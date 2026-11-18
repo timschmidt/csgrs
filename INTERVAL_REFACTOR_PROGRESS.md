@@ -11224,3 +11224,16 @@ caps. Both remain on local review branches after native mixed-client timing
 regressions. The finite version allocated zero heap bytes on the measured
 2,049-bit comparisons. The existing memory allowance and cumulative charges
 remain in force. [Dyadic overlap qualification](docs/research/interval-dyadic-overlap.md)
+
+## Phase 3 exact dyadic overlap and disjointness, 18 November 2026
+
+Commit `207e88c55` delivers all six named queries for finite, extended and
+split dyadic sets. Empty sets, closed contact, extreme exponent gaps and
+division-produced rays retain their exact set meaning. The three-CPU
+campaign covered both arithmetic dependency locks and eliminated the
+previous mixed-client timing regression. Nine comparable final binaries
+passed the size caps. The bounded memory exception charges 16 bytes of stack
+on each affected composition workload, with at least 2,085,520 bytes of
+measured thread headroom. Owner, downstream, native release, WASM and fuzz
+checks are recorded with the raw measurements.
+[Retained query qualification](docs/research/interval-dyadic-overlap.md#retained-query-implementation)

@@ -53,7 +53,7 @@
   "flash": "No firmware flash allowance applies to the recorded host and hosted WebAssembly changes. Embedded image occupancy requires separate deployment measurements.",
   "matrix_size_budget_revision_proposal": "not adopted",
   "evidence": "docs/evidence/2026-11-16-interval-coverage-boundaries",
-  "status": "59 artifact accounts. The scalar midpoint partition adds two reachability-only and SDF client accounts and records four unwind bytes on the all-feature reachability control. All earlier charges are preserved.",
+  "status": "70 existing-artifact accounts. The dyadic overlap addition records both linked client dependency locks, four existing cost executables and the unchanged split-set test harness. Previous charges remain in their individual accounts.",
   "accepted_changes": [
     {
       "id": "array-construction-lifecycle-tests",
@@ -127,6 +127,16 @@
       "production_implementation_changed": true,
       "source_snapshot": "e45bb6b625f68970563ac824dcdbfbfd41134243",
       "evidence": "docs/evidence/2026-11-18-interval-box-radius"
+    },
+    {
+      "id": "closed-dyadic-overlap",
+      "benefit": "Exact budgeted overlap and disjointness for finite intervals, unbounded real intervals, and normalized split sets.",
+      "sources": [
+        "crates/hyperinterval/src/extended/dyadic_overlap.rs"
+      ],
+      "production_implementation_changed": true,
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap"
     }
   ],
   "accounts": [
@@ -7938,6 +7948,808 @@
       },
       "headroom": "65342834 bytes free in 64 MiB host qualification image allowance, 16 MiB required.",
       "evidence": "docs/evidence/2026-11-18-interval-box-radius"
+    },
+    {
+      "artifact": "dyadic-overlap qualification/native",
+      "role": "Completed mixed interval query client",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "dyadic (standalone client lock)",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "8b100dac5cf6a8f13c24a4ec60216068c7348deb07b6e8a2c4895d70ea55d3f4",
+      "previous_sha256": "1cffbdd150d60fa1ede5117e937047d59ab28cade727a83be0bef0014bd5e122",
+      "retained_sha256": "c136df205ea5a22ca0f4de07f4dee84be09839f5ab4b92514ed1fd14735b8c59",
+      "metrics": {
+        ".eh_frame": {
+          "baseline": 24756,
+          "previous_retained": 24756,
+          "retained": 24812,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 56,
+          "incremental_growth_percent": 0.226208,
+          "accepted_positive_growth_bytes": 56,
+          "remaining_cumulative_bytes": 16328,
+          "remaining_cumulative_percent": 1.773792,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 191,
+          "remaining_effective_cumulative_bytes": 439
+        },
+        ".eh_frame_hdr": {
+          "baseline": 4780,
+          "previous_retained": 4780,
+          "retained": 4788,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.167364,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.832636,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 39,
+          "remaining_effective_cumulative_bytes": 87
+        },
+        ".got": {
+          "baseline": 2424,
+          "previous_retained": 2424,
+          "retained": 2432,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.330033,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.669967,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 16,
+          "remaining_effective_cumulative_bytes": 40
+        },
+        ".rela.dyn": {
+          "baseline": 17688,
+          "previous_retained": 17688,
+          "retained": 17712,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 24,
+          "incremental_growth_percent": 0.135685,
+          "accepted_positive_growth_bytes": 24,
+          "remaining_cumulative_bytes": 16360,
+          "remaining_cumulative_percent": 1.864315,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 152,
+          "remaining_effective_cumulative_bytes": 329
+        },
+        ".rodata": {
+          "baseline": 24872,
+          "previous_retained": 24872,
+          "retained": 24904,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 32,
+          "incremental_growth_percent": 0.128659,
+          "accepted_positive_growth_bytes": 32,
+          "remaining_cumulative_bytes": 16352,
+          "remaining_cumulative_percent": 1.871341,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 216,
+          "remaining_effective_cumulative_bytes": 465
+        },
+        ".text": {
+          "baseline": 286947,
+          "previous_retained": 286947,
+          "retained": 287331,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 384,
+          "incremental_growth_percent": 0.133823,
+          "accepted_positive_growth_bytes": 384,
+          "remaining_cumulative_bytes": 16000,
+          "remaining_cumulative_percent": 1.866177,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 2485,
+          "remaining_effective_cumulative_bytes": 5354
+        },
+        "file": {
+          "baseline": 523888,
+          "previous_retained": 523880,
+          "retained": 524416,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 536,
+          "incremental_growth_percent": 0.102314,
+          "accepted_positive_growth_bytes": 536,
+          "remaining_cumulative_bytes": 15848,
+          "remaining_cumulative_percent": 1.897688,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 3560,
+          "remaining_effective_cumulative_bytes": 9941
+        },
+        "function_union": {
+          "baseline": 283031,
+          "previous_retained": 283031,
+          "retained": 283395,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 364,
+          "incremental_growth_percent": 0.128608,
+          "accepted_positive_growth_bytes": 364,
+          "remaining_cumulative_bytes": 3732,
+          "remaining_cumulative_percent": 0.871392,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 660,
+          "remaining_effective_cumulative_bytes": 2466
+        }
+      },
+      "headroom": "66584448 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "dyadic-overlap qualification/portable.wasm",
+      "role": "Completed mixed interval query client",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "Rust 1.95.0",
+      "features": "dyadic (standalone client lock)",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "129f223e8022e84cd1707059f5c660f5c3d04bb2c3d73bc2d6bf2ecd2c1e03c5",
+      "previous_sha256": "129f223e8022e84cd1707059f5c660f5c3d04bb2c3d73bc2d6bf2ecd2c1e03c5",
+      "retained_sha256": "3360c1f53c7be630fb7f542eddc888923abc8bc94b0d22c7f89fe65048c0f169",
+      "metrics": {
+        "code": {
+          "baseline": 41362,
+          "previous_retained": 41362,
+          "retained": 41958,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 596,
+          "incremental_growth_percent": 1.440936,
+          "accepted_positive_growth_bytes": 596,
+          "remaining_cumulative_bytes": 3500,
+          "remaining_cumulative_percent": 8.559064,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 428,
+          "remaining_effective_cumulative_bytes": 3500
+        },
+        "file": {
+          "baseline": 53036,
+          "previous_retained": 53036,
+          "retained": 53715,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 679,
+          "incremental_growth_percent": 1.280262,
+          "accepted_positive_growth_bytes": 679,
+          "remaining_cumulative_bytes": 3417,
+          "remaining_cumulative_percent": 8.719738,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 345,
+          "remaining_effective_cumulative_bytes": 3417
+        }
+      },
+      "headroom": "67055149 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "dyadic-overlap qualification/workspace-native",
+      "role": "Completed mixed interval query client",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "dyadic (workspace lock)",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "638c12fd76ade36896c941361938f79cdc7da26ddb2a53a01b2edf0ae430a7e5",
+      "previous_sha256": "64ba1ecaab7384398b175d102f8669913ca4686e1a152f27fb567337a41667f7",
+      "retained_sha256": "a0eccc446fb8163570c0f56eaad372084a231cc2548bf04ec748179e4ac2ff75",
+      "metrics": {
+        ".got": {
+          "baseline": 2416,
+          "previous_retained": 2416,
+          "retained": 2424,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.331126,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.668874,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 16,
+          "remaining_effective_cumulative_bytes": 40
+        },
+        ".rela.dyn": {
+          "baseline": 17568,
+          "previous_retained": 17568,
+          "retained": 17592,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 24,
+          "incremental_growth_percent": 0.136612,
+          "accepted_positive_growth_bytes": 24,
+          "remaining_cumulative_bytes": 16360,
+          "remaining_cumulative_percent": 1.863388,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 151,
+          "remaining_effective_cumulative_bytes": 327
+        },
+        ".rodata": {
+          "baseline": 24440,
+          "previous_retained": 24440,
+          "retained": 24472,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 32,
+          "incremental_growth_percent": 0.130933,
+          "accepted_positive_growth_bytes": 32,
+          "remaining_cumulative_bytes": 16352,
+          "remaining_cumulative_percent": 1.869067,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 212,
+          "remaining_effective_cumulative_bytes": 456
+        },
+        ".text": {
+          "baseline": 281555,
+          "previous_retained": 281555,
+          "retained": 281603,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 48,
+          "incremental_growth_percent": 0.017048,
+          "accepted_positive_growth_bytes": 48,
+          "remaining_cumulative_bytes": 16336,
+          "remaining_cumulative_percent": 1.982952,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 2767,
+          "remaining_effective_cumulative_bytes": 5583
+        },
+        "function_union": {
+          "baseline": 277725,
+          "previous_retained": 277725,
+          "retained": 277794,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 69,
+          "incremental_growth_percent": 0.024845,
+          "accepted_positive_growth_bytes": 69,
+          "remaining_cumulative_bytes": 4027,
+          "remaining_cumulative_percent": 0.975155,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 955,
+          "remaining_effective_cumulative_bytes": 2708
+        }
+      },
+      "headroom": "66594360 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "dyadic-overlap qualification/workspace.wasm",
+      "role": "Completed mixed interval query client",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "Rust 1.95.0",
+      "features": "dyadic (workspace lock)",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "443c8a56515169d03eedf25d7dc302236504490cc9be94fa78ef2bb2f27efc51",
+      "previous_sha256": "443c8a56515169d03eedf25d7dc302236504490cc9be94fa78ef2bb2f27efc51",
+      "retained_sha256": "b4f2cbd8e00e12eaa66486889fae3a5b9bc27d652b1df7cc9e09cdbd3bc50bd5",
+      "metrics": {
+        "code": {
+          "baseline": 36975,
+          "previous_retained": 36975,
+          "retained": 37177,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 202,
+          "incremental_growth_percent": 0.546315,
+          "accepted_positive_growth_bytes": 202,
+          "remaining_cumulative_bytes": 3894,
+          "remaining_cumulative_percent": 9.453685,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 822,
+          "remaining_effective_cumulative_bytes": 3495
+        },
+        "file": {
+          "baseline": 47496,
+          "previous_retained": 47496,
+          "retained": 47781,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 285,
+          "incremental_growth_percent": 0.600051,
+          "accepted_positive_growth_bytes": 285,
+          "remaining_cumulative_bytes": 3811,
+          "remaining_cumulative_percent": 9.399949,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 739,
+          "remaining_effective_cumulative_bytes": 3811
+        }
+      },
+      "headroom": "67061083 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "crates/hyperinterval/conformance/order_cost.rs",
+      "role": "Existing completed-workload cost executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "integer,fixed,rational,dyadic,float-enclosure",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "1194d2dcee765c36ec189d6efb7d54af1a7b17242010101dc637892c1954a5de",
+      "previous_sha256": "ba7fa4bd81307595d24902c600945fd3f93268b941f16f0865b97f938e41374b",
+      "retained_sha256": "36538490dc29eea3913be9d9a21ee8f8c98383f20de1a90f1ca8e2fba2cffb61",
+      "metrics": {
+        "file": {
+          "baseline": 887104,
+          "previous_retained": 887112,
+          "retained": 887112,
+          "prior_positive_growth_bytes": 8,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.999098,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 4096,
+          "remaining_effective_cumulative_bytes": 16376
+        }
+      },
+      "headroom": "66221752 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "crates/hyperinterval/conformance/division_cost.rs",
+      "role": "Existing completed-workload cost executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "integer,fixed,rational,dyadic,float-enclosure",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "de3b0816e1b193adb838fa0b47d6568246a8687670927fc71bfa92ad05e89933",
+      "previous_sha256": "47a54e0ed4f2ab5ae6546043a85a7b8765747cc7566a9e3f8484db86f7b5b85c",
+      "retained_sha256": "669fc98d3eee5f1dec8b6a6c8f3699f7156aa94289dfeeaa042d906b6d17ef10",
+      "metrics": {
+        ".got": {
+          "baseline": 2808,
+          "previous_retained": 2808,
+          "retained": 2816,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.2849,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.7151,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 20,
+          "remaining_effective_cumulative_bytes": 48
+        },
+        ".rela.dyn": {
+          "baseline": 22584,
+          "previous_retained": 22584,
+          "retained": 22608,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 24,
+          "incremental_growth_percent": 0.10627,
+          "accepted_positive_growth_bytes": 24,
+          "remaining_cumulative_bytes": 16360,
+          "remaining_cumulative_percent": 1.89373,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 201,
+          "remaining_effective_cumulative_bytes": 427
+        },
+        "function_union": {
+          "baseline": 643488,
+          "previous_retained": 643488,
+          "retained": 643495,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 7,
+          "incremental_growth_percent": 0.001088,
+          "accepted_positive_growth_bytes": 7,
+          "remaining_cumulative_bytes": 4089,
+          "remaining_cumulative_percent": 0.998912,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 1017,
+          "remaining_effective_cumulative_bytes": 4089
+        }
+      },
+      "headroom": "65943376 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "crates/hyperinterval/conformance/fractional_power_cost.rs",
+      "role": "Existing completed-workload cost executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "integer,fixed,rational,dyadic,float-enclosure",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "86edbc5d6b836148aaf5dd8afc90d491b42f4ab9457890473111faba65c95b3d",
+      "previous_sha256": "5070e5feed2ec4f4de9e2aee29ae801c889c4c1ff88668454074fec3983fc038",
+      "retained_sha256": "157ca5a713a322a8704f31c3b3ced772967b53af7ffb416d1c300afb08836bad",
+      "metrics": {
+        ".got": {
+          "baseline": 2920,
+          "previous_retained": 2920,
+          "retained": 2928,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.273973,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.726027,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 21,
+          "remaining_effective_cumulative_bytes": 50
+        },
+        ".rela.dyn": {
+          "baseline": 23424,
+          "previous_retained": 23424,
+          "retained": 23448,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 24,
+          "incremental_growth_percent": 0.102459,
+          "accepted_positive_growth_bytes": 24,
+          "remaining_cumulative_bytes": 16360,
+          "remaining_cumulative_percent": 1.897541,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 210,
+          "remaining_effective_cumulative_bytes": 444
+        },
+        "function_union": {
+          "baseline": 832735,
+          "previous_retained": 832735,
+          "retained": 832739,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 4,
+          "incremental_growth_percent": 0.00048,
+          "accepted_positive_growth_bytes": 4,
+          "remaining_cumulative_bytes": 4092,
+          "remaining_cumulative_percent": 0.99952,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 1020,
+          "remaining_effective_cumulative_bytes": 4092
+        }
+      },
+      "headroom": "65690240 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "crates/hyperinterval/conformance/tangent_cost.rs",
+      "role": "Existing completed-workload cost executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "integer,fixed,rational,dyadic,float-enclosure",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "4e2e40e77e91ffa8489bec6b6c8b939c34ff05a57a1eee862ca977f56dba76a0",
+      "previous_sha256": "8919ce0f4fd3b556047a40c8385c869b2d60579fc0ffa5e9a17edbd7c4e5cde4",
+      "retained_sha256": "a1c126728bcbbfa5bb5da046adf74671f728e777be42d5d15d0d6dad2417a4e9",
+      "metrics": {
+        ".got": {
+          "baseline": 3096,
+          "previous_retained": 3096,
+          "retained": 3104,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.258398,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.741602,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 22,
+          "remaining_effective_cumulative_bytes": 53
+        },
+        ".rela.dyn": {
+          "baseline": 25152,
+          "previous_retained": 25152,
+          "retained": 25176,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 24,
+          "incremental_growth_percent": 0.09542,
+          "accepted_positive_growth_bytes": 24,
+          "remaining_cumulative_bytes": 16360,
+          "remaining_cumulative_percent": 1.90458,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 227,
+          "remaining_effective_cumulative_bytes": 479
+        },
+        "file": {
+          "baseline": 1586448,
+          "previous_retained": 1586456,
+          "retained": 1586448,
+          "prior_positive_growth_bytes": 8,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.999496,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 4096,
+          "remaining_effective_cumulative_bytes": 16376
+        },
+        "function_union": {
+          "baseline": 955027,
+          "previous_retained": 955027,
+          "retained": 955032,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 5,
+          "incremental_growth_percent": 0.000524,
+          "accepted_positive_growth_bytes": 5,
+          "remaining_cumulative_bytes": 4091,
+          "remaining_cumulative_percent": 0.999476,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 1019,
+          "remaining_effective_cumulative_bytes": 4091
+        }
+      },
+      "headroom": "65522416 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "crates/hyperinterval/tests/dyadic_set_relations.rs#release-tests",
+      "role": "Existing closed-set qualification test",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "dyadic (workspace lock)",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "aa92b60c0",
+      "baseline_sha256": "cfff7a8e54498941ee69cdef01f1d9cd99fa142048ac99fed42f5a52a99b8831",
+      "previous_sha256": "50f97653dd2a317aaef0b7c0816d2da316f0350337454cd47b7d75b2db1712fc",
+      "retained_sha256": "9aeb94a6a51eec8637db18d35dabfc20b91d080fa1286a7e5858da99d1889c54",
+      "metrics": {
+        ".got": {
+          "baseline": 4464,
+          "previous_retained": 4464,
+          "retained": 4472,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.179211,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.820789,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 36,
+          "remaining_effective_cumulative_bytes": 81
+        },
+        ".rela.dyn": {
+          "baseline": 58200,
+          "previous_retained": 58200,
+          "retained": 58224,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 24,
+          "incremental_growth_percent": 0.041237,
+          "accepted_positive_growth_bytes": 24,
+          "remaining_cumulative_bytes": 16360,
+          "remaining_cumulative_percent": 1.958763,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 558,
+          "remaining_effective_cumulative_bytes": 1140
+        },
+        "file": {
+          "baseline": 1175552,
+          "previous_retained": 1175536,
+          "retained": 1175568,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 32,
+          "incremental_growth_percent": 0.002722,
+          "accepted_positive_growth_bytes": 32,
+          "remaining_cumulative_bytes": 16352,
+          "remaining_cumulative_percent": 1.997278,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 4064,
+          "remaining_effective_cumulative_bytes": 16352
+        },
+        "function_union": {
+          "baseline": 661141,
+          "previous_retained": 661141,
+          "retained": 661147,
+          "prior_positive_growth_bytes": 0,
+          "incremental_growth_bytes": 6,
+          "incremental_growth_percent": 0.000908,
+          "accepted_positive_growth_bytes": 6,
+          "remaining_cumulative_bytes": 4090,
+          "remaining_cumulative_percent": 0.999092,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true,
+          "remaining_effective_incremental_bytes": 1018,
+          "remaining_effective_cumulative_bytes": 4090
+        }
+      },
+      "headroom": "65933296 bytes free within 64 MiB qualification allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
+      "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed",
@@ -7961,5 +8773,18 @@
       "cumulative_percent": 4
     },
     "other_allocated_sections": "existing native caps unchanged"
+  },
+  "new_dyadic_overlap_test_harness": {
+    "target": "x86_64-unknown-linux-gnu",
+    "toolchain": "Rust 1.95.0 release",
+    "features": "dyadic",
+    "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58",
+    "file_bytes": 1220432,
+    "sha256": "2694de499feb9ad594f689e42d0b15c2334b784ab92faccfd6f179984ebc8dc5",
+    "qualification_capacity_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "remaining_bytes": 65888432,
+    "role": "New standalone test artifact. The pre-existing dyadic_set_relations harness has a separate incremental and cumulative account.",
+    "evidence": "docs/evidence/2026-11-18-interval-directed-overlap"
   }
 }
