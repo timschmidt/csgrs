@@ -63,7 +63,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
-| 11 path dynamics | unaccepted prototypes archived and removed from active worktrees; extraction remains open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
+| 11 path dynamics | earlier full prototypes retired; smaller affine-axis extraction and direct Interface consumer functionally qualified on isolated branches; admission and full extraction remain open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
@@ -10965,3 +10965,21 @@ SHA-256 `e37499a3986a178c9c6c310691cc7e8a9d53f575c8ceaff0146241ec4338ee91`.
 The lossless payload contains 5,313 members / 323,661,870 raw bytes and
 42 validated images. Original, decoded and committed hashes are verified;
 earlier archive paths are unchanged.
+
+## Isolated affine axis owner extraction (17 November 2026)
+
+[The new review](docs/research/axis-projection-owner.md) records a smaller Phase 11
+candidate: Hyperdynamics owns exact affine axis projection behind an opt-in
+feature; Hyperpath retains deprecated wrappers and unchanged error variants.
+The algorithm/report bodies and all original test assertions are preserved.
+Final owner suites pass 602 tests, Interface core passes 201, and the independent
+canonical motion transcript remains unchanged. Four external full-output/trace
+comparisons match under both policies; the direct consumer needs no geometry
+crate. Strict local lint, documentation, formatting and repository checks pass.
+
+CSGRS `8f351042e1880a8d77b50606df8b387066522c45` and Interface
+`e5af3b4383d33c440d087e0d2b933fccde766b9c` remain isolated, unaccepted source
+candidates. Runtime, complete lifetime/stack, final artifact and distribution
+admission remain open. No new memory or size allowance is accepted; prior
+charges, rejections and the held release queue are unchanged. Feed/lookahead/jerk
+extraction and the full 15-phase objective remain required.
