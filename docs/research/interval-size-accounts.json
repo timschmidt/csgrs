@@ -9115,5 +9115,194 @@
       "remaining_bytes": 38214864,
       "evidence": "docs/evidence/2026-11-18-interval-schedule-equivalence"
     }
-  ]
+  ],
+  "dyadic_scalar_affine": {
+    "source_snapshot": "f10679ece0875272998a8ad2916bdd27e2e3a622",
+    "fixed_program_baseline": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding_revision": "4c0a21334",
+    "features": "dyadic, locked, release Rust 1.95, independent standalone clients; Hypersolve example uses interval-program",
+    "scope": "Complete native and WASM linked clients. The existing fixed-only firmware dependency graph is outside the BigInt feature. The qualification host has a 64 MiB per-image slot with 16 MiB required headroom. Positive native section charges remain separate. No existing allowance increased.",
+    "clients": [
+      {
+        "workload": "composed scalar operations",
+        "target": "x86_64-unknown-linux-gnu",
+        "sizes": [
+          552496,
+          552496,
+          552496
+        ],
+        "sha256": [
+          "940af3d4b13d00e94088ae60f43f211d9b2ab975fe5bf0abb6605fc4aaf5819a",
+          "e4f0ca33cdebc0b3e48b0436dc3cf023d242486c7af59ac9dc13c6adf5baefe2",
+          "e4f0ca33cdebc0b3e48b0436dc3cf023d242486c7af59ac9dc13c6adf5baefe2"
+        ],
+        "positive_charges": {}
+      },
+      {
+        "workload": "composed scalar operations",
+        "target": "wasm32-unknown-unknown",
+        "sizes": [
+          104699,
+          104699,
+          104699
+        ],
+        "sha256": [
+          "ef023f1635079e1d83343b365d85495d9760852f6cd0a66b1754ef78932c56e5",
+          "72511b237d21950018f13fc479c3aeb390c432fbfb125943367f580c357e8587",
+          "72511b237d21950018f13fc479c3aeb390c432fbfb125943367f580c357e8587"
+        ],
+        "positive_charges": {}
+      },
+      {
+        "workload": "native scalar map",
+        "target": "x86_64-unknown-linux-gnu",
+        "sizes": [
+          552496,
+          552496,
+          543472
+        ],
+        "sha256": [
+          "940af3d4b13d00e94088ae60f43f211d9b2ab975fe5bf0abb6605fc4aaf5819a",
+          "e4f0ca33cdebc0b3e48b0436dc3cf023d242486c7af59ac9dc13c6adf5baefe2",
+          "630bba60ea54f6a9e58f8733b406ae199373883e79fda77447749a2503efd0b5"
+        ],
+        "positive_charges": {
+          ".gcc_except_table": {
+            "fixed": 19924,
+            "previous": 19924,
+            "retained": 20004,
+            "incremental": 80,
+            "cumulative": 80,
+            "cap_schedule": "native_final_file_and_allocated_sections",
+            "remaining_cumulative_bytes": 16304,
+            "remaining_cumulative_percentage_points": 1.5984742019674765
+          },
+          ".rodata": {
+            "fixed": 27808,
+            "previous": 27808,
+            "retained": 27840,
+            "incremental": 32,
+            "cumulative": 32,
+            "cap_schedule": "native_final_file_and_allocated_sections",
+            "remaining_cumulative_bytes": 16352,
+            "remaining_cumulative_percentage_points": 1.8849252013808977
+          }
+        }
+      },
+      {
+        "workload": "native scalar map",
+        "target": "wasm32-unknown-unknown",
+        "sizes": [
+          104699,
+          104699,
+          95219
+        ],
+        "sha256": [
+          "ef023f1635079e1d83343b365d85495d9760852f6cd0a66b1754ef78932c56e5",
+          "72511b237d21950018f13fc479c3aeb390c432fbfb125943367f580c357e8587",
+          "19c20bd12aca8b12db1337a3062cf57bb5ddea1af22650e8f9aeb1baab71e7e1"
+        ],
+        "positive_charges": {}
+      },
+      {
+        "workload": "existing inverse functions",
+        "target": "x86_64-unknown-linux-gnu",
+        "sizes": [
+          613688,
+          613744,
+          613744
+        ],
+        "sha256": [
+          "e93d98e43f912d1b4ff6d4e5ca5c0729658fe857a5664832ce59d8b808f94025",
+          "fb7736fbe45c5080213b122f44a81c24cebb26487e00827f8d5e6b14fd0cf4e3",
+          "fb7736fbe45c5080213b122f44a81c24cebb26487e00827f8d5e6b14fd0cf4e3"
+        ],
+        "positive_charges": {
+          "file": {
+            "fixed": 613688,
+            "previous": 613744,
+            "retained": 613744,
+            "incremental": 0,
+            "cumulative": 56,
+            "cap_schedule": "native_final_file_and_allocated_sections",
+            "remaining_cumulative_bytes": 16328,
+            "remaining_cumulative_percentage_points": 1.9908748419392264
+          },
+          "defined_function_union": {
+            "fixed": 364703,
+            "previous": 364713,
+            "retained": 364713,
+            "incremental": 0,
+            "cumulative": 10,
+            "cap_schedule": "native_monomorphized_text_sum",
+            "remaining_cumulative_bytes": 4086,
+            "remaining_cumulative_percentage_points": 0.9972580428458225
+          },
+          ".rela.dyn": {
+            "fixed": 18336,
+            "previous": 18360,
+            "retained": 18360,
+            "incremental": 0,
+            "cumulative": 24,
+            "cap_schedule": "native_final_file_and_allocated_sections",
+            "remaining_cumulative_bytes": 16360,
+            "remaining_cumulative_percentage_points": 1.869109947643979
+          },
+          ".eh_frame": {
+            "fixed": 28136,
+            "previous": 28140,
+            "retained": 28140,
+            "incremental": 0,
+            "cumulative": 4,
+            "cap_schedule": "native_final_file_and_allocated_sections",
+            "remaining_cumulative_bytes": 16380,
+            "remaining_cumulative_percentage_points": 1.9857833380722207
+          },
+          ".got": {
+            "fixed": 2416,
+            "previous": 2424,
+            "retained": 2424,
+            "incremental": 0,
+            "cumulative": 8,
+            "cap_schedule": "native_final_file_and_allocated_sections",
+            "remaining_cumulative_bytes": 16376,
+            "remaining_cumulative_percentage_points": 1.6688741721854305
+          }
+        }
+      },
+      {
+        "workload": "existing inverse functions",
+        "target": "wasm32-unknown-unknown",
+        "sizes": [
+          162069,
+          162069,
+          162069
+        ],
+        "sha256": [
+          "f6746a688be976c052987a762610b49ebdcae5b9f1fc5b7eec7b62e0628a4a46",
+          "812aab02bae7c5c95d6dd8fb1f3e29455d81361316f318562bdbc9f17ab80e3f",
+          "812aab02bae7c5c95d6dd8fb1f3e29455d81361316f318562bdbc9f17ab80e3f"
+        ],
+        "positive_charges": {}
+      }
+    ],
+    "solver_example": {
+      "target": "x86_64-unknown-linux-gnu",
+      "sizes": [
+        3201560,
+        3201592,
+        3201592
+      ],
+      "previous_and_candidate_sha256": "68436bc2fdc57df6c40d4cd24b9792c4b1bc1e818857bc2c0a899c2352d47362",
+      "all_incremental_charges": 0
+    },
+    "new_release_test": {
+      "file_bytes": 1766104,
+      "sha256": "c462115ca2c3f69fe7911635ba3f99b5c7cd84867941631c2ed57b38a590a570",
+      "capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 65342760
+    },
+    "evidence": "docs/evidence/2026-11-18-interval-dyadic-affine"
+  }
 }

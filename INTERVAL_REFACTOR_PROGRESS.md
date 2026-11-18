@@ -55,7 +55,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 0 inventory/baseline | in progress | audited source map, sibling states, tests, cost/size/coverage/fuzz, hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
-| 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
+| 3 rational/dyadic/ball | carriers, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 and WASM qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
@@ -11783,3 +11783,21 @@ identical machine code, sanitizer coverage sections and all decompressed debug
 sections. The release test and compressed ASan image meet the required
 16 MiB headroom in their respective qualification slots.
 [Artifact accounts](docs/research/interval-size-accounts.json)
+
+## Phase 3 finite dyadic scalar maps
+
+Primary `f10679ece` adds exact scalar multiplication and affine images with
+caller-budgeted translations and signed exponent repair. The ordinary signed
+scale fixture completes with two products in 50 work units. Adding its offset
+takes ten more. Both operations preserve the original interval on failure
+and support a fresh-budget retry.
+
+All 270 all-target/all-feature Hyperinterval tests, 15 doctests, 98 downstream
+Hyperlattice interval tests/doctests and nine Hypersolve expression tests
+passed. The two existing native/WASM clients and the linked native solver
+example matched their preceding binaries byte-for-byte. Standalone Rust 1.88
+and 1.95 clients passed the 32,768-case oracle on native and WASM. The
+direct native example reduced the maximum measured whole-call stack by 672
+bytes and peak requested heap by 192 bytes. The size ledger preserves the
+two positive section charges. No production memory allowance was consumed.
+[Resource limits, rejected implementations and completed workloads](docs/research/dyadic-scalar-affine.md)
