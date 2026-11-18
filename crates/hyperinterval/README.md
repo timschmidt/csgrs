@@ -161,6 +161,11 @@ rejects any zero-containing denominator, even with an empty numerator.
 to fit as a fixed-point value. It retains the source grid, rounds outward, and
 rejects zero even for an empty numerator.
 
+With `fixed,dyadic`, `to_dyadic(&mut budget)` converts the two lattice
+numerators at their shared exponent exactly. With `fixed,rational`,
+`to_rational()` converts the same endpoints directly using the denominator
+`2^FRAC`. Both preserve empty intervals and support all valid i32/i64 scales.
+
 No default feature enables allocation, `std`, Hyperreal or serialization.
 The `integer` and `fixed` builds are allocation-free `no_std` and target Rust
 1.88. Optional `serde` uses null for empty and an ordered endpoint pair for

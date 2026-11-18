@@ -173,3 +173,45 @@ impl<'de, const F: u32> serde::Deserialize<'de> for FixedWidth<F> {
         Self::new(u64::deserialize(deserializer)?).map_err(serde::de::Error::custom)
     }
 }
+
+#[cfg(any(feature = "dyadic", feature = "rational"))]
+impl<I: FixedEndpoint + Into<i64>, const FRAC: u32> FixedInterval<I, FRAC> {
+    /// Converts both exact lattice endpoints directly to a normalized dyadic interval.
+    ///
+    /// Before materializing the mantissas, reserves two linear stages at their
+    /// maximum magnitude bit length. Empty requires no work.
+    #[cfg(feature = "dyadic")]
+    pub fn to_dyadic(
+        &self,
+        budget: &mut crate::DyadicBudget,
+    ) -> Result<crate::DyadicInterval, IntervalError> {
+        let Some((lower, upper)) = self.bounds() else {
+            return Ok(crate::DyadicInterval::empty());
+        };
+        let (lower, upper) = (lower.into(), upper.into());
+        let magnitude = lower.unsigned_abs().max(upper.unsigned_abs());
+        budget.reserve(u64::from(u64::BITS - magnitude.leading_zeros()), 2, false)?;
+        crate::DyadicInterval::new(lower.into(), upper.into(), -(FRAC as i32))
+    }
+
+    /// Converts the whole closed interval exactly, using the lattice denominator
+    /// for both rational endpoints. Empty maps to empty.
+    #[cfg(feature = "rational")]
+    pub fn to_rational(&self) -> crate::RationalInterval {
+        let Some((lower, upper)) = self.bounds() else {
+            return crate::RationalInterval::empty();
+        };
+        // FixedInterval construction proves FRAC < I::BITS <= 64.
+        let denominator = 1_u64 << FRAC;
+        let endpoint = |n: I| {
+            hyperreal::Rational::fraction(n.into(), denominator)
+                .expect("fixed-point denominator is a positive power of two")
+        };
+        let a = endpoint(lower);
+        if lower == upper {
+            crate::RationalInterval::point(a)
+        } else {
+            crate::RationalInterval::ordered(a, endpoint(upper))
+        }
+    }
+}

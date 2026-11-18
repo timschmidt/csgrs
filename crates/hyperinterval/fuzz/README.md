@@ -18,7 +18,9 @@ promote each failure to a named deterministic regression before closing it.
 
 `conversions` exercises rational/dyadic conversion with full-width signed
 numerators and nonzero unsigned denominators, ordinary grids from -128 to 128,
-and explicit refusal at extreme grids. Independent GMP directed bounds check
+and explicit refusal at extreme grids. It also checks fixed-point endpoints
+at 30, 32 and 63 fractional bits against independent GMP fractions after
+conversion to either host backend. Independent GMP directed bounds check
 tightness and exact-grid admission. Generated empty, singleton and interval
 results pass through serialization, exact rational replay and another grid;
 exact work limits, exhausted attempts and fresh-budget retries are checked.

@@ -1,5 +1,7 @@
 #![no_main]
-use hyperinterval::{DyadicBudget, DyadicInterval, IntervalError, RationalInterval};
+use hyperinterval::{
+    DyadicBudget, DyadicInterval, FixedEndpoint, FixedInterval, IntervalError, RationalInterval,
+};
 use hyperreal::Rational;
 use libfuzzer_sys::fuzz_target;
 use rug::Rational as Q;
@@ -21,8 +23,32 @@ fn exact_bounds(value: &DyadicInterval) -> Option<(Q, Q)> {
         .map(|(lo, hi, e)| (grid::q(lo, e), grid::q(hi, e)))
 }
 
+fn fixed_bounds<I: FixedEndpoint + Into<i64>, const F: u32>(a: I, b: I) {
+    let (lo, hi) = (a.min(b), a.max(b));
+    let source = FixedInterval::<I, F>::new(lo, hi).unwrap();
+    let expected = (
+        Q::from((lo.into(), 1_u64 << F)),
+        Q::from((hi.into(), 1_u64 << F)),
+    );
+    assert_eq!(
+        exact_bounds(&source.to_dyadic(&mut budget()).unwrap()).unwrap(),
+        expected
+    );
+    let image = source.to_rational();
+    let (lo, hi) = image.bounds().unwrap();
+    assert_eq!(
+        (rational_oracle::mpq(lo), rational_oracle::mpq(hi)),
+        expected
+    );
+}
+
 fuzz_target!(|data: [u64; 8]| {
     let [a, b, c, d, p, q, ieee, mode] = data;
+    match mode % 3 {
+        0 => fixed_bounds::<i32, 30>(a as i32, c as i32),
+        1 => fixed_bounds::<i64, 32>(a as i64, c as i64),
+        _ => fixed_bounds::<i64, 63>(a as i64, c as i64),
+    }
     let a = Rational::fraction(a as i64, b.max(1)).unwrap();
     let b = Rational::fraction(c as i64, d.max(1)).unwrap();
     let (a, b) = if a <= b { (a, b) } else { (b, a) };

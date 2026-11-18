@@ -6,6 +6,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact fixed-point interval conversion to the optional dyadic and rational
+  backends. The dyadic conversion charges the caller before allocating.
+
 - Qualify the allocation-free integer IEEE enclosure backend on
   `wasm32-unknown-unknown`, with exact-bit oracle execution and generated-code
   checks. Other previously unsupported targets still fail closed. Proposal
