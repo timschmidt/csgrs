@@ -10631,5 +10631,194 @@
         "stable": 58839873
       }
     }
+  },
+  "borrowed_rational_scalar": {
+    "source_revision": "e221c81ff1eb0be45516d8b69090c5bf18424134",
+    "fixed_revision": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding_revision": "19d0bf698",
+    "evidence": "docs/evidence/2026-11-18-interval-rational-scale",
+    "operation": "RationalInterval::scale, exact image of empty or ordered finite rational endpoints by a borrowed rational factor",
+    "scope": "Rust 1.99.0 paired native and WASI release consumers. The singleton and direct API are separate completed clients. Each positive delta is charged against its preceding build and fixed baseline. The metadata-bearing WASI file grew even though the executable code shrank.",
+    "bounds": {
+      "incremental_bytes": 4096,
+      "incremental_percent_of_preceding": 1,
+      "cumulative_bytes": 8192,
+      "cumulative_percent_of_fixed": 2,
+      "capacity_bytes": 33554432,
+      "minimum_headroom_bytes": 4194304
+    },
+    "metrics": "Native code is .text and functions is the union of text-symbol address ranges. WASI code is the code section and functions is the sum of function body payload sizes.",
+    "clients": {
+      "x86_64-unknown-linux-gnu": {
+        "file": {
+          "fixed": 1277048,
+          "preceding": 1277048,
+          "retained_singleton": 1277048,
+          "retained_scale": 1275912,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        },
+        "code": {
+          "fixed": 506373,
+          "preceding": 506373,
+          "retained_singleton": 506373,
+          "retained_scale": 505477,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        },
+        "functions": {
+          "fixed": 500110,
+          "preceding": 500110,
+          "retained_singleton": 500110,
+          "retained_scale": 499218,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        }
+      },
+      "x86_64-unknown-linux-gnu-trace": {
+        "file": {
+          "fixed": 1229640,
+          "preceding": 1229624,
+          "retained_singleton": 1229608,
+          "retained_scale": 1228864,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        },
+        "code": {
+          "fixed": 469669,
+          "preceding": 469669,
+          "retained_singleton": 469669,
+          "retained_scale": 468645,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        },
+        "functions": {
+          "fixed": 464043,
+          "preceding": 464043,
+          "retained_singleton": 464043,
+          "retained_scale": 463017,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        }
+      },
+      "wasm32-wasip1": {
+        "file": {
+          "fixed": 435261,
+          "preceding": 435261,
+          "retained_singleton": 435261,
+          "retained_scale": 434775,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        },
+        "code": {
+          "fixed": 313753,
+          "preceding": 313753,
+          "retained_singleton": 313753,
+          "retained_scale": 313330,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        },
+        "functions": {
+          "fixed": 312820,
+          "preceding": 312820,
+          "retained_singleton": 312820,
+          "retained_scale": 312399,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        }
+      },
+      "wasm32-wasip1-trace": {
+        "file": {
+          "fixed": 367766,
+          "preceding": 367766,
+          "retained_singleton": 367770,
+          "retained_scale": 367818,
+          "singleton_charge_bytes": 4,
+          "scale_charge_bytes": 52,
+          "remaining_singleton_bytes": 8188,
+          "remaining_scale_bytes": 8140
+        },
+        "code": {
+          "fixed": 275877,
+          "preceding": 275877,
+          "retained_singleton": 275877,
+          "retained_scale": 275849,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        },
+        "functions": {
+          "fixed": 275054,
+          "preceding": 275054,
+          "retained_singleton": 275054,
+          "retained_scale": 275028,
+          "singleton_charge_bytes": 0,
+          "scale_charge_bytes": 0,
+          "remaining_singleton_bytes": 8192,
+          "remaining_scale_bytes": 8192
+        }
+      }
+    },
+    "new_test_executable": {
+      "max_file_bytes": 16777216,
+      "capacity_bytes": 20971520,
+      "minimum_headroom_bytes": 4194304,
+      "features": "rational,serde,dispatch-trace",
+      "measurements": {
+        "test-native-1.95.0.elf": {
+          "file_bytes": 1915792,
+          "capacity_headroom_bytes": 19055728
+        },
+        "test-native-stable.elf": {
+          "file_bytes": 1949288,
+          "capacity_headroom_bytes": 19022232
+        },
+        "test-wasi-1.95.0.wasm": {
+          "file_bytes": 807549,
+          "capacity_headroom_bytes": 20163971
+        },
+        "test-wasi-stable.wasm": {
+          "file_bytes": 835327,
+          "capacity_headroom_bytes": 20136193
+        }
+      }
+    },
+    "existing_release_consumers": {
+      "enclosed_program": {
+        "file": 0,
+        "code": 0,
+        "functions": 0
+      },
+      "rational_power_cost": {
+        "file": 0,
+        "code": 0,
+        "functions": 0
+      },
+      "rational": {
+        "file": -24,
+        "code": 0,
+        "functions": 0
+      }
+    },
+    "firmware": "Alumina clock and FOC enable integer and fixed respectively. Rational requires std and is absent from both normal firmware dependency feature graphs."
   }
 }

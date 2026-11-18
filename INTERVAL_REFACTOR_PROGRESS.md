@@ -55,7 +55,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 0 inventory/baseline | Hyperinterval, Hyperdynamics and Hyperlattice Interval have native coverage measurements on Rust 1.95 and branch-instrumented nightly | audited source map, sibling states, remaining tests, cost/size/coverage/fuzz and hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
-| 3 rational/dyadic/ball | carriers, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
+| 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
@@ -12726,3 +12726,61 @@ default-feature binary fit its prospective size screen. Four existing Rust
 grew 38,880 B against its 4,096 B incremental limit. Both prototypes remain
 outside production, with zero new charges to the size and memory accounts.
 [Horner measurements and disposition](docs/research/horner-working-interval-admission.md)
+
+## Phase 3 exact rational scalar scaling, 18 November 2026
+
+Revision `e221c81ff` adds `RationalInterval::scale(&Rational)`. Section 3.5
+requires scalar scaling for finite exact families. The existing rational
+`affine` method already handled shifts. The new entry point passes the
+borrowed factor as both scalar endpoints to the existing sign-partitioned
+product kernel. This preserves predicate order and avoids constructing a
+singleton interval.
+
+The public tests check 495 interval/factor combinations against signed
+integer numerator products over a common denominator, invert every nonzero
+factor, preserve empty sets under zero and negative scaling, and replay a
+129-bit cancellation before a second map. A retained counter assertion checks
+two endpoint products on a crossing interval. An isolated extra-product
+mutation preserved every endpoint and failed that assertion. Fresh native
+and WASI processes also matched all 160 complete result rows and all 160
+dispatch and reducer windows against explicit singleton multiplication.
+
+| Final release client, Rust 1.99 | Singleton multiplication | Borrowed scalar |
+| --- | ---: | ---: |
+| Native replay and affine composition | 1,277,048 B | 1,275,912 B |
+| WASI replay and affine composition | 435,261 B | 434,775 B |
+| Native trace client | 1,229,624 B | 1,228,864 B |
+| WASI trace client | 367,766 B | 367,818 B |
+
+The [size accounts](docs/research/interval-size-accounts.json) charge the
+52 B WASI trace file increase. Its code section shrank by 28 B. The existing
+singleton trace client has its own 4 B file charge. No exception was needed
+for heap or stack. The fixed and preceding controls matched across all 16
+case and cache-state maxima. Checking and destroying the complete direct
+result used 64–88 B less stack. The highest measured stack was 8,504 B and the
+highest requested live heap was 1,280 B. Allocation counts, requested bytes
+and retained bytes matched. The stack harness includes a calibrated 1,024 B
+caller frame to expose shallow calls beneath its protected area.
+
+In two paired timing campaigns, direct scaling took 55–71% of singleton
+multiplication time across the seven nonempty cases and about 13% for empty.
+Each individual paired 95% interval stayed below one. These are warm,
+single-threaded operations on the measured host. The first method placement
+grew the existing rational test executable's text section by 64 B. With the
+final inline placement the rational power example, Hypersolve's
+`enclosed_program` example and the existing rational tests retained identical
+executable code.
+
+The full Hyperinterval release suite passed 291 tests on each of Rust 1.95.0
+and 1.99.0. The scalar WASI runner passed 231 guest tests and all nine
+host-required cases. All three new feature-enabled tests also executed in
+WASI on both compilers. Hyperlattice Interval passed 98 downstream tests and
+Hypersolve passed 627 library tests. Strict owner Clippy and rustdoc passed on
+both compilers. Firmware dependency inspection confirmed the clock and FOC
+select the integer and fixed features respectively. Phase 3 and the broader
+plan remain open.
+
+The evidence archive commit is `79eceffd89912fe260bf9f6e7566f5c900455dc2`,
+record `docs/evidence/2026-11-18-interval-rational-scale`. Its 569 members
+include both placements, negative controls, raw resource and timing rows,
+feature graphs and final-artifact measurements. [Record digest](docs/evidence-archive.tsv)
