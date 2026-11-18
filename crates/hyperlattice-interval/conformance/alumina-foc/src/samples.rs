@@ -93,14 +93,20 @@ pub enum Output {
 }
 
 impl Output {
-    /// Deterministic digest of every endpoint and the output tag; equality tests
-    /// compare the original outputs separately, not just this checksum.
-    pub fn digest(self, mut hash: u64) -> u64 {
-        let (tag, lanes) = match self {
+    /// Output tag and ordered Q30 lanes used by the conformance ABI.
+    /// Two-axis frames have a zero third lane.
+    pub fn tagged_lanes(self) -> (u8, [Q30Interval; 3]) {
+        match self {
             Self::Stationary(v) => (1, [v.alpha, v.beta, Q30Interval::ZERO]),
             Self::Rotating(v) => (2, [v.d, v.q, Q30Interval::ZERO]),
             Self::Phases(v) => (3, [v.a, v.b, v.c]),
-        };
+        }
+    }
+
+    /// Deterministic digest of every endpoint and the output tag; equality tests
+    /// compare the original outputs separately, not just this checksum.
+    pub fn digest(self, mut hash: u64) -> u64 {
+        let (tag, lanes) = self.tagged_lanes();
         for byte in core::iter::once(tag).chain(
             lanes
                 .into_iter()

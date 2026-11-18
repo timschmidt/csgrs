@@ -42,5 +42,9 @@ rejection, seeded intervals, widened products/divisions and repeated transforms.
 The cost probe first verifies equal completed results, then reports timing,
 allocation and checksums for both implementations. `native-probe` and
 `shared-probe` run identical workload bodies for executable-size comparison.
+The WASM host also reads each output tag and signed lane endpoint. Its BigInt
+oracle derives the two Clarke radical brackets and applies outward rounding
+at the specified Q30 operations through the complete five-transform chain.
+Noncardinal Park checks include both sides of the signed range boundary.
 These probes do not establish firmware cycle, stack, HIL or performance gates.
 Measurements and adoption decisions belong in the main progress/evidence ledger.
