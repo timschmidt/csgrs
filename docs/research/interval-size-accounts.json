@@ -9969,5 +9969,50 @@
       }
     },
     "existing_consumers": "The sampled existing native .text, .rodata and .data sections, and every non-custom section of the legacy midpoint WASM client, matched the preceding release. Prior RK4 charges remain in their accounts. No memory or firmware exception was charged."
+  },
+  "foc_wasm_endpoint_replay": {
+    "source": "7084c9f0dddd2d2cc6770a0bbdbe545da36a089e",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "95dd3d236",
+    "firmware_fixed": "2d68e82b7341db7b747b20e4ad1455a4c1113a00",
+    "firmware_retained": "96ac22cadef311f069d62bae4dfa5f3918cfc143",
+    "evidence": "docs/evidence/2026-11-18-interval-foc-endpoints",
+    "benefit": "Raw endpoint and tag replay for all 825 FOC transform and chain fixtures. Independent exact integer expectations and signed range diagnostics.",
+    "artifact": "crates/hyperlattice-interval/conformance/alumina-foc/wasm (test-only wasm32-unknown-unknown, Rust 1.88.0 release)",
+    "lock": "The fixed standalone lock omitted the local hyperinterval edge of the pinned firmware. Its unchanged locked build refused to run. Both sides were rebuilt with the same corrected all-local lock; the previous and fixed guest files and code sections have equal sizes.",
+    "caps": {
+      "incremental_bytes": 1024,
+      "incremental_percent": 5,
+      "cumulative_bytes": 4096,
+      "cumulative_percent": 10
+    },
+    "metrics": {
+      "file": {
+        "fixed": 35547,
+        "previous": 35547,
+        "retained": 35858,
+        "incremental_charge": 311,
+        "cumulative_charge": 311,
+        "remaining_incremental_bytes": 713,
+        "remaining_incremental_percent": 4.125102,
+        "remaining_cumulative_bytes": 3785,
+        "remaining_cumulative_percent": 9.125102
+      },
+      "code": {
+        "fixed": 25784,
+        "previous": 25784,
+        "retained": 26060,
+        "incremental_charge": 276,
+        "cumulative_charge": 276,
+        "remaining_incremental_bytes": 748,
+        "remaining_incremental_percent": 3.929569,
+        "remaining_cumulative_bytes": 3820,
+        "remaining_cumulative_percent": 8.929569
+      }
+    },
+    "host_fixture_capacity_bytes": 131072,
+    "required_free_bytes": 32768,
+    "free_bytes": 95214,
+    "memory": "Zero positive measured guest-stack charges over the fixed and preceding controls. The new four-word observation peaks at 368 bytes. No deployment flash or memory exception was charged."
   }
 }

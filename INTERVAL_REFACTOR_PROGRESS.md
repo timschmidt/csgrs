@@ -12133,3 +12133,49 @@ allows the scanner to include it on subsequent refreshes. A clean refresh
 reproduced all 4,142 current lexical records and all 268 historical review
 records byte for byte. The interval plan remains active.
 [Inventory](interval-inventory.tsv) · [Evidence archive](docs/evidence-archive.tsv)
+
+## Independent replay of Alumina firmware transform endpoints
+
+Commit `7084c9f0d` extends the Phase 9/14 linked comparison to all 825
+Q30 transform outputs, including the noncardinal rotation and the complete
+chain. Each of two fresh Rust 1.88.0 WASM instances returned the expected
+type tag, signed lane endpoints and digest, and matched 251 independent range
+expectations (79 range errors). Three separately compiled mutations passed
+the preceding checker. The new checker identifies the wrong chain digest,
+the one-unit error in the third inverse-Clarke lane and the suppressed Park
+overflow. The sibling validation also passed the native no-allocation and
+transform tests, the Thumb library check and 4,369 Interface measurement
+cases in each of two fresh WASM instances. All nine coordinated package
+graph audits passed. [FOC conformance client](crates/hyperlattice-interval/conformance/alumina-foc/README.md)
+
+The first implementation added 32 bytes of guest stack to the existing
+digest calls. The retained observer reads the firmware endpoints separately.
+Across the cold and warm corpus, the existing transform calls used 400–624
+bytes of guest stack and the range calls used 480 bytes, matching both
+controls. Reading all four output words took 304–368 bytes, with at least
+1,047,952 bytes of guest stack free across the measured workloads. All 75
+previous WASM function bodies matched after normalizing two disassembler
+alias labels. All 1,076 previous output and Wasmtime fuel pairs also matched
+individually. Paired host timings varied by core, including a 4.59% Park
+increase on one core and 0.13% on the other. Hardware cycle counts remain
+unmeasured. The three native release comparison clients retained their file
+lengths and identical text, read-only data and data sections.
+
+The linked WASM fixture grew by 311 bytes to 35,858 bytes, including 276
+additional code-section bytes. For each metric both incremental limits
+(1,024 bytes and 5%) and both cumulative limits (4,096 bytes and 10%) passed.
+The 128 KiB host fixture slot has 95,214 bytes free against its 32 KiB
+reserve. The fixed historical standalone lock omitted the local firmware
+dependency on hyperinterval and refused a locked build. Rebuilding the
+historical and preceding sources with the same corrected lock produced
+byte-identical modules. This entry charges only the test fixture's binary
+size. Firmware deployment, physical hardware validation and hosted CI
+remain open. [Per-target account](docs/research/interval-size-accounts.json)
+
+Three current ABI reviews bring the inventory to 4,143 scan rows and 271
+preserved reviews. A fresh scan reproduced it byte for byte and all six
+scanner tests passed. Formatting, standalone Clippy and the repository
+budget passed locally. Evidence commit `8852dec62` contains the two controls,
+candidate measurements, original lock failure, mutations and comparison
+scripts under `docs/evidence/2026-11-18-interval-foc-endpoints`.
+[Inventory](interval-inventory.tsv) · [Evidence index](docs/evidence-archive.tsv)
