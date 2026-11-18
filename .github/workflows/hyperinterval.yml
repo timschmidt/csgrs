@@ -85,6 +85,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y binaryen nodejs
           python3 scripts/check_interval_wasm.py --toolchain "$INTERVAL_RUST" --output "$RUNNER_TEMP/interval-float-wasm"
+      - name: Exercise unqualified WASI targets
+        if: matrix.os == 'ubuntu-latest' && matrix.rust == '1.95.0'
+        run: |
+          for target in wasm32-wasip1 wasm32-wasip1-threads; do
+            rustup target add --toolchain "$INTERVAL_RUST" "$target"
+            cargo +"$INTERVAL_RUST" build --locked --release --target "$target" --target-dir "$RUNNER_TEMP/interval-wasi" --manifest-path crates/hyperinterval/conformance/wasm-float/Cargo.toml
+            node crates/hyperinterval/conformance/wasm-float/unqualified.mjs "$RUNNER_TEMP/interval-wasi/$target/release/interval_float_wasm_conformance.wasm"
+          done
       - name: Verify firmware dependency closure
         run: |
           cargo +"$INTERVAL_RUST" tree --locked -p hyperinterval --no-default-features --features integer,fixed --edges normal --prefix none > interval-dependencies.txt

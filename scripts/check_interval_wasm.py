@@ -56,6 +56,7 @@ def main():
     forbidden = floating_operations(assembly)
     if forbidden or "memory.grow" in assembly or "(import " in assembly:
         raise SystemExit(f"Unexpected arithmetic, allocation/import path: {forbidden}")
+    run("guest-stack", ["node", str(client / "stack.mjs"), str(binary), str(output / "module.wat"), str(output / "corpus.json")])
     run("dependencies", ["cargo", f"+{args.toolchain}", "tree", "--locked", "--manifest-path", str(client / "Cargo.toml"), "--edges", "normal", "--prefix", "none"])
     dependencies = (output / "dependencies.log").read_text().splitlines()
     if len(dependencies) != 2 or not any(line.startswith("hyperinterval ") for line in dependencies):
@@ -83,6 +84,7 @@ def main():
                    "corpus_sha256": hashlib.sha256((output / "corpus.json").read_bytes()).hexdigest(),
                    "floating_arithmetic": forbidden, "memory_grow": False,
                    "no_allocator_consumer": True, "dependencies": dependencies,
+                   "guest_stack": json.loads((output / "guest-stack.log").read_text()),
                    "lattice": json.loads((output / "lattice-execute.log").read_text()),
                    "lattice_binary_sha256": hashlib.sha256(lattice_binary.read_bytes()).hexdigest(),
                    "dyadic": json.loads((output / "dyadic-execute.log").read_text()),

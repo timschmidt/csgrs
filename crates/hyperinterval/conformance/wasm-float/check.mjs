@@ -4,6 +4,10 @@ export async function verify(bytes, corpus) {
   const imports = WebAssembly.Module.imports(module);
   if (imports.length) throw new Error(`Unexpected module imports: ${JSON.stringify(imports)}`);
   const { exports: api } = await WebAssembly.instantiate(module);
+  return { ...verifyInstance(api, corpus), imports };
+}
+
+export function verifyInstance(api, corpus) {
   if (api.qualification() !== 3) throw new Error("Both IEEE backends must be qualified");
   const statuses = {};
   const counts = {};
@@ -30,7 +34,7 @@ export async function verify(bytes, corpus) {
     const actual = BigInt.asUintN(64, api[`properties${width}`](flags, ...inputs));
     if (actual !== BigInt(expected)) throw new Error(`Property ${index}: ${actual.toString(16)} != ${expected}; ${JSON.stringify(row)}`);
   }
-  return { cases: corpus.cases.length, properties: corpus.properties.length, counts, statuses, imports, seed: corpus.seed };
+  return { cases: corpus.cases.length, properties: corpus.properties.length, counts, statuses, seed: corpus.seed };
 }
 
 export async function verifyLattice(bytes, corpus) {

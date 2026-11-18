@@ -45,3 +45,15 @@ module must have no imports, `memory.grow`, or floating arithmetic/conversion;
 bit reinterpretation is allowed. This is finite platform qualification, not
 exhaustive binary64 proof, a timing benchmark, or evidence for other targets.
 The root progress ledger records the actual compiler/runtime versions and scope.
+
+The Node runner also executes the complete arithmetic and property corpus twice
+on each of two fresh instances with complementary stack sentinels. It records
+the fixed linear-memory size and the deepest changed byte below the linker's
+initial stack pointer. An unknown stack layout or a data segment inside that
+range stops the measurement. Untouched frame reservations, the engine stack
+and host memory are outside this measurement.
+
+CI builds the same public client for both WASI Preview 1 targets and runs
+`unqualified.mjs`. Each width must reject a finite singleton, preserve empty,
+and trap on requests for unavailable endpoints. The threaded ABI uses
+host-supplied shared memory.
