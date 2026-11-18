@@ -627,8 +627,8 @@ pub fn certify_interval_box_candidate(
 /// For affine rows `f(x) = A*x + c`, the interval Newton/Krawczyk operator has
 /// no nonlinear interval remainder when `A` is exactly invertible. This helper
 /// solves `A*step = -f(candidate)` over `Real`, then proves
-/// `|step_i| <= radius_i` for every variable. A successful report therefore
-/// proves that the unique affine root is inside the caller's box.
+/// `|step_i| <= radius_i` for every variable. Use `PredicatePolicy::STRICT` for proof.
+/// Terminal approximation can skip a nonzero factor or accept a root outside the box.
 pub fn certify_affine_krawczyk_box(
     analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
@@ -794,9 +794,9 @@ pub fn certify_affine_krawczyk_box(
 ///
 /// `|2*a|*r < |f'(x0)|`.
 ///
-/// All terms are exact `Real` values and every comparison is delegated to
-/// `hyperlimit`'s exact policy surface. This provides the first nonlinear
-/// interval-Newton/Krawczyk proof operator for retained solver structure.
+/// All terms are exact `Real` values. Use `PredicatePolicy::STRICT` for proof.
+/// Terminal approximation can report a unique root outside the box or reject
+/// a contractive derivative bound when its strict inequality is unresolved.
 pub fn certify_univariate_quadratic_krawczyk_box(
     analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
