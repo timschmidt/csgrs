@@ -10889,3 +10889,41 @@ SHA-256 `c6b396475714d5702a72a53f5ec73deba66ebaf831b61f31c36872a8dc6f7b53`.
 The payload retains 4,677 members / 100,888,275 raw bytes and nine
 validated images. Original/decoded/committed hashes pass; old archive paths
 are unchanged.
+
+## 2026-11-17: cancellation finish-borrow candidate
+
+Isolated candidate `1abfbc3fc` performs the final cancellation decision inside
+scope finish's existing frame borrow. A shared owner helper preserves the prior
+first-failure lookup and unchanged cancellation scan; ordinary scopes still skip
+the final poll. The new destructor-reentry witness checks parent restoration,
+admitted work during cleanup and fresh retry. See the
+[finish-borrow review](docs/research/cancellation-finish-borrow.md).
+
+Current primary reproduces six owner publication failures and the adapter failure,
+with three passing owner controls. The original publication implementation passes
+all nine publication tests. The revised candidate passes 1,303 affected test
+invocations, strict owner/adapter lint/docs, examples/benches and formatting.
+Independent source/output audit passes. No existing test or adapter assertion
+changes; only the owner implementation differs from the reference with this test.
+
+Four runtime images pass 128 functional controls and two strict lint configurations.
+The targeted eight-case screen completes 152 case invocations / 4,560 samples,
+with 608 public full control matches and 96 balanced comparisons. All eight case
+medians are lower than the original publication candidate. Against primary, seven
+are lower and one is +0.94%, with mixed individual pairs. All contrary evidence
+remains. This supports further investigation, not full non-regression or admission.
+
+All producers and audits finish within their declared limits. Full runtime,
+lifetime memory, final-artifact and platform qualification remain open; old byte
+verdicts do not automatically transfer to the changed source. Historical count
+charges and earlier failed obligations remain. Source control is restored clean,
+queue held and original watcher terminal. Primary production and accepted totals
+of 57 size / zero memory exceptions are unchanged; inventory remains 1,644 rows.
+No push; the full goal remains active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-finish`,
+archive commit `6cd1ef20d98dfa409d14ed74272850f562f8a6d8`; 3 files / 9,784,408 bytes,
+SHA-256 `8f3669c71dad32650f9a5fdc4be768c35af7c2c1ea551686009d33b57e65ca01`.
+The lossless payload contains 1,434 members / 33,176,529 raw bytes and
+four validated images. Original, decoded and committed hashes are verified;
+earlier archive paths are unchanged.

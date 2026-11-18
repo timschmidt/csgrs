@@ -10,6 +10,10 @@ Hypersolve work-budget ownership, P5/P6/P20/P36 and plan 14.4.
 The functionality prevents a cancellable scope from publishing success after its
 callback requests cancellation without reaching another instrumented check.
 
+The later [finish-borrow review](cancellation-finish-borrow.md) evaluates a
+revised owner implementation with a destructor-reentry witness. It preserves
+this record and its failed obligations; neither candidate is admitted.
+
 ## Proposed byte allowances
 
 These allowances cover only the measured four-case consumer on
