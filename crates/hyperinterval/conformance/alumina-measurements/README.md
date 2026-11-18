@@ -9,7 +9,8 @@ cargo +1.95.0 test --locked --manifest-path crates/hyperinterval/conformance/alu
 cargo +1.95.0 clippy --locked --manifest-path crates/hyperinterval/conformance/alumina-measurements/Cargo.toml --all-targets --all-features -- -D warnings
 cargo +1.95.0 run --locked --release --manifest-path crates/hyperinterval/conformance/alumina-measurements/Cargo.toml --features probes --bin cost
 cargo +1.95.0 run --locked --release --manifest-path crates/hyperinterval/conformance/alumina-measurements/Cargo.toml --features probes --bin probe -- 6
-cargo +stable build --locked --release --manifest-path crates/hyperinterval/conformance/alumina-measurements/wasm/Cargo.toml --target wasm32-unknown-unknown
+cargo +1.95.0 build --locked --release --manifest-path crates/hyperinterval/conformance/alumina-measurements/wasm/Cargo.toml --target wasm32-unknown-unknown
+node crates/hyperinterval/conformance/alumina-measurements/wasm/check.mjs
 ```
 
 The tests retain independent common-denominator expectations, both physical unit
@@ -29,8 +30,10 @@ fixture index. Use matching source and build settings for before/after compariso
 
 The Wasm export hashes complete exact endpoint text. Zero denotes negative
 uncertainty, `u64::MAX` denotes an invalid denominator, and `u64::MAX - 1` denotes
-an unexpected kernel error that the oracle must reject. The independent Python
-Fraction oracle and captured artifact measurements live in the evidence archive.
+an unexpected kernel error that the oracle must reject. The Node runner checks the linked module against exact BigInt endpoints and both
+failure sentinels, with the case order reversed in a second instance. Supply
+the WASM path as its argument when using a custom Cargo target directory.
+The original Python Fraction oracle and fuel observations live in the evidence archive.
 The raw module includes binding imports from Interface's dependencies; the
 measurement path must execute without calling them. This does not substitute for
 an application browser, schedule-latency or whole-UI memory qualification.
