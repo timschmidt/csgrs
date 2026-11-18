@@ -48,6 +48,12 @@ per-file counts and uncovered code under the Cargo target directory. Use a
 separate `CARGO_TARGET_DIR` for each checkout so LLVM's source paths match
 the revision being measured.
 
+Run `python3 scripts/check_interval_wasm.py --target wasm32-wasip1 --output DIR`
+from the workspace root with a new output directory. Alongside the linked
+WASM clients, Node executes the crate's Rust tests with fixed, dyadic and
+Preview 1 floating-point intervals, then the fixed-point JSON and rectangular
+shape replay suites. The guest test counts are recorded in `report.json`.
+
 Run the rectangular replay and multiplication tests with
 `cargo test -p hyperlattice-interval --features fixed,serde --test shape_replay`.
 From `crates/hyperinterval`, run the same oracle under libFuzzer with

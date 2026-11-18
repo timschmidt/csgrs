@@ -131,6 +131,27 @@ def main():
         bridge_report.update(json.loads((output / "real-bridge-execute.log").read_text()))
         bridge_report.update(executed=True, binary_sha256=hashlib.sha256(binary_path.read_bytes()).hexdigest())
     report["real_bridge"] = bridge_report
+    if runtime:
+        runner = root / "crates/hyperlattice-interval/conformance/run-wasi-test.mjs"
+        test_command = ["cargo", f"+{args.toolchain}", "test", "--locked", "--release",
+                        "-p", "hyperlattice-interval", "--no-default-features", "--target", target,
+                        "--config", f"target.{target}.runner={json.dumps(['node', str(runner)])}"]
+        passed = {}
+        for name, features, selection in [
+            ("arithmetic", "fixed,dyadic,float-enclosure-wasip1", ["--lib", "--tests"]),
+            ("replay", "fixed,serde", ["--test", "replay"]),
+            ("shape_replay", "fixed,serde", ["--test", "shape_replay"]),
+        ]:
+            log = f"wasi-lattice-{name}"
+            # A guest panic can trap before libtest flushes its captured diagnostics.
+            run(log, [*test_command, "--features", features, *selection,
+                      "--", "--test-threads=1", "--nocapture"])
+            transcript = (output / f"{log}.log").read_text()
+            passed[name] = sum(map(int, re.findall(r"^test result: ok\. (\d+) passed;", transcript, re.MULTILINE)))
+            if not passed[name]:
+                raise SystemExit(f"No passing guest tests in {log}")
+        report["lattice_guest_tests"] = passed
+        print(f"WASI Preview 1 lattice tests: {sum(passed.values())} passed")
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(f"WASM {args.toolchain}: {report['cases']} exact cases passed; {report['binary_bytes']} bytes; no floating arithmetic or allocator")
     print(f"Fixed lattice: {report['fixed_lattice']['calls']} calls passed in two fresh instances")
