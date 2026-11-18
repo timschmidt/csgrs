@@ -41,9 +41,14 @@ hyperlattice-interval = { version = "0.1.0", path = "../hyperlattice-interval", 
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
-criterion = "0.5"
 hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false }
 serde_json = "1.0"
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "wasi"))'.dev-dependencies]
+criterion = { version = "0.5", default-features = false, features = ["plotters", "cargo_bench_support"] }
+
+[target.'cfg(not(all(target_arch = "wasm32", target_os = "wasi")))'.dev-dependencies]
+criterion = "0.5"
 
 [[example]]
 name = "expression_field"

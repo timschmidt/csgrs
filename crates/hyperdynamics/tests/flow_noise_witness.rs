@@ -833,7 +833,7 @@ mod closure {
             std::env::temp_dir().join(format!("flow-noise-replay-{}-{nonce}", std::process::id()));
         std::fs::create_dir(&path).unwrap();
         std::fs::write(path.join("input.json"), serde_json::to_vec(&data).unwrap()).unwrap();
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "closure::fresh_process_replays_original_inputs",
@@ -1027,3 +1027,7 @@ mod two_rate {
 #[cfg(all(feature = "flow-noise", feature = "taylor-evolution"))]
 #[path = "support/exponential_oracle.rs"]
 mod exponential_oracle;
+
+#[cfg(all(feature = "serde", feature = "flow-noise"))]
+#[path = "support/replay.rs"]
+mod replay;

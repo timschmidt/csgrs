@@ -543,7 +543,7 @@ fn fresh_process_source_request_and_selection_replay() {
     .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_source_request_and_selection_replay",
@@ -618,3 +618,7 @@ fn all_retained_evidence_getters_do_not_repeat_decisions() {
     assert!(trace.dispatch.is_empty());
     assert_eq!(trace.rational, Default::default());
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

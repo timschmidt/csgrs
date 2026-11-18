@@ -356,7 +356,7 @@ fn fresh_process_replay_rebuilds_field_interpretation_and_remainder() {
     let encoded = serde_json::to_string(&(field.identity(), request)).unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_rebuilds_field_interpretation_and_remainder",
@@ -382,3 +382,7 @@ fn fresh_process_replay_rebuilds_field_interpretation_and_remainder() {
         previous = Some(row);
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

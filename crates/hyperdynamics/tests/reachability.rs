@@ -584,7 +584,7 @@ fn source_request_and_policy_replay_in_fresh_processes() {
         serde_json::to_string(&(r.identity(), req, ReachabilityPolicy::default())).unwrap();
     let mut expected = None;
     for _ in 0..2 {
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "source_request_and_policy_replay_in_fresh_processes",
@@ -832,3 +832,7 @@ fn regridded_portfolio_cap_meets_quality_while_the_coarser_control_does_not() {
         }
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

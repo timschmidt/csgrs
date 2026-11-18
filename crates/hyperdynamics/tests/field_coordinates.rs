@@ -354,7 +354,7 @@ fn fresh_process_field_replay_preserves_chart_and_transported_step() {
     let data = serde_json::to_string(&definition).unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_field_replay_preserves_chart_and_transported_step",
@@ -503,3 +503,7 @@ mod transition;
 #[cfg(feature = "qr-coordinates")]
 #[path = "field_coordinates/qr.rs"]
 mod qr;
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

@@ -545,7 +545,7 @@ fn fresh_process_replay_revalidates_source_and_regenerates_field_partials() {
         ExpressionField::<1>::from_definition(definition(&[source], &[X, T], &[X]), &mut b())
             .unwrap();
     let encoded = serde_json::to_string(&field.identity()).unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(crate::replay::binary().unwrap())
         .args([
             "--exact",
             "fresh_process_replay_revalidates_source_and_regenerates_field_partials",
@@ -1017,7 +1017,7 @@ mod picard {
                 .unwrap();
         let original = field.certify_step(proposal.clone(), &mut b());
         let expected = signature(&original);
-        let child=std::process::Command::new(std::env::current_exe().unwrap()).args(["--exact","picard::picard_replay_reexecutes_source_and_candidate_validation_in_a_fresh_process","--nocapture"]).env(KEY,encoded).output().unwrap();
+        let child=std::process::Command::new(crate::replay::binary().unwrap()).args(["--exact","picard::picard_replay_reexecutes_source_and_candidate_validation_in_a_fresh_process","--nocapture"]).env(KEY,encoded).output().unwrap();
         assert!(
             child.status.success(),
             "{}",
@@ -1041,3 +1041,7 @@ mod picard {
         assert_eq!(signature(&original), expected);
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

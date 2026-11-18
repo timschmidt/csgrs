@@ -266,7 +266,7 @@ fn fresh_process_transition_replay_rechecks_sources_and_inverses() {
     .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "transition::fresh_process_transition_replay_rechecks_sources_and_inverses",

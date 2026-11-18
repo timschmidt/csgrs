@@ -143,6 +143,22 @@ directory. It exits unsuccessfully if an instrumented production metric is
 below 100%. For branch counts, use nightly Rust with
 `RUSTFLAGS=-Zcoverage-options=branch`.
 
+To run the numerical and replay suites on WASI Preview 1, use Node.js
+24.22.3 and Python 3 from the workspace root. Choose a new output directory
+for each run.
+
+```sh
+rustup target add --toolchain stable wasm32-wasip1
+python3 crates/hyperinterval/conformance/wasi-dynamics.py --toolchain stable --output target/dynamics-wasi
+```
+
+The runner matches the native and guest test inventories. Each fresh-process
+replay uses the original native parent to check evidence computed from its
+inputs in a new WASI instance. The small-stack destruction test runs on a
+native thread, and its guest run checks the platform's thread-creation limit.
+The output directory contains the test logs, child execution counts and suite
+inventory.
+
 The default feature set is empty. `dispatch-trace` enables underlying exact
 arithmetic instrumentation when `field` is enabled.
 

@@ -551,7 +551,7 @@ fn fresh_process_replays_original_chart_request_options_and_all_source_outputs()
     .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replays_original_chart_request_options_and_all_source_outputs",
@@ -784,3 +784,7 @@ fn selected_frame_certifies_longer_steps_with_exact_equilibrium_output() {
     };
     assert_eq!(first_retained.segments().len(), 2);
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

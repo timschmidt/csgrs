@@ -420,7 +420,7 @@ fn qr_field_replays_in_fresh_processes_without_serialized_certificates() {
     let data = serde_json::to_string(&(definition, qr.factorization().request())).unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "qr::qr_field_replays_in_fresh_processes_without_serialized_certificates",

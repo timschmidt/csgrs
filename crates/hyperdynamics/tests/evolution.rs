@@ -646,7 +646,7 @@ fn fresh_process_replay_rebuilds_all_attempts_and_rejects_changed_requests() {
         EnclosurePolicy::default(),
     ))
     .unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(crate::replay::binary().unwrap())
         .args([
             "--exact",
             "fresh_process_replay_rebuilds_all_attempts_and_rejects_changed_requests",
@@ -731,3 +731,7 @@ fn negative_start_time_and_unrepresentable_halving_keep_exact_semantics() {
     assert_eq!(underflow.attempts().len(), 1);
     assert!(underflow.end_enclosure().is_none());
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

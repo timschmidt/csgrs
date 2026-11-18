@@ -900,7 +900,7 @@ fn fresh_process_replay_recomputes_proposals_and_exact_certificates() {
         );
         let expected = run(input.clone());
         let encoded = serde_json::to_string(&input).unwrap();
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_recomputes_proposals_and_exact_certificates",
@@ -936,3 +936,7 @@ fn fresh_process_replay_recomputes_proposals_and_exact_certificates() {
         assert_eq!(run(serde_json::from_value(forged).unwrap()), expected);
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

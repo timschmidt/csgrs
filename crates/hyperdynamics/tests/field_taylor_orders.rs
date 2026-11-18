@@ -379,7 +379,7 @@ fn fresh_process_replay_rebuilds_source_and_order_restriction() {
         serde_json::to_string(&(definition, 4, 2, step([d(1, 1, 0)], [d(1, 2, 0)]))).unwrap();
     let mut prior = None;
     for _ in 0..3 {
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_rebuilds_source_and_order_restriction",
@@ -411,3 +411,7 @@ mod consumer;
 fn actual_example_reuses_preparation_for_consecutive_steps() {
     consumer::run().unwrap();
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

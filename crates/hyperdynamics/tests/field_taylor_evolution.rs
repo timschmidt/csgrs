@@ -512,7 +512,7 @@ fn fresh_process_replay_regenerates_all_search_and_taylor_evidence() {
     .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_regenerates_all_search_and_taylor_evidence",
@@ -641,3 +641,7 @@ fn nested_search_records_count_toward_the_outer_entry_limit() {
         Some(&BoxN::new([d(40, 40, 0)]).unwrap())
     );
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

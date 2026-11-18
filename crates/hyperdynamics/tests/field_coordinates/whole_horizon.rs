@@ -420,7 +420,7 @@ fn fresh_process_replays_chart_request_and_outputs() {
     let data = serde_json::to_string(&(definition, request(), options())).unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "whole_horizon::fresh_process_replays_chart_request_and_outputs",

@@ -461,7 +461,7 @@ fn fresh_process_replay_rebuilds_clock_and_rejects_invalid_source() {
     let encoded =
         serde_json::to_string(&(&f, &initial, quarter_steps(), EnclosurePolicy::default()))
             .unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(crate::replay::binary().unwrap())
         .args([
             "--exact",
             "fresh_process_replay_rebuilds_clock_and_rejects_invalid_source",
@@ -510,3 +510,7 @@ fn fresh_process_replay_rebuilds_clock_and_rejects_invalid_source() {
     assert!(RationalTimeField::<1>::from_definition(changed, &mut b()).is_err());
     assert_eq!(signature(&original), expected);
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;

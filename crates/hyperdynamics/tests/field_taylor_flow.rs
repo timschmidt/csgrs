@@ -456,7 +456,7 @@ fn fresh_process_replay_regenerates_the_complete_flow_evidence() {
             .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_regenerates_the_complete_flow_evidence",
@@ -628,3 +628,7 @@ fn exact_state_chart_and_rational_clock_consume_the_flow_endpoint() {
             .contains_point(&(Q::from(32) / Q::from(3)))
     );
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay.rs"]
+mod replay;
