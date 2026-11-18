@@ -1,32 +1,52 @@
 #!/usr/bin/env python3
 """Inventory interval-related declarations without claiming an implementation audit.
 
-Run before each migration, then review the affected rows. Rust declarations are
-selected lexically, including inline tests; macros and unnamed endpoint tuples
-need manual review. Missing sibling repositories are reported, never omitted.
-The output is deterministic for identical source trees.
+Refresh before each migration, then review the affected rows. Include the
+plan's source modules, public declarations in the interval and dynamics crates,
+keyword matches elsewhere, and declarations named by a preserved review.
+Inline tests are included. Macros, reexports and unnamed endpoint tuples still
+need manual review. Keep revision-specific reviews separate from the current
+scan. Missing repositories remain visible.
 """
 
 import argparse
 import csv
+from functools import cache
+import os
 from pathlib import Path
 import re
 import subprocess
+from tempfile import TemporaryDirectory
+import tomllib
 
 
 DECLARATION = re.compile(
-    r"^\s*(?P<visibility>pub(?:\([^)]*\))?\s+)?"
-    r"(?:(?:async|const|unsafe)\s+)?"
-    r"(?P<kind>struct|enum|type|fn)\s+(?P<name>[A-Za-z_][A-Za-z_0-9]*)",
+    r"^[ \t]*(?P<visibility>pub(?:\([^)]*\))?\s+)?"
+    r"(?:(?:async|const|unsafe)\s+)*"
+    r"(?P<kind>struct|enum|trait|type|fn)\s+(?P<name>[A-Za-z_][A-Za-z_0-9]*)",
     re.MULTILINE,
 )
-KEYWORD = re.compile(r"interval|enclosure|ball|bounds|range", re.IGNORECASE)
+KEYWORD = re.compile(r"interval|enclosure|ball|bounds|range|krawczyk", re.IGNORECASE)
 FIELDS = [
     "repository", "path", "line", "symbol", "kind", "endpoint_representation",
     "semantics", "allocation", "platform", "visibility", "serialization",
     "consumers", "owner", "disposition", "baseline_tests", "baseline_benchmarks",
     "review_status",
 ]
+
+CANDIDATE = "lexical candidate; not yet audited"
+UNAVAILABLE = "repository unavailable"
+INTERVAL_PACKAGES = {"hyperinterval", "hyperlattice-interval", "hyperdynamics"}
+# Paths are relative to their package manifests (plan section 12).
+SEED_FILES = {
+    "hypersolve": {"src/interval.rs", "src/real_interval.rs"},
+    "alumina-interface-core": {"src/boundary.rs", "src/machine_profile.rs", "src/motion_schedule.rs"},
+    "alumina-foc": {"src/lib.rs", "src/current.rs", "src/servo.rs"},
+    "alumina-clock": {"src/lib.rs"},
+    "hyperlimit": {"src/predicate.rs", "src/resolve.rs"},
+}
+SEED_DIRECTORIES = {"hyperpath": "src/routing", "hyperlimit": "src/predicates"}
+
 
 # These are disposition rules, not claims that every matched body was reviewed.
 def disposition(repository, path, name):
@@ -49,50 +69,124 @@ def disposition(repository, path, name):
     return "requires body review", "retain in owner pending consumer-specific admission"
 
 
-def scan(root, repository):
+def scan(root, repository, reviewed_names):
     if not root.is_dir():
-        return [{"repository": repository, "review_status": "repository unavailable"}]
-    files = subprocess.check_output(
-        ["rg", "--files", "-g", "*.rs", "-g", "!target/**", "-g", "!vendor/**"],
-        cwd=root, text=True,
-    ).splitlines()
-    rows = []
-    for filename in sorted(files):
+        yield {"repository": repository, "review_status": UNAVAILABLE}
+        return
+
+    @cache
+    def package(directory):
+        manifest = directory / "Cargo.toml"
+        if manifest.is_file():
+            with manifest.open("rb") as stream:
+                name = tomllib.load(stream).get("package", {}).get("name")
+            if name:
+                return name, manifest.relative_to(root).as_posix()
+        if directory == root:
+            return repository, None
+        return package(directory.parent)
+
+    listing = subprocess.run(
+        ["rg", "--files", "-0", "-g", "*.rs", "-g", "!target/**", "-g", "!vendor/**"],
+        cwd=root, capture_output=True, check=False,
+    )
+    if listing.returncode != 1:  # rg reports an empty selection with exit 1.
+        listing.check_returncode()
+    files = os.fsdecode(listing.stdout).split("\0")
+    for filename in sorted(filter(None, files)):
         parts = Path(filename).parts
         if any(part in {"tests", "benches", "fuzz", "examples", "verification"} for part in parts):
             continue
         source = (root / filename).read_text()
-        owner = parts[1] if len(parts) > 2 and parts[0] == "crates" else repository
+        owner, manifest = package((root / filename).parent)
+        relative = Path(filename).relative_to(Path(manifest).parent) if manifest else Path(filename)
+        seed = (
+            relative.as_posix() in SEED_FILES.get(owner, ())
+            or (owner in SEED_DIRECTORIES and relative.is_relative_to(SEED_DIRECTORIES[owner]))
+        )
+        test_command = (f"cargo test --manifest-path {manifest} (select features after review)"
+                        if manifest else "requires test mapping")
+        line = 1
+        previous = 0
         for match in DECLARATION.finditer(source):
             name = match["name"]
-            if not KEYWORD.search(name):
+            visibility = (match["visibility"] or "private").strip()
+            if not (
+                seed or KEYWORD.search(name)
+                or (owner in INTERVAL_PACKAGES and visibility == "pub")
+                or (repository, filename, name) in reviewed_names
+            ):
                 continue
             semantics, action = disposition(repository, filename, name)
-            rows.append(dict(zip(FIELDS, [
-                repository, filename, source.count("\n", 0, match.start()) + 1,
+            position = match.start("name")
+            line += source.count("\n", previous, position)
+            previous = position
+            yield dict(zip(FIELDS, [
+                repository, filename, line,
                 name, match["kind"], "requires body review", semantics,
                 "requires body review", "requires manifest/feature review",
-                (match["visibility"] or "private").strip(), "requires derive/codec review",
+                visibility, "requires derive/codec review",
                 "requires call-site review", owner, action,
-                f"cargo test -p {owner} (select features after review)",
-                "requires benchmark mapping", "lexical candidate; not yet audited",
-            ])))
-    return rows
+                test_command, "requires benchmark mapping", CANDIDATE,
+            ], strict=True))
+
+
+def review_rows(path):
+    if not path.exists():
+        return []
+    with path.open(newline="") as stream:
+        reader = csv.DictReader(stream, delimiter="\t", strict=True)
+        if reader.fieldnames is None:
+            return []
+        if reader.fieldnames != FIELDS:
+            raise ValueError(f"unexpected inventory columns in {path}")
+        reviews = []
+        for row in reader:
+            if None in row or None in row.values() or not row["review_status"]:
+                raise ValueError(f"incomplete inventory row in {path} at line {reader.line_num}")
+            if row["review_status"] not in (CANDIDATE, UNAVAILABLE):
+                reviews.append(row)
+        return reviews
+
+
+def refresh(workspace, csgrs, output):
+    output = output.resolve()
+    # Include additional hand reviews from an out-of-place destination. A
+    # matching name or line number alone cannot transfer a historical review.
+    paths = ((csgrs / "interval-inventory.tsv").resolve(), output)
+    paths = dict.fromkeys(paths)
+    inputs = {path: review_rows(path) for path in paths}
+    reviews = {tuple(row.values()): row for records in inputs.values() for row in records}
+    reviewed_names = {(r["repository"], r["path"], r["symbol"]) for r in reviews.values()}
+    checkouts = (("csgrs", csgrs), ("alumina-interface", workspace / "alumina-interface"),
+                 ("alumina-firmware", workspace / "alumina-firmware"))
+    count = 0
+    with TemporaryDirectory(dir=output.parent) as directory:
+        temporary = Path(directory) / "inventory.tsv"
+        with temporary.open("w", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=FIELDS, delimiter="\t", lineterminator="\n")
+            writer.writeheader()
+            for repository, root in checkouts:
+                for row in scan(root, repository, reviewed_names):
+                    writer.writerow(row)
+                    count += 1
+            writer.writerows(reviews.values())
+        if output.exists():
+            temporary.chmod(output.stat().st_mode & 0o777)
+        for path, records in inputs.items():
+            if review_rows(path) != records:
+                raise RuntimeError(f"review records changed during scan of {path}; retry the refresh")
+        temporary.replace(output)
+    print(f"Wrote {count} scan rows and {len(reviews)} review records to {output}")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--workspace", type=Path, default=Path(__file__).resolve().parents[2])
+    parser.add_argument("--workspace", type=Path, help="parent of the named checkouts")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    rows = []
-    for repository in ("csgrs", "alumina-interface", "alumina-firmware"):
-        rows.extend(scan(args.workspace / repository, repository))
-    with args.output.open("w", newline="") as output:
-        writer = csv.DictWriter(output, fieldnames=FIELDS, delimiter="\t", lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(rows)
-    print(f"Wrote {len(rows)} candidate rows to {args.output}; body review remains required")
+    csgrs = (args.workspace / "csgrs" if args.workspace else Path(__file__).resolve().parents[1])
+    refresh(csgrs.parent, csgrs, args.output)
 
 
 if __name__ == "__main__":
