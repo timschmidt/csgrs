@@ -10815,3 +10815,40 @@ commit `0bb075b062f09e0df09727529becfd1f43c3d6ab`; 1,645 files / 10,550,284 byte
 SHA-256 `0dd304266c9fdd74b8b04985f7034ef8f7e96eaffcb0dfaf331b68d882dc075a`.
 All source/stored/committed hashes and three native timing images are verified;
 previous archive paths are unchanged.
+
+## 2026-11-17: standalone cancellation publication on primary
+
+The scope-local publication check is now qualified independently of the unadmitted
+solver migrations. Isolated candidate `8a454c860` reproduces the old failures on
+current primary and passes 1,301 affected test invocations, native/WASM public
+witnesses, strict affected lint/docs and formatting. See the
+[standalone review](docs/research/cancellation-standalone-qualification.md).
+
+Thirty final consumer images complete 3,294 observations: 3,288 successes and six
+expected old publication failures. All 2,232 full output/trace and 2,760 output
+comparisons pass; 592 complete histories cover 18,944 cycles. Twelve observed
+resource accounts fail current growth allowances. Retaining historical floors
+yields 17 failures, all active-trace cases. Absolute capacities, headrooms, stack
+and lifetime retention checks pass. Image growth/headroom checks pass.
+
+Historical review confirms only test additions on the accepted primary source
+path and 1,644 corresponding historical/current full output/trace matches. It
+retains 1,632 metric floors and 254 positive historical observations; the older
+ten-boundary solver/wrapper ledger remains separate and unchanged. No numerical
+allowance changes or source admission follows. The next work is bounded allowance
+assessment for this functionality and its remaining runtime/distribution gates,
+without requiring the optional trace refactor.
+
+The Cargo cache warning and initial feature-coupling build failure remain recorded.
+Reviewed corrections retain assertions and, for the consumer, its original deadline
+and aggregate child ceiling. All validation producers/audits are terminal; source
+control is restored, queue held and watcher terminal. Primary production code is
+unchanged. Accepted totals remain 57 size / zero memory, inventory 1,644 rows.
+No push; the full goal remains active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-standalone`,
+archive commit `a66bfd0ab72be6c91812d60ee6a0fc6993fe0c56`; 3 files / 28,577,694 bytes,
+SHA-256 `5455967c5b5a948f2ca896e0a017a7ed26c1983be92ab4538b56b50814e2ba7e`.
+The lossless payload contains 3,861 members / 259,497,686 raw bytes,
+including 46 validated images. All original, decoded and committed hashes are
+verified; earlier archive paths are unchanged.

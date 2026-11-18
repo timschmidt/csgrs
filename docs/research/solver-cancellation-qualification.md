@@ -1,5 +1,10 @@
 # Cancellation consumer qualification and launch controls
 
+A [standalone primary evaluation](cancellation-standalone-qualification.md) now
+isolates the publication check from this unadmitted solver bundle. It preserves
+this complete ledger and its failures; its different source path and consumer
+configuration do not establish admission for the combined implementation below.
+
 The scope-local candidate `ab81708aa8c44eb895043879162803a964f6ebc5`
 completes the native, WASM and packaged consumer checks below. Resource
 qualification remains open. These measurements extend the
