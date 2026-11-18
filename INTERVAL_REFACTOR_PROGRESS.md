@@ -66,7 +66,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow and 65 WASI Preview 1 Cartesian arithmetic/replay tests locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests and the original scalar Rust and MPFR oracle suites locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -12578,4 +12578,63 @@ owner tests. Both crossed the host test executable's RELRO padding limit.
 No memory or code allowance was charged. The original harder cases, alternative
 implementations, native and guest transcripts, complete cover definitions
 and per-target measurements are in evidence commit `362ddb6ae`.
+[Evidence index](docs/evidence-archive.tsv)
+
+## Phase 3, 5 and 14 scalar oracles on WASI Preview 1, 18 November 2026
+
+Commit `933c9ae56` makes Hyperinterval's existing test executables build and
+run with GMP/MPFR on ordinary WASI Preview 1. On `7d4fc5d7e`, Cargo rejected
+even the direct dyadic bisection test because its development dependency
+refused the cross build. After enabling cross compilation, GMP itself failed
+to compile its error handling against WASI libc. The retained target-specific
+development dependency and C toolchain configuration resolve both failures.
+The C build uses the WASI sysroot and its emulated signal library. The linked
+arctangent test contains GMP and MPFR code and executes its directed oracle
+in the guest.
+
+| Toolchain | Passed in the guest | Probed in the guest and passed on the host | Additional target-gated native cases |
+| --- | ---: | ---: | ---: |
+| Rust 1.88, compatible features | 178 | 6 | 32 |
+| Rust 1.95, all features | 228 | 9 | 33 |
+| Rust 1.99 stable, all features | 228 | 9 | 33 |
+
+Every guest case matched an existing native case in the same test executable.
+The guest coverage includes exact bisection, typed budget failures and retries,
+directed transcendental bounds, and rational cases on the two newer compilers.
+The two rightmost columns have distinct evidence. The process and thread tests
+were executed individually in the guest and hit an unsupported OS call. Their
+original tests then completed natively. The remaining cases compile only under
+their existing target guards. The report names each guest pass and each case
+that required the host. Native-only inventories are archived separately.
+A guest-only incorrect midpoint passed native bisection tests and failed the
+guest's independent midpoint assertion. An unrelated unsupported error in a
+process probe also failed the new check.
+
+The dedicated CI job targets Ubuntu 24.04. Local runs used its Clang 18,
+LLD, compiler runtime and WASI libc packages, then independently reproduced
+the outcomes with Debian Clang 19. Node 22 executed the guest programs.
+The GitHub-hosted job itself has not been observed. The force-cross feature
+appeared only in the exact Preview 1 development dependency graph. The
+ordinary dependency graph excludes Rug and GMP. The representative native
+release client and native extended-interval test executable were byte-identical
+to the preceding build. All 14 existing Preview 1 conformance images and
+their complete reports also matched. This change used no production flash or
+memory allowance.
+
+An experiment enabled the existing x86 extended-IEEE ingress witness on
+WASI. Both IEEE widths passed. With the original assertion, the guest file
+grew by 5,024, 4,027 and 5,052 bytes respectively, exceeding the 4,096-byte
+incremental cap on Rust 1.88 and stable. Comparing the returned error directly
+preserved the typed expectation and reduced the three increments to 2,470,
+1,553 and 2,442 bytes. All three guest file and code caps then passed, but
+native release test RELRO padding increased from 48 to 1,560 bytes. Both
+variants remain in the evidence archive. The retained driver preserves the
+original witness and its target guard.
+
+Strict native and cross-target Clippy, strict native rustdoc, owner doctests,
+the downstream Hyperlattice Interval tests, workspace formatting, package
+verification for both Hyperreal and Hyperinterval, strict zizmor and repository
+budget checks passed. Evidence commit `76f0c1977` contains the inventory by
+test name, transcripts, linked measurements, normalized dependency checks,
+source patches and failed controls.
 [Evidence index](docs/evidence-archive.tsv)
