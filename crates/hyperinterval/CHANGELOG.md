@@ -6,6 +6,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact dyadic scalar scaling and affine images with bounded endpoint products and
+  shared work accounting for translation.
+
 - Add exact, budgeted overlap and disjointness queries for finite, unbounded
   and split dyadic sets. Queries preserve contact at closed endpoints and gaps
   between components.

@@ -209,6 +209,10 @@ containing zero. These operations share the caller's size and work budget.
 Nonnegative integer powers compute the exact image using bounded endpoint
 exponentiation and parity, with explicit size reservations before growth.
 Negative powers compose with reciprocal at a caller-selected grid.
+The dyadic `scale` and `affine` methods take their scalar arguments as borrowed
+`(mantissa, exponent)` pairs. They return the exact image, including when a
+negative factor reverses the endpoints. Scaling with zero offset needs at
+most two endpoint products and no translation work.
 
 `float-proposal` adds `F32ProposalInterval` and `F64ProposalInterval`, with
 no dependencies or allocation. Their native arithmetic produces endpoint

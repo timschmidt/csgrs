@@ -1100,3 +1100,6 @@ impl DyadicInterval {
 #[cfg(test)]
 #[path = "dyadic_quotient_tests.rs"]
 mod quotient_tests;
+
+#[path = "dyadic_affine.rs"]
+mod affine;
