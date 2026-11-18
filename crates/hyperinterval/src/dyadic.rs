@@ -1095,6 +1095,17 @@ impl DyadicInterval {
         let bits = crate::ieee::BINARY64.finite(value.to_bits())?;
         crate::ieee::BINARY64.dyadic_point(bits, budget)
     }
+
+    /// Import the exact finite binary32 value as a singleton, including subnormals.
+    /// Both zero signs give the canonical zero. NaN and infinity fail before
+    /// spending work. A normal value needs 24 significand bits and 48 work units.
+    /// The integer decoder uses the supplied bits independently of native float
+    /// arithmetic and of the strict float enclosure target qualification.
+    #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
+    pub fn from_f32(value: f32, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let bits = crate::ieee::BINARY32.finite(u64::from(value.to_bits()))?;
+        crate::ieee::BINARY32.dyadic_point(bits, budget)
+    }
 }
 
 #[cfg(test)]

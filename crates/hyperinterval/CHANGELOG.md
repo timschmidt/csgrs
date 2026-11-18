@@ -6,6 +6,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact binary32 scalar ingress to `DyadicInterval` with binary32 significand
+  accounting under either float feature.
+
 - Add exact dyadic scalar scaling and affine images with bounded endpoint products and
   shared work accounting for translation.
 

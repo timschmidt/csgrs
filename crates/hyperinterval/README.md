@@ -7,9 +7,11 @@ enclosures on x86_64 and wasm32-unknown-unknown. Empty sets, sign sets, and set
 relations are explicit.
 Elementary function enclosures remain under development.
 
-With `dyadic` and either float feature, `DyadicInterval::from_f64(value, budget)`
-adopts a finite IEEE value exactly, including subnormals. It rejects NaN and
-infinity and reserves significand work before allocation. This conversion needs
+With `dyadic` and either float feature, `DyadicInterval::from_f32` and
+`DyadicInterval::from_f64` import finite IEEE values exactly, including
+subnormals. Both reject NaN and infinity and reserve work for the input
+significand before allocation. A normal binary32 input needs 24 magnitude bits
+and 48 work units. This conversion needs
 no strict-float platform qualification or Hyperreal dependency. `0.1_f64` remains
 its binary value, not 1/10; importing numerical estimates does not certify their
 relationship to an earlier source.
