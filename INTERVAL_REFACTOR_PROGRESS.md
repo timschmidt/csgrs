@@ -63,7 +63,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
-| 11 path dynamics | earlier full prototypes retired; smaller affine-axis extraction and direct Interface consumer functionally qualified on isolated branches; admission and full extraction remain open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
+| 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
@@ -11752,3 +11752,34 @@ standalone native clients matched in size and machine code. Their WASM clients
 matched in size and code-section bytes; data bytes differed. The refreshed
 inventory has 4,129 scan rows and 257 review records.
 [Qualification artifacts and commands](docs/evidence-archive.tsv)
+
+## Phase 11 lookahead schedule equivalence and memory reassessment
+
+Primary `d8eb6fa0c` adds a public Hyperpath regression and fuzz target.
+On connected line routes it computes each node's squared speed independently
+from every local limit and its distance to that node. The corpus covers
+both traversal directions, caller caps, reversals, radius-limited corners
+and edited schedules. It checks exact residuals and proof-status replay.
+All three deliberate faults failed the deterministic tests. Both sanitizer
+builds completed 10,000 fuzz executions. The fixed matrix has 256 cases
+and six additional retained seeds. Curved and jerk-limited paths have
+separate qualification requirements.
+
+The rebased full extraction reproduced all 26,406 ordered certificate rows.
+In 144 fresh native processes its requested heap matched at each measured
+stage, while whole-call stack grew 320 bytes (2.62%) in every group. This
+exceeds the 128-byte and 1% limits. The retained change adds test coverage
+with zero production memory charge.
+[Reassessment and measured headroom](docs/research/path-dynamics-current-admission.md#lookahead-replay-and-whole-call-stack-reassessment)
+
+Rust 1.95 passed 446 all-target/all-feature owner tests and 445 minimal
+tests. The new suite passed on stable and in release. Strict Clippy,
+rustdoc, formatting, standalone fuzz checks and all five inventory tests
+passed. The linked native and WASM example clients matched their preceding
+images byte-for-byte. The native release test occupies 4,785,624 bytes.
+The default ASan image exceeded the separate 64 MiB slot at 67,733,848 bytes.
+Lossless linker compression produced a 28,894,000-byte image, retaining
+identical machine code, sanitizer coverage sections and all decompressed debug
+sections. The release test and compressed ASan image meet the required
+16 MiB headroom in their respective qualification slots.
+[Artifact accounts](docs/research/interval-size-accounts.json)

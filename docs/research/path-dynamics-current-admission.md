@@ -118,3 +118,44 @@ remain unchanged. No cross-target savings offset this cost.
 Raw evidence: `docs/evidence/2026-11-16-interval-path-dynamics-current-admission` in archive commit
 `373fad71f6a875589c59db2fc3b79b24283be560`; registered in
 [`docs/evidence-archive.tsv`](../evidence-archive.tsv).
+
+## Lookahead replay and whole-call stack reassessment
+
+On 18 November the 41-file extraction at `f8dd6e1b2` applied cleanly to
+`7c3cd54d6`. Both builds passed the new public oracle for forward limits,
+final schedules, reversed routes and edited feeds. All 26,406 ordered
+certificate rows matched byte-for-byte, including proof sources and
+violation signs. The rebased candidate passed 450 all-target/all-feature
+Hyperpath tests. Its compatibility entry points emit deprecation warnings.
+
+The native resource probe covers complete two- and six-line calls under
+`STRICT` and `APPROXIMATE_512`. Each call constructs the inputs, plans the
+schedule, replays it, verifies rejection of an edited feed, and drops its
+inputs and outputs. Two stack sentinel patterns and three fresh processes
+for each cold and warm case gave 144 processes across the fixed program
+baseline, preceding revision and candidate. All used the same release
+toolchain, registry versions, physical source path and 2 MiB pthread stack.
+The predeclared incremental and cumulative stack limits were 128 bytes and
+1% of the respective prior and fixed baselines. Both limits apply.
+
+| Whole-call measurement | Fixed program | Preceding | Extraction |
+| --- | ---: | ---: | ---: |
+| Stack bytes in each of eight workload groups | 12,232 | 12,232 | 12,552 |
+| Peak requested heap, two spans cold / warm, bytes | 27,855 / 20,567 | 27,855 / 20,567 | 27,855 / 20,567 |
+| Peak requested heap, six spans cold / warm, bytes | 69,490 / 55,394 | 69,490 / 55,394 | 69,490 / 55,394 |
+
+The extraction adds 320 stack bytes (2.62%) in every group, with 2,074,424
+bytes of thread headroom. Requested and allocator-usable peaks, counts,
+traffic and post-drop live bytes match across revisions. The cold two-span
+run retains 7,776 requested bytes after drop. The warm two-span run retains
+632. The corresponding six-span values are 13,968 and 1,632. Group-specific
+RSS ranges and all five heap snapshots are archived with the observer.
+
+The public example client shrinks by 3,032 bytes on native and 506 bytes on
+WASM with the extraction. Its native exception table grows by 1,776 bytes.
+Both native clients and two fresh WASM instances per image executed the
+expected planning and rejection checks. A preliminary build changed numeric
+dependency versions. The reported comparison pins every registry checksum.
+The stack results keep the extraction outside the bounded exception. Timing,
+Interface, and firmware qualification of this rebase remain open.
+[Commands and per-workload measurements](../evidence-archive.tsv)

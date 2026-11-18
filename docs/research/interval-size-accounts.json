@@ -9087,5 +9087,33 @@
       "remaining_bytes": 63251080,
       "evidence": "docs/evidence/2026-11-18-interval-jacobian-memory"
     }
+  ],
+  "new_schedule_equivalence_harnesses": [
+    {
+      "artifact": "crates/hyperpath/tests/schedule_equivalence.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "all Hyperpath features; workspace lock",
+      "source_snapshot": "d8eb6fa0c74280d0b648efc70fc9e986105a3916",
+      "file_bytes": 4785624,
+      "sha256": "53e3147d3840ebbd5207851d0fbbcaaa37c27370a5a86f15514a39a38ba5e275",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 62323240,
+      "evidence": "docs/evidence/2026-11-18-interval-schedule-equivalence"
+    },
+    {
+      "artifact": "crates/hyperpath/fuzz/fuzz_targets/schedule_equivalence.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "rustc 1.101.0-nightly (8006091eb 2026-10-17)",
+      "features": "ASan with libFuzzer, linker-compressed DWARF; standalone Hyperpath fuzz lock",
+      "source_snapshot": "d8eb6fa0c74280d0b648efc70fc9e986105a3916",
+      "file_bytes": 28894000,
+      "sha256": "c43d8d9d09c3b3077ae528d578197b935cb65178d2c07847b76439774c8b8c77",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 38214864,
+      "evidence": "docs/evidence/2026-11-18-interval-schedule-equivalence"
+    }
   ]
 }
