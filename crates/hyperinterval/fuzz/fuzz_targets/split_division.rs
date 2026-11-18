@@ -24,12 +24,25 @@ fuzz_target!(|data: [i16; 8]| {
     let (b, qb) = source(c.min(d), c.max(d), i32::from(f % 8), k.unsigned_abs() / 5);
     let p = 4 - i32::from(p.unsigned_abs() % 69);
     let budget = || DyadicBudget::new(4096, 100_000_000_000);
+    let overlap = qa
+        .as_ref()
+        .zip(qb.as_ref())
+        .is_some_and(|((al, ah), (bl, bh))| ah >= bl && bh >= al);
+    assert_eq!(a.overlaps(&b, &mut budget()), Ok(overlap));
+    assert_eq!(a.disjoint(&b, &mut budget()), Ok(!overlap));
     let result = a.div(&b, p, &mut budget());
     oracle::verify(result.clone(), &qa, &qb, p);
     if let Ok(image) = result {
         let bytes = serde_json::to_vec(&image.range).unwrap();
         let restored: IntervalSet2<DyadicInterval> = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(restored, image.range);
+        let (expected, _) = oracle::expected(&qa, &qb, p).unwrap();
+        let meets_a = qa
+            .as_ref()
+            .is_some_and(|(lo, hi)| expected.iter().any(|(l, h)| h >= lo && hi >= l));
+        let source = IntervalSet2::from_interval(a);
+        assert_eq!(restored.overlaps(&source, &mut budget()), Ok(meets_a));
+        assert_eq!(source.disjoint(&restored, &mut budget()), Ok(!meets_a));
         assert_eq!(
             restored
                 .neg(&mut budget())

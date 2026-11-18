@@ -1,4 +1,7 @@
 //! Closed real enclosures with explicit unbounded ends, never infinite members.
+#[cfg(feature = "dyadic")]
+mod dyadic_overlap;
+
 use crate::{IntervalError, SignSet};
 
 mod sealed {

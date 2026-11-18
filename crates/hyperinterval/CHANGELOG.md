@@ -6,6 +6,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact, budgeted overlap and disjointness queries for finite, unbounded
+  and split dyadic sets. Queries preserve contact at closed endpoints and gaps
+  between components.
+
 - Add exact, budgeted midpoint bisection for closed dyadic intervals.
 
 - Add fused integer affine hulls for all primitive endpoint types. Signed

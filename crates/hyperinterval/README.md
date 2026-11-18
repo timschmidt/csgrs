@@ -36,6 +36,13 @@ arithmetic without allocation. Fixed-point upper rounding can return Overflow
 at maximal fractional scales. IEEE square roots include subnormal inputs and
 retain the certified backend's platform qualification gate.
 
+With `dyadic`, finite intervals, extended intervals and two-component unions
+provide `overlaps(&other, &mut budget)` and `disjoint(&other, &mut budget)`.
+These queries include touching endpoints and preserve gaps in split results.
+Empty inputs are disjoint from every set. Finite endpoint comparisons share
+the caller’s budget and can decide separation across the full exponent range
+without constructing a common-grid intersection.
+
 With `dyadic`, `DyadicInterval::bisect(&mut budget)` returns two closed halves
 sharing the exact midpoint. Empty and singleton inputs return `Ok(None)`. An
 unrepresentable midpoint on the minimum exponent grid returns `Overflow`.

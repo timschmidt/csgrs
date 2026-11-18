@@ -77,6 +77,9 @@ fuzz_target!(|data: [i16; 7]| {
         x.max_image(&y, &mut budget).unwrap(),
         DyadicInterval::new(aa.max(cc).into(), bb.max(dd).into(), grid).unwrap()
     );
+    let overlap = bb >= cc && dd >= aa;
+    assert_eq!(x.overlaps(&y, &mut budget).unwrap(), overlap);
+    assert_eq!(x.disjoint(&y, &mut budget).unwrap(), !overlap);
     let min_abs = if a <= 0 && b >= 0 {
         0
     } else {
