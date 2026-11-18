@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | --- | --- | --- |
 | 0 inventory/baseline | in progress | audited source map, sibling states, tests, cost/size/coverage/fuzz, hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
-| 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
+| 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 and WASM qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
@@ -11030,3 +11030,50 @@ The change adds tests and CI coverage. The memory and binary growth accounts
 receive no charge. Archive commit `cfe9563cf6b5eb92f2a5b4af49720c839871811a`
 contains the final corpus, logs and commands at
 `docs/evidence/2026-11-17-interval-atanh-domain`.
+
+## Fixed-point conversion to host intervals
+
+Section 3.7 requires fixed-point intervals to convert to both exact host
+families. At `024bff5ff`, the new public integration witness failed to compile
+for both missing methods. Commit `26a6c6b59` implements the conversions on
+`FixedInterval` under their respective features. An ordered numerator pair
+`[a,b]` with scale `F` maps directly to `[a,b] × 2^-F`. The rational
+constructor uses the positive denominator `2^F`. The dyadic constructor
+reserves two linear endpoint stages before materialization and normalizes the
+common exponent. Empty requires zero work. P1, P5, P6 and P18 apply.
+
+The owner corpus recovers both original numerators for 4,320 endpoint
+pairs across all 32 i32 scales and 64 i64 scales. It also consumes converted
+widths, checks empty and singleton results, and exercises both kinds of budget
+refusal and a fresh retry. Every instrumented line of each new method ran.
+The conversion fuzz target completed 100,000 ASan runs, including independent
+GMP checks at 30, 32 and 63 fractional bits. Node executed 720 exact endpoint
+checks on the release WASM module for four representative source formats.
+
+All-feature owner tests and doctests passed on Rust 1.95, including 251 tests
+counted once across suites. The fixed/rational suite passed independently on
+1.95 and stable 1.99. Rust 1.88 passed the fixed/dyadic regression and both
+fixed-only and fixed/dyadic checks for Thumb and WASM. The fixed-only normal
+dependency tree contains only Hyperinterval. All 87 downstream Alumina FOC
+library tests passed in release on 1.88. Strict owner/fuzz Clippy, strict
+rustdoc, formatting, the pedantic workflow audit and repository budget passed.
+
+Four existing native release executables matched the baseline byte for byte.
+The fixed example measured 443,208 bytes with fixed alone and 444,296 with
+all features. The all-feature rational cost example measured 1,217,824 bytes,
+and the Alumina FOC host test executable measured 6,151,184. The new standalone
+caller measured 838,368 bytes, or 843,816 with the measuring allocator.
+The WASM verification module measured 214,716 bytes.
+
+Nine warmed blocks of 65,536 conversions on one pinned CPU included owned
+result destruction. Across four nonempty cases, dyadic median times ranged
+from 142 to 149 ns and rational median times from 117 to 261 ns. A separate
+warmed allocator probe observed 64 bytes peak requested heap for dyadics,
+168 to 336 bytes for rationals, zero for empty, and zero live bytes after
+destruction in each case. These finite observations cover the new workload.
+No memory or binary exception was needed. Hosted CI, MCU cycles, board flash
+fit and hardware-in-the-loop qualification remain open.
+
+Verified archive commit `f21108ae036892f7832facaaab05079fdc4efb38` contains
+the logs, corpus, probe sources, output measurements and before/after images
+at `docs/evidence/2026-11-17-interval-fixed-host-conversions`.
