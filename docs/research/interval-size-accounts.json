@@ -8986,5 +8986,91 @@
       "remaining_bytes": 40552824,
       "evidence": "docs/evidence/2026-11-18-interval-cartesian-shapes"
     }
+  ],
+  "worked_interval_examples": [
+    {
+      "artifact": "hyperinterval/examples/proposal_replay",
+      "repository": "csgrs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "rational,float-proposal",
+      "source_snapshot": "df9cb4dde843ea0ed749532d4c94beed1ba50f17",
+      "file_bytes": 1097744,
+      "sha256": "896ef081da0fba2067980c547a9d1d83a1f8f8b4fd19728d59c01fe92bd2a41c",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 66011120,
+      "evidence": "docs/evidence/2026-11-18-interval-worked-proofs"
+    },
+    {
+      "artifact": "hyperinterval/examples/real_to_dyadic",
+      "repository": "csgrs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "hyperreal",
+      "source_snapshot": "df9cb4dde843ea0ed749532d4c94beed1ba50f17",
+      "file_bytes": 2071232,
+      "sha256": "60cc4f1834ddef7a8457d0b6521f50a5e3e28dc752b675792c89999a1e79e49d",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 65037632,
+      "evidence": "docs/evidence/2026-11-18-interval-worked-proofs"
+    },
+    {
+      "artifact": "hyperlattice-interval/examples/affine_image",
+      "repository": "csgrs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "fixed",
+      "source_snapshot": "df9cb4dde843ea0ed749532d4c94beed1ba50f17",
+      "file_bytes": 460112,
+      "sha256": "2c956603c4fa53d875cca74718e67a32634984c4f20bb7a73cf050db876bf006",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 66648752,
+      "evidence": "docs/evidence/2026-11-18-interval-worked-proofs"
+    },
+    {
+      "artifact": "hypersolve/examples/krawczyk_certificate",
+      "repository": "csgrs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "default (empty)",
+      "source_snapshot": "df9cb4dde843ea0ed749532d4c94beed1ba50f17",
+      "file_bytes": 3391888,
+      "sha256": "d78fe988be08f4313f6f3900ebe7d15ceb90ec0cc036f2f203c20938a7c38aea",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 63716976,
+      "evidence": "docs/evidence/2026-11-18-interval-worked-proofs"
+    },
+    {
+      "artifact": "hyperpath/examples/certified_schedule",
+      "repository": "csgrs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "default",
+      "source_snapshot": "df9cb4dde843ea0ed749532d4c94beed1ba50f17",
+      "file_bytes": 3881840,
+      "sha256": "bdec826ca0d9bf7d566fce490cfc542498492e0280ae71d6f8827fbdee65d826",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 63227024,
+      "evidence": "docs/evidence/2026-11-18-interval-worked-proofs"
+    },
+    {
+      "artifact": "alumina-foc/examples/current_calibration",
+      "repository": "alumina-firmware",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.88.0 release",
+      "features": "default",
+      "source_snapshot": "96ac22cadef311f069d62bae4dfa5f3918cfc143",
+      "file_bytes": 1671480,
+      "sha256": "841401f528cdb84b1ae03bf6d84da150d90177697d67d915a57d4d02fb1cf834",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 65437384,
+      "evidence": "docs/evidence/2026-11-18-interval-worked-proofs"
+    }
   ]
 }

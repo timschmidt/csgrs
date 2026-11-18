@@ -11619,3 +11619,68 @@ second multiplication overflows, in a term or in an accumulated sum.
 The change adds qualification executables and leaves the production memory
 accounts intact. The host runs cover fixed-point Cartesian products. Hardware timing and
 the resource behavior of other scalar backends require separate qualification. [Raw campaigns, corpus, mutation patches and image hashes](docs/evidence-archive.tsv)
+
+## Section 17 worked interval examples
+
+CSGRS `df9cb4dde` and Alumina Firmware `96ac22cad` add six worked examples
+and execute them in their owner workflows. Each new source is present in the
+owner's Cargo package file list. The commands below exercised all nine example
+topics on Linux. Run each command from its repository root.
+
+| Plan topic | Command and observed result |
+| --- | --- |
+| Rational measurement and checked floating-point proposal | `cargo run -p hyperinterval --features rational,float-proposal --example proposal_replay`. Translating 1/2 ± 1/4 by one and back preserves both proposed endpoints. At 2⁵³ the proposal collapses to a singleton. Exact replay from the authored values gives [1/4, 3/4] in both cases. |
+| Fixed Q30 enclosure | `cargo run -p hyperinterval --features fixed --example fixed_bounds` checks inclusion, sign, square, midpoint and intersection with empty on [1/2, 1]. |
+| Real-to-dyadic conversion | `cargo run -p hyperinterval --features hyperreal --example real_to_dyadic` retries after typed work exhaustion. The 2⁻⁴ grid contains √2 and 181/128. At 2⁻²⁴ the lower endpoint proves strict separation. Both enclosures bracket the positive root by exact squaring. |
+| Interval matrix affine image | `cargo run -p hyperlattice-interval --features fixed --example affine_image` retains the shared parameter of (t, 2t+1) for t ∈ [1, 3]. Applying 2x−y yields exactly −1. Applying the same linear form to the Cartesian hull gives [−5, 3]. |
+| Hypersolve Krawczyk certificate | `cargo run -p hypersolve --example krawczyk_certificate` uses two retained quadratic rows and strict predicates. The image radii are 5/48 and 7/48, and the contraction bounds are 1/6 and 1/2. Tightening the second radius to 3/32 gives `ImageOutsideBox` on y even though the root remains in the smaller box. |
+| Specialized path schedule | `cargo run -p hyperpath --example certified_schedule` plans consecutive straight spans of lengths 8 and 2 from rest to rest. Acceleration 1 permits a forward join feed of 4. Stopping requires 2. Exact replay identifies the second span when the join feed is raised to 4. |
+| Validated ODE flow tube | `cargo run -p hyperdynamics --features field --example expression_field` certifies Picard steps and integrates to an exact rational final time. |
+| Firmware current calibration | In Alumina Firmware, `cargo run -p alumina-foc --example current_calibration` maps ADC counts 2051 and 2045 to [2048, 7168] and [−7168, −2048] in Q30 numerator units. Count 2057 returns the configured window error. The calibration also passed against the CSGRS revision pinned in the firmware CI workflow. |
+
+The proposal example ran in four x86-64 rounding modes. At the large offset,
+rounding up produced [2, 2]. The other three modes produced [0, 0]. Exact
+replay rejected all four, and each process preserved its starting mode.
+An independent rational calculation checked the positive root, the inverse
+Jacobian, both radius choices, the affine images, path limits and current
+bounds. The mixed system with an affine equality row reproduced
+`NonQuadraticRow`; this multivariate certificate still consumes retained
+quadratic packages.
+
+The release examples occupied 460,112 to 3,881,840 bytes on x86-64. Each
+passed its individual 64 MiB host qualification envelope with at least 16 MiB
+free. Four existing release example binaries from Hyperinterval, the lattice
+companion, Hypersolve and Hyperpath matched the preceding revision byte for
+byte in a common checkout. The examples add no production memory charge.
+[Per-example file sizes and hashes](docs/research/interval-size-accounts.json)
+
+Local checks passed 278 all-feature Hyperinterval tests and doctests, 1,533
+all-target/all-feature and 1,396 minimal Hypersolve tests, 443 Hyperpath tests
+and doctests, and 49 fixed/Serde lattice companion tests and doctests. The
+firmware default-member suite passed 603 tests and doctests. Formatting,
+strict Clippy, rustdoc, both repository-wide strict zizmor audits and the
+affected Cortex-M library checks passed. Hosted workflows and board timing
+remain outside these local results.
+
+### Locked native and WebAssembly FOC conformance
+
+Both documented locked builds initially failed before compilation. The
+native and bare-WASM lockfiles omitted the dependency of `alumina-foc` on
+`hyperinterval`. Revision `b56d2e770` restores that edge in each lock.
+The set of packages and versions stayed identical. All seven checked-in
+locks containing `alumina-foc` across CSGRS, Alumina Firmware and Alumina
+Interface record the edge.
+
+The standalone native release tests, allocation check, Clippy, cost client
+and Cortex-M library build passed. A maintained Node runner executed the
+linked import-free WASM client. Each of two fresh instances checked 825
+transform cases and 147 range cases, including overflow in a checked
+intermediate. The cardinal Park digest oracle detected selection of the
+wrong sample even when both transform paths used it. The range oracle
+detected conversion of a genuine overflow to success. These two deliberate
+mutations failed independently.
+
+The two native probes and the WASM client matched controls built from the
+previous source with the two missing lock edges restored locally. The
+unmodified previous locks had no successful linked result. Timing from the
+cost probe documents execution only. [FOC commands](crates/hyperlattice-interval/conformance/alumina-foc/README.md) · [Raw observations and reproduction material](docs/evidence-archive.tsv)

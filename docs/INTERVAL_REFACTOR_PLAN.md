@@ -1779,6 +1779,8 @@ Provide examples for:
 - validated ODE flow tube;
 - firmware current calibration.
 
+[Runnable commands and qualification for these nine example topics](../INTERVAL_REFACTOR_PROGRESS.md#section-17-worked-interval-examples)
+
 ---
 
 # 18. Stop/reject conditions
