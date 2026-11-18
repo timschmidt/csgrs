@@ -11965,3 +11965,60 @@ packaged and verified Hyperreal and Hyperinterval together. A clean external
 consumer of the unpacked Hyperinterval package passed the native and bare-WASM
 oracle on Rust 1.88. The full interval plan remains active.
 [Reproduction scripts, oracle and resource measurements](docs/evidence-archive.tsv)
+
+## Three-variable affine certificate replay and bounded stack review
+
+On `07825c92f`, the Phase 7 affine certificate oracle covered coupled
+two-variable systems. Commit `b815965eb` adds 48 reports for three coupled
+equations under both predicate policies. Each report must return the
+prescribed symbols and coordinates. The test also substitutes those values
+into all three original expressions and requires exact zero. The corpus uses
+both signs of √2 and 2⁻²⁰⁴⁸ and all six row permutations. A mutation that
+replaced only the third reported root with its candidate coordinate passed
+the two-variable and fuzz-seed suites and failed the new test.
+[Independent residual replay](crates/hypersolve/tests/krawczyk_affine_residuals.rs)
+
+The public affine and univariate quadratic Krawczyk APIs still require
+`PredicatePolicy::STRICT` for proof. Four archived assertions failed on this
+revision under `APPROXIMATE_512`, including the original-equation check on
+a reported affine root. Three complete repairs passed all four witnesses.
+The policy-only and affine-only candidates also passed the ordinary and
+stress native memory gates. The two balanced, opposing-order timing
+campaigns reproduced a slowdown on the already certified one-dimensional
+multivariate workload. Across 48 fresh stress processes per revision, each
+policy-only candidate peaked at 15,436 requested heap bytes and 15,192 callee
+stack bytes, within separate 16 KiB limits. At least 2,071,784 bytes remained
+on its guarded 2 MiB native worker against 1 MiB of required headroom.
+
+| Candidate | Observed result on the current revision |
+| --- | --- |
+| Certified-only at both entries | Passed 66 linked-image checks. The four pinned-core timing comparisons rose 0.46%, 0.70%, 1.51% and 0.57%. |
+| Certified-only at the affine entry | Corrected the original-equation and affine elimination cases. All 30 ordinary Krawczyk reports and traces and all 84 box replay records matched. Timings rose 0.42%, 1.13%, 0.47% and 0.97%. The univariate failures remained reproducible. |
+| Move the normalized pivot row during elimination | Passed all ordinary and stress stack and requested-heap comparisons. Native RELRO padding grew 2,824 bytes in the benchmark and 288 in the lifetime observer, exceeding their section caps. |
+| Reuse the solved right-hand side and inverse row storage | Six ordinary and eight stress workloads grew in peak requested heap, by up to 144 bytes. The linked WASM file grew 6,536 bytes and its code section grew 5,746. |
+
+The separate owned-radius, final-row box replay had previously failed the
+stack gate. Its original patch applied to the current source. It passed nine
+previously failing assertions for row certainty and proof scope and changed
+24 of the 84 box verdicts. All 84 underlying evidence/dispatch records and
+all 84 allocation records matched. Across 24 processes per revision, all
+60 peak requested heap measurements passed. Of 120 cold/warm stack
+comparisons, 24 exceeded the incremental cap and 16 exceeded the cumulative
+relative cap. One affine call rose from 3,302 to 3,350 bytes, or 1.45%
+against its 1% incremental limit. Constructing the final report directly
+also exceeded 24 stack caps. Each variant passed 240 linked WASM calls.
+The raw observations retain each workload's baseline and previous charges.
+
+Only the residual replay test was admitted. Its Rust 1.95 release executable
+uses 4,365,824 bytes of its 64 MiB host qualification slot, leaving
+62,743,040 bytes free. Default, all-feature and release executions passed,
+as did targeted all-feature Clippy with warnings denied, workspace formatting
+and the repository budget check. No production memory or flash charge was
+added. A final shared-target run reused the mutant executable. Its digest
+matched a fresh isolated mutant build. Independent builds passed all four
+retained tests, reproduced the intended mutation failure and matched the
+release image byte for byte. Rebuilding Hypersolve in the shared target
+also restored all four passes. Evidence commits `d56504756` and
+`73fedff86` preserve the measurements and isolated build logs.
+[Per-target accounts](docs/research/interval-size-accounts.json) ·
+[Raw observations and candidate patches](docs/evidence-archive.tsv)

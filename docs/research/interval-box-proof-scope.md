@@ -287,3 +287,18 @@ linked-image hashes, rebuild inputs and artifact deltas. Alternative repairs
 include checking individual comparison receipts, borrowing the pivot row and
 reusing residual payloads. Their per-artifact and per-workload results are
 preserved for subsequent review. [Evidence index](../evidence-archive.tsv)
+
+### Three-variable root replay and current stack reassessment
+
+The maintained affine oracle now also rebinds three reported coordinates and
+requires the original equations to evaluate to exact zero. It exercises all
+six pivot input orders with signed algebraic and tiny dyadic coefficients
+under both policies. The hidden-coefficient counterexample under
+`APPROXIMATE_512` remains reproducible. Two pinned-core campaigns on
+`07825c92f` reproduced the one-dimensional runtime regression for both the
+full proof repair and the affine-only repair. The separately rebased
+whole-box candidate corrected 24 verdicts and exceeded 24 individual stack
+caps. Candidate patches, prior charges, complete-lifetime observations and
+the admission decision are indexed in the current progress record.
+[Affine residual oracle](../../crates/hypersolve/tests/krawczyk_affine_residuals.rs) ·
+[Qualification record](../../INTERVAL_REFACTOR_PROGRESS.md#three-variable-affine-certificate-replay-and-bounded-stack-review)

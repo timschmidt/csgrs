@@ -9029,6 +9029,19 @@
       "required_free_bytes": 16777216,
       "remaining_bytes": 62825160,
       "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
+    },
+    {
+      "artifact": "krawczyk_affine_residuals",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "hypersolve --all-features",
+      "source_snapshot": "b815965eb75ad1ef96502b2feaef9250881f1c45",
+      "file_bytes": 4365824,
+      "sha256": "ea99ec70667efeb77f486398196964ebe75a4c4f66fabfab7ad94e8a894bdd11",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 62743040,
+      "evidence": "docs/evidence/2026-11-18-interval-affine-proof-replay"
     }
   ],
   "new_finite_dyadic_inclusion_test_harness": {

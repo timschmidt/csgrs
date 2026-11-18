@@ -681,3 +681,4 @@ docs/evidence/2026-11-18-interval-dyadic-affine	2	89874	2ad2c534434acd804651f740
 docs/evidence/2026-11-18-interval-native-coverage	2	1092870	3fc9359aad4f2fa94fd70f083a34327b97ef973e6dab73807133916f9aeadc9b
 docs/evidence/2026-11-18-interval-wasm-stack	2	65101	57cb3da02954e39626e8fbccc3f6d05a5217a5f37cf035a544dc4ce84bca5339
 docs/evidence/2026-11-18-interval-binary32-dyadic-ingress	2	48713	745fdac9681d539bc9ead858a6c0b3773c1891b0ce2b3b8ea188027c0e30d3fa
+docs/evidence/2026-11-18-interval-affine-proof-replay	3	316523	69acda0ba5abcb6a5fa12d98e0133c4dcb0abe85cd03530f2c9b59cae8937b65
