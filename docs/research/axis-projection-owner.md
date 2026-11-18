@@ -84,3 +84,66 @@ Raw evidence: `docs/evidence/2026-11-17-interval-axis-projection-owner` in archi
 record SHA-256 `1c5e1d7a0df68af347a9e993e101001c8c73d7fc248e8ad6bdc035d602ad1676`. All 82 original payload members,
 decoded bytes and committed archive files were verified. The digest is registered
 in [the evidence index](../evidence-archive.tsv).
+
+## Matched owner timing and legacy trace repair
+
+On Rust 1.95.0 the six previously selected Hyperpath benchmarks all had lower
+candidate mean times in both ABBA and BAAB blocks. Each binary ran from the
+same path on CPU 0 with ASLR disabled. Each run used a one-second Criterion
+warmup, two-second measurement and 30 samples. The 1,440 samples cover
+43,953,195 completed iterations. The entries below are percentage changes from
+baseline in each block.
+
+| Workload | ABBA | BAAB |
+| --- | ---: | ---: |
+| Axis-aligned offset | −1.02% | −0.62% |
+| Quadratic hodograph | −5.19% | −4.38% |
+| Rectangular-pad clearance | −5.21% | −5.08% |
+| Additive bead schedule | −5.11% | −5.07% |
+| Exact trace import | −0.87% | −0.83% |
+| 256-record parser | −2.34% | −2.78% |
+
+The final benchmark file grew from 13,312,800 to 13,323,776 bytes (+10,976),
+exceeding the ordinary 4,096-byte incremental cap. The text section grew from
+8,118,103 to 8,119,191 bytes. The union of defined function ranges grew from
+8,044,187 to 8,045,207 bytes, with six unsized symbols on each side. These
+measurements cover the owner benchmark. Full owner timing, direct workload
+cost, complete heap/stack lifetimes, downstream artifacts, and cumulative
+admission remain open.
+
+The earlier external probe explicitly enabled Hyperdynamics tracing as well as
+Hyperpath tracing. An external caller enabling only Hyperpath tracing exposed
+an extra lattice matrix dispatch event after axis planning. Its baseline count
+was zero. The extracted manifest enabled Hypersolve tracing through Hyperdynamics,
+which in turn enabled lattice tracing for the entire consumer. Removing that
+feature edge restored the baseline count under both policies. The complete
+215,437-byte legacy probe also matched when built with Hyperpath tracing alone.
+All 446 Hyperpath tests passed. The repaired owner bench executable is
+byte-identical to the timed candidate. The feature fix is isolated in
+`08c23797c51102f23367fc904144d1bbe4bcef93`.
+
+Four standalone lockfiles needed updates for the candidate dependency graph.
+Candidate `75dd0273eb7b9deddcee80fd98a7626a993a9070` records them and preserves
+all registry package versions and checksums. The Hyperpath fuzz targets compile,
+the native measurement tests pass, and the WASM measurement client type-checks.
+The comparison harness initially lacked its external oracle. All 85 archived
+input hashes matched NYU's exactCorelib revision
+`e9b4e4af404e657d74741d0e1e6fb18ab19e0838`. With those sources and MPFR
+4.2.2, seven path comparisons pass and one existing contract difference remains
+ignored. The trace and size findings keep the original qualification and the
+later correction distinguishable.
+
+Two of the standalone locks already missed the clock and FOC firmware crates'
+Hyperinterval dependencies on the primary branch. Primary commit `4e19d4d33`
+restores those four dependency entries across the native and WASM conformance
+clients. Native all-feature tests and strict Clippy passed. The stable release
+WASM client built and its Fraction oracle matched all 4,369 calls, including
+1,330 negative-radius and 24 invalid-denominator cases. The final module was
+960,680 bytes with SHA-256
+`923d17c99a7788e2ae817a898c7795551de48f1c6d3039c4ddfd345a90dd97da`.
+
+The benchmark binaries, raw samples, feature witnesses, package checks and
+lock comparisons are in evidence commit `803884ca5c88752269928634323026f258c30f94`,
+record `docs/evidence/2026-11-17-interval-axis-owner-cost`. The WASM replay
+above ran after archival using the existing interface-measurements Fraction
+oracle and the release module identified by its hash.

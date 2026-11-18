@@ -10983,3 +10983,14 @@ candidates. Runtime, complete lifetime/stack, final artifact and distribution
 admission remain open. No new memory or size allowance is accepted; prior
 charges, rejections and the held release queue are unchanged. Feed/lookahead/jerk
 extraction and the full 15-phase objective remain required.
+
+## Axis projection costs and locked consumer repair
+
+The six previously selected Hyperpath benchmarks improved in both matched
+timing blocks. The owner binary grew 10,976 bytes, exceeding its ordinary
+incremental cap. A consumer selecting Hyperpath tracing alone exposed an extra
+lattice event. Isolated candidate `75dd0273e` restores the original counts and
+the standalone dependency locks. Full runtime, memory and downstream size
+admission remain open. Primary commit `4e19d4d33` repairs the two stale Alumina
+measurement locks. Native tests pass and the release WASM module replays 4,369
+exact-oracle calls. [Measurements and evidence](docs/research/axis-projection-owner.md#matched-owner-timing-and-legacy-trace-repair).
