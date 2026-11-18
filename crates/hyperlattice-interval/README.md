@@ -32,6 +32,13 @@ accounting. `rational` enables Hyperreal, std and its Rust 1.95 requirement.
 including std and the same Rust 1.95 requirement.
 `serde` validates scalar endpoints, dimensions and fixed scales on replay.
 
+Run the rectangular replay and multiplication tests with
+`cargo test -p hyperlattice-interval --features fixed,serde --test shape_replay`.
+From `crates/hyperinterval`, run the same oracle under libFuzzer with
+`cargo +nightly fuzz run cartesian_shapes --features lattice-shapes`. The
+target covers empty dimensions and shapes up to 33 lanes, malformed wire
+lengths, outward rounding, and overflow in successive products.
+
 Implemented: canonical empty/unit products, component hull/intersection and
 inclusion, sums/differences, dot products, matrix products, affine enclosures,
 transpose and checked row/column projections. Vector and matrix one/infinity

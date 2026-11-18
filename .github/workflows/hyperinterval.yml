@@ -96,6 +96,7 @@ jobs:
         run: |
           cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --bins
           cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --bins --features rational
+          cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --features lattice-shapes --bin cartesian_shapes
           rustfmt --edition 2024 --check crates/hyperinterval/fuzz/fuzz_targets/*.rs
 
   portable:
@@ -165,3 +166,6 @@ jobs:
           cargo +nightly fuzz run atanh "$RUNNER_TEMP/interval-atanh" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261126
           mkdir -p "$RUNNER_TEMP/interval-integer-affine"
           cargo +nightly fuzz run integer_affine "$RUNNER_TEMP/interval-integer-affine" -- -runs=100000 -max_len=64 -max_total_time=30 -seed=20261127
+          mkdir -p "$RUNNER_TEMP/interval-cartesian-shapes"
+          cp ../hyperlattice-interval/tests/fixtures/shapes/*.bin "$RUNNER_TEMP/interval-cartesian-shapes/"
+          cargo +nightly fuzz run cartesian_shapes --features lattice-shapes "$RUNNER_TEMP/interval-cartesian-shapes" -- -runs=10000 -max_len=532 -max_total_time=60 -seed=20261128

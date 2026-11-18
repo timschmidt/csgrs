@@ -9,10 +9,12 @@ rust-version = "1.88"
 cargo-fuzz = true
 
 [features]
+lattice-shapes = ["dep:hyperlattice-interval"]
 rational = ["hyperinterval/rational", "dep:hyperreal"]
 solver-certificates = ["dep:hyperlimit", "dep:hyperreal", "dep:hypersolve"]
 
 [dependencies]
+hyperlattice-interval = { path = "../../hyperlattice-interval", features = ["fixed", "serde"], optional = true }
 hyperlimit = { path = "../../hyperlimit", default-features = false, optional = true }
 hypersolve = { path = "../../hypersolve", default-features = false, optional = true }
 libfuzzer-sys = "0.4"
@@ -165,3 +167,11 @@ test = false
 doc = false
 bench = false
 required-features = ["solver-certificates"]
+
+[[bin]]
+name = "cartesian_shapes"
+path = "fuzz_targets/cartesian_shapes.rs"
+required-features = ["lattice-shapes"]
+test = false
+doc = false
+bench = false
