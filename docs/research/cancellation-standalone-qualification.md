@@ -8,6 +8,11 @@ existing growth allowances after historical charges are retained, and runtime,
 distribution and remaining admission work are open. No numerical cap or accepted
 exception count changes in this record.
 
+The subsequent [allowance and runtime review](cancellation-allowance-runtime.md)
+evaluates bounded byte caps while retaining those charges. It leaves one count
+account failing and performance non-regression unproven; the candidate remains
+isolated.
+
 This follows the [combined consumer qualification](solver-cancellation-qualification.md)
 under Hypersolve work-budget ownership, P5/P6/P20/P36 and plan 14.4. The four
 affected owner/adapter source and test files on primary were byte-identical to

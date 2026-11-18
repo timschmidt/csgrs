@@ -10852,3 +10852,40 @@ SHA-256 `5455967c5b5a948f2ca896e0a017a7ed26c1983be92ab4538b56b50814e2ba7e`.
 The lossless payload contains 3,861 members / 259,497,686 raw bytes,
 including 46 validated images. All original, decoded and committed hashes are
 verified; earlier archive paths are unchanged.
+
+## 2026-11-17: bounded cancellation bytes and focused runtime
+
+The standalone cancellation candidate now has a reviewed per-target byte
+proposal: tighter absolute small-case peak and relative stress-traffic limits
+accompany bounded percentage/absolute growth respectively. All original values,
+denominators, positive historical charges and verdicts remain. Across 288
+accounts, 72 metric caps and 42 verdicts change; failures fall from 17 to one.
+The historical allocation/free count failure remains under unchanged count caps.
+See the [allowance/runtime review](docs/research/cancellation-allowance-runtime.md)
+for exact caps, capacity/headroom rationale and the unchanged gates.
+
+Eight final images pass 174 functional controls, six strict Clippy configurations
+and formatting. The extraction build failure remains alongside its minimal
+correction, sharing the original deadline and child ceiling. Timing completes
+26 invocations / 552 case invocations / 16,560 samples, with 432 public full
+control matches and 252 balanced comparisons over 63 common cases. Added retry
+has 48 separately recorded absolute costs and no invented old-success baseline.
+
+Default consumer comparisons are all faster; trace-build case medians are all
+higher, ranging from +0.25% to +3.96%. Two passive-recording cases are slower in
+all four pairs. All contrary samples remain. Non-regression is unproven, so the
+candidate remains isolated. No runtime allowance, source admission or unchanged
+benchmark rerun follows. Full owner/successive/distribution gates remain open.
+
+All producers are terminal and audits pass within their declared bounds. Source
+control is restored clean; the workflow queue remains held and its original
+watcher terminal. Primary production code and accepted totals of 57 size / zero
+memory exceptions remain unchanged; inventory remains 1,644 rows. No push; the
+full goal remains active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-allowance-runtime`,
+archive commit `1286123944e231ef7c2e4706cd9df2d502420788`; 3 files / 25,668,639 bytes,
+SHA-256 `c6b396475714d5702a72a53f5ec73deba66ebaf831b61f31c36872a8dc6f7b53`.
+The payload retains 4,677 members / 100,888,275 raw bytes and nine
+validated images. Original/decoded/committed hashes pass; old archive paths
+are unchanged.
