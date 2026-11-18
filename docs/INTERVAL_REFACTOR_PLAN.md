@@ -30,10 +30,13 @@ Retain changes only when they improve, in strict order:
 
 Every lower-priority improvement is gated by all higher-priority contracts.
 
-Code/binary-size growth may use the
-[bounded exception protocol](admission.md#bounded-code-and-binary-size-exceptions).
-This does not waive cycle-time, memory/stack, exact-output, or evidence gates;
-source reduction alone is insufficient justification.
+Useful functionality and correctness repairs can justify bounded growth under
+the [code and binary size protocol](admission.md#bounded-code-and-binary-size-exceptions)
+and the [memory and stack protocol](admission.md#bounded-memory-growth-exceptions).
+Each applicable target and workload must pass its own incremental and
+cumulative limits and retain its required headroom. Cycle-time, exact-output
+and evidence gates apply independently. Source reduction alone is insufficient
+justification.
 
 ## 1.1 Mathematical authority
 

@@ -198,3 +198,92 @@ The fixed, current and candidate WebAssembly images, reversible native ELF
 deltas, controls, failed mutants, 84-row differentials and source patches
 are recorded under `2026-11-18-interval-box-aggregation`.
 [Evidence index](../evidence-archive.tsv)
+
+## Krawczyk containment, contraction and elimination
+
+On `471560ade`, all three public Krawczyk certifiers could report a unique
+root for a box containing no root. Let
+`c = sin(e+1) − sin(e)cos(1) − cos(e)sin(1) + 2⁻²⁰⁴⁸`. The angle addition
+identity gives `c = 2⁻²⁰⁴⁸ > 0`. At the only point of the box `{0}`, both
+`x+c` and `x²+x+c` equal `c`. The terminal comparison under
+`APPROXIMATE_512` nevertheless reported equality with approximate certainty.
+The radius had already passed certified validation. The unsound step was
+using a later comparison as proof of containment.
+
+Two additional witnesses separate the affected decisions.
+
+- For `x²+x` centered at zero, the image-radius bound is `r²` and the
+  derivative variation is `2r`. At `r = 1/2 − c`, strict contraction holds.
+  Both quadratic certifiers reported a noncontractive derivative after
+  terminal rounding. At exactly `1/2`, that diagnostic is correct.
+- On `[-1,1] × {0}`, the equations `x=1` and `c·x+y=0` have their only
+  root at `(1,−c)`, outside the box. Affine elimination skipped the
+  nonzero factor and certified a root. Widening the second interval to
+  `[-1,1]` makes the existence verdict correct but still yielded the wrong
+  root coordinates. The regression evaluates the original equation on the
+  reported root.
+
+**Retained on the primary branch.** In `4d4b472e6`, the multivariate quadratic
+certifier selects the caller's certified-only subpolicy at entry. Radius
+validation, Jacobian inversion, closed containment and strict contraction
+therefore share a proof policy. An undecided bound identifies its coordinate.
+A two-variable fixture independently checks the inverse path. Its equations
+are `x+x²/16−1=0` and `c·x+y+y²=0` on `[-2,2] × {0}`. The second equation
+forces `x=0`, which violates the first. The previous policy returned a unique
+root. The retained implementation reports the undecided comparison on `y`.
+The point, coupled and strict-contraction regressions all failed on the
+previous implementation and passed after the change. The exact rational
+point control retained all four Hyperlimit comparisons under both policies.
+[Multivariate proof tests](../../crates/hypersolve/tests/krawczyk_multivariate_certainty.rs)
+
+A separate oracle in `aaebcb395` constructs right-hand sides from known
+integer roots of invertible two-variable systems. Its 600 affine reports
+cover row swaps, coupled coefficients, translated centers, faces, corners,
+zero-width axes and outside roots. Every successful report must return both
+prescribed root coordinates. This corpus also passes before the production
+change. [Exact affine oracle](../../crates/hypersolve/tests/krawczyk_affine_oracle.rs)
+
+**Remaining exposure.** Use `PredicatePolicy::STRICT` with
+`certify_affine_krawczyk_box` and `certify_univariate_quadratic_krawczyk_box`.
+Both can still certify the rootless point box under `APPROXIMATE_512`. The full
+repair and its failing witnesses are available on
+`interval-krawczyk-proof-review` at `0dcfb17ba`. It passed the regular and
+stress memory limits and the linked-size limits. In matched one-variable
+multivariate benchmarks, its median rose from 4.538 to 4.604 µs on one pinned
+CPU and from 4.551 to 4.614 µs on another. The full repair remains in review.
+The independent whole-box replay and row-aggregation issues above also remain open.
+
+### Cost of the retained multivariate repair
+
+| Completed workload | Observation |
+| --- | --- |
+| Native reports | All 30 Krawczyk controls preserved complete reports and dispatch counts. All 84 existing box-replay records matched. |
+| Owner benchmarks | Eight balanced blocks covered affine, univariate and square systems of dimensions 1, 2, 4 and 8. Multivariate median-of-block-medians changes ranged from −0.28% to −0.08%. Separate opposing-order runs on two cores measured +0.004% and +0.026% on dimension one. The archive includes the initial timings and outliers. |
+| Native images | File size, allocated sections and defined-function bytes held for both the owner benchmark and the replay client. |
+| WASM | The linked radius/report client and its code section each grew by one byte. Cumulative charges are 67 file bytes and 26 code bytes. Two fresh instances completed 240 existing calls per revision. The adversarial client ran a further 48 calls per revision. |
+| Regular native memory | Each revision ran 24 processes using two stack watermark patterns on cold and warm threads. All 60 peak-requested-heap and 120 stack comparisons passed. Maximum requested heap was 15,036 bytes, maximum callee stack was 12,776 bytes, and every report dropped to zero retained requested bytes. |
+| Adversarial native memory | Across 48 processes per revision, six inputs and both policies, the maxima were 15,436 requested heap bytes and 15,192 callee-stack bytes. At least 2,071,784 bytes remained on the guarded 2 MiB thread. |
+
+The regular observer debits 11 positive stack increments, at most 48 bytes
+each. It carries every earlier charge, with a maximum cumulative charge of
+72 bytes. The stress observer compares each newly corrected verdict to the
+previous completed strict proof on the same input. It also records the raw
+same-policy comparison for each case. Two stress accounts carry 48-byte
+stack increments. No workload spent a peak or retained heap growth allowance.
+The existing 16 KiB peak-heap and callee-stack limits and 1 MiB mandatory
+thread headroom apply to these single-worker clients.
+[Memory accounts](interval-memory-accounts.json) · [Linked-size accounts](interval-size-accounts.json)
+
+Rust 1.95.0 passed 1,393 default-feature Hypersolve tests, 1,529 all-feature
+tests and one all-feature doctest. All 155 Hyperdynamics tests and 14
+CSGRS SVG replay tests passed. All-feature, all-target Hypersolve Clippy and
+all-feature rustdoc passed with warnings denied. Both new release test
+executables, workspace formatting and the repository budget check passed.
+
+The qualification bundle contains the historical and candidate source
+patches, policy-specific failures, full native records, Criterion samples,
+WASM status and linear-memory observations, allocator and stack measurements,
+linked-image hashes, rebuild inputs and artifact deltas. Alternative repairs
+include checking individual comparison receipts, borrowing the pivot row and
+reusing residual payloads. Their per-artifact and per-workload results are
+preserved for subsequent review. [Evidence index](../evidence-archive.tsv)

@@ -463,6 +463,10 @@ blocks before an algorithm is selected.
 - Affine and quadratic Krawczyk reports, plus
   `certify_univariate_quadratic_alpha`, expose supported local existence and
   uniqueness evidence.
+- Multivariate quadratic Krawczyk reports require certified comparisons under
+  both predicate policies. Use `PredicatePolicy::STRICT` for the affine and
+  univariate quadratic Krawczyk reports. A terminal approximation in either
+  can produce a false root certificate. [Affected comparisons and examples](../../docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)
 - `certify_candidate_batch` and `schedule_candidate_batch_predicates` reuse
   predicate schedules across candidates.
 - `replay_dense_linear_residuals` is the shared policy-explicit exact replay

@@ -137,6 +137,16 @@
       "production_implementation_changed": true,
       "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58",
       "evidence": "docs/evidence/2026-11-18-interval-directed-overlap"
+    },
+    {
+      "id": "certified-multivariate-krawczyk-proof",
+      "benefit": "Prevents terminal approximation from supplying multivariate Krawczyk containment, contraction, or inverse evidence.",
+      "sources": [
+        "crates/hypersolve/src/interval.rs"
+      ],
+      "production_implementation_changed": true,
+      "source_snapshot": "4d4b472e66c50b0ad9f7ad050c75e27014cda0d0",
+      "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
     }
   ],
   "accounts": [
@@ -8750,6 +8760,58 @@
       "headroom": "65933296 bytes free within 64 MiB qualification allowance, 16 MiB required.",
       "evidence": "docs/evidence/2026-11-18-interval-directed-overlap",
       "source_snapshot": "207e88c55ec3cb56890604648d9193a8e74dae58"
+    },
+    {
+      "artifact": "interval-box qualification/kraw.wasm",
+      "role": "Complete linked solver report client",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "Rust 1.95.0",
+      "features": "default",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "471560adebf2d050a50e057f1a142d107ce20aee",
+      "source_snapshot": "4d4b472e66c50b0ad9f7ad050c75e27014cda0d0",
+      "baseline_sha256": "d7e87f5b802bb7ffc4b49a07ab42e0d96cd14fbfd05f80b6c4166947e0b581ed",
+      "previous_sha256": "9d81844880fe07f4d5e7b2ee170c35851bea9de040f2ac10b5e3b1e4113fc66a",
+      "retained_sha256": "8363465a49e86777e3310c92be88ce8efdad8f038ba4ca5d7c1c188284148741",
+      "metrics": {
+        "file": {
+          "baseline": 1765964,
+          "previous_retained": 1766030,
+          "retained": 1766031,
+          "incremental_growth_bytes": 1,
+          "incremental_growth_percent": 5.7e-05,
+          "accepted_positive_growth_bytes": 67,
+          "remaining_cumulative_bytes": 4029,
+          "remaining_cumulative_percent": 9.996206,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true
+        },
+        "code": {
+          "baseline": 1569561,
+          "previous_retained": 1569586,
+          "retained": 1569587,
+          "incremental_growth_bytes": 1,
+          "incremental_growth_percent": 6.4e-05,
+          "accepted_positive_growth_bytes": 26,
+          "remaining_cumulative_bytes": 4070,
+          "remaining_cumulative_percent": 9.998343,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "65342833 bytes free within 64 MiB, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed",
@@ -8786,5 +8848,33 @@
     "remaining_bytes": 65888432,
     "role": "New standalone test artifact. The pre-existing dyadic_set_relations harness has a separate incremental and cumulative account.",
     "evidence": "docs/evidence/2026-11-18-interval-directed-overlap"
-  }
+  },
+  "new_krawczyk_test_harnesses": [
+    {
+      "artifact": "krawczyk_affine_oracle",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "hypersolve --all-features",
+      "source_snapshot": "aaebcb39566f64c01255197bfe89da503f615be7",
+      "file_bytes": 4320048,
+      "sha256": "84910a26b6cbc643e05794254911f1304f6a41f52c276c4a9bd0d9be9dccc3da",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 62788816,
+      "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
+    },
+    {
+      "artifact": "krawczyk_multivariate_certainty",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "hypersolve --all-features",
+      "source_snapshot": "4d4b472e66c50b0ad9f7ad050c75e27014cda0d0",
+      "file_bytes": 4283704,
+      "sha256": "cf2814aeb9587f046a6aa85bfec991f89f70ee4550960bd68a2f3965851d520c",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 62825160,
+      "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
+    }
+  ]
 }

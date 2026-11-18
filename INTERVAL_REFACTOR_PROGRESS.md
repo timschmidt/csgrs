@@ -11237,3 +11237,19 @@ on each affected composition workload, with at least 2,085,520 bytes of
 measured thread headroom. Owner, downstream, native release, WASM and fuzz
 checks are recorded with the raw measurements.
 [Retained query qualification](docs/research/interval-dyadic-overlap.md#retained-query-implementation)
+
+## Phase 7 multivariate Krawczyk proof policy, 18 November 2026
+
+Retained `4d4b472e6`. The multivariate quadratic certifier now requires
+certified decisions throughout its inverse construction, containment and
+strict contraction checks. Three independent regressions reproduced false
+verdicts on the previous primary. A separate affine oracle in `aaebcb395`
+checks 600 reports and the exact coordinates of every accepted root.
+
+The regular and adversarial memory workloads passed their individual caps.
+Peak requested heap held, and the largest new stack charge was 48 bytes.
+The existing linked WASM client and its code section each grew by one byte.
+Affine and univariate quadratic Krawczyk callers still require `STRICT` for
+root certificates. The full repair remains on `interval-krawczyk-proof-review`
+after a reproducible one-variable runtime regression.
+[Proof witnesses, costs and remaining scope](docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)
