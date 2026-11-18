@@ -147,6 +147,18 @@
       "production_implementation_changed": true,
       "source_snapshot": "4d4b472e66c50b0ad9f7ad050c75e27014cda0d0",
       "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
+    },
+    {
+      "id": "native-interval-coverage-and-rounding-retry",
+      "benefit": "Measures the native production denominator and detects a one-grid-unit overestimate at an unbounded arctangent endpoint and incorrect empty integer differences.",
+      "sources": [
+        "crates/hyperinterval/scripts/coverage.py",
+        "crates/hyperinterval/tests/arctangent.rs",
+        "crates/hyperinterval/tests/boundary_composition.rs"
+      ],
+      "production_implementation_changed": false,
+      "source_snapshot": "d8760fc6bdb9f698427ffe965ac9406b3f45b8b3",
+      "evidence": "docs/evidence/2026-11-18-interval-native-coverage"
     }
   ],
   "accounts": [
@@ -8812,6 +8824,148 @@
       },
       "headroom": "65342833 bytes free within 64 MiB, 16 MiB required.",
       "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
+    },
+    {
+      "artifact": "crates/hyperinterval/tests/arctangent.rs#release-tests",
+      "role": "Checks the tight outward unbounded arctangent image across a refinement boundary.",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "hyperinterval --all-features",
+      "profile": "Configured release integration tests; workspace lock. One physical source and target path for all three builds.",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "c09e26a929413b920c9a90b64c95ac49901814a4",
+      "source_snapshot": "d8760fc6bdb9f698427ffe965ac9406b3f45b8b3",
+      "baseline_sha256": "0ba3f0a1b4bf57cb2f9df36a4dfec96eb1b4f064cf1a13fece0cd52461840b4e",
+      "previous_sha256": "df2990b28730bf0d2fa59d54043a5d5c1437dacf15249fb43bfca76a06d32ed0",
+      "retained_sha256": "dca5e0bdb3df148875b0537bd2193e29a744f5272258321fbe85744b7082210a",
+      "metrics": {
+        "file": {
+          "baseline": 2589560,
+          "previous_retained": 2589616,
+          "retained": 2590544,
+          "incremental_growth_bytes": 928,
+          "incremental_growth_percent": 0.03583542888211998,
+          "accepted_positive_growth_bytes": 984,
+          "remaining_cumulative_bytes": 31784,
+          "remaining_cumulative_percent": 1.962001266624446,
+          "caps": {
+            "incremental_bytes": 32768,
+            "cumulative_bytes": 32768,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "executable_code": {
+          "baseline": 1395223,
+          "previous_retained": 1395223,
+          "retained": 1395991,
+          "incremental_growth_bytes": 768,
+          "incremental_growth_percent": 0.05504496413834921,
+          "accepted_positive_growth_bytes": 768,
+          "remaining_cumulative_bytes": 15616,
+          "remaining_cumulative_percent": 1.9449550358616507,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "sized_named_code": {
+          "baseline": 1376114,
+          "previous_retained": 1376121,
+          "retained": 1376893,
+          "incremental_growth_bytes": 772,
+          "incremental_growth_percent": 0.056099717975381526,
+          "accepted_positive_growth_bytes": 779,
+          "remaining_cumulative_bytes": 15605,
+          "remaining_cumulative_percent": 1.9433913178704671,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        }
+      },
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 64518320,
+      "evidence": "docs/evidence/2026-11-18-interval-native-coverage"
+    },
+    {
+      "artifact": "crates/hyperinterval/tests/boundary_composition.rs#release-tests",
+      "role": "Checks empty integer differences and subsequent hull on all twelve storage widths.",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "hyperinterval --all-features",
+      "profile": "Configured release integration tests; workspace lock. One physical source and target path for all three builds.",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "c09e26a929413b920c9a90b64c95ac49901814a4",
+      "source_snapshot": "d8760fc6bdb9f698427ffe965ac9406b3f45b8b3",
+      "baseline_sha256": "7c40802566186a2f5789584adafe8264429c63a10f8b9d0ac51d92bf69778acb",
+      "previous_sha256": "74e929c99b7f54803fd37aa7d8a9f1f3dd519891505baa776f421317404ca5db",
+      "retained_sha256": "68eed43f8dfc02560a09114941be8224c9e0ce4dc5653d6880ef3c510b1c24c8",
+      "metrics": {
+        "file": {
+          "baseline": 1721760,
+          "previous_retained": 1721784,
+          "retained": 1724480,
+          "incremental_growth_bytes": 2696,
+          "incremental_growth_percent": 0.15658177796982664,
+          "accepted_positive_growth_bytes": 2720,
+          "remaining_cumulative_bytes": 30048,
+          "remaining_cumulative_percent": 1.8420221169036335,
+          "caps": {
+            "incremental_bytes": 32768,
+            "cumulative_bytes": 32768,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "executable_code": {
+          "baseline": 885591,
+          "previous_retained": 885591,
+          "retained": 887495,
+          "incremental_growth_bytes": 1904,
+          "incremental_growth_percent": 0.21499766822381888,
+          "accepted_positive_growth_bytes": 1904,
+          "remaining_cumulative_bytes": 14480,
+          "remaining_cumulative_percent": 1.7850023317761812,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "sized_named_code": {
+          "baseline": 874337,
+          "previous_retained": 874344,
+          "retained": 876235,
+          "incremental_growth_bytes": 1891,
+          "incremental_growth_percent": 0.21627643124445298,
+          "accepted_positive_growth_bytes": 1898,
+          "remaining_cumulative_bytes": 14486,
+          "remaining_cumulative_percent": 1.7829212306010154,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        }
+      },
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 65384384,
+      "evidence": "docs/evidence/2026-11-18-interval-native-coverage"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed",

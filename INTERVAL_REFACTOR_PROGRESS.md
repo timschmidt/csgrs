@@ -52,7 +52,7 @@ No existing arithmetic or predicate dispatch has been changed.
 
 | Phase | State | Evidence still required |
 | --- | --- | --- |
-| 0 inventory/baseline | in progress | audited source map, sibling states, tests, cost/size/coverage/fuzz, hashes |
+| 0 inventory/baseline | Hyperinterval native coverage is measured on Rust 1.95 and branch-instrumented nightly | audited source map, sibling states, remaining tests, cost/size/coverage/fuzz and hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
@@ -11801,3 +11801,45 @@ direct native example reduced the maximum measured whole-call stack by 672
 bytes and peak requested heap by 192 bytes. The size ledger preserves the
 two positive section charges. No production memory allowance was consumed.
 [Resource limits, rejected implementations and completed workloads](docs/research/dyadic-scalar-affine.md)
+
+
+## Hyperinterval native coverage and arctangent refinement
+
+Primary `d8760fc6b` adds the §14.5 coverage command. It runs the all-feature
+library and integration suites, checks the LLVM file list against the crate
+source tree and emits annotated source for incomplete metrics. Each measured
+run merged 151 profiles from 48 native test executables. The production
+denominator contains 29 code-bearing files. Two test-only modules are
+excluded and the declarations in `lib.rs` have no coverage records.
+
+| Toolchain and metric | Preceding revision | With new witnesses |
+| --- | ---: | ---: |
+| Rust 1.95 lines | 4,902 / 4,948 | 4,905 / 4,948 |
+| Rust 1.95 regions | 9,821 / 10,370 | 9,828 / 10,370 |
+| Nightly lines | 4,886 / 4,926 | 4,889 / 4,926 |
+| Nightly regions | 6,204 / 6,747 | 6,209 / 6,747 |
+| Nightly branches | 980 / 1,004 | 981 / 1,004 |
+
+Every grouped production function executed on both compilers (512 on 1.95,
+518 on nightly). Rust 1.95 supplied no branch counters. The nightly measurement
+used `8006091eb` and `-Zcoverage-options=branch`. Each compiler retained
+its own denominators. The 100% gate still fails on both. On nightly, seven
+of the 23 uncovered branches are in the IEEE backend.
+
+At spacings `2^-189` and `2^-645`, the unbounded arctangent limit needs
+another precision pass. An entire source and both one-sided rays retain
+their tight endpoints against a directed MPFR oracle. A budget one unit
+short returns work exhaustion and a fresh exact-debit retry completes.
+Stopping at the first enclosure passed the original tests and the
+`2^-189` case alone. At `2^-645`, the resulting outer endpoint is one
+output-grid unit too wide. The empty-difference test detected a second
+mutation on the integer storage paths. Production source is unchanged.
+
+Rust 1.95 passed 270 all-target/all-feature tests, 15 doctests, five minimal
+tests and 98 downstream Hyperlattice interval tests/doctests. Strict Clippy,
+strict rustdoc, formatting and example/bench checks passed. Rust 1.88 passed
+the seven affected tests enabled by the integer and dyadic features.
+Against the preceding revision, the release arctangent test executable grew
+928 bytes and the boundary-composition executable grew 2,696 bytes. Both
+passed the fixed-baseline and incremental file and code-size limits.
+[Size accounts](docs/research/interval-size-accounts.json) · [Coverage reports, controls and commands](docs/evidence-archive.tsv)
