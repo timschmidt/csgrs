@@ -500,7 +500,7 @@ fn fresh_process_replay_rebuilds_source_coefficients_and_remainder() {
     let encoded = serde_json::to_string(&(source.definition(), &request)).unwrap();
     let mut expected = None;
     for _ in 0..2 {
-        let result = std::process::Command::new(std::env::current_exe().unwrap())
+        let result = std::process::Command::new(replay_binary::path().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_rebuilds_source_coefficients_and_remainder",
@@ -530,3 +530,7 @@ fn fresh_process_replay_rebuilds_source_coefficients_and_remainder() {
     invalid.outputs[0] = usize::MAX;
     assert!(ExpressionProgram::from_definition(invalid, &mut graph()).is_err());
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

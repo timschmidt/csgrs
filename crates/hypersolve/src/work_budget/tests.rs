@@ -132,7 +132,7 @@ fn scopes_restore_after_unwinding_without_refunding_admitted_work() {
 }
 
 #[test]
-fn threads_start_without_a_budget_and_overflow_is_a_typed_failure() {
+fn threads_start_without_a_budget() {
     let outcome = with_budget(WorkBudget::ZERO, || {
         std::thread::spawn(|| {
             assert!(!is_active());
@@ -142,6 +142,10 @@ fn threads_start_without_a_budget_and_overflow_is_a_typed_failure() {
         .unwrap();
     });
     assert!(outcome.result.is_ok());
+}
+
+#[test]
+fn work_counter_overflow_is_a_typed_failure() {
     let maximal = with_budget(
         WorkBudget {
             refinements: usize::MAX,

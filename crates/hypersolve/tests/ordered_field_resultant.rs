@@ -493,10 +493,10 @@ fn an_empty_operand_does_not_hide_an_invalid_coefficient_field() {
     ));
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
 #[path = "support/selected_polynomial_replay.rs"]
 mod codec;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
 #[test]
 fn eliminated_coefficients_replay_cold_and_reselect_their_dependent_root() {
     use hypersolve::selected_polynomial_field::SelectedPolynomialDefinition;
@@ -599,7 +599,7 @@ fn eliminated_coefficients_replay_cold_and_reselect_their_dependent_root() {
         std::process::id()
     ));
     std::fs::write(&path, &wire).unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "eliminated_coefficients_replay_cold_and_reselect_their_dependent_root",
@@ -995,3 +995,7 @@ fn native_and_selected_coefficient_bezout_schedules_keep_factored_magnitudes() {
         }
     }
 }
+
+#[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

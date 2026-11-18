@@ -424,7 +424,7 @@ fn fresh_process_replay_rebuilds_both_certificates_and_generated_chain() {
     .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(replay_binary::path().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_rebuilds_both_certificates_and_generated_chain",
@@ -438,7 +438,7 @@ fn fresh_process_replay_rebuilds_both_certificates_and_generated_chain() {
             "{}",
             String::from_utf8_lossy(&output.stderr)
         );
-        let stdout = String::from_utf8(output.stdout).unwrap();
+        let stdout = std::str::from_utf8(&output.stdout).unwrap();
         let line = stdout
             .lines()
             .find(|x| x.starts_with("MODEL "))
@@ -623,3 +623,7 @@ fn outer_center_need_not_match_or_lie_inside_the_inner_image() {
         }
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

@@ -387,7 +387,7 @@ fn fresh_process_replay_regenerates_partials_from_source_and_variables() {
     let jacobian = source.jacobian(&[SymbolId(0)], &mut budget()).unwrap();
     let encoded =
         serde_json::to_string(&(jacobian.source().definition(), jacobian.variables())).unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "fresh_process_replay_regenerates_partials_from_source_and_variables",
@@ -606,3 +606,7 @@ mod regularity {
         assert!(empty.values().iter().all(DyadicInterval::is_empty));
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

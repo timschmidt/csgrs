@@ -56,7 +56,7 @@ fn second_chamfer_scalar_enclosure_keeps_its_selected_graph() {
     assert_eq!(policy.approximations(), 0);
     const CHILD: &str = "HYPERSOLVE_CHAMFER_ENCLOSURE_CHILD";
     if std::env::var_os(CHILD).is_none() {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(replay_binary::path().unwrap())
             .args([
                 "--exact",
                 "second_chamfer_scalar_enclosure_keeps_its_selected_graph",
@@ -73,3 +73,6 @@ fn second_chamfer_scalar_enclosure_keeps_its_selected_graph() {
         );
     }
 }
+
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

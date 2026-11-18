@@ -527,7 +527,7 @@ fn fresh_process_replay_validates_source_and_composed_map() {
             .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(replay_binary::path().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_validates_source_and_composed_map",
@@ -639,3 +639,7 @@ fn query_accounts_for_its_domain_scan_and_shift_construction() {
         );
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

@@ -329,7 +329,7 @@ fn replay_revalidates_both_original_sources_and_the_binding_selection() {
         ExpressionProgram::from_definition(invalid, &mut budget()),
         Err(ExpressionError::InvalidOutput { .. })
     ));
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "replay_revalidates_both_original_sources_and_the_binding_selection",
@@ -488,3 +488,7 @@ fn nonlinear_taylor_projection_retains_correlation_and_all_source_guards() {
         vec![DyadicInterval::empty(); 2]
     );
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

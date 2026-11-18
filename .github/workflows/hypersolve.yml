@@ -43,7 +43,7 @@ defaults:
 
 jobs:
   wasi-interval:
-    name: Interval solver and Horner migration (WASI Preview 1, Rust ${{ matrix.rust }})
+    name: Solver tests and replay (WASI Preview 1, Rust ${{ matrix.rust }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -55,7 +55,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Compare exact results and isolated dispatch traces
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24.22.3"
+          package-manager-cache: false
+      - name: Run solver tests, source replays and isolated dispatch comparisons
         run: |
           rustup toolchain install "$HYPERSOLVE_RUST" --profile minimal --target wasm32-wasip1
           python3 ../hyperinterval/conformance/wasi-solver.py --toolchain "$HYPERSOLVE_RUST" --output "$RUNNER_TEMP/horner-wasi"

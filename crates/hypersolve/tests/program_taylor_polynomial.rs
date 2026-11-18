@@ -518,7 +518,7 @@ fn fresh_process_replay_reconstructs_every_source_and_map() {
     .unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(replay_binary::path().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_reconstructs_every_source_and_map",
@@ -532,7 +532,7 @@ fn fresh_process_replay_reconstructs_every_source_and_map() {
             "{}",
             String::from_utf8_lossy(&output.stderr)
         );
-        let text = String::from_utf8(output.stdout).unwrap();
+        let text = std::str::from_utf8(&output.stdout).unwrap();
         let row = text
             .lines()
             .find(|l| l.starts_with("MODEL "))
@@ -592,3 +592,7 @@ fn algebraic_coefficients_remain_exact_through_multiplication_and_negation() {
     assert_eq!(model.remainder(1), Some(&d(-1, 0, 0)));
     assert_eq!(model.range(), &[d(-2, -1, 0), d(1, 2, 0)]);
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

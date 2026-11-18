@@ -420,7 +420,7 @@ fn fresh_process_replay_retains_symbolic_constants_and_revalidates_edges() {
     let _remove = Remove(path.clone());
     std::fs::write(&path, serde_json::to_vec(program.definition()).unwrap()).unwrap();
     let run = || {
-        Command::new(std::env::current_exe().unwrap())
+        Command::new(replay_binary::path().unwrap())
             .args(["--exact", "replay_child", "--nocapture"])
             .env("HYPERSOLVE_PROGRAM_REPLAY", &path)
             .output()
@@ -611,7 +611,7 @@ fn tree_import_preserves_warm_scalar_dispatch_on_the_polynomial_fixture() {
     // Small scalar constants share caches across tests. Isolate the measured
     // fixture so another test cannot alter its count while it is recording.
     if std::env::var_os("HYPERSOLVE_PROGRAM_TRACE_CHILD").is_none() {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(replay_binary::path().unwrap())
             .args([
                 "--exact",
                 "tree_import_preserves_warm_scalar_dispatch_on_the_polynomial_fixture",
@@ -663,3 +663,7 @@ fn tree_import_preserves_warm_scalar_dispatch_on_the_polynomial_fixture() {
     assert_eq!(counts.rational_gcds, 0);
     assert_eq!(counts.sign_or_zero_query_events, 0);
 }
+
+#[cfg(any(feature = "serde", feature = "dispatch-trace"))]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

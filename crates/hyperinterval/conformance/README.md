@@ -55,3 +55,24 @@ cargo +1.95.0 build --locked --release --manifest-path "$client/Cargo.toml" \
   --target wasm32-unknown-unknown --target-dir target/interval-real-bridge
 node "$client/check.mjs" target/interval-real-bridge/wasm32-unknown-unknown/release/interval_real_bridge_wasm_conformance.wasm
 ```
+
+### Hypersolve tests and fresh-process replay on WASI
+
+From the workspace root, use Rust 1.95 or stable, its `wasm32-wasip1`
+target, and Node 24.22.3. Supply a new directory for the test transcripts.
+
+```sh
+python3 crates/hyperinterval/conformance/wasi-solver.py --toolchain 1.95.0 --output /tmp/hypersolve-wasi
+```
+
+The driver checks the native and WASI test inventories for every library and
+integration executable. It runs ordinary solver cases in WASI. For tests
+that launch a fresh process, the native parent supplies the original input,
+the WASI child executes the exact selected test, and the parent checks its
+result. For children that emit model coefficients, work counts, scalar values
+or dispatch records, the driver also runs a fresh native child with the same
+input and compares the full evidence rows. The report records the number of
+child calls and matching rows for each replay. Two
+Horner cases compare complete ordered dispatch records across both targets
+and both implementations. Thread creation and panic unwinding require a
+native run. Each of those cases also exercises the guest limitation explicitly.

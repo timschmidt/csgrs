@@ -356,7 +356,7 @@ fn fresh_process_replay_rebuilds_inverse_and_source_association() {
     let data = serde_json::to_string(&(source.definition(), change)).unwrap();
     let mut previous = None;
     for _ in 0..2 {
-        let child = std::process::Command::new(std::env::current_exe().unwrap())
+        let child = std::process::Command::new(replay_binary::path().unwrap())
             .args([
                 "--exact",
                 "fresh_process_replay_rebuilds_inverse_and_source_association",
@@ -424,3 +424,7 @@ fn dense_four_dimensional_rational_chart_preserves_binding_order() {
         expected
     );
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

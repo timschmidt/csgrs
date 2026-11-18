@@ -340,7 +340,7 @@ fn join_correspondences_survive_fresh_process_replay_and_further_joins() {
             .as_nanos()
     ));
     std::fs::write(&path, wire).unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "join_correspondences_survive_fresh_process_replay_and_further_joins",
@@ -919,7 +919,7 @@ fn equal_generator_reduction_replays_fresh_with_original_selections_and_retries(
             .as_nanos()
     ));
     std::fs::write(&path, codec::encode(&graph)).unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "equal_generator_reduction_replays_fresh_with_original_selections_and_retries",
@@ -936,3 +936,6 @@ fn equal_generator_reduction_replays_fresh_with_original_selections_and_retries(
         String::from_utf8_lossy(&child.stderr)
     );
 }
+
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

@@ -644,7 +644,7 @@ fn polynomial_inverse_over_selected_coefficients_keeps_replay() {
                     .as_nanos(),
             ));
             std::fs::write(&path, inverse_codec::encode(&graph)).unwrap();
-            let child = std::process::Command::new(std::env::current_exe().unwrap())
+            let child = std::process::Command::new(replay_binary::path().unwrap())
                 .args([
                     "--exact",
                     "selected_polynomial_inverse_replay_child",
@@ -732,3 +732,6 @@ fn polynomial_reciprocal_composition_retains_its_original_field() {
     assert!(field.parent().unwrap().shares_authority(&parent));
     assert_eq!(field.defining_polynomial().unwrap().len(), 4);
 }
+
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

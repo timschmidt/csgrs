@@ -468,7 +468,7 @@ fn graph_encoding_shares_repeated_outputs_and_replays_in_a_fresh_process() {
             .as_nanos()
     ));
     std::fs::write(&path, wire).unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args(["--exact", "replay_in_fresh_process_child", "--nocapture"])
         .env("HYPERSOLVE_SELECTED_REPLAY_TEST_INPUT", &path)
         .output();
@@ -700,3 +700,6 @@ fn elliptic_contact_graph_replays_original_curve_distance_and_side() {
     );
     assert_sign(y.sign(&TestContext::strict()), RealSign::Positive);
 }
+
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

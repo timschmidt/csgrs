@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 import tempfile
 
-from wasi_libtest import RUNNER, TARGET, build_tests, completed, execute, test_names
+from wasi_libtest import RUNNER, TARGET, build_tests, completed, execute, run_replay_child, test_names
 
 THREAD_DROP = ("flow_noise_witness", "closure::unique_history_drops_iteratively_with_a_retained_intermediate_state")
 REPLAY_DIRECTORY = "CSGRS_FLOW_NOISE_REPLAY_DIR"
@@ -26,18 +26,7 @@ def replay_child(args):
     options = ["--env", key, os.environ[key]]
     if key == REPLAY_DIRECTORY:
         options = ["--env", key, "/replay", "--replay-dir", os.environ[key]]
-    # The native tests collect subprocess stdout via a pipe. WASI needs a regular
-    # file while writing large evidence rows, then the parent can read them.
-    with tempfile.TemporaryDirectory() as temp:
-        run = execute(["node", str(RUNNER), *options, guest, *args], Path(temp) / "child.log")
-    if run.returncode or not completed(run.stdout, {case}):
-        raise SystemExit(run.stdout)
-    # Single-thread libtest can put the first evidence row after the test label.
-    prefix = f"test {case} ... "
-    for line in run.stdout.splitlines():
-        print(line.removeprefix(prefix) if line.startswith(prefix) else line)
-    with Path(os.environ["DYNAMICS_WASI_RECEIPT"]).open("a") as receipt:
-        print(case, file=receipt)
+    run_replay_child(guest, args, case, options, Path(os.environ["DYNAMICS_WASI_RECEIPT"]))
 
 
 def main():

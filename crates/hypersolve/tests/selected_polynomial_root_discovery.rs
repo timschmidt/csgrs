@@ -686,7 +686,7 @@ fn discovered_roots_replay_in_a_fresh_process_and_feed_further_discovery() {
             .as_nanos()
     ));
     std::fs::write(&path, wire).unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args(["--exact", "discovered_root_replay_child", "--nocapture"])
         .env("HYPERSOLVE_ROOT_DISCOVERY_REPLAY", &path)
         .output();
@@ -968,3 +968,6 @@ fn selected_value_endpoints_count_distinct_roots_without_projection() {
         Some(0)
     );
 }
+
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

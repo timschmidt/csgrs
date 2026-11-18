@@ -23,7 +23,7 @@ fn vertical_limits_invalid_inputs_and_budget_retry_remain_explicit() {
 }
 
 #[test]
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
 fn vertical_source_replays_and_restricts_in_a_fresh_process() {
     use hyperreal::Real;
     use hypersolve::bivariate_topology::{BivariateCurveDomain, decompose_bivariate_curve};
@@ -92,7 +92,7 @@ fn vertical_source_replays_and_restricts_in_a_fresh_process() {
         serde_json::to_string(&(equation.coefficients, domain.first, domain.second)).unwrap(),
     )
     .unwrap();
-    let status = std::process::Command::new(std::env::current_exe().unwrap())
+    let status = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "vertical_source_replays_and_restricts_in_a_fresh_process",
@@ -112,3 +112,7 @@ fn vertical_source_replays_and_restricts_in_a_fresh_process() {
 fn content_scalars_and_unsupported_algebraic_bounds_remain_explicit() {
     acceptance::content_scalars_and_unsupported_algebraic_bounds_remain_explicit();
 }
+
+#[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

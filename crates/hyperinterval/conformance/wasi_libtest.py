@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
 RUNNER = ROOT / "crates/hyperlattice-interval/conformance/run-wasi-test.mjs"
@@ -40,6 +41,21 @@ def execute(command, log, env=None):
     with log.open("w") as stream:
         result = subprocess.run(command, cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT)
     return subprocess.CompletedProcess(command, result.returncode, log.read_text())
+
+
+def run_replay_child(guest, args, case, options, receipt):
+    """Run the guest with a regular stdout file, then forward its evidence to the native parent."""
+    with tempfile.TemporaryDirectory() as temp:
+        run = execute(["node", str(RUNNER), *options, guest, *args], Path(temp) / "child.log")
+    if run.returncode or not completed(run.stdout, {case}):
+        raise SystemExit(run.stdout)
+    # On single-thread libtest the first evidence row can follow the test label.
+    lines = [line.removeprefix(f"test {case} ... ") for line in run.stdout.splitlines()]
+    for line in lines:
+        print(line)
+    with receipt.open("a") as stream:
+        print(case, file=stream)
+    return lines
 
 
 def compare_dispatch(guest, native, case, variable, marker, expected, output):
