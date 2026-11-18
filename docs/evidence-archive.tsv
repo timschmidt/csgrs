@@ -692,3 +692,4 @@ docs/evidence/2026-11-18-interval-wasip1-qualified	2	211056	5e0c694430b9dd573e29
 docs/evidence/2026-11-18-interval-lattice-coverage	2	335457	08014c5a791d6d3909f386a9f3be00292943d338e7347ac2f4f5e4af3daf3148
 docs/evidence/2026-11-18-interval-box-wasi	2	124299	1a7877b24b7bac7b5c4a0624d3f1c84f4a6c22a8a15153a7217cd2a52fe31cea
 docs/evidence/2026-11-18-interval-scalar-wasi-oracles	2	173969	9e214a215262421ce861e00d038b0b751fd3a9b3bc1e14e8d332089605716339
+docs/evidence/2026-11-18-interval-solver-wasi-dispatch	2	431452	a2529ea52afabe32607984efe97e29fa5b4e835b05ce9c6ede0c66bbe8b7bf43

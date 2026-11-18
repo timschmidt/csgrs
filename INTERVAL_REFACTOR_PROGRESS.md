@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI interval solver acceptance, including 4,212 matched Horner dispatch windows; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -12637,4 +12637,72 @@ verification for both Hyperreal and Hyperinterval, strict zizmor and repository
 budget checks passed. Evidence commit `76f0c1977` contains the inventory by
 test name, transcripts, linked measurements, normalized dependency checks,
 source patches and failed controls.
+[Evidence index](docs/evidence-archive.tsv)
+
+## Phases 3, 7 and 14, solver intervals and dispatch on WASI Preview 1, 18 November 2026
+
+The solver acceptance job in `7b5fb0fdb` runs twelve complete public
+integration suites and both exact Horner migration tests in WASI. The 63
+tests cover interval expression evaluation, radius validity, quadratic
+extrema, Jacobian traces, Krawczyk certificates, symbolic enclosures and
+trivariate tensor capacity. Each guest integration inventory must match the
+corresponding native executable. The Horner tests exercise the production,
+frozen and candidate polynomial paths on the existing 702-case corpus.
+
+The two Horner trace comparisons cover 1,404 polynomial evaluation windows
+and 2,808 root-exclusion and derivative windows. Hyperinterval adds 450
+rational product windows. In each comparison the native and guest frozen
+and shared implementations run in four fresh processes. Every window
+compares its ordered dispatch counts, reducer statistics and full result.
+A guest-only extra rational temporary left the exact four-corner product
+oracle green and failed this comparison on its first row. The original
+native parent-process assertions still pass.
+
+The preceding solver test build failed in `wait-timeout`; after isolating
+Proptest's process-fork features, Criterion rejected its threaded backend
+on WASI. The target-specific development dependencies retain in-process
+property generation, bit sets and Criterion plotting. The 64-bit tensor
+capacity test also contained shifts that Rust rejected when compiling a
+32-bit `usize`. Commit `f18c2f79b` preserves the original 64-bit cases and
+exercises shape-product overflow and each unreservable axis on 32-bit.
+The wide determinant fixture retains its explicitly typed heap-backed matrix.
+
+| Local qualification | Rust 1.95.0 | Rust 1.99.0 |
+| --- | ---: | ---: |
+| Solver library tests passing directly in WASI | 622 of 627 | 622 of 627 |
+| Solver integration tests passing directly in WASI | 887 of 904 | 887 of 904 |
+| All-feature native solver tests passing | 1,533 | 1,533 |
+| Complete dispatch windows matching across both targets | 4,662 | 4,662 |
+
+All 69 solver guest executables were linked and every listed case ran in an
+isolated guest. Two library cases invoked a parent process that WASI cannot
+spawn. Their full child computations were separately qualified by the Horner
+comparison. The other three library cases require threads or panic unwinding.
+Seventeen integration cases reached a missing process, thread or temporary
+directory facility. Every one passed in the native inventory. Two further
+replay cases compile only for the native target. None of these counts includes
+a timed-out test. The scalar driver also passed 178 guest tests on Rust 1.88
+and 228 on each newer compiler, with the original 6/9/9 native OS probes.
+
+Eight matched native test executables retained their preceding allocated
+section sizes and defined-function byte counts. Four file sizes grew by 16
+to 104 bytes, within their per-artifact and cumulative limits. Earlier matrix
+layouts and a common pointer-width shift expression had measurable costs.
+The three-row matrix table exceeded its Rust 1.95 all-feature RELRO padding
+cap. The common shift version added 40 bytes to a stable all-feature test
+file whose historical growth already exceeded its cumulative allowance. The
+retained variant reduced that file by 24 bytes. All previous charges remain
+reserved. A separate 64 MiB hosted test slot with 16 MiB reserved covers each
+new guest executable, with at least 58,839,873 bytes free. The ordinary
+Krawczyk example as a downstream release client remained byte-identical on
+native (3,368,824 bytes) and WASI (1,704,627 bytes), with matching complete
+output. No deployment, memory or stack exception was consumed.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+Strict native and cross-target Clippy, formatting, all six packages through a
+local registry and strict zizmor passed. The hosted CI job has not been run.
+These results qualify solver tests on another target. Production Horner
+migration still requires the existing runtime and size gates. Evidence commit
+`b6c8d68f8` contains the transcripts, observed inventories, comparison
+controls, rejected fixture layouts and final-artifact measurements.
 [Evidence index](docs/evidence-archive.tsv)

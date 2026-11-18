@@ -10481,5 +10481,155 @@
       "remaining_bytes_under_tighter_percentage_cap": 226
     },
     "result": "The centered-affine executable has identical final file and code sizes to its preceding control. The unit file shrank by 240 bytes with unchanged code size. Its only growing allocated section is read-only data. The linked fixed_affine example is byte-identical to the preceding build. No production flash or memory allowance was charged."
+  },
+  "solver_wasi_dispatch": {
+    "benefit": "Qualifies the solver's original interval suites, width-dependent tensor capacity failures and full native/WASI dispatch differentials with a fixed heap-backed polynomial matrix fixture.",
+    "evidence": "docs/evidence/2026-11-18-interval-solver-wasi-dispatch",
+    "source_snapshot": "f18c2f79b13dcb8836aa4ba7e73ee4282da88587",
+    "baseline": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "6f0815cfb",
+    "production_change": false,
+    "target": "x86_64-unknown-linux-gnu, locked release. Rust 1.95.0 and 1.99.0 (stable). Each artifact, toolchain, and feature selection is accounted separately.",
+    "caps": {
+      "incremental_bytes": 4096,
+      "incremental_percent": 1,
+      "cumulative_bytes": 8192,
+      "cumulative_percent": 2,
+      "file_slot_bytes": 67108864,
+      "required_free_bytes": 16777216
+    },
+    "metrics": "Final file size, union of defined ELF function ranges, and every allocated ELF section. No allocated section or function union grew versus the preceding revision. Raw values and all positive historical charges remain in matched-measurements.json in the evidence archive.",
+    "cumulative_rule": "Charge positive steps separately against the fixed baseline. Preserve prior increases even after a decrease. Previously over-cap metrics receive no new charge. The stable all-feature tensor file had already grown by 11704 bytes and its RELRO padding by 1672 bytes before this change. Neither increased here.",
+    "columns": [
+      "executable",
+      "Rust",
+      "features",
+      "fixed_file",
+      "previous_file",
+      "retained_file",
+      "incremental_file_charge",
+      "cumulative_file_charge",
+      "remaining_incremental_cap_bytes",
+      "remaining_cumulative_cap_bytes",
+      "slot_headroom_bytes"
+    ],
+    "native_files": [
+      [
+        "hypersolve library tests",
+        "1.95.0",
+        "dispatch-trace",
+        13367336,
+        13367320,
+        13367424,
+        104,
+        104,
+        3992,
+        8088,
+        53741440
+      ],
+      [
+        "hypersolve library tests",
+        "1.95.0",
+        "all",
+        13379440,
+        13379448,
+        13379504,
+        56,
+        64,
+        4040,
+        8128,
+        53729360
+      ],
+      [
+        "hypersolve library tests",
+        "stable",
+        "dispatch-trace",
+        14065360,
+        14065632,
+        14065672,
+        40,
+        312,
+        4056,
+        7880,
+        53043192
+      ],
+      [
+        "hypersolve library tests",
+        "stable",
+        "all",
+        14077816,
+        14077976,
+        14077976,
+        0,
+        160,
+        4096,
+        8032,
+        53030888
+      ],
+      [
+        "trivariate_arithmetic",
+        "1.95.0",
+        "dispatch-trace",
+        4887344,
+        4887392,
+        4887408,
+        16,
+        64,
+        4080,
+        8128,
+        62221456
+      ],
+      [
+        "trivariate_arithmetic",
+        "1.95.0",
+        "all",
+        4915776,
+        4915800,
+        4915792,
+        0,
+        24,
+        4096,
+        8168,
+        62193072
+      ],
+      [
+        "trivariate_arithmetic",
+        "stable",
+        "dispatch-trace",
+        5040304,
+        5040264,
+        5040264,
+        0,
+        0,
+        4096,
+        8192,
+        62068600
+      ],
+      [
+        "trivariate_arithmetic",
+        "stable",
+        "all",
+        5075120,
+        5086824,
+        5086800,
+        0,
+        11704,
+        4096,
+        0,
+        62022064
+      ]
+    ],
+    "new_guest_images": {
+      "target": "wasm32-wasip1, release, hypersolve --all-features",
+      "scope": "New hosted test command images. Each has a 64 MiB file slot with 16 MiB reserved; no earlier image on this target qualified for comparison. The archive contains every image name, CODE-section size, file size, SHA-256 and headroom in wasm-image-accounts.json.",
+      "counts": {
+        "1.95.0": 69,
+        "stable": 69
+      },
+      "minimum_headroom_bytes": {
+        "1.95.0": 59226367,
+        "stable": 58839873
+      }
+    }
   }
 }
