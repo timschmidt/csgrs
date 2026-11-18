@@ -1,5 +1,8 @@
 # Changelog
 
+- Add `F32ProposalInterval::radius_estimate` for finite native half-widths,
+  including subnormal intervals and the full binary32 range.
+
 - Add budgeted, tight outward dyadic-to-F32/F64 enclosure conversion, preserving
   finite overflow and unsupported-environment diagnostics. Qualify exact output
   bits, retry, native rounding-mode independence and actual WASM execution.

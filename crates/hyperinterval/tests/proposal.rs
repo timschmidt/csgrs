@@ -148,3 +148,38 @@ macro_rules! cases {
 
 cases!(binary32, F32ProposalInterval, f32, u32);
 cases!(binary64, F64ProposalInterval, f64, u64);
+
+#[test]
+fn binary32_radius_rounds_the_exact_half_width_once() {
+    let grid = |n: i32| {
+        let value = f32::from_bits(n.unsigned_abs());
+        if n < 0 { -value } else { value }
+    };
+    for lo in -32..=32 {
+        for hi in lo..=32 {
+            let width: i32 = hi - lo;
+            let floor = width / 2;
+            let expected = grid(floor + i32::from(width % 2 == 1 && floor % 2 == 1));
+            let span = F32ProposalInterval::new(grid(lo), grid(hi)).unwrap();
+            assert_eq!(
+                span.radius_estimate(),
+                Some(expected),
+                "subnormal units [{lo}, {hi}]"
+            );
+        }
+    }
+    assert_eq!(F32ProposalInterval::empty().radius_estimate(), None);
+    let max = f32::MAX;
+    let prev = f32::from_bits(max.to_bits() - 1);
+    for (lo, hi, radius) in [
+        (-max, max, max),
+        (-max, prev, prev),
+        (prev, max, (max - prev) * 0.5),
+        (0.0, max, max * 0.5),
+        (-0.0, 0.0, 0.0),
+        (max, max, 0.0),
+    ] {
+        let span = F32ProposalInterval::new(lo, hi).unwrap();
+        assert_eq!(span.radius_estimate().unwrap().to_bits(), radius.to_bits());
+    }
+}

@@ -207,3 +207,14 @@ let certified: RationalInterval = proposal.into();
 
 proposal!(F32ProposalInterval, f32, u32, BINARY32);
 proposal!(F64ProposalInterval, f64, u64, BINARY64);
+
+impl F32ProposalInterval {
+    /// Native estimate of the half-width, or `None` for empty.
+    /// Taking the midpoint of the upper and negated lower endpoints keeps the
+    /// full finite range representable. With gradual underflow and rounding
+    /// to nearest, a subnormal half-width rounds once to the nearest even value.
+    #[inline]
+    pub fn radius_estimate(&self) -> Option<f32> {
+        self.estimates().map(|(lo, hi)| (-lo).midpoint(hi))
+    }
+}
