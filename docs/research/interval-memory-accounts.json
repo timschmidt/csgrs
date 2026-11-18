@@ -1140,5 +1140,31 @@
         0
       ]
     }
+  },
+  "whole_solver_wasi_qualification": {
+    "source": "0e3566c05b2c574ee8aa908dd37648b754ac1ed1",
+    "evidence": "docs/evidence/2026-11-18-interval-solver-library-wasi",
+    "workload": "Compiled 70-executable Hypersolve qualification job on Linux. Warm Cargo lookup, native and WASI libtest, Python, Node, children, assertion output and cleanup in one fresh cgroup v2 per compiler and workload. Swap disabled.",
+    "capacity_bytes": 1073741824,
+    "required_headroom_bytes": 268435456,
+    "positive_charges": "New qualification workload. Record its full observed peak against its own capacity. The preceding run executed 64 direct tests and the two migration comparisons. Its separate reference peak measures the change in the CI job. No production allocation or stack allowance is spent. Cold compilation is outside this observation.",
+    "targets": {
+      "1.95.0": {
+        "old_peak_bytes": 66109440,
+        "old_wall_seconds": 5.267,
+        "retained_peak_bytes": 84496384,
+        "retained_wall_seconds": 76.165,
+        "increase_over_preceding_job_bytes": 18386944,
+        "headroom_bytes": 989245440
+      },
+      "stable": {
+        "old_peak_bytes": 68030464,
+        "old_wall_seconds": 5.25,
+        "retained_peak_bytes": 82939904,
+        "retained_wall_seconds": 76.119,
+        "increase_over_preceding_job_bytes": 14909440,
+        "headroom_bytes": 990801920
+      }
+    }
   }
 }

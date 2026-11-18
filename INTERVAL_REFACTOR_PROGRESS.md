@@ -59,14 +59,14 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI interval solver acceptance, including 4,212 matched Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 70 solver test executables, including 4,212 matched Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, and Hyperdynamics numerical and fresh-process replay cases locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, and Hypersolve and Hyperdynamics numerical and fresh-process replay cases locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -12882,4 +12882,70 @@ The evidence archive contains 1,396 observations and supporting files at
 `92bd98328f7f809eab8315f9e0419d274f8f3561`, record
 `docs/evidence/2026-11-18-interval-univariate-proof`, digest
 `23c956a12c18f474ab8c919605d40746fb1a0ae9600398fb72fe24790ccd9b5d`.
+[Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7 and 14 whole-solver WASI qualification, 18 November 2026
+
+Commit `0e3566c05` extends the Hypersolve WASI job from 64 direct tests to
+the full library and integration inventory. Rust 1.95.0 and 1.99.0 each
+accounted for the same 1,535 cases across 70 test executables. Each ran
+1,511 tests directly on WASI, 17 native parent cases with 26 fresh guest
+executions, two Horner comparisons covering 4,212 ordered dispatch windows,
+and five native tests for threading or unwinding. The runner checks the
+expected WASI diagnostic for each native-only case. Splitting the cost
+overflow assertion from its threading test lets the overflow check run on
+the 32-bit guest. The restored vertical-component and field-resultant cases
+reconstruct their original algebraic inputs in fresh guests.
+[Qualification driver and execution modes](crates/hyperinterval/conformance/README.md)
+
+Eight native parent cases also compared 15 complete output records from
+14 guest calls. The records cover exact Jacobians, charts, Taylor coefficients
+and remainders, work counts, invalid source references and dispatch.
+Each emitted record was byte-identical across the two compilers.
+Changing one guest expression value failed the original parent assertion.
+Increasing one Taylor graph-work count by one passed the guest's repeatability
+check and failed the comparison against the native model.
+
+| Warm qualification job | Previous peak | Full-inventory peak | Free under 1 GiB cap | Previous / full wall time |
+| --- | ---: | ---: | ---: | ---: |
+| Rust 1.95.0 | 66,109,440 B | 84,496,384 B | 989,245,440 B | 5.267 / 76.165 s |
+| Rust 1.99.0 | 68,030,464 B | 82,939,904 B | 990,801,920 B | 5.250 / 76.119 s |
+
+Each measurement includes Cargo lookup, the native, Node and Python process
+trees, recorded output and cleanup. Swap was disabled. All four cgroups kept
+the required 256 MiB reserve and recorded zero limit or OOM events. The
+account charges the full observed peak to each new test workload. Cold builds
+and production heap and stack are outside this measurement.
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+All 24 release example images matched their controls byte for byte. Maximum
+ordinary file growth on Rust 1.95.0 was 992 B native and 246 B WASI. On
+Rust 1.99.0 it was 640 B native and 165 B WASI. Enabling the two previously
+excluded algebraic replay cases added 247,039–357,703 B to their respective
+guest executables, measured independently of the driver change. Each fit
+the 16 MiB test executable cap. Two stable native Taylor test executables
+already carried excess cumulative file growth. Borrowing the UTF-8 stdout
+from each process result recovered 1,024 B and 656 B on those executables.
+The fixed, preceding, ported and retained measurements preserve all prior
+positive charges. [Per-target size accounts](docs/research/interval-size-accounts.json)
+
+A public budget probe found an open 32-bit diagnostic defect. With a limit
+of 4,294,967,296 bits, observing 4,294,967,297 bits correctly returns
+`WorkKind::CoefficientGrowth` on both targets. On WASI the public error
+fields and display report 4,294,967,295 for both counts. The native 64-bit
+receipt preserves both inputs. The witness calls the budget API directly.
+[Coefficient observer](crates/hypersolve/src/work_budget.rs)
+
+Both compilers passed the native Hypersolve release suite and doctest,
+strict native and guest Clippy, strict rustdoc, the owner bench targets in
+test mode, and fuzz-target checks. The shared child runner also passed each
+Hyperdynamics WASI suite with 141 direct tests, 17 fresh replay cases and one
+native thread case. Workspace formatting and strict zizmor passed locally.
+Hosted jobs and the remaining release and solver migration gates stay open.
+
+Evidence commit `657e4535e65fe4bb9b2cf7ef7b7caa2d50fc7606` contains
+885 files for this qualification, including both mutations, the 32-bit
+reproducer, compiler-specific lifetime measurements and linked binary
+accounts. Record `docs/evidence/2026-11-18-interval-solver-library-wasi`
+has digest `532e947f4b97cd0d0c9fa3dd615b01fec2af7e9701a5d07592ae0e3c4f0b7291`.
 [Evidence index](docs/evidence-archive.tsv)

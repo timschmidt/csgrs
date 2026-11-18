@@ -11201,5 +11201,99 @@
         "headroom_bytes": 64878064
       }
     }
+  },
+  "whole_solver_wasi_replay": {
+    "source": "0e3566c05b2c574ee8aa908dd37648b754ac1ed1",
+    "preceding": "486af4162",
+    "fixed": "c9f1f9ac5",
+    "evidence": "docs/evidence/2026-11-18-interval-solver-library-wasi",
+    "benefit": "Complete solver WASI test inventories, source replay and native/guest comparisons of exact results and work records.",
+    "capacity_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "ordinary_caps": "4,096 bytes and 1% incremental, 8,192 bytes and 2% cumulative per final file, code and function metric. Historical allocated ELF section limits also apply to the native library tests under all features and dispatch-trace.",
+    "new_replay_cases": "Previously excluded WASI vertical-component and field-resultant replay assertions are compiled independently as a control. The new test workload has a 16 MiB executable ceiling. Its measured addition to the existing qualification file and its residual transport cost are both retained.",
+    "coordinator_caps": "Optional native test driver up to 16,384 bytes and 2% over its ordinary binary per metric, with a 16 MiB absolute executable ceiling.",
+    "accounting": "Full fixed, preceding, port-only, retained and coordinator measures, historical positive charges, effective caps, headroom, and remaining allowances are hash-bound in accounts-review.json. Existing charges carry forward. Each target summary gives maximum incremental charge across ordinary workloads separately by metric. The exhaustive positive accounts in the archive are the input for future cumulative reviews.",
+    "metrics": [
+      "file",
+      "code",
+      "functions"
+    ],
+    "targets": {
+      "1.95.0-x86_64-unknown-linux-gnu": {
+        "compared_artifacts": 17,
+        "matching_release_examples": 6,
+        "max_incremental_charges": [
+          992,
+          464,
+          487
+        ],
+        "minimum_slot_headroom": 53725528,
+        "max_coordinator_charges": [
+          456,
+          48,
+          37
+        ]
+      },
+      "1.95.0-wasm32-wasip1": {
+        "compared_artifacts": 16,
+        "matching_release_examples": 6,
+        "max_incremental_charges": [
+          246,
+          45,
+          42
+        ],
+        "minimum_slot_headroom": 59226121,
+        "new_assertion_workload_bytes": {
+          "ordered_field_resultant": [
+            325943,
+            254672,
+            254016
+          ],
+          "bivariate_vertical_components": [
+            247039,
+            181996,
+            181476
+          ]
+        }
+      },
+      "stable-x86_64-unknown-linux-gnu": {
+        "compared_artifacts": 17,
+        "matching_release_examples": 6,
+        "max_incremental_charges": [
+          640,
+          96,
+          68
+        ],
+        "minimum_slot_headroom": 53031088,
+        "max_coordinator_charges": [
+          336,
+          32,
+          19
+        ]
+      },
+      "stable-wasm32-wasip1": {
+        "compared_artifacts": 16,
+        "matching_release_examples": 6,
+        "max_incremental_charges": [
+          165,
+          55,
+          52
+        ],
+        "minimum_slot_headroom": 58839708,
+        "new_assertion_workload_bytes": {
+          "ordered_field_resultant": [
+            357703,
+            257337,
+            256676
+          ],
+          "bivariate_vertical_components": [
+            270338,
+            183220,
+            182714
+          ]
+        }
+      }
+    }
   }
 }
