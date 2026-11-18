@@ -157,6 +157,8 @@ fn images_are_consumable_and_budgets_retry_without_cached_exhaustion() {
 #[path = "support/grid_oracle.rs"]
 mod grid_oracle;
 #[cfg(not(target_env = "msvc"))]
+use grid_oracle::q;
+#[cfg(not(target_env = "msvc"))]
 #[path = "../../hyperreal/tests/support/mpfr.rs"]
 mod mpfr_cache;
 
@@ -234,6 +236,26 @@ fn directed_mpfr_endpoint_oracle_across_domains_and_grids() {
                     precision,
                 );
                 assert_eq!(result.domain, DomainCoverage::Complete);
+            }
+        }
+    }
+}
+
+#[cfg(not(target_env = "msvc"))]
+#[path = "support/atanh_oracle.rs"]
+mod atanh_oracle;
+
+#[cfg(not(target_env = "msvc"))]
+#[test]
+fn atanh_one_grid_step_either_side_of_each_pole() {
+    for fraction_bits in [2, 16, 32, 60] {
+        let one = 1_i64 << fraction_bits;
+        let endpoints = [-one - 1, -one, -one + 1, 0, one - 1, one, one + 1];
+        for (index, &a) in endpoints.iter().enumerate() {
+            for &b in &endpoints[index..] {
+                for precision in [-64, -8, 0, 5] {
+                    atanh_oracle::verify(a, b, fraction_bits, precision);
+                }
             }
         }
     }

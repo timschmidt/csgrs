@@ -30,3 +30,13 @@ not establish arbitrary coefficient-size coverage or total-resource bounds.
 mkdir -p /tmp/hyperinterval-conversions
 cargo +nightly fuzz run conversions --features rational /tmp/hyperinterval-conversions -- -runs=100000 -max_len=64 -max_total_time=30 -seed=20261125
 ```
+
+`atanh` draws dyadic endpoints around −1, 0 and 1 with up to 60 fractional
+bits. It checks both open domain limits, local coverage, empty-domain errors
+and every finite endpoint against directed MPFR bounds. The deterministic
+owner test also exercises intervals one grid step to either side of each pole.
+
+```sh
+mkdir -p /tmp/hyperinterval-atanh
+cargo +nightly fuzz run atanh /tmp/hyperinterval-atanh -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261126
+```
