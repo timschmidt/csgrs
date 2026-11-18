@@ -11503,3 +11503,86 @@ and the repository-wide strict zizmor audit passed. Hosted runners have yet
 to execute this workflow revision. The analytic oracles qualify the two
 specified field families; general nonlinear ODE coverage remains part of
 the wider plan. [Raw campaign, mutation and matrix evidence](docs/evidence-archive.tsv)
+
+## Phase 7 and 14 solver certificate fuzzing
+
+Revision `c9a94af00` adds a maintained oracle for the three public Hypersolve
+Krawczyk certifiers. Given two original roots, the generator constructs an
+affine system, a quadratic in one variable, and a quadratic system in two
+variables with an invertible change of coordinates and mixed equation rows.
+Integer arithmetic independently gives the original solutions, their closed-box
+membership, the Newton step, and the inclusion and contraction bounds. Both
+`STRICT` and `APPROXIMATE_512` must return the expected ordered outcome on
+these rational inputs. [Native witnesses and fuzz instructions](crates/hypersolve/fuzz/README.md#interval-krawczyk-certificates)
+
+| Qualification | Result |
+| --- | --- |
+| Ordinary native replay | 2,025 generated cases and seven checked-in inputs exercised 12,192 reports. The grid contained 1,264 boxes with zero roots, 573 with one distinct root and 188 with two. The seeds also exercise the second singular pivot and successful coupled certification with positive unequal radii. |
+| Fuzz and cost replay | The final bounded ASan campaign executed 10,000 inputs in 57 seconds from the seven seeds. Its 394 distinct eight-byte survivors included all seven coupled outcomes. Two checked-in seeds were the two most expensive by median on each of two pinned CPUs in the initial 399-input replay. |
+| Oracle sensitivity | Three isolated mutations independently failed, covering an incorrect affine root, acceptance of equality at the strict contraction bound, and use of the first width twice in the mixed quadratic remainder. The unmodified control passed. |
+| Final images | The retained solver certification and retained-fuzz benchmark executables matched their preceding release builds byte for byte. The new all-feature and minimal release test images occupied 4,413,576 and 4,104,784 bytes. The sanitizer image occupied 29,787,760 bytes, leaving 37,321,104 bytes in its 64 MiB qualification envelope. [Size accounts](docs/research/interval-size-accounts.json) |
+
+The original aggregate retained-fuzz benchmark stopped on the registered
+bivariate target. Its dispatch table also omitted the optional Jacobian
+target. The repair on `interval-krawczyk-collector-review` (`5b149113d`)
+replayed the whole registry and preserved historical promotions when run
+without the optional target. Linking all three workloads grew the final
+collector from 9,377,104 to 10,474,648 bytes against a 4,096-byte cap.
+The primary CI therefore runs the solver-owned oracle through the existing
+interval conformance workspace. The aggregate collector gap remains open.
+
+### Reassessment of the affine and univariate proof repair
+
+On the retained revision, four symbolic regressions failed under
+`APPROXIMATE_512`. They reproduced false uniqueness, an affine root that
+fails its original equations, and rejection of a contractive bound. The full repair on
+`interval-krawczyk-proof-review` passed all six symbolic regressions and the
+two maintained rational tests. The comparison uses the current primary, which
+already requires certified predicates for the multivariate proof.
+
+Across 24 fresh native processes per revision, the repair passed all 120
+cold/warm stack rows and all 60 heap rows. The cumulative account carries
+forward the previously accepted growth for each workload. Twenty rows used
+additional stack, at most 48 bytes. The repaired client's largest measured
+callee stack was 12,824 bytes and its smallest measured free worker space
+was 2,074,152 bytes. Requested heap peaked at 15,036 bytes and returned to
+zero after drop. Each revision also passed 240 ordered bare-WASM calls.
+Both revisions' rebuilt native certification, lifetime and WASM files were
+byte-identical to their respective archived images. All 66 measured section,
+function and final-file rows across these three images passed their
+incremental and cumulative caps.
+
+A separate stress run used the original complete symbolic inputs, two stack
+watermark patterns and 48 fresh processes per revision. For each previously
+incorrect result, the comparison used the same input's completed strict proof
+and recorded the prior approximate result separately. All 24 stack and 12 heap
+rows passed, including earlier positive charges. The repair used at most
+15,192 bytes of callee stack and 15,436 bytes of requested heap. The minimum
+worker headroom was 2,071,784 bytes. The stress WASM client checked each
+revision's expected statuses in fresh instances.
+
+The runtime gate still blocks the full repair. The one-variable multivariate
+quadratic benchmark completes the same exact proof on both revisions. In the
+first balanced crossover the repair's median was 0.42% slower on CPU 5 and
+0.91% slower on CPU 15. A run on CPUs 3 and 5 overlapped other qualification
+work and mixed approximately 4.5 and 9.1 microsecond process medians. An
+independent crossover after the owner tests finished reversed the assignment
+order on CPUs 5 and 15. The repair was 0.96% and 0.95% slower, respectively.
+Each crossover used four processes per revision per CPU and 50 Criterion
+samples per process. The production affine and univariate paths still require
+`STRICT` for authoritative root certification. Commit `d2a67f1d1` documents the policy
+requirement and its observed failure modes at both public entry points.
+Rebuilding the two benchmark images after this documentation edit changed the
+ELF build ID and symbol string table. Their machine code, section sizes, union
+of defined function bytes and final file sizes matched the preceding revision.
+The fuzz corpus adds no production memory or binary charge.
+
+On Rust 1.95.0, 1,533 all-feature and 1,396 minimal solver tests passed, as
+did the optimized certificate fixtures and 11 affected Hyperdynamics tests.
+The retained fixtures also passed on stable 1.99.0. After the public
+documentation change, the two native certificate tests and 14 downstream
+reachability tests passed. The Rust 1.88 default interval fuzz build, strict
+Clippy, rustdoc, formatting, inventory tests and the
+repository-wide strict zizmor audit passed. The inventory contains 4,129 scan
+sites and 252 review records. Hosted CI and hardware execution were outside
+this local run. [Raw campaigns, mutation patches, costs and timing samples](docs/evidence-archive.tsv)

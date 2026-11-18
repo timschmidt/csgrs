@@ -8917,5 +8917,46 @@
       "remaining_bytes": 40348120,
       "evidence": "docs/evidence/2026-11-18-interval-cover-policy"
     }
+  ],
+  "new_krawczyk_corpus_test_harnesses": [
+    {
+      "artifact": "crates/hypersolve/tests/krawczyk_certificates.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "all Hypersolve features; workspace lock",
+      "source_snapshot": "c9a94af00dec6ba2a15c154f863854feda21409d",
+      "file_bytes": 4413576,
+      "sha256": "4b86b67e24b39bf9410b9a0321e667a0fd51e571e99be2bdb6aacae0eedf7d29",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 62695288,
+      "evidence": "docs/evidence/2026-11-18-interval-krawczyk-fuzz"
+    },
+    {
+      "artifact": "crates/hypersolve/tests/krawczyk_certificates.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "no default Hypersolve features; workspace lock",
+      "source_snapshot": "c9a94af00dec6ba2a15c154f863854feda21409d",
+      "file_bytes": 4104784,
+      "sha256": "df63686fb3290f41aecf2e715ff1b7cf4568df10d29bbcb304d9dc0c966dc06a",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 63004080,
+      "evidence": "docs/evidence/2026-11-18-interval-krawczyk-fuzz"
+    },
+    {
+      "artifact": "crates/hyperinterval/fuzz/fuzz_targets/krawczyk_certificates.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "rustc 1.101.0-nightly (8006091eb 2026-10-17)",
+      "features": "solver-certificates; standalone interval fuzz workspace lock; cargo-fuzz 0.13.2; ASan and compressed ELF debug sections",
+      "source_snapshot": "c9a94af00dec6ba2a15c154f863854feda21409d",
+      "file_bytes": 29787760,
+      "sha256": "fc0a29f2740c4ba9002aa8f63c9cda331b9a1748ad1e8f4a43fb653240461d0c",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 37321104,
+      "evidence": "docs/evidence/2026-11-18-interval-krawczyk-fuzz"
+    }
   ]
 }
