@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Execute exact IEEE interval oracles in a real WebAssembly runtime.
+"""Execute exact interval conformance clients in a real WebAssembly runtime.
 
 Requires Python, Node with WebAssembly BigInt support, the selected Rust WASM
 target, and Binaryen's wasm-dis. All generated artifacts stay in --output.
@@ -88,6 +88,27 @@ def main():
                    "dyadic": json.loads((output / "dyadic-execute.log").read_text()),
                    "dyadic_binary_sha256": hashlib.sha256(dyadic_binary.read_bytes()).hexdigest(),
                    "dyadic_floating_arithmetic": dyadic_floating})
+    bridge = client.parent / "wasm-real-bridge"
+    manifest = bridge / "Cargo.toml"
+    run("real-bridge-metadata", ["cargo", f"+{args.toolchain}", "metadata", "--locked", "--no-deps",
+                                 "--format-version", "1", "--manifest-path", str(manifest)])
+    metadata = json.loads((output / "real-bridge-metadata.log").read_text())
+    required = metadata["packages"][0]["rust_version"]
+    release = re.search(r"^release: (\d+\.\d+\.\d+)", (output / "compiler.log").read_text(), re.MULTILINE)
+    if release is None:
+        raise SystemExit("Missing rustc release in compiler.log")
+    bridge_report = {"rustc": release[1], "rust_version": required, "executed": False}
+    if tuple(map(int, release[1].split("."))) >= tuple(map(int, required.split("."))):
+        target = "wasm32-unknown-unknown"
+        options = ["--locked", "--manifest-path", str(manifest), "--target", target]
+        run("real-bridge-build", ["cargo", f"+{args.toolchain}", "build", "--release", *options])
+        run("real-bridge-lint", ["cargo", f"+{args.toolchain}", "clippy", *options, "--", "-D", "warnings"])
+        binary_path = output / "interval_real_bridge.wasm"
+        shutil.copyfile(output / "target" / target / "release/interval_real_bridge_wasm_conformance.wasm", binary_path)
+        run("real-bridge-execute", ["node", str(bridge / "check.mjs"), str(binary_path)])
+        bridge_report.update(json.loads((output / "real-bridge-execute.log").read_text()))
+        bridge_report.update(executed=True, binary_sha256=hashlib.sha256(binary_path.read_bytes()).hexdigest())
+    report["real_bridge"] = bridge_report
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(f"WASM {args.toolchain}: {report['cases']} exact cases passed; {report['binary_bytes']} bytes; no floating arithmetic or allocator")
 

@@ -1,0 +1,19 @@
+[package]
+name = "interval-real-bridge-wasm-conformance"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hyperinterval = { path = "../..", default-features = false, features = ["hyperreal"] }
+hyperreal = { path = "../../../hyperreal", default-features = false }
+
+[workspace]
+
+[profile.release]
+panic = "abort"
+overflow-checks = true

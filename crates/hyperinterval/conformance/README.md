@@ -25,3 +25,25 @@ calls on four successful input cases, including construction and materialized
 endpoints. It is not a full FOC, embedded-cycle or HIL benchmark. Raw samples
 stay in the chosen output directory; do not compare a successful row with an
 overflow/invalid row.
+
+### Real-to-dyadic cancellation and retry
+
+The native and bare-WASM consumers run the same exact checks on
+`sqrt(109) - 7/5`. They cover cold and warm cancellation, independent
+readers of a shared result, conversion-budget exhaustion
+and finer-precision retry. The native target also exercises concurrent
+readers. The oracle translates the exported dyadic endpoints back and
+compares their squares with 109 using exact rational arithmetic.
+
+The interval WASM runner executes this corpus on toolchains meeting the
+client’s declared Rust version. To run the client on its own, use the
+following commands from the CSGRS root with Rust 1.95.0, the
+`wasm32-unknown-unknown` target and Node.
+
+```sh
+cargo +1.95.0 test --locked -p hyperinterval --features hyperreal --test real_dyadic_lifecycle
+client=crates/hyperinterval/conformance/wasm-real-bridge
+cargo +1.95.0 build --locked --release --manifest-path "$client/Cargo.toml" \
+  --target wasm32-unknown-unknown --target-dir target/interval-real-bridge
+node "$client/check.mjs" target/interval-real-bridge/wasm32-unknown-unknown/release/interval_real_bridge_wasm_conformance.wasm
+```
