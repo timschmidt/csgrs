@@ -12839,3 +12839,47 @@ platform and release requirements stay open.
 The [evidence index](docs/evidence-archive.tsv) registers 509 observations
 and supporting files in archive commit `63d6c4e7ef3b7549d80726ed6c9059c12122084c`,
 record `docs/evidence/2026-11-18-interval-dynamics-wasi`.
+
+## Phase 7 univariate proof replay and bounded memory review, 18 November 2026
+
+Commit `442615f77` adds an independent regression test for quadratic
+certificate reports with translated algebraic roots. On Rust 1.95.0 and
+1.99.0, native and WASI each passed all 72 reports and 648 exact or
+certified-filtered equalities. A signed-derivative mutation failed the new
+test while preserving its first root verdict. The all-feature Hypersolve
+release suite and doctest recorded 1,536 passes on each compiler. Both
+compilers passed strict native and guest Clippy, strict rustdoc and workspace
+formatting. Each WASI solver run passed 64 tests and matched all 4,212
+native/guest Horner dispatch windows. The Rust 1.95 downstream native
+Hyperdynamics run passed all 159 tests.
+[Algebraic-root oracle](crates/hypersolve/tests/krawczyk_univariate_algebraic.rs)
+
+On the preceding production revision, `APPROXIMATE_512` certified a nonroot
+in the middle of a three-row point-box problem and rejected an unresolved
+strict contraction bound. Use `PredicatePolicy::STRICT` for proofs from the
+public univariate certifier. Seven changes passed both failing cases.
+The two that reached complete-lifetime qualification fit every ordinary and
+stress memory allowance, including all previous positive stack charges.
+Both independently regressed the owning benchmark in repeated two-core
+campaigns. Borrowing both divisors improved the same benchmark by 2.05–2.24%
+and exceeded the lifetime client's allocated ELF section limit by growing
+`.relro_padding` 208 bytes. The production repair remains open.
+[Inputs, measurements and individual decisions](docs/research/interval-box-proof-scope.md#univariate-quadratic-proofs-at-algebraic-roots-and-unresolved-thresholds)
+
+For the call-site variant, the three-stage build produced 42 registered
+release executables per revision. All 33 with matching registered features
+passed the incremental and cumulative file, text and named-text checks.
+The downstream six-step `((A-B)-C)+D feedback` model completed all steps
+with certified, closed manifolds on the control and candidate. With matched
+executable and output paths every semantic and allocation column agreed.
+Its linked file grew 16 bytes, with identical allocated section sizes and
+defined-function coverage in bytes. These downstream observations cover
+that feedback chain. The sole new size account is for the retained test
+on four target/compiler combinations. Production memory charges carry forward.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+The evidence archive contains 1,396 observations and supporting files at
+`92bd98328f7f809eab8315f9e0419d274f8f3561`, record
+`docs/evidence/2026-11-18-interval-univariate-proof`, digest
+`23c956a12c18f474ab8c919605d40746fb1a0ae9600398fb72fe24790ccd9b5d`.
+[Evidence index](docs/evidence-archive.tsv)

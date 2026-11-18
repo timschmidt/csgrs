@@ -11161,5 +11161,45 @@
         "minimum_coordinator_headroom_bytes": 15035592
       }
     ]
+  },
+  "univariate_krawczyk_algebraic_replay": {
+    "source": "442615f778c86d592be8ed2b84170f0fc97b0677",
+    "previous": "20504d9b4",
+    "evidence": "docs/evidence/2026-11-18-interval-univariate-proof",
+    "artifact": "crates/hypersolve/tests/krawczyk_univariate_algebraic.rs",
+    "workload": "New independent test executable. Replays signed derivatives, iteration data, contraction evidence and original residuals for 72 quadratic certificates or diagnostics with algebraic centers and radii.",
+    "build": "Cargo.lock, release, hypersolve --all-features, native Linux and WASI Preview 1. File, .text and named text union on native; file, code section and function-body bytes on WASI.",
+    "qualification_capacity_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "targets": {
+      "1.95.0 x86_64-unknown-linux-gnu": {
+        "file": 4234432,
+        "sha256": "6a42ebe44dff4f35fbd3ddd44ee8398fb244f929008be1d95317c1ed98ae7de2",
+        "code": 2170631,
+        "functions": 2149354,
+        "headroom_bytes": 62874432
+      },
+      "1.95.0 wasm32-wasip1": {
+        "file": 2192943,
+        "sha256": "0104f2b8f6dfa15da0ea1f789943673476439acee28d51518b9434d9166b0fdf",
+        "code": 1870121,
+        "functions": 1866431,
+        "headroom_bytes": 64915921
+      },
+      "1.99.0 x86_64-unknown-linux-gnu": {
+        "file": 4374520,
+        "sha256": "9bbcd089064caaaaf4c80d0ecd1d643efb5204b3d09bb1cd172b6643a3779270",
+        "code": 2236629,
+        "functions": 2215739,
+        "headroom_bytes": 62734344
+      },
+      "1.99.0 wasm32-wasip1": {
+        "file": 2230800,
+        "sha256": "2378cf6deaa0c28d97e7675a28608c4fb35446669e2fed682554d4320b8f5187",
+        "code": 1865874,
+        "functions": 1862164,
+        "headroom_bytes": 64878064
+      }
+    }
   }
 }

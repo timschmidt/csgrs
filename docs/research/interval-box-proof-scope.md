@@ -302,3 +302,51 @@ caps. Candidate patches, prior charges, complete-lifetime observations and
 the admission decision are indexed in the current progress record.
 [Affine residual oracle](../../crates/hypersolve/tests/krawczyk_affine_residuals.rs) ·
 [Qualification record](../../INTERVAL_REFACTOR_PROGRESS.md#three-variable-affine-certificate-replay-and-bounded-stack-review)
+
+### Univariate quadratic proofs at algebraic roots and unresolved thresholds
+
+Use `PredicatePolicy::STRICT` for a proof from
+`certify_univariate_quadratic_krawczyk_box`. On `20504d9b4`, the public
+certifier reported `CertifiedUniqueRoot` for the middle of three constraints
+on the point box {0}. That row was x² + x + c, with c exactly 2⁻²⁰⁴⁸ by the
+sine addition identity. The other two rows had c = 0. Under
+`APPROXIMATE_512`, a terminal equality made the report count all three as
+certified. On x² + x with radius ½ − c, a second terminal equality produced
+`NonContractiveDerivative` even though the derivative variation 2r is
+strictly less than one. Under the supplied strict policy both unresolved
+comparisons produce `Undecided`.
+
+The maintained test at `442615f77` exercises a different case with known
+answers. For k((x − t)² − n) centered at t ± √n, the signed derivative is
+±2k√n. A radius m√n gives contraction factor m and image radius m²√n.
+The test covers zero radius, both sides of m = 1 and equality itself. It
+checks 72 row reports under the two policies and proves 648 scalar equalities,
+including evaluation of the original polynomial at the returned center plus
+step. A changed executable that returned the absolute derivative passed the
+first root-status assertion and failed the signed-derivative assertion.
+[Algebraic-root test](../../crates/hypersolve/tests/krawczyk_univariate_algebraic.rs)
+
+Seven independently built changes passed both failing proof cases and the
+four-comparison rational control. The following checks determined admission.
+
+| Change to the univariate path | Measured constraint |
+| --- | --- |
+| Restrict the policy inside row classification | Ordinary and stress memory and the linked-client size checks passed. Median time for the owning univariate benchmark increased 0.48% and 0.58% on two pinned cores, then 0.65% and 0.68% in confirmation. |
+| Restrict the policy at the row call site | Ordinary and stress memory and the linked-client size checks passed. The same benchmark increased 0.64% and 0.78%, then 0.24% and 0.98% in confirmation. |
+| Restrict the policy at public entry | The lifetime and usable-allocation executables each grew 32 bytes in the allocated ELF section `.relro_padding`. The increase on the lifetime client exceeded the 1% section cap. |
+| Borrow both divisors during row classification | The owning benchmark was 2.05% and 2.24% faster. The lifetime executable shrank 296 bytes overall and grew 208 bytes in `.relro_padding`. Rebuilding at the historical reference path reproduced the 208-byte increase. |
+| Borrow only the signed derivative, only its magnitude, or allow inlining with both borrowed | The same section in the lifetime executable grew by 112, 176 and 208 bytes, respectively. |
+
+For each of the two changes that reached memory qualification, the complete
+call included constructing the input, checking and materializing the report,
+and dropping it on a guarded 2 MiB thread. The 60 ordinary workloads and 12
+stress workloads retained zero requested heap after drop. Maximum requested
+heap was 15,036 bytes ordinarily and 15,436 bytes under stress. Maximum
+callee stack was 12,824 and 15,208 bytes, respectively. The largest positive
+stack increments were 48 and 64 bytes. Including prior charges, the largest
+prospective cumulative stack debit was 112 bytes. Every workload passed its
+128-byte and 1% incremental limits, 256-byte and 2% cumulative limits,
+separate 16 KiB peak heap and stack limits and 1 MiB headroom requirement.
+The runtime and size results leave the production repair open. The new
+qualification executable has separate native and WASI size accounts.
+[Size accounts](interval-size-accounts.json) · [Evidence index](../evidence-archive.tsv)
