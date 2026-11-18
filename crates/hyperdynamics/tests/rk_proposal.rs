@@ -85,6 +85,42 @@ fn contains(value: &DyadicInterval, expected: &Rational) {
 }
 
 #[test]
+fn subnormal_proposal_replay_preserves_the_initial_set_across_steps() {
+    let stationary = field::<1>(&[Expr::int(0)]).rk4_proposer(&mut b()).unwrap();
+    let translating = field::<1>(&[Expr::int(1)]).rk4_proposer(&mut b()).unwrap();
+    for (lo, hi) in [(-3_i64, -3_i64), (1, 3), (-3, 1)] {
+        let grid = |a: i64, b: i64| DyadicInterval::new(a.into(), b.into(), -1074).unwrap();
+        let initial = grid(lo, hi);
+        let first = stationary
+            .propose(
+                request(point(1, -1074), [initial.clone()]),
+                Default::default(),
+                &mut b(),
+            )
+            .unwrap()
+            .certify(&mut b());
+        certified(&first);
+        let endpoint = first.proof().end_enclosure().unwrap();
+        assert_eq!(endpoint.lanes(), Some(&[initial]));
+
+        let next = EvolutionRequest {
+            start: point(1, -1074),
+            end: point(5, -1074),
+            initial: endpoint.clone(),
+        };
+        let second = translating
+            .propose(next, Default::default(), &mut b())
+            .unwrap()
+            .certify(&mut b());
+        certified(&second);
+        assert_eq!(
+            second.proof().end_enclosure().unwrap().lanes(),
+            Some(&[grid(lo + 4, hi + 4)])
+        );
+    }
+}
+
+#[test]
 fn uncertain_constant_flows_keep_exact_inputs_and_feed_subsequent_operations() {
     for c in -3..=3 {
         for initial in -3..=3 {
