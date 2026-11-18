@@ -112,6 +112,26 @@ jobs:
           cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --features lattice-shapes --bin cartesian_shapes
           rustfmt --edition 2024 --check crates/hyperinterval/fuzz/fuzz_targets/*.rs
 
+  scalar-wasi:
+    name: Scalar oracles (WASI Preview 1, Rust ${{ matrix.rust }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.88.0", "1.95.0", stable]
+    env:
+      INTERVAL_RUST: ${{ matrix.rust }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Execute scalar and MPFR oracles
+        run: |
+          rustup toolchain install "$INTERVAL_RUST" --profile minimal --target wasm32-wasip1
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y clang-18 lld-18 libclang-rt-18-dev-wasm32 wasi-libc nodejs
+          python3 crates/hyperinterval/conformance/wasi-tests.py --toolchain "$INTERVAL_RUST" --cc /usr/bin/clang-18 --sysroot /usr --output "$RUNNER_TEMP/interval-scalar-wasi"
+
   portable:
     name: no_std (${{ matrix.target }})
     runs-on: ubuntu-latest

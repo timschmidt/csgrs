@@ -44,10 +44,14 @@ num-integer = { version = "0.1", default-features = false, optional = true }
 [dev-dependencies]
 serde_json = "1.0"
 
-# GMP does not support the MSVC target. Directed MPFR oracles run on Unix;
-# portable exact-integer and dispatch tests still run on Windows.
+# Unix and WASI Preview 1 run the directed MPFR oracles. MSVC runs the
+# portable exact-integer and dispatch tests.
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
+# The Preview 1 test runner supplies a WASI C compiler for the Rug oracles.
+[target.wasm32-wasip1.dev-dependencies]
+gmp-mpfr-sys = { version = "1.7", default-features = false, features = ["force-cross"] }
 
 [[example]]
 name = "real_to_dyadic"

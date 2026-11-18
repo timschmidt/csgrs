@@ -269,6 +269,21 @@ cargo test -p hyperinterval --all-features
 cargo run -p hyperinterval --example fixed_bounds --features fixed
 ```
 
+To execute the scalar test binaries and their GMP/MPFR oracles under WASI
+Preview 1, install the Rust target, Node.js, and a WASI C toolchain. On Ubuntu
+24.04 the C packages are `clang-18`, `lld-18`, `libclang-rt-18-dev-wasm32`
+and `wasi-libc`. From the workspace root, use a new output directory.
+
+```sh
+rustup target add --toolchain stable wasm32-wasip1
+python3 crates/hyperinterval/conformance/wasi-tests.py --toolchain stable --cc /usr/bin/clang-18 --sysroot /usr --output /tmp/interval-scalar-wasi
+```
+
+`report.json` lists each passing guest test and each test that required a
+native process or thread. The runner probes those OS-dependent cases in the
+guest and executes the original case on the host when it encounters the
+documented OS error.
+
 From a workspace checkout, run the native production coverage gate with
 `python3 crates/hyperinterval/scripts/coverage.py`. It uses the active Rust
 toolchain's `llvm-tools-preview` component and runs the all-feature library

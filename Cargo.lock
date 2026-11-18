@@ -2620,6 +2620,7 @@ dependencies = [
 name = "hyperinterval"
 version = "0.1.0"
 dependencies = [
+ "gmp-mpfr-sys",
  "hyperreal",
  "num-bigint",
  "num-integer",
