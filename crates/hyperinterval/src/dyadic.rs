@@ -248,6 +248,7 @@ impl DyadicInterval {
     /// Arithmetic uses at most one extra magnitude bit. The budget covers the
     /// endpoint sum, the two outer endpoints and the shared midpoint in both
     /// results.
+    #[inline]
     pub fn bisect(&self, budget: &mut DyadicBudget) -> Result<Option<[Self; 2]>, IntervalError> {
         let Some((a, b, exponent)) = self.bounds() else {
             return Ok(None);
