@@ -66,7 +66,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow and 65 WASI Preview 1 Cartesian arithmetic/replay tests locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -12518,4 +12518,64 @@ compatible focused tests. Both bare WASM and WASI Preview 1 repeated 55,802
 scalar oracle cases and the 172,284-call fixed-lattice replay on Rust 1.95.
 Evidence commit `80d0f8ac1` contains the per-file reports, annotated lines,
 mutation patches, linked measurements and validation logs.
+[Evidence index](docs/evidence-archive.tsv)
+
+## Phase 6 and 14 Cartesian tests on WASI Preview 1, 18 November 2026
+
+Commit `9a6546a65` extends the existing coordinated WASM command. Cargo uses
+Node's Preview 1 command runtime to run the owner's Rust tests in the guest.
+The complete fixed, dyadic and qualified IEEE library/integration selection
+passed 60 tests. The fixed JSON and rectangular shape replay suites passed
+three and two tests respectively. Rust 1.88, 1.95 and stable 1.99 each ran
+all 65. A real failing tight-budget test propagated its guest panic through
+Cargo. Uncaptured output retained the original `Scalar(WorkExhausted)`.
+A guest exiting with status 23 returned 23 to the host. A filter that removed
+every arithmetic test made the checker fail even though Cargo exited zero.
+
+The 65 passing names matched their native cases on every compiler. The native
+configuration has one further case, `float_decomposition_and_reconstruction`,
+whose existing x86-only guard excludes it on WASI. Enabling it experimentally
+passed all 66 cases on all three guest compilers, including both IEEE widths,
+subnormals, maximal endpoints and reconstruction. The complete guest test
+file grew by 58,247, 58,989 and 67,102 bytes respectively. The code sections
+grew by 50,254, 50,083 and 49,482 bytes. Each crossed the predeclared
+32 KiB and 6% incremental limits for that hosted test module. On Rust 1.95
+a matched size-optimized fat-LTO build still added 48,018 file bytes and
+36,430 code bytes. The guard change was declined. The new routine check
+reports only executed cases.
+
+All 14 existing Preview 1 client images were byte-identical to the preceding
+checker on their respective compilers. The 55,802 scalar oracle cases and
+172,284-call fixed-lattice replay passed on each compiler. Rust 1.95 bare
+WASM reproduced the previous complete report. The standard-library guest
+harnesses use WASI command imports and are separate from the existing kernel
+import, disassembly and allocation checks. Running the scalar owner's native
+test package in the guest remains open because its GMP development dependency
+rejects that cross-build. Formatting, JavaScript syntax, Python compilation
+and repository retention checks passed.
+
+### Dyadic box bisection requalification
+
+Against `5f1d06746`, the existing translated-and-clipped implementation
+exhausted work on the four-bit, sixteen-unit single-box witness and the
+227,200-unit SDF cover. The prior direct-split migration and a variant that
+reused the proof of nonempty lanes completed both. Both reproduced the full
+11-cell dependency cover, the full 23-cell affine sphere cover and the exact
+four-box reachability output. The dependency workload fell from 227,460 to
+227,189 units and the sphere from 3,624,110 to 3,623,512. Peak requested heap
+and post-drop bytes matched in every observed cover, capacity and exhaustion
+case. The largest observed guarded-stack writes for the two SDF callbacks and
+the reachability callback were 26,552, 26,552 and 29,432 bytes respectively
+for all three builds.
+
+The matched Rust 1.95 release reachability client exceeded two existing gates
+for both box candidates. The union of linked function ranges grew by 1,846
+and 1,870 bytes against the 1,024-byte incremental cap. RELRO padding grew
+from 440 bytes to 2,584 and 2,568 bytes respectively. Both implementations
+remain outside the retained library. Two independent ordered-axis witness
+variants also detected a reversed-child mutation missed by the 93 previous
+owner tests. Both crossed the host test executable's RELRO padding limit.
+No memory or code allowance was charged. The original harder cases, alternative
+implementations, native and guest transcripts, complete cover definitions
+and per-target measurements are in evidence commit `362ddb6ae`.
 [Evidence index](docs/evidence-archive.tsv)
