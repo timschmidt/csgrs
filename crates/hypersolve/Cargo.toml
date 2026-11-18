@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypersolve"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+include = ["/src/**", "/examples/krawczyk_certificate.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["solver", "constraints", "hyperreal", "numerics", "cad"]
 categories = ["mathematics", "science", "algorithms"]
 

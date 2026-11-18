@@ -9,7 +9,7 @@ license = "Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hyperpath"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+include = ["/src/**", "/examples/certified_schedule.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["paths", "routing", "constraints", "hyperreal", "cad"]
 categories = ["algorithms", "mathematics", "science"]
 

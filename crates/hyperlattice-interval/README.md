@@ -32,6 +32,10 @@ accounting. `rational` enables Hyperreal, std and its Rust 1.95 requirement.
 including std and the same Rust 1.95 requirement.
 `serde` validates scalar endpoints, dimensions and fixed scales on replay.
 
+The affine image example carries one shared parameter through two maps and
+checks the exact relation `2x − y = −1`. Run it with
+`cargo run -p hyperlattice-interval --features fixed --example affine_image`.
+
 Run the rectangular replay and multiplication tests with
 `cargo test -p hyperlattice-interval --features fixed,serde --test shape_replay`.
 From `crates/hyperinterval`, run the same oracle under libFuzzer with

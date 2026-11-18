@@ -105,6 +105,7 @@ jobs:
       - name: Check isolated features and composition
         run: |
           cargo +"$LATTICE_RUST" fmt -p hyperlattice-interval -- --check
+          cargo +"$LATTICE_RUST" run --locked -p hyperlattice-interval --features fixed --example affine_image
           rustfmt +"$LATTICE_RUST" --edition 2024 --check crates/hyperlattice-interval/conformance/no_alloc_wasm.rs
           for features in '' fixed dyadic float-enclosure serde fixed,serde dyadic,serde float-enclosure,serde; do
             cargo +"$LATTICE_RUST" test --locked -p hyperlattice-interval --no-default-features --features "$features"

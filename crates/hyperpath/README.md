@@ -89,6 +89,14 @@ Run it with:
 cargo run -p hyperpath --example basic
 ```
 
+The lookahead example plans two straight spans. The shorter second span
+limits the join feed so the route can stop at its endpoint. It replays a
+faster schedule and identifies the failing span.
+
+```sh
+cargo run -p hyperpath --example certified_schedule
+```
+
 ## Ownership and workflow
 
 ```text

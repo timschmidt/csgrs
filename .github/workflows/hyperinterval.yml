@@ -57,6 +57,8 @@ jobs:
             cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --no-default-features --features "$features"
           done
           if [ "$INTERVAL_RUST" != 1.88.0 ]; then
+            cargo +"$INTERVAL_RUST" run --locked -p hyperinterval --features hyperreal --example real_to_dyadic
+            cargo +"$INTERVAL_RUST" run --locked -p hyperinterval --features rational,float-proposal --example proposal_replay
             for features in rational rational,serde rational,dyadic fixed,rational hyperreal real-ball float-enclosure,rational; do
               cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --no-default-features --features "$features"
             done

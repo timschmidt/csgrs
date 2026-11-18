@@ -218,6 +218,15 @@ NaN/infinity input and overflowing calculations return typed errors. Optional
 serde encodes the endpoint IEEE bit patterns and validates them on import;
 empty is null and both signed zeros canonicalize to positive zero.
 
+The measurement replay example translates `1/2 ± 1/4` to another origin and
+back. At an offset of 2⁵³ the default floating-point calculation loses the
+measured width. The example checks the proposed endpoints against an exact
+replay of the original measurement. Run it from the workspace root.
+
+```sh
+cargo run -p hyperinterval --features rational,float-proposal --example proposal_replay
+```
+
 `float-enclosure` independently adds `F32Enclosure` and `F64Enclosure` with
 allocation-free integer arithmetic on IEEE encodings. Addition, subtraction,
 product, quotient, square and fused affine images have tight outward finite
@@ -238,6 +247,13 @@ evaluation retain their existing resource contracts. In particular, a bridge's
 conversion budget is not a total-work bound on computable Real evaluation.
 These carriers add no independent scalar cache and do not choose a predicate
 policy. An inconclusive ball-membership query remains unresolved.
+
+The Real-to-dyadic example starts with an exhausted conversion budget, retries
+with a shared budget, and refines the grid until it separates √2 from 181/128.
+
+```sh
+cargo run -p hyperinterval --features hyperreal --example real_to_dyadic
+```
 
 ```sh
 cargo test -p hyperinterval --no-default-features

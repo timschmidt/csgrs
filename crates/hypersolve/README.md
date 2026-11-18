@@ -42,6 +42,15 @@ Add hypersolve 0.4.0 to a project with `cargo add hypersolve`; it requires Rust
 cargo run -p hypersolve --example basic
 ```
 
+The Krawczyk example certifies a box around the positive solution of
+`x² = 2` and `x² + y² = 4`. It checks each coordinate's Newton displacement,
+image radius and contraction bound. Tightening the box shows how an image
+containment check can fail even when the root lies inside.
+
+```sh
+cargo run -p hypersolve --example krawczyk_certificate
+```
+
 Hypersolve has no default features. `dispatch-trace` is for exact-dispatch
 instrumentation and does not change the mathematical API.
 

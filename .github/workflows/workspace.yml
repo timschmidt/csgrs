@@ -79,6 +79,9 @@ jobs:
           ARGS: ${{ matrix.args }}
           HYPERDRC_REQUIRE_COMPLEX_FIXTURES: "1"
         run: cargo test --locked -p "${CRATE}" ${ARGS}
+      - name: Replay the lookahead schedule example
+        if: matrix.crate == 'hyperpath'
+        run: cargo run --locked -p hyperpath --example certified_schedule
 
   hypervoxel:
     name: hypervoxel

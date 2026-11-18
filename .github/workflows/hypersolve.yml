@@ -69,6 +69,9 @@ jobs:
       - name: Test without features
         run: cargo test --locked --no-default-features
 
+      - name: Run the coupled Krawczyk certificate example
+        run: cargo run --locked --no-default-features --example krawczyk_certificate
+
       - name: Test all targets and features
         run: cargo test --locked --all-targets --all-features
 

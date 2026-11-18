@@ -30,6 +30,10 @@ serde = { version = "1.0", default-features = false, optional = true }
 serde_json = "1.0"
 
 [[example]]
+name = "affine_image"
+required-features = ["fixed"]
+
+[[example]]
 name = "fixed_affine"
 required-features = ["fixed"]
 

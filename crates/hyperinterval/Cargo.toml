@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hyperinterval"
 readme = "README.md"
-include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+include = ["/src/**", "/examples/proposal_replay.rs", "/examples/real_to_dyadic.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 categories = ["mathematics", "no-std", "embedded"]
 
 [package.metadata.docs.rs]
@@ -44,6 +44,14 @@ serde_json = "1.0"
 # portable exact-integer and dispatch tests still run on Windows.
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
+[[example]]
+name = "real_to_dyadic"
+required-features = ["hyperreal"]
+
+[[example]]
+name = "proposal_replay"
+required-features = ["rational", "float-proposal"]
 
 [[example]]
 name = "fixed_bounds"
