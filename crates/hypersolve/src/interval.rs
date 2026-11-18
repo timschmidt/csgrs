@@ -934,6 +934,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
 ) -> MultivariateQuadraticKrawczykReport {
+    let policy = policy.certified_only();
     let variable_count = analysis.problem().variables.len();
     let radius_by_symbol =
         match validate_multivariate_quadratic_krawczyk_variable_balls(variable_balls, policy) {
@@ -1449,7 +1450,7 @@ fn validate_multivariate_quadratic_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, MultivariateQuadraticKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals(&ball.radius, &Real::zero(), policy.certified_only()).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
             Some(Ordering::Less) => {
                 return Err(
                     MultivariateQuadraticKrawczykStatus::NegativeVariableRadius {
