@@ -12085,3 +12085,17 @@ Rust 1.88 proposal tests and the no-default-feature Thumb build. The strict
 WASM suite passed 55,802 cases, and native code inspection passed for 70
 strict symbols. Workspace formatting and the repository budget passed.
 [Commands, probes, raw observations and review patches](docs/evidence-archive.tsv)
+
+## ABI-qualified functions in the Phase 0 inventory
+
+A fresh three-repository scan on `25a4597e7` omitted all seven public entry
+points in Hyperlattice's fixed-point WASM consumer and the firmware comparison
+client's `range_probe`. The scanner now recognizes Rust function declarations
+with an explicit or implicit foreign ABI. The regression exercises visibility,
+unsafe functions, a declaration split across lines, an extern block and an
+extern crate. It failed on the preceding scanner. All six inventory tests pass.
+Two full refreshes produced byte-identical output containing 4,141 lexical
+candidates and all 259 prior review records in their original order. Eight
+candidates are attributable to the scanner change. The refresh also includes
+two previously unrecorded declarations from the current source tree.
+[Scanner and regression tests](scripts/test-interval-inventory.py)

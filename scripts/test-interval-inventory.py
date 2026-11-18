@@ -103,6 +103,24 @@ class InventoryRefresh(unittest.TestCase):
         self.assertEqual([(r["repository"], r["symbol"]) for r in rows],
                          [("csgrs", "PrivateIntervalFixture"), ("alumina-firmware", "")])
 
+    def test_extern_functions_keep_their_owner_visibility_and_declaration_line(self):
+        self.source("Cargo.toml", '[package]\nname = "hyperlattice-interval"\n')
+        self.source("src/lib.rs", 'pub extern "C" fn image(input: i32) -> i32 { input }\n'
+                    'pub(crate) unsafe extern "C-unwind" fn interval_hook() {}\n'
+                    'extern fn private_bounds() {}\n'
+                    'pub unsafe extern\n    "C" fn split() {}\n'
+                    'unsafe extern "C" {\n    fn foreign_bounds();\n}\n'
+                    'extern crate core as interval_core;\n')
+        self.refresh(self.inventory)
+        rows = [r for r in self.rows(self.inventory) if r["review_status"] == CANDIDATE]
+        self.assertEqual(
+            [(r["symbol"], r["kind"], r["visibility"], r["line"], r["owner"]) for r in rows],
+            [(name, "fn", visibility, line, "hyperlattice-interval") for name, visibility, line in
+             [("image", "pub", "1"), ("interval_hook", "pub(crate)", "2"),
+              ("private_bounds", "private", "3"), ("split", "pub", "5"),
+              ("foreign_bounds", "private", "7")]],
+        )
+
     def test_source_map_picks_private_algorithms_by_package_and_module(self):
         self.source("math/Cargo.toml", '[package]\nname = "hypersolve"\n')
         self.source("math/src/interval.rs", "fn gauss_jordan() {}\n")

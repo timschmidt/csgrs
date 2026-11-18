@@ -23,6 +23,7 @@ import tomllib
 DECLARATION = re.compile(
     r"^[ \t]*(?P<visibility>pub(?:\([^)]*\))?\s+)?"
     r"(?:(?:async|const|unsafe)\s+)*"
+    r'(?:extern(?:\s+"[^"\r\n]*")?\s+(?=fn\b))?'
     r"(?P<kind>struct|enum|trait|type|fn)\s+(?P<name>[A-Za-z_][A-Za-z_0-9]*)",
     re.MULTILINE,
 )
