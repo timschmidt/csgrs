@@ -12,7 +12,8 @@ from wasi_libtest import RUNNER, TARGET, build_tests, compare_dispatch, complete
 SUITES = (
     "expression_interval", "interval_box_radius", "interval_quadratic_extrema",
     "jacobian_matrix", "krawczyk_affine_oracle", "krawczyk_affine_residuals",
-    "krawczyk_certificates", "krawczyk_multivariate_certainty", "program_jacobian_trace",
+    "krawczyk_certificates", "krawczyk_multivariate_certainty", "krawczyk_univariate_algebraic",
+    "program_jacobian_trace",
     "real_interval_enclosures", "real_interval_migration_contract", "trivariate_arithmetic",
 )
 
