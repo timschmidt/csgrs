@@ -10152,5 +10152,248 @@
         "free_bytes": 66159216
       }
     }
+  },
+  "wasip1_float_qualification": {
+    "benefit": "Explicit qualification of binary32/binary64, lattice composition and dyadic conversions on ordinary WASI Preview 1. All previous feature configurations retain their artifact bytes.",
+    "evidence": "docs/evidence/2026-11-18-interval-wasip1-qualified",
+    "source": {
+      "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "preceding": "3ebe192ae7834295c960b3466c44c5d54542e10d",
+      "fixed_lattice_client_first_revision": "700888155",
+      "real_bridge_client_first_revision": "3ad284efe"
+    },
+    "toolchain": "Rust 1.95.0, locked release artifacts, identical Cargo home and source path per stage. File, Wasm code section and sum of function bodies are independently measured.",
+    "metrics": [
+      "file",
+      "code",
+      "function_bodies"
+    ],
+    "slots": {
+      "primitive_capacity": 131072,
+      "primitive_reserve": 16384,
+      "other_capacity": 4194304,
+      "other_reserve": 1048576
+    },
+    "existing_caps": {
+      "incremental_bytes": 128,
+      "incremental_percent": 0.25,
+      "cumulative_bytes": 512,
+      "cumulative_percent": 1
+    },
+    "default_requalification": "Each row gives the same three values for fixed, preceding and retained. Incremental and cumulative charges are zero. The full file and section hashes, including first-revision references for the two newer clients, are in results.json.",
+    "default_columns": [
+      "file",
+      "code",
+      "function_bodies",
+      "remaining_slot_bytes"
+    ],
+    "default_artifacts": {
+      "bare-bridge.wasm": [
+        1158705,
+        1012690,
+        1010797,
+        3035599
+      ],
+      "bare-dyadic.wasm": [
+        56968,
+        42263,
+        42073,
+        4137336
+      ],
+      "bare-fixed.wasm": [
+        62756,
+        48487,
+        48278,
+        4131548
+      ],
+      "bare-float.wasm": [
+        58546,
+        48044,
+        47858,
+        72526
+      ],
+      "bare-layout.wasm": [
+        527846,
+        475049,
+        473913,
+        3666458
+      ],
+      "none-float.wasm": [
+        29786,
+        22743,
+        22629,
+        101286
+      ],
+      "p1-bridge.wasm": [
+        1205825,
+        1035760,
+        1033714,
+        2988479
+      ],
+      "p1-dyadic.wasm": [
+        60912,
+        43297,
+        43051,
+        4133392
+      ],
+      "p1-fixed.wasm": [
+        62714,
+        48487,
+        48278,
+        4131590
+      ],
+      "p1-float.wasm": [
+        29882,
+        22767,
+        22653,
+        101190
+      ],
+      "p1-layout.wasm": [
+        443306,
+        390507,
+        389429,
+        3750998
+      ],
+      "threads-float.wasm": [
+        30033,
+        22853,
+        22738,
+        101039
+      ]
+    },
+    "explicit_feature_comparisons": "On other targets, file, code and function bodies have zero positive charges except the listed row. This includes both unsupported ABI controls. The fixed-only and Real bridge controls keep their original feature sets. Positive charges never offset another artifact.",
+    "existing_positive_charges": {
+      "bare-layout.wasm": {
+        "file": {
+          "retained": 527847,
+          "incremental_charge": 1,
+          "cumulative_charge": 1,
+          "remaining_incremental_bytes": 127,
+          "remaining_cumulative_bytes": 511,
+          "remaining_incremental_percent": 0.249811,
+          "remaining_cumulative_percent": 0.999811
+        }
+      }
+    },
+    "new_preview1": "Each explicit opt-in artifact has a separate host test slot. Its full retained size is charged at introduction. Percentage caps refer to slot capacity. An additional 128-byte AND 0.25% cap applies against the unretained automatic implementation on the same completed contract. Existing default builds keep their original accounting.",
+    "new_metric_columns": [
+      "default_abi_build",
+      "default_to_enabled_delta",
+      "automatic_completed",
+      "initial_cumulative_charge",
+      "remaining_initial_budget_bytes",
+      "additional_charge_vs_completed",
+      "remaining_comparison_bytes",
+      "remaining_comparison_percent"
+    ],
+    "new_artifacts": {
+      "p1-dyadic.wasm": {
+        "first_release_cap_bytes": 98304,
+        "first_release_cap_percent_of_slot": 2.34375,
+        "free_bytes": 4113816,
+        "file": [
+          60912,
+          19576,
+          80487,
+          80488,
+          17816,
+          1,
+          127,
+          0.248758
+        ],
+        "code": [
+          43297,
+          15453,
+          58750,
+          58750,
+          39554,
+          0,
+          128,
+          0.25
+        ],
+        "function_bodies": [
+          43051,
+          15396,
+          58447,
+          58447,
+          39857,
+          0,
+          128,
+          0.25
+        ]
+      },
+      "p1-float.wasm": {
+        "first_release_cap_bytes": 65536,
+        "first_release_cap_percent_of_slot": 50.0,
+        "free_bytes": 72565,
+        "extra_scalar_code_cap_bytes": 57344,
+        "remaining_scalar_code_bytes": 9300,
+        "file": [
+          29882,
+          28625,
+          58499,
+          58507,
+          7029,
+          8,
+          120,
+          0.236325
+        ],
+        "code": [
+          22767,
+          25277,
+          48044,
+          48044,
+          17492,
+          0,
+          128,
+          0.25
+        ],
+        "function_bodies": [
+          22653,
+          25205,
+          47858,
+          47858,
+          17678,
+          0,
+          128,
+          0.25
+        ]
+      },
+      "p1-layout.wasm": {
+        "first_release_cap_bytes": 655360,
+        "first_release_cap_percent_of_slot": 15.625,
+        "free_bytes": 3641281,
+        "file": [
+          443306,
+          109717,
+          553020,
+          553023,
+          102337,
+          3,
+          125,
+          0.249458
+        ],
+        "code": [
+          390507,
+          102047,
+          492554,
+          492554,
+          162806,
+          0,
+          128,
+          0.25
+        ],
+        "function_bodies": [
+          389429,
+          101867,
+          491296,
+          491296,
+          164064,
+          0,
+          128,
+          0.25
+        ]
+      }
+    }
   }
 }

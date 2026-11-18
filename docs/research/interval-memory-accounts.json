@@ -1084,5 +1084,61 @@
     "No allocation-free firmware or configured RAM/task-stack limit is relaxed.",
     "Runtime, predicate/dispatch order, exact outputs and certainty remain separate gates.",
     "No candidate is admitted solely by this policy record."
-  ]
+  ],
+  "wasip1_qualification": {
+    "source": "d1a81beaed28647ba73fc119c4f330a995ec0a0b",
+    "evidence": "docs/evidence/2026-11-18-interval-wasip1-qualified",
+    "target": "Rust 1.95 wasm32-wasip1, opt-in scalar and mixed lattice/dyadic release conformance clients",
+    "basis": "New target registration. All previously selected default artifacts remain byte-identical. Existing successful fixed-only WASI work is measured before and after selection. New mixed arithmetic is compared with the previously supported bare workload and the automatic same-ABI prototype. The stack and requested-heap observations match the controls. Bare dyadic conversion committed one extra 64 KiB linear-memory page; ordinary Preview 1 stayed at its initial capacity. No positive memory exception is charged.",
+    "memory_model": "Single guest instance at a time. Cold/warm, two fresh instances with complementary stack fills. Record original linked primitive writes, instrumented SP minima, and Rust system allocator requests in the standard-library clients, including releases through completed output. Guest linear memory never grew. Engine/host memory is outside this account.",
+    "guest_stack_capacity_bytes": 1048576,
+    "guest_linear_initial_and_final_bytes": 1114112,
+    "primitive_reserved_cap_bytes": 2048,
+    "primitive_observed_stack_bytes": 704,
+    "primitive_free_stack_bytes": 1047872,
+    "primitive_retained_heap_bytes": 0,
+    "primitive_temporary_heap_bytes": 0,
+    "other_columns": [
+      "reserved_stack_bytes",
+      "deepest_touched_bytes",
+      "free_stack_bytes",
+      "peak_requested_heap_bytes",
+      "retained_heap_bytes",
+      "allocations",
+      "deallocations",
+      "reallocations"
+    ],
+    "other_completed_workloads": {
+      "mixed lattice": [
+        393440,
+        393440,
+        655136,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "fixed-only lattice": [
+        393376,
+        352343,
+        655200,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dyadic conversions": [
+        816,
+        816,
+        1047760,
+        2604,
+        0,
+        62,
+        62,
+        0
+      ]
+    }
+  }
 }

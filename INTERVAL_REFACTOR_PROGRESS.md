@@ -56,7 +56,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 and WASM qualification passed | full surface/coverage, further targets and shipped consumers |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
@@ -12374,3 +12374,97 @@ passed all seven tests against retained firmware. Evidence commit `0d510b87f`
 contains all candidate patches, the mutation, oracles, linked guest images,
 raw comparisons, and per-stage board packaging logs.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 4 and 14 ordinary WASI Preview 1 qualification
+
+Commit `d1a81beae` adds the `float-enclosure-wasip1` Cargo feature to
+Hyperinterval and forwards it through Hyperlattice Interval. It enables
+certified binary32 and binary64 arithmetic on the ordinary `wasm32-wasip1`
+target. Cargo's stable target cfgs coincide for the ordinary and threaded ABIs
+on the three tested compilers. The optional `no_std` dependency
+`target-tuple` supplies the exact target name at compile time. The linked
+scalar reactor imports nothing and contains no floating arithmetic, allocator
+or memory growth. The earlier raw-file rejection remains recorded above.
+
+On preceding `3ebe192ae`, both widths returned `UnqualifiedEnvironment` for
+a valid ordinary Preview 1 singleton. The same public client now accepts that
+input when the feature is selected. The default configuration, the threaded
+ABI and `wasm32v1-none` preserve typed refusal, valid empty and endpoint traps
+at their unqualified boundaries. One Cargo invocation built both Preview 1
+ABIs with the feature. A deliberately overbroad selector passed ordinary
+ingress and failed the threaded negative control.
+
+The automatic selector added 109,717 bytes to an existing mixed lattice
+consumer on ordinary Preview 1, including deployments using only its fixed
+operations. Making selection explicit preserved the default footprint.
+Putting target detection in Hyperinterval's own build script also changed
+executable bytes in an unrelated fixed-only ESP32 build. An isolated optional
+helper removed that coupling. The retained implementation uses the published
+target-name crate and avoids adding a Hyper package for one build fact.
+
+| Rust 1.95 ordinary Preview 1 client | Default file | Opt-in file | Opt-in code | File cap | Slot headroom |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Primitive IEEE | 29,882 B | 58,507 B | 48,044 B | 65,536 B | 72,565 B |
+| Mixed lattice | 443,306 B | 553,023 B | 492,554 B | 655,360 B | 3,641,281 B |
+| Dyadic conversion | 60,912 B | 80,488 B | 58,750 B | 98,304 B | 4,113,816 B |
+
+These matched builds used the same source and Cargo registry paths. All
+12 existing default artifacts matched the preceding files byte for byte. The
+three new opt-in artifacts used 8, 3 and 1 more file bytes respectively than
+the automatic same-ABI implementation. Code-section and function-body sums
+matched that implementation on all three. In the separate bare-target
+feature-selected mixed lattice client, one additional file byte was charged.
+The fixed and preceding measurements were equal in all original target
+configurations, using the introduction revision for clients absent at the
+fixed program baseline. The primary checkout's opt-in primitive image measured
+58,479 bytes. The per-target accounts retain each path's role and the full
+initial footprint of each new configuration.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+Rust 1.88, 1.95 and stable 1.99 completed 55,802 exact arithmetic cases and
+8,836 property cases per qualified target. Each also passed 612 floating and
+612 fixed lattice chains, 56 dyadic conversions and the separate fixed-lattice
+replay's 172,284 calls. Rust 1.95 and stable passed all four Real bridge retry
+calls per target. Wasmtime 50 independently matched all 165,138 public scalar
+status, endpoint and property calls. Each call used exactly the same fuel in
+the preceding bare, automatic Preview 1 and retained Preview 1 builds. All
+1,224 previously successful ordinary Preview 1 fixed-lattice endpoint reads
+matched individually in value and fuel after selection. Median complete Node
+oracle replay times for the feature-selected versus automatic builds varied
+from −0.70% to +2.11% across four pinned, alternated process runs.
+
+The retained stack probe measures both the deepest original guest write and
+the lowest guest stack pointer in an independently replayed instrumented
+copy. It checks agreement with the linked disassembly and verifies that every
+exported call restores the pointer. A 4,096-byte unwritten frame touched only
+704 bytes and passed the old probe. The new one recorded both values. It also
+detected a leaked 16-byte frame and a mismatched module/disassembly pair.
+Across all three compilers and both qualified WASM targets the primitive
+workload used 704 bytes by both measures, cold and warm.
+
+On ordinary Preview 1 the mixed lattice corpus reserved 393,440 bytes of its
+1 MiB guest stack and made zero Rust allocator requests. The existing
+fixed-only workload reserved 393,376 bytes both before and after selection.
+Dyadic conversion reserved 816 stack bytes and made 62 allocations and 62
+frees, with 2,604 peak requested heap bytes and zero retained. These stack
+and requested-heap observations matched the corresponding completed bare
+and automatic controls. Preview 1 stayed at its initial 1,114,112 bytes of
+linear memory. Bare dyadic conversion committed one further 64 KiB page.
+No positive memory exception was charged.
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+The complete MKS ESP32 FOC V1 ELF was byte-identical to its matched preceding
+build, including debug information. Both packaging runs reproduced the
+existing 4 MiB board partition failure. With the same temporary Cargo home on
+each side, espflash measured 4,191,408 application bytes for a 4,128,768-byte
+partition, a 62,640-byte shortfall. No firmware flash allowance was spent.
+
+Rust 1.95 passed 366 all-target/all-feature owner tests, 20 doctests and 12
+minimal tests/doctests. Rust 1.88 passed 280 compatible owner tests/doctests.
+Packaged crates reproduced both positive and negative WASI behavior. Chromium
+ran the bare oracle, the coordinated firmware and Interface checks passed,
+and the native code-generation scan, 16 MXCSR modes, Clippy, strict rustdoc,
+formatting, strict zizmor and 10,000 address-sanitized native fuzz iterations
+passed. Evidence commit `db1b189a8` holds the linked measurements, full
+per-call fuel observations, allocator and stack probes, intermediate variants
+and regression controls. [Evidence index](docs/evidence-archive.tsv)
