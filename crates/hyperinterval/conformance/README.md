@@ -26,6 +26,14 @@ endpoints. It is not a full FOC, embedded-cycle or HIL benchmark. Raw samples
 stay in the chosen output directory; do not compare a successful row with an
 overflow/invalid row.
 
+### Fixed-point Cartesian images
+
+The interval WASM runner builds the standalone fixed-point Hyperlattice
+client. It checks the affine, norm, width, midpoint/radius and contraction
+exports in two fresh instances. The affine-chain oracle follows all four
+source corners through each step. See the per-client results under
+`fixed_lattice` in the runner's `report.json`.
+
 ### Real-to-dyadic cancellation and retry
 
 The native and bare-WASM consumers run the same exact checks on

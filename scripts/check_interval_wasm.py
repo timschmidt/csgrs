@@ -35,10 +35,10 @@ def main():
     env = os.environ | {"CARGO_TARGET_DIR": str(output / "target"), "CARGO_TERM_COLOR": "never"}
     commands = []
 
-    def run(name, command):
+    def run(name, command, *, timeout=900):
         start = time.monotonic()
         with (output / f"{name}.log").open("w") as log, (output / f"{name}.stderr.log").open("w") as errors:
-            result = subprocess.run(command, cwd=root, env=env, stdout=log, stderr=errors, timeout=900)
+            result = subprocess.run(command, cwd=root, env=env, stdout=log, stderr=errors, timeout=timeout)
         commands.append({"name": name, "command": command, "exit_code": result.returncode, "seconds": time.monotonic() - start})
         (output / "commands.json").write_text(json.dumps(commands, indent=2) + "\n")
         if result.returncode:
@@ -67,6 +67,19 @@ def main():
     lattice_binary = output / "interval_layout.wasm"
     shutil.copyfile(output / "target/wasm32-unknown-unknown/release/interval_layout_wasm.wasm", lattice_binary)
     run("lattice-execute", ["node", str(client / "check.mjs"), str(lattice_binary), str(output / "corpus.json"), "--lattice"])
+    fixed = root / "crates/hyperlattice-interval/conformance/fixed-wasm"
+    target = "wasm32-unknown-unknown"
+    fixed_options = ["--locked", "--manifest-path", str(fixed / "Cargo.toml"), "--target", target]
+    run("fixed-lattice-build", ["cargo", f"+{args.toolchain}", "build", "--release", *fixed_options])
+    run("fixed-lattice-lint", ["cargo", f"+{args.toolchain}", "clippy", *fixed_options, "--", "-D", "warnings"])
+    fixed_binary = output / "interval_fixed_lattice.wasm"
+    shutil.copyfile(output / "target" / target / "release/interval_fixed_lattice_wasm.wasm", fixed_binary)
+    fixed_wat = output / "fixed-lattice.wat"
+    run("fixed-lattice-disassemble", ["wasm-dis", str(fixed_binary), "-o", str(fixed_wat)])
+    fixed_assembly = fixed_wat.read_text()
+    if floating_operations(fixed_assembly) or "memory.grow" in fixed_assembly:
+        raise SystemExit("Unexpected floating arithmetic or memory growth in fixed lattice client")
+    run("fixed-lattice-execute", ["node", str(fixed / "check.mjs"), str(fixed_binary)], timeout=60)
     dyadic_manifest = root / "crates/hyperinterval/conformance/wasm-dyadic/Cargo.toml"
     run("dyadic-build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(dyadic_manifest), "--target", "wasm32-unknown-unknown"])
     run("dyadic-lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(dyadic_manifest), "--target", "wasm32-unknown-unknown", "--", "-D", "warnings"])
@@ -87,6 +100,8 @@ def main():
                    "guest_stack": json.loads((output / "guest-stack.log").read_text()),
                    "lattice": json.loads((output / "lattice-execute.log").read_text()),
                    "lattice_binary_sha256": hashlib.sha256(lattice_binary.read_bytes()).hexdigest(),
+                   "fixed_lattice": json.loads((output / "fixed-lattice-execute.log").read_text()),
+                   "fixed_lattice_binary_sha256": hashlib.sha256(fixed_binary.read_bytes()).hexdigest(),
                    "dyadic": json.loads((output / "dyadic-execute.log").read_text()),
                    "dyadic_binary_sha256": hashlib.sha256(dyadic_binary.read_bytes()).hexdigest(),
                    "dyadic_floating_arithmetic": dyadic_floating})
@@ -101,7 +116,6 @@ def main():
         raise SystemExit("Missing rustc release in compiler.log")
     bridge_report = {"rustc": release[1], "rust_version": required, "executed": False}
     if tuple(map(int, release[1].split("."))) >= tuple(map(int, required.split("."))):
-        target = "wasm32-unknown-unknown"
         options = ["--locked", "--manifest-path", str(manifest), "--target", target]
         run("real-bridge-build", ["cargo", f"+{args.toolchain}", "build", "--release", *options])
         run("real-bridge-lint", ["cargo", f"+{args.toolchain}", "clippy", *options, "--", "-D", "warnings"])
@@ -113,6 +127,7 @@ def main():
     report["real_bridge"] = bridge_report
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(f"WASM {args.toolchain}: {report['cases']} exact cases passed; {report['binary_bytes']} bytes; no floating arithmetic or allocator")
+    print(f"Fixed lattice: {report['fixed_lattice']['calls']} calls passed in two fresh instances")
 
 
 if __name__ == "__main__":

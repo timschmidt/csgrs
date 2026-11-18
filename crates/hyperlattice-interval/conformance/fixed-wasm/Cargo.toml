@@ -1,0 +1,19 @@
+[package]
+name = "interval-fixed-lattice-wasm"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[workspace]
+
+[lib]
+path = "../no_alloc_wasm.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+hyperlattice-interval = { path = "../..", default-features = false, features = ["fixed"] }
+
+[profile.release]
+panic = "abort"
+overflow-checks = true
