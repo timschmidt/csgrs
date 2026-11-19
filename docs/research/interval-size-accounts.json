@@ -16598,5 +16598,64 @@
     "new_clients": "The native format test fits the 64 MiB test slot with 16 MiB reserved. The three bare, two WASI and three packaged native consumer images fit 4 MiB each with at least 1 MiB reserved. These slots cover host and guest test artifacts. No board image changed.",
     "memory": "No existing memory allowance charged. On Rust 1.95 the preceding and retained bare WASM conformance clients both reserved and touched 704 bytes. Each of the three new bare clients reserved and touched 224 bytes in a 1 MiB stack. All maintained their initial linear memory size.",
     "evidence": "2026-11-19-interval-float-format-conversion, metrics.json and accounts.json"
+  },
+  "affine_rank_oracle": {
+    "introduction": "e5524c9ca",
+    "artifact": "crates/hypersolve/tests/krawczyk_affine_rank.rs",
+    "benefit": "Checks the exact missing pivot, empty steps and report dimensions for 129 singular integer matrices, two right-hand sides and both policies.",
+    "scope": "Standalone all-feature release test executables. Each uses the existing 64 MiB qualification file slot with at least 16 MiB free. Each target starts with the measured file, code and function bytes below. The test has no production consumers.",
+    "metrics": [
+      "final_file_bytes",
+      "text_or_wasm_code_bytes",
+      "unique_named_text_or_wasm_function_body_bytes"
+    ],
+    "targets": {
+      "1.95.0-wasm32-wasip1": {
+        "introduction_bytes": [
+          2246191,
+          1919302,
+          1915607
+        ],
+        "slot_bytes": 67108864,
+        "remaining_slot_bytes": 64862673,
+        "required_free_bytes": 16777216,
+        "sha256": "62a93527049934dcb2948ac339bd69c48fd46c6be719ef732b475938ab2a98bb"
+      },
+      "1.95.0-x86_64-unknown-linux-gnu": {
+        "introduction_bytes": [
+          4290672,
+          2229639,
+          2208565
+        ],
+        "slot_bytes": 67108864,
+        "remaining_slot_bytes": 62818192,
+        "required_free_bytes": 16777216,
+        "sha256": "91aeb793fef8a187ccc0468da1c080f49d79741fdb53aaae75b0f10d3c2a5316"
+      },
+      "1.99.0-wasm32-wasip1": {
+        "introduction_bytes": [
+          2281097,
+          1912690,
+          1908982
+        ],
+        "slot_bytes": 67108864,
+        "remaining_slot_bytes": 64827767,
+        "required_free_bytes": 16777216,
+        "sha256": "7936085d44691baaedded6652f08db70a0d26606a52af5c4a7bf1253e5b682ca"
+      },
+      "1.99.0-x86_64-unknown-linux-gnu": {
+        "introduction_bytes": [
+          4419552,
+          2291429,
+          2270895
+        ],
+        "slot_bytes": 67108864,
+        "remaining_slot_bytes": 62689312,
+        "required_free_bytes": 16777216,
+        "sha256": "289f477fce00e2ffb2dbbb059eeffd03d2b77b05f5f96a1a6238b49e5833910f"
+      }
+    },
+    "memory": "Five fresh process high-water RSS observations per target, including the Node host for WASI, are archived in rank-accounts.json. The file slot does not bound process memory.",
+    "evidence": "docs/evidence/2026-11-19-interval-affine-rank-and-proof"
   }
 }

@@ -262,6 +262,25 @@ caller guidance above still applies. The subsequent pivot-normalization
 trial, its public regression witnesses and its Linux and WASI measurements
 are recorded in the [Phase 7 ledger](../../INTERVAL_REFACTOR_PROGRESS.md#phase-7-partial-affine-reports-and-certified-elimination).
 
+### Affine uniqueness with dependent rows
+
+At `e5524c9ca`, `APPROXIMATE_512` can certify a unique root even when
+every residual at the reported point is exactly zero and a second root
+lies in the same closed box. Let `c = 2^-2048`, presented to the solver as
+`sin(e+1) - sin(e)*cos(1) - cos(e)*sin(1) + 2^-2048`. The sine addition
+identity makes the first three terms sum to zero. The rows
+`x + 2^2048*y = 0` and `c*x + y = 0` are proportional. Both the origin and
+`(1, -2^-2048)` are solutions in `[-1,1]²`. The origin therefore passes
+exact residual replay, while the zero determinant rules out uniqueness.
+
+Across 64 bare WebAssembly calls varying coefficient presentation, sign,
+row order, policy and cache state, 16 returned a false uniqueness certificate.
+The integer regression suite exercises 129 independently classified singular
+matrices with consistent and inconsistent right-hand sides. The symbolic
+counterexample and the measured repair have a separate qualification record.
+[Integer rank oracle](../../crates/hypersolve/tests/krawczyk_affine_rank.rs) ·
+[Repair qualification](../../INTERVAL_REFACTOR_PROGRESS.md#phase-7-affine-rank-and-uniqueness)
+
 ### Cost of the retained multivariate repair
 
 | Completed workload | Observation |

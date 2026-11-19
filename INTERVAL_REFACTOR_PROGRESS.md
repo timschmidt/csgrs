@@ -14707,3 +14707,89 @@ The inventory reproduces 7,359 scan rows and 438 body reviews.
 All 73 archived members verified at evidence commit
 `cc5e4c0310629943dbfc278ac7cce87ff10fb582`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7, affine rank and uniqueness
+
+At `e5524c9ca`, the public Hypersolve rank oracle enumerates all 129
+singular two-by-two integer matrices with entries in `[-2,2]`. Each has one
+consistent and one inconsistent right-hand side. Across the two policies,
+100 reports must identify column zero and 416 must identify column one as
+the first missing pivot. Each must report two rows, two variables and no
+certified coordinates. Changing the index to zero or publishing a unique
+root on solver failure passed both older affine suites. The new oracle
+caught each mutation. [Integer rank oracle](crates/hypersolve/tests/krawczyk_affine_rank.rs)
+
+A separate symbolic system has two proportional rows and two explicit
+solutions in the box. The returned origin solves both original equations.
+On the production implementation, 16 of 64 bare WebAssembly calls returned
+a false uniqueness certificate. Independent release-mode native execution
+reproduced it. Restricting the affine certifier to the certified stages of
+its supplied policy corrected all 64 guest verdicts. The cold guest call
+sequence reserved 6,704 stack bytes and touched 6,696. The warm sequence
+reserved and touched 6,192. Both versions reached 1,310,720 bytes of linear
+memory from 1,245,184 at instantiation. [Equations and proof scope](docs/research/interval-box-proof-scope.md#affine-uniqueness-with-dependent-rows)
+
+The new rank test passed all four Rust 1.95 and 1.99 native Linux and
+WASI Preview 1 builds. The largest executable was 4,419,552 bytes with
+62,689,312 bytes free in its qualification slot. The primary Rust 1.95
+release suite passed 1,550 tests including doctests. Its WASI runner passed
+1,523 direct tests, 17 native parents with fresh WASI children and five
+native platform tests. All 4,212 Horner dispatch windows matched. The
+minimal-feature rank test, targeted strict Clippy on both compilers,
+formatting, nine inventory tests and the 7,359-row inventory comparison
+passed. [Per-target accounts](docs/research/interval-size-accounts.json)
+
+Eleven complete solver trials and two partial repairs were reconsidered.
+Returning a boxed right-hand side eliminated the previous eight heap
+failures. The ordinary lifetime client grew its padding by 3,600 bytes against
+a zero-byte incremental cap. The full-report client added 224 bytes to
+480 already charged, exceeding its 512-byte cumulative cap. Sharing an augmented elimination matrix changed ten of 30
+ordinary dispatch traces. Borrowing its pivot slices fixed the single
+remaining stack failure while preserving that trace difference. Both
+partial repairs grew full-report padding by 2,496 bytes. Each complete
+trial has separate final-image and complete-lifetime results in the archive.
+
+The policy-only repair at `5ca642d0a` preserved all 30 ordinary reports
+and dispatch traces and all 84 whole-box records. All 216 native heap and
+stack gates passed. The largest incremental stack charge was 48 bytes.
+Both existing bare guests grew by three file bytes and one code byte.
+The eight linked image accounts passed and all six native instruments
+preserved their load and protected page counts. The review revision
+passed 1,554 native tests including doctests and 1,527 direct WASI tests
+with the same parent, platform and cross-target dispatch counts. The
+six-step downstream chain retained every certified manifold result and
+checksum in 32 paired blocks on each of two cores.
+
+All 42 registered native artifacts were rebuilt at the fixed, preceding
+and trial revisions. Thirty-three had the registered features. The nine
+upstream lattice artifacts with changed feature sets were byte-identical
+between preceding and trial. The registered fuzz benchmark gained two
+replay workloads after the fixed revision. Rebuilding each suite against
+its own reference gave file changes of −16 bytes for the original and
+−24 bytes for the expanded suite. Code and function sizes matched for
+each pair. The archive preserves the raw cross-workload difference and
+both comparable accounts.
+
+The four additional symbolic and dispatch regression cases are carried
+in the review branch's affine residual executable. Across the two native
+compilers the file grew by 84,392 and 97,040 bytes. Across the two WASI
+compilers it grew by 54,588 and 56,550 bytes. These are qualification
+harness costs, accounted separately from the production library consumers.
+
+After compilation finished, the six owning-crate Criterion workloads had
+lower medians on both pinned cores. The affine workload improved by 1.65%
+and 1.64%. Same-address process timing found no resolved change for the
+16-row client on either core. In two further opposing-load-order campaigns,
+the 16-row client on CPU 17 with the repair loaded first took 1.68% and
+0.89% longer than the baseline. The bootstrap 95% intervals were
+[0.41%, 1.90%] and [0.13%, 1.66%]. The other load order on that core and
+the same-binary controls included zero. Direction varied on CPU 7. The
+raw measurements include the earlier owner run that overlapped compilation.
+The measured client regression keeps the repair on
+`interval-affine-certified-rank` at `5ca642d0a`. The interval branch
+retains the integer oracle and its standalone qualification accounts.
+Use `PredicatePolicy::STRICT` when consuming an affine uniqueness proof.
+
+All 2,670 members of the 438,244-byte record verified from committed blobs
+at evidence revision `7547422348806efb15cf9e05ce245e2d41d56129`.
+[Evidence index](docs/evidence-archive.tsv)
