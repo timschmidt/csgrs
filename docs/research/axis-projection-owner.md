@@ -150,3 +150,38 @@ oracle and the release module identified by its hash.
 
 The [native consumer memory and runtime review](axis-projection-memory.md) measures
 report movement through the legacy wrapper and qualifies the revised boundary.
+
+## Tangent replay findings at the Phase 11 boundary
+
+At `143c712e5`, the contract for a G1 join requires coincident endpoints and
+two parallel, nonzero tangents with the same orientation. With coincident
+endpoints and tangents `(x, 0)` and `(y, 0)`, that orientation condition is
+`xy > 0`. The solver model's cross product vanishes for every such pair and its
+dot-product constraint accepts `xy >= 0`.
+
+| Scalars `(x, y)` | Strict join classifier | Solver join, chain and oriented alignment |
+| --- | --- | --- |
+| (1, 2) | G1Continuous | All satisfied |
+| (1, −2) | ReversedTangent | Rejected |
+| (1, 0), (0, 1), (0, 0) | DegenerateTangent | All satisfied |
+
+A separate direct-classifier witness uses an exact positive displacement
+`h = 2^-2048` behind the sine addition identity. With identical tangents,
+endpoints separated by `(h, 0)` were reported G1-continuous under
+`APPROXIMATE_512`. With identical endpoints, tangents `(1, 0)` and `(1, h)`
+were also reported G1-continuous. A tangent `(h, 0)` was reported degenerate.
+The strict classifier returned `Unknown` for all three. The reports carry
+no qualification for the terminal approximations. All three public solver
+entry points and the direct classifier need their own acceptance witnesses
+before tangent evidence can authorize downstream smoothing.
+
+## Source inventory
+
+The Phase 0 scanner now visits the full routing, tangent and solver modules
+named in section 10.1. A fresh scan of those three files grew from one
+declaration to 118. A separate Rust syntax-tree walk found exactly the same
+64 routing, 34 tangent and 20 solver declarations, plus all 19 in the affine
+axis-projection submodule. The inventory has an individual, source-bound
+review for each of the 19 projection and 34 tangent declarations. The other
+routing and solver entries remain lexical candidates. All 365 earlier manual
+records survived two successive refreshes.
