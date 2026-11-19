@@ -191,6 +191,20 @@ impl Rational {
         &self.canonicalized_ref().numerator
     }
 
+    /// Width of the largest stored magnitude that may need reduction to
+    /// expose the canonical numerator and denominator. Already reduced
+    /// storage returns zero. The bound ignores cache warmth so a budgeted
+    /// caller can charge the same work on a fresh or repeated evaluation.
+    /// Inspecting it does not reduce the fraction or allocate.
+    #[inline]
+    pub fn reduction_input_bits(&self) -> u64 {
+        if self.is_internally_unreduced() {
+            self.numerator.bits().max(self.denominator.bits())
+        } else {
+            0
+        }
+    }
+
     /// Borrow the stored sign, numerator magnitude and positive denominator.
     ///
     /// Their ratio is exactly this value, but the parts need not be reduced.

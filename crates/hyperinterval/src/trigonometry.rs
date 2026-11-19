@@ -27,6 +27,51 @@ pub(crate) struct Reduced {
     pub(crate) argument: DyadicInterval,
 }
 
+// Reserve both source copies and any deferred reductions before either
+// canonical accessor can allocate. Each possible reduction is charged for
+// a GCD and two divisions, independently of cache warmth or shared storage.
+#[cfg(feature = "rational")]
+pub(crate) fn reserve_rational_sources(
+    left: &hyperreal::Rational,
+    right: &hyperreal::Rational,
+    budget: &mut DyadicBudget,
+) -> Result<(), IntervalError> {
+    let (_, left_num, left_den) = left.ratio_parts();
+    let (_, right_num, right_den) = right.ratio_parts();
+    budget.reserve(
+        left_num
+            .bits()
+            .max(left_den.bits())
+            .max(right_num.bits())
+            .max(right_den.bits()),
+        4,
+        false,
+    )?;
+    for value in [left, right] {
+        let bits = value.reduction_input_bits();
+        if bits != 0 {
+            budget.reserve(bits, 3, true)?;
+        }
+    }
+    Ok(())
+}
+
+// Call only after both endpoints pass reserve_rational_sources. Ordinary
+// fractions already contain canonical coefficients and can be copied directly.
+#[cfg(feature = "rational")]
+#[inline]
+pub(crate) fn signed_rational_source(value: &hyperreal::Rational) -> (BigInt, BigInt) {
+    let (sign, numerator, denominator) = if value.reduction_input_bits() == 0 {
+        value.ratio_parts()
+    } else {
+        (value.sign(), value.numerator(), value.denominator())
+    };
+    (
+        BigInt::from_biguint(sign, numerator.clone()),
+        BigInt::from(denominator.clone()),
+    )
+}
+
 impl DyadicInterval {
     /// Tight outward sine image on the requested dyadic grid. Certified phase
     /// reduction and interior extrema are included; this is not endpoint-only.
@@ -63,7 +108,11 @@ impl DyadicInterval {
 #[cfg(feature = "rational")]
 impl crate::RationalInterval {
     /// Tight outward sine image of the exact rational source. Requires
-    /// rational+dyadic; phase selection, extrema and all refinements are budgeted.
+    /// rational+dyadic. Phase selection, extrema and all refinements share the
+    /// caller's budget. Ingress reserves four linear copies at the larger
+    /// stored endpoint width, then three quadratic stages at each endpoint's
+    /// possible reduction width before accessing either reduced fraction.
+    /// These charges are independent of cache warmth.
     pub fn sin(&self, precision: i32, budget: &mut DyadicBudget) -> Result<Image, IntervalError> {
         self.trig(Function::Sin, precision, budget)
     }
@@ -81,21 +130,9 @@ impl crate::RationalInterval {
         let Some((a, b)) = self.bounds() else {
             return complete(DyadicInterval::empty());
         };
-        budget.reserve(
-            a.numerator()
-                .bits()
-                .max(a.denominator().bits())
-                .max(b.numerator().bits())
-                .max(b.denominator().bits()),
-            4,
-            false,
-        )?;
-        let (an, ad, bn, bd) = (
-            BigInt::from_biguint(a.sign(), a.numerator().clone()),
-            BigInt::from(a.denominator().clone()),
-            BigInt::from_biguint(b.sign(), b.numerator().clone()),
-            BigInt::from(b.denominator().clone()),
-        );
+        reserve_rational_sources(a, b, budget)?;
+        let (an, ad) = signed_rational_source(a);
+        let (bn, bd) = signed_rational_source(b);
         range(
             Source {
                 n: &an,

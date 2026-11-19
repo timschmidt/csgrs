@@ -1,5 +1,7 @@
 //! Pole incidence and monotone branches reuse certified trigonometric bounds.
 use crate::trigonometry::{Function, Reduced, Source, extrema, reduce, series, wide};
+#[cfg(feature = "rational")]
+use crate::trigonometry::{reserve_rational_sources, signed_rational_source};
 use crate::{
     DomainCoverage, DyadicBudget, DyadicInterval, ExtendedInterval, ExtendedIntervalView as View,
     IntervalError, IntervalSet2, RangeEnclosure,
@@ -60,7 +62,8 @@ impl DyadicInterval {
 #[cfg(feature = "rational")]
 impl crate::RationalInterval {
     /// Tangent of the exact rational source, with certified pole incidence,
-    /// outward dyadic components and domain coverage. Requires rational+dyadic.
+    /// outward dyadic components and domain coverage. Stored rational parts
+    /// use the same ingress budget as [`Self::sin`]. Requires rational+dyadic.
     pub fn tan(&self, precision: i32, budget: &mut DyadicBudget) -> Result<Image, IntervalError> {
         self.pole_trig(PoleFunction::Tan, precision, budget)
     }
@@ -81,21 +84,9 @@ impl crate::RationalInterval {
         if function.cot() && a.is_zero() && b.is_zero() {
             return Err(IntervalError::EmptyDomain);
         }
-        budget.reserve(
-            a.numerator()
-                .bits()
-                .max(a.denominator().bits())
-                .max(b.numerator().bits())
-                .max(b.denominator().bits()),
-            4,
-            false,
-        )?;
-        let (an, ad, bn, bd) = (
-            BigInt::from_biguint(a.sign(), a.numerator().clone()),
-            BigInt::from(a.denominator().clone()),
-            BigInt::from_biguint(b.sign(), b.numerator().clone()),
-            BigInt::from(b.denominator().clone()),
-        );
+        reserve_rational_sources(a, b, budget)?;
+        let (an, ad) = signed_rational_source(a);
+        let (bn, bd) = signed_rational_source(b);
         range(
             Source {
                 n: &an,

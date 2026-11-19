@@ -34,6 +34,9 @@
   view for resource admission before coefficient copying or canonicalization.
   Existing canonical numerator/denominator getters retain their behavior.
 
+- Add `Rational::reduction_input_bits` to report the operand width of a
+  possible deferred reduction without allocating or consulting its cache.
+
 - Cold-domain continuation regressions cover rational cotangents around pi,
   extreme shifted trig arguments, malformed hidden children, exact downstream
   consumers and abort/reset. Bounded structural proofs restore the scoped

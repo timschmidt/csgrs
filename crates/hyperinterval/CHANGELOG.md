@@ -9,6 +9,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Rational sine, cosine, tangent and cotangent check both stored fractions
+  against the caller's budget before reducing either endpoint. Generated
+  coordinates with large common factors can now exhaust the budget at ingress.
+
 - Add `RationalInterval::scale` for exact scalar multiplication by a borrowed
   rational, including negative and zero factors.
 
