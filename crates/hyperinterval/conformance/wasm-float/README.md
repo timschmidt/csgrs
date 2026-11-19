@@ -50,8 +50,14 @@ runner checks both endpoint selectors for empty results and errors 16–20 at
 both widths. Each check reproduces the expected status on a fresh instance and
 requires a WebAssembly trap when it requests the endpoint. Flags 1/2 explicitly
 select empty first/second inputs; their unused endpoint payloads are ignored.
-Each query recomputes the bounded
-operation, so there is no mutable result cache or stale-output channel.
+Corpus operation 21 calls `convert32` or `convert64` to convert the first
+interval to the other IEEE format. Its endpoint selectors return destination-format
+bits. The corpus includes both
+sides of each binary32 normal exponent boundary and each subnormal
+leading-bit position, signed intervals crossing those boundaries, and
+narrowing past the largest finite binary32 endpoint. The verifier also
+checks that querying either endpoint of a failed or empty conversion traps.
+Each query recomputes the bounded operation, so there is no mutable result cache or stale-output channel.
 
 The driver records exact results, tool versions, source-independent corpus and
 module hashes, dependency closure, and generated-code inspection. The whole

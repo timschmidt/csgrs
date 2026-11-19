@@ -27,7 +27,7 @@ pub extern "C" fn qualification() -> u32 {
 }
 
 macro_rules! query {
-    ($function:ident, $properties:ident, $interval:ty, $float:ty, $bits:ty) => {
+    ($function:ident, $properties:ident, $interval:ty, $float:ty, $bits:ty, $conversion:ident, $convert:ident) => {
         /// Exact set facts and width ordering. Bit 63 marks a typed error code.
         #[unsafe(no_mangle)]
         pub extern "C" fn $properties(
@@ -75,6 +75,27 @@ macro_rules! query {
                 Ok(bits) => bits,
                 Err(error) => (1 << 63) | error_code(error),
             }
+        }
+
+        /// Cross-format endpoints use the destination encoding.
+        #[unsafe(no_mangle)]
+        pub extern "C" fn $conversion(selector: u32, empty: u32, a: $bits, b: $bits) -> u64 {
+            assert!(selector <= 2 && empty <= 1);
+            let source = if empty == 1 {
+                Ok(<$interval>::empty())
+            } else {
+                <$interval>::new(<$float>::from_bits(a), <$float>::from_bits(b))
+            };
+            let result = source.and_then(|source| source.$convert());
+            if selector == 0 {
+                return match result {
+                    Ok(range) => u64::from(range.is_empty()),
+                    Err(error) => error_code(error),
+                };
+            }
+            let range = result.expect("endpoints require success");
+            let (lo, hi) = range.bounds().expect("endpoints require nonempty success");
+            u64::from(if selector == 1 { lo } else { hi }.to_bits())
         }
 
         /// Selector 0 returns status; 1/2 return complete endpoint bits.
@@ -158,5 +179,21 @@ macro_rules! query {
     };
 }
 
-query!(query32, properties32, F32Enclosure, f32, u32);
-query!(query64, properties64, F64Enclosure, f64, u64);
+query!(
+    query32,
+    properties32,
+    F32Enclosure,
+    f32,
+    u32,
+    convert32,
+    to_f64_enclosure
+);
+query!(
+    query64,
+    properties64,
+    F64Enclosure,
+    f64,
+    u64,
+    convert64,
+    to_f32_enclosure
+);

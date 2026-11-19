@@ -146,6 +146,9 @@ class Format:
             values = [a ** exponent, b ** exponent]
             if exponent and exponent % 2 == 0 and a <= 0 <= b:
                 values.append(Fraction(0))
+        elif operation == 21:
+            destination = BINARY64 if self.width == 32 else BINARY32
+            return 0, destination.project(x)
         elif operation == 20:
             _, first = self.image(1, x, y, 0, 0, 0)
             _, second = self.image(5, tuple(map(self.decode, first)), None, 0, 0, 0)
@@ -193,6 +196,10 @@ class Format:
             return (1 << 63) | error.code
 
 
+BINARY32 = Format(32)
+BINARY64 = Format(64)
+
+
 def cases(seed, samples):
     rng = random.Random(seed)
     for width in [32, 64]:
@@ -207,10 +214,10 @@ def cases(seed, samples):
         invalid = [fmt.infinity, fmt.infinity | fmt.sign, fmt.infinity | 1,
                    fmt.infinity | (1 << (fmt.fraction - 1)), (1 << width) - 1]
         for value in edges + invalid:
-            for operation in range(21):
+            for operation in range(22):
                 yield fmt.case(operation, 0, [value, value, one, two])
             for flags in [0, 1, 2, 3]:
-                for operation in [0, 1, 4, 6, 7, 12, 13, 20]:
+                for operation in [0, 1, 4, 6, 7, 12, 13, 20, 21]:
                     yield fmt.case(operation, flags, [one, value, 0, value])
         for a in edges:
             for b in edges:
@@ -223,7 +230,7 @@ def cases(seed, samples):
             for exponent in range(1, (1 << fmt.exponent) - 1)
         ] + [1 << bit for bit in range(fmt.fraction)]
         for value in bands:
-            for operation in [0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16, 17, 18, 20]:
+            for operation in [0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16, 17, 18, 20, 21]:
                 yield fmt.case(operation, 0, [value, value, one + 1, one + 1])
         for _ in range(samples):
             points = [rng.getrandbits(width) for _ in range(4)]
@@ -233,6 +240,7 @@ def cases(seed, samples):
             c, d = sorted(points[2:], key=fmt.decode)
             for operation in range(21):
                 yield fmt.case(operation, 0, [a, b, c, d], rng.randrange(3))
+            yield fmt.case(21, 0, [a, b, c, d])
         for a, b in [(-2, 3), (-2, -1), (0, 2), (1, 2)]:
             for exponent in [3, 4, 5, 8, 10]:
                 yield fmt.case(19, 0, [fmt.bounds(Fraction(a))[0], fmt.bounds(Fraction(b))[1], 0, 0], exponent)
@@ -243,6 +251,21 @@ def cases(seed, samples):
         yield fmt.case(15, 0, [0, 1, 0, 0])
         yield fmt.case(16, 0, [0, 1, 0, 0])
         yield fmt.case(1, 0, [one, one, one | fmt.sign, one | fmt.sign])
+
+
+def narrowing_boundaries():
+    # One binary64 ulp on either side of a binary32 boundary must select
+    # opposite rounding directions. Include the subnormal and overflow edges.
+    boundaries = [1 << bit for bit in range(BINARY32.fraction)]
+    boundaries.extend(e << BINARY32.fraction for e in range(1, (1 << BINARY32.exponent) - 1))
+    boundaries.append(BINARY32.maximum)
+    for edge in boundaries:
+        lo, hi = BINARY64.bounds(BINARY32.decode(edge))
+        assert lo == hi
+        for a, b in [(lo - 1, lo), (lo, lo + 1), (lo - 1, lo + 1)]:
+            for lower, upper in [(a, b), (b | BINARY64.sign, a | BINARY64.sign),
+                                 (a | BINARY64.sign, b)]:
+                yield BINARY64.case(21, 0, [lower, upper, 0, 0])
 
 
 def near_one_power(fmt, n):
@@ -347,6 +370,7 @@ def main():
     rows = list(cases(args.seed, args.samples))
     for width in (32, 64):
         rows.extend(higher_powers(Format(width)))
+    rows.extend(narrowing_boundaries())
     properties = []
     seen = set()
     formats = {width: Format(width) for width in [32, 64]}
