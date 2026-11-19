@@ -38,9 +38,15 @@ FIELDS = [
 CANDIDATE = "lexical candidate; not yet audited"
 UNAVAILABLE = "repository unavailable"
 INTERVAL_PACKAGES = {"hyperinterval", "hyperlattice-interval", "hyperdynamics"}
-# Paths are relative to their package manifests (plan sections 8, 9 and 12).
+# Paths are relative to their package manifests (plan sections 7–9 and 12).
 SEED_FILES = {
-    "hypersolve": {"src/interval.rs", "src/real_interval.rs"},
+    "hypersolve": {
+        "src/interval.rs", "src/real_interval.rs", "src/jacobian.rs", "src/linalg.rs",
+        "src/alpha.rs", "src/root_isolation.rs", "src/certification.rs", "src/residual_replay.rs",
+        # Test modules included by these owners with an explicit #[path].
+        "src/root_isolation_monic_tests.rs", "src/interval_migration/root_isolation.rs",
+        "src/interval_migration/algebraic.rs",
+    },
     "alumina-interface-core": {
         "src/boundary.rs", "src/machine_profile.rs", "src/motion_schedule.rs", "src/compiler.rs",
         "src/direct_motion.rs", "src/servo_motion.rs", "src/shared_timing_evidence.rs", "src/graph.rs",
@@ -104,15 +110,20 @@ def scan(root, repository, reviewed_names):
     files = os.fsdecode(listing.stdout).split("\0")
     for filename in sorted(filter(None, files)):
         parts = Path(filename).parts
-        if any(part in {"tests", "benches", "fuzz", "examples", "verification"} for part in parts):
+        if any(part in {"benches", "fuzz", "examples", "verification"} for part in parts):
             continue
-        source = (root / filename).read_text()
         owner, manifest = package((root / filename).parent)
         relative = Path(filename).relative_to(Path(manifest).parent) if manifest else Path(filename)
+        # Section 7 includes the algebraic*.rs family and its split Rust modules.
+        algebraic_module = (owner == "hypersolve" and len(relative.parts) >= 2
+                            and relative.parts[0] == "src" and relative.parts[1].startswith("algebraic"))
+        if "tests" in parts and not (algebraic_module and "tests" in relative.parts[2:]):
+            continue
         seed = (
-            relative.as_posix() in SEED_FILES.get(owner, ())
+            algebraic_module or relative.as_posix() in SEED_FILES.get(owner, ())
             or (owner in SEED_DIRECTORIES and relative.is_relative_to(SEED_DIRECTORIES[owner]))
         )
+        source = (root / filename).read_text()
         test_command = (f"cargo test --manifest-path {manifest} (select features after review)"
                         if manifest else "requires test mapping")
         line = 1

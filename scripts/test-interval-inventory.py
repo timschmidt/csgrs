@@ -159,6 +159,25 @@ class InventoryRefresh(unittest.TestCase):
                  if r["symbol"] == "calibrate"]
         self.assertCountEqual(found, expected)
 
+    def test_solver_migration_modules_follow_package_and_source_boundaries(self):
+        paths = {
+            "src/jacobian.rs", "src/linalg.rs", "src/alpha.rs", "src/root_isolation.rs",
+            "src/certification.rs", "src/residual_replay.rs", "src/algebraic.rs",
+            "src/algebraic_new_image.rs", "src/algebraic_fiber/refinement.rs",
+            "src/algebraic_fiber/tests/projection_budget.rs",
+            "src/root_isolation_monic_tests.rs", "src/interval_migration/root_isolation.rs",
+            "src/interval_migration/algebraic.rs",
+        }
+        outside = {"src/analysis.rs", "src/other/algebraic.rs", "src/certification_extra.rs",
+                   "src/interval_migration/other.rs", "tests/algebraic.rs"}
+        for directory, package in [("solver", "hypersolve"), ("unrelated", "other")]:
+            self.source(f"{directory}/Cargo.toml", f'[package]\nname = "{package}"\n')
+            for path in paths | outside:
+                self.source(f"{directory}/{path}", "fn evaluate() {}\n")
+        self.refresh(self.inventory)
+        found = [r["path"] for r in self.rows(self.inventory) if r["symbol"] == "evaluate"]
+        self.assertCountEqual(found, ["solver/" + path for path in paths])
+
     def test_failed_refresh_leaves_existing_evidence_intact(self):
         self.write_review(self.inventory, "retired_bounds", "7")
         before = self.inventory.read_bytes()
