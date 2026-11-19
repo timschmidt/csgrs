@@ -110,9 +110,9 @@
 //! large integer product or a scalar refinement, still runs to completion.
 //!
 //! [`with_coefficient_bit_limit`] bounds the size of exact coefficients that
-//! those same constructions produce: Bareiss entries, pseudo-quotient matrix
-//! entries and exact rational dense tensor product coefficients report their
-//! bit length through [`observe_coefficient_bits`], and a larger one fails
+//! produced by Bareiss entries, pseudo-quotient matrix entries and [`crate::DenseTensorPolynomial::multiply`].
+//! For [`crate::DenseTensorPolynomial::sum_products`], the caller must observe the largest stored rational
+//! coefficient through [`observe_coefficient_bits`] before using the result. An oversized coefficient fails
 //! with [`WorkKind::CoefficientGrowth`] before it is used. Unlike cancellation
 //! the bound is deterministic. It covers only these constructions: other
 //! coefficient arithmetic, such as subresultant and Sturm sequences or scalar

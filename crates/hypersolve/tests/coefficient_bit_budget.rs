@@ -94,3 +94,32 @@ fn first_receipt_names_the_outermost_limit_that_denied_work() {
         }
     }
 }
+
+#[test]
+fn materialized_product_counts_denominator_bits_and_recovers_after_denial() {
+    use hyperreal::Real;
+    use hypersolve::DenseTensorPolynomial;
+
+    let tensor = |coefficients: Vec<Real>| {
+        DenseTensorPolynomial::try_new(vec![coefficients.len()], coefficients).unwrap()
+    };
+    let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+    let a = tensor(vec![ratio(1_i64, 16_i64), Real::one()]);
+    let b = tensor(vec![ratio(-1, 16), Real::one()]);
+    let expected = tensor(vec![ratio(-1, 256), Real::zero(), Real::one()]);
+    // (x + 1/16)(x - 1/16) has constant coefficient -1/256. Its
+    // numerator needs one bit and its denominator needs nine.
+    let completed = with_coefficient_bit_limit(10, || {
+        let inner = with_coefficient_bit_limit(9, || {
+            assert!(a.multiply(&b).is_none());
+        });
+        let denied = inner.result.unwrap_err();
+        assert_eq!(denied.kind, WorkKind::CoefficientGrowth);
+        assert_eq!((denied.limit, denied.used, denied.requested), (9, 0, 10));
+        assert_eq!(exhaustion(), None);
+        let product = a.multiply(&b).unwrap();
+        assert_eq!(product, expected);
+        assert_eq!(product.multiply(&tensor(vec![Real::one()])), Some(expected));
+    });
+    assert_eq!(completed.result, Ok(()));
+}

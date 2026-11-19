@@ -127,8 +127,13 @@ allocation, or elapsed time. `work_budget::with_cancellable_budget` adds a
 `CancellationToken` that another thread can cancel; the operation stops at its
 next instrumented unit with a typed `Cancellation` failure.
 `work_budget::with_coefficient_bit_limit` bounds the exact coefficients that
-Bareiss determinants, pseudo-quotient matrices and dense tensor products
-produce, failing deterministically with `CoefficientGrowth`. The limit and
+Bareiss determinants, pseudo-quotient matrices and
+`DenseTensorPolynomial::multiply` produce. For a single budgeted product,
+use `multiply`. The fused `sum_products` currently omits the automatic
+observation of its final rational coefficients. Callers that check a fused
+sum can pass the largest stored numerator-plus-denominator bit count to
+`work_budget::observe_coefficient_bits` before using the result.
+A denied observation exhausts the responsible scope with `CoefficientGrowth`. The limit and
 observed bit count are compared as `u64`. On 32-bit targets the error currently
 saturates each reported count above `usize::MAX`, including in its display. See the
 [module contract](src/work_budget.rs) for the current coverage, cache behavior,
