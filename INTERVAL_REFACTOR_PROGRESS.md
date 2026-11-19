@@ -52,7 +52,7 @@ No existing arithmetic or predicate dispatch has been changed.
 
 | Phase | State | Evidence still required |
 | --- | --- | --- |
-| 0 inventory/baseline | Native coverage measured for Hyperinterval, Hyperdynamics and Hyperlattice Interval. Independent syntax traversal matched 2,807 declarations in 36 planned machine source files. All 34 shared-timing evidence declarations have body reviews. | remaining body and consumer audits, sibling qualification, costs, coverage, fuzz and hashes |
+| 0 inventory/baseline | Native coverage measured for Hyperinterval, Hyperdynamics and Hyperlattice Interval. Independent syntax traversal matched 2,807 declarations in 36 planned machine source files. All 34 shared-timing evidence declarations and all 40 simulator FOC declarations have body reviews. | remaining body and consumer audits, sibling qualification, costs, coverage, fuzz and hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
@@ -13549,3 +13549,27 @@ Evidence commit `94e38e6a52ad849fe428ef4c625ee2c0539e8a9b` retains 249
 members. The indexed record occupies 79,060 bytes and has digest
 `a1eebf796402ce94ae95620c73c989143440f2968eb11aa60a1c264a9947aa15`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 0 simulator FOC source review, 19 November 2026
+
+At firmware `56c2c28`, all 40 named declarations in the simulator FOC
+module now have body reviews, including four fixture helpers and seven tests.
+The independent Rust syntax visitor from evidence commit `a50777920` matched
+all 40 inventory entries by line, kind and name. The 29 additional reviews
+preserve the previous 323. Two inventory refreshes agreed on all 6,338 scan
+rows and 352 reviews. All seven inventory tests passed. [Inventory](interval-inventory.tsv)
+
+The servo plant integrates the rounded Q30 displacement into Q31.32 by
+multiplying the displacement bits by four. Its constructor validates the
+two response and scale coefficients and copies the supplied initial velocity.
+The cascaded controller receives singleton position and velocity intervals
+on velocity ticks. The encoder replay derives a raw reading from signed truth
+and compares the portable estimator's recovered count against it at every step.
+
+The existing host tests exercised a 12,000-step cascade with 240 position
+and 1,200 velocity updates, plus 1,600 encoder steps in each direction. The
+counter prechecks in the current and cascaded loop builders establish that
+the transition count fits. Their output vectors reserve memory separately,
+and admission for arbitrarily large byte capacities remains open. These
+reviews concern the simulator. Device timing and whole-board memory still
+require separate qualification. [Test evidence](docs/evidence-archive.tsv)
