@@ -16280,5 +16280,51 @@
       }
     },
     "native_interface_symbols": "Release strips native symbols. .text measures native machine code; zero named-range bytes is the symbol table observation."
+  },
+  "mixed_degree_affine_box_review": {
+    "source": "4c4385b48",
+    "evidence": "f3e0c3520bcbbce73fde0b36eb038b68dd093d0d",
+    "record": "docs/evidence/2026-11-19-interval-mixed-degree-box-replay",
+    "admission": "Reviewed trials only. Primary debit is zero.",
+    "trials": {
+      "open_residual": "7433a54bd",
+      "affine_in_place": "2f42ef920",
+      "affine_source_dependencies": "1bcfa0a2e",
+      "grouped_balls": "580b8617e"
+    },
+    "scope": "88 existing release library/test, example and benchmark commands per toolchain and architecture, plus one new integration command per trial. Three complete four-way comparisons and a separate four-command measurement for alternatives.",
+    "slot_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "open_residual_rust_1_99_native_representation_test": {
+      "file_step": 4304,
+      "ordinary_file_step_limit": 4096
+    },
+    "rust_1_95_certification_benchmark": {
+      "fit-sparse": {
+        "native": {
+          "file": 8704,
+          "code": 6080,
+          "functions": 6006
+        },
+        "wasi": {
+          "file": 13305,
+          "code": 13361,
+          "functions": 13367
+        }
+      },
+      "fit-grouped": {
+        "native": {
+          "file": 14136,
+          "code": 10192,
+          "functions": 10205
+        },
+        "wasi": {
+          "file": 13493,
+          "code": 13346,
+          "functions": 13350
+        }
+      }
+    },
+    "raw": "strict-comparison.json, family-comparison.json and sparse-comparison.json give per-target sizes, positive and negative changes and slot headroom. Raw paired ELF and WASI metrics include every allocated ELF section, function range union or aggregate WASI body size. Original registered accounts are preserved."
   }
 }

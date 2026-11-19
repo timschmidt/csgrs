@@ -2803,5 +2803,32 @@
       }
     },
     "exception_charge": 0
+  },
+  "mixed_degree_affine_box_review": {
+    "source": "4c4385b48",
+    "evidence": "f3e0c3520bcbbce73fde0b36eb038b68dd093d0d",
+    "record": "docs/evidence/2026-11-19-interval-mixed-degree-box-replay",
+    "admission": "Reviewed trials only. Primary debit is zero.",
+    "trial": "1bcfa0a2e",
+    "scope": "Complete construction, box replay, report consumption and cleanup for 60 registered workloads and 12 mixed-degree cells. Two fill patterns, cold and warm guarded Linux threads. 24 fresh processes per revision and toolchain in the sparse comparison. Requested and allocator-usable histories are separate.",
+    "fixed": "c9f1f9ac5",
+    "registered_references": [
+      "4d4b472e6",
+      "0783f2ddc"
+    ],
+    "registered_rust_1_95_stack": {
+      "step_caps": "128 B and 1% of preceding peak",
+      "cumulative_caps": "256 B and 2% of fixed peak",
+      "largest_positive_step": 48,
+      "largest_cumulative_charge_if_retained": 168,
+      "over_cap_rows": 0,
+      "rows": 120,
+      "smallest_cumulative_allowance_remaining": 51
+    },
+    "rust_1_99_largest_step": 40,
+    "max_mixed_stack_increase": 0,
+    "peak_requested_delta_all_72_cells": 0,
+    "retained_after_drop": 0,
+    "raw": "cumulative-stack.json, anchor-repeats.json, stack-repeat-summary.json, and the per-call requested/usable histories"
   }
 }

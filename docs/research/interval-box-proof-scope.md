@@ -376,3 +376,25 @@ downstream feedback chain preserved geometry, validation and allocation
 records. In the same-file timing control, the median downstream differences
 were 0.00% and +0.08%, with both 95% intervals containing zero.
 [Memory accounts](interval-memory-accounts.json) · [Size accounts](interval-size-accounts.json)
+
+## Varying affine rows in the quadratic packages
+
+On `4c4385b48` the quadratic residual selectors admit structural degree
+two. A linear row may have a retained affine form and still receive only
+point replay in either quadratic package. For a generated G1 join, take
+a fixed target tangent `(2, 0)` and a candidate `(x, 0)` over
+`[-1, 3]`. Endpoints agree, the cross product vanishes and the dot product
+takes both signs. Each quadratic package reported `Certified` at center 1
+under both policies. The affine package returned `Unknown`. This exposure is
+independent of whether orientation excludes the zero tangent.
+
+The trial at `1bcfa0a2e` reuses the affine source to compute the exact
+projected radius for varying rows. The quadratic evidence remains available
+on the same mixed problem. Independent four-corner and symbolic-face
+expectations check row indices, signed residuals, certainty, and the public
+aggregate. The combined path/solver branch `c112d08f6` also requires a strict
+dot product. Its generated-box corpus passed all 180 checks on Linux and
+WASI with Rust 1.95 and 1.99. The earlier cubic coverage and approximate
+receipt findings above are separate. The implementation remains under review
+because final linked executables exceed their size limits.
+[Qualification and measurements](../../INTERVAL_REFACTOR_PROGRESS.md#phases-7-and-11-generated-tangent-models-over-variable-boxes)

@@ -59,11 +59,11 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers and full-width exponents | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 72 current solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. The full 199-case Interface core suite now runs on WASI, including machine-profile replay and TinyBee firmware actors. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
-| 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; nine solver zero-tangent outcomes and the measured extraction stack excess remain open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
+| 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; solver zero-tangent and varying affine-box verdicts remain open alongside the measured extraction stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 27 required client checks pass on both, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
@@ -14397,3 +14397,56 @@ Nine added owner reviews bring the interval inventory to 427 reviews and
 7,354 scan rows. Two regenerations produced identical bytes. The 797 archived
 sources, manifests, samples and logs were verified from evidence commit
 `1d5a51ef247d701490b0faa4eb50b5e011531ac7`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phases 7 and 11, generated tangent models over variable boxes
+
+On `4c4385b48`, a generated axial G1 model produced 36 incorrect whole-box
+verdicts in 120 independent cases. For example, target tangent `(2, 0)`
+and candidate tangent `(x, 0)` with `x` in `[-1, 3]` have dot products
+from −2 to 6. Both quadratic packages could certify orientation using the
+center alone. The affine package enclosed this varying row. The strict
+residual trial `7433a54bd` corrected the twelve singleton outcomes, leaving
+24 incorrect crossing-box results. A new public example on the primary branch
+exercises the supported affine enclosure and explains the scope of fallback
+rows. Both Rust 1.95 and 1.99 passed the doctests and strict rustdoc build.
+[Public box API](crates/hypersolve/src/interval.rs) ·
+[Solver proof scope](docs/research/interval-box-proof-scope.md)
+
+The mixed-degree trial independently encloses an affine row using the sum
+of absolute source coefficients times their variable radii. It retains the
+source constraint index, normalized residual, policy-qualified sign and
+aggregate counts. The combined branch `interval-g1-box-composition` at
+`c112d08f6` passed all 180 generated G1 box checks and the mixed-degree,
+open half-line and hidden-sign regressions on both compilers and targets.
+The 12 unchanged owner report/trace comparisons per implementation matched
+byte for byte.
+
+A full linked comparison covered 88 existing Hypersolve commands on each of
+four compiler/target combinations. The unchanged revision ran 1,543 native
+tests. The strict-row, in-place affine and source-dependency trials each ran
+1,545. Each trial ran 1,521 direct WASI tests, 17 native parents making 26
+fresh guest calls and five native platform cases, and matched all 4,212
+Horner dispatch windows. This qualifies the measured trials, including their
+new test executable. Release coordination and the binary limits still block
+the strict-row migration. Its Rust 1.99 Linux representation test grew by
+4,304 file bytes against a 4,096-byte incremental cap.
+
+Source-dependency checks removed the first affine implementation's
+256–272-byte stack increase on constant-only controls. With 24 fresh
+processes on each side per compiler, maximum positive stack changes across
+the 60 registered workloads were 48 bytes on Rust 1.95 and 40 on Rust 1.99.
+Every paired requested-heap peak matched. The 12 additional mixed-workload
+cells had unchanged measured stack maxima. For the registered Rust 1.95
+account, the largest cumulative stack debit in the trial reconstruction was
+168 bytes. All 120 cold/warm rows were within their cumulative limits.
+The raw account preserves every positive charge and the fixed references.
+
+The source-dependency trial `1bcfa0a2e` still added 8,704 Linux file bytes
+and 13,305 WASI file bytes to the Rust 1.95 owner certification benchmark.
+The grouped-ball alternative `580b8617e` added 14,136 and 13,493 file bytes
+respectively. Neither change was admitted. The public scope documentation
+and four reviewed inventory rows are retained. The inventory now contains
+431 reviews and 7,354 scan rows. Evidence commit `f3e0c3520bcbbce73fde0b36eb038b68dd093d0d` includes the
+independent source oracles, release measurements, full test inventories,
+stack accounts, paired timings and trial patches.
+[Evidence index](docs/evidence-archive.tsv)

@@ -253,3 +253,11 @@ exhaustive encoder fails to compile against the extension. Release coordination
 and the broader solver resource checks remain open. The affine projection
 proof and extraction findings above are separate open issues.
 [Measurements and admission record](../../INTERVAL_REFACTOR_PROGRESS.md#phase-11-certified-tangent-decisions-and-schedule-replay)
+
+The full `7433a54bd` solver trial ran 1,545 ordinary native tests on each
+compiler and matched the native/WASI replay and dispatch controls. Its Linux
+representation test on Rust 1.99 grew by 4,304 bytes against the 4,096-byte
+file cap. A generated model subsequently consumed by quadratic interval replay
+also exposed 24 incorrect crossing-box verdicts after the strict-row repair.
+The paired trial with Hypersolve's affine enclosure corrects those verdicts.
+[Mixed-degree proof coverage](interval-box-proof-scope.md#varying-affine-rows-in-the-quadratic-packages)
