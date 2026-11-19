@@ -9,6 +9,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add allocation-free conversion between certified float intervals. Binary32
+  widens exactly and binary64 narrows to the tightest finite binary32 bounds.
+
 - Add tight, budgeted rational-to-binary32 and rational-to-binary64 interval
   projection, including subnormal, overflow and independent endpoint grids.
 

@@ -16575,5 +16575,28 @@
       }
     },
     "evidence": "docs/evidence/2026-11-19-interval-affine-prefix-and-proof"
+  },
+  "float_format_conversion": {
+    "source": "db9fa026c",
+    "preceding": "dd275ffda",
+    "fixed": "c9f1f9ac5",
+    "benefit": "Direct directed conversion between finite binary32 and binary64 intervals with float-enclosure alone. A completed mixed-range round trip avoids the intermediate dyadic representation.",
+    "controls": "Five matched native Rust 1.99 controls. No positive increment in any final file, loaded section or named code total. Existing bare WebAssembly conformance clients on 1.88 and 1.99 each shrink by one file byte. All three guest code sections and function-body totals retain their sizes.",
+    "rust_1_95_bare_wasm_file": {
+      "fixed_bytes": 649031,
+      "preceding_bytes": 649045,
+      "retained_bytes": 649048,
+      "incremental_charge_bytes": 3,
+      "incremental_cap_bytes": 1024,
+      "cumulative_charge_bytes": 17,
+      "cumulative_cap_bytes": 4096,
+      "remaining_cumulative_bytes": 4079,
+      "qualification_slot_bytes": 67108864,
+      "free_bytes": 66459816,
+      "required_free_bytes": 16777216
+    },
+    "new_clients": "The native format test fits the 64 MiB test slot with 16 MiB reserved. The three bare, two WASI and three packaged native consumer images fit 4 MiB each with at least 1 MiB reserved. These slots cover host and guest test artifacts. No board image changed.",
+    "memory": "No existing memory allowance charged. On Rust 1.95 the preceding and retained bare WASM conformance clients both reserved and touched 704 bytes. Each of the three new bare clients reserved and touched 224 bytes in a 1 MiB stack. All maintained their initial linear memory size.",
+    "evidence": "2026-11-19-interval-float-format-conversion, metrics.json and accounts.json"
   }
 }

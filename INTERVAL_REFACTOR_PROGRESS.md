@@ -56,7 +56,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and direct rational-to-IEEE projection implemented and locally qualified | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers, full-width exponents and tight rational endpoint projection | full surface/coverage, further targets and shipped consumers |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers, full-width exponents, tight rational endpoint projection and direct binary32/binary64 conversion | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound. The affine oracle checks every field of each published coordinate, including the proved prefix of an outside-box report | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
@@ -14668,3 +14668,42 @@ Production size and memory charges remain at their preceding values.
 All 1,774 archived members verified at evidence commit
 `91660fccff4acd321079fca31a13d260b9ec579c`. The record occupies
 431,268 bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 4, direct conversion between certified IEEE intervals
+
+At `db9fa026c`, Hyperinterval widens a finite binary32 interval to binary64
+exactly and narrows binary64 to the tightest finite binary32 enclosure.
+The conversion decodes the source significand and exponent, applies the
+target's existing directed rounding, and selects the lower bound for the
+first endpoint and the upper for the second. This covers every finite
+encoding, including values below the smallest positive binary32 subnormal.
+Both APIs preserve empty. Narrowing an interval extending beyond finite
+binary32 returns `IntervalError::Overflow`. Only `float-enclosure` is required.
+[Public contract](crates/hyperinterval/README.md)
+
+The new calls failed to compile at `dd275ffda`. The retained tests cover every
+finite binary32 exponent field and all 16 native rounding and FTZ/DAZ
+combinations on x86_64. A mutation rounding the upper endpoint downward
+failed both tests. Each of three bare WebAssembly builds and the opt-in
+Rust 1.95 WASI client passed 260,948 endpoint or overflow comparisons.
+The default WASI build preserved empty and rejected nonempty ingress.
+All 417 owner and lattice tests and doctests passed on Rust 1.99. Strict
+Clippy, workspace formatting, the Thumb feature check and nine inventory
+tests passed. A version-only external client consumed the staged package
+offline on Rust 1.88, 1.95 and 1.99. [Acceptance tests](crates/hyperinterval/tests/float_format.rs)
+
+On 65,536 mixed-range round trips, the direct and intermediate-dyadic paths
+produced the same endpoint checksum. The direct path made zero allocation
+requests. The dyadic path made 1,413,237 requests totaling 31,370,464 bytes.
+Median times over five interleaved samples per path on one pinned core were
+9.60 ms and 108.27 ms respectively. Each new bare guest reserved and touched
+224 bytes of its 1 MiB stack. The existing Rust 1.95 conformance workload
+retained its 704-byte stack measurement. Five existing native controls had
+no positive size delta. The Rust 1.95 bare client grew by three file bytes
+with identical code and function-body sizes, bringing its cumulative charge
+to 17 of 4,096 bytes. [Per-target accounts](docs/research/interval-size-accounts.json)
+
+The inventory reproduces 7,359 scan rows and 438 body reviews.
+All 73 archived members verified at evidence commit
+`cc5e4c0310629943dbfc278ac7cce87ff10fb582`.
+[Evidence index](docs/evidence-archive.tsv)
