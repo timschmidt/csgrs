@@ -1885,5 +1885,95 @@
       }
     },
     "stack_scope": "Maximum observed rsp-based DWARF CFA offset per emitted client frame. A null value is censored. Inlining differs by compiler. These observations do not bound OS startup or whole-thread stack."
+  },
+  "ieee_power_qualification": {
+    "source_previous": "56f976d80",
+    "evidence": "docs/evidence/2026-11-19-interval-ieee-powers",
+    "scope": "Completed sequential Node arithmetic verification with 24 fresh trap checks, and Python generation through publication of the deterministic corpus. Host group peaks include the observer. Previous positive verifier charges carry forward. The generator at its first commit 0ba14a211 has the same source blob as the predecessor.",
+    "capacity_bytes": 268435456,
+    "reserve_bytes": 67108864,
+    "swap_bytes": 0,
+    "positive_incremental_cap": "minimum of 4 MiB and 5% of the preceding measured peak",
+    "positive_cumulative_cap": "minimum of 8 MiB and 10% of the fixed preceding peak",
+    "targets": {
+      "1.88.0-wasm32-unknown-unknown": {
+        "fixed_peak": 63778816,
+        "previous_charge": 64348160,
+        "previous_peak": 65470464,
+        "measured_peak": 64786432,
+        "increment": 0,
+        "cumulative_charged_peak": 64348160,
+        "incremental_remaining_bytes": 3273523,
+        "cumulative_remaining_bytes": 5808537,
+        "remaining_above_reserve_bytes": 136540160
+      },
+      "1.88.0-wasm32-wasip1": {
+        "fixed_peak": 64262144,
+        "previous_charge": 64262144,
+        "previous_peak": 66093056,
+        "measured_peak": 64327680,
+        "increment": 0,
+        "cumulative_charged_peak": 64262144,
+        "incremental_remaining_bytes": 3304652,
+        "cumulative_remaining_bytes": 6426214,
+        "remaining_above_reserve_bytes": 136998912
+      },
+      "1.95.0-wasm32-unknown-unknown": {
+        "fixed_peak": 63361024,
+        "previous_charge": 63643648,
+        "previous_peak": 67559424,
+        "measured_peak": 64004096,
+        "increment": 0,
+        "cumulative_charged_peak": 63643648,
+        "incremental_remaining_bytes": 3377971,
+        "cumulative_remaining_bytes": 6053478,
+        "remaining_above_reserve_bytes": 137322496
+      },
+      "1.95.0-wasm32-wasip1": {
+        "fixed_peak": 66838528,
+        "previous_charge": 66838528,
+        "previous_peak": 66744320,
+        "measured_peak": 64024576,
+        "increment": 0,
+        "cumulative_charged_peak": 66838528,
+        "incremental_remaining_bytes": 3337216,
+        "cumulative_remaining_bytes": 6683852,
+        "remaining_above_reserve_bytes": 134488064
+      },
+      "stable-wasm32-unknown-unknown": {
+        "fixed_peak": 63356928,
+        "previous_charge": 63356928,
+        "previous_peak": 68104192,
+        "measured_peak": 65183744,
+        "increment": 0,
+        "cumulative_charged_peak": 63356928,
+        "incremental_remaining_bytes": 3405209,
+        "cumulative_remaining_bytes": 6335692,
+        "remaining_above_reserve_bytes": 136142848
+      },
+      "stable-wasm32-wasip1": {
+        "fixed_peak": 60563456,
+        "previous_charge": 64503808,
+        "previous_peak": 67440640,
+        "measured_peak": 65933312,
+        "increment": 0,
+        "cumulative_charged_peak": 64503808,
+        "incremental_remaining_bytes": 3372032,
+        "cumulative_remaining_bytes": 2115993,
+        "remaining_above_reserve_bytes": 135393280
+      }
+    },
+    "generator": {
+      "fixed_peak": 100401152,
+      "previous_charge": 100401152,
+      "previous_peak": 100401152,
+      "measured_peak": 100048896,
+      "increment": 0,
+      "cumulative_charged_peak": 100401152,
+      "incremental_remaining_bytes": 4194304,
+      "cumulative_remaining_bytes": 8388608,
+      "remaining_above_reserve_bytes": 100925440
+    },
+    "source": "c60e2eae1ae8116bd03cc69a69cf008a36e3684f"
   }
 }

@@ -56,7 +56,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified | full surface/coverage, further targets and shipped consumers |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers and full-width exponents | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
@@ -13573,3 +13573,51 @@ the transition count fits. Their output vectors reserve memory separately,
 and admission for arbitrarily large byte capacities remains open. These
 reviews concern the simulator. Device timing and whole-board memory still
 require separate qualification. [Test evidence](docs/evidence-archive.tsv)
+
+## Phases 4 and 14, rounded IEEE interval powers, 19 November 2026
+
+At `56f976d80`, two independently damaged WebAssembly reactors passed the
+entire strict-float corpus. One discarded all but the low four exponent bits.
+The other rounded the upper magnitudes down during multiplication. The corpus
+tested higher powers on exactly representable small-integer examples. Commit
+`c60e2eae1` adds 186 arithmetic cases and 26 property queries and preserves
+every preceding record. Both damaged reactors fail the new cases in binary32
+and binary64. [Oracle and verifier](crates/hyperinterval/conformance/wasm-float/README.md)
+
+The oracle checks 132 normal higher powers against two independent requirements.
+The result must contain the exact mathematical image and both endpoints must
+fit the accumulated directed-rounding error. A rational bound on the omitted
+binomial terms resolves finite powers of one plus one spacing through
+`u32::MAX` in binary64. The binary32 cases include alternating exponent bits
+and both neighbors of 2²⁰. An additional 54 cases check unit values, signs,
+underflow to adjacent subnormal bounds, and typed overflow at the unsigned
+exponent boundary. On each width, all 66 tight projections passed, all 66
+whole-format substitutes failed, and 55 actual guest results were wider than
+the tight projection.
+
+Rust 1.88, 1.95 and 1.99 each passed all 55,988 arithmetic cases, 8,862
+property queries and 24 endpoint-trap checks on both bare WebAssembly and
+opt-in WASI Preview 1. The three bare modules passed the same corpus in
+Chromium 155. All six primitive modules matched their archived release bytes
+and a separate same-path before/after rebuild. Peak reserved guest stack
+remained 704 bytes. The lattice and dyadic consumers passed on all six builds,
+including 612 floating and 612 fixed chains and 56 directed conversions per
+build. Each WASI run passed all 65 applicable lattice tests. The default
+WASI feature set still rejected nonempty certified float ingress.
+
+Across 60 complete Node process groups, the highest peak on the expanded
+corpus was 65,933,312 bytes. Across six corpus-generation groups, the highest
+expanded peak was 100,048,896 bytes. Each workload stayed below its matched
+predecessor peak and preserved the 64 MiB reserve within 256 MiB with swap
+disabled. Earlier positive charges carry forward. The Node timing record
+includes the old and new checker on the original corpus and the new checker
+on the expanded corpus. CPU and wall medians varied by ABI. These measurements
+concern the verifier, generator and linked guest. The production power kernel
+has no edits in this change. [Memory accounts](docs/research/interval-memory-accounts.json)
+
+The final corpus has SHA-256
+`c00e935bc7b562a941021c63a3b03e6e37d841d10c986497e952a1652fd2cf3a`.
+Evidence commit `bf6a6da794aeed129b0c75b40c6d98c72d2ad3aa` retains 444
+verified members in 313,644 bytes with record digest
+`69eacbfa08dd1377287e13df5ad1ec64c9d5d85c08891fca43aae176bb789ff9`.
+[Evidence index](docs/evidence-archive.tsv)
