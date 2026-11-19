@@ -12556,5 +12556,301 @@
         }
       }
     }
+  },
+  "dq_simulator_full_counter": {
+    "scope": "Host-only simulator update and maintained overflow witness. Firmware release profile uses DWARF level 2. Complete unstripped file, allocated sections, executable text, and sum of nonduplicate named code spans were measured.",
+    "fixed_revisions": {
+      "firmware": "2d68e82",
+      "csgrs": "c9f1f9ac5"
+    },
+    "previous_revisions": {
+      "firmware": "35d1b0d",
+      "csgrs": "35a176de2"
+    },
+    "retained_firmware": "56c2c28df9fa29ac01d88ed1b67bf70690b73897",
+    "evidence": "docs/evidence/2026-11-19-interval-dq-publication",
+    "caps": "Existing native file/allocated-section and executable-code schedules. The cap applies separately on each compiler and artifact. Positive fixed-to-previous growth remains charged.",
+    "artifacts": {
+      "sim-1.88.0": {
+        "fixed_previous_retained_sha256": {
+          "fixed": "1027a660990b3ed3e900d1937812f17bba0b90691ed6562c35b5ac0e76d61ae4",
+          "original": "c0d70685b2bcc90e4fa1eba880c2e16f95d3d0888cc5268c35aeef4e80217cf8",
+          "candidate": "2eed08dfa0f81ad9999682e46f7f0604308c745fe23e304eb2a0833c5e7e02da"
+        },
+        "metrics": {
+          ".data.rel.ro": {
+            "fixed": 112152,
+            "previous": 112152,
+            "candidate": 112224,
+            "change": 72,
+            "prior_charge": 0,
+            "cumulative_charge": 72,
+            "incremental_remaining": 1049,
+            "cumulative_remaining": 2171
+          },
+          ".eh_frame": {
+            "fixed": 129352,
+            "previous": 129352,
+            "candidate": 129456,
+            "change": 104,
+            "prior_charge": 0,
+            "cumulative_charge": 104,
+            "incremental_remaining": 1189,
+            "cumulative_remaining": 2483
+          },
+          ".eh_frame_hdr": {
+            "fixed": 19348,
+            "previous": 19348,
+            "candidate": 19356,
+            "change": 8,
+            "prior_charge": 0,
+            "cumulative_charge": 8,
+            "incremental_remaining": 185,
+            "cumulative_remaining": 378
+          },
+          ".gcc_except_table": {
+            "fixed": 24896,
+            "previous": 24896,
+            "candidate": 24900,
+            "change": 4,
+            "prior_charge": 0,
+            "cumulative_charge": 4,
+            "incremental_remaining": 244,
+            "cumulative_remaining": 493
+          },
+          ".rela.dyn": {
+            "fixed": 126168,
+            "previous": 126168,
+            "candidate": 126240,
+            "change": 72,
+            "prior_charge": 0,
+            "cumulative_charge": 72,
+            "incremental_remaining": 1189,
+            "cumulative_remaining": 2451
+          },
+          ".rodata": {
+            "fixed": 3201688,
+            "previous": 3201688,
+            "candidate": 3201944,
+            "change": 256,
+            "prior_charge": 0,
+            "cumulative_charge": 256,
+            "incremental_remaining": 3840,
+            "cumulative_remaining": 16128
+          },
+          ".text": {
+            "fixed": 1505564,
+            "previous": 1505564,
+            "candidate": 1505708,
+            "change": 144,
+            "prior_charge": 0,
+            "cumulative_charge": 144,
+            "incremental_remaining": 880,
+            "cumulative_remaining": 3952
+          },
+          "file": {
+            "fixed": 16928560,
+            "previous": 16928560,
+            "candidate": 16931024,
+            "change": 2464,
+            "prior_charge": 0,
+            "cumulative_charge": 2464,
+            "incremental_remaining": 1632,
+            "cumulative_remaining": 13920
+          },
+          "named_code": {
+            "fixed": 1498080,
+            "previous": 1498080,
+            "candidate": 1498229,
+            "change": 149,
+            "prior_charge": 0,
+            "cumulative_charge": 149,
+            "incremental_remaining": 875,
+            "cumulative_remaining": 3947
+          }
+        },
+        "failed_caps": []
+      },
+      "client-1.88.0": {
+        "fixed_previous_retained_sha256": {
+          "fixed": "8a6678772c0d7865ad9899771189763c761b2401b8901a86eb80a31cb1e573bd",
+          "original": "baffec4000686d02f1fdf0c9ab49084bfb00263c739f3bc0b09e4d2c1a508c0b",
+          "candidate": "b5df97eae5b0bb57ed91d48430c8c3573c9a5b3e0bd0f243a0396171ae689919"
+        },
+        "metrics": {
+          ".text": {
+            "fixed": 232524,
+            "previous": 232524,
+            "candidate": 232524,
+            "change": 0,
+            "prior_charge": 0,
+            "cumulative_charge": 0,
+            "incremental_remaining": 1024,
+            "cumulative_remaining": 2325
+          },
+          "file": {
+            "fixed": 1740144,
+            "previous": 1740152,
+            "candidate": 1739360,
+            "change": -792,
+            "prior_charge": 8,
+            "cumulative_charge": 8,
+            "incremental_remaining": 4096,
+            "cumulative_remaining": 16376
+          },
+          "named_code": {
+            "fixed": 229837,
+            "previous": 229837,
+            "candidate": 229835,
+            "change": -2,
+            "prior_charge": 0,
+            "cumulative_charge": 0,
+            "incremental_remaining": 1024,
+            "cumulative_remaining": 2298
+          }
+        },
+        "failed_caps": []
+      },
+      "sim-stable": {
+        "fixed_previous_retained_sha256": {
+          "fixed": "78f9042a705029efec22fde282fd58a584f217581db95c6161cf1fb25d264929",
+          "original": "3fe65d0425c47319945684847a9544ce6b444fa9bb6941cfa7e3e5a73920197a",
+          "candidate": "793fb5484a3b43a34cbe68460613e1e5ef010044af1941972f501805d3ae6298"
+        },
+        "metrics": {
+          ".data.rel.ro": {
+            "fixed": 100080,
+            "previous": 100080,
+            "candidate": 100152,
+            "change": 72,
+            "prior_charge": 0,
+            "cumulative_charge": 72,
+            "incremental_remaining": 928,
+            "cumulative_remaining": 1929
+          },
+          ".eh_frame": {
+            "fixed": 127916,
+            "previous": 127916,
+            "candidate": 128020,
+            "change": 104,
+            "prior_charge": 0,
+            "cumulative_charge": 104,
+            "incremental_remaining": 1175,
+            "cumulative_remaining": 2454
+          },
+          ".eh_frame_hdr": {
+            "fixed": 19620,
+            "previous": 19620,
+            "candidate": 19628,
+            "change": 8,
+            "prior_charge": 0,
+            "cumulative_charge": 8,
+            "incremental_remaining": 188,
+            "cumulative_remaining": 384
+          },
+          ".gcc_except_table": {
+            "fixed": 24692,
+            "previous": 24692,
+            "candidate": 24696,
+            "change": 4,
+            "prior_charge": 0,
+            "cumulative_charge": 4,
+            "incremental_remaining": 242,
+            "cumulative_remaining": 489
+          },
+          ".rela.dyn": {
+            "fixed": 109224,
+            "previous": 109224,
+            "candidate": 109296,
+            "change": 72,
+            "prior_charge": 0,
+            "cumulative_charge": 72,
+            "incremental_remaining": 1020,
+            "cumulative_remaining": 2112
+          },
+          ".rodata": {
+            "fixed": 3194865,
+            "previous": 3194865,
+            "candidate": 3195081,
+            "change": 216,
+            "prior_charge": 0,
+            "cumulative_charge": 216,
+            "incremental_remaining": 3880,
+            "cumulative_remaining": 16168
+          },
+          ".text": {
+            "fixed": 1462727,
+            "previous": 1462727,
+            "candidate": 1462967,
+            "change": 240,
+            "prior_charge": 0,
+            "cumulative_charge": 240,
+            "incremental_remaining": 784,
+            "cumulative_remaining": 3856
+          },
+          "file": {
+            "fixed": 18647560,
+            "previous": 18647560,
+            "candidate": 18651168,
+            "change": 3608,
+            "prior_charge": 0,
+            "cumulative_charge": 3608,
+            "incremental_remaining": 488,
+            "cumulative_remaining": 12776
+          },
+          "named_code": {
+            "fixed": 1455850,
+            "previous": 1455850,
+            "candidate": 1456104,
+            "change": 254,
+            "prior_charge": 0,
+            "cumulative_charge": 254,
+            "incremental_remaining": 770,
+            "cumulative_remaining": 3842
+          }
+        },
+        "failed_caps": []
+      },
+      "client-stable": {
+        "fixed_previous_retained_sha256": {
+          "fixed": "80818c9abfa6cdce26c009bf49a6d81911246b69d95a04906d78381401b42e85",
+          "original": "3aba315c56346f85fab7eeefeb53f194f1ba33eb6cb092ada9085ec270a169c6",
+          "candidate": "383d630185765411b3cbfef1d5c292df5b981f28bbcbbc97f780da38fda63c14"
+        },
+        "metrics": {
+          ".text": {
+            "fixed": 222112,
+            "previous": 222112,
+            "candidate": 222112,
+            "change": 0,
+            "prior_charge": 0,
+            "cumulative_charge": 0,
+            "incremental_remaining": 1024,
+            "cumulative_remaining": 2221
+          },
+          "file": {
+            "fixed": 2069968,
+            "previous": 2069976,
+            "candidate": 2068984,
+            "change": -992,
+            "prior_charge": 8,
+            "cumulative_charge": 8,
+            "incremental_remaining": 4096,
+            "cumulative_remaining": 16376
+          },
+          "named_code": {
+            "fixed": 219649,
+            "previous": 219649,
+            "candidate": 219647,
+            "change": -2,
+            "prior_charge": 0,
+            "cumulative_charge": 0,
+            "incremental_remaining": 1024,
+            "cumulative_remaining": 2196
+          }
+        },
+        "failed_caps": []
+      }
+    }
   }
 }

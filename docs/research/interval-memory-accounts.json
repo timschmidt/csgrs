@@ -1720,5 +1720,170 @@
         "candidate_remaining_above_reserve_bytes": 186933248
       }
     }
+  },
+  "dq_simulator_full_counter": {
+    "scope": "Native simulator unit-test suite and external client making one million accepted and one million rejected public calls. Three fresh full-process group lifetimes per compiler, revision and artifact. Peak includes the Python observer. The counter repair uses existing fields and allocates no heap storage. No on-board stack or memory qualification is claimed.",
+    "evidence": "docs/evidence/2026-11-19-interval-dq-publication",
+    "cap_bytes": 268435456,
+    "reserved_bytes": 67108864,
+    "swap_bytes": 0,
+    "compiler_artifact_peak_bytes": {
+      "1.88.0-sim": {
+        "fixed": 12038144,
+        "original": 12410880,
+        "candidate": 12087296,
+        "remaining_above_reserve": 189239296
+      },
+      "1.88.0-client": {
+        "fixed": 6815744,
+        "original": 6971392,
+        "candidate": 6811648,
+        "remaining_above_reserve": 194514944
+      },
+      "stable-sim": {
+        "fixed": 12275712,
+        "original": 12103680,
+        "candidate": 12431360,
+        "remaining_above_reserve": 188895232
+      },
+      "stable-client": {
+        "fixed": 6819840,
+        "original": 6823936,
+        "candidate": 7032832,
+        "remaining_above_reserve": 194293760
+      }
+    },
+    "requested_heap": "glibc libmemusage interposition on the linked executables with a common argv[0]. Three fresh instrumented jobs for each stage. Requested peaks and all recorded malloc, calloc, realloc and free counts and bytes agree. Group peaks include the observer and runtime variability.",
+    "requested_heap_accounts": {
+      "1.88.0-sim": {
+        "total": 11245533,
+        "peak": 4660173,
+        "calls": {
+          "malloc": {
+            "count": 2342,
+            "bytes": 11001388
+          },
+          "realloc": {
+            "count": 576,
+            "bytes": 197305
+          },
+          "calloc": {
+            "count": 241,
+            "bytes": 46840
+          },
+          "free": {
+            "count": 4060,
+            "bytes": 11243813
+          }
+        },
+        "incremental_positive_bytes": 0,
+        "cumulative_positive_bytes": 0
+      },
+      "1.88.0-client": {
+        "total": 2976,
+        "peak": 1736,
+        "calls": {
+          "malloc": {
+            "count": 4,
+            "bytes": 2640
+          },
+          "realloc": {
+            "count": 3,
+            "bytes": 184
+          },
+          "calloc": {
+            "count": 1,
+            "bytes": 152
+          },
+          "free": {
+            "count": 7,
+            "bytes": 2976
+          }
+        },
+        "incremental_positive_bytes": 0,
+        "cumulative_positive_bytes": 0
+      },
+      "stable-sim": {
+        "total": 11251406,
+        "peak": 4660772,
+        "calls": {
+          "malloc": {
+            "count": 2416,
+            "bytes": 11007197
+          },
+          "realloc": {
+            "count": 577,
+            "bytes": 197369
+          },
+          "calloc": {
+            "count": 241,
+            "bytes": 46840
+          },
+          "free": {
+            "count": 4132,
+            "bytes": 11249138
+          }
+        },
+        "incremental_positive_bytes": 0,
+        "cumulative_positive_bytes": 0
+      },
+      "stable-client": {
+        "total": 3524,
+        "peak": 1736,
+        "calls": {
+          "malloc": {
+            "count": 6,
+            "bytes": 3188
+          },
+          "realloc": {
+            "count": 3,
+            "bytes": 184
+          },
+          "calloc": {
+            "count": 1,
+            "bytes": 152
+          },
+          "free": {
+            "count": 7,
+            "bytes": 2976
+          }
+        },
+        "incremental_positive_bytes": 0,
+        "cumulative_positive_bytes": 0
+      }
+    },
+    "linked_frame_cfa_bytes": {
+      "1.88.0-fixed": {
+        "dq_client::main": 352,
+        "alumina_foc::Q30::checked_mul": null,
+        "alumina_sim::foc::FirstOrderDqPlant::update": 64,
+        "alumina_sim::foc::convex_update": 32
+      },
+      "1.88.0-original": {
+        "dq_client::main": 352,
+        "alumina_foc::Q30::checked_mul": null,
+        "alumina_sim::foc::FirstOrderDqPlant::update": 64,
+        "alumina_sim::foc::convex_update": 32
+      },
+      "1.88.0-publish": {
+        "dq_client::main": 352,
+        "alumina_foc::Q30::checked_mul": null,
+        "alumina_sim::foc::FirstOrderDqPlant::update": 64,
+        "alumina_sim::foc::convex_update": 32
+      },
+      "stable-fixed": {
+        "dq_client::main": 240,
+        "alumina_sim::foc::convex_update": 32
+      },
+      "stable-original": {
+        "dq_client::main": 240,
+        "alumina_sim::foc::convex_update": 32
+      },
+      "stable-publish": {
+        "dq_client::main": 240,
+        "alumina_sim::foc::convex_update": 32
+      }
+    },
+    "stack_scope": "Maximum observed rsp-based DWARF CFA offset per emitted client frame. A null value is censored. Inlining differs by compiler. These observations do not bound OS startup or whole-thread stack."
   }
 }

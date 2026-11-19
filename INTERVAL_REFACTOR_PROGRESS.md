@@ -61,7 +61,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
-| 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
+| 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
@@ -13485,3 +13485,67 @@ job through process exit. [Memory accounts](docs/research/interval-memory-accoun
 Evidence commit `a50777920934644c60c97d1dba34e7f054d9812f` contains 97 checked members under
 `docs/evidence/2026-11-18-interval-machine-source-map`. Its record digest is
 `2bef5edd21c91e56e44539d7502dac797867d95980c241e41eda30441607c226`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 9 host dq simulator counter boundary, 19 November 2026
+
+At firmware `35d1b0d`, a valid public plant update after transition
+`u64::MAX` returned `TraceLength` but changed the d-axis current from one-half
+to one-quarter. Firmware commit `56c2c28` stages the two rounded Q30 coordinates
+and the incremented count before writing either field. The existing unit-disk
+check, per-axis arithmetic and error precedence retain their order. The owner
+test exercises the final successful transition from zero current and then two
+rejected drives that would move the state in opposite directions. It checks
+the typed outcomes and every plant field. The same test failed on the
+predecessor. This repairs the individual call used by host clients. The batch
+current loop already prechecks the combined transition count.
+
+On Rust 1.88 and 1.99, all 68 simulator unit tests and eight integration
+tests passed. Both also passed workspace formatting and simulator rustdoc.
+An independent integer recurrence matched all 2,097 ordered records from
+81 constructor cases on each compiler, including both coordinates, transition
+counts and typed errors. The linked public client also matched an independent
+terminal state and checksum after one million accepted and one million rejected
+calls. Strict simulator Clippy passed on the firmware CI toolchain, Rust 1.88.
+On 1.99, the clean predecessor and the repair both reported the same three
+`chunks_exact_to_as_chunks` errors in `http_job.rs` and `motion.rs`.
+
+| Final linked native artifact | File change | Executable text change | Named code change | Remaining cumulative file allowance | Remaining cumulative text allowance |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Rust 1.88 simulator tests | +2,464 B | +144 B | +149 B | 13,920 B | 3,952 B |
+| Rust 1.99 simulator tests | +3,608 B | +240 B | +254 B | 12,776 B | 3,856 B |
+| Rust 1.88 public client | −792 B | 0 B | −2 B | 16,376 B | 2,325 B |
+| Rust 1.99 public client | −992 B | 0 B | −2 B | 16,376 B | 2,221 B |
+
+Every allocated section passed the established caps. Both client file accounts
+retain their previous eight-byte charge. The first regression-test form added
+10,296 and 13,944 bytes to the complete test files. Even the final fixture with
+the alternative counter assignment cost 4,160 bytes on Rust 1.99, exceeding
+the incremental limit by 64 bytes. The accepted implementation and test fit the
+same limits with the release profile's debug information included.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+The largest peak across 36 fresh process groups was 12,431,360 bytes under the
+256 MiB limit with 64 MiB reserved and swap disabled. All limit-event counters
+were zero. In a separate 36-run allocation measurement, each artifact matched
+its fixed revision and immediate predecessor in requested peak bytes, total bytes
+and allocation counts. Public-client heap peaked at 1,736 bytes on both compilers.
+Emitted client frame offsets also matched across revisions. Whole-thread stack,
+device RAM, flash and physical cycle timing remain outside this host result.
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+Across the initial 16 warmed pairs per compiler, median elapsed time was
+75.97 to 76.29 ms on Rust 1.88 and 78.59 to 78.33 ms on 1.99. A separate
+48-pair run balanced execution order on one CPU. Its median elapsed times
+were 71.39 to 70.97 ms and 80.89 to 80.45 ms, respectively. These observations
+cover process startup, two million public calls, output and exit.
+
+Eleven body reviews now identify the nominal fixed-point owner, its trace
+consumer and the distinct enclosing-interval operations. Two refreshes
+produced identical inventories with 6,338 scan rows and 323 reviews, including
+all 312 previous reviews. All seven scanner tests passed.
+[Inventory](interval-inventory.tsv)
+
+Evidence commit `94e38e6a52ad849fe428ef4c625ee2c0539e8a9b` retains 249
+members. The indexed record occupies 79,060 bytes and has digest
+`a1eebf796402ce94ae95620c73c989143440f2968eb11aa60a1c264a9947aa15`.
+[Evidence index](docs/evidence-archive.tsv)
