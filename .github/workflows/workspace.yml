@@ -83,6 +83,29 @@ jobs:
         if: matrix.crate == 'hyperpath'
         run: cargo run --locked -p hyperpath --example certified_schedule
 
+  hyperpath-wasi:
+    name: Hyperpath tests and schedule replay (WASI Preview 1, Rust ${{ matrix.rust }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.95.0", stable]
+    env:
+      HYPERPATH_RUST: ${{ matrix.rust }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24.22.3"
+          package-manager-cache: false
+      - name: Run the path suites and compare the shipped schedule
+        run: |
+          rustup toolchain install "$HYPERPATH_RUST" --profile minimal --target wasm32-wasip1
+          python3 crates/hyperinterval/conformance/wasi-path.py --toolchain "$HYPERPATH_RUST" --output "$RUNNER_TEMP/path-wasi"
+
   hypervoxel:
     name: hypervoxel
     runs-on: ubuntu-latest
