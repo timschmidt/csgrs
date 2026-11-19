@@ -5,13 +5,10 @@ use hyperinterval::{
     DomainCoverage, DyadicBudget, DyadicInterval, ExtendedInterval, IntervalError, IntervalSet2,
     RangeEnclosure, RationalInterval,
 };
-use hyperreal::{ExactDyadicLine2, Rational};
-
-fn coordinate(span: f64, y: f64) -> Rational {
-    let line = ExactDyadicLine2::from_f64([0., 0.], [span, span]).unwrap();
-    let (_, point) = line.intersection_point_f64([0., y], [span, y]).unwrap();
-    point[0].exact_rational_ref().unwrap().clone()
-}
+use hyperreal::Rational;
+#[path = "support/rational_coordinate.rs"]
+mod rational_coordinate;
+use rational_coordinate::coordinate;
 
 fn without_dispatch<T>(evaluate: impl FnOnce() -> T) -> T {
     #[cfg(feature = "dispatch-trace")]
