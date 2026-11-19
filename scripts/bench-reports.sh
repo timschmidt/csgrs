@@ -52,6 +52,7 @@ hyperlimit() {
 
 hypersolve() {
   bench hypersolve
+  bench hypersolve --bench retained_fuzz --features interval-lattice
   bench hypersolve --bench dispatch_trace --features dispatch-trace
   if [[ "${BENCH_REPORTS_SKIP_CGAL:-}" != 1 ]]; then
     echo "==> hypersolve: CGAL quadratic comparison" >&2

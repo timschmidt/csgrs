@@ -93,6 +93,7 @@ harness = false
 [[bench]]
 name = "retained_fuzz"
 harness = false
+required-features = ["interval-lattice"]
 
 [[example]]
 name = "allocation_profile"

@@ -7,7 +7,8 @@ use serde_json::Value;
 
 const CRATE_TITLE: &str = "Hypersolve";
 const SKIP_ENV: &str = "HYPERSOLVE_SKIP_BENCHMARK_REPORTS";
-const TIMING_COMMAND: &str = "cargo bench";
+const TIMING_COMMAND: &str =
+    "cargo bench\ncargo bench --bench retained_fuzz --features interval-lattice";
 const BEGIN: &str = "<!-- BEGIN COMPLETE BENCHMARK REPORT -->";
 const END: &str = "<!-- END COMPLETE BENCHMARK REPORT -->";
 
@@ -288,7 +289,7 @@ fn render_section(rows: &[Row], suites: &[BenchSuite]) -> (String, usize) {
     let mut out = String::from(BEGIN);
     out.push_str("\n## Complete generated benchmark report\n\n");
     out.push_str("Every registered benchmark target is catalogued below. Every Criterion result found under `target/criterion` is included without a name or implementation filter; non-Criterion targets write their own linked reports. Each timing binary refreshes this section after it runs.\n\n");
-    out.push_str("Run the complete non-instrumented timing set with:\n\n```sh\n");
+    out.push_str("Run the default timing suites and the retained-fuzz benchmark with:\n\n```sh\n");
     out.push_str(TIMING_COMMAND);
     out.push_str("\n```\n\nRegenerate this Markdown from stored Criterion data without rerunning benchmarks:\n\n```sh\ncargo run --example write_benchmarks_md\n```\n\n");
 
@@ -490,6 +491,7 @@ mod tests {
         assert!(expressions.criterion);
         assert_eq!(expressions.required_features, ["expression-program"]);
         for (name, feature) in [
+            ("retained_fuzz", "interval-lattice"),
             ("taylor_composition", "taylor-composition"),
             ("taylor_noise", "taylor-noise"),
             ("taylor_polynomial", "taylor-polynomial"),

@@ -35,8 +35,12 @@ end-of-epoch live-byte accounting across every finite certificate class.
 
 ## Retained performance offenders
 
-Run `cargo bench --bench retained_fuzz` to replay deterministic inputs for every
-target registered in `fuzz/Cargo.toml`. The refresh merges each target/seed
+Run `cargo bench --bench retained_fuzz --features interval-lattice` to replay
+every target registered in `fuzz/Cargo.toml`. The vertical-component and
+Jacobian targets run their fuzz assertions on deterministic seed bytes. The
+older adapters use target-shaped workloads, including shared sketch fixtures.
+`cargo test --bench retained_fuzz --features interval-lattice` exercises one
+seed per target without updating the reports. The refresh merges each target/seed
 pair's worst-ever timing into `slow_performers.txt`, rotates the worst eligible
 offender into the 100-case `promoted_slow_offenders.txt` lexicase set, emits a
 dedicated Criterion row for every promoted case, and writes the suite's score,

@@ -22,12 +22,16 @@ use std::time::Duration;
 
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
+#[path = "../fuzz/fuzz_targets/support/jacobian_matrix.rs"]
+mod jacobian_matrix;
 #[path = "support/retained_fuzz.rs"]
 mod retained_fuzz;
+#[path = "../fuzz/fuzz_targets/support/vertical_components.rs"]
+mod vertical_components;
 
 const CONFIG: retained_fuzz::Config = retained_fuzz::Config {
     crate_title: "Hypersolve",
-    bench_target: "retained_fuzz",
+    command: "cargo bench --bench retained_fuzz --features interval-lattice",
     skip_env: "HYPERSOLVE_SKIP_BENCHMARK_REPORTS",
     case_count_env: "HYPERSOLVE_RETAINED_FUZZ_CASES",
 };
@@ -354,6 +358,10 @@ fn representation_case(seed: u64) {
     ));
 }
 
+fn fuzz_bytes(seed: u64) -> [u8; 10] {
+    std::array::from_fn(|lane| mix(seed, lane as u64) as u8)
+}
+
 fn run_case(target: &str, seed: u64) {
     match target {
         target if target.starts_with("sketch_") => sketch_case(target, seed),
@@ -367,15 +375,25 @@ fn run_case(target: &str, seed: u64) {
         "failed_constraint_minimal_removals" => failed_removal_case(seed),
         "curve_resultant" | "curve_substitution" => curve_case(target, seed),
         "hyperreal_representations" => representation_case(seed),
+        "bivariate_vertical_components" => vertical_components::check(&fuzz_bytes(seed)),
+        "jacobian_matrix" => jacobian_matrix::check(&fuzz_bytes(seed)),
         unknown => panic!("unmapped fuzz target {unknown}"),
     }
 }
 
 fn bench_retained_fuzz(c: &mut Criterion) {
-    if retained_fuzz::metadata_only_invocation() {
+    if std::env::args().any(|arg| matches!(arg.as_str(), "--list" | "--help")) {
         return;
     }
     let targets = retained_fuzz::fuzz_targets_from_manifest(include_str!("../fuzz/Cargo.toml"));
+    // Cargo's benchmark tests exercise every registered adapter without timing or writing reports.
+    if !std::env::args().any(|arg| arg == "--bench") || std::env::args().any(|arg| arg == "--test")
+    {
+        for target in &targets {
+            run_case(target, 0);
+        }
+        return;
+    }
     let current = retained_fuzz::collect_cases(CONFIG, &targets, run_case);
     let refresh = retained_fuzz::refresh(CONFIG, &targets, &current, run_case);
 
