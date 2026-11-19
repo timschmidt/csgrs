@@ -217,6 +217,10 @@ awk -F'|' -v prefix="${repo_dir}/" -v threshold="${minimum_production_line_cover
                 sum += total[file]
                 sum_hit += hit[file]
             }
+            if (sum == 0) {
+                print "no executable Hypersolve source lines in coverage report" > "/dev/stderr"
+                exit 2
+            }
             coverage = 100 * sum_hit / sum
             printf "%-42s %8d %8d %8d %8.2f%%\n", "TOTAL", sum, sum_hit, sum - sum_hit, coverage
             if (coverage < threshold) {
