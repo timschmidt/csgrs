@@ -59,6 +59,9 @@ cargo +nightly fuzz run integer_affine /tmp/hyperinterval-integer-affine -- -run
 `strict_float` checks binary32 and binary64 products and quotients of two
 finite intervals. It evaluates all four corners in GMP rationals and rounds
 the extrema outward with MPFR. It compares both endpoint bit patterns and
-checks typed overflow and zero-containing divisors. Four little-endian
+checks typed overflow and zero-containing divisors. It also converts the hull
+of the first two points to the other IEEE format, checks its directed endpoint
+bits or overflow against MPFR, and converts successful results back to
+check source containment. Four little-endian
 64-bit words supply the endpoints. Binary32 uses each word's low 32 bits.
 Existing 24-byte inputs retain their point, affine, dyadic and replay checks.

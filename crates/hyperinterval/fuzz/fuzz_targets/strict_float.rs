@@ -11,7 +11,8 @@ mod oracle;
 mod ranges;
 
 macro_rules! exercise {
-    ($data:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident) => {{
+    ($data:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident,
+     $convert:ident, $back:ident, $target_round:ident) => {{
         let a = <$float>::from_bits($data[0] as $bits);
         let b = <$float>::from_bits($data[1] as $bits);
         let c = <$float>::from_bits($data[2] as $bits);
@@ -26,6 +27,21 @@ macro_rules! exercise {
         if let (Ok(x), Ok(y)) = (x, y) {
             let aa = Rational::$from(a).unwrap();
             let bb = Rational::$from(b).unwrap();
+            let source = x.hull(&y);
+            let expected = oracle::$target_round((&aa).min(&bb))
+                .and_then(|(lo, _)| oracle::$target_round((&aa).max(&bb)).map(|(_, hi)| (lo, hi)));
+            let converted = source.$convert();
+            assert_eq!(
+                converted.map(|range| {
+                    let (lo, hi) = range.bounds().unwrap();
+                    (lo.to_bits(), hi.to_bits())
+                }),
+                expected
+            );
+            if let Ok(range) = converted {
+                assert!(source.subset_of(&range.$back().unwrap()));
+            }
+
             let mut budget = hyperinterval::DyadicBudget::new(8192, 1_000_000_000);
             let dx = x.to_dyadic(&mut budget).unwrap();
             let dy = y.to_dyadic(&mut budget).unwrap();
@@ -112,8 +128,28 @@ fuzz_target!(|bytes: &[u8]| {
     let n = bytes.len().min(32);
     words.as_flattened_mut()[..n].copy_from_slice(&bytes[..n]);
     let data = words.map(u64::from_le_bytes);
-    exercise!(data, F32Enclosure, f32, u32, from_f32, round_f32);
-    exercise!(data, F64Enclosure, f64, u64, from_f64, round_f64);
+    exercise!(
+        data,
+        F32Enclosure,
+        f32,
+        u32,
+        from_f32,
+        round_f32,
+        to_f64_enclosure,
+        to_f32_enclosure,
+        round_f64
+    );
+    exercise!(
+        data,
+        F64Enclosure,
+        f64,
+        u64,
+        from_f64,
+        round_f64,
+        to_f32_enclosure,
+        to_f64_enclosure,
+        round_f32
+    );
     ranges::check_f32(data.map(|word| f32::from_bits(word as u32)));
     ranges::check_f64(data.map(f64::from_bits));
 });
