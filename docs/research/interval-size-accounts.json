@@ -11334,5 +11334,65 @@
         "free_slot_bytes": 65069096
       }
     }
+  },
+  "produced_tensor_coefficient_budget": {
+    "source": "c73863d18d67991ae0f227a78eb4223931c9bdef",
+    "evidence": "docs/evidence/2026-11-18-interval-fused-tensor-budget",
+    "workload": "Expanded public coefficient-budget integration suite with a produced rational denominator, nested denial, recovery and exact reuse. The preceding width suite remains in full.",
+    "capacity_bytes": 67108864,
+    "file_ceiling": 16777216,
+    "required_slot_headroom_bytes": 16777216,
+    "charge_rule": "The same test executable gains a produced-denominator case. Preserve the prior charge and charge the larger measured final file across its matched build and qualification job. The reviewed implementations consume no production allowance.",
+    "targets": {
+      "1.95.0-wasm32-wasip1": {
+        "file_bytes": 1659247,
+        "executable_code_bytes": 1372228,
+        "function_bytes": 1369097,
+        "previous_file_bytes": 475976,
+        "added_test_file_charge": 1183271,
+        "cumulative_file_charge": 1659247,
+        "free_slot_bytes": 65449617,
+        "qualification_job_file_bytes": 1659247,
+        "qualification_job_free_bytes": 65449617,
+        "matched_build_added_file_bytes": 1183271
+      },
+      "1.95.0-x86_64-unknown-linux-gnu": {
+        "file_bytes": 3631576,
+        "executable_code_bytes": 1673271,
+        "function_bytes": 1655089,
+        "previous_file_bytes": 2006416,
+        "added_test_file_charge": 1625288,
+        "cumulative_file_charge": 3631704,
+        "free_slot_bytes": 63477288,
+        "qualification_job_file_bytes": 3631704,
+        "qualification_job_free_bytes": 63477160,
+        "matched_build_added_file_bytes": 1625160
+      },
+      "stable-wasm32-wasip1": {
+        "file_bytes": 1700719,
+        "executable_code_bytes": 1375626,
+        "function_bytes": 1372464,
+        "previous_file_bytes": 495746,
+        "added_test_file_charge": 1204973,
+        "cumulative_file_charge": 1700719,
+        "free_slot_bytes": 65408145,
+        "qualification_job_file_bytes": 1700719,
+        "qualification_job_free_bytes": 65408145,
+        "matched_build_added_file_bytes": 1204973
+      },
+      "stable-x86_64-unknown-linux-gnu": {
+        "file_bytes": 3726200,
+        "executable_code_bytes": 1707557,
+        "function_bytes": 1689830,
+        "previous_file_bytes": 2039768,
+        "added_test_file_charge": 1686448,
+        "cumulative_file_charge": 3726216,
+        "free_slot_bytes": 63382664,
+        "qualification_job_file_bytes": 3726216,
+        "qualification_job_free_bytes": 63382648,
+        "matched_build_added_file_bytes": 1686432
+      }
+    },
+    "measurement": "Fixed-path comparative test images establish the incremental charge. The separately measured qualification-job images use the native replay parent and WASI guest builds from the retained source."
   }
 }

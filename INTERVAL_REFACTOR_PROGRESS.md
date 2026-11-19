@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 70 solver test executables, including 4,212 matched Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -12992,3 +12992,79 @@ all five designs, heap lifetimes and mutation transcripts. Record
 `docs/evidence/2026-11-18-interval-coefficient-budget-width` has digest
 `b22e93b75ee33e08cd6299f17db2c203c5bde348ab7f563ddf3e66674fab42d5`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7 and 14 tensor coefficient budgets and coverage, 18 November 2026
+
+The retained test in `c73863d18` checks an exact product whose denominator
+determines its cost. In `(x + 1/16)(x - 1/16) = x² - 1/256`, the largest
+stored rational needs ten bits. Nine bits produces an exact
+`CoefficientGrowth` receipt, and the enclosing ten-bit scope recovers,
+computes the expected coefficients and consumes them in another product.
+A trial that counted only numerator bits failed on Linux and WASI with
+both Rust 1.95.0 and 1.99.0. The full-width and nested-scope tests still
+run in the same mandatory executable. [Public regression suite](crates/hypersolve/tests/coefficient_bit_budget.rs)
+
+The fused `sum_products` operation can publish `256 - x²` under a
+nine-bit limit. Its automatic repair must check the completed sum because
+opposite ten-bit products cancel to exact zero under a one-bit limit.
+Removing the check or moving it inside the term loop failed the witness
+on both targets. The public scope documentation names the affected operation
+and explains how to observe a fused result before use. A caller using the
+existing public APIs completed all 64 signed polynomial cases, including
+denial, exact retry, 128 complete dispatch traces and 128 allocation records
+per compiler and target. [Published solver scope](crates/hypersolve/README.md)
+
+The unannotated automatic check exceeded the stable WASI stack allowance by
+increasing the measured stack by 32 bytes. The inlined version
+`3f32da7ae` eliminated positive comparable stack and heap growth on all
+four compiler and target combinations. It passed 33 feature-matched legacy
+artifact accounts. On the same resultant benchmark its paired medians were
+2.796 and 2.789 microseconds on the two cores, against 2.693 and 2.731.
+The old work-only fused workload also took 2.99% longer on 1.95 and 2.22%
+longer on 1.99. A lazy bit observer exceeded the native linked solver
+file cap. A scope-aware observer fit the measured stack but grew the stable
+native selected-field executable by 4,232 bytes against its 4,096-byte cap.
+
+Two opt-in API designs also preserved the materialized outputs. Exposing
+the private observer directly passed the size and memory screens. Six paired
+owner benchmark observations per core gave median regression from
+2.719 to 2.792 microseconds and 2.757 to 2.815 microseconds. The separate
+public wrapper added eight bytes to the already exhausted stable native
+trivariate file account. Their source revisions are `8065c9447` and
+`bd4b04a0d`. These alternatives remain under review. Accepted production
+size, heap and stack charges carry forward. The additional retained test
+workload has its own cumulative file and CI memory accounts.
+[Size accounts](docs/research/interval-size-accounts.json) · [Memory accounts](docs/research/interval-memory-accounts.json)
+
+The automatic review passed native release tests, strict Clippy and Rustdoc
+on both toolchains, packed-crate external consumption, 10,000 libFuzzer runs,
+six certified `successive_operations` steps with identical semantic and heap
+rows, the bounded filleted-hyperbola stroke, and fresh-process generated
+NURBS trim replay. Its full WASI run completed 1,514 direct tests, 17 native
+parents spawning guests, five platform-specific native tests and 4,212
+matched dispatch windows. These runs qualify the measured review revision.
+The production fused-path and 32-bit count-reporting gaps remain open.
+
+Commits `4f57942ad` and `beb37e7cf` repair the owner coverage report.
+A relocated Cargo cache brought dependency sources into the old denominator
+and produced 39.73%. The corrected report keeps all 124 measured solver
+source rows identical on the same binaries and profile, including all 59,089
+owner lines and all 53,085 covered lines. It reports 89.84% on that review.
+Empty input and a source with zero executable lines now fail explicitly.
+The threshold and mathematical test corpus are unchanged.
+[Coverage gate](crates/hypersolve/scripts/coverage.sh)
+
+On the retained revision the full production coverage run reached
+89.84% (53,085 of 59,089 lines).
+The native/WASI qualification completed the 71-executable inventory on both
+compilers. The two compiled CI jobs peaked at 83,251,200 and 84,017,152 bytes in
+their separate 1 GiB, swap-disabled cgroups. Both recorded zero OOM events.
+The denominator suite, both strict Clippy configurations, Rustdoc, doctests,
+all four scalar-cache representation selections and the repository retention
+budget passed locally. The test binary observations and cumulative charges
+are in the linked accounts. Hosted CI and hardware runs remain open in the
+larger program.
+
+Evidence commit `f13164d20eb6b0bdecf1dc864967bd08324b8fd8` contains 1,795
+files. Record `docs/evidence/2026-11-18-interval-fused-tensor-budget` has digest
+`ec76096f429dfc49f8b9ec49ad8de63e702ecb19d0b4f23d06b21548c84f8e93`. [Evidence index](docs/evidence-archive.tsv)

@@ -1166,5 +1166,33 @@
         "headroom_bytes": 990801920
       }
     }
+  },
+  "produced_tensor_coefficient_qualification": {
+    "source": "c73863d18d67991ae0f227a78eb4223931c9bdef",
+    "evidence": "docs/evidence/2026-11-18-interval-fused-tensor-budget",
+    "workload": "Compiled whole Hypersolve native/WASI qualification job with the additional width and rational-denominator cases. Warm Cargo lookup, children and cleanup inside a fresh swap-disabled Linux cgroup. Compilation is outside this account.",
+    "capacity_bytes": 1073741824,
+    "required_headroom_bytes": 268435456,
+    "charge": "Keep the previously registered full peak plus positive growth. This is a test workload account. All production stack and heap accounts carry forward.",
+    "targets": {
+      "1.95.0": {
+        "previous_job_peak_bytes": 84496384,
+        "measured_peak_bytes": 83251200,
+        "incremental_positive_job_bytes": 0,
+        "cumulative_positive_job_bytes": 84496384,
+        "headroom_bytes": 990490624,
+        "headroom_above_reserve_bytes": 722055168,
+        "elapsed_seconds": 73.243
+      },
+      "stable": {
+        "previous_job_peak_bytes": 82939904,
+        "measured_peak_bytes": 84017152,
+        "incremental_positive_job_bytes": 1077248,
+        "cumulative_positive_job_bytes": 84017152,
+        "headroom_bytes": 989724672,
+        "headroom_above_reserve_bytes": 721289216,
+        "elapsed_seconds": 72.854
+      }
+    }
   }
 }
