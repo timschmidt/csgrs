@@ -13507,5 +13507,419 @@
         }
       }
     }
+  },
+  "generated_square_root_admission": {
+    "source": "16733722a9fde63b2a15b9cd5818af3db69ff28a",
+    "preceding": "c5e8b5168435c5a75010107ec43996630a5d4b3c",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "evidence": "docs/evidence/2026-11-19-interval-generated-square-root-admission",
+    "scope": "Rational and dyadic square-root kernel, generated-source budget admission and two release regression suites. Eight linked native/bare Wasm client images and eight native/WASI regression images. The optional allocation observer is built separately. Firmware uses integer/fixed.",
+    "allowances": "Native client file and code 4096 B/1% per change, 8192 B/2% cumulatively. Native functions also cap at 1024 B/0.5% per change. Bare Wasm 1024 B/5% per change and 4096 B/10% cumulatively. Both ingress suites 32768 B/2% per change and 65536 B/4% cumulatively, also subject to their 4 MiB file limit. All host slots 64 MiB with 16 MiB reserved. Existing cost and test accounts retain their individual limits.",
+    "clients": {
+      "1.95.0-x86_64-unknown-linux-gnu": {
+        "file_bytes": 888416,
+        "file_delta": -7488,
+        "headroom_bytes": 66220448,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 8192
+          }
+        }
+      },
+      "1.95.0-x86_64-unknown-linux-gnu-alloc": {
+        "file_bytes": 884792,
+        "file_delta": -7488,
+        "headroom_bytes": 66224072,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 8192
+          }
+        }
+      },
+      "1.95.0-wasm32-unknown-unknown": {
+        "file_bytes": 235781,
+        "file_delta": -6190,
+        "headroom_bytes": 66873083,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 4096
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 4096
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 4096
+          }
+        }
+      },
+      "1.95.0-wasm32-unknown-unknown-alloc": {
+        "file_bytes": 238208,
+        "file_delta": -6190,
+        "headroom_bytes": 66870656,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 4096
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 4096
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 4096
+          }
+        }
+      },
+      "stable-x86_64-unknown-linux-gnu": {
+        "file_bytes": 891784,
+        "file_delta": -7376,
+        "headroom_bytes": 66217080,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 8165
+          }
+        }
+      },
+      "stable-x86_64-unknown-linux-gnu-alloc": {
+        "file_bytes": 888848,
+        "file_delta": -7384,
+        "headroom_bytes": 66220016,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 4096,
+            "remaining_cumulative": 8192
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 0,
+            "remaining_step": 1024,
+            "remaining_cumulative": 8148
+          }
+        }
+      },
+      "stable-wasm32-unknown-unknown": {
+        "file_bytes": 236554,
+        "file_delta": -6107,
+        "headroom_bytes": 66872310,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 451,
+            "remaining_step": 1024,
+            "remaining_cumulative": 3645
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 454,
+            "remaining_step": 1024,
+            "remaining_cumulative": 3642
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 453,
+            "remaining_step": 1024,
+            "remaining_cumulative": 3643
+          }
+        }
+      },
+      "stable-wasm32-unknown-unknown-alloc": {
+        "file_bytes": 239764,
+        "file_delta": -6107,
+        "headroom_bytes": 66869100,
+        "metrics": {
+          "file": {
+            "positive_step": 0,
+            "cumulative": 451,
+            "remaining_step": 1024,
+            "remaining_cumulative": 3645
+          },
+          "code": {
+            "positive_step": 0,
+            "cumulative": 454,
+            "remaining_step": 1024,
+            "remaining_cumulative": 3642
+          },
+          "functions": {
+            "positive_step": 0,
+            "cumulative": 453,
+            "remaining_step": 1024,
+            "remaining_cumulative": 3643
+          }
+        }
+      }
+    },
+    "regression_harnesses": {
+      "1.95.0-native/fractional_power_ingress": {
+        "file_bytes": 1665768,
+        "file_delta": 20792,
+        "headroom_bytes": 65443096,
+        "metrics": {
+          "file": {
+            "positive_step": 20792,
+            "cumulative": 20808,
+            "remaining_step": 11976,
+            "remaining_cumulative": 44728
+          },
+          "code": {
+            "positive_step": 13680,
+            "cumulative": 13680,
+            "remaining_step": 2935,
+            "remaining_cumulative": 19551
+          },
+          "functions": {
+            "positive_step": 13459,
+            "cumulative": 13459,
+            "remaining_step": 2948,
+            "remaining_cumulative": 19356
+          }
+        }
+      },
+      "1.95.0-native/monotone_ingress": {
+        "file_bytes": 1683368,
+        "file_delta": 17232,
+        "headroom_bytes": 65425496,
+        "metrics": {
+          "file": {
+            "positive_step": 17232,
+            "cumulative": 17632,
+            "remaining_step": 15536,
+            "remaining_cumulative": 47904
+          },
+          "code": {
+            "positive_step": 13392,
+            "cumulative": 13392,
+            "remaining_step": 3687,
+            "remaining_cumulative": 20768
+          },
+          "functions": {
+            "positive_step": 13309,
+            "cumulative": 13309,
+            "remaining_step": 3560,
+            "remaining_cumulative": 20433
+          }
+        }
+      },
+      "1.95.0-wasm32-wasip1/fractional_power_ingress": {
+        "file_bytes": 762461,
+        "file_delta": 12802,
+        "headroom_bytes": 66346403,
+        "metrics": {
+          "file": {
+            "positive_step": 12802,
+            "cumulative": 12802,
+            "remaining_step": 2191,
+            "remaining_cumulative": 17250
+          },
+          "code": {
+            "positive_step": 9894,
+            "cumulative": 9894,
+            "remaining_step": 1382,
+            "remaining_cumulative": 12766
+          },
+          "functions": {
+            "positive_step": 9862,
+            "cumulative": 9862,
+            "remaining_step": 1380,
+            "remaining_cumulative": 12731
+          }
+        }
+      },
+      "1.95.0-wasm32-wasip1/monotone_ingress": {
+        "file_bytes": 781861,
+        "file_delta": 13017,
+        "headroom_bytes": 66327003,
+        "metrics": {
+          "file": {
+            "positive_step": 13017,
+            "cumulative": 13017,
+            "remaining_step": 2359,
+            "remaining_cumulative": 17891
+          },
+          "code": {
+            "positive_step": 10878,
+            "cumulative": 10878,
+            "remaining_step": 820,
+            "remaining_cumulative": 12704
+          },
+          "functions": {
+            "positive_step": 10860,
+            "cumulative": 10860,
+            "remaining_step": 804,
+            "remaining_cumulative": 12655
+          }
+        }
+      },
+      "stable-native/fractional_power_ingress": {
+        "file_bytes": 1693480,
+        "file_delta": 13104,
+        "headroom_bytes": 65415384,
+        "metrics": {
+          "file": {
+            "positive_step": 13104,
+            "cumulative": 13104,
+            "remaining_step": 19664,
+            "remaining_cumulative": 52432
+          },
+          "code": {
+            "positive_step": 9344,
+            "cumulative": 9344,
+            "remaining_step": 7466,
+            "remaining_cumulative": 24276
+          },
+          "functions": {
+            "positive_step": 9274,
+            "cumulative": 9274,
+            "remaining_step": 7325,
+            "remaining_cumulative": 23925
+          }
+        }
+      },
+      "stable-native/monotone_ingress": {
+        "file_bytes": 1715544,
+        "file_delta": 16656,
+        "headroom_bytes": 65393320,
+        "metrics": {
+          "file": {
+            "positive_step": 16656,
+            "cumulative": 17024,
+            "remaining_step": 16112,
+            "remaining_cumulative": 48512
+          },
+          "code": {
+            "positive_step": 12816,
+            "cumulative": 12848,
+            "remaining_step": 4454,
+            "remaining_cumulative": 21691
+          },
+          "functions": {
+            "positive_step": 12791,
+            "cumulative": 12827,
+            "remaining_step": 4270,
+            "remaining_cumulative": 21293
+          }
+        }
+      },
+      "stable-wasm32-wasip1/fractional_power_ingress": {
+        "file_bytes": 788178,
+        "file_delta": 9469,
+        "headroom_bytes": 66320686,
+        "metrics": {
+          "file": {
+            "positive_step": 9469,
+            "cumulative": 15024,
+            "remaining_step": 6105,
+            "remaining_cumulative": 15902
+          },
+          "code": {
+            "positive_step": 7502,
+            "cumulative": 11103,
+            "remaining_step": 4077,
+            "remaining_cumulative": 11911
+          },
+          "functions": {
+            "positive_step": 7481,
+            "cumulative": 11071,
+            "remaining_step": 4063,
+            "remaining_cumulative": 11873
+          }
+        }
+      },
+      "stable-wasm32-wasip1/monotone_ingress": {
+        "file_bytes": 807415,
+        "file_delta": 12560,
+        "headroom_bytes": 66301449,
+        "metrics": {
+          "file": {
+            "positive_step": 12560,
+            "cumulative": 16414,
+            "remaining_step": 3337,
+            "remaining_cumulative": 15226
+          },
+          "code": {
+            "positive_step": 9779,
+            "cumulative": 12110,
+            "remaining_step": 2199,
+            "remaining_cumulative": 11753
+          },
+          "functions": {
+            "positive_step": 9752,
+            "cumulative": 12077,
+            "remaining_step": 2192,
+            "remaining_cumulative": 11718
+          }
+        }
+      }
+    },
+    "linked_owner_consumers": "The fixed, preceding and retained builds and SHA-256 sums cover 20 indirect native tests and benchmarks on each compiler. Also measured sqrt_cost, fractional_power_cost, and two previously registered narrow-feature cost drivers. Maximum positive indirect code step was 336 B, maximum function step 369 B. The fixed inverse_functions comparison separately links the same atanh oracle to the fixed library. Legacy narrow tangent and power link images retain 324 and 288 load pages. Their uninitialized RELRO padding grew 312 B and 1464 B. Power protects five pages after relinking, previously four. Its initialized RELRO payload fell 24 B.",
+    "details": "Archive members size-accounted.json and caps.txt contain individual charges, predecessor values and headroom. layout-pages.json separates file-backed payload, page protection and zero-fill alignment. All linked public clients use fewer mapped native pages or a smaller bare Wasm image."
   }
 }

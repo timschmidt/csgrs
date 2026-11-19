@@ -2072,5 +2072,56 @@
       }
     },
     "details": "records/accounted.json contains the per-case stack and heap history. Native pthread and Wasm canaries use two byte patterns. Heap peaks cover requested allocations only. records/process-resident.json reports process high-water separately, including the host runtime for bare Wasm."
+  },
+  "generated_square_root_admission": {
+    "source": "16733722a9fde63b2a15b9cd5818af3db69ff28a",
+    "preceding": "c5e8b5168435c5a75010107ec43996630a5d4b3c",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "evidence": "docs/evidence/2026-11-19-interval-generated-square-root-admission",
+    "scope": "Caller-owned DyadicBudget and lifetime of the rational square-root client on Linux and bare Wasm. The cost driver covers canonical and generated points, positive intervals, clipped intervals and independently equal endpoints. Each runs with 64-bit and 1024-bit caps. The result, output verification, and destruction are part of the workload.",
+    "allowances": "128 B and 2% incremental stack, 256 B and 4% cumulative, with 256 KiB reserved. On matched completed calls the allowance for additional allocations, peak requested heap and retained heap is zero. Prior growth stays charged. Changed small-cap outcomes are reported separately.",
+    "targets": {
+      "1.95.0-native": {
+        "maximum_stack_bytes": 7064,
+        "largest_positive_step": 0,
+        "largest_cumulative_stack_charge": 0,
+        "minimum_remaining_cumulative_allowance": 250,
+        "minimum_stack_headroom": 2085992,
+        "maximum_requested_heap_bytes": 696,
+        "largest_peak_heap_increase": 0,
+        "retained_after_drop_bytes": 0
+      },
+      "1.95.0-wasm": {
+        "maximum_stack_bytes": 1792,
+        "largest_positive_step": 0,
+        "largest_cumulative_stack_charge": 0,
+        "minimum_remaining_cumulative_allowance": 26,
+        "minimum_stack_headroom": 1046784,
+        "maximum_requested_heap_bytes": 368,
+        "largest_peak_heap_increase": 0,
+        "retained_after_drop_bytes": 0
+      },
+      "stable-native": {
+        "maximum_stack_bytes": 7128,
+        "largest_positive_step": 0,
+        "largest_cumulative_stack_charge": 0,
+        "minimum_remaining_cumulative_allowance": 253,
+        "minimum_stack_headroom": 2085928,
+        "maximum_requested_heap_bytes": 696,
+        "largest_peak_heap_increase": 0,
+        "retained_after_drop_bytes": 0
+      },
+      "stable-wasm": {
+        "maximum_stack_bytes": 1904,
+        "largest_positive_step": 0,
+        "largest_cumulative_stack_charge": 0,
+        "minimum_remaining_cumulative_allowance": 27,
+        "minimum_stack_headroom": 1046672,
+        "maximum_requested_heap_bytes": 368,
+        "largest_peak_heap_increase": 0,
+        "retained_after_drop_bytes": 0
+      }
+    },
+    "details": "The archive includes per-call canary/heap observations, fixed, preceding and retained outcomes, memory-accounted.json and external process RSS. All four target/compiler combinations completed 12 cases and returned the typed size limit for four generated inputs. Absolute peak requested heap counts fresh source construction. Every measured call returned to its initial requested-heap level."
   }
 }

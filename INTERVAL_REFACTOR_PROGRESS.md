@@ -13931,3 +13931,44 @@ Rust 1.95 release tests, strict Clippy, rustdoc and formatting passed.
 The machine-profile arithmetic migration and hardware qualification remain
 open. Evidence commit `08853958e4c1e8047e6897c830284ae2555f3c60` contains 292 verified members in
 56,164 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+
+### Phase 5 — budget generated rational square-root inputs
+
+Hyperinterval now checks the stored width of each positive rational endpoint
+before either endpoint can trigger reduction. On `c5e8b5168`, an exact line
+intersection produced the value 3 in a 98-bit stored fraction. With a 97-bit
+cap, square root at grid 2⁻⁴ returned [27, 28]/16. On `16733722a`, the same
+call returns `SizeExhausted` before reducing either endpoint. A sufficient
+budget returns the tight interval. Cold and warm sources pay the same three
+quadratic stages per potentially unreduced positive endpoint. Negative-only
+inputs and negative lower bounds clipped to zero retain their domain semantics.
+
+The root kernel uses the quotient and remainder from one unsigned division.
+The remainder distinguishes a true square from an input just above one.
+The regressions check the work boundary, agreement with rational power 1/2,
+and both endpoints after squaring the result. Four injected faults were
+detected, including early cache warming and ignoring the division remainder.
+Both Rust 1.95 and 1.99 passed 309 native owner tests and doctests, strict
+Clippy and rustdoc. Both ran the nine generated-ingress tests under WASI and
+10,773 independent dyadic grid cases. Five Hypersolve consumer checks and the
+Rust 1.88 Cortex-M integer/fixed/dyadic compile passed. The native sanitizer
+campaign completed 10,000 square-root runs from 210 seeds, reaching 152 MiB RSS.
+
+A trial using unreduced ratios throughout slowed reused generated inputs.
+Another stack layout exceeded the per-call Wasm cap. The retained kernel
+added no peak requested heap, allocations or touched stack on matched completed
+calls. The largest observed stack was 7,128 bytes native and 1,904 bytes in
+bare Wasm. Each compiler reduced the ordinary native client by over 7 KiB
+and the bare Wasm client by over 6,100 bytes. The two expanded test programs
+grew 9,469–20,792 bytes across native and WASI and fit their individual caps.
+Seven alternating campaigns on 32 completed square-root benchmark rows gave
+median paired changes of −18.5% and −18.6% across rows. The stable rational
+point at grid 2⁻²⁵⁶ was 1.6% slower in that series and 6.8% faster in an
+independent nine-pair repeat. [Size accounts](docs/research/interval-size-accounts.json)
+and [memory accounts](docs/research/interval-memory-accounts.json).
+
+Evidence commit `54cb5b7ca8beeeed996533e43e2ef5cac3b84e61` contains
+797 verified members in 304,660 compressed bytes, including the original
+failure, rejected trials, measured final images' hashes and workload-level
+accounts. The remaining interval migrations and platform qualification stay
+open. [Evidence index](docs/evidence-archive.tsv)
