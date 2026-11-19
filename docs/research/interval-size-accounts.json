@@ -15308,5 +15308,311 @@
         "function_step": 0
       }
     }
+  },
+  "saturated_coefficient_diagnostic": {
+    "source": "e5f757ad1a50ab85d90a807f708d9aa2f226913f",
+    "previous": "282fec460",
+    "evidence": "docs/evidence/2026-11-19-interval-saturated-coefficient-diagnostic",
+    "evidence_commit": "b2608b12bc368b80246991e645e587ba1b4d4379",
+    "benefit": "A simultaneous 32-bit ceiling in a coefficient denial now reports a justified lower bound. The executable suite also checks both individually representable counts across the 512 nested triples.",
+    "program_budget": "Carry the historical c9f1f9ac5 solver and legacy accounts, the 063cb703d nested suite and the c73863d18 produced-denominator test file charge. The 282fec460 matched release is the preceding revision. The new standalone formatted-error clients use their first matched 282fec460 images as their workload baseline.",
+    "caps": "Legacy file, executable code and defined-function bytes: 4096 bytes and 1% incremental, 8192 bytes and 2% cumulative (earlier target-specific caps and exhausted accounts remain binding). New fixture assertions: 16384 bytes and 1% incremental, 32768 bytes and 2% for the new assertion series, retaining historical full image charges and the 16 MiB ceiling. Standalone clients: 4096 bytes and 1% incremental, 8192 bytes and 2% cumulative, at most 16 MiB file.",
+    "capacity_bytes": 67108864,
+    "required_headroom_bytes": 16777216,
+    "targets": {
+      "stable-wasm32-wasip1": {
+        "registered_legacy_images": 11,
+        "maximum_positive_legacy_step": {
+          "file": 111,
+          "code": 43,
+          "functions": 43
+        },
+        "minimum_legacy_slot_headroom": 58839470,
+        "fixture": {
+          "file": {
+            "historical": 1700719,
+            "preceding": 1700918,
+            "retained": 1706622,
+            "carry": 1700918,
+            "step": 5704,
+            "cumulative": 1706622,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15070594
+          },
+          "code": {
+            "historical": 1375626,
+            "preceding": 1375838,
+            "retained": 1379631,
+            "carry": 1375838,
+            "step": 3793,
+            "cumulative": 1379631,
+            "step_cap": 13758,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15397585
+          },
+          "functions": {
+            "historical": 1372464,
+            "preceding": 1372676,
+            "retained": 1376453,
+            "carry": 1372676,
+            "step": 3777,
+            "cumulative": 1376453,
+            "step_cap": 13726,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15400763
+          }
+        },
+        "fixture_free_slot_bytes": 65402242,
+        "public_render_file_code_functions": {
+          "file": [
+            92497,
+            92603
+          ],
+          "code": [
+            58398,
+            58441
+          ],
+          "functions": [
+            58040,
+            58083
+          ]
+        },
+        "additional_external_client": {
+          "file": [
+            38412,
+            38516
+          ],
+          "code": [
+            26107,
+            26150
+          ],
+          "functions": [
+            25967,
+            26010
+          ]
+        }
+      },
+      "stable-x86_64-unknown-linux-gnu": {
+        "registered_legacy_images": 11,
+        "maximum_positive_legacy_step": {
+          "file": 8,
+          "code": 0,
+          "functions": 0
+        },
+        "minimum_legacy_slot_headroom": 53031888,
+        "fixture": {
+          "file": {
+            "historical": 3726216,
+            "preceding": 3724560,
+            "retained": 3729112,
+            "carry": 3726216,
+            "step": 4552,
+            "cumulative": 3730768,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 13046448
+          },
+          "code": {
+            "historical": 1707557,
+            "preceding": 1707477,
+            "retained": 1709557,
+            "carry": 1707557,
+            "step": 2080,
+            "cumulative": 1709637,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15067579
+          },
+          "functions": {
+            "historical": 1689830,
+            "preceding": 1689747,
+            "retained": 1691823,
+            "carry": 1689830,
+            "step": 2076,
+            "cumulative": 1691906,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15085310
+          }
+        },
+        "fixture_free_slot_bytes": 63379752,
+        "public_render_file_code_functions": {
+          "file": [
+            1227136,
+            1227144
+          ],
+          "code": [
+            254467,
+            254467
+          ],
+          "functions": [
+            250803,
+            250803
+          ]
+        },
+        "additional_external_client": {
+          "file": [
+            1189960,
+            1189968
+          ],
+          "code": [
+            238083,
+            238083
+          ],
+          "functions": [
+            234838,
+            234838
+          ]
+        }
+      },
+      "1.95.0-wasm32-wasip1": {
+        "registered_legacy_images": 11,
+        "maximum_positive_legacy_step": {
+          "file": 102,
+          "code": 43,
+          "functions": 43
+        },
+        "minimum_legacy_slot_headroom": 59225841,
+        "fixture": {
+          "file": {
+            "historical": 1659247,
+            "preceding": 1659256,
+            "retained": 1664377,
+            "carry": 1659256,
+            "step": 5121,
+            "cumulative": 1664377,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15112839
+          },
+          "code": {
+            "historical": 1372228,
+            "preceding": 1372228,
+            "retained": 1375692,
+            "carry": 1372228,
+            "step": 3464,
+            "cumulative": 1375692,
+            "step_cap": 13722,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15401524
+          },
+          "functions": {
+            "historical": 1369097,
+            "preceding": 1369097,
+            "retained": 1372546,
+            "carry": 1369097,
+            "step": 3449,
+            "cumulative": 1372546,
+            "step_cap": 13690,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15404670
+          }
+        },
+        "fixture_free_slot_bytes": 65444487,
+        "public_render_file_code_functions": {
+          "file": [
+            91456,
+            91565
+          ],
+          "code": [
+            59881,
+            59924
+          ],
+          "functions": [
+            59517,
+            59560
+          ]
+        },
+        "additional_external_client": {
+          "file": [
+            36770,
+            36874
+          ],
+          "code": [
+            25674,
+            25717
+          ],
+          "functions": [
+            25529,
+            25572
+          ]
+        }
+      },
+      "1.95.0-x86_64-unknown-linux-gnu": {
+        "registered_legacy_images": 11,
+        "maximum_positive_legacy_step": {
+          "file": 144,
+          "code": 0,
+          "functions": 0
+        },
+        "minimum_legacy_slot_headroom": 53725800,
+        "fixture": {
+          "file": {
+            "historical": 3631704,
+            "preceding": 3631600,
+            "retained": 3634840,
+            "carry": 3631704,
+            "step": 3240,
+            "cumulative": 3634944,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 13142272
+          },
+          "code": {
+            "historical": 1673271,
+            "preceding": 1673271,
+            "retained": 1675207,
+            "carry": 1673271,
+            "step": 1936,
+            "cumulative": 1675207,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15102009
+          },
+          "functions": {
+            "historical": 1655089,
+            "preceding": 1655089,
+            "retained": 1657011,
+            "carry": 1655089,
+            "step": 1922,
+            "cumulative": 1657011,
+            "step_cap": 16384,
+            "cumulative_ceiling": 16777216,
+            "remaining": 15120205
+          }
+        },
+        "fixture_free_slot_bytes": 63474024,
+        "public_render_file_code_functions": {
+          "file": [
+            1239096,
+            1239096
+          ],
+          "code": [
+            264643,
+            264643
+          ],
+          "functions": [
+            260904,
+            260904
+          ]
+        },
+        "additional_external_client": {
+          "file": [
+            1192952,
+            1192960
+          ],
+          "code": [
+            241683,
+            241683
+          ],
+          "functions": [
+            238293,
+            238293
+          ]
+        }
+      }
+    },
+    "raw": "size-review.json contains all 44 per-image comparable accounts. public-images.json contains both bare modules and both native libraries. The 1.95 native owner benchmark has identical loaded bytes outside its build ID. No firmware links Hypersolve in the measured program."
   }
 }

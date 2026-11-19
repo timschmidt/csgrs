@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers and full-width exponents | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -14243,3 +14243,52 @@ Implementation commit `0783f2ddc`. Affine Krawczyk proof eligibility and
 the 32-bit coefficient diagnostic are still open.
 
 Evidence commit `2f8688e31f6e79b0eff61e962539f0699f5e50e7` records 1,935 verified members in 392,796 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7 coefficient denials at the 32-bit reporting ceiling
+
+On `282fec460`, an observed coefficient of 4,294,967,297 bits against a
+4,294,967,296-bit ceiling correctly exhausted its scope on WASI. Its error
+claimed that 4,294,967,295 bits exceeded 4,294,967,295. In `e5f757ad1` the
+message preserves the known inequality and gives the configured limit's
+lower bound when both fields reach the reporting ceiling. The regression
+covers a limit exactly at the 32-bit maximum, a larger limit and the
+largest possible denied `u64` observation. The 512 nested triples also
+check the exact value of each independently representable field. The public
+fields still saturate on 32-bit targets. A single saturated request can
+still appear as the word maximum in the message.
+[Public tests](crates/hypersolve/tests/coefficient_bit_budget.rs)
+
+Both Rust 1.95.0 and 1.99.0 passed 1,544 native solver tests and the
+doctest, the minimal-feature coefficient suite, all-target all-feature
+Clippy, and Rustdoc with warnings denied. Each WASI qualification passed
+1,519 direct tests, 17 native parents with fresh guest children, five
+native platform cases and 4,212 matched Horner dispatch windows. Seven
+Hyperbrep budget tests and the filleted-hyperbola Hypercurve stroke passed.
+The six-step feedback benchmark preserved every semantic and allocation
+column. Outside the build ID, all loaded native certification-benchmark
+sections matched. Its timings varied while the machine was compiling.
+
+Materializing the corrected WASI message used 77 fewer requested bytes
+and two fewer reallocations. The warm measurement after the message was
+dropped returned to zero. A cold run retained the same 224-byte frame
+capacity. The bare-Wasm client grew by 104 file bytes and 43 code bytes on
+both compilers. Its warm corrected-message stack fell by 32 bytes.
+Two opposing measurement orders on two cores gave 43–49% lower times
+for the corrected message, including checksum, destruction and retry.
+The independent equal-result controls varied with instance order.
+Across 44 registered release images the largest file increase was 144
+bytes. The expanded coefficient suite grew by 3,216–5,705 file bytes.
+[Size accounts](docs/research/interval-size-accounts.json) ·
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+Four independent source trials preserved the full `u64` counts in the
+81-pair public oracle on both compilers and targets. Storing the
+unrestricted internal ceiling as `u64::MAX` held the WASI frame heap
+constant. The wider receipt still added 520 bytes of stack for 32 nested
+unlimited scopes in that trial. Sharing one receipt by failing-frame index
+reduced native cost, but slowed WASM. Eliding redundant unlimited child
+frames sped up deep nesting, while a single successful WASM scope remained
+18–23% slower. The shared denial-loop trial exceeded both WASI solver
+unit-test image budgets. The full-width public-field migration remains open.
+The trials consume no production allowance. Evidence commit `b2608b12bc368b80246991e645e587ba1b4d4379`.
+[Evidence index](docs/evidence-archive.tsv)

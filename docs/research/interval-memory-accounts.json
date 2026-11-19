@@ -2409,5 +2409,236 @@
       "live_after_drop": 0
     },
     "accounts": "magnitude-lifetime.json and magnitude-stress.json record per-workload fixed references, carried charges, increments and resulting charges. semantics.json records both allocator views."
+  },
+  "saturated_coefficient_diagnostic": {
+    "source": "e5f757ad1a50ab85d90a807f708d9aa2f226913f",
+    "previous": "282fec460",
+    "evidence": "docs/evidence/2026-11-19-interval-saturated-coefficient-diagnostic",
+    "evidence_commit": "b2608b12bc368b80246991e645e587ba1b4d4379",
+    "scope": "Release public Hypersolve denial, owned formatted message, nested scopes, sticky failure, cleanup and independent retry. The six inputs include ordinary, word ceiling, one or two saturated counts and the largest new denial. Warm runs begin with the thread-local frame storage already allocated.",
+    "caps": "No comparable heap or stack debit. Retain earlier charges. The two prepared native/WASI qualification jobs retain the 1 GiB cgroup limit, zero swap and 256 MiB minimum headroom. Bare wasm32 has a 1 MiB linear stack and 512 KiB minimum headroom. Each target, input and cold/warm state stands alone.",
+    "targets": {
+      "stable-wasm32-wasip1": {
+        "heap": {
+          "cold": {
+            "peak": [
+              364,
+              287
+            ],
+            "retained": [
+              364,
+              287
+            ],
+            "alloc": [
+              2,
+              2
+            ],
+            "realloc": [
+              2,
+              0
+            ],
+            "live_after_drop": 224
+          },
+          "warm": {
+            "peak": [
+              140,
+              63
+            ],
+            "retained": [
+              140,
+              63
+            ],
+            "alloc": [
+              1,
+              1
+            ],
+            "realloc": [
+              2,
+              0
+            ],
+            "live_after_drop": 0
+          }
+        },
+        "bare_wasm_stack_bytes_by_case_and_warmth": {
+          "control": {
+            "1/0": 220,
+            "1/1": 220,
+            "4/0": 220,
+            "4/1": 220,
+            "32/0": 220,
+            "32/1": 220
+          },
+          "display": {
+            "1/0": 220,
+            "1/1": 220,
+            "4/0": 220,
+            "4/1": 220,
+            "32/0": 188,
+            "32/1": 188
+          }
+        },
+        "compiled_job": {
+          "previous_peak": 84017152,
+          "new_peak": 95518720,
+          "previous_charge": 84017152,
+          "positive_step": 11501568,
+          "cumulative_charge": 95518720,
+          "free_after_charge": 978223104
+        }
+      },
+      "stable-x86_64-unknown-linux-gnu": {
+        "heap": {
+          "cold": {
+            "peak": [
+              492,
+              492
+            ],
+            "retained": [
+              492,
+              492
+            ],
+            "alloc": [
+              2,
+              2
+            ],
+            "realloc": [
+              2,
+              2
+            ],
+            "live_after_drop": 352
+          },
+          "warm": {
+            "peak": [
+              140,
+              140
+            ],
+            "retained": [
+              140,
+              140
+            ],
+            "alloc": [
+              1,
+              1
+            ],
+            "realloc": [
+              2,
+              2
+            ],
+            "live_after_drop": 0
+          }
+        }
+      },
+      "1.95.0-wasm32-wasip1": {
+        "heap": {
+          "cold": {
+            "peak": [
+              364,
+              287
+            ],
+            "retained": [
+              364,
+              287
+            ],
+            "alloc": [
+              2,
+              2
+            ],
+            "realloc": [
+              2,
+              0
+            ],
+            "live_after_drop": 224
+          },
+          "warm": {
+            "peak": [
+              140,
+              63
+            ],
+            "retained": [
+              140,
+              63
+            ],
+            "alloc": [
+              1,
+              1
+            ],
+            "realloc": [
+              2,
+              0
+            ],
+            "live_after_drop": 0
+          }
+        },
+        "bare_wasm_stack_bytes_by_case_and_warmth": {
+          "control": {
+            "1/0": 252,
+            "1/1": 252,
+            "4/0": 252,
+            "4/1": 252,
+            "32/0": 252,
+            "32/1": 252
+          },
+          "display": {
+            "1/0": 252,
+            "1/1": 252,
+            "4/0": 252,
+            "4/1": 252,
+            "32/0": 236,
+            "32/1": 220
+          }
+        },
+        "compiled_job": {
+          "previous_peak": 83251200,
+          "new_peak": 85254144,
+          "previous_charge": 84496384,
+          "positive_step": 2002944,
+          "cumulative_charge": 86499328,
+          "free_after_charge": 987242496
+        }
+      },
+      "1.95.0-x86_64-unknown-linux-gnu": {
+        "heap": {
+          "cold": {
+            "peak": [
+              492,
+              492
+            ],
+            "retained": [
+              492,
+              492
+            ],
+            "alloc": [
+              2,
+              2
+            ],
+            "realloc": [
+              2,
+              2
+            ],
+            "live_after_drop": 352
+          },
+          "warm": {
+            "peak": [
+              140,
+              140
+            ],
+            "retained": [
+              140,
+              140
+            ],
+            "alloc": [
+              1,
+              1
+            ],
+            "realloc": [
+              2,
+              2
+            ],
+            "live_after_drop": 0
+          }
+        }
+      }
+    },
+    "raw": "*-render-*.json materialize the output. *-renderdrop-*.json end after its destruction. public-images.json gives the high watermarks for two fill patterns. Unretained full-width trials remain separate."
   }
 }
