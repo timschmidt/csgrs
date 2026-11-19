@@ -23,9 +23,20 @@ Binary search through positive IEEE encodings establishes adjacent directed
 bounds; square roots compare exact squares. It covers every finite normal
 exponent class, subnormal leading-bit positions, adversarial endpoint classes,
 seeded random intervals, typed failures, empty/invalid combinations, clipped
-root domains, fused cancellation and output-to-input arithmetic chains. Higher
-integer powers use exact small-integer fixtures; general higher-power rounding
-is not claimed tight. No native interval implementation produces the oracle.
+root domains, fused cancellation and output-to-input arithmetic chains. Integer
+powers include exact small integers, directed subnormal results, overflow,
+and both parities through `u32::MAX`. For normal higher powers, each returned
+endpoint must enclose the exact rational image and stay within the accumulated
+directed-rounding bound. For exponent `n`, a multiplication tree has `n − 1`
+products counting reused squares with multiplicity. Each normal product changes
+the exact magnitude by a factor between `1 − ε` and `1 + ε`, where `ε` is the
+spacing above one. These cases keep the nonzero intermediate products normal.
+The bound permits tighter implementations and does not require a particular
+order of multiplication.
+For bases one spacing above one, the oracle sums a binomial series until a
+rational bound on its tail proves both adjacent endpoints. This checks finite,
+nonconstant binary64 results through `u32::MAX` without constructing a
+rational with billions of denominator bits.
 Separate bit-mask queries verify set relations, signs, membership and exact width
 ordering, including widths that cannot be projected to a finite endpoint value.
 The downstream lattice module checks native and separate-array chains through

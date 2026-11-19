@@ -40,7 +40,7 @@ export function verifyInstance(api, corpus) {
   const statuses = {};
   const counts = {};
   for (const [index, row] of corpus.cases.entries()) {
-    const [width, operation, flags, a, b, c, d, exponent, expected, lower, upper] = row;
+    const [width, operation, flags, a, b, c, d, exponent, expected, lower, upper, outerLower, outerUpper] = row;
     const inputs = [a, b, c, d].map(width === 32 ? Number : BigInt);
     const query = api[`query${width}`];
     const call = selector => BigInt.asUintN(64, query(operation, selector, flags, ...inputs, exponent));
@@ -48,8 +48,18 @@ export function verifyInstance(api, corpus) {
     if (status !== expected) throw new Error(`Case ${index}: status ${status} != ${expected}; ${JSON.stringify(row)}`);
     if (status === 0 || status === 2) {
       const lo = call(1), hi = call(2);
-      if (lo !== BigInt(lower) || hi !== BigInt(upper)) {
-        throw new Error(`Case ${index}: bits [${lo.toString(16)},${hi.toString(16)}] != [${lower},${upper}]; ${JSON.stringify(row)}`);
+      if (outerLower === undefined) {
+        if (lo !== BigInt(lower) || hi !== BigInt(upper)) {
+          throw new Error(`Case ${index}: bits [${lo.toString(16)},${hi.toString(16)}] != [${lower},${upper}]; ${JSON.stringify(row)}`);
+        }
+      } else {
+        const sign = 1n << BigInt(width - 1);
+        const rank = bits => bits < sign ? bits : -(bits - sign);
+        if (lo === sign || hi === sign || lo >= 2n * sign || hi >= 2n * sign ||
+            rank(lo) < rank(BigInt(outerLower)) || rank(lo) > rank(BigInt(lower)) ||
+            rank(hi) < rank(BigInt(upper)) || rank(hi) > rank(BigInt(outerUpper))) {
+          throw new Error(`Case ${index}: power bounds [${lo.toString(16)},${hi.toString(16)}] outside endpoint allowances; ${JSON.stringify(row)}`);
+        }
       }
     }
     const key = `${width}/${operation}`;

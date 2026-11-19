@@ -173,7 +173,7 @@ def main():
         report["lattice_guest_tests"] = passed
         print(f"WASI Preview 1 lattice tests: {sum(passed.values())} passed")
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
-    print(f"WASM {args.toolchain}: {report['cases']} exact cases passed; {report['binary_bytes']} bytes; no floating arithmetic or allocator")
+    print(f"WASM {args.toolchain}: {report['cases']} arithmetic cases passed; {report['binary_bytes']} bytes; no floating arithmetic or allocator")
     print(f"Fixed lattice: {report['fixed_lattice']['calls']} calls passed in two fresh instances")
 
 

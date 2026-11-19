@@ -142,8 +142,7 @@ class Format:
                 assert error.code == 16
                 raise Failure(18) from error
         elif operation == 19:
-            # General powers may round at intermediate stages. This exact-bit
-            # corpus uses powers 0,1,2 and exact small-integer higher powers.
+            # This path is used for cases with known tight endpoint results.
             values = [a ** exponent, b ** exponent]
             if exponent and exponent % 2 == 0 and a <= 0 <= b:
                 values.append(Fraction(0))
@@ -246,6 +245,89 @@ def cases(seed, samples):
         yield fmt.case(1, 0, [one, one, one | fmt.sign, one | fmt.sign])
 
 
+def near_one_power(fmt, n):
+    """Project (1 + epsilon)^n by bounding the uncomputed binomial tail."""
+    epsilon = Fraction(1, 1 << fmt.fraction)
+    term = total = Fraction(1)
+    for k in range(1, 65):
+        term *= (n - k + 1) * epsilon / k
+        total += term
+        ratio = (n - k) * epsilon / (k + 1)
+        # Successive term ratios decrease. The geometric series bounds all
+        # remaining terms with rational arithmetic independent of IEEE power.
+        assert 0 <= ratio < 1
+        lower = fmt.bounds(total)
+        if lower == fmt.bounds(total + term * ratio / (1 - ratio)):
+            return lower
+    raise AssertionError("binomial tail did not resolve both adjacent endpoints")
+
+
+def higher_powers(fmt):
+    one = fmt.bounds(Fraction(1))[0]
+    half = fmt.bounds(Fraction(1, 2))[0]
+    two = fmt.bounds(Fraction(2))[0]
+    # Powers of zero and units can be evaluated exactly even at u32::MAX.
+    # Once (1/2)^n is smaller than the least subnormal, the directed positive
+    # bounds remain [0, least subnormal] at subsequent positive products.
+    for exponent in ((1 << 31) - 1, 1 << 31, (1 << 32) - 1):
+        for a, b in [(0, 0), (one | fmt.sign, one), (one | fmt.sign, one | fmt.sign)]:
+            yield fmt.case(19, 0, [a, b, 0, 0], exponent)
+        for magnitude in (1, half, two):
+            for negative in (False, True):
+                bits = magnitude | (fmt.sign if negative else 0)
+                row = [fmt.width, 19, 0, hex(bits), hex(bits), "0x0", "0x0", exponent]
+                if magnitude == two:
+                    yield [*row, 18]
+                elif negative and exponent % 2:
+                    yield [*row, 0, hex(fmt.sign | 1), "0x0"]
+                else:
+                    yield [*row, 0, "0x0", "0x1"]
+
+    # With |x| between 3/4 and 5/4, all nonzero intermediate products for
+    # these exponents stay normal in both formats. A directed rounding of a
+    # normal product changes its magnitude by at most a factor 1 +/- epsilon.
+    # Any multiplication tree for x^n has n-1 internal products, counting
+    # reused squares with multiplicity. Bound both directions independently
+    # of the Rust evaluation order; a tighter result is valid.
+    epsilon = Fraction(1, 1 << fmt.fraction)
+    low = fmt.bounds(Fraction(3, 4))[0] + 1
+    high = fmt.bounds(Fraction(5, 4))[0] - 1
+    for n in (3, 4, 7, 15, 16, 31, 63, 127):
+        down, up = (1 - epsilon) ** (n - 1), (1 + epsilon) ** (n - 1)
+        for a, b in [(low, low), (one + 1, one + 1), (one - 1, high),
+                     (high | fmt.sign, low | fmt.sign), (high | fmt.sign, low),
+                     (0, low), (one | fmt.sign, 0)]:
+            left, right = fmt.decode(a), fmt.decode(b)
+            exact = [left ** n, right ** n]
+            if n % 2 == 0 and left <= 0 <= right:
+                exact.append(Fraction(0))
+            tight = fmt.project(exact)
+            outer = fmt.project([v * factor for v in exact for factor in (down, up)])
+            yield [fmt.width, 19, 0, hex(a), hex(b), "0x0", "0x0", n, 0,
+                   *map(hex, tight), *map(hex, outer)]
+
+    # Exercise high exponent bits with a finite, nonconstant result. The
+    # controls above test parity, overflow and underflow at the same boundary.
+    exponents = ((0x55555, 0xAAAAA, (1 << 20) - 1, 1 << 20, (1 << 20) + 1)
+                 if fmt.width == 32 else
+                 (0x55555555, 0xAAAAAAAA, (1 << 31) - 1, 1 << 31, (1 << 32) - 1))
+    assert near_one_power(fmt, 31) == fmt.bounds((1 + epsilon) ** 31)
+    for n in exponents:
+        tight = near_one_power(fmt, n)
+        # All intermediates stay in [1, 2). When two lower bounds for powers
+        # i,j are multiplied, 1+(i+j)*epsilon is representable and no larger
+        # than their product. The upper bound allows n-1 directed roundings.
+        outer = (one + n, near_one_power(fmt, 2 * n - 1)[1])
+        assert outer[0] <= tight[0] <= tight[1] <= outer[1] < two
+        for sign in (0, fmt.sign):
+            source = hex(sign | (one + 1))
+            if sign and n % 2:
+                ends = [sign | magnitude for magnitude in (*reversed(tight), *reversed(outer))]
+            else:
+                ends = [*tight, *outer]
+            yield [fmt.width, 19, 0, source, source, "0x0", "0x0", n, 0, *map(hex, ends)]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
@@ -263,6 +345,8 @@ def main():
         assert fmt.bounds(fmt.decode(1) / 2) == (0, 1)
         assert fmt.bounds(-fmt.decode(1) / 2) == (fmt.sign | 1, 0)
     rows = list(cases(args.seed, args.samples))
+    for width in (32, 64):
+        rows.extend(higher_powers(Format(width)))
     properties = []
     seen = set()
     formats = {width: Format(width) for width in [32, 64]}
