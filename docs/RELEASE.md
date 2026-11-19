@@ -117,6 +117,10 @@ Run these after the last change, in addition to the
    native source and tangent evidence over four parameter cells, conversion
    to native bounds, and consumption by the native nonoverlap predicate.
 
+   The check requests each Rust executable by name and runs the path Cargo
+   reports for that consumer. A missing required Rust, C or C++ program fails
+   the check. Executables left by older releases are ignored.
+
    Before unpacking, it also builds each crate's documentation from the
    workspace with its docs.rs feature settings, per-crate `rustdoc-args` and
    `-D warnings`. Arguments retain their boundaries (including spaces); flags

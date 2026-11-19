@@ -64,6 +64,7 @@ rm -rf "${target}/package"
 clear_release_package_builds "${target}" "${crates[@]}"
 prepare_release_package_home "${work}/cargo-home"
 bash "${root}/scripts/test-release-package-cache.sh" "${toolchain}"
+python3 "${root}/scripts/test-release-consumer-artifacts.py" "${toolchain}"
 
 package_args=()
 for crate in "${crates[@]}"; do package_args+=(-p "${crate}"); done
@@ -124,12 +125,14 @@ mkdir -p "${consumer}/src/bin"
 } > "${consumer}/Cargo.toml"
 
 cp scripts/release-consumer/user_path.rs "${consumer}/src/bin/user_path.rs"
-echo 'fn main() {}' > "${consumer}/src/main.rs"
+rust_programs=(user_path)
 for crate in "${crates[@]}"; do
   [[ ${crate} == csgrs-ffi ]] && continue
+  name="quickstart_${crate//-/_}"
+  rust_programs+=("${name}")
   readme="${work}/packages/${crate}-${version[${crate}]}/README.md"
   [[ ${crate} == csgrs ]] && readme="${work}/packages/csgrs-${version[csgrs]}/readme.md"
-  python3 - "${readme}" "${consumer}/src/bin/quickstart_${crate//-/_}.rs" <<'EOF'
+  python3 - "${readme}" "${consumer}/src/bin/${name}.rs" <<'EOF'
 import re, sys
 text = open(sys.argv[1]).read()
 block = re.search(r'<!-- quickstart:start -->\s*```rust\n(.*?)```\s*<!-- quickstart:end -->', text, re.S)
@@ -142,9 +145,15 @@ done
 # Exercise the shipped optional API with the example from the actual archive.
 cp "${work}/packages/hypercurve-${version[hypercurve]}/examples/interval_ranges.rs" \
   "${consumer}/src/bin/curve_interval_ranges.rs"
+rust_programs+=(curve_interval_ranges)
 
 echo "== building the consumer against packaged sources"
-(cd "${consumer}" && CARGO_TARGET_DIR="${target}/consumer" "${cargo_command[@]}" build --bins)
+bin_args=()
+for name in "${rust_programs[@]}"; do bin_args+=(--bin "${name}"); done
+(cd "${consumer}" && CARGO_TARGET_DIR="${target}/consumer" "${cargo_command[@]}" \
+  build --message-format=json-render-diagnostics "${bin_args[@]}") > "${work}/consumer-build.jsonl"
+python3 scripts/release-consumer-artifacts.py "${consumer}/Cargo.toml" "${rust_programs[@]}" \
+  < "${work}/consumer-build.jsonl" > "${work}/rust-binaries"
 
 # Every released crate must resolve from the unpacked packages, never from
 # the repository.
@@ -197,11 +206,12 @@ run() {
   }
   echo "ok"
 }
-for binary in "${target}/consumer/debug/user_path" "${target}"/consumer/debug/quickstart_* \
-    "${target}/consumer/debug/curve_interval_ranges" \
-    "${work}/ffi_smoke" "${work}/cpp_smoke"; do
-  [[ -x ${binary} && -f ${binary} ]] || continue
-  run "$(basename "${binary}")" "${binary}"
+mapfile -d '' -t rust_binaries < "${work}/rust-binaries"
+for i in "${!rust_programs[@]}"; do
+  run "${rust_programs[i]}" "${rust_binaries[i]}"
+done
+for name in ffi_smoke cpp_smoke; do
+  run "${name}" "${work}/${name}"
 done
 
 # The other language bindings wrap the same packaged library and header.
