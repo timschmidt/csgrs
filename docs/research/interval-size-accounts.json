@@ -13944,5 +13944,134 @@
       }
     },
     "rationale": "Sixteen file pages and four executable pages per step accommodate a compatible memory-safety repair in a 16–18 MB desktop executable. The smaller of the byte and percentage caps applies separately to each metric. Prior positive charges remain due at the fixed program baseline, independently on each compiler. The exact consumer results, matched memory, confirmed final linked measurements and headroom must pass before retention."
+  },
+  "csgrs_bevy_executor_release_qualification": {
+    "source": "311f3cca24c7dbcfc4d55ce2529978a9076a5292",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "eed465b8728b8a3f01c2fcfd7542189a1d15d231",
+    "evidence": "docs/evidence/2026-11-19-interval-release-executor-repair",
+    "evidence_commit": "9037725d9d3ed084ad239a42bac9780c904b0619",
+    "benefit": "Use the unyanked patch that repairs the upstream desktop executor lifetime.",
+    "caps": "See csgrs_bevy_executor_release_client_budget. Three Linux GUI slots each use the same step and cumulative file, text and function caps, with a 128 MiB slot and 32 MiB reserved. Wasm requires byte identity on this step.",
+    "method": "The archive records absolute totals, caps, remaining step and cumulative allowances and separate checksums for every final image. Cargo uses the executor only in the native normal dependency graphs of the three demos.",
+    "targets": {
+      "packaged_bevy_1.95.0": {
+        "file_code_functions_signed_step": [
+          50376,
+          6320,
+          6177
+        ],
+        "file_code_functions_cumulative_charge": [
+          50376,
+          6320,
+          6177
+        ],
+        "file_code_functions_cumulative_remaining": [
+          80696,
+          17999,
+          17168
+        ],
+        "free_artifact_bytes": 50500280
+      },
+      "packaged_bevy_stable": {
+        "file_code_functions_signed_step": [
+          1536,
+          4608,
+          4788
+        ],
+        "file_code_functions_cumulative_charge": [
+          2552,
+          4608,
+          4788
+        ],
+        "file_code_functions_cumulative_remaining": [
+          128520,
+          19533,
+          18466
+        ],
+        "free_artifact_bytes": 49562936
+      },
+      "hypertri_x86_64-unknown-linux-gnu": {
+        "file_code_functions_signed_step": [
+          2576,
+          -2912,
+          -3144
+        ],
+        "file_code_functions_cumulative_charge": [
+          2576,
+          0,
+          0
+        ],
+        "file_code_functions_cumulative_remaining": [
+          128496,
+          32768,
+          32768
+        ],
+        "free_artifact_bytes": 114799696
+      },
+      "hypertri_wasm32-unknown-unknown": {
+        "current_file_and_code_step": 0,
+        "wasm_sha256": "8830809f7216cd0deca48f26a4c0a23477362deece3bc143d1d2b7380c62b880",
+        "signed_history": {
+          "file": 18,
+          "code": 0,
+          "functions": 0
+        }
+      },
+      "hypermesh_x86_64-unknown-linux-gnu": {
+        "file_code_functions_signed_step": [
+          3736,
+          -2512,
+          -2796
+        ],
+        "file_code_functions_cumulative_charge": [
+          3736,
+          0,
+          0
+        ],
+        "file_code_functions_cumulative_remaining": [
+          127336,
+          32768,
+          32768
+        ],
+        "free_artifact_bytes": 111597736
+      },
+      "hypermesh_wasm32-unknown-unknown": {
+        "current_file_and_code_step": 0,
+        "wasm_sha256": "5fe456f79eb8beb989fdf9a16d859a642e6090a17c90293d48aa544b7c6b69cd",
+        "signed_history": {
+          "file": -9,
+          "code": 0,
+          "functions": 0
+        }
+      },
+      "hypercurve_x86_64-unknown-linux-gnu": {
+        "file_code_functions_signed_step": [
+          2488,
+          -2784,
+          -3031
+        ],
+        "file_code_functions_cumulative_charge": [
+          2488,
+          0,
+          0
+        ],
+        "file_code_functions_cumulative_remaining": [
+          128584,
+          32768,
+          32768
+        ],
+        "free_artifact_bytes": 96750744
+      },
+      "hypercurve_wasm32-unknown-unknown": {
+        "current_file_and_code_step": 0,
+        "wasm_sha256": "162952e3f8eb330b1e2249f8245e37308d6cfd1b52da4e0438e799e30526d0f8",
+        "signed_history": {
+          "file": 5481,
+          "code": 6247,
+          "functions": 6255
+        }
+      }
+    }
   }
 }

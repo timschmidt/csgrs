@@ -2123,5 +2123,106 @@
       }
     },
     "details": "The archive includes per-call canary/heap observations, fixed, preceding and retained outcomes, memory-accounted.json and external process RSS. All four target/compiler combinations completed 12 cases and returned the typed size limit for four generated inputs. Absolute peak requested heap counts fresh source construction. Every measured call returned to its initial requested-heap level."
+  },
+  "csgrs_bevy_executor_release_qualification": {
+    "source": "311f3cca24c7dbcfc4d55ce2529978a9076a5292",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "eed465b8728b8a3f01c2fcfd7542189a1d15d231",
+    "evidence": "docs/evidence/2026-11-19-interval-release-executor-repair",
+    "evidence_commit": "9037725d9d3ed084ad239a42bac9780c904b0619",
+    "workload": "Single-worker packaged Bevy client validating three cube conversions and 18 completed scoped tasks across pool creation and teardown. Whole-job requested Rust heap, calling-thread stack on a guarded 2 MiB allocation, and 60 GNU time fresh-process RSS samples per stage.",
+    "heap_cold_then_warm": [
+      [
+        708,
+        645,
+        6,
+        122848,
+        22736,
+        9184
+      ],
+      [
+        615,
+        615,
+        6,
+        108528,
+        13552,
+        0
+      ]
+    ],
+    "heap_columns": [
+      "allocations",
+      "deallocations",
+      "reallocations",
+      "cumulative_bytes",
+      "peak_live_bytes",
+      "live_after_return"
+    ],
+    "caller_stack_cold_then_warm": {
+      "1.95.0": [
+        15096,
+        14976
+      ],
+      "stable": [
+        15528,
+        15408
+      ]
+    },
+    "current_and_cumulative_charge": "Every measured requested-heap and calling-thread stack field is equal at the fixed, preceding and retained revisions on both compilers. The new charge is zero. The stack measurement covers the calling thread.",
+    "sampled_peak_process_rss_KiB_min_median_max": {
+      "1.95.0": {
+        "fixed": [
+          6672,
+          6984.0,
+          7304
+        ],
+        "before": [
+          6696,
+          7002.0,
+          7368
+        ],
+        "candidate": [
+          6668,
+          7002.0,
+          7356
+        ],
+        "control": [
+          6656,
+          6994.0,
+          7368
+        ],
+        "previous-safe": [
+          6900,
+          6992.0,
+          7352
+        ]
+      },
+      "stable": {
+        "fixed": [
+          6708,
+          6996.0,
+          7300
+        ],
+        "before": [
+          6888,
+          6990.0,
+          7300
+        ],
+        "candidate": [
+          6872,
+          7002.0,
+          7372
+        ],
+        "control": [
+          6620,
+          6988.0,
+          7300
+        ],
+        "previous-safe": [
+          6900,
+          6988.0,
+          7348
+        ]
+      }
+    }
   }
 }

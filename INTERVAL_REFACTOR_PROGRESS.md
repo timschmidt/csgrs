@@ -14012,3 +14012,63 @@ documentation, registry publication and hardware qualification remain open.
 
 Evidence commit `3bca756ddf4c0b1a4972e9d6e5f1cdc275b33eb9` records 41 verified members
 in 39,816 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 14 — repair the released Bevy executor dependency
+
+Cargo reproduced the yanked `async-executor` 1.14.0 warning on `eed465b87`
+when packaging csgrs 0.23.0. Commit `311f3cca2` updates the workspace,
+the three standalone GUI lockfiles and the OpenSCAD corpus worker to
+1.14.1. The version and checksum are the only two changed fields in
+each lock. Of the 21 coordinated packages, only csgrs includes this
+executor, through the optional Bevy feature. Hypervoxel's independent
+lock already used an unyanked version.
+[Upstream repair](https://github.com/smol-rs/async-executor/releases/tag/v1.14.1)
+
+The full release driver passed on Rust 1.95.0 and 1.99.0. Each toolchain
+verified 21 packages, rendered 21 local documentation configurations and
+passed all 27 packaged consumer checks. Across the archived dependency
+graphs the only version change was the executor. Every changed sibling
+checksum matched its rebuilt archive. A separate clean checkout reproduced
+all 21 final archives byte-for-byte on each compiler, offline. On 1.95,
+the standalone UIs passed 42 Hypercurve, 8 Hypermesh and 6 Hypertri tests,
+strict all-target Clippy, and native and Wasm release builds. Each Wasm
+binary matched its predecessor byte-for-byte.
+
+The packaged Bevy client checked cube corners, face counts, orientation
+and 18 completed scoped tasks. Its executable grew by 50,376 bytes on
+Rust 1.95 and 1,536 bytes on Rust 1.99.
+The original caps rejected both the patched client and the earlier
+unaffected 1.13.3 alternative. Commit `0d37f7b88` records the revised
+desktop budget. The native Hypercurve, Hypermesh and Hypertri demos grew
+by 2,488, 3,736 and 2,576 bytes respectively. Each executable, code
+section and measured function total passed its individual and cumulative
+caps against `c9f1f9ac5`.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+Across the fixed, preceding and patched builds, cold peak requested
+heap was 22,736 bytes and warm peak was 13,552 bytes. A cold run retained
+9,184 bytes of one-time state and the warm job returned to its starting
+level. Peak calling-thread stack was 15,096 bytes on Rust 1.95 and 15,528
+on Rust 1.99. The account includes separate process RSS samples.
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+The randomized paired run found median increases of 0.22–1.19 percent in
+the complete short pool, mesh and task workload across two CPUs and two
+compilers. Three of four per-lane bootstrap intervals were above zero.
+The initial three-version run measured 0.51–0.74 percent. The release
+accepts this small complete-job cost for the upstream executor lifetime
+repair under the plan's higher-priority correctness rule. The repository's
+separate sphere-to-Bevy conversion benchmark measured 165.45 ms before and
+166.74 ms after (+0.78%) with identical work, output and checksum
+receipts. Per-run medians overlapped. The archive includes all samples
+and repeat controls. [Performance protocol](docs/INTERVAL_REFACTOR_PLAN.md#15-benchmark-and-resource-matrix)
+
+The 26 OpenSCAD collector and protocol tests passed. The historical
+SynapsCAD revision was unavailable from its public repository. Both
+executor locks produced the same 29 compiler diagnostics against public
+SynapsCAD `a63c4c95f` and parser `c0d92e6ea`, after matching the local
+manifest layout. The worker's end-to-end execution remains open. Hosted
+publication and hardware qualification also remain open.
+
+Evidence commit `9037725d9d3ed084ad239a42bac9780c904b0619` records 253 verified
+members in 204,436 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
