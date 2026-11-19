@@ -13,7 +13,7 @@ from wasi_libtest import RUNNER, TARGET, build_tests, compare_dispatch, complete
 # These interval suites are required even if a Cargo manifest changes both inventories.
 INTERVAL_SUITES = {
     "coefficient_bit_budget", "expression_interval", "interval_box_radius", "interval_quadratic_extrema", "jacobian_matrix",
-    "krawczyk_affine_oracle", "krawczyk_affine_residuals", "krawczyk_certificates",
+    "krawczyk_affine_oracle", "krawczyk_affine_rank", "krawczyk_affine_residuals", "krawczyk_certificates",
     "krawczyk_multivariate_certainty", "krawczyk_univariate_algebraic", "program_jacobian_trace",
     "real_interval_enclosures", "real_interval_migration_contract", "trivariate_arithmetic",
 }
