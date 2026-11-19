@@ -700,3 +700,4 @@ docs/evidence/2026-11-18-interval-univariate-proof	2	323872	23c956a12c18f474ab8c
 docs/evidence/2026-11-18-interval-solver-library-wasi	2	380228	532e947f4b97cd0d0c9fa3dd615b01fec2af7e9701a5d07592ae0e3c4f0b7291
 docs/evidence/2026-11-18-interval-coefficient-budget-width	2	51352	b22e93b75ee33e08cd6299f17db2c203c5bde348ab7f563ddf3e66674fab42d5
 docs/evidence/2026-11-18-interval-fused-tensor-budget	2	702156	ec76096f429dfc49f8b9ec49ad8de63e702ecb19d0b4f23d06b21548c84f8e93
+docs/evidence/2026-11-18-interval-scalar-fresh-replay	2	136596	24a1641bc7ed36017f9aafe0449fb867df4cfe82cefd84d39a52d9eb4279955e

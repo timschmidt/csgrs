@@ -1194,5 +1194,51 @@
         "elapsed_seconds": 72.854
       }
     }
+  },
+  "whole_scalar_wasi_qualification": {
+    "source": "88e11ea7bbdab5c8d1ff7b5c73a5e010b7d310ee",
+    "evidence": "docs/evidence/2026-11-18-interval-scalar-fresh-replay",
+    "scope": "New hosted Hyperinterval test job, one compiler lane and one child guest at a time. One fresh swap-disabled cgroup per run. Linux memory.peak includes parent, children, Cargo, native test relinking, Node and cleanup, with dependency and guest build caches prewarmed. Cold dependency compilation is separate. Native-only and guest-only five-case runs are separate compiled workloads.",
+    "capacity_bytes": 1073741824,
+    "required_headroom_bytes": 268435456,
+    "charge": "Register the entire observed peak per compiler for the new job, without offsetting production, firmware or other test budgets. Existing ordinary production heap and stack accounts carry forward.",
+    "targets": {
+      "1.88.0": {
+        "measured_whole_job_bytes": 225976320,
+        "registered_whole_job_charge_bytes": 225976320,
+        "remaining_with_reserve_bytes": 579330048,
+        "headroom_bytes": 847765504,
+        "warm_job_seconds": 76.045,
+        "compiled_five_native_parents_peak_bytes": 8695808,
+        "compiled_five_cross_target_parents_peak_bytes": 31854592,
+        "direct_guest_passes": 178,
+        "native_os_cases": 6,
+        "fresh_guest_replays": 5
+      },
+      "1.95.0": {
+        "measured_whole_job_bytes": 197312512,
+        "registered_whole_job_charge_bytes": 197312512,
+        "remaining_with_reserve_bytes": 607993856,
+        "headroom_bytes": 876429312,
+        "warm_job_seconds": 82.152,
+        "compiled_five_native_parents_peak_bytes": 8491008,
+        "compiled_five_cross_target_parents_peak_bytes": 33349632,
+        "direct_guest_passes": 231,
+        "native_os_cases": 9,
+        "fresh_guest_replays": 5
+      },
+      "stable": {
+        "measured_whole_job_bytes": 187351040,
+        "registered_whole_job_charge_bytes": 187351040,
+        "remaining_with_reserve_bytes": 617955328,
+        "headroom_bytes": 886390784,
+        "warm_job_seconds": 78.95,
+        "compiled_five_native_parents_peak_bytes": 8986624,
+        "compiled_five_cross_target_parents_peak_bytes": 32387072,
+        "direct_guest_passes": 231,
+        "native_os_cases": 9,
+        "fresh_guest_replays": 5
+      }
+    }
   }
 }

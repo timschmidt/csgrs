@@ -13068,3 +13068,61 @@ larger program.
 Evidence commit `f13164d20eb6b0bdecf1dc864967bd08324b8fd8` contains 1,795
 files. Record `docs/evidence/2026-11-18-interval-fused-tensor-budget` has digest
 `ec76096f429dfc49f8b9ec49ad8de63e702ecb19d0b4f23d06b21548c84f8e93`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phases 3, 5, 7 and 14, scalar replay and bounded Horner review, 18 November 2026
+
+Commit `88e11ea7b` exercises five native-produced scalar results in fresh
+WASI guests. The native parent supplies the actual serialized fixed division,
+dyadic grid, rational power, split division or tangent result. Each guest
+performs the corresponding operation on the decoded value. The runner
+requires a successful parent and one receipt from the named child.
+The original native subprocess cases and the direct WASI probes still run.
+[Scalar conformance runner](crates/hyperinterval/conformance/wasi-tests.py)
+
+Before the stronger assertions, both the fractional-power and tangent cases
+accepted the canonical empty set. The split-division, power and tangent cases
+also accepted another operation’s pair of rays. The retained tests check
+component counts, exact endpoints and the subsequent operation. Directed
+256-bit MPFR independently determines the two finite tangent endpoints.
+Across all three compilers the five genuine payloads agreed byte for byte,
+and all thirteen substitutions per compiler were rejected on both targets.
+The substitutions include malformed JSON, unrelated canonical intervals
+and an extra dyadic grid entry.
+
+| Rust release | Direct guest tests | OS-dependent native cases | Extra fresh guests | Warm whole-job peak |
+| --- | ---: | ---: | ---: | ---: |
+| 1.88 | 178 | 6 | 5 | 225,976,320 B |
+| 1.95 | 231 | 9 | 5 | 197,312,512 B |
+| 1.99 | 231 | 9 | 5 | 187,351,040 B |
+
+The two Hyperreal-enabled configurations also matched all 450 ordered
+rational dispatch windows. Each job ran with 1 GiB of memory and zero
+swap, retained its 256 MiB reserve and recorded zero OOM events. These
+peaks include native harness relinking and exclude cold dependency
+compilation. The individual compiled replay workloads are recorded
+separately. Native release tests, strict native and WASI Clippy, workspace
+formatting and the downstream Cartesian replay and dyadic suites passed.
+
+The initial assertions exceeded two existing image budgets. Keeping the
+exact cardinality check on the decoded vector and comparing both power
+rays without emitting an extra array formatter put all five native and
+guest harnesses within their existing per-image caps. The largest file
+charge was 4,057 B on the Rust 1.99 WASI power test, leaving 39 B
+incrementally and 4,135 B cumulatively. The ordinary and opt-in native
+images have separate accounts. [Size accounts](docs/research/interval-size-accounts.json) · [Memory accounts](docs/research/interval-memory-accounts.json)
+
+The targeted-inline Horner trial and its ordinary-inline alternative were
+rebuilt against this revision. Across the 100 case and cache-state
+combinations, both preserved the six heap and allocation maxima. The cold
+tensor chain used 12,424 B in the control,
+12,440 B with targeted inlining and 12,504 B
+with ordinary inlining. Targeted inlining fits the 32 B incremental and
+64 B cumulative stack limits. Ordinary inlining exceeds both. The targeted
+trial grew the registered Rust 1.95 certification executable by
+38,896 B against its 4,096 B cap. The trials were
+discarded. The scalar replay commit affects test binaries and has its
+own hosted workload account.
+
+Evidence commit `ce9133a4b9fed19d833b1a36eb9600e3a4ba6943` contains 1,200
+files under `docs/evidence/2026-11-18-interval-scalar-fresh-replay`, with digest
+`24a1641bc7ed36017f9aafe0449fb867df4cfe82cefd84d39a52d9eb4279955e`. [Evidence index](docs/evidence-archive.tsv)

@@ -11394,5 +11394,195 @@
       }
     },
     "measurement": "Fixed-path comparative test images establish the incremental charge. The separately measured qualification-job images use the native replay parent and WASI guest builds from the retained source."
+  },
+  "scalar_native_to_wasi_replays": {
+    "source": "88e11ea7bbdab5c8d1ff7b5c73a5e010b7d310ee",
+    "evidence": "docs/evidence/2026-11-18-interval-scalar-fresh-replay",
+    "scope": "Five Hyperinterval release integration test executables, ordinary native and WASI plus opt-in native parent. File, complete code and nonoverlapping function bytes are tracked separately for every compiler and image in per-image.json. All previous accounts carry forward.",
+    "fixed": "933c9ae56",
+    "preceding": "d0a782310",
+    "ordinary_caps": "Incremental 4096 bytes and 1% of preceding. Cumulative 8192 bytes and 2% of fixed. Positive charges only.",
+    "coordinator_caps": "New optional path relative to the corresponding ordinary native image. Incremental and total allowance 16384 bytes and 1%.",
+    "slot_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "targets": {
+      "1.88.0": {
+        "wasm32-wasip1": {
+          "peak_file_bytes": 1201047,
+          "minimum_free_slot_bytes": 65907817,
+          "largest_positive_increment": {
+            "file": 3140,
+            "code": 2747,
+            "functions": 2745
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 956,
+            "code": 1349,
+            "functions": 1351
+          },
+          "largest_cumulative_charge": {
+            "file": 3140,
+            "code": 2747,
+            "functions": 2745
+          }
+        },
+        "native": {
+          "peak_file_bytes": 2089360,
+          "minimum_free_slot_bytes": 65019504,
+          "largest_positive_increment": {
+            "file": 504,
+            "code": 2368,
+            "functions": 2322
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 3592,
+            "code": 1728,
+            "functions": 1774
+          },
+          "largest_cumulative_charge": {
+            "file": 504,
+            "code": 2368,
+            "functions": 2322
+          }
+        },
+        "coordinator": {
+          "peak_file_bytes": 2089424,
+          "minimum_free_slot_bytes": 65019440,
+          "largest_positive_increment": {
+            "file": 264,
+            "code": 64,
+            "functions": 122
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 12170,
+            "code": 7076,
+            "functions": 6975
+          },
+          "largest_cumulative_charge": {
+            "file": 264,
+            "code": 64,
+            "functions": 122
+          }
+        }
+      },
+      "1.95.0": {
+        "wasm32-wasip1": {
+          "peak_file_bytes": 1334070,
+          "minimum_free_slot_bytes": 65774794,
+          "largest_positive_increment": {
+            "file": 2273,
+            "code": 2321,
+            "functions": 2322
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 1823,
+            "code": 1775,
+            "functions": 1774
+          },
+          "largest_cumulative_charge": {
+            "file": 2273,
+            "code": 2321,
+            "functions": 2322
+          }
+        },
+        "native": {
+          "peak_file_bytes": 2725416,
+          "minimum_free_slot_bytes": 64383448,
+          "largest_positive_increment": {
+            "file": 2912,
+            "code": 2048,
+            "functions": 2034
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 1184,
+            "code": 2048,
+            "functions": 2062
+          },
+          "largest_cumulative_charge": {
+            "file": 2912,
+            "code": 2048,
+            "functions": 2034
+          }
+        },
+        "coordinator": {
+          "peak_file_bytes": 2724968,
+          "minimum_free_slot_bytes": 64383896,
+          "largest_positive_increment": {
+            "file": 56,
+            "code": 192,
+            "functions": 258
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 14499,
+            "code": 6825,
+            "functions": 6731
+          },
+          "largest_cumulative_charge": {
+            "file": 56,
+            "code": 192,
+            "functions": 258
+          }
+        }
+      },
+      "stable": {
+        "wasm32-wasip1": {
+          "peak_file_bytes": 1363724,
+          "minimum_free_slot_bytes": 65745140,
+          "largest_positive_increment": {
+            "file": 4057,
+            "code": 3841,
+            "functions": 3838
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 39,
+            "code": 255,
+            "functions": 258
+          },
+          "largest_cumulative_charge": {
+            "file": 4057,
+            "code": 3841,
+            "functions": 3838
+          }
+        },
+        "native": {
+          "peak_file_bytes": 2760504,
+          "minimum_free_slot_bytes": 64348360,
+          "largest_positive_increment": {
+            "file": 1640,
+            "code": 1728,
+            "functions": 1795
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 2456,
+            "code": 2368,
+            "functions": 2301
+          },
+          "largest_cumulative_charge": {
+            "file": 1640,
+            "code": 1728,
+            "functions": 1795
+          }
+        },
+        "coordinator": {
+          "peak_file_bytes": 2759760,
+          "minimum_free_slot_bytes": 64349104,
+          "largest_positive_increment": {
+            "file": 1040,
+            "code": 1152,
+            "functions": 1122
+          },
+          "smallest_incremental_allowance_left": {
+            "file": 14842,
+            "code": 6918,
+            "functions": 6825
+          },
+          "largest_cumulative_charge": {
+            "file": 1040,
+            "code": 1152,
+            "functions": 1122
+          }
+        }
+      }
+    }
   }
 }
