@@ -185,3 +185,48 @@ axis-projection submodule. The inventory has an individual, source-bound
 review for each of the 19 projection and 34 tangent declarations. The other
 routing and solver entries remain lexical candidates. All 365 earlier manual
 records survived two successive refreshes.
+
+## Affine projection proof admission
+
+On the primary branch, both public projection operations consume a sign or
+comparison through `PredicateOutcome::value()`. This loses the distinction
+between a certified zero and a terminal approximation. At `143c712e5` the
+span with absolute derivatives `[1, −2^-2048]` and unit axis limits was
+accepted under `APPROXIMATE_512` when the negative value was expressed using
+the sine addition identity. Independent replay certified all six inequalities.
+The positive counterpart was labeled `ZeroFeedRate`. An undecided ordering
+was treated as a tie and reached `AxisProjectionProposalUncertified`.
+
+Qualification commit `cce4eb9f9` requires certified decisions before either
+public entry point validates its arguments. All three previously failing
+witnesses then return `PredicateUnresolved` under both policies. Exact zero
+still produces its distinct error, and a genuine tie retains the first row.
+The zero-axis and exact-tie control kept three rational comparisons and 30
+structural sign calls. Rust 1.95 and 1.99 each passed 450 all-feature tests,
+three minimal-feature tests and strict rustdoc. The 199 Alumina Interface
+core tests include all 18 machine-profile cases.
+
+On both toolchains the guard preserved the complete output, dispatch, heap
+and touched stack in each of the 1×1, 4×3 and 32×8 native workloads under
+both policies and three trace modes. The two-fill bare-Wasm probes also
+measured identical stack and linear pages for matching outcomes. Among 14
+linked probe, example and benchmark images, its largest individual growth
+was 64 file bytes and 32 executable-code bytes. The optimized Alumina browser
+module remained 10,737,605 bytes and the desktop executable remained
+13,931,312 bytes. The raw browser module grew by 12 bytes and its Brotli
+delivery grew by 825 bytes.
+
+The guard remains on the local `interval-axis-proof-qualification` branch.
+On Rust 1.95 the complete 32×8 approximate workload with passive tracing
+took 0.69% and 1.65% more thread CPU time on the two cores in the final
+paired run. An earlier confirmation also found higher medians on both cores.
+Moving the checks to each decision, reserving the exact row capacity, sharing
+solver bindings, reusing row buffers, checking certainty receipts, and
+iterating paired inputs were measured separately. Sharing bindings changed
+the construction trace. Reusing buffers increased the Rust 1.99 shipped
+example by 7,464 bytes against a 4,096-byte incremental cap. None of these
+trials qualifies a path ownership transfer. The primary projection proof
+gap and the tangent findings above remain open.
+
+Measured sources, both exact oracles and raw trial records are archived in
+evidence commit `1818ef32b8debc1724ae48647bd6562279928ba9`. [Evidence index](../evidence-archive.tsv)

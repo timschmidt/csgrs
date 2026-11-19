@@ -15614,5 +15614,76 @@
       }
     },
     "raw": "size-review.json contains all 44 per-image comparable accounts. public-images.json contains both bare modules and both native libraries. The 1.95 native owner benchmark has identical loaded bytes outside its build ID. No firmware links Hypersolve in the measured program."
+  },
+  "schedule_equivalence_decoder_compatibility": {
+    "source": "b1abbdb4c67215d05114160d863d0353f99d8a73",
+    "previous": "6aafc02603225949d2c9a2da3e6a2617b24bfa87",
+    "scope": "Phase 11 schedule-equivalence test and fuzz byte decoder. Rust 1.99 strict all-target Clippy now passes. Production code is unchanged.",
+    "evidence": "docs/evidence/2026-11-19-interval-axis-projection-proof-admission",
+    "evidence_commit": "1818ef32b8debc1724ae48647bd6562279928ba9",
+    "program_baseline": "Keep the previously registered d8eb6fa0c harness accounts. No positive change in final file, executable code or defined function bytes on any measured target. Earlier charges stay reserved.",
+    "limits": "64 MiB for each complete executable, 16 MiB reserved. No size exception spent.",
+    "targets": {
+      "fuzz-equivalence": {
+        "original": {
+          "file": 28899184,
+          "sha256": "ec640614bcf41c6b92c0fae6f0ec830426aadd4e6a5abe7982a502118a2e79ff",
+          "code": 7503340,
+          "functions": 7397724
+        },
+        "current": {
+          "file": 28898752,
+          "sha256": "5a98f02abbb2b3427b89be18085a5757663f82ed5ce3711dacfb91d0fa356c17",
+          "code": 7503084,
+          "functions": 7397424
+        },
+        "delta": {
+          "file": -432,
+          "code": -256,
+          "functions": -300
+        },
+        "remaining_slot": 38210112
+      },
+      "schedule-equivalence-1.95.0": {
+        "original": {
+          "file": 4785672,
+          "sha256": "4845c34a1e26cefa9b67073dd1a5413c67709ad4da4a68b98418ccb52a71d1c9",
+          "code": 2444503,
+          "functions": 2420211
+        },
+        "current": {
+          "file": 4785664,
+          "sha256": "0ebee92b529355e542bb5b06ea2d110c0d9a21337f18aa790a76d2df79f7e132",
+          "code": 2444471,
+          "functions": 2420189
+        },
+        "delta": {
+          "file": -8,
+          "code": -32,
+          "functions": -22
+        },
+        "remaining_slot": 62323200
+      },
+      "schedule-equivalence-stable": {
+        "original": {
+          "file": 4940728,
+          "sha256": "ee5d9c3edc8a9220aca4821a472266a9a4ad465b42fd95d109be1fdce16c50ae",
+          "code": 2507573,
+          "functions": 2483610
+        },
+        "current": {
+          "file": 4940712,
+          "sha256": "0ed9235cac9ff53301be1ed4bdd1e60c7d7f28be1e3bf9bf8f0ae0547448dc8b",
+          "code": 2507557,
+          "functions": 2483588
+        },
+        "delta": {
+          "file": -16,
+          "code": -16,
+          "functions": -22
+        },
+        "remaining_slot": 62168152
+      }
+    }
   }
 }

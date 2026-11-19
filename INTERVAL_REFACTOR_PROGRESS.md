@@ -14292,3 +14292,36 @@ frames sped up deep nesting, while a single successful WASM scope remained
 unit-test image budgets. The full-width public-field migration remains open.
 The trials consume no production allowance. Evidence commit `b2608b12bc368b80246991e645e587ba1b4d4379`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 0 inventory and Phase 11 path proofs
+
+Commits `ba98a61b5` and `6aafc0260` restore the three named Hyperpath
+source modules to the scanner and record 53 body reviews. A Rust syntax-tree
+walk agreed on all 137 declarations across routing, tangent, solve and affine
+projection. The nine scanner tests passed. Two refreshes preserved all 418
+manual records. The direct and solver G1 oracle reports 12 incorrect public
+outcomes for zero tangents, a hidden endpoint gap, a nonparallel pair and a
+small nonzero tangent. [Source review](docs/research/axis-projection-owner.md)
+
+The primary affine planner and independent replay both certified an invalid
+negative absolute derivative under `APPROXIMATE_512`. Local trial
+`cce4eb9f9` returns `PredicateUnresolved` and keeps the control reports,
+dispatch, heap and stack across all 36 native workloads. Seven repairs were
+tested. The public-input guard reproduced a slowdown on the Rust 1.95 32×8
+approximate workload with compiled, passive tracing. Six alternative source
+patches and their independent gate findings are archived. The guard remains
+on `interval-axis-proof-qualification`; the production path and dynamics
+ownership transfer are open. No trial spent a production allowance.
+
+Commit `b1abbdb4c` restores strict Rust 1.99 Clippy for the retained schedule
+equivalence oracle. It consumes complete byte pairs and ignores the same odd
+tail and excess edges. Both decoder revisions matched the independent byte
+grammar on 2,097,174 inputs, completed 2,500 ASan fuzz runs apiece and
+replayed the same 826 distinct generated inputs. Both Rust 1.95 and 1.99
+passed 446 all-feature Hyperpath tests and strict all-target Clippy. The two
+release suites shrank by 8 and 16 file bytes. The ASan driver shrank by 432.
+[Target measurements](docs/research/interval-size-accounts.json)
+
+Raw reports, traces, independent oracles, complete memory histories, linked
+sizes and paired timing samples are in evidence commit `1818ef32b8debc1724ae48647bd6562279928ba9`.
+[Evidence index](docs/evidence-archive.tsv)
