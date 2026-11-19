@@ -30,7 +30,8 @@ impl Path {
             acceleration: i64::from(limits >> 4) + 1,
         };
         let (u, v, scale) = if flags & 1 == 0 { (1, 0, 1) } else { (3, 4, 5) };
-        for edge in tail.chunks_exact(2).take(6) {
+        let (edges, _) = tail.as_chunks::<2>();
+        for edge in edges.iter().take(6) {
             let direction = edge[0] >> 6;
             let (dx, dy) = [(u, v), (-v, u), (-u, -v), (v, -u)][usize::from(direction)];
             let length = i64::from(edge[0] & 63) + 1;
