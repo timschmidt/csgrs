@@ -13921,5 +13921,28 @@
     },
     "linked_owner_consumers": "The fixed, preceding and retained builds and SHA-256 sums cover 20 indirect native tests and benchmarks on each compiler. Also measured sqrt_cost, fractional_power_cost, and two previously registered narrow-feature cost drivers. Maximum positive indirect code step was 336 B, maximum function step 369 B. The fixed inverse_functions comparison separately links the same atanh oracle to the fixed library. Legacy narrow tangent and power link images retain 324 and 288 load pages. Their uninitialized RELRO padding grew 312 B and 1464 B. Power protects five pages after relinking, previously four. Its initialized RELRO payload fell 24 B.",
     "details": "Archive members size-accounted.json and caps.txt contain individual charges, predecessor values and headroom. layout-pages.json separates file-backed payload, page protection and zero-fill alignment. All linked public clients use fewer mapped native pages or a smaller bare Wasm image."
+  },
+  "csgrs_bevy_executor_release_client_budget": {
+    "benefit": "Admit the upstream executor lifetime repair used by the optional Bevy desktop renderer and its scoped task consumer. The named artifact links actual packaged csgrs and Bevy on x86_64 Linux.",
+    "program_reference": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "eed465b8728b8a3f01c2fcfd7542189a1d15d231",
+    "scope": "The matched optimized 0.23.0 public Bevy release client on Rust 1.95.0 and 1.99.0, in a 64 MiB host-tool slot with 16 MiB reserved.",
+    "original_caps": "File and text 4096 bytes and 1% per change, 8192 bytes and 2% cumulative. Functions additionally restricted to 1024 bytes and 0.5% per change.",
+    "first_screen": "On 1.95.0 the upstream 1.14.1 patch grew file, text and function union by 50376, 6320 and 6177 bytes. Rebuilding the 1.14.0 client with the observer targets present reproduced the original SHA-256. Earlier unaffected 1.13.3 grew the same metrics by 50288, 6304 and 6177 bytes. On 1.99.0 the patched client grew by 1536, 4608 and 4788 bytes. Historical screens remain recorded.",
+    "revised_caps": {
+      "file": {
+        "incremental_bytes": 65536,
+        "incremental_percent": 0.5,
+        "cumulative_bytes": 131072,
+        "cumulative_percent": 1.0
+      },
+      "text_and_defined_functions_each": {
+        "incremental_bytes": 16384,
+        "incremental_percent": 0.25,
+        "cumulative_bytes": 32768,
+        "cumulative_percent": 0.5
+      }
+    },
+    "rationale": "Sixteen file pages and four executable pages per step accommodate a compatible memory-safety repair in a 16–18 MB desktop executable. The smaller of the byte and percentage caps applies separately to each metric. Prior positive charges remain due at the fixed program baseline, independently on each compiler. The exact consumer results, matched memory, confirmed final linked measurements and headroom must pass before retention."
   }
 }
