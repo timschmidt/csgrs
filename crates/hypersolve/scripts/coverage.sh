@@ -93,24 +93,30 @@ for object in "${test_objects[@]:1}"; do
     object_args+=(--object "${object}")
 done
 
-ignore_regex='/([.]cargo/registry|[.]rustup|rustc|hyperreal|hyperlattice|hyperlimit|nalgebra|roots|target|tests|benches|examples|fuzz)/'
+# Select owned sources so Cargo cache, toolchain and workspace paths cannot
+# change the denominator. Dedicated test directories remain outside it.
+mapfile -d '' -t source_files < <(find src -type f -name '*.rs' ! -path '*/tests/*' -print0)
+if [[ ${#source_files[@]} -eq 0 ]]; then
+    echo "no Hypersolve source files found for coverage" >&2
+    exit 1
+fi
 
 echo "Instrumented Rust source (inline #[cfg(test)] code included):"
 "${llvm_cov}" report \
     "${primary_object}" \
     "${object_args[@]}" \
     --instr-profile="${profile_data}" \
-    --ignore-filename-regex="${ignore_regex}"
+    --sources "${source_files[@]}"
 
 "${llvm_cov}" show \
     "${primary_object}" \
     "${object_args[@]}" \
     --instr-profile="${profile_data}" \
-    --ignore-filename-regex="${ignore_regex}" \
     --format=html \
     --output-dir="${report_dir}" \
     --show-instantiations=false \
-    --show-line-counts-or-regions
+    --show-line-counts-or-regions \
+    --sources "${source_files[@]}"
 
 # LLVM combines production code with inline unit-test modules. Derive a
 # physical executable-line view that stops only at an explicit test-gated
@@ -121,10 +127,10 @@ echo "Production executable lines (trailing inline test modules excluded):"
     "${primary_object}" \
     "${object_args[@]}" \
     --instr-profile="${profile_data}" \
-    --ignore-filename-regex="${ignore_regex}" \
     --format=text \
     --show-instantiations=false \
-    --show-line-counts-or-regions >"${text_report}"
+    --show-line-counts-or-regions \
+    --sources "${source_files[@]}" >"${text_report}"
 awk -F'|' -v prefix="${repo_dir}/" -v threshold="${minimum_production_line_coverage}" '
         /^\/.*[.]rs:$/ {
             file = $0
