@@ -794,9 +794,9 @@ pub fn certify_affine_krawczyk_box(
 ///
 /// `|2*a|*r < |f'(x0)|`.
 ///
-/// All terms are exact `Real` values. Use `PredicatePolicy::STRICT` for proof.
-/// Terminal approximation can report a unique root outside the box or reject
-/// a contractive derivative bound when its strict inequality is unresolved.
+/// All terms are exact `Real` values. Radius validation and row classification
+/// use the certified stages of the supplied policy. An unresolved containment
+/// or contraction comparison cannot establish a unique root.
 pub fn certify_univariate_quadratic_krawczyk_box(
     analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
@@ -1620,6 +1620,7 @@ fn classify_quadratic_krawczyk_row(
     quadratic_coefficient: &Real,
     policy: PredicatePolicy,
 ) -> QuadraticKrawczykRow {
+    let policy = policy.certified_only();
     let derivative_abs = abs_real(&derivative);
     if compare_reals(&derivative_abs, &Real::zero(), policy).value() == Some(Ordering::Equal) {
         return quadratic_krawczyk_row_with_values(
@@ -1651,9 +1652,9 @@ fn classify_quadratic_krawczyk_row(
     let quadratic_abs = abs_real(quadratic_coefficient);
 
     let contraction_numerator = quadratic_abs.clone() * Real::from(2) * radius.clone();
-    let contraction_denominator = derivative_abs.clone();
+    let contraction_denominator = derivative_abs;
     let remainder_radius =
-        match (contraction_numerator.clone() * radius.clone() / derivative_abs).ok() {
+        match (contraction_numerator.clone() * radius.clone() / &contraction_denominator).ok() {
             Some(value) => value,
             None => {
                 return classify_quadratic_krawczyk_row_policy_fallback(

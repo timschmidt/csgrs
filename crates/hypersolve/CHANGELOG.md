@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Require certified comparisons when classifying a univariate quadratic
+  Krawczyk row. An unresolved containment or contraction comparison can now
+  return `Undecided` under `APPROXIMATE_512`.
+
 - Require certified comparisons for univariate quadratic alpha reports under
   both predicate policies. A zero residual with an unresolved derivative now
   returns `Undecided`. An approximate comparison can no longer classify a
