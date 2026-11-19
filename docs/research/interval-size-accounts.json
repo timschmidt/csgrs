@@ -14073,5 +14073,776 @@
         }
       }
     }
+  },
+  "proposal_midpoints_and_rk4_subnormal_bounds": {
+    "source": "6ee367956667d647445a08a70a739dfc37aad030",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "e17866b40",
+    "evidence": "docs/evidence/2026-11-19-interval-native-proposal-midpoint-admission",
+    "evidence_commit": "b062d2acb06ac08e4f45bee6434df30d1d615696",
+    "benefit": "Round both primitive proposal midpoints once under round-to-nearest with gradual underflow and preserve tiny initial ranges and stage values in RK4.",
+    "scope": "Final Rust release images at matched checkout and client paths. The unversioned images use Rust 1.95, stable is 1.99. Measured direct midpoint, radius and materialized midpoint/radius clients, downstream workloads, augmented tests and a simulated Thumb hard-float consumer. Per-image SHA-256 and auxiliary native read-only data inventory are in final-size.json in the archive.",
+    "cap_columns": [
+      "incremental_bytes",
+      "incremental_percent",
+      "cumulative_bytes",
+      "cumulative_percent",
+      "slot_bytes",
+      "reserved_bytes"
+    ],
+    "caps": {
+      "native scalar": [
+        256,
+        1,
+        512,
+        2,
+        67108864,
+        16777216
+      ],
+      "bare Wasm": [
+        128,
+        5,
+        256,
+        10,
+        65536,
+        16384
+      ],
+      "native workload": [
+        4096,
+        0.5,
+        8192,
+        1,
+        67108864,
+        16777216
+      ],
+      "conformance harness": [
+        16384,
+        1,
+        32768,
+        2,
+        67108864,
+        16777216
+      ],
+      "Cortex-M4": [
+        256,
+        10,
+        512,
+        20,
+        65536,
+        16384
+      ]
+    },
+    "client_columns": [
+      "cap_family",
+      "free_bytes",
+      "metrics"
+    ],
+    "metric_columns": [
+      "fixed_bytes",
+      "preceding_bytes",
+      "retained_bytes",
+      "positive_increment",
+      "cumulative_positive_charge",
+      "effective_incremental_cap",
+      "effective_cumulative_cap",
+      "remaining_cumulative_bytes"
+    ],
+    "accounting": "Both absolute and percentage caps apply separately to each metric. Carry forward the larger of the observed positive fixed-to-preceding delta and the published prior charge for the same radius or test client. File includes metadata for native and Wasm. Embedded flash uses occupied loadable extent including gaps. Native named_text deduplicates symbol aliases and Wasm counts emitted function bodies.",
+    "clients": {
+      ".so": [
+        "native scalar",
+        66706480,
+        {
+          "file": [
+            402640,
+            402640,
+            402384,
+            0,
+            0,
+            256,
+            512,
+            512
+          ],
+          "text": [
+            230003,
+            230003,
+            229891,
+            0,
+            0,
+            256,
+            512,
+            512
+          ],
+          "named_text": [
+            227081,
+            227081,
+            226975,
+            0,
+            0,
+            256,
+            512,
+            512
+          ]
+        }
+      ],
+      ".wasm": [
+        "bare Wasm",
+        64199,
+        {
+          "file": [
+            1606,
+            1606,
+            1337,
+            0,
+            0,
+            80,
+            160,
+            160
+          ],
+          "text": [
+            944,
+            944,
+            730,
+            0,
+            0,
+            47,
+            94,
+            94
+          ],
+          "named_text": [
+            935,
+            935,
+            722,
+            0,
+            0,
+            46,
+            93,
+            93
+          ]
+        }
+      ],
+      "-packed.so": [
+        "native scalar",
+        66707040,
+        {
+          "file": [
+            402024,
+            402056,
+            401824,
+            0,
+            32,
+            256,
+            512,
+            480
+          ],
+          "text": [
+            229699,
+            229731,
+            229635,
+            0,
+            32,
+            256,
+            512,
+            480
+          ],
+          "named_text": [
+            226798,
+            226824,
+            226725,
+            0,
+            26,
+            256,
+            512,
+            486
+          ]
+        }
+      ],
+      "-packed.wasm": [
+        "bare Wasm",
+        64699,
+        {
+          "file": [
+            1052,
+            1065,
+            837,
+            0,
+            13,
+            53,
+            105,
+            92
+          ],
+          "text": [
+            493,
+            506,
+            340,
+            0,
+            13,
+            25,
+            49,
+            36
+          ],
+          "named_text": [
+            487,
+            500,
+            335,
+            0,
+            13,
+            25,
+            48,
+            35
+          ]
+        }
+      ],
+      "-radius.so": [
+        "native scalar",
+        66707072,
+        {
+          "file": [
+            402008,
+            402024,
+            401792,
+            0,
+            16,
+            256,
+            512,
+            496
+          ],
+          "text": [
+            229683,
+            229699,
+            229603,
+            0,
+            16,
+            256,
+            512,
+            496
+          ],
+          "named_text": [
+            226779,
+            226795,
+            226697,
+            0,
+            16,
+            256,
+            512,
+            496
+          ],
+          "rodata": [
+            17816,
+            17816,
+            17816,
+            0,
+            0,
+            178,
+            356,
+            356
+          ]
+        }
+      ],
+      "-radius.wasm": [
+        "bare Wasm",
+        64728,
+        {
+          "file": [
+            1034,
+            1035,
+            808,
+            0,
+            1,
+            51,
+            103,
+            102
+          ],
+          "text": [
+            475,
+            476,
+            311,
+            0,
+            1,
+            23,
+            47,
+            46
+          ],
+          "named_text": [
+            470,
+            471,
+            307,
+            0,
+            1,
+            23,
+            47,
+            46
+          ]
+        }
+      ],
+      "-rk-cost": [
+        "native workload",
+        63204208,
+        {
+          "file": [
+            3908672,
+            3904464,
+            3904656,
+            192,
+            192,
+            4096,
+            8192,
+            8000
+          ],
+          "text": [
+            1974615,
+            1971975,
+            1972215,
+            240,
+            240,
+            4096,
+            8192,
+            7952
+          ],
+          "named_text": [
+            1952663,
+            1950042,
+            1950283,
+            241,
+            241,
+            4096,
+            8192,
+            7951
+          ]
+        }
+      ],
+      "-rk-stack": [
+        "native workload",
+        63692784,
+        {
+          "file": [
+            3419960,
+            3415928,
+            3416080,
+            152,
+            152,
+            4096,
+            8192,
+            8040
+          ],
+          "text": [
+            1684919,
+            1682279,
+            1682471,
+            192,
+            192,
+            4096,
+            8192,
+            8000
+          ],
+          "named_text": [
+            1667365,
+            1664744,
+            1664935,
+            191,
+            191,
+            4096,
+            8192,
+            8001
+          ]
+        }
+      ],
+      "-proposal_cost": [
+        "native workload",
+        66389728,
+        {
+          "file": [
+            718672,
+            718936,
+            719136,
+            200,
+            464,
+            3594,
+            7186,
+            6722
+          ],
+          "text": [
+            260819,
+            260819,
+            261075,
+            256,
+            256,
+            1304,
+            2608,
+            2352
+          ],
+          "named_text": [
+            257246,
+            257246,
+            257484,
+            238,
+            238,
+            1286,
+            2572,
+            2334
+          ]
+        }
+      ],
+      "-rk_proposal": [
+        "native workload",
+        63396904,
+        {
+          "file": [
+            3712552,
+            3711864,
+            3711960,
+            96,
+            96,
+            4096,
+            8192,
+            8096
+          ],
+          "text": [
+            1825287,
+            1825863,
+            1826023,
+            160,
+            736,
+            4096,
+            8192,
+            7456
+          ],
+          "named_text": [
+            1807001,
+            1807641,
+            1807800,
+            159,
+            799,
+            4096,
+            8192,
+            7393
+          ]
+        }
+      ],
+      "-test-proposal": [
+        "conformance harness",
+        65675920,
+        {
+          "file": [
+            1425768,
+            1428504,
+            1432944,
+            4440,
+            7176,
+            14285,
+            28515,
+            21339
+          ],
+          "text": [
+            657668,
+            658996,
+            662660,
+            3664,
+            4992,
+            6589,
+            13153,
+            8161
+          ],
+          "named_text": [
+            648100,
+            649406,
+            653103,
+            3697,
+            5003,
+            6494,
+            12962,
+            7959
+          ]
+        }
+      ],
+      "-test-rk_proposal": [
+        "conformance harness",
+        61798424,
+        {
+          "file": [
+            5294584,
+            5301584,
+            5310440,
+            8856,
+            16712,
+            16384,
+            32768,
+            16056
+          ],
+          "text": [
+            2764727,
+            2771399,
+            2778215,
+            6816,
+            13488,
+            16384,
+            32768,
+            19280
+          ],
+          "named_text": [
+            2733753,
+            2740468,
+            2747264,
+            6796,
+            13511,
+            16384,
+            32768,
+            19257
+          ]
+        }
+      ],
+      "-1.88.0.so": [
+        "native scalar",
+        67092744,
+        {
+          "file": [
+            16080,
+            16080,
+            16120,
+            40,
+            40,
+            160,
+            321,
+            281
+          ],
+          "text": [
+            903,
+            903,
+            855,
+            0,
+            0,
+            9,
+            18,
+            18
+          ],
+          "named_text": [
+            674,
+            674,
+            629,
+            0,
+            0,
+            6,
+            13,
+            13
+          ]
+        }
+      ],
+      "-1.88.0.wasm": [
+        "bare Wasm",
+        63947,
+        {
+          "file": [
+            1585,
+            1585,
+            1589,
+            4,
+            4,
+            79,
+            158,
+            154
+          ],
+          "text": [
+            923,
+            923,
+            887,
+            0,
+            0,
+            46,
+            92,
+            92
+          ],
+          "named_text": [
+            915,
+            915,
+            877,
+            0,
+            0,
+            45,
+            91,
+            91
+          ]
+        }
+      ],
+      "-1.95.0.so": [
+        "native scalar",
+        66706480,
+        {
+          "file": [
+            402640,
+            402640,
+            402384,
+            0,
+            0,
+            256,
+            512,
+            512
+          ],
+          "text": [
+            230003,
+            230003,
+            229891,
+            0,
+            0,
+            256,
+            512,
+            512
+          ],
+          "named_text": [
+            227081,
+            227081,
+            226975,
+            0,
+            0,
+            256,
+            512,
+            512
+          ]
+        }
+      ],
+      "-1.95.0.wasm": [
+        "bare Wasm",
+        64199,
+        {
+          "file": [
+            1606,
+            1606,
+            1337,
+            0,
+            0,
+            80,
+            160,
+            160
+          ],
+          "text": [
+            944,
+            944,
+            730,
+            0,
+            0,
+            47,
+            94,
+            94
+          ],
+          "named_text": [
+            935,
+            935,
+            722,
+            0,
+            0,
+            46,
+            93,
+            93
+          ]
+        }
+      ],
+      "-stable.so": [
+        "native scalar",
+        66698176,
+        {
+          "file": [
+            410936,
+            410936,
+            410688,
+            0,
+            0,
+            256,
+            512,
+            512
+          ],
+          "text": [
+            227459,
+            227459,
+            227379,
+            0,
+            0,
+            256,
+            512,
+            512
+          ],
+          "named_text": [
+            224593,
+            224593,
+            224507,
+            0,
+            0,
+            256,
+            512,
+            512
+          ]
+        }
+      ],
+      "-stable.wasm": [
+        "bare Wasm",
+        64230,
+        {
+          "file": [
+            1578,
+            1578,
+            1306,
+            0,
+            0,
+            78,
+            157,
+            157
+          ],
+          "text": [
+            944,
+            944,
+            730,
+            0,
+            0,
+            47,
+            94,
+            94
+          ],
+          "named_text": [
+            935,
+            935,
+            722,
+            0,
+            0,
+            46,
+            93,
+            93
+          ]
+        }
+      ],
+      "thumbv7em-none-eabihf": [
+        "Cortex-M4",
+        63040,
+        {
+          "load_extent": [
+            2472,
+            2472,
+            2496,
+            24,
+            24,
+            247,
+            494,
+            470
+          ],
+          "text": [
+            2456,
+            2456,
+            2480,
+            24,
+            24,
+            245,
+            491,
+            467
+          ],
+          "defined_functions": [
+            2448,
+            2448,
+            2474,
+            26,
+            26,
+            244,
+            489,
+            463
+          ]
+        }
+      ]
+    }
   }
 }

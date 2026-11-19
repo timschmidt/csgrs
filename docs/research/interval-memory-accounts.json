@@ -2224,5 +2224,161 @@
         ]
       }
     }
+  },
+  "proposal_midpoints_and_rk4_subnormal_bounds": {
+    "source": "6ee367956667d647445a08a70a739dfc37aad030",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "e17866b40",
+    "evidence": "docs/evidence/2026-11-19-interval-native-proposal-midpoint-admission",
+    "evidence_commit": "b062d2acb06ac08e4f45bee6434df30d1d615696",
+    "scope": "Whole calls in guarded native pthreads, bare Wasm guest stack and Cortex-M4 simulation. Primitive probes reject allocator traffic. RK measurements cover prepare, propose, certify, replay, failure, retry and drop under ordinary and subnormal inputs. Raw per-temperature and per-case data are in final-memory.json.",
+    "order": [
+      "fixed",
+      "preceding",
+      "retained"
+    ],
+    "limits": {
+      "stack_increment_bytes": 128,
+      "stack_increment_percent": 2,
+      "stack_cumulative_bytes": 256,
+      "stack_cumulative_percent": 4,
+      "requested_heap_growth_bytes": 0,
+      "retained_growth_bytes": 0
+    },
+    "native_stack": {
+      "reservation": 2097152,
+      "guard_bytes": 4096,
+      "clients": {
+        "mid": {
+          "max_touched_bytes": [
+            136,
+            136,
+            72
+          ],
+          "minimum_remaining_stack_bytes": [
+            2088504,
+            2088504,
+            2088568
+          ],
+          "positive_increment_max_bytes": 0,
+          "cumulative_positive_max_bytes": 0
+        },
+        "packed": {
+          "max_touched_bytes": [
+            120,
+            120,
+            56
+          ],
+          "minimum_remaining_stack_bytes": [
+            2088520,
+            2088520,
+            2088584
+          ],
+          "positive_increment_max_bytes": 0,
+          "cumulative_positive_max_bytes": 0
+        },
+        "radius": {
+          "max_touched_bytes": [
+            120,
+            120,
+            56
+          ],
+          "minimum_remaining_stack_bytes": [
+            2088520,
+            2088520,
+            2088584
+          ],
+          "positive_increment_max_bytes": 0,
+          "cumulative_positive_max_bytes": 0
+        },
+        "rk": {
+          "max_touched_bytes": [
+            7848,
+            7832,
+            7832
+          ],
+          "minimum_remaining_stack_bytes": [
+            2079128,
+            2079144,
+            2079144
+          ],
+          "positive_increment_max_bytes": 0,
+          "cumulative_positive_max_bytes": 0
+        }
+      }
+    },
+    "rk_heap": {
+      "cold_warm_rows": 12,
+      "peak_requested_bytes": 2580,
+      "largest_allocation_traffic_bytes": 11401,
+      "retained_after_drop_bytes": 0,
+      "change_in_allocation_deallocation_reallocation_counts": 0,
+      "change_in_peak_and_traffic_bytes": 0
+    },
+    "wasm": {
+      "wasm": {
+        "stack_written": [
+          48,
+          48,
+          24
+        ],
+        "reserved": [
+          48,
+          48,
+          32
+        ],
+        "memory_bytes": [
+          1048576,
+          1048576,
+          1048576
+        ]
+      },
+      "wasm-packed": {
+        "stack_written": [
+          32,
+          32,
+          12
+        ],
+        "reserved": [
+          32,
+          32,
+          16
+        ],
+        "memory_bytes": [
+          1048576,
+          1048576,
+          1048576
+        ]
+      },
+      "wasm-radius": {
+        "stack_written": [
+          32,
+          32,
+          12
+        ],
+        "reserved": [
+          32,
+          32,
+          16
+        ],
+        "memory_bytes": [
+          1048576,
+          1048576,
+          1048576
+        ]
+      }
+    },
+    "cortex_m4": {
+      "stack_ram_bytes": 8192,
+      "reserved_bytes": 4096,
+      "touched": [
+        144,
+        144,
+        120
+      ],
+      "remaining_bytes": 8072,
+      "allocator": false
+    },
+    "cumulative_charge_bytes": 0
   }
 }

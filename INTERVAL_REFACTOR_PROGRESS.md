@@ -14072,3 +14072,59 @@ publication and hardware qualification also remain open.
 
 Evidence commit `9037725d9d3ed084ad239a42bac9780c904b0619` records 253 verified
 members in 204,436 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phases 4 and 12 — subnormal midpoints in numerical proposals
+
+On `e17866b40`, taking half of each endpoint before adding moved some
+midpoints outside their own singleton. Across 89,008 binary32 and 347,056
+binary64 input pairs, an independent integer oracle found 4,830 and 4,882
+incorrect midpoint results respectively. In RK4, a stationary initial
+interval spanning one to three minimum-subnormal units produced a numerical
+candidate spanning zero to four. Both failures reproduced in release builds.
+
+Commit `6ee367956` rounds the primitive midpoint once under round-to-nearest
+with gradual underflow. RK4 uses the native midpoint for the initial value,
+half-width and intermediate time. The stationary example now proposes
+exactly the original range. A separate fixture checks all four stage times
+and state values. The exact initial set continues into Picard certification
+and the next evolution step. Substituting the numerical candidate for the
+original request made the replay regression fail.
+
+All 436,064 midpoint pairs passed on both x86-64 Linux and bare Wasm with
+Rust 1.88, 1.95 and 1.99. A linked Cortex-M4 image passed a 6,886-case
+subset in simulation. The radius-only and combined binary32 clients also
+passed. Across five ordinary fields, all 30 RK preparation, proof, replay
+and exhaustion workloads kept their dispatch counts and allocation receipts.
+The five serialized proof records matched byte-for-byte. The csgrs
+successive-operations benchmark's resolved dependency tree includes neither
+changed crate.
+
+On two pinned cores, taking the binary32 midpoint and radius together cost
+13.5% and 19.8% less time than before. The time-affine rejection with one
+unit of graph work, which had blocked a previous repair, took 4.3% less
+time on both cores. Two other RK workloads had positive medians on both
+cores, ranging from 0.6% to 2.2%. Each paired interval included zero.
+The archive includes all samples and repeat controls.
+
+On Rust 1.95 the direct midpoint client shrank by 256 bytes on Linux and
+269 bytes on Wasm. On Rust 1.88 it grew by 40 and 4 bytes respectively.
+The example RK executable grew by 96 bytes. The Cortex-M4 image used 24
+additional flash bytes, leaving 63,040 of 65,536 free. Its measured stack
+use fell from 144 to 120 bytes. Native RK4 peaked at 7,832 stack bytes
+and 2,580 requested heap bytes, with zero retained after drop. No measured
+caller consumed a memory growth allowance. The accounts include the
+test executables and carry existing size charges forward.
+[Size accounts](docs/research/interval-size-accounts.json) ·
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+The two all-feature, all-target suites passed 296 Hyperinterval and 161
+Hyperdynamics tests. Formatting, Clippy with warnings denied, docs,
+examples, benches and no-default-feature checks passed for the affected
+crates. Both fuzz targets completed 100,000 runs. The strict arithmetic
+checks verified 70 emitted symbols and passed 55,988 Wasm arithmetic cases
+and 172,284 fixed-lattice calls. The full coverage gate remains open at
+5,000/5,033 lines and 10,093/10,546 regions, with 528/528 functions and
+unmeasured branches. Physical-board qualification remains open.
+
+Evidence commit `b062d2acb06ac08e4f45bee6434df30d1d615696` contains 1,537
+verified members in 881,240 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
