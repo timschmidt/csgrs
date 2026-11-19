@@ -11,10 +11,18 @@ pub(crate) fn reserve_reductions(
     budget: &mut DyadicBudget,
 ) -> Result<(), IntervalError> {
     for source in [left, right] {
-        let bits = source.reduction_input_bits();
-        if bits != 0 {
-            budget.reserve(bits, 3, true)?;
-        }
+        reserve_reduction(source, budget)?;
+    }
+    Ok(())
+}
+
+pub(crate) fn reserve_reduction(
+    source: &Rational,
+    budget: &mut DyadicBudget,
+) -> Result<(), IntervalError> {
+    let bits = source.reduction_input_bits();
+    if bits != 0 {
+        budget.reserve(bits, 3, true)?;
     }
     Ok(())
 }

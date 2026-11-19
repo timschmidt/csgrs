@@ -130,3 +130,64 @@ fn materialized_outward_images_reenter_the_elementary_kernels() {
         ExtendedInterval::below(DyadicInterval::point((-1419).into(), -8).unwrap()).unwrap()
     );
 }
+
+#[path = "support/rational_sqrt_sources.rs"]
+mod rational_sqrt_sources;
+
+#[test]
+fn generated_square_root_images_retry_and_compose() {
+    let budget = || DyadicBudget::new(16384, 100_000_000_000);
+
+    for warm in [false, true] {
+        for case in 0..3 {
+            let (input, lo) = rational_sqrt_sources::source(case, warm);
+            let (a, b) = input.bounds().unwrap();
+            let reduction = |x: &Rational| 3 * x.reduction_input_bits().pow(2);
+            let upper_charge = reduction(b);
+            let mut short = DyadicBudget::new(16384, reduction(a) + upper_charge - 1);
+            assert!(matches!(
+                input.sqrt(-4, &mut short),
+                Err(IntervalError::WorkExhausted)
+            ));
+            assert_eq!(short.remaining_work(), upper_charge - 1);
+            let mut enough = budget();
+            let image = input.sqrt(-4, &mut enough).unwrap();
+            assert_eq!(image.domain, DomainCoverage::Complete);
+            assert_eq!(
+                image.range,
+                DyadicInterval::new(lo.into(), 28.into(), -4).unwrap()
+            );
+            let used = budget().remaining_work() - enough.remaining_work();
+            let mut exact = DyadicBudget::new(16384, used);
+            let repeated = input.sqrt(-4, &mut exact).unwrap();
+            assert_eq!(repeated.domain, image.domain);
+            assert_eq!(repeated.range, image.range);
+            assert_eq!(exact.remaining_work(), 0);
+            assert!(matches!(
+                input.sqrt(-4, &mut DyadicBudget::new(16384, used - 1)),
+                Err(IntervalError::WorkExhausted)
+            ));
+            // Squaring the returned grid interval must reproduce both exact
+            // scaled squares and enclose the original upper endpoint (3).
+            let squared = image.range.mul(&image.range, &mut budget()).unwrap();
+            assert_eq!(
+                squared,
+                DyadicInterval::new((lo * lo).into(), 784.into(), -8).unwrap()
+            );
+        }
+    }
+    let below = coordinate(281_474_976_710_662., -3.);
+    assert!(matches!(
+        RationalInterval::point(below.clone()).sqrt(0, &mut DyadicBudget::new(0, 0)),
+        Err(IntervalError::EmptyDomain)
+    ));
+    let partial = RationalInterval::new(below, Rational::from(4)).unwrap();
+    let image = partial
+        .sqrt(-4, &mut DyadicBudget::new(32, 100_000))
+        .unwrap();
+    assert_eq!(image.domain, DomainCoverage::Partial);
+    assert_eq!(
+        image.range,
+        DyadicInterval::new(0.into(), 2.into(), 0).unwrap()
+    );
+}

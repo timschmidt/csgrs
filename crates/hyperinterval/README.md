@@ -55,6 +55,10 @@ Rational and dyadic intervals provide `sqrt(precision, &mut budget)`, returning
 are excluded with `Partial` coverage; strictly negative nonempty inputs return
 `EmptyDomain`. Empty inputs return empty with `Complete` coverage. Keep the
 coverage receipt when consuming the result in later arithmetic.
+For rational input, each positive endpoint that can require reduction reserves
+three quadratic stages at its stored width before either endpoint is reduced.
+An excluded negative endpoint needs no reduction. Cold and warm calls use the
+same admission schedule.
 
 Rational and dyadic intervals also provide `exp(precision, &mut budget)` with
 tight outward dyadic endpoints. Its domain is complete for every input, with

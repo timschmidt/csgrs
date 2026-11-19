@@ -1,4 +1,4 @@
-//! Admission of generated rational bases before a fractional power normalizes them.
+//! Admission of generated rational bases for fractional powers and square roots.
 #![cfg(all(feature = "rational", feature = "dyadic"))]
 use hyperinterval::{
     DomainCoverage, DyadicBudget, DyadicInterval, ExtendedInterval, IntervalError, RationalInterval,
@@ -139,5 +139,48 @@ fn reductions_add_exactly_the_stored_width_charge_across_power_branches() {
         assert_eq!(first.0, expected);
         assert_eq!(first.1, canonical_work + reductions);
         assert_eq!(run(&generated), first);
+    }
+}
+
+#[path = "support/rational_sqrt_sources.rs"]
+mod rational_sqrt_sources;
+
+#[test]
+fn generated_square_root_endpoints_are_admitted_before_use() {
+    let budget = || DyadicBudget::new(16384, 100_000_000_000);
+
+    for warm in [false, true] {
+        for case in 0..3 {
+            let (input, _) = rational_sqrt_sources::source(case, warm);
+            let bits = input.upper().unwrap().reduction_input_bits();
+            let mut denied = DyadicBudget::new(bits - 1, 100_000_000);
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let result = {
+                #[cfg(feature = "dispatch-trace")]
+                let _recording = hyperreal::dispatch_trace::recording_scope();
+                input.sqrt(-4, &mut denied)
+            };
+            assert!(matches!(result, Err(IntervalError::SizeExhausted)));
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                hyperreal::dispatch_trace::take_trace().path_count(
+                    "rational",
+                    "canonicalization",
+                    "lazy-internal-coordinate"
+                ),
+                0
+            );
+            let mut enough = budget();
+            let image = input.sqrt(-4, &mut enough).unwrap();
+            let power = input
+                .pow_rational(&1.into(), &2.into(), -4, &mut budget())
+                .unwrap();
+            assert_eq!(power.domain, image.domain);
+            let [component] = power.range.components() else {
+                panic!("positive square root must have one component");
+            };
+            assert_eq!(component.as_finite().unwrap(), &image.range);
+        }
     }
 }

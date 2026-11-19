@@ -1,6 +1,6 @@
 use crate::bounds::Bounds;
 use crate::{DomainCoverage, IntervalError, RangeEnclosure, SignSet};
-use num_bigint::BigInt;
+use num_bigint::{BigInt, BigUint};
 use num_integer::Integer;
 use num_traits::{One, Zero};
 
@@ -110,12 +110,13 @@ impl DyadicInterval {
         };
         let shift = i64::from(exponent) - 2 * i64::from(precision);
         budget.reserve(1, 1, false)?;
-        let denominator = BigInt::one();
-        let (lower, lower_ceil) = scaled_sqrt(a.max(&zero), &denominator, shift, budget)?;
+        let denominator = BigUint::one();
+        let (lower, lower_ceil) =
+            scaled_sqrt(a.max(&zero).magnitude(), &denominator, shift, budget)?;
         let upper = if a == b {
             lower_ceil
         } else {
-            scaled_sqrt(b, &denominator, shift, budget)?.1
+            scaled_sqrt(b.magnitude(), &denominator, shift, budget)?.1
         };
         Ok(RangeEnclosure {
             range: Self::new(lower, upper, precision)?,
@@ -818,8 +819,8 @@ fn endpoint_power(
 // exactly when the quotient is integral and its floor is a perfect square.
 // Domain checks belong to the public entry points.
 fn scaled_sqrt(
-    n: &BigInt,
-    d: &BigInt,
+    n: &BigUint,
+    d: &BigUint,
     shift: i64,
     budget: &mut DyadicBudget,
 ) -> Result<(BigInt, BigInt), IntervalError> {
@@ -827,7 +828,12 @@ fn scaled_sqrt(
         budget.reserve(1, 1, false)?;
         return Ok((BigInt::zero(), BigInt::zero()));
     }
-    let (floor, ceil) = scaled_quotient(n, d, shift, budget)?;
+    let amount = admitted_shift(n.bits(), d.bits(), shift, budget)?;
+    let (floor, remainder) = if shift >= 0 {
+        (n << amount).div_rem(d)
+    } else {
+        n.div_rem(&(d << amount))
+    };
     let bits = floor.bits().saturating_add(2);
     // Charge the integer root backend logarithmically many quadratic stages,
     // plus its exact square check, increment, and owned output. These are
@@ -835,12 +841,12 @@ fn scaled_sqrt(
     let stages = 2 * u64::from(u64::BITS - bits.leading_zeros()) + 4;
     budget.reserve(bits, stages, true)?;
     let lower = floor.sqrt();
-    let upper = if floor == ceil && &lower * &lower == floor {
+    let upper = if remainder.is_zero() && &lower * &lower == floor {
         lower.clone()
     } else {
-        &lower + 1
+        &lower + 1u8
     };
-    Ok((lower, upper))
+    Ok((BigInt::from(lower), BigInt::from(upper)))
 }
 
 // Exact floor/ceiling of (numerator / denominator) * 2^shift.
@@ -854,20 +860,25 @@ pub(crate) fn scaled_quotient(
     if d.is_zero() {
         return Err(IntervalError::ContainsZero);
     }
-    let n_bits = n
-        .bits()
-        .saturating_add(if shift >= 0 { shift as u64 } else { 0 });
-    let d_bits = d
-        .bits()
-        .saturating_add(if shift < 0 { shift.unsigned_abs() } else { 0 });
-    budget.reserve(n_bits.max(d_bits).saturating_add(1), 4, true)?;
-    let amount = usize::try_from(shift.unsigned_abs()).map_err(|_| IntervalError::Overflow)?;
+    let amount = admitted_shift(n.bits(), d.bits(), shift, budget)?;
     let (n, d) = if shift >= 0 {
         (n << amount, d.clone())
     } else {
         (n.clone(), d << amount)
     };
     Ok((n.div_floor(&d), n.div_ceil(&d)))
+}
+
+fn admitted_shift(
+    numerator_bits: u64,
+    denominator_bits: u64,
+    shift: i64,
+    budget: &mut DyadicBudget,
+) -> Result<usize, IntervalError> {
+    let n_bits = numerator_bits.saturating_add(if shift >= 0 { shift as u64 } else { 0 });
+    let d_bits = denominator_bits.saturating_add(if shift < 0 { shift.unsigned_abs() } else { 0 });
+    budget.reserve(n_bits.max(d_bits).saturating_add(1), 4, true)?;
+    usize::try_from(shift.unsigned_abs()).map_err(|_| IntervalError::Overflow)
 }
 
 #[cfg(feature = "rational")]
@@ -889,6 +900,9 @@ mod bridge {
         /// to empty with `Complete` coverage. Scaling, integer division and
         /// root extraction use the caller's shared [`DyadicBudget`]. No rounded
         /// rational input or intermediate interval is substituted for the source.
+        /// Positive endpoints that may need reduction each reserve three quadratic
+        /// stages at their stored width before either endpoint is reduced. This
+        /// reservation is independent of cache warmth.
         pub fn sqrt(
             &self,
             precision: i32,
@@ -908,25 +922,19 @@ mod bridge {
             } else {
                 DomainCoverage::Complete
             };
+            reserve_sqrt_reductions(a, b, budget)?;
             let endpoint = |value: &Rational, budget: &mut DyadicBudget| {
                 if value.is_negative() || value.is_zero() {
                     budget.reserve(1, 1, false)?;
                     return Ok((BigInt::zero(), BigInt::zero()));
                 }
-                budget.reserve(
-                    value.numerator().bits().max(value.denominator().bits()),
-                    2,
-                    false,
-                )?;
-                scaled_sqrt(
-                    &BigInt::from(value.numerator().clone()),
-                    &BigInt::from(value.denominator().clone()),
-                    -2 * i64::from(precision),
-                    budget,
-                )
+                let numerator = value.numerator();
+                let denominator = value.denominator();
+                budget.reserve(numerator.bits().max(denominator.bits()), 2, false)?;
+                scaled_sqrt(numerator, denominator, -2 * i64::from(precision), budget)
             };
             let (lower, lower_ceil) = endpoint(a, budget)?;
-            let upper = if a == b {
+            let upper = if equal_sqrt_endpoints(a, b) {
                 lower_ceil
             } else {
                 endpoint(b, budget)?.1
@@ -951,6 +959,38 @@ mod bridge {
             let (_, upper) = round_rational(b, precision, budget)?;
             DyadicInterval::new(lower, upper, precision)
         }
+    }
+
+    // Both positive endpoints have already been admitted for canonicalization.
+    // Compare stored parts first to reuse equal coordinates without a second reduction.
+    fn equal_sqrt_endpoints(a: &Rational, b: &Rational) -> bool {
+        if a.storage_identity() == b.storage_identity() {
+            return true;
+        }
+        let (left_sign, an, ad) = a.ratio_parts();
+        let (right_sign, bn, bd) = b.ratio_parts();
+        if left_sign != right_sign {
+            return false;
+        }
+        if ad == bd {
+            return an == bn;
+        }
+        a.is_zero() || (a.denominator() == b.denominator() && a.numerator() == b.numerator())
+    }
+
+    // Release the admission frame before entering the integer square-root kernel.
+    #[inline(never)]
+    fn reserve_sqrt_reductions(
+        a: &Rational,
+        b: &Rational,
+        budget: &mut DyadicBudget,
+    ) -> Result<(), IntervalError> {
+        for source in [a, b] {
+            if source.is_positive() {
+                crate::rational_admission::reserve_reduction(source, budget)?;
+            }
+        }
+        Ok(())
     }
 
     fn round_rational(

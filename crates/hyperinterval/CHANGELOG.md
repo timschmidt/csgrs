@@ -9,6 +9,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Rational square roots now charge the stored width of positive generated
+  endpoints before reduction. Dyadic and rational square roots use one
+  unsigned division to determine both tight output bounds.
+
 - Rational sine, cosine, tangent and cotangent check both stored fractions
   against the caller's budget before reducing either endpoint. Generated
   coordinates with large common factors can now exhaust the budget at ingress.
