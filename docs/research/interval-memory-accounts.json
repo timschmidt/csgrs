@@ -1564,5 +1564,86 @@
         }
       }
     }
+  },
+  "monotone_composition_qualification": {
+    "source": "41e99d06eb4701ffdccaa4865ce7c622f09d3571",
+    "preceding": "7317c8ea8ee9783409646aea247e582cd201e5a2",
+    "evidence": "docs/evidence/2026-11-18-interval-monotone-ingress",
+    "scope": "One compiled release test process with sequential cases, including native startup or Node/WASI instantiation through exit. Full warmed conformance jobs use the existing cumulative account. Production sources are identical to the preceding revision.",
+    "single_job_capacity_bytes": 268435456,
+    "single_job_reserved_bytes": 67108864,
+    "whole_job_capacity_bytes": 1073741824,
+    "whole_job_reserved_bytes": 268435456,
+    "targets": {
+      "1.88.0": {
+        "native": {
+          "peak_bytes": 6230016,
+          "remaining_above_reserve_bytes": 195096576,
+          "passed": 0
+        },
+        "wasm32-wasip1": {
+          "peak_bytes": 21770240,
+          "remaining_above_reserve_bytes": 179556352,
+          "passed": 0
+        },
+        "whole_warmed_job": {
+          "peak_bytes": 220835840,
+          "previous_warmed_peak": 223449088,
+          "previous_cumulative_positive": 226770944,
+          "incremental_positive": 0,
+          "cumulative_positive": 226770944,
+          "remaining_above_reserve": 578535424,
+          "direct_guest_passes": 181,
+          "native_required": 6,
+          "fresh_guest_replays": 5
+        }
+      },
+      "1.95.0": {
+        "native": {
+          "peak_bytes": 6766592,
+          "remaining_above_reserve_bytes": 194560000,
+          "passed": 3
+        },
+        "wasm32-wasip1": {
+          "peak_bytes": 23658496,
+          "remaining_above_reserve_bytes": 177668096,
+          "passed": 3
+        },
+        "whole_warmed_job": {
+          "peak_bytes": 199544832,
+          "previous_warmed_peak": 201060352,
+          "previous_cumulative_positive": 201060352,
+          "incremental_positive": 0,
+          "cumulative_positive": 201060352,
+          "remaining_above_reserve": 604246016,
+          "direct_guest_passes": 241,
+          "native_required": 9,
+          "fresh_guest_replays": 5
+        }
+      },
+      "stable": {
+        "native": {
+          "peak_bytes": 7004160,
+          "remaining_above_reserve_bytes": 194322432,
+          "passed": 3
+        },
+        "wasm32-wasip1": {
+          "peak_bytes": 23437312,
+          "remaining_above_reserve_bytes": 177889280,
+          "passed": 3
+        },
+        "whole_warmed_job": {
+          "peak_bytes": 186904576,
+          "previous_warmed_peak": 185024512,
+          "previous_cumulative_positive": 187351040,
+          "incremental_positive": 1880064,
+          "cumulative_positive": 189231104,
+          "remaining_above_reserve": 616075264,
+          "direct_guest_passes": 241,
+          "native_required": 9,
+          "fresh_guest_replays": 5
+        }
+      }
+    }
   }
 }

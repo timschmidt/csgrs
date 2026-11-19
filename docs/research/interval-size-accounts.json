@@ -12145,5 +12145,214 @@
         }
       }
     }
+  },
+  "monotone_composition_qualification": {
+    "source": "41e99d06eb4701ffdccaa4865ce7c622f09d3571",
+    "preceding": "7317c8ea8ee9783409646aea247e582cd201e5a2",
+    "evidence": "docs/evidence/2026-11-18-interval-monotone-ingress",
+    "scope": "Release integration executables for generated rational monotone inputs. CI artifact storage per compiler and target. Only preceding periodic fixtures and new test executables change.",
+    "file_cap_bytes": 4194304,
+    "ci_slot_bytes": 67108864,
+    "required_free_slot_bytes": 16777216,
+    "targets": {
+      "1.88.0": {
+        "native": {
+          "file": 1068736,
+          "code": 626030,
+          "functions": 617208,
+          "sha256": "01ba04fb7c76de21e95cd9255985bb0f07f589d23ed7f1c5fbc73d468f2cdf55",
+          "remaining_file_allowance_bytes": 3125568,
+          "free_slot_bytes": 66040128,
+          "existing_periodic_test": {
+            "metrics": {
+              "file": {
+                "preceding": 1068736,
+                "measured": 1068736,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "code": {
+                "preceding": 626030,
+                "measured": 626030,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "functions": {
+                "preceding": 617208,
+                "measured": 617208,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              }
+            },
+            "remaining_file_allowance_bytes": 3125568,
+            "free_slot_bytes": 66040128
+          }
+        },
+        "wasm32-wasip1": {
+          "file": 488096,
+          "code": 360522,
+          "functions": 359359,
+          "sha256": "415c96efe5cd9e11466b862a85b55ff36ff84879b309b57c5cdaf87c2396991e",
+          "remaining_file_allowance_bytes": 3706208,
+          "free_slot_bytes": 66620768,
+          "existing_periodic_test": {
+            "metrics": {
+              "file": {
+                "preceding": 488096,
+                "measured": 488096,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "code": {
+                "preceding": 360522,
+                "measured": 360522,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "functions": {
+                "preceding": 359359,
+                "measured": 359359,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              }
+            },
+            "remaining_file_allowance_bytes": 3706208,
+            "free_slot_bytes": 66620768
+          }
+        }
+      },
+      "1.95.0": {
+        "native": {
+          "file": 1665736,
+          "code": 854023,
+          "functions": 843551,
+          "sha256": "449c88c2cccdc53fdd3a5684f66d0c8362112f3ed97b99fd29ad7bdc1ae1514e",
+          "remaining_file_allowance_bytes": 2528568,
+          "free_slot_bytes": 65443128,
+          "existing_periodic_test": {
+            "metrics": {
+              "file": {
+                "preceding": 1683648,
+                "measured": 1683696,
+                "incremental_positive_bytes": 48,
+                "cumulative_positive_bytes": 48
+              },
+              "code": {
+                "preceding": 866247,
+                "measured": 866247,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "functions": {
+                "preceding": 855581,
+                "measured": 855581,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              }
+            },
+            "remaining_file_allowance_bytes": 2510608,
+            "free_slot_bytes": 65425168
+          }
+        },
+        "wasm32-wasip1": {
+          "file": 772700,
+          "code": 589574,
+          "functions": 587895,
+          "sha256": "edc958c8784f57b3665fa303c1841a3a4807f220564236dc7a660fe0d4c60cd1",
+          "remaining_file_allowance_bytes": 3421604,
+          "free_slot_bytes": 66336164,
+          "existing_periodic_test": {
+            "metrics": {
+              "file": {
+                "preceding": 788309,
+                "measured": 788373,
+                "incremental_positive_bytes": 64,
+                "cumulative_positive_bytes": 64
+              },
+              "code": {
+                "preceding": 602654,
+                "measured": 602654,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "functions": {
+                "preceding": 600944,
+                "measured": 600944,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              }
+            },
+            "remaining_file_allowance_bytes": 3405931,
+            "free_slot_bytes": 66320491
+          }
+        }
+      },
+      "stable": {
+        "native": {
+          "file": 1698520,
+          "code": 863493,
+          "functions": 853022,
+          "sha256": "36c84ce0010806a0e2468bce3c5970794f4474d6ddeb83c500a89fc5c033b67f",
+          "remaining_file_allowance_bytes": 2495784,
+          "free_slot_bytes": 65410344,
+          "existing_periodic_test": {
+            "metrics": {
+              "file": {
+                "preceding": 1717824,
+                "measured": 1717888,
+                "incremental_positive_bytes": 64,
+                "cumulative_positive_bytes": 64
+              },
+              "code": {
+                "preceding": 875589,
+                "measured": 875589,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "functions": {
+                "preceding": 864922,
+                "measured": 864922,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              }
+            },
+            "remaining_file_allowance_bytes": 2476416,
+            "free_slot_bytes": 65390976
+          }
+        },
+        "wasm32-wasip1": {
+          "file": 791001,
+          "code": 596598,
+          "functions": 594885,
+          "sha256": "68c32086f068db7e8cc13bbceac7f4bc22056ea97690e79766e12022a092686e",
+          "remaining_file_allowance_bytes": 3403303,
+          "free_slot_bytes": 66317863,
+          "existing_periodic_test": {
+            "metrics": {
+              "file": {
+                "preceding": 807696,
+                "measured": 807760,
+                "incremental_positive_bytes": 64,
+                "cumulative_positive_bytes": 64
+              },
+              "code": {
+                "preceding": 609846,
+                "measured": 609846,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              },
+              "functions": {
+                "preceding": 608102,
+                "measured": 608102,
+                "incremental_positive_bytes": 0,
+                "cumulative_positive_bytes": 0
+              }
+            },
+            "remaining_file_allowance_bytes": 3386544,
+            "free_slot_bytes": 66301104
+          }
+        }
+      }
+    }
   }
 }
