@@ -117,6 +117,13 @@ Run these after the last change, in addition to the
    native source and tangent evidence over four parameter cells, conversion
    to native bounds, and consumption by the native nonoverlap predicate.
 
+   Cargo also runs the seven worked interval examples from the unpacked
+   Hyperinterval, Hyperlattice Interval, Hypersolve, Hyperpath and Hyperdynamics
+   crates. Each invocation selects the documented features for that example.
+   This checks both the target declared in the published manifest and the
+   assertions in its shipped source. The current-calibration example runs in
+   the separate Alumina Firmware workflow. [Worked examples](../INTERVAL_REFACTOR_PROGRESS.md#section-17-worked-interval-examples)
+
    The check requests each Rust executable by name and runs the path Cargo
    reports for that consumer. A missing required Rust, C or C++ program fails
    the check. Executables left by older releases are ignored.

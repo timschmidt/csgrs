@@ -4,6 +4,7 @@
 # its own contents, then builds a clean consumer project outside the
 # repository against the packaged sources only. The consumer runs the csgrs
 # user path, every README quick start and the packaged curve-range example.
+# Cargo also runs the worked interval examples from their owning archives.
 #
 # Usage: scripts/release-check.sh [--no-verify] [--allow-dirty] [--toolchain <name>]
 #
@@ -213,6 +214,24 @@ done
 for name in ffi_smoke cpp_smoke; do
   run "${name}" "${work}/${name}"
 done
+
+# Use the published example target and its documented features in isolation.
+# A combined consumer could supply a feature that the individual example lacks.
+run_example() {
+  local owner="$1" example="$2"
+  shift 2
+  local manifest="${work}/packages/${owner}-${version[${owner}]}/Cargo.toml"
+  run "${owner}-${example}" env CARGO_TARGET_DIR="${work}/example-target" \
+    "${cargo_command[@]}" run --manifest-path "${manifest}" "${patches[@]}" --example "${example}" "$@"
+}
+echo "== running the worked interval examples from their archives"
+run_example hyperinterval fixed_bounds --features fixed
+run_example hyperinterval proposal_replay --features rational,float-proposal
+run_example hyperinterval real_to_dyadic --features hyperreal
+run_example hyperlattice-interval affine_image --features fixed
+run_example hypersolve krawczyk_certificate
+run_example hyperpath certified_schedule
+run_example hyperdynamics expression_field --features field
 
 # The other language bindings wrap the same packaged library and header.
 echo "== running the Python, Go and TypeScript bindings"
