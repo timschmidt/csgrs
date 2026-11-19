@@ -13725,3 +13725,38 @@ The optimized module matched the predecessor byte for byte.
 Formatting, all-target Clippy with warnings denied, and warnings-denied rustdoc passed for the retained solver change.
 
 Evidence commit `f7b4458706319c4e2008a597e756823492628ade` contains 319 verified members in 180,072 bytes. [Evidence index](docs/evidence-archive.tsv)
+
+### Hypersolve retained-fuzz replay, 19 November 2026
+
+The Phase 0 and Phase 14 adversarial workload at `07f1326a0` stopped on
+`bivariate_vertical_components` before the first ranking in both the default
+and interval-lattice configurations. The manifest also registered an interval
+Jacobian with no replay adapter. Commit `8fa4de4a9` runs the same assertions
+in the benchmark and both fuzz binaries. The full benchmark now requires
+`interval-lattice`. Its Cargo test invocation exercises one seed for each
+registered name. The 67 earlier adapters retain their input mapping, including
+the shared point-distance fixtures behind many sketch labels.
+
+The native release campaign sampled 20,000 cases across 69 targets and
+measured 100 promoted cases plus the aggregate replay. Each repaired target
+had 290 seeds. All 290 vertical-component cases entered the worst 1,000.
+Seed 106 was promoted at 4.879 ms best of five. Its unit circle meets repeated
+vertical factors at x = −1/2 and −1/4. The highest Jacobian time was
+73.931 µs and none of its seeds ranked in the worst 1,000. Rotation preserved
+99 previous promoted cases. The complete refresh took 22.790 seconds with
+78,704 KiB peak RSS. Its score includes a newly admitted workload and a
+different host run. These observations establish a new baseline for replay.
+[Current history](crates/hypersolve/slow_performers.txt) and [promotions](crates/hypersolve/promoted_slow_offenders.txt)
+
+Both ASan targets completed 1,000 fuzz iterations and replayed all 290
+full-width benchmark inputs each. Release benchmark smoke, the seven
+vertical-component and six Jacobian integration tests, two report-generator
+tests, formatting and affected Clippy checks passed. A subsequent read-only
+rotation consumed the refreshed history and preserved all three report
+digests. At identical interval-lattice settings the native benchmark
+executable grew from 9,058,800 to 10,026,488 bytes to link the added test
+workloads. The changes affect development tooling and its measured reports.
+Coverage of the broader interval lexicase matrix remains open.
+
+Evidence commit `989ac011dea07367f384408775d831c1ec73e4eb` records 1,018 verified members in 143,000 bytes.
+[Evidence index](docs/evidence-archive.tsv)
