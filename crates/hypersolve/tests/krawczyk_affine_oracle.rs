@@ -54,11 +54,18 @@ fn coupled_affine_certificates_preserve_the_root_and_closed_faces() {
                             report.status, expected,
                             "matrix {matrix:?}, root {root:?}, radii ({rx},{ry}), {policy:?}"
                         );
-                        if expected == AffineKrawczykStatus::CertifiedUniqueRoot {
-                            assert_eq!(report.steps.len(), 2);
-                            for (step, coordinate) in report.steps.iter().zip(root) {
-                                assert_eq!(step.certified_root, Real::from(coordinate));
-                            }
+                        assert_eq!((report.variable_count, report.equality_rows), (2, 2));
+                        let contained = [(dx, rx), (dy, ry)]
+                            .into_iter()
+                            .take_while(|(delta, radius)| delta.abs() <= *radius)
+                            .count();
+                        assert_eq!(report.steps.len(), contained);
+                        for (i, step) in report.steps.iter().enumerate() {
+                            assert_eq!(step.symbol, bounds[i].symbol);
+                            assert_eq!(step.candidate, Real::from(center[i]));
+                            assert_eq!(step.step, Real::from(root[i] - center[i]));
+                            assert_eq!(step.certified_root, Real::from(root[i]));
+                            assert_eq!(step.radius, bounds[i].radius);
                         }
                     }
                 }
