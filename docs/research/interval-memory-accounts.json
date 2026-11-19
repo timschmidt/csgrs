@@ -2380,5 +2380,34 @@
       "allocator": false
     },
     "cumulative_charge_bytes": 0
+  },
+  "univariate_krawczyk_row_certainty": {
+    "source": "0783f2ddc4571a5fac8ffbf99c01c43d4e8942c2",
+    "previous": "6ec893190",
+    "fixed": "c9f1f9ac5",
+    "benefit": "Row classification and its division fallback use certified comparisons on univariate quadratic boxes. The public point-box and strict-contraction controls return honest proof outcomes under both policies.",
+    "evidence": "docs/evidence/2026-11-19-interval-univariate-krawczyk-proof-admission",
+    "scope": "Rust 1.95 native Linux, single guarded 2 MiB thread. Full fixture construction, public API call, report materialization and destruction. Sixty ordinary and twelve stress workloads, cold/warm, two watermark patterns. Twenty-four fresh ordinary processes and forty-eight stress processes per version. Twelve processes per version also record glibc usable capacity.",
+    "caps": "Per workload positive stack growth up to 128 bytes and 1% incremental, 256 bytes and 2% cumulative. Requested peak heap has zero growth allowance. Both peak requested heap and callee stack are limited to 16384 bytes, with 1 MiB reserved thread headroom. Approximate stress cases 7 and 10 use the same input’s previously completed strict contract. Raw same-policy results are retained.",
+    "ordinary": {
+      "peak_stack": 12824,
+      "peak_heap": 15036,
+      "max_stack_step": 48,
+      "max_stack_cumulative": 120
+    },
+    "stress": {
+      "peak_stack": 15208,
+      "peak_heap": 15436,
+      "max_stack_step": 64,
+      "max_stack_cumulative": 112
+    },
+    "minimum_remaining_thread_bytes": 2071768,
+    "usable_capacity": {
+      "previous_peak": 16536,
+      "retained_peak": 16584,
+      "max_step_per_workload": 64,
+      "live_after_drop": 0
+    },
+    "accounts": "magnitude-lifetime.json and magnitude-stress.json record per-workload fixed references, carried charges, increments and resulting charges. semantics.json records both allocator views."
   }
 }

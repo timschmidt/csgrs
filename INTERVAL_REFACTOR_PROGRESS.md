@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers and full-width exponents | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha reports now require certified comparison outcomes | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -14173,3 +14173,73 @@ GMP cross-compilation feature required by the toolchain. The changes are
 confined to test sources. [Size accounts](docs/research/interval-size-accounts.json)
 
 Evidence commit `ce53bad0f62abdd2cf792ccf85742a0fe0008122` records 120 verified members in 882,536 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7 univariate Krawczyk proof eligibility
+
+Hypersolve now requires certified comparisons for each univariate quadratic
+Krawczyk row under both public policies. On `6ec893190`, the middle of three
+rows on the point box {0} falsely certified a root. Its exact residual was
+2⁻²⁰⁴⁸ by the sine addition identity. The retained row returns `Undecided`,
+preserves the two neighboring certificates and reports two certified rows.
+At radius ½ − 2⁻²⁰⁴⁸ the solver also returns `Undecided`. The exact ½ control
+still reports a noncontractive derivative. The rational point takes four
+exact comparisons under either policy. Reusing the derivative magnitude for
+division avoids cloning the value retained as evidence in the report.
+[Univariate tests](crates/hypersolve/tests/krawczyk_univariate_algebraic.rs) ·
+[Proof scope and affine exposure](docs/research/interval-box-proof-scope.md)
+
+Thirty ordinary reports and their dispatch counts and all 84 box replay
+records matched the preceding implementation. Both bare-Wasm clients passed.
+Native Rust 1.95 and 1.99 each passed 1,543 solver tests, the doctest,
+all-target Clippy with warnings denied, rustdoc and formatting. Rust 1.95
+passed 161 downstream Hyperdynamics tests and six no-default-feature
+Krawczyk tests. WASI Preview 1 passed 1,518
+direct tests, 17 parent tests with fresh guest children and five native
+platform tests. All 4,212 Horner dispatch windows matched. The added
+regressions also passed individually on native and WASI under both
+compilers.
+
+The 16-row owner benchmark improved by 1.33% and 1.72% on two cores.
+Independent interleaved measurements gave improvements of 0.78% and 1.77%.
+The six-step downstream feedback model retained every geometry, validation
+and allocation field. Using symlinks produced repeatable differences of
+opposite sign on two cores. Overwriting the same regular executable inode
+before each run gave median wall-time changes of +0.08% and +0.00% in 64
+counterbalanced blocks per core. Both 95% intervals included zero. These
+measurements cover the completed ordinary workload. The former incorrect
+approximate verdicts are recorded separately.
+
+Across 60 ordinary and 12 stress inputs, peak requested heap stayed at 15,036
+and 15,436 bytes. Maximum callee stack was 12,824 and 15,208 bytes. Maximum
+positive stack increments of 48 and 64 bytes brought the largest cumulative
+charges to 120 and 112 bytes, respectively. Minimum thread headroom was
+2,071,768 bytes. Glibc usable capacity peaked at 16,584 bytes, up 48 bytes
+overall, with a largest per-input increase of 64 bytes. Requested and usable
+bytes returned to zero after drop. [Memory accounts](docs/research/interval-memory-accounts.json)
+
+The native full-report and allocator-usable clients shrank by 8 and 176
+file bytes. Their alignment padding increased by 16 and 176 bytes without
+adding a page to any load or protected segment. The ordinary lifetime client
+shrank 184 file bytes. Its padding went from 3,936 to 16 bytes. A third clean
+build reproduced identical fixed, previous and retained images. The 3,208
+bytes of earlier same-path padding growth remain charged, with zero new
+padding allowance. The trace observer traded one executable page for one
+RELRO-protected page at unchanged total load pages. The ordinary and stress
+bare-Wasm modules grew by 177 and 160 bytes. The univariate test images grew
+by 30,981–40,864 bytes across four compiler/target combinations. Sharing the
+symbolic input kept the multivariate suite's code and function sizes
+unchanged. [Per-target caps and full-image accounts](docs/research/interval-size-accounts.json)
+
+The 42 legacy native builds included 33 exact feature matches. The other
+nine belong to upstream Hyperlattice interval targets. The fixed program's
+retained-fuzz benchmark predates the two replay workloads added at
+`8fa4de4a9`. On the same preceding solver the expanded harness occupied 995,264 more file bytes.
+Relinking each benchmark workload separately against the preceding and
+repaired solver kept its code and function sizes unchanged. The old and
+expanded executables shrank by 64 and 120 file bytes. The archive preserves
+both sets of costs and the original cross-workload comparison.
+
+Implementation commit `0783f2ddc`. Affine Krawczyk proof eligibility and
+the 32-bit coefficient diagnostic are still open.
+
+Evidence commit `2f8688e31f6e79b0eff61e962539f0699f5e50e7` records 1,935 verified members in 392,796 compressed bytes. [Evidence index](docs/evidence-archive.tsv)

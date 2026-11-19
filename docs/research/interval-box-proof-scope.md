@@ -243,10 +243,11 @@ zero-width axes and outside roots. Every successful report must return both
 prescribed root coordinates. This corpus also passes before the production
 change. [Exact affine oracle](../../crates/hypersolve/tests/krawczyk_affine_oracle.rs)
 
-**Remaining exposure.** Use `PredicatePolicy::STRICT` with
-`certify_affine_krawczyk_box` and `certify_univariate_quadratic_krawczyk_box`.
-Both can still certify the rootless point box under `APPROXIMATE_512`. The full
-repair and its failing witnesses are available on
+**Affine exposure.** Use `PredicatePolicy::STRICT` with
+`certify_affine_krawczyk_box`. Its approximate policy can still certify a
+rootless point box. The univariate repair is described below. At `4d4b472e6`
+both paths reproduced the false certificate. The combined trial and its
+failing witnesses are available on
 `interval-krawczyk-proof-review` at `0dcfb17ba`. It passed the regular and
 stress memory limits and the linked-size limits. In matched one-variable
 multivariate benchmarks, its median rose from 4.538 to 4.604 µs on one pinned
@@ -347,6 +348,31 @@ stack increments were 48 and 64 bytes. Including prior charges, the largest
 prospective cumulative stack debit was 112 bytes. Every workload passed its
 128-byte and 1% incremental limits, 256-byte and 2% cumulative limits,
 separate 16 KiB peak heap and stack limits and 1 MiB headroom requirement.
-The runtime and size results leave the production repair open. The new
+Those measurements left the production repair open at `442615f77`. The new
 qualification executable has separate native and WASI size accounts.
 [Size accounts](interval-size-accounts.json) · [Evidence index](../evidence-archive.tsv)
+
+### Univariate Krawczyk row classification
+
+On `6ec893190` the mixed batch still certified the row with residual 2⁻²⁰⁴⁸
+at its only candidate point. The retained row classifier passes the certified
+stages of the caller's policy to all row comparisons, including its division
+fallback. It borrows the derivative magnitude for the remainder calculation
+and carries that same value into the report. The rootless middle row returns
+`Undecided` and both neighboring exact roots remain certified. The radius
+½ − 2⁻²⁰⁴⁸ returns `Undecided`. Exactly ½ still gives
+`NonContractiveDerivative`. Each rational point control uses four exact
+comparisons under either policy. The earlier 72 algebraic replay reports and
+their signed derivative and original-equation checks remain in the same suite.
+[Univariate proof tests](../../crates/hypersolve/tests/krawczyk_univariate_algebraic.rs)
+
+The ordinary and stress workloads peaked at 15,036 and 15,436 requested heap
+bytes and 12,824 and 15,208 callee stack bytes. All live allocations returned
+to zero. The largest cumulative stack charges were 120 and 112 bytes,
+respectively. Glibc's separately measured usable capacity peaked at 16,584
+bytes, compared with 16,536 on the preceding revision. The 16-row owner
+benchmark took 1.33% and 1.72% less time on two pinned cores. The six-step
+downstream feedback chain preserved geometry, validation and allocation
+records. In the same-file timing control, the median downstream differences
+were 0.00% and +0.08%, with both 95% intervals containing zero.
+[Memory accounts](interval-memory-accounts.json) · [Size accounts](interval-size-accounts.json)

@@ -14990,5 +14990,323 @@
         }
       }
     }
+  },
+  "univariate_krawczyk_row_certainty": {
+    "source": "0783f2ddc4571a5fac8ffbf99c01c43d4e8942c2",
+    "previous": "6ec893190",
+    "fixed": "c9f1f9ac5",
+    "benefit": "Row classification and its division fallback use certified comparisons on univariate quadratic boxes. The public point-box and strict-contraction controls return honest proof outcomes under both policies.",
+    "evidence": "docs/evidence/2026-11-19-interval-univariate-krawczyk-proof-admission",
+    "qualification_capacity_bytes": 67108864,
+    "minimum_free_bytes": 16777216,
+    "original_caps": "Defaults for native allocated sections were 4096 bytes and 1% incremental, 16384 bytes and 2% cumulative, with separate function and file limits. All original dispositions are retained in caps.txt and the trial accounts.",
+    "native_padding_revision": "Rust 1.95 Linux SHT_NOBITS .relro_padding only. For each full-report and allocator-usable client, at most 256 bytes incremental and 512 bytes cumulative (6.25% and 12.5% of one 4096-byte page). No additional pages in any PT_LOAD or GNU_RELRO, larger file, or changed permissions. The ordinary lifetime target reserves zero new padding. Its cumulative ceiling of 3208 bytes (78.3203125% of one link page) carries the entire pre-existing same-path fixed-to-control debit. Each retained segment must fit the fixed page count. The cumulative allowance is fully spent. For each of the registered certification benchmark, smoke suite, native trace observer and stress lifetime instrument, at most 256 and 4096 bytes (6.25% and 100% of one link page) with no growth in total load pages, initialized RELRO payload, executable code or final file. Retain all prior debits, including historical increases between fixed and previous. Record each segment separately. Firmware receives no allowance.",
+    "qualification_test_revision": "For the new acceptance cases in krawczyk_univariate_algebraic alone, each of the four final native and WASI qualification images has a 49152-byte and 2% step cap, and a 65536-byte and 3% cumulative cap for file, code and defined-function size. The introductory 442615f77 image anchors each budget. The initial 16 KiB proposal and the separate test/combined library pilots are preserved. Shared fixture extraction left multivariate code and function sizes unchanged.",
+    "note": "final-account.json contains effective byte/percentage caps, allocation flags and positive-only charges by target and metric. The 42 registered release targets have a separate feature-qualified accounting in all-budget-review.json. Nine upstream Hyperlattice interval targets had different features from the registry. A pre-existing positive fixed-to-control debit on a metric is preserved even when the current change allocates zero bytes there.",
+    "retained_fuzz_comparable": {
+      "old": {
+        "file": {
+          "fixed": 9378392,
+          "preceding": 9378408,
+          "retained": 9378344,
+          "delta": -64,
+          "prior_charge": 16,
+          "increment": 0,
+          "cumulative": 16,
+          "step_remaining": 4096,
+          "cumulative_remaining": 16368,
+          "pass_step": true,
+          "pass_cumulative": true
+        },
+        "code": {
+          "fixed": 5061975,
+          "preceding": 5061975,
+          "retained": 5061975,
+          "delta": 0,
+          "prior_charge": 0,
+          "increment": 0,
+          "cumulative": 0,
+          "step_remaining": 4096,
+          "cumulative_remaining": 16384,
+          "pass_step": true,
+          "pass_cumulative": true
+        },
+        "functions": {
+          "fixed": 5009940,
+          "preceding": 5009940,
+          "retained": 5009940,
+          "delta": 0,
+          "prior_charge": 0,
+          "increment": 0,
+          "cumulative": 0,
+          "step_remaining": 1024,
+          "cumulative_remaining": 4096,
+          "pass_step": true,
+          "pass_cumulative": true
+        }
+      },
+      "new": {
+        "file": {
+          "fixed": 10373768,
+          "preceding": 10373672,
+          "retained": 10373552,
+          "delta": -120,
+          "prior_charge": 0,
+          "increment": 0,
+          "cumulative": 0,
+          "step_remaining": 4096,
+          "cumulative_remaining": 16384,
+          "pass_step": true,
+          "pass_cumulative": true
+        },
+        "code": {
+          "fixed": 5807623,
+          "preceding": 5808103,
+          "retained": 5808103,
+          "delta": 0,
+          "prior_charge": 480,
+          "increment": 0,
+          "cumulative": 480,
+          "step_remaining": 4096,
+          "cumulative_remaining": 15904,
+          "pass_step": true,
+          "pass_cumulative": true
+        },
+        "functions": {
+          "fixed": 5748846,
+          "preceding": 5749366,
+          "retained": 5749366,
+          "delta": 0,
+          "prior_charge": 520,
+          "increment": 0,
+          "cumulative": 520,
+          "step_remaining": 1024,
+          "cumulative_remaining": 3576,
+          "pass_step": true,
+          "pass_cumulative": true
+        }
+      },
+      "expanded_suite_at_introduction": {
+        "file": 995376,
+        "code": 745648,
+        "functions": 738906
+      }
+    },
+    "retained_fuzz_scope": "The fixed 2026-11-15 driver lacks two replay workloads introduced at 8fa4de4a9. Preserve the measured change between the two suites and the raw historical comparison. Compile the original benchmark sources against fixed, preceding and repaired libraries, and the expanded suite separately against its introduction, preceding and repaired libraries. The standard incremental and cumulative caps hold for each completed suite. No new charge for code or functions in either comparison.",
+    "targets": {
+      "lifetime": {
+        "file_bytes": 3623760,
+        "file_delta": -184,
+        "file_cumulative_charge": 768,
+        "free_bytes": 63485104,
+        "relro_padding_delta": -3920,
+        "relro_padding_prior_charge": 3208,
+        "relro_padding_cumulative_charge": 3208,
+        "mapped_pages": [
+          732,
+          732,
+          732
+        ],
+        "protected_pages": [
+          8,
+          9,
+          8
+        ]
+      },
+      "client": {
+        "file_bytes": 3791680,
+        "file_delta": -8,
+        "file_cumulative_charge": 56,
+        "free_bytes": 63317184,
+        "relro_padding_delta": 16,
+        "relro_padding_prior_charge": 0,
+        "relro_padding_cumulative_charge": 16,
+        "mapped_pages": [
+          768,
+          768,
+          767
+        ],
+        "protected_pages": [
+          10,
+          10,
+          10
+        ]
+      },
+      "usable": {
+        "file_bytes": 3621864,
+        "file_delta": -176,
+        "file_cumulative_charge": 776,
+        "free_bytes": 63487000,
+        "relro_padding_delta": 176,
+        "relro_padding_prior_charge": 0,
+        "relro_padding_cumulative_charge": 176,
+        "mapped_pages": [
+          731,
+          731,
+          731
+        ],
+        "protected_pages": [
+          9,
+          9,
+          9
+        ]
+      },
+      "observer": {
+        "file_bytes": 3882984,
+        "file_delta": -200,
+        "file_cumulative_charge": 0,
+        "free_bytes": 63225880,
+        "relro_padding_delta": 192,
+        "relro_padding_prior_charge": 64,
+        "relro_padding_cumulative_charge": 256,
+        "mapped_pages": [
+          788,
+          788,
+          788
+        ],
+        "protected_pages": [
+          9,
+          9,
+          10
+        ]
+      },
+      "stress-life": {
+        "file_bytes": 3560336,
+        "file_delta": -184,
+        "file_cumulative_charge": 1056,
+        "free_bytes": 63548528,
+        "relro_padding_delta": 176,
+        "relro_padding_prior_charge": 2816,
+        "relro_padding_cumulative_charge": 2992,
+        "mapped_pages": [
+          719,
+          719,
+          719
+        ],
+        "protected_pages": [
+          8,
+          9,
+          9
+        ]
+      },
+      "smoke": {
+        "file_bytes": 6836472,
+        "file_delta": -208,
+        "file_cumulative_charge": 136,
+        "free_bytes": 60272392,
+        "relro_padding_delta": 144,
+        "relro_padding_prior_charge": 0,
+        "relro_padding_cumulative_charge": 144,
+        "mapped_pages": [
+          1422,
+          1422,
+          1422
+        ],
+        "protected_pages": [
+          43,
+          43,
+          43
+        ]
+      },
+      "certification": {
+        "file_bytes": 16948352,
+        "file_delta": -232,
+        "file_cumulative_charge": 368,
+        "free_bytes": 50160512,
+        "relro_padding_delta": 144,
+        "relro_padding_prior_charge": 0,
+        "relro_padding_cumulative_charge": 144,
+        "mapped_pages": [
+          3536,
+          3536,
+          3536
+        ],
+        "protected_pages": [
+          81,
+          81,
+          81
+        ]
+      },
+      "portable-krawczyk.wasm": {
+        "file_bytes": 1766711,
+        "file_delta": 177,
+        "file_cumulative_charge": 244,
+        "free_bytes": 65342153,
+        "code_step": 163,
+        "function_step": 163
+      },
+      "stress.wasm": {
+        "file_bytes": 1820713,
+        "file_delta": 160,
+        "file_cumulative_charge": 192,
+        "free_bytes": 65288151,
+        "code_step": 163,
+        "function_step": 163
+      },
+      "1.95.0 wasm32-wasip1/krawczyk_univariate_algebraic": {
+        "file_bytes": 2225338,
+        "file_delta": 32335,
+        "file_cumulative_charge": 32395,
+        "free_bytes": 64883526,
+        "code_step": 26399,
+        "function_step": 26328
+      },
+      "1.95.0 x86_64-unknown-linux-gnu/krawczyk_univariate_algebraic": {
+        "file_bytes": 4274184,
+        "file_delta": 39608,
+        "file_cumulative_charge": 39752,
+        "free_bytes": 62834680,
+        "code_step": 23152,
+        "function_step": 22838
+      },
+      "1.99.0 wasm32-wasip1/krawczyk_univariate_algebraic": {
+        "file_bytes": 2262135,
+        "file_delta": 30981,
+        "file_cumulative_charge": 31335,
+        "free_bytes": 64846729,
+        "code_step": 23343,
+        "function_step": 23274
+      },
+      "1.99.0 x86_64-unknown-linux-gnu/krawczyk_univariate_algebraic": {
+        "file_bytes": 4409832,
+        "file_delta": 40864,
+        "file_cumulative_charge": 40864,
+        "free_bytes": 62699032,
+        "code_step": 21552,
+        "function_step": 21223
+      },
+      "1.95.0 wasm32-wasip1/krawczyk_multivariate_certainty": {
+        "file_bytes": 2225466,
+        "file_delta": 48,
+        "file_cumulative_charge": 48,
+        "free_bytes": 64883398,
+        "code_step": 0,
+        "function_step": 0
+      },
+      "1.95.0 x86_64-unknown-linux-gnu/krawczyk_multivariate_certainty": {
+        "file_bytes": 4283912,
+        "file_delta": 88,
+        "file_cumulative_charge": 208,
+        "free_bytes": 62824952,
+        "code_step": 0,
+        "function_step": 0
+      },
+      "1.99.0 wasm32-wasip1/krawczyk_multivariate_certainty": {
+        "file_bytes": 2265205,
+        "file_delta": 60,
+        "file_cumulative_charge": 348,
+        "free_bytes": 64843659,
+        "code_step": 0,
+        "function_step": 0
+      },
+      "1.99.0 x86_64-unknown-linux-gnu/krawczyk_multivariate_certainty": {
+        "file_bytes": 4426080,
+        "file_delta": 56,
+        "file_cumulative_charge": 56,
+        "free_bytes": 62682784,
+        "code_step": 0,
+        "function_step": 0
+      }
+    }
   }
 }
