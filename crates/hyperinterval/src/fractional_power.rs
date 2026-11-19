@@ -115,6 +115,9 @@ impl crate::RationalInterval {
     /// Real rational power retaining exact rational endpoints through root
     /// isolation. Requires rational+dyadic; see [`DyadicInterval::pow_rational`]
     /// for branch, pole, empty, domain-coverage and shared-budget semantics.
+    /// Before accessing canonical coefficients, each endpoint that may need
+    /// reduction reserves three quadratic stages at its stored width, even
+    /// when both endpoints share storage or an earlier call warmed the cache.
     pub fn pow_rational(
         &self,
         numerator: &BigInt,
@@ -126,24 +129,38 @@ impl crate::RationalInterval {
             return Ok(result);
         }
         let (a, b) = self.bounds().expect("nonempty source");
-        let convert = |x: &hyperreal::Rational, budget: &mut DyadicBudget| {
-            budget.reserve(x.numerator().bits().max(x.denominator().bits()), 2, false)?;
-            Ok::<_, IntervalError>((
-                BigInt::from(x.numerator().clone()),
-                BigInt::from(x.denominator().clone()),
-            ))
+        crate::rational_admission::reserve_reductions(a, b, budget)?;
+        let (an, ad) = copy_endpoint(a, budget)?;
+        // A point can share its exact source. Charge both endpoint copies on
+        // the same schedule and reuse the already materialized coefficients.
+        let upper;
+        let (bn, bd) = if a.storage_identity() == b.storage_identity() {
+            budget.reserve(an.bits().max(ad.bits()), 2, false)?;
+            (&an, &ad)
+        } else {
+            upper = copy_endpoint(b, budget)?;
+            (&upper.0, &upper.1)
         };
-        let (an, ad) = convert(a, budget)?;
-        let (bn, bd) = convert(b, budget)?;
         image(
             End::Finite(&an, &ad, 0),
-            End::Finite(&bn, &bd, 0),
+            End::Finite(bn, bd, 0),
             self.signs(),
             &Power::new(numerator, denominator, budget)?,
             precision,
             budget,
         )
     }
+}
+// Charge the canonical magnitudes before copying them into the power kernel.
+#[cfg(feature = "rational")]
+fn copy_endpoint(
+    x: &hyperreal::Rational,
+    budget: &mut DyadicBudget,
+) -> Result<(BigInt, BigInt), IntervalError> {
+    let n = x.numerator();
+    let d = x.denominator();
+    budget.reserve(n.bits().max(d.bits()), 2, false)?;
+    Ok((BigInt::from(n.clone()), BigInt::from(d.clone())))
 }
 fn trivial(
     signs: SignSet,

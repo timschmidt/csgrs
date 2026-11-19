@@ -47,13 +47,7 @@ pub(crate) fn reserve_rational_sources(
         4,
         false,
     )?;
-    for value in [left, right] {
-        let bits = value.reduction_input_bits();
-        if bits != 0 {
-            budget.reserve(bits, 3, true)?;
-        }
-    }
-    Ok(())
+    crate::rational_admission::reserve_reductions(left, right, budget)
 }
 
 // Call only after both endpoints pass reserve_rational_sources. Ordinary

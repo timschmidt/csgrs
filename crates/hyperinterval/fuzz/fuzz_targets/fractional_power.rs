@@ -5,6 +5,9 @@ use hyperinterval::{DyadicBudget, DyadicInterval, ExtendedInterval as E, Interva
 use libfuzzer_sys::fuzz_target;
 #[path = "../../tests/support/power_oracle.rs"]
 mod oracle;
+#[cfg(feature = "rational")]
+#[path = "../../tests/support/rational_coordinate.rs"]
+mod rational_coordinate;
 fn source(a: i64, b: i64, e: i32, kind: u16) -> (E<DyadicInterval>, oracle::Source) {
     use oracle::End::{Minus as M, Plus as P, Value as V};
     let point = |n: i64| DyadicInterval::point(n.into(), e).unwrap();
@@ -29,6 +32,28 @@ fuzz_target!(|data: [i16; 6]| {
     let (n, q) = (i32::from(n % 6), i32::from(q % 7));
     let p = 4 - i32::from(p.unsigned_abs() % 37);
     let budget = || DyadicBudget::new(8192, 1_000_000_000_000);
+    #[cfg(feature = "rational")]
+    {
+        let shift = i32::from(e % 5);
+        let scale = 2_f64.powi(shift);
+        let (lo, hi) = (a.min(b), a.max(b));
+        let base = hyperinterval::RationalInterval::new(
+            rational_coordinate::coordinate(6., lo as f64 * scale),
+            rational_coordinate::coordinate(10., hi as f64 * scale),
+        )
+        .unwrap();
+        let exact = Some((
+            oracle::End::Value(oracle::q(&lo, shift)),
+            oracle::End::Value(oracle::q(&hi, shift)),
+        ));
+        oracle::verify(
+            base.pow_rational(&n.into(), &q.into(), p, &mut budget()),
+            &exact,
+            n,
+            q,
+            p,
+        );
+    }
     let result = source.pow_rational(&n.into(), &q.into(), p, &mut budget());
     oracle::verify(result.clone(), &exact, n, q, p);
     if let Ok(image) = result {

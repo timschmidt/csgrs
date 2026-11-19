@@ -191,7 +191,7 @@ jobs:
           cargo +nightly fuzz run arctangent --features rational "$RUNNER_TEMP/interval-arctangent" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261120
           cargo +nightly fuzz run trigonometry --features rational "$RUNNER_TEMP/interval-trigonometry" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261121
           cargo +nightly fuzz run split_division "$RUNNER_TEMP/interval-split-division" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261122
-          cargo +nightly fuzz run fractional_power "$RUNNER_TEMP/interval-fractional-power" -- -runs=10000 -max_len=12 -max_total_time=30 -seed=20261123
+          cargo +nightly fuzz run fractional_power "$RUNNER_TEMP/interval-fractional-power" --features rational -- -runs=10000 -max_len=12 -max_total_time=30 -seed=20261123
           cargo +nightly fuzz run tangent --features rational "$RUNNER_TEMP/interval-tangent" -- -runs=10000 -max_len=8 -max_total_time=120 -seed=20261124
           mkdir -p "$RUNNER_TEMP/interval-conversions"
           cargo +nightly fuzz run conversions --features rational "$RUNNER_TEMP/interval-conversions" -- -runs=100000 -max_len=64 -max_total_time=30 -seed=20261125

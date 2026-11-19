@@ -3,6 +3,22 @@ use crate::{DyadicBudget, IntervalError, RationalInterval};
 use core::cmp::Ordering;
 use hyperreal::Rational;
 
+// A canonical accessor may run a GCD and two divisions on the stored parts.
+// Admit both possible reductions before either accessor can warm its cache.
+pub(crate) fn reserve_reductions(
+    left: &Rational,
+    right: &Rational,
+    budget: &mut DyadicBudget,
+) -> Result<(), IntervalError> {
+    for source in [left, right] {
+        let bits = source.reduction_input_bits();
+        if bits != 0 {
+            budget.reserve(bits, 3, true)?;
+        }
+    }
+    Ok(())
+}
+
 /// A borrowed admission view sharing a native arithmetic counter.
 ///
 /// Mathematical operations delegate to Hyperreal without changing its dispatch
