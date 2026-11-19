@@ -869,7 +869,7 @@ pub(crate) fn scaled_quotient(
     Ok((n.div_floor(&d), n.div_ceil(&d)))
 }
 
-fn admitted_shift(
+pub(crate) fn admitted_shift(
     numerator_bits: u64,
     denominator_bits: u64,
     shift: i64,

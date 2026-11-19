@@ -25,6 +25,14 @@ exact IEEE → dyadic arithmetic → explicit IEEE enclosure chains without nati
 floating arithmetic. The conversion uses allocation; float-only arithmetic does
 not acquire that dependency.
 
+With `rational,dyadic,float-enclosure`, use `F32Enclosure::from_rational` or
+`F64Enclosure::from_rational` to project an exact rational interval directly.
+The result has the tightest finite IEEE endpoints that contain the source.
+For example, the point 1/10 projects to adjacent binary32 values with bit
+patterns `0x3dcccccc` and `0x3dcccccd`. Each endpoint selects its own grid
+and both draw from one `DyadicBudget`. A failed projection leaves the original
+rational interval available for retry.
+
 Finite integer, fixed, rational, dyadic and qualified IEEE carriers provide
 exact `abs`, `min_image` and `max_image`. Min/max are images over independently
 chosen operand members, so either empty operand gives empty. Absolute value

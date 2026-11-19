@@ -9,6 +9,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add tight, budgeted rational-to-binary32 and rational-to-binary64 interval
+  projection, including subnormal, overflow and independent endpoint grids.
+
 - Rational square roots now charge the stored width of positive generated
   endpoints before reduction. Dyadic and rational square roots use one
   unsigned division to determine both tight output bounds.

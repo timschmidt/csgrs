@@ -480,3 +480,6 @@ impl Format {
 
 #[cfg(all(feature = "dyadic", feature = "float-enclosure"))]
 mod dyadic;
+
+#[cfg(all(feature = "dyadic", feature = "rational", feature = "float-enclosure"))]
+mod rational;

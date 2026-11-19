@@ -619,3 +619,6 @@ let enclosure: F64Enclosure = proposal.into();
 
 enclosure!(F32Enclosure, Binary32, f32, u32, BINARY32, F32Width, 5);
 enclosure!(F64Enclosure, Binary64, f64, u64, BINARY64, F64Width, 33);
+
+#[cfg(all(feature = "rational", feature = "dyadic"))]
+mod rational;
