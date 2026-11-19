@@ -391,16 +391,15 @@ impl Rational {
         if msd > 1023 {
             return None;
         }
-        if msd < -1075 {
-            return Some(0.0);
-        }
 
         // Operands of at most 53 bits convert exactly, so one IEEE division
         // rounds the quotient correctly. Wider operands, including unreduced
         // ones such as long decimals over a power of ten, would round twice
         // that way; round their exact quotient instead, so the result depends
         // only on the value.
-        let value = if self.numerator.bits() <= 53 && self.denominator.bits() <= 53 {
+        let value = if msd < -1075 {
+            0.0
+        } else if self.numerator.bits() <= 53 && self.denominator.bits() <= 53 {
             self.numerator.to_f64()? / self.denominator.to_f64()?
         } else {
             let (significand, ulp) = self.rounded_binary_magnitude(53, -1074);

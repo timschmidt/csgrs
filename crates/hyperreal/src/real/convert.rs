@@ -994,9 +994,7 @@ mod tests {
                         <= u64::from(!exact_float),
                     "{value}: {actual:e} versus {expected:e}"
                 );
-                if actual != 0.0 {
-                    assert_eq!(actual.is_sign_negative(), negative);
-                }
+                assert_eq!(actual.is_sign_negative(), negative);
                 assert_eq!(
                     value.to_f64_lossy().map(f64::to_bits),
                     Some(actual.to_bits())
@@ -1020,6 +1018,7 @@ mod tests {
         for exponent in [1000_usize, 1022, 1040, 1050, 1070, 1074] {
             check(BigUint::one(), (BigUint::one() << exponent) * 3_u8, false);
         }
+        check(BigUint::one(), (BigUint::one() << 2000_usize) + 3_u8, false);
         for exponent in [1024_usize, 1050, 1074, 1500] {
             check(
                 (BigUint::one() << 1000_usize) + BigUint::one(),
@@ -1038,7 +1037,10 @@ mod tests {
         assert_eq!(tiny.to_f64_lossy(), Some(0.0));
 
         let negative_tiny = -tiny;
-        assert_eq!(negative_tiny.to_f64_lossy(), Some(0.0));
+        assert_eq!(
+            negative_tiny.to_f64_lossy().map(f64::to_bits),
+            Some((-0.0_f64).to_bits())
+        );
 
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
         assert_eq!(huge.to_f64_lossy(), None);

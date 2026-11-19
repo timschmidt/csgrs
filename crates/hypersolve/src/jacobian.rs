@@ -133,11 +133,18 @@ fn symbolic_jacobian_with_sparsity(
             // those facts in a future hyperreal/hyperlattice linear backend so
             // this dense-solver conversion is needed only for external f64
             // solvers.
-            row.push((value * constraint.weight.clone()).to_f64_lossy().ok_or(
-                EvalError::DenseSolverEstimateUnavailable(
-                    "symbolic Jacobian entry is not f64-estimable",
-                ),
-            )?);
+            let weighted = value * constraint.weight.clone();
+            let estimate =
+                weighted
+                    .to_f64_lossy()
+                    .ok_or(EvalError::DenseSolverEstimateUnavailable(
+                        "symbolic Jacobian entry is not f64-estimable",
+                    ))?;
+            // Negation at the proposal boundary is exact. Preserve the canonical
+            // zero of a zero derivative, and reverse signed underflow otherwise.
+            let reverse = constraint.kind == ConstraintKind::GreaterOrEqual
+                && (estimate != 0.0 || !weighted.definitely_zero());
+            row.push(if reverse { -estimate } else { estimate });
         }
         rows.push(row);
     }
