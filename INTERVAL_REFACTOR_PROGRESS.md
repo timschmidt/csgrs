@@ -13223,3 +13223,88 @@ remain outside these measurements.
 Evidence commit `1ab2a968d967ff10d05d3c04f17f157c50fc9e57` contains 856
 files under `docs/evidence/2026-11-18-interval-periodic-refinement` with digest
 `83bca27b5f0984e75f1c4f3faae5dbcd1e321b029861dc05960cb3950760bef0`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phases 3, 5 and 14, rational source budgets for four periodic functions, 18 November 2026
+
+On `b8bfae793`, sine, cosine, tangent and cotangent could reduce a generated
+coordinate before checking the caller's budget. Refusal on a cold point with
+value 3 and a 98-bit stored numerator made eight allocations and one
+reallocation, retaining 128 bytes on x86-64. Commit `5d15ce394` checks both
+endpoints before normalizing or copying either. The same refusal now allocates
+and retains zero bytes and consumes zero work. A later successful retry still
+returns the certified dyadic bounds.
+
+The kernels reserve four linear copies at the larger stored width and three
+quadratic stages at each endpoint that may require reduction. The Hyperreal
+width query reads the storage representation independently of the cache.
+The kernels copy canonical fractions directly. Already-reduced inputs kept
+their measured work receipts. A successful sine evaluation of 108/36 on the
+2⁻⁸ grid costs an additional 314 work units. Independent directed 512-bit
+MPFR bounds cover the point 3 and the interval [2,3] for all four functions.
+The tests check different encodings of the same point, denial on the second
+endpoint, an exact success budget, a one-unit-short failure, and a retry.
+Two cold generated endpoints produced two reductions and the warm repeat
+produced none. [Interval witnesses](crates/hyperinterval/tests/periodic_ingress.rs) ·
+[Scalar query witnesses](crates/hyperreal/tests/reduction_input_bits.rs)
+
+| Rust / target | Largest stack increase | Temporary / retained heap increase | Minimum stack headroom | Largest existing release file increase |
+| --- | ---: | ---: | ---: | ---: |
+| 1.95 / x86-64 Linux | 0 B | 0 / 0 B | 2,083,120 B | 320 B |
+| 1.95 / WASI Preview 1 | 16 B | 0 / 0 B | 1,046,004 B | 514 B |
+| 1.99 / x86-64 Linux | 0 B | 0 / 0 B | 2,083,256 B | 296 B |
+| 1.99 / WASI Preview 1 | 16 B | 0 / 0 B | 1,046,048 B | 512 B |
+
+The 16-byte charge appeared with the workspace dependency lock on both WASI
+compilers and was at most 0.77% per affected workload. Stack allowances
+were 128 B and 2% per step, 256 B and 4% cumulative, with a 256 KiB reserve.
+The register includes both dependency locks, operation and whole-ownership
+heap epochs, cold and warm inputs, disposal and retry, for one caller per
+target. The smallest remaining cumulative allowance among ordinary file
+accounts is 400 B. The legacy Rust 1.95 tangent benchmark also passed its
+separate relocation, GOT, file and named-function size gates.
+[Memory accounts](docs/research/interval-memory-accounts.json) ·
+[Size accounts](docs/research/interval-size-accounts.json)
+
+Keeping unreduced coefficients throughout added 351 allocations on a
+single-point sine case. A callback added 48 bytes to a 2,320-byte guest
+stack measurement, exceeding 2%. Returning all borrowed parts together
+increased a guest refusal from 172 to 272 bytes. The separate-reservation
+implementation in `5de33dbc9` fit the memory caps but slowed wide rational
+sine on repeated linked measurements. Its trial charges are excluded from
+the program accounts.
+
+Each of 156 linked release cost cases completed with identical work and
+completion counts for 20 paired samples per core. On the two final-build
+cores the wide rational sine ratios at precision −256 were 0.996 and
+0.973, compared with 1.030–1.086 for the earlier implementation across
+four cores. Across all cases, final per-core suite medians ranged from
+1.009 to 1.017. Byte-identical controls on separate cores ranged from
+0.994 to 1.012. No individual case measured more than 3% slower on both
+final-build cores. A separate direct comparison of 152 warm, cold and
+refusal workloads had a median ratio of 0.983 on each of two cores.
+These measurements resolve the earlier wide-sine slowdown. Smaller
+runtime differences remain within the resolution of this comparison.
+
+Native release owner suites, strict native/WASI Clippy, strict rustdoc,
+formatting and six inventory tests passed. Hyperreal passed 1,053 unit
+tests and both scalar query tests. Hypersolve and Hyperdynamics passed nine
+expression tests and fifteen field tests respectively. Both packaged crates
+were installed together and the three interval regressions passed on Rust
+1.95 and 1.99. The identical scalar query fixture passed on native and WASI
+with tracing enabled and disabled. Its portable WASI client avoids an
+unsupported OS dependency of the Hyperreal development test harness.
+Both ASan campaigns completed 10,000 inputs with their follow-up runs.
+Stable covered 4,940/4,973 production lines and 519/519 functions. Nightly
+covered 987/1,009 branches. Whole-owner coverage remains open.
+
+The full scalar jobs ran 181 direct guest cases on Rust 1.88 and 238 each on
+Rust 1.95 and 1.99, plus the required native cases and five fresh guest
+replays in every lane. An earlier Rust 1.95 compile hit the 1 GiB limit.
+After separate build preparation, the final Rust 1.95 job peaked at
+201,060,352 bytes under the same swap-disabled limit with zero limit or OOM
+events. These runs qualify warmed jobs on native Linux and WASI. Cold
+compilation at that limit and physical embedded execution remain unqualified.
+
+Evidence commit `d4975085f429bf729670e3302f49dce856a01dd2` contains 1,254 files under
+`docs/evidence/2026-11-18-interval-periodic-ingress` with digest
+`461e5a31caa0aa20d907da11aafbaccc67befaaa837e9e5f3631a2cef0a9ae39`. [Evidence index](docs/evidence-archive.tsv)

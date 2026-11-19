@@ -1332,5 +1332,237 @@
         }
       }
     }
+  },
+  "rational_periodic_ingress": {
+    "source": "5d15ce394447210262b3de7c20d2b8f99cebec18",
+    "preceding": "b8bfae793e7d03db2a5ac66a19614c4294115a26",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "evidence": "docs/evidence/2026-11-18-interval-periodic-ingress",
+    "scope": "Four rational periodic calls, ordinary and generated sources, native and guest execution, denial, completed outputs and retries. complete-memory-details.json lists both dependency locks and every per-workload account. Includes separate whole-ownership epochs from fresh processes through input/output destruction. Compiler and OS job peaks are separate.",
+    "metric_order": [
+      "stack",
+      "temporary requested heap peak",
+      "retained requested heap"
+    ],
+    "absolute_incremental_bytes": [
+      128,
+      64,
+      32
+    ],
+    "relative_incremental_percent": 2,
+    "absolute_cumulative_bytes": [
+      256,
+      128,
+      64
+    ],
+    "relative_cumulative_percent": 4,
+    "required_stack_headroom_bytes": 262144,
+    "targets": {
+      "1.95.0": {
+        "native": {
+          "metric_order": [
+            "stack",
+            "peak_requested_heap",
+            "retained_requested_heap"
+          ],
+          "max_incremental_bytes": [
+            0,
+            0,
+            0
+          ],
+          "max_cumulative_positive_bytes": [
+            0,
+            0,
+            0
+          ],
+          "workloads_with_positive_step": [
+            0,
+            0,
+            0
+          ],
+          "max_observed_bytes": [
+            9936,
+            952,
+            288
+          ],
+          "minimum_stack_headroom_bytes": 2083120
+        },
+        "wasm32-wasip1": {
+          "metric_order": [
+            "stack",
+            "peak_requested_heap",
+            "retained_requested_heap"
+          ],
+          "max_incremental_bytes": [
+            16,
+            0,
+            0
+          ],
+          "max_cumulative_positive_bytes": [
+            16,
+            0,
+            0
+          ],
+          "workloads_with_positive_step": [
+            96,
+            0,
+            0
+          ],
+          "max_observed_bytes": [
+            2316,
+            528,
+            152
+          ],
+          "minimum_stack_headroom_bytes": 1046004
+        }
+      },
+      "stable": {
+        "native": {
+          "metric_order": [
+            "stack",
+            "peak_requested_heap",
+            "retained_requested_heap"
+          ],
+          "max_incremental_bytes": [
+            0,
+            0,
+            0
+          ],
+          "max_cumulative_positive_bytes": [
+            0,
+            0,
+            0
+          ],
+          "workloads_with_positive_step": [
+            0,
+            0,
+            0
+          ],
+          "max_observed_bytes": [
+            9800,
+            952,
+            288
+          ],
+          "minimum_stack_headroom_bytes": 2083256
+        },
+        "wasm32-wasip1": {
+          "metric_order": [
+            "stack",
+            "peak_requested_heap",
+            "retained_requested_heap"
+          ],
+          "max_incremental_bytes": [
+            16,
+            0,
+            0
+          ],
+          "max_cumulative_positive_bytes": [
+            16,
+            0,
+            0
+          ],
+          "workloads_with_positive_step": [
+            96,
+            0,
+            0
+          ],
+          "max_observed_bytes": [
+            2288,
+            528,
+            152
+          ],
+          "minimum_stack_headroom_bytes": 1046048
+        }
+      }
+    },
+    "test_job_capacity_bytes": 268435456,
+    "test_job_reserve_bytes": 67108864,
+    "whole_scalar_capacity_bytes": 1073741824,
+    "whole_scalar_reserve_bytes": 268435456,
+    "jobs": {
+      "1.88.0": {
+        "compiled_test_job_peaks": {
+          "native": 6389760,
+          "wasm32-wasip1": 21254144
+        },
+        "whole_warmed_peak": 223449088,
+        "previous_cumulative_positive": 226770944,
+        "incremental_positive": 0,
+        "cumulative_positive": 226770944,
+        "remaining_above_required_reserve": 578535424,
+        "direct_guest_passes": 181,
+        "native_required": 6,
+        "fresh_guest_replays": 5
+      },
+      "1.95.0": {
+        "compiled_test_job_peaks": {
+          "native": 6520832,
+          "wasm32-wasip1": 24793088
+        },
+        "whole_warmed_peak": 201060352,
+        "previous_cumulative_positive": 197312512,
+        "incremental_positive": 3747840,
+        "cumulative_positive": 201060352,
+        "remaining_above_required_reserve": 604246016,
+        "direct_guest_passes": 238,
+        "native_required": 9,
+        "fresh_guest_replays": 5
+      },
+      "stable": {
+        "compiled_test_job_peaks": {
+          "native": 6766592,
+          "wasm32-wasip1": 22749184
+        },
+        "whole_warmed_peak": 185024512,
+        "previous_cumulative_positive": 187351040,
+        "incremental_positive": 0,
+        "cumulative_positive": 187351040,
+        "remaining_above_required_reserve": 617955328,
+        "direct_guest_passes": 238,
+        "native_required": 9,
+        "fresh_guest_replays": 5
+      }
+    },
+    "scalar_query_test": {
+      "scope": "Native Hyperreal integration executable and the identical maintained Rust fixture in a portable WASI consumer. Both with and without trace. Same new-test file/job caps.",
+      "targets": {
+        "1.95.0": {
+          "native-plain": {
+            "peak_process_bytes": 6754304,
+            "remaining_above_reserve": 194572288
+          },
+          "native-trace": {
+            "peak_process_bytes": 6385664,
+            "remaining_above_reserve": 194940928
+          },
+          "wasm32-wasip1-plain": {
+            "peak_process_bytes": 20951040,
+            "remaining_above_reserve": 180375552
+          },
+          "wasm32-wasip1-trace": {
+            "peak_process_bytes": 21499904,
+            "remaining_above_reserve": 179826688
+          }
+        },
+        "stable": {
+          "native-plain": {
+            "peak_process_bytes": 6766592,
+            "remaining_above_reserve": 194560000
+          },
+          "native-trace": {
+            "peak_process_bytes": 6422528,
+            "remaining_above_reserve": 194904064
+          },
+          "wasm32-wasip1-plain": {
+            "peak_process_bytes": 21864448,
+            "remaining_above_reserve": 179462144
+          },
+          "wasm32-wasip1-trace": {
+            "peak_process_bytes": 21426176,
+            "remaining_above_reserve": 179900416
+          }
+        }
+      }
+    }
   }
 }

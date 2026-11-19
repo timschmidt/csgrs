@@ -11904,5 +11904,246 @@
         }
       }
     }
+  },
+  "rational_periodic_ingress": {
+    "source": "5d15ce394447210262b3de7c20d2b8f99cebec18",
+    "preceding": "b8bfae793e7d03db2a5ac66a19614c4294115a26",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "evidence": "docs/evidence/2026-11-18-interval-periodic-ingress",
+    "scope": "Rational periodic ingress. Four existing all-feature release consumers and the existing combined refinement suite on native x86-64 Linux and wasm32-wasip1. Follows each prior account, including the legacy tangent_cost feature set. complete-size-details.json carries each positive charge, cap remainder and named metric.",
+    "absolute_incremental_cap": 4096,
+    "relative_incremental_percent": 1,
+    "ordinary_cumulative_cap": 8192,
+    "ordinary_cumulative_percent": 2,
+    "ci_slot_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "targets": {
+      "1.95.0": {
+        "native": {
+          "max_positive_step_bytes": {
+            "file": 320,
+            "code": 0,
+            "functions": 0
+          },
+          "min_remaining_cumulative_bytes": {
+            "file": 7792,
+            "code": 8192,
+            "functions": 8187
+          },
+          "minimum_free_slot_bytes": 64389088
+        },
+        "wasm32-wasip1": {
+          "max_positive_step_bytes": {
+            "file": 514,
+            "code": 352,
+            "functions": 348
+          },
+          "min_remaining_cumulative_bytes": {
+            "file": 1934,
+            "code": 2673,
+            "functions": 2680
+          },
+          "minimum_free_slot_bytes": 65787999
+        }
+      },
+      "stable": {
+        "native": {
+          "max_positive_step_bytes": {
+            "file": 296,
+            "code": 0,
+            "functions": 0
+          },
+          "min_remaining_cumulative_bytes": {
+            "file": 408,
+            "code": 2752,
+            "functions": 2741
+          },
+          "minimum_free_slot_bytes": 64353008
+        },
+        "wasm32-wasip1": {
+          "max_positive_step_bytes": {
+            "file": 512,
+            "code": 358,
+            "functions": 354
+          },
+          "min_remaining_cumulative_bytes": {
+            "file": 400,
+            "code": 1518,
+            "functions": 1524
+          },
+          "minimum_free_slot_bytes": 65759897
+        }
+      }
+    },
+    "legacy_tangent_cost": {
+      "columns": [
+        "fixed",
+        "preceding",
+        "candidate",
+        "prior_positive",
+        "increment",
+        "cumulative_positive",
+        "remaining_incremental",
+        "remaining_cumulative"
+      ],
+      "metrics": {
+        "file": [
+          1586632,
+          1586736,
+          1586952,
+          112,
+          216,
+          328,
+          3880,
+          16056
+        ],
+        "functions": [
+          955027,
+          955032,
+          954911,
+          5,
+          0,
+          5,
+          1024,
+          4091
+        ],
+        ".got": [
+          3096,
+          3104,
+          3104,
+          8,
+          0,
+          8,
+          31,
+          53
+        ],
+        ".rela.dyn": [
+          25152,
+          25176,
+          25176,
+          24,
+          0,
+          24,
+          251,
+          479
+        ]
+      }
+    },
+    "new_test_file_cap": 4194304,
+    "new_tests": {
+      "1.88.0": {
+        "native": {
+          "file": 1068736,
+          "code": 626030,
+          "functions": 617208,
+          "remaining_file_cap": 3125568,
+          "free_slot_bytes": 66040128
+        },
+        "wasm32-wasip1": {
+          "file": 488096,
+          "code": 360522,
+          "functions": 359359,
+          "remaining_file_cap": 3706208,
+          "free_slot_bytes": 66620768
+        }
+      },
+      "1.95.0": {
+        "native": {
+          "file": 1683648,
+          "code": 866247,
+          "functions": 855581,
+          "remaining_file_cap": 2510656,
+          "free_slot_bytes": 65425216
+        },
+        "wasm32-wasip1": {
+          "file": 788309,
+          "code": 602654,
+          "functions": 600944,
+          "remaining_file_cap": 3405995,
+          "free_slot_bytes": 66320555
+        }
+      },
+      "stable": {
+        "native": {
+          "file": 1717824,
+          "code": 875589,
+          "functions": 864922,
+          "remaining_file_cap": 2476480,
+          "free_slot_bytes": 65391040
+        },
+        "wasm32-wasip1": {
+          "file": 807696,
+          "code": 609846,
+          "functions": 608102,
+          "remaining_file_cap": 3386608,
+          "free_slot_bytes": 66301168
+        }
+      }
+    },
+    "scalar_query_test": {
+      "scope": "Native Hyperreal integration executable and the identical maintained Rust fixture in a portable WASI consumer. Both with and without trace. Same new-test file/job caps.",
+      "targets": {
+        "1.95.0": {
+          "native-plain": {
+            "file": 1436648,
+            "code": 739575,
+            "functions": 730048,
+            "remaining_file_allowance": 2757656,
+            "free_ci_slot": 65672216
+          },
+          "native-trace": {
+            "file": 1495656,
+            "code": 759399,
+            "functions": 749588,
+            "remaining_file_allowance": 2698648,
+            "free_ci_slot": 65613208
+          },
+          "wasm32-wasip1-plain": {
+            "file": 645677,
+            "code": 479219,
+            "functions": 477764,
+            "remaining_file_allowance": 3548627,
+            "free_ci_slot": 66463187
+          },
+          "wasm32-wasip1-trace": {
+            "file": 666095,
+            "code": 494792,
+            "functions": 493286,
+            "remaining_file_allowance": 3528209,
+            "free_ci_slot": 66442769
+          }
+        },
+        "stable": {
+          "native-plain": {
+            "file": 1464024,
+            "code": 750725,
+            "functions": 741306,
+            "remaining_file_allowance": 2730280,
+            "free_ci_slot": 65644840
+          },
+          "native-trace": {
+            "file": 1529528,
+            "code": 771077,
+            "functions": 761318,
+            "remaining_file_allowance": 2664776,
+            "free_ci_slot": 65579336
+          },
+          "wasm32-wasip1-plain": {
+            "file": 660103,
+            "code": 485528,
+            "functions": 484042,
+            "remaining_file_allowance": 3534201,
+            "free_ci_slot": 66448761
+          },
+          "wasm32-wasip1-trace": {
+            "file": 691505,
+            "code": 508961,
+            "functions": 507414,
+            "remaining_file_allowance": 3502799,
+            "free_ci_slot": 66417359
+          }
+        }
+      }
+    }
   }
 }
