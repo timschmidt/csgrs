@@ -133,6 +133,17 @@ class InventoryRefresh(unittest.TestCase):
         self.assertEqual([(r["symbol"], r["owner"]) for r in fresh],
                          [("gauss_jordan", "hypersolve"), ("propagate", "hyperpath")])
 
+    def test_path_extraction_keeps_adjacent_report_and_replay_owners(self):
+        for package in ("hyperpath", "another-path"):
+            self.source(f"{package}/Cargo.toml", f'[package]\nname = "{package}"\n')
+            for name in ("routing", "tangent", "solve", "unrelated"):
+                self.source(f"{package}/src/{name}.rs", "fn replay() {}\n")
+        self.refresh(self.inventory)
+        actual = [(r["path"], r["symbol"], r["owner"]) for r in self.rows(self.inventory)
+                  if r["review_status"] == CANDIDATE]
+        self.assertEqual(actual, [(f"hyperpath/src/{name}.rs", "replay", "hyperpath")
+                                  for name in ("routing", "solve", "tangent")])
+
     def test_machine_migration_modules_include_private_declarations(self):
         expected = set()
         for repository, package, files in [

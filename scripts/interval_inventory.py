@@ -38,7 +38,7 @@ FIELDS = [
 CANDIDATE = "lexical candidate; not yet audited"
 UNAVAILABLE = "repository unavailable"
 INTERVAL_PACKAGES = {"hyperinterval", "hyperlattice-interval", "hyperdynamics"}
-# Paths are relative to their package manifests (plan sections 7–9 and 12).
+# Paths are relative to their package manifests (plan sections 7–10 and 12).
 SEED_FILES = {
     "hypersolve": {
         "src/interval.rs", "src/real_interval.rs", "src/jacobian.rs", "src/linalg.rs",
@@ -55,6 +55,7 @@ SEED_FILES = {
     "alumina-clock": {"src/lib.rs"},
     "alumina-sim": {"src/foc.rs"},
     "hyperlimit": {"src/predicate.rs", "src/resolve.rs"},
+    "hyperpath": {"src/routing.rs", "src/tangent.rs", "src/solve.rs"},
 }
 SEED_DIRECTORIES = {
     "alumina-interface-core": "src/graph",
