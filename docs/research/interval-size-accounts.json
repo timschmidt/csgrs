@@ -11839,5 +11839,70 @@
       "stable wasm32-wasip1": 66564878,
       "nightly native ASan libFuzzer": 45066504
     }
+  },
+  "periodic_refinement_suite": {
+    "source": "8d667f09844089fda0164296844813ce68c53417",
+    "preceding": "56e041ca550d0e2d16b9c4ed156027af5a2e6141",
+    "evidence": "docs/evidence/2026-11-18-interval-periodic-refinement",
+    "scope": "New combined periodic-refinement integration test executable. Register each complete per-target file, emitted code and nonoverlapping function size. Existing test and production accounts carry forward.",
+    "file_cap_bytes": 4194304,
+    "ci_slot_bytes": 67108864,
+    "required_free_slot_bytes": 16777216,
+    "targets": {
+      "1.88.0": {
+        "native": {
+          "file": 1287648,
+          "code": 780798,
+          "functions": 770685,
+          "sha256": "640c57e699b65c1242a0a00a8eb304f055f9b71dcdf6721680ebcd6efc2c29ce",
+          "remaining_file_allowance_bytes": 2906656,
+          "free_slot_bytes": 65821216
+        },
+        "wasm32-wasip1": {
+          "file": 684733,
+          "code": 527391,
+          "functions": 525941,
+          "sha256": "599c7834a243dbe47797e31bb07f12532019a46dd9b40e54fcefd0b6e9d9bf21",
+          "remaining_file_allowance_bytes": 3509571,
+          "free_slot_bytes": 66424131
+        }
+      },
+      "1.95.0": {
+        "native": {
+          "file": 1657184,
+          "code": 850135,
+          "functions": 839772,
+          "sha256": "c83f48c9795eace765e00f90c40c0a3ffef0a9c853aadf8526bc2ba4f0406b72",
+          "remaining_file_allowance_bytes": 2537120,
+          "free_slot_bytes": 65451680
+        },
+        "wasm32-wasip1": {
+          "file": 759756,
+          "code": 576160,
+          "functions": 574489,
+          "sha256": "d67512be67f97ef920f339e08506fe4259c51ebe69c569f7dbfef98ee1d5786f",
+          "remaining_file_allowance_bytes": 3434548,
+          "free_slot_bytes": 66349108
+        }
+      },
+      "stable": {
+        "native": {
+          "file": 1686944,
+          "code": 856069,
+          "functions": 845705,
+          "sha256": "78617ea39600dfffdb4c8620b9f8b6b73d3db6fcbb6057a5e56ddfae8c75be11",
+          "remaining_file_allowance_bytes": 2507360,
+          "free_slot_bytes": 65421920
+        },
+        "wasm32-wasip1": {
+          "file": 779148,
+          "code": 583145,
+          "functions": 581439,
+          "sha256": "57c3f66033d50b0f04399803605700d9385e214518987851c83d1c7036be8d92",
+          "remaining_file_allowance_bytes": 3415156,
+          "free_slot_bytes": 66329716
+        }
+      }
+    }
   }
 }

@@ -13166,3 +13166,60 @@ execution remain outside this qualification.
 Evidence commit `7ae7db07739918a6adae8e322084dfbfe7cdea2a` contains 139 files under
 `docs/evidence/2026-11-18-interval-fixed-hull-oracle` with digest
 `2d9d4a3a3610ba9c45e79aa97445d661447858bf70c33669262e2dd9f1f47edc`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phases 5 and 14, periodic refinement and work exhaustion, 18 November 2026
+
+Commit `8d667f098` checks 18 non-singleton dyadic intervals of width
+2⁻⁴⁸. Three neighboring cells around π/6 and π/3 distinguish the grid
+images on either side of sin(x) or cos(x) equal to 1/2. At π/4, tan(x)
+and cot(x) cross 1. At the respective poles π/2 and π their center cells
+produce two rays and partial domain coverage. The neighboring cells have
+finite images and complete coverage. Directed 512-bit MPFR bounds agree
+on each expected endpoint after rounding to the 2⁻⁸ grid. The reflected
+sources independently verify parity, including ray order and signs.
+[Periodic conformance tests](crates/hyperinterval/tests/periodic_refinement.rs)
+
+A 64-bit size limit produces typed exhaustion on all 18 inputs. Each
+operation also fails one work unit below its completed cost and succeeds
+on retry with exactly that cost. The highest observed debit was 341,095,460
+units within the 2²⁹-unit fixture allowance. Native and WASI receipts agree.
+
+For the wider intervals [1,2] and [1/2,2], the tests visit every work
+reservation made by the public sine and tangent calls. The spent prefix of a
+failed call identifies the preceding reservation. This gives 284 and 426
+cutoffs on the dyadic source and 272 and 392 on the rational source.
+Publishing a whole sine range or the entire tangent line after exhaustion
+passed the respective existing numerical suites. The new sweeps rejected
+both alterations independently on native and WASI, then verified the exact
+retry in the unmodified implementation.
+
+| Rust release | New native / WASI test cases | Complete scalar job direct WASI cases | New native image | New WASI image |
+| --- | ---: | ---: | ---: | ---: |
+| 1.88 | 3 / 3 | 181 | 1,287,648 B | 684,733 B |
+| 1.95 | 4 / 4 | 235 | 1,657,184 B | 759,756 B |
+| 1.99 | 4 / 4 | 235 | 1,686,944 B | 779,148 B |
+
+All six new executables fit their 4 MiB file caps. The largest individual
+compiled job peaked at 27,377,664 bytes in a swap-disabled 256 MiB cgroup. The complete
+scalar jobs kept their 256 MiB reserves, original OS-dependent host cases
+and five native-parent replays. The two Hyperreal-enabled compilers also
+matched all 450 rational dispatch comparisons. [Size accounts](docs/research/interval-size-accounts.json) · [Memory accounts](docs/research/interval-memory-accounts.json)
+
+The complete stable coverage run gained 10 production lines and 81 regions
+with identical denominators. It now covers 4,930/4,963 lines and
+9,944/10,405 regions. Nightly gained six lines, 81 regions and a
+trigonometry branch, reaching 983/1,005 branches. The additional branch
+requires another pass after evaluating both ends of a non-singleton interval. Per-file covered counts
+held or improved on both compilers. The 100% owner gate remains open.
+
+Native release suites, minimal-feature tests, native and WASI strict Clippy,
+strict rustdoc and formatting passed. The downstream Hypersolve interval
+expression and Hyperdynamics expression-field suites passed 9 and 15 tests.
+The bounded ASan campaigns completed 8,160 trigonometry
+runs under the workflow time limit and 10,000 tangent runs.
+A second trigonometry campaign completed all 10,000 runs. Hosted CI and hardware execution
+remain outside these measurements.
+
+Evidence commit `1ab2a968d967ff10d05d3c04f17f157c50fc9e57` contains 856
+files under `docs/evidence/2026-11-18-interval-periodic-refinement` with digest
+`83bca27b5f0984e75f1c4f3faae5dbcd1e321b029861dc05960cb3950760bef0`. [Evidence index](docs/evidence-archive.tsv)

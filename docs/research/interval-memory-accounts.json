@@ -1255,5 +1255,82 @@
     "seeded_extreme_job_peak_bytes": 128925696,
     "registered_peak_bytes": 128925696,
     "remaining_above_reserve_bytes": 676380672
+  },
+  "periodic_refinement_qualification": {
+    "source": "8d667f09844089fda0164296844813ce68c53417",
+    "evidence": "docs/evidence/2026-11-18-interval-periodic-refinement",
+    "scope": "One freshly instantiated compiled test job, sequential cases, inside a swap-disabled Linux cgroup, including native or Node/WASI startup through process exit. Separately charge the complete warmed scalar conformance job against its existing register. Production heap and stack accounts carry forward.",
+    "single_test_job_capacity_bytes": 268435456,
+    "single_test_job_reserved_bytes": 67108864,
+    "whole_job_capacity_bytes": 1073741824,
+    "whole_job_reserved_bytes": 268435456,
+    "targets": {
+      "1.88.0": {
+        "native": {
+          "complete_new_job_peak_bytes": 6238208,
+          "above_reserve_bytes": 195088384,
+          "elapsed_seconds": 0.065
+        },
+        "wasm32-wasip1": {
+          "complete_new_job_peak_bytes": 26927104,
+          "above_reserve_bytes": 174399488,
+          "elapsed_seconds": 0.192
+        },
+        "whole_scalar_job": {
+          "previous_positive_charge_bytes": 225976320,
+          "measured_peak_bytes": 226770944,
+          "incremental_positive_charge_bytes": 794624,
+          "cumulative_positive_charge_bytes": 226770944,
+          "remaining_above_required_reserve_bytes": 578535424,
+          "direct_guest_passes": 181,
+          "native_cases": 6,
+          "fresh_replay_count": 5
+        }
+      },
+      "1.95.0": {
+        "native": {
+          "complete_new_job_peak_bytes": 6725632,
+          "above_reserve_bytes": 194600960,
+          "elapsed_seconds": 0.083
+        },
+        "wasm32-wasip1": {
+          "complete_new_job_peak_bytes": 26230784,
+          "above_reserve_bytes": 175095808,
+          "elapsed_seconds": 0.228
+        },
+        "whole_scalar_job": {
+          "previous_positive_charge_bytes": 197312512,
+          "measured_peak_bytes": 197091328,
+          "incremental_positive_charge_bytes": 0,
+          "cumulative_positive_charge_bytes": 197312512,
+          "remaining_above_required_reserve_bytes": 607993856,
+          "direct_guest_passes": 235,
+          "native_cases": 9,
+          "fresh_replay_count": 5
+        }
+      },
+      "stable": {
+        "native": {
+          "complete_new_job_peak_bytes": 6934528,
+          "above_reserve_bytes": 194392064,
+          "elapsed_seconds": 0.084
+        },
+        "wasm32-wasip1": {
+          "complete_new_job_peak_bytes": 27377664,
+          "above_reserve_bytes": 173948928,
+          "elapsed_seconds": 0.223
+        },
+        "whole_scalar_job": {
+          "previous_positive_charge_bytes": 187351040,
+          "measured_peak_bytes": 187109376,
+          "incremental_positive_charge_bytes": 0,
+          "cumulative_positive_charge_bytes": 187351040,
+          "remaining_above_required_reserve_bytes": 617955328,
+          "direct_guest_passes": 235,
+          "native_cases": 9,
+          "fresh_replay_count": 5
+        }
+      }
+    }
   }
 }
