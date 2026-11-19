@@ -15898,5 +15898,84 @@
         }
       }
     }
+  },
+  "hyperpath_two_hosted_relro_padding_limits": {
+    "target": "Rust 1.95 x86_64-unknown-linux-gnu release, all Hyperpath features",
+    "scope": "Only the .relro_padding SHT_NOBITS section of the certified_schedule example and schedule_equivalence integration suite. The linker reserves this space through the end of a page protected after relocation. The preceding section-size percentage gave different allowances for the same page capacity. Every file-backed, code, memory, performance and dispatch account keeps its existing limits.",
+    "capacity_bytes": 4096,
+    "incremental_max_bytes": 64,
+    "incremental_percent_of_page": 1.5625,
+    "cumulative_max_bytes": 256,
+    "cumulative_percent_of_page": 6.25,
+    "required_condition": "Each PT_LOAD and GNU_RELRO segment keeps its page count and permissions against both the original and preceding release. The examples and tests each retain a 16 MiB reserve in the registered 64 MiB hosted command slot.",
+    "original_disposition": "The original incremental 1% section allowance rejected +24 on 1,648 and +40 on 2,760. No other artifact receives this revision.",
+    "targets": {
+      "certified_schedule": {
+        "fixed_revision": "df9cb4dde",
+        "fixed_padding": 1632,
+        "previous_padding": 1648,
+        "previous_charge": 16,
+        "verified_load_and_relro_page_counts": [
+          [
+            "LOAD",
+            "R",
+            269
+          ],
+          [
+            "LOAD",
+            "RE",
+            508
+          ],
+          [
+            "LOAD",
+            "RW",
+            10
+          ],
+          [
+            "LOAD",
+            "RW",
+            49
+          ],
+          [
+            "GNU_RELRO",
+            "R",
+            10
+          ]
+        ]
+      },
+      "schedule_equivalence": {
+        "fixed_revision": "d8eb6fa0c",
+        "fixed_padding": 2712,
+        "previous_padding": 2760,
+        "previous_charge": 48,
+        "verified_load_and_relro_page_counts": [
+          [
+            "LOAD",
+            "R",
+            299
+          ],
+          [
+            "LOAD",
+            "RE",
+            598
+          ],
+          [
+            "LOAD",
+            "RW",
+            17
+          ],
+          [
+            "LOAD",
+            "RW",
+            49
+          ],
+          [
+            "GNU_RELRO",
+            "R",
+            17
+          ]
+        ]
+      }
+    }
   }
 }
