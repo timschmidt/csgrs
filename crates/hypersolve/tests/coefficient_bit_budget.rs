@@ -31,6 +31,13 @@ fn outermost_exceeded_limit_owns_the_failure() {
                         } else {
                             let denied = observation.unwrap_err();
                             assert_eq!(denied.kind, WorkKind::CoefficientGrowth);
+                            let limit = if bits > outer { outer } else { inner };
+                            if let Ok(limit) = usize::try_from(limit) {
+                                assert_eq!(denied.limit, limit);
+                            }
+                            if let Ok(bits) = usize::try_from(bits) {
+                                assert_eq!(denied.requested, bits);
+                            }
                             assert_eq!(denied.used, 0);
                             assert_eq!(exhaustion(), Some(denied));
                             let child =
@@ -92,6 +99,27 @@ fn first_receipt_names_the_outermost_limit_that_denied_work() {
             });
             assert_eq!(enclosing.result.is_err(), outer < request);
         }
+    }
+}
+
+#[test]
+fn denial_above_the_word_ceiling_keeps_the_strict_inequality() {
+    let ceiling = u64::from(u32::MAX);
+    for (limit, request) in [
+        (ceiling, ceiling + 1),
+        (ceiling + 1, ceiling + 2),
+        (u64::MAX - 1, u64::MAX),
+    ] {
+        let denied = with_coefficient_bit_limit(limit, || observe_coefficient_bits(request))
+            .result
+            .unwrap_err();
+        assert_eq!(denied.kind, WorkKind::CoefficientGrowth);
+        let expected = if usize::BITS == 32 {
+            "coefficient growth exceeded a limit of at least 4294967295 bits".to_owned()
+        } else {
+            format!("coefficient growth limit exceeded: {request} bits against a limit of {limit}")
+        };
+        assert_eq!(denied.to_string(), expected);
     }
 }
 

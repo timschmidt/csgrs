@@ -134,8 +134,9 @@ observation of its final rational coefficients. Callers that check a fused
 sum can pass the largest stored numerator-plus-denominator bit count to
 `work_budget::observe_coefficient_bits` before using the result.
 A denied observation exhausts the responsible scope with `CoefficientGrowth`. The limit and
-observed bit count are compared as `u64`. On 32-bit targets the error currently
-saturates each reported count above `usize::MAX`, including in its display. See the
+observed bit count are compared as `u64`. On 32-bit targets the error fields saturate
+above `usize::MAX`. When both fields reach that ceiling the message reports
+that the observation exceeded a limit of at least 4,294,967,295 bits. See the
 [module contract](src/work_budget.rs) for the current coverage, cache behavior,
 and thread-local scope rules.
 

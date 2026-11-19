@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Report a lower bound when both coefficient-growth counts reach the 32-bit
+  reporting ceiling. The diagnostic now preserves the strict inequality
+  between the observed bit length and its limit.
+
 - Require certified comparisons when classifying a univariate quadratic
   Krawczyk row. An unresolved containment or contraction comparison can now
   return `Undecided` under `APPROXIMATE_512`.

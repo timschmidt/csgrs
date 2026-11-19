@@ -199,6 +199,9 @@ pub enum WorkKind {
 /// reports only the size of the request that observed the cancellation. A
 /// [`WorkKind::CoefficientGrowth`] failure reports the bit limit as `limit`,
 /// zero `used`, and the observed coefficient's bit length as `requested`.
+/// On 32-bit targets each count above `usize::MAX` saturates in the receipt.
+/// If both fields reach that ceiling, the observation exceeded the actual
+/// limit and only a lower bound on that limit is available.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BudgetExceeded {
     /// Work that the operation attempted to perform.
@@ -225,6 +228,10 @@ impl BudgetExceeded {
 impl fmt::Display for BudgetExceeded {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.kind == WorkKind::CoefficientGrowth {
+            if usize::BITS == 32 && self.limit == usize::MAX && self.requested == usize::MAX {
+                return formatter
+                    .write_str("coefficient growth exceeded a limit of at least 4294967295 bits");
+            }
             return write!(
                 formatter,
                 "coefficient growth limit exceeded: {} bits against a limit of {}",
