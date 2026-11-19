@@ -13760,3 +13760,34 @@ Coverage of the broader interval lexicase matrix remains open.
 
 Evidence commit `989ac011dea07367f384408775d831c1ec73e4eb` records 1,018 verified members in 143,000 bytes.
 [Evidence index](docs/evidence-archive.tsv)
+
+### Phase 4 strict IEEE range fuzzing, 19 November 2026
+
+At `a76696da9`, the strict-float fuzz target passed four inputs against a
+disposable kernel missing the corner formed by the first lower endpoint and
+the second upper endpoint. Its multiplication and division calls used point
+operands. The owner already checked 4,000 generated endpoint quartets per
+format in a deterministic test. Commit `db62aae75` shares that test's GMP
+and directed MPFR oracle with the fuzzer and broadens CI input length to
+32 bytes. The original 24-byte point and affine inputs retain their decoding.
+
+Both binary32 and binary64 now detect the missing lower bound of −15 for
+[−3, 2] × [−4, 5] and the tight lower rounding of 2/9 for [2, 6] / [3, 9].
+The unmodified kernel passed all four replays. Each format also checks 3,025
+pairs of ranges spanning signed zeros, subnormals, normal values and finite
+extremes. Product and quotient checks compare both endpoint bits and the
+zero-divisor or overflow outcome where applicable.
+[Shared oracle](crates/hyperinterval/tests/support/float_range_oracle.rs)
+
+The native ASan campaign completed 43,584 iterations in 31 seconds. It also
+passed 2,048 independently generated full-width inputs and 64 legacy inputs.
+For binary64, the full-width sample included 332 overflowing quotients,
+1,040 zero-containing divisors and 673 finite quotients. Three additional
+inputs had a nonfinite endpoint. The two formats' fixed and random tests ran
+on Rust 1.88 and 1.95. All 45 affected all-feature release tests, both
+Clippy checks, formatting and the pedantic workflow scan passed. This change
+qualifies the host test and fuzz paths. Packaged library source, manifests
+and lockfiles matched the baseline.
+
+Evidence commit `7a4bbb78c51a6f0eafe7082e36950e419f67c621` records 281 verified members in 40,932 bytes.
+[Evidence index](docs/evidence-archive.tsv)
