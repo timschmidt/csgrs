@@ -13126,3 +13126,43 @@ own hosted workload account.
 Evidence commit `ce9133a4b9fed19d833b1a36eb9600e3a4ba6943` contains 1,200
 files under `docs/evidence/2026-11-18-interval-scalar-fresh-replay`, with digest
 `24a1641bc7ed36017f9aafe0449fb867df4cfe82cefd84d39a52d9eb4279955e`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phases 2 and 14, tight fixed-point arithmetic hulls, 18 November 2026
+
+In `9fa17b080`, Hyperinterval's Q2.30 and Q31.32 checks require an exact
+attainable extremum to fall beyond each inward lattice neighbor. Signed
+integer cross-products prove containment, tightness and representability.
+The square and absolute-value checks include zero when the interval crosses
+it. The original 16-byte fuzz inputs retain their Q2.30 interpretation, and
+a 32-byte input additionally supplies all four Q31.32 endpoints.
+[Independent oracle](crates/hyperinterval/tests/support/fixed_hull_oracle.rs) · [Fuzz target](crates/hyperinterval/fuzz/fuzz_targets/fixed_arithmetic.rs)
+
+On `5261b146c`, a product widened by one lattice unit passed the Q31.32
+extreme matrix and 100,000 sanitizer fuzz runs. Both revised checks rejected
+the mutation. A separate one-unit error confined to the 64-bit upper bound
+was detected by a 32-byte seed. The native and WASI arithmetic suites
+passed on Rust 1.88, 1.95 and 1.99. Three Alumina firmware Q30 differential
+tests passed against firmware `35d1b0da6`. The CI fuzz command and three
+bounded candidate campaigns completed 100,000 runs each, including an empty
+starting corpus and all 4,050 width-specific boundary seeds. The latter
+campaign peaked at 128,925,696 bytes within its 1 GiB swap-disabled cgroup.
+
+The largest ordinary executable growth was 688 bytes. Native and WASI emitted
+code shrank on all three compilers. The sanitizer image added
+14,112 emitted code bytes and fit its
+per-image allowance. All production accounts carry forward.
+[Size accounts](docs/research/interval-size-accounts.json) · [Memory accounts](docs/research/interval-memory-accounts.json)
+
+Native release tests, strict native Clippy, the fuzz target's strict Clippy
+check, strict Rustdoc, formatting and the workflow security audit passed.
+The whole-owner coverage gate is still open. The preceding and retained Rust
+1.99 runs measured identical production coverage on every file, with
+4,920/4,963 lines,
+9,863/10,405 regions and
+517/517 functions. This
+compiler supplied no branch counts. Hosted CI and physical hardware
+execution remain outside this qualification.
+
+Evidence commit `7ae7db07739918a6adae8e322084dfbfe7cdea2a` contains 139 files under
+`docs/evidence/2026-11-18-interval-fixed-hull-oracle` with digest
+`2d9d4a3a3610ba9c45e79aa97445d661447858bf70c33669262e2dd9f1f47edc`. [Evidence index](docs/evidence-archive.tsv)

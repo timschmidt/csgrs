@@ -11584,5 +11584,260 @@
         }
       }
     }
+  },
+  "fixed_hull_qualification": {
+    "source": "9fa17b08038dfd71fece558fd6c1be9226d24aba",
+    "evidence": "docs/evidence/2026-11-18-interval-fixed-hull-oracle",
+    "workload": "Fixed-point arithmetic integration tests on native and WASI plus the hosted sanitizer-instrumented fixed_arithmetic fuzz executable. Production artifacts have no source, feature or dependency changes. Existing accounts carry forward.",
+    "fixed": "933c9ae56 for ordinary test images. First sanitizer image registration at 5261b146ca1310634227d219beeb5b7b889e0776",
+    "preceding": "5261b146ca1310634227d219beeb5b7b889e0776",
+    "caps": "Ordinary images 4096 bytes / 1% incremental and 8192 bytes / 2% cumulative. ASan image 256 KiB / 5% incremental and 512 KiB / 10% cumulative. Percentages use preceding and fixed bytes respectively. Smaller of the absolute and relative limits governs.",
+    "file_slot_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "columns": [
+      "fixed",
+      "preceding",
+      "accepted",
+      "previous_positive",
+      "incremental_positive",
+      "cumulative_positive",
+      "remaining_incremental",
+      "remaining_cumulative"
+    ],
+    "bytes": {
+      "1.88.0 native": {
+        "file": [
+          1140824,
+          1140824,
+          1141272,
+          0,
+          448,
+          448,
+          3648,
+          7744
+        ],
+        "code": [
+          665788,
+          665788,
+          664620,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ],
+        "functions": [
+          655883,
+          655883,
+          654688,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ]
+      },
+      "1.88.0 wasm32-wasip1": {
+        "file": [
+          554489,
+          554489,
+          553860,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ],
+        "code": [
+          408962,
+          408962,
+          407536,
+          0,
+          0,
+          0,
+          4089,
+          8179
+        ],
+        "functions": [
+          407614,
+          407614,
+          406179,
+          0,
+          0,
+          0,
+          4076,
+          8152
+        ]
+      },
+      "1.95.0 native": {
+        "file": [
+          1129672,
+          1129672,
+          1130360,
+          0,
+          688,
+          688,
+          3408,
+          7504
+        ],
+        "code": [
+          641380,
+          641380,
+          640420,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ],
+        "functions": [
+          632235,
+          632235,
+          631242,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ]
+      },
+      "1.95.0 wasm32-wasip1": {
+        "file": [
+          522701,
+          522701,
+          522885,
+          0,
+          184,
+          184,
+          3912,
+          8008
+        ],
+        "code": [
+          373018,
+          373018,
+          372290,
+          0,
+          0,
+          0,
+          3730,
+          7460
+        ],
+        "functions": [
+          371647,
+          371647,
+          370907,
+          0,
+          0,
+          0,
+          3716,
+          7432
+        ]
+      },
+      "stable native": {
+        "file": [
+          1156624,
+          1156624,
+          1156640,
+          0,
+          16,
+          16,
+          4080,
+          8176
+        ],
+        "code": [
+          650327,
+          650327,
+          649063,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ],
+        "functions": [
+          641280,
+          641280,
+          639973,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ]
+      },
+      "stable wasm32-wasip1": {
+        "file": [
+          544614,
+          544614,
+          543986,
+          0,
+          0,
+          0,
+          4096,
+          8192
+        ],
+        "code": [
+          384062,
+          384062,
+          382643,
+          0,
+          0,
+          0,
+          3840,
+          7681
+        ],
+        "functions": [
+          382641,
+          382641,
+          381213,
+          0,
+          0,
+          0,
+          3826,
+          7652
+        ]
+      },
+      "nightly native ASan libFuzzer": {
+        "file": [
+          22067792,
+          22067792,
+          22042360,
+          0,
+          0,
+          0,
+          262144,
+          524288
+        ],
+        "code": [
+          2287644,
+          2287644,
+          2301756,
+          0,
+          14112,
+          14112,
+          100270,
+          214652
+        ],
+        "functions": [
+          1987070,
+          1987070,
+          2000960,
+          0,
+          13890,
+          13890,
+          85463,
+          184817
+        ]
+      }
+    },
+    "free_file_slot_bytes": {
+      "1.88.0 native": 65967592,
+      "1.88.0 wasm32-wasip1": 66555004,
+      "1.95.0 native": 65978504,
+      "1.95.0 wasm32-wasip1": 66585979,
+      "stable native": 65952224,
+      "stable wasm32-wasip1": 66564878,
+      "nightly native ASan libFuzzer": 45066504
+    }
   }
 }

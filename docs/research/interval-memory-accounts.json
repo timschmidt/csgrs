@@ -1240,5 +1240,20 @@
         "fresh_guest_replays": 5
       }
     }
+  },
+  "fixed_hull_fuzz_campaign": {
+    "source": "9fa17b08038dfd71fece558fd6c1be9226d24aba",
+    "evidence": "docs/evidence/2026-11-18-interval-fixed-hull-oracle",
+    "scope": "Hosted sanitizer conformance campaigns only. Fresh swap-disabled cgroup per invocation through result and cleanup. One worker, ASan quarantine 128 MiB, max 100000 runs, 30 s, 16 or 32 input bytes. The baseline and candidate legacy invocations consume the same input seeds. The new workload includes both formats. Production heap and stack accounts carry forward independently.",
+    "capacity_bytes": 1073741824,
+    "required_free_bytes": 268435456,
+    "unit": "whole cgroup peak bytes, including input corpus reads, fuzzer, sanitizer and allocator overhead",
+    "legacy_baseline_peak_bytes": 56193024,
+    "legacy_observed_peak_bytes": 58798080,
+    "legacy_positive_increase_bytes": 2605056,
+    "ordinary_new_job_peak_bytes": 61161472,
+    "seeded_extreme_job_peak_bytes": 128925696,
+    "registered_peak_bytes": 128925696,
+    "remaining_above_reserve_bytes": 676380672
   }
 }
