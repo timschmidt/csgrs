@@ -185,12 +185,21 @@ fn exact_rational_sources_near_poles_and_huge_phases() {
     }
     let (pi, _) = oracle::half_pi();
     let scale = Integer::from(1) << 128u32;
-    for k in [-5i32, -4, -1, 0, 1, 4, 5] {
-        let at = (pi.clone() * k * &scale).floor().numer().clone();
+    // Include pi/4, where tan and cot both cross the output grid at one,
+    // as well as the poles of tan at pi/2 and cot at pi.
+    for quarters in [-10_i32, -8, -2, 0, 1, 2, 4, 8, 10] {
+        let at = (pi.clone() * quarters * &scale / 2_i32)
+            .floor()
+            .numer()
+            .clone();
         let a = Q::from((at.clone() - 1, scale.clone()));
         let b = Q::from((at + 2, scale.clone()));
         verify(a.clone(), a.clone(), -64);
         verify(b.clone(), b.clone(), -64);
+        if matches!(quarters, 1 | 2 | 4) {
+            verify(Q::from((1, 4)), a.clone(), -64);
+            verify(Q::from((1, 4)), b.clone(), -64);
+        }
         verify(a, b, -64);
     }
     for e in [128u32, 512] {

@@ -94,6 +94,12 @@ fn rational_near_periodic_boundaries_and_huge_phases() {
         let b = Q::from((x + 2, scale.clone()));
         verify(a.clone(), a.clone(), -128);
         verify(b.clone(), b.clone(), -128);
+        // One endpoint is well inside the quadrant while the other must
+        // distinguish the two sides of an irrational quarter turn.
+        if matches!(k, 1 | 2) {
+            verify(Q::from((1, 4)), a.clone(), -128);
+            verify(Q::from((1, 4)), b.clone(), -128);
+        }
         verify(a, b, -128);
     }
     for e in [128u32, 512] {
@@ -259,40 +265,46 @@ fn near_dyadic_output_boundaries_refine_and_retry_without_publishing_partial_bou
                 let mantissa = floor.clone() + offset;
                 let source =
                     DyadicInterval::point(mantissa.to_string().parse().unwrap(), -bits).unwrap();
-                let evaluate = |work: &mut DyadicBudget| {
+                let evaluate = |x: &DyadicInterval, work: &mut DyadicBudget| {
                     if cosine {
-                        source.cos(-8, work)
+                        x.cos(-8, work)
                     } else {
-                        source.sin(-8, work)
+                        x.sin(-8, work)
                     }
                 };
-                let mut work = budget();
-                let available = work.remaining_work();
-                let result = evaluate(&mut work).unwrap();
-                assert_eq!(result.domain, DomainCoverage::Complete);
-                let above_half = cosine == (offset == 0);
-                assert_eq!(
-                    result.range,
-                    if above_half {
-                        d(128, 129, -8)
-                    } else {
-                        d(127, 128, -8)
-                    }
-                );
+                let span = d(0, 0, 0).hull(&source, &mut budget()).unwrap();
                 let point = oracle::q(&mantissa, -bits);
-                oracle::verify(&result.range, &point, &point, -8, cosine);
+                let (lo, hi) = if cosine == (offset == 0) {
+                    (128, 129)
+                } else {
+                    (127, 128)
+                };
+                // Both functions are monotone here. At zero, sine is zero
+                // and cosine is one (256 units on the requested grid).
+                let span_image = if cosine { d(lo, 256, -8) } else { d(0, hi, -8) };
+                for (input, left, expected) in [
+                    (&source, &point, d(lo, hi, -8)),
+                    (&span, &0.into(), span_image),
+                ] {
+                    let mut work = budget();
+                    let available = work.remaining_work();
+                    let result = evaluate(input, &mut work).unwrap();
+                    assert_eq!(result.domain, DomainCoverage::Complete);
+                    oracle::verify(&result.range, left, &point, -8, cosine);
 
-                let consumed = available - work.remaining_work();
-                assert!(consumed > 0);
-                assert_eq!(
-                    evaluate(&mut DyadicBudget::new(32768, consumed - 1)),
-                    Err(IntervalError::WorkExhausted)
-                );
-                let mut retry = DyadicBudget::new(32768, consumed);
-                assert_eq!(evaluate(&mut retry).unwrap(), result);
-                assert_eq!(retry.remaining_work(), 0);
-                // The newly generated enclosure remains a valid next operand.
-                assert!(!result.range.square(&mut budget()).unwrap().is_empty());
+                    assert_eq!(result.range, expected);
+
+                    let consumed = available - work.remaining_work();
+                    assert!(consumed > 0);
+                    assert_eq!(
+                        evaluate(input, &mut DyadicBudget::new(32768, consumed - 1)),
+                        Err(IntervalError::WorkExhausted)
+                    );
+                    let mut retry = DyadicBudget::new(32768, consumed);
+                    assert_eq!(evaluate(input, &mut retry).unwrap(), result);
+                    assert_eq!(retry.remaining_work(), 0);
+                    assert!(!result.range.square(&mut budget()).unwrap().is_empty());
+                }
             }
         }
     }
