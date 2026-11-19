@@ -170,8 +170,8 @@ impl DenseTensorPolynomial {
         Some(result)
     }
 
-    /// Forms a signed sum of same-rank tensor products in one result tensor,
-    /// subtracting each product whose flag is set.
+    /// Accumulates same-rank products in one tensor, subtracting flagged terms.
+    /// The coefficient bit limit applies to the final exact rational coefficients.
     pub fn sum_products(terms: &[(&Self, &Self, bool)]) -> Option<Self> {
         let rank = terms.first()?.0.dimensions.len();
         if terms
@@ -207,7 +207,7 @@ impl DenseTensorPolynomial {
                 }
             }
         }
-        Some(result)
+        result.within_coefficient_bit_limit()
     }
 
     /// Embeds a trivariate polynomial in a tensor of `rank`, sending its three
@@ -260,6 +260,7 @@ impl DenseTensorPolynomial {
 
     // Reports the largest exact rational coefficient to an active coefficient
     // bit limit; an oversized product is unavailable, never truncated.
+    #[inline(always)]
     fn within_coefficient_bit_limit(self) -> Option<Self> {
         if !crate::work_budget::is_active() {
             return Some(self);
