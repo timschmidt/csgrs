@@ -66,7 +66,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; solver zero-tangent and varying affine-box verdicts remain open alongside the measured extraction stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 27 required client checks pass on both, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -14553,3 +14553,58 @@ The final projection required no memory or firmware allowance.
 All 375 observations verified from local evidence commit
 `6373c2840b7ef98935865b5fcff813cbcde20058`. The compressed record occupies
 120,164 bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 14, worked interval examples from the release archives
+
+At `ce6cf85f5`, the Hyperinterval README's Q30 command worked in a
+checkout. Cargo reported a missing `fixed_bounds` target when the same
+command used the release archive. The published manifest contained only
+`proposal_replay` and `real_to_dyadic`. Commit `bbf96fd7f` includes all
+three example sources and makes the release check run seven worked targets
+from their unpacked owning crates, using the feature flags in their documented
+commands. A control that changed the squared lower bound from 2²⁸ to 2²⁷
+compiled successfully and failed when the release check executed it.
+[Package manifest](crates/hyperinterval/Cargo.toml) · [Release procedure](docs/RELEASE.md)
+
+The seven executables cover eight worked topics in section 17. The proposal at
+an offset of 2⁵³ collapsed to zero while exact replay retained [1/4, 3/4].
+The fine dyadic grid separated √2 from 181/128. The affine image retained
+2x−y = −1, the Krawczyk example checked both contraction bounds, the schedule
+replay identified the failed stopping constraint, and the ODE example exercised
+certified steps and a complete horizon. In the ninth topic, unchanged Alumina
+Firmware `56c2c28` consumed the packaged fixed-only library. Its calibration
+example checked the two ADC intervals and the invalid count. The Cortex-M4F
+library check passed on Rust 1.88. Board execution and timing remain open.
+[Example expectations](#section-17-worked-interval-examples)
+
+Each Linux release run verified 21 packages and their 21 workspace
+documentation configurations. All 34 named checks passed on Rust 1.95 and
+1.99. The seven new executables produced identical outputs across compilers.
+A separate build rendered the documentation of all five example owners from
+the unpacked archives on both compilers. All resolved first-party manifests
+in those ten builds came from the extracted packages. The hosted docs.rs
+build remains a separate release gate.
+
+All 21 archives were byte-identical between two clean checkouts using the
+same compiler. Fourteen also matched across compiler versions. Of the seven
+remaining cross-compiler differences, four had differences confined to `Cargo.lock` member
+contents and three had identical member contents. Against the preceding
+revision on each compiler, the Hyperinterval archive grew by 157 bytes to
+92,726 bytes in the coordinated 21-package build. The added Q30 source is
+705 bytes. The normalized manifest declares the `fixed` feature for its
+target. The dependency versions and edges in the packaged locks stayed
+the same after accounting for sibling archive checksums.
+
+The packaged Q30 Cargo target also ran on its fixed backend's Rust 1.88
+minimum. An external program using the same source and only the `fixed`
+feature produced byte-identical native and bare WebAssembly images against
+the preceding and retained libraries on Rust 1.88, 1.95 and 1.99. All six
+image pairs executed their assertions. This distribution change consumed no
+production binary or memory allowance. Both workspace formatting checks
+passed and the inventory regenerated with 7,356 scan rows and 435 body
+reviews. Publication and the full cross-platform and HIL matrix remain open.
+
+The archived record contains 84 observations in 52,964 bytes. Verification
+against local evidence commit `f50729e1ca9d62834ba5d02f1e70910f8b23e6a8`
+matched all 258 November interval records to the index, covering 93,284
+files and 6,298,330,796 bytes. [Evidence index](docs/evidence-archive.tsv)

@@ -121,8 +121,10 @@ Run these after the last change, in addition to the
    Hyperinterval, Hyperlattice Interval, Hypersolve, Hyperpath and Hyperdynamics
    crates. Each invocation selects the documented features for that example.
    This checks both the target declared in the published manifest and the
-   assertions in its shipped source. The current-calibration example runs in
-   the separate Alumina Firmware workflow. [Worked examples](../INTERVAL_REFACTOR_PROGRESS.md#section-17-worked-interval-examples)
+   assertions in its shipped source. Cargo builds Hyperinterval's development
+   dependencies for example targets. Building their GMP library from source
+   on Linux requires a C toolchain, Make and M4. The current-calibration
+   example runs in the separate Alumina Firmware workflow. [Worked examples](../INTERVAL_REFACTOR_PROGRESS.md#section-17-worked-interval-examples)
 
    The check requests each Rust executable by name and runs the path Cargo
    reports for that consumer. A missing required Rust, C or C++ program fails
