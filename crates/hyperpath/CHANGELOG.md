@@ -2,6 +2,10 @@
 
 ## [0.3.0] - Unreleased
 
+Affine axis projection now requires certified signs for its inputs and a
+certified comparison to select each limiting row. Planning and replay return
+`PredicateUnresolved` when only a terminal approximation is available.
+
 ### Breaking
 
 - Constructors and importers take an explicit `hyperlimit::PredicatePolicy`:

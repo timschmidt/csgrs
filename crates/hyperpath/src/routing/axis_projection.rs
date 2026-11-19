@@ -129,11 +129,14 @@ impl PlannedAxisProjectedMotionLimits {
 /// candidate. Structurally zero derivatives contribute no limit. The exact
 /// minimum is selected independently for velocity, acceleration, and jerk;
 /// ties retain the first span/axis row for deterministic evidence.
+/// Signs and comparisons must be certified, including the equality used to
+/// retain a tied row. An unresolved decision returns `PredicateUnresolved`.
 pub fn plan_axis_projected_motion_limits(
     projections: &[AffineSpanAxisProjection],
     axis_limits: &[AxisMotionLimits],
     policy: PredicatePolicy,
 ) -> Result<PlannedAxisProjectedMotionLimits, RouteCertificationError> {
+    let policy = policy.certified_only();
     validate_projection_inputs(projections, axis_limits, policy)?;
 
     let mut feed: Option<(Real, AxisProjectionBottleneck)> = None;
@@ -216,7 +219,8 @@ pub fn plan_axis_projected_motion_limits(
 ///
 /// This does not require a proposal to be maximal; it certifies safety. The
 /// planner separately retains exact bottleneck equalities to establish that its
-/// selected values are the route-wide minima.
+/// selected values are the route-wide minima. Input signs must be certified
+/// before the inequalities can serve as evidence for an absolute derivative.
 pub fn certify_axis_projected_motion_limits(
     projections: &[AffineSpanAxisProjection],
     axis_limits: &[AxisMotionLimits],
@@ -225,6 +229,7 @@ pub fn certify_axis_projected_motion_limits(
     maximum_path_jerk: Real,
     policy: PredicatePolicy,
 ) -> Result<AxisProjectedMotionLimitsReport, RouteCertificationError> {
+    let policy = policy.certified_only();
     validate_projection_inputs(projections, axis_limits, policy)?;
     require_positive(
         &maximum_path_feed,
