@@ -38,15 +38,23 @@ FIELDS = [
 CANDIDATE = "lexical candidate; not yet audited"
 UNAVAILABLE = "repository unavailable"
 INTERVAL_PACKAGES = {"hyperinterval", "hyperlattice-interval", "hyperdynamics"}
-# Paths are relative to their package manifests (plan section 12).
+# Paths are relative to their package manifests (plan sections 8, 9 and 12).
 SEED_FILES = {
     "hypersolve": {"src/interval.rs", "src/real_interval.rs"},
-    "alumina-interface-core": {"src/boundary.rs", "src/machine_profile.rs", "src/motion_schedule.rs"},
-    "alumina-foc": {"src/lib.rs", "src/current.rs", "src/servo.rs"},
+    "alumina-interface-core": {
+        "src/boundary.rs", "src/machine_profile.rs", "src/motion_schedule.rs", "src/compiler.rs",
+        "src/direct_motion.rs", "src/servo_motion.rs", "src/shared_timing_evidence.rs", "src/graph.rs",
+    },
+    "alumina-foc": {"src/lib.rs", "src/angle.rs", "src/current.rs", "src/servo.rs", "src/pwm.rs"},
     "alumina-clock": {"src/lib.rs"},
+    "alumina-sim": {"src/foc.rs"},
     "hyperlimit": {"src/predicate.rs", "src/resolve.rs"},
 }
-SEED_DIRECTORIES = {"hyperpath": "src/routing", "hyperlimit": "src/predicates"}
+SEED_DIRECTORIES = {
+    "alumina-interface-core": "src/graph",
+    "hyperpath": "src/routing",
+    "hyperlimit": "src/predicates",
+}
 
 
 # These are disposition rules, not claims that every matched body was reviewed.

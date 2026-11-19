@@ -133,6 +133,32 @@ class InventoryRefresh(unittest.TestCase):
         self.assertEqual([(r["symbol"], r["owner"]) for r in fresh],
                          [("gauss_jordan", "hypersolve"), ("propagate", "hyperpath")])
 
+    def test_machine_migration_modules_include_private_declarations(self):
+        expected = set()
+        for repository, package, files in [
+            ("alumina-interface", "alumina-interface-core",
+             ["compiler.rs", "direct_motion.rs", "servo_motion.rs", "shared_timing_evidence.rs",
+              "graph.rs", "graph/storage.rs", "graph/nested/replay.rs"]),
+            ("alumina-firmware", "alumina-foc", ["angle.rs", "pwm.rs"]),
+            ("alumina-firmware", "alumina-sim", ["foc.rs"]),
+            ("alumina-firmware", "unrelated", []),
+        ]:
+            # A checkout's directory names need not equal Cargo package names.
+            root = self.workspace / repository
+            crate = root / ("impl-" + package)
+            crate.mkdir(parents=True)
+            (crate / "Cargo.toml").write_text(f'[package]\nname = "{package}"\n')
+            for filename in set(files) | {"graph_extra/storage.rs", "other/angle.rs", "pwm.rs"}:
+                path = crate / "src" / filename
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("fn calibrate() {}\n")
+                if filename in files:
+                    expected.add((repository, package, path.relative_to(root).as_posix()))
+        self.refresh(self.inventory)
+        found = [(r["repository"], r["owner"], r["path"]) for r in self.rows(self.inventory)
+                 if r["symbol"] == "calibrate"]
+        self.assertCountEqual(found, expected)
+
     def test_failed_refresh_leaves_existing_evidence_intact(self):
         self.write_review(self.inventory, "retired_bounds", "7")
         before = self.inventory.read_bytes()
