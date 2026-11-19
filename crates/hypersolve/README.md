@@ -209,9 +209,14 @@ blocks before an algorithm is selected.
   `ConstraintKind` identifies other row semantics.
 - `context_from_problem`, `EvaluationContext::bind`, and
   `evaluate_residuals` create and evaluate exact candidates.
-- `jacobian::symbolic_jacobian`, `symbolic_jacobian_with_analysis`, and
-  `finite_difference_jacobian` expose exact-symbolic and explicitly finite
-  Jacobian routes.
+- `jacobian::symbolic_jacobian` and `symbolic_jacobian_with_analysis`
+  differentiate symbolic rows and return dense binary64 proposals.
+  For an inequality `g >= 0`, use a `LessOrEqual` row with expression `-g`
+  and the original weight. On the violated branch, a `GreaterOrEqual` row
+  currently gives the derivative of `w*g` although its residual is `-w*g`.
+  For `x = -3` and weight 2, both symbolic APIs return +2 for `x >= 0`.
+  The equivalent `-x <= 0` row and `finite_difference_jacobian` with a unit
+  step at that point both give −2.
 
 ### Structural and direct exact solving
 

@@ -345,7 +345,10 @@ obligations](verification/README.md).
   `Rational` returns `Problem::Exhausted` before a short exponent-only input can
   force excessive eager storage; `Real` retains such extreme powers lazily.
 - `Real::to_f32_lossy` and `to_f64_lossy` return `None` when no finite
-  approximation can be produced.
+  approximation can be produced. In the binary64 rational path, the exact
+  values `−2⁻¹⁰⁷⁵` and `−2⁻¹⁰⁷⁶` currently project to `−0.0` and `+0.0`
+  respectively. Read the sign from the exact value when it matters after
+  underflow.
 - Structural equality is not algebraic equality. Use exact extraction or a
   certification API when a branch depends on the answer.
 - Some real-number questions cannot be decided within a bounded refinement
