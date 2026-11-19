@@ -15685,5 +15685,218 @@
         "remaining_slot": 62168152
       }
     }
+  },
+  "wasi_path_and_interface_tests_2026_11_19": {
+    "scope": "Hosted single-thread wasm32-wasip1 release test commands. Hyperpath development-only binaries have their first measured baseline here. Interface is compared with the preceding 196-test image on precisely the same dependency revisions. The additions exercise existing firmware actor tests. All native Hyperpath controls match byte for byte.",
+    "revisions": {
+      "csgrs": "f345872582c8bbe49a7887b5cfbab490ca59ad6d",
+      "interface": "f7086884f0c2189e2c39d5aa9dd5f449cdf978a3",
+      "interface_baseline": "f883707429208e5f2355fb7c9550100235da2fb8",
+      "firmware": "56c2c28df9fa29ac01d88ed1b67bf70690b73897",
+      "evidence": "6f209ac271789c4e24ffd312f1ba75df266ef039"
+    },
+    "slot_bytes": 67108864,
+    "minimum_free_bytes": 16777216,
+    "interface_incremental_cap": {
+      "bytes": 131072,
+      "percent": 2
+    },
+    "interface_cumulative_cap": {
+      "bytes": 262144,
+      "percent": 4
+    },
+    "units": "bytes; code is the code section payload, bodies is the sum of defined function body payloads",
+    "targets": {
+      "1.99.0": {
+        "hyperpath": {
+          "readme": {
+            "file": 491364,
+            "sha256": "40dd10d85784cade1c322bbd7cb21fdd4021355c0a3dc75641426a673bfc4ebb",
+            "code": 336670,
+            "bodies": 335457,
+            "remaining_slot": 66617500
+          },
+          "dispatch_trace": {
+            "file": 1948313,
+            "sha256": "46943f3828089c373fdd35bb59e873fe738241364c095f8b2bbbbca22a7c8154",
+            "code": 1605850,
+            "bodies": 1602447,
+            "remaining_slot": 65160551
+          },
+          "schedule_equivalence": {
+            "file": 2567377,
+            "sha256": "4b40b5c0f67668830cba874875846639e87fc70e68e3432b2913135e67c7a77c",
+            "code": 2131972,
+            "bodies": 2127722,
+            "remaining_slot": 64541487
+          },
+          "hyperpath": {
+            "file": 1902610,
+            "sha256": "ca5ba49f24dfd82017b196d95750274f68f66a5ef1e71758f93a8169d9940369",
+            "code": 1560625,
+            "bodies": 1557263,
+            "remaining_slot": 65206254
+          },
+          "path_primitives": {
+            "file": 6991165,
+            "sha256": "55711a95c0ce4ec0556d6b041db3551e23445cba444ecded9df5d8a12bfec437",
+            "code": 5607676,
+            "bodies": 5596921,
+            "remaining_slot": 60117699
+          },
+          "path_predicates": {
+            "file": 8188185,
+            "sha256": "326837c5a0ebfc8547b6561af8c9f867862e4135b9c31cb095df4165ccd4b94d",
+            "code": 6328917,
+            "bodies": 6315855,
+            "remaining_slot": 58920679
+          },
+          "certified_schedule": {
+            "file": 2164070,
+            "sha256": "63edf33d70b13a3ed4c9aea9153fc41a3ecb23743b0689c7b04c5106c666fa31",
+            "code": 1840611,
+            "bodies": 1837288,
+            "remaining_slot": 64944794
+          }
+        },
+        "alumina_interface": {
+          "linked": {
+            "baseline": {
+              "file": 9610178,
+              "sha256": "cd8cfdba0af99c25515793e1b0e4d35b2dce8ca571e07addb7e19e8836c29331",
+              "code": 8371047,
+              "bodies": 8347511
+            },
+            "current": {
+              "file": 9643055,
+              "sha256": "2d07170241128331f13149d2db3947acaa2eefe634ac2d86736880cf45cf75c6",
+              "code": 8402371,
+              "bodies": 8378781
+            },
+            "incremental_and_cumulative": {
+              "file": 32877,
+              "code": 31324,
+              "bodies": 31270
+            },
+            "remaining_slot": 57465809
+          },
+          "command": {
+            "baseline": {
+              "file": 8194993,
+              "sha256": "d95cc5468943c26c61d2f2aab2e31e652ad61e24d12838de2df9cecb496d2ff5",
+              "code": 7625780,
+              "bodies": 7604787
+            },
+            "current": {
+              "file": 8226257,
+              "sha256": "781281962ebb5d57dc79f3cb26c7ddd8cdcac4791d906fad9a8248fd63838a27",
+              "code": 7655494,
+              "bodies": 7634449
+            },
+            "incremental_and_cumulative": {
+              "file": 31264,
+              "code": 29714,
+              "bodies": 29662
+            },
+            "remaining_slot": 58882607
+          }
+        }
+      },
+      "1.95.0": {
+        "hyperpath": {
+          "readme": {
+            "file": 476327,
+            "sha256": "a616f2029c3df3bf6c57640f6f676eb54773df2cb740a5d39ac80d3dc881c59d",
+            "code": 327160,
+            "bodies": 325977,
+            "remaining_slot": 66632537
+          },
+          "dispatch_trace": {
+            "file": 1913617,
+            "sha256": "93d41a38bbdf86201f575632927d924cdaa188be667227b04ab7d7ff292335b3",
+            "code": 1605821,
+            "bodies": 1602451,
+            "remaining_slot": 65195247
+          },
+          "schedule_equivalence": {
+            "file": 2490253,
+            "sha256": "2f49883fa3e815400698b8cb6dbdd5e7a72b283098989aad69465d3245548e6e",
+            "code": 2117771,
+            "bodies": 2113588,
+            "remaining_slot": 64618611
+          },
+          "hyperpath": {
+            "file": 1857286,
+            "sha256": "1752efbe659b83a8d82b9126a6a5ffea9a307495eaaa41c2fab645e0612521d7",
+            "code": 1553345,
+            "bodies": 1550032,
+            "remaining_slot": 65251578
+          },
+          "path_primitives": {
+            "file": 6630780,
+            "sha256": "7664f491eb6fbfb5d2f0b2635890bf6c755895571a04cf4d167063b13e6387e6",
+            "code": 5627155,
+            "bodies": 5616502,
+            "remaining_slot": 60478084
+          },
+          "path_predicates": {
+            "file": 7902504,
+            "sha256": "0dc8737b52bdf9eff062a31de04380f8ebc1bd25fee2f1db950c75097f7afdf8",
+            "code": 6576903,
+            "bodies": 6563886,
+            "remaining_slot": 59206360
+          },
+          "certified_schedule": {
+            "file": 2104646,
+            "sha256": "03fd4ae050fce2cc7dca510735720066e50467bd4ed0a08948fd737211bd621c",
+            "code": 1834601,
+            "bodies": 1831314,
+            "remaining_slot": 65004218
+          }
+        },
+        "alumina_interface": {
+          "linked": {
+            "baseline": {
+              "file": 9651323,
+              "sha256": "8c0f23d4120eeea30c25f0398630fa3e3b76172e9d9de51c6c01750df22da46f",
+              "code": 8413488,
+              "bodies": 8389892
+            },
+            "current": {
+              "file": 9684095,
+              "sha256": "5f1b7e12f5e3da846b7538e6704da8cf30c2f0bb0d12983044d72efba22b087c",
+              "code": 8444723,
+              "bodies": 8421075
+            },
+            "incremental_and_cumulative": {
+              "file": 32772,
+              "code": 31235,
+              "bodies": 31183
+            },
+            "remaining_slot": 57424769
+          },
+          "command": {
+            "baseline": {
+              "file": 8238033,
+              "sha256": "b2e2bb4a98d1c10d5067bc2d2fa3eaa8a4d66abf047696f5588035a18cc246f5",
+              "code": 7670088,
+              "bodies": 7649032
+            },
+            "current": {
+              "file": 8269144,
+              "sha256": "38872382440ce6bdc764770a24bc3691f691fc5226bb7bc11baf8434092db1f0",
+              "code": 7699663,
+              "bodies": 7678556
+            },
+            "incremental_and_cumulative": {
+              "file": 31111,
+              "code": 29575,
+              "bodies": 29524
+            },
+            "remaining_slot": 58839720
+          }
+        }
+      }
+    }
   }
 }

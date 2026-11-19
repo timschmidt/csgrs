@@ -159,3 +159,21 @@ dependency versions. The reported comparison pins every registry checksum.
 The stack results keep the extraction outside the bounded exception. Timing,
 Interface, and firmware qualification of this rebase remain open.
 [Commands and per-workload measurements](../evidence-archive.tsv)
+
+## Replaying the specialized solver on WASI Preview 1
+
+Use Node.js 24.22.3 and a Rust toolchain with the `wasm32-wasip1` target.
+From the workspace root, these commands run the original proof assertions,
+compare the native and guest test inventories, and compare the output of the
+shipped stopping-bound example. The output directory holds the seed, case
+names, individual suite logs and example transcript.
+
+```sh
+rustup target add --toolchain 1.95.0 wasm32-wasip1
+python3 crates/hyperinterval/conformance/wasi-path.py --toolchain 1.95.0 --output target/path-wasi
+```
+
+On Rust 1.95 and 1.99 all 446 cases passed on both targets. The schedule
+example certified a join feed of 2 and rejected 4 on replay. These are
+controls for a future transfer of solver ownership. The existing extraction
+still exceeds its measured native whole-call stack allowance.

@@ -2640,5 +2640,128 @@
       }
     },
     "raw": "*-render-*.json materialize the output. *-renderdrop-*.json end after its destruction. public-images.json gives the high watermarks for two fill patterns. Unretained full-width trials remain separate."
+  },
+  "wasi_path_and_interface_tests_2026_11_19": {
+    "scope": "Hosted guest test command only. Original 196 cases and the expanded 199 cases are different workloads. The isolated canonical diagonal case is a common completed workload. The three added actor calls have their initial WASI workload baselines here.",
+    "revisions": {
+      "csgrs": "f345872582c8bbe49a7887b5cfbab490ca59ad6d",
+      "interface": "f7086884f0c2189e2c39d5aa9dd5f449cdf978a3",
+      "interface_baseline": "f883707429208e5f2355fb7c9550100235da2fb8",
+      "firmware": "56c2c28df9fa29ac01d88ed1b67bf70690b73897",
+      "evidence": "6f209ac271789c4e24ffd312f1ba75df266ef039"
+    },
+    "call_boundary": "One fresh Node WASI instance, after binding initialization through return from libtest _start, including fixture creation, assertions and teardown. Each named case and full-suite invocation used both 0x5a and 0xa5. Byte-resolution sentinel measures deepest observed guest stack write. Linear memory has 65536-byte pages and does not shrink; its ending extent is not a guest allocator measurement.",
+    "stack_capacity_bytes": 1048576,
+    "minimum_remaining_stack_bytes": 262144,
+    "targets": {
+      "1.95.0": {
+        "whole_suite": {
+          "control": {
+            "stack_bytes": 58432,
+            "initial_bytes": 1703936,
+            "linear_bytes": 15400960
+          },
+          "bundler": {
+            "stack_bytes": 62992,
+            "initial_bytes": 1703936,
+            "linear_bytes": 15400960
+          },
+          "remaining_stack": 985584,
+          "stack_difference": 4560
+        },
+        "machine_profile::tests::exact_diagonal_g1_uses_dense_axis_projection_and_lowers_to_terminal_steps": {
+          "control": {
+            "stack_bytes": 45696,
+            "initial_bytes": 1703936,
+            "linear_bytes": 4390912
+          },
+          "bundler": {
+            "stack_bytes": 45696,
+            "initial_bytes": 1703936,
+            "linear_bytes": 4390912
+          },
+          "remaining_stack": 1002880,
+          "stack_difference": 0
+        },
+        "graph::deployment::tests::lowered_package_executes_in_the_portable_split_runtime": {
+          "bundler": {
+            "stack_bytes": 42688,
+            "initial_bytes": 1703936,
+            "linear_bytes": 1769472
+          },
+          "remaining_stack": 1005888
+        },
+        "graph::deployment::tests::lowered_tinybee_input_executes_in_the_firmware_actor_types": {
+          "bundler": {
+            "stack_bytes": 62896,
+            "initial_bytes": 1703936,
+            "linear_bytes": 1769472
+          },
+          "remaining_stack": 985680
+        },
+        "graph::deployment::tests::lowered_tinybee_pair_executes_both_reads_in_the_firmware_actor_types": {
+          "bundler": {
+            "stack_bytes": 62992,
+            "initial_bytes": 1703936,
+            "linear_bytes": 1769472
+          },
+          "remaining_stack": 985584
+        }
+      },
+      "1.99.0": {
+        "whole_suite": {
+          "control": {
+            "stack_bytes": 57776,
+            "initial_bytes": 1703936,
+            "linear_bytes": 15400960
+          },
+          "bundler": {
+            "stack_bytes": 62640,
+            "initial_bytes": 1703936,
+            "linear_bytes": 15400960
+          },
+          "remaining_stack": 985936,
+          "stack_difference": 4864
+        },
+        "machine_profile::tests::exact_diagonal_g1_uses_dense_axis_projection_and_lowers_to_terminal_steps": {
+          "control": {
+            "stack_bytes": 45168,
+            "initial_bytes": 1703936,
+            "linear_bytes": 4390912
+          },
+          "bundler": {
+            "stack_bytes": 45168,
+            "initial_bytes": 1703936,
+            "linear_bytes": 4390912
+          },
+          "remaining_stack": 1003408,
+          "stack_difference": 0
+        },
+        "graph::deployment::tests::lowered_package_executes_in_the_portable_split_runtime": {
+          "bundler": {
+            "stack_bytes": 42288,
+            "initial_bytes": 1703936,
+            "linear_bytes": 1769472
+          },
+          "remaining_stack": 1006288
+        },
+        "graph::deployment::tests::lowered_tinybee_input_executes_in_the_firmware_actor_types": {
+          "bundler": {
+            "stack_bytes": 62560,
+            "initial_bytes": 1703936,
+            "linear_bytes": 1769472
+          },
+          "remaining_stack": 986016
+        },
+        "graph::deployment::tests::lowered_tinybee_pair_executes_both_reads_in_the_firmware_actor_types": {
+          "bundler": {
+            "stack_bytes": 62640,
+            "initial_bytes": 1703936,
+            "linear_bytes": 1769472
+          },
+          "remaining_stack": 985936
+        }
+      }
+    }
   }
 }
