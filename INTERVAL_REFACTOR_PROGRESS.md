@@ -52,14 +52,14 @@ No existing arithmetic or predicate dispatch has been changed.
 
 | Phase | State | Evidence still required |
 | --- | --- | --- |
-| 0 inventory/baseline | Native coverage measured for Hyperinterval, Hyperdynamics and Hyperlattice Interval. Independent syntax traversal matched 2,807 declarations in 36 planned machine source files. All 34 shared-timing evidence declarations and all 40 simulator FOC declarations have body reviews. | remaining body and consumer audits, sibling qualification, costs, coverage, fuzz and hashes |
+| 0 inventory/baseline | Native coverage measured for Hyperinterval, Hyperdynamics and Hyperlattice Interval. Independent syntax traversal matched 2,807 declarations in 36 planned machine source files. Phase 7 now covers all 1,101 syntax declarations and 38 compiled macro properties in its 24 named Hypersolve sources. All 34 shared-timing evidence declarations and all 40 simulator FOC declarations have body reviews. | remaining body and consumer audits, sibling qualification, costs, coverage, fuzz and hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers and full-width exponents | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha reports now require certified comparison outcomes | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -13621,3 +13621,107 @@ Evidence commit `bf6a6da794aeed129b0c75b40c6d98c72d2ad3aa` retains 444
 verified members in 313,644 bytes with record digest
 `69eacbfa08dd1377287e13df5ad1ec64c9d5d85c08891fca43aae176bb789ff9`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7 source coverage, inequality gradients and scalar underflow
+
+The inventory previously found 241 declarations in the 24 Hypersolve files
+named by section 7.1 and their split modules. Matching module families brings
+that count to 1,139. A separate Rust syntax visitor found all 1,101 declarations
+outside macro token trees. The remaining 38 functions appear by name in the
+compiled native test list. The complete scan gained 898 rows. Its 352 prior
+hand reviews survived the refresh, and nine new body reviews cover every
+declaration in `alpha.rs`. Two independent refreshes matched, and all eight
+scanner regressions passed. [Inventory](interval-inventory.tsv)
+
+At `x = −3`, weight 2, Hypersolve's normalized residual for `x >= 0` is
+`−2x`. Both symbolic Jacobian APIs returned +2 while a unit forward difference
+returned −2. With zero damping, the numerical solver stopped after 32 updates
+at weighted residual 12,884,901,888. Encoding the same row as `−x <= 0`
+returned −2 and converged in one update. A second witness found that binary64
+projection changes the zero sign between exact negative magnitudes 2⁻¹⁰⁷⁵
+and 2⁻¹⁰⁷⁶. The public guides describe both limitations.
+[Hypersolve](crates/hypersolve/README.md) · [Hyperreal](crates/hyperreal/README.md)
+
+The review branch `interval-symbolic-inequality-orientation` at `769938b87`
+retains the combined repair and its three regressions. All three failed on
+the predecessor. They pass together with signed weights, sparse and ordinary
+columns, exact zero, subnormal and underflow cases. The release client grew
+by 112/96 bytes on native and 43/60 bytes on WASI for Rust 1.95/stable.
+The largest added native stack use on the common workload was 16 bytes,
+within the separately measured allowance of 32 bytes and 0.5% per toolchain
+and workload. The outputs and complete allocator counts matched on
+the common inputs after holding the process argument name fixed; both guest
+stacks shrank by 16 bytes. Four of 72 dispatch windows gained a structural
+zero query for an active greater-than-or-equal derivative. All other windows
+preserved their counts.
+
+The two actual solver artifacts met their size caps. The Hyperreal
+`scalar_micro` benchmark shrank by 96 bytes, but its allocated ELF RELRO
+padding grew from 216 to 280 bytes. The incremental allowance was two bytes.
+Applying the sign on the early return produced 232 bytes of padding, and
+sharing sign application across conversions produced 280. Exact normalization
+variants also exceeded WASI code/file caps. The production change remains on
+the review branch with no charge to retained production budgets.
+
+The retained GMP coverage fix classifies `reduction_input_bits`, the stored
+width of a deferred reduction independent of cache warmth. The existing test
+failed on the predecessor. The release executable adds 48 bytes, bringing
+the cumulative file charge to 112 bytes and leaving 16,272 bytes. Its text
+and named function union match the predecessor.
+[Size account](docs/research/interval-size-accounts.json)
+
+## Certified univariate quadratic alpha statuses
+
+For `f(x) = x² + z*x`, with `z = sin(2e) − 2 sin(e) cos(e) = 0`, zero
+is a double root. On the preceding source, the strict derivative comparison
+returned unknown, yet the report returned `ExactSimpleRoot`. For
+`f(x) = x² + x + z + 2⁻⁶⁰⁰`, zero is not a root: the approximate policy
+reported `ExactSimpleRoot`. The same double-root failure reproduced with
+the angle-addition identity and a power-based Pythagorean identity. The
+multiplication-based Pythagorean control produced an exact equality and a
+correct multiple-root status.
+
+`bf9d28a5e` uses certified-only comparisons in the original residual,
+derivative and bound order. Exact zero residual with unresolved derivative
+returns `Undecided` under both policies. Strict inequality in the sufficient
+bound proves a positive denominator because its left side is nonnegative.
+Equality at the threshold requires separate nonzero derivative evidence.
+The near nonroot receives a certified basin bound. The maintained regression
+also covers simple roots, multiple roots, failed bounds and a proved zero
+derivative away from a root. [Witness](crates/hypersolve/tests/alpha_proof_classification.rs)
+
+The dispatch counts, exact statuses and reducer statistics for 63
+ordinary integer-coefficient rows under both policies matched all 126
+preceding recording windows. Native and WASI checked the full output
+materialization. All 1,541 tests in the final native all-feature Hypersolve
+release suite passed. The wider three-crate check on the preceding production
+kernel passed 3,241 tests. The eight inventory tests passed, and a fresh
+three-repository scan reproduced all 7,236 scan rows and 365 historical
+and current body reviews.
+
+On the ordinary 63-row workload each complete native process peaked at
+132,082 requested heap bytes. The native stack high-water marks were 9,032
+bytes on Rust 1.95 and 9,016 bytes on Rust 1.99. Each WASI module reserved
+5,808 guest stack bytes. The measurements agreed across fixed, preceding
+and retained builds, for both one and seven repeats. The corrected opaque
+case has separate completion measurements. All 28 process groups stayed
+within their 256 MiB limits and retained the 64 MiB reserve.
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+The registered release smoke test and certification benchmark grew by 16
+and 24 bytes respectively. The public client changed by +32/−136 bytes on
+native and +42/+84 bytes on WASI for Rust 1.95/1.99. Revision `9a9c245a8`
+authorizes one 16-byte linker alignment unit on the 1.99 native proof client
+when the file shrinks and mapped pages, permissions, protected pages and
+initialized RELRO payload all match. The previous 1% incremental cap
+allowed six bytes. Padding measured 1,424/656/672 bytes at fixed, preceding
+and retained revisions. The 16-byte cumulative charge leaves 12 bytes
+under the original cumulative cap. A fresh linked build reproduced the
+exact SHA-256. Other targets retain their existing budgets.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+The locked Alumina Interface release pipeline produced a 10,678,893-byte optimized browser module. Its final file changed by +0 bytes and its code section by +0 bytes.
+The optimized module matched the predecessor byte for byte.
+Formatting, all-target Clippy with warnings denied, and warnings-denied rustdoc passed for the retained solver change.
+
+Evidence commit `f7b4458706319c4e2008a597e756823492628ade` contains 319 verified members in 180,072 bytes. [Evidence index](docs/evidence-archive.tsv)

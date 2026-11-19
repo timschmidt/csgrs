@@ -12939,5 +12939,175 @@
     },
     "guard": "Measure on a fresh linked build at the same source path. For each PT_LOAD retain the same page addresses and permissions. Require unchanged initialized PT_GNU_RELRO payload, no increase in file bytes, and the same protected pages. All other ELF metrics, WASM, runtime, heap, stack, certainty and trace gates apply.",
     "history": "The default cap was 6 bytes at 656 bytes of preceding padding. The first trial grew by 544 bytes and remains rejected. The separate paired-status trial grew by one 16-byte linker unit and failed that original gate. Fixed padding was 1,424 bytes. Previous positive charge was zero. The cumulative effective cap remains 28 bytes. Rejected trials consume no budget."
+  },
+  "quadratic_alpha_proof_classification": {
+    "source": "bf9d28a5e17e26ae8fff8557c55c69db370c866c",
+    "benefit": "Return honest proof statuses for unknown or approximately compared zero values under both public policies.",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "previous": "590b87f32",
+    "policy": "existing_artifacts with the one Rust 1.99 native NOBITS exception at alpha_client_native_layout_revision. Its new allowance is used only after the independent same-path rebuild. Original failure measurements are archived.",
+    "accounts": {
+      "1.95.0-native": {
+        "file": {
+          "fixed": 3348608,
+          "previous": 3348464,
+          "candidate": 3348496,
+          "delta": 32,
+          "cumulative_charge": 32,
+          "cumulative_remaining": 16352
+        },
+        "function_union": {
+          "fixed": 1670310,
+          "previous": 1670310,
+          "candidate": 1670339,
+          "delta": 29,
+          "cumulative_charge": 29,
+          "cumulative_remaining": 4067
+        }
+      },
+      "1.95.0-wasi": {
+        "file": {
+          "fixed": 1697025,
+          "previous": 1697070,
+          "candidate": 1697112,
+          "delta": 42,
+          "cumulative_charge": 87,
+          "cumulative_remaining": 4009
+        },
+        "code": {
+          "fixed": 1472833,
+          "previous": 1472833,
+          "candidate": 1472888,
+          "delta": 55,
+          "cumulative_charge": 55,
+          "cumulative_remaining": 4041
+        }
+      },
+      "stable-native": {
+        "file": {
+          "fixed": 3405872,
+          "previous": 3407016,
+          "candidate": 3406880,
+          "delta": -136,
+          "cumulative_charge": 1144,
+          "cumulative_remaining": 15240
+        },
+        "function_union": {
+          "fixed": 1674525,
+          "previous": 1674527,
+          "candidate": 1674564,
+          "delta": 37,
+          "cumulative_charge": 39,
+          "cumulative_remaining": 4057
+        }
+      },
+      "stable-wasi": {
+        "file": {
+          "fixed": 1723866,
+          "previous": 1723897,
+          "candidate": 1723981,
+          "delta": 84,
+          "cumulative_charge": 115,
+          "cumulative_remaining": 3981
+        },
+        "code": {
+          "fixed": 1459695,
+          "previous": 1459695,
+          "candidate": 1459767,
+          "delta": 72,
+          "cumulative_charge": 72,
+          "cumulative_remaining": 4024
+        }
+      },
+      "smoke-matched": {
+        "file": {
+          "fixed": 6836776,
+          "previous": 6836824,
+          "candidate": 6836840,
+          "delta": 16,
+          "cumulative_charge": 64,
+          "cumulative_remaining": 16320
+        },
+        "function_union": {
+          "fixed": 3908874,
+          "previous": 3909002,
+          "candidate": 3909015,
+          "delta": 13,
+          "cumulative_charge": 141,
+          "cumulative_remaining": 3955
+        }
+      },
+      "certification-matched": {
+        "file": {
+          "fixed": 16954320,
+          "previous": 16954392,
+          "candidate": 16954416,
+          "delta": 24,
+          "cumulative_charge": 96,
+          "cumulative_remaining": 16288
+        },
+        "function_union": {
+          "fixed": 10541092,
+          "previous": 10541220,
+          "candidate": 10541233,
+          "delta": 13,
+          "cumulative_charge": 141,
+          "cumulative_remaining": 3955
+        }
+      },
+      "1.99_native_padding": {
+        "fixed": 1424,
+        "previous": 656,
+        "retained": 672,
+        "prior_charge": 0,
+        "new_charge": 16,
+        "incremental_percent": 2.4390243902439024,
+        "remaining_incremental_bytes": 0,
+        "remaining_cumulative_bytes": 12,
+        "linker_page_size": 4096,
+        "same_pages_permissions_and_relro_payload": true
+      }
+    },
+    "new_test_harness": {
+      "native": {
+        "bytes": 4196336,
+        "capacity": 67108864,
+        "remaining": 62912528,
+        "sha256": "a5b45799671a2627eb07d644c9832d04c24563a63fdd6d9dea2731327d00a204"
+      },
+      "wasi": {
+        "bytes": 2171792,
+        "capacity": 16777216,
+        "remaining": 14605424,
+        "sha256": "bb5036bc68f0293c499cf2dbbf5db615862e02ec41c337b79ac980dc2353094a"
+      }
+    },
+    "browser": {
+      "application-alpha-matched": {
+        "fixed": 13478614,
+        "previous": 13478614,
+        "candidate": 13478614,
+        "delta": 0,
+        "delta_percent": 0.0,
+        "previous_positive_charge": 0,
+        "incremental_charge": 0,
+        "incremental_remaining": 1024,
+        "cumulative_charge": 0,
+        "cumulative_remaining": 4096
+      },
+      "application-optimized-alpha-matched": {
+        "fixed": 10678893,
+        "previous": 10678893,
+        "candidate": 10678893,
+        "delta": 0,
+        "delta_percent": 0.0,
+        "previous_positive_charge": 0,
+        "incremental_charge": 0,
+        "incremental_remaining": 1024,
+        "cumulative_charge": 0,
+        "cumulative_remaining": 4096
+      }
+    },
+    "evidence": "docs/evidence/2026-11-19-interval-solver-orientation: matched-client-sizes.json, alpha-matched-registered-sizes.json, alpha-deploy-sizes.json, layout-evidence.json and full section reports; no firmware artifact links the proof API."
   }
 }

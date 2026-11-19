@@ -1975,5 +1975,51 @@
       "remaining_above_reserve_bytes": 100925440
     },
     "source": "c60e2eae1ae8116bd03cc69a69cf008a36e3684f"
+  },
+  "quadratic_alpha_proof_classification": {
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "previous": "590b87f32",
+    "source": "bf9d28a5e17e26ae8fff8557c55c69db370c866c",
+    "workload": "63 quadratic rows per evaluation, both policies, 1 and 7 repetitions; complete model construction, proof classification, field checks and destruction. One native worker or WASI instance per process.",
+    "scope": "No positive memory charge on common workloads. Fixed, previous and retained stack, requested heap, allocator counts and bytes freed agree. Opaque unresolved input is a separate correctly completed workload.",
+    "metrics": {
+      "1.95.0": {
+        "existing_native_peak_heap": 132082,
+        "common_native_stack_bytes": [
+          9032,
+          9032
+        ],
+        "common_guest_stack_bytes": [
+          5808,
+          5808
+        ],
+        "incremental_bytes": 0,
+        "cumulative_bytes": 0,
+        "new_native_peak_requested_bytes": 352383,
+        "new_native_stack": 13568,
+        "new_guest_stack": 6560
+      },
+      "stable": {
+        "existing_native_peak_heap": 132082,
+        "common_native_stack_bytes": [
+          9016,
+          9016
+        ],
+        "common_guest_stack_bytes": [
+          5808,
+          5808
+        ],
+        "incremental_bytes": 0,
+        "cumulative_bytes": 0,
+        "new_native_peak_requested_bytes": 352383,
+        "new_native_stack": 13648,
+        "new_guest_stack": 6880
+      }
+    },
+    "process_groups": 28,
+    "peak_process_bytes": 28635136,
+    "process_limit_bytes": 268435456,
+    "required_free_bytes": 67108864,
+    "evidence": "docs/evidence/2026-11-19-interval-solver-orientation: matched-lifetime.json, matched-guest-stack.json, matched-groups.json and alpha-scope.md"
   }
 }
