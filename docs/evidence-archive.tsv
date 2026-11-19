@@ -713,3 +713,4 @@ docs/evidence/2026-11-19-interval-solver-orientation	2	180072	a1a9ac46b60d2dd36c
 docs/evidence/2026-11-19-interval-retained-fuzz-replay	2	143000	686dd7e2fcc9f54037b69f649d9bb1f2cfda8dbd88d2733a7738e682dd139016
 docs/evidence/2026-11-19-interval-strict-float-corners	2	40932	09f6be942fc2907e8ec7c605b43fc26a75a7ffd84d13d3a34ffef1458d373a61
 docs/evidence/2026-11-19-interval-fractional-power-admission	2	98268	56e901df5c589c79b3ea5f38eb367d01d6787b99ee215d099a089c5de9d52c64
+docs/evidence/2026-11-19-interval-consumer-dependency-kinds	2	14680	b34f23b3e3107f9d8b9277d0698276137478a807ad0a42a3c9fd1977a8d0911e

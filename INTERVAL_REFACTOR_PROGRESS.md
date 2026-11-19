@@ -13849,3 +13849,40 @@ pedantic workflow audit passed. Rust 1.88's reduced CI feature set excludes
 the rational provider. The evidence archive contains 415 verified members in
 98,268 bytes at `f109536ea6d42fa214b616f4ed07c6cd99cfd4cc`.
 [Evidence index](docs/evidence-archive.tsv)
+
+### Phase 14 — verify sibling crates in the target dependency graph
+
+At Alumina Interface `96dd1b4` the coordinated source check accepted a
+required Wasm dependency reachable only through a test, a build script, or
+an optional feature enabled by tests. Cargo's compiled artifacts confirmed
+the difference on all three fixtures. In the deployment-pinned FOC guest,
+moving its interval conformance library into development dependencies also
+passed the previous check with the same lockfile.
+
+Alumina Interface `abfb182eb` now asks Cargo for the selected target's
+normal dependency graph with host procedural macros excluded. The path,
+version and source checks still cover all resolved copies of owned packages.
+The native and browser applications must both reach the exact measurement
+stack. The fuzz and native measurement checks use their respective
+`fuzzing` and `trace` features. The FOC mutation now identifies both
+missing libraries, and restoring the manifest passes the coordinated check.
+These are release-tooling changes for §16 and P36–P37.
+
+All nine target graphs and both license inventories passed on the current
+three-repository stack and the deployment pins. All seven lockfiles per
+stack matched their committed bytes. The regression suite ran on Cargo
+1.88, 1.95 and 1.99. Five paired local runs increased the median duration of
+the coordinated dependency audit from 2.31 to
+3.73 seconds.
+
+The consumer script also ran the Cortex-M FOC check and 12
+native tests on the current stack (12 on the
+deployment pins). Each of two fresh Wasm instances checked 825 FOC
+transforms and 251 range cases on current source, and 825 transforms and
+147 range cases on the pinned source. Each measurement guest checked 4,369
+cases. These local results qualify the consumer checks; hosted deployment
+and hardware execution remain open.
+
+Evidence commit `fd8b6909ca1aed2c653439fcb6cc27b95eaa546f` records 36 verified
+members in 14,680 bytes.
+[Evidence index](docs/evidence-archive.tsv)
