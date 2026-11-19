@@ -86,7 +86,8 @@ It evaluates corners, stationary points along each edge, and the interior
 stationary point using integer arithmetic with exact rational coordinates.
 A stationary line meets the boundary at the same value. The oracle checks
 the signed center, row certainty and aggregate verdict under both policies.
-Singleton boxes and the two dominant constant shifts require a decision.
+Every singleton residual ball and every Taylor enclosure strictly separated
+from zero requires a decision.
 
 The eleven input bytes encode six signed coefficients, four endpoint bytes
 and one mode byte. The signed endpoints are reduced modulo nine and ordered

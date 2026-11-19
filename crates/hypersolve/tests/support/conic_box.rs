@@ -87,16 +87,23 @@ pub fn check(input: [u8; 11]) {
     // coefficients vanish. Its retained multivariate form covers those cases.
     let package = Package::MultivariateQuadratic;
     assert!(analysis.quadratic_residuals()[0].is_some(), "{coeffs:?}");
-    let center = value(coeffs, xs[0] + xs[1], ys[0] + ys[1], 2);
+    let (sx, sy) = (xs[0] + xs[1], ys[0] + ys[1]);
+    let center = value(coeffs, sx, sy, 2);
     let signed = if kind == ConstraintKind::GreaterOrEqual {
         -center
     } else {
         center
     };
-    // Every coordinate and radius has magnitude at most 8. Coefficients have
-    // magnitude at most 128, so even the symmetric Taylor variation plus
-    // the nonconstant center value is below 128 * (12 * 8 * 8 + 4 * 8).
-    let must_decide = xs[0] == xs[1] && ys[0] == ys[1] || f.abs() == 1_048_576;
+    // In doubled coordinates the center residual and the specified Taylor
+    // radius both have denominator four. A separated ball or singleton
+    // forces a decision. The independent extrema above check its sign.
+    let (dx, dy) = (xs[1] - xs[0], ys[1] - ys[0]);
+    let radius = (2 * a * sx + b * sy + 2 * d).abs() * dx
+        + (b * sx + 2 * c * sy + 2 * e).abs() * dy
+        + a.abs() * dx * dx
+        + b.abs() * dx * dy
+        + c.abs() * dy * dy;
+    let must_decide = radius == 0 || center.abs() > radius;
     for policy in POLICIES {
         let report = certify_interval_box_candidate(&analysis, &ctx, &balls, package, policy);
         assert_eq!(report.variable_balls, balls);
