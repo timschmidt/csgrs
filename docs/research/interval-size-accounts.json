@@ -12852,5 +12852,71 @@
         "failed_caps": []
       }
     }
+  },
+  "reduction_work_catalog": {
+    "artifact": "crates/hyperreal/tests/gmp_api_coverage.rs#release-tests",
+    "source_commit": "50a62bdc4",
+    "prior_account": "accounts / crates/hyperreal/tests/gmp_api_coverage.rs#release-tests",
+    "benefit": "The existing coverage check now classifies the cache-independent cost of a deferred reduction. Numeric operation coverage and stale-exclusion checks still run.",
+    "configuration": "x86_64-unknown-linux-gnu, Rust 1.95.0, locked release, hyperreal --all-features, one source path across all builds.",
+    "control": "590b87f32",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "headroom": "Host test executable. No firmware or browser dependency. The file retains 16,272 bytes of cumulative allowance.",
+    "sha256": {
+      "fixed": "0604e93554c9be00efdac5c0b6dddb2a8d44770dfce89a4fbfe2088ea888c7e5",
+      "previous": "5a1c8a37f7705fc0cd2ff86f21dd7211d5e87822b2e1d92874162a9e8f858745",
+      "retained": "c08bf867a5c3d5dca1e10360284a6c7303c2575c326c0b937379b8c05495ec0d"
+    },
+    "metrics": {
+      ".data.rel.ro": {
+        "fixed": 34416,
+        "previous": 34432,
+        "candidate": 34448,
+        "incremental_charge": 16,
+        "cumulative_charge": 32,
+        "cumulative_remaining": 656
+      },
+      ".rela.dyn": {
+        "fixed": 59856,
+        "previous": 59880,
+        "candidate": 59904,
+        "incremental_charge": 24,
+        "cumulative_charge": 48,
+        "cumulative_remaining": 1149
+      },
+      ".rodata": {
+        "fixed": 59108,
+        "previous": 59124,
+        "candidate": 59140,
+        "incremental_charge": 16,
+        "cumulative_charge": 32,
+        "cumulative_remaining": 1150
+      },
+      ".text": {
+        "fixed": 631956,
+        "previous": 631956,
+        "candidate": 631956,
+        "incremental_charge": 0,
+        "cumulative_charge": 0,
+        "cumulative_remaining": 4096
+      },
+      "file": {
+        "fixed": 1109088,
+        "previous": 1109152,
+        "candidate": 1109200,
+        "incremental_charge": 48,
+        "cumulative_charge": 112,
+        "cumulative_remaining": 16272
+      },
+      "function_union": {
+        "fixed": 623226,
+        "previous": 623226,
+        "candidate": 623226,
+        "incremental_charge": 0,
+        "cumulative_charge": 0,
+        "cumulative_remaining": 4096
+      }
+    },
+    "evidence": "docs/evidence/2026-11-19-interval-solver-orientation / registered-sizes.json; all ELF allocated sections and remaining incremental and cumulative caps."
   }
 }
