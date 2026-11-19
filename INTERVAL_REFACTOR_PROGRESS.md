@@ -66,7 +66,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, and Hypersolve and Hyperdynamics numerical and fresh-process replay cases locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 27 required client checks pass on both, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, and Hypersolve and Hyperdynamics numerical and fresh-process replay cases locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -13972,3 +13972,43 @@ Evidence commit `54cb5b7ca8beeeed996533e43e2ef5cac3b84e61` contains
 failure, rejected trials, measured final images' hashes and workload-level
 accounts. The remaining interval migrations and platform qualification stay
 open. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 14 — execute the current release's required clients
+
+On `c2f658bef`, the release driver returned success when its C smoke
+executable was absent and ran a quick start left by an earlier release.
+The compiler had produced a known set of programs, but the driver searched
+a reusable build directory and silently skipped missing paths.
+
+Commit `66083909e` requests each Rust consumer by name and runs the executable
+Cargo reports for that consumer manifest. Both linked C and C++ programs
+must also execute. The compiled regression keeps a retired binary on disk,
+builds the remaining programs a second time, and checks missing and
+foreign-manifest artifacts. The execution checks detected a missing Rust
+quick start, a missing C program and a nonexecutable C++ program.
+[Release check](scripts/release-check.sh)
+
+The complete local release check passed on Rust 1.95 and 1.99. Each packaged
+and verified 21 crates, rendered 21 documentation configurations and passed
+all 27 client checks. These included 20 packaged README quick starts, the
+user path, the curve-range example, both linked programs and the Python, Go
+and TypeScript bindings. An executable left in the reused target directory
+would have exited 93 if called. The archive contains all 22 selected Rust
+executable hashes and all 21 rendered crate index hashes for each compiler.
+
+All 21 final package archives reproduced byte-for-byte in separate clean
+checkouts with each Cargo version. Across the two versions, 14 archive hashes
+matched. Three gzip streams differed with identical decompressed tar bytes.
+Four packages had only dependency checksum differences in the generated
+`Cargo.lock`. Every changed checksum matched the corresponding rebuilt archive.
+The selected dependency names and versions and packaged sources matched.
+
+The first offline run lacked the `target-tuple` index entry. Both complete
+runs used registry access. Cargo also warned about the existing yanked
+`async-executor` 1.14.0 lockfile entry. The documentation builds used workspace
+sources and packaging used the documented local Hypervoxel overlay. Hosted
+documentation, registry publication and hardware qualification remain open.
+[Release conditions](docs/RELEASE.md)
+
+Evidence commit `3bca756ddf4c0b1a4972e9d6e5f1cdc275b33eb9` records 41 verified members
+in 39,816 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
