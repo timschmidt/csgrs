@@ -569,6 +569,39 @@ pub fn certify_affine_interval_candidate(
 /// interval certifiers. It is intentionally conservative: invalid variable
 /// radii, missing candidate bindings, and undecided magnitudes become explicit
 /// `InvalidInput` reports rather than panics or primitive-float fallbacks.
+///
+/// # Current proof coverage
+///
+/// A row outside the selected package's enclosure coverage can contribute a
+/// center-only verdict to the aggregate. In particular, both quadratic packages
+/// currently do this for varying affine rows. When consuming a whole-box verdict,
+/// check the scope and certainty of the evidence for each contributing row.
+///
+/// The affine package encloses the half-space residual below. Its center `x = 1`
+/// satisfies the constraint, while the box `[-1, 3]` contains both signs.
+///
+/// ```
+/// use hypersolve::{
+///     Constraint, ConstraintKind, Expr, IntervalBoxCertificationPackage,
+///     IntervalBoxCertificationStatus, PredicatePolicy, Problem, SymbolId,
+///     VariableBall, certify_interval_box_candidate, context_from_problem,
+/// };
+///
+/// let mut problem = Problem::default();
+/// let x = SymbolId::from(problem.add_variable("x", 1.into()));
+/// let mut row = Constraint::equality("nonnegative x", Expr::anonymous_symbol(x));
+/// row.kind = ConstraintKind::GreaterOrEqual;
+/// problem.add_constraint(row);
+/// let report = certify_interval_box_candidate(
+///     &problem.analyze(),
+///     &context_from_problem(&problem),
+///     &[VariableBall { symbol: x, radius: 2.into() }],
+///     IntervalBoxCertificationPackage::Affine,
+///     PredicatePolicy::STRICT,
+/// );
+/// assert_eq!(report.status, IntervalBoxCertificationStatus::Unknown);
+/// assert!(report.certification.unwrap().has_only_uncertainty());
+/// ```
 pub fn certify_interval_box_candidate(
     analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
