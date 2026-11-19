@@ -4,6 +4,11 @@
 
 This document is the implementation contract for extracting, generalizing, and deploying interval machinery across the Hyper/CSGRS/Alumina stack.
 
+On the development host, keep this program's checkouts, build products,
+temporary files and validation runs under `/mnt/development`. Do not use
+`/dev/shm` for this work. Retain the required evidence and remove disposable
+worktrees, build caches and scratch files when their runs finish.
+
 The work is not a greenfield interval experiment. The workspace already contains several strong, independently useful interval and reachability implementations:
 
 - Hyperpath has exact forward/reverse path-speed reachability, exact-stop barriers, bounded component refinement, and independent replay.
