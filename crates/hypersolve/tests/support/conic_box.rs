@@ -1,10 +1,9 @@
 //! Independent critical-point oracle for a quadratic on a closed rectangle.
-#[path = "box_receipt.rs"]
-mod box_receipt;
-use box_receipt::{KINDS, POLICIES, check_receipt};
-use hyperreal::{Rational, Real};
+use hyperlimit::{Certainty, PredicatePolicy};
+use hyperreal::{Rational, Real, RealSign};
 use hypersolve::{
-    Constraint, ConstraintKind, Expr, IntervalBoxCertificationPackage as Package, Problem,
+    CertifiedCandidateStatus, Constraint, ConstraintKind, Expr,
+    IntervalBoxCertificationPackage as Package, IntervalBoxCertificationStatus as Status, Problem,
     SymbolId, VariableBall, certify_interval_box_candidate, context_from_problem,
 };
 
@@ -57,7 +56,12 @@ pub fn check(input: [u8; 11]) {
     xs.sort();
     ys.sort();
     let extrema = extrema_signs(coeffs, xs, ys);
-    let kind = KINDS[usize::from(mode & 3)];
+    let kind = [
+        ConstraintKind::Equality,
+        ConstraintKind::LessOrEqual,
+        ConstraintKind::GreaterOrEqual,
+        ConstraintKind::Soft,
+    ][usize::from(mode & 3)];
     let half = |n| Real::from(Rational::fraction(n, 2).unwrap());
     let mut problem = Problem::default();
     let x = Expr::anonymous_symbol(problem.add_variable("x", half(xs[0] + xs[1])).into());
@@ -104,13 +108,73 @@ pub fn check(input: [u8; 11]) {
         + b.abs() * dx * dy
         + c.abs() * dy * dy;
     let must_decide = radius == 0 || center.abs() > radius;
-    for policy in POLICIES {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let report = certify_interval_box_candidate(&analysis, &ctx, &balls, package, policy);
         assert_eq!(report.variable_balls, balls);
+        let proof = report.certification.unwrap();
+        let [row] = proof.rows.as_slice() else {
+            panic!("expected one conic row")
+        };
         assert_eq!(
-            report.certification.as_ref().unwrap().rows[0].signed_residual,
+            row.signed_residual,
             Some(Real::from(Rational::fraction(signed, 4).unwrap()))
         );
-        check_receipt(report, extrema, kind, must_decide);
+        // Only a uniform sign at all global extrema can certify this row.
+        // Preserve the solver's orientation convention for greater-or-equal.
+        let normalized = if kind == ConstraintKind::GreaterOrEqual {
+            (-extrema.1, -extrema.0)
+        } else {
+            extrema
+        };
+        let expected = match row.status {
+            CertifiedCandidateStatus::BoundedUnknown { .. } => {
+                assert!(
+                    !must_decide,
+                    "missed separated residual {signed}/4 ± {radius}/4"
+                );
+                Status::Unknown
+            }
+            CertifiedCandidateStatus::BallCertified {
+                sign,
+                certainty,
+                satisfied,
+            } => {
+                assert!(matches!(certainty, Certainty::Exact | Certainty::Filtered));
+                let s = match sign {
+                    RealSign::Negative => -1,
+                    RealSign::Zero => 0,
+                    RealSign::Positive => 1,
+                };
+                assert_eq!(
+                    normalized,
+                    (s, s),
+                    "invalid box sign for {coeffs:?} on {xs:?} × {ys:?}"
+                );
+                let inequality = matches!(
+                    kind,
+                    ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual
+                );
+                assert_eq!(satisfied, s == 0 || inequality && s < 0);
+                if satisfied {
+                    Status::Certified
+                } else {
+                    Status::Violation
+                }
+            }
+            ref other => panic!("missing whole-box receipt for {coeffs:?}: {other:?}"),
+        };
+        assert_eq!(report.status, expected);
+        assert_eq!(
+            proof.certified_satisfied_rows,
+            usize::from(expected == Status::Certified)
+        );
+        assert_eq!(
+            proof.certified_violation_rows,
+            usize::from(expected == Status::Violation)
+        );
+        assert_eq!(
+            proof.bounded_unknown_rows,
+            usize::from(expected == Status::Unknown)
+        );
     }
 }
