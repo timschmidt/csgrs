@@ -128,7 +128,9 @@ allocation, or elapsed time. `work_budget::with_cancellable_budget` adds a
 next instrumented unit with a typed `Cancellation` failure.
 `work_budget::with_coefficient_bit_limit` bounds the exact coefficients that
 Bareiss determinants, pseudo-quotient matrices and dense tensor products
-produce, failing deterministically with `CoefficientGrowth`. See the
+produce, failing deterministically with `CoefficientGrowth`. The limit and
+observed bit count are compared as `u64`. On 32-bit targets the error currently
+saturates each reported count above `usize::MAX`, including in its display. See the
 [module contract](src/work_budget.rs) for the current coverage, cache behavior,
 and thread-local scope rules.
 
