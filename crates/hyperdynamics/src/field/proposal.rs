@@ -366,9 +366,6 @@ impl<const N: usize> Rk4Proposer<N> {
         if !h.is_finite() || h <= 0.0 {
             return Err(Rk4Error::PrimitiveTimeUnavailable);
         }
-        let middle = F64ProposalInterval::new(start, end)?
-            .midpoint_estimate()
-            .expect("nonempty time");
         budget
             .graph
             .charge(N.checked_mul(2).ok_or(ExpressionError::SizeExhausted)?)?;
@@ -383,13 +380,12 @@ impl<const N: usize> Rk4Proposer<N> {
         {
             let projected = project(lane, ProposalInput::State(i), budget)?;
             let (a, b) = projected.estimates().expect("nonempty initial lane");
-            initial[i] = projected
-                .midpoint_estimate()
-                .expect("nonempty initial lane");
-            radius[i] = b * 0.5 - a * 0.5;
+            initial[i] = a.midpoint(b);
+            radius[i] = (-a).midpoint(b);
         }
         let k1 = self.stage(start, initial, trace, budget)?;
         budget.graph.charge(N)?;
+        let middle = start.midpoint(end);
         let k2 = self.stage(
             middle,
             std::array::from_fn(|i| initial[i] + (h * 0.5) * k1[i]),

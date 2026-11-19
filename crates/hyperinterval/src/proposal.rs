@@ -53,18 +53,26 @@ let certified: RationalInterval = proposal.into();
 
         impl $name {
             /// Validates finite ordered estimates. Signed zeros become +0.
+            #[inline]
             pub fn new(lower: $float, upper: $float) -> Result<Self, IntervalError> {
-                let a = $format.finite(u64::from(lower.to_bits()))?;
-                let b = $format.finite(u64::from(upper.to_bits()))?;
-                if $format.compare(a, b) == Ordering::Greater {
-                    return Err(IntervalError::ReversedEndpoints);
-                }
-                Ok(Self {
+                Self::from_bits(lower.to_bits(), upper.to_bits())
+            }
+
+            // An integer call boundary keeps zero canonicalization independent
+            // of DAZ while allowing the validator to specialize for this width.
+            #[inline(never)]
+            fn from_bits(lower: $bits, upper: $bits) -> Result<Self, IntervalError> {
+                let (a, b) = $format.ordered_finite_pair(u64::from(lower), u64::from(upper))?;
+                Ok(Self::from_ordered_bits(a as $bits, b as $bits))
+            }
+
+            fn from_ordered_bits(lower: $bits, upper: $bits) -> Self {
+                Self {
                     estimates: Some(Bounds::ordered(
-                        <$float>::from_bits(a as $bits),
-                        <$float>::from_bits(b as $bits),
+                        <$float>::from_bits(lower),
+                        <$float>::from_bits(upper),
                     )),
-                })
+                }
             }
 
             /// A single finite proposed value, without an exact-source claim.
@@ -87,10 +95,10 @@ let certified: RationalInterval = proposal.into();
                 self.estimates.map(Bounds::endpoints)
             }
 
-            /// Approximate midpoint proposal, using halved endpoints to avoid
-            /// overflow. Underflow can move it outside the estimated range.
+            /// Native midpoint estimate, or an absent value for empty input. Under rounding to nearest
+            /// with gradual underflow, even a subnormal midpoint rounds once.
             pub fn midpoint_estimate(&self) -> Option<$float> {
-                self.estimates().map(|(a, b)| a * 0.5 + b * 0.5)
+                self.estimates().map(|(a, b)| a.midpoint(b))
             }
 
             // Validate every arithmetic result before selecting extrema. Bit
@@ -119,10 +127,8 @@ let certified: RationalInterval = proposal.into();
                 }
                 match range {
                     None => Ok(Self::empty()),
-                    Some((a, b)) => Self::new(
-                        <$float>::from_bits(a as $bits),
-                        <$float>::from_bits(b as $bits),
-                    ),
+                    // Every candidate passed finite validation before selection.
+                    Some((a, b)) => Ok(Self::from_ordered_bits(a as $bits, b as $bits)),
                 }
             }
 

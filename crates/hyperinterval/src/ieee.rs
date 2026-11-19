@@ -25,6 +25,24 @@ impl Format {
     // code inspection qualify this barrier on the supported compiler/target.
     #[inline(never)]
     pub(crate) fn finite(self, bits: u64) -> Result<u64, IntervalError> {
+        self.canonical_finite(bits)
+    }
+
+    // The proposal caller supplies both encodings at its integer boundary.
+    #[cfg(feature = "float-proposal")]
+    #[inline]
+    pub(crate) fn ordered_finite_pair(self, a: u64, b: u64) -> Result<(u64, u64), IntervalError> {
+        let a = self.canonical_finite(a)?;
+        let b = self.canonical_finite(b)?;
+        if self.compare(a, b) == Ordering::Greater {
+            Err(IntervalError::ReversedEndpoints)
+        } else {
+            Ok((a, b))
+        }
+    }
+
+    #[inline]
+    fn canonical_finite(self, bits: u64) -> Result<u64, IntervalError> {
         if bits & self.infinity == self.infinity {
             Err(IntervalError::NonFiniteEndpoint)
         } else if bits & (self.sign - 1) == 0 {

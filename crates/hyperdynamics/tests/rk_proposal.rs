@@ -88,7 +88,7 @@ fn contains(value: &DyadicInterval, expected: &Rational) {
 fn subnormal_proposal_replay_preserves_the_initial_set_across_steps() {
     let stationary = field::<1>(&[Expr::int(0)]).rk4_proposer(&mut b()).unwrap();
     let translating = field::<1>(&[Expr::int(1)]).rk4_proposer(&mut b()).unwrap();
-    for (lo, hi) in [(-3_i64, -3_i64), (1, 3), (-3, 1)] {
+    for (lo, hi) in [(-3_i64, -3_i64), (1, 3), (-3, 1), (1, 2)] {
         let grid = |a: i64, b: i64| DyadicInterval::new(a.into(), b.into(), -1074).unwrap();
         let initial = grid(lo, hi);
         let first = stationary
@@ -118,6 +118,55 @@ fn subnormal_proposal_replay_preserves_the_initial_set_across_steps() {
             Some(&[grid(lo + 4, hi + 4)])
         );
     }
+}
+
+#[test]
+fn zero_flow_preserves_subnormal_proposal_width_before_exact_replay() {
+    let proposer = field::<1>(&[Expr::int(0)]).rk4_proposer(&mut b()).unwrap();
+    let initial = DyadicInterval::new(1.into(), 3.into(), -1074).unwrap();
+    let req = request(point(1, -2), [initial.clone()]);
+    let candidate = proposer
+        .propose(
+            req,
+            Rk4Options {
+                relative_padding: 0.0,
+                absolute_padding: 0.0,
+            },
+            &mut b(),
+        )
+        .unwrap();
+    let (lower, upper) = candidate.trace().bounds()[0].estimates().unwrap();
+    assert_eq!((lower.to_bits(), upper.to_bits()), (1, 3));
+    let attempt = candidate.certify(&mut b());
+    certified(&attempt);
+    assert_eq!(
+        attempt.proof().end_enclosure().unwrap().lanes(),
+        Some(&[initial])
+    );
+}
+
+#[test]
+fn constant_flow_preserves_subnormal_stage_coordinates_and_time() {
+    let proposer = field::<1>(&[Expr::int(0)]).rk4_proposer(&mut b()).unwrap();
+    let initial = point(-3, -1074);
+    let req = EvolutionRequest {
+        start: point(1, -1074),
+        end: point(5, -1074),
+        initial: BoxN::new([initial.clone()]).unwrap(),
+    };
+    let attempt = proposer
+        .propose(req, Default::default(), &mut b())
+        .unwrap()
+        .certify(&mut b());
+    certified(&attempt);
+    for (stage, time_bits) in attempt.trace().stages().iter().zip([1, 3, 3, 5]) {
+        assert_eq!(stage.time().to_bits(), time_bits);
+        assert_eq!(stage.state()[0].to_bits(), (-f64::from_bits(3)).to_bits());
+    }
+    assert_eq!(
+        attempt.proof().end_enclosure().unwrap().lanes(),
+        Some(&[initial])
+    );
 }
 
 #[test]

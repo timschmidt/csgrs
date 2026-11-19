@@ -8,6 +8,43 @@ macro_rules! cases {
             use super::*;
 
             #[test]
+            fn midpoint_rounds_once_on_the_subnormal_grid() {
+                let grid = |units: i32| {
+                    let value = <$float>::from_bits(units.unsigned_abs() as $bits);
+                    if units < 0 { -value } else { value }
+                };
+                for lo in -31..=31 {
+                    for hi in lo..=31 {
+                        let sum: i32 = lo + hi;
+                        let floor = sum.div_euclid(2);
+                        let rounded = floor + i32::from(sum % 2 != 0 && floor % 2 != 0);
+                        let expected = if rounded == 0 && sum < 0 {
+                            -0.0
+                        } else {
+                            grid(rounded)
+                        };
+                        let image = $interval::new(grid(lo), grid(hi)).unwrap();
+                        assert_eq!(
+                            image.midpoint_estimate().unwrap().to_bits(),
+                            expected.to_bits(),
+                            "units [{lo},{hi}]"
+                        );
+                    }
+                }
+                let tiny = <$float>::MIN_POSITIVE;
+                for value in [<$float>::from_bits(tiny.to_bits() + 1), <$float>::MAX] {
+                    assert_eq!(
+                        $interval::point(value).unwrap().midpoint_estimate(),
+                        Some(value)
+                    );
+                    assert_eq!(
+                        $interval::point(-value).unwrap().midpoint_estimate(),
+                        Some(-value)
+                    );
+                }
+            }
+
+            #[test]
             fn finite_order_and_special_values() {
                 assert_eq!(
                     $interval::new(2.0, 1.0),
