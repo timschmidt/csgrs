@@ -5,10 +5,7 @@ use hyperinterval::{
     DomainCoverage, DyadicBudget, DyadicInterval, ExtendedInterval, IntervalError, IntervalSet2,
     RangeEnclosure, RationalInterval,
 };
-use hyperreal::Rational;
-#[path = "support/rational_coordinate.rs"]
-mod rational_coordinate;
-use rational_coordinate::coordinate;
+include!("support/rational_coordinate.rs");
 
 fn without_dispatch<T>(evaluate: impl FnOnce() -> T) -> T {
     #[cfg(feature = "dispatch-trace")]
