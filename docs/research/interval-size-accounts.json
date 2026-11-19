@@ -12918,5 +12918,26 @@
       }
     },
     "evidence": "docs/evidence/2026-11-19-interval-solver-orientation / registered-sizes.json; all ELF allocated sections and remaining incremental and cumulative caps."
+  },
+  "alpha_client_native_layout_revision": {
+    "status": "Authorized for independent requalification of this target. Adoption requires the measurements below.",
+    "scope": "x86_64-unknown-linux-gnu release alpha-client on Rust 1.99.0, using the locked Phase 7 public quadratic proof workload. Only the ELF SHT_NOBITS .relro_padding section. No shared or firmware target budget changes.",
+    "rationale": "A 16-byte shift of the start of the protected segment can expand its trailing padding by one linker alignment unit, without allocating another page or increasing the final file or initialized RELRO payload. The mathematical benefit is elimination of a false simple-root certificate. The bounded exception is disallowed if any PT_LOAD page range changes or any new mapped page is required.",
+    "baseline": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "previous": "590b87f32",
+    "original_incremental": {
+      "bytes": 4096,
+      "percent_of_previous_section": 1
+    },
+    "new_incremental": {
+      "bytes": 16,
+      "percent_of_previous_section": 2.5
+    },
+    "cumulative": {
+      "bytes": 16384,
+      "percent_of_fixed_section": 2
+    },
+    "guard": "Measure on a fresh linked build at the same source path. For each PT_LOAD retain the same page addresses and permissions. Require unchanged initialized PT_GNU_RELRO payload, no increase in file bytes, and the same protected pages. All other ELF metrics, WASM, runtime, heap, stack, certainty and trace gates apply.",
+    "history": "The default cap was 6 bytes at 656 bytes of preceding padding. The first trial grew by 544 bytes and remains rejected. The separate paired-status trial grew by one 16-byte linker unit and failed that original gate. Fixed padding was 1,424 bytes. Previous positive charge was zero. The cumulative effective cap remains 28 bytes. Rejected trials consume no budget."
   }
 }
