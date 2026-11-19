@@ -254,6 +254,14 @@ multivariate benchmarks, its median rose from 4.538 to 4.604 µs on one pinned
 CPU and from 4.551 to 4.614 µs on another. The full repair remains in review.
 The independent whole-box replay and row-aggregation issues above also remain open.
 
+The rational affine oracle also checks the prefix of certified coordinates
+when a later coordinate is outside its ball. Each step must preserve its
+symbol, candidate, displacement, root and radius. A solver that dropped the
+prefix previously passed all 600 cases. On the interval branch the affine
+caller guidance above still applies. The subsequent pivot-normalization
+trial, its public regression witnesses and its Linux and WASI measurements
+are recorded in the [Phase 7 ledger](../../INTERVAL_REFACTOR_PROGRESS.md#phase-7-partial-affine-reports-and-certified-elimination).
+
 ### Cost of the retained multivariate repair
 
 | Completed workload | Observation |

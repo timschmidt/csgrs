@@ -16438,5 +16438,142 @@
     "new_artifacts": "Each oracle uses the existing 64 MiB qualification slot with 16 MiB reserved. Each packaged smoke client fits the 4 MiB slot with 1 MiB reserved. The ten final images leave at least 64628272 and 3359680 bytes respectively. Direct and composed clients produce the same bits on all six compiler/target combinations. Direct images are 7090 to 12664 bytes smaller. No embedded flash allowance applies.",
     "memory": "No memory exception charged. Per-input requested and glibc-usable peak heap, retained bytes and cold/warm worker stack on both native compilers are in audited-lifetimes.json.",
     "evidence": "docs/evidence/2026-11-19-interval-rational-ieee-projection"
+  },
+  "affine_krawczyk_partial_reports": {
+    "source": "f2a30f542",
+    "preceding": "6aad6b95f",
+    "artifact": "hypersolve all-feature release krawczyk_affine_oracle",
+    "benefit": "Checks each proved coordinate and all five step fields when the next coordinate lies outside its closed ball. The previous test passed a solver that discarded the prefix.",
+    "qualification_slot_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "limits": "Each target independently allows 4096 bytes and 0.5% incrementally, 32768 bytes and 1.5% cumulatively for final file, code and function bytes. The original Rust 1.95 Linux file account remains charged.",
+    "metrics_order": [
+      "file",
+      "code",
+      "functions"
+    ],
+    "targets": {
+      "1.95.0 x86_64-unknown-linux-gnu": {
+        "fixed_revision": "aaebcb395",
+        "fixed_bytes": [
+          4320224,
+          2241527,
+          2220004
+        ],
+        "preceding_bytes": [
+          4320104,
+          2241527,
+          2220004
+        ],
+        "retained_bytes": [
+          4317200,
+          2238775,
+          2217232
+        ],
+        "cumulative_positive_bytes": [
+          56,
+          0,
+          0
+        ],
+        "remaining_cumulative_bytes": [
+          32712,
+          32768,
+          32768
+        ],
+        "remaining_slot_bytes": 62791664,
+        "retained_sha256": "37542ff9b3157aef19754ad47a40c3096075778611f080b4d04f8f79a8bddfdd"
+      },
+      "stable x86_64-unknown-linux-gnu": {
+        "fixed_revision": "aaebcb395",
+        "fixed_bytes": [
+          4463136,
+          2306581,
+          2285394
+        ],
+        "preceding_bytes": [
+          4456528,
+          2302853,
+          2281753
+        ],
+        "retained_bytes": [
+          4454160,
+          2299877,
+          2278740
+        ],
+        "cumulative_positive_bytes": [
+          0,
+          0,
+          0
+        ],
+        "remaining_cumulative_bytes": [
+          32768,
+          32768,
+          32768
+        ],
+        "remaining_slot_bytes": 62654704,
+        "retained_sha256": "5022ea17cad64538ac166a2cba592915a8d95f4fc1c6be11c836a4b1d7b55242"
+      },
+      "1.95.0 wasm32-wasip1": {
+        "fixed_revision": "7b5fb0fdb",
+        "fixed_bytes": [
+          2272458,
+          1936638,
+          1932842
+        ],
+        "preceding_bytes": [
+          2272463,
+          1936638,
+          1932842
+        ],
+        "retained_bytes": [
+          2273929,
+          1937823,
+          1934023
+        ],
+        "cumulative_positive_bytes": [
+          1471,
+          1185,
+          1181
+        ],
+        "remaining_cumulative_bytes": [
+          31297,
+          27864,
+          27811
+        ],
+        "remaining_slot_bytes": 64834935,
+        "retained_sha256": "335ffeefd76fb48e298997203619e08bd66bb084eea49da99c00581df139cbfb"
+      },
+      "stable wasm32-wasip1": {
+        "fixed_revision": "7b5fb0fdb",
+        "fixed_bytes": [
+          2308793,
+          1929596,
+          1925802
+        ],
+        "preceding_bytes": [
+          2309103,
+          1929900,
+          1926106
+        ],
+        "retained_bytes": [
+          2310421,
+          1930762,
+          1926964
+        ],
+        "cumulative_positive_bytes": [
+          1628,
+          1166,
+          1162
+        ],
+        "remaining_cumulative_bytes": [
+          31140,
+          27777,
+          27725
+        ],
+        "remaining_slot_bytes": 64798443,
+        "retained_sha256": "1b952b1ba75e4d5d31413b8584a736159c489f0ce9129ae728dfdd1ce60bb25d"
+      }
+    },
+    "evidence": "docs/evidence/2026-11-19-interval-affine-prefix-and-proof"
   }
 }

@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers, full-width exponents and tight rational endpoint projection | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound. The affine oracle checks every field of each published coordinate, including the proved prefix of an outside-box report | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. The full 199-case Interface core suite now runs on WASI, including machine-profile replay and TinyBee firmware actors. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -14608,3 +14608,63 @@ The archived record contains 84 observations in 52,964 bytes. Verification
 against local evidence commit `f50729e1ca9d62834ba5d02f1e70910f8b23e6a8`
 matched all 258 November interval records to the index, covering 93,284
 files and 6,298,330,796 bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7, partial affine reports and certified elimination
+
+Commit `f2a30f542` extends the rational two-variable oracle to check the
+entire reported prefix against known roots and closed intervals. Of 600
+reports across both policies, 240 reject the first coordinate, 180 retain
+the first and reject the second, and 180 certify both. Each published step
+must carry its original symbol, center, displacement, root and radius.
+Removing the first step only on an outside verdict passed the preceding
+test and failed the revised one. All four Linux and WASI Preview 1 builds on
+Rust 1.95 and 1.99 reproduced both sides of that control.
+[Affine oracle](crates/hypersolve/tests/krawczyk_affine_oracle.rs)
+
+The native test files shrank by 2,904 and 2,368 bytes. The WASI files grew
+by 1,466 and 1,318 bytes. The largest cumulative file charge was 1,628
+bytes. Two builds from different source directories agreed on the final
+file, executable code and function byte counts on each target. Each image
+retains at least 62.6 million free bytes of its 64 MiB qualification slot.
+Minimal-feature and all-feature tests, strict targeted Clippy on both
+compilers, workspace formatting, nine inventory tests and the inventory
+comparison passed. The retained change modifies only the oracle.
+[Per-target size accounts](docs/research/interval-size-accounts.json)
+
+At `6aad6b95f`, terminal equality under `APPROXIMATE_512` still certified
+two rootless affine boxes and returned a root that failed an original
+equation. A row-swap witness reproduced the wrong outside-box verdict after
+a proved first coordinate. Seven repairs passed the 48 adversarial guest
+calls, the 240 ordinary guest calls and the 30 ordinary native report and
+dispatch comparisons. All 84 whole-box report and trace records matched.
+The policy-only change passed the eight measured image budgets and 216
+ordinary and stress heap/stack gates. On opposite load orders, the two-core
+paired CPU-time runs reproduced an affine slowdown. Returning the owned
+right-hand side directly exceeded eight heap caps by 8–144 bytes.
+[Proof scope and caller guidance](docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)
+
+Review commit `6fc8f3deb` on `interval-affine-proof-normalization` uses
+certified comparisons and borrows the operands of pivot normalization. It
+passed 1,550 native tests and two doctests. The Rust 1.95 WASI suite passed
+1,525 direct cases, 17 native parents with fresh WASI children, five native
+platform checks and 4,212 matched Horner dispatch windows. All 216 measured
+heap and stack comparisons passed. Both guest release clients shrank.
+The ordinary native lifetime client also shrank by 1,704 file bytes, but
+its uninitialized RELRO padding grew by 1,912 bytes against its zero-byte
+incremental allowance. It gained a protected page and lost an executable
+page. Other link layouts and the original positive charges are recorded
+individually. This repair remains on the review branch. Use
+`PredicatePolicy::STRICT` for affine Krawczyk proof on the interval branch.
+
+The variant borrowing both pivot and elimination operands reduced the
+measured affine CPU time on both cores in the same-path process comparison.
+It exceeded the ordinary guest file cap by 922 bytes, the guest code cap
+by 10 bytes, and the native trace benchmark's named-code cap by 714 bytes.
+The qualification records include fixed and preceding builds of all 42
+registered native artifacts, with 33 feature-matched comparisons, plus the
+six-step downstream model on the policy-only and normalization trials.
+Production size and memory charges remain at their preceding values.
+
+All 1,774 archived members verified at evidence commit
+`91660fccff4acd321079fca31a13d260b9ec579c`. The record occupies
+431,268 bytes. [Evidence index](docs/evidence-archive.tsv)
