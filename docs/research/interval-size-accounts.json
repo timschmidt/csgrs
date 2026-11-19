@@ -11295,5 +11295,44 @@
         }
       }
     }
+  },
+  "nested_coefficient_budget_oracle": {
+    "source": "063cb703dce8a8deb46f927af2a71c8e1f5f742f",
+    "evidence": "docs/evidence/2026-11-18-interval-coefficient-budget-width",
+    "workload": "Public Hypersolve coefficient comparisons and nested failure ownership, 512 outer/inner/request triples and six exact receipts through the representable word boundary. New integration executable, locked release, all features.",
+    "file_ceiling": 16777216,
+    "capacity_bytes": 67108864,
+    "required_slot_headroom_bytes": 16777216,
+    "charge": "The file, code and defined-function bytes enter at their full initial size on each target. Existing production and test accounts carry forward independently.",
+    "targets": {
+      "1.95.0-wasm32-wasip1": {
+        "file": 475976,
+        "sha256": "8b85d8931d34330f05f43e0cfb57744297118892434a0d2ca25a73af8f666d75",
+        "code": 338424,
+        "functions": 337185,
+        "free_slot_bytes": 66632888
+      },
+      "1.95.0-x86_64-unknown-linux-gnu": {
+        "file": 2006416,
+        "sha256": "3e51971be11f1601ed28d65106b775853400f44624689c2c0826ed8d6890e6ba",
+        "code": 615252,
+        "functions": 606536,
+        "free_slot_bytes": 65102448
+      },
+      "stable-wasm32-wasip1": {
+        "file": 495746,
+        "sha256": "9aa10a8ec09f98d21a1740edb839d1c8e3becc72266fc57c988b698baba6db10",
+        "code": 352046,
+        "functions": 350792,
+        "free_slot_bytes": 66613118
+      },
+      "stable-x86_64-unknown-linux-gnu": {
+        "file": 2039768,
+        "sha256": "f18c6bca7963aee15ceaeb96a1530af089f4e386d2a7feedddf09fb69b51f69d",
+        "code": 625061,
+        "functions": 616486,
+        "free_slot_bytes": 65069096
+      }
+    }
   }
 }

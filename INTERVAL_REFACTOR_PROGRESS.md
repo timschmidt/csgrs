@@ -12949,3 +12949,46 @@ reproducer, compiler-specific lifetime measurements and linked binary
 accounts. Record `docs/evidence/2026-11-18-interval-solver-library-wasi`
 has digest `532e947f4b97cd0d0c9fa3dd615b01fec2af7e9701a5d07592ae0e3c4f0b7291`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7 coefficient-width diagnostics and scope ownership, 18 November 2026
+
+Commit `063cb703d` qualifies 512 outer-limit, inner-limit and observed-size
+triples through the public solver API. The corpus crosses 2³² and 2⁶³ and
+includes equality at `u64::MAX`. Six exact receipts identify the outermost
+scope that denied work, including requests at each target's maximum word
+value. The corpus checks publication, work usage, sticky failure inside a
+new child, parent recovery and independent retry. All cases passed in
+release on native Linux and WASI with Rust 1.95.0 and 1.99.0. Narrowing
+the comparison to 32 bits or searching from the innermost scope failed the
+independent oracle on both targets. The WASI inventory requires the new
+suite. [Public acceptance tests](crates/hypersolve/tests/coefficient_bit_budget.rs)
+
+The configured limit and observation both accept `u64`. The public error
+still carries its limit and request in `usize`. With limit 4,294,967,296 and
+request 4,294,967,297 the current WASI receipt saturates both fields to
+4,294,967,295. The exhaustion kind and decision are correct. Five trial
+implementations preserved all exact receipt values in a separate 81-pair
+corpus on both targets and compilers. Changing the public field types also
+requires migrating callers that store their counts in `usize`.
+[Public scope and diagnostic limitation](crates/hypersolve/README.md)
+
+Simply widening the two fields grew the WASI receipt from 16 to 24 bytes.
+Retained requested heap on a fresh successful scope rose from 224 to 256
+bytes, and from 1,792 to 2,048 bytes with 32 nested scopes. Both exceeded
+the 5% incremental limit. Sharing the first failure across its affected
+scopes brought those observations down to 160 and 1,280 bytes respectively.
+Keeping a frame's limits or its first failure in the same storage reached
+192 and 1,536 bytes. Four designs passed the measured comparable heap
+screens. Each of the five trials independently exceeded at least one
+existing linked executable's 4,096-byte incremental cap. For example, the
+frame-state design grew the stable WASI ordered-field resultant executable
+by 11,922 bytes. All production memory and size charges carry forward.
+The new acceptance executable is charged separately per target.
+[Four compiler and target size accounts](docs/research/interval-size-accounts.json)
+
+Evidence commit `f1b4a6ca53b4a7e8be2c05e930833cb06128f251` contains 237
+files, including the failing 32-bit client output, linked measurements for
+all five designs, heap lifetimes and mutation transcripts. Record
+`docs/evidence/2026-11-18-interval-coefficient-budget-width` has digest
+`b22e93b75ee33e08cd6299f17db2c203c5bde348ab7f563ddf3e66674fab42d5`.
+[Evidence index](docs/evidence-archive.tsv)
