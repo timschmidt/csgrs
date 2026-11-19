@@ -1645,5 +1645,58 @@
         }
       }
     }
+  },
+  "wasm_float_endpoint_qualification_jobs": {
+    "source": "eef113658",
+    "preceding": "1fb7b8a1f",
+    "evidence": "docs/evidence/2026-11-18-interval-wasm-float-qualification",
+    "scope": "New host-process account for one sequential Node primitive verifier from startup through result publication and exit, including 24 isolated endpoint traps. Independent from the existing guest stack and allocator accounts. Paired measurements use the identical module, corpus and Node runtime; cgroup peaks include the measuring Python process.",
+    "capacity_bytes": 268435456,
+    "reserve_bytes": 67108864,
+    "swap_bytes": 0,
+    "targets": {
+      "1.88.0-wasm32-unknown-unknown": {
+        "preceding_peak_bytes": 63778816,
+        "measured_peak_bytes": 64348160,
+        "positive_change_bytes": 569344,
+        "cumulative_charged_peak_bytes": 64348160,
+        "remaining_above_reserve_bytes": 136978432
+      },
+      "1.88.0-wasm32-wasip1": {
+        "preceding_peak_bytes": 64262144,
+        "measured_peak_bytes": 61337600,
+        "positive_change_bytes": 0,
+        "cumulative_charged_peak_bytes": 64262144,
+        "remaining_above_reserve_bytes": 137064448
+      },
+      "1.95.0-wasm32-unknown-unknown": {
+        "preceding_peak_bytes": 63361024,
+        "measured_peak_bytes": 63643648,
+        "positive_change_bytes": 282624,
+        "cumulative_charged_peak_bytes": 63643648,
+        "remaining_above_reserve_bytes": 137682944
+      },
+      "1.95.0-wasm32-wasip1": {
+        "preceding_peak_bytes": 66838528,
+        "measured_peak_bytes": 61943808,
+        "positive_change_bytes": 0,
+        "cumulative_charged_peak_bytes": 66838528,
+        "remaining_above_reserve_bytes": 134488064
+      },
+      "stable-wasm32-unknown-unknown": {
+        "preceding_peak_bytes": 63356928,
+        "measured_peak_bytes": 63258624,
+        "positive_change_bytes": 0,
+        "cumulative_charged_peak_bytes": 63356928,
+        "remaining_above_reserve_bytes": 137969664
+      },
+      "stable-wasm32-wasip1": {
+        "preceding_peak_bytes": 60563456,
+        "measured_peak_bytes": 64503808,
+        "positive_change_bytes": 3940352,
+        "cumulative_charged_peak_bytes": 64503808,
+        "remaining_above_reserve_bytes": 136822784
+      }
+    }
   }
 }

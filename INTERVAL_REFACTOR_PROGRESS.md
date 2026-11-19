@@ -13378,3 +13378,52 @@ embedded targets require separate qualification.
 Evidence commit `9ef2682fed5bc11010ff527e835a913b8d49c6d4` contains 1,628 files
 under `docs/evidence/2026-11-18-interval-monotone-ingress` with digest
 `dd3abae4b695631e74792daa17a60ef3db61c99da54df592bb2efbd6adf1dba2`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phases 4 and 14, strict IEEE WebAssembly release checks, 18 November 2026
+
+On `1fb7b8a1f`, the release scanner reported zero floating operations in an
+assembled module containing `f32x4.add` and `i32x4.trunc_sat_f64x2_s_zero`.
+Commit `ec92da934` checks folded scalar and SIMD instructions in Binaryen
+disassembly. Each qualification run now assembles a control, disassembles the
+binary, and checks all four expected arithmetic and conversion instructions.
+The control also exercises integer SIMD, same-width bit transfers, and an
+export name containing a floating instruction spelling. A separate module
+reproduced the former omission for relaxed multiply-add and truncation.
+[Scanner](scripts/check_interval_wasm.py) · [Control module](crates/hyperinterval/conformance/wasm-float/codegen-control.wat)
+
+Both deliberately changed clients passed the old 55,802-case arithmetic
+corpus. One returned zero for the lower binary32 endpoint of an empty
+result. The other returned zero for the upper binary64 endpoint after
+division by a zero-containing interval. Commit `eef113658` verifies both
+selectors for empty results and each of the five qualified-target errors at
+both widths. Each of the 24 probes checks the status on a fresh instance,
+then requires a WebAssembly trap. Both changed clients now fail at their
+respective selectors. The original endpoints of complete and partially
+defined images still pass the independent bit-exact oracle.
+[ABI verifier](crates/hyperinterval/conformance/wasm-float/check.mjs)
+
+All six release runs passed on Rust 1.88, 1.95 and 1.99, each on
+`wasm32-unknown-unknown` and `wasm32-wasip1`. Each passed 55,802 arithmetic
+cases, 8,836 set-property cases and 24 endpoint traps. Chromium 155 passed
+the same checks on each bare module. The Preview 1 lattice suites passed
+65 additional tests per compiler. Each downstream run also passed 612
+floating and 612 fixed layout chains, 172,284 fixed-client calls and 56
+dyadic conversions. The exact-real bridge ran on the two compilers meeting
+its MSRV. Three Rust 1.95 unqualified-target configurations preserved all
+eight refusal/empty endpoint traps apiece.
+
+All 28 applicable linked modules matched their predecessor byte for byte
+with the same checkout and target paths. Builds from different checkout
+paths produced different hashes and were excluded from that comparison.
+The primitive guest reserved at most 704 stack bytes on the normal
+completion corpus. In six complete Node verifier jobs, peak host group
+memory ranged from 61,337,600 to 64,503,808 bytes under the 256 MiB limit
+with 64 MiB reserved and zero OOM or limit events. Host measurements include
+startup, corpus loading, fresh instances, result publication and exit. The
+existing guest stack and allocation accounts retain their previous charges.
+[Per-target host measurements](docs/research/interval-memory-accounts.json)
+
+Evidence commit `6c09f756fd47645778a2e0ee246f7d9cc57519f3` contains 403
+files under `docs/evidence/2026-11-18-interval-wasm-float-qualification`,
+with digest `0acd1b23c76d615e640fddc016f34c824c8df068101a89efe7fd544f49d88c7d`.
+[Evidence index](docs/evidence-archive.tsv)
