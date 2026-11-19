@@ -66,6 +66,10 @@
 
 ### Changed
 
+- Direct tangent and G1 join classifications require certified comparisons
+  under both predicate policies. Corner lookahead and feed schedule planning
+  and replay return `PredicateUnresolved` when a join cannot be decided.
+
 - Declares a minimum supported Rust version (MSRV) of 1.95.0; 0.2.1 declared
   none.
 - Development moved to the

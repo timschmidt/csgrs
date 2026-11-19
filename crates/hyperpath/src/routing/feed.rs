@@ -96,6 +96,20 @@ pub enum CornerLookaheadJoinClass {
     ReversalStop,
 }
 
+impl CornerLookaheadJoinClass {
+    pub(super) fn from_tangent(class: TangentJoinClass) -> Result<Self, RouteCertificationError> {
+        match class {
+            TangentJoinClass::G1Continuous => Ok(Self::StraightThrough),
+            TangentJoinClass::Corner => Ok(Self::RadiusLimitedCorner),
+            TangentJoinClass::ReversedTangent => Ok(Self::ReversalStop),
+            TangentJoinClass::DegenerateTangent | TangentJoinClass::EndpointMismatch => {
+                Err(RouteCertificationError::UnsupportedRouteGeometry)
+            }
+            TangentJoinClass::Unknown => Err(RouteCertificationError::PredicateUnresolved),
+        }
+    }
+}
+
 /// Exact corner-speed replay report for one adjacent tangent-span join.
 ///
 /// The report carries the tangent predicate result and a solver replay of the
@@ -360,16 +374,7 @@ pub fn certify_corner_lookahead_limits(
             &pair[1].start_tangent,
             policy,
         );
-        let class = match tangent_join.class {
-            TangentJoinClass::G1Continuous => CornerLookaheadJoinClass::StraightThrough,
-            TangentJoinClass::Corner => CornerLookaheadJoinClass::RadiusLimitedCorner,
-            TangentJoinClass::ReversedTangent => CornerLookaheadJoinClass::ReversalStop,
-            TangentJoinClass::DegenerateTangent
-            | TangentJoinClass::EndpointMismatch
-            | TangentJoinClass::Unknown => {
-                return Err(RouteCertificationError::UnsupportedRouteGeometry);
-            }
-        };
+        let class = CornerLookaheadJoinClass::from_tangent(tangent_join.class)?;
         let certification = certify_corner_lookahead_join_candidate(
             class,
             candidate_corner_feed.clone(),

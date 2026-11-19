@@ -259,8 +259,17 @@ pub struct G1JoinProblem {
 /// same-direction from opposite-direction tangency. No normalization is
 /// performed, so this predicate works with radius-scaled arc tangents,
 /// polynomial Bezier hodographs, rational conic derivatives, and line
-/// direction vectors without introducing square roots.
+/// direction vectors without introducing square roots. A definite alignment
+/// requires a certificate even when the caller permits terminal approximation.
 pub fn classify_tangent_alignment(
+    first: &Point2,
+    second: &Point2,
+    policy: PredicatePolicy,
+) -> TangentAlignment {
+    classify_certified_alignment(first, second, policy.certified_only())
+}
+
+fn classify_certified_alignment(
     first: &Point2,
     second: &Point2,
     policy: PredicatePolicy,
@@ -302,6 +311,7 @@ pub fn classify_tangent_join(
     second_tangent: &Point2,
     policy: PredicatePolicy,
 ) -> TangentJoinReport {
+    let policy = policy.certified_only();
     match point2_equal(first_endpoint, second_endpoint, policy).value() {
         Some(false) => TangentJoinReport {
             class: TangentJoinClass::EndpointMismatch,
@@ -309,7 +319,7 @@ pub fn classify_tangent_join(
             alignment: None,
         },
         Some(true) => {
-            let alignment = classify_tangent_alignment(first_tangent, second_tangent, policy);
+            let alignment = classify_certified_alignment(first_tangent, second_tangent, policy);
             let class = match alignment {
                 TangentAlignment::SameDirection => TangentJoinClass::G1Continuous,
                 TangentAlignment::OppositeDirection => TangentJoinClass::ReversedTangent,

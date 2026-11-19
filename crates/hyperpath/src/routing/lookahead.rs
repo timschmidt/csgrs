@@ -24,7 +24,7 @@ use hypersolve::{
     context_from_problem,
 };
 
-use crate::tangent::{TangentJoinClass, TangentSpan, classify_tangent_join};
+use crate::tangent::{TangentSpan, classify_tangent_join};
 
 use super::RouteCertificationError;
 use super::feed::{
@@ -585,7 +585,7 @@ fn certify_local_corner_limits(
             &pair[1].start_tangent,
             policy,
         );
-        let class = lookahead_join_class_from_tangent(tangent_join.class)?;
+        let class = CornerLookaheadJoinClass::from_tangent(tangent_join.class)?;
         let certification = certify_corner_candidate(
             class,
             corner_feeds[index].clone(),
@@ -844,20 +844,7 @@ fn lookahead_join_class(
         &outgoing.start_tangent,
         policy,
     );
-    lookahead_join_class_from_tangent(tangent_join.class)
-}
-
-fn lookahead_join_class_from_tangent(
-    class: TangentJoinClass,
-) -> Result<CornerLookaheadJoinClass, RouteCertificationError> {
-    match class {
-        TangentJoinClass::G1Continuous => Ok(CornerLookaheadJoinClass::StraightThrough),
-        TangentJoinClass::Corner => Ok(CornerLookaheadJoinClass::RadiusLimitedCorner),
-        TangentJoinClass::ReversedTangent => Ok(CornerLookaheadJoinClass::ReversalStop),
-        TangentJoinClass::DegenerateTangent
-        | TangentJoinClass::EndpointMismatch
-        | TangentJoinClass::Unknown => Err(RouteCertificationError::UnsupportedRouteGeometry),
-    }
+    CornerLookaheadJoinClass::from_tangent(tangent_join.class)
 }
 
 fn minimum_real(
