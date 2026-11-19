@@ -484,6 +484,9 @@ blocks before an algorithm is selected.
 - Affine and quadratic Krawczyk reports, plus
   `certify_univariate_quadratic_alpha`, expose supported local existence and
   uniqueness evidence.
+- The quadratic alpha report requires a proved zero residual and a proved
+  nonzero derivative for `ExactSimpleRoot`. With a zero residual and an
+  unresolved derivative, both predicate policies return `Undecided`.
 - Multivariate quadratic Krawczyk reports require certified comparisons under
   both predicate policies. Use `PredicatePolicy::STRICT` for the affine and
   univariate quadratic Krawczyk reports. A terminal approximation in either

@@ -178,34 +178,40 @@ fn classify_alpha_bound(
     let derivative_abs = derivative.abs();
     let quadratic_abs = quadratic.abs();
 
-    let residual_is_zero =
-        compare_reals(&residual_abs, &Real::zero(), policy).value() == Some(Ordering::Equal);
-    let derivative_is_zero =
-        compare_reals(&derivative_abs, &Real::zero(), policy).value() == Some(Ordering::Equal);
+    let policy = policy.certified_only();
+    let residual_order = compare_reals(&residual_abs, &Real::zero(), policy).value();
+    let derivative_order = compare_reals(&derivative_abs, &Real::zero(), policy).value();
 
-    if residual_is_zero && derivative_is_zero {
-        return alpha_status(UnivariateQuadraticAlphaStatus::ExactMultipleRoot);
-    }
-    if residual_is_zero {
-        return AlphaBoundClassification {
-            status: UnivariateQuadraticAlphaStatus::ExactSimpleRoot,
-            alpha_numerator: Some(Real::zero()),
-            alpha_denominator: Some(derivative_abs.clone() * derivative_abs),
-        };
-    }
-    if derivative_is_zero {
-        return alpha_status(UnivariateQuadraticAlphaStatus::ZeroDerivative);
+    use UnivariateQuadraticAlphaStatus as Status;
+    match (residual_order, derivative_order) {
+        (Some(Ordering::Equal), Some(Ordering::Equal)) => {
+            return alpha_status(Status::ExactMultipleRoot);
+        }
+        (Some(Ordering::Equal), None) | (None, Some(Ordering::Equal)) => {
+            return alpha_status(Status::Undecided);
+        }
+        (_, Some(Ordering::Equal)) => return alpha_status(Status::ZeroDerivative),
+        (Some(Ordering::Equal), _) => {
+            return AlphaBoundClassification {
+                status: Status::ExactSimpleRoot,
+                alpha_numerator: Some(Real::zero()),
+                alpha_denominator: Some(derivative_abs.clone() * derivative_abs),
+            };
+        }
+        _ => {}
     }
 
     let numerator = residual_abs * quadratic_abs;
     let denominator = derivative_abs.clone() * derivative_abs;
     let sufficient_left = numerator.clone() * Real::from(8);
     let status = match compare_reals(&sufficient_left, &denominator, policy).value() {
-        Some(Ordering::Less | Ordering::Equal) => {
+        // A strict inequality proves the denominator positive because the left side is nonnegative.
+        Some(Ordering::Less) => UnivariateQuadraticAlphaStatus::CertifiedSmaleAlphaBound,
+        Some(Ordering::Equal) if derivative_order.is_some() => {
             UnivariateQuadraticAlphaStatus::CertifiedSmaleAlphaBound
         }
         Some(Ordering::Greater) => UnivariateQuadraticAlphaStatus::BoundFailed,
-        None => UnivariateQuadraticAlphaStatus::Undecided,
+        Some(Ordering::Equal) | None => UnivariateQuadraticAlphaStatus::Undecided,
     };
     AlphaBoundClassification {
         status,

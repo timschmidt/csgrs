@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Require certified comparisons for univariate quadratic alpha reports under
+  both predicate policies. A zero residual with an unresolved derivative now
+  returns `Undecided`. An approximate comparison can no longer classify a
+  nonroot as an exact simple root.
+
 - Require a certified nonnegative radius for interval-box and Krawczyk
   certificates. An unresolved radius sign returns the existing typed error
   even when the caller permits approximate terminal predicates.
