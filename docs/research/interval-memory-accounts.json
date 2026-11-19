@@ -2021,5 +2021,56 @@
     "process_limit_bytes": 268435456,
     "required_free_bytes": 67108864,
     "evidence": "docs/evidence/2026-11-19-interval-solver-orientation: matched-lifetime.json, matched-guest-stack.json, matched-groups.json and alpha-scope.md"
+  },
+  "rational_fractional_power_ingress": {
+    "source": "5bd199578b1999f58a11137c8abc6fce7b6a1bba",
+    "preceding": "bc8fe3061137e00caf9909f44eed15d47c64e0a3",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "evidence": "docs/evidence/2026-11-19-interval-fractional-power-admission",
+    "scope": "One sequential completed rational power with materialized output, on canonical or generated point 3, cube-root range [-8,27], and the partial square root on [-8,4]. Check both a fresh input and a retained input. Complete point source construction uses an exact line intersection. Small-budget refusals are accounted separately from completed jobs.",
+    "caps": "Zero positive requested heap growth and zero retained after drop. Per job stack growth at most 128 B and 2% incremental and 256 B and 4% cumulative. Retain at least 256 KiB stack headroom. Native worker has a 2 MiB mapping including a 4 KiB guard, bare-Wasm has a 1 MiB stack. No new concurrency.",
+    "targets": {
+      "1.95.0-native": {
+        "maximum_stack_bytes": 8784,
+        "largest_positive_step": 80,
+        "largest_cumulative_stack_charge": 80,
+        "minimum_remaining_cumulative_allowance": 176,
+        "minimum_stack_headroom": 2084272,
+        "maximum_requested_heap_bytes": 816,
+        "largest_peak_heap_increase": 0,
+        "peak_retained_after_drop": 0
+      },
+      "1.95.0-wasm": {
+        "maximum_stack_bytes": 1812,
+        "largest_positive_step": 0,
+        "largest_cumulative_stack_charge": 0,
+        "minimum_remaining_cumulative_allowance": 66,
+        "minimum_stack_headroom": 1046764,
+        "maximum_requested_heap_bytes": 424,
+        "largest_peak_heap_increase": 0,
+        "peak_retained_after_drop": 0
+      },
+      "stable-native": {
+        "maximum_stack_bytes": 8832,
+        "largest_positive_step": 72,
+        "largest_cumulative_stack_charge": 72,
+        "minimum_remaining_cumulative_allowance": 184,
+        "minimum_stack_headroom": 2084224,
+        "maximum_requested_heap_bytes": 816,
+        "largest_peak_heap_increase": 0,
+        "peak_retained_after_drop": 0
+      },
+      "stable-wasm": {
+        "maximum_stack_bytes": 1904,
+        "largest_positive_step": 0,
+        "largest_cumulative_stack_charge": 0,
+        "minimum_remaining_cumulative_allowance": 70,
+        "minimum_stack_headroom": 1046672,
+        "maximum_requested_heap_bytes": 424,
+        "largest_peak_heap_increase": 0,
+        "peak_retained_after_drop": 0
+      }
+    },
+    "details": "records/accounted.json contains the per-case stack and heap history. Native pthread and Wasm canaries use two byte patterns. Heap peaks cover requested allocations only. records/process-resident.json reports process high-water separately, including the host runtime for bare Wasm."
   }
 }

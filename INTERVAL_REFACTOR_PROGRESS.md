@@ -13791,3 +13791,61 @@ and lockfiles matched the baseline.
 
 Evidence commit `7a4bbb78c51a6f0eafe7082e36950e419f67c621` records 281 verified members in 40,932 bytes.
 [Evidence index](docs/evidence-archive.tsv)
+
+### Phase 3 and 5 — charge deferred rational reduction before fractional powers
+
+At `bc8fe3061` the cube root of a generated coordinate representing 3
+completed with a 97-bit coefficient limit. Its unreduced representation
+requires 98 bits. The result [1, 2] enclosed the root correctly, but reading
+the canonical numerator could already have performed the unadmitted reduction.
+This violated the input and work contract for nontrivial powers on exact
+rational intervals (P5, P6, P36, P38).
+
+Commit `5bd199578` charges three quadratic stages at each reducible
+endpoint's stored width before either endpoint can warm its reduction cache.
+A shared point pays both charges and can reuse its materialized coefficients.
+The two original sign decisions retain their order. The 97-bit call now
+returns `SizeExhausted`. Insufficient work for the second endpoint leaves
+both caches cold. Larger-budget retry succeeds, and running at the exact
+work cutoff produces the same enclosure and domain coverage on warm and cold
+inputs. Positive, negative, partial-domain and split powers exercise the
+same admission rule. The fuzzer checks generated endpoints against the
+independent GMP and MPFR oracle.
+[Acceptance witnesses](crates/hyperinterval/tests/fractional_power_ingress.rs)
+
+| Final public client | Linked file change | Code change | Function-byte change | Largest stack growth |
+| --- | ---: | ---: | ---: | ---: |
+| Rust 1.95 Linux | +152 B | −192 B | −211 B | +80 B |
+| Rust 1.95 bare Wasm | +939 B | +729 B | +725 B | 0 B |
+| Rust 1.99 Linux | +792 B | +304 B | +281 B | +72 B |
+| Rust 1.99 bare Wasm | +654 B | +810 B | +810 B | 0 B |
+
+Each row compares the same consumer to the preceding revision. The size
+register carries prior positive charges from the fixed program baseline.
+The narrowest remaining cumulative file allowance is 136 B for the Rust
+1.99 Linux trigonometry test executable. The firmware selects integer and
+fixed backends. The completed client workloads peak at 816 requested heap
+bytes on Linux and 424 on Wasm, with zero retained after drop. Peak requested
+heap held or fell across all matched jobs. Every measured stack retained
+more than 1,046,000 B of usable headroom. Three generated inputs per target
+that previously bypassed the 97-bit limit are recorded separately.
+[Size accounts](docs/research/interval-size-accounts.json) ·
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+Across the six native workloads, paired median elapsed times ranged from
+5.0% lower to 2.1% higher for construction through completion, and from
+6.1% lower to 1.6% higher for an already constructed input. On the longer
+generated-point run, the Rust 1.95 medians were 1.5% higher through
+construction and 2.3% lower on a retained point. Earlier implementations
+exceeded the bare-Wasm linked-file or stack caps. These measurements describe
+this corpus and do not establish a general speedup.
+
+All 307 native Hyperinterval release tests passed. The affected Hypersolve
+and Hyperdynamics suites passed 9 and 10 tests respectively. Rust 1.95 and
+1.99 each passed 36 WASI cases, including two fresh guests consuming
+native-produced results. The ASan campaign completed 10,000 runs.
+Formatting, owner and fuzz Clippy, warnings-denied rustdoc and the
+pedantic workflow audit passed. Rust 1.88's reduced CI feature set excludes
+the rational provider. The evidence archive contains 415 verified members in
+98,268 bytes at `f109536ea6d42fa214b616f4ed07c6cd99cfd4cc`.
+[Evidence index](docs/evidence-archive.tsv)

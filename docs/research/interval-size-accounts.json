@@ -13109,5 +13109,226 @@
       }
     },
     "evidence": "docs/evidence/2026-11-19-interval-solver-orientation: matched-client-sizes.json, alpha-matched-registered-sizes.json, alpha-deploy-sizes.json, layout-evidence.json and full section reports; no firmware artifact links the proof API."
+  },
+  "rational_fractional_power_ingress": {
+    "source": "5bd199578b1999f58a11137c8abc6fce7b6a1bba",
+    "preceding": "bc8fe3061137e00caf9909f44eed15d47c64e0a3",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "evidence": "docs/evidence/2026-11-19-interval-fractional-power-admission",
+    "scope": "Generated rational endpoints in the fractional power consumer. Compare final linked public clients on Linux and bare Wasm plus owner release tests and cost drivers on Linux and WASI. The optional native replay coordinator uses its existing premium over the corresponding ordinary image. The reduced 1.88 feature lane builds an empty harness. Firmware selects integer/fixed backends. No rational power code reaches those linked firmware images.",
+    "caps": "Public linked file, code and nonoverlapping function bytes: 4096 B and 1% incremental, 8192 B and 2% cumulative. Also limit bare Wasm to 1024 B incremental and native functions to 1024 B and 0.5%. Each 64 MiB tool slot retains 16 MiB. New test harness limited to 4 MiB. Existing ordinary, coordinator and legacy accounts retain their own limits and prior positive charges.",
+    "clients": {
+      "1.95.0-native": {
+        "file": {
+          "bytes": 945816,
+          "delta": 152,
+          "positive_charge": 160,
+          "remaining_cumulative": 8032
+        },
+        "code": {
+          "bytes": 460231,
+          "delta": -192,
+          "positive_charge": 0,
+          "remaining_cumulative": 8192
+        },
+        "functions": {
+          "bytes": 454917,
+          "delta": -211,
+          "positive_charge": 4,
+          "remaining_cumulative": 8188
+        },
+        "free_tool_slot_bytes": 66163048
+      },
+      "1.95.0-wasm": {
+        "file": {
+          "bytes": 286667,
+          "delta": 939,
+          "positive_charge": 945,
+          "remaining_cumulative": 4769
+        },
+        "code": {
+          "bytes": 234164,
+          "delta": 729,
+          "positive_charge": 729,
+          "remaining_cumulative": 3939
+        },
+        "functions": {
+          "bytes": 233603,
+          "delta": 725,
+          "positive_charge": 725,
+          "remaining_cumulative": 3932
+        },
+        "free_tool_slot_bytes": 66822197
+      },
+      "stable-native": {
+        "file": {
+          "bytes": 947432,
+          "delta": 792,
+          "positive_charge": 792,
+          "remaining_cumulative": 7400
+        },
+        "code": {
+          "bytes": 451189,
+          "delta": 304,
+          "positive_charge": 304,
+          "remaining_cumulative": 7888
+        },
+        "functions": {
+          "bytes": 445846,
+          "delta": 281,
+          "positive_charge": 286,
+          "remaining_cumulative": 7906
+        },
+        "free_tool_slot_bytes": 66161432
+      },
+      "stable-wasm": {
+        "file": {
+          "bytes": 286860,
+          "delta": 654,
+          "positive_charge": 656,
+          "remaining_cumulative": 5068
+        },
+        "code": {
+          "bytes": 231061,
+          "delta": 810,
+          "positive_charge": 810,
+          "remaining_cumulative": 3795
+        },
+        "functions": {
+          "bytes": 230501,
+          "delta": 810,
+          "positive_charge": 810,
+          "remaining_cumulative": 3783
+        },
+        "free_tool_slot_bytes": 66822004
+      }
+    },
+    "owner_release_images": {
+      "1.95.0-native": {
+        "maximum_positive_step": 864,
+        "minimum_remaining_cumulative": 5080,
+        "maximum_file_bytes": 2726472,
+        "minimum_slot_headroom": 64382392,
+        "new_harness_bytes": 1644960
+      },
+      "1.95.0-wasm32-wasip1": {
+        "maximum_positive_step": 938,
+        "minimum_remaining_cumulative": 1706,
+        "maximum_file_bytes": 1335312,
+        "minimum_slot_headroom": 65773552,
+        "new_harness_bytes": 751324
+      },
+      "stable-native": {
+        "maximum_positive_step": 848,
+        "minimum_remaining_cumulative": 136,
+        "maximum_file_bytes": 2761544,
+        "minimum_slot_headroom": 64347320,
+        "new_harness_bytes": 1680376
+      },
+      "stable-wasm32-wasip1": {
+        "maximum_positive_step": 941,
+        "minimum_remaining_cumulative": 259,
+        "maximum_file_bytes": 1364899,
+        "minimum_slot_headroom": 65743965,
+        "new_harness_bytes": 773154
+      },
+      "1.88.0-native": {
+        "new_harness_bytes": 1068752,
+        "minimum_slot_headroom": 66040112,
+        "active_cases": 0
+      },
+      "1.88.0-wasm32-wasip1": {
+        "new_harness_bytes": 488112,
+        "minimum_slot_headroom": 66620752,
+        "active_cases": 0
+      }
+    },
+    "legacy_cost_accounts": {
+      "fractional_power_cost": {
+        ".got": [
+          2920,
+          2928,
+          2928,
+          8,
+          0,
+          8,
+          29,
+          50
+        ],
+        ".rela.dyn": [
+          23424,
+          23448,
+          23448,
+          24,
+          0,
+          24,
+          234,
+          444
+        ],
+        "functions": [
+          832735,
+          832739,
+          832737,
+          4,
+          0,
+          4,
+          1024,
+          4092
+        ]
+      },
+      "tangent_cost": {
+        ".got": [
+          3096,
+          3104,
+          3104,
+          8,
+          0,
+          8,
+          31,
+          53
+        ],
+        ".rela.dyn": [
+          25152,
+          25176,
+          25176,
+          24,
+          0,
+          24,
+          251,
+          479
+        ],
+        "file": [
+          1586448,
+          1587064,
+          1587168,
+          440,
+          104,
+          544,
+          3992,
+          15840
+        ],
+        "functions": [
+          955027,
+          954911,
+          955089,
+          5,
+          178,
+          183,
+          846,
+          3913
+        ]
+      }
+    },
+    "legacy_columns": [
+      "reference",
+      "preceding",
+      "candidate",
+      "prior_positive",
+      "positive_step",
+      "cumulative_charge",
+      "remaining_step",
+      "remaining_cumulative"
+    ],
+    "details": "records/accounted.json contains per-image fixed, preceding, candidate, prior charge, step, cumulative charge and remaining allowances. Native earlier sources recompiled at the same path. coordinator-account.json carries each coordinator premium. No savings credited against growth."
   }
 }

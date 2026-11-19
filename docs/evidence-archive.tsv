@@ -712,3 +712,4 @@ docs/evidence/2026-11-19-interval-ieee-powers	2	313644	69eacbfa08dd1377287e13df5
 docs/evidence/2026-11-19-interval-solver-orientation	2	180072	a1a9ac46b60d2dd36cb266826d1e4251df9dc104fcb8ee3d9ca0e85776dfde0a
 docs/evidence/2026-11-19-interval-retained-fuzz-replay	2	143000	686dd7e2fcc9f54037b69f649d9bb1f2cfda8dbd88d2733a7738e682dd139016
 docs/evidence/2026-11-19-interval-strict-float-corners	2	40932	09f6be942fc2907e8ec7c605b43fc26a75a7ffd84d13d3a34ffef1458d373a61
+docs/evidence/2026-11-19-interval-fractional-power-admission	2	98268	56e901df5c589c79b3ea5f38eb367d01d6787b99ee215d099a089c5de9d52c64
