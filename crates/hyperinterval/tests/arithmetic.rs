@@ -1,3 +1,7 @@
+#[cfg(feature = "fixed")]
+#[path = "support/fixed_hull_oracle.rs"]
+mod fixed_hull_oracle;
+
 #[cfg(feature = "integer")]
 mod integer {
     use hyperinterval::{IntegerRange, IntervalError, MidpointRounding};
@@ -327,28 +331,7 @@ mod fixed {
     fn q31_32_extreme_matrix_matches_exact_cross_product_oracle() {
         type I = FixedInterval<i64, 32>;
         const SCALE: i128 = 1_i128 << 32;
-        fn check(result: Result<I, IntervalError>, points: &[(i128, i128)]) {
-            let mut outside = false;
-            for &(mut numerator, mut denominator) in points {
-                if denominator < 0 {
-                    numerator = -numerator;
-                    denominator = -denominator;
-                }
-                assert!(denominator > 0);
-                outside |= numerator < i128::from(i64::MIN) * denominator
-                    || numerator > i128::from(i64::MAX) * denominator;
-                if let Ok(value) = result {
-                    let (lower, upper) = value.bounds().unwrap();
-                    assert!(i128::from(lower) * denominator <= numerator);
-                    assert!(numerator <= i128::from(upper) * denominator);
-                }
-            }
-            if outside {
-                assert_eq!(result, Err(IntervalError::Overflow));
-            } else {
-                assert!(result.is_ok());
-            }
-        }
+        use crate::fixed_hull_oracle::check;
         let values = [
             i64::MIN,
             i64::MIN + 1,
@@ -366,7 +349,11 @@ mod fixed {
                 let x = I::new(a, b).unwrap();
                 check(
                     x.square(),
-                    &[(i128::from(a).pow(2), SCALE), (i128::from(b).pow(2), SCALE)],
+                    &[
+                        (i128::from(a).pow(2), SCALE),
+                        (i128::from(b).pow(2), SCALE),
+                        (i128::from(0_i64.clamp(a, b)).pow(2), SCALE),
+                    ],
                 );
                 for c in values {
                     for d in values {

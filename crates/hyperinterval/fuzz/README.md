@@ -2,14 +2,18 @@
 
 The initial target exercises checked fixed/integer constructors, set relations,
 signs and adversarial JSON ingress. It does not qualify arithmetic that has
-not been implemented. `fixed_arithmetic` independently checks rational
-cross-products, denominator-domain handling and exact overflow admission.
+not been implemented. `fixed_arithmetic` checks the tight Q2.30 and Q31.32 arithmetic images with exact rational
+cross-products. Each endpoint must enclose all extrema and moving it one lattice
+unit inward must exclude an attainable value. Zero-containing divisors and
+unrepresentable results require their respective typed errors. The first 16 bytes
+retain the original four Q2.30 endpoints. With 32 bytes the same input also
+supplies four full-width Q31.32 endpoints.
 
 ```sh
 mkdir -p /tmp/hyperinterval-corpus
 cargo +nightly fuzz run constructors /tmp/hyperinterval-corpus -- -runs=10000 -max_len=1024 -max_total_time=30
 mkdir -p /tmp/hyperinterval-arithmetic
-cargo +nightly fuzz run fixed_arithmetic /tmp/hyperinterval-arithmetic -- -runs=100000 -max_len=16 -max_total_time=30
+cargo +nightly fuzz run fixed_arithmetic /tmp/hyperinterval-arithmetic -- -runs=100000 -max_len=32 -max_total_time=30
 ```
 
 Run from this crate's directory. Cargo-fuzz enables ASan by default. Preserve
