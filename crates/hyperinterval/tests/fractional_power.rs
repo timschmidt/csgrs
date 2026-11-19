@@ -411,13 +411,19 @@ fn exact_replay_then_further_power_in_fresh_process() {
         let set: IntervalSet2<DyadicInterval> = serde_json::from_str(&bytes).unwrap();
         assert_eq!(serde_json::to_string(&set).unwrap(), bytes);
         assert!(!set.contains_point(&0.into(), 0, &mut budget()).unwrap());
-        for piece in set.components() {
+        // x^(-1/3) on [-8,8] has the two rays ending at -1/2 and +1/2.
+        let rays = [
+            E::below(d(-1, -1, -1)).unwrap(),
+            E::above(d(1, 1, -1)).unwrap(),
+        ];
+        assert!(set.components() == rays);
+        for (piece, expected) in set.components().iter().zip([d(-8, 0, 0), d(0, 8, 0)]) {
             let result = piece
                 .pow_rational(&(-3).into(), &1.into(), -32, &mut budget())
                 .unwrap();
             assert_eq!(result.domain, DomainCoverage::Complete);
             assert_eq!(result.range.components().len(), 1);
-            assert!(result.range.components()[0].as_finite().is_some());
+            assert_eq!(result.range.components()[0].as_finite(), Some(&expected));
         }
         return;
     }
@@ -427,7 +433,7 @@ fn exact_replay_then_further_power_in_fresh_process() {
     assert_eq!(image.domain, DomainCoverage::Partial);
     let bytes = serde_json::to_string(&image.range).unwrap();
     assert!(
-        std::process::Command::new(std::env::current_exe().unwrap())
+        std::process::Command::new(replay_binary::path().unwrap())
             .arg("--exact")
             .arg("exact_replay_then_further_power_in_fresh_process")
             .env(ENV, bytes)
@@ -473,3 +479,7 @@ fn rational_empty_and_zero_power_keep_domain_validation_and_compose() {
         assert_eq!(result.range.components(), &[E::from_finite(expected)]);
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

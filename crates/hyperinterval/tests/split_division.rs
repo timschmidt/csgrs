@@ -239,7 +239,10 @@ fn replay_in_fresh_process() {
     const PAYLOAD: &str = "HYPERINTERVAL_SPLIT_REPLAY_PAYLOAD";
     if let Ok(payload) = std::env::var(PAYLOAD) {
         let restored: IntervalSet2<DyadicInterval> = serde_json::from_str(&payload).unwrap();
-        assert_eq!(restored.components().len(), 2);
+        assert_eq!(
+            restored.components(),
+            &[E::below(d(-1, -1)).unwrap(), E::above(d(1, 1)).unwrap()]
+        );
         assert!(
             !restored
                 .contains_point(&0.into(), 0, &mut budget())
@@ -267,7 +270,7 @@ fn replay_in_fresh_process() {
     let image = E::from_finite(d(-1, 1))
         .reciprocal(-64, &mut budget())
         .unwrap();
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args(["--exact", "replay_in_fresh_process", "--nocapture"])
         .env(PAYLOAD, serde_json::to_string(&image.range).unwrap())
         .status()
@@ -289,3 +292,7 @@ fn exact_quotients_do_not_expand_an_irrelevant_output_grid() {
         );
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

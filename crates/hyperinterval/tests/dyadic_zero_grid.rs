@@ -235,6 +235,7 @@ fn fresh_process_replay_then_operation() {
     const CHILD: &str = "HYPERINTERVAL_ZERO_GRID_REPLAY";
     if let Ok(encoded) = std::env::var(CHILD) {
         let values: Vec<D> = serde_json::from_str(&encoded).unwrap();
+        assert_eq!(values.len(), 5);
         assert_eq!(serde_json::to_string(&values).unwrap(), encoded);
         for (index, exponent) in [i32::MIN, -17, 0, 17, i32::MAX].into_iter().enumerate() {
             let x = &values[index];
@@ -251,7 +252,7 @@ fn fresh_process_replay_then_operation() {
         .into_iter()
         .map(|e| d(-3, 7, e))
         .collect();
-    let output = std::process::Command::new(std::env::current_exe().unwrap())
+    let output = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "fresh_process_replay_then_operation",
@@ -267,3 +268,7 @@ fn fresh_process_replay_then_operation() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

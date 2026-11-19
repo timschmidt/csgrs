@@ -296,6 +296,16 @@ fn replay_then_another_pole_operation_in_fresh_process() {
         let set: IntervalSet2<DyadicInterval> = serde_json::from_str(&bytes).unwrap();
         assert_eq!(serde_json::to_string(&set).unwrap(), bytes);
         assert!(!set.contains_point(&0.into(), 0, &mut budget()).unwrap());
+        // A single pole lies between 1 and 2. The finite grid endpoints are
+        // ceil(2^64 tan(2)) and floor(2^64 tan(1)), checked with directed MPFR.
+        let point = |n: i128| DyadicInterval::point(n.into(), -64).unwrap();
+        assert_eq!(
+            set.components(),
+            &[
+                E::below(point(-40_306_871_148_438_554_474)).unwrap(),
+                E::above(point(28_729_101_715_127_294_858)).unwrap(),
+            ]
+        );
         for component in set.components() {
             let further = component.cot(-32, &mut budget()).unwrap();
             assert_eq!(further.range.components(), &[E::entire()]);
@@ -306,7 +316,7 @@ fn replay_then_another_pole_operation_in_fresh_process() {
     let original = d(1, 2, 0).tan(-64, &mut budget()).unwrap();
     assert_eq!(original.domain, DomainCoverage::Partial);
     assert!(
-        std::process::Command::new(std::env::current_exe().unwrap())
+        std::process::Command::new(replay_binary::path().unwrap())
             .arg("--exact")
             .arg("replay_then_another_pole_operation_in_fresh_process")
             .env(ENV, serde_json::to_string(&original.range).unwrap())
@@ -315,3 +325,7 @@ fn replay_then_another_pole_operation_in_fresh_process() {
             .success()
     );
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

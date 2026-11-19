@@ -142,7 +142,7 @@ fn replayed_output_feeds_widening_and_further_division() {
         Some((-357_913_942, 357_913_942))
     );
     assert_eq!(serde_json::to_string(&replay).unwrap(), text);
-    let child = std::process::Command::new(std::env::current_exe().unwrap())
+    let child = std::process::Command::new(replay_binary::path().unwrap())
         .args([
             "--exact",
             "replayed_output_feeds_widening_and_further_division",
@@ -182,3 +182,7 @@ fn seeded_full_width_divisors_satisfy_exact_tightness() {
         }
     }
 }
+
+#[cfg(feature = "serde")]
+#[path = "support/replay_binary.rs"]
+mod replay_binary;

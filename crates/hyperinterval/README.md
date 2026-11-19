@@ -283,7 +283,10 @@ python3 crates/hyperinterval/conformance/wasi-tests.py --toolchain stable --cc /
 `report.json` lists each passing guest test and each test that required a
 native process or thread. The runner probes those OS-dependent cases in the
 guest and executes the original case on the host when it encounters the
-documented OS error.
+documented OS error. For the five serialized fixed and dyadic replay cases,
+the native parent also sends its original payload into a fresh WASI guest.
+Each guest checks the reloaded interval and performs the original follow-up
+operation. The report lists these cases under `fresh_replays`.
 
 With Hyperreal enabled, the runner also executes the rational product trace
 in fresh native and WASI processes. It compares all 450 ordered results and
