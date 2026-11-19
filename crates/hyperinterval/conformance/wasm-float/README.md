@@ -34,9 +34,12 @@ dimension 1024 against exact integer expectations, preserving fixed-point checks
 `query32`/`query64` selectors 0, 1, 2 return status, lower bits and upper bits.
 Status 0 is nonempty complete, 1 empty complete, and 2 nonempty partial-domain.
 Errors 16–21 are nonfinite input, reversed endpoints, overflow, zero-containing
-denominator, empty domain, and unqualified target. Endpoint queries on errors
-or empty outputs trap. Flags 1/2 explicitly select empty first/second inputs;
-their unused endpoint payloads are ignored. Each query recomputes the bounded
+denominator, empty domain, and unqualified target. On qualified targets the
+runner checks both endpoint selectors for empty results and errors 16–20 at
+both widths. Each check reproduces the expected status on a fresh instance and
+requires a WebAssembly trap when it requests the endpoint. Flags 1/2 explicitly
+select empty first/second inputs; their unused endpoint payloads are ignored.
+Each query recomputes the bounded
 operation, so there is no mutable result cache or stale-output channel.
 
 The driver records exact results, tool versions, source-independent corpus and
@@ -45,8 +48,9 @@ module must have no imports, `memory.grow`, or floating arithmetic/conversion;
 bit reinterpretation is allowed. The driver first assembles and disassembles a
 control module containing scalar arithmetic, SIMD arithmetic and conversions
 in both directions. It checks that the scanner identifies the exact instructions
-and accepts integer SIMD and same-width bit transfers. This is finite platform qualification, not
-exhaustive binary64 proof, a timing benchmark, or evidence for other targets.
+and accepts integer SIMD and same-width bit transfers. This finite corpus
+qualifies the listed platforms. Exhaustive binary64 behavior, timing and other
+targets require separate evidence.
 The root progress ledger records the actual compiler/runtime versions and scope.
 
 The Node runner also executes the complete arithmetic and property corpus twice

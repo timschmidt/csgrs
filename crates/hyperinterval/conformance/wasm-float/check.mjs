@@ -5,7 +5,34 @@ export async function verify(bytes, corpus, wasiPreview1 = false) {
   const module = await WebAssembly.compile(bytes);
   const imports = WebAssembly.Module.imports(module);
   const { exports: api } = await instantiate(module, wasiPreview1);
-  return { ...verifyInstance(api, corpus), imports };
+  const result = verifyInstance(api, corpus);
+  let endpointTraps = 0;
+  for (const width of [32, 64]) {
+    // Empty, nonfinite, reversed, overflow, zero divisor and empty domain.
+    for (const status of [1, 16, 17, 18, 19, 20]) {
+      const row = corpus.cases.find(row => row[0] === width && row[8] === status);
+      if (!row) throw new Error(`Missing binary${width} oracle case for status ${status}`);
+      const [, operation, flags, a, b, c, d, exponent] = row;
+      const inputs = [a, b, c, d].map(width === 32 ? Number : BigInt);
+      for (const selector of [1, 2]) {
+        // A trap may leave the guest stack pointer inside the aborted call.
+        const instance = await instantiate(module, wasiPreview1);
+        const query = instance.exports[`query${width}`];
+        if (query(operation, 0, flags, ...inputs, exponent) !== BigInt(status)) {
+          throw new Error(`Fresh binary${width} instance did not reproduce status ${status}`);
+        }
+        try {
+          query(operation, selector, flags, ...inputs, exponent);
+        } catch (error) {
+          if (!(error instanceof WebAssembly.RuntimeError)) throw error;
+          endpointTraps++;
+          continue;
+        }
+        throw new Error(`Binary${width} returned endpoint ${selector} for status ${status}`);
+      }
+    }
+  }
+  return { ...result, endpoint_traps: endpointTraps, imports };
 }
 
 export function verifyInstance(api, corpus) {
