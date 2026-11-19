@@ -230,3 +230,26 @@ gap and the tangent findings above remain open.
 
 Measured sources, both exact oracles and raw trial records are archived in
 evidence commit `1818ef32b8debc1724ae48647bd6562279928ba9`. [Evidence index](../evidence-archive.tsv)
+
+## Direct G1 classification and positive orientation
+
+Hyperpath `e8b1bef51` closes the three direct tangent failures recorded above.
+Exact comparisons guard endpoint equality, squared norms, cross products and
+orientation in the existing decision order. An unresolved alignment retains a
+proved shared endpoint. Corner limits, schedule planning and independent
+replay now return `PredicateUnresolved` for an unresolved join. Proved
+degeneracy and mismatched endpoints still return `UnsupportedRouteGeometry`.
+The regressions prime approximate caches and cover both public policies.
+[Acceptance tests](../../crates/hyperpath/tests/tangent_certification.rs)
+
+The nine solver-backed zero-tangent outcomes still reproduce on this revision.
+The oriented problem currently permits a zero dot product. The csgrs trial
+`7433a54bd` adds a strictly positive residual to the oriented model.
+An independent point-ball case caught a false violation in its first version.
+The corrected trial keeps a hidden positive or negative sign unresolved until
+the sign is certified. Its Alumina Interface counterpart `19c9f6e` encodes
+the new residual kind while preserving existing transcript tags. The older
+exhaustive encoder fails to compile against the extension. Release coordination
+and the broader solver resource checks remain open. The affine projection
+proof and extraction findings above are separate open issues.
+[Measurements and admission record](../../INTERVAL_REFACTOR_PROGRESS.md#phase-11-certified-tangent-decisions-and-schedule-replay)

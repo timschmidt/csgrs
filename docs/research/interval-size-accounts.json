@@ -15977,5 +15977,308 @@
         ]
       }
     }
+  },
+  "hyperpath_certified_tangent_joins": {
+    "source": "e8b1bef51",
+    "budget_revision": "688e25c18",
+    "previous": "6ba224717",
+    "evidence_record": "2026-11-19-interval-g1-tangent-certification",
+    "units": "Bytes in file, executable .text or WASI code payload, and union of named text ranges or sum of WASI function bodies, in that order.",
+    "caps": "Hosted slot 64 MiB with 16 MiB reserved per target. Native file, .text and allocated sections 4096 B/1% incremental, 16384 B/2% cumulative. Native named text 1024 B/0.5% incremental and 4096 B/1% cumulative. WASI file/code/bodies 1024 B/5% incremental and 4096 B/10% cumulative. See hyperpath_two_hosted_relro_padding_limits for the two named ELF reservations.",
+    "accounting": "Same-location before and after for each delta. Cumulative totals charge positive growth for each metric independently. Native historic deltas and all nonzero section charges with both remaining limits are in cumulative.json in the evidence archive. WASI uses the same-source reconstruction of the originally registered guest release. New test commands establish separate initial measurements.",
+    "owner_targets": {
+      "1.95.0/native": {
+        "certified_schedule": {
+          "current": [4146128, 2076359, 2057307],
+          "free_slot": 62962736,
+          "delta": [32, 0, 7],
+          "anchor": "df9cb4dde",
+          "cumulative": [32, 0, 7],
+          "remaining": [16352, 16384, 4089]
+        },
+        "dispatch_trace": {
+          "current": [4022408, 1887239, 1868269],
+          "free_slot": 63086456,
+          "delta": [8, 0, 0],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [56, 0, 0],
+          "remaining": [16328, 16384, 4096]
+        },
+        "hyperpath": {
+          "current": [3326472, 1840839, 1821964],
+          "free_slot": 63782392,
+          "delta": [0, 0, 0],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [0, 0, 0],
+          "remaining": [16384, 16384, 4096]
+        },
+        "path_predicates": {
+          "current": [13704408, 8396263, 8322178],
+          "free_slot": 53404456,
+          "delta": [184, 0, -3],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [184, 0, 0],
+          "remaining": [16200, 16384, 4096]
+        },
+        "path_primitives": {
+          "current": [13003400, 8251863, 8186904],
+          "free_slot": 54105464,
+          "delta": [184, 0, 4],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [200, 0, 4],
+          "remaining": [16184, 16384, 4092]
+        },
+        "readme": {
+          "current": [1074112, 603444, 595083],
+          "free_slot": 66034752,
+          "delta": [0, 0, 0],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [256, 0, 0],
+          "remaining": [16128, 12068, 4096]
+        },
+        "schedule_equivalence": {
+          "current": [4785528, 2444471, 2420196],
+          "free_slot": 62323336,
+          "delta": [16, 0, 7],
+          "anchor": "d8eb6fa0c",
+          "cumulative": [16, 0, 7],
+          "remaining": [16368, 16384, 4089]
+        },
+        "tangent_certification": {
+          "current": [4842448, 2478263, 2453388],
+          "free_slot": 62266416,
+          "anchor": "e8b1bef51"
+        }
+      },
+      "1.95.0/wasi": {
+        "certified_schedule": {
+          "current": [2104734, 1834641, 1831353],
+          "free_slot": 65004130,
+          "delta": [62, 40, 39],
+          "anchor": "f34587258",
+          "cumulative": [62, 40, 39],
+          "remaining": [4034, 4056, 4057]
+        },
+        "dispatch_trace": {
+          "current": [1913632, 1605821, 1602451],
+          "free_slot": 65195232,
+          "delta": [-1, 0, 0],
+          "anchor": "f34587258",
+          "cumulative": [0, 0, 0],
+          "remaining": [4096, 4096, 4096]
+        },
+        "hyperpath": {
+          "current": [1857295, 1553345, 1550032],
+          "free_slot": 65251569,
+          "delta": [0, 0, 0],
+          "anchor": "f34587258",
+          "cumulative": [0, 0, 0],
+          "remaining": [4096, 4096, 4096]
+        },
+        "path_predicates": {
+          "current": [7902983, 6577183, 6564162],
+          "free_slot": 59205881,
+          "delta": [514, 280, 276],
+          "anchor": "f34587258",
+          "cumulative": [514, 280, 276],
+          "remaining": [3582, 3816, 3820]
+        },
+        "path_primitives": {
+          "current": [6631340, 5627456, 5616798],
+          "free_slot": 60477524,
+          "delta": [558, 301, 296],
+          "anchor": "f34587258",
+          "cumulative": [558, 301, 296],
+          "remaining": [3538, 3795, 3800]
+        },
+        "readme": {
+          "current": [476327, 327160, 325977],
+          "free_slot": 66632537,
+          "delta": [0, 0, 0],
+          "anchor": "f34587258",
+          "cumulative": [0, 0, 0],
+          "remaining": [4096, 4096, 4096]
+        },
+        "schedule_equivalence": {
+          "current": [2490342, 2117811, 2113627],
+          "free_slot": 64618522,
+          "delta": [79, 40, 39],
+          "anchor": "f34587258",
+          "cumulative": [79, 40, 39],
+          "remaining": [4017, 4056, 4057]
+        },
+        "tangent_certification": {
+          "current": [2532290, 2150443, 2146173],
+          "free_slot": 64576574,
+          "anchor": "e8b1bef51"
+        }
+      },
+      "1.99.0/native": {
+        "certified_schedule": {
+          "current": [4266088, 2120501, 2101727],
+          "free_slot": 62842776,
+          "delta": [56, 48, 39],
+          "anchor": "df9cb4dde",
+          "cumulative": [4000, 1648, 1565],
+          "remaining": [12384, 14736, 2531]
+        },
+        "dispatch_trace": {
+          "current": [4122248, 1932517, 1913844],
+          "free_slot": 62986616,
+          "delta": [0, 0, 0],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [688, 0, 0],
+          "remaining": [15696, 16384, 4096]
+        },
+        "hyperpath": {
+          "current": [3427960, 1888965, 1870324],
+          "free_slot": 63680904,
+          "delta": [0, 0, 0],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [0, 0, 0],
+          "remaining": [16384, 16384, 4096]
+        },
+        "path_predicates": {
+          "current": [14128680, 8155365, 8084310],
+          "free_slot": 52980184,
+          "delta": [152, -16, -56],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [4616, 1696, 1593],
+          "remaining": [11768, 14688, 2503]
+        },
+        "path_primitives": {
+          "current": [13708032, 8255957, 8192420],
+          "free_slot": 53400832,
+          "delta": [192, 16, -33],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [4664, 1712, 1593],
+          "remaining": [11720, 14672, 2503]
+        },
+        "readme": {
+          "current": [1097136, 612789, 604574],
+          "free_slot": 66011728,
+          "delta": [0, 0, 0],
+          "anchor": "c9f1f9ac5",
+          "cumulative": [256, 0, 0],
+          "remaining": [16128, 12255, 4096]
+        },
+        "schedule_equivalence": {
+          "current": [4940592, 2507605, 2483627],
+          "free_slot": 62168272,
+          "delta": [32, 48, 39],
+          "anchor": "d8eb6fa0c",
+          "cumulative": [3968, 1632, 1543],
+          "remaining": [12416, 14752, 2553]
+        },
+        "tangent_certification": {
+          "current": [4994704, 2540709, 2516130],
+          "free_slot": 62114160,
+          "anchor": "e8b1bef51"
+        }
+      },
+      "1.99.0/wasi": {
+        "certified_schedule": {
+          "current": [2164191, 1840677, 1837353],
+          "free_slot": 64944673,
+          "delta": [91, 66, 65],
+          "anchor": "f34587258",
+          "cumulative": [91, 66, 65],
+          "remaining": [4005, 4030, 4031]
+        },
+        "dispatch_trace": {
+          "current": [1948332, 1605850, 1602447],
+          "free_slot": 65160532,
+          "delta": [-4, 0, 0],
+          "anchor": "f34587258",
+          "cumulative": [0, 0, 0],
+          "remaining": [4096, 4096, 4096]
+        },
+        "hyperpath": {
+          "current": [1902637, 1560625, 1557263],
+          "free_slot": 65206227,
+          "delta": [6, 0, 0],
+          "anchor": "f34587258",
+          "cumulative": [6, 0, 0],
+          "remaining": [4090, 4096, 4096]
+        },
+        "path_predicates": {
+          "current": [8188884, 6329216, 6316151],
+          "free_slot": 58919980,
+          "delta": [746, 299, 296],
+          "anchor": "f34587258",
+          "cumulative": [746, 299, 296],
+          "remaining": [3350, 3797, 3800]
+        },
+        "path_primitives": {
+          "current": [6991975, 5608009, 5597250],
+          "free_slot": 60116889,
+          "delta": [783, 333, 329],
+          "anchor": "f34587258",
+          "cumulative": [783, 333, 329],
+          "remaining": [3313, 3763, 3767]
+        },
+        "readme": {
+          "current": [491364, 336670, 335457],
+          "free_slot": 66617500,
+          "delta": [0, 0, 0],
+          "anchor": "f34587258",
+          "cumulative": [0, 0, 0],
+          "remaining": [4096, 4096, 4096]
+        },
+        "schedule_equivalence": {
+          "current": [2567498, 2132038, 2127787],
+          "free_slot": 64541366,
+          "delta": [91, 66, 65],
+          "anchor": "f34587258",
+          "cumulative": [91, 66, 65],
+          "remaining": [4005, 4030, 4031]
+        },
+        "tangent_certification": {
+          "current": [2608620, 2163729, 2159399],
+          "free_slot": 64500244,
+          "anchor": "e8b1bef51"
+        }
+      }
+    },
+    "relro_padding": {
+      "certified_schedule": {
+        "fixed": 1632,
+        "previous": 1648,
+        "current": 1672,
+        "new_charge": 24,
+        "cumulative_charge": 40,
+        "remaining_absolute": 216
+      },
+      "schedule_equivalence": {
+        "fixed": 2712,
+        "previous": 2760,
+        "current": 2800,
+        "new_charge": 40,
+        "cumulative_charge": 88,
+        "remaining_absolute": 168
+      }
+    },
+    "alumina_interface_rust_1_99": {
+      "native": {
+        "current": [12828336, 9482727, 0],
+        "delta": [0, 0, 0],
+        "free_slot": 54280528
+      },
+      "wasi": {
+        "current": [9647838, 8401838, 8378259],
+        "delta": [1, 1, 1],
+        "free_slot": 57461026,
+        "cumulative": [32878, 31325, 31271],
+        "remaining": [229266, 230819, 230873]
+      },
+      "linked_command": {
+        "current": [8231153, 7655074, 7634039],
+        "delta": [1, 1, 1],
+        "free_slot": 58877711,
+        "cumulative": [31265, 29715, 29663],
+        "remaining": [230879, 232429, 232481]
+      }
+    },
+    "native_interface_symbols": "Release strips native symbols. .text measures native machine code; zero named-range bytes is the symbol table observation."
   }
 }

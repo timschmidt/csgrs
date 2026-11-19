@@ -63,7 +63,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. The full 199-case Interface core suite now runs on WASI, including machine-profile replay and TinyBee firmware actors. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
-| 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle and all 446 Hyperpath tests qualified on native and WASI; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
+| 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; nine solver zero-tangent outcomes and the measured extraction stack excess remain open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 27 required client checks pass on both, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
@@ -14353,3 +14353,47 @@ remain open. [Size accounts](docs/research/interval-size-accounts.json) ·
 The complete per-case inventories, execution logs, image and archive hashes,
 and two-pattern guest stack measurements are in evidence commit `6f209ac271789c4e24ffd312f1ba75df266ef039`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 11 certified tangent decisions and schedule replay
+
+At `6ba224717` the direct path classifier could turn a hidden endpoint gap
+into a joined endpoint, a nonparallel pair into a smooth join, and a small
+nonzero tangent into a degenerate tangent under the approximate policy.
+At `e8b1bef51` each definite label requires certified evidence. A shared
+endpoint remains known when its tangent alignment is unresolved. Corner
+certification, schedule planning and independent replay preserve the distinction
+between an unresolved predicate and proved unsuitable geometry. The ten
+rational controls retained their complete dispatch traces under both policies.
+[Owner review](docs/research/axis-projection-owner.md)
+
+All 449 Hyperpath checks and 194 benchmark smoke cases passed on Linux and
+WASI with Rust 1.95 and 1.99. Both compilers also passed strict Clippy on
+both targets, native rustdoc, and a packaged client that certified feed 2
+and rejected feed 4. Alumina Interface passed all 199 native and guest tests
+on Rust 1.99 before and after, including the canonical planner digest.
+
+Among the seven existing owner commands per platform and compiler, the
+largest file increases were 192 B on Linux and 783 B on WASI. Two Rust 1.95
+ELF commands used an additional 24 B and 40 B of linker alignment padding.
+Their cumulative charges are 40 B and 88 B of a 256 B cap per command,
+with identical load and protection page counts and permissions since first
+registration. All paired native and guest stack depths matched. Six paired
+owner timing runs and eight additional three-run controls per compiler showed
+no repeatable slowdown on the measured workloads.
+[Binary accounts](docs/research/interval-size-accounts.json) ·
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+The solver still accepts nine oriented zero-tangent cases on the primary
+branch. The paired `interval-g1-open-constraint` commits pass the original
+twelve-case oracle, exact strict half-line and residual-ball regressions, and
+the existing Interface planner digest. Its new public constraint variant
+requires coordinated consumer releases and wider solver qualification.
+Hyperdrc's 120 s KiCad worker-time gate also remains open. The unchanged
+control took 139.4 s, and the isolated revised run took 142.2 s. The sparse
+spacing test passed in isolation on both compilers, as did all downstream
+integration and documentation tests.
+
+Nine added owner reviews bring the interval inventory to 427 reviews and
+7,354 scan rows. Two regenerations produced identical bytes. The 797 archived
+sources, manifests, samples and logs were verified from evidence commit
+`1d5a51ef247d701490b0faa4eb50b5e011531ac7`. [Evidence index](docs/evidence-archive.tsv)

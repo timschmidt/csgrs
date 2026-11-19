@@ -2763,5 +2763,45 @@
         }
       }
     }
+  },
+  "hyperpath_certified_tangent_joins": {
+    "source": "e8b1bef51",
+    "previous": "6ba224717",
+    "evidence_record": "2026-11-19-interval-g1-tangent-certification",
+    "workload": "Two and six spans under STRICT and APPROXIMATE_512. Construct inputs, classify chain, plan, independently replay, assert and drop. Native cold and warm calls, four iterations, passive and active dispatch tracing, 2 MiB guarded thread stack, complementary fills. WASI guest inputs use both fills with a 1 MiB stack.",
+    "linux_x86_64": {
+      "compilers": [
+        "1.95.0",
+        "1.99.0"
+      ],
+      "report_and_trace_pairs_identical": 16,
+      "whole_stack_pairs_identical": 32,
+      "largest_touched_stack": 18656,
+      "minimum_stack_remaining": 2078496,
+      "passive_heap_histories_identical": 16,
+      "requested_peaks_and_live_counts_match_all_pairs": true,
+      "active_recorder": "Pointer-hash groups affect the recorder\u2019s own tree allocations. Balanced repeat with 320 fresh processes and another 256 Rust 1.99 six-span STRICT processes. In that repeated cell both sides reached 47088 usable bytes at peak, with 45415 requested."
+    },
+    "wasm32_wasip1": {
+      "1.95.0": {
+        "stack_bytes": 6696,
+        "remaining_stack": 1041880,
+        "linear_bytes_by_span_count": {
+          "2": 1245184,
+          "6": 1310720
+        },
+        "same_complete_pairs": 8
+      },
+      "1.99.0": {
+        "stack_bytes": 6920,
+        "remaining_stack": 1041656,
+        "linear_bytes_by_span_count": {
+          "2": 1245184,
+          "6": 1310720
+        },
+        "same_complete_pairs": 8
+      }
+    },
+    "exception_charge": 0
   }
 }
