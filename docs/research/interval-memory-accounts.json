@@ -1698,5 +1698,27 @@
         "remaining_above_reserve_bytes": 136822784
       }
     }
+  },
+  "shared_timing_evidence_reference_job": {
+    "scope": "Native host test process and observer from spawn through result and exit, two-participant exact retiming, global job publication and drop. Test assertion borrows the existing record and a static expected slice. Production code is unchanged.",
+    "evidence": "docs/evidence/2026-11-18-interval-machine-source-map",
+    "limit_bytes": 268435456,
+    "required_headroom_bytes": 67108864,
+    "swap_limit_bytes": 0,
+    "measurement": "Fresh cgroup v2 memory.peak for each run, including the Python observer. This is a complete group capacity check, not an allocation or stack measurement. The three repetitions at each revision use the same completed test.",
+    "observations": {
+      "1.95.0": {
+        "fixed": 14991360,
+        "original": 14622720,
+        "candidate": 14663680,
+        "candidate_remaining_above_reserve_bytes": 186662912
+      },
+      "stable": {
+        "fixed": 14389248,
+        "original": 14503936,
+        "candidate": 14393344,
+        "candidate_remaining_above_reserve_bytes": 186933248
+      }
+    }
   }
 }

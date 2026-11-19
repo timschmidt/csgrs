@@ -4109,6 +4109,208 @@
           "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
           "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-core-padding-budget-revision.json",
           "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+        },
+        {
+          "change": "shared-timing-evidence-reference-record",
+          "scope": "Test-only 104-byte reference for the complete two-device record and ordered transcript. Every allocated section and the complete stripped executable were measured on both compilers.",
+          "retained_source_commit": "96dd1b4fb4eb2a7039dd2f9d698ab313a6b9df8a",
+          "baseline_repositories": {
+            "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+            "alumina-interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+            "alumina-firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+          },
+          "previous_repositories": {
+            "csgrs": "dba77e15b",
+            "alumina-interface": "fdb7b15",
+            "alumina-firmware": "35d1b0d"
+          },
+          "evidence": "docs/evidence/2026-11-18-interval-machine-source-map/sizes.json (inside observations.tar.xz)",
+          "targets": {
+            "Rust 1.95.0": {
+              "target": "x86_64-unknown-linux-gnu",
+              "sha256": {
+                "candidate": "5d19ab7ce67c52ea82b53658032c27e727e7f0fab3a00798ac4259c8529d1507",
+                "original": "3933c82f49105302f1be499bfb04a2a553ad735049a8094242bca3996a237503",
+                "fixed": "e5b83a808531979bb39ce56069893ed69c1055ac09e8bed74f75620162d9e907"
+              },
+              "metrics": {
+                "file": {
+                  "fixed": 12912128,
+                  "original": 12912480,
+                  "candidate": 12912800,
+                  "delta": 320,
+                  "prior_charge": 432,
+                  "new_charge": 320,
+                  "cumulative_charge": 752,
+                  "net_bytes_from_fixed": 672,
+                  "remaining_incremental_bytes": 3776,
+                  "remaining_cumulative_bytes": 15632
+                },
+                ".rela.dyn": {
+                  "fixed": 329328,
+                  "original": 329400,
+                  "candidate": 329424,
+                  "delta": 24,
+                  "prior_charge": 72,
+                  "new_charge": 24,
+                  "cumulative_charge": 96,
+                  "net_bytes_from_fixed": 96,
+                  "remaining_incremental_bytes": 3270,
+                  "remaining_cumulative_bytes": 6490
+                },
+                ".rodata": {
+                  "fixed": 400640,
+                  "original": 400672,
+                  "candidate": 400784,
+                  "delta": 112,
+                  "prior_charge": 32,
+                  "new_charge": 112,
+                  "cumulative_charge": 144,
+                  "net_bytes_from_fixed": 144,
+                  "remaining_incremental_bytes": 3894,
+                  "remaining_cumulative_bytes": 7868
+                },
+                ".eh_frame": {
+                  "fixed": 1198088,
+                  "original": 1198088,
+                  "candidate": 1198096,
+                  "delta": 8,
+                  "prior_charge": 0,
+                  "new_charge": 8,
+                  "cumulative_charge": 8,
+                  "net_bytes_from_fixed": 8,
+                  "remaining_incremental_bytes": 4088,
+                  "remaining_cumulative_bytes": 16376
+                },
+                ".text": {
+                  "fixed": 9561682,
+                  "original": 9561858,
+                  "candidate": 9562018,
+                  "delta": 160,
+                  "prior_charge": 224,
+                  "new_charge": 160,
+                  "cumulative_charge": 384,
+                  "net_bytes_from_fixed": 336,
+                  "remaining_incremental_bytes": 864,
+                  "remaining_cumulative_bytes": 3712
+                },
+                ".data.rel.ro": {
+                  "fixed": 336896,
+                  "original": 336968,
+                  "candidate": 336992,
+                  "delta": 24,
+                  "prior_charge": 72,
+                  "new_charge": 24,
+                  "cumulative_charge": 96,
+                  "net_bytes_from_fixed": 96,
+                  "remaining_incremental_bytes": 3345,
+                  "remaining_cumulative_bytes": 6641
+                }
+              },
+              "allocated_sections_checked": 30,
+              "failed_caps": []
+            },
+            "Rust 1.99.0": {
+              "target": "x86_64-unknown-linux-gnu",
+              "sha256": {
+                "candidate": "ec5dd33b62508b7f58218598fc18b37a236b0258e55f25938cbb9a0a15e16875",
+                "original": "a2f888d12287324d62ce247f2e8f79b77e490820730120db2996a04bfa46c8f0",
+                "fixed": "50219c0b8aba553f1fff7962b83d4408327ddb990fbc8728f5196f77660480fe"
+              },
+              "metrics": {
+                "file": {
+                  "fixed": 12833680,
+                  "original": 12834064,
+                  "candidate": 12834400,
+                  "delta": 336,
+                  "prior_charge": 384,
+                  "new_charge": 336,
+                  "cumulative_charge": 720,
+                  "net_bytes_from_fixed": 720,
+                  "remaining_incremental_bytes": 3760,
+                  "remaining_cumulative_bytes": 15664
+                },
+                ".rela.dyn": {
+                  "fixed": 330264,
+                  "original": 330336,
+                  "candidate": 330360,
+                  "delta": 24,
+                  "prior_charge": 72,
+                  "new_charge": 24,
+                  "cumulative_charge": 96,
+                  "net_bytes_from_fixed": 96,
+                  "remaining_incremental_bytes": 3279,
+                  "remaining_cumulative_bytes": 6509
+                },
+                ".rodata": {
+                  "fixed": 398824,
+                  "original": 398856,
+                  "candidate": 398968,
+                  "delta": 112,
+                  "prior_charge": 32,
+                  "new_charge": 112,
+                  "cumulative_charge": 144,
+                  "net_bytes_from_fixed": 144,
+                  "remaining_incremental_bytes": 3876,
+                  "remaining_cumulative_bytes": 7832
+                },
+                ".eh_frame": {
+                  "fixed": 1197696,
+                  "original": 1197696,
+                  "candidate": 1197736,
+                  "delta": 40,
+                  "prior_charge": 0,
+                  "new_charge": 40,
+                  "cumulative_charge": 40,
+                  "net_bytes_from_fixed": 40,
+                  "remaining_incremental_bytes": 4056,
+                  "remaining_cumulative_bytes": 16344
+                },
+                ".text": {
+                  "fixed": 9482759,
+                  "original": 9482983,
+                  "candidate": 9483111,
+                  "delta": 128,
+                  "prior_charge": 224,
+                  "new_charge": 128,
+                  "cumulative_charge": 352,
+                  "net_bytes_from_fixed": 352,
+                  "remaining_incremental_bytes": 896,
+                  "remaining_cumulative_bytes": 3744
+                },
+                ".data.rel.ro": {
+                  "fixed": 337944,
+                  "original": 338016,
+                  "candidate": 338040,
+                  "delta": 24,
+                  "prior_charge": 72,
+                  "new_charge": 24,
+                  "cumulative_charge": 96,
+                  "net_bytes_from_fixed": 96,
+                  "remaining_incremental_bytes": 3356,
+                  "remaining_cumulative_bytes": 6662
+                }
+              },
+              "allocated_sections_checked": 30,
+              "failed_caps": []
+            }
+          },
+          "accounting": "Fixed and immediately prior links use the same paths for each compiler. Earlier positive file and code charges of 432 and 224 bytes on Rust 1.95 remain charged. Each remaining allowance takes the greater of cumulative positive charges and net fixed-to-candidate growth. The supplemental Rust 1.99 account charges positive predecessor growth against its fixed control before adding this change. All existing limits apply, including the historical Rust 1.95 RELRO padding provision.",
+          "layout_verification": {
+            "archived_sha256": "e5b83a808531979bb39ce56069893ed69c1055ac09e8bed74f75620162d9e907",
+            "reproduced_sha256": "e5b83a808531979bb39ce56069893ed69c1055ac09e8bed74f75620162d9e907",
+            "fixed_matches_byte_for_byte": true,
+            "archived_revision": "6c09f756f",
+            "archived_path": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-core-budget/fixed/test-binary",
+            "temporary_layout_report": "temporary-layout-sizes.json",
+            "temporary_layout_padding": [
+              8,
+              3712,
+              3416
+            ],
+            "checks": []
+          },
+          "layout_limitation": "Rust 1.95 temporary-path RELRO padding failed its cumulative cap (fixed 8, predecessor 3712, candidate 3416 bytes). Only the registered release layout is qualified. Caps and prior charges remain unchanged."
         }
       ]
     },

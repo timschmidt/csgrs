@@ -8,6 +8,9 @@ On the development host, keep this program's checkouts, build products,
 temporary files and validation runs under `/mnt/development`. Do not use
 `/dev/shm` for this work. Retain the required evidence and remove disposable
 worktrees, build caches and scratch files when their runs finish.
+Check free space before starting a build batch. If overlapping target
+directories would use the remaining headroom, run the builds in sequence
+and remove each target directory after recording its measurements.
 
 The work is not a greenfield interval experiment. The workspace already contains several strong, independently useful interval and reachability implementations:
 

@@ -52,7 +52,7 @@ No existing arithmetic or predicate dispatch has been changed.
 
 | Phase | State | Evidence still required |
 | --- | --- | --- |
-| 0 inventory/baseline | Hyperinterval, Hyperdynamics and Hyperlattice Interval have native coverage measurements on Rust 1.95 and branch-instrumented nightly | audited source map, sibling states, remaining tests, cost/size/coverage/fuzz and hashes |
+| 0 inventory/baseline | Native coverage measured for Hyperinterval, Hyperdynamics and Hyperlattice Interval. Independent syntax traversal matched 2,807 declarations in 36 planned machine source files. All 34 shared-timing evidence declarations have body reviews. | remaining body and consumer audits, sibling qualification, costs, coverage, fuzz and hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
@@ -60,7 +60,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 71 solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the approximate univariate proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
-| 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
+| 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
@@ -13427,3 +13427,61 @@ Evidence commit `6c09f756fd47645778a2e0ee246f7d9cc57519f3` contains 403
 files under `docs/evidence/2026-11-18-interval-wasm-float-qualification`,
 with digest `0acd1b23c76d615e640fddc016f34c824c8df068101a89efe7fd544f49d88c7d`.
 [Evidence index](docs/evidence-archive.tsv)
+
+
+## Alumina source inventory and shared retiming compatibility, 18 November 2026
+
+The Phase 0 scanner now follows the Interface and firmware modules named in
+sections 8 and 9, including nested graph modules. At CSGRS `6a8ca3de3`, a
+separate Rust parser found 2,807 function, method, type, struct, trait and
+enum declarations across the 36 files. All matched by file, line, kind and
+name. The preceding scanner found 617 there. The full inventory grew from
+4,148 to 6,338 scan rows, including inline tests. Each of the 278 historical
+reviews was preserved and 34 new body reviews document the shared timing
+evidence module. Two independent refreshes produced identical bytes and all
+seven inventory tests passed. Macro expansion and broader body audits
+remain open. All 68 simulator library tests passed on the firmware MSRV, Rust
+1.88, including the seven FOC tests. [Inventory](interval-inventory.tsv)
+
+Phase 8 properties P31–P33 and P36–P37 require deterministic machine evidence.
+At Interface `fdb7b15`, changing the transcript format version or swapping
+the two serialized factor fields passed the existing two-device test.
+The earlier implementation generated both sides of its main comparison.
+The captured 104-byte outer record commits to a 64,597-byte transcript,
+a common dilation of 4,151/4,096, 20 search rounds and 40 participant
+preflights. Reading the fixed record independently reproduced these fields
+and its SHA-256. The new assertion caught both changes at the expected byte
+positions. The original replay, permutation, framing, preflight and global
+job checks all ran.
+
+Interface commit `96dd1b4fb4` adds the reference to the
+existing test. All 199 native release unit tests passed on Rust 1.95 and
+1.99. The exact control graph integration test, formatting, and native and
+bare-WASM Clippy checks also passed. The WebAssembly check compiled the test
+code. Execution of this specific two-device witness was native.
+
+| Linked x86_64 test harness | Change in final file | Change in executable text | Remaining cumulative file allowance | Remaining cumulative text allowance |
+| --- | ---: | ---: | ---: | ---: |
+| Rust 1.95 | +320 B | +160 B | 15,632 B | 3,712 B |
+| Rust 1.99 | +336 B | +128 B | 15,664 B | 3,744 B |
+
+Every allocated section passed its incremental and cumulative limits.
+The fixed-revision comparisons used the same paths and linked profiles
+as the predecessor and candidate. The previous Rust 1.95 file and text charges remain on the account.
+In a separate temporary layout the linker wrapped RELRO padding from
+8 bytes on the fixed revision to 3,712 on the predecessor and 3,416 on
+the candidate. That layout failed the cumulative cap. For the recorded
+Rust 1.95 release layout the rebuilt fixed executable matched the archived
+binary byte for byte. The table reports that release layout and the
+separately measured Rust 1.99 layout. The figures measure test-only code.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+The fixed, previous and candidate native tests completed 18 fresh memory
+scopes under 256 MiB with swap disabled. The largest observed group peak
+was 14,991,360 bytes, including the host observer. Every run kept the
+64 MiB reserve. The check covers the two-device evidence and its downstream
+job through process exit. [Memory accounts](docs/research/interval-memory-accounts.json)
+
+Evidence commit `a50777920934644c60c97d1dba34e7f054d9812f` contains 97 checked members under
+`docs/evidence/2026-11-18-interval-machine-source-map`. Its record digest is
+`2bef5edd21c91e56e44539d7502dac797867d95980c241e41eda30441607c226`. [Evidence index](docs/evidence-archive.tsv)
