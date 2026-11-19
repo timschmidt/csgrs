@@ -476,6 +476,11 @@ impl Format {
         )?;
         crate::DyadicInterval::point(mantissa.into(), exponent)
     }
+
+    #[cfg(feature = "float-enclosure")]
+    pub(crate) fn enclose_from(self, source: Self, bits: u64) -> Result<(u64, u64), IntervalError> {
+        self.rounded(source.decode(bits))
+    }
 }
 
 #[cfg(all(feature = "dyadic", feature = "float-enclosure"))]

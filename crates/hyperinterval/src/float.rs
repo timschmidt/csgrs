@@ -622,3 +622,31 @@ enclosure!(F64Enclosure, Binary64, f64, u64, BINARY64, F64Width, 33);
 
 #[cfg(all(feature = "rational", feature = "dyadic"))]
 mod rational;
+
+impl F32Enclosure {
+    /// Converts both endpoints exactly to binary64. Empty stays empty.
+    pub fn to_f64_enclosure(&self) -> Result<F64Enclosure, IntervalError> {
+        let Some((lo, hi)) = self.bits() else {
+            return Ok(F64Enclosure::empty());
+        };
+        F64Enclosure::from_bits(
+            BINARY64.enclose_from(BINARY32, lo)?.0,
+            BINARY64.enclose_from(BINARY32, hi)?.1,
+        )
+    }
+}
+
+impl F64Enclosure {
+    /// Tightest binary32 enclosure. Rounds lower and upper endpoints outward,
+    /// preserving empty. Returns [`IntervalError::Overflow`] when the source
+    /// extends beyond the finite binary32 range.
+    pub fn to_f32_enclosure(&self) -> Result<F32Enclosure, IntervalError> {
+        let Some((lo, hi)) = self.bits() else {
+            return Ok(F32Enclosure::empty());
+        };
+        F32Enclosure::from_bits(
+            BINARY32.enclose_from(BINARY64, lo)?.0,
+            BINARY32.enclose_from(BINARY64, hi)?.1,
+        )
+    }
+}

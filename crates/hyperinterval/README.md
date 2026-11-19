@@ -253,6 +253,10 @@ bounds. Nonnegative integer powers accumulate outward rounding and may be
 wider; an unrepresentable intermediate or required endpoint returns Overflow.
 These operations preserve subnormals independently of native rounding modes
 and FTZ/DAZ. Nonempty ingress supports x86_64 and wasm32-unknown-unknown.
+`F32Enclosure::to_f64_enclosure` widens both endpoints exactly.
+`F64Enclosure::to_f32_enclosure` returns the tightest enclosing binary32
+interval, or `IntervalError::Overflow` if either bound exceeds its finite
+range. Both conversions preserve empty sets and require only `float-enclosure`.
 Enable `float-enclosure-wasip1` to add ordinary wasm32-wasip1 support. Cargo's
 exact target name distinguishes it from the threaded Preview 1 ABI. Unqualified
 targets return `UnqualifiedEnvironment`. Optional serde validates endpoint bit pairs.
