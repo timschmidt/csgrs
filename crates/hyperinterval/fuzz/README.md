@@ -55,3 +55,10 @@ endpoint overflow.
 mkdir -p /tmp/hyperinterval-integer-affine
 cargo +nightly fuzz run integer_affine /tmp/hyperinterval-integer-affine -- -runs=100000 -max_len=64 -max_total_time=30 -seed=20261127
 ```
+
+`strict_float` checks binary32 and binary64 products and quotients of two
+finite intervals. It evaluates all four corners in GMP rationals and rounds
+the extrema outward with MPFR. It compares both endpoint bit patterns and
+checks typed overflow and zero-containing divisors. Four little-endian
+64-bit words supply the endpoints. Binary32 uses each word's low 32 bits.
+Existing 24-byte inputs retain their point, affine, dyadic and replay checks.

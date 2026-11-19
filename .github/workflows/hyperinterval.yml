@@ -182,7 +182,7 @@ jobs:
           cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=32 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run dyadic_arithmetic "$RUNNER_TEMP/interval-dyadic" -- -runs=100000 -max_len=14 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run primitive_proposals "$RUNNER_TEMP/interval-proposals" -- -runs=100000 -max_len=32 -max_total_time=30 -seed=20261113
-          cargo +nightly fuzz run strict_float "$RUNNER_TEMP/interval-strict-float" -- -runs=100000 -max_len=24 -max_total_time=30 -seed=20261114
+          cargo +nightly fuzz run strict_float "$RUNNER_TEMP/interval-strict-float" -- -runs=100000 -max_len=32 -max_total_time=30 -seed=20261114
           cargo +nightly fuzz run rational_powers --features rational "$RUNNER_TEMP/interval-rational-powers" -- -runs=100000 -max_len=10 -max_total_time=30 -seed=20261115
           cargo +nightly fuzz run square_roots --features rational "$RUNNER_TEMP/interval-square-roots" -- -runs=100000 -max_len=10 -max_total_time=30 -seed=20261116
           cargo +nightly fuzz run primitive_roots "$RUNNER_TEMP/interval-primitive-roots" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261117

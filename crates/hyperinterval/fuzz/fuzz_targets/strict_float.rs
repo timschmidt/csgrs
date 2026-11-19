@@ -7,6 +7,8 @@ use rug::Rational;
 
 #[path = "../../tests/support/float_oracle.rs"]
 mod oracle;
+#[path = "../../tests/support/float_range_oracle.rs"]
+mod ranges;
 
 macro_rules! exercise {
     ($data:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident) => {{
@@ -96,7 +98,7 @@ macro_rules! exercise {
     }};
 }
 
-fuzz_target!(|data: [u64; 3]| {
+fuzz_target!(|bytes: &[u8]| {
     if !F64Enclosure::backend_supported() {
         assert_eq!(
             F64Enclosure::point(0.0),
@@ -104,6 +106,14 @@ fuzz_target!(|data: [u64; 3]| {
         );
         return;
     }
+    // The original three little-endian words retain their point/affine semantics.
+    // Zero-fill short inputs so mutations can reach the arithmetic from an empty corpus.
+    let mut words = [[0; 8]; 4];
+    let n = bytes.len().min(32);
+    words.as_flattened_mut()[..n].copy_from_slice(&bytes[..n]);
+    let data = words.map(u64::from_le_bytes);
     exercise!(data, F32Enclosure, f32, u32, from_f32, round_f32);
     exercise!(data, F64Enclosure, f64, u64, from_f64, round_f64);
+    ranges::check_f32(data.map(|word| f32::from_bits(word as u32)));
+    ranges::check_f64(data.map(f64::from_bits));
 });

@@ -8,14 +8,17 @@ use hyperinterval::{F32Enclosure, F64Enclosure, IntervalError};
 
 #[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
 #[path = "support/float_oracle.rs"]
-mod independent;
+mod oracle;
+#[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
+#[path = "support/float_range_oracle.rs"]
+mod ranges;
 
 #[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
 #[path = "support/primitive_sqrt_oracle.rs"]
 mod root_oracle;
 
 macro_rules! cases {
-    ($module:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident, $root:ident, $fraction:literal) => {
+    ($module:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident, $root:ident, $ranges:ident, $fraction:literal) => {
         mod $module {
             use super::*;
 
@@ -247,7 +250,28 @@ macro_rules! cases {
                 use super::*;
                 use rug::Rational;
                 fn expected(value: &Rational) -> Result<($bits, $bits), IntervalError> {
-                    crate::independent::$round(value)
+                    crate::oracle::$round(value)
+                }
+                #[test]
+                fn products_and_quotients_cover_signed_range_extrema() {
+                    // These inputs isolate the lower bound at (a, d) in each operation.
+                    crate::ranges::$ranges([-3.0, 2.0, -4.0, 5.0]);
+                    crate::ranges::$ranges([2.0, 6.0, 3.0, 9.0]);
+                    let tiny = <$float>::from_bits(1);
+                    let normal = <$float>::MIN_POSITIVE;
+                    let max = <$float>::MAX;
+                    let values = [
+                        -max, -3.0, -normal, -tiny, -0.0, 0.0, tiny, normal, 2.0, max,
+                    ];
+                    for (i, &a) in values.iter().enumerate() {
+                        for &b in &values[i..] {
+                            for (j, &c) in values.iter().enumerate() {
+                                for &d in &values[j..] {
+                                    crate::ranges::$ranges([a, b, c, d]);
+                                }
+                            }
+                        }
+                    }
                 }
                 fn actual(
                     value: Result<$interval, IntervalError>,
@@ -460,35 +484,7 @@ macro_rules! cases {
                             seed ^= seed << 17;
                             *value = <$float>::from_bits(seed as $bits);
                         }
-                        if values.iter().any(|v| !v.is_finite()) {
-                            continue;
-                        }
-                        let [a, b, c, d] = values;
-                        let (a, b) = (a.min(b), a.max(b));
-                        let (c, d) = (c.min(d), c.max(d));
-                        let x = $interval::new(a, b).unwrap();
-                        let y = $interval::new(c, d).unwrap();
-                        for divide in [false, true] {
-                            if divide && c <= 0.0 && d >= 0.0 {
-                                assert_eq!(x.div(&y), Err(IntervalError::ContainsZero));
-                                continue;
-                            }
-                            let corners: Vec<_> = [(a, c), (a, d), (b, c), (b, d)]
-                                .into_iter()
-                                .map(|(u, v)| {
-                                    let u = Rational::$from(u).unwrap();
-                                    let v = Rational::$from(v).unwrap();
-                                    if divide { u / v } else { u * v }
-                                })
-                                .collect();
-                            let lo = expected(corners.iter().min().unwrap());
-                            let hi = expected(corners.iter().max().unwrap());
-                            let want = match (lo, hi) {
-                                (Ok(a), Ok(b)) => Ok((a.0, b.1)),
-                                _ => Err(IntervalError::Overflow),
-                            };
-                            assert_eq!(actual(if divide { x.div(&y) } else { x.mul(&y) }), want);
-                        }
+                        crate::ranges::$ranges(values);
                     }
                 }
 
@@ -683,6 +679,7 @@ cases!(
     from_f32,
     round_f32,
     sqrt_f32,
+    check_f32,
     23
 );
 cases!(
@@ -693,6 +690,7 @@ cases!(
     from_f64,
     round_f64,
     sqrt_f64,
+    check_f64,
     52
 );
 
