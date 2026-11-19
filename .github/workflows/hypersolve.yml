@@ -127,6 +127,16 @@ jobs:
           cargo clippy --locked --manifest-path ../hyperinterval/fuzz/Cargo.toml --features solver-certificates --bin krawczyk_certificates -- -D warnings
           cargo +nightly fuzz run krawczyk_certificates "$corpus" --fuzz-dir ../hyperinterval/fuzz --features solver-certificates -- -runs=10000 -max_len=8 -max_total_time=90 -seed=20261119
 
+      - name: Fuzz quadratic box certificates against exact extrema
+        env:
+          RUSTFLAGS: -C link-arg=-Wl,--compress-debug-sections=zlib
+        run: |
+          corpus="$RUNNER_TEMP/conic-box-certificates"
+          mkdir -p "$corpus"
+          cp tests/fixtures/conic/*.bin "$corpus/"
+          cargo clippy --locked --manifest-path ../hyperinterval/fuzz/Cargo.toml --features solver-certificates --bin conic_box_certificates -- -D warnings
+          cargo +nightly fuzz run conic_box_certificates "$corpus" --fuzz-dir ../hyperinterval/fuzz --features solver-certificates -- -runs=10000 -max_len=11 -max_total_time=90 -seed=20261119
+
       - name: Run Clippy
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
 

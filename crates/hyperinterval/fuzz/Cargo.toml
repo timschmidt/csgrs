@@ -175,3 +175,11 @@ required-features = ["lattice-shapes"]
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "conic_box_certificates"
+path = "fuzz_targets/conic_box_certificates.rs"
+required-features = ["solver-certificates"]
+test = false
+doc = false
+bench = false

@@ -77,3 +77,32 @@ native fixture suite and seed CI. They include both singular pivot positions
 and two inputs that ranked first and second by median native replay time on
 each of two pinned CPUs. To reproduce one input, pass its file path immediately
 after the fuzz target name in the command above.
+
+## Quadratic residuals over rectangles
+
+The `conic_box_certificates` target checks the multivariate quadratic package
+against extrema of `ax² + bxy + cy² + dx + ey + f` on a closed rectangle.
+It evaluates corners, stationary points along each edge, and the interior
+stationary point using integer arithmetic with exact rational coordinates.
+A stationary line meets the boundary at the same value. The oracle checks
+the signed center, row certainty and aggregate verdict under both policies.
+Singleton boxes and the two dominant constant shifts require a decision.
+
+The eleven input bytes encode six signed coefficients, four endpoint bytes
+and one mode byte. The signed endpoints are reduced modulo nine and ordered
+on each axis. The low two mode bits select the constraint kind. The next two
+select either the supplied constant or a shift of ±1,048,576. The checked-in
+seeds include non-dyadic interior and edge extrema and a cross term that
+changes the sign reached at a corner.
+
+From `crates/hypersolve`, run the deterministic suite with
+`cargo test --locked --test conic_box_certificates`. Copy
+`tests/fixtures/conic/*.bin` into a writable corpus directory and pass that
+directory to the sanitizer run.
+
+```sh
+RUSTFLAGS='-C link-arg=-Wl,--compress-debug-sections=zlib' \
+  cargo +nightly fuzz run conic_box_certificates "$corpus" \
+  --fuzz-dir ../hyperinterval/fuzz --features solver-certificates \
+  -- -runs=10000 -max_len=11 -max_total_time=90 -seed=20261119
+```
