@@ -13330,5 +13330,182 @@
       "remaining_cumulative"
     ],
     "details": "records/accounted.json contains per-image fixed, preceding, candidate, prior charge, step, cumulative charge and remaining allowances. Native earlier sources recompiled at the same path. coordinator-account.json carries each coordinator premium. No savings credited against growth."
+  },
+  "machine_travel_qualification": {
+    "fixed_interface": "abfb182eb79dda1edec2bbd7316f3b7a1f6e6973",
+    "source_interface": "f883707429208e5f2355fb7c9550100235da2fb8",
+    "evidence": "docs/evidence/2026-11-19-interval-machine-travel-uncertainty",
+    "scope": "First size registration for these unshipped Linux conformance tools. Each target shares its fixed baseline across future charges. The campaign process limit is 1536 MiB per worker. It does not describe firmware memory or flash.",
+    "metrics": [
+      "final ELF bytes",
+      "allocated .text bytes",
+      "nonoverlapping defined text-function bytes"
+    ],
+    "targets": {
+      "reachability": {
+        "incremental_cap_bytes_percent": [
+          32768,
+          2
+        ],
+        "cumulative_cap_bytes_percent": [
+          65536,
+          4
+        ],
+        "slot_and_required_reserve_bytes": [
+          67108864,
+          16777216
+        ],
+        "free_slot_bytes": 48008904,
+        "metrics": {
+          "file": {
+            "before": 19072920,
+            "after": 19099960,
+            "delta": 27040,
+            "delta_percent": 0.1418,
+            "positive_charge": 27040,
+            "remaining_cumulative_bytes": 38496
+          },
+          "code": {
+            "before": 11951719,
+            "after": 11963271,
+            "delta": 11552,
+            "delta_percent": 0.0967,
+            "positive_charge": 11552,
+            "remaining_cumulative_bytes": 53984
+          },
+          "functions": {
+            "before": 11845694,
+            "after": 11856997,
+            "delta": 11303,
+            "delta_percent": 0.0954,
+            "positive_charge": 11303,
+            "remaining_cumulative_bytes": 54233
+          }
+        }
+      },
+      "replay_corpus": {
+        "incremental_cap_bytes_percent": [
+          32768,
+          2
+        ],
+        "cumulative_cap_bytes_percent": [
+          65536,
+          4
+        ],
+        "slot_and_required_reserve_bytes": [
+          67108864,
+          16777216
+        ],
+        "free_slot_bytes": 48566448,
+        "metrics": {
+          "file": {
+            "before": 18543488,
+            "after": 18542416,
+            "delta": -1072,
+            "delta_percent": -0.0058,
+            "positive_charge": 0,
+            "remaining_cumulative_bytes": 65536
+          },
+          "code": {
+            "before": 11648519,
+            "after": 11647959,
+            "delta": -560,
+            "delta_percent": -0.0048,
+            "positive_charge": 0,
+            "remaining_cumulative_bytes": 65536
+          },
+          "functions": {
+            "before": 11546573,
+            "after": 11546004,
+            "delta": -569,
+            "delta_percent": -0.0049,
+            "positive_charge": 0,
+            "remaining_cumulative_bytes": 65536
+          }
+        }
+      },
+      "machine_profile": {
+        "incremental_cap_bytes_percent": [
+          262144,
+          5
+        ],
+        "cumulative_cap_bytes_percent": [
+          524288,
+          10
+        ],
+        "slot_and_required_reserve_bytes": [
+          134217728,
+          33554432
+        ],
+        "free_slot_bytes": 127259432,
+        "metrics": {
+          "file": {
+            "before": 6948264,
+            "after": 6958296,
+            "delta": 10032,
+            "delta_percent": 0.1444,
+            "positive_charge": 10032,
+            "remaining_cumulative_bytes": 514256
+          },
+          "code": {
+            "before": 3306876,
+            "after": 3310524,
+            "delta": 3648,
+            "delta_percent": 0.1103,
+            "positive_charge": 3648,
+            "remaining_cumulative_bytes": 327039
+          },
+          "functions": {
+            "before": 2877198,
+            "after": 2880842,
+            "delta": 3644,
+            "delta_percent": 0.1267,
+            "positive_charge": 3644,
+            "remaining_cumulative_bytes": 284075
+          }
+        }
+      },
+      "machine_lowering": {
+        "incremental_cap_bytes_percent": [
+          262144,
+          5
+        ],
+        "cumulative_cap_bytes_percent": [
+          524288,
+          10
+        ],
+        "slot_and_required_reserve_bytes": [
+          134217728,
+          33554432
+        ],
+        "free_slot_bytes": 52142440,
+        "metrics": {
+          "file": {
+            "before": 82064808,
+            "after": 82075288,
+            "delta": 10480,
+            "delta_percent": 0.0128,
+            "positive_charge": 10480,
+            "remaining_cumulative_bytes": 513808
+          },
+          "code": {
+            "before": 32783756,
+            "after": 32787788,
+            "delta": 4032,
+            "delta_percent": 0.0123,
+            "positive_charge": 4032,
+            "remaining_cumulative_bytes": 520256
+          },
+          "functions": {
+            "before": 32211513,
+            "after": 32215507,
+            "delta": 3994,
+            "delta_percent": 0.0124,
+            "positive_charge": 3994,
+            "remaining_cumulative_bytes": 520294
+          }
+        }
+      }
+    }
   }
 }

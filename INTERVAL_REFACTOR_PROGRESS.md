@@ -13886,3 +13886,48 @@ and hardware execution remain open.
 Evidence commit `fd8b6909ca1aed2c653439fcb6cc27b95eaa546f` records 36 verified
 members in 14,680 bytes.
 [Evidence index](docs/evidence-archive.tsv)
+
+### Phase 8 — qualify reciprocal travel uncertainty through cached lowering
+
+Alumina Interface `f88370742` adds the missing travel-denominator case
+to the machine-profile and lowering corpus in §14.3 (P31–P33, P36–P38).
+At `abfb182eb` the old tests accepted division by nominal travel at both
+endpoints. They also accepted conversion of the nominal density as the
+upper millimetre bound. The new regressions caught all three individual
+mutations. For 3,200 microsteps per turn and travel from 7/4000 to
+9/4000 metre per turn, the exact density endpoints are 12,800,000/9 and
+12,800,000/7 microsteps per metre. The tests check the selected axis,
+both units, the separate calibration uncertainty, and the typed cause
+when travel reaches or crosses zero.
+
+Across 512 profile cases on two axes, 384 derived exact profiles and
+128 failed the positive-travel precondition. Of 36 lowering cases, 10
+replayed through the firmware cache, 18 exceeded the requested error
+budget, and 8 had invalid travel. All 20 earlier seeds retained their
+individual outcomes. In 51 alternating CPU-pinned pairs, the median
+end-to-end replay time for the earlier profile corpus changed from
+7.08 to 7.19 ms and for lowering from 45.98 to 47.43 ms. These timings
+include process startup and measure developer-side replay.
+
+The new checks share the existing profile path and integration executable.
+Two earlier layouts exceeded predeclared test-tool size caps. With the
+retained layout the release integration ELF grew by 27,040 bytes, the
+release replay tool shrank by 1,072 bytes, and the two ASan tools grew
+by 10,032 and 10,480 bytes. The per-target size account records the final
+file, text, function bytes, remaining allowance and headroom. The ASan
+profile campaign reached 4,096 runs and lowering reached 333 at its time
+limit. Lifetime peak RSS was 180,948 and 575,520 KiB respectively with
+a 1,536 MiB limit per worker. This change affects development tools.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+All ten integration tests passed on current source and the coordinated
+deployment pins. Both stacks passed the Cortex-M FOC build check. In
+each of two fresh Wasm instances, the current and pinned stacks checked
+825 transforms and respectively 251 and 147 range cases. Both checked
+4,369 measurements per instance. An intermediate run reused one Cargo
+target directory across the two source graphs and mixed incompatible
+types. Separate target directories qualified the final sources.
+Rust 1.95 release tests, strict Clippy, rustdoc and formatting passed.
+The machine-profile arithmetic migration and hardware qualification remain
+open. Evidence commit `08853958e4c1e8047e6897c830284ae2555f3c60` contains 292 verified members in
+56,164 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
