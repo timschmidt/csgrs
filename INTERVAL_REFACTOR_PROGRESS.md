@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers and full-width exponents | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across all 72 current solver test executables, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. The full 199-case Interface core suite now runs on WASI, including machine-profile replay and TinyBee firmware actors. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -14450,3 +14450,53 @@ and four reviewed inventory rows are retained. The inventory now contains
 independent source oracles, release measurements, full test inventories,
 stack accounts, paired timings and trial patches.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7, quadratic certificates over closed rectangles
+
+At `88f2e5d5b`, the maintained conic oracle checks the original polynomial
+at corners, on edges and at interior stationary points using exact integer
+arithmetic on rational coordinates. It also requires a decision whenever the
+documented Taylor ball has zero radius or excludes zero. On the 360-case
+deterministic grid, 272 inputs required a decision and 28 had a sign range
+that the corners alone missed. Additional fixtures reach an interior zero at
+(1/6, 1/2), an edge minimum at (2, −3/5), a stationary line and a sign
+change caused by the mixed term. Removing either stationary-point check
+failed its analytic control. Omitting the mixed term from the solver's
+remainder produced an incorrect sign and failed the retained regression.
+[Solver tests](crates/hypersolve/tests/conic_box_certificates.rs) · [Fuzz target](crates/hypersolve/fuzz/README.md#quadratic-residuals-over-rectangles)
+
+Both compilers passed all 764 deterministic report checks on Linux and WASI.
+Rust 1.95 passed 1,546 native tests in 73 executables. The complete
+WASI qualification executed 1,522 direct tests, 17 native parents with
+fresh guest children, 5 host platform checks and 4,212 matching dispatch
+windows. Linux ASan completed 10,000 inputs from six checked-in seeds in 13
+seconds. The four existing release controls matched their preceding SHA-256
+digests in all sixteen comparisons. The five new qualification images fit the
+existing 64 MiB capacity and 16 MiB free-space requirement. Clippy, workspace and standalone
+formatting, the repository retention check and the pedantic workflow security
+audit passed.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+Three proposed repairs were measured at the same source and build paths.
+The table shows final certification benchmark file changes in bytes against
+`dba6a5604`. The corresponding native and WASI screens were 4,096 and
+1,024 bytes.
+
+| Trial | Rust 1.95 Linux | Rust 1.95 WASI | Rust 1.99 Linux | Rust 1.99 WASI |
+| --- | ---: | ---: | ---: | ---: |
+| Shared quadratic row traversal, `f2eae56c3` | +11,376 | −1,021 | −6,264 | −36 |
+| Shared ordered quadratic remainder, `8f5150b98` | −1,832 | +6,682 | −8,688 | −511 |
+| Fully affine system dispatch, `d28dbeaf5` | +6,112 | +15,488 | −5,696 | +4,629 |
+
+Both mixed-degree implementations passed the two whole-box witnesses on all
+four compiler/target combinations. The fully affine dispatch corrected 24 of
+the 36 incorrect results across the 120 nonzero-target G1 checks. Its twelve
+singleton orientation errors and the sixty checks with a zero target still
+failed. Each trial exceeded an existing linked-image cap and remains on its
+review branch. No production memory or size allowance was charged.
+[Proof scope and zero-coefficient reproduction](docs/research/interval-box-proof-scope.md)
+
+The inventory regenerated twice with 7,354 scan rows and 433 body reviews.
+All 750 archived files, including per-image sections, case logs, seeds,
+mutations and build commands, were verified from evidence commit
+`b30ca5f10c6869c4fbf6d274145cc7c331b48ace`. [Evidence index](docs/evidence-archive.tsv)

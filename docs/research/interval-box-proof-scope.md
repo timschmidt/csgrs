@@ -398,3 +398,26 @@ WASI with Rust 1.95 and 1.99. The earlier cubic coverage and approximate
 receipt findings above are separate. The implementation remains under review
 because final linked executables exceed their size limits.
 [Qualification and measurements](../../INTERVAL_REFACTOR_PROGRESS.md#phases-7-and-11-generated-tangent-models-over-variable-boxes)
+
+### Zero coefficients and the selected residual package
+
+The expression `0*x*x + 0*x*y + 0*y*y - 3*x + 5*y - 1` retains a
+multivariate quadratic form at `88f2e5d5b`. Its three quadratic terms
+vanish, but the authored expression still has structural degree two. For
+the equality on `[-2,3] × [-1,4]`, the center residual is 5 and the full
+range is `[-15,25]`. The corner `(-2,-1)` satisfies the equality. The
+multivariate package returned `Unknown` under both policies. The affine and
+univariate packages each reported `Violation` with a center-only receipt.
+The selected package and its retained forms determine which rows have box
+evidence. [Whole-box certifier](../../crates/hypersolve/src/interval.rs)
+
+The conic qualification exercises the multivariate package directly with
+squared, cross and linear terms, including zero coefficients. Its independent
+oracle enumerates corners, edge stationary points and the isolated stationary
+point in the interior. If the stationary set is a line through the rectangle,
+its value also occurs on the boundary. Rectangles of zero width reduce to an
+edge or a point. The tests check the normalized residual, whole-box sign,
+certainty, satisfaction and row counts. The published symmetric Taylor bound
+determines which rational inputs must produce a decision.
+[Deterministic fixtures](../../crates/hypersolve/tests/conic_box_certificates.rs) ·
+[Sanitizer target](../../crates/hypersolve/fuzz/README.md#quadratic-residuals-over-rectangles)

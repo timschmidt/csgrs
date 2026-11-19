@@ -16326,5 +16326,102 @@
       }
     },
     "raw": "strict-comparison.json, family-comparison.json and sparse-comparison.json give per-target sizes, positive and negative changes and slot headroom. Raw paired ELF and WASI metrics include every allocated ELF section, function range union or aggregate WASI body size. Original registered accounts are preserved."
+  },
+  "conic_box_certificate_qualification": {
+    "source": "88f2e5d5bdc42d4a3d1c8d054c129e5bd5b55e1c",
+    "previous": "dba6a5604134d5a5416471cc80aae60fa6a3c1b0",
+    "evidence": "docs/evidence/2026-11-19-interval-conic-certificates",
+    "scope": "New Hypersolve conic oracle integration test and opt-in standalone ASan target. The existing extrema executable, smoke test, representation test and certification benchmark have identical SHA-256 hashes at each of the four compiler/target combinations.",
+    "capacity_per_new_qualification_executable_bytes": 67108864,
+    "required_free_per_executable_bytes": 16777216,
+    "existing_executable_charge_bytes": 0,
+    "firmware": "Test-only native and hosted WASI targets. No firmware image links the harness.",
+    "new_images": {
+      "1.95.0-native": {
+        "file": 4399912,
+        "sha256": "c682bc137dbd71ae4b86eea4b50868fff15a9bb233898549392c83ba3d6cb39e",
+        "code": 2291591,
+        "functions": 2269168,
+        "headroom_bytes": 62708952
+      },
+      "stable-native": {
+        "file": 4531504,
+        "sha256": "c37cc94991bf59caddc452e3f0f932d30b24c731531f55162e9080cf5da013bb",
+        "code": 2347653,
+        "functions": 2325760,
+        "headroom_bytes": 62577360
+      },
+      "1.95.0-wasi": {
+        "file": 2325541,
+        "sha256": "ccf634fe79b85f1d917e7a9fdd261ce2993b4514ce4db67ebf7af7f29ae6a511",
+        "code": 1980200,
+        "functions": 1976306,
+        "headroom_bytes": 64783323
+      },
+      "stable-wasi": {
+        "file": 2371327,
+        "sha256": "7d7966e1034c041366ccc9e510caa1d948d0b6c28cc944cbf2ada7c60de80c1c",
+        "code": 1977778,
+        "functions": 1973855,
+        "headroom_bytes": 64737537
+      },
+      "nightly-linux-asan": {
+        "file": 29707312,
+        "sha256": "1e2fe07947861f68fcb68c7c4735825f7f17c99e5392387b2023c482e9f83b19",
+        "code": 8291036,
+        "functions": 7978069,
+        "headroom_bytes": 37401552
+      }
+    },
+    "review_trials": {
+      "shared_quadratic_rows": {
+        "source": "f2eae56c3c1e09b4ab19e2d0dff17cdcbb061b17",
+        "rust_1_95_owner_benchmark_file_code_function_deltas_bytes": {
+          "native": [
+            11376,
+            8256,
+            8295
+          ],
+          "wasi": [
+            -1021,
+            -938,
+            -942
+          ]
+        },
+        "production_charge_bytes": 0
+      },
+      "shared_quadratic_remainder": {
+        "source": "8f5150b989c46119182505ad028dc3f3987b4188",
+        "rust_1_95_owner_benchmark_file_code_function_deltas_bytes": {
+          "native": [
+            -1832,
+            -1696,
+            -1700
+          ],
+          "wasi": [
+            6682,
+            6113,
+            6110
+          ]
+        },
+        "production_charge_bytes": 0
+      },
+      "all_affine_system": {
+        "source": "d28dbeaf50ac9de9c2c050ce377dbb5b926156d4",
+        "rust_1_95_owner_benchmark_file_code_function_deltas_bytes": {
+          "native": [
+            6112,
+            3712,
+            3602
+          ],
+          "wasi": [
+            15488,
+            13331,
+            13299
+          ]
+        },
+        "production_charge_bytes": 0
+      }
+    }
   }
 }
