@@ -42,7 +42,10 @@ operation, so there is no mutable result cache or stale-output channel.
 The driver records exact results, tool versions, source-independent corpus and
 module hashes, dependency closure, and generated-code inspection. The whole
 module must have no imports, `memory.grow`, or floating arithmetic/conversion;
-bit reinterpretation is allowed. This is finite platform qualification, not
+bit reinterpretation is allowed. The driver first assembles and disassembles a
+control module containing scalar arithmetic, SIMD arithmetic and conversions
+in both directions. It checks that the scanner identifies the exact instructions
+and accepts integer SIMD and same-width bit transfers. This is finite platform qualification, not
 exhaustive binary64 proof, a timing benchmark, or evidence for other targets.
 The root progress ledger records the actual compiler/runtime versions and scope.
 

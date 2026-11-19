@@ -17,10 +17,22 @@ import time
 
 
 def floating_operations(assembly):
-    floating = sorted(set(re.findall(r"\b(?:f32|f64|i32|i64)\.[a-z][a-z0-9_]*", assembly)))
-    return [op for op in floating if (
-        op.startswith(("f32.", "f64.")) and op not in {"f32.reinterpret_i32", "f64.reinterpret_i64"}
-    ) or "_f32" in op and op != "i32.reinterpret_f32" or "_f64" in op and op != "i64.reinterpret_f64"]
+    # wasm-dis emits folded instructions. Skip quoted names and data, which
+    # can themselves contain text that looks like an instruction.
+    tokens = re.finditer(r'"(?:\\.|[^"\\])*"|;;[^\n]*|\(([if]\d+(?:x\d+)?)\.([a-z][a-z0-9_]*)(?=[\s)])', assembly)
+    forbidden = set()
+    for token in tokens:
+        shape, operation = token.groups()
+        if shape is None:
+            continue
+        opcode = f"{shape}.{operation}"
+        if opcode in {"i32.reinterpret_f32", "i64.reinterpret_f64", "f32.reinterpret_i32", "f64.reinterpret_i64"}:
+            continue
+        if shape in {"f32x4", "f64x2"} and operation in {"extract_lane", "replace_lane", "splat"}:
+            continue  # Transfer bits between same-width lanes and scalars.
+        if shape.startswith("f") or re.search(r"_f\d+(?:x\d+)?(?:_|$)", operation):
+            forbidden.add(opcode)
+    return sorted(forbidden)
 
 
 def main():
@@ -49,6 +61,13 @@ def main():
             raise SystemExit(f"{name} failed; see {output / (name + '.log')} and its .stderr.log")
 
     run("compiler", ["rustc", f"+{args.toolchain}", "-vV"])
+    control = output / "codegen-control.wasm"
+    run("assemble-codegen-control", ["wasm-as", "--enable-simd", str(client / "codegen-control.wat"), "-o", str(control)])
+    control_wat = output / "codegen-control.wat"
+    run("disassemble-codegen-control", ["wasm-dis", str(control), "-o", str(control_wat)])
+    detected = floating_operations(control_wat.read_text())
+    if detected != ["f32.add", "f32x4.add", "f64x2.convert_low_i32x4_s", "i32x4.trunc_sat_f64x2_s_zero"]:
+        raise SystemExit(f"Unexpected floating operations in the codegen control: {detected}")
     run("oracle", ["python3", str(client / "oracle.py"), str(output / "corpus.json")])
     run("build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(client / "Cargo.toml"), "--target", target, *ieee])
     run("lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(client / "Cargo.toml"), "--target", target, *ieee, "--", "-D", "warnings"])
@@ -98,7 +117,8 @@ def main():
     if dyadic_floating or (not runtime and "(import " in dyadic_assembly):
         raise SystemExit(f"Unexpected dyadic floating arithmetic or imports: {dyadic_floating}")
     report = json.loads((output / "execute.log").read_text())
-    report.update({"toolchain": args.toolchain, "target": target, "binary_bytes": binary.stat().st_size,
+    report.update({"toolchain": args.toolchain, "target": target, "codegen_control": detected,
+                   "binary_bytes": binary.stat().st_size,
                    "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
                    "corpus_sha256": hashlib.sha256((output / "corpus.json").read_bytes()).hexdigest(),
                    "floating_arithmetic": forbidden, "memory_grow": False,
