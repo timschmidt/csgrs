@@ -55,8 +55,8 @@ No existing arithmetic or predicate dispatch has been changed.
 | 0 inventory/baseline | Native coverage measured for Hyperinterval, Hyperdynamics and Hyperlattice Interval. Independent syntax traversal matched 2,807 declarations in 36 planned machine source files. Phase 7 now covers all 1,101 syntax declarations and 38 compiled macro properties in its 24 named Hypersolve sources. All 34 shared-timing evidence declarations and all 40 simulator FOC declarations have body reviews. | remaining body and consumer audits, sibling qualification, costs, coverage, fuzz and hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
-| 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers and full-width exponents | full surface/coverage, further targets and shipped consumers |
+| 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and direct rational-to-IEEE projection implemented and locally qualified | solver kernel migration, full coverage and consumer cost gates |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers, full-width exponents and tight rational endpoint projection | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
@@ -14500,3 +14500,56 @@ The inventory regenerated twice with 7,354 scan rows and 433 body reviews.
 All 750 archived files, including per-image sections, case logs, seeds,
 mutations and build commands, were verified from evidence commit
 `b30ca5f10c6869c4fbf6d274145cc7c331b48ace`. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 3 and 4, exact rational intervals to strict IEEE enclosures
+
+At `6cd10d93e`, a caller could project through a common dyadic grid. An
+interval from `1/(2^70 + 1)` to `2^70/3` exhausted a 160-bit budget on
+the binary64 subnormal grid. At `97c59c69f` both strict float types accept a
+`RationalInterval` directly. On each endpoint, the numerator and denominator
+bit lengths bound the leading exponent to two adjacent possibilities. The
+chosen dyadic grid divides the IEEE spacing on both binades. Rounding on that
+grid and then in the same direction to IEEE preserves the tight endpoint.
+The mixed-scale interval now fits the 160-bit budget and reproduces the
+previous high-budget bounds. Empty, subnormal, overflow, shared-budget
+exhaustion and retry have independent witnesses.
+[Public conversion](crates/hyperinterval/README.md) · [Regression suite](crates/hyperinterval/tests/rational_float_projection.rs)
+
+The directed GMP/MPFR oracle checked 2,392 interval/width pairs on Linux and
+ordinary WASI Preview 1 with Rust 1.95 and 1.99. The Rust 1.95 Linux scalar
+and lattice suites passed 392 tests and 20 doctests. The scalar WASI driver
+passed 255 guest tests, 9 native platform cases and 5 fresh guest replays.
+The opt-out WASI run exercised the typed environment rejection. The two
+packaged scalar crates supplied a standalone executable on Linux, bare
+WebAssembly and WASI with both compilers. Clippy, rustdoc with warnings denied,
+workspace formatting and the allocation-free ARM feature check passed.
+The inventory regenerated twice with 7,356 scan rows and 435 body reviews.
+
+For twelve completed native inputs per compiler, including zero, mixed scales
+and ratios with 2,201-bit denominators, direct projection reduced peak
+requested heap in every case. Its largest peak was 1,432 requested bytes and
+1,472 glibc-usable bytes. All twelve released all measured bytes. Cold and
+warm stack watermarks never increased over the two-step conversion in the
+matched measurements. The largest observed callee watermark was 2,776 bytes
+on a guarded 2 MiB worker. These measurements include construction of the
+source, projection, materialization of both endpoint bits and cleanup.
+On Rust 1.95, median conversion times on prepared inputs ranged from 5.9% to
+41.6% of the two-step path. The existing float-chain executable had paired
+median time ratios of 0.991 and 0.983. The order and host-cost controls had
+identical loaded section addresses and bytes apart from the GNU build ID.
+Their observed group medians ranged from 0.987 to 1.063 across paired runs.
+
+The largest new charge across existing size metrics was 34 bytes. Four native
+ELF padding accounts had already exceeded their cumulative caps before this
+change. Each retained its prior charge and spent zero additional bytes.
+Three bare WebAssembly control images matched their previous SHA-256 digests.
+The standalone direct client was 7,090 to 12,664 bytes smaller than the
+equivalent two-step client across six compiler/target combinations. The
+intermediate interval, signed quotient and out-of-line unsigned variants
+remain recorded with their separate padding, stack and heap measurements.
+The final projection required no memory or firmware allowance.
+[Per-target size accounts](docs/research/interval-size-accounts.json) · [Evidence index](docs/evidence-archive.tsv)
+
+All 375 observations verified from local evidence commit
+`6373c2840b7ef98935865b5fcff813cbcde20058`. The compressed record occupies
+120,164 bytes. [Evidence index](docs/evidence-archive.tsv)

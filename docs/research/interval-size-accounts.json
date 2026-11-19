@@ -16423,5 +16423,20 @@
         "production_charge_bytes": 0
       }
     }
+  },
+  "rational_ieee_projection": {
+    "source": "97c59c69fc3fa9de260d087ff6def33dd8fabf30",
+    "benefit": "Tight outward conversion from exact rational intervals directly to binary32 and binary64 using independent endpoint grids and a shared budget.",
+    "scope": "Rust 1.95.0 and 1.99.0, release, all features. Five existing executables on x86_64 Linux and ordinary WASI Preview 1. The same three Rust 1.95 bare WebAssembly controls retain their image hashes.",
+    "baseline": {
+      "native": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "wasi": "933c9ae56, first scalar GMP/MPFR WASI qualification. The fixed program revision predates that executable configuration. The separate existing WASI qualification accounts retain their prior charges.",
+      "preceding": "6cd10d93e"
+    },
+    "caps": "Use existing_artifacts for each existing file, loaded ELF section, .text and named native code or WASM code and function bodies, independently. In the 360 comparisons, 24 metrics required a positive incremental charge. The largest was 34 bytes. account-rows.json retains fixed, preceding and final values, cumulative positive charges and remaining byte allowances.",
+    "prior_overage": "Four existing native .relro_padding rows had already exhausted their cumulative allowance. No further charge is available. The Rust 1.95 real_bridge and dyadic_float_egress rows stay at 2320 bytes and fall from 4072 to 4032 bytes respectively. The Rust 1.99 rows stay at 2744 bytes and fall from 920 to 912 bytes. Prior charges remain in the account.",
+    "new_artifacts": "Each oracle uses the existing 64 MiB qualification slot with 16 MiB reserved. Each packaged smoke client fits the 4 MiB slot with 1 MiB reserved. The ten final images leave at least 64628272 and 3359680 bytes respectively. Direct and composed clients produce the same bits on all six compiler/target combinations. Direct images are 7090 to 12664 bytes smaller. No embedded flash allowance applies.",
+    "memory": "No memory exception charged. Per-input requested and glibc-usable peak heap, retained bytes and cold/warm worker stack on both native compilers are in audited-lifetimes.json.",
+    "evidence": "docs/evidence/2026-11-19-interval-rational-ieee-projection"
   }
 }
