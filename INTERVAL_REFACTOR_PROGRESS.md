@@ -14128,3 +14128,48 @@ unmeasured branches. Physical-board qualification remains open.
 
 Evidence commit `b062d2acb06ac08e4f45bee6434df30d1d615696` contains 1,537
 verified members in 881,240 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 5 — refinement at one endpoint of a trigonometric interval
+
+On `ace4bf62f`, both trigonometric suites accepted a control that returned
+the whole range when the left endpoint's quadrant was known but the right
+endpoint's quadrant was still unresolved. Commit `ce8820eb1` adds rational
+intervals starting at 1/4 and ending just below or above π/2 and π. Directed
+MPFR and independent pole counts check the exact outward grid bounds, the
+number of components and domain coverage. Tangent and cotangent also cross
+the output grid at one near π/4. The altered tangent implementation reported
+partial coverage for a complete interval. Both suites now reject it.
+
+For sine near π/6 and cosine near π/3, the tests now include nondegenerate
+intervals from zero to either side of the point whose image is 1/2. They
+check both endpoints at input spacings of 2^-64, 2^-256 and 2^-512. Each
+interval exhausts one work unit below its measured debit and completes on
+exact-budget retry. A separate control that published a full range after
+endpoint evaluation failed passed the original sine/cosine suite. The new
+fixture detected a lower bound of −1 where the exact grid bound is zero.
+
+Nightly `8006091eb` now covers both outcomes of right-endpoint reduction
+in each kernel. Across Hyperinterval, covered branch outcomes rose from
+1,004 to 1,006 of 1,027. Rust 1.99 covered 5,002 of 5,033 lines and
+10,095 of 10,546 regions, up two in each metric. The 100% gate remains open.
+[Trigonometric tests](crates/hyperinterval/tests/trigonometry.rs) ·
+[Pole and domain tests](crates/hyperinterval/tests/tangent.rs)
+
+Rust 1.95 passed 296 Hyperinterval all-target tests, 15 doctests, five
+minimal tests and 98 downstream Hyperlattice interval tests and doctests.
+Formatting, strict Clippy, rustdoc and example/bench checks passed. Rust
+1.88 passed the dyadic suites. The optional Hyperreal-backed rational
+configuration requires Rust 1.95. Both ASan fuzz targets completed 10,000
+inputs with their directed oracles. The dyadic library built for bare
+Wasm and Thumb. On WASI Preview 1, all six sine/cosine cases and seven
+tangent/cotangent cases passed. The native suite exercised the additional
+process-spawning replay fixture.
+
+The native sine/cosine and tangent/cotangent test executables grew by
+2,136 and 1,152 bytes. Their WASI modules grew by 2,177 and 854 bytes.
+All four met the file, code and function budgets including prior charges.
+For the fixed historical WASI comparison, the archived build adds the
+GMP cross-compilation feature required by the toolchain. The changes are
+confined to test sources. [Size accounts](docs/research/interval-size-accounts.json)
+
+Evidence commit `ce53bad0f62abdd2cf792ccf85742a0fe0008122` records 120 verified members in 882,536 compressed bytes. [Evidence index](docs/evidence-archive.tsv)

@@ -14844,5 +14844,151 @@
         }
       ]
     }
+  },
+  "trigonometric_endpoint_conformance": {
+    "source": "ce8820eb1422b1a19e9e7a3d93cb9be8b8c27107",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "ace4bf62f11da551911f699754c7629916951236",
+    "evidence": "docs/evidence/2026-11-19-interval-trigonometric-endpoint-refinement",
+    "evidence_commit": "ce53bad0f62abdd2cf792ccf85742a0fe0008122",
+    "benefit": "Detect false whole images and incorrect domain coverage for unresolved right endpoints. Verify exact tight bounds and exhaustion/retry at dyadic output boundaries with nondegenerate inputs.",
+    "scope": "Rust 1.95 release all-feature Hyperinterval integration test executables, one matched checkout and target path per compiler target. Host qualification slot 64 MiB, required free 16 MiB per image.",
+    "metrics": [
+      "fixed",
+      "preceding",
+      "retained",
+      "previous_positive",
+      "increment",
+      "cumulative",
+      "remaining"
+    ],
+    "limits": "Both 2% and the absolute cap apply at each step and cumulatively. The file cap is 32 KiB. Executable code and defined-function bytes each have a 16 KiB cap. Remaining is after both limits. Native charges carry forward the larger of the published earlier charge and observed positive fixed-to-preceding growth.",
+    "wasm_control": "The fixed historical manifest refused cross-compilation. Its isolated fixture adds the WASI-only GMP force-cross development feature and lock edge from the current build. The fixed Rust source is unchanged. Hashes and build-metadata diff are archived.",
+    "targets": {
+      "x86_64-unknown-linux-gnu": {
+        "trigonometry": {
+          "free_bytes": 64453168,
+          "file": [
+            2643848,
+            2653560,
+            2655696,
+            9712,
+            2136,
+            11848,
+            20920
+          ],
+          "executable_code": [
+            1444151,
+            1450663,
+            1452519,
+            6656,
+            1856,
+            8512,
+            7872
+          ],
+          "named_text": [
+            1424638,
+            1431104,
+            1432900,
+            6591,
+            1796,
+            8387,
+            7997
+          ]
+        },
+        "tangent": {
+          "free_bytes": 64388008,
+          "file": [
+            2714800,
+            2719704,
+            2720856,
+            4904,
+            1152,
+            6056,
+            26712
+          ],
+          "executable_code": [
+            1485975,
+            1489399,
+            1490487,
+            3424,
+            1088,
+            4512,
+            11872
+          ],
+          "named_text": [
+            1465670,
+            1469116,
+            1470205,
+            3446,
+            1089,
+            4535,
+            11849
+          ]
+        }
+      },
+      "wasm32-wasip1": {
+        "trigonometry": {
+          "free_bytes": 65826627,
+          "file": [
+            1275106,
+            1280060,
+            1282237,
+            4954,
+            2177,
+            7131,
+            18371
+          ],
+          "code": [
+            1030953,
+            1035294,
+            1036919,
+            4341,
+            1625,
+            5966,
+            10418
+          ],
+          "function_bodies": [
+            1028379,
+            1032713,
+            1034332,
+            4334,
+            1619,
+            5953,
+            10431
+          ]
+        },
+        "tangent": {
+          "free_bytes": 65788062,
+          "file": [
+            1318333,
+            1319948,
+            1320802,
+            1615,
+            854,
+            2469,
+            23897
+          ],
+          "code": [
+            1064752,
+            1065705,
+            1066559,
+            953,
+            854,
+            1807,
+            14577
+          ],
+          "function_bodies": [
+            1062068,
+            1063010,
+            1063864,
+            942,
+            854,
+            1796,
+            14588
+          ]
+        }
+      }
+    }
   }
 }
