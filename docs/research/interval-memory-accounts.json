@@ -2830,5 +2830,67 @@
     "peak_requested_delta_all_72_cells": 0,
     "retained_after_drop": 0,
     "raw": "cumulative-stack.json, anchor-repeats.json, stack-repeat-summary.json, and the per-call requested/usable histories"
+  },
+  "cross_width_qualification": {
+    "evidence": "docs/evidence/2026-11-19-interval-cross-width-qualification",
+    "scope": "Guest stack and native sanitizer process measurements for the expanded qualification clients. No production library changes.",
+    "guest": {
+      "targets": "bare WebAssembly and opt-in wasm32-wasip1 on Rust 1.88.0, 1.95.0 and 1.99.0",
+      "stack_bytes": 1048576,
+      "preceding_and_expanded_corpus_peak_bytes": 704,
+      "conversion_only_peak_bytes_by_compiler": [
+        256,
+        240,
+        240
+      ],
+      "conversion_only_cap_bytes": 1024,
+      "linear_page_growth": 0,
+      "cumulative_stack_debit_bytes": 0
+    },
+    "native_asan": {
+      "target": "x86_64-unknown-linux-gnu strict_float",
+      "measure": "Maximum process RSS over five interleaved fresh-process runs per executable and corpus. Includes ASan quarantine and process setup. Fixed, preceding and expanded executables ran identical input files in the same order.",
+      "fixed": "db62aae75",
+      "preceding": "26bfa1093",
+      "incremental_caps": [
+        8388608,
+        "5% of preceding"
+      ],
+      "cumulative_caps": [
+        16777216,
+        "10% of fixed"
+      ],
+      "host_slot_bytes": 1073741824,
+      "minimum_free_bytes": 268435456,
+      "matched_corpora": {
+        "cross-format": {
+          "count": 5339,
+          "high_water": [
+            207323136,
+            207675392,
+            212193280
+          ],
+          "prior": 352256,
+          "increment": 4517888,
+          "cumulative": 4870144,
+          "remaining_host_bytes": 861548544,
+          "pass": true
+        },
+        "legacy": {
+          "count": 151,
+          "high_water": [
+            57253888,
+            57360384,
+            56270848
+          ],
+          "prior": 106496,
+          "increment": 0,
+          "cumulative": 106496,
+          "remaining_host_bytes": 1017470976,
+          "pass": true
+        }
+      },
+      "fresh_unseeded_qualification": 558624768
+    }
   }
 }

@@ -56,7 +56,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and direct rational-to-IEEE projection implemented and locally qualified | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers, full-width exponents, tight rational endpoint projection and direct binary32/binary64 conversion | full surface/coverage, further targets and shipped consumers |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers, full-width exponents, tight rational endpoint projection and direct binary32/binary64 conversion with maintained browser, WASI and native fuzz qualification | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound. The affine oracle checks every field of each published coordinate, including the proved prefix of an outside-box report | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
@@ -14792,4 +14792,50 @@ Use `PredicatePolicy::STRICT` when consuming an affine uniqueness proof.
 
 All 2,670 members of the 438,244-byte record verified from committed blobs
 at evidence revision `7547422348806efb15cf9e05ce245e2d41d56129`.
+[Evidence index](docs/evidence-archive.tsv)
+
+## Phases 4 and 14, cross-format IEEE qualification
+
+Commit `c842e8ec0` adds direct binary32/binary64 conversions to the
+maintained WebAssembly conformance client. The Fraction oracle checks both
+destination endpoints, including one binary64 spacing on each side of every
+binary32 normal exponent boundary, subnormal leading-bit positions, sign
+changes and overflow. Its 5,587 new queries include 1,047 narrowing overflows.
+All 55,988 previous arithmetic cases and 8,862 previous property records
+reproduced. The expanded corpus contains 61,575 arithmetic cases and 13,866
+property records. The old guest fails when asked for a conversion. The
+current verifier also detects a missing conversion corpus.
+[Guest and oracle](crates/hyperinterval/conformance/wasm-float/README.md)
+
+Node and Chromium passed the expanded corpus on Rust 1.88, 1.95 and 1.99
+for both bare WebAssembly and opt-in WASI Preview 1. Each checked 38
+unavailable endpoint traps. Default WASI and both Rust 1.95 threaded
+configurations rejected unqualified nonempty input and preserved empty.
+The ordinary arithmetic, lattice, dyadic egress and code-generation
+checks passed. The qualified scalar guests retained their linear memory
+size and their 704-byte complete-corpus peak on a 1 MiB stack. The new
+queries alone used 240–256 bytes. Two earlier placements added 32 bytes
+to at least one existing workload. Separate conversion exports kept the
+original peak on all six targets. The largest qualification file increment
+was 2,538 bytes across eleven host-tested WebAssembly configurations.
+[Size accounts](docs/research/interval-size-accounts.json) ·
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+Commit `8b0644c6b` checks conversion of full interval hulls in the
+native strict-float fuzzer using exact GMP values and directed MPFR bounds.
+Both the previous fuzzer and the previous WebAssembly corpus accepted
+a narrowed upper endpoint rounded downward and a widened upper endpoint
+copied from the lower endpoint. The revised verifiers rejected each mutant.
+The native ASan build passed 5,339 generated conversion seeds and 151
+retained inputs. An empty-corpus campaign completed 60,310 executions in
+31 seconds. The fuzzer grew by 16,760 file bytes and 6,096 text bytes. Five
+interleaved process runs per revision and corpus put the largest incremental
+RSS charge at 4,517,888 bytes. The 417 native owner/lattice tests and
+doctests, strict Clippy, formatting and nine inventory tests passed. The
+inventory reproduced 7,359 scan rows and 438 reviews. These are
+qualification-client costs. The production library receives no charge.
+[Native fuzz target](crates/hyperinterval/fuzz/fuzz_targets/strict_float.rs)
+
+All 721 archived members verified from evidence commit
+`4ce56c26832a03b98d38cb786deb429b71e554e8` (233,196 bytes).
 [Evidence index](docs/evidence-archive.tsv)

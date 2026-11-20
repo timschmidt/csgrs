@@ -16657,5 +16657,230 @@
     },
     "memory": "Five fresh process high-water RSS observations per target, including the Node host for WASI, are archived in rank-accounts.json. The file slot does not bound process memory.",
     "evidence": "docs/evidence/2026-11-19-interval-affine-rank-and-proof"
+  },
+  "cross_width_qualification": {
+    "evidence": "docs/evidence/2026-11-19-interval-cross-width-qualification",
+    "scope": "Expanded conformance workloads at c842e8ec0 and 8b0644c6b. Production library and firmware accounts receive no charge.",
+    "wasm_metrics": [
+      "final file",
+      "code section",
+      "function bodies"
+    ],
+    "guest_caps": {
+      "incremental": [
+        4096,
+        "8% of preceding"
+      ],
+      "cumulative": [
+        8192,
+        "12% of fixed"
+      ],
+      "slot_bytes": 4194304,
+      "minimum_free_bytes": 1048576
+    },
+    "guest_account_columns": [
+      "fixed revision",
+      "incremental bytes per metric",
+      "cumulative positive bytes per metric",
+      "remaining file slot bytes"
+    ],
+    "guest_targets": {
+      "1.88.0/wasm32-unknown-unknown/default": [
+        "c9f1f9ac5",
+        [
+          2538,
+          2268,
+          2260
+        ],
+        [
+          2538,
+          2268,
+          2260
+        ],
+        4130098
+      ],
+      "1.88.0/wasm32-wasip1/default": [
+        "c9f1f9ac5",
+        [
+          1734,
+          1464,
+          1456
+        ],
+        [
+          1734,
+          1464,
+          1456
+        ],
+        4161036
+      ],
+      "1.95.0/wasm32-unknown-unknown/default": [
+        "c9f1f9ac5",
+        [
+          2329,
+          2059,
+          2051
+        ],
+        [
+          2346,
+          2059,
+          2051
+        ],
+        4133417
+      ],
+      "1.95.0/wasm32-wasip1/default": [
+        "c9f1f9ac5",
+        [
+          1627,
+          1357,
+          1349
+        ],
+        [
+          1627,
+          1357,
+          1349
+        ],
+        4162787
+      ],
+      "1.99.0/wasm32-unknown-unknown/default": [
+        "c9f1f9ac5",
+        [
+          2331,
+          2053,
+          2045
+        ],
+        [
+          2334,
+          2053,
+          2045
+        ],
+        4132944
+      ],
+      "1.99.0/wasm32-wasip1/default": [
+        "c9f1f9ac5",
+        [
+          1622,
+          1351,
+          1343
+        ],
+        [
+          1622,
+          1351,
+          1343
+        ],
+        4162949
+      ],
+      "1.95.0/wasm32-wasip1-threads/default": [
+        "c9f1f9ac5",
+        [
+          1627,
+          1357,
+          1349
+        ],
+        [
+          1627,
+          1357,
+          1349
+        ],
+        4162636
+      ],
+      "1.88.0/wasm32-wasip1/opt-in": [
+        "d1a81beae",
+        [
+          2538,
+          2268,
+          2260
+        ],
+        [
+          2538,
+          2268,
+          2260
+        ],
+        4130137
+      ],
+      "1.95.0/wasm32-wasip1/opt-in": [
+        "d1a81beae",
+        [
+          2329,
+          2059,
+          2051
+        ],
+        [
+          2333,
+          2059,
+          2051
+        ],
+        4133460
+      ],
+      "1.99.0/wasm32-wasip1/opt-in": [
+        "d1a81beae",
+        [
+          2331,
+          2053,
+          2045
+        ],
+        [
+          2334,
+          2053,
+          2045
+        ],
+        4132944
+      ],
+      "1.95.0/wasm32-wasip1-threads/opt-in": [
+        "d1a81beae",
+        [
+          1627,
+          1357,
+          1349
+        ],
+        [
+          1631,
+          1357,
+          1349
+        ],
+        4162632
+      ]
+    },
+    "native_asan": {
+      "target": "x86_64-unknown-linux-gnu strict_float, nightly with cargo-fuzz 0.13.2, address sanitizer",
+      "fixed": "db62aae75",
+      "preceding": "26bfa1093",
+      "metrics": {
+        "file": {
+          "preceding": 26622592,
+          "expanded": 26639352,
+          "positive": 16760,
+          "fixed": 26606208,
+          "prior": 16384,
+          "cumulative": 33144
+        },
+        "code": {
+          "preceding": 3245628,
+          "expanded": 3251724,
+          "positive": 6096,
+          "fixed": 3245628,
+          "prior": 0,
+          "cumulative": 6096
+        },
+        "functions": {
+          "preceding": 2935661,
+          "expanded": 2941695,
+          "positive": 6034,
+          "fixed": 2935661,
+          "prior": 0,
+          "cumulative": 6034
+        }
+      },
+      "incremental_caps": [
+        262144,
+        "2% of preceding"
+      ],
+      "cumulative_caps": [
+        524288,
+        "4% of fixed"
+      ],
+      "slot_bytes": 134217728,
+      "minimum_free_bytes": 33554432,
+      "free_bytes": 107578376
+    }
   }
 }
