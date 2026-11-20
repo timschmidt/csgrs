@@ -213,7 +213,10 @@ mantissas share an exponent, with explicit budgets for arithmetic and scale
 changes. Common-grid arithmetic, set operations and comparisons keep exact
 zero on the other operand's grid; zero copies consume work without reserving
 bits for a shift. An interval that merely contains zero still uses ordinary
-alignment accounting. `hyperreal` enables both carriers and their certified Real bridge;
+alignment accounting. The `hyperreal` feature enables both Real bridges.
+`RationalInterval::from_real(&value, precision)` preserves exact rational
+singletons and the rational scale of a symbolic value's certified bounds.
+`DyadicInterval::from_real` encloses the value on the requested binary grid.
 `real-ball` adds exact symbolic centers with nonnegative rational radii.
 
 Dyadic width, midpoint and radius return exact singleton intervals, or empty

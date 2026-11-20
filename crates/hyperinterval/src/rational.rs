@@ -20,6 +20,22 @@ impl RationalInterval {
         })
     }
 
+    /// Encloses an exact Hyperreal point using its certified rational bounds.
+    ///
+    /// Exact rationals give singletons at every precision. For symbolic inputs,
+    /// `precision` is the binary exponent requested for the computable factor.
+    /// Its exact rational scale also affects the width of the resulting interval.
+    /// Evaluation uses the source's cache and cancellation signal and has no
+    /// separate work budget. An unavailable enclosure returns a typed error.
+    #[cfg(feature = "hyperreal")]
+    #[inline]
+    pub fn from_real(value: &hyperreal::Real, precision: i32) -> Result<Self, IntervalError> {
+        let [lower, upper] = value
+            .certified_rational_interval(precision)
+            .ok_or(IntervalError::EnclosureUnavailable)?;
+        Self::new(lower, upper)
+    }
+
     /// The empty set.
     pub const fn empty() -> Self {
         Self { bounds: None }

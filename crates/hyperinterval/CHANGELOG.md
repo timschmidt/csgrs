@@ -9,6 +9,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add `RationalInterval::from_real` under the `hyperreal` feature. It preserves
+  rational singletons and returns a typed error if symbolic evaluation is cancelled.
+
 - Add allocation-free conversion between certified float intervals. Binary32
   widens exactly and binary64 narrows to the tightest finite binary32 bounds.
 
