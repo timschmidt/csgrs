@@ -2892,5 +2892,46 @@
       },
       "fresh_unseeded_qualification": 558624768
     }
+  },
+  "real_rational_enclosure_2026_11_19": {
+    "revision": "4ad0c199c",
+    "preceding": "0426a60b6",
+    "record": "2026-11-19-interval-rational-real-bridge",
+    "scope": "Rust 1.95 release, 20 single-worker complete rational enclosure and rescaling workloads, including scalar cancellation and retry.",
+    "guarded_native_stack_bytes": 3560,
+    "minimum_worker_headroom_bytes": 2084120,
+    "peak_requested_heap_bytes": 1704,
+    "peak_usable_heap_bytes": 1864,
+    "post_drop_requested_bytes": 0,
+    "post_drop_usable_bytes": 0,
+    "per_workload_incremental_and_new_cumulative_heap_and_stack_charges_bytes": 0,
+    "bare_wasm_max_linear_memory_bytes": 1310720,
+    "bare_wasm_initial_linear_memory_bytes": 1245184,
+    "bare_wasm_stack_capacity_bytes": 1048576,
+    "bare_wasm_peak_stack_reserved_bytes": 1648,
+    "bare_wasm_peak_stack_touched_bytes": 1624,
+    "standalone_test_process_high_water_KiB": {
+      "native-1.95.0": [
+        6780,
+        6816,
+        6764
+      ],
+      "native-1.99.0": [
+        7084,
+        7136,
+        6760
+      ],
+      "wasi-1.95.0": [
+        55868,
+        55896,
+        55564
+      ],
+      "wasi-1.99.0": [
+        55576,
+        55896,
+        55228
+      ]
+    },
+    "test_process_scope": "Three fresh single-thread runs per binary. WASI process high water includes Node and its WebAssembly engine."
   }
 }

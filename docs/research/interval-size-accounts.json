@@ -16882,5 +16882,58 @@
       "minimum_free_bytes": 33554432,
       "free_bytes": 107578376
     }
+  },
+  "real_rational_enclosure_2026_11_19": {
+    "revision": "4ad0c199c",
+    "preceding": "0426a60b6",
+    "existing_ball_fixed": "c9f1f9ac5",
+    "record": "2026-11-19-interval-rational-real-bridge",
+    "matched_release_image_bytes": {
+      "checked_scalar": {
+        "-native": 2092936,
+        ".wasm": 1059258,
+        "-trace": 2230408,
+        "-life": 2093368,
+        "-usable": 2091608
+      },
+      "existing_ball": {
+        "-native": 2134096,
+        "-test": 3415304,
+        ".wasm": 1096228,
+        "-trace": 2286712,
+        "-life": 2133792,
+        "-usable": 2132032
+      }
+    },
+    "production_incremental_bytes": 0,
+    "cumulative_account": "No additional charge on existing images. The fixed-to-preceding padding increases of 96 B each for the ordinary, guarded and usable-allocation ball clients remain in their own accounts. Detailed fixed, preceding and final section sizes are archived.",
+    "new_qualification_slot_bytes_per_target": 16777216,
+    "minimum_free_bytes_per_target": 4194304,
+    "standalone_test": {
+      "native-1.95.0": {
+        "file_bytes": 3376264,
+        "code_bytes": 2046759,
+        "first_positive_charge_bytes": 3376264,
+        "free_bytes": 13400952
+      },
+      "native-1.99.0": {
+        "file_bytes": 3471912,
+        "code_bytes": 2088485,
+        "first_positive_charge_bytes": 3471912,
+        "free_bytes": 13305304
+      },
+      "wasi-1.95.0": {
+        "file_bytes": 1871326,
+        "code_bytes": 1579347,
+        "first_positive_charge_bytes": 1871326,
+        "free_bytes": 14905890
+      },
+      "wasi-1.99.0": {
+        "file_bytes": 1909924,
+        "code_bytes": 1586975,
+        "first_positive_charge_bytes": 1909924,
+        "free_bytes": 14867292
+      }
+    }
   }
 }

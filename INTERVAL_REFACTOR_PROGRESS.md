@@ -14839,3 +14839,66 @@ qualification-client costs. The production library receives no charge.
 All 721 archived members verified from evidence commit
 `4ce56c26832a03b98d38cb786deb429b71e554e8` (233,196 bytes).
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 3 certified rational point enclosures
+
+At `4ad0c199c`, callers can convert a Hyperreal point directly into a checked
+`RationalInterval` with the `hyperreal` feature. Rational points such as
+−7/3 retain equal endpoints even at the two extreme i32 precision requests.
+For a symbolic point, the requested precision applies to its computable
+factor. The exact rational scale determines the final endpoint spacing.
+An actively cancelled symbolic source produces `EnclosureUnavailable`.
+Callers can clear the signal and retry using the same source.
+[Public constructor](crates/hyperinterval/src/rational.rs)
+
+Four tests check exact singleton arithmetic, both signs of √2/3 and its
+squared endpoint relations, 15 comparisons against directed 512-bit MPFR
+bounds for scaled π, and full dispatch receipts against one scalar enclosure
+plus checked endpoint construction. They passed on Rust 1.95 and 1.99 on
+x86-64 Linux and WASI Preview 1. Across Hyperinterval, Hyperlattice Interval
+and Hyperdynamics, 582 native release tests and doctests passed. The full
+Rust 1.99 scalar runner passed 260 cases directly in WASI and nine with
+native platform support, including five fresh guest replays. All 450
+rational dispatch windows matched. Strict owner Clippy, rustdoc, formatting,
+the rational-only build and nine inventory tests passed. The refreshed
+inventory has 7,360 scan rows and 439 reviewed entries.
+[Registered tests](crates/hyperinterval/tests/real_rational_enclosure.rs)
+
+Across 20 consumer fixtures, replacing manual checked construction with
+the public call produced byte-identical Rust 1.95 release executables for
+the ordinary, traced and two memory-instrumented native clients, and for
+the bare WebAssembly module. Peak requested heap was 1,704 bytes and peak
+usable heap was 1,864 bytes. Both returned to zero after drop. The largest
+native call used 3,560 stack bytes. The bare guest reserved 1,648 bytes and
+touched 1,624 on its 1 MiB stack across cold and warm calls. The largest
+new standalone test occupied 3,471,912 bytes of its 16 MiB qualification
+slot. Each target has its own charge. The earlier fixed-to-preceding padding
+charges on three ball clients persist. The bridge added zero bytes to those
+sections. [Size accounts](docs/research/interval-size-accounts.json) ·
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+The closed-ball classifier still uses dyadic displacement bounds. At
+`0426a60b6` it returned unresolved on both closed ends of the reflected
+ball [1/3, 1]. It also missed a coarse containment proof for ±√2/32 in
+[−1/8, 1/8]. Consuming rational bounds directly fixed both cases and
+passed the original 1,485 integer comparisons and 207 translated comparisons.
+It changed the receipts on all ten existing control cases, added 88 bytes
+to the warm reflected lower-endpoint stack and exceeded five linked-section
+allowances. A fallback that reused rational operands or a source opposite
+zero passed the same geometric witnesses and preserved all ten control
+receipts. Four existing warm calls gained 16 stack bytes apiece, exceeding
+their individual 1% caps. Both trials still returned a verdict for a
+nonzero translated displacement with an active source abort.
+
+Rebuilding the earlier rational-only fallback from `4f05060aa` preserved
+the ten control traces and all measured stack peaks. Eight newly decidable
+fixtures needed 120–168 additional peak heap bytes. On the current revision,
+fresh classification of a symbolic center against itself took 3.35% and
+3.36% longer on CPUs 3 and 5, with all 18 pairs slower on each. The original
+MPFR test executable also gained 3,936 bytes in its allocated read-only
+relocation padding. Both findings are independent of the memory allowance.
+All three classifier trials remain outside the production branch.
+
+All 748 members of the 108,288-byte archive verified from committed blobs
+at evidence revision `ce92fb4f546d0b8de4770da69479ef6486562700`.
+[Evidence index](docs/evidence-archive.tsv)
