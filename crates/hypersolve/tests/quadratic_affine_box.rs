@@ -1,6 +1,6 @@
 //! Whole-box scope of affine rows alongside retained quadratic residuals.
-use hyperlimit::PredicatePolicy;
-use hyperreal::Real;
+use hyperlimit::{Certainty, PredicatePolicy};
+use hyperreal::{Real, RealSign};
 use hypersolve::{
     CertifiedCandidateStatus, Constraint, ConstraintKind, Expr,
     IntervalBoxCertificationPackage as Package, IntervalBoxCertificationStatus as Status, Problem,
@@ -75,15 +75,31 @@ fn mixed_degree_boxes_enclose_each_active_affine_row_in_source_coordinates() {
                     proof.has_certified_violation(),
                     expected == Status::Violation
                 );
-                match expected {
-                    Status::Unknown => assert!(matches!(
-                        proof.rows[1].status,
-                        CertifiedCandidateStatus::BoundedUnknown { .. }
-                    )),
-                    _ => assert!(matches!(
-                        proof.rows[1].status,
-                        CertifiedCandidateStatus::BallCertified { .. }
-                    )),
+                let row = &proof.rows[1];
+                assert_eq!(row.signed_residual, Some(Real::from(2 * cy - 3 * cx)));
+                match (&row.status, &expected) {
+                    (CertifiedCandidateStatus::BoundedUnknown { .. }, Status::Unknown) => {}
+                    (
+                        CertifiedCandidateStatus::BallCertified {
+                            sign,
+                            certainty,
+                            satisfied,
+                        },
+                        _,
+                    ) => {
+                        assert!(matches!(certainty, Certainty::Exact | Certainty::Filtered));
+                        assert_ne!(expected, Status::Unknown);
+                        assert_eq!(*satisfied, expected == Status::Certified);
+                        assert_eq!(
+                            *sign,
+                            if *satisfied {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            }
+                        );
+                    }
+                    other => panic!("missing whole-box evidence: {other:?}"),
                 }
             }
         }
