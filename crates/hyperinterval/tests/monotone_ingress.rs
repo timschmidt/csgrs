@@ -161,7 +161,6 @@ fn logarithm_leaves_excluded_generated_bounds_untouched() {
     );
 }
 
-
 #[cfg(feature = "dispatch-trace")]
 #[test]
 fn a_refused_second_endpoint_cannot_multiply_unadmitted_coefficients() {
@@ -297,4 +296,3 @@ fn generated_square_root_images_retry_and_compose() {
         DyadicInterval::new(0.into(), 2.into(), 0).unwrap()
     );
 }
-
