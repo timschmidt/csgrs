@@ -73,7 +73,7 @@ and relocated losslessly to the development SSD, restoring writable cache
 space. No third-party archive payload is included in this evidence record.
 
 Frozen review evidence: `docs/evidence/2026-11-17-interval-residual-certainty-review`, local commit
-`ae36f8d84f038d5789b690e41b0615c5929b7ca5`; 138 files / 2,686,921 bytes, SHA-256
+`d30b7edb14a386323c0423cc1ced0eef94ef93dc`; 138 files / 2,686,921 bytes, SHA-256
 `a5ce2987cfdc4ae978cbe44cc1cbbc3c85b61e8105819a93f80dfd8a9ab8ef20`. Prior archive records and manifest rows are preserved.
 No push.
 
@@ -122,7 +122,7 @@ output-path error are retained with their corrected checks. No source or
 resource account is admitted, and no runtime claim comes from these runs.
 
 Frozen finite resource evidence: `docs/evidence/2026-11-17-interval-residual-certainty-resources`, local commit
-`d62cded53e3df97f5c77ada6a040df93cda848c0`; 13 archive files / 134,998,864 bytes, SHA-256
+`1a1bfc019d6ab36e181a2f917231672ed944bd2a`; 13 archive files / 134,998,864 bytes, SHA-256
 `5e6547a66f1263debda2a5f5a794ccaef9aec58034c1de61b570926a80de2dc6`. The verified split archive contains 109,301 files /
 2,875,171,645 uncompressed bytes, including all fourteen instrumented binaries.
 The live admission stage remains mutable; later work is not sealed by this

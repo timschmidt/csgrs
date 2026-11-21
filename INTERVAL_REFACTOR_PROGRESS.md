@@ -7974,8 +7974,11 @@ full pre-push, complete platform/HIL or full-goal completion claim
 follows from these checks. The rejected migration and extraction gates remain
 open; no push or publication occurs.
 
-Evidence `docs/evidence/2026-11-15-interval-workspace-qualification`, local archive commit `ee8790064afd94ee089a865e2061b9510a17ae46`:
+Evidence `docs/evidence/2026-11-15-interval-workspace-qualification`, local archive commit `37d717543bff5871bf7213728410c0a6bda1aedd`:
 137 files / 172,230,791 bytes, SHA-256 `24a5df0d14c1cc9dd1ec80dcad258de9aca345cbd6ad0c5e733adcd577a9b2d4`.
+Since 21 November 2026 its 134 MB coverage archive is a Git LFS payload, so
+the record digest now covers the pointer: 37,972,238 bytes, SHA-256
+`ca81f0630f15f5e08a87ce8dbd2426cdc700b9af6f389d558a15fc50435416e1`.
 
 ## Automatic affine-noise horizon candidate and retained dispatch regression (2026-11-15)
 
@@ -8044,7 +8047,7 @@ were subsequently run from the correct saved binaries. Original failures and
 literal command records remain, rather than being overwritten.
 
 Evidence `docs/evidence/2026-11-15-interval-flow-noise-evolution`, local archive
-commit `77526600bc4fc390e9db37800c78f8d0ed8aa4b0`: 426 files / 7,717,756 bytes,
+commit `7c4a63fa3c3695c3ad391cb395abf097670814bb`: 426 files / 7,717,756 bytes,
 SHA-256 `f8782a79d00119ff4bc14a40372c6797d4dd0103a0cf2d296dd92c684964cd3e`.
 This stage retains a regression test, not the automatic controller. Broader
 wrapping/resource support, the extraction and other existing cost gates,
@@ -8112,7 +8115,7 @@ resource support, hosted platform/HIL and coordinated-release work remain open.
 No full pre-push, push, publication or full-goal completion is claimed.
 
 Evidence `docs/evidence/2026-11-15-interval-wasm-float-qualification`, local archive commit
-`52a9ce3f00e56527dc11d1a25819211f66b47fbc`: 304 files / 40,877,079 bytes,
+`640280211d76afe83194641fccb6d3eb1804674d`: 304 files / 40,877,079 bytes,
 SHA-256 `542eeec3955e1a1feb68aef57bbe55c6ea217f883a0f6834686f66a7633702be`.
 
 ## Directed dyadic-to-IEEE conversion closure (2026-11-15)
@@ -8178,7 +8181,7 @@ hosted OS/MCU/HIL, complete resource, whole-goal, push or publication claim is
 made. Existing migration cost and coordinated-release gates remain open.
 
 Evidence `docs/evidence/2026-11-15-interval-ieee-dyadic-egress`, local archive commit
-`97a51a509d6fcd497580a9feee8d1c5671226fbb`: 589 files / 86,109,543 bytes,
+`2fc4e93926c56cdbc76409c6011650b43c74270c`: 589 files / 86,109,543 bytes,
 SHA-256 `7f7c8843bfebb923ef3aacb841ceac2825cfde3d17f234d4cdab6e2df5d8930f`.
 
 
@@ -8217,7 +8220,7 @@ qualification remain open. This is not phase or goal completion. No full
 pre-push, MCU/HIL, timing speedup, push or publication claim is made.
 
 Evidence `docs/evidence/2026-11-15-interval-lattice-support-facts`, local archive commit
-`cf37b5f152ebb0ffe652fb5609a350b6705abda7`: 70 files / 338,764 bytes,
+`13ccdb28bf000dfc28b15ea3142cc48622e7ea4d`: 70 files / 338,764 bytes,
 SHA-256 `26196061d3bfcf4d24513b35b682773cd97a6169ff282f3f1aa77878568cf330`.
 
 
@@ -8267,7 +8270,7 @@ release remain open. No phase/goal completion, full pre-push, push or publicatio
 is claimed.
 
 Evidence `docs/evidence/2026-11-15-interval-sdf-voxel-frame`, local archive commit
-`efe5493aa245b2a901202e649c99e25e63b8c228`: 61 files / 5,077,995 bytes,
+`529c82387ba5c2f7c458aab17a89e88df6686181`: 61 files / 5,077,995 bytes,
 SHA-256 `a0dc818a168e3cf93506605ab9775ebcd83be67fff9955a9c40dfe2c5c486291`.
 
 
@@ -8325,7 +8328,7 @@ remaining migration cost gates, hardware and coordinated release remain open.
 This is not phase/goal completion; no full pre-push, push or publication occurred.
 
 Evidence `docs/evidence/2026-11-15-interval-sdf-voxel-enclosures`, local archive commit
-`32f176a919814448030d0a585fb552d248a5fa4f`: 3,197 files / 58,398,912 bytes,
+`04b9816f80f04674187e580b2f8dc9618efde45f`: 3,197 files / 58,398,912 bytes,
 SHA-256 `70662d68780559b476ebd4f0b7209ab72e1ba24432a04c21d3148d6ed392a401`.
 
 
@@ -8383,7 +8386,7 @@ active: migration cost gates, whole-resource closure, broader required adoption,
 hardware and coordinated release are not complete. No push/publication occurred.
 
 Evidence `docs/evidence/2026-11-15-interval-voxel-affine-enclosures`, local archive commit
-`0bb2d1329f98eabcbde4b31f9578ceac706e9c2b`: 141 files / 12,040,903 bytes,
+`a3d930f57a56d62b76153068a02589502d313a0e`: 141 files / 12,040,903 bytes,
 SHA-256 `3cc6a550c09b8ef63734319ccecd06837f01a186bb0046630cadd6c17992a90c`.
 
 
@@ -8442,7 +8445,7 @@ active; broader migration, resource, hardware and coordinated release gates rema
 No push/publication occurred.
 
 Evidence `docs/evidence/2026-11-15-interval-interface-machine-fuzz`, local archive commit
-`693cf4038c69be4550d73b7bf59cf010d308ff07`: 639 files / 880,428 bytes,
+`1c01b6c731fed5ae215c27d603a9fca29e6a6dd8`: 639 files / 880,428 bytes,
 SHA-256 `1681f93512b7d12d128f9c565fe1cb3dec69ceb1b17f9593e1b076494305bc29`.
 
 
@@ -8496,7 +8499,7 @@ gates, whole-resource closure, hardware and coordinated release. No source from
 this experiment is retained or pushed.
 
 Evidence `docs/evidence/2026-11-15-interval-profile-static-products`, local archive commit
-`45bbdbd247556273f926334a4d5954ebe9ba5373`: 73 files / 747,732 bytes,
+`181b7aa4908e6a23f55c57a1d50c55773d52d55c`: 73 files / 747,732 bytes,
 SHA-256 `8a4be98432a778397ef84eeaea1b321b7c4d0ea472a5a283eda19ef55d140a9f`. Complete patches, source, locks, initial failures,
 full transcripts and restoration receipts are retained. Do not repeat the
 static-arity variant without evidence distinguishing it from this result.
@@ -8570,7 +8573,7 @@ frozen stages verify. The complete goal remains active, with migration, extracti
 resource, hardware and coordinated release requirements unresolved. No push.
 
 Evidence `docs/evidence/2026-11-15-interval-profile-codegen-attribution`, local archive commit
-`726c24d55a9f704c21ee3bf1df85e82383f52a42`: 96 files / 6,514,571 bytes,
+`b8d55fe6711b3c777121501aaef7c9b6ed2bffdc`: 96 files / 6,514,571 bytes,
 SHA-256 `363df0c84750b94853059462f44d659a605743e45acf2eb22f182410fb50c2f2`. Source variants, maps, disassembly, commands,
 full transcripts, rejected attempt and restoration receipts are retained.
 
@@ -8627,7 +8630,7 @@ remains active with migration, extraction, resource, hardware and coordinated
 release work unresolved. No push or publication.
 
 Evidence `docs/evidence/2026-11-15-interval-profile-final-construction`, local archive commit
-`d94336575bf3bf300c913b3a23620b1fc72b144e`: 66 files / 3,148,345 bytes,
+`a51e3802ffcb229fc901a4813635e41bf9e0f766`: 66 files / 3,148,345 bytes,
 SHA-256 `0bb39825d350fa3199182fd0aafdac63b6efc773404c5c49f670fbbb517808d2`. Candidate source, missing witness,
 commands, raw maps, complete transcripts and restoration receipts are retained.
 
@@ -8683,7 +8686,7 @@ preceding frozen stages verify. Full coverage and the entire15-phase goal remain
 open, including unresolved implementation, resource, migration and release gates.
 
 Evidence `docs/evidence/2026-11-15-interval-coverage-closure`, local archive commit
-`cd8f9b7977102e187676bd401ac986cb566a504d`: 70 files / 7,576,352 bytes,
+`1c2107a9da916f6cc4e1cee44d33ac8acdede4a8`: 70 files / 7,576,352 bytes,
 SHA-256 `489259f892188e071c9715aef8d385ea40686e9a100069729a8efa9355a27f32`. Exact commands, aggregate profiles,
 compressed exports, raw diagnostic logs, source patch and integration receipts are
 retained. Bulky unmerged profiles remain external with paths/hashes; the aggregate
@@ -8730,7 +8733,7 @@ byte-identical; firmware remains clean. All 68 preceding frozen stages verify.
 The entire 15-phase goal remains active.
 
 Evidence `docs/evidence/2026-11-15-interval-drc-current-admission`, local archive commit
-`84304984a69084d9ebf849e7d0ef0e064f766468`: 49 files / 1,471,494 bytes,
+`18d79660accd5510eb33de293a6d672b65adbd85`: 49 files / 1,471,494 bytes,
 SHA-256 `d4d8df62bc8b4ec930a7b5408b181e1e4b6517e0a53e84af031b8d64fbef743c`. The source patch, negative witness logs,
 source-bound builds, fixture hashes, command outputs and integration receipt are
 archived. Test binaries remain external with paths and hashes; no archived-binary
@@ -8771,7 +8774,7 @@ active, including solver and Interface migrations, pending dynamics extraction,
 resource, performance, coordinated release and HIL gates. No push or publication.
 
 Evidence `docs/evidence/2026-11-15-interval-drc-arrangement-profile`, local archive commit
-`0bf6988be70e2ab599a3349ec6cbcf5acd05be96`: 13 files / 1,821,800 bytes,
+`49edd9b4dbbe03336d8204dc4c9364f3cc901172`: 13 files / 1,821,800 bytes,
 SHA-256 `aeb31e89a259b69d582a02a28d26c0c3f09c962a860eef4fa393357609971524`. Includes the bounded sampling script,
 raw debugger stream, all original stacks, inclusive attribution, executable and
 fixture hashes, reviewed-source hashes and preserved repository state. The binary
@@ -8830,7 +8833,7 @@ extraction, resource, performance, coordinated release and HIL gates remain open
 No push or publication occurs.
 
 Evidence `docs/evidence/2026-11-15-interval-drc-borrowed-promotion`, local archive commit
-`c7aa15fae3b5b5b7ec0f872afb167a40ed1f8d61`: 533 files / 19,117,162 bytes,
+`48e64137148c7737d28cd5db3006063279fec83a`: 533 files / 19,117,162 bytes,
 SHA-256 `022fcda07edb594db9d0a96175a62d1926061b495d62101f08db52f00e585773`. Includes raw timing series, failures, source-bound builds,
 reports, witnesses, dispatch records, restoration receipts and losslessly compressed
 symbol maps. Executables remain external at hash-bound paths. The earlier superseded
@@ -8886,7 +8889,7 @@ arithmetic, retained-proof ownership and named-budget work are not declared comp
 No push or publication.
 
 Evidence `docs/evidence/2026-11-15-interval-profile-typed-fraction`, local archive commit
-`224455e99bb2a6846e9ce9d1f35718cbc44bc969`: 91 files / 1,593,253 bytes,
+`6231c077ceb231928acaee179b7cd232336136da`: 91 files / 1,593,253 bytes,
 SHA-256 `cae451f595416064198ca8f131c1441e2fc98ba944a9d0f5df005b8238f5f9f7`.
 
 ## 2026-11-15: retained machine interval ownership rejected on complete-consumer size
@@ -8946,7 +8949,7 @@ the adaptive Taylor controller as a concrete remaining Phase 13 investigation;
 no implementation or cost claim is made for it. No push or publication.
 
 Evidence `docs/evidence/2026-11-15-interval-profile-owned-intervals`, local archive commit
-`3114a7190c1dd122167ba1f62caf6bca38443bda`: 108 files / 3,765,395 bytes,
+`9b37ef1259f37fe9855f391d667195ee2ab66876`: 108 files / 3,765,395 bytes,
 SHA-256 `850f1cb8f6d68ad01d20702c1a2d4d0b4b9102ba799afb4a643ddcf9cc9f517f`.
 
 ## 2026-11-15: adaptive coefficient ownership rejected on existing binary size
@@ -8997,7 +9000,7 @@ verify unchanged. Automatic cross-order reuse and the full fifteen-phase goal
 remain open. No push or publication.
 
 Evidence `docs/evidence/2026-11-15-interval-adaptive-stage-ownership`, local archive commit
-`3b6b05b722c87740871f81dbe7e6d7a9b75c15c1`: 87 files / 17,444,948 bytes,
+`8379e74fbd35e6ed6634872a813e8616d792b48e`: 87 files / 17,444,948 bytes,
 SHA-256 `c4d79b079bc26bc2575abe1c7932241326bb0b3b07471f24004f7325047e70b7`.
 
 ## 2026-11-15: external validated-dynamics comparison retained
@@ -9055,7 +9058,7 @@ unchanged. Wider/stress portfolios, profiling this measured cost gap and all oth
 remaining plan gates stay open. No push or publication.
 
 Evidence `docs/evidence/2026-11-15-interval-external-dynamics`, local archive commit
-`27ae2575dffb0281865a3a45b65fc4c276476a62`: 92 files / 664,056 bytes,
+`5765cfd560bc40696923c4dda97004b786409944`: 92 files / 664,056 bytes,
 SHA-256 `d550132d0ba9470f62905965c65665e3b48fcfaf0e89314a2ea772af7b26e54f`.
 
 ## 2026-11-15: profiled finer-grid regridding rejected on scalar latency
@@ -9104,7 +9107,7 @@ The allocation issue and all remaining plan gates stay open. No production
 optimization, push or publication is retained.
 
 Evidence `docs/evidence/2026-11-15-interval-dyadic-regrid`, local archive commit
-`14ce442c6a28e65a7d8083b8b64e00c8532a044b`: 351 files / 5,881,523 bytes,
+`a1bfac7ad3b741737a509b97ab22ae00b63ed337`: 351 files / 5,881,523 bytes,
 SHA-256 `14b9b7784a1ed4b2da11d8532f27f33fdef824364711732ebe455830619ba5f3`.
 
 ## 2026-11-15: sensitivity and matrix scaling prototypes rejected on size
@@ -9151,7 +9154,7 @@ verify unchanged. Neither extension nor any phase is marked complete, and no
 production/test change, push or publication is retained. The full goal stays active.
 
 Evidence `docs/evidence/2026-11-15-interval-flow-sensitivity`, local archive commit
-`867f9efa52d49677c1d0e1b17289a6fa77eca859`: 179 files / 6,810,194 bytes,
+`4fe837e05f1e6e6d7f13abf0bff8c0a9d0399f19`: 179 files / 6,810,194 bytes,
 SHA-256 `3765bdd254395fcad1627a2992ede2e67eee2972d3d56add521b9d7865265766`.
 
 ## 2026-11-15: sixteen-case external dynamics corpus qualified
@@ -9196,7 +9199,7 @@ unchanged. Full-stack/hosted/HIL and remaining plan gates stay open; neither a
 phase nor the full goal is marked complete. No push or publication.
 
 Evidence `docs/evidence/2026-11-15-interval-external-dynamics-extended`, local archive commit
-`701e672ceb746e72fe5914eab720f21fd2d5e8ab`: 93 files / 649,328 bytes,
+`95015cc5f9608d0554e40fdbb9a46402849d6095`: 93 files / 649,328 bytes,
 SHA-256 `bee040027bb858af8ee74f5b5da8040dc6139204d16af4985402d6537c090d64`.
 
 ## 2026-11-15: continuous two-rate noise chains qualified; clone candidate restored
@@ -9250,7 +9253,7 @@ phase completion or full-goal completion. The status table now distinguishes
 implemented manual propagation from open automatic orchestration/global sensitivity.
 
 Evidence `docs/evidence/2026-11-15-interval-flow-wrapping-diagnostic`, local archive commit
-`af19ca2bbcbc7737547a94ff53fa69b17fd25e1d`: 202 files / 2,429,217 bytes,
+`b08ad4a90750c3ab23321475973751850afe216d`: 202 files / 2,429,217 bytes,
 SHA-256 `c1553e9b5ffc9a118a4c6462f503c4a645c74674f9240cee78d088d65bc9c385`.
 
 ## 2026-11-15: clock inventory review fixes partial publication on count exhaustion
@@ -9308,7 +9311,7 @@ eight pending paths remain protected by exact patch hashes. Only reviewed local
 commits are brought forward; the full interval-plan goal remains active.
 
 Evidence `docs/evidence/2026-11-15-interval-firmware-interval-inventory`, local archive commit
-`c390ef8e50da1f274ce5b1217f83a3e0bf4bdcac`: 121 files / 4,544,975 bytes,
+`97e3dc2d78ec9eaec0188b1e59e2c8276fc101cf`: 121 files / 4,544,975 bytes,
 SHA-256 `0431237cb8e36eb53b0f86ed882f11a5a551f5a539ecd870cf25a5cdc3978cb6`.
 
 ## 2026-11-16: audit FOC ownership and authorize bounded size reconsideration
@@ -9364,7 +9367,7 @@ or phase completion; the full goal remains active. Next implementation review
 will begin with the size-only matrix-scaling candidate under explicit caps.
 
 Evidence `docs/evidence/2026-11-16-interval-foc-inventory`, local archive commit
-`3c7205433a65b97d09e78478cdaddc338c6c9ff8`: 14 files / 836,893 bytes,
+`09ceb8910aff4308bba34ee05060d72cbdba0e54`: 14 files / 836,893 bytes,
 SHA-256 `4bc0348e1c7488f4ac3f6521f9354eebe2e27a436529ee0c3a11cbbe30e69912`.
 
 ## 2026-11-16: matrix scaling reconsidered under bounded size policy
@@ -9415,7 +9418,7 @@ and the same cumulative size baseline.
 
 Retained test/account commit `89d4fac48e5bba5ab538e4bf1b84c486383ff438`.
 Evidence `docs/evidence/2026-11-16-interval-matrix-scale-reconsideration`, local archive commit
-`3ecedc632cc6b4e92c14be86af9e539a13c6110e`: 607 files / 6,137,767 bytes,
+`e31a60a0431d06a9b3e9fd804fb3d55325b6008f`: 607 files / 6,137,767 bytes,
 SHA-256 `9ba4a6d94479521f114da38de1dc1c0015848b5640bee23807e08d650d5ca7cd`.
 
 
@@ -9462,7 +9465,7 @@ extraction against its current owner timing gates, rather than retrying this
 unchanged Taylor candidate.
 
 Review commit `f7008cc03`. Evidence `docs/evidence/2026-11-16-interval-taylor-scheduling-reconsideration`, local archive commit
-`4b31e7d22673bce20812bd2aa952f11074595a0f`: 261 files / 2,412,029 bytes,
+`9e4b24cbbba5846e527d9b5b6d3db4362752639e`: 261 files / 2,412,029 bytes,
 SHA-256 `6f9f64f8e4ddc4ce74d3057b58ccacce2e4ec521d5bc2bb8f82e74bffafa4051`.
 
 
@@ -9504,7 +9507,7 @@ be silently restored or declared complete. Further work needs a distinct
 supported implementation approach or another required plan capability.
 
 Review/account commit `a3629dcac0ff81606d0e862154c95f0d082dbf20`. Evidence
-`docs/evidence/2026-11-16-interval-path-dynamics-current-admission`, local archive commit `373fad71f6a875589c59db2fc3b79b24283be560`:
+`docs/evidence/2026-11-16-interval-path-dynamics-current-admission`, local archive commit `37faadd605bb8742d6feb6e5df543df081d343ad`:
 301 files / 22,253,496 bytes, SHA-256
 `26a6964a2e716d408e16e73fec695e36afdcb85a464644f7799922a8cf1d9910`.
 
@@ -9536,7 +9539,7 @@ not another timing run of this unchanged candidate. No push or publication.
 
 
 Review commit `b8aa7109b`. Evidence `docs/evidence/2026-11-16-interval-flow-noise-reconsideration`, local archive commit
-`d14d110932ae8e548d4a3773020962e5b5a5ab6b`: 2,645 files / 9,032,213 bytes,
+`006a50238ffcad151c25de993f6886f52f4ba7ce`: 2,645 files / 9,032,213 bytes,
 SHA-256 `abfa3ac4e8f36fa895cccb7f09d7c79b88a63dbdec02e4bdc7e08aeebbdb5680`.
 
 
@@ -9584,7 +9587,7 @@ release, complete stack, firmware flash-fit, push or publication claim.
 
 
 Review commit `270eefdc6`. Evidence `docs/evidence/2026-11-16-interval-profile-owned-reconsideration`, local archive commit
-`491d20ddfd2ffb256e2e6aa3ac037ed776406f20`: 337 files / 6,789,565 bytes,
+`c54cce2b4556790c2705c950bdcc8f8cdbe6fc18`: 337 files / 6,789,565 bytes,
 SHA-256 `5cf531276f57325dd73ecf4e92f1008b750fb8858b6b64d17d734dcbbf38c67d`.
 
 
@@ -9623,7 +9626,7 @@ fifteen-phase goal. No push or publication.
 
 
 Review commit `dc9e33712a3f24e1bdfe97f4205fc9992768641d`. Evidence archive commit
-`c0e98b7bc4e9f810ed5226f8eca64aff55b14693`: 294 files / 3,439,487 bytes,
+`cf47f4afd4f6648c89ed0d0cc500b0f6bcd19b63`: 294 files / 3,439,487 bytes,
 SHA-256 `e5c9452e59707f718315c92c25b4f4766b46d704a4bf2b23b57da1a192c1852f`.
 
 
@@ -9657,7 +9660,7 @@ No push or publication.
 
 
 Review commit `2f463ef2830ab36a15585e66066105db6e759207`. Evidence archive commit
-`c25f14ce87dfe51b40203f122e49e94e0770dbd8`: 269 files / 3,082,821 bytes,
+`02c21f767da82e30f6bdf38e2848b29b66cdc1bd`: 269 files / 3,082,821 bytes,
 SHA-256 `c26a51ee3419e79d1b7922a99b84c7de8c98e07b02d36e03c991f3cac7198a2d`.
 
 
@@ -9697,7 +9700,7 @@ migration and the full fifteen-phase goal remain open. No push or publication.
 
 
 Review commit `e8a3d4e16595ac8b7e98c2bdc60be156ada2c309`. Evidence archive commit
-`12d5c1d22714f9abca6dff94f848a80f66c35b1f`: 459 files / 10,966,221 bytes,
+`c7d0ee301c874132b0148c85317bad8fc72a772d`: 459 files / 10,966,221 bytes,
 SHA-256 `c01b12f6f809ac391c3afea734ee16fd68ac98c2bf9dd4c6d4fe2886f11149dc`.
 
 
@@ -9731,7 +9734,7 @@ The full fifteen-phase goal remains active. No push or publication.
 
 
 Review commit `59d1b3f6416b480b5a725c17b1403d111308808d`. Evidence archive commit
-`55f99b524042bf8caaaf16e6b328dc5cc8406ea6`: 352 files / 21,273,567 bytes,
+`d068b83c24cccc8c8bedc139815f9b355936c07c`: 352 files / 21,273,567 bytes,
 SHA-256 `40bcfaa2fe4394c74a78dc70295d5401cff7ebb4ab0cb7e3c9e6835dd59bb780`.
 
 
@@ -9761,7 +9764,7 @@ does not establish production migration or firmware/HIL qualification. No push.
 
 
 Review commit `a64c0e58cdeaf3123d979ea243882a289c25fa2f`. Evidence archive commit
-`2abaec72ada24ca1c61f4c382b63235e66b57739`: 147 files / 26,976,291 bytes,
+`4b083c2720876ae641eb213465fad8f7e9a634c8`: 147 files / 26,976,291 bytes,
 SHA-256 `58c812f5e452dfa60e269f80e997c9685237038f6effee2bdb19d1859e5c8255`.
 
 
@@ -9783,7 +9786,7 @@ budget revisions preserving the original failures. Hosted Brotli headroom is
 688,115 bytes. Eight new accounts bring the total to 54; prior core-test growth
 remains charged despite smaller new-layout measurements. No flash claim.
 
-Evidence commit `efc1e26c633fa6e7004d583b4981b94876afde18` freezes the Interface
+Evidence commit `5bd4de422762a168989711a4e9772ff3fa5b182e` freezes the Interface
 subrecord: 608 files / 857,548,059 bytes, SHA-256
 `7f94dd7541f665d233bb8d41494e2a278d38fe3531c79dcebb5a5728c1583395`.
 All 91 earlier frozen stages remain unchanged. Stage 92's remaining coordinated
@@ -9804,7 +9807,7 @@ or size account is retained. Source snapshots, original failures and diagnostic
 attribution are preserved.
 
 Review commit `834d7d4785dd1e13d680878c74b22138dc12732f`; evidence commit
-`4d0e306d02fbafdd0e9a52e4a8c8274b3ff7aa71`: 380 files / 195,329,447 bytes,
+`e969ab022c869421abd69d2128468676942d07f6`: 380 files / 195,329,447 bytes,
 SHA-256 `54113bb2b11dc6d0488873a3f196390736d2a0cfcafd78a78a00d7755f7a559a`.
 The Phase 7 migration and full goal remain open.
 
@@ -9819,7 +9822,7 @@ and packaged FFI consumers preserve authored source and locked registry inputs;
 no library-only or feature-superset result substitutes for the required scope.
 No production source, policy, assertion or account changes are introduced.
 
-Evidence commit `c15dd5c97d462dc65686ee9ff2014263dd50e427`: 2,904 files /
+Evidence commit `0e93ed846cb8f54acd9fafec1b01a09b8f6fd475`: 2,904 files /
 89,084,530 bytes, SHA-256
 `8ae8dd43ec18ecd17cd625e0e3608046bf99ebb5c57ab73f470003e300102b14`.
 The original default-root job on controlled CI revision `955593aa9e25` also
@@ -9885,7 +9888,7 @@ The isolated checkout is restored clean; all 17 original order/controller tests
 and formatting pass, and the rebuilt allocation probe matches the baseline hash.
 The candidate and raw evidence remain available; no primary production source or
 any of the 54 cumulative accounts changes. Frozen evidence commit
-`cd6ef1cf2751ae30c6acc96fe1c22ca32d67b49d`: 125 files / 2,880,317 bytes,
+`29ca992059b924c21c5ecf6e63203e90fab33a14`: 125 files / 2,880,317 bytes,
 SHA-256 `d6882e5ab9b8738c8eb7e1b8210e52878a8f03c9f61139a7fe1344d1d372bda3`.
 Earlier archive records remain unchanged. Automatic noise-controller admission,
 coordinated CI and the fifteen-phase goal remain open; no push is claimed.
@@ -9928,7 +9931,7 @@ One missing helper row is added to the actual tracked inventory, preserving its
 not exhaustive coverage; older ledger totals are not a substitute for inspecting
 the current file. All fifteen phases and the full goal remain open.
 
-Evidence `docs/evidence/2026-11-16-interval-dyadic-quotient-reconsideration`, commit `2de86748da8a00595cca3bbeffa3e399401ee2a9`:
+Evidence `docs/evidence/2026-11-16-interval-dyadic-quotient-reconsideration`, commit `c8c8f8e1f7f04d83997af630adefc2c48a9b5385`:
 1,865 files / 9,864,610 bytes, SHA-256
 `1cd43363d05afc82015a5bd23b3bacac5e60767fa28fef41bb17397f493a245e`. Every previous archive path and manifest row is preserved.
 
@@ -9979,7 +9982,7 @@ of the current revision. All fifteen phases remain open; no push occurred.
 
 One missing reviewed method row is appended to the partial inventory, preserving
 all 1,533 prior rows. Evidence `docs/evidence/2026-11-16-interval-voxel-envelope-state` at commit
-`070189df831d97d142d3c369b20b625762c42d89` contains 904 files / 7,644,811 bytes,
+`e87918ce3d7d4ef78ef928f2e3ef9b53e27979be` contains 904 files / 7,644,811 bytes,
 SHA-256 `7f2065bd836e15fb9f624da28af619b78f55134caadfde9517d07761c38fb05e`. Earlier archive paths and rows are unchanged.
 
 
@@ -10022,7 +10025,7 @@ preserving all 54 prior accounts and fixed baseline `c9f1f9ac5`. This adds no
 firmware or flash cost. All fifteen phases and broader validation remain open.
 
 Evidence: `docs/evidence/2026-11-16-interval-coverage-boundaries`.
-Archive commit `4844da1d38ddc5e38970d92416deb64871651aa4` contains 177 files /
+Archive commit `c17c58bdb9430efa09cba7acadb6e8067423c1b0` contains 177 files /
 9,554,477 bytes, SHA-256
 `1698b22b10740be2121cbe597765b889665cb47250e181787d5ed710dc544764`. Prior archive records and manifest rows are unchanged.
 Both original-source adversarial CI commands separately pass; the 22-command
@@ -10055,7 +10058,7 @@ No production code, new tests or size-account change is retained. The bug and
 separate numerical-adapter review questions remain open.
 
 See [the review](docs/research/solver-jacobian-context-review.md).
-Evidence `docs/evidence/2026-11-17-interval-jacobian-context`, commit `a099a4fd21fd8d106acfb874bb943dedc628794d`,
+Evidence `docs/evidence/2026-11-17-interval-jacobian-context`, commit `5713de4c0624de0b114b20046f2aa4812f59e9ec`,
 contains 1,792 files / 1,280,121 bytes, SHA-256
 `33911caecf0a7cd0d30a440b434f9bbff6331f88c514a7a711b71a4dbaeb42ce`. Earlier archive paths and rows are unchanged.
 All 57 size accounts are unchanged. All fifteen goal phases remain active.
@@ -10085,7 +10088,7 @@ unchanged. A temporary build dependency held the quiet lane during the
 standalone builds and was released afterward. All24queued commands are
 unchanged. Other pending candidate admissions and all15phases remain active.
 
-Evidence: `docs/evidence/2026-11-17-interval-linear-adapter-review`, local commit `8e85280f4f69874b21dc38bee78dbf879c7f6541`;
+Evidence: `docs/evidence/2026-11-17-interval-linear-adapter-review`, local commit `37bca178e838daa2003d38afd5ae20bbeec3a044`;
 22files / 853,986bytes, SHA-256
 `03745adae57d4258bd9ac21cc8fee79a63b8c9a72111b24b7f300f9c783c3210`. This stage is frozen. Every previous archive path and
 manifest row is preserved. No push.
@@ -10115,7 +10118,7 @@ test or migration change is retained. 1,565 inventory rows and 57 accounts remai
 unchanged. Full owner tests, stable/WASM qualification, runtime and size gates
 were not continued after resource rejection. All 15 phases remain active.
 
-Frozen evidence: `docs/evidence/2026-11-17-interval-linear-finite-rejection`, local commit `d84e75a0e2c50a41daf74a5e982e9cf86e15c417`;
+Frozen evidence: `docs/evidence/2026-11-17-interval-linear-finite-rejection`, local commit `610f1c8dfc8ea9c0e5fb5660aa6ab14db3627bc0`;
 998files / 894,283bytes, SHA-256
 `73555446eddb99a781d02abf3005dbd6c09c5a02a5c3657ba277041f22caef03`. Every prior archive path and manifest row is preserved.
 No push.
@@ -10194,7 +10197,7 @@ solver candidates remain unaccepted pending their quiet-host timing campaigns.
 All fifteen phases remain active; no phase is declared complete.
 
 Frozen ownership evidence: `docs/evidence/2026-11-17-interval-selected-enclosure-review`, local commit
-`3382575d943f9d7801fe56d185827120576a2420`; 15 files / 1,672,600 bytes, SHA-256
+`2d99c0658e0569b5d1cb55163bc5089164e0f683`; 15 files / 1,672,600 bytes, SHA-256
 `b05e1ff27456794dcbcb0432cbd77401e6cb7fbb45a8aab53ad30f413adb88c7`. Prior archive paths and manifest rows are preserved.
 No push.
 
@@ -10217,7 +10220,7 @@ memory exception. All source/resource proposals remain subject to their original
 runtime and other gates; all fifteen phases remain active.
 
 Frozen review evidence: `docs/evidence/2026-11-17-interval-selected-filter-review`, local commit
-`b62e9eb5ae819cd788a7b379f16ad52147bd950c`; 12 files / 1,539,709 bytes, SHA-256
+`fbfa368f74982cfb07c8a605c84627975ca6b1e2`; 12 files / 1,539,709 bytes, SHA-256
 `071764eecb4a080fbdaafd15db2d365f14c8066fce643f711f39d04aab877b01`. Prior archive records and manifest rows are preserved.
 No push.
 
@@ -10252,7 +10255,7 @@ remain unchanged. All fifteen phases remain active. No production adoption or
 push follows from this record.
 
 Frozen finite evidence: `docs/evidence/2026-11-17-interval-successive-analysis-review`,
-local commit `56b05cf2010fa75d6ff3ce00ffd52503a75a2512`; 24 files / 1,336,955 bytes,
+local commit `8ad4c3d05e2a609903563f717f88643aa6d59408`; 24 files / 1,336,955 bytes,
 SHA-256 `d084ca916a048e8bd10e79bd7930ee1c5b41c7d38620fb91074b08d082f79649`.
 The live combined stage and queue remain mutable and are not sealed by this
 snapshot. Both archive-preparation failures are retained; prior archive records
@@ -10290,7 +10293,7 @@ space. Initial warnings and relocation failures are retained, with every archive
 available through the original cache path. No push.
 
 Frozen review evidence: `docs/evidence/2026-11-17-interval-residual-certainty-review`, local commit
-`ae36f8d84f038d5789b690e41b0615c5929b7ca5`; 138 files / 2,686,921 bytes, SHA-256
+`d30b7edb14a386323c0423cc1ced0eef94ef93dc`; 138 files / 2,686,921 bytes, SHA-256
 `a5ce2987cfdc4ae978cbe44cc1cbbc3c85b61e8105819a93f80dfd8a9ab8ef20`. Prior archive records and manifest rows are preserved.
 No push.
 
@@ -10319,7 +10322,7 @@ partial, all 57 size accounts and zero memory accounts remain intact, and all
 fifteen plan phases remain active. No push.
 
 Frozen finite resource evidence: `docs/evidence/2026-11-17-interval-residual-certainty-resources`, local commit
-`d62cded53e3df97f5c77ada6a040df93cda848c0`; 13 archive files / 134,998,864 bytes, SHA-256
+`1a1bfc019d6ab36e181a2f917231672ed944bd2a`; 13 archive files / 134,998,864 bytes, SHA-256
 `5e6547a66f1263debda2a5f5a794ccaef9aec58034c1de61b570926a80de2dc6`. The verified split archive contains 109,301 files /
 2,875,171,645 uncompressed bytes, including all fourteen instrumented binaries.
 The live admission stage remains mutable; later work is not sealed by this
@@ -10347,7 +10350,7 @@ open. No production or accepted resource account changes; the broader plan
 remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-failed-constraint-ownership`, local commit
-`8bc1f0256c0d8fe919cd7c0fd182ac94341145ac`; 139 files / 55,660,343 bytes, SHA-256
+`3c96ebcb416878a0696f36f4f451d43ac44354f6`; 139 files / 55,660,343 bytes, SHA-256
 `ef3852c2547fec0b9019c3f552951d36f88d9819ff6b8244ee49eea74e7b8568`. All prior archive paths and manifest rows are
 preserved. The ownership review is frozen; the separate live residual admission
 stage remains mutable beyond this finite snapshot. No push.
@@ -10372,7 +10375,7 @@ The inventory remains partial at 1,644 rows and all fifteen plan phases remain
 active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-packaged`, local commit
-`db4865f495af7e3c0ee640cea890e6edca344d5a`; 253 files / 56,808,003 bytes, SHA-256
+`c76d80440c31d6c1d59dff216a689d27e036fe79`; 253 files / 56,808,003 bytes, SHA-256
 `295c4976b18427b073f9990d010e4510f7b333d4f584c746b6106ae6bbfd2407`. All earlier archive paths and index rows remain unchanged.
 Both package attempts and the review snapshot are frozen. No push.
 
@@ -10400,7 +10403,7 @@ remain open. No production or inventory change; all fifteen phases remain
 active and the 1,644-row inventory remains partial.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-owner`, local commit
-`1da0eebf99e52060d5f08dd1f7c80cf8e28def6d`; 548 files / 149,749,754 bytes, SHA-256
+`58d4f33d4f657e2818d941b8f36073ebda1588da`; 548 files / 149,749,754 bytes, SHA-256
 `984f4104fc268c76d6c94dcbc0e74b98741f43fbc8b6c436614807a21b3f6cef`. Earlier records and index rows are preserved.
 The raw-log archive rejection and metadata collector error remain recorded
 with their corrected verification; all source/output bytes are preserved.
@@ -10426,7 +10429,7 @@ validation and combined-composition gates stay open. Production and the partial
 unchanged finite horizon. All fifteen plan phases remain active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-residual-usable-allocation`,
-local commit `d2842b8b326d916d541a670ada9a604ab9453e9a`; 171 files /
+local commit `6de0aab87eb0c23c9f8883dd88c6f1411c1c83b7`; 171 files /
 2,662,214 bytes, SHA-256
 `fae97e7a8a16aebbd67440cf3f4a5ab665fcffbe42a845df79f431ec648bcb9e`.
 Original bytes are preserved with source/stored digests; earlier archive paths
@@ -10455,7 +10458,7 @@ artifacts/revisions and the finite watcher are preserved. The partial inventory
 stays at 1,644 rows and the full fifteen-phase plan remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-composition`, local commit
-`db6870e1c3109c4e540d084e3f34039dc412158f`; 122 files / 7,822,613 bytes, SHA-256
+`760108d3248c9d9de236893987c3f0a629d7373b`; 122 files / 7,822,613 bytes, SHA-256
 `ca2012ee7e29ee64f569a2bf38e82cf71e917ca45c07dad2d5daef74329598e6`. Original observer executables, command outputs and patches
 are preserved with lossless gzip encoding and source/stored digests. Earlier
 archive paths and manifest rows remain unchanged. The qualification and initial
@@ -10488,7 +10491,7 @@ remain 57 size and zero memory. Earlier failures and the fifteen-phase goal
 remain active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-controls`, local commit
-`b2dde626edd2ca1a4b4e5030192c3108d345b32a`; 843 files / 73,745,748 bytes, SHA-256
+`cb522a2bb64a67e72b041ed99b2c05a4cecd0835`; 843 files / 73,745,748 bytes, SHA-256
 `c4339cb5da9ec04d23673a74dc20d2fdae210ebcdd59b3408af76f4c88b571d9`. Raw logs, collector attempts, recovery records and all
 38 final executable images are preserved losslessly with source/stored digests.
 Previous archive paths and index rows are unchanged.
@@ -10515,7 +10518,7 @@ accepted accounts remain 57 size and zero memory. The frozen queue, finite
 watcher horizon and full fifteen-phase goal remain intact.
 
 Frozen repeated-measurement evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-measurements`, local commit
-`dbf779db93c6765fcdf1c349ab1f9330be864c3e`; 31 files / 33,237,852 bytes, SHA-256
+`233143681e2077596ce4423730ac5323e4c8cacd`; 31 files / 33,237,852 bytes, SHA-256
 `8a2c2ed024609657d66fc211aa8444739477f40de9b9830e27eb8b63fa103063`. The archive inventories all 12,600 log members and references
 18 unchanged executable images in the preceding immutable record. Earlier
 archive paths and index rows remain unchanged. No push.
@@ -10552,7 +10555,7 @@ Inventory is still 1,644 rows; accepted accounts remain 57 size and zero memory.
 The full fifteen-phase goal remains active. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-reused-lifetime`, local commit
-`01de43682923e9910cfe5607bba3d16ffaf4fc22`; 54 files / 125,109,846 bytes, SHA-256
+`63b14d987fa55e260784f6ace67b193a823e864f`; 54 files / 125,109,846 bytes, SHA-256
 `a41d45a26fdc8fbd0d155a0a8b715d80de7a0e3b0660531c03f7db05a199c458`. All 19 images and every compressed command/history log are
 preserved losslessly with byte counts, hashes, modes and a container-member
 inventory. Earlier archive paths and index rows remain unchanged.
@@ -10569,7 +10572,7 @@ gate. See the [diagnostic review](docs/research/queued-drc-profile.md).
 The workflow parent remains held, its original watcher terminal and 36 commands
 pending. No queue, budget, source or accepted account changes. The full goal
 remains active. Frozen evidence: `docs/evidence/2026-11-17-interval-queued-drc-profile`,
-archive commit `a2cd1f4732df9805b8ba6bfd3e70b8eeabf4f179`; 12 files / 200,433
+archive commit `fa3894a4d4ded73fb61c389b1781f8a68453a00d`; 12 files / 200,433
 bytes, SHA-256 `e02a9ed79f7ff2c116f0156bd5b877d461a76831944f1d86d262f158fafba85a`.
 
 ## 2026-11-17: complete-chain trace allocation attribution
@@ -10590,7 +10593,7 @@ account changes; earlier charges remain. Source/package portable qualification
 continues separately, and the full fifteen-phase goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-trace-attribution`, local
-archive commit `8a2190d1a0f35ec794d8539fde0b209b240c77ab`; 129 files / 306,365
+archive commit `fbaef1fe81d4ccf1a9ba1acfd3f43473e5718300`; 129 files / 306,365
 bytes, SHA-256 `21c21fcdc02ca3244204f681749cfffe4710524a7f3ff00ef14e0e2ab811ad1a`.
 
 ## 2026-11-17: complete native/WASM source and package consumer
@@ -10614,10 +10617,10 @@ The original watcher remains terminal and its workflow parent held. The full
 fifteen-phase goal stays active. No push.
 
 Frozen source evidence: `docs/evidence/2026-11-17-interval-five-repair-portable`,
-commit `f71d0b053690f057fdd173fe873726c4f0392809`; 309 files / 42,478,380 bytes,
+commit `674a0f5487c5be3fd85df5ffd1862f9fd3ba65ed`; 309 files / 42,478,380 bytes,
 SHA-256 `bb953e6601ba5c953b9b1d00172a45e431f4cf753f22a8761525b610ad276ab7`.
 Frozen package evidence: `docs/evidence/2026-11-17-interval-five-repair-packaged`,
-commit `2e30fed7f1350d6483eb1c329e95f6c4e4907db8`; 140 files / 11,295,447 bytes,
+commit `99161a0bca9019cb13425e26e4c4b635435642bf`; 140 files / 11,295,447 bytes,
 SHA-256 `dff37ca2318f78975a34c2bda4e38818bc486072c866b82b5dabb09036485ced`.
 
 ## 2026-11-17: cancellation publication boundary
@@ -10636,7 +10639,7 @@ at 1,644 rows. The queue remains held and the original watcher terminal. The ful
 fifteen-phase goal remains active. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-boundary`,
-commit `6b9666fe36a5affa1bc289457d843b13f8a9f93f`; 79 files / 571,103 bytes,
+commit `f36a509a3e69917406dab41ebc9c1c087119ed8f`; 79 files / 571,103 bytes,
 SHA-256 `963fbacbf2f8aec16d500627514e2990071e4b1886639b17743d599cebdb33c2`.
 
 ## 2026-11-17: complete cancellation consumer cost
@@ -10656,7 +10659,7 @@ charges or earlier failures. Fixed-baseline cumulative accounting, quiet runtime
 distribution and complete validation remain open. The full goal stays active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-consumer`,
-commit `0e2c1dad1ff7df5e9b8c9bea3a27227855ab7adc`; 14 files / 57,952,780 bytes,
+commit `20d859de23726bf3c05c48ac5b25686be9c5ff2c`; 14 files / 57,952,780 bytes,
 SHA-256 `f49b4b07ece73452600445c65339605e0e9f24ef3734530be3bb5375da5cb065`. The lossless container retains 4,143 members,
 all 24 images and recovery records for 26 relocated, previously archived images.
 The original watcher is terminal and its parent held. No push.
@@ -10683,7 +10686,7 @@ failures and positive charges remain. Accepted totals stay 57 size / zero memory
 inventory 1,644 rows. The full goal stays active; queue parent remains held.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-scope`,
-commit `335b51a405c4fcb6be800aa41df4464a3c9d930e`; 968 files / 14,485,688 bytes,
+commit `c89b8a4d11114160521cfe6e652082d3567d5502`; 968 files / 14,485,688 bytes,
 SHA-256 `e5f317e42656b088fb53d1cf3d90b440496cac806caf1825d2c1c16ea339a92f`. No push.
 
 ## 2026-11-17: full cancellation qualification and matching launch names
@@ -10720,7 +10723,7 @@ held, the original watcher terminal and the full fifteen-phase goal active.
 No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-qualification`,
-commit `e8bce8dcf528a98e2fad45f022fca70f93f84dfc`; 11 files / 199,940,791 bytes,
+commit `a2c1a784b5042fa2bdb6d980579ff2d6553dda7a`; 11 files / 199,940,791 bytes,
 SHA-256 `6a97f9ba7c481c85fccf1accbac053a36998e0a5edef538395c96cfcbb690b5e`.
 All 33,903 container members and committed parts are verified; earlier records
 are unchanged. The archive retains all 172 images and the storage recovery
@@ -10753,7 +10756,7 @@ held and watcher terminal. Accepted size/memory totals remain 57/0; inventory
 remains 1,644. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-trace-materialization`,
-commit `3cc14e7745bec36f5c6a0eebbf17587600aea49e`; 917 files / 4,824,326 bytes,
+commit `ff6c91557586f7dd3ef7e98736cecb9ce5ecd657`; 917 files / 4,824,326 bytes,
 SHA-256 `e1c880a1930c61cdd0c3a8ddd4b7d62a6a68020ef9d1740a70f1c3caf66b7800`.
 All source/stored/committed hashes and three images are verified; previous
 archive records remain unchanged.
@@ -10781,7 +10784,7 @@ is merged. Accepted totals remain 57 size / zero memory, inventory 1,644 rows;
 the full goal stays active, queue held and original watcher terminal. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-trace-key-representations`,
-commit `5fd724d2341e4ad19fed277370f27e2bb66ccf0b`; 2,011 files / 19,028,727 bytes,
+commit `acdcc39b4ac6159c3c09a1b7a86fa02eec4d814a`; 2,011 files / 19,028,727 bytes,
 SHA-256 `f39d6584b892a9d999a06cafaf00e4b3922f14d35346987b6201af07cf279e9c`.
 All source/stored/committed hashes and six validated native images are verified;
 previous archive paths are unchanged.
@@ -10811,7 +10814,7 @@ watcher terminal. Accepted size/memory totals remain 57/0; inventory 1,644. The
 full goal remains active. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-trace-borrowed-runtime`,
-commit `0bb075b062f09e0df09727529becfd1f43c3d6ab`; 1,645 files / 10,550,284 bytes,
+commit `ab588c47a0cf2273a0164fb837cdacb93ebc1444`; 1,645 files / 10,550,284 bytes,
 SHA-256 `0dd304266c9fdd74b8b04985f7034ef8f7e96eaffcb0dfaf331b68d882dc075a`.
 All source/stored/committed hashes and three native timing images are verified;
 previous archive paths are unchanged.
@@ -10847,7 +10850,7 @@ unchanged. Accepted totals remain 57 size / zero memory, inventory 1,644 rows.
 No push; the full goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-standalone`,
-archive commit `a66bfd0ab72be6c91812d60ee6a0fc6993fe0c56`; 3 files / 28,577,694 bytes,
+archive commit `8ff7c2e7b8f172bbb5ca2469ac5fd2b6df20bbb0`; 3 files / 28,577,694 bytes,
 SHA-256 `5455967c5b5a948f2ca896e0a017a7ed26c1983be92ab4538b56b50814e2ba7e`.
 The lossless payload contains 3,861 members / 259,497,686 raw bytes,
 including 46 validated images. All original, decoded and committed hashes are
@@ -10884,7 +10887,7 @@ memory exceptions remain unchanged; inventory remains 1,644 rows. No push; the
 full goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-allowance-runtime`,
-archive commit `1286123944e231ef7c2e4706cd9df2d502420788`; 3 files / 25,668,639 bytes,
+archive commit `d88ee4db5d43c610ad77bf8d59313fb02dc1d411`; 3 files / 25,668,639 bytes,
 SHA-256 `c6b396475714d5702a72a53f5ec73deba66ebaf831b61f31c36872a8dc6f7b53`.
 The payload retains 4,677 members / 100,888,275 raw bytes and nine
 validated images. Original/decoded/committed hashes pass; old archive paths
@@ -10922,7 +10925,7 @@ of 57 size / zero memory exceptions are unchanged; inventory remains 1,644 rows.
 No push; the full goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-finish`,
-archive commit `6cd1ef20d98dfa409d14ed74272850f562f8a6d8`; 3 files / 9,784,408 bytes,
+archive commit `579335fba1e0ff7a71f159390b67cdfb95df4a0d`; 3 files / 9,784,408 bytes,
 SHA-256 `8f3669c71dad32650f9a5fdc4be768c35af7c2c1ea551686009d33b57e65ca01`.
 The lossless payload contains 1,434 members / 33,176,529 raw bytes and
 four validated images. Original, decoded and committed hashes are verified;
@@ -10960,7 +10963,7 @@ zero memory exceptions are unchanged; inventory remains 1,644 rows. No push;
 the full fifteen-phase goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-finish-consumer`,
-archive commit `11a20d85962cf35c577cad25b61e0b9d367941c1`; 3 files / 32,476,138 bytes,
+archive commit `989b1c481ce3471a565b6fab4c46fc272bf3d0fb`; 3 files / 32,476,138 bytes,
 SHA-256 `e37499a3986a178c9c6c310691cc7e8a9d53f575c8ceaff0146241ec4338ee91`.
 The lossless payload contains 5,313 members / 323,661,870 raw bytes and
 42 validated images. Original, decoded and committed hashes are verified;
@@ -11027,7 +11030,7 @@ the locked fuzz build check and the pedantic workflow audit passed. These are
 native Linux results. Hosted workflow execution remains open.
 
 The change adds tests and CI coverage. The memory and binary growth accounts
-receive no charge. Archive commit `cfe9563cf6b5eb92f2a5b4af49720c839871811a`
+receive no charge. Archive commit `5717df1b82a26d56962d1310e7ac1c8b49f65693`
 contains the final corpus, logs and commands at
 `docs/evidence/2026-11-17-interval-atanh-domain`.
 
@@ -11074,7 +11077,7 @@ destruction in each case. These finite observations cover the new workload.
 No memory or binary exception was needed. Hosted CI, MCU cycles, board flash
 fit and hardware-in-the-loop qualification remain open.
 
-Verified archive commit `f21108ae036892f7832facaaab05079fdc4efb38` contains
+Verified archive commit `3fbd4720ddf66a5d42ba98d11bafec8c2075c740` contains
 the logs, corpus, probe sources, output measurements and before/after images
 at `docs/evidence/2026-11-17-interval-fixed-host-conversions`.
 
@@ -11120,7 +11123,7 @@ signed success). These are absolute observations for the new API.
 The source requires no new memory or binary exception for the measured
 existing callers.
 
-Verified archive commit `2ef71922b1f8bb6ad7b542ebea396d843eb7b4d0`
+Verified archive commit `7715ea9400215d887b04fbb2568a13e89814c50d`
 contains the logs, exact checks, final corpus, caller images and raw samples
 at `docs/evidence/2026-11-17-interval-integer-affine`.
 
@@ -11170,7 +11173,7 @@ box WASM file/code sizes hold. All prior charges are preserved in the
 
 The qualification archive includes controls, candidate and retained binaries,
 WASM execution, raw timing blocks, allocation and stack observers and the
-reproduced failures. Evidence commit `4db3f8e17`, record
+reproduced failures. Evidence commit `9a6661f3e`, record
 `2026-11-17-interval-bisection`. [Evidence index](docs/evidence-archive.tsv)
 
 ## Taylor coefficient sharing under the memory allowance
@@ -12018,8 +12021,8 @@ added. A final shared-target run reused the mutant executable. Its digest
 matched a fresh isolated mutant build. Independent builds passed all four
 retained tests, reproduced the intended mutation failure and matched the
 release image byte for byte. Rebuilding Hypersolve in the shared target
-also restored all four passes. Evidence commits `d56504756` and
-`73fedff86` preserve the measurements and isolated build logs.
+also restored all four passes. Evidence commits `201c41f39` and
+`2b9021f24` preserve the measurements and isolated build logs.
 [Per-target accounts](docs/research/interval-size-accounts.json) ·
 [Raw observations and candidate patches](docs/evidence-archive.tsv)
 
@@ -12175,7 +12178,7 @@ remain open. [Per-target account](docs/research/interval-size-accounts.json)
 Three current ABI reviews bring the inventory to 4,143 scan rows and 271
 preserved reviews. A fresh scan reproduced it byte for byte and all six
 scanner tests passed. Formatting, standalone Clippy and the repository
-budget passed locally. Evidence commit `8852dec62` contains the two controls,
+budget passed locally. Evidence commit `aafe458a2` contains the two controls,
 candidate measurements, original lock failure, mutations and comparison
 scripts under `docs/evidence/2026-11-18-interval-foc-endpoints`.
 [Inventory](interval-inventory.tsv) · [Evidence index](docs/evidence-archive.tsv)
@@ -12228,7 +12231,7 @@ were 3,856 and 8,656 bytes. Both fit the predeclared 16 KiB and 1% per-target
 incremental caps and 32 KiB and 2% cumulative caps. Including preceding
 growth, the file charges are 7,800 and 15,504 bytes. Each 64 MiB host slot
 retains over 59 MiB free against a 16 MiB reserve. This qualification
-changed test and tooling code only. Evidence commit `f61f0aad9` contains the
+changed test and tooling code only. Evidence commit `8166fea7f` contains the
 full per-source reports, annotated gaps, linked-image measurements, mutation
 controls and validation logs. [Size accounts](docs/research/interval-size-accounts.json) ·
 [Evidence index](docs/evidence-archive.tsv)
@@ -12288,7 +12291,7 @@ headroom and HIL qualification remain open.
 The coordinated firmware and Interface suites, nine sibling-source graph
 audits, standalone Clippy with warnings denied, formatting and repository
 budget passed locally. No production size or memory allowance was charged.
-Evidence commit `1bf538726` contains the linked images, checked call lists,
+Evidence commit `b0c3749f1` contains the linked images, checked call lists,
 per-instruction measurement code, comparison records and mutations.
 [Evidence index](docs/evidence-archive.tsv)
 
@@ -12370,7 +12373,7 @@ On the retained and combined revisions, Rust 1.88 passed 87 FOC unit tests,
 three FOC integration tests, 68 simulator unit tests and eight simulator
 integration tests. FOC all-target/all-feature Clippy with warnings denied
 and firmware formatting passed. The coordinated host conformance crate also
-passed all seven tests against retained firmware. Evidence commit `0d510b87f`
+passed all seven tests against retained firmware. Evidence commit `5448d8c5a`
 contains all candidate patches, the mutation, oracles, linked guest images,
 raw comparisons, and per-stage board packaging logs.
 [Evidence index](docs/evidence-archive.tsv)
@@ -12465,7 +12468,7 @@ Packaged crates reproduced both positive and negative WASI behavior. Chromium
 ran the bare oracle, the coordinated firmware and Interface checks passed,
 and the native code-generation scan, 16 MXCSR modes, Clippy, strict rustdoc,
 formatting, strict zizmor and 10,000 address-sanitized native fuzz iterations
-passed. Evidence commit `db1b189a8` holds the linked measurements, full
+passed. Evidence commit `eda1c0f5e` holds the linked measurements, full
 per-call fuel observations, allocator and stack probes, intermediate variants
 and regression controls. [Evidence index](docs/evidence-archive.tsv)
 
@@ -12516,7 +12519,7 @@ seven minimal tests and doctests, 159 downstream Hyperdynamics tests, strict
 Clippy and rustdoc, and workspace formatting. Rust 1.88 passed the seven
 compatible focused tests. Both bare WASM and WASI Preview 1 repeated 55,802
 scalar oracle cases and the 172,284-call fixed-lattice replay on Rust 1.95.
-Evidence commit `80d0f8ac1` contains the per-file reports, annotated lines,
+Evidence commit `8606a388e` contains the per-file reports, annotated lines,
 mutation patches, linked measurements and validation logs.
 [Evidence index](docs/evidence-archive.tsv)
 
@@ -12577,7 +12580,7 @@ variants also detected a reversed-child mutation missed by the 93 previous
 owner tests. Both crossed the host test executable's RELRO padding limit.
 No memory or code allowance was charged. The original harder cases, alternative
 implementations, native and guest transcripts, complete cover definitions
-and per-target measurements are in evidence commit `362ddb6ae`.
+and per-target measurements are in evidence commit `fd0d84f61`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 3, 5 and 14 scalar oracles on WASI Preview 1, 18 November 2026
@@ -12634,7 +12637,7 @@ original witness and its target guard.
 Strict native and cross-target Clippy, strict native rustdoc, owner doctests,
 the downstream Hyperlattice Interval tests, workspace formatting, package
 verification for both Hyperreal and Hyperinterval, strict zizmor and repository
-budget checks passed. Evidence commit `76f0c1977` contains the inventory by
+budget checks passed. Evidence commit `db3dcf760` contains the inventory by
 test name, transcripts, linked measurements, normalized dependency checks,
 source patches and failed controls.
 [Evidence index](docs/evidence-archive.tsv)
@@ -12703,7 +12706,7 @@ Strict native and cross-target Clippy, formatting, all six packages through a
 local registry and strict zizmor passed. The hosted CI job has not been run.
 These results qualify solver tests on another target. Production Horner
 migration still requires the existing runtime and size gates. Evidence commit
-`b6c8d68f8` contains the transcripts, observed inventories, comparison
+`b1f0ac6e4` contains the transcripts, observed inventories, comparison
 controls, rejected fixture layouts and final-artifact measurements.
 [Evidence index](docs/evidence-archive.tsv)
 
@@ -12780,7 +12783,7 @@ both compilers. Firmware dependency inspection confirmed the clock and FOC
 select the integer and fixed features respectively. Phase 3 and the broader
 plan remain open.
 
-The evidence archive commit is `79eceffd89912fe260bf9f6e7566f5c900455dc2`,
+The evidence archive commit is `52744e88850a0b08208cf522521f73a91085e96a`,
 record `docs/evidence/2026-11-18-interval-rational-scale`. Its 569 members
 include both placements, negative controls, raw resource and timing rows,
 feature graphs and final-artifact measurements. [Record digest](docs/evidence-archive.tsv)
@@ -12837,7 +12840,7 @@ reachability cases completed on Node 24.22.3 and 26.13.1. Hosted execution and t
 platform and release requirements stay open.
 
 The [evidence index](docs/evidence-archive.tsv) registers 509 observations
-and supporting files in archive commit `63d6c4e7ef3b7549d80726ed6c9059c12122084c`,
+and supporting files in archive commit `e5cfbff9d348705340b7a2b09b15a8428d7702a3`,
 record `docs/evidence/2026-11-18-interval-dynamics-wasi`.
 
 ## Phase 7 univariate proof replay and bounded memory review, 18 November 2026
@@ -12879,7 +12882,7 @@ on four target/compiler combinations. Production memory charges carry forward.
 [Size accounts](docs/research/interval-size-accounts.json)
 
 The evidence archive contains 1,396 observations and supporting files at
-`92bd98328f7f809eab8315f9e0419d274f8f3561`, record
+`52f52a3ef4ac472e48728d7396f8f75001de1dbc`, record
 `docs/evidence/2026-11-18-interval-univariate-proof`, digest
 `23c956a12c18f474ab8c919605d40746fb1a0ae9600398fb72fe24790ccd9b5d`.
 [Evidence index](docs/evidence-archive.tsv)
@@ -12943,7 +12946,7 @@ Hyperdynamics WASI suite with 141 direct tests, 17 fresh replay cases and one
 native thread case. Workspace formatting and strict zizmor passed locally.
 Hosted jobs and the remaining release and solver migration gates stay open.
 
-Evidence commit `657e4535e65fe4bb9b2cf7ef7b7caa2d50fc7606` contains
+Evidence commit `fac3d8dd4d1f4a7b9e6dcc47e1ec879e482823ad` contains
 885 files for this qualification, including both mutations, the 32-bit
 reproducer, compiler-specific lifetime measurements and linked binary
 accounts. Record `docs/evidence/2026-11-18-interval-solver-library-wasi`
@@ -12986,7 +12989,7 @@ by 11,922 bytes. All production memory and size charges carry forward.
 The new acceptance executable is charged separately per target.
 [Four compiler and target size accounts](docs/research/interval-size-accounts.json)
 
-Evidence commit `f1b4a6ca53b4a7e8be2c05e930833cb06128f251` contains 237
+Evidence commit `fad081103055a58349c85ed1fb4f0f97002a2c24` contains 237
 files, including the failing 32-bit client output, linked measurements for
 all five designs, heap lifetimes and mutation transcripts. Record
 `docs/evidence/2026-11-18-interval-coefficient-budget-width` has digest
@@ -13065,7 +13068,7 @@ budget passed locally. The test binary observations and cumulative charges
 are in the linked accounts. Hosted CI and hardware runs remain open in the
 larger program.
 
-Evidence commit `f13164d20eb6b0bdecf1dc864967bd08324b8fd8` contains 1,795
+Evidence commit `00380f685bf1ad5be6b3b88559a6264006e54672` contains 1,795
 files. Record `docs/evidence/2026-11-18-interval-fused-tensor-budget` has digest
 `ec76096f429dfc49f8b9ec49ad8de63e702ecb19d0b4f23d06b21548c84f8e93`. [Evidence index](docs/evidence-archive.tsv)
 
@@ -13123,7 +13126,7 @@ trial grew the registered Rust 1.95 certification executable by
 discarded. The scalar replay commit affects test binaries and has its
 own hosted workload account.
 
-Evidence commit `ce9133a4b9fed19d833b1a36eb9600e3a4ba6943` contains 1,200
+Evidence commit `b4dd312bfdd23dbfd4884a9fd291a9532d0707ff` contains 1,200
 files under `docs/evidence/2026-11-18-interval-scalar-fresh-replay`, with digest
 `24a1641bc7ed36017f9aafe0449fb867df4cfe82cefd84d39a52d9eb4279955e`. [Evidence index](docs/evidence-archive.tsv)
 
@@ -13163,7 +13166,7 @@ The whole-owner coverage gate is still open. The preceding and retained Rust
 compiler supplied no branch counts. Hosted CI and physical hardware
 execution remain outside this qualification.
 
-Evidence commit `7ae7db07739918a6adae8e322084dfbfe7cdea2a` contains 139 files under
+Evidence commit `4ed79f5cfcdbb80eb4d5efd9fe04fe5b347aff94` contains 139 files under
 `docs/evidence/2026-11-18-interval-fixed-hull-oracle` with digest
 `2d9d4a3a3610ba9c45e79aa97445d661447858bf70c33669262e2dd9f1f47edc`. [Evidence index](docs/evidence-archive.tsv)
 
@@ -13220,7 +13223,7 @@ runs under the workflow time limit and 10,000 tangent runs.
 A second trigonometry campaign completed all 10,000 runs. Hosted CI and hardware execution
 remain outside these measurements.
 
-Evidence commit `1ab2a968d967ff10d05d3c04f17f157c50fc9e57` contains 856
+Evidence commit `12f3a357b6b3869e036e709c8d4c1269d4dd179f` contains 856
 files under `docs/evidence/2026-11-18-interval-periodic-refinement` with digest
 `83bca27b5f0984e75f1c4f3faae5dbcd1e321b029861dc05960cb3950760bef0`. [Evidence index](docs/evidence-archive.tsv)
 
@@ -13305,7 +13308,7 @@ After separate build preparation, the final Rust 1.95 job peaked at
 events. These runs qualify warmed jobs on native Linux and WASI. Cold
 compilation at that limit and physical embedded execution remain unqualified.
 
-Evidence commit `d4975085f429bf729670e3302f49dce856a01dd2` contains 1,254 files under
+Evidence commit `75fe6caa902eea91c8dd799bd3807030a02bceb2` contains 1,254 files under
 `docs/evidence/2026-11-18-interval-periodic-ingress` with digest
 `461e5a31caa0aa20d907da11aafbaccc67befaaa837e9e5f3631a2cef0a9ae39`. [Evidence index](docs/evidence-archive.tsv)
 
@@ -13375,7 +13378,7 @@ headroom above the 256 MiB reserve was 578,535,424 bytes.
 This qualifies the warmed Linux/WASI jobs. Cold builds and physical
 embedded targets require separate qualification.
 
-Evidence commit `9ef2682fed5bc11010ff527e835a913b8d49c6d4` contains 1,628 files
+Evidence commit `908fa5774cde7d9d4d2bd7d58aaeee343535eb34` contains 1,628 files
 under `docs/evidence/2026-11-18-interval-monotone-ingress` with digest
 `dd3abae4b695631e74792daa17a60ef3db61c99da54df592bb2efbd6adf1dba2`. [Evidence index](docs/evidence-archive.tsv)
 
@@ -13423,7 +13426,7 @@ startup, corpus loading, fresh instances, result publication and exit. The
 existing guest stack and allocation accounts retain their previous charges.
 [Per-target host measurements](docs/research/interval-memory-accounts.json)
 
-Evidence commit `6c09f756fd47645778a2e0ee246f7d9cc57519f3` contains 403
+Evidence commit `1c0f2ccd67913042871b611cb99acbef2f900244` contains 403
 files under `docs/evidence/2026-11-18-interval-wasm-float-qualification`,
 with digest `0acd1b23c76d615e640fddc016f34c824c8df068101a89efe7fd544f49d88c7d`.
 [Evidence index](docs/evidence-archive.tsv)
@@ -13482,7 +13485,7 @@ was 14,991,360 bytes, including the host observer. Every run kept the
 64 MiB reserve. The check covers the two-device evidence and its downstream
 job through process exit. [Memory accounts](docs/research/interval-memory-accounts.json)
 
-Evidence commit `a50777920934644c60c97d1dba34e7f054d9812f` contains 97 checked members under
+Evidence commit `dac8b51cc65ddbe4a99dd7bb1d8ed27efee9d5a1` contains 97 checked members under
 `docs/evidence/2026-11-18-interval-machine-source-map`. Its record digest is
 `2bef5edd21c91e56e44539d7502dac797867d95980c241e41eda30441607c226`. [Evidence index](docs/evidence-archive.tsv)
 
@@ -13545,7 +13548,7 @@ produced identical inventories with 6,338 scan rows and 323 reviews, including
 all 312 previous reviews. All seven scanner tests passed.
 [Inventory](interval-inventory.tsv)
 
-Evidence commit `94e38e6a52ad849fe428ef4c625ee2c0539e8a9b` retains 249
+Evidence commit `35cadfca8040469b8054bb71d049d733dd7ee5a2` retains 249
 members. The indexed record occupies 79,060 bytes and has digest
 `a1eebf796402ce94ae95620c73c989143440f2968eb11aa60a1c264a9947aa15`.
 [Evidence index](docs/evidence-archive.tsv)
@@ -13554,7 +13557,7 @@ members. The indexed record occupies 79,060 bytes and has digest
 
 At firmware `56c2c28`, all 40 named declarations in the simulator FOC
 module now have body reviews, including four fixture helpers and seven tests.
-The independent Rust syntax visitor from evidence commit `a50777920` matched
+The independent Rust syntax visitor from evidence commit `dac8b51cc` matched
 all 40 inventory entries by line, kind and name. The 29 additional reviews
 preserve the previous 323. Two inventory refreshes agreed on all 6,338 scan
 rows and 352 reviews. All seven inventory tests passed. [Inventory](interval-inventory.tsv)
@@ -13617,7 +13620,7 @@ has no edits in this change. [Memory accounts](docs/research/interval-memory-acc
 
 The final corpus has SHA-256
 `c00e935bc7b562a941021c63a3b03e6e37d841d10c986497e952a1652fd2cf3a`.
-Evidence commit `bf6a6da794aeed129b0c75b40c6d98c72d2ad3aa` retains 444
+Evidence commit `3e0e5662b58f928cc8f8f1f152bbf13c949b25c9` retains 444
 verified members in 313,644 bytes with record digest
 `69eacbfa08dd1377287e13df5ad1ec64c9d5d85c08891fca43aae176bb789ff9`.
 [Evidence index](docs/evidence-archive.tsv)
@@ -13724,7 +13727,7 @@ The locked Alumina Interface release pipeline produced a 10,678,893-byte optimiz
 The optimized module matched the predecessor byte for byte.
 Formatting, all-target Clippy with warnings denied, and warnings-denied rustdoc passed for the retained solver change.
 
-Evidence commit `f7b4458706319c4e2008a597e756823492628ade` contains 319 verified members in 180,072 bytes. [Evidence index](docs/evidence-archive.tsv)
+Evidence commit `bf2059a1509d9985e22da4979a6e6b293e3b76b8` contains 319 verified members in 180,072 bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ### Hypersolve retained-fuzz replay, 19 November 2026
 
@@ -13758,7 +13761,7 @@ executable grew from 9,058,800 to 10,026,488 bytes to link the added test
 workloads. The changes affect development tooling and its measured reports.
 Coverage of the broader interval lexicase matrix remains open.
 
-Evidence commit `989ac011dea07367f384408775d831c1ec73e4eb` records 1,018 verified members in 143,000 bytes.
+Evidence commit `ace5bcf26dcd81c7947a453d9ddcbdbbe79a94f8` records 1,018 verified members in 143,000 bytes.
 [Evidence index](docs/evidence-archive.tsv)
 
 ### Phase 4 strict IEEE range fuzzing, 19 November 2026
@@ -13789,7 +13792,7 @@ Clippy checks, formatting and the pedantic workflow scan passed. This change
 qualifies the host test and fuzz paths. Packaged library source, manifests
 and lockfiles matched the baseline.
 
-Evidence commit `7a4bbb78c51a6f0eafe7082e36950e419f67c621` records 281 verified members in 40,932 bytes.
+Evidence commit `8cea5233da08a6cdcd01ca75aa3276bf45cd2d6c` records 281 verified members in 40,932 bytes.
 [Evidence index](docs/evidence-archive.tsv)
 
 ### Phase 3 and 5 — charge deferred rational reduction before fractional powers
@@ -13847,7 +13850,7 @@ native-produced results. The ASan campaign completed 10,000 runs.
 Formatting, owner and fuzz Clippy, warnings-denied rustdoc and the
 pedantic workflow audit passed. Rust 1.88's reduced CI feature set excludes
 the rational provider. The evidence archive contains 415 verified members in
-98,268 bytes at `f109536ea6d42fa214b616f4ed07c6cd99cfd4cc`.
+98,268 bytes at `b11b4ff883bcbfcac42fd93cb8194369fe97fd3a`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ### Phase 14 — verify sibling crates in the target dependency graph
@@ -13883,7 +13886,7 @@ transforms and 251 range cases on current source, and 825 transforms and
 cases. These local results qualify the consumer checks; hosted deployment
 and hardware execution remain open.
 
-Evidence commit `fd8b6909ca1aed2c653439fcb6cc27b95eaa546f` records 36 verified
+Evidence commit `711e8b7444aee4db67c9b8a91fd9df2c8ee7a1b8` records 36 verified
 members in 14,680 bytes.
 [Evidence index](docs/evidence-archive.tsv)
 
@@ -13929,7 +13932,7 @@ target directory across the two source graphs and mixed incompatible
 types. Separate target directories qualified the final sources.
 Rust 1.95 release tests, strict Clippy, rustdoc and formatting passed.
 The machine-profile arithmetic migration and hardware qualification remain
-open. Evidence commit `08853958e4c1e8047e6897c830284ae2555f3c60` contains 292 verified members in
+open. Evidence commit `8d85879f512d358bed071bc0df3abb2a5dcb5c92` contains 292 verified members in
 56,164 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ### Phase 5 — budget generated rational square-root inputs
@@ -13967,7 +13970,7 @@ point at grid 2⁻²⁵⁶ was 1.6% slower in that series and 6.8% faster in an
 independent nine-pair repeat. [Size accounts](docs/research/interval-size-accounts.json)
 and [memory accounts](docs/research/interval-memory-accounts.json).
 
-Evidence commit `54cb5b7ca8beeeed996533e43e2ef5cac3b84e61` contains
+Evidence commit `e796d035c9df63169f3efd0ce04273e3d77af8a0` contains
 797 verified members in 304,660 compressed bytes, including the original
 failure, rejected trials, measured final images' hashes and workload-level
 accounts. The remaining interval migrations and platform qualification stay
@@ -14010,7 +14013,7 @@ sources and packaging used the documented local Hypervoxel overlay. Hosted
 documentation, registry publication and hardware qualification remain open.
 [Release conditions](docs/RELEASE.md)
 
-Evidence commit `3bca756ddf4c0b1a4972e9d6e5f1cdc275b33eb9` records 41 verified members
+Evidence commit `dce6d287a2131d35cac608382ee9d4959a56b9d7` records 41 verified members
 in 39,816 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 14 — repair the released Bevy executor dependency
@@ -14070,7 +14073,7 @@ SynapsCAD `a63c4c95f` and parser `c0d92e6ea`, after matching the local
 manifest layout. The worker's end-to-end execution remains open. Hosted
 publication and hardware qualification also remain open.
 
-Evidence commit `9037725d9d3ed084ad239a42bac9780c904b0619` records 253 verified
+Evidence commit `c53161b1b9b9c94825d8840351f3bb37f25509dc` records 253 verified
 members in 204,436 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phases 4 and 12 — subnormal midpoints in numerical proposals
@@ -14126,7 +14129,7 @@ and 172,284 fixed-lattice calls. The full coverage gate remains open at
 5,000/5,033 lines and 10,093/10,546 regions, with 528/528 functions and
 unmeasured branches. Physical-board qualification remains open.
 
-Evidence commit `b062d2acb06ac08e4f45bee6434df30d1d615696` contains 1,537
+Evidence commit `7b0c9ab79238643d17d6d9482e950fda2076ede0` contains 1,537
 verified members in 881,240 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 5 — refinement at one endpoint of a trigonometric interval
@@ -14172,7 +14175,7 @@ For the fixed historical WASI comparison, the archived build adds the
 GMP cross-compilation feature required by the toolchain. The changes are
 confined to test sources. [Size accounts](docs/research/interval-size-accounts.json)
 
-Evidence commit `ce53bad0f62abdd2cf792ccf85742a0fe0008122` records 120 verified members in 882,536 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+Evidence commit `b7a96b1429cf39d9b4198f22ba95bc47a3221a33` records 120 verified members in 882,536 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 7 univariate Krawczyk proof eligibility
 
@@ -14242,7 +14245,7 @@ both sets of costs and the original cross-workload comparison.
 Implementation commit `0783f2ddc`. Affine Krawczyk proof eligibility and
 the 32-bit coefficient diagnostic are still open.
 
-Evidence commit `2f8688e31f6e79b0eff61e962539f0699f5e50e7` records 1,935 verified members in 392,796 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
+Evidence commit `9e12bd47d80fb00545409317d245b4b5089b505c` records 1,935 verified members in 392,796 compressed bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 7 coefficient denials at the 32-bit reporting ceiling
 
@@ -14290,7 +14293,7 @@ reduced native cost, but slowed WASM. Eliding redundant unlimited child
 frames sped up deep nesting, while a single successful WASM scope remained
 18–23% slower. The shared denial-loop trial exceeded both WASI solver
 unit-test image budgets. The full-width public-field migration remains open.
-The trials consume no production allowance. Evidence commit `b2608b12bc368b80246991e645e587ba1b4d4379`.
+The trials consume no production allowance. Evidence commit `05380c7ff4cd41cd39e7c66384100b5a3cef52fa`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 0 inventory and Phase 11 path proofs
@@ -14323,7 +14326,7 @@ release suites shrank by 8 and 16 file bytes. The ASan driver shrank by 432.
 [Target measurements](docs/research/interval-size-accounts.json)
 
 Raw reports, traces, independent oracles, complete memory histories, linked
-sizes and paired timing samples are in evidence commit `1818ef32b8debc1724ae48647bd6562279928ba9`.
+sizes and paired timing samples are in evidence commit `fce4a90f6a8b34bc32ebb3c5698589fc3cdab20d`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 8, 11 and 14 schedule replay on WASI Preview 1
@@ -14351,7 +14354,7 @@ remain open. [Size accounts](docs/research/interval-size-accounts.json) ·
 [Memory accounts](docs/research/interval-memory-accounts.json)
 
 The complete per-case inventories, execution logs, image and archive hashes,
-and two-pattern guest stack measurements are in evidence commit `6f209ac271789c4e24ffd312f1ba75df266ef039`.
+and two-pattern guest stack measurements are in evidence commit `3871fa870c32e8eb17d9fb5b01a177145dde3fc8`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 11 certified tangent decisions and schedule replay
@@ -14396,7 +14399,7 @@ integration and documentation tests.
 Nine added owner reviews bring the interval inventory to 427 reviews and
 7,354 scan rows. Two regenerations produced identical bytes. The 797 archived
 sources, manifests, samples and logs were verified from evidence commit
-`1d5a51ef247d701490b0faa4eb50b5e011531ac7`. [Evidence index](docs/evidence-archive.tsv)
+`157dabdc6c767b9d509081c09491b4a42d8e49e6`. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phases 7 and 11, generated tangent models over variable boxes
 
@@ -14446,7 +14449,7 @@ and 13,305 WASI file bytes to the Rust 1.95 owner certification benchmark.
 The grouped-ball alternative `580b8617e` added 14,136 and 13,493 file bytes
 respectively. Neither change was admitted. The public scope documentation
 and four reviewed inventory rows are retained. The inventory now contains
-431 reviews and 7,354 scan rows. Evidence commit `f3e0c3520bcbbce73fde0b36eb038b68dd093d0d` includes the
+431 reviews and 7,354 scan rows. Evidence commit `569c704b9a514827d6922c1448af668a63a74f3f` includes the
 independent source oracles, release measurements, full test inventories,
 stack accounts, paired timings and trial patches.
 [Evidence index](docs/evidence-archive.tsv)
@@ -14499,7 +14502,7 @@ review branch. No production memory or size allowance was charged.
 The inventory regenerated twice with 7,354 scan rows and 433 body reviews.
 All 750 archived files, including per-image sections, case logs, seeds,
 mutations and build commands, were verified from evidence commit
-`b30ca5f10c6869c4fbf6d274145cc7c331b48ace`. [Evidence index](docs/evidence-archive.tsv)
+`d102673a3315373129b6dbde5eba32a557cb5535`. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 3 and 4, exact rational intervals to strict IEEE enclosures
 
@@ -14551,7 +14554,7 @@ The final projection required no memory or firmware allowance.
 [Per-target size accounts](docs/research/interval-size-accounts.json) · [Evidence index](docs/evidence-archive.tsv)
 
 All 375 observations verified from local evidence commit
-`6373c2840b7ef98935865b5fcff813cbcde20058`. The compressed record occupies
+`19c5d0a74a41edf87896dc3f713bc80467873910`. The compressed record occupies
 120,164 bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 14, worked interval examples from the release archives
@@ -14605,7 +14608,7 @@ passed and the inventory regenerated with 7,356 scan rows and 435 body
 reviews. Publication and the full cross-platform and HIL matrix remain open.
 
 The archived record contains 84 observations in 52,964 bytes. Verification
-against local evidence commit `f50729e1ca9d62834ba5d02f1e70910f8b23e6a8`
+against local evidence commit `959696e8193a8d4c86c5f15075200b30203fd85b`
 matched all 258 November interval records to the index, covering 93,284
 files and 6,298,330,796 bytes. [Evidence index](docs/evidence-archive.tsv)
 
@@ -14666,7 +14669,7 @@ six-step downstream model on the policy-only and normalization trials.
 Production size and memory charges remain at their preceding values.
 
 All 1,774 archived members verified at evidence commit
-`91660fccff4acd321079fca31a13d260b9ec579c`. The record occupies
+`15b78d3862476fb638a7ecd173372ff1810b43f0`. The record occupies
 431,268 bytes. [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 4, direct conversion between certified IEEE intervals
@@ -14705,7 +14708,7 @@ to 17 of 4,096 bytes. [Per-target accounts](docs/research/interval-size-accounts
 
 The inventory reproduces 7,359 scan rows and 438 body reviews.
 All 73 archived members verified at evidence commit
-`cc5e4c0310629943dbfc278ac7cce87ff10fb582`.
+`663a79eda246e2a4e147d3e072ab2b7db02167d3`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 7, affine rank and uniqueness
@@ -14791,7 +14794,7 @@ retains the integer oracle and its standalone qualification accounts.
 Use `PredicatePolicy::STRICT` when consuming an affine uniqueness proof.
 
 All 2,670 members of the 438,244-byte record verified from committed blobs
-at evidence revision `7547422348806efb15cf9e05ce245e2d41d56129`.
+at evidence revision `ba05f588dccd030e65c8ef298de7452598b1614a`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phases 4 and 14, cross-format IEEE qualification
@@ -14837,7 +14840,7 @@ qualification-client costs. The production library receives no charge.
 [Native fuzz target](crates/hyperinterval/fuzz/fuzz_targets/strict_float.rs)
 
 All 721 archived members verified from evidence commit
-`4ce56c26832a03b98d38cb786deb429b71e554e8` (233,196 bytes).
+`d84b64c84d696c3e75355d386b0232b2498691e2` (233,196 bytes).
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 3 certified rational point enclosures
@@ -14900,7 +14903,7 @@ relocation padding. Both findings are independent of the memory allowance.
 All three classifier trials remain outside the production branch.
 
 All 748 members of the 108,288-byte archive verified from committed blobs
-at evidence revision `ce92fb4f546d0b8de4770da69479ef6486562700`.
+at evidence revision `36e39ee981152b328b018456e3109ab92b5b0f2c`.
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 4, strict IEEE enclosures on AArch64 GNU/Linux, 20 November 2026
@@ -14953,7 +14956,7 @@ has 7,360 scan rows and 439 reviews.
 [Memory accounts](docs/research/interval-memory-accounts.json)
 
 All 117 archived members verified from evidence commit
-`798cbede6fc47e04f1ed87db6bcfd3c6e99651b0` (433,368 bytes).
+`5a482fc8805b3ea36a949d0ab8ed2ba8d941fe69` (433,368 bytes).
 [Evidence index](docs/evidence-archive.tsv)
 
 ## Phase 7, certified-stage affine Krawczyk proofs merged, 20 November 2026
@@ -15115,3 +15118,17 @@ Hosted CI on `3b18f872f` exposed two further gaps.
   run must pass. Locally the suite then reported 1,563 direct WASI tests,
   17 native parents with fresh WASI children and 7 native platform tests. All
   4,212 Horner dispatch windows matched.
+
+### Evidence publication
+
+The 266 unpublished evidence commits were pushed to the new
+`interval-refactor` branch of the evidence repository, at
+`5a482fc8805b3ea36a949d0ab8ed2ba8d941fe69`. GitHub rejects blobs over 100 MB,
+so `coverage-original-profraw.tar.gz` in the workspace qualification record
+became a Git LFS payload. Its LFS object has the original SHA-256,
+`2fc05a44a9975e8f0eb3116048a733454921f87b2526a3fb1e1bac282081ecca`. The
+conversion gave the 161 commits from `37d717543` onward new IDs. CSGRS
+citations were translated in place, and
+[`docs/evidence-lfs-rewrite-2026-11-21.tsv`](docs/evidence-lfs-rewrite-2026-11-21.tsv)
+maps each old ID to its new one, for citations inside the evidence records
+themselves. Only that record's digest row changed.

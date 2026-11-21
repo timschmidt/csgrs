@@ -119,7 +119,7 @@ retention does not establish a universal bound for arbitrary inputs or depth.
 The full fifteen-phase goal remains active. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-reused-lifetime`, local commit
-`01de43682923e9910cfe5607bba3d16ffaf4fc22`; 54 files / 125,109,846 bytes, SHA-256
+`63b14d987fa55e260784f6ace67b193a823e864f`; 54 files / 125,109,846 bytes, SHA-256
 `a41d45a26fdc8fbd0d155a0a8b715d80de7a0e3b0660531c03f7db05a199c458`. All 19 images and every compressed command/history log are
 preserved losslessly with byte counts, hashes, modes and a container-member
 inventory. Earlier archive paths and index rows remain unchanged.

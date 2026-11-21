@@ -50,7 +50,7 @@ failed caps, cumulative charges, passive-trace failures and other workloads
 remain intact; resource/cancellation and quiet-runtime requirements stay open.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-trace-attribution`, local
-archive commit `8a2190d1a0f35ec794d8539fde0b209b240c77ab`; 129 files / 306,365
+archive commit `fbaef1fe81d4ccf1a9ba1acfd3f43473e5718300`; 129 files / 306,365
 bytes, SHA-256 `21c21fcdc02ca3244204f681749cfffe4710524a7f3ff00ef14e0e2ab811ad1a`.
 The archive preserves all raw streams, resolved stacks, scripts, the unchanged
 interposer source/binary and independent verification. Original executable

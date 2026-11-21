@@ -104,6 +104,6 @@ memory account changes. All 57 accepted size accounts and zero accepted memory
 accounts remain intact; the broader fifteen-phase plan stays active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-packaged`, local commit
-`db4865f495af7e3c0ee640cea890e6edca344d5a`; 253 files / 56,808,003 bytes, SHA-256
+`c76d80440c31d6c1d59dff216a689d27e036fe79`; 253 files / 56,808,003 bytes, SHA-256
 `295c4976b18427b073f9990d010e4510f7b333d4f584c746b6106ae6bbfd2407`. All earlier archive paths and index rows remain unchanged.
 Both package attempts and the review snapshot are frozen. No push.

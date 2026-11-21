@@ -139,7 +139,7 @@ package measurements remain required before retention. Collector-only results
 and shared-input diagnostics do not satisfy those gates.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-trace-key-representations`,
-archive commit `5fd724d2341e4ad19fed277370f27e2bb66ccf0b`; 2,011 files / 19,028,727 bytes,
+archive commit `acdcc39b4ac6159c3c09a1b7a86fa02eec4d814a`; 2,011 files / 19,028,727 bytes,
 SHA-256 `f39d6584b892a9d999a06cafaf00e4b3922f14d35346987b6201af07cf279e9c`.
 All original, stored and committed hashes are verified, including six validated
 native images. Earlier archive paths are unchanged. Initial failed diagnostic

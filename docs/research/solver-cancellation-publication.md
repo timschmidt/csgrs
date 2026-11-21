@@ -82,7 +82,7 @@ exceptions. The fifteen-phase goal stays active; no push.
 ## Frozen evidence
 
 Record `docs/evidence/2026-11-17-interval-cancellation-boundary`, evidence commit
-`6b9666fe36a5affa1bc289457d843b13f8a9f93f`: 79 files / 571,103 bytes,
+`f36a509a3e69917406dab41ebc9c1c087119ed8f`: 79 files / 571,103 bytes,
 SHA-256 `963fbacbf2f8aec16d500627514e2990071e4b1886639b17743d599cebdb33c2`.
 The record preserves original failures, raw commands/logs, protocols, verifiers,
 source patch and four losslessly compressed witness images. Source/stored hashes,

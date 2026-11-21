@@ -93,7 +93,7 @@ No source capacity, cost cap or queued artifact changes.
 ## Frozen evidence
 
 Record `docs/evidence/2026-11-17-interval-cancellation-scope`, archive commit
-`335b51a405c4fcb6be800aa41df4464a3c9d930e`: 968 files / 14,485,688 bytes,
+`c89b8a4d11114160521cfe6e652082d3567d5502`: 968 files / 14,485,688 bytes,
 SHA-256 `e5f317e42656b088fb53d1cf3d90b440496cac806caf1825d2c1c16ea339a92f`.
 It retains raw observations, all six images, protocols, original failure and
 continuation, verifiers, source patch/commit and storage verification. Original

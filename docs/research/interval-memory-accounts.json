@@ -2129,7 +2129,7 @@
     "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
     "preceding": "eed465b8728b8a3f01c2fcfd7542189a1d15d231",
     "evidence": "docs/evidence/2026-11-19-interval-release-executor-repair",
-    "evidence_commit": "9037725d9d3ed084ad239a42bac9780c904b0619",
+    "evidence_commit": "c53161b1b9b9c94825d8840351f3bb37f25509dc",
     "workload": "Single-worker packaged Bevy client validating three cube conversions and 18 completed scoped tasks across pool creation and teardown. Whole-job requested Rust heap, calling-thread stack on a guarded 2 MiB allocation, and 60 GNU time fresh-process RSS samples per stage.",
     "heap_cold_then_warm": [
       [
@@ -2230,7 +2230,7 @@
     "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
     "preceding": "e17866b40",
     "evidence": "docs/evidence/2026-11-19-interval-native-proposal-midpoint-admission",
-    "evidence_commit": "b062d2acb06ac08e4f45bee6434df30d1d615696",
+    "evidence_commit": "7b0c9ab79238643d17d6d9482e950fda2076ede0",
     "scope": "Whole calls in guarded native pthreads, bare Wasm guest stack and Cortex-M4 simulation. Primitive probes reject allocator traffic. RK measurements cover prepare, propose, certify, replay, failure, retry and drop under ordinary and subnormal inputs. Raw per-temperature and per-case data are in final-memory.json.",
     "order": [
       "fixed",
@@ -2414,7 +2414,7 @@
     "source": "e5f757ad1a50ab85d90a807f708d9aa2f226913f",
     "previous": "282fec460",
     "evidence": "docs/evidence/2026-11-19-interval-saturated-coefficient-diagnostic",
-    "evidence_commit": "b2608b12bc368b80246991e645e587ba1b4d4379",
+    "evidence_commit": "05380c7ff4cd41cd39e7c66384100b5a3cef52fa",
     "scope": "Release public Hypersolve denial, owned formatted message, nested scopes, sticky failure, cleanup and independent retry. The six inputs include ordinary, word ceiling, one or two saturated counts and the largest new denial. Warm runs begin with the thread-local frame storage already allocated.",
     "caps": "No comparable heap or stack debit. Retain earlier charges. The two prepared native/WASI qualification jobs retain the 1 GiB cgroup limit, zero swap and 256 MiB minimum headroom. Bare wasm32 has a 1 MiB linear stack and 512 KiB minimum headroom. Each target, input and cold/warm state stands alone.",
     "targets": {
@@ -2648,7 +2648,7 @@
       "interface": "f7086884f0c2189e2c39d5aa9dd5f449cdf978a3",
       "interface_baseline": "f883707429208e5f2355fb7c9550100235da2fb8",
       "firmware": "56c2c28df9fa29ac01d88ed1b67bf70690b73897",
-      "evidence": "6f209ac271789c4e24ffd312f1ba75df266ef039"
+      "evidence": "3871fa870c32e8eb17d9fb5b01a177145dde3fc8"
     },
     "call_boundary": "One fresh Node WASI instance, after binding initialization through return from libtest _start, including fixture creation, assertions and teardown. Each named case and full-suite invocation used both 0x5a and 0xa5. Byte-resolution sentinel measures deepest observed guest stack write. Linear memory has 65536-byte pages and does not shrink; its ending extent is not a guest allocator measurement.",
     "stack_capacity_bytes": 1048576,
@@ -2806,7 +2806,7 @@
   },
   "mixed_degree_affine_box_review": {
     "source": "4c4385b48",
-    "evidence": "f3e0c3520bcbbce73fde0b36eb038b68dd093d0d",
+    "evidence": "569c704b9a514827d6922c1448af668a63a74f3f",
     "record": "docs/evidence/2026-11-19-interval-mixed-degree-box-replay",
     "admission": "Reviewed trials only. Primary debit is zero.",
     "trial": "1bcfa0a2e",

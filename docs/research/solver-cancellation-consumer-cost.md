@@ -106,7 +106,7 @@ fifteen-phase goal remains active. No push.
 ## Frozen evidence and recovery
 
 Record `docs/evidence/2026-11-17-interval-cancellation-consumer`, archive commit
-`0e2c1dad1ff7df5e9b8c9bea3a27227855ab7adc`: 14 files / 57,952,780 bytes,
+`20d859de23726bf3c05c48ac5b25686be9c5ff2c`: 14 files / 57,952,780 bytes,
 SHA-256 `f49b4b07ece73452600445c65339605e0e9f24ef3734530be3bb5375da5cb065`.
 The lossless XZ/tar container holds 4,143 prepared members, including every raw
 log, all 24 images, original assertions, protocols, scripts and failed cost

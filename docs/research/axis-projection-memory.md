@@ -106,6 +106,6 @@ checks remain open. The revised source is on branch
 `interval-axis-projection-wrapper-stack`. All 602 owner tests, strict Hyperpath
 Clippy, formatting and strict external probe Clippy passed.
 
-Raw evidence is in archive commit `cccd68301db8ae9e8f913d9d221b38f549d3642c`, record
+Raw evidence is in archive commit `de2218b51d1f64633a01806538c144435e11a640`, record
 `docs/evidence/2026-11-17-interval-axis-owner-memory`. The index binds the three archive
 files to the verified payload. [Evidence index](../evidence-archive.tsv)

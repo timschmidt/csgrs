@@ -51,7 +51,7 @@ inequality conventions remain separate review questions. Neither this audit nor
 the preserved failing fixtures establishes broader Jacobian correctness.
 
 Evidence: `docs/evidence/2026-11-17-interval-jacobian-context`, local commit
-`a099a4fd21fd8d106acfb874bb943dedc628794d`; 1,792 files / 1,280,121 bytes,
+`5713de4c0624de0b114b20046f2aa4812f59e9ec`; 1,792 files / 1,280,121 bytes,
 SHA-256 `33911caecf0a7cd0d30a440b434f9bbff6331f88c514a7a711b71a4dbaeb42ce`.
 Commands, source patches, locks, failed witnesses and all raw observations are
 retained. Earlier archive paths and manifest rows are unchanged. No push.

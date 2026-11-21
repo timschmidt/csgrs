@@ -102,7 +102,7 @@ Accepted totals remain 57 size accounts and zero memory exceptions. Neither
 prototype is merged, and the full fifteen-phase goal remains active. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-trace-materialization`,
-archive commit `3cc14e7745bec36f5c6a0eebbf17587600aea49e`; 917 files / 4,824,326 bytes,
+archive commit `ff6c91557586f7dd3ef7e98736cecb9ce5ecd657`; 917 files / 4,824,326 bytes,
 SHA-256 `e1c880a1930c61cdd0c3a8ddd4b7d62a6a68020ef9d1740a70f1c3caf66b7800`.
 All source, stored and committed hashes are verified, including three executable
 images and the primary-worktree checks for the retained test. Those nine owner

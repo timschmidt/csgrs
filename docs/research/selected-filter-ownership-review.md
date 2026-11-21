@@ -51,6 +51,6 @@ change. Production, resource accounts and pending runtime gates are unchanged.
 No migration, performance improvement or phase completion is admitted.
 
 Frozen review evidence: `docs/evidence/2026-11-17-interval-selected-filter-review`, local commit
-`b62e9eb5ae819cd788a7b379f16ad52147bd950c`; 12 files / 1,539,709 bytes, SHA-256
+`fbfa368f74982cfb07c8a605c84627975ca6b1e2`; 12 files / 1,539,709 bytes, SHA-256
 `071764eecb4a080fbdaafd15db2d365f14c8066fce643f711f39d04aab877b01`. Prior archive records and manifest rows are preserved.
 No push.

@@ -161,7 +161,7 @@ full fifteen-phase goal remains active.
 ## Frozen evidence
 
 Record `docs/evidence/2026-11-17-interval-cancellation-qualification`,
-archive commit `e8bce8dcf528a98e2fad45f022fca70f93f84dfc`: 11 files /
+archive commit `a2c1a784b5042fa2bdb6d980579ff2d6553dda7a`: 11 files /
 199,940,791 bytes, SHA-256
 `6a97f9ba7c481c85fccf1accbac053a36998e0a5edef538395c96cfcbb690b5e`.
 The lossless container preserves 33,903 members (1,476,645,847 bytes), including

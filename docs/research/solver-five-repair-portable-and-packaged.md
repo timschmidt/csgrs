@@ -103,10 +103,10 @@ fifteen-phase goal remains active. No push.
 ## Frozen evidence
 
 Source record `docs/evidence/2026-11-17-interval-five-repair-portable`, archive
-commit `f71d0b053690f057fdd173fe873726c4f0392809`: 309 files / 42,478,380 bytes,
+commit `674a0f5487c5be3fd85df5ffd1862f9fd3ba65ed`: 309 files / 42,478,380 bytes,
 SHA-256 `bb953e6601ba5c953b9b1d00172a45e431f4cf753f22a8761525b610ad276ab7`.
 Package record `docs/evidence/2026-11-17-interval-five-repair-packaged`, archive
-commit `2e30fed7f1350d6483eb1c329e95f6c4e4907db8`: 140 files / 11,295,447 bytes,
+commit `99161a0bca9019cb13425e26e4c4b635435642bf`: 140 files / 11,295,447 bytes,
 SHA-256 `dff37ca2318f78975a34c2bda4e38818bc486072c866b82b5dabb09036485ced`.
 
 Both records preserve all final images, full controls, commands, protocols,

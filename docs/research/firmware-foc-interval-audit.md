@@ -86,7 +86,7 @@ At the same firmware revision, the preceding clock qualification ran Rust 1.88
 Clippy and workspace formatting passed. This audit reuses those unchanged-source
 results; it does not present them as a new benchmark or a newly executed test run.
 The archived logs are in evidence commit
-`c390ef8e50da1f274ce5b1217f83a3e0bf4bdcac`, directory
+`97e3dc2d78ec9eaec0188b1e59e2c8276fc101cf`, directory
 `docs/evidence/2026-11-15-interval-firmware-interval-inventory`.
 
 Reviewed witnesses include independent integer certificates for constants;

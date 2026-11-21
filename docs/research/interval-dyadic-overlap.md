@@ -61,7 +61,7 @@ timings, work receipts and mutation logs. These are single-threaded x86-64
 Linux and WASM client measurements. Firmware deployment was outside this
 qualification. Raw evidence is registered under
 `docs/evidence/2026-11-18-interval-dyadic-overlap` at local evidence commit
-`41499f327`. [Evidence index](../evidence-archive.tsv)
+`8f7b6f569`. [Evidence index](../evidence-archive.tsv)
 
 ## Retained query implementation
 
@@ -126,4 +126,4 @@ separate portable WASM execution. [Memory accounts](interval-memory-accounts.jso
 The preserved controls, executable deltas, mutation checks, clocks, budgets
 and raw resource observations are registered under
 `docs/evidence/2026-11-18-interval-directed-overlap` at local evidence
-commit `b6503355e`. [Evidence index](../evidence-archive.tsv)
+commit `8d9a9e753`. [Evidence index](../evidence-archive.tsv)

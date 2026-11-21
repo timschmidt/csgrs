@@ -84,7 +84,7 @@ binary size**. No new memory or binary allowance was charged. Downstream
 run after these failures.
 
 The evidence record is `docs/evidence/2026-11-18-interval-horner-bounded-readmission`
-in csgrs-evidence commit `3051ef201beb2eb2f97230de13e85804a857f2cc`.
+in csgrs-evidence commit `1430137d9b390e00f149d2acc04302be8e9c1625`.
 It contains the two candidate patches, harnesses, all 102,400 memory probe
 rows, all 576 Criterion sample files, release artifact measurements, complete
 WASI production traces and replay commands. [Record digest](../evidence-archive.tsv)
@@ -162,7 +162,7 @@ remain archived. A future repair must retain the cold tensor witness and supply
 a concrete representation or lifetime justification before further tuning.
 
 Evidence: `docs/evidence/2026-11-16-interval-horner-requalification` in
-csgrs-evidence, commit `4d0e306d02fbafdd0e9a52e4a8c8274b3ff7aa71`: 380 files,
+csgrs-evidence, commit `e969ab022c869421abd69d2128468676942d07f6`: 380 files,
 195,329,447 bytes, SHA-256
 `54113bb2b11dc6d0488873a3f196390736d2a0cfcafd78a78a00d7755f7a559a`.
 This frozen subrecord leaves coordinated Stage 92 and all fifteen phases open.

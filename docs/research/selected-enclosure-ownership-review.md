@@ -56,6 +56,6 @@ and the queued runtime campaigns remain separate obligations. No production
 change, resource allowance or phase completion is admitted.
 
 Frozen review record: `docs/evidence/2026-11-17-interval-selected-enclosure-review`, local evidence commit
-`3382575d943f9d7801fe56d185827120576a2420`; 15 files / 1,672,600 bytes, SHA-256
+`2d99c0658e0569b5d1cb55163bc5089164e0f683`; 15 files / 1,672,600 bytes, SHA-256
 `b05e1ff27456794dcbcb0432cbd77401e6cb7fbb45a8aab53ad30f413adb88c7`. The source manifest registers this record.
 No repository has been pushed for this review.

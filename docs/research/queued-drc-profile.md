@@ -32,7 +32,7 @@ reset. Fresh review is still required before queue resumption. This record does
 not admit source or resource accounts or complete the interval-refactor goal.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-queued-drc-profile`, local
-archive commit `a2cd1f4732df9805b8ba6bfd3e70b8eeabf4f179`; 12 files / 200,433
+archive commit `fa3894a4d4ded73fb61c389b1781f8a68453a00d`; 12 files / 200,433
 bytes, SHA-256 `e02a9ed79f7ff2c116f0156bd5b877d461a76831944f1d86d262f158fafba85a`.
 It includes the sampler, raw debugger stream, all samples, source/fixture/image
 hashes and independent verification. The image remains at its hash-bound path;

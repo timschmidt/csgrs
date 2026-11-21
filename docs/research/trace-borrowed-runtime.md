@@ -119,7 +119,7 @@ remaining admission evidence and bounded allowances must be assessed directly,
 without silently discarding historical costs or weakening other gates.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-trace-borrowed-runtime`,
-archive commit `0bb075b062f09e0df09727529becfd1f43c3d6ab`; 1,645 files / 10,550,284 bytes,
+archive commit `ab588c47a0cf2273a0164fb837cdacb93ebc1444`; 1,645 files / 10,550,284 bytes,
 SHA-256 `0dd304266c9fdd74b8b04985f7034ef8f7e96eaffcb0dfaf331b68d882dc075a`.
 All original, stored and committed hashes are verified, including three native
 timing images. Earlier archive paths are unchanged.

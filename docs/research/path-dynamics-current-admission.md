@@ -116,7 +116,7 @@ percentage caps. All 43 earlier artifact accounts and the fixed program baseline
 remain unchanged. No cross-target savings offset this cost.
 
 Raw evidence: `docs/evidence/2026-11-16-interval-path-dynamics-current-admission` in archive commit
-`373fad71f6a875589c59db2fc3b79b24283be560`; registered in
+`37faadd605bb8742d6feb6e5df543df081d343ad`; registered in
 [`docs/evidence-archive.tsv`](../evidence-archive.tsv).
 
 ## Lookahead replay and whole-call stack reassessment

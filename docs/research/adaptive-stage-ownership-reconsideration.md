@@ -65,7 +65,7 @@ cost before repeating qualification. The automatic noise controller, coordinated
 CI and the complete fifteen-phase goal remain separate ongoing work.
 
 Evidence record `docs/evidence/2026-11-16-interval-adaptive-stage-reconsideration`,
-csgrs-evidence commit `cd6ef1cf2751ae30c6acc96fe1c22ca32d67b49d`: 125 files,
+csgrs-evidence commit `29ca992059b924c21c5ecf6e63203e90fab33a14`: 125 files,
 2,880,317 bytes, SHA-256
 `d6882e5ab9b8738c8eb7e1b8210e52878a8f03c9f61139a7fe1344d1d372bda3`.
 It retains the failed baseline witness, complete candidate patch, original
@@ -105,4 +105,4 @@ This review admitted no memory or size charge for coefficient sharing. Full
 stack, allocator-usable bytes and runtime qualification remain open. Raw
 measurements, the proposed caps, build inputs, linked images and exact-output
 comparisons are archived at `2026-11-17-interval-coefficient-memory-recheck`
-in evidence commit `99d81e837`. [Evidence index](../evidence-archive.tsv)
+in evidence commit `ed27541a2`. [Evidence index](../evidence-archive.tsv)

@@ -76,7 +76,7 @@ builds. Earlier Q30/servo whole-stack and hardware obligations remain open.
 ## Evidence
 
 Evidence: `docs/evidence/2026-11-16-interval-firmware-current-images` in
-csgrs-evidence, commit `46ea2593656dee451b0dc22412743236d7d8c3a6`: 234 files,
+csgrs-evidence, commit `20b7924340f60b7f29f1513d468ace47bca8696b`: 234 files,
 144,514,251 bytes, SHA-256
 `ffd235cfee2642b0a8d77f516d7df674441474bff4a3cc7afc2f3f7f5a70ec14`.
 The frozen record includes commands, source/lock boundaries, tool identities,

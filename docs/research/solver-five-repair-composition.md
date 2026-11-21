@@ -81,7 +81,7 @@ Primary production source, the partial 1,644-row inventory and accepted accounts
 active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-composition`, local commit
-`db6870e1c3109c4e540d084e3f34039dc412158f`; 122 files / 7,822,613 bytes, SHA-256
+`760108d3248c9d9de236893987c3f0a629d7373b`; 122 files / 7,822,613 bytes, SHA-256
 `ca2012ee7e29ee64f569a2bf38e82cf71e917ca45c07dad2d5daef74329598e6`. Original observer executables, command outputs and patches
 are preserved with lossless gzip encoding and source/stored digests. Earlier
 archive paths and manifest rows remain unchanged. The qualification and initial

@@ -122,7 +122,7 @@ terminal; the source worktree is restored clean, the workflow queue stays held
 and its original watcher stays terminal. No push; the full goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-allowance-runtime`,
-archive commit `1286123944e231ef7c2e4706cd9df2d502420788`; 3 files / 25,668,639 bytes,
+archive commit `d88ee4db5d43c610ad77bf8d59313fb02dc1d411`; 3 files / 25,668,639 bytes,
 SHA-256 `c6b396475714d5702a72a53f5ec73deba66ebaf831b61f31c36872a8dc6f7b53`.
 The lossless payload has 4,677 members / 100,888,275 raw bytes and
 nine validated images. Original, decoded and committed hashes are verified;

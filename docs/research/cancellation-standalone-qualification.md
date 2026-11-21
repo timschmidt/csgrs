@@ -137,7 +137,7 @@ accounts and zero memory exceptions; inventory remains 1,644 rows. No push; the
 full fifteen-phase goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-standalone`,
-archive commit `a66bfd0ab72be6c91812d60ee6a0fc6993fe0c56`; 3 files / 28,577,694 bytes,
+archive commit `8ff7c2e7b8f172bbb5ca2469ac5fd2b6df20bbb0`; 3 files / 28,577,694 bytes,
 SHA-256 `5455967c5b5a948f2ca896e0a017a7ed26c1983be92ab4538b56b50814e2ba7e`.
 The lossless payload contains 3,861 members / 259,497,686 raw bytes,
 including 46 validated images. All original, decoded and committed hashes are

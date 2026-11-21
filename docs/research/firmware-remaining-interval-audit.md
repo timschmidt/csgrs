@@ -77,7 +77,7 @@ mechanical checker incorrectly rejected descriptive wording containing
 unresolved placeholder values and does not relax an implementation assertion.
 
 Evidence: `docs/evidence/2026-11-16-interval-firmware-remaining-inventory` in
-csgrs-evidence, commit `f0f0aa104ec13de24d3f5da8257ae030a2bcc52b`: 56 files,
+csgrs-evidence, commit `5dc617121db7f0369ccb107610e1a9dc77ba86e7`: 56 files,
 2,319,703 bytes, SHA-256
 `73777cc34d4f5a1a0e4f1daec98d3e3e9c83153ed0c7dc10aefdb84353b51f34`.
 The record includes source snapshots/manifests, both inventory versions through

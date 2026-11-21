@@ -18,6 +18,7 @@ This repository keeps a digest for each archived record in
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
 | Local manifest commit | `00bedad0ad295181cbde735e13f3328fa6d4d492` (468 records) |
 | Local research branch | `research-parallel-normal-circle-contact-replay-20261111` |
+| Interval refactor branch | [`interval-refactor`](https://github.com/timschmidt/csgrs-evidence/tree/interval-refactor) at `5a482fc8805b3ea36a949d0ab8ed2ba8d941fe69` |
 
 The [11 November integration and disposition record](research/integration-and-dispositions-2026-11-11.md)
 accounts for eleven later local records, the published circle/ellipse source,
@@ -165,7 +166,8 @@ repository:
 
 The archive also carries the comparison crate's audit verifiers
 (`crates/comparisons/scripts/`) and its `.gitattributes`, so the audit corpus
-can be rechecked from an evidence checkout. Five audit results are Git LFS
+can be rechecked from an evidence checkout. Five audit results, and the coverage archive in
+`docs/evidence/2026-11-15-interval-workspace-qualification`, are Git LFS
 payloads; run `git lfs pull` after cloning. Their pointers, which embed each
 payload's SHA-256, are what the record digests cover.
 
@@ -180,6 +182,13 @@ changed evidence. Commits that never touched an archived root, tags, and the
 changed pre-rewrite commit ID to its new ID; dropped commits map to zeros. Use
 it to translate commit IDs cited by ledgers, performance records and older
 documentation.
+
+On 2026-11-21 the `interval-refactor` evidence branch was rewritten before
+its first push, so that its 134 MB coverage archive could become a Git LFS
+payload. That gave 161 local commits new IDs. Citations in this repository were
+translated, and
+[`evidence-lfs-rewrite-2026-11-21.tsv`](evidence-lfs-rewrite-2026-11-21.tsv)
+maps each old ID to its new one.
 
 ## Verifying a record
 

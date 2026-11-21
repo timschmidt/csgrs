@@ -101,7 +101,7 @@ and combination with the four earlier repairs remain required. No source or
 resource account is admitted.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-failed-constraint-ownership`, local commit
-`8bc1f0256c0d8fe919cd7c0fd182ac94341145ac`; 139 files / 55,660,343 bytes, SHA-256
+`3c96ebcb416878a0696f36f4f451d43ac44354f6`; 139 files / 55,660,343 bytes, SHA-256
 `ef3852c2547fec0b9019c3f552951d36f88d9819ff6b8244ee49eea74e7b8568`. All prior archive paths and manifest rows are
 preserved. The ownership review is frozen; the separate live residual admission
 stage remains mutable beyond this finite snapshot. No push.

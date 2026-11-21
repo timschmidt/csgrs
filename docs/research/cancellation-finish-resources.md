@@ -104,7 +104,7 @@ exceptions and the 1,644-row inventory are unchanged. No push; the full
 fifteen-phase goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-finish-consumer`,
-archive commit `11a20d85962cf35c577cad25b61e0b9d367941c1`; 3 files / 32,476,138 bytes,
+archive commit `989b1c481ce3471a565b6fab4c46fc272bf3d0fb`; 3 files / 32,476,138 bytes,
 SHA-256 `e37499a3986a178c9c6c310691cc7e8a9d53f575c8ceaff0146241ec4338ee91`.
 The lossless payload contains 5,313 members / 323,661,870 raw bytes and
 42 validated images. Original, decoded and committed hashes are verified;

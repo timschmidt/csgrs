@@ -115,7 +115,7 @@ queue, earlier failures and finite watcher horizon are preserved. The full
 fifteen-phase goal remains active. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-controls`, local commit
-`b2dde626edd2ca1a4b4e5030192c3108d345b32a`; 843 files / 73,745,748 bytes, SHA-256
+`cb522a2bb64a67e72b041ed99b2c05a4cecd0835`; 843 files / 73,745,748 bytes, SHA-256
 `c4339cb5da9ec04d23673a74dc20d2fdae210ebcdd59b3408af76f4c88b571d9`. Raw logs, collector attempts, recovery records and all
 38 final executable images are preserved losslessly with source/stored digests.
 Previous archive paths and index rows are unchanged.
@@ -180,7 +180,7 @@ complete applicable release validation remain open. There is no source or accoun
 queue, candidate revisions and earlier charges are preserved.
 
 Frozen repeated-measurement evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-measurements`, local commit
-`dbf779db93c6765fcdf1c349ab1f9330be864c3e`; 31 files / 33,237,852 bytes, SHA-256
+`233143681e2077596ce4423730ac5323e4c8cacd`; 31 files / 33,237,852 bytes, SHA-256
 `8a2c2ed024609657d66fc211aa8444739477f40de9b9830e27eb8b63fa103063`. The archive inventories all 12,600 log members and references
 18 unchanged executable images in the preceding immutable record. Earlier
 archive paths and index rows remain unchanged. No push.

@@ -80,7 +80,7 @@ containment, not an internal total-work or memory guarantee. The held release
 queue and immutable DRC image remain unchanged. No push or release occurred.
 
 Raw evidence: `docs/evidence/2026-11-17-interval-axis-projection-owner` in archive commit
-`93f858d19f60ffcb3384fb262673fc19c1eb9493`; 3 files, 45,856 bytes,
+`e2472efe954749eca13cd357757776ca341e96d0`; 3 files, 45,856 bytes,
 record SHA-256 `1c5e1d7a0df68af347a9e993e101001c8c73d7fc248e8ad6bdc035d602ad1676`. All 82 original payload members,
 decoded bytes and committed archive files were verified. The digest is registered
 in [the evidence index](../evidence-archive.tsv).
@@ -143,7 +143,7 @@ WASM client built and its Fraction oracle matched all 4,369 calls, including
 `923d17c99a7788e2ae817a898c7795551de48f1c6d3039c4ddfd345a90dd97da`.
 
 The benchmark binaries, raw samples, feature witnesses, package checks and
-lock comparisons are in evidence commit `803884ca5c88752269928634323026f258c30f94`,
+lock comparisons are in evidence commit `ae9852fadd86dce8ada83f278d849f9f866b1b69`,
 record `docs/evidence/2026-11-17-interval-axis-owner-cost`. The WASM replay
 above ran after archival using the existing interface-measurements Fraction
 oracle and the release module identified by its hash.
@@ -229,7 +229,7 @@ trials qualifies a path ownership transfer. The primary projection proof
 gap and the tangent findings above remain open.
 
 Measured sources, both exact oracles and raw trial records are archived in
-evidence commit `1818ef32b8debc1724ae48647bd6562279928ba9`. [Evidence index](../evidence-archive.tsv)
+evidence commit `fce4a90f6a8b34bc32ebb3c5698589fc3cdab20d`. [Evidence index](../evidence-archive.tsv)
 
 ## Direct G1 classification and positive orientation
 

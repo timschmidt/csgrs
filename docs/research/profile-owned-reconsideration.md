@@ -124,5 +124,5 @@ receipts.
 
 
 Review commit `270eefdc6`. Evidence `docs/evidence/2026-11-16-interval-profile-owned-reconsideration`, local archive commit
-`491d20ddfd2ffb256e2e6aa3ac037ed776406f20`: 337 files / 6,789,565 bytes,
+`c54cce2b4556790c2705c950bdcc8f8cdbe6fc18`: 337 files / 6,789,565 bytes,
 SHA-256 `5cf531276f57325dd73ecf4e92f1008b750fb8858b6b64d17d734dcbbf38c67d`.

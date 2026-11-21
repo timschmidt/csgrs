@@ -52,7 +52,7 @@ program baseline or recover previously consumed allowance. Eight new accounts
 bring the total to 54; all preceding accounts retain their accepted charges.
 
 Evidence: `docs/evidence/2026-11-16-interval-interface-compiler-display` in
-csgrs-evidence, commit `efc1e26c633fa6e7004d583b4981b94876afde18`: 608 files,
+csgrs-evidence, commit `5bd4de422762a168989711a4e9772ff3fa5b182e`: 608 files,
 857,548,059 bytes, SHA-256
 `7f94dd7541f665d233bb8d41494e2a278d38fe3531c79dcebb5a5728c1583395`.
 It preserves linked artifacts, build configurations, raw samples, original

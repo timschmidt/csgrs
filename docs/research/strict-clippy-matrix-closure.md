@@ -44,7 +44,7 @@ locks and each generated locked graph remain available. Third-party package
 archives are not redistributed.
 
 Evidence: `docs/evidence/2026-11-16-interval-strict-clippy-closure` in
-csgrs-evidence, commit `c15dd5c97d462dc65686ee9ff2014263dd50e427`: 2,904 files,
+csgrs-evidence, commit `0e93ed846cb8f54acd9fafec1b01a09b8f6fd475`: 2,904 files,
 89,084,530 bytes, SHA-256
 `8ae8dd43ec18ecd17cd625e0e3608046bf99ebb5c57ab73f470003e300102b14`.
 This is a frozen subrecord of active Stage 92. It includes the command manifests,

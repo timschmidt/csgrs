@@ -122,7 +122,7 @@ other gates remain intact. Primary production code and accepted totals of
 No push; the full fifteen-phase goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-finish`,
-archive commit `6cd1ef20d98dfa409d14ed74272850f562f8a6d8`; 3 files / 9,784,408 bytes,
+archive commit `579335fba1e0ff7a71f159390b67cdfb95df4a0d`; 3 files / 9,784,408 bytes,
 SHA-256 `8f3669c71dad32650f9a5fdc4be768c35af7c2c1ea551686009d33b57e65ca01`.
 The lossless payload contains 1,434 members / 33,176,529 raw bytes and
 four validated images. Original, decoded and committed hashes are verified;

@@ -69,7 +69,7 @@ finite hold with its original horizon and command plan. All fifteen plan
 phases remain active. No push.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-residual-usable-allocation`,
-local commit `d2842b8b326d916d541a670ada9a604ab9453e9a`; 171 files /
+local commit `6de0aab87eb0c23c9f8883dd88c6f1411c1c83b7`; 171 files /
 2,662,214 bytes, SHA-256
 `fae97e7a8a16aebbd67440cf3f4a5ab665fcffbe42a845df79f431ec648bcb9e`.
 Raw outputs and the diagnostic shared object are preserved with lossless gzip

@@ -114,7 +114,7 @@ accepted size account or memory account changes: 57 size accounts and zero
 memory exceptions remain accepted, and the fifteen-phase goal remains active.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-owner`, local
-commit `1da0eebf99e52060d5f08dd1f7c80cf8e28def6d`; 548 files / 149,749,754 bytes,
+commit `58d4f33d4f657e2818d941b8f36073ebda1588da`; 548 files / 149,749,754 bytes,
 SHA-256 `984f4104fc268c76d6c94dcbc0e74b98741f43fbc8b6c436614807a21b3f6cef`.
 Original executable and command-output bytes are preserved with lossless gzip
 encoding and source/stored digests. The initial raw-log whitespace rejection
