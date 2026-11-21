@@ -88,25 +88,35 @@ def native_function_ranges(root):
 
 
 def count_function_lines(annotated, groups, root):
-    """Count each physical executable line once in every complete named function."""
+    """Count each physical executable line once in every complete named function.
+
+    `annotated` is one `llvm-cov show` listing, or one listing per test
+    executable. A line is executable when any listing maps it, and covered
+    when any listing executed it. Separate listings are needed because
+    llvm-cov loads each function name only once across all `--object`
+    arguments: an unexecuted copy of an inline function in an earlier object
+    can mask the executed copy in a later one, and the order follows Cargo's
+    hashed artifact paths.
+    """
     counts = {label: [dict(entry, measured={}) for entry in entries]
               for label, entries in groups.items()}
     paths = {entry["path"] for entries in groups.values() for entry in entries}
-    active = None
-    for line in annotated.splitlines():
-        if line.endswith(":") and line[:-1] in paths:
-            active = line[:-1]
-            continue
-        fields = line.split("|", 2)
-        if active is None or len(fields) != 3 or not fields[0].strip().isdigit():
-            continue
-        number, count = int(fields[0].strip()), fields[1].strip()
-        if not count:
-            continue
-        for entries in counts.values():
-            for entry in entries:
-                if entry["path"] == active and entry["start"] <= number < entry["end_exclusive"]:
-                    entry["measured"][number] = count != "0"
+    for listing in [annotated] if isinstance(annotated, str) else annotated:
+        active = None
+        for line in listing.splitlines():
+            if line.endswith(":") and line[:-1] in paths:
+                active = line[:-1]
+                continue
+            fields = line.split("|", 2)
+            if active is None or len(fields) != 3 or not fields[0].strip().isdigit():
+                continue
+            number, count = int(fields[0].strip()), fields[1].strip()
+            if not count:
+                continue
+            for entries in counts.values():
+                for entry in entries:
+                    if entry["path"] == active and entry["start"] <= number < entry["end_exclusive"]:
+                        entry["measured"][number] = entry["measured"].get(number, False) or count != "0"
     report = {}
     for label, entries in counts.items():
         files = {}

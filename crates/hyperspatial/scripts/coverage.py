@@ -171,9 +171,11 @@ output = target / "coverage.json"
 report.update(native_elliptic_coverage(export, root))
 function_ranges = native_function_ranges(root)
 function_sources = sorted({entry["path"] for entries in function_ranges.values() for entry in entries})
-function_annotated = subprocess.check_output(
-    [str(llvm / "llvm-cov"), "show", *cov_args, *function_sources,
+# Measure each executable separately; see count_function_lines.
+function_annotated = [subprocess.check_output(
+    [str(llvm / "llvm-cov"), "show", executable, f"--instr-profile={merged}", *function_sources,
      "--show-instantiations=false", "--show-line-counts-or-regions"], text=True)
+    for executable in objects]
 report.update(count_function_lines(function_annotated, function_ranges, root))
 output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
 print(json.dumps(totals, indent=2))

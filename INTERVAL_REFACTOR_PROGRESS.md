@@ -15134,6 +15134,22 @@ Hosted CI on `3b18f872f` exposed two further gaps.
   run must pass. Locally the suite then reported 1,563 direct WASI tests,
   17 native parents with fresh WASI children and 7 native platform tests. All
   4,212 Horner dispatch windows matched.
+* Typos read `nd`, the n-dimensional predicate module cited by
+  `interval-inventory.tsv`, as a misspelling of "and". `typos.toml` now
+  accepts it.
+* Hyperspatial's production coverage failed its `native_atan2` floor on every
+  Rust 1.100 run: hosted CI measured 40 of 44 lines, while the same toolchain
+  measured 43 of 44 locally, both fresh and on 4 CPUs. A temporary diagnostic
+  branch showed that the `atan2_right_half_plane` executable alone covers 38
+  of the 39 `try_atan2` lines on CI too, and that merging all 37 objects into
+  one `llvm-cov show` dropped its counts. llvm-cov loads each function name
+  once across `--object` arguments, so an unexecuted inline copy in an
+  earlier object can mask the executed one, and the object order follows
+  Cargo's hashed artifact paths. The native function floors now measure each
+  executable separately and take the union of mapped and executed lines.
+  Locally this reproduces the previous figures exactly: 43 of 44 atan2 lines,
+  105 of 107 parameter-ring lines and 13 of 13 deferred-atan lines. The 95%
+  floors are unchanged.
 
 ### Evidence publication
 

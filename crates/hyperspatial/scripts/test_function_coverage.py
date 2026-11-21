@@ -33,6 +33,31 @@ class FunctionCoverageTests(unittest.TestCase):
                 with self.assertRaisesRegex(SystemExit,label):
                     coverage.check_native_function_coverage(self.report(uncovered=(label,0)))
 
+    def test_separate_executables_union_their_measurements(self):
+        ranges = coverage.native_function_ranges(ROOT)
+        entry = ranges["native_atan2"][0]
+        body = entry["start"] + 1
+        # Every other function is fully executed in a third executable.
+        others = [(label, index) for label, entries in ranges.items()
+                  for index in range(len(entries)) if (label, index) != ("native_atan2", 0)]
+        rest = "\n".join(
+            ranges[label][index]["path"] + ":\n" + f'{ranges[label][index]["start"]}|1|fn body'
+            for label, index in others)
+        def listing(hit, extra=()):
+            rows = [f'{entry["start"]}|1|fn body', f'{body}|{hit}|body', *extra]
+            return entry["path"] + ":\n" + "\n".join(rows)
+        def row(listings):
+            files = coverage.count_function_lines(listings + [rest], ranges, ROOT)["native_atan2"]["files"]
+            measured = next(r for rows in files.values() for r in rows if r["start"] == entry["start"])
+            return measured["count"], measured["covered"], measured["uncovered"]
+        # An unexecuted copy in one executable does not mask the executed
+        # copy in another, in either order.
+        self.assertEqual(row([listing(0), listing(3)]), (2, 2, []))
+        self.assertEqual(row([listing(3), listing(0)]), (2, 2, []))
+        # A line mapped only by an unexecuted copy still joins the denominator.
+        extra = [f'{body + 1}|0|unexecuted elsewhere']
+        self.assertEqual(row([listing(1), listing(1, extra)]), (3, 2, [body + 1]))
+
     def test_missing_function_measurements_cannot_be_hidden_by_the_other_function(self):
         for label,entries in coverage.native_function_ranges(ROOT).items():
             for index in range(len(entries)):
