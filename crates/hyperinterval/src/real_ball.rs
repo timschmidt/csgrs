@@ -120,7 +120,15 @@ impl RealBall {
         point: &Real,
         precision: i32,
     ) -> Result<BallRelation, IntervalError> {
-        let displacement = Self::point(point - &self.center);
+        let mut translated = point - &self.center;
+        // Rational translation does not carry the point's abort flag, so
+        // reattach it before refining the displacement.
+        if let Some(signal) = point.abort_signal()
+            && translated.exact_rational_ref().is_none()
+        {
+            translated.abort(signal.clone());
+        }
+        let displacement = Self::point(translated);
         let difference = displacement.to_rational(precision)?;
         let allowed = RationalInterval::from_nominal_uncertainty(&Rational::zero(), &self.radius)?;
         Ok(if difference.subset_of(&allowed) {

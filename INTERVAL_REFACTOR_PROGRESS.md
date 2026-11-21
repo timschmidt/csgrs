@@ -15037,12 +15037,14 @@ rely on the reproductions recorded in their original entries.
 replaces the stale center-only caveat on `certify_interval_box_candidate`.
 
 Declined: `7e881ac12`, abort-signal propagation through rational
-translations. The values it affects are correct, and it adds 10.79% to
-Hyperreal's generic add/sub path. That is a material hot-path cost without
-an exactness gain. The cancellation half of its witness stays on the declined
-commit. `real_ball_boundary.rs` keeps the uncertainty and refinement half, with
-a comment recording the gap. Every libtest run under WASI must report
-0 ignored tests, so an `#[ignore]` marker is not an option.
+translations in Hyperreal's generic add/sub. It adds 10.79% to that hot path.
+The witness's actual consumer, `RealBall::classify_point`, now reattaches the
+point's abort flag to the translated displacement itself, through the new
+public `Real::abort_signal`. The full witness,
+`symbolic_membership_preserves_uncertainty_and_cancellation_on_retry`, runs
+unignored and passes; it fails without the repair. Other consumers that
+translate an aborting `Real` by a rational still lose the flag, which remains
+a Hyperreal gap.
 
 Discarded, all preserved as refs, not deleted:
 
@@ -15112,6 +15114,14 @@ Hosted CI on `3b18f872f` exposed two further gaps.
 
 * Rust 1.100 Clippy extended `needless_range_loop` and `needless_bool`. The
   affected sites now carry scoped allows, so generated code is unchanged.
+* The Hyperinterval workflow ran on hosted CI for the first time. Its WASI
+  libtest gate rejects ignored tests, which led to the consumer-level
+  abort-signal repair above. On macOS AArch64, an unqualified strict-float
+  target, `boundary_composition` now asserts the typed
+  `UnqualifiedEnvironment` refusal for scalar ingress, instead of unwrapping
+  it. Rust 1.100 std on `wasm32-wasip1` links wasi-libc's timed rwlock wait,
+  which imports `clock_time_get`. The strict-float WebAssembly harness now
+  accepts that import for std clients.
 * The WASI Preview 1 Hypersolve job aborted on two accepted
   cancellable-publication tests. One spawns a thread and the other catches an
   unwind, and neither is possible under `wasm32-wasip1`.

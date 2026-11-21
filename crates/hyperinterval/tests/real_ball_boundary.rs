@@ -56,18 +56,27 @@ fn closed_rational_balls_agree_with_integer_membership() {
     }
 }
 
-// Cancellation is not asserted here. Rational translations of a symbolic Real
-// drop its abort signal, and the repair (7e881ac12) was declined on a 10.79%
-// Hyperreal add/sub cost. INTERVAL_REFACTOR_PROGRESS.md records the gap and
-// its failing witness.
 #[test]
-fn symbolic_membership_stays_unresolved_until_refined() {
+fn symbolic_membership_preserves_uncertainty_and_cancellation_on_retry() {
+    use hyperinterval::IntervalError;
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    };
+
     let ball = RealBall::point(Real::from(Rational::fraction(7, 5).unwrap()));
-    let point = Real::from(2).sqrt().unwrap();
+    let mut point = Real::from(2).sqrt().unwrap();
     assert_eq!(
         ball.classify_point(&point, 0).unwrap(),
         BallRelation::Unresolved
     );
+    let stop = Arc::new(AtomicBool::new(true));
+    point.abort(stop.clone());
+    assert_eq!(
+        ball.classify_point(&point, -64),
+        Err(IntervalError::EnclosureUnavailable)
+    );
+    stop.store(false, Ordering::Relaxed);
     assert_eq!(
         ball.classify_point(&point, -64).unwrap(),
         BallRelation::Excluded

@@ -30,6 +30,9 @@
 
 ### Added
 
+- `Real::abort_signal` returns the flag attached with `Real::abort`, so a
+  consumer can reattach it to a value derived for refinement.
+
 - Add `Rational::ratio_parts`, a borrowed exact, potentially unreduced ratio
   view for resource admission before coefficient copying or canonicalization.
   Existing canonical numerator/denominator getters retain their behavior.

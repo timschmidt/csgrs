@@ -175,22 +175,25 @@ fn strict_float_empty_affine_and_distinct_neighbors_compose() {
     macro_rules! check {
         ($interval:ty, $float:ty) => {{
             let empty = <$interval>::empty();
-            let transformed = empty.affine(-2.0, 3.0).unwrap();
-            assert_eq!(transformed.bounds(), None);
-            assert_eq!(transformed.affine(0.0, 1.0).unwrap(), empty);
-            assert_eq!(
-                transformed.affine(<$float>::NAN, 0.0),
-                Err(E::NonFiniteEndpoint)
-            );
-            assert_eq!(
-                transformed.affine(0.0, <$float>::INFINITY),
-                Err(E::NonFiniteEndpoint)
-            );
-            // Finite endpoints need a qualified backend; elsewhere they are
-            // refused with a typed error, while empty stays valid.
+            // Scalar ingress, including affine coefficients and finite
+            // endpoints, needs a qualified backend. Elsewhere it is refused
+            // with a typed error, while the empty interval stays valid.
             if !<$interval>::backend_supported() {
+                assert!(empty.is_empty());
+                assert_eq!(empty.affine(-2.0, 3.0), Err(E::UnqualifiedEnvironment));
                 assert_eq!(<$interval>::new(0.0, 1.0), Err(E::UnqualifiedEnvironment));
             } else {
+                let transformed = empty.affine(-2.0, 3.0).unwrap();
+                assert_eq!(transformed.bounds(), None);
+                assert_eq!(transformed.affine(0.0, 1.0).unwrap(), empty);
+                assert_eq!(
+                    transformed.affine(<$float>::NAN, 0.0),
+                    Err(E::NonFiniteEndpoint)
+                );
+                assert_eq!(
+                    transformed.affine(0.0, <$float>::INFINITY),
+                    Err(E::NonFiniteEndpoint)
+                );
                 let next = <$float>::from_bits((1.0 as $float).to_bits() + 1);
                 let left = <$interval>::new(0.0, 1.0).unwrap();
                 let right = <$interval>::new(next, 2.0).unwrap();

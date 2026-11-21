@@ -266,7 +266,11 @@ impl Real {
         computable.abort(s);
     }
 
-    pub(super) fn abort_signal(&self) -> Option<&Signal> {
+    /// The abort flag attached with [`Real::abort`], if any.
+    ///
+    /// Consumers that derive a new value for refinement can reattach it, so a
+    /// cancellation request still reaches the derived calculation.
+    pub fn abort_signal(&self) -> Option<&Signal> {
         self.computable
             .as_ref()
             .and_then(|computable| computable.signal.as_ref())

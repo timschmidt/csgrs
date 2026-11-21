@@ -1,5 +1,9 @@
 # Changelog
 
+- `RealBall::classify_point` keeps the point's abort flag on the translated
+  displacement, so a cancelled symbolic point returns
+  `EnclosureUnavailable` instead of refining to completion.
+
 - Add `F32ProposalInterval::radius_estimate` for finite native half-widths,
   including subnormal intervals and the full binary32 range.
 
