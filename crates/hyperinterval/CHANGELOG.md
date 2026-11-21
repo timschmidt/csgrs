@@ -25,6 +25,10 @@
   endpoints before reduction. Dyadic and rational square roots use one
   unsigned division to determine both tight output bounds.
 
+- Rational exponential, logarithm and arctangent admit deferred reduction
+  and wide singleton comparisons against the caller's budget. A refused
+  reduction leaves its endpoint cache untouched.
+
 - Rational sine, cosine, tangent and cotangent check both stored fractions
   against the caller's budget before reducing either endpoint. Generated
   coordinates with large common factors can now exhaust the budget at ingress.

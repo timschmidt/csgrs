@@ -33,12 +33,13 @@ impl crate::RationalInterval {
     /// Tight outward principal arctangent with dyadic spacing `2^precision`.
     /// Requires rational+dyadic. The exact rational source remains authoritative
     /// through every refinement attempt; local coverage is Complete.
+    /// Stored fractions and singleton comparisons follow the budget in [`Self::exp`].
     pub fn atan(&self, precision: i32, budget: &mut DyadicBudget) -> Result<Image, IntervalError> {
         let Some((a, b)) = self.bounds() else {
             return complete(DyadicInterval::empty());
         };
         let point = |x: &hyperreal::Rational, budget: &mut DyadicBudget| {
-            budget.reserve(x.numerator().bits().max(x.denominator().bits()), 2, false)?;
+            crate::rational_admission::reserve_monotone_source(x, budget)?;
             endpoint(
                 &BigInt::from_biguint(x.sign(), x.numerator().clone()),
                 &BigInt::from(x.denominator().clone()),
@@ -48,7 +49,7 @@ impl crate::RationalInterval {
             )
         };
         let lower = point(a, budget)?;
-        if a == b {
+        if crate::rational_admission::same_monotone_source(a, b, budget)? {
             return complete(lower);
         }
         assemble(lower, point(b, budget)?, budget)

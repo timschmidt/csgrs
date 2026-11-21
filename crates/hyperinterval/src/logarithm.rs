@@ -42,6 +42,7 @@ impl crate::RationalInterval {
     /// Requires rational+dyadic. Intervals reaching zero from above return an
     /// explicit lower-unbounded enclosure with Partial coverage. Exact rational
     /// inputs are retained through every budgeted refinement attempt.
+    /// Stored fractions and singleton comparisons follow the budget in [`Self::exp`].
     pub fn log(&self, precision: i32, budget: &mut DyadicBudget) -> Result<Image, IntervalError> {
         let Some((a, b)) = self.bounds() else {
             return image(ExtendedInterval::empty(), DomainCoverage::Complete);
@@ -50,7 +51,7 @@ impl crate::RationalInterval {
             return Err(IntervalError::EmptyDomain);
         }
         let point = |x: &hyperreal::Rational, budget: &mut DyadicBudget| {
-            budget.reserve(x.numerator().bits().max(x.denominator().bits()), 2, false)?;
+            crate::rational_admission::reserve_monotone_source(x, budget)?;
             endpoint(
                 &BigInt::from(x.numerator().clone()),
                 &BigInt::from(x.denominator().clone()),
@@ -63,7 +64,7 @@ impl crate::RationalInterval {
         if !a.is_positive() {
             return partial(upper, budget);
         }
-        if a == b {
+        if crate::rational_admission::same_monotone_source(b, a, budget)? {
             return image(
                 ExtendedInterval::from_finite(upper),
                 DomainCoverage::Complete,

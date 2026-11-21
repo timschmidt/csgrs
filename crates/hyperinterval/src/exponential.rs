@@ -41,6 +41,13 @@ impl crate::RationalInterval {
     /// retained through argument bounds; it is not replaced by an adopted
     /// rounded model. Directed refinement and all interval arithmetic share
     /// the caller's budget. Empty maps to empty with `Complete` coverage.
+    ///
+    /// Monotone rational images reserve two linear stages at each evaluated
+    /// endpoint's stored width, plus three quadratic stages if reduction may
+    /// be necessary. Comparing distinct, same-sign sources wider than 64 bits
+    /// reserves two linear stages at their maximum width for canonical data,
+    /// or two quadratic stages at the cross-product width for unreduced data.
+    /// A shared endpoint is evaluated once. Charges ignore cache warmth.
     pub fn exp(
         &self,
         precision: i32,
@@ -50,7 +57,7 @@ impl crate::RationalInterval {
             return complete(DyadicInterval::empty());
         };
         let point = |x: &hyperreal::Rational, budget: &mut DyadicBudget| {
-            budget.reserve(x.numerator().bits().max(x.denominator().bits()), 2, false)?;
+            crate::rational_admission::reserve_monotone_source(x, budget)?;
             endpoint(
                 &BigInt::from_biguint(x.sign(), x.numerator().clone()),
                 &BigInt::from(x.denominator().clone()),
@@ -60,7 +67,7 @@ impl crate::RationalInterval {
             )
         };
         let lower = point(a, budget)?;
-        if a == b {
+        if crate::rational_admission::same_monotone_source(a, b, budget)? {
             return complete(lower);
         }
         complete(outer_bounds(lower, point(b, budget)?, budget)?)
@@ -101,10 +108,9 @@ fn endpoint(
     budget: &mut DyadicBudget,
 ) -> Result<DyadicInterval, IntervalError> {
     budget.reserve(n.bits().max(d.bits()).max(1), 3, false)?;
-    let one = DyadicInterval::point(BigInt::one(), 0)?;
     if n.is_zero() {
         return if precision <= 0 {
-            Ok(one)
+            DyadicInterval::point(BigInt::one(), 0)
         } else {
             DyadicInterval::new(BigInt::zero(), BigInt::one(), precision)
         };

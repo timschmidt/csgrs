@@ -74,6 +74,78 @@ fn generated_endpoints_match_directed_cells_and_the_exact_work_cutoff() {
 }
 
 #[test]
+
+fn denial_on_a_cold_source_precedes_reduction_and_preserves_a_retry() {
+    use Operation::*;
+    for op in [Exp, Log, Atan] {
+        for y in [2., 3.] {
+            let x = coordinate(281_474_976_710_662., y);
+            let bits = x.reduction_input_bits();
+            assert!(bits > 64);
+            let input = RationalInterval::point(x);
+            let reductions = 3 * bits * bits;
+            for (limit, units, remaining, error) in [
+                (0, 100, 100, IntervalError::SizeExhausted),
+                (bits - 1, 1 << 30, 1 << 30, IntervalError::SizeExhausted),
+                (
+                    bits,
+                    2 * bits - 1,
+                    2 * bits - 1,
+                    IntervalError::WorkExhausted,
+                ),
+                (
+                    bits,
+                    2 * bits + reductions - 1,
+                    reductions - 1,
+                    IntervalError::WorkExhausted,
+                ),
+            ] {
+                let mut budget = DyadicBudget::new(limit, units);
+                let run = || op.image(&input, &mut budget);
+                #[cfg(feature = "dispatch-trace")]
+                let result = {
+                    use hyperreal::dispatch_trace;
+                    dispatch_trace::reset();
+                    let result = dispatch_trace::with_recording(run);
+                    assert!(dispatch_trace::take_trace().dispatch.is_empty(), "{op:?}");
+                    result
+                };
+                #[cfg(not(feature = "dispatch-trace"))]
+                let result = {
+                    let mut run = run;
+                    run()
+                };
+                assert_eq!(result, Err(error));
+                assert_eq!(budget.remaining_work(), remaining);
+            }
+            let retry = || {
+                op.image(&input, &mut DyadicBudget::new(4096, 1 << 40))
+                    .unwrap()
+            };
+            #[cfg(feature = "dispatch-trace")]
+            {
+                use hyperreal::dispatch_trace;
+                for expected in [1, 0] {
+                    dispatch_trace::reset();
+                    let image = dispatch_trace::with_recording(retry);
+                    assert_eq!(image.domain, DomainCoverage::Complete);
+                    assert_eq!(
+                        dispatch_trace::take_trace().path_count(
+                            "rational",
+                            "canonicalization",
+                            "lazy-internal-coordinate"
+                        ),
+                        expected
+                    );
+                }
+            }
+            #[cfg(not(feature = "dispatch-trace"))]
+            assert_eq!(retry().domain, DomainCoverage::Complete);
+        }
+    }
+}
+
+#[test]
 fn logarithm_leaves_excluded_generated_bounds_untouched() {
     let invalid = RationalInterval::point(coordinate(6., -3.));
     let partial =
@@ -87,6 +159,40 @@ fn logarithm_leaves_excluded_generated_bounds_untouched() {
         image.range,
         ExtendedInterval::below(DyadicInterval::point(0.into(), 0).unwrap()).unwrap()
     );
+}
+
+
+#[cfg(feature = "dispatch-trace")]
+#[test]
+fn a_refused_second_endpoint_cannot_multiply_unadmitted_coefficients() {
+    use hyperreal::dispatch_trace;
+    use num_bigint::BigInt;
+    let denominator = (BigInt::from(1) << 1024u32) + 1;
+    for op in [Operation::Exp, Operation::Log, Operation::Atan] {
+        // All three endpoints have the same sign and leading binary exponent.
+        // A comparison by products would inspect the far side of the budget.
+        let numerator: BigInt =
+            &denominator * 3 + if matches!(op, Operation::Log) { -1 } else { 1 };
+        let near_three = format!("{numerator}/{denominator}")
+            .parse::<Rational>()
+            .unwrap();
+        let input = if matches!(op, Operation::Log) {
+            RationalInterval::new(near_three, Rational::from(3))
+        } else {
+            RationalInterval::new(Rational::from(3), near_three)
+        }
+        .unwrap();
+        let mut budget = DyadicBudget::new(256, 1 << 40);
+        dispatch_trace::reset();
+        let result = dispatch_trace::with_recording(|| op.image(&input, &mut budget));
+        let count = dispatch_trace::take_trace().path_count(
+            "rational",
+            "comparison",
+            "biguint-cross-product",
+        );
+        assert_eq!(result, Err(IntervalError::SizeExhausted));
+        assert_eq!(count, 0, "{op:?}");
+    }
 }
 
 #[test]
@@ -191,3 +297,4 @@ fn generated_square_root_images_retry_and_compose() {
         DyadicInterval::new(0.into(), 2.into(), 0).unwrap()
     );
 }
+

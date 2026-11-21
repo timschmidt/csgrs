@@ -116,3 +116,51 @@ impl RationalArithmetic<'_> {
         Ok(RationalInterval::ordered(lower, upper))
     }
 }
+
+// Reserve both coefficient copies and any GCD and two exact divisions before
+// accessing the canonical fraction. Cache warmth does not affect this charge.
+pub(crate) fn reserve_monotone_source(
+    x: &Rational,
+    budget: &mut DyadicBudget,
+) -> Result<(), IntervalError> {
+    let (_, n, d) = x.ratio_parts();
+    budget.reserve(n.bits().max(d.bits()), 2, false)?;
+    let width = x.reduction_input_bits();
+    if width != 0 {
+        budget.reserve(width, 3, true)?;
+    }
+    Ok(())
+}
+
+// Both inputs stay live, so shared storage proves equality. For two small
+// fractions, Hyperreal's word products fit in u128; larger reduced fractions
+// have unique signed coefficients. Distinct unreduced encodings may require
+// cross products. Admit those products before asking Hyperreal for equality.
+#[inline(never)]
+pub(crate) fn same_monotone_source(
+    first: &Rational,
+    other: &Rational,
+    budget: &mut DyadicBudget,
+) -> Result<bool, IntervalError> {
+    if first.storage_identity() == other.storage_identity() {
+        return Ok(true);
+    }
+    let (ls, ln, ld) = first.ratio_parts();
+    let (rs, rn, rd) = other.ratio_parts();
+    if ls != rs {
+        return Ok(false);
+    }
+    let width = ln.bits().max(ld.bits()).max(rn.bits()).max(rd.bits());
+    if width > 64 {
+        if first.reduction_input_bits() == 0 && other.reduction_input_bits() == 0 {
+            budget.reserve(width, 2, false)?;
+            return Ok(ln == rn && ld == rd);
+        }
+        let products = ln
+            .bits()
+            .saturating_add(rd.bits())
+            .max(rn.bits().saturating_add(ld.bits()));
+        budget.reserve(products, 2, true)?;
+    }
+    Ok(first == other)
+}
