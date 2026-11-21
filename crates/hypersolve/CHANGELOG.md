@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Enforce `with_coefficient_bit_limit` on the final coefficients of
+  `DenseTensorPolynomial::sum_products`. The fused sum previously published
+  `256 - x²` under a nine-bit limit.
+
 - Reject non-finite linear proposals. Normal equations and BFGS could return
   successful NaN steps from finite overflowing inputs, and normal equations
   accepted NaN input. `LinearSolveError` and `ConvergenceReason` gain typed
