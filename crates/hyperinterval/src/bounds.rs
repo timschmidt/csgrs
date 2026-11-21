@@ -135,18 +135,6 @@ impl<T: Copy + PartialOrd> Bounds<T> {
         self.lower <= value && value <= self.upper
     }
 
-    pub(crate) fn subset(self, other: Self) -> bool {
-        other.lower <= self.lower && self.upper <= other.upper
-    }
-
-    pub(crate) fn interior_subset(self, other: Self) -> bool {
-        other.lower < self.lower && self.upper < other.upper
-    }
-
-    pub(crate) fn left_of(self, other: Self) -> bool {
-        self.upper < other.lower
-    }
-
     pub(crate) fn hull(self, other: Self) -> Self {
         Self {
             lower: if self.lower <= other.lower {
@@ -190,6 +178,26 @@ impl<T: Copy + PartialOrd> Bounds<T> {
             signs = signs.union(SignSet::Positive);
         }
         signs
+    }
+}
+
+#[cfg(any(
+    feature = "integer",
+    feature = "fixed",
+    feature = "rational",
+    feature = "float-enclosure"
+))]
+impl<T: Copy + PartialOrd> Bounds<T> {
+    pub(crate) fn subset(self, other: Self) -> bool {
+        other.lower <= self.lower && self.upper <= other.upper
+    }
+
+    pub(crate) fn interior_subset(self, other: Self) -> bool {
+        other.lower < self.lower && self.upper < other.upper
+    }
+
+    pub(crate) fn left_of(self, other: Self) -> bool {
+        self.upper < other.lower
     }
 }
 

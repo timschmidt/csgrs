@@ -68,3 +68,18 @@ fn outward_grid_transport_preserves_empty_unit_and_exact_containment() {
     assert!(source.regrid(-100, &mut DyadicBudget::new(1, 0)).is_err());
     assert!(source.regrid(-2, &mut budget()).is_ok());
 }
+
+#[test]
+fn partition_children_fit_a_cartesian_interior_across_extreme_scales() {
+    let source = BoxN::new([d(-1, 1, i32::MIN), d(-1, 1, 0)]).unwrap();
+    let enclosing = BoxN::new([d(-1, 1, i32::MAX), d(-2, 2, 0)]).unwrap();
+    let [left, right] = source.bisect_axis(0, &mut budget()).unwrap().unwrap();
+    assert_eq!(left, BoxN::new([d(-1, 0, i32::MIN), d(-1, 1, 0)]).unwrap());
+    assert_eq!(right, BoxN::new([d(0, 1, i32::MIN), d(-1, 1, 0)]).unwrap());
+    let mut query = DyadicBudget::new(2, 64);
+    for half in [left, right] {
+        assert_eq!(half.subset_of(&enclosing, &mut query), Ok(true));
+        assert_eq!(half.interior_subset_of(&enclosing, &mut query), Ok(true));
+        assert_eq!(enclosing.subset_of(&half, &mut query), Ok(false));
+    }
+}

@@ -12,6 +12,10 @@ pub(crate) fn compare(
     budget: &mut DyadicBudget,
 ) -> Result<Ordering, IntervalError> {
     budget.reserve(a.bits().max(b.bits()), 1, false)?;
+
+    if e == f {
+        return Ok(a.cmp(b));
+    }
     let sa = a.cmp(&BigInt::zero());
     let sb = b.cmp(&BigInt::zero());
     if sa != sb {

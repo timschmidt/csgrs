@@ -7,6 +7,32 @@ fn interval(lo: i64, hi: i64, exponent: i32) -> DyadicInterval {
 }
 
 #[test]
+
+fn inclusion_and_separation_across_the_entire_exponent_range() {
+    let tiny = interval(-1, 1, i32::MIN);
+    let large = interval(-1, 1, i32::MAX);
+    let positive = interval(1, 1, i32::MAX);
+    let mut budget = DyadicBudget::new(1, 32);
+    assert_eq!(tiny.subset_of(&large, &mut budget), Ok(true));
+    assert_eq!(tiny.interior_subset_of(&large, &mut budget), Ok(true));
+    assert_eq!(large.subset_of(&tiny, &mut budget), Ok(false));
+    assert_eq!(tiny.strictly_left_of(&positive, &mut budget), Ok(true));
+    assert_eq!(positive.strictly_left_of(&tiny, &mut budget), Ok(false));
+    assert_eq!(
+        large.contains_point(&1.into(), i32::MIN, &mut budget),
+        Ok(true)
+    );
+
+    let split = tiny
+        .bisect(&mut DyadicBudget::new(4, 128))
+        .unwrap()
+        .unwrap();
+    for child in split {
+        assert_eq!(child.interior_subset_of(&large, &mut budget), Ok(true));
+    }
+}
+
+#[test]
 fn finite_order_distinguishes_contact_empty_and_exhausted_queries() {
     let a = interval(-3, 8, -2);
     let b = interval(1, 2, 1);
@@ -78,7 +104,6 @@ fn equal_leading_powers_keep_the_lowest_significant_limb() {
         assert_eq!(right.interior_subset_of(&wide, &mut budget), Ok(false));
     }
 }
-
 
 #[test]
 fn zero_endpoint_comparisons_charge_work_at_zero_magnitude_width() {

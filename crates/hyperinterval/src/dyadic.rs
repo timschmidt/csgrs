@@ -739,13 +739,14 @@ impl DyadicInterval {
         }
     }
 
-    /// Exact set inclusion, with explicit alignment accounting.
+    /// Exact set inclusion. Endpoint comparisons share the caller’s budget
+    /// without expanding the intervals to a common grid.
     pub fn subset_of(
         &self,
         other: &Self,
         budget: &mut DyadicBudget,
     ) -> Result<bool, IntervalError> {
-        self.relation(other, budget, false, false)
+        self.included_in(other, budget, false)
     }
 
     /// Exact strict-endpoint inclusion in the real interior; empty is included.
@@ -754,7 +755,7 @@ impl DyadicInterval {
         other: &Self,
         budget: &mut DyadicBudget,
     ) -> Result<bool, IntervalError> {
-        self.relation(other, budget, true, false)
+        self.included_in(other, budget, true)
     }
 
     /// Whether both sets are nonempty and this set lies strictly to the left.
@@ -763,32 +764,35 @@ impl DyadicInterval {
         other: &Self,
         budget: &mut DyadicBudget,
     ) -> Result<bool, IntervalError> {
-        self.relation(other, budget, false, true)
+        let (Some((upper, e)), Some((lower, f))) = (self.upper(), other.lower()) else {
+            return Ok(false);
+        };
+        Ok(crate::dyadic_order::compare(upper, e, lower, f, budget)?.is_lt())
     }
 
-    fn relation(
+    fn included_in(
         &self,
         other: &Self,
         budget: &mut DyadicBudget,
         interior: bool,
-        left: bool,
     ) -> Result<bool, IntervalError> {
-        if self.is_empty() {
-            return Ok(!left);
-        }
-        if other.is_empty() {
+        let Some((lo, hi, e)) = self.bounds() else {
+            return Ok(true);
+        };
+        let Some((lower, upper, f)) = other.bounds() else {
             return Ok(false);
-        }
-        let exponent = self.common_exponent(other);
-        let a = self.align(exponent, budget)?.expect("nonempty input");
-        let b = other.align(exponent, budget)?.expect("nonempty input");
-        Ok(if left {
-            a.as_refs().left_of(b.as_refs())
-        } else if interior {
-            a.as_refs().interior_subset(b.as_refs())
-        } else {
-            a.as_refs().subset(b.as_refs())
-        })
+        };
+        let inside = |order: core::cmp::Ordering| {
+            if interior {
+                order.is_lt()
+            } else {
+                order.is_le()
+            }
+        };
+        Ok(
+            inside(crate::dyadic_order::compare(lower, f, lo, e, budget)?)
+                && inside(crate::dyadic_order::compare(hi, e, upper, f, budget)?),
+        )
     }
 }
 
