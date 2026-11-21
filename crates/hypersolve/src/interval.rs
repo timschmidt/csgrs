@@ -671,24 +671,41 @@ fn interval_box_status(
     if !has_violation && !certification.all_satisfied() {
         return IntervalBoxCertificationStatus::Unknown;
     }
+    // Later bindings of a symbol take precedence, as in the variable lookup below.
+    let radius_by_symbol: HashMap<SymbolId, Real> = variable_balls
+        .iter()
+        .map(|ball| (ball.symbol, ball.radius.clone()))
+        .collect();
     let active_constraints = analysis.constraints().iter().filter(|facts| facts.active);
     for (row, facts) in certification.rows.iter().zip(active_constraints) {
         if has_violation && !row.status.is_certified_violation() {
             continue;
         }
-        let covers_box = matches!(
-            row.status,
-            crate::CertifiedCandidateStatus::BallCertified { .. }
-        ) || facts.residual.dependencies.iter().all(|symbol| {
-            variable_balls
-                .iter()
-                .rev()
-                .find(|ball| ball.symbol == *symbol)
-                .is_none_or(|ball| match ball.radius.immediate_sign() {
-                    Some(sign) => sign == RealSign::Zero,
-                    None => variable_radius_sign(&ball.radius) == Some(Ordering::Equal),
-                })
-        });
+        // An affine residual whose box radius is structurally zero is constant
+        // over the box, so its center evidence covers the whole box. This is
+        // the same test that lets replay skip refining such a row.
+        let constant_over_box = analysis
+            .affine_residuals()
+            .get(row.constraint_index)
+            .and_then(Option::as_ref)
+            .is_some_and(|affine| {
+                affine_box_radius(analysis, affine, &radius_by_symbol).definitely_zero()
+            });
+        let covers_box = constant_over_box
+            || matches!(
+                row.status,
+                crate::CertifiedCandidateStatus::BallCertified { .. }
+            )
+            || facts.residual.dependencies.iter().all(|symbol| {
+                variable_balls
+                    .iter()
+                    .rev()
+                    .find(|ball| ball.symbol == *symbol)
+                    .is_none_or(|ball| match ball.radius.immediate_sign() {
+                        Some(sign) => sign == RealSign::Zero,
+                        None => variable_radius_sign(&ball.radius) == Some(Ordering::Equal),
+                    })
+            });
         if has_violation && covers_box {
             return IntervalBoxCertificationStatus::Violation;
         }
