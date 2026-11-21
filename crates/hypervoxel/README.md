@@ -176,6 +176,11 @@ With `hypermesh-adapter`, `adapt_hypermesh_exact_solid` validates and imports a
 retained Hypermesh solid. It is a conversion boundary, not shared ownership of
 mesh topology.
 
+`FieldEnvelopeFacts::from_envelopes` checks component endpoint order and tensor
+shape before publishing certified aggregate bounds. Malformed records return
+`InvalidFieldEnvelope`; undecided endpoint order returns `UnknownScalarOrdering`.
+Valid incompatible shapes and absent envelopes retain explicit unknown results.
+
 ### Queries and exact surface output
 
 - `voxel_neighbors6`, `select_lod_cells`, `classify_support_mask`,

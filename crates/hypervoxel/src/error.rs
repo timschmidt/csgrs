@@ -31,6 +31,11 @@ pub enum HypervoxelError {
     MismatchedAddressDepth { left: u8, right: u8 },
     /// A certified scalar ordering was required for aggregate bounds.
     UnknownScalarOrdering { field: &'static str },
+    /// Field-envelope storage has inverted bounds or an invalid tensor shape.
+    InvalidFieldEnvelope {
+        /// Human-readable validation failure.
+        reason: &'static str,
+    },
     /// An axis transform does not form a valid signed permutation.
     InvalidAxisPermutation,
     /// A support-mask direction must use axis `0..3` and sign `-1` or `1`.
@@ -89,6 +94,9 @@ impl fmt::Display for HypervoxelError {
             }
             Self::UnknownScalarOrdering { field } => {
                 write!(f, "scalar ordering for {field} could not be certified")
+            }
+            Self::InvalidFieldEnvelope { reason } => {
+                write!(f, "invalid field envelope: {reason}")
             }
             Self::InvalidAxisPermutation => {
                 write!(f, "axis transform is not a valid signed permutation")

@@ -139,30 +139,50 @@ pub struct FieldSampleQuery {
 
 impl FieldEnvelopeFacts {
     /// Builds aggregate facts over vector and tensor envelopes.
+    ///
+    /// Every component must have certified ordered endpoints, and each tensor
+    /// must contain exactly `rows * cols` components without size overflow.
+    /// Public source fields are checked on every call, including the first
+    /// envelope and envelopes with incompatible shapes. Malformed data returns
+    /// `InvalidFieldEnvelope`; an undecided comparison retains
+    /// `UnknownScalarOrdering`. No partial aggregate is published on failure.
     pub fn from_envelopes<'a>(
         vectors: impl IntoIterator<Item = &'a CertifiedVectorInterval>,
         tensors: impl IntoIterator<Item = &'a CertifiedTensorInterval>,
     ) -> HypervoxelResult<Self> {
-        let mut vector_count = 0_usize;
-        let mut tensor_count = 0_usize;
-        let mut incompatible_shapes = 0_usize;
-        let mut vector_interval = None::<CertifiedVectorInterval>;
-        let mut tensor_interval = None::<CertifiedTensorInterval>;
+        let mut facts = Self {
+            vector_count: 0,
+            tensor_count: 0,
+            envelope_count: 0,
+            has_envelopes: false,
+            vector_interval: None,
+            tensor_interval: None,
+            incompatible_shapes: 0,
+            certainty: AggregateCertainty::Unknown,
+            certified_envelope_ready: false,
+        };
 
         for vector in vectors {
-            vector_count += 1;
-            match &mut vector_interval {
+            validate_components(&vector.components)?;
+            facts.vector_count += 1;
+            match &mut facts.vector_interval {
                 Some(current) if current.components.len() == vector.components.len() => {
                     merge_components(&mut current.components, &vector.components)?;
                 }
-                Some(_) => incompatible_shapes += 1,
-                None => vector_interval = Some(vector.clone()),
+                Some(_) => facts.incompatible_shapes += 1,
+                None => facts.vector_interval = Some(vector.clone()),
             }
         }
 
         for tensor in tensors {
-            tensor_count += 1;
-            match &mut tensor_interval {
+            if tensor.rows.checked_mul(tensor.cols) != Some(tensor.components.len()) {
+                return Err(HypervoxelError::InvalidFieldEnvelope {
+                    reason: "tensor dimensions do not match component count",
+                });
+            }
+            validate_components(&tensor.components)?;
+            facts.tensor_count += 1;
+            match &mut facts.tensor_interval {
                 Some(current)
                     if current.rows == tensor.rows
                         && current.cols == tensor.cols
@@ -170,30 +190,20 @@ impl FieldEnvelopeFacts {
                 {
                     merge_components(&mut current.components, &tensor.components)?;
                 }
-                Some(_) => incompatible_shapes += 1,
-                None => tensor_interval = Some(tensor.clone()),
+                Some(_) => facts.incompatible_shapes += 1,
+                None => facts.tensor_interval = Some(tensor.clone()),
             }
         }
 
-        let envelope_count = vector_count + tensor_count;
-        let has_envelopes = envelope_count > 0;
-        let certified_envelope_ready = has_envelopes && incompatible_shapes == 0;
-
-        Ok(Self {
-            vector_count,
-            tensor_count,
-            envelope_count,
-            has_envelopes,
-            vector_interval,
-            tensor_interval,
-            incompatible_shapes,
-            certainty: if certified_envelope_ready {
-                AggregateCertainty::Certified
-            } else {
-                AggregateCertainty::Unknown
-            },
-            certified_envelope_ready,
-        })
+        facts.envelope_count = facts.vector_count + facts.tensor_count;
+        facts.has_envelopes = facts.envelope_count > 0;
+        facts.certified_envelope_ready = facts.has_envelopes && facts.incompatible_shapes == 0;
+        facts.certainty = if facts.certified_envelope_ready {
+            AggregateCertainty::Certified
+        } else {
+            AggregateCertainty::Unknown
+        };
+        Ok(facts)
     }
 }
 
@@ -321,6 +331,22 @@ fn certified_cmp(left: &Real, right: &Real, field: &'static str) -> HypervoxelRe
             Err(HypervoxelError::UnknownScalarOrdering { field })
         }
     }
+}
+
+fn validate_components(components: &[CertifiedFieldInterval]) -> HypervoxelResult<()> {
+    for component in components {
+        if certified_cmp(
+            &component.lower,
+            &component.upper,
+            "vector/tensor component order",
+        )? == Ordering::Greater
+        {
+            return Err(HypervoxelError::InvalidFieldEnvelope {
+                reason: "inverted component interval",
+            });
+        }
+    }
+    Ok(())
 }
 
 fn merge_components(

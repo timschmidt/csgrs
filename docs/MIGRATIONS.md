@@ -40,6 +40,23 @@ retain their meanings.
 solver. These carriers have no native serialization format. Finite successful
 steps retain their existing receipt and operation order.
 
+## Hypervoxel field-envelope admission (unreleased)
+
+`FieldEnvelopeFacts::from_envelopes` now checks every component's exact endpoint
+order and verifies that each tensor's `rows * cols` matches its component count
+without overflow. Reversed components and malformed tensor storage return the
+new `HypervoxelError::InvalidFieldEnvelope` variant. Exhaustive error matches
+must handle that variant. A scalar comparison that cannot certify order still
+returns `UnknownScalarOrdering`; it is not treated as invalid or certified.
+
+This corrects earlier false certification of malformed public records, including
+first envelopes and records whose incompatible shapes would otherwise skip
+merging. Valid incompatible shapes still produce an unknown aggregate; absent
+envelopes remain an absence report. Valid zero-dimensional products remain
+supported. Public source fields remain writable, so each aggregation validates
+the current values. The infallible arithmetic methods on the public scalar/ball
+records are outside this aggregate-boundary repair.
+
 ## Parallel-normal circle and contact SVG replay (2026-11-11)
 
 Version 4 and 5 graph metadata adds tags 41 and 42 for a selected

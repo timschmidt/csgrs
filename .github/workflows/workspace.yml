@@ -127,3 +127,5 @@ jobs:
         run: cargo fmt --all --check
       - name: Test
         run: cargo test --locked
+      - name: Test Hypervoxel owner and adapters
+        run: cargo test --locked -p hypervoxel --all-features
