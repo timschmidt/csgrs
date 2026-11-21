@@ -745,9 +745,7 @@ fn failure_status(
         CertifiedCandidateStatus::LossyAdapterOnly { .. } => {
             Some(FailedConstraintStatus::DidNotConvergeOnly)
         }
-        CertifiedCandidateStatus::BoundedUnknown { .. } => {
-            Some(FailedConstraintStatus::BoundedUnknown)
-        }
+        status if status.is_unknown() => Some(FailedConstraintStatus::BoundedUnknown),
         CertifiedCandidateStatus::DomainFailure { .. }
         | CertifiedCandidateStatus::InvalidBallRadius => {
             Some(FailedConstraintStatus::DomainFailure)

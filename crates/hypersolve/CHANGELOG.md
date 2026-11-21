@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Keep approximate residual-ball receipts out of exact satisfaction summaries.
+  The affine interval-box facade previously promoted approximate receipts,
+  including nonzero equality residuals, to `Certified`. Failed-constraint
+  diagnostics now retain their qualification.
+
 - Add `DomainCheckStatus::Approximate { valid, stage }`. The domain preflight
   previously counted approximate predicate answers as exact domain
   certificates; a negative square-root operand could be `CertifiedValid`.

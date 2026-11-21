@@ -96,7 +96,8 @@ pub enum CertifiedCandidateStatus {
 }
 
 impl CertifiedCandidateStatus {
-    /// Returns whether this row is proved acceptable under its constraint kind.
+    /// Returns whether exact or filtered evidence proves this row acceptable.
+    /// Approximate ball receipts remain available but do not certify a row.
     pub const fn is_certified_satisfied(&self) -> bool {
         matches!(
             self,
@@ -104,18 +105,20 @@ impl CertifiedCandidateStatus {
                 | Self::CertifiedSatisfiedInequality { .. }
                 | Self::BallCertified {
                     satisfied: true,
+                    certainty: Certainty::Exact | Certainty::Filtered,
                     ..
                 }
         )
     }
 
-    /// Returns whether this row is proved unacceptable.
+    /// Returns whether exact or filtered evidence proves this row unacceptable.
     pub const fn is_certified_violation(&self) -> bool {
         matches!(
             self,
             Self::CertifiedViolation { .. }
                 | Self::BallCertified {
                     satisfied: false,
+                    certainty: Certainty::Exact | Certainty::Filtered,
                     ..
                 }
         )
@@ -125,7 +128,12 @@ impl CertifiedCandidateStatus {
     pub const fn is_unknown(&self) -> bool {
         matches!(
             self,
-            Self::BoundedUnknown { .. } | Self::LossyAdapterOnly { .. }
+            Self::BoundedUnknown { .. }
+                | Self::LossyAdapterOnly { .. }
+                | Self::BallCertified {
+                    certainty: Certainty::Approximate,
+                    ..
+                }
         )
     }
 
