@@ -13,7 +13,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PredicatePolicy, compare_reals};
+use hyperlimit::{Certainty, Escalation, PredicateOutcome, PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::eval::EvaluationContext;
@@ -53,6 +53,16 @@ pub enum DomainCheckStatus {
     CertifiedValid,
     /// The domain condition was proved false.
     CertifiedInvalid,
+    /// A policy-authorized approximation decided the domain condition.
+    ///
+    /// This retains `Certainty::Approximate`; it is not a validity or
+    /// invalidity proof and does not contribute to the certified counters.
+    Approximate {
+        /// Whether the approximate decision accepts the domain condition.
+        valid: bool,
+        /// Predicate stage that supplied the approximate decision.
+        stage: Escalation,
+    },
     /// The exact comparison was not decidable under the supplied policy.
     Unknown,
     /// A required candidate symbol was not bound.
@@ -81,6 +91,11 @@ impl DomainCheckStatus {
     /// Returns whether this status leaves the domain condition unresolved.
     pub const fn is_unknown(&self) -> bool {
         matches!(self, Self::Unknown)
+    }
+
+    /// Returns whether this status retains a policy-authorized approximation.
+    pub const fn is_approximate(&self) -> bool {
+        matches!(self, Self::Approximate { .. })
     }
 }
 
@@ -127,6 +142,17 @@ impl CandidateDomainReport {
     /// Returns true when at least one check proves a domain violation.
     pub fn has_certified_invalid_domain(&self) -> bool {
         self.certified_invalid_checks > 0
+    }
+
+    /// Count qualified approximate answers, separately from proofs and unknowns.
+    ///
+    /// Together with the four stored status counters this accounts for every
+    /// emitted check. Approximate answers never satisfy the certification queries.
+    pub fn approximate_checks(&self) -> usize {
+        self.checks
+            .iter()
+            .filter(|check| check.status.is_approximate())
+            .count()
     }
 }
 
@@ -465,68 +491,86 @@ fn classify_domain_value(
     kind: DomainCheckKind,
     policy: PredicatePolicy,
 ) -> DomainCheckStatus {
-    match kind {
+    let outcome = match kind {
         DomainCheckKind::DivisionDenominatorNonZero
         | DomainCheckKind::NegativePowerBaseNonZero
         | DomainCheckKind::ZeroPowerBaseNonZero => {
-            match compare_reals(value, &Real::zero(), policy).value() {
-                Some(Ordering::Less | Ordering::Greater) => DomainCheckStatus::CertifiedValid,
-                Some(Ordering::Equal) => DomainCheckStatus::CertifiedInvalid,
-                None => DomainCheckStatus::Unknown,
-            }
+            domain_comparison(compare_reals(value, &Real::zero(), policy), |order| {
+                order != Ordering::Equal
+            })
         }
         DomainCheckKind::SqrtOperandNonNegative => {
-            match compare_reals(value, &Real::zero(), policy).value() {
-                Some(Ordering::Equal | Ordering::Greater) => DomainCheckStatus::CertifiedValid,
-                Some(Ordering::Less) => DomainCheckStatus::CertifiedInvalid,
-                None => DomainCheckStatus::Unknown,
-            }
+            domain_comparison(compare_reals(value, &Real::zero(), policy), |order| {
+                order != Ordering::Less
+            })
         }
         DomainCheckKind::Log10OperandPositive | DomainCheckKind::LnOperandPositive => {
-            match compare_reals(value, &Real::zero(), policy).value() {
-                Some(Ordering::Greater) => DomainCheckStatus::CertifiedValid,
-                Some(Ordering::Less | Ordering::Equal) => DomainCheckStatus::CertifiedInvalid,
-                None => DomainCheckStatus::Unknown,
-            }
+            domain_comparison(compare_reals(value, &Real::zero(), policy), |order| {
+                order == Ordering::Greater
+            })
         }
         DomainCheckKind::AsinOperandInClosedUnitInterval
         | DomainCheckKind::AcosOperandInClosedUnitInterval => {
             classify_closed_unit_interval(value, policy)
         }
         DomainCheckKind::AcoshOperandAtLeastOne => {
-            match compare_reals(value, &Real::one(), policy).value() {
-                Some(Ordering::Equal | Ordering::Greater) => DomainCheckStatus::CertifiedValid,
-                Some(Ordering::Less) => DomainCheckStatus::CertifiedInvalid,
-                None => DomainCheckStatus::Unknown,
-            }
+            domain_comparison(compare_reals(value, &Real::one(), policy), |order| {
+                order != Ordering::Less
+            })
         }
         DomainCheckKind::AtanhOperandInOpenUnitInterval => {
             classify_open_unit_interval(value, policy)
         }
+    };
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty: Certainty::Approximate,
+            stage,
+        } => DomainCheckStatus::Approximate {
+            valid: value,
+            stage,
+        },
+        PredicateOutcome::Decided { value: true, .. } => DomainCheckStatus::CertifiedValid,
+        PredicateOutcome::Decided { value: false, .. } => DomainCheckStatus::CertifiedInvalid,
+        PredicateOutcome::Unknown { .. } => DomainCheckStatus::Unknown,
     }
 }
 
-fn classify_closed_unit_interval(value: &Real, policy: PredicatePolicy) -> DomainCheckStatus {
-    let lower = compare_reals(value, &(-Real::one()), policy).value();
-    let upper = compare_reals(value, &Real::one(), policy).value();
-    match (lower, upper) {
-        (Some(Ordering::Less), _) | (_, Some(Ordering::Greater)) => {
-            DomainCheckStatus::CertifiedInvalid
-        }
-        (Some(Ordering::Equal | Ordering::Greater), Some(Ordering::Less | Ordering::Equal)) => {
-            DomainCheckStatus::CertifiedValid
-        }
-        _ => DomainCheckStatus::Unknown,
+fn domain_comparison(
+    outcome: PredicateOutcome<Ordering>,
+    accepts: impl FnOnce(Ordering) -> bool,
+) -> PredicateOutcome<bool> {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(accepts(value), certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
 }
 
-fn classify_open_unit_interval(value: &Real, policy: PredicatePolicy) -> DomainCheckStatus {
-    let lower = compare_reals(value, &(-Real::one()), policy).value();
-    let upper = compare_reals(value, &Real::one(), policy).value();
-    match (lower, upper) {
-        (Some(Ordering::Greater), Some(Ordering::Less)) => DomainCheckStatus::CertifiedValid,
-        (Some(Ordering::Less | Ordering::Equal), _)
-        | (_, Some(Ordering::Equal | Ordering::Greater)) => DomainCheckStatus::CertifiedInvalid,
-        _ => DomainCheckStatus::Unknown,
-    }
+fn classify_closed_unit_interval(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<bool> {
+    let lower = domain_comparison(compare_reals(value, &(-Real::one()), policy), |order| {
+        order != Ordering::Less
+    });
+    let upper = domain_comparison(compare_reals(value, &Real::one(), policy), |order| {
+        order != Ordering::Greater
+    });
+    lower.and(upper)
 }
+
+fn classify_open_unit_interval(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<bool> {
+    let lower = domain_comparison(compare_reals(value, &(-Real::one()), policy), |order| {
+        order == Ordering::Greater
+    });
+    let upper = domain_comparison(compare_reals(value, &Real::one(), policy), |order| {
+        order == Ordering::Less
+    });
+    lower.and(upper)
+}
+
+#[cfg(test)]
+#[path = "domain_certification/tests.rs"]
+mod tests;

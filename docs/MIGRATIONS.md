@@ -1,5 +1,30 @@
 # Migrations
 
+## Hypersolve domain certainty (2026-11-20)
+
+This repairs a domain
+preflight bug that discarded `PredicateOutcome` certainty and could report an
+approximate equality as `CertifiedValid` or `CertifiedInvalid`.
+
+`DomainCheckStatus::Approximate { valid, stage }` now preserves that answer with
+its `Certainty::Approximate` qualification and predicate escalation stage.
+Exhaustive status matches must handle the added variant. It is neither an exact
+proof nor an undecided predicate. Exact and filtered decisions keep their
+existing certified variants; strict uncertainty and evaluation failures keep
+their existing variants.
+
+Approximate checks are excluded from the certified, unknown and failure
+counters. `CandidateDomainReport::approximate_checks()` counts them on demand;
+adding this value to the four stored status counters accounts for every check
+returned by the preflight. `all_checks_certified_valid()` and
+`has_certified_invalid_domain()` continue to query proofs, so a qualified
+approximate answer cannot make either query true on its own. Callers needing
+an exact domain proof must not consume the approximate `valid` flag as one.
+
+No function is renamed, and these reports have no native or serde codec to
+migrate. Expression traversal and lower-before-upper predicate order are
+preserved.
+
 ## Parallel-normal circle and contact SVG replay (2026-11-11)
 
 Version 4 and 5 graph metadata adds tags 41 and 42 for a selected

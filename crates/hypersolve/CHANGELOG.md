@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Add `DomainCheckStatus::Approximate { valid, stage }`. The domain preflight
+  previously counted approximate predicate answers as exact domain
+  certificates; a negative square-root operand could be `CertifiedValid`.
+  See [the migration note](../../docs/MIGRATIONS.md).
+
 - Evaluate each `finite_difference_jacobian` column at the variable's context
   binding. A rebound free variable previously stepped from its model value, so
   `x²` bound at 3 with model value 1 and step 1 gave −5 instead of 7.
