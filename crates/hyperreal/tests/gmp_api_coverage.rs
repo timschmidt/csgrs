@@ -10,6 +10,7 @@ use std::{collections::BTreeSet, fs, path::Path};
 const NO_GMP_ANALOG: &[&str] = &[
     // Cancellation and formatting-framework hooks.
     "abort",
+    "abort_signal",
     "approx_signal",
     "approximate",
     "decimal",

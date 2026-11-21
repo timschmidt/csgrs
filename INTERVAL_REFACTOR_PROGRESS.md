@@ -15119,7 +15119,11 @@ Hosted CI on `3b18f872f` exposed two further gaps.
   abort-signal repair above. On macOS AArch64, an unqualified strict-float
   target, `boundary_composition` now asserts the typed
   `UnqualifiedEnvironment` refusal for scalar ingress, instead of unwrapping
-  it. Rust 1.100 std on `wasm32-wasip1` links wasi-libc's timed rwlock wait,
+  it. `dyadic_float_egress::no_exact_real_dispatch` likewise expects the
+  refusal there, and still requires an empty dispatch trace. The new
+  `Real::abort_signal` accessor is classified with `abort` in the GMP API
+  coverage audit, since GMP has no cancellation hooks. Rust 1.100 std on
+  `wasm32-wasip1` links wasi-libc's timed rwlock wait,
   which imports `clock_time_get`. The strict-float WebAssembly harness now
   accepts that import for std clients.
 * The WASI Preview 1 Hypersolve job aborted on two accepted

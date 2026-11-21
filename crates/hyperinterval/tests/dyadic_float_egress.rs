@@ -170,9 +170,21 @@ cases!(binary64, F64Enclosure, f64, u64, 52, 1023, round_f64);
 fn no_exact_real_dispatch() {
     let source = DyadicInterval::new(3.into(), 7.into(), -5).unwrap();
     hyperreal::dispatch_trace::reset();
+    // Unqualified backends refuse egress, and the refusal must not dispatch
+    // through exact reals either.
     hyperreal::dispatch_trace::with_recording(|| {
-        F32Enclosure::from_dyadic(&source, &mut budget()).unwrap();
-        F64Enclosure::from_dyadic(&source, &mut budget()).unwrap();
+        let single = F32Enclosure::from_dyadic(&source, &mut budget());
+        let double = F64Enclosure::from_dyadic(&source, &mut budget());
+        if F32Enclosure::backend_supported() {
+            single.unwrap();
+        } else {
+            assert_eq!(single, Err(IntervalError::UnqualifiedEnvironment));
+        }
+        if F64Enclosure::backend_supported() {
+            double.unwrap();
+        } else {
+            assert_eq!(double, Err(IntervalError::UnqualifiedEnvironment));
+        }
     });
     assert!(hyperreal::dispatch_trace::take_trace().dispatch.is_empty());
 }
