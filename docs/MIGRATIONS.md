@@ -57,6 +57,15 @@ supported. Public source fields remain writable, so each aggregation validates
 the current values. The infallible arithmetic methods on the public scalar/ball
 records are outside this aggregate-boundary repair.
 
+## Unsigned voxel occupancy counts (unreleased)
+
+Hypervoxel preserves the full unsigned range when converting logical occupancy
+counts to exact fractions. On 64-bit targets, a filled depth-21 compressed
+subtree now reports occupancy 1 rather than -1. Counts, certainty, and public
+method signatures are unchanged. Valid lower-count inputs retain their exact
+results; zero total still reports an unknown unit interval. This fixes count
+conversion, not validation of inconsistent count triples or public mutations.
+
 ## Parallel-normal circle and contact SVG replay (2026-11-11)
 
 Version 4 and 5 graph metadata adds tags 41 and 42 for a selected

@@ -95,12 +95,8 @@ impl VoxelOccupancyInterval {
             (Real::from(0), Real::from(1), AggregateCertainty::Unknown)
         } else {
             (
-                Rational::fraction(definite_filled_cells as i64, total_cells as u64)
-                    .expect("positive aggregate denominator")
-                    .into(),
-                Rational::fraction(possible_occupied_cells as i64, total_cells as u64)
-                    .expect("positive aggregate denominator")
-                    .into(),
+                occupancy_fraction(definite_filled_cells, total_cells),
+                occupancy_fraction(possible_occupied_cells, total_cells),
                 certainty,
             )
         };
@@ -118,6 +114,18 @@ impl VoxelOccupancyInterval {
     pub fn is_point_interval(&self) -> bool {
         self.lower == self.upper
     }
+}
+
+// A compressed subtree can represent 2^63 logical cells without allocating them.
+// Keep the existing small-count constructor; larger unsigned numerators must not
+// be reinterpreted as negative signed integers.
+fn occupancy_fraction(cells: usize, total: usize) -> Real {
+    match i64::try_from(cells) {
+        Ok(numerator) => Rational::fraction(numerator, total as u64),
+        Err(_) => Rational::from_bigint_fraction(cells.into(), total.into()),
+    }
+    .expect("positive aggregate denominator")
+    .into()
 }
 
 impl VoxelAggregateFacts {
