@@ -7472,6 +7472,10 @@ mod tests {
             BivariatePolynomial::new(vec![vec![real(1), real(0)], vec![real(0), real(1)]]);
         let scale = resultant.coefficients[0][0].clone();
         assert_ne!(scale, Real::zero());
+        #[allow(
+            clippy::needless_range_loop,
+            reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+        )]
         for first_power in 0..2 {
             for second_power in 0..2 {
                 let actual = resultant

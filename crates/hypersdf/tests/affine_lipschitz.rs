@@ -56,6 +56,10 @@ fn exact_similarities_axis_scales_and_shears_transport_the_bound() {
         (ratio(1, 2), Real::from(2)),
     ] {
         let mut m = Matrix4::identity();
+        #[allow(
+            clippy::needless_range_loop,
+            reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+        )]
         for i in 0..3 {
             m.0[i][i] = scale.clone();
         }
@@ -110,6 +114,10 @@ fn nesting_constants_and_raw_inverse_fields_keep_exact_composition() {
         Real::zero()
     );
     let mut inverse = Matrix4::identity();
+    #[allow(
+        clippy::needless_range_loop,
+        reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+    )]
     for r in 0..3 {
         for c in 0..3 {
             inverse.0[r][c] = Real::zero();

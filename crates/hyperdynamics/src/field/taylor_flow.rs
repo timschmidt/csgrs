@@ -195,6 +195,10 @@ impl<const N: usize> ExpressionField<N> {
                         .expect("requested partial")]
                 };
                 let mut sum = partial(0);
+                #[allow(
+                    clippy::needless_range_loop,
+                    reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+                )]
                 for state in 0..N {
                     budget.graph.charge(2)?;
                     let product = definition.nodes.len();

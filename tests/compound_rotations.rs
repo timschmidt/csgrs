@@ -43,6 +43,10 @@ fn assert_unit_cube(mesh: &TriangleMesh) {
                             Sign::Positive
                         }
                     );
+                    #[allow(
+                        clippy::needless_range_loop,
+                        reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+                    )]
                     for other in 0..3 {
                         if other != axis {
                             assert_eq!(strict_sign(&normal.0[other]), Sign::Zero);

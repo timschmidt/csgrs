@@ -247,6 +247,10 @@ impl TaylorPolynomialModel {
                 context.graph.charge(count)?;
                 inputs.extend(stage.outputs.iter().cloned());
             } else {
+                #[allow(
+                    clippy::needless_range_loop,
+                    reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+                )]
                 for output in 0..count {
                     context.graph.charge(1)?;
                     context.reserve(2)?;

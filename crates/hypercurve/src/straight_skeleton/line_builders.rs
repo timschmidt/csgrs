@@ -739,6 +739,10 @@ pub(super) fn relocate_split_candidate(
             if previous != stable.left_source_edge || current != stable.right_source_edge {
                 continue;
             }
+            #[allow(
+                clippy::needless_range_loop,
+                reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+            )]
             for target_edge in 0..count {
                 if cycle.source_edges[target_edge] != stable.hit_source_edge
                     || target_edge == vertex

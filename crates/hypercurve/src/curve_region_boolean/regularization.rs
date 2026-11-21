@@ -1625,6 +1625,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             && self.has_simple_single_loop_vertex_walk(topology)
     }
 
+    #[allow(
+        clippy::needless_bool,
+        reason = "Clippy 1.100 extended this lint; the early return is kept so generated code is unchanged"
+    )]
     fn has_simple_single_loop_carriers(&self, topology: &CurveRegionSplitTopology) -> bool {
         if self.data.first.boundary_loops().len() != 1
             || self.data.carriers.is_empty()

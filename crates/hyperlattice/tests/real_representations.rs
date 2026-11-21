@@ -344,6 +344,10 @@ fn every_real_certificate_crosses_every_lattice_carrier() {
             * Matrix3::diagonal_inverse(diagonal_entries)
                 .expect("all diagonal entries are nonzero");
         for row in 0..3 {
+            #[allow(
+                clippy::needless_range_loop,
+                reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+            )]
             for column in 0..3 {
                 assert_same_real(
                     &matrix3_round_trip[row][column],

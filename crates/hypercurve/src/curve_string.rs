@@ -550,6 +550,10 @@ impl CurveString2 {
         }
 
         let mut trimmed_segments = Vec::new();
+        #[allow(
+            clippy::needless_range_loop,
+            reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+        )]
         for source_segment_index in start.segment_index..=end.segment_index {
             let range_start = if source_segment_index == start.segment_index {
                 start.param.clone()
@@ -870,6 +874,10 @@ impl CurveString2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let mut trimmed_segments = Vec::new();
+        #[allow(
+            clippy::needless_range_loop,
+            reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+        )]
         for source_segment_index in start.trim_point.segment_index..=end.trim_point.segment_index {
             let range_start = if source_segment_index == start.trim_point.segment_index {
                 start.trim_point.param.clone()
