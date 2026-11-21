@@ -317,61 +317,67 @@ pub fn certify_candidate_with_residual_balls(
         let Some(row) = rows.get_mut(ball.active_row) else {
             continue;
         };
-        let Some(center) = row.signed_residual.as_ref() else {
-            continue;
-        };
-        // A rounded zero cannot prove a violation of an open half-line.
-        let ball_policy = if row.kind == ConstraintKind::GreaterThan {
-            policy.certified_only()
-        } else {
-            policy
-        };
-        let status = match classify_ball_sign(center, &ball.radius, ball_policy) {
-            hyperlimit::PredicateOutcome::Decided {
-                value: Sign::Zero,
-                certainty,
-                ..
-            } => CertifiedCandidateStatus::BallCertified {
-                sign: RealSign::Zero,
-                certainty,
-                satisfied: row.kind != ConstraintKind::GreaterThan,
-            },
-            hyperlimit::PredicateOutcome::Decided {
-                value: Sign::Positive,
-                certainty,
-                ..
-            } => CertifiedCandidateStatus::BallCertified {
-                sign: RealSign::Positive,
-                certainty,
-                satisfied: false,
-            },
-            hyperlimit::PredicateOutcome::Decided {
-                value: Sign::Negative,
-                certainty,
-                ..
-            } => CertifiedCandidateStatus::BallCertified {
-                sign: RealSign::Negative,
-                certainty,
-                satisfied: matches!(
-                    row.kind,
-                    ConstraintKind::LessOrEqual
-                        | ConstraintKind::GreaterOrEqual
-                        | ConstraintKind::GreaterThan
-                ),
-            },
-            hyperlimit::PredicateOutcome::Unknown {
-                needed: hyperlimit::RefinementNeed::Unsupported,
-                ..
-            } => CertifiedCandidateStatus::InvalidBallRadius,
-            hyperlimit::PredicateOutcome::Unknown { .. } => {
-                CertifiedCandidateStatus::BoundedUnknown {
-                    min_precision: CandidateCertificationConfig::default().min_precision,
-                }
-            }
-        };
-        row.status = status;
+        apply_residual_ball(row, &ball.radius, policy);
     }
     report_from_rows(rows)
+}
+
+pub(crate) fn apply_residual_ball(
+    row: &mut CertifiedCandidateRow,
+    radius: &Real,
+    policy: PredicatePolicy,
+) {
+    let Some(center) = row.signed_residual.as_ref() else {
+        return;
+    };
+    // A rounded zero cannot prove a violation of an open half-line.
+    let ball_policy = if row.kind == ConstraintKind::GreaterThan {
+        policy.certified_only()
+    } else {
+        policy
+    };
+    let status = match classify_ball_sign(center, radius, ball_policy) {
+        hyperlimit::PredicateOutcome::Decided {
+            value: Sign::Zero,
+            certainty,
+            ..
+        } => CertifiedCandidateStatus::BallCertified {
+            sign: RealSign::Zero,
+            certainty,
+            satisfied: row.kind != ConstraintKind::GreaterThan,
+        },
+        hyperlimit::PredicateOutcome::Decided {
+            value: Sign::Positive,
+            certainty,
+            ..
+        } => CertifiedCandidateStatus::BallCertified {
+            sign: RealSign::Positive,
+            certainty,
+            satisfied: false,
+        },
+        hyperlimit::PredicateOutcome::Decided {
+            value: Sign::Negative,
+            certainty,
+            ..
+        } => CertifiedCandidateStatus::BallCertified {
+            sign: RealSign::Negative,
+            certainty,
+            satisfied: matches!(
+                row.kind,
+                ConstraintKind::LessOrEqual
+                    | ConstraintKind::GreaterOrEqual
+                    | ConstraintKind::GreaterThan
+            ),
+        },
+        hyperlimit::PredicateOutcome::Unknown {
+            needed: hyperlimit::RefinementNeed::Unsupported,
+            ..
+        } => CertifiedCandidateStatus::InvalidBallRadius,
+        hyperlimit::PredicateOutcome::Unknown { .. } => CertifiedCandidateStatus::BoundedUnknown {
+            min_precision: CandidateCertificationConfig::default().min_precision,
+        },
+    };
+    row.status = status;
 }
 
 fn normalize_residual(value: Real, kind: ConstraintKind) -> Real {
@@ -434,4 +440,38 @@ fn report_from_rows(rows: Vec<CertifiedCandidateRow>) -> CandidateCertificationR
         ));
     }
     report
+}
+
+pub(crate) fn recompute_report_counts(report: &mut CandidateCertificationReport) {
+    report.certified_satisfied_rows = report
+        .rows
+        .iter()
+        .filter(|row| row.status.is_certified_satisfied())
+        .count();
+    report.certified_violation_rows = report
+        .rows
+        .iter()
+        .filter(|row| row.status.is_certified_violation())
+        .count();
+    report.bounded_unknown_rows = report
+        .rows
+        .iter()
+        .filter(|row| row.status.is_unknown())
+        .count();
+    report.lossy_adapter_only_rows = report
+        .rows
+        .iter()
+        .filter(|row| row.status.is_lossy_adapter_only())
+        .count();
+    report.domain_failure_rows = report
+        .rows
+        .iter()
+        .filter(|row| {
+            matches!(
+                row.status,
+                CertifiedCandidateStatus::DomainFailure { .. }
+                    | CertifiedCandidateStatus::InvalidBallRadius
+            )
+        })
+        .count();
 }

@@ -539,15 +539,7 @@ pub fn certify_affine_interval_candidate(
             continue;
         }
         if let Some(affine) = &analysis.affine_residuals()[constraint_index] {
-            let mut radius = Real::zero();
-            for (column, coefficient) in affine.coefficients().iter().enumerate() {
-                let variable = &analysis.problem().variables[column];
-                let Some(variable_radius) = radius_by_symbol.get(&variable.symbol) else {
-                    continue;
-                };
-                let coefficient_abs = abs_real(coefficient);
-                radius += coefficient_abs * variable_radius.clone();
-            }
+            let radius = affine_box_radius(analysis, affine, &radius_by_symbol);
             residual_balls.push(CandidateResidualBall { active_row, radius });
         }
         active_row += 1;
@@ -562,6 +554,23 @@ pub fn certify_affine_interval_candidate(
         &residual_balls,
         policy,
     ))
+}
+
+fn affine_box_radius(
+    analysis: &ProblemAnalysis<'_>,
+    affine: &crate::AffineResidual,
+    radius_by_symbol: &HashMap<SymbolId, Real>,
+) -> Real {
+    let mut radius = Real::zero();
+    for (column, coefficient) in affine.coefficients().iter().enumerate() {
+        let variable = &analysis.problem().variables[column];
+        let Some(variable_radius) = radius_by_symbol.get(&variable.symbol) else {
+            continue;
+        };
+        let coefficient_abs = abs_real(coefficient);
+        radius += coefficient_abs * variable_radius.clone();
+    }
+    radius
 }
 
 /// Certify a candidate interval box and retain the proof payload.
@@ -1255,7 +1264,8 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
 ///
 /// The resulting residual ball is then certified by the same `hyperlimit`
 /// ball-sign filter as affine interval replay. Missing variable radii are
-/// treated as zero-radius variables, so callers can use this as a strict point
+/// treated as zero-radius variables. Retained affine rows use their exact linear
+/// image over the same box, so callers can use this as a strict point
 /// replay with optional local proof radii.
 pub fn certify_quadratic_interval_candidate(
     analysis: &ProblemAnalysis<'_>,
@@ -1303,18 +1313,18 @@ pub fn certify_quadratic_interval_candidate(
         active_row += 1;
     }
 
-    if residual_balls.is_empty() {
-        return Ok(certify_candidate(analysis, context));
-    }
-    Ok(certify_candidate_with_residual_balls(
+    Ok(certify_mixed_degree_balls(
         analysis,
         context,
         &residual_balls,
+        &radius_by_symbol,
         policy,
     ))
 }
 
 /// Certify a candidate using multivariate quadratic interval enclosures.
+///
+/// Retained affine rows use their exact linear image over the supplied box.
 ///
 /// This extends [`certify_quadratic_interval_candidate`] from single-symbol
 /// rows to retained cross terms. For a quadratic residual form
@@ -1409,13 +1419,11 @@ pub fn certify_multivariate_quadratic_interval_candidate(
         active_row += 1;
     }
 
-    if residual_balls.is_empty() {
-        return Ok(certify_candidate(analysis, context));
-    }
-    Ok(certify_candidate_with_residual_balls(
+    Ok(certify_mixed_degree_balls(
         analysis,
         context,
         &residual_balls,
+        &radius_by_symbol,
         policy,
     ))
 }
@@ -1429,6 +1437,39 @@ fn variable_radius_sign(radius: &Real) -> Option<Ordering> {
         Some(RealSign::Negative) => Some(Ordering::Less),
         None => compare_reals(radius, &Real::zero(), PredicatePolicy::STRICT).value(),
     }
+}
+
+// Preserve the existing quadratic receipts. An affine row with a varying
+// residual needs evidence for the whole interval, even if its center is zero.
+fn certify_mixed_degree_balls(
+    analysis: &ProblemAnalysis<'_>,
+    context: &EvaluationContext,
+    quadratic_balls: &[CandidateResidualBall],
+    radii: &HashMap<SymbolId, Real>,
+    policy: PredicatePolicy,
+) -> crate::CandidateCertificationReport {
+    let mut report = if quadratic_balls.is_empty() {
+        certify_candidate(analysis, context)
+    } else {
+        certify_candidate_with_residual_balls(analysis, context, quadratic_balls, policy)
+    };
+    if radii.is_empty() || analysis.facts().affine_form_active_rows == 0 {
+        return report;
+    }
+    let mut changed = false;
+    for row in &mut report.rows {
+        if let Some(affine) = &analysis.affine_residuals()[row.constraint_index] {
+            let radius = affine_box_radius(analysis, affine, radii);
+            if !radius.definitely_zero() {
+                crate::certification::apply_residual_ball(row, &radius, policy.certified_only());
+                changed = true;
+            }
+        }
+    }
+    if changed {
+        crate::certification::recompute_report_counts(&mut report);
+    }
+    report
 }
 
 fn validate_variable_balls(
