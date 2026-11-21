@@ -14990,3 +14990,113 @@ branch. Its additional changes are cost optimizations, not needed for
 correctness, and its RELRO padding finding is unchanged. Callers no
 longer need `PredicatePolicy::STRICT` as a workaround for this certifier.
 [Proof scope](docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)
+
+## Outstanding candidates resolved, 21 November 2026
+
+At the user's request every outstanding candidate was evaluated and either
+accepted or discarded. Four read-only reviews covered all 67 unmerged review
+branches. Each checked the ledger and the tip for landed equivalents. The
+rule applied is the governing order. A repair of an exactness,
+certainty, completeness or declared-resource defect is accepted when it was
+held only on lower-ranked stack, size, padding or timing costs. Those costs
+remain as previously recorded. They were not re-measured for this
+integration and are accepted as the price of the repair. Optimizations,
+refactors and extractions held on measured regressions are discarded.
+
+Accepted on the interval branch, with the defect each repairs:
+
+| Commit | Source | Defect repaired |
+| --- | --- | --- |
+| `454550ae9` | `9268e4371` | A rebound Jacobian column for `x²` at 3 gave −5 instead of 7 |
+| `ac6007f0e` | `21b794649` | Approximate domain answers counted as exact; a negative sqrt operand was `CertifiedValid` |
+| `d53bc8720` | `aad7409a5` | Approximate residual receipts became exact satisfaction and `Certified` boxes |
+| `4d39b1209` | `e4d27cc62` | Normal equations and BFGS returned successful NaN steps |
+| `9905d08d1` | `4e7c83c61` | AABB-sphere decisions dropped approximate axis receipts |
+| `b47e0f818` | `200a3ecf9` | Reversed bounds or malformed tensors produced certified voxel envelope facts |
+| `128db8e44` | reapplies `3f32da7ae` | Fused `sum_products` published `256 − x²` under a nine-bit limit |
+| `7b01fc7ab` | `7f24fbb65` | Voxel occupancy counts above 2^63 wrapped; a full depth-21 subtree reported −1 |
+| `8826689de` | `769938b87` | `x ≥ 0` with weight 2 at −3 gave Jacobian +2 instead of −2; negative underflow lost its sign |
+| `12a5bcc09` | `cce4eb9f9` | Axis projection certified a negative absolute derivative under `APPROXIMATE_512` |
+| `d51d7643b` | `ff3632485` | Zero dyadic comparisons were refused under a zero-bit cap despite sufficient work |
+| `358c0036f` | `63e798155` | Finite inclusion across the exponent range was refused as exhausted |
+| `8346b343e` | `0988ec1d9` | Refused monotone images still performed unadmitted reduction work |
+| `85b155ace` | `4f05060aa` | Closed rational balls were unresolved at exact endpoints |
+| `004151550` | `d4816b5f2`, `c799e8acb`, `1abfbc3fc` | A cancelled scope published `Ok(value)` |
+| `1fa941889` | `b44486e25`, `88beac671` | Box verdicts came from center-only rows; `x³ = 0` was `Certified` on [−1, 1] |
+| `b74ad2851` … `b22df7250` | `interval-g1-box-composition` | A zero tangent passed as an oriented G1 join; 36 of 120 G1 box verdicts were wrong |
+
+Alumina Interface `f3916f3` encodes the new `ConstraintKind::GreaterThan`
+as schedule-evidence tag 4. Existing tags and canonical bytes are unchanged.
+Every newly reachable witness fails before its repair and passes after it,
+where the witness can compile without the new API. API-gated witnesses
+rely on the reproductions recorded in their original entries.
+`4939d05f2` adds the composed solver-chain contract test. `8b3a38904`
+replaces the stale center-only caveat on `certify_interval_box_candidate`.
+
+Declined: `7e881ac12`, abort-signal propagation through rational
+translations. The values it affects are correct, and it adds 10.79% to
+Hyperreal's generic add/sub path. That is a material hot-path cost without
+an exactness gain. Its witness in `real_ball_boundary.rs` is `#[ignore]`
+with the reason recorded, so the gap stays visible.
+
+Discarded, all preserved as refs, not deleted:
+
+- Unmerged review branches were moved to `refs/interval-unaccepted/branches/<name>`
+  (67 in CSGRS, 2 in Interface, 1 in firmware). Eighteen branches already
+  contained in the interval branch were deleted.
+- The dynamics extraction stacks, trace-materialization experiments,
+  sharing and inlining variants, alternative proofs of accepted repairs and
+  the firmware inverse-Clarke halving change remain archived. The halving
+  change gives identical values and changes only timing.
+- The 21 remaining worktrees with uncommitted state were snapshotted
+  byte-for-byte as `refs/interval-unaccepted/worktree-<name>-20261121`.
+  Tracked and untracked contents were verified, then the worktrees were
+  removed. They were earlier states of the archived path-dynamics extraction
+  or Alumina migration scaffolding whose delegations are already on the tips.
+
+Composing the whole-box scope check with the G1 composition exposed one
+interaction, which `a3c220ccf` repairs. An axial cross product depends on
+the box variable syntactically, but its affine residual has a structurally
+zero box radius. Replay skips refining such a row, so its evidence stayed
+center-only and valid G1 boxes returned `Unknown`. A row with zero affine
+box radius is constant over the box and now covers it. The test is the
+same one replay uses to skip refinement.
+
+Local validation on the final revision used Rust 1.99 release builds with
+all features. Every listed suite passed:
+
+| Crate | Passed | Ignored |
+| --- | --- | --- |
+| Hyperreal | 1,400 | — |
+| Hyperinterval | 329 | 1 (recorded gap) |
+| Hyperlattice Interval | 99 | — |
+| Hyperlimit | 384 | — |
+| Hypersolve | 1,592 | — |
+| Hypersdf | 187 | — |
+| Hyperdynamics | 161 | — |
+| Hyperpath | 455 | — |
+| Hypercircuit | 365 | — |
+| Hyperphysics | 84 | — |
+| Hypervoxel, owner `--all-features` | 99 | — |
+| Hypervoxel, workspace default | 106 | — |
+| Alumina Interface workspace | 400 | — |
+| Alumina firmware, `cargo +1.88.0 test` | 604 | — |
+
+Strict Clippy passed for every changed CSGRS crate, Hypervoxel, the Interface
+native and WASM targets, and firmware on Rust 1.88. Formatting and rustdoc
+with `-D warnings` also passed.
+
+Hypercurve passed all but one test. The heap-retention test
+`cancelled_stalled_stroke_releases_its_temporary_heap` failed in two of three
+runs on the final revision. With the previous `work_budget.rs` restored it
+failed in one of three runs, retaining 32,648 of 1,085,328 bytes against a
+1% limit. It is a pre-existing, timing-dependent flake. Today's cancellation
+check did not introduce it, and it remains open. Under `--all-features`, the
+vendored `voxelis` library tests were killed by the host after more than
+60 s in set-pattern cases. CI does not run that combination, and no change
+touched `voxelis`.
+
+Interface Clippy on stable prints one deprecation warning in firmware's
+`alumina-runtime` (`fetch_update` renamed `try_update`). It predates this
+work. Hosted CI, coverage, fuzz and size/memory re-measurement of the
+accepted repairs were not run in this step.
