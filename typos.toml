@@ -23,6 +23,8 @@ PN = "PN"
 
 # Abbreviation for homogeneous coordinates
 hom = "hom"
+# n-dimensional predicates (`hyperlimit::predicates::nd`), cited by inventories
+nd = "nd"
 # Acronym for Level-of-Detail
 LOD = "LOD"
 
