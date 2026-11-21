@@ -582,10 +582,11 @@ fn affine_box_radius(
 ///
 /// # Current proof coverage
 ///
-/// A row outside the selected package's enclosure coverage can contribute a
-/// center-only verdict to the aggregate. In particular, both quadratic packages
-/// currently do this for varying affine rows. When consuming a whole-box verdict,
-/// check the scope and certainty of the evidence for each contributing row.
+/// The aggregate status uses only evidence that covers the whole box. A
+/// certified violation needs box evidence on at least one row, and universal
+/// satisfaction needs it on every active row. Both quadratic packages enclose
+/// varying affine rows over the box. Rows checked only at the center remain in
+/// the retained replay but cannot decide the aggregate.
 ///
 /// The affine package encloses the half-space residual below. Its center `x = 1`
 /// satisfies the constraint, while the box `[-1, 3]` contains both signs.
