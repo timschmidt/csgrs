@@ -66,6 +66,25 @@ method signatures are unchanged. Valid lower-count inputs retain their exact
 results; zero total still reports an unknown unit interval. This fixes count
 conversion, not validation of inconsistent count triples or public mutations.
 
+## Cancellable publication check (2026-11-21)
+
+`hypersolve::work_budget::with_cancellable_budget` checks cancellation once
+more after its callback returns, before publishing the result. Previously, a
+callback that cancelled its token without reaching another instrumented unit
+or exhaustion check could return `Ok(value)`. It now returns
+`BudgetExceeded { kind: WorkKind::Cancellation, limit: 0, used: 0, requested: 0 }`
+when the final check first observes that request. An earlier resource failure
+retains its original reason and counters.
+
+Callers must handle the outer resource result before consuming the callback's
+value and use a fresh token for retry. The callback still runs when its token
+was cancelled before entry; cancellation remains cooperative. This change does
+not preempt uninstrumented work, undo callback side effects or establish a time,
+heap or total-work bound. Cancellation after the final check may still race
+with successful publication. Ordinary `with_budget` behavior is unchanged.
+The same final check governs Hypercurve's `evaluate_with_cancellable_budget`,
+so a cancelled value cannot escape that boundary as a successful `Provisional`.
+
 ## Parallel-normal circle and contact SVG replay (2026-11-11)
 
 Version 4 and 5 graph metadata adds tags 41 and 42 for a selected

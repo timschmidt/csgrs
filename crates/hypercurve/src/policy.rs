@@ -206,9 +206,11 @@ pub fn evaluate_with_budget<T>(
 /// another thread may cancel. A cancelled evaluation reports
 /// [`crate::WorkKind::Cancellation`] in the outer result and publishes no
 /// value; it is never an approximate or partial success. Cancellation is
-/// observed at instrumented work units, so it is not a wall-clock deadline.
-/// A retry needs a new token. Pass [`crate::WorkBudget::UNLIMITED`] to limit
-/// the evaluation by cancellation alone.
+/// observed at instrumented work units and once more before publication, so
+/// it is not a wall-clock deadline. The final check does not preempt the callback
+/// or undo its side effects; a request arriving afterward may race with success.
+/// A retry needs a new token. Pass [`crate::WorkBudget::UNLIMITED`] to select
+/// cancellation without unit limits; no time or memory bound follows.
 ///
 /// ```
 /// use hypercurve::{

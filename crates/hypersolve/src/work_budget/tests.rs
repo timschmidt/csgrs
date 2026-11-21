@@ -453,3 +453,239 @@ fn coefficient_bit_limits_nest_like_budgets() {
     assert_eq!(outcome.result.unwrap_err().limit, 100);
     assert!(!is_active());
 }
+
+#[test]
+fn cancellation_publication_drops_unpolled_result_and_allows_fresh_retry() {
+    let token = CancellationToken::new();
+    let retained = std::sync::Arc::new(17_u32);
+    let outcome = with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
+        token.cancel();
+        std::sync::Arc::clone(&retained)
+    });
+    assert_eq!(
+        outcome.result.unwrap_err(),
+        BudgetExceeded {
+            kind: WorkKind::Cancellation,
+            limit: 0,
+            used: 0,
+            requested: 0,
+        }
+    );
+    assert_eq!(outcome.usage, WorkUsage::default());
+    assert_eq!(std::sync::Arc::strong_count(&retained), 1);
+    assert!(!is_active());
+    assert_eq!(exhaustion(), None);
+
+    let fresh = CancellationToken::new();
+    let retry = with_cancellable_budget(WorkBudget::ZERO, &fresh, || {
+        std::sync::Arc::clone(&retained)
+    });
+    assert_eq!(**retry.result.as_ref().unwrap(), 17);
+    assert_eq!(retry.usage, WorkUsage::default());
+    assert_eq!(std::sync::Arc::strong_count(&retained), 2);
+    drop(retry);
+    assert_eq!(std::sync::Arc::strong_count(&retained), 1);
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_observes_precancelled_token_after_callback() {
+    let token = CancellationToken::new();
+    token.cancel();
+    let invoked = std::cell::Cell::new(false);
+    let outcome = with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
+        invoked.set(true);
+        23
+    });
+    assert!(
+        invoked.get(),
+        "the boundary check does not preempt the callback"
+    );
+    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.usage, WorkUsage::default());
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_observes_cross_thread_request() {
+    use std::sync::{Arc, Barrier};
+    let token = CancellationToken::new();
+    let ready = Barrier::new(2);
+    let finish = Barrier::new(2);
+    let retained = Arc::new(31_u32);
+    let outcome = std::thread::scope(|scope| {
+        let worker = scope.spawn(|| {
+            with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
+                let value = Arc::clone(&retained);
+                ready.wait();
+                finish.wait();
+                value
+            })
+        });
+        ready.wait();
+        token.cancel();
+        finish.wait();
+        worker.join().unwrap()
+    });
+    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.usage, WorkUsage::default());
+    assert_eq!(Arc::strong_count(&retained), 1);
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_propagates_unpolled_parent_request() {
+    let parent = CancellationToken::new();
+    let child = CancellationToken::new();
+    let outcome = with_cancellable_budget(WorkBudget::UNLIMITED, &parent, || {
+        let inner = with_cancellable_budget(WorkBudget::UNLIMITED, &child, || {
+            parent.cancel();
+            13
+        });
+        assert_eq!(inner.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(inner.usage, WorkUsage::default());
+        37
+    });
+    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.usage, WorkUsage::default());
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_keeps_inner_request_local() {
+    let child = CancellationToken::new();
+    let outcome = with_budget(
+        WorkBudget {
+            refinements: 2,
+            promotions: 0,
+        },
+        || {
+            consume(WorkKind::RootRefinement, 1).unwrap();
+            let inner = with_cancellable_budget(WorkBudget::UNLIMITED, &child, || {
+                child.cancel();
+                13
+            });
+            assert_eq!(inner.result.unwrap_err().kind, WorkKind::Cancellation);
+            assert_eq!(exhaustion(), None);
+            consume(WorkKind::RootRefinement, 1).unwrap();
+            37
+        },
+    );
+    assert_eq!(outcome.result, Ok(37));
+    assert_eq!(outcome.usage.refinements, 2);
+    assert_eq!(outcome.usage.promotions, 0);
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_preserves_first_failure() {
+    let token = CancellationToken::new();
+    let expected = BudgetExceeded {
+        kind: WorkKind::RootRefinement,
+        limit: 0,
+        used: 0,
+        requested: 1,
+    };
+    let outcome = with_cancellable_budget(WorkBudget::ZERO, &token, || {
+        assert_eq!(consume(WorkKind::RootRefinement, 1), Err(expected));
+        token.cancel();
+        41
+    });
+    assert_eq!(outcome.result, Err(expected));
+    assert_eq!(outcome.usage, WorkUsage::default());
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_unwinding_restores_parent() {
+    let child = CancellationToken::new();
+    let outcome = with_budget(
+        WorkBudget {
+            refinements: 2,
+            promotions: 0,
+        },
+        || {
+            let unwound = std::panic::catch_unwind(|| {
+                with_cancellable_budget(WorkBudget::UNLIMITED, &child, || {
+                    consume(WorkKind::RootRefinement, 1).unwrap();
+                    child.cancel();
+                    panic!("exercise cancellation-boundary unwinding");
+                })
+            });
+            assert!(unwound.is_err());
+            assert_eq!(exhaustion(), None);
+            consume(WorkKind::RootRefinement, 1).unwrap();
+            43
+        },
+    );
+    assert_eq!(outcome.result, Ok(43));
+    assert_eq!(outcome.usage.refinements, 2);
+    assert_eq!(outcome.usage.promotions, 0);
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_ordinary_budget_and_uncancelled_scope_keep_values() {
+    let plain = with_budget(WorkBudget::ZERO, || 47);
+    assert_eq!(plain.result, Ok(47));
+    assert_eq!(plain.usage, WorkUsage::default());
+    let token = CancellationToken::new();
+    let cancellable = with_cancellable_budget(WorkBudget::ZERO, &token, || 53);
+    assert_eq!(cancellable.result, Ok(53));
+    assert_eq!(cancellable.usage, WorkUsage::default());
+    assert!(!token.is_cancelled());
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_publication_drops_result_after_restoring_parent() {
+    struct Returned<'a>(&'a std::cell::Cell<bool>);
+    impl Drop for Returned<'_> {
+        fn drop(&mut self) {
+            assert!(is_active(), "the enclosing budget must remain active");
+            assert_eq!(exhaustion(), None, "the cancelled child must be removed");
+            consume(WorkKind::RootRefinement, 1).unwrap();
+            self.0.set(true);
+        }
+    }
+
+    let dropped = std::cell::Cell::new(false);
+    let outer = with_budget(
+        WorkBudget {
+            refinements: 1,
+            promotions: 0,
+        },
+        || {
+            let token = CancellationToken::new();
+            let inner = with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
+                token.cancel();
+                Returned(&dropped)
+            });
+            assert!(
+                dropped.get(),
+                "the unpublished result must already be dropped"
+            );
+            assert_eq!(
+                inner.result.err(),
+                Some(BudgetExceeded {
+                    kind: WorkKind::Cancellation,
+                    limit: 0,
+                    used: 0,
+                    requested: 0,
+                })
+            );
+            assert_eq!(inner.usage, WorkUsage::default());
+            let fresh = CancellationToken::new();
+            let retry = with_cancellable_budget(WorkBudget::ZERO, &fresh, || 61);
+            assert_eq!(retry.result, Ok(61));
+            assert_eq!(retry.usage, WorkUsage::default());
+            assert_eq!(exhaustion(), None);
+            67
+        },
+    );
+    assert_eq!(outer.result, Ok(67));
+    assert_eq!(outer.usage.refinements, 1);
+    assert_eq!(outer.usage.promotions, 0);
+    assert!(!is_active());
+    assert_eq!(exhaustion(), None);
+}

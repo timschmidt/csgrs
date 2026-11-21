@@ -288,3 +288,37 @@ fn concurrent_cancellation_never_publishes_a_partial_intersection() {
     }
     assert_eq!(outcomes.iter().sum::<usize>(), 4);
 }
+
+#[test]
+fn cancellation_at_publication_cannot_escape_as_a_provisional_value() {
+    use std::sync::Arc;
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let retained = Arc::new(Point2::new(Real::from(3), Real::from(4)));
+        let token = CancellationToken::new();
+        let cancelled =
+            evaluate_with_cancellable_budget(policy, WorkBudget::UNLIMITED, &token, || {
+                token.cancel();
+                Arc::clone(&retained)
+            });
+        assert_eq!(cancelled.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(cancelled.usage, WorkUsage::default());
+        assert_eq!(Arc::strong_count(&retained), 1);
+        assert!(!hypersolve::work_budget::is_active());
+
+        let fresh = CancellationToken::new();
+        let retry = evaluate_with_cancellable_budget(policy, WorkBudget::ZERO, &fresh, || {
+            Arc::clone(&retained)
+        });
+        assert_eq!(retry.usage, WorkUsage::default());
+        let value = retry.result.unwrap().certified().unwrap();
+        assert_eq!(value.as_ref(), retained.as_ref());
+        assert_eq!(Arc::strong_count(&retained), 2);
+        drop(value);
+        assert_eq!(Arc::strong_count(&retained), 1);
+        assert!(!hypersolve::work_budget::is_active());
+    }
+}

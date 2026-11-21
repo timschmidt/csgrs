@@ -90,7 +90,8 @@
 //!
 //! A scope can also carry a [`CancellationToken`]. Cancellation is cooperative:
 //! the computing thread observes it at its next admitted unit or exhaustion
-//! check, never inside one exact arithmetic step, so the delay before an
+//! check, including a final check before a cancellable scope publishes its
+//! result. It never interrupts one exact arithmetic step, so the delay before an
 //! instrumented operation stops is bounded by its longest uninstrumented
 //! stretch, not by a time limit. A cancelled scope then behaves as an exhausted
 //! one with [`WorkKind::Cancellation`]: it publishes no value and its callers
@@ -323,18 +324,21 @@ pub fn is_active() -> bool {
     ACTIVE.with(Cell::get)
 }
 
+#[inline]
+fn exhaustion_in(frames: &mut [Frame]) -> Option<BudgetExceeded> {
+    frames
+        .last()
+        .and_then(|frame| frame.exhausted)
+        .or_else(|| observe_cancellation(frames, 0))
+}
+
 /// The innermost scope's first resource failure, if any.
 #[inline]
 pub fn exhaustion() -> Option<BudgetExceeded> {
     if !is_active() {
         return None;
     }
-    FRAMES.with_borrow_mut(|frames| {
-        frames
-            .last()
-            .and_then(|frame| frame.exhausted)
-            .or_else(|| observe_cancellation(frames, 0))
-    })
+    FRAMES.with_borrow_mut(|frames| exhaustion_in(frames))
 }
 
 /// Admit work before performing it, charging every active enclosing budget.
@@ -385,7 +389,7 @@ pub fn consume(kind: WorkKind, amount: usize) -> Result<(), BudgetExceeded> {
 /// return type. Panic unwinding restores the enclosing scope without refunding
 /// work already admitted by that scope.
 pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> BudgetOutcome<T> {
-    enter(budget, None, None, operation)
+    enter::<false, T>(budget, None, None, operation)
 }
 
 /// Evaluate one synchronous operation with a work budget and a cancellation token.
@@ -393,15 +397,20 @@ pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> Budg
 /// This is [`with_budget`] with cooperative cancellation: once `cancellation`
 /// is cancelled, from any thread, the operation's next admitted unit or
 /// exhaustion check fails with [`WorkKind::Cancellation`] and no value is
-/// published. A value completed before any check observed the request is
-/// returned normally. Use [`WorkBudget::UNLIMITED`] to bound the operation by
-/// cancellation alone.
+/// published. A final check after the callback returns also observes requests
+/// made during work that did not reach an instrumented unit. An earlier resource
+/// failure keeps precedence over a later cancellation request.
+///
+/// This check does not preempt the callback or undo its side effects. A request
+/// arriving after the final check may race with successful publication. Use
+/// [`WorkBudget::UNLIMITED`] to select cancellation without unit limits; it does
+/// not impose a time or memory bound.
 pub fn with_cancellable_budget<T>(
     budget: WorkBudget,
     cancellation: &CancellationToken,
     operation: impl FnOnce() -> T,
 ) -> BudgetOutcome<T> {
-    enter(budget, Some(cancellation.clone()), None, operation)
+    enter::<true, T>(budget, Some(cancellation.clone()), None, operation)
 }
 
 /// Evaluate one synchronous operation whose instrumented exact coefficients
@@ -413,7 +422,7 @@ pub fn with_cancellable_budget<T>(
 /// is published. A nested limit that fails leaves its parent running. See the
 /// [module documentation](self) for the constructions that report sizes.
 pub fn with_coefficient_bit_limit<T>(bits: u64, operation: impl FnOnce() -> T) -> BudgetOutcome<T> {
-    enter(WorkBudget::UNLIMITED, None, Some(bits), operation)
+    enter::<false, T>(WorkBudget::UNLIMITED, None, Some(bits), operation)
 }
 
 /// Report the bit length of an exact coefficient that an instrumented
@@ -458,7 +467,7 @@ pub fn observe_coefficient_bits(bits: u64) -> Result<(), BudgetExceeded> {
     })
 }
 
-fn enter<T>(
+fn enter<const CHECK_CANCELLATION: bool, T>(
     budget: WorkBudget,
     cancellation: Option<CancellationToken>,
     max_coefficient_bits: Option<u64>,
@@ -467,9 +476,12 @@ fn enter<T>(
     struct Scope(bool);
 
     impl Scope {
-        fn finish(mut self) -> Frame {
+        fn finish<const CHECK_CANCELLATION: bool>(mut self) -> Frame {
             self.0 = false;
             FRAMES.with_borrow_mut(|frames| {
+                if CHECK_CANCELLATION {
+                    let _ = exhaustion_in(frames);
+                }
                 let frame = frames.pop().expect("a budget scope owns its frame");
                 ACTIVE.with(|active| active.set(!frames.is_empty()));
                 frame
@@ -501,7 +513,7 @@ fn enter<T>(
     });
     let scope = Scope(true);
     let value = operation();
-    let frame = scope.finish();
+    let frame = scope.finish::<CHECK_CANCELLATION>();
     BudgetOutcome {
         result: match frame.exhausted {
             Some(error) => Err(error),

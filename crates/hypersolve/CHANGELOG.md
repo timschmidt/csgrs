@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Check cancellation once more before `with_cancellable_budget` publishes.
+  A token cancelled after the callback's last instrumented unit previously
+  let `Ok(value)` escape. See [the migration note](../../docs/MIGRATIONS.md).
+
 - Enforce `with_coefficient_bit_limit` on the final coefficients of
   `DenseTensorPolynomial::sum_products`. The fused sum previously published
   `256 - x²` under a nine-bit limit.
