@@ -2,6 +2,10 @@
 
 ## [0.5.0] - Unreleased
 
+- Carry each axis comparison's certainty and stage into AABB-sphere
+  intersection outcomes. An approximate axis selection was previously dropped,
+  so a downstream SDF cell report could claim exact evidence.
+
 - Add `PredicatePolicy::certified_only` to disable a requested approximate
   terminal when constructing exact algebraic certificates.
 

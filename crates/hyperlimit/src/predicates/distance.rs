@@ -569,8 +569,9 @@ pub fn classify_sphere3_intersection_with_policy(
 ///
 /// The nearest-point distance is formed as the sum of squared outside-axis
 /// violations, which is the standard AABB/sphere broad-phase predicate. Each
-/// axis comparison is exact and inclusive, and the final comparison stays in
-/// squared-distance form.
+/// axis comparison is policy-controlled and inclusive. The final comparison
+/// stays in squared-distance form and retains the certainty of every consumed
+/// axis decision.
 pub fn classify_aabb3_sphere_intersection_with_policy(
     min: &Point3,
     max: &Point3,
@@ -578,9 +579,21 @@ pub fn classify_aabb3_sphere_intersection_with_policy(
     radius_squared: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<AabbSphereIntersection> {
-    let distance_squared = match aabb3_center_distance_squared(min, max, center, policy) {
-        Ok(distance) => distance,
-        Err(outcome) => return outcome,
+    let mut trace = (Certainty::Exact, Escalation::Structural);
+    let distance_squared = {
+        let dx = match outside_interval_delta(&center.x, &min.x, &max.x, policy, &mut trace) {
+            Ok(delta) => delta,
+            Err(outcome) => return outcome,
+        };
+        let dy = match outside_interval_delta(&center.y, &min.y, &max.y, policy, &mut trace) {
+            Ok(delta) => delta,
+            Err(outcome) => return outcome,
+        };
+        let dz = match outside_interval_delta(&center.z, &min.z, &max.z, policy, &mut trace) {
+            Ok(delta) => delta,
+            Err(outcome) => return outcome,
+        };
+        Real::signed_product_sum([true; 3], [[&dx, &dx], [&dy, &dy], [&dz, &dz]])
     };
     match compare_reals_with_policy(&distance_squared, radius_squared, policy) {
         PredicateOutcome::Decided {
@@ -593,7 +606,11 @@ pub fn classify_aabb3_sphere_intersection_with_policy(
                 Ordering::Equal => AabbSphereIntersection::Touching,
                 Ordering::Greater => AabbSphereIntersection::Disjoint,
             };
-            PredicateOutcome::decided(relation, certainty, stage)
+            PredicateOutcome::decided(
+                relation,
+                max_distance_certainty(trace.0, certainty),
+                max_distance_stage(trace.1, stage),
+            )
         }
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
@@ -648,53 +665,62 @@ fn reject_negative_radius<T>(
     }
 }
 
-fn aabb3_center_distance_squared(
-    min: &Point3,
-    max: &Point3,
-    center: &Point3,
-    policy: PredicatePolicy,
-) -> Result<Real, PredicateOutcome<AabbSphereIntersection>> {
-    let dx = outside_interval_delta(&center.x, &min.x, &max.x, policy)?;
-    let dy = outside_interval_delta(&center.y, &min.y, &max.y, policy)?;
-    let dz = outside_interval_delta(&center.z, &min.z, &max.z, policy)?;
-    Ok(Real::signed_product_sum(
-        [true; 3],
-        [[&dx, &dx], [&dy, &dy], [&dz, &dz]],
-    ))
-}
-
+#[inline(always)]
 fn outside_interval_delta(
     value: &Real,
     first: &Real,
     second: &Real,
     policy: PredicatePolicy,
+    trace: &mut (Certainty, Escalation),
 ) -> Result<Real, PredicateOutcome<AabbSphereIntersection>> {
     let (min, max) = match compare_reals_with_policy(first, second, policy) {
         PredicateOutcome::Decided {
-            value: Ordering::Greater,
-            ..
-        } => (second, first),
-        PredicateOutcome::Decided { .. } => (first, second),
+            value,
+            certainty,
+            stage,
+        } => {
+            trace.0 = max_distance_certainty(trace.0, certainty);
+            trace.1 = max_distance_stage(trace.1, stage);
+            if value == Ordering::Greater {
+                (second, first)
+            } else {
+                (first, second)
+            }
+        }
         PredicateOutcome::Unknown { needed, stage } => {
             return Err(PredicateOutcome::unknown(needed, stage));
         }
     };
     match compare_reals_with_policy(value, min, policy) {
         PredicateOutcome::Decided {
-            value: Ordering::Less,
-            ..
-        } => return Ok(sub_ref(min, value)),
-        PredicateOutcome::Decided { .. } => {}
+            value: ordering,
+            certainty,
+            stage,
+        } => {
+            trace.0 = max_distance_certainty(trace.0, certainty);
+            trace.1 = max_distance_stage(trace.1, stage);
+            if ordering == Ordering::Less {
+                return Ok(sub_ref(min, value));
+            }
+        }
         PredicateOutcome::Unknown { needed, stage } => {
             return Err(PredicateOutcome::unknown(needed, stage));
         }
     }
     match compare_reals_with_policy(value, max, policy) {
         PredicateOutcome::Decided {
-            value: Ordering::Greater,
-            ..
-        } => Ok(sub_ref(value, max)),
-        PredicateOutcome::Decided { .. } => Ok(Real::from(0)),
+            value: ordering,
+            certainty,
+            stage,
+        } => {
+            trace.0 = max_distance_certainty(trace.0, certainty);
+            trace.1 = max_distance_stage(trace.1, stage);
+            Ok(if ordering == Ordering::Greater {
+                sub_ref(value, max)
+            } else {
+                Real::from(0)
+            })
+        }
         PredicateOutcome::Unknown { needed, stage } => {
             Err(PredicateOutcome::unknown(needed, stage))
         }
@@ -2669,6 +2695,140 @@ mod tests {
     }
 
     #[test]
+    fn aabb3_sphere_preserves_approximate_axis_decisions() {
+        let mut failures = Vec::new();
+        for axis in 0..3 {
+            for branch in ["lower", "upper", "endpoints"] {
+                for policy in [PredicatePolicy::STRICT, APPROX, PredicatePolicy::STRICT] {
+                    let zero = terminal_zero();
+                    let mut min = [Real::zero(), Real::zero(), Real::zero()];
+                    let mut max = [Real::one(), Real::one(), Real::one()];
+                    let mut center = [Real::zero(), Real::zero(), Real::zero()];
+                    match branch {
+                        "lower" => center[axis] = zero,
+                        "upper" => center[axis] = Real::one() + zero,
+                        "endpoints" => {
+                            min[axis] = zero;
+                            max[axis] = Real::zero();
+                            center[axis] = Real::one();
+                        }
+                        _ => unreachable!(),
+                    }
+                    let [x, y, z] = min;
+                    let min = Point3::new(x, y, z);
+                    let [x, y, z] = max;
+                    let max = Point3::new(x, y, z);
+                    let [x, y, z] = center;
+                    let center = Point3::new(x, y, z);
+                    #[cfg(feature = "dispatch-trace")]
+                    let _recording = {
+                        hyperreal::dispatch_trace::reset();
+                        hyperreal::dispatch_trace::recording_scope()
+                    };
+                    let outcome = crate::classify_aabb3_sphere_intersection(
+                        &min,
+                        &max,
+                        &center,
+                        &4.into(),
+                        policy,
+                    );
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        let trace = hyperreal::dispatch_trace::snapshot_trace();
+                        let comparisons: u64 = trace
+                            .dispatch
+                            .iter()
+                            .filter(|row| {
+                                row.layer == "hyperlimit" && row.operation == "compare_reals"
+                            })
+                            .map(|row| row.count)
+                            .sum();
+                        // Three ordered decisions per completed axis; STRICT
+                        // stops at the first unresolved comparison.
+                        let expected = if policy == APPROX {
+                            10
+                        } else {
+                            3 * axis as u64
+                                + match branch {
+                                    "lower" => 2,
+                                    "upper" => 3,
+                                    "endpoints" => 1,
+                                    _ => unreachable!(),
+                                }
+                        };
+                        assert_eq!(comparisons, expected);
+                    }
+                    let correct = if policy == PredicatePolicy::STRICT {
+                        matches!(outcome, PredicateOutcome::Unknown { .. })
+                    } else {
+                        matches!(
+                            outcome,
+                            PredicateOutcome::Decided {
+                                value: AabbSphereIntersection::Overlapping,
+                                certainty: Certainty::Approximate,
+                                stage: Escalation::Refined,
+                            }
+                        )
+                    };
+                    if !correct {
+                        failures.push(format!("{axis} {branch} {policy:?}: {outcome:?}"));
+                    }
+                }
+            }
+        }
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+
+    #[test]
+    fn aabb3_sphere_rational_relations_and_receipts_survive_axis_ordering() {
+        for policy in [PredicatePolicy::STRICT, APPROX] {
+            for reversed in [false, true] {
+                let (min, max) = if reversed {
+                    (p3(1, 1, 1), p3(0, 0, 0))
+                } else {
+                    (p3(0, 0, 0), p3(1, 1, 1))
+                };
+                for axis in 0..3 {
+                    for coordinate in -2_i32..=3 {
+                        let mut coordinates = [0; 3];
+                        coordinates[axis] = coordinate;
+                        let center = p3(coordinates[0], coordinates[1], coordinates[2]);
+                        // Integer distance to [0,1], independent of Real predicates.
+                        let distance = if coordinate < 0 {
+                            -coordinate
+                        } else if coordinate > 1 {
+                            coordinate - 1
+                        } else {
+                            0
+                        };
+                        for radius_squared in [0, 1, 4] {
+                            let expected = match (distance * distance).cmp(&radius_squared) {
+                                Ordering::Less => AabbSphereIntersection::Overlapping,
+                                Ordering::Equal => AabbSphereIntersection::Touching,
+                                Ordering::Greater => AabbSphereIntersection::Disjoint,
+                            };
+                            assert_eq!(
+                                crate::classify_aabb3_sphere_intersection(
+                                    &min,
+                                    &max,
+                                    &center,
+                                    &radius_squared.into(),
+                                    policy,
+                                ),
+                                PredicateOutcome::decided(
+                                    expected,
+                                    Certainty::Exact,
+                                    Escalation::Exact
+                                )
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn interval_distance_helper_propagates_lower_and_upper_order_uncertainty() {
         assert!(matches!(
             outside_interval_delta(
@@ -2676,6 +2836,7 @@ mod tests {
                 &Real::from(0),
                 &Real::from(1),
                 PredicatePolicy::STRICT,
+                &mut (Certainty::Exact, Escalation::Structural),
             ),
             Err(PredicateOutcome::Unknown { .. })
         ));
@@ -2685,6 +2846,7 @@ mod tests {
                 &Real::from(0),
                 &Real::from(1),
                 PredicatePolicy::STRICT,
+                &mut (Certainty::Exact, Escalation::Structural),
             ),
             Err(PredicateOutcome::Unknown { .. })
         ));

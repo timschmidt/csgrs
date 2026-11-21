@@ -1,3 +1,6 @@
+#[path = "support/uncertainty.rs"]
+mod test_uncertainty;
+
 use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
@@ -951,4 +954,22 @@ fn coordinate_preview_samples_match_input_coordinates() {
         samples.topology_status,
         SdfSampleTopologyStatus::PreviewOnly
     );
+}
+
+#[test]
+fn sphere_cell_report_preserves_approximate_axis_selection() {
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    let zero = test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
+    let center = Point3::new(zero, 0.into(), 0.into());
+    let field = Sdf::new(SdfExpr::sphere(center, 0.into()));
+    let report = field.classify_cell(&p(0, 0, 0), &p(1, 1, 1));
+    assert_eq!(report.location, hypersdf::SdfCellLocation::Boundary);
+    assert_eq!(
+        report.evidence,
+        hypersdf::SdfEvidenceStatus::Approximate {
+            stage: hyperlimit::Escalation::Refined,
+        }
+    );
+    assert!(!report.evidence.is_certified());
 }
