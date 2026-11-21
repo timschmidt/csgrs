@@ -37,3 +37,60 @@ fn oriented_models_require_a_strictly_positive_dot_product() {
         }
     }
 }
+
+#[test]
+fn rebound_join_models_certify_the_entire_axial_tangent_box() {
+    use hyperlimit::PredicatePolicy;
+    use hypersolve::{
+        IntervalBoxCertificationPackage as Package, IntervalBoxCertificationStatus as Status,
+        VariableBall, certify_interval_box_candidate, context_from_problem,
+    };
+
+    for target in [-3, 0, 2] {
+        let join = g1_join_problem(axial(0), axial(0), axial(0), axial(target));
+        let analysis = join.problem.analyze();
+        let mut context = context_from_problem(&join.problem);
+        for center in [-3, -1, 0, 1, 3] {
+            context.bind(join.tangent_x_symbol, center.into());
+            for radius in [0, 2] {
+                // Endpoints and cross product agree everywhere. Orientation is
+                // strict and its two extrema occur at the ends of this interval.
+                let ends = [target * (center - radius), target * (center + radius)];
+                let expected = if ends.iter().all(|&dot| dot > 0) {
+                    Status::Certified
+                } else if ends.iter().all(|&dot| dot <= 0) {
+                    Status::Violation
+                } else {
+                    Status::Unknown
+                };
+                let bounds = [VariableBall {
+                    symbol: join.tangent_x_symbol,
+                    radius: radius.into(),
+                }];
+                for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+                    for package in [
+                        Package::Affine,
+                        Package::UnivariateQuadratic,
+                        Package::MultivariateQuadratic,
+                    ] {
+                        let report = certify_interval_box_candidate(
+                            &analysis, &context, &bounds, package, policy,
+                        );
+                        assert_eq!(
+                            report.status, expected,
+                            "{target} {center} {radius} {package:?} {policy:?}"
+                        );
+                        assert_eq!(report.variable_balls, bounds);
+                        let proof = report.certification.unwrap();
+                        assert_eq!(proof.rows.len(), 4);
+                        assert_eq!(proof.all_satisfied(), expected == Status::Certified);
+                        assert_eq!(
+                            proof.has_certified_violation(),
+                            expected == Status::Violation
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
