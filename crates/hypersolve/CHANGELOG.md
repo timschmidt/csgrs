@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- `certify_interval_box_candidate` no longer builds a whole-box verdict from
+  rows checked only at the box center. `x³ = 0` previously certified
+  `[-1, 1]` and reported a violation on `[0, 2]`.
+
 - Check cancellation once more before `with_cancellable_budget` publishes.
   A token cancelled after the callback's last instrumented unit previously
   let `Ok(value)` escape. See [the migration note](../../docs/MIGRATIONS.md).

@@ -104,8 +104,8 @@ impl CertifiedCandidateStatus {
             Self::CertifiedZero { .. }
                 | Self::CertifiedSatisfiedInequality { .. }
                 | Self::BallCertified {
-                    satisfied: true,
                     certainty: Certainty::Exact | Certainty::Filtered,
+                    satisfied: true,
                     ..
                 }
         )
@@ -117,8 +117,8 @@ impl CertifiedCandidateStatus {
             self,
             Self::CertifiedViolation { .. }
                 | Self::BallCertified {
-                    satisfied: false,
                     certainty: Certainty::Exact | Certainty::Filtered,
+                    satisfied: false,
                     ..
                 }
         )
@@ -217,6 +217,14 @@ pub fn certify_candidate_with_config(
     context: &EvaluationContext,
     config: CandidateCertificationConfig,
 ) -> CandidateCertificationReport {
+    report_from_rows(replay_rows(analysis, context, config))
+}
+
+fn replay_rows(
+    analysis: &ProblemAnalysis<'_>,
+    context: &EvaluationContext,
+    config: CandidateCertificationConfig,
+) -> Vec<CertifiedCandidateRow> {
     let mut rows = Vec::with_capacity(analysis.facts().active_constraint_count);
 
     for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
@@ -249,32 +257,7 @@ pub fn certify_candidate_with_config(
         rows.push(row);
     }
 
-    let certified_satisfied_rows = rows
-        .iter()
-        .filter(|row| row.status.is_certified_satisfied())
-        .count();
-    let certified_violation_rows = rows
-        .iter()
-        .filter(|row| row.status.is_certified_violation())
-        .count();
-    let bounded_unknown_rows = rows.iter().filter(|row| row.status.is_unknown()).count();
-    let lossy_adapter_only_rows = rows
-        .iter()
-        .filter(|row| row.status.is_lossy_adapter_only())
-        .count();
-    let domain_failure_rows = rows
-        .iter()
-        .filter(|row| matches!(row.status, CertifiedCandidateStatus::DomainFailure { .. }))
-        .count();
-
-    CandidateCertificationReport {
-        rows,
-        certified_satisfied_rows,
-        certified_violation_rows,
-        bounded_unknown_rows,
-        lossy_adapter_only_rows,
-        domain_failure_rows,
-    }
+    rows
 }
 
 /// Build an explicit non-certificate for a numerical proposal-only candidate.
@@ -329,9 +312,9 @@ pub fn certify_candidate_with_residual_balls(
     balls: &[CandidateResidualBall],
     policy: PredicatePolicy,
 ) -> CandidateCertificationReport {
-    let mut report = certify_candidate(analysis, context);
+    let mut rows = replay_rows(analysis, context, CandidateCertificationConfig::default());
     for ball in balls {
-        let Some(row) = report.rows.get_mut(ball.active_row) else {
+        let Some(row) = rows.get_mut(ball.active_row) else {
             continue;
         };
         let Some(center) = row.signed_residual.as_ref() else {
@@ -380,8 +363,7 @@ pub fn certify_candidate_with_residual_balls(
         };
         row.status = status;
     }
-    recompute_report_counts(&mut report);
-    report
+    report_from_rows(rows)
 }
 
 fn normalize_residual(value: Real, kind: ConstraintKind) -> Real {
@@ -419,36 +401,25 @@ fn classify_signed_residual(
     }
 }
 
-fn recompute_report_counts(report: &mut CandidateCertificationReport) {
-    report.certified_satisfied_rows = report
-        .rows
-        .iter()
-        .filter(|row| row.status.is_certified_satisfied())
-        .count();
-    report.certified_violation_rows = report
-        .rows
-        .iter()
-        .filter(|row| row.status.is_certified_violation())
-        .count();
-    report.bounded_unknown_rows = report
-        .rows
-        .iter()
-        .filter(|row| row.status.is_unknown())
-        .count();
-    report.lossy_adapter_only_rows = report
-        .rows
-        .iter()
-        .filter(|row| row.status.is_lossy_adapter_only())
-        .count();
-    report.domain_failure_rows = report
-        .rows
-        .iter()
-        .filter(|row| {
-            matches!(
-                row.status,
-                CertifiedCandidateStatus::DomainFailure { .. }
-                    | CertifiedCandidateStatus::InvalidBallRadius
-            )
-        })
-        .count();
+fn report_from_rows(rows: Vec<CertifiedCandidateRow>) -> CandidateCertificationReport {
+    let mut report = CandidateCertificationReport {
+        rows,
+        certified_satisfied_rows: 0,
+        certified_violation_rows: 0,
+        bounded_unknown_rows: 0,
+        lossy_adapter_only_rows: 0,
+        domain_failure_rows: 0,
+    };
+    for row in &report.rows {
+        report.certified_satisfied_rows += usize::from(row.status.is_certified_satisfied());
+        report.certified_violation_rows += usize::from(row.status.is_certified_violation());
+        report.bounded_unknown_rows += usize::from(row.status.is_unknown());
+        report.lossy_adapter_only_rows += usize::from(row.status.is_lossy_adapter_only());
+        report.domain_failure_rows += usize::from(matches!(
+            row.status,
+            CertifiedCandidateStatus::DomainFailure { .. }
+                | CertifiedCandidateStatus::InvalidBallRadius
+        ));
+    }
+    report
 }

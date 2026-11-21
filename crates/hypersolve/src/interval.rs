@@ -131,7 +131,8 @@ pub struct IntervalBoxCertificationReport {
     pub package: IntervalBoxCertificationPackage,
     /// Exact variable balls supplied by the caller.
     pub variable_balls: Vec<VariableBall>,
-    /// Candidate certification report, when replay reached row certification.
+    /// Candidate replay, including any point-only rows. Use the outer status
+    /// for the verdict on the entire box.
     pub certification: Option<crate::CandidateCertificationReport>,
     /// Final report status.
     pub status: IntervalBoxCertificationStatus,
@@ -529,7 +530,7 @@ pub fn certify_affine_interval_candidate(
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
 ) -> Result<crate::CandidateCertificationReport, AffineIntervalError> {
-    let radius_by_symbol = validate_variable_balls(variable_balls, policy)?;
+    let radius_by_symbol = validate_variable_balls(variable_balls)?;
     let mut residual_balls = Vec::new();
     let mut active_row = 0_usize;
 
@@ -630,13 +631,7 @@ pub fn certify_interval_box_candidate(
     };
     match result {
         Ok(certification) => {
-            let status = if certification.all_satisfied() {
-                IntervalBoxCertificationStatus::Certified
-            } else if certification.has_certified_violation() {
-                IntervalBoxCertificationStatus::Violation
-            } else {
-                IntervalBoxCertificationStatus::Unknown
-            };
+            let status = interval_box_status(analysis, variable_balls, &certification);
             IntervalBoxCertificationReport {
                 package,
                 variable_balls: variable_balls.to_vec(),
@@ -652,6 +647,49 @@ pub fn certify_interval_box_candidate(
             status: IntervalBoxCertificationStatus::InvalidInput,
             message: Some(message),
         },
+    }
+}
+
+/// A certified violation must cover the box on at least one row. Universal
+/// satisfaction requires box evidence on every active row.
+fn interval_box_status(
+    analysis: &ProblemAnalysis<'_>,
+    variable_balls: &[VariableBall],
+    certification: &crate::CandidateCertificationReport,
+) -> IntervalBoxCertificationStatus {
+    let has_violation = certification.has_certified_violation();
+    if !has_violation && !certification.all_satisfied() {
+        return IntervalBoxCertificationStatus::Unknown;
+    }
+    let active_constraints = analysis.constraints().iter().filter(|facts| facts.active);
+    for (row, facts) in certification.rows.iter().zip(active_constraints) {
+        if has_violation && !row.status.is_certified_violation() {
+            continue;
+        }
+        let covers_box = matches!(
+            row.status,
+            crate::CertifiedCandidateStatus::BallCertified { .. }
+        ) || facts.residual.dependencies.iter().all(|symbol| {
+            variable_balls
+                .iter()
+                .rev()
+                .find(|ball| ball.symbol == *symbol)
+                .is_none_or(|ball| match ball.radius.immediate_sign() {
+                    Some(sign) => sign == RealSign::Zero,
+                    None => variable_radius_sign(&ball.radius) == Some(Ordering::Equal),
+                })
+        });
+        if has_violation && covers_box {
+            return IntervalBoxCertificationStatus::Violation;
+        }
+        if !has_violation && !covers_box {
+            return IntervalBoxCertificationStatus::Unknown;
+        }
+    }
+    if has_violation {
+        IntervalBoxCertificationStatus::Unknown
+    } else {
+        IntervalBoxCertificationStatus::Certified
     }
 }
 
@@ -1226,7 +1264,7 @@ pub fn certify_quadratic_interval_candidate(
     policy: PredicatePolicy,
 ) -> Result<crate::CandidateCertificationReport, QuadraticIntervalError> {
     let radius_by_symbol =
-        validate_variable_balls(variable_balls, policy).map_err(|error| match error {
+        validate_variable_balls(variable_balls).map_err(|error| match error {
             AffineIntervalError::NegativeVariableRadius { symbol } => {
                 QuadraticIntervalError::NegativeVariableRadius { symbol }
             }
@@ -1297,7 +1335,7 @@ pub fn certify_multivariate_quadratic_interval_candidate(
     policy: PredicatePolicy,
 ) -> Result<crate::CandidateCertificationReport, QuadraticIntervalError> {
     let radius_by_symbol =
-        validate_variable_balls(variable_balls, policy).map_err(|error| match error {
+        validate_variable_balls(variable_balls).map_err(|error| match error {
             AffineIntervalError::NegativeVariableRadius { symbol } => {
                 QuadraticIntervalError::NegativeVariableRadius { symbol }
             }
@@ -1382,26 +1420,23 @@ pub fn certify_multivariate_quadratic_interval_candidate(
     ))
 }
 
+/// A radius is admissible only with a certified sign. The same decision
+/// establishes when a point proof covers an entire input coordinate.
+fn variable_radius_sign(radius: &Real) -> Option<Ordering> {
+    match radius.structural_facts().sign {
+        Some(RealSign::Zero) => Some(Ordering::Equal),
+        Some(RealSign::Positive) => Some(Ordering::Greater),
+        Some(RealSign::Negative) => Some(Ordering::Less),
+        None => compare_reals(radius, &Real::zero(), PredicatePolicy::STRICT).value(),
+    }
+}
+
 fn validate_variable_balls(
     variable_balls: &[VariableBall],
-    policy: PredicatePolicy,
 ) -> Result<HashMap<SymbolId, Real>, AffineIntervalError> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match ball.radius.structural_facts().sign {
-            Some(RealSign::Negative) => {
-                return Err(AffineIntervalError::NegativeVariableRadius {
-                    symbol: ball.symbol,
-                });
-            }
-            Some(RealSign::Zero | RealSign::Positive) => {
-                radii.insert(ball.symbol, ball.radius.clone());
-                continue;
-            }
-            None => {}
-        }
-        // Nonnegativity is a precondition for constructing any residual enclosure.
-        match compare_reals(&ball.radius, &Real::zero(), policy.certified_only()).value() {
+        match variable_radius_sign(&ball.radius) {
             Some(Ordering::Less) => {
                 return Err(AffineIntervalError::NegativeVariableRadius {
                     symbol: ball.symbol,

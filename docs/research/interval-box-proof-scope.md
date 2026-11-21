@@ -86,14 +86,18 @@ file growth from the fixed program revision. The WASM file and code charges
 remain separate. The linked clients fit the 64 MiB host image allowance with
 at least 16 MiB free. [Target size accounts](interval-size-accounts.json)
 
-## Unresolved whole-box certificates
+## Whole-box certificates (repaired 2026-11-21)
 
-The public facade also aggregates row results that apply only at the center.
+The public facade previously aggregated row results that apply only at the center.
 For example, `x³ = 0` holds at zero and fails at one. Both lie in `[-1,1]`
 and `[0,2]`. On the previous primary the corresponding centers yielded
 `Certified` and `Violation` respectively. Neither aggregate verdict describes
 the whole box. A separate fixture reproduced a certified aggregate from an
-approximate ball receipt. Both issues remain in the retained implementation.
+approximate ball receipt. Both issues are repaired on the interval branch by
+the whole-box scope check from `interval-box-proof-and-diagnostics-review`
+(`b44486e25`, `88beac671`): a certified violation must cover the box on at
+least one row, and universal satisfaction needs box evidence on every active
+row. The earlier candidates below are kept for reference.
 
 The review branch `interval-box-replay-coverage-review` at `245d4bb43`
 preserves a broader candidate and its six regressions. It passed 1,527
