@@ -351,7 +351,9 @@ impl<'a> ProblemAnalysis<'a> {
             let signed = match constraint.kind {
                 ConstraintKind::Equality | ConstraintKind::Soft => value,
                 ConstraintKind::LessOrEqual => positive_part(value),
-                ConstraintKind::GreaterOrEqual => positive_part(-value),
+                ConstraintKind::GreaterOrEqual | ConstraintKind::GreaterThan => {
+                    positive_part(-value)
+                }
             };
             let facts = signed.structural_facts();
             let weighted = signed.clone() * constraint.weight.clone();

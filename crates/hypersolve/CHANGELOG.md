@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Add a strict half-line constraint so oriented G1 tangent replay rejects a
+  zero tangent. A zero tangent was previously accepted as an oriented join.
+
 - `certify_interval_box_candidate` no longer builds a whole-box verdict from
   rows checked only at the box center. `x³ = 0` previously certified
   `[-1, 1]` and reported a violation on `[0, 2]`.

@@ -106,7 +106,7 @@ fn symbolic_jacobian_with_sparsity(
                 residual.structural_facts().sign,
                 Some(RealSign::Negative | RealSign::Zero)
             ),
-            ConstraintKind::GreaterOrEqual => !matches!(
+            ConstraintKind::GreaterOrEqual | ConstraintKind::GreaterThan => !matches!(
                 residual.structural_facts().sign,
                 Some(RealSign::Positive | RealSign::Zero)
             ),

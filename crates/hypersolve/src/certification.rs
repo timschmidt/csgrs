@@ -320,7 +320,13 @@ pub fn certify_candidate_with_residual_balls(
         let Some(center) = row.signed_residual.as_ref() else {
             continue;
         };
-        let status = match classify_ball_sign(center, &ball.radius, policy) {
+        // A rounded zero cannot prove a violation of an open half-line.
+        let ball_policy = if row.kind == ConstraintKind::GreaterThan {
+            policy.certified_only()
+        } else {
+            policy
+        };
+        let status = match classify_ball_sign(center, &ball.radius, ball_policy) {
             hyperlimit::PredicateOutcome::Decided {
                 value: Sign::Zero,
                 certainty,
@@ -328,7 +334,7 @@ pub fn certify_candidate_with_residual_balls(
             } => CertifiedCandidateStatus::BallCertified {
                 sign: RealSign::Zero,
                 certainty,
-                satisfied: true,
+                satisfied: row.kind != ConstraintKind::GreaterThan,
             },
             hyperlimit::PredicateOutcome::Decided {
                 value: Sign::Positive,
@@ -348,7 +354,9 @@ pub fn certify_candidate_with_residual_balls(
                 certainty,
                 satisfied: matches!(
                     row.kind,
-                    ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual
+                    ConstraintKind::LessOrEqual
+                        | ConstraintKind::GreaterOrEqual
+                        | ConstraintKind::GreaterThan
                 ),
             },
             hyperlimit::PredicateOutcome::Unknown {
@@ -369,7 +377,7 @@ pub fn certify_candidate_with_residual_balls(
 fn normalize_residual(value: Real, kind: ConstraintKind) -> Real {
     match kind {
         ConstraintKind::Equality | ConstraintKind::LessOrEqual | ConstraintKind::Soft => value,
-        ConstraintKind::GreaterOrEqual => -value,
+        ConstraintKind::GreaterOrEqual | ConstraintKind::GreaterThan => -value,
     }
 }
 
@@ -386,11 +394,15 @@ fn classify_signed_residual(
             (
                 ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual,
                 RealSign::Negative | RealSign::Zero,
-            ) => CertifiedCandidateStatus::CertifiedSatisfiedInequality { certificate },
+            )
+            | (ConstraintKind::GreaterThan, RealSign::Negative) => {
+                CertifiedCandidateStatus::CertifiedSatisfiedInequality { certificate }
+            }
             (
                 ConstraintKind::Equality | ConstraintKind::Soft,
                 RealSign::Positive | RealSign::Negative,
             )
+            | (ConstraintKind::GreaterThan, RealSign::Zero | RealSign::Positive)
             | (ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual, RealSign::Positive) => {
                 CertifiedCandidateStatus::CertifiedViolation { sign, certificate }
             }

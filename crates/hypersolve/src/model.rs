@@ -45,6 +45,10 @@ pub enum ConstraintKind {
     LessOrEqual,
     GreaterOrEqual,
     Soft,
+    /// The raw residual must be strictly positive. A certified zero violates
+    /// this row. Numerical distance to the feasible set is only a proposal
+    /// metric and can vanish on the excluded boundary.
+    GreaterThan,
 }
 
 #[derive(Clone, Debug)]

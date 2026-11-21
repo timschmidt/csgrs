@@ -407,8 +407,8 @@ pub fn tangent_alignment_problem(candidate: Point2, target: Point2) -> TangentAl
 /// Create a two-variable oriented tangent-alignment model.
 ///
 /// This includes the cross-product equality from
-/// [`tangent_alignment_problem`] and adds `candidate · target >= 0`.
-/// The inequality rejects opposite-direction tangents during exact replay while
+/// [`tangent_alignment_problem`] and adds `candidate · target > 0`.
+/// The inequality rejects zero and opposite-direction tangents during exact replay while
 /// still avoiding vector normalization. That makes it the solver-side
 /// counterpart to [`TangentAlignment::SameDirection`].
 pub fn oriented_tangent_alignment_problem(
@@ -463,7 +463,7 @@ pub fn g1_join_problem(
     ));
     problem.add_constraint(Constraint {
         name: "join tangent same direction dot product".to_string(),
-        kind: ConstraintKind::GreaterOrEqual,
+        kind: ConstraintKind::GreaterThan,
         residual: tangent_x_expr * Expr::real(target_tangent.x.clone())
             + tangent_y_expr * Expr::real(target_tangent.y.clone()),
         weight: Real::one(),
@@ -499,7 +499,7 @@ fn build_tangent_alignment_problem_with_orientation(
     if require_same_direction {
         problem.add_constraint(Constraint {
             name: "tangent same direction dot product".to_string(),
-            kind: ConstraintKind::GreaterOrEqual,
+            kind: ConstraintKind::GreaterThan,
             residual: candidate_x_expr * Expr::real(target.x.clone())
                 + candidate_y_expr * Expr::real(target.y.clone()),
             weight: Real::one(),

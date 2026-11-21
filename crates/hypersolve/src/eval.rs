@@ -68,7 +68,7 @@ pub fn evaluate_residuals(
         let signed = match constraint.kind {
             ConstraintKind::Equality | ConstraintKind::Soft => value,
             ConstraintKind::LessOrEqual => positive_part(value),
-            ConstraintKind::GreaterOrEqual => positive_part(-value),
+            ConstraintKind::GreaterOrEqual | ConstraintKind::GreaterThan => positive_part(-value),
         };
         let facts = signed.structural_facts();
         // f64 values are dense-solver estimates for the external linear

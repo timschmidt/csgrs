@@ -973,7 +973,12 @@ fn classify_active_set_row(
             }
             (false, _) => ActiveSetRowStatus::RequiredActiveMissing { sign: Some(sign) },
         },
-        ConstraintKind::LessOrEqual | ConstraintKind::GreaterOrEqual => match (active, sign) {
+        ConstraintKind::GreaterThan if sign == RealSign::Zero => {
+            ActiveSetRowStatus::CertifiedViolation { sign, certificate }
+        }
+        ConstraintKind::LessOrEqual
+        | ConstraintKind::GreaterOrEqual
+        | ConstraintKind::GreaterThan => match (active, sign) {
             (_, RealSign::Positive) => ActiveSetRowStatus::CertifiedViolation { sign, certificate },
             (true, RealSign::Zero) => ActiveSetRowStatus::ActiveBinding { certificate },
             (false, RealSign::Zero) => ActiveSetRowStatus::MissedBindingInequality { certificate },
@@ -990,7 +995,7 @@ fn classify_active_set_row(
 fn normalize_residual(value: Real, kind: ConstraintKind) -> Real {
     match kind {
         ConstraintKind::Equality | ConstraintKind::LessOrEqual | ConstraintKind::Soft => value,
-        ConstraintKind::GreaterOrEqual => -value,
+        ConstraintKind::GreaterOrEqual | ConstraintKind::GreaterThan => -value,
     }
 }
 
