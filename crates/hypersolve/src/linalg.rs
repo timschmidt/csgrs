@@ -12,6 +12,10 @@
 pub enum LinearSolveError {
     Singular,
     DimensionMismatch,
+    /// An input coefficient, residual, or numerical option was NaN or infinite.
+    NonFiniteInput,
+    /// Finite inputs produced non-finite arithmetic in the proposal adapter.
+    NonFiniteArithmetic,
 }
 
 /// Numerical adapter that produced a linear solve step.
@@ -154,6 +158,7 @@ impl LinearBackend for DenseLinearBackend {
             return Err(LinearSolveError::DimensionMismatch);
         }
         let Some(width) = jacobian.first().map(Vec::len) else {
+            check_finite_input(jacobian, residuals, damping)?;
             return Ok((
                 Vec::new(),
                 LinearSolveReport {
@@ -171,6 +176,7 @@ impl LinearBackend for DenseLinearBackend {
         if jacobian.iter().any(|row| row.len() != width) {
             return Err(LinearSolveError::DimensionMismatch);
         }
+        check_finite_input(jacobian, residuals, damping)?;
 
         let mut normal = vec![vec![0.0; width]; width];
         let mut rhs = vec![0.0; width];
@@ -212,6 +218,7 @@ impl LinearBackend for DenseLinearBackend {
             return Err(LinearSolveError::DimensionMismatch);
         }
         let Some(width) = jacobian.first().map(Vec::len) else {
+            check_finite_input(jacobian, residuals, trust_radius)?;
             return Ok((
                 Vec::new(),
                 LinearSolveReport {
@@ -229,6 +236,7 @@ impl LinearBackend for DenseLinearBackend {
         if jacobian.iter().any(|row| row.len() != width) {
             return Err(LinearSolveError::DimensionMismatch);
         }
+        check_finite_input(jacobian, residuals, trust_radius)?;
 
         let (normal, gradient) = normal_matrix_and_gradient(jacobian, residuals);
         let rhs = gradient.iter().map(|value| -*value).collect::<Vec<_>>();
@@ -263,11 +271,12 @@ impl LinearBackend for DenseLinearBackend {
         {
             return Err(LinearSolveError::DimensionMismatch);
         }
+        check_finite_input(inverse_hessian, gradient, step_limit)?;
         let mut step = mat_vec(inverse_hessian, gradient)
             .into_iter()
             .map(|value| -value)
             .collect::<Vec<_>>();
-        let step_norm = norm2(&step);
+        let step_norm = finite_arithmetic(norm2(&step))?;
         let limit = step_limit.max(f64::EPSILON);
         if step_norm > limit {
             step = scaled(&step, limit / step_norm);
@@ -286,6 +295,38 @@ impl LinearBackend for DenseLinearBackend {
             },
         ))
     }
+}
+
+fn check_finite_input(
+    matrix: &[Vec<f64>],
+    vector: &[f64],
+    parameter: f64,
+) -> Result<(), LinearSolveError> {
+    if !parameter.is_finite()
+        || !matrix
+            .iter()
+            .flatten()
+            .chain(vector)
+            .all(|value| value.is_finite())
+    {
+        return Err(LinearSolveError::NonFiniteInput);
+    }
+    Ok(())
+}
+
+fn finite_arithmetic(value: f64) -> Result<f64, LinearSolveError> {
+    if value.is_finite() {
+        Ok(value)
+    } else {
+        Err(LinearSolveError::NonFiniteArithmetic)
+    }
+}
+
+fn finite_vector(values: Vec<f64>) -> Result<Vec<f64>, LinearSolveError> {
+    for &value in &values {
+        finite_arithmetic(value)?;
+    }
+    Ok(values)
 }
 
 fn normal_matrix_and_gradient(
@@ -312,21 +353,24 @@ fn dogleg_step(
     gauss_newton: &[f64],
     trust_radius: f64,
 ) -> Result<Vec<f64>, LinearSolveError> {
-    if norm2(gauss_newton) <= trust_radius {
+    if finite_arithmetic(norm2(gauss_newton))? <= trust_radius {
         return Ok(gauss_newton.to_vec());
     }
-    let gradient_norm_sq = dot(gradient, gradient);
+    let gradient_norm_sq = finite_arithmetic(dot(gradient, gradient))?;
     if gradient_norm_sq <= f64::EPSILON {
         return Ok(vec![0.0; gradient.len()]);
     }
     let normal_gradient = mat_vec(normal, gradient);
-    let curvature = dot(gradient, &normal_gradient);
+    let curvature = finite_arithmetic(dot(gradient, &normal_gradient))?;
     if curvature <= f64::EPSILON {
-        return Ok(scaled(gradient, -trust_radius / gradient_norm_sq.sqrt()));
+        return finite_vector(scaled(
+            gradient,
+            finite_arithmetic(-trust_radius / gradient_norm_sq.sqrt())?,
+        ));
     }
-    let alpha = gradient_norm_sq / curvature;
+    let alpha = finite_arithmetic(gradient_norm_sq / curvature)?;
     let cauchy = scaled(gradient, -alpha);
-    let cauchy_norm = norm2(&cauchy);
+    let cauchy_norm = finite_arithmetic(norm2(&cauchy))?;
     if cauchy_norm >= trust_radius {
         return Ok(scaled(&cauchy, trust_radius / cauchy_norm));
     }
@@ -335,19 +379,23 @@ fn dogleg_step(
         .zip(&cauchy)
         .map(|(gn, sd)| gn - sd)
         .collect::<Vec<_>>();
-    let a = dot(&segment, &segment);
-    let b = 2.0 * dot(&cauchy, &segment);
-    let c = dot(&cauchy, &cauchy) - trust_radius * trust_radius;
-    let discriminant = b * b - 4.0 * a * c;
+    let a = finite_arithmetic(dot(&segment, &segment))?;
+    let b = finite_arithmetic(2.0 * dot(&cauchy, &segment))?;
+    let c = finite_arithmetic(dot(&cauchy, &cauchy) - trust_radius * trust_radius)?;
+    let discriminant = finite_arithmetic(b * b - 4.0 * a * c)?;
     if a <= f64::EPSILON || discriminant < 0.0 {
         return Err(LinearSolveError::Singular);
     }
-    let tau = (-b + discriminant.sqrt()) / (2.0 * a);
-    Ok(cauchy
-        .iter()
-        .zip(segment)
-        .map(|(sd, direction)| sd + tau * direction)
-        .collect())
+    let tau = finite_arithmetic(
+        finite_arithmetic(-b + discriminant.sqrt())? / finite_arithmetic(2.0 * a)?,
+    )?;
+    finite_vector(
+        cauchy
+            .iter()
+            .zip(segment)
+            .map(|(sd, direction)| sd + tau * direction)
+            .collect(),
+    )
 }
 
 fn mat_vec(matrix: &[Vec<f64>], vector: &[f64]) -> Vec<f64> {
@@ -403,6 +451,9 @@ fn solve_dense(
 ) -> Result<(Vec<f64>, DensePivotDiagnostics), LinearSolveError> {
     let n = rhs.len();
     let mut diagnostics = DensePivotDiagnostics::default();
+    for &value in matrix.iter().flatten().chain(&rhs) {
+        finite_arithmetic(value)?;
+    }
     for pivot in 0..n {
         let mut best = pivot;
         let mut best_abs = matrix[pivot][pivot].abs();
@@ -423,10 +474,10 @@ fn solve_dense(
         }
         let pivot_value = matrix[pivot][pivot];
         for value in matrix[pivot].iter_mut().skip(pivot) {
-            *value /= pivot_value;
+            *value = finite_arithmetic(*value / pivot_value)?;
         }
         let pivot_tail = matrix[pivot][pivot..].to_vec();
-        rhs[pivot] /= pivot_value;
+        rhs[pivot] = finite_arithmetic(rhs[pivot] / pivot_value)?;
         for row in 0..n {
             if row == pivot {
                 continue;
@@ -436,9 +487,9 @@ fn solve_dense(
                 continue;
             }
             for (value, pivot_value) in matrix[row].iter_mut().skip(pivot).zip(&pivot_tail) {
-                *value -= factor * pivot_value;
+                *value = finite_arithmetic(*value - factor * pivot_value)?;
             }
-            rhs[row] -= factor * rhs[pivot];
+            rhs[row] = finite_arithmetic(rhs[row] - factor * rhs[pivot])?;
         }
     }
     Ok((rhs, diagnostics))

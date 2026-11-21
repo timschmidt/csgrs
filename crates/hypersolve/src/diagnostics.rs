@@ -169,6 +169,10 @@ pub enum ConvergenceReason {
     StepTooSmall,
     MaxIterations,
     LinearSolveFailed,
+    /// The linear proposal adapter rejected a NaN or infinite input.
+    NonFiniteLinearInput,
+    /// Finite linear-adapter inputs produced non-finite arithmetic.
+    NonFiniteLinearArithmetic,
     EvaluationFailed,
     UnsupportedProposalEngine,
 }

@@ -16,7 +16,7 @@ use crate::eval::context_from_problem;
 use crate::jacobian::{
     FiniteDifferenceConfig, finite_difference_jacobian, symbolic_jacobian_with_analysis,
 };
-use crate::linalg::{DenseLinearBackend, LinearBackend};
+use crate::linalg::{DenseLinearBackend, LinearBackend, LinearSolveError};
 use crate::model::{Problem, Variable, VariableId};
 use crate::symbolic::SymbolId;
 
@@ -225,15 +225,26 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             | ProposalEngineKind::ModifiedNewtonLeastSquares
             | ProposalEngineKind::Sqp => backend.solve_damped_normal(&jacobian, &numeric, damping),
         };
-        let Ok((step, linear_report)) = step_result else {
-            return SolveReport {
-                reason: ConvergenceReason::LinearSolveFailed,
-                iterations: iteration,
-                proposal_engine,
-                residuals: last_residuals,
-                linear_reports,
-                preprocessing,
-            };
+        let (step, linear_report) = match step_result {
+            Ok(result) => result,
+            Err(error) => {
+                return SolveReport {
+                    reason: match error {
+                        LinearSolveError::NonFiniteInput => ConvergenceReason::NonFiniteLinearInput,
+                        LinearSolveError::NonFiniteArithmetic => {
+                            ConvergenceReason::NonFiniteLinearArithmetic
+                        }
+                        LinearSolveError::Singular | LinearSolveError::DimensionMismatch => {
+                            ConvergenceReason::LinearSolveFailed
+                        }
+                    },
+                    iterations: iteration,
+                    proposal_engine,
+                    residuals: last_residuals,
+                    linear_reports,
+                    preprocessing,
+                };
+            }
         };
         linear_reports.push(linear_report);
         let step_norm = step.iter().map(|value| value * value).sum::<f64>().sqrt();

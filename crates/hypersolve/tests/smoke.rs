@@ -12126,3 +12126,6 @@ fn candidate_domain_certification_reports_inverse_function_boundaries() {
             && check.status == DomainCheckStatus::CertifiedInvalid
     }));
 }
+
+#[path = "support/linear_adapter_finite.rs"]
+mod linear_adapter_finite;

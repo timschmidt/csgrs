@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Reject non-finite linear proposals. Normal equations and BFGS could return
+  successful NaN steps from finite overflowing inputs, and normal equations
+  accepted NaN input. `LinearSolveError` and `ConvergenceReason` gain typed
+  non-finite variants. See [the migration note](../../docs/MIGRATIONS.md).
+
 - Keep approximate residual-ball receipts out of exact satisfaction summaries.
   The affine interval-box facade previously promoted approximate receipts,
   including nonzero equality residuals, to `Certified`. Failed-constraint

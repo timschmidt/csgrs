@@ -25,6 +25,21 @@ No function is renamed, and these reports have no native or serde codec to
 migrate. Expression traversal and lower-before-upper predicate order are
 preserved.
 
+## Dense linear proposal failures (2026-11-20)
+
+`hypersolve::LinearSolveError` adds `NonFiniteInput` and
+`NonFiniteArithmetic`. Exhaustive matches must handle both. NaN or infinite
+coefficients, residuals and numerical options fail as input errors; finite
+inputs whose arithmetic becomes non-finite fail before publishing a proposal.
+The numerical adapter still returns lossy proposals, not exact rank or
+convergence certificates. Existing dimensional and finite singularity errors
+retain their meanings.
+
+`ConvergenceReason` adds `NonFiniteLinearInput` and
+`NonFiniteLinearArithmetic` to preserve these diagnostics through the nonlinear
+solver. These carriers have no native serialization format. Finite successful
+steps retain their existing receipt and operation order.
+
 ## Parallel-normal circle and contact SVG replay (2026-11-11)
 
 Version 4 and 5 graph metadata adds tags 41 and 42 for a selected
