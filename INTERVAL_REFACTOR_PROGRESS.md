@@ -15100,3 +15100,18 @@ Interface Clippy on stable prints one deprecation warning in firmware's
 `alumina-runtime` (`fetch_update` renamed `try_update`). It predates this
 work. Hosted CI, coverage, fuzz and size/memory re-measurement of the
 accepted repairs were not run in this step.
+
+### Hosted CI follow-up
+
+Hosted CI on `3b18f872f` exposed two further gaps.
+
+* Rust 1.100 Clippy extended `needless_range_loop` and `needless_bool`. The
+  affected sites now carry scoped allows, so generated code is unchanged.
+* The WASI Preview 1 Hypersolve job aborted on two accepted
+  cancellable-publication tests. One spawns a thread and the other catches an
+  unwind, and neither is possible under `wasm32-wasip1`.
+  `crates/hyperinterval/conformance/wasi-solver.py` now lists them as host
+  cases. The guest must abort with the expected diagnostic, and the native
+  run must pass. Locally the suite then reported 1,563 direct WASI tests,
+  17 native parents with fresh WASI children and 7 native platform tests. All
+  4,212 Horner dispatch windows matched.

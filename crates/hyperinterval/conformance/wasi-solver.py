@@ -83,7 +83,9 @@ HOST_CASES = {
     "hypersolve": {
         "work_budget::tests::cancellation_from_another_thread_reaches_a_running_operation": THREAD_FAILURE,
         "work_budget::tests::threads_start_without_a_budget": THREAD_FAILURE,
-        "work_budget::tests::scopes_restore_after_unwinding_without_refunding_admitted_work": "exercise budget restoration"},
+        "work_budget::tests::cancellation_publication_observes_cross_thread_request": THREAD_FAILURE,
+        "work_budget::tests::scopes_restore_after_unwinding_without_refunding_admitted_work": "exercise budget restoration",
+        "work_budget::tests::cancellation_publication_unwinding_restores_parent": "exercise cancellation-boundary unwinding"},
     "expression_program": {"deep_source_compiles_evaluates_and_drops_on_a_small_stack": THREAD_FAILURE},
     "program_jacobian": {"shared_source_graphs_expand_linearly_and_deep_graphs_use_a_small_stack": THREAD_FAILURE},
 }
