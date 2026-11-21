@@ -186,17 +186,23 @@ fn strict_float_empty_affine_and_distinct_neighbors_compose() {
                 transformed.affine(0.0, <$float>::INFINITY),
                 Err(E::NonFiniteEndpoint)
             );
-            let next = <$float>::from_bits((1.0 as $float).to_bits() + 1);
-            let left = <$interval>::new(0.0, 1.0).unwrap();
-            let right = <$interval>::new(next, 2.0).unwrap();
-            assert!(left.disjoint(&right));
-            assert!(right.disjoint(&left));
-            assert_eq!(left.intersection(&right), empty);
-            assert_eq!(left.intersection(&right).affine(1.0, 0.0).unwrap(), empty);
-            let touching = <$interval>::new(1.0, 2.0).unwrap();
-            assert!(!left.disjoint(&touching));
-            assert!(!touching.disjoint(&left));
-            assert_eq!(left.intersection(&touching).bounds(), Some((1.0, 1.0)));
+            // Finite endpoints need a qualified backend; elsewhere they are
+            // refused with a typed error, while empty stays valid.
+            if !<$interval>::backend_supported() {
+                assert_eq!(<$interval>::new(0.0, 1.0), Err(E::UnqualifiedEnvironment));
+            } else {
+                let next = <$float>::from_bits((1.0 as $float).to_bits() + 1);
+                let left = <$interval>::new(0.0, 1.0).unwrap();
+                let right = <$interval>::new(next, 2.0).unwrap();
+                assert!(left.disjoint(&right));
+                assert!(right.disjoint(&left));
+                assert_eq!(left.intersection(&right), empty);
+                assert_eq!(left.intersection(&right).affine(1.0, 0.0).unwrap(), empty);
+                let touching = <$interval>::new(1.0, 2.0).unwrap();
+                assert!(!left.disjoint(&touching));
+                assert!(!touching.disjoint(&left));
+                assert_eq!(left.intersection(&touching).bounds(), Some((1.0, 1.0)));
+            }
         }};
     }
     check!(F32Enclosure, f32);

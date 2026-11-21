@@ -15039,8 +15039,10 @@ replaces the stale center-only caveat on `certify_interval_box_candidate`.
 Declined: `7e881ac12`, abort-signal propagation through rational
 translations. The values it affects are correct, and it adds 10.79% to
 Hyperreal's generic add/sub path. That is a material hot-path cost without
-an exactness gain. Its witness in `real_ball_boundary.rs` is `#[ignore]`
-with the reason recorded, so the gap stays visible.
+an exactness gain. The cancellation half of its witness stays on the declined
+commit. `real_ball_boundary.rs` keeps the uncertainty and refinement half, with
+a comment recording the gap. Every libtest run under WASI must report
+0 ignored tests, so an `#[ignore]` marker is not an option.
 
 Discarded, all preserved as refs, not deleted:
 

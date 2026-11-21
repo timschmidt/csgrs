@@ -16,4 +16,6 @@ export async function instantiate(module, wasiPreview1 = false, hostFunctions = 
   return instance;
 }
 
-export const stdFunctions = ["environ_get", "environ_sizes_get", "fd_write", "proc_exit"];
+// Rust 1.100 std links wasi-libc's pthread rwlock, whose timed wait reads
+// clock_time_get. A single-threaded guest never waits on it.
+export const stdFunctions = ["environ_get", "environ_sizes_get", "clock_time_get", "fd_write", "proc_exit"];
