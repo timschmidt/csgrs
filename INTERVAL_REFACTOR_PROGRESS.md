@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM, opt-in ordinary WASI Preview 1 and opt-in AArch64 GNU/Linux (QEMU only) locally qualified, including rounded higher powers, full-width exponents, tight rational endpoint projection and direct binary32/binary64 conversion with maintained browser, WASI and native fuzz qualification | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound. The affine oracle checks every field of each published coordinate, including the proved prefix of an outside-box report | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound. The affine oracle checks every field of each published coordinate, including the proved prefix of an outside-box report. The certified-stage affine Krawczyk repair is merged (20 November) | preserve coefficient-growth diagnostic counts above the 32-bit word limit and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement construction delegates to Hyperinterval. The two-device shared timer fixture pins the complete evidence bytes and ordered transcript hash. The full 199-case Interface core suite now runs on WASI, including machine-profile replay and TinyBee firmware actors. | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock and host dq simulator counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -14955,3 +14955,38 @@ has 7,360 scan rows and 439 reviews.
 All 117 archived members verified from evidence commit
 `798cbede6fc47e04f1ed87db6bcfd3c6e99651b0` (433,368 bytes).
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 7, certified-stage affine Krawczyk proofs merged, 20 November 2026
+
+The policy-only repair from `interval-affine-certified-rank` (`5ca642d0a`)
+is now on the interval branch. `certify_affine_krawczyk_box` evaluates pivot
+selection, elimination and containment with `policy.certified_only()`.
+Before the merge, three of its four retained regressions failed on this
+branch under `APPROXIMATE_512`. In those cases a point box was certified
+without a proved equality. Two proportional rows were reported unique, and
+an unresolved elimination factor reached a verdict after row swaps. All four
+pass after the merge. The full all-feature Hypersolve suite passed 1,554
+tests across 102 test executables, the count recorded for the review
+revision. Strict Clippy, rustdoc, workspace formatting and the nine
+inventory tests passed. The refreshed inventory still has 7,360 scan rows
+and 439 reviews.
+
+This reverses the earlier hold. The repair was held on one 16-row client
+that took 0.89–1.68% longer in one load order on one core. The other order
+on that core and the controls included zero, and on the second core the
+direction varied. The governing order puts exactness above performance.
+The admission rule rejects a lower-rung improvement that brings a
+significant higher-rung regression. This repair has the opposite shape. It
+fixes false certificates at the cost of a small, inconsistently reproduced
+runtime change. Its size and memory results are recorded above: all 216 heap
+and stack gates, all eight linked-image accounts, and a three-byte file and
+one-byte code growth on each guest. Those results fall under the
+correctness provision of the bounded size exception. The timing finding
+stays in the record as an accepted cost of the repair. It was not
+re-measured, and the WASI suite was not rerun for this merge.
+
+The borrowed-operand normalization trial (`6fc8f3deb`) remains on its review
+branch. Its additional changes are cost optimizations, not needed for
+correctness, and its RELRO padding finding is unchanged. Callers no
+longer need `PredicatePolicy::STRICT` as a workaround for this certifier.
+[Proof scope](docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)

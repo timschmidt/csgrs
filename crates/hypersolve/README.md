@@ -489,9 +489,9 @@ blocks before an algorithm is selected.
   nonzero derivative for `ExactSimpleRoot`. With a zero residual and an
   unresolved derivative, both predicate policies return `Undecided`.
 - Univariate and multivariate quadratic Krawczyk reports require certified
-  containment and contraction comparisons under both predicate policies. Use
-  `PredicatePolicy::STRICT` for affine Krawczyk reports. Terminal approximation
-  in affine elimination can produce a false root certificate. [Affected comparisons and examples](../../docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)
+  containment and contraction comparisons under both predicate policies.
+  Affine Krawczyk reports likewise use only certified comparisons for pivot
+  selection, elimination and containment. [Affected comparisons and examples](../../docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)
 - `certify_candidate_batch` and `schedule_candidate_batch_predicates` reuse
   predicate schedules across candidates.
 - `replay_dense_linear_residuals` is the shared policy-explicit exact replay

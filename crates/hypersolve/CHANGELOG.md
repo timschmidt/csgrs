@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- Require certified comparisons for pivot selection, elimination and
+  containment in `certify_affine_krawczyk_box` under both predicate policies.
+  Under `APPROXIMATE_512` a terminal approximation could previously certify a
+  rootless box, report uniqueness for dependent rows, or accept a root that
+  fails an original equation. Such cases now return their unresolved status.
+
 - Report a lower bound when both coefficient-growth counts reach the 32-bit
   reporting ceiling. The diagnostic now preserves the strict inequality
   between the observed bit length and its limit.

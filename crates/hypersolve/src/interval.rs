@@ -660,14 +660,15 @@ pub fn certify_interval_box_candidate(
 /// For affine rows `f(x) = A*x + c`, the interval Newton/Krawczyk operator has
 /// no nonlinear interval remainder when `A` is exactly invertible. This helper
 /// solves `A*step = -f(candidate)` over `Real`, then proves
-/// `|step_i| <= radius_i` for every variable. Use `PredicatePolicy::STRICT` for proof.
-/// Terminal approximation can skip a nonzero factor or accept a root outside the box.
+/// `|step_i| <= radius_i` for every variable. Pivot selection, elimination and
+/// containment use the certified stages of the supplied policy.
 pub fn certify_affine_krawczyk_box(
     analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
 ) -> AffineKrawczykReport {
+    let policy = policy.certified_only();
     let variable_count = analysis.problem().variables.len();
     let mut matrix = Vec::new();
     let mut rhs = Vec::new();
@@ -1853,7 +1854,7 @@ fn validate_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, AffineKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals(&ball.radius, &Real::zero(), policy.certified_only()).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
             Some(Ordering::Less) => {
                 return Err(AffineKrawczykStatus::NegativeVariableRadius {
                     symbol: ball.symbol,

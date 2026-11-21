@@ -243,9 +243,10 @@ zero-width axes and outside roots. Every successful report must return both
 prescribed root coordinates. This corpus also passes before the production
 change. [Exact affine oracle](../../crates/hypersolve/tests/krawczyk_affine_oracle.rs)
 
-**Affine exposure.** Use `PredicatePolicy::STRICT` with
-`certify_affine_krawczyk_box`. Its approximate policy can still certify a
-rootless point box. The univariate repair is described below. At `4d4b472e6`
+**Affine exposure (repaired 2026-11-20).** `certify_affine_krawczyk_box`
+now restricts pivot selection, elimination and containment to the certified
+stages of the supplied policy. Before the repair, its approximate policy could
+certify a rootless point box. The univariate repair is described below. At `4d4b472e6`
 both paths reproduced the false certificate. The combined trial and its
 failing witnesses are available on
 `interval-krawczyk-proof-review` at `0dcfb17ba`. It passed the regular and
@@ -257,8 +258,8 @@ The independent whole-box replay and row-aggregation issues above also remain op
 The rational affine oracle also checks the prefix of certified coordinates
 when a later coordinate is outside its ball. Each step must preserve its
 symbol, candidate, displacement, root and radius. A solver that dropped the
-prefix previously passed all 600 cases. On the interval branch the affine
-caller guidance above still applies. The subsequent pivot-normalization
+prefix previously passed all 600 cases. The certified-stage affine repair
+described above is now on the interval branch. The subsequent pivot-normalization
 trial, its public regression witnesses and its Linux and WASI measurements
 are recorded in the [Phase 7 ledger](../../INTERVAL_REFACTOR_PROGRESS.md#phase-7-partial-affine-reports-and-certified-elimination).
 
