@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Evaluate each `finite_difference_jacobian` column at the variable's context
+  binding. A rebound free variable previously stepped from its model value, so
+  `x²` bound at 3 with model value 1 and step 1 gave −5 instead of 7.
+
 - Require certified comparisons for pivot selection, elimination and
   containment in `certify_affine_krawczyk_box` under both predicate policies.
   Under `APPROXIMATE_512` a terminal approximation could previously certify a

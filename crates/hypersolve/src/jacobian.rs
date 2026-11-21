@@ -17,16 +17,11 @@ impl Default for FiniteDifferenceConfig {
     }
 }
 
-/// Computes a forward-difference proposal from the active weighted residuals.
-/// Each fixed variable has a zero column. Its context binding still contributes
-/// to residuals used for the other columns.
+/// Propose a forward-difference Jacobian at the supplied context bindings.
 ///
-/// The current implementation evaluates the baseline at the supplied bindings
-/// but adds the step to each free variable's model value. Rebinding a free
-/// variable independently can therefore give an incorrect column. For `x²`,
-/// a model value of 1, a binding of 3, and a step of 1 give −5 where the
-/// forward difference at 3 is 7. To evaluate at a new center, update the free
-/// model coordinates and their context bindings together.
+/// Fixed columns remain zero. An unused, unbound variable retains its model
+/// value for perturbation; a used unbound symbol fails during baseline replay.
+/// The returned primitive-float estimates are not derivative certificates.
 pub fn finite_difference_jacobian(
     problem: &Problem,
     context: &EvaluationContext,
@@ -50,7 +45,11 @@ pub fn finite_difference_jacobian(
             continue;
         }
         let mut perturbed = context.clone();
-        let shifted = variable.value.clone() + config.step.clone();
+        let center = context
+            .bindings()
+            .get(&variable.symbol)
+            .unwrap_or(&variable.value);
+        let shifted = center + &config.step;
         perturbed.bind(variable.symbol, shifted);
         let next = crate::eval::evaluate_residuals(problem, &perturbed)?
             .into_iter()
@@ -144,3 +143,7 @@ fn symbolic_jacobian_with_sparsity(
     }
     Ok(rows)
 }
+
+#[cfg(test)]
+#[path = "jacobian_tests.rs"]
+mod tests;
