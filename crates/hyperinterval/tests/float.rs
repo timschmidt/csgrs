@@ -1,21 +1,23 @@
 #![cfg(feature = "float-enclosure")]
-#[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
-#[path = "../../hyperreal/tests/support/mpfr.rs"]
-mod mpfr_cache;
+#[cfg(all(
+    not(target_env = "msvc"),
+    any(
+        target_arch = "x86_64",
+        all(
+            feature = "float-enclosure-aarch64-linux-gnu",
+            target_arch = "aarch64",
+            target_os = "linux",
+            target_env = "gnu",
+            target_endian = "little",
+            target_pointer_width = "64"
+        )
+    )
+))]
+include!("support/native_float_oracles.rs");
+
 #[cfg(target_arch = "x86_64")]
 use hyperinterval::SignSet;
 use hyperinterval::{F32Enclosure, F64Enclosure, IntervalError};
-
-#[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
-#[path = "support/float_oracle.rs"]
-mod oracle;
-#[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
-#[path = "support/float_range_oracle.rs"]
-mod ranges;
-
-#[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
-#[path = "support/primitive_sqrt_oracle.rs"]
-mod root_oracle;
 
 macro_rules! cases {
     ($module:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident, $root:ident, $ranges:ident, $fraction:literal) => {
@@ -37,6 +39,14 @@ macro_rules! cases {
                 )))]
                 let expected = cfg!(any(
                     target_arch = "x86_64",
+                    all(
+                        feature = "float-enclosure-aarch64-linux-gnu",
+                        target_arch = "aarch64",
+                        target_os = "linux",
+                        target_env = "gnu",
+                        target_endian = "little",
+                        target_pointer_width = "64"
+                    ),
                     all(target_arch = "wasm32", target_os = "unknown")
                 ));
                 assert_eq!($interval::backend_supported(), expected);
@@ -245,7 +255,20 @@ macro_rules! cases {
                 }
             }
 
-            #[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
+            #[cfg(all(
+                not(target_env = "msvc"),
+                any(
+                    target_arch = "x86_64",
+                    all(
+                        feature = "float-enclosure-aarch64-linux-gnu",
+                        target_arch = "aarch64",
+                        target_os = "linux",
+                        target_env = "gnu",
+                        target_endian = "little",
+                        target_pointer_width = "64"
+                    )
+                )
+            ))]
             mod oracle {
                 use super::*;
                 use rug::Rational;
@@ -488,6 +511,7 @@ macro_rules! cases {
                     }
                 }
 
+                #[cfg(target_arch = "x86_64")]
                 #[test]
                 fn alternate_native_modes_do_not_change_bounds() {
                     const KEY: &str = "HYPERINTERVAL_MXCSR_MODE";
@@ -943,3 +967,14 @@ fn dyadic_egress_ignores_native_modes() {
         );
     }
 }
+
+#[cfg(all(
+    feature = "float-enclosure-aarch64-linux-gnu",
+    target_arch = "aarch64",
+    target_os = "linux",
+    target_env = "gnu",
+    target_endian = "little",
+    target_pointer_width = "64"
+))]
+#[path = "support/fpcr.rs"]
+mod fpcr;

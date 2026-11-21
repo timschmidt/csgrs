@@ -112,6 +112,32 @@ jobs:
           cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --features lattice-shapes --bin cartesian_shapes
           rustfmt --edition 2024 --check crates/hyperinterval/fuzz/fuzz_targets/*.rs
 
+  aarch64-gnu:
+    name: Strict float (AArch64 GNU/Linux, Rust ${{ matrix.rust }})
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.88.0", "1.95.0", stable]
+    env:
+      INTERVAL_RUST: ${{ matrix.rust }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install toolchain
+        run: rustup toolchain install "$INTERVAL_RUST" --profile minimal --component clippy
+      - name: Check unqualified ingress and qualified endpoint bits
+        run: |
+          cargo +"$INTERVAL_RUST" test --release --locked -p hyperinterval --features float-enclosure --test float target_gate_and_empty_are_explicit
+          cargo +"$INTERVAL_RUST" test --release --locked -p hyperinterval --features float-enclosure-aarch64-linux-gnu,dyadic,serde --test float --test float_format --test dyadic_float_egress
+          if [ "$INTERVAL_RUST" != 1.88.0 ]; then
+            cargo +"$INTERVAL_RUST" test --release --locked -p hyperinterval --features float-enclosure-aarch64-linux-gnu,hyperreal --test rational_float_projection
+          fi
+          cargo +"$INTERVAL_RUST" test --release --locked -p hyperlattice-interval --features fixed,float-enclosure-aarch64-linux-gnu --test cartesian --test affine --test no_alloc
+          cargo +"$INTERVAL_RUST" clippy --release --locked -p hyperinterval --all-targets --features float-enclosure-aarch64-linux-gnu,dyadic,serde -- -D warnings
+          python3 scripts/check_interval_float_codegen.py --toolchain "$INTERVAL_RUST" --output "$RUNNER_TEMP/interval-arm-codegen"
+
   scalar-wasi:
     name: Scalar oracles (WASI Preview 1, Rust ${{ matrix.rust }})
     runs-on: ubuntu-24.04

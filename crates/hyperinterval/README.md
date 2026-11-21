@@ -3,7 +3,7 @@
 Scalar sets with exact endpoint semantics for the Hyper stack. The current
 surface provides checked integer/fixed arithmetic, exact rational intervals,
 budgeted common-scale dyadic arithmetic, symbolic Real balls, and finite IEEE
-enclosures on x86_64 and wasm32-unknown-unknown, with opt-in wasm32-wasip1 support. Empty sets, sign sets, and set
+enclosures on x86_64 and wasm32-unknown-unknown, with opt-in support for WASI Preview 1 and AArch64 GNU/Linux. Empty sets, sign sets, and set
 relations are explicit.
 Elementary function enclosures remain under development.
 
@@ -260,6 +260,9 @@ and FTZ/DAZ. Nonempty ingress supports x86_64 and wasm32-unknown-unknown.
 `F64Enclosure::to_f32_enclosure` returns the tightest enclosing binary32
 interval, or `IntervalError::Overflow` if either bound exceeds its finite
 range. Both conversions preserve empty sets and require only `float-enclosure`.
+Enable `float-enclosure-aarch64-linux-gnu` for the little-endian, 64-bit-pointer
+`aarch64-unknown-linux-gnu` target. The AArch64 qualification checks directed
+MPFR bounds, alternate FPCR settings and optimized machine code.
 Enable `float-enclosure-wasip1` to add ordinary wasm32-wasip1 support. Cargo's
 exact target name distinguishes it from the threaded Preview 1 ABI. Unqualified
 targets return `UnqualifiedEnvironment`. Optional serde validates endpoint bit pairs.

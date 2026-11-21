@@ -22,6 +22,7 @@ integer = []
 fixed = []
 float-proposal = []
 float-enclosure = []
+float-enclosure-aarch64-linux-gnu = ["float-enclosure"]
 float-enclosure-wasip1 = ["float-enclosure", "dep:target-tuple"]
 bigint = ["alloc", "dep:num-bigint", "dep:num-traits", "dep:num-integer"]
 dyadic = ["bigint"]
@@ -49,8 +50,11 @@ serde_json = "1.0"
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
 
-# The Preview 1 test runner supplies a WASI C compiler for the Rug oracles.
+# The target qualification runners supply matching cross C compilers for Rug.
 [target.wasm32-wasip1.dev-dependencies]
+gmp-mpfr-sys = { version = "1.7", default-features = false, features = ["force-cross"] }
+
+[target.aarch64-unknown-linux-gnu.dev-dependencies]
 gmp-mpfr-sys = { version = "1.7", default-features = false, features = ["force-cross"] }
 
 [[example]]

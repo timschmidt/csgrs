@@ -2933,5 +2933,22 @@
       ]
     },
     "test_process_scope": "Three fresh single-thread runs per binary. WASI process high water includes Node and its WebAssembly engine."
+  },
+  "aarch64_gnu_strict_float_2026_11_20": {
+    "revision": "candidate on fe44ef2c5",
+    "record": "2026-11-20-interval-aarch64-strict-float",
+    "client": "release stack client, cold and warm, two paint bytes, four runs per artifact",
+    "peak_stack_bytes": {
+      "x86_64 before": 1232,
+      "x86_64 final": 1232,
+      "aarch64 qemu default feature (unqualified)": 40,
+      "aarch64 qemu opt-in feature": 1264
+    },
+    "allocations": {
+      "count": 0,
+      "bytes": 0
+    },
+    "existing_workload_charge_bytes": 0,
+    "scope": "AArch64 figures come from user-mode QEMU -cpu max on an x86_64 host, not hardware."
   }
 }

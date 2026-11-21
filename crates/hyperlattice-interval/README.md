@@ -48,6 +48,9 @@ per-file counts and uncovered code under the Cargo target directory. Use a
 separate `CARGO_TARGET_DIR` for each checkout so LLVM's source paths match
 the revision being measured.
 
+The `float-enclosure-aarch64-linux-gnu` feature enables strict scalar and
+Cartesian floating-point enclosures on little-endian LP64 AArch64 GNU/Linux.
+
 Run `python3 scripts/check_interval_wasm.py --target wasm32-wasip1 --output DIR`
 from the workspace root with a new output directory. Alongside the linked
 WASM clients, Node executes the crate's Rust tests with fixed, dyadic and

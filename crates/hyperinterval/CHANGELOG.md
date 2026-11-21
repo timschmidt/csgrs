@@ -9,6 +9,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add opt-in strict binary32/binary64 enclosures on `aarch64-unknown-linux-gnu`
+  with `float-enclosure-aarch64-linux-gnu`.
+
 - Add `RationalInterval::from_real` under the `hyperreal` feature. It preserves
   rational singletons and returns a typed error if symbolic evaluation is cancelled.
 

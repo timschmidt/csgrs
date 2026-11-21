@@ -56,7 +56,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact rational scalar scaling, exact dyadic scalar maps and direct rational-to-IEEE projection implemented and locally qualified | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified, including rounded higher powers, full-width exponents, tight rational endpoint projection and direct binary32/binary64 conversion with maintained browser, WASI and native fuzz qualification | full surface/coverage, further targets and shipped consumers |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM, opt-in ordinary WASI Preview 1 and opt-in AArch64 GNU/Linux (QEMU only) locally qualified, including rounded higher powers, full-width exponents, tight rational endpoint projection and direct binary32/binary64 conversion with maintained browser, WASI and native fuzz qualification | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI inventories matched across the preceding 72 solver test executables on both compilers and all 73 with the general conic oracle on Rust 1.95, including nested coefficient scopes, produced denominator growth and 4,212 Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts. The weighted inequality Jacobian trial fits its bounded stack allowance and exceeds a Hyperreal benchmark section cap. Quadratic alpha and univariate quadratic Krawczyk rows require certified comparisons. Simultaneously saturated coefficient receipts display a proven lower bound. The affine oracle checks every field of each published coordinate, including the proved prefix of an outside-box report | preserve coefficient-growth diagnostic counts above the 32-bit word limit, repair the affine Krawczyk proof path, and satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
@@ -14901,4 +14901,57 @@ All three classifier trials remain outside the production branch.
 
 All 748 members of the 108,288-byte archive verified from committed blobs
 at evidence revision `ce92fb4f546d0b8de4770da69479ef6486562700`.
+[Evidence index](docs/evidence-archive.tsv)
+
+## Phase 4, strict IEEE enclosures on AArch64 GNU/Linux, 20 November 2026
+
+The opt-in `float-enclosure-aarch64-linux-gnu` feature qualifies strict
+binary32/binary64 enclosures on little-endian LP64 `aarch64-unknown-linux-gnu`.
+Plain `float-enclosure` on that target still returns `UnqualifiedEnvironment`
+for nonempty ingress. The hyperlattice-interval feature forwards it. A new
+CI job targets the hosted `ubuntu-24.04-arm` runner. That job has not run.
+[Backend gate](crates/hyperinterval/src/float.rs) ·
+[FPCR sweep](crates/hyperinterval/tests/support/fpcr.rs)
+
+Without two feature-gated `inline(never)` placements, LLVM vectorized
+endpoint sign-mask comparisons and negations into SIMD `FNEG`. This occurred
+in hull, intersection, min/max images and binary64 subtraction, producing 13
+scan findings. `FNEG` is a floating-point instruction whose NaN handling
+depends on `FPCR.AH`. The kernel would therefore no longer be integer-only.
+With the placements on `Ord::cmp` and `Format::negate`, the release scanner
+found no native floating arithmetic, comparison or conversion in 74 emitted
+symbols on Rust 1.88 and 76 on Rust 1.95 and 1.99. The codegen script now
+accepts `--target` and `--objdump`.
+
+All checks used user-mode QEMU 10.0.13 with Debian cross binutils 2.44,
+GCC 14.2 and glibc 2.41. They did not run on AArch64 hardware. The job's
+commands passed on Rust 1.88, 1.95 and 1.99. These covered the target gate,
+the directed-MPFR scalar suites, `float_format`, `dyadic_float_egress`,
+`rational_float_projection` (1.95 and 1.99), the lattice
+cartesian/affine/no-alloc tests and Clippy with `-D warnings`. The scalar
+suite sweeps the rounding, flush-to-zero and default-NaN FPCR controls. It
+also sweeps the FEAT_AFP FIZ and AH bits wherever they read back. The
+75,441-row WebAssembly conformance corpus reproduced byte-for-byte from the
+exact Fraction oracle in `conformance/wasm-float/oracle.py`. Every row
+matched in all 64 verified FPCR modes under `-cpu max`. It also matched in
+the 16 modes available under `-cpu cortex-a53`, which reads both AFP bits
+back as zero.
+
+On x86-64, the release stack client had identical section sizes and
+identical `.text` bytes before and after the change on all three toolchains.
+The disassembly differed only in `.llvm.<hash>` symbol suffixes. AArch64
+clients without the feature were byte-identical. The qualified AArch64
+client used a peak of 1,264 stack bytes (1,232 on x86-64) and made no
+allocations. Its file was 59,184–78,928 bytes larger than the unqualified
+client, which had returned an error before computing. No existing image is
+charged. The x86-64 `float` test list matched the base revision: 24 tests.
+Native fmt, float, lattice and rational suites passed, with and without the
+inert feature. So did all-feature Clippy and rustdoc with `-D warnings`,
+strict zizmor 1.32.0 and the nine inventory tests. The refreshed inventory
+has 7,360 scan rows and 439 reviews.
+[Size accounts](docs/research/interval-size-accounts.json) ·
+[Memory accounts](docs/research/interval-memory-accounts.json)
+
+All 117 archived members verified from evidence commit
+`798cbede6fc47e04f1ed87db6bcfd3c6e99651b0` (433,368 bytes).
 [Evidence index](docs/evidence-archive.tsv)

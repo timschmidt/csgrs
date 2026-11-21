@@ -18,6 +18,14 @@ const BACKEND_SUPPORTED: bool = matches!(target_tuple::TARGET.as_bytes(), b"wasm
 )))]
 const BACKEND_SUPPORTED: bool = cfg!(any(
     target_arch = "x86_64",
+    all(
+        feature = "float-enclosure-aarch64-linux-gnu",
+        target_arch = "aarch64",
+        target_os = "linux",
+        target_env = "gnu",
+        target_endian = "little",
+        target_pointer_width = "64"
+    ),
     all(target_arch = "wasm32", target_os = "unknown")
 ));
 
@@ -40,6 +48,19 @@ macro_rules! enclosure {
             }
         }
         impl Ord for $endpoint {
+            // Vectorizing adjacent AArch64 endpoint
+            // comparisons can materialize their integer sign masks with SIMD FNEG.
+            #[cfg_attr(
+                all(
+                    feature = "float-enclosure-aarch64-linux-gnu",
+                    target_arch = "aarch64",
+                    target_os = "linux",
+                    target_env = "gnu",
+                    target_endian = "little",
+                    target_pointer_width = "64"
+                ),
+                inline(never)
+            )]
             fn cmp(&self, other: &Self) -> Ordering {
                 $format.compare(u64::from(self.0), u64::from(other.0))
             }
@@ -51,7 +72,8 @@ macro_rules! enclosure {
         /// independent of ambient float rounding and FTZ/DAZ. No native float
         /// arithmetic or allocation occurs. Nonempty ingress is
         /// qualified on x86_64 and wasm32-unknown-unknown. The optional
-        /// `float-enclosure-wasip1` feature also qualifies wasm32-wasip1. Other targets return
+        /// features `float-enclosure-wasip1` and `float-enclosure-aarch64-linux-gnu`
+        /// qualify ordinary WASI Preview 1 and little-endian LP64 GNU/Linux on AArch64. Other targets return
         /// `UnqualifiedEnvironment`. Empty is valid on every target.
         /// Overflow is an error, never saturation or an infinite endpoint.
         /// Both input zero signs represent the same canonical real zero.

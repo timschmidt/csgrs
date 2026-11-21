@@ -20,6 +20,7 @@ hyperreal = ["dyadic", "hyperinterval/hyperreal"]
 dyadic = ["hyperinterval/dyadic"]
 rational = ["hyperinterval/rational"]
 float-enclosure = ["hyperinterval/float-enclosure"]
+float-enclosure-aarch64-linux-gnu = ["float-enclosure", "hyperinterval/float-enclosure-aarch64-linux-gnu"]
 float-enclosure-wasip1 = ["float-enclosure", "hyperinterval/float-enclosure-wasip1"]
 serde = ["dep:serde", "hyperinterval/serde"]
 

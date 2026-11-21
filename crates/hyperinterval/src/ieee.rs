@@ -79,6 +79,18 @@ impl Format {
         (self.bias() as u64) << self.fraction()
     }
 
+    // Pairwise endpoint negations can also be contracted to SIMD FNEG.
+    #[cfg_attr(
+        all(
+            feature = "float-enclosure-aarch64-linux-gnu",
+            target_arch = "aarch64",
+            target_os = "linux",
+            target_env = "gnu",
+            target_endian = "little",
+            target_pointer_width = "64"
+        ),
+        inline(never)
+    )]
     pub(crate) fn negate(self, bits: u64) -> u64 {
         if bits == 0 { 0 } else { bits ^ self.sign }
     }

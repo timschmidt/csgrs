@@ -16935,5 +16935,35 @@
         "free_bytes": 14867292
       }
     }
+  },
+  "aarch64_gnu_strict_float_2026_11_20": {
+    "revision": "candidate on fe44ef2c5",
+    "preceding": "fe44ef2c5",
+    "record": "2026-11-20-interval-aarch64-strict-float",
+    "feature": "float-enclosure-aarch64-linux-gnu (opt-in; not default)",
+    "production_incremental_bytes": {
+      "x86_64-unknown-linux-gnu": 0,
+      "wasm32 and default builds": 0,
+      "aarch64-unknown-linux-gnu without the feature": 0
+    },
+    "method": "Release hyperlattice-interval stack client (strict f32/f64 vector, matrix and scalar chain) built before and after on Rust 1.88.0, 1.95.0 and 1.99.0.",
+    "x86_64_before_vs_final": "Identical section sizes and identical .text bytes on all three toolchains; disassembly differs only in .llvm.<hash> local symbol suffixes.",
+    "aarch64_before_vs_final_default_feature": "Byte-identical executables on all three toolchains.",
+    "aarch64_opt_in_client_bytes": {
+      "1.88.0": {
+        "unqualified": 450560,
+        "qualified": 529488
+      },
+      "1.95.0": {
+        "unqualified": 475456,
+        "qualified": 534640
+      },
+      "1.99.0": {
+        "unqualified": 479240,
+        "qualified": 539088
+      }
+    },
+    "accounting": "The opt-in AArch64 delta is new functionality on a target that previously returned UnqualifiedEnvironment before computing; it carries no charge against existing images. The two inline(never) placements are AArch64-feature-gated.",
+    "evidence": "docs/evidence/2026-11-20-interval-aarch64-strict-float/binaries/stack-clients.tsv"
   }
 }
