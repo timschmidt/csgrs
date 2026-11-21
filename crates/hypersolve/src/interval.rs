@@ -1453,23 +1453,37 @@ fn certify_mixed_degree_balls(
     } else {
         certify_candidate_with_residual_balls(analysis, context, quadratic_balls, policy)
     };
-    if radii.is_empty() || analysis.facts().affine_form_active_rows == 0 {
-        return report;
+    if !radii.is_empty()
+        && analysis.facts().affine_form_active_rows != 0
+        && analysis.facts().structural_jacobian_nonzeros != 0
+    {
+        refine_affine_box_rows(&mut report, analysis, radii, policy.certified_only());
     }
+    report
+}
+
+#[inline(never)]
+fn refine_affine_box_rows(
+    report: &mut crate::CandidateCertificationReport,
+    analysis: &ProblemAnalysis<'_>,
+    radii: &HashMap<SymbolId, Real>,
+    policy: PredicatePolicy,
+) {
     let mut changed = false;
     for row in &mut report.rows {
-        if let Some(affine) = &analysis.affine_residuals()[row.constraint_index] {
+        if let Some(affine) = &analysis.affine_residuals()[row.constraint_index]
+            && !affine.is_constant()
+        {
             let radius = affine_box_radius(analysis, affine, radii);
             if !radius.definitely_zero() {
-                crate::certification::apply_residual_ball(row, &radius, policy.certified_only());
+                crate::certification::apply_residual_ball(row, &radius, policy);
                 changed = true;
             }
         }
     }
     if changed {
-        crate::certification::recompute_report_counts(&mut report);
+        crate::certification::recompute_report_counts(report);
     }
-    report
 }
 
 fn validate_variable_balls(
