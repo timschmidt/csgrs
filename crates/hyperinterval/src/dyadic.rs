@@ -7,7 +7,8 @@ use num_traits::{One, Zero};
 /// Caller-owned accounting for dyadic arithmetic and directed conversions.
 ///
 /// Each stage reserves an upper bound `n` on its input/output magnitude bits.
-/// With `w = max(n, 1)`, linear stages cost `w` units and product/division stages cost `w*w`.
+/// For cost accounting let `w = max(n, 1)`. Linear stages cost `w` units
+/// and product/division stages cost `w*w` units.
 /// Square-root extraction reserves `2 * bit_length(n) + 4` quadratic stages,
 /// with `n` the scaled quotient bit length plus two.
 /// The formulas deliberately overestimate small or cancelling results. A size

@@ -11,7 +11,7 @@ pub(crate) fn compare(
     f: i32,
     budget: &mut DyadicBudget,
 ) -> Result<Ordering, IntervalError> {
-    budget.reserve(a.bits().max(b.bits()).max(1), 1, false)?;
+    budget.reserve(a.bits().max(b.bits()), 1, false)?;
     let sa = a.cmp(&BigInt::zero());
     let sb = b.cmp(&BigInt::zero());
     if sa != sb {

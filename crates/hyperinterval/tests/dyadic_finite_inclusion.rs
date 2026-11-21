@@ -78,3 +78,41 @@ fn equal_leading_powers_keep_the_lowest_significant_limb() {
         assert_eq!(right.interior_subset_of(&wide, &mut budget), Ok(false));
     }
 }
+
+
+#[test]
+fn zero_endpoint_comparisons_charge_work_at_zero_magnitude_width() {
+    use core::cmp::Ordering;
+    use hyperinterval::ExtendedInterval;
+
+    let zero = DyadicInterval::point(0.into(), i32::MAX).unwrap();
+    let extended = ExtendedInterval::from_finite(zero.clone());
+    let mut budget = DyadicBudget::new(0, 10);
+    assert_eq!(
+        zero.compare_singleton(&zero, &mut budget),
+        Ok(Ordering::Equal)
+    );
+    assert_eq!(zero.overlaps(&zero, &mut budget), Ok(true));
+    assert_eq!(extended.subset_of(&extended, &mut budget), Ok(true));
+    assert_eq!(extended.strictly_left_of(&extended, &mut budget), Ok(false));
+    assert_eq!(
+        extended.contains_point(&0.into(), i32::MIN, &mut budget),
+        Ok(true)
+    );
+    assert_eq!(budget.remaining_work(), 0);
+    assert_eq!(
+        extended.contains_point(&0.into(), i32::MAX, &mut budget),
+        Err(IntervalError::WorkExhausted)
+    );
+    let mut retry = DyadicBudget::new(0, 2);
+    assert_eq!(
+        extended.contains_point(&1.into(), i32::MIN, &mut retry),
+        Err(IntervalError::SizeExhausted)
+    );
+    assert_eq!(retry.remaining_work(), 2);
+    assert_eq!(
+        extended.contains_point(&0.into(), i32::MAX, &mut retry),
+        Ok(true)
+    );
+    assert_eq!(retry.remaining_work(), 0);
+}
