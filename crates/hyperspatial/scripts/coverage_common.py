@@ -115,7 +115,8 @@ def count_function_lines(annotated, groups, root):
                 raise SystemExit(f"LLVM reported no {label} function executable lines")
             path = str(Path(entry["path"]).relative_to(root))
             row = {key: entry[key] for key in ("start", "end_exclusive")}
-            row.update(count=len(entry["measured"]), covered=sum(entry["measured"].values()))
+            row.update(count=len(entry["measured"]), covered=sum(entry["measured"].values()),
+                       uncovered=sorted(n for n, hit in entry["measured"].items() if not hit))
             files.setdefault(path, []).append(row)
         total = {key: sum(row[key] for rows in files.values() for row in rows)
                  for key in ("count", "covered")}
@@ -136,4 +137,7 @@ def check_native_function_coverage(report):
         group = report[label]
         if (not group["files"] or any(not row["count"] for rows in group["files"].values() for row in rows)
                 or group["physical_executable_lines"]["percent"] < 95):
-            raise SystemExit(f"{label} production function line coverage is below the 95% gate or missing")
+            # Name the measured lines, so a hosted failure can be diagnosed
+            # without its retained LLVM profile.
+            raise SystemExit(f"{label} production function line coverage is below the 95% gate or missing: "
+                             f"{group['physical_executable_lines']}, files {group['files']}")
