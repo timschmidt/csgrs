@@ -112,18 +112,27 @@ impl RealBall {
 
     /// Classifies exact point membership using a certified bound on
     /// `point - center`. Overlap alone returns `Unresolved`; it cannot certify
-    /// either membership or equality. Unavailable evaluation is a typed error.
+    /// either membership or equality. An exact rational displacement resolves
+    /// either side of a closed boundary even when it is off the dyadic grid.
+    /// Unavailable evaluation is a typed error.
     pub fn classify_point(
         &self,
         point: &Real,
         precision: i32,
     ) -> Result<BallRelation, IntervalError> {
-        let difference = Self::point(point - &self.center).to_rational(precision)?;
+        let displacement = Self::point(point - &self.center);
+        let difference = displacement.to_rational(precision)?;
         let allowed = RationalInterval::from_nominal_uncertainty(&Rational::zero(), &self.radius)?;
         Ok(if difference.subset_of(&allowed) {
             BallRelation::Contained
         } else if difference.disjoint(&allowed) {
             BallRelation::Excluded
+        } else if let Some(exact) = displacement.center().exact_rational_ref() {
+            if allowed.contains_point(exact) {
+                BallRelation::Contained
+            } else {
+                BallRelation::Excluded
+            }
         } else {
             BallRelation::Unresolved
         })
