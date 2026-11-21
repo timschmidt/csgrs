@@ -423,3 +423,6 @@ pub use tensor_resultant::{
     DenseTensorPolynomial, TensorConstraintResultantReport, TensorConstraintResultantStatus,
     resultant_tensor_polynomial_univariate_constraint,
 };
+
+#[cfg(test)]
+mod solver_contract_tests;
