@@ -15208,7 +15208,7 @@ rewrite.
 The largest retained increase is 5 instructions, on the exact-rational
 fixtures 0–3, which the change does not touch.
 
-**Size.** These artifacts were built at `62b99e887` and with the change.
+**Size.** These exploratory Rust 1.100 figures compare `62b99e887` with the change.
 
 | Artifact | Before | After | Change |
 | --- | ---: | ---: | ---: |
@@ -15216,13 +15216,51 @@ fixtures 0–3, which the change does not touch.
 | ball client, native `.text` | 1,266,554 | 1,267,402 | +848 |
 | ball client, native `.relro_padding` | 3,808 | 2,792 | −1,016 |
 | ball client, WASM release | 1,172,026 | 1,172,875 | +849 (+0.072%) |
-| Interface release WASM, cargo output | 13,469,168 | 13,464,452 | −4,716 (−0.035%) |
-| Interface release WASM, code section | 10,527,999 | 10,524,327 | −3,672 |
-| Interface release WASM, `gzip -9` | 4,688,909 | 4,687,650 | −1,259 |
 
-The Interface figures are cargo's `wasm32-unknown-unknown` release output.
-They precede `wasm-bindgen` and `wasm-opt`, so they are not the deployed
-artifact. The accounts in `docs/research/interval-size-accounts.json` were not
-re-measured against their fixed baseline `c9f1f9ac5`, and the earlier
-`classify_point` repair is not charged there either. This cumulative
-accounting remains open.
+An earlier local Interface figure of −4,716 B was wrong: it came from a build
+configuration other than the locked `trunk` release. The accounting below
+supersedes it.
+
+**Cumulative size accounting.** Both abort-flag changes are now charged in
+`docs/research/interval-size-accounts.json` under
+`rational_translation_abort_2026_11_22`. The raw data is in the evidence
+record `2026-11-22-interval-rational-translation-abort`. The admission is
+retroactive: both changes were merged before the caps were declared. The caps
+were declared before the measurements below were read.
+
+The ball membership client from the 19 November record was rebuilt with
+Rust 1.95.0 at six revisions from one checkout path: `c9f1f9ac5`, `4ad0c199c`,
+`61c84c882`, `3664c7d08`, `62b99e887` and `ee5df2136`. It was built as the
+native client, the lifetime and allocation observers, and the WASM library.
+The caps are 2,048 B and 0.2% per change, and 8,192 B and 0.5% cumulative
+from `c9f1f9ac5`. Positive steps are never offset.
+
+| Change | ELF file | ELF `.text` | WASM file | WASM code |
+| --- | ---: | ---: | ---: | ---: |
+| `3664c7d08`, `classify_point` | +496 to +504 | +272 | +363 | +298 |
+| `ea846698d`, add/sub | +1,064 to +1,088 | +720 | +893 | +814 |
+| Accepted from `c9f1f9ac5` | 1,568 to 1,592 | 1,136 | 1,330 | 1,170 |
+
+The accepted totals include +144 B of `.text` and +58 B of WASM code from
+merged changes between `4ad0c199c` and `61c84c882` that were never charged.
+The images at `3664c7d08` and `62b99e887` are byte-identical. Verdict output
+is identical from `61c84c882` onward.
+
+The Interface ran its locked `trunk` release build on hosted CI, run
+45030377592, on a temporary branch since deleted. It used Rust 1.100,
+`wasm-opt -Oz` and Interface `ef5061183`.
+
+| Change | raw file / code | final file / code | gzip | brotli |
+| --- | ---: | ---: | ---: | ---: |
+| `3664c7d08` | 0 / 0 | 0 / 0 | −1 | −1,313 |
+| `ea846698d` | +545 / +544 | +492 / +491 | −73 | +1,810 |
+
+These charges are added to the four existing Interface WASM accounts. Their
+largest use of budget is brotli, which has 2,286 B left of its 4,096 B
+allowance. Every incremental and cumulative cap passes.
+
+The Pages deploy pins csgrs `20330cd30`, so neither change has shipped yet.
+
+**Still open.** The Interface accounts' absolute sizes were recorded with the
+archived toolchain. Growth from each account's retained revision to `61c84c882`
+has not been re-measured with that toolchain.

@@ -53,7 +53,7 @@
   "flash": "No firmware flash allowance applies to the recorded host and hosted WebAssembly changes. Embedded image occupancy requires separate deployment measurements.",
   "matrix_size_budget_revision_proposal": "not adopted",
   "evidence": "docs/evidence/2026-11-16-interval-coverage-boundaries",
-  "status": "70 existing-artifact accounts. The dyadic overlap addition records both linked client dependency locks, four existing cost executables and the unchanged split-set test harness. Previous charges remain in their individual accounts.",
+  "status": "70 existing-artifact accounts. The dyadic overlap addition records both linked client dependency locks, four existing cost executables and the unchanged split-set test harness. Previous charges remain in their individual accounts. The 22 November 2026 abort-flag entry adds four ball membership client accounts and charges the two abort-flag changes to the four Interface WASM accounts.",
   "accepted_changes": [
     {
       "id": "array-construction-lifecycle-tests",
@@ -6498,9 +6498,9 @@
           "incremental_growth_percent": 0.0001337388990212616,
           "net_growth_bytes": 18,
           "growth_percent": 0.0001337388990212616,
-          "accepted_positive_growth_bytes": 18,
-          "remaining_cumulative_bytes": 8174,
-          "remaining_cumulative_percent": 0.09986626110097874,
+          "accepted_positive_growth_bytes": 563,
+          "remaining_cumulative_bytes": 7629,
+          "remaining_cumulative_percent": 0.095816944,
           "caps": {
             "incremental_bytes": 8192,
             "incremental_percent": 0.1,
@@ -6517,9 +6517,9 @@
           "incremental_growth_percent": 0.00017118407166449975,
           "net_growth_bytes": 18,
           "growth_percent": 0.00017118407166449975,
-          "accepted_positive_growth_bytes": 18,
-          "remaining_cumulative_bytes": 4078,
-          "remaining_cumulative_percent": 0.09982881592833551,
+          "accepted_positive_growth_bytes": 562,
+          "remaining_cumulative_bytes": 3534,
+          "remaining_cumulative_percent": 0.094655253,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 0.1,
@@ -6742,7 +6742,58 @@
       "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
       "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
       "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
-      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b",
+      "subsequent_charges": [
+        {
+          "change": "3664c7d08",
+          "metric": "file",
+          "csgrs_before": "61c84c8829fb77d3890fd491a48bebb68e58342e",
+          "csgrs_after": "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+          "before": 13467379,
+          "after": 13467379,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "ea846698d",
+          "metric": "file",
+          "csgrs_before": "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+          "csgrs_after": "ee5df213621270bfa2ecabb0441762014636f68d",
+          "before": 13467379,
+          "after": 13467924,
+          "incremental_growth_bytes": 545,
+          "incremental_growth_percent": 0.004047,
+          "charged_bytes": 545,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "3664c7d08",
+          "metric": "emitted_code",
+          "csgrs_before": "61c84c8829fb77d3890fd491a48bebb68e58342e",
+          "csgrs_after": "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+          "before": 10519356,
+          "after": 10519356,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "ea846698d",
+          "metric": "emitted_code",
+          "csgrs_before": "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+          "csgrs_after": "ee5df213621270bfa2ecabb0441762014636f68d",
+          "before": 10519356,
+          "after": 10519900,
+          "incremental_growth_bytes": 544,
+          "incremental_growth_percent": 0.005171,
+          "charged_bytes": 544,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, trunk 0.21.14, wasm-opt 133, Interface ef5061183 with its locked dependencies (--locked succeeded at every stage) and firmware 9c874b2b8; hosted CI run 45030377592 on a temporary branch since deleted. Each charge is the positive difference between adjacent csgrs revisions in one configuration, never offset. Absolute sizes in this configuration are not comparable with 'retained', which used the archived toolchain; growth between this account's retained revision and csgrs 61c84c882 under the archived toolchain is not re-measured here."
     },
     {
       "artifact": "alumina-interface#wasm-final",
@@ -6768,9 +6819,9 @@
           "incremental_growth_percent": 0.00015947016880667815,
           "net_growth_bytes": 17,
           "growth_percent": 0.00015947016880667815,
-          "accepted_positive_growth_bytes": 17,
-          "remaining_cumulative_bytes": 8175,
-          "remaining_cumulative_percent": 0.09984052983119333,
+          "accepted_positive_growth_bytes": 509,
+          "remaining_cumulative_bytes": 7683,
+          "remaining_cumulative_percent": 0.095225276,
           "caps": {
             "incremental_bytes": 8192,
             "incremental_percent": 0.1,
@@ -6787,9 +6838,9 @@
           "incremental_growth_percent": 0.00019693264660216466,
           "net_growth_bytes": 17,
           "growth_percent": 0.00019693264660216466,
-          "accepted_positive_growth_bytes": 17,
-          "remaining_cumulative_bytes": 4079,
-          "remaining_cumulative_percent": 0.09980306735339783,
+          "accepted_positive_growth_bytes": 508,
+          "remaining_cumulative_bytes": 3588,
+          "remaining_cumulative_percent": 0.094115189,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 0.1,
@@ -7031,7 +7082,58 @@
       "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
       "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
       "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
-      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b",
+      "subsequent_charges": [
+        {
+          "change": "3664c7d08",
+          "metric": "file",
+          "csgrs_before": "61c84c8829fb77d3890fd491a48bebb68e58342e",
+          "csgrs_after": "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+          "before": 10662533,
+          "after": 10662533,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "ea846698d",
+          "metric": "file",
+          "csgrs_before": "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+          "csgrs_after": "ee5df213621270bfa2ecabb0441762014636f68d",
+          "before": 10662533,
+          "after": 10663025,
+          "incremental_growth_bytes": 492,
+          "incremental_growth_percent": 0.004614,
+          "charged_bytes": 492,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "3664c7d08",
+          "metric": "emitted_code",
+          "csgrs_before": "61c84c8829fb77d3890fd491a48bebb68e58342e",
+          "csgrs_after": "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+          "before": 8630709,
+          "after": 8630709,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "ea846698d",
+          "metric": "emitted_code",
+          "csgrs_before": "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+          "csgrs_after": "ee5df213621270bfa2ecabb0441762014636f68d",
+          "before": 8630709,
+          "after": 8631200,
+          "incremental_growth_bytes": 491,
+          "incremental_growth_percent": 0.005689,
+          "charged_bytes": 491,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, trunk 0.21.14, wasm-opt 133, Interface ef5061183 with its locked dependencies (--locked succeeded at every stage) and firmware 9c874b2b8; hosted CI run 45030377592 on a temporary branch since deleted. Each charge is the positive difference between adjacent csgrs revisions in one configuration, never offset. Absolute sizes in this configuration are not comparable with 'retained', which used the archived toolchain; growth between this account's retained revision and csgrs 61c84c882 under the archived toolchain is not re-measured here."
     },
     {
       "artifact": "alumina-interface#wasm-gzip",
@@ -7059,7 +7161,7 @@
           "growth_percent": 0.0005699567052118156,
           "accepted_positive_growth_bytes": 26,
           "remaining_cumulative_bytes": 4070,
-          "remaining_cumulative_percent": 0.09943004329478819,
+          "remaining_cumulative_percent": 0.099430043,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 0.1,
@@ -7073,7 +7175,34 @@
       "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
       "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
       "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
-      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b",
+      "subsequent_charges": [
+        {
+          "change": "3664c7d08",
+          "metric": "file",
+          "csgrs_before": "61c84c8829fb77d3890fd491a48bebb68e58342e",
+          "csgrs_after": "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+          "before": 4565162,
+          "after": 4565161,
+          "incremental_growth_bytes": -1,
+          "incremental_growth_percent": -2.2e-05,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "ea846698d",
+          "metric": "file",
+          "csgrs_before": "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+          "csgrs_after": "ee5df213621270bfa2ecabb0441762014636f68d",
+          "before": 4565161,
+          "after": 4565088,
+          "incremental_growth_bytes": -73,
+          "incremental_growth_percent": -0.001599,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, trunk 0.21.14, wasm-opt 133, Interface ef5061183 with its locked dependencies (--locked succeeded at every stage) and firmware 9c874b2b8; hosted CI run 45030377592 on a temporary branch since deleted. Each charge is the positive difference between adjacent csgrs revisions in one configuration, never offset. Absolute sizes in this configuration are not comparable with 'retained', which used the archived toolchain; growth between this account's retained revision and csgrs 61c84c882 under the archived toolchain is not re-measured here."
     },
     {
       "artifact": "alumina-interface#wasm-brotli",
@@ -7099,9 +7228,9 @@
           "incremental_growth_percent": -0.009296980049992656,
           "net_growth_bytes": -326,
           "growth_percent": -0.009296980049992656,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 0.1,
+          "accepted_positive_growth_bytes": 1810,
+          "remaining_cumulative_bytes": 2286,
+          "remaining_cumulative_percent": 0.048381798,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 0.1,
@@ -7119,7 +7248,34 @@
       "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
       "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
       "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
-      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b",
+      "subsequent_charges": [
+        {
+          "change": "3664c7d08",
+          "metric": "file",
+          "csgrs_before": "61c84c8829fb77d3890fd491a48bebb68e58342e",
+          "csgrs_after": "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+          "before": 3507359,
+          "after": 3506046,
+          "incremental_growth_bytes": -1313,
+          "incremental_growth_percent": -0.037436,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "ea846698d",
+          "metric": "file",
+          "csgrs_before": "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+          "csgrs_after": "ee5df213621270bfa2ecabb0441762014636f68d",
+          "before": 3506046,
+          "after": 3507856,
+          "incremental_growth_bytes": 1810,
+          "incremental_growth_percent": 0.051625,
+          "charged_bytes": 1810,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, trunk 0.21.14, wasm-opt 133, Interface ef5061183 with its locked dependencies (--locked succeeded at every stage) and firmware 9c874b2b8; hosted CI run 45030377592 on a temporary branch since deleted. Each charge is the positive difference between adjacent csgrs revisions in one configuration, never offset. Absolute sizes in this configuration are not comparable with 'retained', which used the archived toolchain; growth between this account's retained revision and csgrs 61c84c882 under the archived toolchain is not re-measured here."
     },
     {
       "artifact": "alumina-interface#ui-release-tests",
@@ -9168,6 +9324,630 @@
       "required_free_bytes": 16777216,
       "remaining_bytes": 65384384,
       "evidence": "docs/evidence/2026-11-18-interval-native-coverage"
+    },
+    {
+      "artifact": "ball membership client-native",
+      "role": "Ball membership client, native release",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "hyperinterval real-ball; hyperreal default-features = false",
+      "profile": "release; client lock from the 2026-11-19 record; one physical source and target path per kind for all six stages",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "stages": [
+        "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "4ad0c199c",
+        "61c84c8829fb77d3890fd491a48bebb68e58342e",
+        "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+        "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+        "ee5df213621270bfa2ecabb0441762014636f68d"
+      ],
+      "baseline_sha256": "0c5cb1012962000ca7c3956e6272bb77df4b8ea433906aa3dde2629031aa7ce8",
+      "retained_sha256": "4c0a0ca1f02402699b25d652f021144f138c74998dda935d2e38e2529b321cbe",
+      "code_metric": "code = complete .text (ELF) or WASM code section; function_union = address-deduplicated sized FUNC symbols",
+      "headroom": "Host and hosted qualification clients; no firmware image or flash partition.",
+      "metrics": {
+        "file": {
+          "baseline": 2132728,
+          "retained": 2134072,
+          "net_growth_bytes": 1344,
+          "growth_percent": 0.063018,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": -136,
+              "percent": -0.006377
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": -104,
+              "percent": -0.004877
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 496,
+              "percent": 0.023259
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 1088,
+              "percent": 0.051008
+            }
+          ],
+          "accepted_positive_growth_bytes": 1584,
+          "remaining_cumulative_bytes": 6608,
+          "remaining_cumulative_percent": 0.425729,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        },
+        "code": {
+          "baseline": 1216823,
+          "retained": 1217959,
+          "net_growth_bytes": 1136,
+          "growth_percent": 0.093358,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 144,
+              "percent": 0.011834
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 272,
+              "percent": 0.022351
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 720,
+              "percent": 0.05915
+            }
+          ],
+          "accepted_positive_growth_bytes": 1136,
+          "remaining_cumulative_bytes": 7056,
+          "remaining_cumulative_percent": 0.406642,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        },
+        "function_union": {
+          "baseline": 1204771,
+          "retained": 1205936,
+          "net_growth_bytes": 1165,
+          "growth_percent": 0.096699,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 144,
+              "percent": 0.011952
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 255,
+              "percent": 0.021163
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 766,
+              "percent": 0.063559
+            }
+          ],
+          "accepted_positive_growth_bytes": 1165,
+          "remaining_cumulative_bytes": 7027,
+          "remaining_cumulative_percent": 0.403301,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        }
+      },
+      "evidence": "docs/evidence/2026-11-22-interval-rational-translation-abort"
+    },
+    {
+      "artifact": "ball membership client-life",
+      "role": "Ball membership client linked with the guarded lifetime observer",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "hyperinterval real-ball; hyperreal default-features = false",
+      "profile": "release; client lock from the 2026-11-19 record; one physical source and target path per kind for all six stages",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "stages": [
+        "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "4ad0c199c",
+        "61c84c8829fb77d3890fd491a48bebb68e58342e",
+        "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+        "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+        "ee5df213621270bfa2ecabb0441762014636f68d"
+      ],
+      "baseline_sha256": "dabbb08a7575bfa33fbc798bc610c191944ca17cae2e0c4dbfb017c278e1e64c",
+      "retained_sha256": "88ec640304077e2afacbf64fc130ad51b312cb831cdb3f2b6665f66b4f873f5d",
+      "code_metric": "code = complete .text (ELF) or WASM code section; function_union = address-deduplicated sized FUNC symbols",
+      "headroom": "Host and hosted qualification clients; no firmware image or flash partition.",
+      "metrics": {
+        "file": {
+          "baseline": 2132408,
+          "retained": 2133720,
+          "net_growth_bytes": 1312,
+          "growth_percent": 0.061527,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": -168,
+              "percent": -0.007878
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": -88,
+              "percent": -0.004127
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 504,
+              "percent": 0.023638
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 1064,
+              "percent": 0.049891
+            }
+          ],
+          "accepted_positive_growth_bytes": 1568,
+          "remaining_cumulative_bytes": 6624,
+          "remaining_cumulative_percent": 0.426468,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        },
+        "code": {
+          "baseline": 1215991,
+          "retained": 1217127,
+          "net_growth_bytes": 1136,
+          "growth_percent": 0.093422,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 144,
+              "percent": 0.011842
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 272,
+              "percent": 0.022366
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 720,
+              "percent": 0.059191
+            }
+          ],
+          "accepted_positive_growth_bytes": 1136,
+          "remaining_cumulative_bytes": 7056,
+          "remaining_cumulative_percent": 0.406578,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        },
+        "function_union": {
+          "baseline": 1203971,
+          "retained": 1205136,
+          "net_growth_bytes": 1165,
+          "growth_percent": 0.096763,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 144,
+              "percent": 0.01196
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 255,
+              "percent": 0.021177
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 766,
+              "percent": 0.063602
+            }
+          ],
+          "accepted_positive_growth_bytes": 1165,
+          "remaining_cumulative_bytes": 7027,
+          "remaining_cumulative_percent": 0.403237,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        }
+      },
+      "evidence": "docs/evidence/2026-11-22-interval-rational-translation-abort"
+    },
+    {
+      "artifact": "ball membership client-usable",
+      "role": "Ball membership client linked with the usable-allocation observer",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "hyperinterval real-ball; hyperreal default-features = false",
+      "profile": "release; client lock from the 2026-11-19 record; one physical source and target path per kind for all six stages",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "stages": [
+        "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "4ad0c199c",
+        "61c84c8829fb77d3890fd491a48bebb68e58342e",
+        "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+        "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+        "ee5df213621270bfa2ecabb0441762014636f68d"
+      ],
+      "baseline_sha256": "6287bf6be498344d84b16762621984d2482f3d156a17b4ec4736ec1b2681abb4",
+      "retained_sha256": "4c0594d1b8908bf9b5b7528aabd98e73180dc7410839327354175626d321a0d0",
+      "code_metric": "code = complete .text (ELF) or WASM code section; function_union = address-deduplicated sized FUNC symbols",
+      "headroom": "Host and hosted qualification clients; no firmware image or flash partition.",
+      "metrics": {
+        "file": {
+          "baseline": 2130648,
+          "retained": 2131984,
+          "net_growth_bytes": 1336,
+          "growth_percent": 0.062704,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": -152,
+              "percent": -0.007134
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": -104,
+              "percent": -0.004881
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 504,
+              "percent": 0.023658
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 1088,
+              "percent": 0.051058
+            }
+          ],
+          "accepted_positive_growth_bytes": 1592,
+          "remaining_cumulative_bytes": 6600,
+          "remaining_cumulative_percent": 0.425281,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        },
+        "code": {
+          "baseline": 1215351,
+          "retained": 1216487,
+          "net_growth_bytes": 1136,
+          "growth_percent": 0.093471,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 144,
+              "percent": 0.011848
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 272,
+              "percent": 0.022378
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 720,
+              "percent": 0.059222
+            }
+          ],
+          "accepted_positive_growth_bytes": 1136,
+          "remaining_cumulative_bytes": 7056,
+          "remaining_cumulative_percent": 0.406529,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        },
+        "function_union": {
+          "baseline": 1203344,
+          "retained": 1204509,
+          "net_growth_bytes": 1165,
+          "growth_percent": 0.096814,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 144,
+              "percent": 0.011967
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 255,
+              "percent": 0.021188
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 766,
+              "percent": 0.063635
+            }
+          ],
+          "accepted_positive_growth_bytes": 1165,
+          "remaining_cumulative_bytes": 7027,
+          "remaining_cumulative_percent": 0.403186,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        }
+      },
+      "evidence": "docs/evidence/2026-11-22-interval-rational-translation-abort"
+    },
+    {
+      "artifact": "ball membership client.wasm",
+      "role": "Ball membership client, wasm32-unknown-unknown release cdylib",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "Rust 1.95.0",
+      "features": "hyperinterval real-ball; hyperreal default-features = false",
+      "profile": "release; client lock from the 2026-11-19 record; one physical source and target path per kind for all six stages",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "stages": [
+        "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "4ad0c199c",
+        "61c84c8829fb77d3890fd491a48bebb68e58342e",
+        "3664c7d08ebd016ffac3fe2ef75af19f48dfbb61",
+        "62b99e88773f2e82d3bafe4256064f0fa543d3e7",
+        "ee5df213621270bfa2ecabb0441762014636f68d"
+      ],
+      "baseline_sha256": "0bc76a791b8567365bd9a631dcb04dd66960a348b6307cd893481ef58d7ce127",
+      "retained_sha256": "967f57df1d9e268b731697b5cf02413c42bd0abde58bba5e504def6bc49917f7",
+      "code_metric": "code = complete .text (ELF) or WASM code section; function_union = address-deduplicated sized FUNC symbols",
+      "headroom": "Host and hosted qualification clients; no firmware image or flash partition.",
+      "metrics": {
+        "file": {
+          "baseline": 1094789,
+          "retained": 1096119,
+          "net_growth_bytes": 1330,
+          "growth_percent": 0.121485,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 32,
+              "percent": 0.002923
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 42,
+              "percent": 0.003836
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 363,
+              "percent": 0.033155
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 893,
+              "percent": 0.081536
+            }
+          ],
+          "accepted_positive_growth_bytes": 1330,
+          "remaining_cumulative_bytes": 6862,
+          "remaining_cumulative_percent": 0.378515,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        },
+        "code": {
+          "baseline": 964948,
+          "retained": 966118,
+          "net_growth_bytes": 1170,
+          "growth_percent": 0.12125,
+          "steps": [
+            {
+              "from": "c9f1f9ac5",
+              "to": "4ad0c199c",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "4ad0c199c",
+              "to": "61c84c882",
+              "bytes": 58,
+              "percent": 0.006011
+            },
+            {
+              "from": "61c84c882",
+              "to": "3664c7d08",
+              "bytes": 298,
+              "percent": 0.030881
+            },
+            {
+              "from": "3664c7d08",
+              "to": "62b99e887",
+              "bytes": 0,
+              "percent": 0.0
+            },
+            {
+              "from": "62b99e887",
+              "to": "ee5df2136",
+              "bytes": 814,
+              "percent": 0.084326
+            }
+          ],
+          "accepted_positive_growth_bytes": 1170,
+          "remaining_cumulative_bytes": 7022,
+          "remaining_cumulative_percent": 0.37875,
+          "caps": {
+            "incremental_bytes": 2048,
+            "incremental_percent": 0.2,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.5
+          },
+          "passes_both_caps": true
+        }
+      },
+      "evidence": "docs/evidence/2026-11-22-interval-rational-translation-abort"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed",
@@ -16965,5 +17745,45 @@
     },
     "accounting": "The opt-in AArch64 delta is new functionality on a target that previously returned UnqualifiedEnvironment before computing; it carries no charge against existing images. The two inline(never) placements are AArch64-feature-gated.",
     "evidence": "docs/evidence/2026-11-20-interval-aarch64-strict-float/binaries/stack-clients.tsv"
+  },
+  "rational_translation_abort_2026_11_22": {
+    "revisions": {
+      "fixed": "c9f1f9ac5",
+      "classify_point_repair": "3664c7d08 (preceding 61c84c882)",
+      "translation_repair": "ea846698d (preceding 62b99e887); final ee5df2136 differs only in crates/hyperreal/benchmarks.md"
+    },
+    "record": "2026-11-22-interval-rational-translation-abort",
+    "benefit": "Exactness/cancellation: a cancellable Real shifted by a rational keeps its abort flag, first at RealBall::classify_point (3664c7d08), then in Hyperreal's generic add/sub, offset certificate and cached pi minus three (ea846698d). Witnesses: real_ball_boundary symbolic_membership_preserves_uncertainty_and_cancellation_on_retry, rational_translation_signal (2 tests), translated_real_ball_signal (1 test).",
+    "admission_order": "Retroactive. Both changes were merged before these caps were declared. Caps were written at 2026-11-22T14:00:57Z, after the exploratory Rust 1.100 sizes and the fixed-stage file sizes had been seen, but before the Rust 1.95.0 stage section sizes and the Interface trunk measurements were read.",
+    "caps": {
+      "ball_client_per_change_incremental": {
+        "bytes": 2048,
+        "percent": 0.2
+      },
+      "ball_client_cumulative_from_c9f1f9ac5": {
+        "bytes": 8192,
+        "percent": 0.5
+      },
+      "interface_wasm": "existing per-account caps"
+    },
+    "ball_client_charges_bytes": {
+      "classify_point_repair": {
+        "file": "+496 to +504 ELF, +363 WASM",
+        "code": "+272 ELF .text, +298 WASM code"
+      },
+      "translation_repair": {
+        "file": "+1,064 to +1,088 ELF, +893 WASM",
+        "code": "+720 ELF .text, +814 WASM code"
+      }
+    },
+    "interface_charges_bytes": {
+      "classify_point_repair": "0 raw and final file and code; gzip -1, brotli -1,313 (no charge)",
+      "translation_repair": "raw +545 file / +544 code; final +492 file / +491 code; gzip -73 (no charge); brotli +1,810"
+    },
+    "result": "Every incremental and cumulative cap passes on every image and metric. 3664c7d08 and 62b99e887 ball images are byte-identical, so the second charge belongs to ea846698d alone. Ball verdict output is identical at 61c84c882 and every later stage.",
+    "deployment": "The Interface Pages deploy pins csgrs 20330cd30, so neither change is in the deployed artifact until that pin advances.",
+    "correction": "The earlier local figure of -4,716 B for the Interface raw WASM came from a different configuration; on the locked trunk release build the change grows it by 545 B.",
+    "reproducibility": "A rebuild of the 4ad0c199c native ball client is 2,132,592 B against 2,134,096 B in the 2026-11-19 record. That record keeps only file sizes for this image, so the 1,504 B difference is not attributed; the checkout paths differ. Within this run all stages share one checkout path, so the stage differences are comparable.",
+    "evidence": "docs/evidence/2026-11-22-interval-rational-translation-abort"
   }
 }
