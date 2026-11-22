@@ -273,8 +273,12 @@ mod constants {
         Some(value)
     }
 
-    pub(super) fn pi_minus_three() -> Real {
-        PI_MINUS_THREE.with(|real| real.clone())
+    pub(super) fn pi_minus_three(pi: &Real) -> Real {
+        let mut shifted = PI_MINUS_THREE.with(|real| real.clone());
+        if let Some(signal) = pi.abort_signal() {
+            shifted.abort(signal.clone());
+        }
+        shifted
     }
 
     pub(super) fn one_plus_ln2() -> Real {

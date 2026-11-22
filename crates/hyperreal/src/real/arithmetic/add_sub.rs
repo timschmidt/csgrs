@@ -66,6 +66,23 @@ impl Real {
         Ok(left * right)
     }
 
+    /// Give a rational translation's new sum the abort flag of its sole
+    /// refining operand. Out of line so the unsignalled generic path keeps its
+    /// codegen; only operands that already carry a flag reach it.
+    #[cold]
+    #[inline(never)]
+    fn inherit_translation_abort(left: &Real, right: &Real, sum: &mut Computable) {
+        if let Some(signal) = left.abort_signal()
+            && right.class == One
+        {
+            sum.abort(signal.clone());
+        } else if let Some(signal) = right.abort_signal()
+            && left.class == One
+        {
+            sum.abort(signal.clone());
+        }
+    }
+
     fn try_add_rational_to_const_term(term: &Real, offset: Rational) -> Option<Real> {
         // Add rational offsets to a recognized pi/e constant without discarding
         // the symbolic certificate. This is the cheap path for facts on values
@@ -82,7 +99,7 @@ impl Real {
         Some(Real {
             rational: term.rational.clone(),
             class,
-            computable: Some(computable),
+            computable: Some(term.inherit_abort(computable)),
             primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         })
     }
@@ -158,7 +175,10 @@ impl<T: AsRef<Real>> Add<T> for &Real {
         crate::trace_dispatch!("real", "add", "generic-computable");
         let left = self.fold_ref();
         let right = other.fold_ref();
-        let computable = Computable::add(left, right);
+        let mut computable = Computable::add(left, right);
+        if self.abort_signal().is_some() || other.abort_signal().is_some() {
+            Real::inherit_translation_abort(self, other, &mut computable);
+        }
         Self::Output {
             rational: Rational::one(),
             class: Irrational,
@@ -399,7 +419,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             && other.rational == *rationals::THREE
         {
             crate::trace_dispatch!("real", "sub", "cached-pi-minus-three");
-            return constants::pi_minus_three();
+            return constants::pi_minus_three(self);
         }
         if self.class == One
             && self.rational == *rationals::THREE
@@ -407,7 +427,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             && other.rational.is_one()
         {
             crate::trace_dispatch!("real", "sub", "cached-three-minus-pi");
-            return -constants::pi_minus_three();
+            return -constants::pi_minus_three(other);
         }
         if other.has_zero_scale() {
             crate::trace_dispatch!("real", "sub", "rhs-zero");
@@ -453,7 +473,10 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
         crate::trace_dispatch!("real", "sub", "generic-computable");
         let left = self.fold_ref();
         let right = other.fold_ref().negate();
-        let computable = Computable::add(left, right);
+        let mut computable = Computable::add(left, right);
+        if self.abort_signal().is_some() || other.abort_signal().is_some() {
+            Real::inherit_translation_abort(self, other, &mut computable);
+        }
         Self::Output {
             rational: Rational::one(),
             class: Irrational,

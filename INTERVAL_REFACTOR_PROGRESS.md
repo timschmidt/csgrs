@@ -15036,15 +15036,15 @@ rely on the reproductions recorded in their original entries.
 `4939d05f2` adds the composed solver-chain contract test. `8b3a38904`
 replaces the stale center-only caveat on `certify_interval_box_candidate`.
 
-Declined: `7e881ac12`, abort-signal propagation through rational
-translations in Hyperreal's generic add/sub. It adds 10.79% to that hot path.
+Declined at the time: `7e881ac12`, abort-signal propagation through rational
+translations in Hyperreal's generic add/sub, on its measured 10.79% slowdown.
 The witness's actual consumer, `RealBall::classify_point`, now reattaches the
 point's abort flag to the translated displacement itself, through the new
 public `Real::abort_signal`. The full witness,
 `symbolic_membership_preserves_uncertainty_and_cancellation_on_retry`, runs
-unignored and passes; it fails without the repair. Other consumers that
-translate an aborting `Real` by a rational still lose the flag, which remains
-a Hyperreal gap.
+unignored and passes; it fails without the repair. A rewrite of `7e881ac12`
+later closed the general Hyperreal gap; see "Rational-translation abort
+signal, 22 November 2026" below.
 
 Discarded, all preserved as refs, not deleted:
 
@@ -15164,3 +15164,65 @@ citations were translated in place, and
 [`docs/evidence-lfs-rewrite-2026-11-21.tsv`](docs/evidence-lfs-rewrite-2026-11-21.tsv)
 maps each old ID to its new one, for citations inside the evidence records
 themselves. Only that record's digest row changed.
+
+## Rational-translation abort signal, 22 November 2026
+
+A nonrational `Real` shifted by a rational kept its abort flag only through
+`RealBall::classify_point`. Elsewhere the new generic sum, the cached `π−3`
+and the `π`/`e` offset certificate were published without it. The retained
+change keeps `7e881ac12`'s scope and both of its regression files, with a
+different implementation. The generic add and sub paths are unchanged apart
+from one test of whether either operand carries a flag. The sole refining
+operand is selected out of line, in `Real::inherit_translation_abort`, marked
+`#[cold]` and `#[inline(never)]`. Two independently controlled nonrational operands
+remain outside the contract.
+
+**Witnesses.** `rational_translation_signal` (2 tests) and
+`translated_real_ball_signal` (1 test) pass. Each of five mutations makes them
+fail: dropping the generic inheritance, the offset-certificate inheritance or
+the cached `π−3` flag, or disabling either operand-order arm. The hyperreal
+all-target suites, with default and with all features, its Clippy with
+`-D warnings` in both configurations, and the Hyperinterval all-feature
+suite pass.
+
+**The earlier 10.79%.** That figure came from fixtures 10 and 11 of the
+`classify_point` timing client in `2026-11-18-interval-translation-signal`.
+A dispatch trace shows that both take `same-symbolic-basis` and never reach
+the changed path. On Rust 1.100 at `62b99e887`, the same paired wall-clock
+harness, 12 pairs on a pinned core, put `7e881ac12` 4.7% *faster* on fixture
+11. Other untouched fixtures moved by −14% to +6% between builds, so this
+client measures code placement, not the change. Only fixtures 14, 15 and 17
+take `generic-computable`.
+
+**Instruction counts.** Cachegrind ran on hosted CI, run 45001562144,
+on a temporary branch since deleted. It counted `Ir` per call as
+`(Ir(N) − Ir(0)) / N` for `62b99e887`, for `7e881ac12` and for the retained
+rewrite.
+
+| Workload | baseline Ir/call | `7e881ac12` | retained |
+| --- | ---: | ---: | ---: |
+| construct `√2 + 7/5` and `7/5 − √2` | 3,676.8 | +1.01% | +0.27% |
+| warm fixtures 14 / 15 / 17 (generic sub) | 6,841 / 8,418 / 8,418 | +0.28 / +0.23 / +0.23% | +0.06 / +0.05 / +0.05% |
+| all 40 warm and fresh fixtures | — | −0.36% to +0.17% | −0.14% to +0.47% |
+
+The largest retained increase is 5 instructions, on the exact-rational
+fixtures 0–3, which the change does not touch.
+
+**Size.** These artifacts were built at `62b99e887` and with the change.
+
+| Artifact | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| ball client, native release file | 2,222,472 | 2,223,720 | +1,248 (+0.056%) |
+| ball client, native `.text` | 1,266,554 | 1,267,402 | +848 |
+| ball client, native `.relro_padding` | 3,808 | 2,792 | −1,016 |
+| ball client, WASM release | 1,172,026 | 1,172,875 | +849 (+0.072%) |
+| Interface release WASM, cargo output | 13,469,168 | 13,464,452 | −4,716 (−0.035%) |
+| Interface release WASM, code section | 10,527,999 | 10,524,327 | −3,672 |
+| Interface release WASM, `gzip -9` | 4,688,909 | 4,687,650 | −1,259 |
+
+The Interface figures are cargo's `wasm32-unknown-unknown` release output.
+They precede `wasm-bindgen` and `wasm-opt`, so they are not the deployed
+artifact. The accounts in `docs/research/interval-size-accounts.json` were not
+re-measured against their fixed baseline `c9f1f9ac5`, and the earlier
+`classify_point` repair is not charged there either. This cumulative
+accounting remains open.

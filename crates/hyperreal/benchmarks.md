@@ -40,12 +40,12 @@ Cold versus cached approximation of basic `Computable` expressions.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `computable_cache/ratio_approx_cold_p128` | 23.10 ns | 23.02 ns - 23.18 ns | Approximates a rational value at p=-128 from a fresh clone. |
-| `computable_cache/ratio_approx_cached_p128` | 18.91 ns | 18.88 ns - 18.94 ns | Repeats an already cached rational approximation at p=-128. |
-| `computable_cache/pi_approx_cold_p128` | 26.58 ns | 26.54 ns - 26.61 ns | Approximates pi at p=-128 from a fresh clone. |
-| `computable_cache/pi_approx_cached_p128` | 19.08 ns | 18.98 ns - 19.20 ns | Repeats an already cached pi approximation at p=-128. |
-| `computable_cache/pi_plus_tiny_cold_p128` | 27.16 ns | 27.04 ns - 27.31 ns | Approximates pi plus a tiny exact rational perturbation. |
-| `computable_cache/pi_minus_tiny_cold_p128` | 27.12 ns | 27.02 ns - 27.25 ns | Approximates pi minus a tiny exact rational perturbation. |
+| `computable_cache/ratio_approx_cold_p128` | not run | not run | Approximates a rational value at p=-128 from a fresh clone. |
+| `computable_cache/ratio_approx_cached_p128` | not run | not run | Repeats an already cached rational approximation at p=-128. |
+| `computable_cache/pi_approx_cold_p128` | not run | not run | Approximates pi at p=-128 from a fresh clone. |
+| `computable_cache/pi_approx_cached_p128` | not run | not run | Repeats an already cached pi approximation at p=-128. |
+| `computable_cache/pi_plus_tiny_cold_p128` | not run | not run | Approximates pi plus a tiny exact rational perturbation. |
+| `computable_cache/pi_minus_tiny_cold_p128` | not run | not run | Approximates pi minus a tiny exact rational perturbation. |
 
 ### `computable_bounds`
 
@@ -58,18 +58,18 @@ Structural sign and bound discovery for deep or perturbed computable trees.
 | `computable_bounds/sqrt_scaled_square_sign` | not run | not run | Finds the sign after taking a square root of a scaled square. |
 | `computable_bounds/deep_structural_bound_sign` | not run | not run | Finds sign through repeated multiply/inverse/negate structural transformations. |
 | `computable_bounds/deep_structural_bound_sign_cached` | not run | not run | Reads the cached sign of the deep structural-bound chain. |
-| `computable_bounds/deep_structural_bound_facts_cached` | 8.60 ns | 8.52 ns - 8.70 ns | Reads cached structural facts for the deep structural-bound chain. |
+| `computable_bounds/deep_structural_bound_facts_cached` | not run | not run | Reads cached structural facts for the deep structural-bound chain. |
 | `computable_bounds/perturbed_scaled_product_sign` | not run | not run | Finds sign for a deeply scaled value with a tiny perturbation. |
 | `computable_bounds/perturbed_scaled_product_sign_until` | not run | not run | Refines sign for the perturbed scaled product only to p=-128. |
 | `computable_bounds/pi_minus_tiny_sign` | not run | not run | Finds sign for pi minus a tiny exact rational. |
 | `computable_bounds/pi_minus_tiny_sign_cached` | not run | not run | Reads cached sign for pi minus a tiny exact rational. |
 | `computable_bounds/exp_unknown_sign_arg_sign` | not run | not run | Finds sign for exp(1 - pi), where exp can prove positivity structurally. |
 | `computable_bounds/exp_unknown_sign_arg_sign_cached` | not run | not run | Reads cached sign for exp(1 - pi). |
-| `computable_bounds/mixed_pi_e_sign_until_p0_cold` | 605.62 ns | 599.43 ns - 611.70 ns | Certifies a fresh mixed pi/e expression with the bounded binary64 interval filter. |
-| `computable_bounds/near_pi_sign_until_p64_cold` | 525.02 ns | 517.52 ns - 532.66 ns | Certifies a fresh close pi/rational difference at its permitted p=-64 floor. |
-| `computable_bounds/near_pi_sign_until_p0_inconclusive_cold` | 867.83 ns | 859.69 ns - 876.41 ns | Preserves an inconclusive p=0 result for the same close pi/rational difference. |
-| `computable_bounds/unsupported_sin_difference_sign_until_p0_cold` | 1.029 us | 1.022 us - 1.037 us | Measures bounded-filter rejection and arbitrary-precision fallback for an unsupported sine expression. |
-| `computable_bounds/unsupported_sin_difference_sign_until_p64_cold` | 4.380 us | 4.364 us - 4.401 us | Measures algebraic-certificate rejection after ordinary refinement reaches p=-64. |
+| `computable_bounds/mixed_pi_e_sign_until_p0_cold` | not run | not run | Certifies a fresh mixed pi/e expression with the bounded binary64 interval filter. |
+| `computable_bounds/near_pi_sign_until_p64_cold` | not run | not run | Certifies a fresh close pi/rational difference at its permitted p=-64 floor. |
+| `computable_bounds/near_pi_sign_until_p0_inconclusive_cold` | not run | not run | Preserves an inconclusive p=0 result for the same close pi/rational difference. |
+| `computable_bounds/unsupported_sin_difference_sign_until_p0_cold` | not run | not run | Measures bounded-filter rejection and arbitrary-precision fallback for an unsupported sine expression. |
+| `computable_bounds/unsupported_sin_difference_sign_until_p64_cold` | not run | not run | Measures algebraic-certificate rejection after ordinary refinement reaches p=-64. |
 
 ### `computable_algebraic_roots`
 
@@ -77,16 +77,16 @@ Explicit bounded-degree roots and exact algebraic-zero certification.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `computable_algebraic_roots/root5_construct` | 193.38 ns | 193.09 ns - 193.69 ns | Constructs the non-perfect fifth root of 17. |
-| `computable_algebraic_roots/root5_interval_p128_cold` | 2.932 us | 2.920 us - 2.947 us | Computes a p=-128 certified interval for a freshly constructed fifth root. |
-| `computable_algebraic_roots/root5_interval_p2048_cold` | 98.993 us | 98.868 us - 99.162 us | Computes a p=-2048 certified interval for a freshly constructed fifth root. |
-| `computable_algebraic_roots/root9_interval_p128_cold` | 5.740 us | 5.716 us - 5.768 us | Computes a p=-128 certified interval at the explicit-root degree cap. |
-| `computable_algebraic_roots/root9_interval_p2048_cold` | 272.922 us | 272.424 us - 273.477 us | Computes a p=-2048 certified interval at the explicit-root degree cap. |
-| `computable_algebraic_roots/root10_interval_p128_fallback_cold` | 5.866 us | 5.858 us - 5.874 us | Exercises the retained exp/ln fallback just above the explicit-root degree cap. |
-| `computable_algebraic_roots/eighth_root_near_dyadic_sign_p64_cold` | 5.963 us | 5.941 us - 5.989 us | Certifies an ordinary nonzero eighth-root difference before algebraic zero metadata is needed. |
-| `computable_algebraic_roots/ramanujan_one_zero_sign_p2048_cold` | 43.311 us | 43.160 us - 43.476 us | Certifies the first archived Ramanujan radical identity as exactly zero. |
-| `computable_algebraic_roots/ramanujan_two_zero_sign_p2048_cold` | 126.520 us | 126.210 us - 126.897 us | Certifies the nested archived Ramanujan radical identity as exactly zero. |
-| `computable_algebraic_roots/many_digits_c10_zero_sign_p2048_cold` | 40.113 us | 40.029 us - 40.207 us | Certifies the archived mixed cube/fifth-root C10 identity as exactly zero. |
+| `computable_algebraic_roots/root5_construct` | not run | not run | Constructs the non-perfect fifth root of 17. |
+| `computable_algebraic_roots/root5_interval_p128_cold` | not run | not run | Computes a p=-128 certified interval for a freshly constructed fifth root. |
+| `computable_algebraic_roots/root5_interval_p2048_cold` | not run | not run | Computes a p=-2048 certified interval for a freshly constructed fifth root. |
+| `computable_algebraic_roots/root9_interval_p128_cold` | not run | not run | Computes a p=-128 certified interval at the explicit-root degree cap. |
+| `computable_algebraic_roots/root9_interval_p2048_cold` | not run | not run | Computes a p=-2048 certified interval at the explicit-root degree cap. |
+| `computable_algebraic_roots/root10_interval_p128_fallback_cold` | not run | not run | Exercises the retained exp/ln fallback just above the explicit-root degree cap. |
+| `computable_algebraic_roots/eighth_root_near_dyadic_sign_p64_cold` | not run | not run | Certifies an ordinary nonzero eighth-root difference before algebraic zero metadata is needed. |
+| `computable_algebraic_roots/ramanujan_one_zero_sign_p2048_cold` | not run | not run | Certifies the first archived Ramanujan radical identity as exactly zero. |
+| `computable_algebraic_roots/ramanujan_two_zero_sign_p2048_cold` | not run | not run | Certifies the nested archived Ramanujan radical identity as exactly zero. |
+| `computable_algebraic_roots/many_digits_c10_zero_sign_p2048_cold` | not run | not run | Certifies the archived mixed cube/fifth-root C10 identity as exactly zero. |
 
 ### `computable_compare`
 
@@ -94,14 +94,14 @@ Ordering and absolute-comparison shortcuts.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `computable_compare/compare_to_opposite_sign` | 11.08 ns | 11.08 ns - 11.09 ns | Compares values with known opposite signs. |
-| `computable_compare/compare_to_exact_msd_gap` | 18.55 ns | 18.49 ns - 18.62 ns | Compares values with a large exact magnitude gap. |
-| `computable_compare/compare_to_clone_shared_composite` | 5.03 ns | 5.02 ns - 5.03 ns | Compares two handles that share one composite expression node. |
-| `computable_compare/compare_absolute_exact_rational` | 4.61 ns | 4.58 ns - 4.64 ns | Compares exact rationals using an absolute error tolerance. |
-| `computable_compare/compare_absolute_exact_rational_same_numerator` | 36.88 ns | 36.54 ns - 37.26 ns | Compares exact rationals with matching numerator magnitudes. |
-| `computable_compare/compare_absolute_mixed_exact_leaf_kinds` | 24.18 ns | 24.10 ns - 24.27 ns | Compares opposite-sign exact values stored as `One` and `Ratio` leaves. |
-| `computable_compare/compare_absolute_dominant_add` | 12.95 ns | 12.89 ns - 13.02 ns | Compares a dominant term against the same term plus a tiny addend. |
-| `computable_compare/compare_absolute_exact_msd_gap` | 14.71 ns | 14.67 ns - 14.76 ns | Compares absolute values with a large exact magnitude gap. |
+| `computable_compare/compare_to_opposite_sign` | not run | not run | Compares values with known opposite signs. |
+| `computable_compare/compare_to_exact_msd_gap` | not run | not run | Compares values with a large exact magnitude gap. |
+| `computable_compare/compare_to_clone_shared_composite` | not run | not run | Compares two handles that share one composite expression node. |
+| `computable_compare/compare_absolute_exact_rational` | not run | not run | Compares exact rationals using an absolute error tolerance. |
+| `computable_compare/compare_absolute_exact_rational_same_numerator` | not run | not run | Compares exact rationals with matching numerator magnitudes. |
+| `computable_compare/compare_absolute_mixed_exact_leaf_kinds` | not run | not run | Compares opposite-sign exact values stored as `One` and `Ratio` leaves. |
+| `computable_compare/compare_absolute_dominant_add` | not run | not run | Compares a dominant term against the same term plus a tiny addend. |
+| `computable_compare/compare_absolute_exact_msd_gap` | not run | not run | Compares absolute values with a large exact magnitude gap. |
 
 ### `computable_transcendentals`
 
@@ -109,99 +109,99 @@ Low-level approximation kernels and deep expression-tree stress cases.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `computable_transcendentals/e_constant_cold_p128` | 36.85 ns | 36.55 ns - 37.16 ns | Approximates the shared e constant from a fresh clone. |
-| `computable_transcendentals/e_constant_cached_p128` | 19.28 ns | 19.25 ns - 19.32 ns | Repeats a cached approximation of e. |
-| `computable_transcendentals/exp_cold_p128` | 4.080 us | 4.076 us - 4.085 us | Approximates exp(7/5) from a fresh clone. |
-| `computable_transcendentals/exp_cached_p128` | 19.48 ns | 19.40 ns - 19.58 ns | Repeats a cached exp(7/5) approximation. |
-| `computable_transcendentals/exp_deferred_constructor` | 29.80 ns | 29.62 ns - 30.02 ns | Constructs exp(7/2) without requesting an approximation. |
-| `computable_transcendentals/exp_coarse_cold_p1` | 2.324 us | 2.308 us - 2.342 us | Approximates exp(3/2) at coarse precision, requiring certified range reduction. |
-| `computable_transcendentals/exp_deferred_negative_cold_p128` | 97.109 us | 96.846 us - 97.418 us | Approximates exp(-10000), exercising deferred binary-scaling fallback. |
-| `computable_transcendentals/exp_large_cold_p128` | 4.449 us | 4.440 us - 4.460 us | Approximates exp(128), exercising the bounded exact-integer power path. |
-| `computable_transcendentals/expm1_tiny_cold_p128` | 836.57 ns | 833.67 ns - 839.96 ns | Approximates expm1(1/1000000) directly without subtractive cancellation. |
-| `computable_transcendentals/expm1_coarse_cold_p1` | 3.075 us | 3.069 us - 3.081 us | Approximates expm1(3/2) at coarse precision after checking the argument range. |
-| `computable_transcendentals/expm1_coarse_negative_cold_p1` | 53.77 ns | 53.05 ns - 54.49 ns | Approximates expm1(-32) at coarse precision, where zero is a valid result. |
-| `computable_transcendentals/exp_negative_integer_cold_p128` | 2.129 us | 2.125 us - 2.134 us | Approximates exp(-32), retaining signed ln(2) range reduction. |
-| `computable_transcendentals/exp_integer_limit_cold_p128` | 6.373 us | 6.356 us - 6.391 us | Approximates exp(256), guarding the binary e-power limit. |
-| `computable_transcendentals/exp_integer_above_limit_cold_p128` | 11.888 us | 11.872 us - 11.906 us | Approximates exp(257), retaining the ln(2) range-reduction fallback. |
-| `computable_transcendentals/exp_half_cold_p128` | 2.981 us | 2.971 us - 2.993 us | Approximates exp(1/2). |
-| `computable_transcendentals/exp_near_limit_cold_p128` | 2.852 us | 2.849 us - 2.855 us | Approximates exp near a prescaling threshold. |
-| `computable_transcendentals/exp_near_limit_cached_p128` | 18.96 ns | 18.94 ns - 18.99 ns | Repeats a cached near-threshold exp approximation. |
-| `computable_transcendentals/exp_zero_cold_p128` | 57.85 ns | 57.26 ns - 58.44 ns | Approximates exp(0). |
-| `computable_transcendentals/ln_cold_p128` | 3.096 us | 3.088 us - 3.108 us | Approximates ln(11/7). |
-| `computable_transcendentals/ln_cached_p128` | 18.93 ns | 18.91 ns - 18.96 ns | Repeats a cached ln(11/7) approximation. |
-| `computable_transcendentals/ln_smooth_rational_cold_p128` | 703.02 ns | 697.64 ns - 708.73 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
-| `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | 2.524 us | 2.513 us - 2.535 us | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
-| `computable_transcendentals/ln_large_cold_p128` | 946.20 ns | 938.23 ns - 954.50 ns | Approximates ln(1024), exercising large-input reduction. |
-| `computable_transcendentals/ln_large_cached_p128` | 19.06 ns | 19.01 ns - 19.11 ns | Repeats a cached ln(1024) approximation. |
-| `computable_transcendentals/ln_tiny_cold_p128` | 212.91 ns | 211.12 ns - 214.68 ns | Approximates ln(2^-1024), exercising tiny-input reduction. |
-| `computable_transcendentals/ln_near_limit_cold_p128` | 3.200 us | 3.197 us - 3.205 us | Approximates ln near the prescaled-ln limit. |
-| `computable_transcendentals/ln_near_limit_cached_p128` | 18.95 ns | 18.92 ns - 18.99 ns | Repeats a cached near-limit ln approximation. |
-| `computable_transcendentals/ln_one_cold_p128` | 21.36 ns | 21.13 ns - 21.56 ns | Approximates ln(1). |
-| `computable_transcendentals/sqrt_cold_p128` | 743.12 ns | 740.41 ns - 745.76 ns | Approximates sqrt(2). |
-| `computable_transcendentals/sqrt_squarefree_scaled_cold_p128` | 109.20 ns | 108.54 ns - 109.88 ns | Approximates sqrt(12), which can reduce to 2*sqrt(3). |
-| `computable_transcendentals/sqrt_cached_p128` | 18.96 ns | 18.93 ns - 18.99 ns | Repeats a cached sqrt(2) approximation. |
-| `computable_transcendentals/sqrt_single_scaled_square_cold_p128` | 838.16 ns | 836.70 ns - 839.77 ns | Builds and approximates sqrt((7*pi/8)^2). |
-| `computable_transcendentals/sin_cold_p96` | 1.575 us | 1.570 us - 1.580 us | Approximates sin(7/5). |
-| `computable_transcendentals/sin_cached_p96` | 21.90 ns | 21.83 ns - 21.97 ns | Repeats a cached sin(7/5) approximation. |
-| `computable_transcendentals/cos_cold_p96` | 1.458 us | 1.454 us - 1.463 us | Approximates cos(7/5). |
-| `computable_transcendentals/sin_f64_cold_p96` | 1.741 us | 1.735 us - 1.749 us | Approximates sin of the exact binary64-derived dyadic for 1.23456789. |
-| `computable_transcendentals/cos_f64_cold_p96` | 1.650 us | 1.643 us - 1.657 us | Approximates cos of the exact binary64-derived dyadic for 1.23456789. |
-| `computable_transcendentals/sin_1e6_cold_p96` | 2.311 us | 2.304 us - 2.319 us | Approximates sin(1000000). |
-| `computable_transcendentals/cos_1e6_cold_p96` | 2.330 us | 2.317 us - 2.346 us | Approximates cos(1000000). |
-| `computable_transcendentals/sin_1e30_cold_p96` | 2.138 us | 2.133 us - 2.145 us | Approximates sin(10^30). |
-| `computable_transcendentals/cos_1e30_cold_p96` | 2.223 us | 2.217 us - 2.231 us | Approximates cos(10^30). |
-| `computable_transcendentals/cos_cached_p96` | 18.93 ns | 18.90 ns - 18.96 ns | Repeats a cached cos(7/5) approximation. |
-| `computable_transcendentals/tan_cold_p96` | 5.974 us | 5.965 us - 5.982 us | Approximates tan(7/5). |
-| `computable_transcendentals/tan_cached_p96` | 18.94 ns | 18.92 ns - 18.97 ns | Repeats a cached tan(7/5) approximation. |
-| `computable_transcendentals/sin_zero_cold_p96` | 21.87 ns | 21.59 ns - 22.13 ns | Approximates sin(0). |
-| `computable_transcendentals/cos_zero_cold_p96` | 60.07 ns | 59.56 ns - 60.57 ns | Approximates cos(0). |
-| `computable_transcendentals/tan_zero_cold_p96` | 21.61 ns | 21.35 ns - 21.85 ns | Approximates tan(0). |
-| `computable_transcendentals/tan_near_half_pi_cold_p96` | 10.363 us | 10.300 us - 10.441 us | Approximates tangent near pi/2. |
-| `computable_transcendentals/tan_near_half_pi_cached_p96` | 18.92 ns | 18.90 ns - 18.94 ns | Repeats cached tangent near pi/2. |
-| `computable_transcendentals/sin_huge_cold_p96` | 1.563 us | 1.559 us - 1.568 us | Approximates sine of a huge pi multiple plus offset. |
-| `computable_transcendentals/cos_huge_cold_p96` | 1.469 us | 1.464 us - 1.474 us | Approximates cosine of a huge pi multiple plus offset. |
-| `computable_transcendentals/tan_huge_cold_p96` | 6.078 us | 6.052 us - 6.106 us | Approximates tangent of a huge pi multiple plus offset. |
-| `computable_transcendentals/asin_cold_p96` | 6.278 us | 6.246 us - 6.315 us | Approximates a computable asin expression. |
-| `computable_transcendentals/asin_cached_p96` | 19.19 ns | 19.07 ns - 19.33 ns | Repeats a cached computable asin approximation. |
-| `computable_transcendentals/acos_cold_p96` | 5.599 us | 5.577 us - 5.625 us | Approximates a computable acos expression. |
-| `computable_transcendentals/acos_cached_p96` | 19.04 ns | 18.99 ns - 19.10 ns | Repeats a cached computable acos approximation. |
-| `computable_transcendentals/asin_tiny_cold_p96` | 397.70 ns | 396.05 ns - 399.35 ns | Approximates asin(1e-12), exercising the tiny-input series. |
-| `computable_transcendentals/acos_tiny_cold_p96` | 719.31 ns | 715.76 ns - 723.00 ns | Approximates acos(1e-12), exercising the tiny-input complement. |
-| `computable_transcendentals/asin_near_one_cold_p96` | 1.899 us | 1.891 us - 1.907 us | Approximates asin(0.999999), exercising the endpoint complement. |
-| `computable_transcendentals/acos_near_one_cold_p96` | 1.514 us | 1.513 us - 1.516 us | Approximates acos(0.999999), exercising the endpoint transform. |
-| `computable_transcendentals/atan_cold_p96` | 1.899 us | 1.895 us - 1.903 us | Approximates atan(7/10). |
-| `computable_transcendentals/atan_cached_p96` | 19.09 ns | 19.02 ns - 19.16 ns | Repeats a cached atan(7/10) approximation. |
-| `computable_transcendentals/atan_large_cold_p96` | 1.642 us | 1.635 us - 1.650 us | Approximates atan(8), exercising argument reduction. |
-| `computable_transcendentals/asin_zero_cold_p96` | 21.37 ns | 21.12 ns - 21.59 ns | Approximates asin(0) expression. |
-| `computable_transcendentals/atan_zero_cold_p96` | 21.68 ns | 21.37 ns - 21.97 ns | Approximates atan(0). |
-| `computable_transcendentals/asinh_cold_p128` | 9.524 us | 9.470 us - 9.590 us | Approximates a computable asinh expression. |
-| `computable_transcendentals/asinh_three_quarters_cold_p128` | 5.041 us | 5.033 us - 5.050 us | Approximates asinh(3/4) across the series/ln1p crossover. |
-| `computable_transcendentals/asinh_cached_p128` | 18.90 ns | 18.87 ns - 18.93 ns | Repeats a cached computable asinh approximation. |
-| `computable_transcendentals/acosh_cold_p128` | 37.35 ns | 37.11 ns - 37.57 ns | Approximates a computable acosh expression. |
-| `computable_transcendentals/acosh_cached_p128` | 19.46 ns | 19.42 ns - 19.50 ns | Repeats a cached computable acosh approximation. |
-| `computable_transcendentals/atanh_cold_p128` | 147.44 ns | 146.73 ns - 148.29 ns | Approximates a computable atanh expression. |
-| `computable_transcendentals/atanh_cached_p128` | 18.87 ns | 18.85 ns - 18.89 ns | Repeats a cached computable atanh approximation. |
-| `computable_transcendentals/atanh_tiny_cold_p128` | 484.02 ns | 482.70 ns - 485.41 ns | Approximates atanh(1e-12), exercising the tiny-input series. |
-| `computable_transcendentals/atanh_near_one_cold_p128` | 2.190 us | 2.181 us - 2.200 us | Approximates atanh(0.999999), exercising the endpoint log transform. |
-| `computable_transcendentals/asinh_zero_cold_p128` | 21.75 ns | 21.51 ns - 21.97 ns | Approximates asinh(0) expression. |
-| `computable_transcendentals/atanh_zero_cold_p128` | 21.16 ns | 20.93 ns - 21.37 ns | Approximates atanh(0) expression. |
-| `computable_transcendentals/deep_add_chain_cold_p128` | 42.77 ns | 42.70 ns - 42.85 ns | Approximates a 5000-node addition chain. |
-| `computable_transcendentals/deep_multiply_chain_cold_p128` | 42.90 ns | 42.73 ns - 43.10 ns | Approximates a 5000-node multiply-by-one chain. |
-| `computable_transcendentals/deep_multiply_identity_chain_cold_p128` | 66.44 ns | 66.26 ns - 66.66 ns | Approximates a deep identity multiplication chain around pi. |
-| `computable_transcendentals/deep_scaled_product_chain_cold_p128` | 28.19 ns | 28.16 ns - 28.21 ns | Approximates a deep product of exact scale factors. |
-| `computable_transcendentals/perturbed_scaled_product_chain_cold_p128` | 28.70 ns | 28.43 ns - 29.00 ns | Approximates a deep scaled product with a tiny perturbation. |
-| `computable_transcendentals/scaled_square_chain_cold_p128` | 28.48 ns | 28.42 ns - 28.55 ns | Approximates repeated squaring of a scaled irrational. |
-| `computable_transcendentals/asymmetric_product_bad_order_cold_p128` | 28.57 ns | 28.54 ns - 28.62 ns | Approximates an asymmetric product order stress case. |
-| `computable_transcendentals/sqrt_scaled_square_chain_cold_p128` | 437.02 ns | 433.41 ns - 440.98 ns | Approximates sqrt of a scaled-square chain. |
-| `computable_transcendentals/warmed_zero_product_cold_p128` | 15.57 ns | 15.50 ns - 15.67 ns | Approximates a product involving a warmed zero sum. |
-| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 28.41 ns | 28.38 ns - 28.44 ns | Approximates the inverse of a deep scaled product. |
-| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 66.14 ns | 66.01 ns - 66.32 ns | Approximates a chain of inverse(inverse(x)) pairs. |
-| `computable_transcendentals/deep_negated_square_chain_cold_p128` | 66.33 ns | 66.20 ns - 66.48 ns | Approximates repeated negate-square-sqrt transformations. |
-| `computable_transcendentals/deep_negative_one_product_chain_cold_p128` | 67.48 ns | 67.12 ns - 67.90 ns | Approximates repeated multiplication by -1. |
-| `computable_transcendentals/deep_half_product_chain_cold_p128` | 17.64 ns | 17.56 ns - 17.74 ns | Approximates repeated multiplication by 1/2. |
-| `computable_transcendentals/deep_half_square_chain_cold_p128` | 28.39 ns | 28.33 ns - 28.48 ns | Approximates repeated squaring after scaling by 1/2. |
-| `computable_transcendentals/deep_sqrt_square_chain_cold_p128` | 42.74 ns | 42.58 ns - 42.98 ns | Approximates repeated sqrt-square simplification. |
-| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 29.22 ns | 29.03 ns - 29.44 ns | Approximates the inverse of a deep half-product chain. |
+| `computable_transcendentals/e_constant_cold_p128` | not run | not run | Approximates the shared e constant from a fresh clone. |
+| `computable_transcendentals/e_constant_cached_p128` | not run | not run | Repeats a cached approximation of e. |
+| `computable_transcendentals/exp_cold_p128` | not run | not run | Approximates exp(7/5) from a fresh clone. |
+| `computable_transcendentals/exp_cached_p128` | not run | not run | Repeats a cached exp(7/5) approximation. |
+| `computable_transcendentals/exp_deferred_constructor` | not run | not run | Constructs exp(7/2) without requesting an approximation. |
+| `computable_transcendentals/exp_coarse_cold_p1` | not run | not run | Approximates exp(3/2) at coarse precision, requiring certified range reduction. |
+| `computable_transcendentals/exp_deferred_negative_cold_p128` | not run | not run | Approximates exp(-10000), exercising deferred binary-scaling fallback. |
+| `computable_transcendentals/exp_large_cold_p128` | not run | not run | Approximates exp(128), exercising the bounded exact-integer power path. |
+| `computable_transcendentals/expm1_tiny_cold_p128` | not run | not run | Approximates expm1(1/1000000) directly without subtractive cancellation. |
+| `computable_transcendentals/expm1_coarse_cold_p1` | not run | not run | Approximates expm1(3/2) at coarse precision after checking the argument range. |
+| `computable_transcendentals/expm1_coarse_negative_cold_p1` | not run | not run | Approximates expm1(-32) at coarse precision, where zero is a valid result. |
+| `computable_transcendentals/exp_negative_integer_cold_p128` | not run | not run | Approximates exp(-32), retaining signed ln(2) range reduction. |
+| `computable_transcendentals/exp_integer_limit_cold_p128` | not run | not run | Approximates exp(256), guarding the binary e-power limit. |
+| `computable_transcendentals/exp_integer_above_limit_cold_p128` | not run | not run | Approximates exp(257), retaining the ln(2) range-reduction fallback. |
+| `computable_transcendentals/exp_half_cold_p128` | not run | not run | Approximates exp(1/2). |
+| `computable_transcendentals/exp_near_limit_cold_p128` | not run | not run | Approximates exp near a prescaling threshold. |
+| `computable_transcendentals/exp_near_limit_cached_p128` | not run | not run | Repeats a cached near-threshold exp approximation. |
+| `computable_transcendentals/exp_zero_cold_p128` | not run | not run | Approximates exp(0). |
+| `computable_transcendentals/ln_cold_p128` | not run | not run | Approximates ln(11/7). |
+| `computable_transcendentals/ln_cached_p128` | not run | not run | Repeats a cached ln(11/7) approximation. |
+| `computable_transcendentals/ln_smooth_rational_cold_p128` | not run | not run | Approximates ln(45/14), which can decompose into shared prime-log constants. |
+| `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | not run | not run | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
+| `computable_transcendentals/ln_large_cold_p128` | not run | not run | Approximates ln(1024), exercising large-input reduction. |
+| `computable_transcendentals/ln_large_cached_p128` | not run | not run | Repeats a cached ln(1024) approximation. |
+| `computable_transcendentals/ln_tiny_cold_p128` | not run | not run | Approximates ln(2^-1024), exercising tiny-input reduction. |
+| `computable_transcendentals/ln_near_limit_cold_p128` | not run | not run | Approximates ln near the prescaled-ln limit. |
+| `computable_transcendentals/ln_near_limit_cached_p128` | not run | not run | Repeats a cached near-limit ln approximation. |
+| `computable_transcendentals/ln_one_cold_p128` | not run | not run | Approximates ln(1). |
+| `computable_transcendentals/sqrt_cold_p128` | not run | not run | Approximates sqrt(2). |
+| `computable_transcendentals/sqrt_squarefree_scaled_cold_p128` | not run | not run | Approximates sqrt(12), which can reduce to 2*sqrt(3). |
+| `computable_transcendentals/sqrt_cached_p128` | not run | not run | Repeats a cached sqrt(2) approximation. |
+| `computable_transcendentals/sqrt_single_scaled_square_cold_p128` | not run | not run | Builds and approximates sqrt((7*pi/8)^2). |
+| `computable_transcendentals/sin_cold_p96` | not run | not run | Approximates sin(7/5). |
+| `computable_transcendentals/sin_cached_p96` | not run | not run | Repeats a cached sin(7/5) approximation. |
+| `computable_transcendentals/cos_cold_p96` | not run | not run | Approximates cos(7/5). |
+| `computable_transcendentals/sin_f64_cold_p96` | not run | not run | Approximates sin of the exact binary64-derived dyadic for 1.23456789. |
+| `computable_transcendentals/cos_f64_cold_p96` | not run | not run | Approximates cos of the exact binary64-derived dyadic for 1.23456789. |
+| `computable_transcendentals/sin_1e6_cold_p96` | not run | not run | Approximates sin(1000000). |
+| `computable_transcendentals/cos_1e6_cold_p96` | not run | not run | Approximates cos(1000000). |
+| `computable_transcendentals/sin_1e30_cold_p96` | not run | not run | Approximates sin(10^30). |
+| `computable_transcendentals/cos_1e30_cold_p96` | not run | not run | Approximates cos(10^30). |
+| `computable_transcendentals/cos_cached_p96` | not run | not run | Repeats a cached cos(7/5) approximation. |
+| `computable_transcendentals/tan_cold_p96` | not run | not run | Approximates tan(7/5). |
+| `computable_transcendentals/tan_cached_p96` | not run | not run | Repeats a cached tan(7/5) approximation. |
+| `computable_transcendentals/sin_zero_cold_p96` | not run | not run | Approximates sin(0). |
+| `computable_transcendentals/cos_zero_cold_p96` | not run | not run | Approximates cos(0). |
+| `computable_transcendentals/tan_zero_cold_p96` | not run | not run | Approximates tan(0). |
+| `computable_transcendentals/tan_near_half_pi_cold_p96` | not run | not run | Approximates tangent near pi/2. |
+| `computable_transcendentals/tan_near_half_pi_cached_p96` | not run | not run | Repeats cached tangent near pi/2. |
+| `computable_transcendentals/sin_huge_cold_p96` | not run | not run | Approximates sine of a huge pi multiple plus offset. |
+| `computable_transcendentals/cos_huge_cold_p96` | not run | not run | Approximates cosine of a huge pi multiple plus offset. |
+| `computable_transcendentals/tan_huge_cold_p96` | not run | not run | Approximates tangent of a huge pi multiple plus offset. |
+| `computable_transcendentals/asin_cold_p96` | not run | not run | Approximates a computable asin expression. |
+| `computable_transcendentals/asin_cached_p96` | not run | not run | Repeats a cached computable asin approximation. |
+| `computable_transcendentals/acos_cold_p96` | not run | not run | Approximates a computable acos expression. |
+| `computable_transcendentals/acos_cached_p96` | not run | not run | Repeats a cached computable acos approximation. |
+| `computable_transcendentals/asin_tiny_cold_p96` | not run | not run | Approximates asin(1e-12), exercising the tiny-input series. |
+| `computable_transcendentals/acos_tiny_cold_p96` | not run | not run | Approximates acos(1e-12), exercising the tiny-input complement. |
+| `computable_transcendentals/asin_near_one_cold_p96` | not run | not run | Approximates asin(0.999999), exercising the endpoint complement. |
+| `computable_transcendentals/acos_near_one_cold_p96` | not run | not run | Approximates acos(0.999999), exercising the endpoint transform. |
+| `computable_transcendentals/atan_cold_p96` | not run | not run | Approximates atan(7/10). |
+| `computable_transcendentals/atan_cached_p96` | not run | not run | Repeats a cached atan(7/10) approximation. |
+| `computable_transcendentals/atan_large_cold_p96` | not run | not run | Approximates atan(8), exercising argument reduction. |
+| `computable_transcendentals/asin_zero_cold_p96` | not run | not run | Approximates asin(0) expression. |
+| `computable_transcendentals/atan_zero_cold_p96` | not run | not run | Approximates atan(0). |
+| `computable_transcendentals/asinh_cold_p128` | not run | not run | Approximates a computable asinh expression. |
+| `computable_transcendentals/asinh_three_quarters_cold_p128` | not run | not run | Approximates asinh(3/4) across the series/ln1p crossover. |
+| `computable_transcendentals/asinh_cached_p128` | not run | not run | Repeats a cached computable asinh approximation. |
+| `computable_transcendentals/acosh_cold_p128` | not run | not run | Approximates a computable acosh expression. |
+| `computable_transcendentals/acosh_cached_p128` | not run | not run | Repeats a cached computable acosh approximation. |
+| `computable_transcendentals/atanh_cold_p128` | not run | not run | Approximates a computable atanh expression. |
+| `computable_transcendentals/atanh_cached_p128` | not run | not run | Repeats a cached computable atanh approximation. |
+| `computable_transcendentals/atanh_tiny_cold_p128` | not run | not run | Approximates atanh(1e-12), exercising the tiny-input series. |
+| `computable_transcendentals/atanh_near_one_cold_p128` | not run | not run | Approximates atanh(0.999999), exercising the endpoint log transform. |
+| `computable_transcendentals/asinh_zero_cold_p128` | not run | not run | Approximates asinh(0) expression. |
+| `computable_transcendentals/atanh_zero_cold_p128` | not run | not run | Approximates atanh(0) expression. |
+| `computable_transcendentals/deep_add_chain_cold_p128` | not run | not run | Approximates a 5000-node addition chain. |
+| `computable_transcendentals/deep_multiply_chain_cold_p128` | not run | not run | Approximates a 5000-node multiply-by-one chain. |
+| `computable_transcendentals/deep_multiply_identity_chain_cold_p128` | not run | not run | Approximates a deep identity multiplication chain around pi. |
+| `computable_transcendentals/deep_scaled_product_chain_cold_p128` | not run | not run | Approximates a deep product of exact scale factors. |
+| `computable_transcendentals/perturbed_scaled_product_chain_cold_p128` | not run | not run | Approximates a deep scaled product with a tiny perturbation. |
+| `computable_transcendentals/scaled_square_chain_cold_p128` | not run | not run | Approximates repeated squaring of a scaled irrational. |
+| `computable_transcendentals/asymmetric_product_bad_order_cold_p128` | not run | not run | Approximates an asymmetric product order stress case. |
+| `computable_transcendentals/sqrt_scaled_square_chain_cold_p128` | not run | not run | Approximates sqrt of a scaled-square chain. |
+| `computable_transcendentals/warmed_zero_product_cold_p128` | not run | not run | Approximates a product involving a warmed zero sum. |
+| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | not run | not run | Approximates the inverse of a deep scaled product. |
+| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | not run | not run | Approximates a chain of inverse(inverse(x)) pairs. |
+| `computable_transcendentals/deep_negated_square_chain_cold_p128` | not run | not run | Approximates repeated negate-square-sqrt transformations. |
+| `computable_transcendentals/deep_negative_one_product_chain_cold_p128` | not run | not run | Approximates repeated multiplication by -1. |
+| `computable_transcendentals/deep_half_product_chain_cold_p128` | not run | not run | Approximates repeated multiplication by 1/2. |
+| `computable_transcendentals/deep_half_square_chain_cold_p128` | not run | not run | Approximates repeated squaring after scaling by 1/2. |
+| `computable_transcendentals/deep_sqrt_square_chain_cold_p128` | not run | not run | Approximates repeated sqrt-square simplification. |
+| `computable_transcendentals/inverse_half_product_chain_cold_p128` | not run | not run | Approximates the inverse of a deep half-product chain. |
 
 <!-- END numerical_micro -->
 
@@ -216,16 +216,16 @@ Cost of constructing common exact scalar identities and small integers.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `construction_speed/rational_one` | 3.09 ns | 3.08 ns - 3.10 ns | Constructs `Rational::one()`. |
-| `construction_speed/rational_new_one` | 3.27 ns | 3.26 ns - 3.28 ns | Constructs one through `Rational::new(1)`. |
-| `construction_speed/rational_from_u8_four` | 3.78 ns | 3.77 ns - 3.80 ns | Constructs positive four through unsigned primitive conversion. |
-| `construction_speed/rational_from_i8_minus_four` | 3.96 ns | 3.95 ns - 3.96 ns | Constructs negative four through signed primitive conversion. |
-| `construction_speed/computable_one` | 16.91 ns | 16.84 ns - 16.99 ns | Constructs `Computable::one()`. |
-| `construction_speed/real_new_rational_one` | 9.52 ns | 9.50 ns - 9.54 ns | Constructs one through `Real::new(Rational::one())`. |
-| `construction_speed/real_one` | 9.76 ns | 9.74 ns - 9.78 ns | Constructs one through `Real::one()`. |
-| `construction_speed/real_from_i32_one` | 9.53 ns | 9.49 ns - 9.58 ns | Constructs one through integer conversion. |
-| `construction_speed/real_from_u8_four` | 10.33 ns | 10.31 ns - 10.35 ns | Constructs positive four as an exact `Real` from `u8`. |
-| `construction_speed/real_from_i8_minus_four` | 10.57 ns | 10.51 ns - 10.65 ns | Constructs negative four as an exact `Real` from `i8`. |
+| `construction_speed/rational_one` | not run | not run | Constructs `Rational::one()`. |
+| `construction_speed/rational_new_one` | not run | not run | Constructs one through `Rational::new(1)`. |
+| `construction_speed/rational_from_u8_four` | not run | not run | Constructs positive four through unsigned primitive conversion. |
+| `construction_speed/rational_from_i8_minus_four` | not run | not run | Constructs negative four through signed primitive conversion. |
+| `construction_speed/computable_one` | not run | not run | Constructs `Computable::one()`. |
+| `construction_speed/real_new_rational_one` | not run | not run | Constructs one through `Real::new(Rational::one())`. |
+| `construction_speed/real_one` | not run | not run | Constructs one through `Real::one()`. |
+| `construction_speed/real_from_i32_one` | not run | not run | Constructs one through integer conversion. |
+| `construction_speed/real_from_u8_four` | not run | not run | Constructs positive four as an exact `Real` from `u8`. |
+| `construction_speed/real_from_i8_minus_four` | not run | not run | Constructs negative four as an exact `Real` from `i8`. |
 
 ### `raw_cache_hit_cost`
 
@@ -233,12 +233,12 @@ Cost of cold and cached `Computable::approx` calls for simple values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `raw_cache_hit_cost/zero` | 9.38 ns | 9.36 ns - 9.41 ns | Cached approximation request for exact zero. |
-| `raw_cache_hit_cost/one` | 32.26 ns | 32.17 ns - 32.37 ns | Cached approximation request for exact one. |
-| `raw_cache_hit_cost/two` | 32.27 ns | 32.22 ns - 32.34 ns | Cached approximation request for exact two. |
-| `raw_cache_hit_cost/e` | 58.89 ns | 58.73 ns - 59.10 ns | Cached approximation request for Euler's constant. |
-| `raw_cache_hit_cost/pi` | 57.71 ns | 57.64 ns - 57.82 ns | Cached approximation request for pi. |
-| `raw_cache_hit_cost/tau` | 57.42 ns | 57.37 ns - 57.49 ns | Cached approximation request for two pi. |
+| `raw_cache_hit_cost/zero` | not run | not run | Cached approximation request for exact zero. |
+| `raw_cache_hit_cost/one` | not run | not run | Cached approximation request for exact one. |
+| `raw_cache_hit_cost/two` | not run | not run | Cached approximation request for exact two. |
+| `raw_cache_hit_cost/e` | not run | not run | Cached approximation request for Euler's constant. |
+| `raw_cache_hit_cost/pi` | not run | not run | Cached approximation request for pi. |
+| `raw_cache_hit_cost/tau` | not run | not run | Cached approximation request for two pi. |
 
 ### `structural_query_speed`
 
@@ -246,48 +246,48 @@ Speed of public structural queries across exact, transcendental, and composite `
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `structural_query_speed/zero_zero_status` | 0.82 ns | 0.81 ns - 0.82 ns | Checks zero/nonzero facts for exact zero. |
-| `structural_query_speed/zero_sign_query` | 4.74 ns | 4.73 ns - 4.76 ns | Reads sign facts for exact zero. |
-| `structural_query_speed/zero_msd_query` | 13.53 ns | 13.51 ns - 13.56 ns | Reads magnitude facts for exact zero. |
-| `structural_query_speed/zero_structural_facts` | 8.04 ns | 8.03 ns - 8.05 ns | Computes full structural facts for exact zero. |
-| `structural_query_speed/one_zero_status` | 1.08 ns | 1.08 ns - 1.08 ns | Checks zero/nonzero facts for exact one. |
-| `structural_query_speed/one_sign_query` | 11.55 ns | 11.53 ns - 11.57 ns | Reads sign facts for exact one. |
-| `structural_query_speed/one_msd_query` | 16.25 ns | 16.23 ns - 16.29 ns | Reads magnitude facts for exact one. |
-| `structural_query_speed/one_structural_facts` | 11.90 ns | 11.82 ns - 12.02 ns | Computes full structural facts for exact one. |
-| `structural_query_speed/negative_zero_status` | 1.08 ns | 1.08 ns - 1.08 ns | Checks zero/nonzero facts for an exact negative integer. |
-| `structural_query_speed/negative_sign_query` | 13.32 ns | 13.24 ns - 13.42 ns | Reads sign facts for an exact negative integer. |
-| `structural_query_speed/negative_msd_query` | 17.27 ns | 17.23 ns - 17.31 ns | Reads magnitude facts for an exact negative integer. |
-| `structural_query_speed/negative_structural_facts` | 13.19 ns | 13.17 ns - 13.23 ns | Computes full structural facts for an exact negative integer. |
-| `structural_query_speed/tiny_exact_zero_status` | 1.08 ns | 1.08 ns - 1.09 ns | Checks zero/nonzero facts for a tiny exact rational. |
-| `structural_query_speed/tiny_exact_sign_query` | 17.00 ns | 16.97 ns - 17.04 ns | Reads sign facts for a tiny exact rational. |
-| `structural_query_speed/tiny_exact_msd_query` | 19.73 ns | 19.65 ns - 19.81 ns | Reads magnitude facts for a tiny exact rational. |
-| `structural_query_speed/tiny_exact_structural_facts` | 17.17 ns | 17.10 ns - 17.24 ns | Computes full structural facts for a tiny exact rational. |
-| `structural_query_speed/pi_zero_status` | 1.08 ns | 1.08 ns - 1.08 ns | Checks zero/nonzero facts for pi. |
-| `structural_query_speed/pi_sign_query` | 17.41 ns | 17.36 ns - 17.47 ns | Reads sign facts for pi. |
-| `structural_query_speed/pi_msd_query` | 20.40 ns | 20.33 ns - 20.49 ns | Reads magnitude facts for pi. |
-| `structural_query_speed/pi_structural_facts` | 17.33 ns | 17.29 ns - 17.38 ns | Computes full structural facts for pi. |
-| `structural_query_speed/e_zero_status` | 1.08 ns | 1.08 ns - 1.09 ns | Checks zero/nonzero facts for e. |
-| `structural_query_speed/e_sign_query` | 17.66 ns | 17.54 ns - 17.80 ns | Reads sign facts for e. |
-| `structural_query_speed/e_msd_query` | 20.35 ns | 20.29 ns - 20.43 ns | Reads magnitude facts for e. |
-| `structural_query_speed/e_structural_facts` | 17.30 ns | 17.24 ns - 17.38 ns | Computes full structural facts for e. |
-| `structural_query_speed/tau_zero_status` | 1.09 ns | 1.09 ns - 1.09 ns | Checks zero/nonzero facts for tau. |
-| `structural_query_speed/tau_sign_query` | 21.99 ns | 21.87 ns - 22.14 ns | Reads sign facts for tau. |
-| `structural_query_speed/tau_msd_query` | 26.09 ns | 26.06 ns - 26.13 ns | Reads magnitude facts for tau. |
-| `structural_query_speed/tau_structural_facts` | 21.79 ns | 21.73 ns - 21.85 ns | Computes full structural facts for tau. |
-| `structural_query_speed/sqrt_two_zero_status` | 1.09 ns | 1.08 ns - 1.09 ns | Checks zero/nonzero facts for sqrt(2). |
-| `structural_query_speed/sqrt_two_sign_query` | 17.41 ns | 17.35 ns - 17.48 ns | Reads sign facts for sqrt(2). |
-| `structural_query_speed/sqrt_two_msd_query` | 20.36 ns | 20.28 ns - 20.47 ns | Reads magnitude facts for sqrt(2). |
-| `structural_query_speed/sqrt_two_structural_facts` | 17.60 ns | 17.49 ns - 17.73 ns | Computes full structural facts for sqrt(2). |
-| `structural_query_speed/pi_minus_three_zero_status` | 1.08 ns | 1.08 ns - 1.08 ns | Checks zero/nonzero facts for pi - 3. |
-| `structural_query_speed/pi_minus_three_sign_query` | 17.48 ns | 17.41 ns - 17.55 ns | Reads sign facts for pi - 3. |
-| `structural_query_speed/pi_minus_three_msd_query` | 20.47 ns | 20.40 ns - 20.56 ns | Reads magnitude facts for pi - 3. |
-| `structural_query_speed/pi_minus_three_structural_facts` | 17.26 ns | 17.24 ns - 17.27 ns | Computes full structural facts for pi - 3. |
-| `structural_query_speed/dense_expr_zero_status` | 3.54 ns | 3.53 ns - 3.54 ns | Checks zero/nonzero facts for a dense composite expression. |
-| `structural_query_speed/dense_expr_sign_query` | 8.06 ns | 8.04 ns - 8.09 ns | Reads sign facts for a dense composite expression. |
-| `structural_query_speed/dense_expr_msd_query` | 15.60 ns | 15.54 ns - 15.67 ns | Reads magnitude facts for a dense composite expression. |
-| `structural_query_speed/dense_expr_structural_facts` | 10.83 ns | 10.80 ns - 10.86 ns | Computes full structural facts for a dense composite expression. |
-| `structural_query_speed/structural_negation_match` | 13.08 ns | 13.04 ns - 13.12 ns | Certifies opposite rational scales over one shared exact symbolic basis. |
-| `structural_query_speed/structural_negation_miss` | 3.78 ns | 3.78 ns - 3.79 ns | Rejects an unrelated exact symbolic basis without constructing a negation. |
+| `structural_query_speed/zero_zero_status` | not run | not run | Checks zero/nonzero facts for exact zero. |
+| `structural_query_speed/zero_sign_query` | not run | not run | Reads sign facts for exact zero. |
+| `structural_query_speed/zero_msd_query` | not run | not run | Reads magnitude facts for exact zero. |
+| `structural_query_speed/zero_structural_facts` | not run | not run | Computes full structural facts for exact zero. |
+| `structural_query_speed/one_zero_status` | not run | not run | Checks zero/nonzero facts for exact one. |
+| `structural_query_speed/one_sign_query` | not run | not run | Reads sign facts for exact one. |
+| `structural_query_speed/one_msd_query` | not run | not run | Reads magnitude facts for exact one. |
+| `structural_query_speed/one_structural_facts` | not run | not run | Computes full structural facts for exact one. |
+| `structural_query_speed/negative_zero_status` | not run | not run | Checks zero/nonzero facts for an exact negative integer. |
+| `structural_query_speed/negative_sign_query` | not run | not run | Reads sign facts for an exact negative integer. |
+| `structural_query_speed/negative_msd_query` | not run | not run | Reads magnitude facts for an exact negative integer. |
+| `structural_query_speed/negative_structural_facts` | not run | not run | Computes full structural facts for an exact negative integer. |
+| `structural_query_speed/tiny_exact_zero_status` | not run | not run | Checks zero/nonzero facts for a tiny exact rational. |
+| `structural_query_speed/tiny_exact_sign_query` | not run | not run | Reads sign facts for a tiny exact rational. |
+| `structural_query_speed/tiny_exact_msd_query` | not run | not run | Reads magnitude facts for a tiny exact rational. |
+| `structural_query_speed/tiny_exact_structural_facts` | not run | not run | Computes full structural facts for a tiny exact rational. |
+| `structural_query_speed/pi_zero_status` | not run | not run | Checks zero/nonzero facts for pi. |
+| `structural_query_speed/pi_sign_query` | not run | not run | Reads sign facts for pi. |
+| `structural_query_speed/pi_msd_query` | not run | not run | Reads magnitude facts for pi. |
+| `structural_query_speed/pi_structural_facts` | not run | not run | Computes full structural facts for pi. |
+| `structural_query_speed/e_zero_status` | not run | not run | Checks zero/nonzero facts for e. |
+| `structural_query_speed/e_sign_query` | not run | not run | Reads sign facts for e. |
+| `structural_query_speed/e_msd_query` | not run | not run | Reads magnitude facts for e. |
+| `structural_query_speed/e_structural_facts` | not run | not run | Computes full structural facts for e. |
+| `structural_query_speed/tau_zero_status` | not run | not run | Checks zero/nonzero facts for tau. |
+| `structural_query_speed/tau_sign_query` | not run | not run | Reads sign facts for tau. |
+| `structural_query_speed/tau_msd_query` | not run | not run | Reads magnitude facts for tau. |
+| `structural_query_speed/tau_structural_facts` | not run | not run | Computes full structural facts for tau. |
+| `structural_query_speed/sqrt_two_zero_status` | not run | not run | Checks zero/nonzero facts for sqrt(2). |
+| `structural_query_speed/sqrt_two_sign_query` | not run | not run | Reads sign facts for sqrt(2). |
+| `structural_query_speed/sqrt_two_msd_query` | not run | not run | Reads magnitude facts for sqrt(2). |
+| `structural_query_speed/sqrt_two_structural_facts` | not run | not run | Computes full structural facts for sqrt(2). |
+| `structural_query_speed/pi_minus_three_zero_status` | not run | not run | Checks zero/nonzero facts for pi - 3. |
+| `structural_query_speed/pi_minus_three_sign_query` | not run | not run | Reads sign facts for pi - 3. |
+| `structural_query_speed/pi_minus_three_msd_query` | not run | not run | Reads magnitude facts for pi - 3. |
+| `structural_query_speed/pi_minus_three_structural_facts` | not run | not run | Computes full structural facts for pi - 3. |
+| `structural_query_speed/dense_expr_zero_status` | not run | not run | Checks zero/nonzero facts for a dense composite expression. |
+| `structural_query_speed/dense_expr_sign_query` | not run | not run | Reads sign facts for a dense composite expression. |
+| `structural_query_speed/dense_expr_msd_query` | not run | not run | Reads magnitude facts for a dense composite expression. |
+| `structural_query_speed/dense_expr_structural_facts` | not run | not run | Computes full structural facts for a dense composite expression. |
+| `structural_query_speed/structural_negation_match` | not run | not run | Certifies opposite rational scales over one shared exact symbolic basis. |
+| `structural_query_speed/structural_negation_miss` | not run | not run | Rejects an unrelated exact symbolic basis without constructing a negation. |
 
 ### `pure_scalar_algorithm_speed`
 
@@ -295,41 +295,41 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `pure_scalar_algorithm_speed/rational_add` | 8.76 ns | 8.73 ns - 8.79 ns | Adds two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_sub` | 9.44 ns | 9.35 ns - 9.53 ns | Subtracts two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold` | 92.70 ns | 91.60 ns - 93.72 ns | Adds fresh integer and wide-dyadic operands without retained work. |
-| `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | 98.71 ns | 94.79 ns - 105.54 ns | Subtracts fresh integer and wide-dyadic operands without retained work. |
-| `pure_scalar_algorithm_speed/rational_add_shared_cold` | 98.39 ns | 97.66 ns - 99.03 ns | Adds fresh operands whose storage is cloned but whose arithmetic pair is not yet observed. |
-| `pure_scalar_algorithm_speed/rational_sub_shared_cold` | 97.91 ns | 97.07 ns - 98.70 ns | Subtracts fresh operands whose storage is cloned but whose arithmetic pair is not yet observed. |
-| `pure_scalar_algorithm_speed/rational_scaled_difference_composed_cold` | 264.51 ns | 263.12 ns - 265.93 ns | Computes a fresh wide-integer scaled difference through multiply then subtract. |
-| `pure_scalar_algorithm_speed/rational_scaled_difference_fused_cold` | 95.31 ns | 94.53 ns - 96.05 ns | Computes the same fresh wide-integer scaled difference with the fused integer kernel. |
-| `pure_scalar_algorithm_speed/rational_cross_difference_unit_divisor_composed_cold` | 593.91 ns | 592.58 ns - 595.37 ns | Computes a fresh wide-integer cross difference and divides it by negative one through general operations. |
-| `pure_scalar_algorithm_speed/rational_cross_difference_unit_divisor_fused_cold` | 193.14 ns | 186.03 ns - 206.13 ns | Computes the same cross difference through the checked fused unit-divisor path. |
-| `pure_scalar_algorithm_speed/rational_mul` | 22.51 ns | 22.43 ns - 22.61 ns | Multiplies two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_mul_retained_general` | 11.67 ns | 11.61 ns - 11.74 ns | Reuses one retained exact product for an immutable rational operand pair. |
-| `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | 191.69 ns | 188.68 ns - 194.54 ns | Multiplies fresh wide-denominator dyadics whose numerators fit `u128`. |
-| `pure_scalar_algorithm_speed/rational_mul_dyadic_general_cross_cancel` | 11.77 ns | 11.67 ns - 11.90 ns | Multiplies a wide dyadic rational by a general rational with a power-of-two numerator. |
-| `pure_scalar_algorithm_speed/rational_div` | 162.70 ns | 162.23 ns - 163.28 ns | Divides two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_inverse_owned_cold` | 20.86 ns | 20.82 ns - 20.91 ns | Inverts a fresh uniquely owned nontrivial rational. |
-| `pure_scalar_algorithm_speed/rational_inverse_retained` | 7.63 ns | 7.58 ns - 7.68 ns | Reuses the retained reciprocal of a shared nontrivial rational. |
-| `pure_scalar_algorithm_speed/rational_neg_owned_cold` | 9.35 ns | 9.29 ns - 9.42 ns | Negates a fresh uniquely owned nontrivial rational in place. |
-| `pure_scalar_algorithm_speed/rational_neg_retained` | 7.81 ns | 7.78 ns - 7.83 ns | Reuses the retained opposite sign of a shared nontrivial rational. |
-| `pure_scalar_algorithm_speed/real_exact_powi_i64_owned_cold` | 255.83 ns | 254.32 ns - 257.69 ns | Raises a fresh uniquely owned exact rational Real to the fifth power. |
-| `pure_scalar_algorithm_speed/real_exact_powi_i64_retained` | 58.43 ns | 58.03 ns - 58.90 ns | Reuses the bounded exact product chain for a shared fifth power. |
-| `pure_scalar_algorithm_speed/real_exact_add` | 17.98 ns | 17.91 ns - 18.07 ns | Adds exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_average_pair` | 139.52 ns | 139.09 ns - 140.01 ns | Averages exact rational-backed `Real` values through the fused pair kernel. |
-| `pure_scalar_algorithm_speed/real_exact_average_pair_expanded` | 223.63 ns | 223.06 ns - 224.23 ns | Averages exact rational-backed `Real` values through separate add and divide operations. |
-| `pure_scalar_algorithm_speed/real_exact_sub` | 18.37 ns | 18.25 ns - 18.51 ns | Subtracts exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_mul` | 31.60 ns | 31.53 ns - 31.68 ns | Multiplies exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_mul_retained` | 20.66 ns | 20.62 ns - 20.70 ns | Reuses the retained exact product beneath rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_div` | 182.22 ns | 182.06 ns - 182.43 ns | Divides exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_sqrt_owned_cold` | 220.08 ns | 218.71 ns - 221.73 ns | Reduces a fresh uniquely owned exact square-root expression. |
-| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 100.37 ns | 99.87 ns - 100.94 ns | Reuses the retained reduction of an exact square-root expression. |
-| `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | 95.35 ns | 94.92 ns - 95.83 ns | Reuses the square-root reduction of a large exact dyadic rational. |
-| `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | 94.01 ns | 93.77 ns - 94.28 ns | Reuses the square-root reduction of a non-dyadic rational sum of squares. |
-| `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | 36.33 ns | 36.24 ns - 36.43 ns | Scales an exact reciprocal radical by one exact binary64-derived dyadic coordinate. |
-| `pure_scalar_algorithm_speed/real_exact_ln_reduce` | 81.77 ns | 81.15 ns - 82.53 ns | Reduces an exact logarithm of a power of two. |
-| `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | 130.64 ns | 129.92 ns - 131.52 ns | Dispatches `Real::pow` with an exact small-integer exponent. |
+| `pure_scalar_algorithm_speed/rational_add` | not run | not run | Adds two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_sub` | not run | not run | Subtracts two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold` | not run | not run | Adds fresh integer and wide-dyadic operands without retained work. |
+| `pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold` | not run | not run | Subtracts fresh integer and wide-dyadic operands without retained work. |
+| `pure_scalar_algorithm_speed/rational_add_shared_cold` | not run | not run | Adds fresh operands whose storage is cloned but whose arithmetic pair is not yet observed. |
+| `pure_scalar_algorithm_speed/rational_sub_shared_cold` | not run | not run | Subtracts fresh operands whose storage is cloned but whose arithmetic pair is not yet observed. |
+| `pure_scalar_algorithm_speed/rational_scaled_difference_composed_cold` | not run | not run | Computes a fresh wide-integer scaled difference through multiply then subtract. |
+| `pure_scalar_algorithm_speed/rational_scaled_difference_fused_cold` | not run | not run | Computes the same fresh wide-integer scaled difference with the fused integer kernel. |
+| `pure_scalar_algorithm_speed/rational_cross_difference_unit_divisor_composed_cold` | not run | not run | Computes a fresh wide-integer cross difference and divides it by negative one through general operations. |
+| `pure_scalar_algorithm_speed/rational_cross_difference_unit_divisor_fused_cold` | not run | not run | Computes the same cross difference through the checked fused unit-divisor path. |
+| `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_mul_retained_general` | not run | not run | Reuses one retained exact product for an immutable rational operand pair. |
+| `pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold` | not run | not run | Multiplies fresh wide-denominator dyadics whose numerators fit `u128`. |
+| `pure_scalar_algorithm_speed/rational_mul_dyadic_general_cross_cancel` | not run | not run | Multiplies a wide dyadic rational by a general rational with a power-of-two numerator. |
+| `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_inverse_owned_cold` | not run | not run | Inverts a fresh uniquely owned nontrivial rational. |
+| `pure_scalar_algorithm_speed/rational_inverse_retained` | not run | not run | Reuses the retained reciprocal of a shared nontrivial rational. |
+| `pure_scalar_algorithm_speed/rational_neg_owned_cold` | not run | not run | Negates a fresh uniquely owned nontrivial rational in place. |
+| `pure_scalar_algorithm_speed/rational_neg_retained` | not run | not run | Reuses the retained opposite sign of a shared nontrivial rational. |
+| `pure_scalar_algorithm_speed/real_exact_powi_i64_owned_cold` | not run | not run | Raises a fresh uniquely owned exact rational Real to the fifth power. |
+| `pure_scalar_algorithm_speed/real_exact_powi_i64_retained` | not run | not run | Reuses the bounded exact product chain for a shared fifth power. |
+| `pure_scalar_algorithm_speed/real_exact_add` | not run | not run | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_average_pair` | not run | not run | Averages exact rational-backed `Real` values through the fused pair kernel. |
+| `pure_scalar_algorithm_speed/real_exact_average_pair_expanded` | not run | not run | Averages exact rational-backed `Real` values through separate add and divide operations. |
+| `pure_scalar_algorithm_speed/real_exact_sub` | not run | not run | Subtracts exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_mul_retained` | not run | not run | Reuses the retained exact product beneath rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_div` | not run | not run | Divides exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_owned_cold` | not run | not run | Reduces a fresh uniquely owned exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | not run | not run | Reuses the retained reduction of an exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce` | not run | not run | Reuses the square-root reduction of a large exact dyadic rational. |
+| `pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce` | not run | not run | Reuses the square-root reduction of a non-dyadic rational sum of squares. |
+| `pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale` | not run | not run | Scales an exact reciprocal radical by one exact binary64-derived dyadic coordinate. |
+| `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
+| `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | not run | not run | Dispatches `Real::pow` with an exact small-integer exponent. |
 
 ### `rational_algorithm_dispatch_speed`
 
@@ -337,119 +337,119 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `rational_algorithm_dispatch_speed/dyadic_fact_cold` | 38.15 ns | 37.06 ns - 39.13 ns | Classifies a fresh non-dyadic denominator and retains the result. |
-| `rational_algorithm_dispatch_speed/dyadic_fact_retained` | 1.95 ns | 1.92 ns - 1.98 ns | Reads an already-retained non-dyadic denominator classification. |
-| `rational_algorithm_dispatch_speed/compare_leading_significand_retained_1024_bits` | 46.18 ns | 45.92 ns - 46.48 ns | Compares retained wide rational magnitudes through the certified leading-significand interval. |
-| `rational_algorithm_dispatch_speed/compare_dyadic_shifted_retained_1024_bits` | 10.92 ns | 10.89 ns - 10.96 ns | Compares retained wide dyadics with equal scaled width and a five-bit denominator-shift difference. |
-| `rational_algorithm_dispatch_speed/equality_leading_significand_retained_1024_bits` | 173.91 ns | 173.39 ns - 174.49 ns | Compares unequal retained wide fractions with separated leading significands. |
-| `rational_algorithm_dispatch_speed/equality_dyadic_shifted_retained_1024_bits` | 10.93 ns | 10.91 ns - 10.96 ns | Rejects unequal retained wide dyadics without cross products. |
-| `rational_algorithm_dispatch_speed/equality_shared_identity_retained` | 3.64 ns | 3.62 ns - 3.65 ns | Compares two references to one retained rational allocation. |
-| `rational_algorithm_dispatch_speed/equality_same_denominator_retained` | 6.48 ns | 6.45 ns - 6.51 ns | Rejects unequal small numerators with a common denominator. |
-| `rational_algorithm_dispatch_speed/equality_word_retained` | 10.50 ns | 10.42 ns - 10.59 ns | Rejects unequal small fractions with different non-dyadic denominators. |
-| `rational_algorithm_dispatch_speed/equality_equal_distinct_retained` | 7.31 ns | 7.27 ns - 7.35 ns | Recognizes equal small fractions held in distinct allocations. |
-| `rational_algorithm_dispatch_speed/equality_different_signs_retained` | 2.39 ns | 2.38 ns - 2.40 ns | Rejects wide fractions with opposite signs before magnitude comparison. |
-| `rational_algorithm_dispatch_speed/equality_close_retained_1024_bits` | 182.84 ns | 182.34 ns - 183.42 ns | Rejects near-equal wide fractions through the exact cross-product fallback. |
-| `rational_algorithm_dispatch_speed/mul_backend_basecase_cold` | 361.29 ns | 257.72 ns - 566.34 ns | Multiplies fresh balanced 16-limb integers through the backend basecase kernel. |
-| `rational_algorithm_dispatch_speed/mul_backend_half_karatsuba_cold` | 625.75 ns | 499.12 ns - 876.30 ns | Multiplies fresh unbalanced 33-by-66-limb integers through half-Karatsuba. |
-| `rational_algorithm_dispatch_speed/mul_backend_karatsuba_cold` | 816.38 ns | 813.13 ns - 819.81 ns | Multiplies fresh balanced 40-limb integers through Karatsuba. |
-| `rational_algorithm_dispatch_speed/mul_backend_toom3_cold` | 8.407 us | 8.373 us - 8.442 us | Multiplies fresh balanced 257-limb integers through Toom-3. |
-| `rational_algorithm_dispatch_speed/mul_toom4_candidate_4096_bits` | 8.266 us | 8.203 us - 8.338 us | Runs Hyperreal's seven-product Rust-native Toom-4 candidate on balanced 4,096-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_4096_bits` | 2.801 us | 2.789 us - 2.816 us | Runs the native backend product on the same 4,096-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom4_candidate_16384_bits` | 34.689 us | 34.635 us - 34.757 us | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 16,384-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_16384_bits` | 26.388 us | 26.308 us - 26.482 us | Runs the native backend product on the same 16,384-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom4_candidate_65536_bits` | 225.446 us | 225.070 us - 225.991 us | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 65,536-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_65536_bits` | 203.027 us | 202.650 us - 203.449 us | Runs the native backend product on the same 65,536-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom4_candidate_262144_bits` | 1.646 ms | 1.639 ms - 1.654 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 262,144-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_262144_bits` | 1.641 ms | 1.636 ms - 1.647 ms | Runs the native backend product on the same 262,144-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom4_candidate_524288_bits` | 4.599 ms | 4.585 ms - 4.615 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 524,288-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_524288_bits` | 4.485 ms | 4.472 ms - 4.501 ms | Runs the native backend product on the same 524,288-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom4_candidate_1048576_bits` | 12.216 ms | 12.191 ms - 12.250 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 1,048,576-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_1048576_bits` | 12.877 ms | 12.816 ms - 12.947 ms | Runs the native backend product on the same 1,048,576-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom4_candidate_2097152_bits` | 32.910 ms | 32.844 ms - 32.983 ms | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 2,097,152-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_2097152_bits` | 35.604 ms | 35.531 ms - 35.684 ms | Runs the native backend product on the same 2,097,152-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_selected_1048576_bits` | 10.775 ms | 10.746 ms - 10.807 ms | Runs the retained production Toom-8 selector above its balanced crossover. |
-| `rational_algorithm_dispatch_speed/mul_selected_2097152_bits` | 28.229 ms | 28.116 ms - 28.363 ms | Runs the retained production Toom-8 selector on balanced 2,097,152-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom6_candidate_1048576_bits` | 10.924 ms | 10.890 ms - 10.967 ms | Runs Hyperreal's eleven-product Rust-native Toom-6 candidate above its crossover. |
-| `rational_algorithm_dispatch_speed/mul_toom6_candidate_131072_bits` | 595.264 us | 594.525 us - 596.063 us | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 131,072-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_backend_reference_131072_bits` | 593.866 us | 591.529 us - 596.592 us | Runs the retained native backend selector on the same 131,072-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom6_candidate_262144_bits` | 1.586 ms | 1.581 ms - 1.592 ms | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 262,144-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom6_candidate_524288_bits` | 4.143 ms | 4.132 ms - 4.156 ms | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 524,288-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_selected_524288_bits` | 4.005 ms | 3.990 ms - 4.022 ms | Runs the retained production Toom-8 selector above its balanced crossover. |
-| `rational_algorithm_dispatch_speed/mul_toom6_candidate_2097152_bits` | 30.664 ms | 30.508 ms - 30.833 ms | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 2,097,152-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_selected_toom4_unbalanced_1258291_by_1048576` | 14.997 ms | 14.952 ms - 15.050 ms | Runs retained Toom-4 on a 6:5 operand pair outside Toom-6's balance band. |
-| `rational_algorithm_dispatch_speed/mul_backend_unbalanced_1258291_by_1048576` | 16.312 ms | 16.252 ms - 16.380 ms | Runs the native backend on the same 6:5 operand pair. |
-| `rational_algorithm_dispatch_speed/mul_toom8_candidate_262144_bits` | 1.521 ms | 1.517 ms - 1.526 ms | Runs Hyperreal's fifteen-product Rust-native Toom-8 candidate on balanced 262,144-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_selected_262144_bits` | 1.524 ms | 1.520 ms - 1.528 ms | Runs the retained production Toom-8 selector at its balanced crossover. |
-| `rational_algorithm_dispatch_speed/mul_toom8_candidate_65536_bits` | 258.966 us | 257.922 us - 260.121 us | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 65,536-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom8_candidate_131072_bits` | 603.414 us | 602.105 us - 604.917 us | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 131,072-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom8_candidate_524288_bits` | 4.004 ms | 3.989 ms - 4.022 ms | Runs Hyperreal's Rust-native Toom-8 candidate at the Toom-6 crossover. |
-| `rational_algorithm_dispatch_speed/mul_toom8_candidate_1048576_bits` | 10.765 ms | 10.739 ms - 10.794 ms | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 1,048,576-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom8_candidate_2097152_bits` | 28.297 ms | 28.199 ms - 28.407 ms | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 2,097,152-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_toom8_candidate_4194304_bits` | 74.186 ms | 74.018 ms - 74.376 ms | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 4,194,304-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_selected_4194304_bits` | 73.811 ms | 73.707 ms - 73.933 ms | Runs the retained production Toom-8 selector on the same 4,194,304-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_selected_toom6_unbalanced_599186_by_524288` | 4.814 ms | 4.797 ms - 4.835 ms | Runs retained Toom-6 on an 8:7 operand pair outside Toom-8's balance band. |
-| `rational_algorithm_dispatch_speed/mul_backend_unbalanced_599186_by_524288` | 5.364 ms | 5.347 ms - 5.383 ms | Runs the native backend on the same 8:7 operand pair. |
-| `rational_algorithm_dispatch_speed/mul_ntt_candidate_262144_bits` | 16.200 ms | 16.152 ms - 16.257 ms | Runs Hyperreal's exact two-prime Rust-native NTT/CRT candidate on balanced 262,144-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_ntt_candidate_1048576_bits` | 73.253 ms | 73.092 ms - 73.431 ms | Runs the Rust-native NTT/CRT candidate on balanced 1,048,576-bit operands. |
-| `rational_algorithm_dispatch_speed/mul_ntt_candidate_4194304_bits` | 328.426 ms | 327.815 ms - 329.071 ms | Runs the Rust-native NTT/CRT candidate on balanced 4,194,304-bit operands. |
-| `rational_algorithm_dispatch_speed/reduce_backend_single_limb_cold` | 136.07 ns | 135.69 ns - 136.56 ns | Reduces a fresh wide fraction by a single-limb exact divisor. |
-| `rational_algorithm_dispatch_speed/reduce_backend_knuth_cold` | 755.92 ns | 752.29 ns - 759.89 ns | Reduces a fresh wide fraction through normalized Knuth basecase division. |
-| `rational_algorithm_dispatch_speed/reduce_backend_large_knuth_cold` | 10.482 us | 10.424 us - 10.551 us | Reduces a fresh 129-limb numerator by a 65-limb exact divisor through normalized Knuth division. |
-| `rational_algorithm_dispatch_speed/reduce_fixed_512_coprime_cold` | 2.812 us | 2.789 us - 2.838 us | Reduces fresh balanced 512-bit operands through the fixed-limb rational-operation GCD. |
-| `rational_algorithm_dispatch_speed/exact_remainder_large_knuth` | 5.093 us | 5.074 us - 5.114 us | Computes a wide rational fractional remainder through the traced normalized Knuth backend. |
-| `rational_algorithm_dispatch_speed/division_trivial_small_quotient` | 83.35 ns | 82.72 ns - 84.06 ns | Exercises the backend's zero-quotient magnitude division exit on wide operands. |
-| `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | 129.68 ns | 129.35 ns - 130.07 ns | Runs selected magnitude GCD on an ascending balanced two-limb pair. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_128_bits` | 5.589 us | 5.542 us - 5.640 us | Runs the full-width Euclidean baseline on the same 128-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | 5.431 us | 5.394 us - 5.474 us | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_192_bits` | 8.774 us | 8.734 us - 8.819 us | Runs the full-width Euclidean baseline on the same 192-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | 11.044 us | 10.983 us - 11.110 us | Runs selected magnitude GCD above the Lehmer crossover. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_512_bits` | 32.526 us | 32.315 us - 32.786 us | Runs the full-width Euclidean baseline on the same 512-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_1024_bits` | 21.325 us | 21.192 us - 21.468 us | Runs selected magnitude GCD above the Lehmer crossover. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_1024_bits` | 75.667 us | 75.260 us - 76.115 us | Runs the full-width Euclidean baseline on the same 1,024-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_4096_bits` | 116.449 us | 115.071 us - 118.035 us | Runs selected magnitude GCD well above the Lehmer crossover. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_4096_bits` | 496.054 us | 493.546 us - 498.810 us | Runs the full-width Euclidean baseline on the same 4,096-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits` | 8.502 us | 8.459 us - 8.552 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 192 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_192_bits` | 8.526 us | 8.442 us - 8.626 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits` | 8.086 us | 8.028 us - 8.160 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 256 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_256_bits` | 13.725 us | 13.674 us - 13.782 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits` | 12.216 us | 12.128 us - 12.320 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 512 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_512_bits` | 30.706 us | 30.668 us - 30.745 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits` | 23.438 us | 23.372 us - 23.520 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 1,024 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_1024_bits` | 73.718 us | 73.538 us - 73.949 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits` | 122.571 us | 122.409 us - 122.742 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 4,096 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_4096_bits` | 510.853 us | 509.312 us - 513.168 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_8192_bits` | 296.557 us | 296.141 us - 297.014 us | Runs the recursive half-GCD candidate below its provisional crossover. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_8192_bits` | 303.258 us | 301.453 us - 305.247 us | Runs the quadratic Lehmer baseline on the same 8,192-bit pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_16384_bits` | 3.231 ms | 3.218 ms - 3.245 ms | Runs the recursive half-GCD candidate at its provisional crossover. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_16384_bits` | 877.287 us | 873.885 us - 880.939 us | Runs the quadratic Lehmer baseline on the same 16,384-bit pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_65536_bits` | 11.356 ms | 11.316 ms - 11.403 ms | Runs the recursive half-GCD candidate well above its provisional crossover. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_65536_bits` | 8.931 ms | 8.909 ms - 8.957 ms | Runs the quadratic Lehmer baseline on the same 65,536-bit pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_262144_bits` | 272.155 ms | 271.688 ms - 272.654 ms | Runs recursive half-GCD with selected higher-Toom matrix products at 262,144 bits. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_262144_bits` | 126.535 ms | 126.281 ms - 126.870 ms | Runs the Lehmer baseline on the same 262,144-bit pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_1048576_bits` | 3.829 s | 3.827 s - 3.832 s | Runs recursive half-GCD with selected higher-Toom matrix products at 1,048,576 bits. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_1048576_bits` | 1.980 s | 1.977 s - 1.982 s | Runs the Lehmer baseline on the same 1,048,576-bit pair. |
-| `rational_algorithm_dispatch_speed/barrett_one_shot_8192_by_1024` | 5.755 us | 5.745 us - 5.765 us | Prepares a Rust-native Barrett reciprocal and divides one 8,192-bit value by a 1,024-bit divisor. |
-| `rational_algorithm_dispatch_speed/backend_one_shot_8192_by_1024` | 2.794 us | 2.789 us - 2.800 us | Runs the native backend div-rem baseline for the same one-shot operands. |
-| `rational_algorithm_dispatch_speed/barrett_batch16_8192_by_1024` | 85.577 us | 85.484 us - 85.680 us | Amortizes one Rust-native Barrett reciprocal over sixteen 8,192-bit dividends. |
-| `rational_algorithm_dispatch_speed/backend_batch16_8192_by_1024` | 49.515 us | 49.418 us - 49.637 us | Runs sixteen native backend div-rem operations on the same values. |
-| `rational_algorithm_dispatch_speed/barrett_batch16_65536_by_4096` | 1.470 ms | 1.468 ms - 1.473 ms | Amortizes one Rust-native Barrett reciprocal over sixteen 65,536-bit dividends. |
-| `rational_algorithm_dispatch_speed/backend_batch16_65536_by_4096` | 1.214 ms | 1.213 ms - 1.215 ms | Runs sixteen native backend div-rem operations on the same large values. |
-| `rational_algorithm_dispatch_speed/perfect_power_factor_reject` | 70.91 ns | 70.81 ns - 71.05 ns | Rejects 12 after small-factor multiplicities collapse to gcd one. |
-| `rational_algorithm_dispatch_speed/perfect_power_general_seventh` | 1.627 us | 1.626 us - 1.628 us | Discovers an exact rational seventh power whose base primes exceed the trial table. |
-| `rational_algorithm_dispatch_speed/perfect_power_fixed_seventh` | 208.53 ns | 207.88 ns - 209.30 ns | Checks the same value when the seventh-root degree is already known. |
-| `rational_algorithm_dispatch_speed/perfect_power_unfactored_reject` | 3.273 us | 3.264 us - 3.283 us | Rejects mismatched seventh- and fifth-power rational components beyond the trial table. |
-| `rational_algorithm_dispatch_speed/radix_format_small_integer` | 948.97 ns | 941.01 ns - 958.28 ns | Formats a 16-limb integer using repeated single-limb radix division. |
-| `rational_algorithm_dispatch_speed/radix_format_large_integer` | 2.996 us | 2.989 us - 3.004 us | Formats a 32-limb integer using divide-and-conquer radix conversion. |
-| `rational_algorithm_dispatch_speed/radix_parse_short_decimal` | 81.78 ns | 81.55 ns - 82.05 ns | Parses a short exact decimal through the checked word-sized path. |
-| `rational_algorithm_dispatch_speed/radix_parse_short_scientific` | 75.44 ns | 75.35 ns - 75.54 ns | Parses a representative file-I/O scientific literal through the checked word-sized path. |
-| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific` | 42.858 us | 42.796 us - 42.966 us | Parses a 5,120-digit significand with a negative decimal exponent exactly. |
-| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific_expanded` | 39.483 us | 39.455 us - 39.514 us | Parses the same exact wide value after expanding its decimal point as a baseline. |
-| `rational_algorithm_dispatch_speed/radix_parse_large_integer` | 1.845 us | 1.843 us - 1.847 us | Parses a large below-threshold decimal fixture through chunked multiply-add conversion. |
-| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits` | 105.766 us | 105.652 us - 105.933 us | Parses 10,240 digits through the divide-and-conquer product tree. |
-| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits` | 105.253 us | 104.992 us - 105.593 us | Parses the same 10,240 digits with the backend chunked multiply-add baseline. |
-| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_20480_digits` | 297.513 us | 296.739 us - 298.467 us | Parses 20,480 digits through the divide-and-conquer product tree. |
-| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_20480_digits` | 380.912 us | 380.588 us - 381.284 us | Parses the same 20,480 digits with the backend chunked multiply-add baseline. |
-| `rational_algorithm_dispatch_speed/radix_format_fraction_decimal` | 2.668 us | 2.665 us - 2.672 us | Formats a rational decimal through exact repeated digit division. |
+| `rational_algorithm_dispatch_speed/dyadic_fact_cold` | not run | not run | Classifies a fresh non-dyadic denominator and retains the result. |
+| `rational_algorithm_dispatch_speed/dyadic_fact_retained` | not run | not run | Reads an already-retained non-dyadic denominator classification. |
+| `rational_algorithm_dispatch_speed/compare_leading_significand_retained_1024_bits` | not run | not run | Compares retained wide rational magnitudes through the certified leading-significand interval. |
+| `rational_algorithm_dispatch_speed/compare_dyadic_shifted_retained_1024_bits` | not run | not run | Compares retained wide dyadics with equal scaled width and a five-bit denominator-shift difference. |
+| `rational_algorithm_dispatch_speed/equality_leading_significand_retained_1024_bits` | not run | not run | Compares unequal retained wide fractions with separated leading significands. |
+| `rational_algorithm_dispatch_speed/equality_dyadic_shifted_retained_1024_bits` | not run | not run | Rejects unequal retained wide dyadics without cross products. |
+| `rational_algorithm_dispatch_speed/equality_shared_identity_retained` | not run | not run | Compares two references to one retained rational allocation. |
+| `rational_algorithm_dispatch_speed/equality_same_denominator_retained` | not run | not run | Rejects unequal small numerators with a common denominator. |
+| `rational_algorithm_dispatch_speed/equality_word_retained` | not run | not run | Rejects unequal small fractions with different non-dyadic denominators. |
+| `rational_algorithm_dispatch_speed/equality_equal_distinct_retained` | not run | not run | Recognizes equal small fractions held in distinct allocations. |
+| `rational_algorithm_dispatch_speed/equality_different_signs_retained` | not run | not run | Rejects wide fractions with opposite signs before magnitude comparison. |
+| `rational_algorithm_dispatch_speed/equality_close_retained_1024_bits` | not run | not run | Rejects near-equal wide fractions through the exact cross-product fallback. |
+| `rational_algorithm_dispatch_speed/mul_backend_basecase_cold` | not run | not run | Multiplies fresh balanced 16-limb integers through the backend basecase kernel. |
+| `rational_algorithm_dispatch_speed/mul_backend_half_karatsuba_cold` | not run | not run | Multiplies fresh unbalanced 33-by-66-limb integers through half-Karatsuba. |
+| `rational_algorithm_dispatch_speed/mul_backend_karatsuba_cold` | not run | not run | Multiplies fresh balanced 40-limb integers through Karatsuba. |
+| `rational_algorithm_dispatch_speed/mul_backend_toom3_cold` | not run | not run | Multiplies fresh balanced 257-limb integers through Toom-3. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_4096_bits` | not run | not run | Runs Hyperreal's seven-product Rust-native Toom-4 candidate on balanced 4,096-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_4096_bits` | not run | not run | Runs the native backend product on the same 4,096-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_16384_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 16,384-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_16384_bits` | not run | not run | Runs the native backend product on the same 16,384-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_65536_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 65,536-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_65536_bits` | not run | not run | Runs the native backend product on the same 65,536-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_262144_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_262144_bits` | not run | not run | Runs the native backend product on the same 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_524288_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 524,288-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_524288_bits` | not run | not run | Runs the native backend product on the same 524,288-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_1048576_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_1048576_bits` | not run | not run | Runs the native backend product on the same 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom4_candidate_2097152_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-4 candidate on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_2097152_bits` | not run | not run | Runs the native backend product on the same 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_1048576_bits` | not run | not run | Runs the retained production Toom-8 selector above its balanced crossover. |
+| `rational_algorithm_dispatch_speed/mul_selected_2097152_bits` | not run | not run | Runs the retained production Toom-8 selector on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_1048576_bits` | not run | not run | Runs Hyperreal's eleven-product Rust-native Toom-6 candidate above its crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_131072_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 131,072-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_backend_reference_131072_bits` | not run | not run | Runs the retained native backend selector on the same 131,072-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_262144_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_524288_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 524,288-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_524288_bits` | not run | not run | Runs the retained production Toom-8 selector above its balanced crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom6_candidate_2097152_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-6 candidate on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_toom4_unbalanced_1258291_by_1048576` | not run | not run | Runs retained Toom-4 on a 6:5 operand pair outside Toom-6's balance band. |
+| `rational_algorithm_dispatch_speed/mul_backend_unbalanced_1258291_by_1048576` | not run | not run | Runs the native backend on the same 6:5 operand pair. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_262144_bits` | not run | not run | Runs Hyperreal's fifteen-product Rust-native Toom-8 candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_262144_bits` | not run | not run | Runs the retained production Toom-8 selector at its balanced crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_65536_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 65,536-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_131072_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 131,072-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_524288_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-8 candidate at the Toom-6 crossover. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_1048576_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_2097152_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 2,097,152-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_toom8_candidate_4194304_bits` | not run | not run | Runs Hyperreal's Rust-native Toom-8 candidate on balanced 4,194,304-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_4194304_bits` | not run | not run | Runs the retained production Toom-8 selector on the same 4,194,304-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_selected_toom6_unbalanced_599186_by_524288` | not run | not run | Runs retained Toom-6 on an 8:7 operand pair outside Toom-8's balance band. |
+| `rational_algorithm_dispatch_speed/mul_backend_unbalanced_599186_by_524288` | not run | not run | Runs the native backend on the same 8:7 operand pair. |
+| `rational_algorithm_dispatch_speed/mul_ntt_candidate_262144_bits` | not run | not run | Runs Hyperreal's exact two-prime Rust-native NTT/CRT candidate on balanced 262,144-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_ntt_candidate_1048576_bits` | not run | not run | Runs the Rust-native NTT/CRT candidate on balanced 1,048,576-bit operands. |
+| `rational_algorithm_dispatch_speed/mul_ntt_candidate_4194304_bits` | not run | not run | Runs the Rust-native NTT/CRT candidate on balanced 4,194,304-bit operands. |
+| `rational_algorithm_dispatch_speed/reduce_backend_single_limb_cold` | not run | not run | Reduces a fresh wide fraction by a single-limb exact divisor. |
+| `rational_algorithm_dispatch_speed/reduce_backend_knuth_cold` | not run | not run | Reduces a fresh wide fraction through normalized Knuth basecase division. |
+| `rational_algorithm_dispatch_speed/reduce_backend_large_knuth_cold` | not run | not run | Reduces a fresh 129-limb numerator by a 65-limb exact divisor through normalized Knuth division. |
+| `rational_algorithm_dispatch_speed/reduce_fixed_512_coprime_cold` | not run | not run | Reduces fresh balanced 512-bit operands through the fixed-limb rational-operation GCD. |
+| `rational_algorithm_dispatch_speed/exact_remainder_large_knuth` | not run | not run | Computes a wide rational fractional remainder through the traced normalized Knuth backend. |
+| `rational_algorithm_dispatch_speed/division_trivial_small_quotient` | not run | not run | Exercises the backend's zero-quotient magnitude division exit on wide operands. |
+| `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | not run | not run | Runs selected magnitude GCD on an ascending balanced two-limb pair. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_128_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 128-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | not run | not run | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_192_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 192-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | not run | not run | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_512_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 512-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_1024_bits` | not run | not run | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_1024_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 1,024-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_4096_bits` | not run | not run | Runs selected magnitude GCD well above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_4096_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 4,096-bit pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 192 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_192_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 256 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_256_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 512 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_512_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 1,024 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_1024_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 4,096 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_4096_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_8192_bits` | not run | not run | Runs the recursive half-GCD candidate below its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_8192_bits` | not run | not run | Runs the quadratic Lehmer baseline on the same 8,192-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_16384_bits` | not run | not run | Runs the recursive half-GCD candidate at its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_16384_bits` | not run | not run | Runs the quadratic Lehmer baseline on the same 16,384-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_65536_bits` | not run | not run | Runs the recursive half-GCD candidate well above its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_65536_bits` | not run | not run | Runs the quadratic Lehmer baseline on the same 65,536-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_262144_bits` | not run | not run | Runs recursive half-GCD with selected higher-Toom matrix products at 262,144 bits. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_262144_bits` | not run | not run | Runs the Lehmer baseline on the same 262,144-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_1048576_bits` | not run | not run | Runs recursive half-GCD with selected higher-Toom matrix products at 1,048,576 bits. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_1048576_bits` | not run | not run | Runs the Lehmer baseline on the same 1,048,576-bit pair. |
+| `rational_algorithm_dispatch_speed/barrett_one_shot_8192_by_1024` | not run | not run | Prepares a Rust-native Barrett reciprocal and divides one 8,192-bit value by a 1,024-bit divisor. |
+| `rational_algorithm_dispatch_speed/backend_one_shot_8192_by_1024` | not run | not run | Runs the native backend div-rem baseline for the same one-shot operands. |
+| `rational_algorithm_dispatch_speed/barrett_batch16_8192_by_1024` | not run | not run | Amortizes one Rust-native Barrett reciprocal over sixteen 8,192-bit dividends. |
+| `rational_algorithm_dispatch_speed/backend_batch16_8192_by_1024` | not run | not run | Runs sixteen native backend div-rem operations on the same values. |
+| `rational_algorithm_dispatch_speed/barrett_batch16_65536_by_4096` | not run | not run | Amortizes one Rust-native Barrett reciprocal over sixteen 65,536-bit dividends. |
+| `rational_algorithm_dispatch_speed/backend_batch16_65536_by_4096` | not run | not run | Runs sixteen native backend div-rem operations on the same large values. |
+| `rational_algorithm_dispatch_speed/perfect_power_factor_reject` | not run | not run | Rejects 12 after small-factor multiplicities collapse to gcd one. |
+| `rational_algorithm_dispatch_speed/perfect_power_general_seventh` | not run | not run | Discovers an exact rational seventh power whose base primes exceed the trial table. |
+| `rational_algorithm_dispatch_speed/perfect_power_fixed_seventh` | not run | not run | Checks the same value when the seventh-root degree is already known. |
+| `rational_algorithm_dispatch_speed/perfect_power_unfactored_reject` | not run | not run | Rejects mismatched seventh- and fifth-power rational components beyond the trial table. |
+| `rational_algorithm_dispatch_speed/radix_format_small_integer` | not run | not run | Formats a 16-limb integer using repeated single-limb radix division. |
+| `rational_algorithm_dispatch_speed/radix_format_large_integer` | not run | not run | Formats a 32-limb integer using divide-and-conquer radix conversion. |
+| `rational_algorithm_dispatch_speed/radix_parse_short_decimal` | not run | not run | Parses a short exact decimal through the checked word-sized path. |
+| `rational_algorithm_dispatch_speed/radix_parse_short_scientific` | not run | not run | Parses a representative file-I/O scientific literal through the checked word-sized path. |
+| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific` | not run | not run | Parses a 5,120-digit significand with a negative decimal exponent exactly. |
+| `rational_algorithm_dispatch_speed/radix_parse_wide_scientific_expanded` | not run | not run | Parses the same exact wide value after expanding its decimal point as a baseline. |
+| `rational_algorithm_dispatch_speed/radix_parse_large_integer` | not run | not run | Parses a large below-threshold decimal fixture through chunked multiply-add conversion. |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits` | not run | not run | Parses 10,240 digits through the divide-and-conquer product tree. |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits` | not run | not run | Parses the same 10,240 digits with the backend chunked multiply-add baseline. |
+| `rational_algorithm_dispatch_speed/radix_parse_divide_conquer_20480_digits` | not run | not run | Parses 20,480 digits through the divide-and-conquer product tree. |
+| `rational_algorithm_dispatch_speed/radix_parse_backend_chunked_20480_digits` | not run | not run | Parses the same 20,480 digits with the backend chunked multiply-add baseline. |
+| `rational_algorithm_dispatch_speed/radix_format_fraction_decimal` | not run | not run | Formats a rational decimal through exact repeated digit division. |
 
 ### `borrowed_op_overhead`
 
@@ -457,23 +457,23 @@ Borrowed versus owned operation overhead for rational and real operands.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `borrowed_op_overhead/rational_clone_pair` | 7.35 ns | 7.34 ns - 7.36 ns | Clones two rational values. |
-| `borrowed_op_overhead/rational_add_refs` | 8.78 ns | 8.75 ns - 8.81 ns | Adds rational references. |
-| `borrowed_op_overhead/rational_add_owned` | 10.25 ns | 10.22 ns - 10.27 ns | Adds owned rational values. |
-| `borrowed_op_overhead/real_clone_pair` | 37.29 ns | 37.23 ns - 37.38 ns | Clones two scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_unscaled_add_refs` | 90.20 ns | 90.07 ns - 90.36 ns | Adds borrowed unscaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_unscaled_add_owned` | 89.88 ns | 89.54 ns - 90.37 ns | Adds owned unscaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_add_refs` | 256.14 ns | 255.86 ns - 256.45 ns | Adds borrowed scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_add_owned` | 272.38 ns | 270.94 ns - 274.34 ns | Adds owned scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_dot2_refs_dense_symbolic` | 484.89 ns | 484.56 ns - 485.22 ns | Computes a borrowed two-lane symbolic dot product with no rational shortcut terms. |
-| `borrowed_op_overhead/real_active_dot2_refs_dense_symbolic` | 494.39 ns | 492.74 ns - 496.52 ns | Computes a borrowed two-lane symbolic dot product after the caller has already classified every lane active. |
-| `borrowed_op_overhead/real_dot2_refs_mixed_structural` | 26.98 ns | 26.96 ns - 27.00 ns | Computes a borrowed two-lane symbolic dot product with an exact zero lane and a rational scale lane. |
-| `borrowed_op_overhead/real_dot3_refs_dense_symbolic` | 1.018 us | 1.013 us - 1.023 us | Computes a borrowed three-lane symbolic dot product with no rational shortcut terms. |
-| `borrowed_op_overhead/real_active_dot3_refs_dense_symbolic` | 1.023 us | 1.023 us - 1.024 us | Computes a borrowed three-lane symbolic dot product after the caller has already classified every lane active. |
-| `borrowed_op_overhead/real_dot3_refs_mixed_structural` | 203.49 ns | 203.10 ns - 204.03 ns | Computes a borrowed three-lane symbolic dot product with exact zero and rational scale terms. |
-| `borrowed_op_overhead/real_dot4_refs_dense_symbolic` | 1.555 us | 1.553 us - 1.557 us | Computes a borrowed four-lane symbolic dot product with no rational shortcut terms. |
-| `borrowed_op_overhead/real_active_dot4_refs_dense_symbolic` | 1.579 us | 1.568 us - 1.595 us | Computes a borrowed four-lane symbolic dot product after the caller has already classified every lane active. |
-| `borrowed_op_overhead/real_dot4_refs_mixed_structural` | 242.50 ns | 241.92 ns - 243.17 ns | Computes a borrowed four-lane symbolic dot product with exact zero and rational scale terms. |
+| `borrowed_op_overhead/rational_clone_pair` | not run | not run | Clones two rational values. |
+| `borrowed_op_overhead/rational_add_refs` | not run | not run | Adds rational references. |
+| `borrowed_op_overhead/rational_add_owned` | not run | not run | Adds owned rational values. |
+| `borrowed_op_overhead/real_clone_pair` | not run | not run | Clones two scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_refs` | not run | not run | Adds borrowed unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_owned` | not run | not run | Adds owned unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_refs` | not run | not run | Adds borrowed scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_owned` | not run | not run | Adds owned scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_dot2_refs_dense_symbolic` | not run | not run | Computes a borrowed two-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_active_dot2_refs_dense_symbolic` | not run | not run | Computes a borrowed two-lane symbolic dot product after the caller has already classified every lane active. |
+| `borrowed_op_overhead/real_dot2_refs_mixed_structural` | not run | not run | Computes a borrowed two-lane symbolic dot product with an exact zero lane and a rational scale lane. |
+| `borrowed_op_overhead/real_dot3_refs_dense_symbolic` | not run | not run | Computes a borrowed three-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_active_dot3_refs_dense_symbolic` | not run | not run | Computes a borrowed three-lane symbolic dot product after the caller has already classified every lane active. |
+| `borrowed_op_overhead/real_dot3_refs_mixed_structural` | not run | not run | Computes a borrowed three-lane symbolic dot product with exact zero and rational scale terms. |
+| `borrowed_op_overhead/real_dot4_refs_dense_symbolic` | not run | not run | Computes a borrowed four-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_active_dot4_refs_dense_symbolic` | not run | not run | Computes a borrowed four-lane symbolic dot product after the caller has already classified every lane active. |
+| `borrowed_op_overhead/real_dot4_refs_mixed_structural` | not run | not run | Computes a borrowed four-lane symbolic dot product with exact zero and rational scale terms. |
 
 ### `dense_algebra`
 
@@ -481,20 +481,20 @@ Small dense algebra kernels that stress repeated exact and symbolic operations.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `dense_algebra/rational_dot_64` | 1.689 us | 1.685 us - 1.693 us | Computes a 64-element rational dot product. |
-| `dense_algebra/rational_matmul_8` | 54.981 us | 54.892 us - 55.085 us | Computes an 8x8 rational matrix multiply. |
-| `dense_algebra/real_dot_36` | 4.416 us | 4.413 us - 4.418 us | Computes a 36-element dot product over symbolic `Real` values. |
-| `dense_algebra/real_matmul_6` | 45.701 us | 45.663 us - 45.739 us | Computes a 6x6 matrix multiply over symbolic `Real` values. |
-| `dense_algebra/real_sum_refs_64_symbolic` | 6.686 us | 6.674 us - 6.700 us | Constructs an arbitrary-length sum of 64 borrowed symbolic square roots. |
-| `dense_algebra/real_sum_refs_64_symbolic_to_f64` | 32.265 us | 32.239 us - 32.292 us | Constructs and approximates the same arbitrary-length symbolic sum. |
-| `dense_algebra/real_sum_refs_1024_symbolic_sequential` | 114.986 us | 114.735 us - 115.268 us | Constructs a 1,024-term symbolic sum with the former sequential fold. |
-| `dense_algebra/real_sum_refs_1024_symbolic` | 151.653 us | 151.462 us - 151.875 us | Constructs the same 1,024-term symbolic sum through the balanced public aggregate. |
-| `dense_algebra/real_sum_refs_1024_symbolic_to_f64_sequential` | 5.144 ms | 5.137 ms - 5.153 ms | Sequentially constructs and approximates a 1,024-term symbolic sum with cold child caches. |
-| `dense_algebra/real_sum_refs_1024_symbolic_to_f64` | 1.224 ms | 1.220 ms - 1.228 ms | Constructs and approximates the same cold 1,024-term symbolic sum through the balanced public aggregate. |
-| `dense_algebra/real_sum_refs_1024_rational_sequential` | 21.458 us | 21.370 us - 21.545 us | Constructs a 1,024-term exact rational sum with the former sequential fold. |
-| `dense_algebra/real_sum_refs_1024_rational` | 35.742 us | 35.714 us - 35.775 us | Constructs the same exact rational sum through the homogeneous-prefix public aggregate. |
-| `dense_algebra/real_sum_owned_1024_symbolic_former_clone_path` | 151.000 us | 150.422 us - 151.727 us | Consumes a 1,024-term symbolic sum while reproducing the former extra per-value clone. |
-| `dense_algebra/real_sum_owned_1024_symbolic` | 122.156 us | 121.930 us - 122.398 us | Consumes the same symbolic sum by moving owned values into the balanced reducer. |
+| `dense_algebra/rational_dot_64` | not run | not run | Computes a 64-element rational dot product. |
+| `dense_algebra/rational_matmul_8` | not run | not run | Computes an 8x8 rational matrix multiply. |
+| `dense_algebra/real_dot_36` | not run | not run | Computes a 36-element dot product over symbolic `Real` values. |
+| `dense_algebra/real_matmul_6` | not run | not run | Computes a 6x6 matrix multiply over symbolic `Real` values. |
+| `dense_algebra/real_sum_refs_64_symbolic` | not run | not run | Constructs an arbitrary-length sum of 64 borrowed symbolic square roots. |
+| `dense_algebra/real_sum_refs_64_symbolic_to_f64` | not run | not run | Constructs and approximates the same arbitrary-length symbolic sum. |
+| `dense_algebra/real_sum_refs_1024_symbolic_sequential` | not run | not run | Constructs a 1,024-term symbolic sum with the former sequential fold. |
+| `dense_algebra/real_sum_refs_1024_symbolic` | not run | not run | Constructs the same 1,024-term symbolic sum through the balanced public aggregate. |
+| `dense_algebra/real_sum_refs_1024_symbolic_to_f64_sequential` | not run | not run | Sequentially constructs and approximates a 1,024-term symbolic sum with cold child caches. |
+| `dense_algebra/real_sum_refs_1024_symbolic_to_f64` | not run | not run | Constructs and approximates the same cold 1,024-term symbolic sum through the balanced public aggregate. |
+| `dense_algebra/real_sum_refs_1024_rational_sequential` | not run | not run | Constructs a 1,024-term exact rational sum with the former sequential fold. |
+| `dense_algebra/real_sum_refs_1024_rational` | not run | not run | Constructs the same exact rational sum through the homogeneous-prefix public aggregate. |
+| `dense_algebra/real_sum_owned_1024_symbolic_former_clone_path` | not run | not run | Consumes a 1,024-term symbolic sum while reproducing the former extra per-value clone. |
+| `dense_algebra/real_sum_owned_1024_symbolic` | not run | not run | Consumes the same symbolic sum by moving owned values into the balanced reducer. |
 
 ### `exact_transcendental_special_forms`
 
@@ -502,30 +502,30 @@ Construction-time shortcuts for exact rational multiples of pi and inverse compo
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `exact_transcendental_special_forms/sin_pi_7` | 782.38 ns | 780.01 ns - 784.94 ns | Builds the exact special form for sin(pi/7). |
-| `exact_transcendental_special_forms/cos_pi_7` | 647.14 ns | 643.94 ns - 651.10 ns | Builds the exact special form for cos(pi/7). |
-| `exact_transcendental_special_forms/tan_pi_7` | 235.23 ns | 233.97 ns - 236.76 ns | Builds the exact special form for tan(pi/7). |
-| `exact_transcendental_special_forms/asin_sin_6pi_7` | 905.78 ns | 904.25 ns - 907.31 ns | Recognizes the principal branch of asin(sin(6pi/7)). |
-| `exact_transcendental_special_forms/acos_cos_9pi_7` | 889.12 ns | 886.57 ns - 893.12 ns | Recognizes the principal branch of acos(cos(9pi/7)). |
-| `exact_transcendental_special_forms/atan_tan_6pi_7` | 479.89 ns | 477.82 ns - 482.26 ns | Recognizes the principal branch of atan(tan(6pi/7)). |
-| `exact_transcendental_special_forms/asinh_large` | 188.12 ns | 187.26 ns - 189.07 ns | Builds a large inverse hyperbolic sine without exact intermediate Reals. |
-| `exact_transcendental_special_forms/atanh_sqrt_half` | 85.60 ns | 85.29 ns - 86.00 ns | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
-| `exact_transcendental_special_forms/atanh_sqrt_two_error` | 17.15 ns | 17.13 ns - 17.17 ns | Rejects atanh(sqrt(2)) through exact structural domain checks. |
-| `exact_transcendental_special_forms/sinh_ln_two` | 125.63 ns | 125.11 ns - 126.28 ns | Folds sinh(ln(2)) to the exact rational 3/4 via the integer-log-collapse shortcut. |
-| `exact_transcendental_special_forms/cosh_ln_two` | 131.53 ns | 131.21 ns - 131.86 ns | Folds cosh(ln(2)) to the exact rational 5/4 via the integer-log-collapse shortcut. |
-| `exact_transcendental_special_forms/tanh_ln_two` | 249.37 ns | 248.77 ns - 250.10 ns | Folds tanh(ln(2)) to the exact rational 3/5 via the integer-log-collapse shortcut. |
-| `exact_transcendental_special_forms/sinh_rational_one` | 419.64 ns | 409.40 ns - 438.52 ns | Builds sinh(1) through the generic (exp(x) - exp(-x))/2 identity path. |
-| `exact_transcendental_special_forms/cosh_rational_one` | 355.12 ns | 353.69 ns - 356.72 ns | Builds cosh(1) through the generic (exp(x) + exp(-x))/2 identity path. |
-| `exact_transcendental_special_forms/tanh_rational_one` | 581.22 ns | 572.99 ns - 595.70 ns | Builds tanh(1) through the generic (exp(x) - exp(-x))/(exp(x) + exp(-x)) identity path. |
-| `exact_transcendental_special_forms/atan2_origin` | 18.42 ns | 18.41 ns - 18.44 ns | Hits the origin (0, 0) short-circuit returning exact zero. |
-| `exact_transcendental_special_forms/atan2_axis_positive_y` | 31.89 ns | 31.81 ns - 31.99 ns | Hits the positive-y axis short-circuit returning exact pi/2. |
-| `exact_transcendental_special_forms/atan2_axis_negative_x` | 29.75 ns | 29.69 ns - 29.83 ns | Hits the negative-x axis short-circuit returning exact pi. |
-| `exact_transcendental_special_forms/atan2_quadrant_one_unit_diagonal` | 74.95 ns | 74.81 ns - 75.14 ns | Quadrant I unit diagonal reduces to atan(1) = pi/4 exact special form. |
-| `exact_transcendental_special_forms/atan2_quadrant_two_pi_correction` | 775.64 ns | 773.77 ns - 777.75 ns | Quadrant II (1, -2) exercises atan(small ratio) + pi correction. |
-| `exact_transcendental_special_forms/atan2_quadrant_three_negative_pi` | 700.39 ns | 698.71 ns - 702.30 ns | Quadrant III (-1, -2) exercises atan(small ratio) - pi correction. |
-| `exact_transcendental_special_forms/log2_power_of_two` | 60.61 ns | 60.49 ns - 60.76 ns | Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut. |
-| `exact_transcendental_special_forms/log2_rational_three` | 131.06 ns | 130.45 ns - 131.76 ns | Builds log2(3) as a lightweight Log2 symbolic certificate. |
-| `exact_transcendental_special_forms/log2_ln_quotient_fold` | 145.50 ns | 144.98 ns - 146.08 ns | Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut. |
+| `exact_transcendental_special_forms/sin_pi_7` | not run | not run | Builds the exact special form for sin(pi/7). |
+| `exact_transcendental_special_forms/cos_pi_7` | not run | not run | Builds the exact special form for cos(pi/7). |
+| `exact_transcendental_special_forms/tan_pi_7` | not run | not run | Builds the exact special form for tan(pi/7). |
+| `exact_transcendental_special_forms/asin_sin_6pi_7` | not run | not run | Recognizes the principal branch of asin(sin(6pi/7)). |
+| `exact_transcendental_special_forms/acos_cos_9pi_7` | not run | not run | Recognizes the principal branch of acos(cos(9pi/7)). |
+| `exact_transcendental_special_forms/atan_tan_6pi_7` | not run | not run | Recognizes the principal branch of atan(tan(6pi/7)). |
+| `exact_transcendental_special_forms/asinh_large` | not run | not run | Builds a large inverse hyperbolic sine without exact intermediate Reals. |
+| `exact_transcendental_special_forms/atanh_sqrt_half` | not run | not run | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
+| `exact_transcendental_special_forms/atanh_sqrt_two_error` | not run | not run | Rejects atanh(sqrt(2)) through exact structural domain checks. |
+| `exact_transcendental_special_forms/sinh_ln_two` | not run | not run | Folds sinh(ln(2)) to the exact rational 3/4 via the integer-log-collapse shortcut. |
+| `exact_transcendental_special_forms/cosh_ln_two` | not run | not run | Folds cosh(ln(2)) to the exact rational 5/4 via the integer-log-collapse shortcut. |
+| `exact_transcendental_special_forms/tanh_ln_two` | not run | not run | Folds tanh(ln(2)) to the exact rational 3/5 via the integer-log-collapse shortcut. |
+| `exact_transcendental_special_forms/sinh_rational_one` | not run | not run | Builds sinh(1) through the generic (exp(x) - exp(-x))/2 identity path. |
+| `exact_transcendental_special_forms/cosh_rational_one` | not run | not run | Builds cosh(1) through the generic (exp(x) + exp(-x))/2 identity path. |
+| `exact_transcendental_special_forms/tanh_rational_one` | not run | not run | Builds tanh(1) through the generic (exp(x) - exp(-x))/(exp(x) + exp(-x)) identity path. |
+| `exact_transcendental_special_forms/atan2_origin` | not run | not run | Hits the origin (0, 0) short-circuit returning exact zero. |
+| `exact_transcendental_special_forms/atan2_axis_positive_y` | not run | not run | Hits the positive-y axis short-circuit returning exact pi/2. |
+| `exact_transcendental_special_forms/atan2_axis_negative_x` | not run | not run | Hits the negative-x axis short-circuit returning exact pi. |
+| `exact_transcendental_special_forms/atan2_quadrant_one_unit_diagonal` | not run | not run | Quadrant I unit diagonal reduces to atan(1) = pi/4 exact special form. |
+| `exact_transcendental_special_forms/atan2_quadrant_two_pi_correction` | not run | not run | Quadrant II (1, -2) exercises atan(small ratio) + pi correction. |
+| `exact_transcendental_special_forms/atan2_quadrant_three_negative_pi` | not run | not run | Quadrant III (-1, -2) exercises atan(small ratio) - pi correction. |
+| `exact_transcendental_special_forms/log2_power_of_two` | not run | not run | Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut. |
+| `exact_transcendental_special_forms/log2_rational_three` | not run | not run | Builds log2(3) as a lightweight Log2 symbolic certificate. |
+| `exact_transcendental_special_forms/log2_ln_quotient_fold` | not run | not run | Folds ln(5) / ln(2) into a Log2 certificate via the divide-recognize shortcut. |
 
 ### `real_cotangent`
 
@@ -533,12 +533,12 @@ Public cotangent construction and cold refinement against the two compositional 
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_cotangent/atan_two_direct_construct` | 34.78 ns | 34.67 ns - 34.91 ns | Folds cot(atan(2)) through the public exact inverse-trig rewrite. |
-| `real_cotangent/atan_two_quotient_construct` | 1.406 us | 1.403 us - 1.409 us | Builds cot(atan(2)) as the control expression cos(x)/sin(x). |
-| `real_cotangent/atan_two_inverse_tan_construct` | 4.416 us | 4.405 us - 4.427 us | Builds cot(atan(2)) as the incomplete control expression 1/tan(x). |
-| `real_cotangent/tiny_direct_cold_p256` | 7.791 us | 7.765 us - 7.826 us | Constructs and certifies public cot(2^-10) at 256 fractional bits. |
-| `real_cotangent/tiny_quotient_cold_p256` | 7.620 us | 7.611 us - 7.630 us | Constructs and certifies cos(2^-10)/sin(2^-10) at 256 fractional bits. |
-| `real_cotangent/tiny_inverse_tan_cold_p256` | 10.004 us | 9.989 us - 10.020 us | Constructs and certifies 1/tan(2^-10) at 256 fractional bits. |
+| `real_cotangent/atan_two_direct_construct` | not run | not run | Folds cot(atan(2)) through the public exact inverse-trig rewrite. |
+| `real_cotangent/atan_two_quotient_construct` | not run | not run | Builds cot(atan(2)) as the control expression cos(x)/sin(x). |
+| `real_cotangent/atan_two_inverse_tan_construct` | not run | not run | Builds cot(atan(2)) as the incomplete control expression 1/tan(x). |
+| `real_cotangent/tiny_direct_cold_p256` | not run | not run | Constructs and certifies public cot(2^-10) at 256 fractional bits. |
+| `real_cotangent/tiny_quotient_cold_p256` | not run | not run | Constructs and certifies cos(2^-10)/sin(2^-10) at 256 fractional bits. |
+| `real_cotangent/tiny_inverse_tan_cold_p256` | not run | not run | Constructs and certifies 1/tan(2^-10) at 256 fractional bits. |
 
 ### `symbolic_reductions`
 
@@ -546,25 +546,25 @@ Existing symbolic constant algebra cases considered for additional reductions.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `symbolic_reductions/sqrt_pi_square` | 279.51 ns | 278.29 ns - 281.04 ns | Reduces sqrt(pi^2). |
-| `symbolic_reductions/sqrt_pi_e_square` | 546.99 ns | 546.21 ns - 547.81 ns | Reduces sqrt((pi * e)^2). |
-| `symbolic_reductions/ln_scaled_e` | 60.78 ns | 60.45 ns - 61.17 ns | Reduces ln(2 * e). |
-| `symbolic_reductions/sub_pi_three` | 43.30 ns | 43.11 ns - 43.51 ns | Builds the certified pi - 3 constant-offset form. |
-| `symbolic_reductions/pi_minus_three_facts` | 17.32 ns | 17.27 ns - 17.37 ns | Reads structural facts for the cached pi - 3 offset form. |
-| `symbolic_reductions/div_exp_exp` | 308.78 ns | 307.23 ns - 310.62 ns | Reduces e^3 / e. |
-| `symbolic_reductions/div_pi_square_e` | 304.98 ns | 303.32 ns - 306.95 ns | Reduces pi^2 / e. |
-| `symbolic_reductions/div_const_products` | 412.48 ns | 399.55 ns - 436.63 ns | Reduces (pi^3 * e^5) / (pi * e^2). |
-| `symbolic_reductions/inverse_pi` | 30.93 ns | 30.78 ns - 31.10 ns | Builds the reciprocal of pi. |
-| `symbolic_reductions/div_one_pi` | 62.66 ns | 62.39 ns - 62.95 ns | Reduces 1 / pi. |
-| `symbolic_reductions/div_rational_exp` | 184.01 ns | 164.62 ns - 221.62 ns | Reduces 2 / e. |
-| `symbolic_reductions/div_e_pi` | 120.16 ns | 119.25 ns - 121.22 ns | Reduces e / pi. |
-| `symbolic_reductions/mul_pi_inverse_pi` | 67.28 ns | 66.98 ns - 67.59 ns | Multiplies pi by its reciprocal. |
-| `symbolic_reductions/mul_pi_e_sqrt_two` | 188.81 ns | 187.06 ns - 190.68 ns | Builds the factored pi * e * sqrt(2) form. |
-| `symbolic_reductions/mul_const_product_sqrt_sqrt` | 156.14 ns | 155.31 ns - 157.04 ns | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
-| `symbolic_reductions/div_const_product_sqrt_e` | 73.03 ns | 72.48 ns - 73.64 ns | Reduces (pi * e * sqrt(2)) / e. |
-| `symbolic_reductions/inverse_const_product_sqrt` | 297.30 ns | 295.14 ns - 299.72 ns | Builds a rationalized reciprocal of pi * e * sqrt(2). |
-| `symbolic_reductions/inverse_sqrt_two` | 16.52 ns | 16.46 ns - 16.60 ns | Builds the rationalized reciprocal of unit-scaled sqrt(2). |
-| `symbolic_reductions/div_sqrt_two_sqrt_three` | 47.00 ns | 46.94 ns - 47.05 ns | Rationalizes a quotient of two unit-scaled square roots. |
+| `symbolic_reductions/sqrt_pi_square` | not run | not run | Reduces sqrt(pi^2). |
+| `symbolic_reductions/sqrt_pi_e_square` | not run | not run | Reduces sqrt((pi * e)^2). |
+| `symbolic_reductions/ln_scaled_e` | not run | not run | Reduces ln(2 * e). |
+| `symbolic_reductions/sub_pi_three` | not run | not run | Builds the certified pi - 3 constant-offset form. |
+| `symbolic_reductions/pi_minus_three_facts` | not run | not run | Reads structural facts for the cached pi - 3 offset form. |
+| `symbolic_reductions/div_exp_exp` | not run | not run | Reduces e^3 / e. |
+| `symbolic_reductions/div_pi_square_e` | not run | not run | Reduces pi^2 / e. |
+| `symbolic_reductions/div_const_products` | not run | not run | Reduces (pi^3 * e^5) / (pi * e^2). |
+| `symbolic_reductions/inverse_pi` | not run | not run | Builds the reciprocal of pi. |
+| `symbolic_reductions/div_one_pi` | not run | not run | Reduces 1 / pi. |
+| `symbolic_reductions/div_rational_exp` | not run | not run | Reduces 2 / e. |
+| `symbolic_reductions/div_e_pi` | not run | not run | Reduces e / pi. |
+| `symbolic_reductions/mul_pi_inverse_pi` | not run | not run | Multiplies pi by its reciprocal. |
+| `symbolic_reductions/mul_pi_e_sqrt_two` | not run | not run | Builds the factored pi * e * sqrt(2) form. |
+| `symbolic_reductions/mul_const_product_sqrt_sqrt` | not run | not run | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
+| `symbolic_reductions/div_const_product_sqrt_e` | not run | not run | Reduces (pi * e * sqrt(2)) / e. |
+| `symbolic_reductions/inverse_const_product_sqrt` | not run | not run | Builds a rationalized reciprocal of pi * e * sqrt(2). |
+| `symbolic_reductions/inverse_sqrt_two` | not run | not run | Builds the rationalized reciprocal of unit-scaled sqrt(2). |
+| `symbolic_reductions/div_sqrt_two_sqrt_three` | not run | not run | Rationalizes a quotient of two unit-scaled square roots. |
 
 ### `exact_product_sums`
 
@@ -572,12 +572,12 @@ Fixed product-sum reducers used by determinant and cofactor kernels.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `exact_product_sums/signed_product_sum_lcm_6x2` | 320.79 ns | 320.38 ns - 321.29 ns | Computes an exact rational six-term signed product sum with mixed denominators. |
-| `exact_product_sums/signed_product_sum_common_scale_6x2` | 171.33 ns | 170.54 ns - 172.33 ns | Computes an exact rational six-term signed product sum through the carried common-scale reducer. |
-| `exact_product_sums/signed_product_sum_sparse_single_6x2` | 102.84 ns | 102.58 ns - 103.12 ns | Computes a sparse exact rational six-term signed product sum with one active product. |
-| `exact_product_sums/real_signed_product_sum_rational_det3` | 301.32 ns | 300.61 ns - 302.14 ns | Computes a 3x3 determinant-shaped signed product sum through the public `Real` builder. |
-| `exact_product_sums/real_signed_product_sum_mixed_symbolic_det3` | 2.091 us | 2.087 us - 2.095 us | Computes the same determinant-shaped builder with symbolic factors and rational scales. |
-| `exact_product_sums/exact_rational_sparse_homogeneous_plane_intersection3` | 209.96 ns | 208.91 ns - 211.12 ns | Computes a canonical exact three-plane cofactor tuple from one sparse dyadic row. |
+| `exact_product_sums/signed_product_sum_lcm_6x2` | not run | not run | Computes an exact rational six-term signed product sum with mixed denominators. |
+| `exact_product_sums/signed_product_sum_common_scale_6x2` | not run | not run | Computes an exact rational six-term signed product sum through the carried common-scale reducer. |
+| `exact_product_sums/signed_product_sum_sparse_single_6x2` | not run | not run | Computes a sparse exact rational six-term signed product sum with one active product. |
+| `exact_product_sums/real_signed_product_sum_rational_det3` | not run | not run | Computes a 3x3 determinant-shaped signed product sum through the public `Real` builder. |
+| `exact_product_sums/real_signed_product_sum_mixed_symbolic_det3` | not run | not run | Computes the same determinant-shaped builder with symbolic factors and rational scales. |
+| `exact_product_sums/exact_rational_sparse_homogeneous_plane_intersection3` | not run | not run | Computes a canonical exact three-plane cofactor tuple from one sparse dyadic row. |
 
 <!-- END scalar_micro -->
 
@@ -907,25 +907,25 @@ Cold approximation of sine, cosine, and tangent at exact, tiny, huge, and near-s
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `trig_adversarial_approx/sin_tiny_rational_p96` | 466.96 ns | 461.60 ns - 472.42 ns | Approximates sin(1e-12), stressing direct tiny-argument setup. |
-| `trig_adversarial_approx/cos_tiny_rational_p96` | 511.41 ns | 503.08 ns - 522.21 ns | Approximates cos(1e-12), stressing direct tiny-argument setup. |
-| `trig_adversarial_approx/tan_tiny_rational_p96` | 1.761 us | 1.757 us - 1.766 us | Approximates tan(1e-12), stressing direct tiny-argument setup. |
-| `trig_adversarial_approx/sin_medium_rational_p96` | 1.631 us | 1.626 us - 1.637 us | Approximates sin(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/cos_medium_rational_p96` | 1.555 us | 1.529 us - 1.588 us | Approximates cos(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/tan_medium_rational_p96` | 6.134 us | 6.085 us - 6.198 us | Approximates tan(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/sin_f64_exact_p96` | 1.874 us | 1.846 us - 1.921 us | Approximates sin(1.23456789 imported as an exact dyadic rational). |
-| `trig_adversarial_approx/cos_f64_exact_p96` | 1.755 us | 1.751 us - 1.759 us | Approximates cos(1.23456789 imported as an exact dyadic rational). |
-| `trig_adversarial_approx/sin_1e6_p96` | 2.492 us | 2.455 us - 2.542 us | Approximates sin(1000000), stressing integer argument reduction. |
-| `trig_adversarial_approx/cos_1e6_p96` | 2.449 us | 2.415 us - 2.491 us | Approximates cos(1000000), stressing integer argument reduction. |
-| `trig_adversarial_approx/tan_1e6_p96` | 7.813 us | 7.779 us - 7.866 us | Approximates tan(1000000), stressing integer argument reduction. |
-| `trig_adversarial_approx/sin_1e30_p96` | 2.284 us | 2.271 us - 2.300 us | Approximates sin(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/cos_1e30_p96` | 2.374 us | 2.347 us - 2.422 us | Approximates cos(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/tan_1e30_p96` | 6.769 us | 6.634 us - 6.928 us | Approximates tan(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/sin_huge_pi_plus_offset_p96` | 2.225 us | 2.178 us - 2.282 us | Approximates sin(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/cos_huge_pi_plus_offset_p96` | 2.060 us | 2.034 us - 2.093 us | Approximates cos(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/tan_huge_pi_plus_offset_p96` | 6.361 us | 6.313 us - 6.433 us | Approximates tan(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/tan_near_half_pi_p96` | 20.641 us | 20.354 us - 20.968 us | Approximates tan(pi/2 - 2^-40), stressing the cotangent complement path. |
-| `trig_adversarial_approx/tan_promoted_generated_604_125_p96` | 6.480 us | 6.454 us - 6.520 us | Promoted slow-performer tan(604/125), a generated top offender from the library-wide fuzz history. |
+| `trig_adversarial_approx/sin_tiny_rational_p96` | not run | not run | Approximates sin(1e-12), stressing direct tiny-argument setup. |
+| `trig_adversarial_approx/cos_tiny_rational_p96` | not run | not run | Approximates cos(1e-12), stressing direct tiny-argument setup. |
+| `trig_adversarial_approx/tan_tiny_rational_p96` | not run | not run | Approximates tan(1e-12), stressing direct tiny-argument setup. |
+| `trig_adversarial_approx/sin_medium_rational_p96` | not run | not run | Approximates sin(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/cos_medium_rational_p96` | not run | not run | Approximates cos(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/tan_medium_rational_p96` | not run | not run | Approximates tan(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/sin_f64_exact_p96` | not run | not run | Approximates sin(1.23456789 imported as an exact dyadic rational). |
+| `trig_adversarial_approx/cos_f64_exact_p96` | not run | not run | Approximates cos(1.23456789 imported as an exact dyadic rational). |
+| `trig_adversarial_approx/sin_1e6_p96` | not run | not run | Approximates sin(1000000), stressing integer argument reduction. |
+| `trig_adversarial_approx/cos_1e6_p96` | not run | not run | Approximates cos(1000000), stressing integer argument reduction. |
+| `trig_adversarial_approx/tan_1e6_p96` | not run | not run | Approximates tan(1000000), stressing integer argument reduction. |
+| `trig_adversarial_approx/sin_1e30_p96` | not run | not run | Approximates sin(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/cos_1e30_p96` | not run | not run | Approximates cos(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/tan_1e30_p96` | not run | not run | Approximates tan(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/sin_huge_pi_plus_offset_p96` | not run | not run | Approximates sin(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
+| `trig_adversarial_approx/cos_huge_pi_plus_offset_p96` | not run | not run | Approximates cos(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
+| `trig_adversarial_approx/tan_huge_pi_plus_offset_p96` | not run | not run | Approximates tan(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
+| `trig_adversarial_approx/tan_near_half_pi_p96` | not run | not run | Approximates tan(pi/2 - 2^-40), stressing the cotangent complement path. |
+| `trig_adversarial_approx/tan_promoted_generated_604_125_p96` | not run | not run | Promoted slow-performer tan(604/125), a generated top offender from the library-wide fuzz history. |
 
 ### `inverse_trig_adversarial_approx`
 
@@ -933,27 +933,27 @@ Cold approximation of asin, acos, and atan near exact values, zero, endpoints, a
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `inverse_trig_adversarial_approx/asin_zero_p96` | 39.25 ns | 38.89 ns - 39.63 ns | Approximates asin(0), which should collapse before the generic inverse-trig path. |
-| `inverse_trig_adversarial_approx/acos_zero_p96` | 173.03 ns | 172.45 ns - 173.63 ns | Approximates acos(0), which should reduce to pi/2. |
-| `inverse_trig_adversarial_approx/atan_zero_p96` | 137.36 ns | 136.22 ns - 139.04 ns | Approximates atan(0), which should collapse to zero. |
-| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | 401.46 ns | 397.76 ns - 405.78 ns | Approximates asin(1e-12), stressing the tiny odd series. |
-| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | 1.558 us | 1.535 us - 1.589 us | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
-| `inverse_trig_adversarial_approx/atan_tiny_positive_p96` | 515.64 ns | 502.31 ns - 529.85 ns | Approximates atan(1e-12), stressing direct tiny atan setup. |
-| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 6.557 us | 6.418 us - 6.711 us | Approximates asin(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 5.721 us | 5.656 us - 5.798 us | Approximates acos(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 2.140 us | 2.115 us - 2.165 us | Approximates atan(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p96` | 9.688 us | 9.566 us - 9.838 us | Approximates atan at 11/20, 3/5, 7/10, and 4/5, covering the two-thirds table-reduction interval. |
-| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p32` | 5.813 us | 5.779 us - 5.847 us | Repeats the two-thirds table-reduction interval sweep at 32-bit precision. |
-| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p256` | 20.274 us | 20.046 us - 20.597 us | Repeats the two-thirds table-reduction interval sweep at 256-bit precision. |
-| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_upper_edge_p96` | 2.776 us | 2.760 us - 2.794 us | Approximates atan(4/5), guarding the upper edge of the two-thirds table-reduction interval against a local regression. |
-| `inverse_trig_adversarial_approx/asin_near_one_p96` | 1.923 us | 1.912 us - 1.934 us | Approximates asin(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/acos_near_one_p96` | 1.573 us | 1.566 us - 1.582 us | Approximates acos(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 1.892 us | 1.885 us - 1.899 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
-| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | 1.683 us | 1.678 us - 1.687 us | Approximates acos(-0.999999), stressing negative endpoint transforms. |
-| `inverse_trig_adversarial_approx/atan_large_p96` | 1.860 us | 1.854 us - 1.867 us | Approximates atan(8), stressing reciprocal reduction. |
-| `inverse_trig_adversarial_approx/atan_promoted_generated_783_412_p96` | 1.916 us | 1.907 us - 1.927 us | Promoted slow-performer atan(783/412), the generated exact-rational atan top offender. |
-| `inverse_trig_adversarial_approx/ln_square_plus_one_promoted_generated_677_222_p96` | 31.54 ns | 31.08 ns - 32.07 ns | Promoted slow-performer ln((677/222)^2 + 1), the generated exact-rational log top offender. |
-| `inverse_trig_adversarial_approx/atan_huge_p96` | 924.52 ns | 901.88 ns - 947.06 ns | Approximates atan(10^30), stressing very large reciprocal reduction. |
+| `inverse_trig_adversarial_approx/asin_zero_p96` | not run | not run | Approximates asin(0), which should collapse before the generic inverse-trig path. |
+| `inverse_trig_adversarial_approx/acos_zero_p96` | not run | not run | Approximates acos(0), which should reduce to pi/2. |
+| `inverse_trig_adversarial_approx/atan_zero_p96` | not run | not run | Approximates atan(0), which should collapse to zero. |
+| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | not run | not run | Approximates asin(1e-12), stressing the tiny odd series. |
+| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | not run | not run | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
+| `inverse_trig_adversarial_approx/atan_tiny_positive_p96` | not run | not run | Approximates atan(1e-12), stressing direct tiny atan setup. |
+| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | not run | not run | Approximates asin(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | not run | not run | Approximates acos(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | not run | not run | Approximates atan(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p96` | not run | not run | Approximates atan at 11/20, 3/5, 7/10, and 4/5, covering the two-thirds table-reduction interval. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p32` | not run | not run | Repeats the two-thirds table-reduction interval sweep at 32-bit precision. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p256` | not run | not run | Repeats the two-thirds table-reduction interval sweep at 256-bit precision. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_upper_edge_p96` | not run | not run | Approximates atan(4/5), guarding the upper edge of the two-thirds table-reduction interval against a local regression. |
+| `inverse_trig_adversarial_approx/asin_near_one_p96` | not run | not run | Approximates asin(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/acos_near_one_p96` | not run | not run | Approximates acos(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | not run | not run | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | not run | not run | Approximates acos(-0.999999), stressing negative endpoint transforms. |
+| `inverse_trig_adversarial_approx/atan_large_p96` | not run | not run | Approximates atan(8), stressing reciprocal reduction. |
+| `inverse_trig_adversarial_approx/atan_promoted_generated_783_412_p96` | not run | not run | Promoted slow-performer atan(783/412), the generated exact-rational atan top offender. |
+| `inverse_trig_adversarial_approx/ln_square_plus_one_promoted_generated_677_222_p96` | not run | not run | Promoted slow-performer ln((677/222)^2 + 1), the generated exact-rational log top offender. |
+| `inverse_trig_adversarial_approx/atan_huge_p96` | not run | not run | Approximates atan(10^30), stressing very large reciprocal reduction. |
 
 ### `trig_fuzz_adversarial_approx`
 
@@ -961,12 +961,12 @@ Deterministic broad sweeps of sine, cosine, and tangent over tiny, ordinary, hug
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `trig_fuzz_adversarial_approx/sin_sweep_768_p96` | 1.602 ms | 1.588 ms - 1.624 ms | Approximates sin over 768 deterministic exact inputs spanning tiny, ordinary, huge, dyadic, rational, and pi-offset cases. |
-| `trig_fuzz_adversarial_approx/cos_sweep_768_p96` | 1.623 ms | 1.615 ms - 1.633 ms | Approximates cos over the same 768-input deterministic fuzz sweep. |
-| `trig_fuzz_adversarial_approx/tan_sweep_768_p96` | 4.526 ms | 4.503 ms - 4.552 ms | Approximates tan over the same deterministic sweep, including near-half-pi stress cases. |
-| `trig_fuzz_adversarial_approx/sin_promoted_slow_candidates_p96` | 17.023 us | 16.884 us - 17.179 us | Approximates sin over promoted slow candidates found by prior sweep-style runs. |
-| `trig_fuzz_adversarial_approx/cos_promoted_slow_candidates_p96` | 17.560 us | 17.492 us - 17.634 us | Approximates cos over promoted slow candidates found by prior sweep-style runs. |
-| `trig_fuzz_adversarial_approx/tan_promoted_slow_candidates_p96` | 77.763 us | 76.871 us - 79.152 us | Approximates tan over promoted near-pole and large-reduction slow candidates. |
+| `trig_fuzz_adversarial_approx/sin_sweep_768_p96` | not run | not run | Approximates sin over 768 deterministic exact inputs spanning tiny, ordinary, huge, dyadic, rational, and pi-offset cases. |
+| `trig_fuzz_adversarial_approx/cos_sweep_768_p96` | not run | not run | Approximates cos over the same 768-input deterministic fuzz sweep. |
+| `trig_fuzz_adversarial_approx/tan_sweep_768_p96` | not run | not run | Approximates tan over the same deterministic sweep, including near-half-pi stress cases. |
+| `trig_fuzz_adversarial_approx/sin_promoted_slow_candidates_p96` | not run | not run | Approximates sin over promoted slow candidates found by prior sweep-style runs. |
+| `trig_fuzz_adversarial_approx/cos_promoted_slow_candidates_p96` | not run | not run | Approximates cos over promoted slow candidates found by prior sweep-style runs. |
+| `trig_fuzz_adversarial_approx/tan_promoted_slow_candidates_p96` | not run | not run | Approximates tan over promoted near-pole and large-reduction slow candidates. |
 
 ### `promoted_library_slow_offenders_approx`
 
@@ -982,18 +982,18 @@ Cold approximation of inverse hyperbolic functions at tiny, moderate, large, and
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 550.40 ns | 543.80 ns - 560.72 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
-| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 10.283 us | 10.069 us - 10.521 us | Approximates asinh(1/2), a moderate positive value. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 5.826 us | 5.772 us - 5.888 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 6.304 us | 6.171 us - 6.486 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
-| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 3.978 us | 3.965 us - 3.990 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
-| `inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128` | 86.79 ns | 86.48 ns - 87.18 ns | Approximates acosh(sqrt(2)), a symbolic square-root input. |
-| `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | 47.93 ns | 47.83 ns - 48.03 ns | Approximates acosh(2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 5.970 us | 5.754 us - 6.240 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | 506.19 ns | 503.35 ns - 510.09 ns | Approximates atanh(1e-12), stressing the tiny odd series. |
-| `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | 198.68 ns | 196.92 ns - 200.67 ns | Approximates atanh(1/2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 3.008 us | 3.000 us - 3.017 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 3.246 us | 3.171 us - 3.339 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | not run | not run | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
+| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | not run | not run | Approximates asinh(1/2), a moderate positive value. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | not run | not run | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | not run | not run | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
+| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | not run | not run | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
+| `inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128` | not run | not run | Approximates acosh(sqrt(2)), a symbolic square-root input. |
+| `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | not run | not run | Approximates acosh(2), a moderate exact rational. |
+| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | not run | not run | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | not run | not run | Approximates atanh(1e-12), stressing the tiny odd series. |
+| `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | not run | not run | Approximates atanh(1/2), a moderate exact rational. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | not run | not run | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | not run | not run | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
 
 ### `real_shortcut_adversarial`
 
@@ -1001,17 +1001,17 @@ Public `Real` construction shortcuts and domain checks for the same transcendent
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_shortcut_adversarial/sin_exact_pi_over_six` | 472.57 ns | 469.04 ns - 478.15 ns | Constructs sin(pi/6), which should return the exact rational 1/2. |
-| `real_shortcut_adversarial/cos_exact_pi_over_three` | 428.94 ns | 426.47 ns - 431.77 ns | Constructs cos(pi/3), which should return the exact rational 1/2. |
-| `real_shortcut_adversarial/tan_exact_pi_over_four` | 24.25 ns | 23.94 ns - 24.57 ns | Constructs tan(pi/4), which should return the exact rational 1. |
-| `real_shortcut_adversarial/asin_exact_half` | 32.12 ns | 30.72 ns - 33.55 ns | Constructs asin(1/2), which should return pi/6. |
-| `real_shortcut_adversarial/acos_exact_half` | 30.81 ns | 29.90 ns - 31.81 ns | Constructs acos(1/2), which should return pi/3. |
-| `real_shortcut_adversarial/atan_exact_one` | 25.82 ns | 24.97 ns - 26.88 ns | Constructs atan(1), which should return pi/4. |
-| `real_shortcut_adversarial/asin_domain_error` | 24.94 ns | 24.43 ns - 25.44 ns | Rejects asin(1 + 1e-12). |
-| `real_shortcut_adversarial/acos_domain_error` | 22.85 ns | 22.11 ns - 23.70 ns | Rejects acos(1 + 1e-12). |
-| `real_shortcut_adversarial/atanh_endpoint_infinity` | 10.49 ns | 10.30 ns - 10.73 ns | Rejects atanh(1) as an infinite endpoint. |
-| `real_shortcut_adversarial/atanh_domain_error` | 10.89 ns | 10.87 ns - 10.90 ns | Rejects atanh(1 + 1e-12). |
-| `real_shortcut_adversarial/acosh_domain_error` | 9.38 ns | 9.19 ns - 9.61 ns | Rejects acosh(1 - 1e-12). |
+| `real_shortcut_adversarial/sin_exact_pi_over_six` | not run | not run | Constructs sin(pi/6), which should return the exact rational 1/2. |
+| `real_shortcut_adversarial/cos_exact_pi_over_three` | not run | not run | Constructs cos(pi/3), which should return the exact rational 1/2. |
+| `real_shortcut_adversarial/tan_exact_pi_over_four` | not run | not run | Constructs tan(pi/4), which should return the exact rational 1. |
+| `real_shortcut_adversarial/asin_exact_half` | not run | not run | Constructs asin(1/2), which should return pi/6. |
+| `real_shortcut_adversarial/acos_exact_half` | not run | not run | Constructs acos(1/2), which should return pi/3. |
+| `real_shortcut_adversarial/atan_exact_one` | not run | not run | Constructs atan(1), which should return pi/4. |
+| `real_shortcut_adversarial/asin_domain_error` | not run | not run | Rejects asin(1 + 1e-12). |
+| `real_shortcut_adversarial/acos_domain_error` | not run | not run | Rejects acos(1 + 1e-12). |
+| `real_shortcut_adversarial/atanh_endpoint_infinity` | not run | not run | Rejects atanh(1) as an infinite endpoint. |
+| `real_shortcut_adversarial/atanh_domain_error` | not run | not run | Rejects atanh(1 + 1e-12). |
+| `real_shortcut_adversarial/acosh_domain_error` | not run | not run | Rejects acosh(1 - 1e-12). |
 
 <!-- END adversarial_transcendentals -->
 
@@ -1026,14 +1026,14 @@ Owned versus borrowed arithmetic for exact `Rational` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `rational_ops/add_owned` | 10.78 ns | 10.73 ns - 10.84 ns | Adds cloned owned operands. |
-| `rational_ops/add_refs` | 9.33 ns | 9.25 ns - 9.42 ns | Adds borrowed operands without cloning both inputs. |
-| `rational_ops/sub_owned` | 10.56 ns | 10.52 ns - 10.60 ns | Subtracts cloned owned operands. |
-| `rational_ops/sub_refs` | 9.04 ns | 9.01 ns - 9.06 ns | Subtracts borrowed operands. |
-| `rational_ops/mul_owned` | 24.44 ns | 24.38 ns - 24.52 ns | Multiplies cloned owned operands. |
-| `rational_ops/mul_refs` | 23.06 ns | 22.95 ns - 23.18 ns | Multiplies borrowed operands. |
-| `rational_ops/div_owned` | 182.78 ns | 181.90 ns - 183.76 ns | Divides cloned owned operands. |
-| `rational_ops/div_refs` | 163.44 ns | 162.91 ns - 164.03 ns | Divides borrowed operands. |
+| `rational_ops/add_owned` | not run | not run | Adds cloned owned operands. |
+| `rational_ops/add_refs` | not run | not run | Adds borrowed operands without cloning both inputs. |
+| `rational_ops/sub_owned` | not run | not run | Subtracts cloned owned operands. |
+| `rational_ops/sub_refs` | not run | not run | Subtracts borrowed operands. |
+| `rational_ops/mul_owned` | not run | not run | Multiplies cloned owned operands. |
+| `rational_ops/mul_refs` | not run | not run | Multiplies borrowed operands. |
+| `rational_ops/div_owned` | not run | not run | Divides cloned owned operands. |
+| `rational_ops/div_refs` | not run | not run | Divides borrowed operands. |
 
 ### `real_ops`
 
@@ -1041,14 +1041,14 @@ Owned versus borrowed arithmetic for exact rational-backed `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_ops/add_owned` | 20.69 ns | 20.62 ns - 20.76 ns | Adds cloned owned operands. |
-| `real_ops/add_refs` | 17.78 ns | 17.75 ns - 17.81 ns | Adds borrowed operands without cloning both inputs. |
-| `real_ops/sub_owned` | 23.03 ns | 22.97 ns - 23.12 ns | Subtracts cloned owned operands. |
-| `real_ops/sub_refs` | 17.94 ns | 17.86 ns - 18.05 ns | Subtracts borrowed operands. |
-| `real_ops/mul_owned` | 34.19 ns | 33.99 ns - 34.40 ns | Multiplies cloned owned operands. |
-| `real_ops/mul_refs` | 31.11 ns | 30.89 ns - 31.35 ns | Multiplies borrowed operands. |
-| `real_ops/div_owned` | 193.04 ns | 192.28 ns - 193.97 ns | Divides cloned owned operands. |
-| `real_ops/div_refs` | 183.46 ns | 183.26 ns - 183.67 ns | Divides borrowed operands. |
+| `real_ops/add_owned` | not run | not run | Adds cloned owned operands. |
+| `real_ops/add_refs` | not run | not run | Adds borrowed operands without cloning both inputs. |
+| `real_ops/sub_owned` | not run | not run | Subtracts cloned owned operands. |
+| `real_ops/sub_refs` | not run | not run | Subtracts borrowed operands. |
+| `real_ops/mul_owned` | not run | not run | Multiplies cloned owned operands. |
+| `real_ops/mul_refs` | not run | not run | Multiplies borrowed operands. |
+| `real_ops/div_owned` | not run | not run | Divides cloned owned operands. |
+| `real_ops/div_refs` | not run | not run | Divides borrowed operands. |
 
 ### `real_irrational_ops`
 
@@ -1056,14 +1056,14 @@ Owned versus borrowed arithmetic for symbolic irrational `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_irrational_ops/add_owned` | 67.05 ns | 66.31 ns - 67.85 ns | Adds cloned owned operands. |
-| `real_irrational_ops/add_refs` | 57.81 ns | 57.53 ns - 58.20 ns | Adds borrowed operands without cloning both inputs. |
-| `real_irrational_ops/sub_owned` | 106.58 ns | 106.01 ns - 107.19 ns | Subtracts cloned owned operands. |
-| `real_irrational_ops/sub_refs` | 96.00 ns | 95.74 ns - 96.35 ns | Subtracts borrowed operands. |
-| `real_irrational_ops/mul_owned` | 253.08 ns | 252.30 ns - 254.21 ns | Multiplies cloned owned operands. |
-| `real_irrational_ops/mul_refs` | 223.71 ns | 222.80 ns - 224.75 ns | Multiplies borrowed operands. |
-| `real_irrational_ops/div_owned` | 48.20 ns | 48.01 ns - 48.41 ns | Divides cloned owned operands. |
-| `real_irrational_ops/div_refs` | 41.73 ns | 41.69 ns - 41.78 ns | Divides borrowed operands. |
+| `real_irrational_ops/add_owned` | not run | not run | Adds cloned owned operands. |
+| `real_irrational_ops/add_refs` | not run | not run | Adds borrowed operands without cloning both inputs. |
+| `real_irrational_ops/sub_owned` | not run | not run | Subtracts cloned owned operands. |
+| `real_irrational_ops/sub_refs` | not run | not run | Subtracts borrowed operands. |
+| `real_irrational_ops/mul_owned` | not run | not run | Multiplies cloned owned operands. |
+| `real_irrational_ops/mul_refs` | not run | not run | Multiplies borrowed operands. |
+| `real_irrational_ops/div_owned` | not run | not run | Divides cloned owned operands. |
+| `real_irrational_ops/div_refs` | not run | not run | Divides borrowed operands. |
 
 <!-- END borrowed_ops -->
 
@@ -1078,17 +1078,17 @@ Exact IEEE-754 imports and finite outward binary64 enclosures of rationals.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `float_convert/f32_normal` | 46.17 ns | 45.91 ns - 46.45 ns | Converts a normal `f32` into an exact `Rational`. |
-| `float_convert/f64_normal` | 46.35 ns | 46.23 ns - 46.52 ns | Converts a normal `f64` into an exact `Rational`. |
-| `float_convert/f64_binary_fraction` | 9.99 ns | 9.97 ns - 10.03 ns | Converts an exactly representable binary `f64` fraction into `Rational`. |
-| `float_convert/f64_subnormal` | 54.41 ns | 53.98 ns - 54.91 ns | Converts a subnormal `f64` into an exact `Rational`. |
-| `float_convert/real_f32_normal` | 65.22 ns | 65.15 ns - 65.28 ns | Converts a normal `f32` through the public `Real::try_from` path. |
-| `float_convert/real_f64_normal` | 67.22 ns | 67.00 ns - 67.50 ns | Converts a normal `f64` through the public `Real::try_from` path. |
-| `float_convert/real_f64_binary_fraction` | 22.05 ns | 22.01 ns - 22.11 ns | Converts an exactly representable binary `f64` fraction through the public `Real::try_from` path. |
-| `float_convert/real_f64_subnormal` | 71.37 ns | 71.21 ns - 71.56 ns | Converts a subnormal `f64` through the public `Real::try_from` path. |
-| `float_convert/f64_enclosure_exact` | 7.33 ns | 7.32 ns - 7.35 ns | Exports an exactly representable dyadic as a finite binary64 singleton. |
-| `float_convert/f64_enclosure_rounded` | 10.23 ns | 10.20 ns - 10.28 ns | Exports a dyadic requiring outward binary64 rounding. |
-| `float_convert/f64_enclosure_near_max` | 13.26 ns | 13.23 ns - 13.29 ns | Exports an exact value just below binary64 MAX without an infinite endpoint. |
+| `float_convert/f32_normal` | not run | not run | Converts a normal `f32` into an exact `Rational`. |
+| `float_convert/f64_normal` | not run | not run | Converts a normal `f64` into an exact `Rational`. |
+| `float_convert/f64_binary_fraction` | not run | not run | Converts an exactly representable binary `f64` fraction into `Rational`. |
+| `float_convert/f64_subnormal` | not run | not run | Converts a subnormal `f64` into an exact `Rational`. |
+| `float_convert/real_f32_normal` | not run | not run | Converts a normal `f32` through the public `Real::try_from` path. |
+| `float_convert/real_f64_normal` | not run | not run | Converts a normal `f64` through the public `Real::try_from` path. |
+| `float_convert/real_f64_binary_fraction` | not run | not run | Converts an exactly representable binary `f64` fraction through the public `Real::try_from` path. |
+| `float_convert/real_f64_subnormal` | not run | not run | Converts a subnormal `f64` through the public `Real::try_from` path. |
+| `float_convert/f64_enclosure_exact` | not run | not run | Exports an exactly representable dyadic as a finite binary64 singleton. |
+| `float_convert/f64_enclosure_rounded` | not run | not run | Exports a dyadic requiring outward binary64 rounding. |
+| `float_convert/f64_enclosure_near_max` | not run | not run | Exports an exact value just below binary64 MAX without an infinite endpoint. |
 
 <!-- END float_convert -->
 
