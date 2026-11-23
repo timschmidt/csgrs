@@ -46,6 +46,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                 candidate: BoxN::new([interval(-2, 2, 0)?, interval(-1, 1, 0)?])?,
                 maximum_noise: 2,
                 round_coefficients: false,
+                column_cutoff_bits: None,
             },
             &mut budget,
         );

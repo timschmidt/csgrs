@@ -52,6 +52,7 @@ fn automatic_horizons_preserve_reversible_shear_correlation_and_exact_time() {
             FlowNoiseEvolutionOptions {
                 maximum_noise: 2,
                 round_coefficients: false,
+                column_cutoff_bits: None,
                 native: EvolutionOptions {
                     maximum_step: Some(d(1, 1, -2)),
                     ..Default::default()
@@ -100,6 +101,7 @@ fn validation_precedes_empty_and_identity_and_empty_output_is_reusable() {
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
             round_coefficients: false,
+            column_cutoff_bits: None,
             native: EvolutionOptions {
                 maximum_step: Some(d(0, 0, 0)),
                 ..Default::default()
@@ -145,6 +147,7 @@ fn validation_precedes_empty_and_identity_and_empty_output_is_reusable() {
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
             round_coefficients: false,
+            column_cutoff_bits: None,
             native: EvolutionOptions {
                 maximum_steps: 0,
                 ..Default::default()
@@ -176,6 +179,7 @@ fn stopped_prefix_is_explicit_and_can_seed_a_later_horizon() {
     let options = FlowNoiseEvolutionOptions {
         maximum_noise: 2,
         round_coefficients: false,
+        column_cutoff_bits: None,
         native: EvolutionOptions {
             maximum_steps: 1,
             maximum_step: Some(d(1, 1, -2)),
@@ -221,6 +225,7 @@ fn publication_exhaustion_cancellation_and_retry_never_publish_partial_success()
     let options = FlowNoiseEvolutionOptions {
         maximum_noise: 2,
         round_coefficients: false,
+        column_cutoff_bits: None,
         native: EvolutionOptions {
             maximum_step: Some(d(1, 1, -2)),
             ..Default::default()
@@ -347,6 +352,7 @@ fn nonlinear_horizon_keeps_fresh_residuals_and_contains_the_exact_riccati_flow()
         FlowNoiseEvolutionOptions {
             maximum_noise: 2,
             round_coefficients: false,
+            column_cutoff_bits: None,
             native: EvolutionOptions {
                 maximum_step: Some(d(1, 1, -4)),
                 ..Default::default()
@@ -423,6 +429,7 @@ fn time_dependent_constant_state_derivative_is_integrated_exactly() {
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
             round_coefficients: false,
+            column_cutoff_bits: None,
             native: EvolutionOptions {
                 maximum_step: Some(d(1, 1, -2)),
                 ..Default::default()
@@ -494,6 +501,7 @@ fn fresh_process_reconstructs_sources_and_replays_automatic_horizons() {
                 FlowNoiseEvolutionOptions {
                     maximum_noise: 2,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                     native: EvolutionOptions {
                         maximum_step: Some(d(1, 1, -2)),
                         ..Default::default()
@@ -558,6 +566,7 @@ fn rounding_keeps_on_grid_shear_states_exactly() {
                 FlowNoiseEvolutionOptions {
                     maximum_noise: 2,
                     round_coefficients,
+                    column_cutoff_bits: None,
                     native: EvolutionOptions {
                         maximum_step: Some(d(1, 1, -2)),
                         ..Default::default()
@@ -621,6 +630,7 @@ fn rounded_coefficients_complete_a_long_riccati_horizon_containing_the_flow() {
         FlowNoiseEvolutionOptions {
             maximum_noise: 2,
             round_coefficients: true,
+            column_cutoff_bits: None,
             native: EvolutionOptions {
                 maximum_step: Some(d(1, 1, -5)),
                 ..Default::default()
@@ -665,6 +675,105 @@ fn rounded_coefficients_complete_a_long_riccati_horizon_containing_the_flow() {
         ] {
             let exact = &x0 / (Rational::one() - &t * &x0);
             assert!(actual.contains_point(&exact), "{actual:?} misses {exact:?}");
+        }
+    }
+}
+
+#[test]
+fn relative_column_cutoff_bounds_rotation_columns_and_contains_the_exact_flow() {
+    use hyperinterval::DyadicBudget;
+    use hyperreal::Rational;
+    let (time, x, y) = (SymbolId(10), SymbolId(20), SymbolId(30));
+    let run = |cutoff: Option<u32>| {
+        let mut budget = EnclosureBudget::new(EnclosurePolicy::default());
+        let source = ExpressionProgram::compile(
+            &[
+                Expr::anonymous_symbol(y),
+                Expr::int(-1) * Expr::anonymous_symbol(x),
+            ],
+            &[x, y, time],
+            &mut ExpressionBudget::new(100_000, 1_000_000),
+        )
+        .unwrap();
+        let field = ExpressionField::<2>::from_definition(
+            FieldDefinition {
+                source: source.definition().clone(),
+                time,
+                state: vec![x, y],
+            },
+            &mut budget,
+        )
+        .unwrap();
+        let initial = BoxN::new([d(1023, 1025, -10), d(-1, 1, -10)]).unwrap();
+        let state = Arc::new(FlowNoiseState::new(d(0, 0, 0), initial, &mut budget).unwrap());
+        field.flow_taylor(6, &mut budget).unwrap().integrate_noise(
+            state,
+            d(2, 2, 0),
+            FlowNoiseEvolutionOptions {
+                maximum_noise: 16,
+                round_coefficients: true,
+                column_cutoff_bits: cutoff,
+                native: EvolutionOptions {
+                    maximum_step: Some(d(1, 1, -3)),
+                    ..Default::default()
+                },
+            },
+            &mut budget,
+        )
+    };
+    let columns =
+        |report: &hyperdynamics::field::taylor_flow::noise::evolution::FlowNoiseEvolution<2>| {
+            report
+                .segments()
+                .map(|s| s.end_state().unwrap().columns().unwrap().len())
+                .max()
+                .unwrap()
+        };
+    let full = run(None);
+    let cut = run(Some(16));
+    for report in [&full, &cut] {
+        assert!(
+            matches!(report.status(), FlowNoiseEvolutionStatus::Completed),
+            "{:?}",
+            report.status()
+        );
+    }
+    // Fresh residual columns are about 2^-60 of the transported box columns.
+    assert_eq!(columns(&full), 16);
+    assert!(columns(&cut) <= 4, "{}", columns(&cut));
+    // cos 2 and sin 2 from their alternating series, with the first omitted
+    // term bounding each truncation error.
+    let t = Rational::from(2);
+    let (mut cos, mut sin, mut term) = (Rational::zero(), Rational::zero(), Rational::one());
+    for k in 0..40_i64 {
+        if k % 2 == 0 {
+            cos = if k % 4 == 0 {
+                &cos + &term
+            } else {
+                &cos - &term
+            };
+        } else {
+            sin = if k % 4 == 1 {
+                &sin + &term
+            } else {
+                &sin - &term
+            };
+        }
+        term = &(&term * &t) / &Rational::from(k + 1);
+    }
+    let error = term;
+    let mut arithmetic = DyadicBudget::new(16384, 1_000_000_000);
+    let end = cut.end_state().unwrap().enclosure().lanes().unwrap();
+    for x0 in [1023, 1024, 1025].map(|n| Rational::from(n) / Rational::from(1024)) {
+        for y0 in [-1, 0, 1].map(|n| Rational::from(n) / Rational::from(1024)) {
+            let slack = &(&x0 + &Rational::one()) * &error;
+            let images = [&(&x0 * &cos) + &(&y0 * &sin), &(&y0 * &cos) - &(&x0 * &sin)];
+            for (lane, image) in end.iter().zip(images) {
+                let lane = lane.to_rational(&mut arithmetic).unwrap();
+                for point in [&image - &slack, &image + &slack] {
+                    assert!(lane.contains_point(&point), "{lane:?} misses {point:?}");
+                }
+            }
         }
     }
 }

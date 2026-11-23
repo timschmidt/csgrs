@@ -92,6 +92,7 @@ fn complete(
                     FlowNoiseEvolutionOptions {
                         maximum_noise: 2,
                         round_coefficients: false,
+                        column_cutoff_bits: None,
                         native: options.clone(),
                     },
                     budget,

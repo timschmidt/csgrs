@@ -15,6 +15,9 @@ pub struct FlowNoiseEvolutionOptions {
     /// Round each endpoint onto the policy grid; see [`FlowNoiseRequest`].
     #[cfg_attr(feature = "serde", serde(default))]
     pub round_coefficients: bool,
+    /// Relative column cutoff for each endpoint; see [`FlowNoiseRequest`].
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub column_cutoff_bits: Option<u32>,
     /// Outer segment limit and native duration/halving/expansion controls.
     pub native: EvolutionOptions,
 }
@@ -23,6 +26,7 @@ impl Default for FlowNoiseEvolutionOptions {
         Self {
             maximum_noise: 16,
             round_coefficients: true,
+            column_cutoff_bits: Some(16),
             native: EvolutionOptions::default(),
         }
     }
@@ -339,6 +343,7 @@ fn evolve<const N: usize>(
                         candidate: BoxN::empty()?,
                         maximum_noise: report.options.maximum_noise,
                         round_coefficients: report.options.round_coefficients,
+                        column_cutoff_bits: report.options.column_cutoff_bits,
                     },
                     budget,
                 );
@@ -368,6 +373,7 @@ fn evolve<const N: usize>(
             candidate: copy_state(&picard.proposal().candidate, budget)?,
             maximum_noise: report.options.maximum_noise,
             round_coefficients: report.options.round_coefficients,
+            column_cutoff_bits: report.options.column_cutoff_bits,
         };
         let noise = refine(&report.program, initial.clone(), request, picard, budget);
         let status = noise.status().clone();

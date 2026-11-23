@@ -102,6 +102,7 @@ fn retained_columns_recover_exact_identity_over_repeated_shear_pairs() {
                 candidate: BoxN::new([interval(-2, 2, 0), interval(-1, 1, 0)]).unwrap(),
                 maximum_noise: 2,
                 round_coefficients: false,
+                column_cutoff_bits: None,
             },
             &mut budget,
         );
@@ -184,6 +185,7 @@ mod closure {
                         candidate: BoxN::new([interval(-2, 2, 0), interval(-1, 1, 0)]).unwrap(),
                         maximum_noise: 2,
                         round_coefficients: false,
+                        column_cutoff_bits: None,
                     },
                     &mut budget,
                 );
@@ -224,6 +226,7 @@ mod closure {
                         candidate: BoxN::new([interval(-2, 2, 0), interval(-1, 1, 0)]).unwrap(),
                         maximum_noise: 0,
                         round_coefficients: false,
+                        column_cutoff_bits: None,
                     },
                     &mut budget,
                 );
@@ -296,6 +299,7 @@ mod closure {
                     candidate: BoxN::new([interval(0, 2, 0)]).unwrap(),
                     maximum_noise: 2,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                 },
                 &mut budget,
             );
@@ -347,6 +351,7 @@ mod closure {
                         candidate: coarse.clone(),
                         maximum_noise: 2,
                         round_coefficients: false,
+                        column_cutoff_bits: None,
                     },
                     &mut budget,
                 );
@@ -364,6 +369,7 @@ mod closure {
                         candidate: state.enclosure().clone(),
                         maximum_noise: 2,
                         round_coefficients: false,
+                        column_cutoff_bits: None,
                     },
                     &mut budget,
                 );
@@ -413,6 +419,7 @@ mod closure {
                 candidate: BoxN::empty().unwrap(),
                 maximum_noise: 2,
                 round_coefficients: false,
+                column_cutoff_bits: None,
             },
             &mut budget,
         );
@@ -426,6 +433,7 @@ mod closure {
                     candidate: BoxN::empty().unwrap(),
                     maximum_noise: 0,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                 },
                 &mut budget,
             );
@@ -463,6 +471,7 @@ mod closure {
                 candidate: BoxN::new([]).unwrap(),
                 maximum_noise: 0,
                 round_coefficients: false,
+                column_cutoff_bits: None,
             },
             &mut budget,
         );
@@ -495,6 +504,7 @@ mod closure {
             candidate: BoxN::new([interval(-2, 2, 0), interval(-1, 1, 0)]).unwrap(),
             maximum_noise: 2,
             round_coefficients: false,
+            column_cutoff_bits: None,
         };
         let mut tiny = EnclosureBudget::new(EnclosurePolicy {
             graph_work: 0,
@@ -549,6 +559,7 @@ mod closure {
             candidate: BoxN::new([interval(-2, 2, 0), interval(-1, 1, 0)]).unwrap(),
             maximum_noise: 2,
             round_coefficients: false,
+            column_cutoff_bits: None,
         };
         let warm = program.certify_noise_step(state.clone(), request.clone(), &mut budget());
         assert!(matches!(warm.status(), FlowNoiseStatus::Certified));
@@ -627,6 +638,7 @@ mod closure {
                     candidate: BoxN::new([]).unwrap(),
                     maximum_noise: 0,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                 },
                 &mut budget,
             );
@@ -693,6 +705,7 @@ mod closure {
                     candidate: BoxN::new([interval(0, 2, 0), interval(-1, 1, 0)]).unwrap(),
                     maximum_noise: 4,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                 },
                 &mut budget,
             );
@@ -764,6 +777,7 @@ mod closure {
                     candidate: BoxN::new([interval(-100, 100, 0)]).unwrap(),
                     maximum_noise: 1,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                 },
                 &mut budget,
             );
@@ -831,6 +845,7 @@ mod closure {
                     candidate: BoxN::new([interval(-2, 2, 0), interval(-1, 1, 0)]).unwrap(),
                     maximum_noise: 2,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                 },
             ));
         }
@@ -971,6 +986,7 @@ mod two_rate {
                         candidate: request.candidate.clone(),
                         maximum_noise: 2,
                         round_coefficients: false,
+                        column_cutoff_bits: None,
                     },
                     &mut budget,
                 );
@@ -1083,6 +1099,7 @@ mod two_rate {
                 FlowNoiseEvolutionOptions {
                     maximum_noise: 2,
                     round_coefficients: false,
+                    column_cutoff_bits: None,
                     native: EvolutionOptions {
                         maximum_step: Some(interval(1, 1, -6)),
                         ..Default::default()

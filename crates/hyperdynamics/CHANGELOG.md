@@ -2,6 +2,13 @@
 
 ## 0.1.0 (unreleased)
 
+- Correlated flow endpoints can fold columns whose certified variation is
+  below `2^-column_cutoff_bits` times the largest into residuals, rebuilding
+  the noise model with the significant prefix as its capacity.
+  `FlowNoiseEvolutionOptions::default()` uses a 16-bit cutoff. Transported
+  linear boxes previously kept negligible fresh residual columns up to
+  `maximum_noise`, which cost time and exhausted budgets at large capacities.
+
 - Correlated flow endpoints can round their exact center and columns down
   onto the policy grid (`round_coefficients`), adding each enclosed rounding
   error, scaled by its parameter domain, to its row's residual. Single

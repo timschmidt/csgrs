@@ -214,6 +214,10 @@ pub struct FlowNoiseRequest<const N: usize> {
     /// nonlinear horizons; `false` keeps every coefficient exact.
     #[cfg_attr(feature = "serde", serde(default))]
     pub round_coefficients: bool,
+    /// Fold retained columns whose certified variation is below `2^-bits`
+    /// times the largest into residuals; `None` keeps up to `maximum_noise`.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub column_cutoff_bits: Option<u32>,
 }
 
 /// Provenance of one independently ranged input coordinate for the next step.
@@ -648,12 +652,38 @@ fn advance<const N: usize>(
         &mut budget.graph,
         &mut budget.arithmetic,
     )?);
-    e.noise = Some(Arc::new(TaylorNoiseModel::new(
-        affine,
+    let mut noise = TaylorNoiseModel::new(
+        affine.clone(),
         e.request.maximum_noise,
         &mut budget.graph,
         &mut budget.arithmetic,
-    )?));
+    )?;
+    // Columns arrive in descending certified variation. Rebuilding with the
+    // significant prefix as capacity selects those columns again and folds
+    // the rest into residuals through the original omission proof.
+    if let (Some(bits), Some(first)) = (e.request.column_cutoff_bits, noise.columns().first()) {
+        let exponent = i32::try_from(bits).map_err(|_| ExpressionError::SizeExhausted)?;
+        let cutoff = first.variation().mul(
+            &DyadicInterval::point(1.into(), -exponent)?,
+            &mut budget.arithmetic,
+        )?;
+        let mut kept = 0;
+        for column in noise.columns() {
+            budget.graph.charge(1)?;
+            if column
+                .variation()
+                .compare_singleton(&cutoff, &mut budget.arithmetic)?
+                == core::cmp::Ordering::Less
+            {
+                break;
+            }
+            kept += 1;
+        }
+        if kept < noise.columns().len() {
+            noise = TaylorNoiseModel::new(affine, kept, &mut budget.graph, &mut budget.arithmetic)?;
+        }
+    }
+    e.noise = Some(Arc::new(noise));
     let noise = e.noise.as_ref().expect("stored noise proof");
     let constant = noise
         .source()
