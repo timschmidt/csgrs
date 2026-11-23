@@ -15411,3 +15411,56 @@ without `serde`, from the WASI replay fix; it is now gated like the other
 suites. `cargo hack` and WASI run in hosted CI.
 
 Raw evidence: `docs/evidence/2026-11-22-interval-adaptive-order-continuation`.
+
+## Exact work-budget receipts held for a cap decision, 23 November 2026
+
+Phase 7. `hypersolve::work_budget::BudgetExceeded` now has private fields,
+read through `kind()`, `limit()`, `used()` and `requested()`, which return
+exact `u64` counts. On 32-bit targets a coefficient-growth denial previously
+saturated its bit limit and observation at `usize::MAX`, so a limit above
+4,294,967,295 bits was reported only as a lower bound. A denied observation
+always exceeds its limit, so the strictly ordered pair fits the 127 bits left
+beside a growth flag in the receipt's tag and three words. The receipt stays
+16 bytes on 32-bit targets and 32 on 64-bit, and `Option<BudgetExceeded>`
+stays the same size. `BudgetExceeded::new` builds expected receipts and
+refuses counts no denial reports. The full-width trials of 20 November grew
+the receipt; this layout does not. It is a breaking change, recorded in
+[the migration guide](docs/MIGRATIONS.md).
+
+**Exactness.** `denial_above_the_word_ceiling_reports_exact_counts` checks
+nine limit/observation pairs on both sides of 2^32 and 2^63, up to `u64::MAX`,
+with exact `Display`, `Debug` and constructor equality, plus the receipt and
+`Option` sizes. The nested 512-triple test now asserts every limit and
+observation exactly, not only those that fit `usize`.
+
+**Size.** These are Rust 1.100.0, all-features builds in the default profiles,
+with both revisions built at one path. 35 accounts have recorded charges.
+
+| Artifact | File | `.text` | Named text |
+| --- | ---: | ---: | ---: |
+| Hypersolve library tests | **+10,952** | +1,152 | +941 |
+| Hypersolve `certification` bench | −2,160 | −2,288 | −2,316 |
+| Hypersolve `dispatch_trace` bench | −2,000 | −1,888 | −1,905 |
+| Hypersolve `retained_fuzz` bench | −1,680 | −1,776 | −1,804 |
+| other Hypersolve benches and examples | −200 to +112 | 0 to +16 | 0 to +15 |
+| every Hyperdynamics bench and example | −88 to −8 | 0 | 0 |
+| Interface WASM raw / final (file) | −935 / −929 | | |
+| Interface WASM gzip / brotli | −552 / −770 | | |
+
+The library test harness breaks its 4,096-byte incremental file cap. Built
+with one codegen unit, the same revisions are 8,224 bytes smaller (text
+−8,704). In the default profile the growth sits in modules that never use
+work budgets, for example `residual_replay` +9,651 and `curve_resultant`
+−8,071. Inlining hints, non-const accessors and a derived `Debug` view gave
++10,952 to +11,352 bytes. A budget revision is proposed in
+[the size accounts](docs/research/interval-size-accounts.json) and is not
+adopted, so the change stays on `review/budget-receipt` until it is decided.
+
+**Validation.** Locally, 120 native all-features test binaries of
+Hypersolve, Hypercurve, Hyperbrep and Hyperdrc passed. The run was stopped
+after 80 minutes in Hypercurve's debug-mode `open_path_compositions`
+fresh-process cases. Clippy with `-D warnings` and formatting pass. All eight
+hosted workflows pass on `777d6abd5`: Rust CI, Workspace, Hypersolve
+(including the 32-bit WASI suite), Hyperdynamics, Hypermesh, Hypergraphics,
+Adversarial and csgrs-ffi. Raw evidence:
+`docs/evidence/2026-11-23-interval-work-budget-receipt`.
