@@ -112,8 +112,24 @@ impl<const N: usize> ExpressionField<N> {
         order: usize,
         budget: &mut EnclosureBudget,
     ) -> Result<FlowTaylorProgram<N>, FlowTaylorError> {
+        self.continue_flow_taylor(&[], order, budget)
+    }
+    /// Prepare `order` after a retained prefix of this field's own stages.
+    ///
+    /// An empty prefix is fresh preparation. Otherwise every prefix stage is shared
+    /// by handle, spending the total structural copy work of `restrict_order`, and
+    /// only the missing normalized Lie coefficients are differentiated. Each stage
+    /// is derived only from its predecessor, so the result equals a fresh
+    /// preparation of `order`. Failure publishes nothing.
+    pub(crate) fn continue_flow_taylor(
+        &self,
+        prefix: &[FlowTaylorStage<N>],
+        order: usize,
+        budget: &mut EnclosureBudget,
+    ) -> Result<FlowTaylorProgram<N>, FlowTaylorError> {
         budget.graph.charge(0)?;
         let count = order.checked_add(1).ok_or(FlowTaylorError::OrderOverflow)?;
+        debug_assert!(prefix.len() < count, "a continuation must add stages");
         let columns = N.checked_add(1).ok_or(ExpressionError::SizeExhausted)?;
         let requests_len = N
             .checked_mul(columns)
@@ -121,14 +137,27 @@ impl<const N: usize> ExpressionField<N> {
         budget
             .graph
             .check_entries(&[count, N, columns, requests_len, requests_len])?;
-        budget.graph.charge(N)?;
-        let mut stages = vec![FlowTaylorStage {
-            degree: 1,
-            derivatives: None,
-            program: self.data.jacobian.source().clone(),
-            outputs: std::array::from_fn(|i| i),
-        }];
-        for degree in 2..=count {
+        let mut stages = if prefix.is_empty() {
+            budget.graph.charge(N)?;
+            vec![FlowTaylorStage {
+                degree: 1,
+                derivatives: None,
+                program: self.data.jacobian.source().clone(),
+                outputs: std::array::from_fn(|i| i),
+            }]
+        } else {
+            budget.graph.charge(
+                N.checked_add(8)
+                    .and_then(|work| work.checked_mul(prefix.len()))
+                    .ok_or(ExpressionError::SizeExhausted)?,
+            )?;
+            prefix.to_vec()
+        };
+        let start = stages
+            .len()
+            .checked_add(1)
+            .ok_or(ExpressionError::SizeExhausted)?;
+        for degree in start..=count {
             budget.graph.charge(1)?;
             let previous = stages.last().expect("first coefficient exists");
             let mut requests = Vec::new();

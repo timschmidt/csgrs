@@ -11,7 +11,8 @@ use core::cmp::Ordering;
 pub struct AdaptiveTaylorOptions<const N: usize> {
     /// First order tried on each certified proposal, inclusive; zero is permitted.
     pub minimum_order: usize,
-    /// Last order tried, inclusive. Coefficients are prepared lazily once per run.
+    /// Last order tried, inclusive. Coefficients are prepared lazily once per run;
+    /// each higher order continues the stages of the highest order already prepared.
     pub maximum_order: usize,
     /// Nonnegative exact singleton bounds on absolute endpoint remainder contributions.
     /// These bound neither global error nor uncertainty in the initial state.
@@ -443,7 +444,16 @@ impl<const N: usize> AdaptiveTaylorField<N> {
                     Some(i) => i,
                     None => {
                         report.check_records(native_records, refinements, 1, budget)?;
-                        let prepared = self.field.flow_taylor(order, budget)?;
+                        // Orders are prepared as one ascending run from the minimum,
+                        // so the last program is `order - 1`: continue its stages.
+                        debug_assert!(
+                            report
+                                .programs
+                                .last()
+                                .is_none_or(|p| p.order() + 1 == order)
+                        );
+                        let prefix = report.programs.last().map_or(&[][..], |p| p.stages());
+                        let prepared = self.field.continue_flow_taylor(prefix, order, budget)?;
                         budget.graph.charge(1)?;
                         let i = report.programs.len();
                         report.programs.push(prepared);

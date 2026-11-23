@@ -211,6 +211,64 @@ fn exponential_uncertainty_and_generated_endpoint_have_independent_bounds() {
     assert!(end.contains_point(&(hi * Q::from(2))));
 }
 #[test]
+fn ascending_orders_continue_shared_stages_and_equal_fresh_preparation() {
+    let v = SymbolId(30);
+    let (x, y, t) = (
+        Expr::anonymous_symbol(X),
+        Expr::anonymous_symbol(v),
+        Expr::anonymous_symbol(T),
+    );
+    let f = field::<2>(&[y.clone() + t * x.clone(), -(x * y)], &[X, v]);
+    let mut o = options();
+    o.maximum_order = 4;
+    o.remainder_limits = [d(0, 0, 0), d(0, 0, 0)];
+    o.maximum_quality_halvings = 0;
+    let r = f
+        .adaptive_taylor(o)
+        .integrate(request([d(1, 1, -1), d(1, 1, -2)]), &mut budget());
+    assert!(
+        matches!(
+            r.status(),
+            Status::Stopped(Failure::QualityHalvingLimit { limit: 0 })
+        ),
+        "{:?}",
+        r.status()
+    );
+    let programs = r.programs();
+    assert_eq!(
+        programs.iter().map(|p| p.order()).collect::<Vec<_>>(),
+        [0, 1, 2, 3, 4]
+    );
+    for (i, program) in programs.iter().enumerate() {
+        let fresh = f.flow_taylor(program.order(), &mut budget()).unwrap();
+        assert_eq!(program.identity(), fresh.identity());
+        assert_eq!(program.stages().len(), fresh.stages().len());
+        for (a, b) in program.stages().iter().zip(fresh.stages()) {
+            assert_eq!(a.degree(), b.degree());
+            assert_eq!(a.outputs(), b.outputs());
+            assert_eq!(a.program().definition(), b.program().definition());
+            match (a.derivatives(), b.derivatives()) {
+                (Some(a), Some(b)) => {
+                    assert_eq!(a.requests(), b.requests());
+                    assert_eq!(a.source().definition(), b.source().definition());
+                    assert_eq!(a.program().definition(), b.program().definition());
+                }
+                (None, None) => {}
+                _ => panic!("derivative association differs"),
+            }
+        }
+        // Every retained lower stage is the previous order's handle, not a copy.
+        if let Some(previous) = i.checked_sub(1).map(|j| &programs[j]) {
+            for (a, b) in program.stages().iter().zip(previous.stages()) {
+                assert!(std::ptr::eq(
+                    a.program().definition(),
+                    b.program().definition()
+                ));
+            }
+        }
+    }
+}
+#[test]
 fn oscillator_keeps_signed_remainders_and_independent_alternating_bounds() {
     let v = SymbolId(30);
     let f = field::<2>(

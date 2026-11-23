@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- The adaptive Taylor controller prepares each higher candidate order by
+  continuing the previous order's retained stages, differentiating only the
+  missing normalized Lie coefficients. Prepared programs equal fresh
+  `flow_taylor` preparations stage by stage.
+
 - Add opt-in `flow-noise-evolution`: `FlowTaylorProgram::integrate_noise`
   searches bounded native step durations while carrying the complete affine
   outer endpoint into each next search, reusing accepted Picard proofs and
