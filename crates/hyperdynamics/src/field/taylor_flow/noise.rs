@@ -206,6 +206,14 @@ pub struct FlowNoiseRequest<const N: usize> {
     pub candidate: BoxN<DyadicInterval, N>,
     /// Maximum retained nonconstant affine columns; zero charges all to residuals.
     pub maximum_noise: usize,
+    /// Round the endpoint center and columns down onto the policy grid.
+    ///
+    /// Each rounding error, scaled by its parameter domain, joins its row's
+    /// residual, which is then enclosed outward on the same grid. Values already
+    /// on the grid are kept exactly. This bounds coefficient sizes over long
+    /// nonlinear horizons; `false` keeps every coefficient exact.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub round_coefficients: bool,
 }
 
 /// Provenance of one independently ranged input coordinate for the next step.
@@ -692,6 +700,23 @@ fn advance<const N: usize>(
         budget.graph.charge(1)?;
         result.residual[row] = noise.remainder()[row].add(remainder, &mut budget.arithmetic)?;
     }
+    if e.request.round_coefficients {
+        let cells = result
+            .columns
+            .len()
+            .checked_add(1)
+            .and_then(|v| v.checked_mul(N))
+            .ok_or(ExpressionError::SizeExhausted)?;
+        budget.graph.check_entries(&[cells])?;
+        budget.graph.charge(cells)?;
+        for (row, residual) in result.residual.iter_mut().enumerate() {
+            round_down(&mut result.center[row], None, residual, budget)?;
+            for (column, domain) in result.columns.iter_mut().zip(&result.domains) {
+                round_down(&mut column[row], Some(domain), residual, budget)?;
+            }
+            *residual = residual.regrid(budget.policy.precision, &mut budget.arithmetic)?;
+        }
+    }
     budget.graph.check_entries(&[N, N, N, N])?;
     let mut enclosure = enclose_coefficients(&result.center, budget)?;
     for (column, domain) in result.columns.iter().zip(&result.domains) {
@@ -705,6 +730,33 @@ fn advance<const N: usize>(
     enclosure = enclosure.add(&residual, &mut budget.arithmetic)?;
     budget.graph.charge(0)?;
     Ok((Some(result), enclosure))
+}
+
+// The set c + sum(a_k p_k) + r, with p_k in D_k, lies inside
+// c' + sum(a'_k p_k) + (r + [0, c - c'] + sum([0, a_k - a'_k] D_k)) when each
+// primed value is the grid point at or below its exact value. On-grid values
+// keep their exact source.
+fn round_down(
+    value: &mut Real,
+    domain: Option<&DyadicInterval>,
+    residual: &mut DyadicInterval,
+    budget: &mut EnclosureBudget,
+) -> Result<(), FlowNoiseError> {
+    let enclosure =
+        DyadicInterval::from_real(value, budget.policy.precision, &mut budget.arithmetic)?;
+    let Some((lower, upper, exponent)) = enclosure.bounds() else {
+        return Ok(());
+    };
+    if lower == upper {
+        return Ok(());
+    }
+    let mut error = DyadicInterval::new(0.into(), upper - lower, exponent)?;
+    if let Some(domain) = domain {
+        error = error.mul(domain, &mut budget.arithmetic)?;
+    }
+    *residual = residual.add(&error, &mut budget.arithmetic)?;
+    *value = real_point(&DyadicInterval::point(lower.clone(), exponent)?, budget)?;
+    Ok(())
 }
 
 // Exact scalar conversion only; linear images use the existing native vector owner.

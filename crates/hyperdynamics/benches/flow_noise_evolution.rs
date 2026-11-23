@@ -91,6 +91,7 @@ fn complete(
                     d(3 * (index + 1) as i64, 3 * (index + 1) as i64, -3),
                     FlowNoiseEvolutionOptions {
                         maximum_noise: 2,
+                        round_coefficients: false,
                         native: options.clone(),
                     },
                     budget,

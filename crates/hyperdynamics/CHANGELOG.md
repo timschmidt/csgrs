@@ -2,6 +2,14 @@
 
 ## 0.1.0 (unreleased)
 
+- Correlated flow endpoints can round their exact center and columns down
+  onto the policy grid (`round_coefficients`), adding each enclosed rounding
+  error, scaled by its parameter domain, to its row's residual. Single
+  `FlowNoiseRequest`s keep it off; `FlowNoiseEvolutionOptions::default()`
+  enables it. Exact coefficients previously grew until nonlinear horizons
+  such as Van der Pol, Lotka-Volterra and Lorenz stopped after two steps with
+  `SizeExhausted`.
+
 - The adaptive Taylor controller prepares each higher candidate order by
   continuing the previous order's retained stages, differentiating only the
   missing normalized Lie coefficients. Prepared programs equal fresh

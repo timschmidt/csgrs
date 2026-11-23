@@ -12,6 +12,9 @@ use core::cmp::Ordering;
 pub struct FlowNoiseEvolutionOptions {
     /// Maximum retained columns per endpoint; all omitted terms remain in residuals.
     pub maximum_noise: usize,
+    /// Round each endpoint onto the policy grid; see [`FlowNoiseRequest`].
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub round_coefficients: bool,
     /// Outer segment limit and native duration/halving/expansion controls.
     pub native: EvolutionOptions,
 }
@@ -19,6 +22,7 @@ impl Default for FlowNoiseEvolutionOptions {
     fn default() -> Self {
         Self {
             maximum_noise: 16,
+            round_coefficients: true,
             native: EvolutionOptions::default(),
         }
     }
@@ -334,6 +338,7 @@ fn evolve<const N: usize>(
                         end: report.end.checked_pow(1, &mut budget.arithmetic)?,
                         candidate: BoxN::empty()?,
                         maximum_noise: report.options.maximum_noise,
+                        round_coefficients: report.options.round_coefficients,
                     },
                     budget,
                 );
@@ -362,6 +367,7 @@ fn evolve<const N: usize>(
                 .checked_pow(1, &mut budget.arithmetic)?,
             candidate: copy_state(&picard.proposal().candidate, budget)?,
             maximum_noise: report.options.maximum_noise,
+            round_coefficients: report.options.round_coefficients,
         };
         let noise = refine(&report.program, initial.clone(), request, picard, budget);
         let status = noise.status().clone();

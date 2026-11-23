@@ -51,6 +51,7 @@ fn automatic_horizons_preserve_reversible_shear_correlation_and_exact_time() {
             d(end, end, -3),
             FlowNoiseEvolutionOptions {
                 maximum_noise: 2,
+                round_coefficients: false,
                 native: EvolutionOptions {
                     maximum_step: Some(d(1, 1, -2)),
                     ..Default::default()
@@ -98,6 +99,7 @@ fn validation_precedes_empty_and_identity_and_empty_output_is_reusable() {
         d(0, 0, 0),
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
+            round_coefficients: false,
             native: EvolutionOptions {
                 maximum_step: Some(d(0, 0, 0)),
                 ..Default::default()
@@ -142,6 +144,7 @@ fn validation_precedes_empty_and_identity_and_empty_output_is_reusable() {
         d(0, 0, 0),
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
+            round_coefficients: false,
             native: EvolutionOptions {
                 maximum_steps: 0,
                 ..Default::default()
@@ -172,6 +175,7 @@ fn stopped_prefix_is_explicit_and_can_seed_a_later_horizon() {
     );
     let options = FlowNoiseEvolutionOptions {
         maximum_noise: 2,
+        round_coefficients: false,
         native: EvolutionOptions {
             maximum_steps: 1,
             maximum_step: Some(d(1, 1, -2)),
@@ -216,6 +220,7 @@ fn publication_exhaustion_cancellation_and_retry_never_publish_partial_success()
     );
     let options = FlowNoiseEvolutionOptions {
         maximum_noise: 2,
+        round_coefficients: false,
         native: EvolutionOptions {
             maximum_step: Some(d(1, 1, -2)),
             ..Default::default()
@@ -341,6 +346,7 @@ fn nonlinear_horizon_keeps_fresh_residuals_and_contains_the_exact_riccati_flow()
         d(1, 1, -3),
         FlowNoiseEvolutionOptions {
             maximum_noise: 2,
+            round_coefficients: false,
             native: EvolutionOptions {
                 maximum_step: Some(d(1, 1, -4)),
                 ..Default::default()
@@ -416,6 +422,7 @@ fn time_dependent_constant_state_derivative_is_integrated_exactly() {
         d(3, 3, -2),
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
+            round_coefficients: false,
             native: EvolutionOptions {
                 maximum_step: Some(d(1, 1, -2)),
                 ..Default::default()
@@ -486,6 +493,7 @@ fn fresh_process_reconstructs_sources_and_replays_automatic_horizons() {
                 d(end, end, -3),
                 FlowNoiseEvolutionOptions {
                     maximum_noise: 2,
+                    round_coefficients: false,
                     native: EvolutionOptions {
                         maximum_step: Some(d(1, 1, -2)),
                         ..Default::default()
@@ -530,3 +538,133 @@ fn shipped_automatic_noise_example_completes() {
 #[cfg(feature = "serde")]
 #[path = "support/replay.rs"]
 mod replay;
+
+#[test]
+fn rounding_keeps_on_grid_shear_states_exactly() {
+    let mut runs = Vec::new();
+    for round_coefficients in [false, true] {
+        let mut budget = EnclosureBudget::new(EnclosurePolicy::default());
+        let initial = BoxN::new([d(-1, 1, 0), d(-1, 1, 0)]).unwrap();
+        let mut state =
+            Arc::new(FlowNoiseState::new(d(0, 0, 0), initial.clone(), &mut budget).unwrap());
+        let mut states = Vec::new();
+        for (end, sign) in [(3, 1), (6, -1)] {
+            let program = shear(sign, &mut budget)
+                .flow_taylor(1, &mut budget)
+                .unwrap();
+            let report = program.integrate_noise(
+                state,
+                d(end, end, -3),
+                FlowNoiseEvolutionOptions {
+                    maximum_noise: 2,
+                    round_coefficients,
+                    native: EvolutionOptions {
+                        maximum_step: Some(d(1, 1, -2)),
+                        ..Default::default()
+                    },
+                },
+                &mut budget,
+            );
+            assert!(matches!(
+                report.status(),
+                FlowNoiseEvolutionStatus::Completed
+            ));
+            for segment in report.segments() {
+                let next = segment.end_state().unwrap();
+                states.push((
+                    next.center().unwrap().to_vec(),
+                    next.columns().unwrap().to_vec(),
+                    next.domains().unwrap().to_vec(),
+                    next.residual().unwrap().clone(),
+                    next.enclosure().clone(),
+                ));
+            }
+            state = report.end_state().unwrap().clone();
+        }
+        assert_eq!(state.enclosure(), &initial);
+        runs.push(states);
+    }
+    // Every shear coefficient is a dyadic on the policy grid, so rounding
+    // keeps each center, column, domain and residual exactly.
+    assert_eq!(runs[0], runs[1]);
+}
+
+#[test]
+fn rounded_coefficients_complete_a_long_riccati_horizon_containing_the_flow() {
+    use hyperinterval::DyadicBudget;
+    use hyperreal::Rational;
+    let mut budget = EnclosureBudget::new(EnclosurePolicy::default());
+    let (time, x) = (SymbolId(10), SymbolId(20));
+    let value = Expr::anonymous_symbol(x);
+    let source = ExpressionProgram::compile(
+        &[value.clone() * value],
+        &[x, time],
+        &mut ExpressionBudget::new(100000, 1000000),
+    )
+    .unwrap();
+    let field = ExpressionField::<1>::from_definition(
+        FieldDefinition {
+            source: source.definition().clone(),
+            time,
+            state: vec![x],
+        },
+        &mut budget,
+    )
+    .unwrap();
+    let program = field.flow_taylor(4, &mut budget).unwrap();
+    let initial = Arc::new(
+        FlowNoiseState::new(d(0, 0, 0), BoxN::new([d(1, 2, -1)]).unwrap(), &mut budget).unwrap(),
+    );
+    let report = program.integrate_noise(
+        initial,
+        d(1, 1, -1),
+        FlowNoiseEvolutionOptions {
+            maximum_noise: 2,
+            round_coefficients: true,
+            native: EvolutionOptions {
+                maximum_step: Some(d(1, 1, -5)),
+                ..Default::default()
+            },
+        },
+        &mut budget,
+    );
+    assert!(
+        matches!(report.status(), FlowNoiseEvolutionStatus::Completed),
+        "{:?}",
+        report.status()
+    );
+    assert!(report.segments().len() >= 16);
+    let mut arithmetic = DyadicBudget::new(16384, 1_000_000_000);
+    for segment in report.segments() {
+        let next = segment.end_state().unwrap();
+        // Rounded coefficients stay on the policy grid.
+        let grid = EnclosurePolicy::default().precision;
+        for value in next
+            .center()
+            .unwrap()
+            .iter()
+            .chain(next.columns().unwrap().iter().flatten())
+        {
+            let enclosure = DyadicInterval::from_real(value, grid, &mut arithmetic).unwrap();
+            assert!(enclosure.is_singleton(), "{value:?} is off the grid");
+        }
+        let t = next
+            .time()
+            .to_rational(&mut arithmetic)
+            .unwrap()
+            .lower()
+            .unwrap()
+            .clone();
+        let actual = next.enclosure().lanes().unwrap()[0]
+            .to_rational(&mut arithmetic)
+            .unwrap();
+        for x0 in [
+            Rational::from(1) / Rational::from(2),
+            Rational::from(3) / Rational::from(4),
+            Rational::one(),
+        ] {
+            let exact = &x0 / (Rational::one() - &t * &x0);
+            assert!(actual.contains_point(&exact), "{actual:?} misses {exact:?}");
+        }
+    }
+}

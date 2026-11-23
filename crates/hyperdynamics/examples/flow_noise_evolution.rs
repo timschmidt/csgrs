@@ -44,6 +44,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             d(end, end, -3)?,
             FlowNoiseEvolutionOptions {
                 maximum_noise: 2,
+                round_coefficients: false,
                 native: EvolutionOptions {
                     maximum_step: Some(d(1, 1, -2)?),
                     ..Default::default()
