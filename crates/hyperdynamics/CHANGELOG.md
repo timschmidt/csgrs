@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Add opt-in `flow-noise-evolution`: `FlowTaylorProgram::integrate_noise`
+  searches bounded native step durations while carrying the complete affine
+  outer endpoint into each next search, reusing accepted Picard proofs and
+  retaining every attempt, certified prefix and typed failure.
+
 - Add opt-in correlated Taylor flow endpoints with retained affine columns,
   explicit fresh residual inputs, complete trajectory/parameter remainder proofs,
   bounded column selection, checked continuation and replay from original inputs.

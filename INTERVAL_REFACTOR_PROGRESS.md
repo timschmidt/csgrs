@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, global sensitivity and adaptive noise-column selection beyond the bounded automatic affine-noise horizon evolution accepted 22 November, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -9532,7 +9532,8 @@ and removed from the active worktree. No layout/inlining retry follows.
 After restoration, 238 owner/Hyperphysics tests and doctests, strict all-feature/
 all-target Clippy and workspace formatting pass. All 42 final native artifacts
 and two manual probes are byte-identical to baseline. All 84 prior frozen stages
-remain unchanged. Automatic retained-noise horizon evolution is still open;
+remain unchanged. Automatic retained-noise horizon evolution was still open
+(accepted on reconsideration, 22 November 2026; see the section at the end);
 this disposition does not complete phases 12/13 or the full goal. Further work
 requires a distinct implementation approach or another required capability,
 not another timing run of this unchanged candidate. No push or publication.
@@ -15265,3 +15266,72 @@ The Pages deploy pins csgrs `20330cd30`, so neither change has shipped yet.
 **Still open.** The Interface accounts' absolute sizes were recorded with the
 archived toolchain. Growth from each account's retained revision to `61c84c882`
 has not been re-measured with that toolchain.
+
+## Automatic affine-noise evolution accepted, 22 November 2026
+
+Phases 12/13. `FlowTaylorProgram::integrate_noise`, behind the opt-in
+`flow-noise-evolution` feature, is the controller rejected on 16 November
+(`refs/interval-unaccepted/flow-noise-20261116`, `3dc973c69`). It
+cherry-picked onto `51a095f0e` without conflicts and is otherwise unchanged.
+It searches bounded native step durations and carries the complete affine
+outer endpoint into each next search. Accepted Picard proofs are reused once,
+for the same box the manual step proves. A failed noise proof never falls
+back to a Cartesian-only endpoint. Global sensitivity and adaptive
+noise-column selection remain open.
+
+**Why the rejection is reversed.** The rejection rested on wall-clock
+slowdowns of 0.22–2.17% in ten existing owner cases. None of those
+benchmarks calls the controller. On `51a095f0e` with Rust 1.100 and all
+features, each benchmark was built from one path before and after. Function
+bodies were compared with addresses, hash suffixes and folded callee names
+normalized. Callgrind then counted instructions for one iteration of every
+case whose code differed, on hosted CI run 45085562195 with valgrind 3.26.
+It took the difference between a run filtered to the case and a run matching
+no case, counting only inside the routine. Both repetitions agreed exactly.
+
+| Benchmark | Identical function bodies | Instructions per iteration |
+| --- | --- | --- |
+| `qr_evolution` (six recorded slowdowns) | all 6,147 | identical by construction |
+| `taylor_orders` (one) | all 5,742 | identical by construction |
+| `qr_coordinates` | all 5,873 | identical by construction |
+| `taylor_evolution` (two) | all but one drop-glue copy and its callers | all eight cases identical |
+| `taylor_flow` (one) | 36 bodies differ | Taylor3 and preparation identical; Picard1024 50,268,078 → 50,281,390 (+0.026%) |
+
+So nine of the ten recorded slowdowns execute the same instructions, and the
+tenth executes 0.026% more, a tenth of its recorded +0.22–0.29%. That case's
+Picard path compiled differently: one drop-glue function is outlined and
+inlining in `certify_step` changed. The governing order ranks completeness
+above performance, so this new capability is accepted at that recorded cost.
+Identical instruction counts imply identical allocation behavior for those
+cases. The Picard1024 allocations were not measured separately.
+
+**Size.** These are all-features release builds with Rust 1.100, against
+the caps of the 17 Hyperdynamics accounts (4,096 B for file and `.text`,
+1,024 B for named text, per change).
+
+| Artifact | File | `.text` | Named text |
+| --- | ---: | ---: | ---: |
+| `taylor_flow` bench | +440 | +160 | +164 |
+| `qr_coordinates` bench | +112 | 0 | 0 |
+| `taylor_orders` bench | +48 | 0 | 0 |
+| `taylor_evolution` bench | −48 | +16 | 0 |
+| `coordinates` example | +32 | 0 | 0 |
+| `reachability` example | +8 | +16 | 0 |
+| `flow_noise` example | −6,376 | −3,712 | −3,618 |
+| library test harness | 0 | 0 | 0 |
+
+The other benchmarks and examples are unchanged or smaller. The positive
+deltas are charged to their accounts in
+`docs/research/interval-size-accounts.json`; every cap passes. The new
+`flow_noise_evolution` example (4,157,120 B) and benchmark (7,233,624 B) are
+recorded as new artifacts.
+
+**Validation.** On stable: 171 Hyperdynamics all-target, all-feature tests,
+including the 9 controller and 16 noise-witness tests; the no-default,
+release and doc test runs; Clippy with `-D warnings` at both feature
+boundaries; formatting; Rustdoc with `-D warnings`; the fuzz target check;
+and all 84 Hyperphysics tests. `csgrs` does not link Hyperdynamics, so
+`successive_operations` does not apply. The Rust 1.95.0, `cargo hack`
+per-feature and WASI runs are in hosted CI.
+
+Raw evidence: `docs/evidence/2026-11-22-interval-flow-noise-acceptance`.

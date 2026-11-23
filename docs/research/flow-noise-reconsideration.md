@@ -1,6 +1,6 @@
 # Automatic affine-noise controller reconsideration
 
-**Rejected on existing-workload runtime.** Review at CSGRS
+**Rejected on existing-workload runtime; accepted on reconsideration, 22 November 2026 (see the final section).** Review at CSGRS
 `da19d12ef60614cab931cce2ea361242b6197a8b` revisits the generic proof-provider
 controller previously rejected for 16 bytes of nonallocated symbol-table growth.
 The user's bounded-size exception applies; performance and all other gates remain
@@ -109,3 +109,31 @@ restoration receipts are preserved there.
 Review commit `b8aa7109b`. Evidence `docs/evidence/2026-11-16-interval-flow-noise-reconsideration`, local archive commit
 `006a50238ffcad151c25de993f6886f52f4ba7ce`: 2,645 files / 9,032,213 bytes,
 SHA-256 `abfa3ac4e8f36fa895cccb7f09d7c79b88a63dbdec02e4bdc7e08aeebbdb5680`.
+
+## Reconsideration, 22 November 2026: accepted
+
+The runtime rejection above was a wall-clock result. On CSGRS `51a095f0e`,
+with Rust 1.100 and all features, the regressed benchmarks were rebuilt at
+one path before and after the unchanged candidate. Each function's machine
+code was then compared with addresses, hash suffixes and folded callee names
+normalized.
+
+- `qr_evolution`, `taylor_orders` and `qr_coordinates` have identical code in
+  all 6,147, 5,742 and 5,873 function bodies. Their recorded slowdowns,
+  including all six QR evolution cases, cannot come from executed code.
+- Callgrind counted instructions for one iteration of each `taylor_evolution`
+  and `taylor_flow` case on hosted CI, run 45085562195. Ten of the eleven
+  cases execute exactly the same number of instructions. That includes Taylor
+  evolution constant/Taylor and exponential/preparation, which were recorded
+  as 1.15–2.17% slower.
+- `taylor_flow` Picard1024 executes 50,281,390 instructions instead of
+  50,268,078: +13,312, or +0.026%. This benchmark never calls the
+  controller, but its Picard path compiled differently: one drop-glue
+  function is outlined and inlining in `certify_step` changed. The
+  wall-clock record of +0.22–0.29% was about ten times larger than this.
+
+The governing order ranks completeness above performance. A new capability
+with a +0.026% instruction cost on one of 39 existing cases is accepted;
+the cost is recorded rather than hidden. The full evidence is in
+`INTERVAL_REFACTOR_PROGRESS.md` under "Automatic affine-noise evolution
+accepted, 22 November 2026".

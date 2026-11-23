@@ -1325,7 +1325,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -1341,7 +1341,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -1357,7 +1357,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -1366,7 +1366,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1072592,
+          "after": 1072592,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 606768,
+          "after": 606768,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 598724,
+          "after": 598724,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hypersolve/benches/taylor_noise.rs",
@@ -2003,7 +2042,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2019,7 +2058,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2035,7 +2074,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2044,7 +2083,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3970968,
+          "after": 3970688,
+          "incremental_growth_bytes": -280,
+          "incremental_growth_percent": -0.007051,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1988986,
+          "after": 1988986,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1970364,
+          "after": 1970364,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/expression_field.rs",
@@ -2081,7 +2159,7 @@
           "growth_percent": -0.00021752323691978396,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2097,7 +2175,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2113,7 +2191,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2122,7 +2200,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3738592,
+          "after": 3738576,
+          "incremental_growth_bytes": -16,
+          "incremental_growth_percent": -0.000428,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1830106,
+          "after": 1830106,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1813094,
+          "after": 1813094,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/benches/taylor_orders.rs",
@@ -2157,9 +2274,9 @@
           "retained": 7593232,
           "net_growth_bytes": 0,
           "growth_percent": 0.0,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "accepted_positive_growth_bytes": 48,
+          "remaining_cumulative_bytes": 16336,
+          "remaining_cumulative_percent": 1.999367858,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2175,7 +2292,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2191,7 +2308,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2200,7 +2317,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 6941648,
+          "after": 6941696,
+          "incremental_growth_bytes": 48,
+          "incremental_growth_percent": 0.000691,
+          "charged_bytes": 48,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3668856,
+          "after": 3668856,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3626488,
+          "after": 3626488,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/reachability.rs",
@@ -2235,9 +2391,9 @@
           "retained": 3623360,
           "net_growth_bytes": 0,
           "growth_percent": 0.0,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.99977921,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2251,9 +2407,9 @@
           "retained": 1788775,
           "net_growth_bytes": 0,
           "growth_percent": 0.0,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "accepted_positive_growth_bytes": 16,
+          "remaining_cumulative_bytes": 16368,
+          "remaining_cumulative_percent": 1.999105533,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2269,7 +2425,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2301,7 +2457,46 @@
         },
         "passes_both_caps": true,
         "qualification": "Same-path all-feature example with its workspace release configuration. The prior feature-unified artifact record and its charges remain above."
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3684856,
+          "after": 3684864,
+          "incremental_growth_bytes": 8,
+          "incremental_growth_percent": 0.000217,
+          "charged_bytes": 8,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1800154,
+          "after": 1800170,
+          "incremental_growth_bytes": 16,
+          "incremental_growth_percent": 0.000889,
+          "charged_bytes": 16,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1783764,
+          "after": 1783764,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/benches/taylor_evolution.rs",
@@ -2338,7 +2533,7 @@
           "growth_percent": 0.00010421747268460041,
           "accepted_positive_growth_bytes": 8,
           "remaining_cumulative_bytes": 16376,
-          "remaining_cumulative_percent": 1.9998957825273154,
+          "remaining_cumulative_percent": 1.999895783,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2352,9 +2547,9 @@
           "retained": 3746711,
           "net_growth_bytes": 0,
           "growth_percent": 0.0,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "accepted_positive_growth_bytes": 16,
+          "remaining_cumulative_bytes": 16368,
+          "remaining_cumulative_percent": 1.999572959,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2370,7 +2565,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2379,7 +2574,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 7004888,
+          "after": 7004840,
+          "incremental_growth_bytes": -48,
+          "incremental_growth_percent": -0.000685,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3734456,
+          "after": 3734472,
+          "incremental_growth_bytes": 16,
+          "incremental_growth_percent": 0.000428,
+          "charged_bytes": 16,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3692605,
+          "after": 3692605,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/taylor_model.rs",
@@ -2416,7 +2650,7 @@
           "growth_percent": 0.00021497979189956143,
           "accepted_positive_growth_bytes": 8,
           "remaining_cumulative_bytes": 16376,
-          "remaining_cumulative_percent": 1.9997850202081005,
+          "remaining_cumulative_percent": 1.99978502,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2432,7 +2666,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2448,7 +2682,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2457,7 +2691,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3785736,
+          "after": 3785736,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1858090,
+          "after": 1858090,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1840743,
+          "after": 1840743,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/rk_proposal.rs",
@@ -2494,7 +2767,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2510,7 +2783,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2526,7 +2799,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2535,7 +2808,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3779904,
+          "after": 3779880,
+          "incremental_growth_bytes": -24,
+          "incremental_growth_percent": -0.000635,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1838202,
+          "after": 1838202,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1820373,
+          "after": 1820373,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/benches/taylor_flow.rs",
@@ -2570,9 +2882,9 @@
           "retained": 7568672,
           "net_growth_bytes": 8,
           "growth_percent": 0.00010569897144330888,
-          "accepted_positive_growth_bytes": 8,
-          "remaining_cumulative_bytes": 16376,
-          "remaining_cumulative_percent": 1.9998943010285566,
+          "accepted_positive_growth_bytes": 448,
+          "remaining_cumulative_bytes": 15936,
+          "remaining_cumulative_percent": 1.994080858,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2586,9 +2898,9 @@
           "retained": 3678263,
           "net_growth_bytes": 0,
           "growth_percent": 0.0,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "accepted_positive_growth_bytes": 160,
+          "remaining_cumulative_bytes": 16224,
+          "remaining_cumulative_percent": 1.995650121,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2602,9 +2914,9 @@
           "retained": 3636559,
           "net_growth_bytes": 0,
           "growth_percent": 0.0,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "accepted_positive_growth_bytes": 164,
+          "remaining_cumulative_bytes": 3932,
+          "remaining_cumulative_percent": 0.995490242,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2613,7 +2925,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 6903280,
+          "after": 6903720,
+          "incremental_growth_bytes": 440,
+          "incremental_growth_percent": 0.006374,
+          "charged_bytes": 440,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3671960,
+          "after": 3672120,
+          "incremental_growth_bytes": 160,
+          "incremental_growth_percent": 0.004357,
+          "charged_bytes": 160,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3630927,
+          "after": 3631091,
+          "incremental_growth_bytes": 164,
+          "incremental_growth_percent": 0.004517,
+          "charged_bytes": 164,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/benches/adaptive_taylor.rs",
@@ -2650,7 +3001,7 @@
           "growth_percent": 0.0008501359154794873,
           "accepted_positive_growth_bytes": 32,
           "remaining_cumulative_bytes": 16352,
-          "remaining_cumulative_percent": 1.9991498640845204,
+          "remaining_cumulative_percent": 1.999149864,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2666,7 +3017,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2682,7 +3033,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2691,7 +3042,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3834424,
+          "after": 3834296,
+          "incremental_growth_bytes": -128,
+          "incremental_growth_percent": -0.003338,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1909994,
+          "after": 1909978,
+          "incremental_growth_bytes": -16,
+          "incremental_growth_percent": -0.000838,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1892603,
+          "after": 1892603,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/flow_noise.rs",
@@ -2728,7 +3118,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2744,7 +3134,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2760,7 +3150,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2769,7 +3159,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 4107440,
+          "after": 4101064,
+          "incremental_growth_bytes": -6376,
+          "incremental_growth_percent": -0.155231,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 2060874,
+          "after": 2057162,
+          "incremental_growth_bytes": -3712,
+          "incremental_growth_percent": -0.180118,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 2040814,
+          "after": 2037196,
+          "incremental_growth_bytes": -3618,
+          "incremental_growth_percent": -0.177282,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/benches/qr_evolution.rs",
@@ -2806,7 +3235,7 @@
           "growth_percent": -9.77277324918324e-05,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2822,7 +3251,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2838,7 +3267,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2847,7 +3276,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 7564368,
+          "after": 7564160,
+          "incremental_growth_bytes": -208,
+          "incremental_growth_percent": -0.00275,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 4146008,
+          "after": 4146008,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 4100755,
+          "after": 4100755,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/taylor_affine.rs",
@@ -2884,7 +3352,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2900,7 +3368,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2916,7 +3384,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -2925,7 +3393,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3888120,
+          "after": 3888120,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1946570,
+          "after": 1946570,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1928840,
+          "after": 1928840,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/taylor_orders.rs",
@@ -2962,7 +3469,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2978,7 +3485,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -2994,7 +3501,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -3003,7 +3510,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3798840,
+          "after": 3798824,
+          "incremental_growth_bytes": -16,
+          "incremental_growth_percent": -0.000421,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1867738,
+          "after": 1867722,
+          "incremental_growth_bytes": -16,
+          "incremental_growth_percent": -0.000857,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 1850163,
+          "after": 1850163,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/examples/coordinates.rs",
@@ -3038,9 +3584,9 @@
           "retained": 4035568,
           "net_growth_bytes": 0,
           "growth_percent": 0.0,
-          "accepted_positive_growth_bytes": 0,
-          "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "accepted_positive_growth_bytes": 32,
+          "remaining_cumulative_bytes": 16352,
+          "remaining_cumulative_percent": 1.999207051,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -3056,7 +3602,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -3072,7 +3618,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -3081,7 +3627,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 4112456,
+          "after": 4112488,
+          "incremental_growth_bytes": 32,
+          "incremental_growth_percent": 0.000778,
+          "charged_bytes": 32,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 2118730,
+          "after": 2118730,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 2099736,
+          "after": 2099736,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/benches/qr_coordinates.rs",
@@ -3116,9 +3701,9 @@
           "retained": 7918624,
           "net_growth_bytes": 8,
           "growth_percent": 0.00010102775535522874,
-          "accepted_positive_growth_bytes": 8,
-          "remaining_cumulative_bytes": 16376,
-          "remaining_cumulative_percent": 1.9998989722446447,
+          "accepted_positive_growth_bytes": 120,
+          "remaining_cumulative_bytes": 16264,
+          "remaining_cumulative_percent": 1.998484584,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -3134,7 +3719,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -3150,7 +3735,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -3159,7 +3744,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 7259208,
+          "after": 7259320,
+          "incremental_growth_bytes": 112,
+          "incremental_growth_percent": 0.001543,
+          "charged_bytes": 112,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3944792,
+          "after": 3944792,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3901607,
+          "after": 3901607,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hyperdynamics/benches/coordinate_transition.rs",
@@ -3196,7 +3820,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -3212,7 +3836,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 16384,
-          "remaining_cumulative_percent": 2,
+          "remaining_cumulative_percent": 2.0,
           "caps": {
             "incremental_bytes": 4096,
             "incremental_percent": 1,
@@ -3228,7 +3852,7 @@
           "growth_percent": 0.0,
           "accepted_positive_growth_bytes": 0,
           "remaining_cumulative_bytes": 4096,
-          "remaining_cumulative_percent": 1,
+          "remaining_cumulative_percent": 1.0,
           "caps": {
             "incremental_bytes": 1024,
             "incremental_percent": 0.5,
@@ -3237,7 +3861,46 @@
           },
           "passes_both_caps": true
         }
-      }
+      },
+      "subsequent_charges": [
+        {
+          "change": "flow-noise-evolution",
+          "metric": "file",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 7028184,
+          "after": 7028184,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3803672,
+          "after": 3803672,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-evolution",
+          "metric": "named_text",
+          "csgrs_before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+          "csgrs_after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0",
+          "before": 3762425,
+          "after": 3762425,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true
+        }
+      ],
+      "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
     },
     {
       "artifact": "crates/hypersolve/examples/basic.rs",
@@ -17785,5 +18448,29 @@
     "correction": "The earlier local figure of -4,716 B for the Interface raw WASM came from a different configuration; on the locked trunk release build the change grows it by 545 B.",
     "reproducibility": "A rebuild of the 4ad0c199c native ball client is 2,132,592 B against 2,134,096 B in the 2026-11-19 record. That record keeps only file sizes for this image, so the 1,504 B difference is not attributed; the checkout paths differ. Within this run all stages share one checkout path, so the stage differences are comparable.",
     "evidence": "docs/evidence/2026-11-22-interval-rational-translation-abort"
+  },
+  "flow_noise_evolution_2026_11_22": {
+    "revisions": {
+      "before": "51a095f0e34bd66c1a00fce049d8b7ca17dc09a1",
+      "after": "6f5fac750f1c81aef913d66ba92338ac9c73e7d0"
+    },
+    "record": "2026-11-22-interval-flow-noise-acceptance",
+    "benefit": "Completeness: bounded automatic affine-noise horizon evolution (FlowTaylorProgram::integrate_noise, opt-in flow-noise-evolution).",
+    "existing_charges": "Positive per-artifact deltas charged to the 17 Hyperdynamics accounts under subsequent_charges; the largest is the taylor_flow bench at +440 file, +160 .text, +164 named text bytes. The reachability-only account builds without flow-noise, so the changed module is not compiled there.",
+    "new_artifacts": {
+      "examples/flow_noise_evolution.rs": {
+        "file": 4157120,
+        "text": 2099674,
+        "named_text": 2079533
+      },
+      "benches/flow_noise_evolution.rs": {
+        "file": 7233624,
+        "text": 3888600,
+        "named_text": 3845202
+      },
+      "note": "New development artifacts with no earlier baseline; these first measurements are their baselines for later charges. Not deployed."
+    },
+    "result": "Every incremental and cumulative cap passes.",
+    "evidence": "docs/evidence/2026-11-22-interval-flow-noise-acceptance"
   }
 }
