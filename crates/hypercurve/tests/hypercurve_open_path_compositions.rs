@@ -1501,7 +1501,10 @@ fn cancellation_stops_the_stalled_filleted_hyperbola_bevel_stroke() {
         "cancellation latency {:?}",
         finished.saturating_duration_since(cancelled)
     );
-    assert_eq!(result.unwrap_err().kind, hypercurve::WorkKind::Cancellation);
+    assert_eq!(
+        result.unwrap_err().kind(),
+        hypercurve::WorkKind::Cancellation
+    );
 }
 
 /// A coefficient bit limit stops the same stalled stroke deterministically:
@@ -1535,9 +1538,9 @@ fn coefficient_bit_limit_stops_the_stalled_filleted_hyperbola_bevel_stroke() {
         })
     });
     let exceeded = outcome.result.unwrap_err();
-    assert_eq!(exceeded.kind, hypercurve::WorkKind::CoefficientGrowth);
-    assert_eq!(exceeded.limit, 1024);
-    assert!(exceeded.requested > 1024);
+    assert_eq!(exceeded.kind(), hypercurve::WorkKind::CoefficientGrowth);
+    assert_eq!(exceeded.limit(), 1024);
+    assert!(exceeded.requested() > 1024);
 }
 
 /// Replays both generated NURBS trims, including a reversed source chart,

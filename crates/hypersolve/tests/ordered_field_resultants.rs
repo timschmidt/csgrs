@@ -326,7 +326,7 @@ fn perturbation_does_not_publish_after_cancellation_in_the_final_coefficient_sca
             declined = matches!(result, Err(Error::BudgetExhausted));
             result
         });
-        assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
         assert!(
             declined,
             "the inner API must decline before publishing a completed polynomial"

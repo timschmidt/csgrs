@@ -245,7 +245,7 @@ pub fn rational_image_limits_and_budget_recovery() {
         },
     );
     assert_eq!(
-        denied.result.unwrap_err().kind,
+        denied.result.unwrap_err().kind(),
         work_budget::WorkKind::AlgebraicPromotion
     );
     let retry = work_budget::with_budget(

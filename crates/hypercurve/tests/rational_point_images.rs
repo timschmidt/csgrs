@@ -318,8 +318,8 @@ fn native_scalar_point_image_does_not_publish_after_reached_exhaustion() {
         );
     });
     let reached = attempt.result.unwrap_err();
-    assert_eq!((reached.limit, reached.used), (0, 0));
-    assert!(reached.requested > 0);
+    assert_eq!((reached.limit(), reached.used()), (0, 0));
+    assert!(reached.requested() > 0);
 }
 
 #[test]
@@ -329,8 +329,8 @@ fn native_scalar_point_images_retry_after_actual_exhaustion() {
         let (source, expected) = source_and_independent_circle_point();
         let denied = with_budget(WorkBudget::ZERO, || source.rational_image(&circle_map()));
         let reached = denied.result.unwrap_err();
-        assert_eq!((reached.limit, reached.used), (0, 0));
-        assert!(reached.requested > 0);
+        assert_eq!((reached.limit(), reached.used()), (0, 0));
+        assert!(reached.requested() > 0);
         let retry = with_budget(
             WorkBudget {
                 refinements: 4096,

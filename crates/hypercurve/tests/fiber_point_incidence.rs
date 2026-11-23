@@ -433,8 +433,8 @@ fn correlated_circle_queries_retry_after_counted_exhaustion_without_policy_upgra
         let denied =
             hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, query);
         let reached = denied.result.unwrap_err();
-        assert_eq!((reached.limit, reached.used), (0, 0));
-        assert!(reached.requested > 0);
+        assert_eq!((reached.limit(), reached.used()), (0, 0));
+        assert!(reached.requested() > 0);
         let retry = hypersolve::work_budget::with_budget(
             hypersolve::work_budget::WorkBudget {
                 refinements: 512,
@@ -805,8 +805,8 @@ fn selected_circle_point_queries_retry_without_promoting_requested_policy() {
         let denied =
             hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, query);
         let reached = denied.result.unwrap_err();
-        assert_eq!((reached.limit, reached.used), (0, 0));
-        assert!(reached.requested > 0);
+        assert_eq!((reached.limit(), reached.used()), (0, 0));
+        assert!(reached.requested() > 0);
         let retry = hypersolve::work_budget::with_budget(
             hypersolve::work_budget::WorkBudget {
                 refinements: 4096,
@@ -1111,8 +1111,8 @@ fn selected_circle_derivatives_retry_and_keep_requested_policy_certainty() {
         let denied =
             hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, chain);
         let reached = denied.result.unwrap_err();
-        assert_eq!((reached.limit, reached.used), (0, 0));
-        assert!(reached.requested > 0);
+        assert_eq!((reached.limit(), reached.used()), (0, 0));
+        assert!(reached.requested() > 0);
         let retry = hypersolve::work_budget::with_budget(
             hypersolve::work_budget::WorkBudget {
                 refinements: 4096,
@@ -1282,8 +1282,8 @@ fn retained_point_bounds_retry_after_actual_exhaustion_without_cached_failure() 
                 result
             });
         let reached = denied.result.unwrap_err();
-        assert_eq!((reached.limit, reached.used), (0, 0));
-        assert!(reached.requested > 0);
+        assert_eq!((reached.limit(), reached.used()), (0, 0));
+        assert!(reached.requested() > 0);
         let retry = hypersolve::work_budget::with_budget(
             hypersolve::work_budget::WorkBudget {
                 refinements: 4096,
@@ -2185,8 +2185,8 @@ fn selected_circle_one_incident_contacts_retry_and_preserve_policy_receipts() {
         let denied =
             hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, query);
         let reached = denied.result.unwrap_err();
-        assert_eq!((reached.limit, reached.used), (0, 0));
-        assert!(reached.requested > 0);
+        assert_eq!((reached.limit(), reached.used()), (0, 0));
+        assert!(reached.requested() > 0);
         let retry = hypersolve::work_budget::with_budget(
             hypersolve::work_budget::WorkBudget {
                 refinements: 4096,
@@ -2569,8 +2569,8 @@ fn selected_circle_shared_center_contacts_retry_and_keep_certainty() {
         match small.result {
             Ok(result) => verify(result.unwrap()),
             Err(reached) => {
-                assert_eq!((reached.limit, reached.used), (0, 0));
-                assert!(reached.requested > 0);
+                assert_eq!((reached.limit(), reached.used()), (0, 0));
+                assert!(reached.requested() > 0);
             }
         }
         let retry = hypersolve::work_budget::with_budget(

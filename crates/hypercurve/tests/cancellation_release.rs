@@ -111,7 +111,7 @@ fn cancelled_attempt(running_for: Duration) -> (isize, isize, isize) {
     let running = LIVE_BYTES.load(Ordering::Relaxed) - baseline;
     token.cancel();
     let result = worker.join().unwrap();
-    assert_eq!(result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(result.unwrap_err().kind(), WorkKind::Cancellation);
     let peak = PEAK_BYTES.load(Ordering::Relaxed) - baseline;
     let retained = LIVE_BYTES.load(Ordering::Relaxed) - baseline;
     (running, peak, retained)

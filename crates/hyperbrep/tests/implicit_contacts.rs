@@ -548,6 +548,6 @@ fn zero_budget_exhausts_and_a_later_retry_succeeds() {
     let curve = line(pi(-5, 1, 0), pi(5, 1, 0));
     let denied =
         OperationContext::strict(WorkBudget::ZERO).evaluate(|| torus(3, 1).intersect_curve(&curve));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     assert_eq!(contacts(&torus(3, 1), &curve).len(), 4);
 }

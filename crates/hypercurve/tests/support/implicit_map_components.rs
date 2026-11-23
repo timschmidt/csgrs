@@ -297,8 +297,8 @@ fn implicit_shared_section_budgets_cancellation_and_retry_keep_empty_success_dis
                 source.rational_image_point_locations(&map, &query)
             });
         let exhausted = refused.result.unwrap_err();
-        assert_eq!(exhausted.limit, 0);
-        assert!(exhausted.requested > 0);
+        assert_eq!(exhausted.limit(), 0);
+        assert!(exhausted.requested() > 0);
         let token = hypercurve::CancellationToken::new();
         token.cancel();
         let cancelled = hypercurve::evaluate_with_cancellable_budget(
@@ -308,7 +308,7 @@ fn implicit_shared_section_budgets_cancellation_and_retry_keep_empty_success_dis
             || source.rational_image_point_locations(&map, &query),
         );
         assert_eq!(
-            cancelled.result.unwrap_err().kind,
+            cancelled.result.unwrap_err().kind(),
             hypercurve::WorkKind::Cancellation
         );
         let retry = hypercurve::evaluate_with_budget(
@@ -677,8 +677,8 @@ fn implicit_constant_guard_census_admits_degree_nine_and_recovers_from_budgets()
                 source.rational_image_point_locations(&map, &query)
             });
         let exhausted = refused.result.unwrap_err();
-        assert_eq!(exhausted.limit, 0);
-        assert!(exhausted.requested > 0);
+        assert_eq!(exhausted.limit(), 0);
+        assert!(exhausted.requested() > 0);
         let retry = hypercurve::evaluate_with_budget(
             policy,
             hypercurve::WorkBudget {

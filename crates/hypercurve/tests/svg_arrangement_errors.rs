@@ -22,9 +22,9 @@ fn svg_region_arrangement_preserves_typed_exhaustion_and_retry() {
             },
         );
         let reached = denied.result.unwrap_err();
-        assert_eq!(reached.limit, limit);
-        assert_eq!(reached.used, limit);
-        assert!(reached.requested > 0);
+        assert_eq!(reached.limit(), u64::try_from(limit).unwrap());
+        assert_eq!(reached.used(), u64::try_from(limit).unwrap());
+        assert!(reached.requested() > 0);
     }
     let retry = with_budget(
         WorkBudget {

@@ -480,9 +480,9 @@ fn selected_inverse_budget_refusal_does_not_poison_a_larger_retry() {
         let denied =
             evaluate_with_budget(policy, WorkBudget::ZERO, || target.point_locations(&query));
         let exhausted = denied.result.unwrap_err();
-        assert_eq!(exhausted.limit, 0);
-        assert_eq!(exhausted.used, 0);
-        assert!(exhausted.requested > 0);
+        assert_eq!(exhausted.limit(), 0);
+        assert_eq!(exhausted.used(), 0);
+        assert!(exhausted.requested() > 0);
         let retry = evaluate_with_budget(
             policy,
             WorkBudget {

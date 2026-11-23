@@ -241,9 +241,9 @@ fn native_component_queries_share_actual_solver_budget_and_retry() {
     // The fixture's endpoint/constant proofs may require no solver work. A zero
     // allowance alone does not justify reporting exhaustion.
     if let Err(ref error) = low.result {
-        assert_eq!(error.limit, 0);
-        assert_eq!(error.used, 0);
-        assert!(error.requested > 0);
+        assert_eq!(error.limit(), 0);
+        assert_eq!(error.used(), 0);
+        assert!(error.requested() > 0);
     }
     if let Ok(ref result) = low.result {
         assert!(matches!(

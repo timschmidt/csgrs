@@ -474,7 +474,7 @@ pub fn coaxial_procedural_certainty_budget_and_axis_rejection() {
     let tool = radial_band(4.into(), 6.into());
     let denied = OperationContext::strict(WorkBudget::ZERO)
         .evaluate(|| boolean::intersection(&original, &tool));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
         hypercurve::PredicatePolicy::APPROXIMATE_512,

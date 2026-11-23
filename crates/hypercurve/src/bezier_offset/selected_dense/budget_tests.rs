@@ -53,7 +53,7 @@ fn dense_projection_charges_only_needed_selected_axis_resultants_and_retries_exa
                     },
                 );
                 assert_eq!(
-                    denied.result.unwrap_err().kind,
+                    denied.result.unwrap_err().kind(),
                     WorkKind::AlgebraicPromotion
                 );
                 assert_eq!(denied.usage.promotions, promotions);
@@ -104,7 +104,7 @@ fn bivariate_projection_adapter_preserves_budget_failure_through_degree_continua
             ));
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         let retry = evaluate_with_budget(

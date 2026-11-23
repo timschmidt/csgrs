@@ -1042,8 +1042,8 @@ pub fn mapped_sections_survive_budget_retry_and_policy_changes() {
             if blocker.reason() == UncertaintyReason::BudgetExhausted));
     });
     let reached = denied.result.unwrap_err();
-    assert_eq!((reached.limit, reached.used), (0, 0));
-    assert!(reached.requested > 0);
+    assert_eq!((reached.limit(), reached.used()), (0, 0));
+    assert!(reached.requested() > 0);
     let recovered = work_budget::with_budget(
         work_budget::WorkBudget {
             refinements: 100_000,

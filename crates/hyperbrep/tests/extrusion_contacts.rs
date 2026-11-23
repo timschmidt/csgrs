@@ -310,6 +310,6 @@ fn unsupported_families_remain_typed_and_budgets_recover() {
     let curve = line(pi(0, 0, -1), pi(6, 8, 1));
     let denied =
         OperationContext::strict(WorkBudget::ZERO).evaluate(|| arc_wall(5).intersect_curve(&curve));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     assert_eq!(contacts(&arc_wall(5), &curve).len(), 1);
 }

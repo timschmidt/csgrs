@@ -47,12 +47,13 @@ fn overlapping_simple_and_even_roots_retry_under_a_larger_budget() {
                 );
                 assert_eq!(
                     exhausted.result.unwrap_err(),
-                    BudgetExceeded {
-                        kind: WorkKind::RootRefinement,
-                        limit,
-                        used: limit,
-                        requested: 1,
-                    }
+                    BudgetExceeded::new(
+                        WorkKind::RootRefinement,
+                        u64::try_from(limit).unwrap(),
+                        u64::try_from(limit).unwrap(),
+                        1
+                    )
+                    .unwrap()
                 );
                 assert_eq!(exhausted.usage.refinements, limit);
                 assert_eq!(exhausted.usage.promotions, 0);
@@ -122,7 +123,7 @@ fn rational_curve_intersections_retry_after_denied_elimination() {
         },
     );
     assert_eq!(
-        denied.result.unwrap_err().kind,
+        denied.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(denied.usage.promotions, 0);
@@ -168,7 +169,7 @@ fn polynomial_isolation_shares_a_total_subdivision_budget() {
             },
             || polynomial.isolate_unit_interval_roots(),
         );
-        assert_eq!(failed.result.unwrap_err().kind, WorkKind::RootRefinement);
+        assert_eq!(failed.result.unwrap_err().kind(), WorkKind::RootRefinement);
         assert_eq!(failed.usage.refinements, limit);
     }
     let complete = evaluate_with_budget(
@@ -228,7 +229,7 @@ fn cancelled_intersections_publish_nothing_and_retry_with_a_new_token() {
             }
         },
     );
-    assert_eq!(denied.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(denied.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(denied.usage, WorkUsage::default());
     // A cancelled attempt leaves no cached blocker on these curves.
     let retry = evaluate_with_cancellable_budget(
@@ -275,7 +276,7 @@ fn concurrent_cancellation_never_publishes_a_partial_intersection() {
         let outcome = worker.join().unwrap();
         match outcome.result {
             Err(exceeded) => {
-                assert_eq!(exceeded.kind, WorkKind::Cancellation);
+                assert_eq!(exceeded.kind(), WorkKind::Cancellation);
                 outcomes[0] += 1;
             }
             Ok(provisional) => {
@@ -304,7 +305,7 @@ fn cancellation_at_publication_cannot_escape_as_a_provisional_value() {
                 token.cancel();
                 Arc::clone(&retained)
             });
-        assert_eq!(cancelled.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(cancelled.result.unwrap_err().kind(), WorkKind::Cancellation);
         assert_eq!(cancelled.usage, WorkUsage::default());
         assert_eq!(Arc::strong_count(&retained), 1);
         assert!(!hypersolve::work_budget::is_active());

@@ -2405,7 +2405,10 @@ mod tests {
         let denied = with_coefficient_bit_limit(64, || {
             assert_eq!(determinant_integer_polynomial_matrix(&entries, 2), None);
         });
-        assert_eq!(denied.result.unwrap_err().kind, WorkKind::CoefficientGrowth);
+        assert_eq!(
+            denied.result.unwrap_err().kind(),
+            WorkKind::CoefficientGrowth
+        );
         let allowed =
             with_coefficient_bit_limit(128, || determinant_integer_polynomial_matrix(&entries, 2));
         assert_eq!(allowed.result.unwrap(), Some(expected));
@@ -2440,13 +2443,16 @@ mod tests {
         let cancelled = with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
             assert_eq!(determinant_integer_polynomial_matrix(&entries, 3), None);
         });
-        assert_eq!(cancelled.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(cancelled.result.unwrap_err().kind(), WorkKind::Cancellation);
         // An exhausted scope stops too, before charging any new unit.
         let exhausted = with_budget(WorkBudget::ZERO, || {
             assert!(crate::work_budget::consume(WorkKind::RootRefinement, 1).is_err());
             assert_eq!(determinant_integer_polynomial_matrix(&entries, 3), None);
         });
-        assert_eq!(exhausted.result.unwrap_err().kind, WorkKind::RootRefinement);
+        assert_eq!(
+            exhausted.result.unwrap_err().kind(),
+            WorkKind::RootRefinement
+        );
         let fresh =
             with_cancellable_budget(WorkBudget::UNLIMITED, &CancellationToken::new(), || {
                 determinant_integer_polynomial_matrix(&entries, 3)

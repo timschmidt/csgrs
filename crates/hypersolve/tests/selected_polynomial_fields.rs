@@ -285,7 +285,7 @@ fn selection_budget_refusal_does_not_poison_retry_or_permit_approximation() {
     let run = || q.select(coefficients(&q, &[-2, 0, 0, 1]), real(1), real(2), &policy);
     let refused = with_budget(WorkBudget::ZERO, run);
     assert_eq!(
-        refused.result.unwrap_err().kind,
+        refused.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(refused.usage.promotions, 0);

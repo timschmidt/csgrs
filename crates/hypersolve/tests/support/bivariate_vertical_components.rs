@@ -293,12 +293,13 @@ pub fn vertical_limits_invalid_inputs_and_budget_retry_remain_explicit() {
             Default::default()
         ))
         .result,
-        Err(hypersolve::work_budget::BudgetExceeded {
-            kind: hypersolve::work_budget::WorkKind::AlgebraicPromotion,
-            limit: 0,
-            used: 0,
-            requested: 1
-        })
+        Err(hypersolve::work_budget::BudgetExceeded::new(
+            hypersolve::work_budget::WorkKind::AlgebraicPromotion,
+            0,
+            0,
+            1
+        )
+        .unwrap())
     );
     assert!(
         with_budget(

@@ -597,7 +597,7 @@ pub fn planar_image_limits_and_typed_frontiers_recover() {
         .evaluate(|| builder::extrude_curve_region(&region, 0.into(), 3.into()));
     match budget.result {
         Ok(result) => check_cap(result.unwrap().model(), None),
-        Err(error) => assert_eq!(error.limit, 0),
+        Err(error) => assert_eq!(error.limit(), 0),
     }
     let bodies = builder::extrude_curve_region(&region, 0.into(), 3.into()).unwrap();
     assert!(matches!(

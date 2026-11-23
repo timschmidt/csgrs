@@ -608,7 +608,7 @@ pub fn resource_domain_guards_and_policy_recovery() {
     let curve = sections[0].curve();
     let denied = OperationContext::strict(WorkBudget::ZERO)
         .evaluate(|| curve.derivative_at(&q(3, 5).into(), 2));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
         hypercurve::PredicatePolicy::APPROXIMATE_512,

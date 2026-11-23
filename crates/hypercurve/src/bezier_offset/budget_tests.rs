@@ -67,7 +67,7 @@ fn selected_pair_subresultant_budget_preserves_even_contact_after_selected_degre
                 },
             );
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             assert_eq!(denied.usage.promotions, promotions);
@@ -135,7 +135,7 @@ fn selected_trivariate_projection_propagates_norm_budget_without_tensor_fallback
             },
         );
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         let retry = evaluate_with_budget(

@@ -278,7 +278,7 @@ fn join_budget_refusal_retries_and_ancestor_join_reuses_authority() {
     });
     assert_eq!(refused.usage.promotions, 0);
     assert_eq!(
-        refused.result.unwrap_err().kind,
+        refused.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     let retried = with_budget(

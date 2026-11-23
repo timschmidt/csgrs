@@ -266,7 +266,7 @@ pub fn pcurve_maps_check_domains_and_recover_after_exhaustion() {
             .unwrap()
             .validate()
     });
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     let cold = RawModel::from_json(&json, &ArchiveLimits::default())
         .unwrap()
         .validate()

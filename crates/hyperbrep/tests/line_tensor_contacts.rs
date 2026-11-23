@@ -253,6 +253,6 @@ fn coplanar_tensors_and_budgets_remain_typed() {
     );
     let denied = OperationContext::strict(WorkBudget::ZERO)
         .evaluate(|| paraboloid().intersect_curve(&curve));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     assert_eq!(contacts(&paraboloid(), &curve).len(), 1);
 }

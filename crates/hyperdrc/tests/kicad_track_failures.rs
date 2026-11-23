@@ -357,9 +357,9 @@ fn exhausted_source_load_cannot_escape_as_a_board_and_later_load_recovers() {
     let TrackLoadFailure::BudgetExceeded(budget) = track.failure else {
         panic!("{track:?}")
     };
-    assert_eq!(budget.limit, 0);
-    assert_eq!(budget.used, 0);
-    assert_eq!(budget.requested, 1);
+    assert_eq!(budget.limit(), 0);
+    assert_eq!(budget.used(), 0);
+    assert_eq!(budget.requested(), 1);
     assert!(std::error::Error::source(track).is_some());
     let retried = board("(start 10 20) (end 12 20) (width 2)").unwrap();
     assert_eq!(

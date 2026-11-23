@@ -563,7 +563,7 @@ pub fn selected_planar_policies_and_work_exhaustion_recover() {
     let source = root_source(1);
     let denied = OperationContext::strict(WorkBudget::ZERO)
         .evaluate(|| source.parameters_of(Point3::origin()));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     source.parameters_of(Point3::origin()).unwrap();
     let curve = frame(parallel(0, 1));
     let parameter = root(1);
@@ -588,7 +588,7 @@ pub fn selected_planar_policies_and_work_exhaustion_recover() {
     });
     match zero.result {
         Ok(result) => assert_eq!(result.unwrap(), Ordering::Greater),
-        Err(error) => assert_eq!(error.limit, 0),
+        Err(error) => assert_eq!(error.limit(), 0),
     }
     assert_eq!(
         point

@@ -38,7 +38,7 @@ fn quotient_norm_exhaustion_is_typed_and_both_axes_retry_exactly() {
                     assert!(report.coefficients.is_empty());
                 });
                 assert_eq!(
-                    denied.result.unwrap_err().kind,
+                    denied.result.unwrap_err().kind(),
                     WorkKind::AlgebraicPromotion
                 );
                 assert_eq!(denied.usage.promotions, 0);
@@ -104,7 +104,7 @@ fn saturated_local_and_global_images_preserve_all_evidence_after_budget_retry() 
                 assert!(report.identically_zero_fiber_factor.is_none());
             });
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             assert_eq!(denied.usage.promotions, 0);
@@ -174,7 +174,7 @@ fn degenerate_fiber_images_need_no_norm_but_cannot_escape_an_exhausted_scope() {
                     assert!(report.retained_relation.is_none());
                 });
                 assert_eq!(
-                    denied.result.unwrap_err().kind,
+                    denied.result.unwrap_err().kind(),
                     WorkKind::AlgebraicPromotion
                 );
             }
@@ -222,7 +222,7 @@ fn tagged_projection_shares_its_budget_with_the_final_quotient_norm() {
                     assert!(report.coefficients.is_empty());
                 });
                 assert_eq!(
-                    denied.result.unwrap_err().kind,
+                    denied.result.unwrap_err().kind(),
                     WorkKind::AlgebraicPromotion
                 );
                 assert_eq!(denied.usage.promotions, promotions);

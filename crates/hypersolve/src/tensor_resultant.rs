@@ -1521,7 +1521,7 @@ mod tests {
         ] {
             let outcome = with_coefficient_bit_limit(64, || left.multiply(right));
             assert_eq!(
-                outcome.result.unwrap_err().kind,
+                outcome.result.unwrap_err().kind(),
                 WorkKind::CoefficientGrowth
             );
             let wide = with_coefficient_bit_limit(128, || left.multiply(right));

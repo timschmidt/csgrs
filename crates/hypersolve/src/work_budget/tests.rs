@@ -48,12 +48,7 @@ fn work_is_shared_across_kinds_and_nested_scopes() {
 
 #[test]
 fn ignored_failure_cannot_publish_success_or_replenish_a_parent() {
-    let expected = BudgetExceeded {
-        kind: WorkKind::RootRefinement,
-        limit: 1,
-        used: 1,
-        requested: 1,
-    };
+    let expected = BudgetExceeded::new(WorkKind::RootRefinement, 1, 1, 1).unwrap();
     let outcome = with_budget(
         WorkBudget {
             refinements: 1,
@@ -207,11 +202,11 @@ fn native_root_refinements_share_the_outer_operation_budget() {
                     report
                 },
             );
-            assert_eq!(second.result.unwrap_err().used, 3);
+            assert_eq!(second.result.unwrap_err().used(), 3);
             assert_eq!(second.usage.refinements, 1);
         },
     );
-    assert_eq!(short.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(short.result.unwrap_err().kind(), WorkKind::RootRefinement);
     assert_eq!(short.usage.refinements, 3);
     let retry = with_budget(
         WorkBudget {
@@ -238,22 +233,17 @@ fn cancelled_token_denies_work_and_publishes_no_value() {
     let outcome = with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
         assert_eq!(
             consume(WorkKind::RootRefinement, 3),
-            Err(BudgetExceeded {
-                kind: WorkKind::Cancellation,
-                limit: 0,
-                used: 0,
-                requested: 3,
-            })
+            Err(BudgetExceeded::new(WorkKind::Cancellation, 0, 0, 3).unwrap())
         );
         // Every later request, of either kind, observes the same failure.
         assert_eq!(
-            consume(WorkKind::AlgebraicPromotion, 1).unwrap_err().kind,
+            consume(WorkKind::AlgebraicPromotion, 1).unwrap_err().kind(),
             WorkKind::Cancellation
         );
-        assert_eq!(exhaustion().unwrap().kind, WorkKind::Cancellation);
+        assert_eq!(exhaustion().unwrap().kind(), WorkKind::Cancellation);
         true
     });
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(outcome.usage, WorkUsage::default());
     assert!(!is_active());
     assert_eq!(
@@ -276,14 +266,14 @@ fn cancellation_during_an_operation_stops_its_next_check() {
             assert_eq!(exhaustion(), None);
             token.cancel();
             // A caller that only polls exhaustion still stops.
-            assert_eq!(exhaustion().unwrap().kind, WorkKind::Cancellation);
+            assert_eq!(exhaustion().unwrap().kind(), WorkKind::Cancellation);
             assert_eq!(
-                consume(WorkKind::AlgebraicPromotion, 1).unwrap_err().kind,
+                consume(WorkKind::AlgebraicPromotion, 1).unwrap_err().kind(),
                 WorkKind::Cancellation
             );
         },
     );
-    assert_eq!(outcome.result.unwrap_err().requested, 0);
+    assert_eq!(outcome.result.unwrap_err().requested(), 0);
     assert_eq!(
         outcome.usage,
         WorkUsage {
@@ -303,7 +293,7 @@ fn outer_cancellation_stops_nested_scopes_but_inner_cancellation_does_not_poison
             inner_token.cancel();
             consume(WorkKind::RootRefinement, 1)
         });
-        assert_eq!(inner.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(inner.result.unwrap_err().kind(), WorkKind::Cancellation);
         assert_eq!(inner.usage.refinements, 1);
         // The parent keeps working and its usage includes the nested unit.
         assert_eq!(exhaustion(), None);
@@ -314,10 +304,10 @@ fn outer_cancellation_stops_nested_scopes_but_inner_cancellation_does_not_poison
             outer.cancel();
             consume(WorkKind::RootRefinement, 1)
         });
-        assert_eq!(nested.result.unwrap_err().kind, WorkKind::Cancellation);
-        assert_eq!(exhaustion().unwrap().kind, WorkKind::Cancellation);
+        assert_eq!(nested.result.unwrap_err().kind(), WorkKind::Cancellation);
+        assert_eq!(exhaustion().unwrap().kind(), WorkKind::Cancellation);
     });
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(outcome.usage.refinements, 3);
     assert!(!is_active());
 }
@@ -349,7 +339,7 @@ fn cancellation_from_another_thread_reaches_a_running_operation() {
     token.cancel();
     cancelled.wait();
     let outcome = worker.join().unwrap();
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(outcome.usage.refinements, 1);
     // The caller's thread never entered a scope.
     assert!(!is_active());
@@ -387,7 +377,7 @@ fn cancelled_root_refinement_retries_with_a_new_token() {
     let cancelled = CancellationToken::new();
     cancelled.cancel();
     let denied = with_cancellable_budget(WorkBudget::UNLIMITED, &cancelled, refine);
-    assert_eq!(denied.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(denied.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(denied.usage, WorkUsage::default());
 
     let fresh = CancellationToken::new();
@@ -405,21 +395,16 @@ fn coefficient_bit_limit_denies_larger_coefficients_only() {
         consume(WorkKind::RootRefinement, 5).unwrap();
         assert_eq!(
             observe_coefficient_bits(65),
-            Err(BudgetExceeded {
-                kind: WorkKind::CoefficientGrowth,
-                limit: 64,
-                used: 0,
-                requested: 65,
-            })
+            Err(BudgetExceeded::new(WorkKind::CoefficientGrowth, 64, 0, 65).unwrap())
         );
         // Later work in the exhausted scope also fails.
         assert_eq!(
-            consume(WorkKind::RootRefinement, 1).unwrap_err().kind,
+            consume(WorkKind::RootRefinement, 1).unwrap_err().kind(),
             WorkKind::CoefficientGrowth
         );
     });
     assert_eq!(
-        outcome.result.unwrap_err().kind,
+        outcome.result.unwrap_err().kind(),
         WorkKind::CoefficientGrowth
     );
     assert_eq!(outcome.usage.refinements, 5);
@@ -442,15 +427,18 @@ fn coefficient_bit_limits_nest_like_budgets() {
     let outcome = with_coefficient_bit_limit(100, || {
         // A tighter nested limit fails alone.
         let inner = with_coefficient_bit_limit(10, || observe_coefficient_bits(50));
-        assert_eq!(inner.result.unwrap_err().kind, WorkKind::CoefficientGrowth);
+        assert_eq!(
+            inner.result.unwrap_err().kind(),
+            WorkKind::CoefficientGrowth
+        );
         assert_eq!(exhaustion(), None);
         observe_coefficient_bits(50).unwrap();
         // The enclosing limit applies inside an ordinary nested budget.
         let nested = with_budget(WorkBudget::UNLIMITED, || observe_coefficient_bits(101));
-        assert_eq!(nested.result.unwrap_err().limit, 100);
-        assert_eq!(exhaustion().unwrap().kind, WorkKind::CoefficientGrowth);
+        assert_eq!(nested.result.unwrap_err().limit(), 100);
+        assert_eq!(exhaustion().unwrap().kind(), WorkKind::CoefficientGrowth);
     });
-    assert_eq!(outcome.result.unwrap_err().limit, 100);
+    assert_eq!(outcome.result.unwrap_err().limit(), 100);
     assert!(!is_active());
 }
 
@@ -464,12 +452,7 @@ fn cancellation_publication_drops_unpolled_result_and_allows_fresh_retry() {
     });
     assert_eq!(
         outcome.result.unwrap_err(),
-        BudgetExceeded {
-            kind: WorkKind::Cancellation,
-            limit: 0,
-            used: 0,
-            requested: 0,
-        }
+        BudgetExceeded::new(WorkKind::Cancellation, 0, 0, 0).unwrap()
     );
     assert_eq!(outcome.usage, WorkUsage::default());
     assert_eq!(std::sync::Arc::strong_count(&retained), 1);
@@ -501,7 +484,7 @@ fn cancellation_publication_observes_precancelled_token_after_callback() {
         invoked.get(),
         "the boundary check does not preempt the callback"
     );
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(outcome.usage, WorkUsage::default());
     assert!(!is_active());
 }
@@ -527,7 +510,7 @@ fn cancellation_publication_observes_cross_thread_request() {
         finish.wait();
         worker.join().unwrap()
     });
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(outcome.usage, WorkUsage::default());
     assert_eq!(Arc::strong_count(&retained), 1);
     assert!(!is_active());
@@ -542,11 +525,11 @@ fn cancellation_publication_propagates_unpolled_parent_request() {
             parent.cancel();
             13
         });
-        assert_eq!(inner.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(inner.result.unwrap_err().kind(), WorkKind::Cancellation);
         assert_eq!(inner.usage, WorkUsage::default());
         37
     });
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert_eq!(outcome.usage, WorkUsage::default());
     assert!(!is_active());
 }
@@ -565,7 +548,7 @@ fn cancellation_publication_keeps_inner_request_local() {
                 child.cancel();
                 13
             });
-            assert_eq!(inner.result.unwrap_err().kind, WorkKind::Cancellation);
+            assert_eq!(inner.result.unwrap_err().kind(), WorkKind::Cancellation);
             assert_eq!(exhaustion(), None);
             consume(WorkKind::RootRefinement, 1).unwrap();
             37
@@ -580,12 +563,7 @@ fn cancellation_publication_keeps_inner_request_local() {
 #[test]
 fn cancellation_publication_preserves_first_failure() {
     let token = CancellationToken::new();
-    let expected = BudgetExceeded {
-        kind: WorkKind::RootRefinement,
-        limit: 0,
-        used: 0,
-        requested: 1,
-    };
+    let expected = BudgetExceeded::new(WorkKind::RootRefinement, 0, 0, 1).unwrap();
     let outcome = with_cancellable_budget(WorkBudget::ZERO, &token, || {
         assert_eq!(consume(WorkKind::RootRefinement, 1), Err(expected));
         token.cancel();
@@ -667,12 +645,7 @@ fn cancellation_publication_drops_result_after_restoring_parent() {
             );
             assert_eq!(
                 inner.result.err(),
-                Some(BudgetExceeded {
-                    kind: WorkKind::Cancellation,
-                    limit: 0,
-                    used: 0,
-                    requested: 0,
-                })
+                Some(BudgetExceeded::new(WorkKind::Cancellation, 0, 0, 0).unwrap())
             );
             assert_eq!(inner.usage, WorkUsage::default());
             let fresh = CancellationToken::new();

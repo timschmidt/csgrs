@@ -360,12 +360,8 @@ fn boundary_components_preserve_budget_failure_and_retry() {
     });
     assert_eq!(
         denied.result.unwrap_err(),
-        work_budget::BudgetExceeded {
-            kind: work_budget::WorkKind::AlgebraicPromotion,
-            limit: 0,
-            used: 0,
-            requested: 1
-        }
+        work_budget::BudgetExceeded::new(work_budget::WorkKind::AlgebraicPromotion, 0, 0, 1)
+            .unwrap()
     );
     assert_eq!(denied.usage, work_budget::WorkUsage::default());
     let recovered = work_budget::with_budget(

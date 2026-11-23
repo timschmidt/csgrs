@@ -383,17 +383,17 @@ fn admission_exhaustion_and_cancellation_do_not_poison_retry() {
         );
     });
     let error = denied.result.unwrap_err();
-    assert_eq!(error.kind, WorkKind::AlgebraicPromotion);
-    assert_eq!(error.limit, 0);
-    assert_eq!(error.used, 0);
-    assert_eq!(error.requested, 1);
+    assert_eq!(error.kind(), WorkKind::AlgebraicPromotion);
+    assert_eq!(error.limit(), 0);
+    assert_eq!(error.used(), 0);
+    assert_eq!(error.requested(), 1);
     let cancellation = CancellationToken::new();
     cancellation.cancel();
     let cancelled =
         work_budget::with_cancellable_budget(WorkBudget::UNLIMITED, &cancellation, || {
             assert!(admit().is_err())
         });
-    assert_eq!(cancelled.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(cancelled.result.unwrap_err().kind(), WorkKind::Cancellation);
     let retry = admit().unwrap();
     assert_eq!(retry.curves().len(), 1);
     assert!(retry.isolated_points().is_empty());

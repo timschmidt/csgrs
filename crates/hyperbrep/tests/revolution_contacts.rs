@@ -281,7 +281,7 @@ fn unsupported_families_remain_typed_and_budgets_recover() {
     let curve = line(pi(-2, 0, 1), pi(2, 0, 1));
     let denied =
         OperationContext::strict(WorkBudget::ZERO).evaluate(|| wall().intersect_curve(&curve));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     assert_eq!(contacts(&wall(), &curve).len(), 2);
 }
 

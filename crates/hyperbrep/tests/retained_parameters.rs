@@ -182,7 +182,7 @@ fn retained_inverse_queries_retry_after_a_denied_refinement() {
     .unwrap();
     let denied = OperationContext::strict(WorkBudget::ZERO)
         .evaluate(|| curve.parameters_of(Point3::origin()));
-    assert_eq!(denied.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(denied.result.unwrap_err().kind(), WorkKind::RootRefinement);
     let retry = OperationContext::strict(WorkBudget {
         refinements: 512,
         promotions: 0,

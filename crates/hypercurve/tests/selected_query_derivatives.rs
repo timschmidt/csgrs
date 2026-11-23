@@ -405,10 +405,10 @@ fn selected_query_jets_validate_domains_and_retry_budgets() {
     );
     let exhausted = refused.result.unwrap_err();
     assert_eq!(
-        exhausted.kind,
+        exhausted.kind(),
         hypersolve::work_budget::WorkKind::RootRefinement
     );
-    assert_eq!(exhausted.limit, 0);
+    assert_eq!(exhausted.limit(), 0);
     let point = joint();
     let half = constant(&point, 1)
         .scaled(&q(1, 2))
@@ -471,8 +471,8 @@ fn selected_query_derivative_replay_budget_does_not_poison_retry() {
             },
         );
         let exhausted = refused.result.unwrap_err();
-        assert_eq!(exhausted.kind, WorkKind::AlgebraicPromotion);
-        assert_eq!(exhausted.limit, 0);
+        assert_eq!(exhausted.kind(), WorkKind::AlgebraicPromotion);
+        assert_eq!(exhausted.limit(), 0);
         let complete = with_budget(
             WorkBudget {
                 refinements: 4096,

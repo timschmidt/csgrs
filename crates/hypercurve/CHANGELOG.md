@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- **Breaking:** the re-exported `BudgetExceeded` receipt has private fields
+  and exact `u64` accessors. See Hypersolve's changelog and
+  [the migration note](../../docs/MIGRATIONS.md).
+
 - Add optional prepared rational Bézier coordinate and tangent ranges through
   the shared dyadic expression evaluator. Retain native source, local domain,
   derivative association and full-domain regularity evidence across repeated

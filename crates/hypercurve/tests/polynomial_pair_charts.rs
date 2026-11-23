@@ -797,9 +797,9 @@ fn separate_chart_resource_denial_cancellation_and_policy_retry() {
     let zero =
         work_budget::with_budget(WorkBudget::ZERO, || assert!(a.intersect_curve(&b).is_err()));
     let exhausted = zero.result.unwrap_err();
-    assert_eq!(exhausted.kind, WorkKind::AlgebraicPromotion);
+    assert_eq!(exhausted.kind(), WorkKind::AlgebraicPromotion);
     assert_eq!(
-        (exhausted.limit, exhausted.used, exhausted.requested),
+        (exhausted.limit(), exhausted.used(), exhausted.requested()),
         (0, 0, 1)
     );
     let cancel = CancellationToken::new();
@@ -807,7 +807,7 @@ fn separate_chart_resource_denial_cancellation_and_policy_retry() {
     let cancelled = work_budget::with_cancellable_budget(WorkBudget::UNLIMITED, &cancel, || {
         assert!(a.intersect_curve(&b).is_err())
     });
-    assert_eq!(cancelled.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(cancelled.result.unwrap_err().kind(), WorkKind::Cancellation);
     let retry = work_budget::with_budget(
         WorkBudget {
             refinements: 100_000,

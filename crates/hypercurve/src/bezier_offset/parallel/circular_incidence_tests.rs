@@ -490,7 +490,7 @@ fn circular_parallel_incidence_retries_after_exhausted_trim_comparison() {
     let Err(exhausted) = denied.result else {
         panic!("the unresolved trim comparison requires a refinement");
     };
-    assert_eq!(exhausted.kind, crate::WorkKind::RootRefinement);
+    assert_eq!(exhausted.kind(), crate::WorkKind::RootRefinement);
     let retry = crate::evaluate_with_budget(
         policy.predicate_policy(),
         crate::WorkBudget {

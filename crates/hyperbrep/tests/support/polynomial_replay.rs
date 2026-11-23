@@ -567,7 +567,7 @@ pub fn branch_replay_policy_budget_and_recovery() {
     );
     let raw = RawModel::from_json(&archive, &ArchiveLimits::default()).unwrap();
     let denied = OperationContext::strict(WorkBudget::ZERO).evaluate(|| raw.validate());
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
         hypercurve::PredicatePolicy::APPROXIMATE_512,

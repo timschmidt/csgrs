@@ -566,7 +566,7 @@ fn complete_discovery_separates_near_roots_and_refuses_without_partial_success()
                     report
                 },
             );
-            assert_eq!(refusal.result.unwrap_err().kind, WorkKind::RootRefinement);
+            assert_eq!(refusal.result.unwrap_err().kind(), WorkKind::RootRefinement);
             assert_eq!(refusal.usage.refinements, limit);
         }
         let retry = with_budget(

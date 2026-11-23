@@ -77,7 +77,7 @@ fn selected_image_helpers_stop_on_exhaustion_and_retry_with_exact_saturation_evi
                 }
             });
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             assert_eq!(denied.usage.promotions, 0);
@@ -149,7 +149,7 @@ fn selected_field_import_reuses_one_authority_after_budget_retry_and_refinement(
             ));
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         let values = selected_field_fiber(&parameter, &policy).unwrap();

@@ -58,7 +58,7 @@ fn assert_admission<R: std::fmt::Debug + PartialEq>(
     assert_eq!(degree_limited.usage.promotions, 0);
     let denied = with_budget(allowance(0), || assert_denied(&project(config(32))));
     assert_eq!(
-        denied.result.unwrap_err().kind,
+        denied.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(denied.usage.promotions, 0);
@@ -70,7 +70,7 @@ fn assert_admission<R: std::fmt::Debug + PartialEq>(
         assert_denied(&project(config(0)));
     });
     assert_eq!(
-        already_exhausted.result.unwrap_err().kind,
+        already_exhausted.result.unwrap_err().kind(),
         WorkKind::RootRefinement
     );
 }
@@ -87,7 +87,7 @@ fn assert_terminal_reuse<R: std::fmt::Debug + PartialEq>(
         assert!(consume(WorkKind::RootRefinement, 1).is_err());
         assert_denied(&project());
     });
-    assert_eq!(denied.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(denied.result.unwrap_err().kind(), WorkKind::RootRefinement);
 }
 
 #[test]
@@ -329,10 +329,10 @@ fn constrained_fiber_gcd_orders_cannot_reset_the_enclosing_allowance() {
             );
             assert!(report.coefficients.is_empty());
         });
-        assert_eq!(inner.result.unwrap_err().used, 1);
+        assert_eq!(inner.result.unwrap_err().used(), 1);
     });
     assert_eq!(
-        denied.result.unwrap_err().kind,
+        denied.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(denied.usage.promotions, 1);

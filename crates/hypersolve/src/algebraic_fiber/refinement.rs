@@ -263,7 +263,7 @@ mod tests {
                                 report
                             },
                         );
-                        assert_eq!(failed.result.unwrap_err().kind, WorkKind::RootRefinement);
+                        assert_eq!(failed.result.unwrap_err().kind(), WorkKind::RootRefinement);
                         assert_eq!(failed.usage.refinements, limit);
                     }
                     let retry = with_budget(

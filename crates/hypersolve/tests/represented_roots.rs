@@ -173,7 +173,7 @@ fn exhausted_refinement_budgets_return_the_unrefined_root() {
         results.push(refined_represented_root(&source, 8));
     });
     let error = outcome.result.unwrap_err();
-    assert_eq!(error.kind, WorkKind::RootRefinement);
+    assert_eq!(error.kind(), WorkKind::RootRefinement);
     assert_eq!(results, vec![source.clone(), source.clone()]);
 }
 
@@ -724,7 +724,7 @@ fn exhausted_budgets_stop_tensor_images_before_publication() {
         ));
     });
     assert_eq!(
-        outcome.result.unwrap_err().kind,
+        outcome.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(
@@ -1260,7 +1260,7 @@ fn refined_dense_values_separate_conjugate_images() {
         },
         || blocked = Some(represented_dense_value_refined(&difference, &sources)),
     );
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::RootRefinement);
     assert_eq!(
         blocked.unwrap(),
         Classification::Uncertain(UncertaintyReason::BudgetExhausted)

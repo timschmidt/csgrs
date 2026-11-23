@@ -339,9 +339,9 @@ fn constant_and_punctured_images_and_budget_retry_stay_explicit() {
             fresh.rational_image_point_locations(&map, &query)
         });
         let exhausted = refused.result.unwrap_err();
-        assert_eq!(exhausted.limit, 0);
-        assert_eq!(exhausted.used, 0);
-        assert!(exhausted.requested > 0);
+        assert_eq!(exhausted.limit(), 0);
+        assert_eq!(exhausted.used(), 0);
+        assert!(exhausted.requested() > 0);
         let retry = evaluate_with_budget(
             policy,
             WorkBudget {

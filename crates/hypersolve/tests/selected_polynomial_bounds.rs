@@ -202,7 +202,7 @@ fn bounds_refusal_retries_and_never_consumes_approximation() {
     let value = cube_root();
     let policy = TestContext::approximate();
     let refused = with_budget(WorkBudget::ZERO, || value.enclosed(&policy).unwrap());
-    assert_eq!(refused.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(refused.result.unwrap_err().kind(), WorkKind::RootRefinement);
     assert_eq!(refused.usage.refinements, 0);
     let retried = with_budget(
         WorkBudget {

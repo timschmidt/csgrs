@@ -57817,9 +57817,9 @@ fn recursive_native_comparison_exhaustion_retries_without_caching_failure() {
                 || fresh.cmp_bezier_parameter(&native, &policy),
             );
             let failure = denied.result.unwrap_err();
-            assert_eq!(failure.kind, WorkKind::RootRefinement);
-            assert_eq!(failure.limit, limit);
-            assert_eq!(failure.used, limit);
+            assert_eq!(failure.kind(), WorkKind::RootRefinement);
+            assert_eq!(failure.limit(), u64::try_from(limit).unwrap());
+            assert_eq!(failure.used(), u64::try_from(limit).unwrap());
             assert!(
                 fresh
                     .data

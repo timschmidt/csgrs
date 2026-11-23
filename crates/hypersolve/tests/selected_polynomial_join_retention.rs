@@ -429,7 +429,7 @@ fn join_recipes_validate_original_selectors_references_and_resource_retries() {
         result
     });
     assert_eq!(
-        refused.result.unwrap_err().kind,
+        refused.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     for _ in 0..2 {

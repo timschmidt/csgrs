@@ -970,8 +970,8 @@ fn polynomial_region_budget_retry_and_policy_transitions_keep_exact_results() {
         );
     });
     let reached = denied.result.unwrap_err();
-    assert_eq!((reached.limit, reached.used), (0, 0));
-    assert!(reached.requested > 0);
+    assert_eq!((reached.limit(), reached.used()), (0, 0));
+    assert!(reached.requested() > 0);
     let retry = work_budget::with_budget(
         WorkBudget {
             refinements: 100_000,

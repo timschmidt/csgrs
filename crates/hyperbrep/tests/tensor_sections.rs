@@ -530,7 +530,7 @@ fn forged_tensor_image_archives_fail_typed() {
 fn zero_budget_exhausts_and_a_later_retry_succeeds() {
     let denied = OperationContext::strict(WorkBudget::ZERO)
         .evaluate(|| unit_cylinder().intersect_surface(&cylinder_patch()));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     assert_eq!(cylinder_branches().len(), 2);
 }
 

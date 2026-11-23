@@ -746,7 +746,7 @@ pub fn singular_domains_policy_and_budget_recovery() {
     let Err(exhausted) = denied.result else {
         panic!("cold implicit differential must report budget exhaustion")
     };
-    assert_eq!(exhausted.limit, 0);
+    assert_eq!(exhausted.limit(), 0);
     unit_and_orthogonal(
         &extrusion.partials_at(&uv).unwrap(),
         &extrusion.normal_at(&uv).unwrap(),

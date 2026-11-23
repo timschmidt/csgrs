@@ -156,6 +156,6 @@ fn fidelity_replay_observes_cancellation_and_does_not_poison_retry() {
         blocked = matches!(read(&bytes,256,64),Err(SvgError::Exact(ExactCurveError::Blocked(blocker))) if blocker.reason()==crate::UncertaintyReason::BudgetExhausted);
     });
     assert!(blocked);
-    assert_eq!(attempt.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(attempt.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert!(read(&bytes, 256, 64).is_ok());
 }

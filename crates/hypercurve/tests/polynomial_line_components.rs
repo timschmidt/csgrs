@@ -429,8 +429,8 @@ fn component_sections_retry_a_reached_budget() {
             );
         });
     let reached = denied.result.unwrap_err();
-    assert_eq!((reached.limit, reached.used), (0, 0));
-    assert!(reached.requested > 0);
+    assert_eq!((reached.limit(), reached.used()), (0, 0));
+    assert!(reached.requested() > 0);
     let retry = hypersolve::work_budget::with_budget(
         hypersolve::work_budget::WorkBudget {
             refinements: 100_000,

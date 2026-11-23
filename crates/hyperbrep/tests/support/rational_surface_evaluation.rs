@@ -368,7 +368,7 @@ pub fn rational_surface_policy_and_admission() {
             .unwrap()
             .validate()
     });
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     replay(&model);
     let raw: serde_json::Value = serde_json::from_str(&json).unwrap();
     let mut invalid_weight = raw.clone();

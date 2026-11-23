@@ -1245,8 +1245,8 @@ fn nonlinear_images_intersect_chords_with_selected_coefficients() {
             }
         });
     let exhausted = denied.result.unwrap_err();
-    assert_eq!((exhausted.limit, exhausted.used), (0, 0));
-    assert!(exhausted.requested > 0);
+    assert_eq!((exhausted.limit(), exhausted.used()), (0, 0));
+    assert!(exhausted.requested() > 0);
     let retry = hypersolve::work_budget::with_budget(
         hypersolve::work_budget::WorkBudget {
             refinements: 100_000,

@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- **Breaking:** `work_budget::BudgetExceeded` fields are private. Use the
+  `kind()`, `limit()`, `used()` and `requested()` accessors, which return exact
+  `u64` counts, and `BudgetExceeded::new` to build an expected receipt. On
+  32-bit targets coefficient-growth denials no longer saturate their limit and
+  observed bit length at `usize::MAX`. The receipt keeps its size. See
+  [the migration note](../../docs/MIGRATIONS.md).
+
 - Add a strict half-line constraint so oriented G1 tangent replay rejects a
   zero tangent. A zero tangent was previously accepted as an oriented join.
 

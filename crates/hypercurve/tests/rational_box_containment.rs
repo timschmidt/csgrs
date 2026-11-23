@@ -512,7 +512,10 @@ fn exhausted_root_work_remains_retryable_under_a_larger_budget() {
     let exhausted = evaluate_with_budget(PredicatePolicy::STRICT, WorkBudget::ZERO, || {
         curve.box_containment(&envelope)
     });
-    assert_eq!(exhausted.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(
+        exhausted.result.unwrap_err().kind(),
+        WorkKind::RootRefinement
+    );
     let retry = evaluate_with_budget(
         PredicatePolicy::STRICT,
         WorkBudget {

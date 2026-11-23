@@ -398,7 +398,7 @@ fn cancellation_during_the_last_zero_construction_does_not_publish_success() {
         ));
         result
     });
-    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
     assert!(
         declined.get(),
         "a completed zero cannot escape after cancellation is observed in its construction"
@@ -430,8 +430,11 @@ fn actual_entry_denial_mid_computation_cancellation_and_retry() {
         },
     );
     let receipt = outcome.result.unwrap_err();
-    assert_eq!(receipt.kind, WorkKind::AlgebraicPromotion);
-    assert_eq!((receipt.used, receipt.limit, receipt.requested), (0, 0, 1));
+    assert_eq!(receipt.kind(), WorkKind::AlgebraicPromotion);
+    assert_eq!(
+        (receipt.used(), receipt.limit(), receipt.requested()),
+        (0, 0, 1)
+    );
     for precancelled in [false, true] {
         let token = CancellationToken::new();
         if precancelled {
@@ -459,7 +462,7 @@ fn actual_entry_denial_mid_computation_cancellation_and_retry() {
             ));
             value
         });
-        assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(outcome.result.unwrap_err().kind(), WorkKind::Cancellation);
         assert!(declined.get());
     }
     let result = ordered_field_resultant_bivariate(

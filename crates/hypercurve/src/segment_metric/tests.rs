@@ -383,7 +383,7 @@ fn nested_exhaustion_survives_success_and_numeric_error_adapters() {
                 );
             });
             assert_eq!(
-                attempt.result.unwrap_err().kind,
+                attempt.result.unwrap_err().kind(),
                 crate::WorkKind::RootRefinement
             );
             assert_eq!(attempt.usage, crate::WorkUsage::default());

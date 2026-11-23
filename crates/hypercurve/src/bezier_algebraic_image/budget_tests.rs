@@ -61,7 +61,7 @@ fn coordinate_promotion_exhaustion_preserves_typed_failure_and_lazy_point_retrie
             },
         );
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         assert!(source.parametric_source().unwrap().resolved.get().is_none());

@@ -73,7 +73,7 @@ fn common_components_retry_complete_rational_and_implicit_evidence_on_both_axes(
             }
             let denied = with_budget(allowance(0), || assert_denied(&project()));
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             let retry = with_budget(allowance(1), project);
@@ -105,10 +105,10 @@ fn zero_equation_components_and_nested_scopes_do_not_reset_or_double_charge() {
     let denied = with_budget(allowance(1), || {
         assert_eq!(project(&zero, &line), expected);
         let child = with_budget(allowance(8), || assert_denied(&project(&line, &zero)));
-        assert_eq!(child.result.unwrap_err().used, 1);
+        assert_eq!(child.result.unwrap_err().used(), 1);
     });
     assert_eq!(
-        denied.result.unwrap_err().kind,
+        denied.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(denied.usage.promotions, 1);
@@ -130,7 +130,10 @@ fn zero_equation_components_and_nested_scopes_do_not_reset_or_double_charge() {
             BivariatePolynomialAxisFactorStatus::BudgetExhausted
         );
     });
-    assert_eq!(exhausted.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(
+        exhausted.result.unwrap_err().kind(),
+        WorkKind::RootRefinement
+    );
 }
 
 #[test]
@@ -166,7 +169,7 @@ fn axis_factor_extraction_and_normalized_retry_preserve_authored_residuals() {
                 assert!(report.reduced_equations.is_none());
             });
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             assert_eq!(denied.usage.promotions, units);
@@ -193,7 +196,7 @@ fn axis_factor_extraction_and_normalized_retry_preserve_authored_residuals() {
                     BivariatePolynomialAxisFactorStatus::BudgetExhausted
                 );
             });
-            assert_eq!(denied.result.unwrap_err().used, 1);
+            assert_eq!(denied.result.unwrap_err().used(), 1);
             let admitted = with_budget(allowance(2), || {
                 consume(WorkKind::AlgebraicPromotion, 1).unwrap();
                 retry()
@@ -310,9 +313,15 @@ fn trivariate_factor_normalization_discards_partial_content_and_retries_exact_di
         let expected = normalize().unwrap().unwrap();
         for units in 0..2 {
             let denied = with_budget(allowance(units), || {
-                assert_eq!(normalize().unwrap_err().kind, WorkKind::AlgebraicPromotion)
+                assert_eq!(
+                    normalize().unwrap_err().kind(),
+                    WorkKind::AlgebraicPromotion
+                )
             });
-            assert_eq!(denied.result.unwrap_err().used, units);
+            assert_eq!(
+                denied.result.unwrap_err().used(),
+                u64::try_from(units).unwrap()
+            );
         }
         let retry = with_budget(allowance(2), normalize);
         let actual = retry.result.unwrap().unwrap().unwrap();
@@ -335,7 +344,7 @@ fn trivariate_factor_normalization_discards_partial_content_and_retries_exact_di
         assert_eq!(ready.usage, Default::default());
         let exhausted = with_budget(WorkBudget::ZERO, || {
             assert!(consume(WorkKind::RootRefinement, 1).is_err());
-            assert_eq!(normalize().unwrap_err().kind, WorkKind::RootRefinement);
+            assert_eq!(normalize().unwrap_err().kind(), WorkKind::RootRefinement);
             assert!(
                 trivariate_quadratic_axis_factorizations(&polynomial, axis, Default::default())
                     .is_err()

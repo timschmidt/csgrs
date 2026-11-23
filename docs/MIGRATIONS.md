@@ -1,5 +1,28 @@
 # Migrations
 
+## Exact work-budget receipts (2026-11-23)
+
+`hypersolve::work_budget::BudgetExceeded` (re-exported by Hyperbrep and
+Hypercurve) now has private fields. Read it through `kind()`, `limit()`,
+`used()` and `requested()`. The counts are `u64` and exact on every target.
+Previously, on 32-bit targets, a coefficient-growth denial saturated its bit
+limit and observed bit length at `usize::MAX`, so a limit or observation above
+4,294,967,295 bits was reported only as a lower bound.
+
+Replace `error.limit` with `error.limit()`, and likewise for the other fields.
+Comparisons with `usize` counters need a conversion, for example
+`u64::try_from(usage.refinements)`. Replace a struct literal with
+`BudgetExceeded::new(kind, limit, used, requested)`, which returns `None` for
+counts no denial reports: a unit-kind request that fits its remaining
+allowance or exceeds `usize`, a cancellation with a nonzero limit or use, or a
+coefficient observation that does not exceed its limit.
+
+Equality, `Debug` text and `Display` text are unchanged where the counts fit
+`usize`. On 32-bit targets, a coefficient-growth message above that range now
+states the exact limit and observation instead of "exceeded a limit of at
+least 4294967295 bits". The receipt keeps its size on every target, and
+`Option<BudgetExceeded>` stays the same size as the receipt.
+
 ## Hypersolve domain certainty (2026-11-20)
 
 This repairs a domain

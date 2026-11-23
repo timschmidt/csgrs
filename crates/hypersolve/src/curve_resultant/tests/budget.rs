@@ -63,7 +63,7 @@ fn bivariate_degree_continuation_uses_one_shared_promotion_and_retries_exactly()
             );
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         let retry = with_budget(budget(1), project);
@@ -76,7 +76,7 @@ fn bivariate_degree_continuation_uses_one_shared_promotion_and_retries_exactly()
                 CurveIntersectionResultantStatus::BudgetExhausted
             );
         });
-        assert_eq!(nested.result.unwrap_err().used, 1);
+        assert_eq!(nested.result.unwrap_err().used(), 1);
         assert_eq!(nested.usage.promotions, 1);
     }
 }
@@ -126,7 +126,7 @@ fn polynomial_and_rational_curve_wrappers_preserve_budget_failure_and_exact_repo
                 }
             });
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             let retry = with_budget(budget(1), project);
@@ -169,7 +169,7 @@ fn tensor_axis_resultants_share_limits_and_preserve_the_correlated_product() {
             assert!(report.resultant_error.is_none());
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         let retry = with_budget(budget(1), project);
@@ -211,7 +211,7 @@ fn tensor_axis_resultants_share_limits_and_preserve_the_correlated_product() {
         );
         assert!(report.resultant.is_none());
     });
-    assert_eq!(denied.result.unwrap_err().used, 1);
+    assert_eq!(denied.result.unwrap_err().used(), 1);
     assert_eq!(denied.usage.promotions, 1);
     let retry = with_budget(budget(2), project);
     assert_eq!(retry.result.unwrap(), expected);

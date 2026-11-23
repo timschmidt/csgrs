@@ -116,8 +116,8 @@ fn svg_arrangement_failure_keeps_its_exact_budget_cause_at_the_adapter() {
         },
     );
     let exhausted = denied.result.unwrap_err();
-    assert_eq!(exhausted.limit, 0);
-    assert_eq!(exhausted.used, 0);
+    assert_eq!(exhausted.limit(), 0);
+    assert_eq!(exhausted.used(), 0);
     let retry = with_budget(
         WorkBudget {
             refinements: 16,

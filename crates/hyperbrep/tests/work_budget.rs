@@ -22,12 +22,7 @@ fn brep_parameter_location_retries_after_resource_exhaustion() {
     let denied = zero.evaluate(|| curve.parameters_of(Point3::origin()));
     assert_eq!(
         denied.result.unwrap_err(),
-        BudgetExceeded {
-            kind: WorkKind::RootRefinement,
-            limit: 0,
-            used: 0,
-            requested: 1,
-        }
+        BudgetExceeded::new(WorkKind::RootRefinement, 0, 0, 1).unwrap()
     );
     assert_eq!(denied.usage, WorkUsage::default());
     let enough = OperationContext::strict(WorkBudget {
@@ -74,10 +69,16 @@ fn nested_brep_queries_share_the_parent_allowance() {
     });
     assert_eq!(attempted.usage, single.usage);
     let denied = attempted.result.unwrap_err();
-    assert_eq!(denied.kind, WorkKind::RootRefinement);
-    assert_eq!(denied.limit, single.usage.refinements);
-    assert_eq!(denied.used, single.usage.refinements);
-    assert_eq!(denied.requested, 1);
+    assert_eq!(denied.kind(), WorkKind::RootRefinement);
+    assert_eq!(
+        denied.limit(),
+        u64::try_from(single.usage.refinements).unwrap()
+    );
+    assert_eq!(
+        denied.used(),
+        u64::try_from(single.usage.refinements).unwrap()
+    );
+    assert_eq!(denied.requested(), 1);
 }
 
 #[test]
@@ -166,7 +167,7 @@ fn unwinding_restores_scope_without_refunding_parent_work() {
         assert!(consume(WorkKind::RootRefinement, 1).is_err());
     });
     assert_eq!(attempted.usage.refinements, 2);
-    assert_eq!(attempted.result.unwrap_err().used, 2);
+    assert_eq!(attempted.result.unwrap_err().used(), 2);
     assert!(!is_active());
     let fresh = child.evaluate(|| consume(WorkKind::RootRefinement, 1));
     fresh.result.unwrap().unwrap();
@@ -201,7 +202,7 @@ fn promotion_exhaustion_cannot_publish_a_partial_curve_intersection() {
         partial
     });
     assert_eq!(
-        denied.result.unwrap_err().kind,
+        denied.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(denied.usage.promotions, 0);

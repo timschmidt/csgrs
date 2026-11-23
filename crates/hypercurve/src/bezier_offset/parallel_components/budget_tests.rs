@@ -56,7 +56,7 @@ fn selector_splits_and_branch_factor_removal_preserve_resource_failure_and_exact
                 );
             });
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             let denied = evaluate_with_budget(policy.predicate_policy(), allowance(0), || {
@@ -66,7 +66,7 @@ fn selector_splits_and_branch_factor_removal_preserve_resource_failure_and_exact
                 );
             });
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             let retry = evaluate_with_budget(policy.predicate_policy(), allowance(32), || {
@@ -118,7 +118,10 @@ fn multiplicity_reduction_does_not_publish_a_partially_reduced_component() {
                             Classification::Uncertain(UncertaintyReason::BudgetExhausted)
                         )
                     });
-                assert_eq!(denied.result.unwrap_err().used, units);
+                assert_eq!(
+                    denied.result.unwrap_err().used(),
+                    u64::try_from(units).unwrap()
+                );
             }
             let retry = evaluate_with_budget(policy.predicate_policy(), allowance(32), reduce);
             assert_eq!(retry.result.unwrap().certified().unwrap(), expected);
@@ -144,7 +147,7 @@ fn parallel_source_components_and_candidate_saturation_keep_exhaustion_typed() {
                 Classification::Uncertain(UncertaintyReason::BudgetExhausted)
             )
         });
-        assert_eq!(denied.result.unwrap_err().used, 1);
+        assert_eq!(denied.result.unwrap_err().used(), 1);
         let retry = evaluate_with_budget(policy.predicate_policy(), allowance(16), source);
         assert_eq!(retry.result.unwrap().certified().unwrap(), expected);
         let denied = evaluate_with_budget(policy.predicate_policy(), allowance(0), || {
@@ -204,7 +207,7 @@ fn trivariate_factor_sign_propagates_normalization_exhaustion_before_policy_fall
             )
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         let retry = evaluate_with_budget(policy.predicate_policy(), allowance(32), sign);

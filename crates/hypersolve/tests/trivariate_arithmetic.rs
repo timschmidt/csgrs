@@ -1007,8 +1007,8 @@ fn normalized_linear_factor_division_strips_common_content() {
                 }
                 Err(exceeded) => {
                     assert!(!recovered, "a larger allowance exhausted after recovery");
-                    assert_eq!(exceeded.kind, WorkKind::AlgebraicPromotion);
-                    assert_eq!(exceeded.limit, promotions);
+                    assert_eq!(exceeded.kind(), WorkKind::AlgebraicPromotion);
+                    assert_eq!(exceeded.limit(), u64::try_from(promotions).unwrap());
                 }
             }
         }
@@ -1025,7 +1025,7 @@ fn normalized_linear_factor_division_strips_common_content() {
             )
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         // An exact divisor needs no work units at all.
@@ -1134,7 +1134,7 @@ fn quadratic_axis_factorizations_multiply_back_to_the_tensor() {
             trivariate_quadratic_axis_factorizations(&polynomial, axis, config)
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         let exhausted = with_budget(WorkBudget::ZERO, || {

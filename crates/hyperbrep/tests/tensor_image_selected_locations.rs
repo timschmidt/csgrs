@@ -489,9 +489,9 @@ fn tensor_inverse_resource_refusal_preserves_a_larger_retry() {
     let denied =
         OperationContext::strict(WorkBudget::ZERO).evaluate(|| curve.curve().parameters_of(&query));
     let exhausted = denied.result.unwrap_err();
-    assert_eq!(exhausted.limit, 0);
-    assert_eq!(exhausted.used, 0);
-    assert!(exhausted.requested > 0);
+    assert_eq!(exhausted.limit(), 0);
+    assert_eq!(exhausted.used(), 0);
+    assert!(exhausted.requested() > 0);
     let retry = OperationContext::strict(WorkBudget {
         refinements: 100_000,
         promotions: 10_000,

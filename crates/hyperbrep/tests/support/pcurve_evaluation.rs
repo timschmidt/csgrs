@@ -205,7 +205,7 @@ pub fn selected_evaluation_policy_budget_and_recovery() {
         trace.first_pcurve().point_at(&points[0].parameter)
     };
     let denied = OperationContext::strict(WorkBudget::ZERO).evaluate(evaluate);
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     let expected = selected()
         .affine_point(1.into(), 0.into(), 0.into(), q(1, 2))
         .unwrap();

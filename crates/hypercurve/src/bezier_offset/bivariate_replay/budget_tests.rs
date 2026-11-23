@@ -62,7 +62,7 @@ fn cofactor_lift_cache_does_not_retain_exhaustion_and_reuses_complete_evidence()
             );
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         assert!(cache.is_none());
@@ -106,7 +106,10 @@ fn cofactor_lift_cache_does_not_retain_exhaustion_and_reuses_complete_evidence()
                 Err(UncertaintyReason::BudgetExhausted)
             );
         });
-        assert_eq!(exhausted.result.unwrap_err().kind, WorkKind::RootRefinement);
+        assert_eq!(
+            exhausted.result.unwrap_err().kind(),
+            WorkKind::RootRefinement
+        );
         assert_eq!(cache.as_ref(), Some(&expected));
     }
 }
@@ -132,7 +135,7 @@ fn cofactor_lift_adapter_keeps_resource_failure_distinct_and_retries_certified_p
             denied_report = Some(project());
         });
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         // The report must preserve its resource reason after the scope ends.
@@ -168,7 +171,10 @@ fn cofactor_lift_adapter_keeps_resource_failure_distinct_and_retries_certified_p
                 Classification::Uncertain(UncertaintyReason::BudgetExhausted)
             );
         });
-        assert_eq!(exhausted.result.unwrap_err().kind, WorkKind::RootRefinement);
+        assert_eq!(
+            exhausted.result.unwrap_err().kind(),
+            WorkKind::RootRefinement
+        );
         assert!(cache.iter().all(Option::is_none));
     }
 }

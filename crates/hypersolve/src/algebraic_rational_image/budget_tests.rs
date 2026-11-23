@@ -65,7 +65,7 @@ fn rational_map_budget_failure_cannot_poison_elimination_or_later_selected_roots
             },
         );
         assert_eq!(
-            denied.result.unwrap_err().kind,
+            denied.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         assert_eq!(denied.usage.promotions, 0);
@@ -141,7 +141,7 @@ fn polynomial_images_share_nested_promotion_limits_and_retry_exactly() {
             },
         );
         assert_eq!(
-            nested.result.unwrap_err().kind,
+            nested.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         assert_eq!(nested.usage.promotions, 1);
@@ -197,7 +197,7 @@ fn binary_images_report_promotion_and_refinement_exhaustion_through_arithmetic()
                     );
                     assert!(report.representation.is_none());
                 });
-                assert_eq!(denied.result.unwrap_err().kind, kind);
+                assert_eq!(denied.result.unwrap_err().kind(), kind);
                 let arithmetic = with_budget(budget, || {
                     let report = arithmetic_algebraic_root_representations(
                         &left,
@@ -212,7 +212,7 @@ fn binary_images_report_promotion_and_refinement_exhaustion_through_arithmetic()
                     assert!(report.exact_result.is_none());
                     assert!(report.result_representation.is_none());
                 });
-                assert_eq!(arithmetic.result.unwrap_err().kind, kind);
+                assert_eq!(arithmetic.result.unwrap_err().kind(), kind);
             }
             let retry = with_budget(
                 WorkBudget {
@@ -280,7 +280,7 @@ fn rational_image_domain_refinement_exhaustion_stops_before_elimination() {
             assert!(report.representation.is_none());
             assert!(report.numerator_image.is_none());
         });
-        assert_eq!(denied.result.unwrap_err().kind, WorkKind::RootRefinement);
+        assert_eq!(denied.result.unwrap_err().kind(), WorkKind::RootRefinement);
         let retry = with_budget(
             WorkBudget {
                 refinements: 4096,

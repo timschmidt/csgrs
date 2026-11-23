@@ -268,7 +268,7 @@ fn extrusion_restores_ambient_receipts_and_cannot_refund_exhausted_work() {
         assert!(hypersolve::work_budget::consume(WorkKind::RootRefinement, 1).is_err());
         builder::extrude_curve_region(&region, 0.into(), 3.into())
     });
-    assert_eq!(denied.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(denied.result.unwrap_err().kind(), WorkKind::RootRefinement);
     let retry = OperationContext::strict(WorkBudget {
         refinements: 512,
         promotions: 64,

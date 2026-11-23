@@ -516,7 +516,7 @@ pub fn selected_surface_policy_and_recovery() {
             .unwrap()
             .validate()
     });
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     RawModel::from_json(&json, &ArchiveLimits::default())
         .unwrap()
         .validate()

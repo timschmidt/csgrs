@@ -121,6 +121,7 @@
 
 use std::cell::{Cell, RefCell};
 use std::fmt;
+use std::num::NonZeroU32;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -200,56 +201,182 @@ pub enum WorkKind {
 /// reports only the size of the request that observed the cancellation. A
 /// [`WorkKind::CoefficientGrowth`] failure reports the bit limit as `limit`,
 /// zero `used`, and the observed coefficient's bit length as `requested`.
-/// On 32-bit targets each count above `usize::MAX` saturates in the receipt.
-/// If both fields reach that ceiling, the observation exceeded the actual
-/// limit and only a lower bound on that limit is available.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// Every count is exact on every target, including full-width `u64`
+/// coefficient limits and observations on 32-bit targets. The receipt stays
+/// the size of one tag and three words, and `Option<BudgetExceeded>` the size
+/// of the receipt.
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct BudgetExceeded {
-    /// Work that the operation attempted to perform.
-    pub kind: WorkKind,
-    /// The exhausted scope's configured maximum.
-    pub limit: usize,
-    /// Units already admitted in that scope.
-    pub used: usize,
-    /// Additional units requested by the denied attempt.
-    pub requested: usize,
+    // A unit kind's tag is its index plus one, with its counts stored as
+    // words. A coefficient-growth tag sets `GROWTH` and carries the high bits
+    // of a folded limit/observation pair; see `growth`.
+    tag: NonZeroU32,
+    words: [usize; 3],
 }
 
+const GROWTH: u32 = 1 << 31;
+const LOW: u64 = 0xffff_ffff;
+const FOLD: u64 = 1 << 63;
+
 impl BudgetExceeded {
-    const fn cancelled(requested: usize) -> Self {
+    const fn units(kind: WorkKind, limit: usize, used: usize, requested: usize) -> Self {
+        let tag = match kind {
+            WorkKind::RootRefinement => NonZeroU32::MIN,
+            WorkKind::AlgebraicPromotion => NonZeroU32::MIN.saturating_add(1),
+            WorkKind::Cancellation | WorkKind::CoefficientGrowth => {
+                NonZeroU32::MIN.saturating_add(2)
+            }
+        };
         Self {
-            kind: WorkKind::Cancellation,
-            limit: 0,
-            used: 0,
-            requested,
+            tag,
+            words: [limit, used, requested],
         }
+    }
+
+    const fn cancelled(requested: usize) -> Self {
+        Self::units(WorkKind::Cancellation, 0, 0, requested)
+    }
+
+    // A denied observation exceeds its limit, so the pair is strictly ordered
+    // and fits the 127 bits left beside the growth flag. A limit below 2^63 is
+    // stored as (limit, observation). Otherwise both values are at least
+    // 2^63 and are stored shifted down and swapped, so the stored second value
+    // is then below the first; the order of the stored pair selects the case.
+    // Only 32 bits of each word are used, keeping the layout target-neutral.
+    const fn growth(limit: u64, observed: u64) -> Self {
+        debug_assert!(limit < observed);
+        let (first, second) = if limit < FOLD {
+            (limit, observed)
+        } else {
+            (observed - FOLD, limit - FOLD)
+        };
+        let Some(tag) = NonZeroU32::new(GROWTH | (first >> 32) as u32) else {
+            unreachable!()
+        };
+        Self {
+            tag,
+            words: [
+                (second & LOW) as usize,
+                (second >> 32) as usize,
+                (first & LOW) as usize,
+            ],
+        }
+    }
+
+    const fn growth_pair(&self) -> (u64, u64) {
+        let first = ((self.tag.get() & !GROWTH) as u64) << 32 | self.words[2] as u64;
+        let second = (self.words[1] as u64) << 32 | self.words[0] as u64;
+        if second > first {
+            (first, second)
+        } else {
+            (second + FOLD, first + FOLD)
+        }
+    }
+
+    /// Build a receipt with exactly these counts, if a denial could report them.
+    ///
+    /// A root-refinement or algebraic-promotion denial needs `used <= limit`,
+    /// `requested > limit - used` and counts that fit `usize`. A cancellation
+    /// needs zero `limit` and `used`. A coefficient-growth denial needs zero
+    /// `used` and `requested > limit`. Other combinations return `None`.
+    #[must_use]
+    pub fn new(kind: WorkKind, limit: u64, used: u64, requested: u64) -> Option<Self> {
+        match kind {
+            WorkKind::RootRefinement | WorkKind::AlgebraicPromotion => {
+                let limit = usize::try_from(limit).ok()?;
+                let used = usize::try_from(used).ok()?;
+                let requested = usize::try_from(requested).ok()?;
+                (used <= limit && requested > limit - used)
+                    .then(|| Self::units(kind, limit, used, requested))
+            }
+            WorkKind::Cancellation => (limit == 0 && used == 0)
+                .then(|| usize::try_from(requested).ok().map(Self::cancelled))
+                .flatten(),
+            WorkKind::CoefficientGrowth => {
+                (used == 0 && requested > limit).then(|| Self::growth(limit, requested))
+            }
+        }
+    }
+
+    /// Work that the operation attempted to perform.
+    #[must_use]
+    pub const fn kind(&self) -> WorkKind {
+        match self.tag.get() {
+            1 => WorkKind::RootRefinement,
+            2 => WorkKind::AlgebraicPromotion,
+            3 => WorkKind::Cancellation,
+            _ => WorkKind::CoefficientGrowth,
+        }
+    }
+
+    /// The exhausted scope's configured maximum.
+    #[must_use]
+    pub const fn limit(&self) -> u64 {
+        if self.tag.get() & GROWTH == 0 {
+            self.words[0] as u64
+        } else {
+            self.growth_pair().0
+        }
+    }
+
+    /// Units already admitted in that scope.
+    #[must_use]
+    pub const fn used(&self) -> u64 {
+        if self.tag.get() & GROWTH == 0 {
+            self.words[1] as u64
+        } else {
+            0
+        }
+    }
+
+    /// Additional units requested by the denied attempt.
+    #[must_use]
+    pub const fn requested(&self) -> u64 {
+        if self.tag.get() & GROWTH == 0 {
+            self.words[2] as u64
+        } else {
+            self.growth_pair().1
+        }
+    }
+}
+
+impl fmt::Debug for BudgetExceeded {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("BudgetExceeded")
+            .field("kind", &self.kind())
+            .field("limit", &self.limit())
+            .field("used", &self.used())
+            .field("requested", &self.requested())
+            .finish()
     }
 }
 
 impl fmt::Display for BudgetExceeded {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.kind == WorkKind::CoefficientGrowth {
-            if usize::BITS == 32 && self.limit == usize::MAX && self.requested == usize::MAX {
-                return formatter
-                    .write_str("coefficient growth exceeded a limit of at least 4294967295 bits");
-            }
+        let kind = self.kind();
+        if kind == WorkKind::CoefficientGrowth {
             return write!(
                 formatter,
                 "coefficient growth limit exceeded: {} bits against a limit of {}",
-                self.requested, self.limit
+                self.requested(),
+                self.limit()
             );
         }
-        if self.kind == WorkKind::Cancellation {
+        if kind == WorkKind::Cancellation {
             return write!(
                 formatter,
                 "work cancelled; {} more units requested",
-                self.requested
+                self.requested()
             );
         }
         write!(
             formatter,
             "{:?} budget exhausted: {} of {} units used; {} more requested",
-            self.kind, self.used, self.limit, self.requested
+            kind,
+            self.used(),
+            self.limit(),
+            self.requested()
         )
     }
 }
@@ -363,12 +490,7 @@ pub fn consume(kind: WorkKind, amount: usize) -> Result<(), BudgetExceeded> {
         for index in 0..frames.len() {
             let (limit, used) = frames[index].available(kind);
             if amount > limit - used {
-                let error = BudgetExceeded {
-                    kind,
-                    limit,
-                    used,
-                    requested: amount,
-                };
+                let error = BudgetExceeded::units(kind, limit, used, amount);
                 for frame in &mut frames[index..] {
                     frame.exhausted = Some(error);
                 }
@@ -451,12 +573,7 @@ pub fn observe_coefficient_bits(bits: u64) -> Result<(), BudgetExceeded> {
             return Ok(());
         };
         let limit = frames[index].max_coefficient_bits.unwrap_or(0);
-        let error = BudgetExceeded {
-            kind: WorkKind::CoefficientGrowth,
-            limit: usize::try_from(limit).unwrap_or(usize::MAX),
-            used: 0,
-            requested: usize::try_from(bits).unwrap_or(usize::MAX),
-        };
+        let error = BudgetExceeded::growth(limit, bits);
         for frame in &mut frames[index..] {
             frame.exhausted.get_or_insert(error);
         }

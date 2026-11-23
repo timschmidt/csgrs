@@ -2025,7 +2025,7 @@ mod tests {
             report
         });
         assert_eq!(
-            failed.result.unwrap_err().kind,
+            failed.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         assert_eq!(failed.usage.promotions, 0);
@@ -2047,7 +2047,7 @@ mod tests {
             },
         );
         assert_eq!(
-            elimination_limited.result.unwrap_err().kind,
+            elimination_limited.result.unwrap_err().kind(),
             WorkKind::AlgebraicPromotion
         );
         assert_eq!(elimination_limited.usage.promotions, 1);
@@ -2063,7 +2063,7 @@ mod tests {
             },
         );
         assert_eq!(
-            refinement_limited.result.unwrap_err().kind,
+            refinement_limited.result.unwrap_err().kind(),
             WorkKind::RootRefinement
         );
         assert_eq!(refinement_limited.usage.promotions, 2);

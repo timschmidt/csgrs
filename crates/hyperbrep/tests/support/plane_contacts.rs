@@ -892,7 +892,7 @@ pub fn contact_parameters_split_shared_edges_and_replay_solid_operations() {
 pub fn plane_contact_policies_exhaustion_and_recovery_preserve_certainty() {
     let denied = OperationContext::strict(WorkBudget::ZERO)
         .evaluate(|| xy_plane().intersect_curve(&cubic()));
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
         hypercurve::PredicatePolicy::APPROXIMATE_512,

@@ -1,8 +1,8 @@
 //! Public coefficient limits and nested failure ownership across the full u64 input range.
 
 use hypersolve::work_budget::{
-    WorkBudget, WorkKind, consume, exhaustion, observe_coefficient_bits, with_budget,
-    with_coefficient_bit_limit,
+    BudgetExceeded, WorkBudget, WorkKind, consume, exhaustion, observe_coefficient_bits,
+    with_budget, with_coefficient_bit_limit,
 };
 
 #[test]
@@ -30,15 +30,11 @@ fn outermost_exceeded_limit_owns_the_failure() {
                             assert_eq!(exhaustion(), None);
                         } else {
                             let denied = observation.unwrap_err();
-                            assert_eq!(denied.kind, WorkKind::CoefficientGrowth);
+                            assert_eq!(denied.kind(), WorkKind::CoefficientGrowth);
                             let limit = if bits > outer { outer } else { inner };
-                            if let Ok(limit) = usize::try_from(limit) {
-                                assert_eq!(denied.limit, limit);
-                            }
-                            if let Ok(bits) = usize::try_from(bits) {
-                                assert_eq!(denied.requested, bits);
-                            }
-                            assert_eq!(denied.used, 0);
+                            assert_eq!(denied.limit(), limit);
+                            assert_eq!(denied.requested(), bits);
+                            assert_eq!(denied.used(), 0);
                             assert_eq!(exhaustion(), Some(denied));
                             let child =
                                 with_budget(WorkBudget::UNLIMITED, || observe_coefficient_bits(0));
@@ -76,10 +72,10 @@ fn first_receipt_names_the_outermost_limit_that_denied_work() {
             let enclosing = with_coefficient_bit_limit(outer, || {
                 let nested = with_coefficient_bit_limit(inner, || {
                     let denied = observe_coefficient_bits(request).unwrap_err();
-                    assert_eq!(denied.kind, WorkKind::CoefficientGrowth);
-                    assert_eq!(denied.limit as u64, limit);
-                    assert_eq!(denied.requested as u64, request);
-                    assert_eq!(denied.used, 0);
+                    assert_eq!(denied.kind(), WorkKind::CoefficientGrowth);
+                    assert_eq!(denied.limit(), limit);
+                    assert_eq!(denied.requested(), request);
+                    assert_eq!(denied.used(), 0);
                     assert_eq!(
                         denied.to_string(),
                         format!(
@@ -89,8 +85,8 @@ fn first_receipt_names_the_outermost_limit_that_denied_work() {
                     assert_eq!(observe_coefficient_bits(u64::MAX), Err(denied));
                 });
                 let denied = nested.result.unwrap_err();
-                assert_eq!(denied.limit as u64, limit);
-                assert_eq!(denied.requested as u64, request);
+                assert_eq!(denied.limit(), limit);
+                assert_eq!(denied.requested(), request);
                 if outer < request {
                     assert_eq!(exhaustion(), Some(denied));
                 } else {
@@ -103,23 +99,88 @@ fn first_receipt_names_the_outermost_limit_that_denied_work() {
 }
 
 #[test]
-fn denial_above_the_word_ceiling_keeps_the_strict_inequality() {
+fn denial_above_the_word_ceiling_reports_exact_counts() {
     let ceiling = u64::from(u32::MAX);
+    let fold = 1_u64 << 63;
     for (limit, request) in [
+        (0, 1),
         (ceiling, ceiling + 1),
         (ceiling + 1, ceiling + 2),
+        (ceiling, u64::MAX),
+        (fold - 1, fold),
+        (fold - 1, u64::MAX),
+        (fold, fold + 1),
+        (fold + ceiling, u64::MAX),
         (u64::MAX - 1, u64::MAX),
     ] {
         let denied = with_coefficient_bit_limit(limit, || observe_coefficient_bits(request))
             .result
             .unwrap_err();
-        assert_eq!(denied.kind, WorkKind::CoefficientGrowth);
-        let expected = if usize::BITS == 32 {
-            "coefficient growth exceeded a limit of at least 4294967295 bits".to_owned()
-        } else {
+        assert_eq!(denied.kind(), WorkKind::CoefficientGrowth);
+        assert_eq!(
+            (denied.limit(), denied.used(), denied.requested()),
+            (limit, 0, request)
+        );
+        assert_eq!(
+            denied.to_string(),
             format!("coefficient growth limit exceeded: {request} bits against a limit of {limit}")
-        };
-        assert_eq!(denied.to_string(), expected);
+        );
+        assert_eq!(
+            BudgetExceeded::new(WorkKind::CoefficientGrowth, limit, 0, request),
+            Some(denied)
+        );
+        assert_eq!(
+            format!("{denied:?}"),
+            format!(
+                "BudgetExceeded {{ kind: CoefficientGrowth, limit: {limit}, used: 0, requested: {request} }}"
+            )
+        );
+    }
+    assert_eq!(
+        size_of::<BudgetExceeded>(),
+        size_of::<u32>().max(align_of::<usize>()) + 3 * size_of::<usize>()
+    );
+    assert_eq!(
+        size_of::<Option<BudgetExceeded>>(),
+        size_of::<BudgetExceeded>()
+    );
+}
+
+#[test]
+fn receipts_are_built_only_for_reportable_denials() {
+    let word = u64::try_from(usize::MAX).unwrap();
+    for kind in [WorkKind::RootRefinement, WorkKind::AlgebraicPromotion] {
+        for (limit, used, requested) in [(0, 0, 1), (5, 3, 3), (word, word, 1), (word, 1, word)] {
+            let receipt = BudgetExceeded::new(kind, limit, used, requested).unwrap();
+            assert_eq!(
+                (
+                    receipt.kind(),
+                    receipt.limit(),
+                    receipt.used(),
+                    receipt.requested()
+                ),
+                (kind, limit, used, requested)
+            );
+        }
+        for (limit, used, requested) in [(0, 0, 0), (5, 3, 2), (3, 5, 1)] {
+            assert_eq!(BudgetExceeded::new(kind, limit, used, requested), None);
+        }
+        if usize::BITS < 64 {
+            assert_eq!(BudgetExceeded::new(kind, word + 1, 0, word + 2), None);
+        }
+    }
+    let cancelled = BudgetExceeded::new(WorkKind::Cancellation, 0, 0, 7).unwrap();
+    assert_eq!(
+        (cancelled.kind(), cancelled.requested()),
+        (WorkKind::Cancellation, 7)
+    );
+    assert_eq!(BudgetExceeded::new(WorkKind::Cancellation, 1, 0, 7), None);
+    assert_eq!(BudgetExceeded::new(WorkKind::Cancellation, 0, 1, 7), None);
+    for (limit, used, requested) in [(3, 0, 3), (4, 0, 3), (0, 1, 2), (u64::MAX, 0, u64::MAX)] {
+        assert_eq!(
+            BudgetExceeded::new(WorkKind::CoefficientGrowth, limit, used, requested),
+            None
+        );
     }
 }
 
@@ -142,8 +203,11 @@ fn materialized_product_counts_denominator_bits_and_recovers_after_denial() {
             assert!(a.multiply(&b).is_none());
         });
         let denied = inner.result.unwrap_err();
-        assert_eq!(denied.kind, WorkKind::CoefficientGrowth);
-        assert_eq!((denied.limit, denied.used, denied.requested), (9, 0, 10));
+        assert_eq!(denied.kind(), WorkKind::CoefficientGrowth);
+        assert_eq!(
+            (denied.limit(), denied.used(), denied.requested()),
+            (9, 0, 10)
+        );
         assert_eq!(exhaustion(), None);
         let product = a.multiply(&b).unwrap();
         assert_eq!(product, expected);
@@ -178,8 +242,11 @@ fn fused_tensor_products_check_the_materialized_coefficients() {
                 assert!(product.is_none());
             });
             let receipt = denied.result.unwrap_err();
-            assert_eq!(receipt.kind, WorkKind::CoefficientGrowth);
-            assert_eq!((receipt.limit, receipt.used, receipt.requested), (9, 0, 10));
+            assert_eq!(receipt.kind(), WorkKind::CoefficientGrowth);
+            assert_eq!(
+                (receipt.limit(), receipt.used(), receipt.requested()),
+                (9, 0, 10)
+            );
             assert_eq!(exhaustion(), None);
             let product = DenseTensorPolynomial::sum_products(&terms).unwrap();
             assert_eq!(&product, expected);

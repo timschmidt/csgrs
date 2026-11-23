@@ -571,7 +571,7 @@ pub fn selected_revolution_preserves_certainty_and_budget_recovery() {
             .unwrap()
             .validate()
     });
-    assert_eq!(denied.result.unwrap_err().limit, 0);
+    assert_eq!(denied.result.unwrap_err().limit(), 0);
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
         hypercurve::PredicatePolicy::APPROXIMATE_512,

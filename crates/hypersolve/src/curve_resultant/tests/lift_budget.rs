@@ -69,7 +69,7 @@ fn cofactor_lifts_share_degree_continuation_and_retry_every_exact_map() {
             };
             let denied = with_budget(allowance(0), || assert_denied(&project()));
             assert_eq!(
-                denied.result.unwrap_err().kind,
+                denied.result.unwrap_err().kind(),
                 WorkKind::AlgebraicPromotion
             );
             assert_eq!(denied.usage.promotions, 0);
@@ -100,10 +100,10 @@ fn cofactor_lifts_cannot_reset_an_enclosing_allowance_or_escape_prior_exhaustion
         let child = with_budget(allowance(8), || {
             assert_denied(&project(CurveResultantParameter::Second))
         });
-        assert_eq!(child.result.unwrap_err().used, 1);
+        assert_eq!(child.result.unwrap_err().used(), 1);
     });
     assert_eq!(
-        denied.result.unwrap_err().kind,
+        denied.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     assert_eq!(denied.usage.promotions, 1);
@@ -136,5 +136,8 @@ fn cofactor_lifts_cannot_reset_an_enclosing_allowance_or_escape_prior_exhaustion
         assert!(consume(WorkKind::RootRefinement, 1).is_err());
         assert_denied(&rejected());
     });
-    assert_eq!(exhausted.result.unwrap_err().kind, WorkKind::RootRefinement);
+    assert_eq!(
+        exhausted.result.unwrap_err().kind(),
+        WorkKind::RootRefinement
+    );
 }

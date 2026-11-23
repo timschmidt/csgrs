@@ -412,7 +412,7 @@ fn graph_limits_refuse_atomically_and_retry_without_approximation() {
         ));
     });
     assert_eq!(
-        refused.result.unwrap_err().kind,
+        refused.result.unwrap_err().kind(),
         WorkKind::AlgebraicPromotion
     );
     let retried = with_budget(
