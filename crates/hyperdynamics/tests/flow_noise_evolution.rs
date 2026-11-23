@@ -502,7 +502,7 @@ fn fresh_process_reconstructs_sources_and_replays_automatic_horizons() {
     let expected = String::from_utf8(replay(data.clone())).unwrap();
     let encoded = serde_json::to_string(&data).unwrap();
     for _ in 0..2 {
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let output = std::process::Command::new(crate::replay::binary().unwrap())
             .args([
                 "--exact",
                 "fresh_process_reconstructs_sources_and_replays_automatic_horizons",
@@ -526,3 +526,6 @@ mod shipped_example;
 fn shipped_automatic_noise_example_completes() {
     shipped_example::run().unwrap();
 }
+
+#[path = "support/replay.rs"]
+mod replay;
