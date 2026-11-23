@@ -2354,6 +2354,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "file",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 6941696,
+          "after": 6942344,
+          "incremental_growth_bytes": 648,
+          "incremental_growth_percent": 0.009335,
+          "charged_bytes": 648,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 744,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3668856,
+          "after": 3669384,
+          "incremental_growth_bytes": 528,
+          "incremental_growth_percent": 0.014391,
+          "charged_bytes": 528,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 528,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "named_text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3626488,
+          "after": 3627040,
+          "incremental_growth_bytes": 552,
+          "incremental_growth_percent": 0.015221,
+          "charged_bytes": 552,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 552,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -2611,6 +2653,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "file",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 7004840,
+          "after": 7005400,
+          "incremental_growth_bytes": 560,
+          "incremental_growth_percent": 0.007994,
+          "charged_bytes": 560,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 568,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3734472,
+          "after": 3735000,
+          "incremental_growth_bytes": 528,
+          "incremental_growth_percent": 0.014139,
+          "charged_bytes": 528,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 560,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "named_text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3692605,
+          "after": 3693150,
+          "incremental_growth_bytes": 545,
+          "incremental_growth_percent": 0.014759,
+          "charged_bytes": 545,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 545,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -2962,6 +3046,48 @@
           "incremental_growth_percent": 0.004517,
           "charged_bytes": 164,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "file",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 6903720,
+          "after": 6904304,
+          "incremental_growth_bytes": 584,
+          "incremental_growth_percent": 0.008459,
+          "charged_bytes": 584,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 1472,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3672120,
+          "after": 3672664,
+          "incremental_growth_bytes": 544,
+          "incremental_growth_percent": 0.014814,
+          "charged_bytes": 544,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 864,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "named_text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3631091,
+          "after": 3631644,
+          "incremental_growth_bytes": 553,
+          "incremental_growth_percent": 0.01523,
+          "charged_bytes": 553,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 881,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3079,6 +3205,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "file",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3834296,
+          "after": 3834944,
+          "incremental_growth_bytes": 648,
+          "incremental_growth_percent": 0.0169,
+          "charged_bytes": 648,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 680,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 1909978,
+          "after": 1910618,
+          "incremental_growth_bytes": 640,
+          "incremental_growth_percent": 0.033508,
+          "charged_bytes": 640,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 640,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "named_text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 1892603,
+          "after": 1893239,
+          "incremental_growth_bytes": 636,
+          "incremental_growth_percent": 0.033605,
+          "charged_bytes": 636,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 636,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3196,6 +3364,48 @@
           "incremental_growth_percent": -0.177282,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "file",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 4101064,
+          "after": 4101712,
+          "incremental_growth_bytes": 648,
+          "incremental_growth_percent": 0.015801,
+          "charged_bytes": 648,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 648,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 2057162,
+          "after": 2057802,
+          "incremental_growth_bytes": 640,
+          "incremental_growth_percent": 0.031111,
+          "charged_bytes": 640,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 640,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "named_text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 2037196,
+          "after": 2037838,
+          "incremental_growth_bytes": 642,
+          "incremental_growth_percent": 0.031514,
+          "charged_bytes": 642,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 642,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3313,6 +3523,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "file",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 7564160,
+          "after": 7564808,
+          "incremental_growth_bytes": 648,
+          "incremental_growth_percent": 0.008567,
+          "charged_bytes": 648,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 648,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 4146008,
+          "after": 4146648,
+          "incremental_growth_bytes": 640,
+          "incremental_growth_percent": 0.015437,
+          "charged_bytes": 640,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 640,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "named_text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 4100755,
+          "after": 4101397,
+          "incremental_growth_bytes": 642,
+          "incremental_growth_percent": 0.015656,
+          "charged_bytes": 642,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 642,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3547,6 +3799,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "file",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 3798824,
+          "after": 3799360,
+          "incremental_growth_bytes": 536,
+          "incremental_growth_percent": 0.01411,
+          "charged_bytes": 536,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 536,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 1867722,
+          "after": 1868250,
+          "incremental_growth_bytes": 528,
+          "incremental_growth_percent": 0.02827,
+          "charged_bytes": 528,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 528,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "adaptive-order-continuation",
+          "metric": "named_text",
+          "csgrs_before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+          "csgrs_after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7",
+          "before": 1850163,
+          "after": 1850708,
+          "incremental_growth_bytes": 545,
+          "incremental_growth_percent": 0.029457,
+          "charged_bytes": 545,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 545,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -18472,5 +18766,65 @@
     },
     "result": "Every incremental and cumulative cap passes.",
     "evidence": "docs/evidence/2026-11-22-interval-flow-noise-acceptance"
+  },
+  "adaptive_order_continuation_2026_11_22": {
+    "revisions": {
+      "before": "9f96f14128112ee307ac4ee7b41df00fa421fa65",
+      "after": "8b9f48bf50a45389aba8d97885a8c265c2fd79e7"
+    },
+    "record": "2026-11-22-interval-adaptive-order-continuation",
+    "benefit": "Performance: the adaptive Taylor controller continues the previous candidate order's prepared stages instead of re-deriving them; prepared programs equal fresh preparations stage by stage.",
+    "existing_charges": "Positive per-artifact deltas charged to 7 Hyperdynamics accounts under subsequent_charges, with cumulative totals; the largest named-text charge is crates/hyperdynamics/benches/qr_evolution.rs at +642 bytes. Unchanged: crates/hyperdynamics/benches/coordinate_transition.rs, crates/hyperdynamics/benches/qr_coordinates.rs, crates/hyperdynamics/examples/coordinates.rs, crates/hyperdynamics/examples/expression_field.rs, crates/hyperdynamics/examples/reachability.rs, crates/hyperdynamics/examples/rk_proposal.rs, crates/hyperdynamics/examples/taylor_affine.rs, crates/hyperdynamics/examples/taylor_model.rs, crates/hyperdynamics/examples/taylor_noise.rs, crates/hyperdynamics/src/lib.rs.",
+    "new_artifact_charges": {
+      "artifacts": {
+        "benches/flow_noise_evolution.rs": {
+          "file": {
+            "before": 7233624,
+            "after": 7234240,
+            "growth_bytes": 616
+          },
+          "text": {
+            "before": 3888600,
+            "after": 3889240,
+            "growth_bytes": 640
+          },
+          "named_text": {
+            "before": 3845202,
+            "after": 3845852,
+            "growth_bytes": 650
+          }
+        },
+        "examples/flow_noise_evolution.rs": {
+          "file": {
+            "before": 4157120,
+            "after": 4157752,
+            "growth_bytes": 632
+          },
+          "text": {
+            "before": 2099674,
+            "after": 2100314,
+            "growth_bytes": 640
+          },
+          "named_text": {
+            "before": 2079533,
+            "after": 2080175,
+            "growth_bytes": 642
+          }
+        }
+      },
+      "note": "No account exists for these development artifacts; growth is from the first measurements recorded under flow_noise_evolution_2026_11_22, which equal the before sizes here."
+    },
+    "attribution": {
+      "method": "Diagnostic only: both revisions rebuilt with codegen-units=1 (release and bench) at one path, isolating code growth from codegen-unit partition shifts. Charges use the ledger's default-profile method.",
+      "text_or_named_text_changes": {
+        "crates/hyperdynamics/benches/adaptive_taylor.rs": {
+          "file": 592,
+          "text": 560,
+          "named_text": 571
+        }
+      }
+    },
+    "result": "Every incremental and cumulative cap passes.",
+    "evidence": "docs/evidence/2026-11-22-interval-adaptive-order-continuation"
   }
 }

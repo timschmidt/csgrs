@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, global sensitivity and adaptive noise-column selection beyond the bounded automatic affine-noise horizon evolution accepted 22 November, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order | higher-utility automatic frame strategies, global sensitivity and adaptive noise-column selection beyond the bounded automatic affine-noise horizon evolution accepted 22 November, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -15335,3 +15335,79 @@ and all 84 Hyperphysics tests. `csgrs` does not link Hyperdynamics, so
 per-feature and WASI runs are in hosted CI.
 
 Raw evidence: `docs/evidence/2026-11-22-interval-flow-noise-acceptance`.
+
+## Adaptive Taylor order continuation accepted, 22 November 2026
+
+Phase 13, cross-order preparation reuse in the automatic controller. The
+adaptive Taylor controller prepares candidate orders lazily, in one ascending
+run from `minimum_order`. Before this change each order was prepared from
+scratch, so reaching order *k* derived 1 + 2 + … + (*k*+1) coefficient stages.
+Now each new order continues the previous order's retained stages and derives
+only the one missing normalized Lie coefficient. `flow_taylor` is the
+empty-prefix case of the same body, `ExpressionField::continue_flow_taylor`
+(crate-private). No public API changes.
+
+**Exactness.** Each stage is derived only from its predecessor, so a continued
+program equals a fresh preparation. The new test
+`ascending_orders_continue_shared_stages_and_equal_fresh_preparation` drives a
+nonlinear, time-dependent two-state field through orders 0–4. It checks every
+stage's degree, outputs, definition and derivative requests against a fresh
+`flow_taylor`, and checks that lower stages are the previous program's handles.
+It fails against the previous controller. Copied handles spend the same total
+structural work as `restrict_order`, so structural budget charges in the
+controller are smaller than before; documented scalar exclusions are unchanged.
+
+**Performance.** Callgrind instruction counts, hosted run 45108691290,
+before `9f96f1412`, after `8b9f48bf5`, one iteration each. The adaptive rows
+are deterministic and both repetitions agree.
+
+| Workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| `adaptive_taylor` bench, controller only | 2,909,370 | 2,809,126 | −3.45% |
+| `adaptive_taylor` bench, all four workloads | 5,019,135 | 4,912,550 | −2.12% |
+| Van der Pol probe, maximum order 3 | 83,531,047 | 83,082,954 | −0.54% |
+| Van der Pol probe, maximum order 6 | 388,909,694 | 376,683,220 | −3.14% |
+| Van der Pol probe, maximum order 8 | 1,147,483,734 | 1,053,816,134 | −8.16% |
+
+The probe (μ = 1, remainder limits 2⁻⁴⁰, step ≤ 2⁻⁴, horizon ¼) is in the
+evidence archive and was never committed. The fixed-order part of the
+adaptive bench, which uses fresh preparation, is 2,109,765 → 2,103,424
+(−0.30%). The criterion fresh-preparation and Taylor cases in `taylor_flow`
+and `taylor_evolution` change by −0.07% to +0.06%. That is inside the
+±1,500-instruction run-to-run noise of their whole-program counts.
+
+**Size.** Two codegen variants were rejected before this one. Each kept the
+recurrence once, but it either outlined allocator growth paths or moved
+codegen-unit partitions, by up to ±5 KB per artifact. The retained version
+copies the prefix with `to_vec`. With one codegen unit (diagnostic only),
+only the adaptive bench changes `.text`: +560 B, +571 B named. Under the
+ledger's default profiles every artifact that prepares Taylor programs carries
+the prefix branch:
+
+| Artifact | File | `.text` | Named text |
+| --- | ---: | ---: | ---: |
+| `adaptive_taylor` bench | +648 | +640 | +636 |
+| `qr_evolution` bench | +648 | +640 | +642 |
+| `taylor_flow` bench | +584 | +544 | +553 |
+| `taylor_orders` bench | +648 | +528 | +552 |
+| `taylor_evolution` bench | +560 | +528 | +545 |
+| `flow_noise` example | +648 | +640 | +642 |
+| `taylor_orders` example | +536 | +528 | +545 |
+
+The `flow_noise_evolution` example and bench grow by +632/+640/+642 and
++616/+640/+650 from their first recorded sizes. The other ten artifacts,
+including the library test harness, are unchanged. Charges and cumulative
+totals are in `docs/research/interval-size-accounts.json`
+(`adaptive_order_continuation_2026_11_22`); every incremental and cumulative
+cap passes.
+
+**Validation.** On stable and on Rust 1.95.0: the Hyperdynamics no-default,
+all-target all-feature (172 tests), release and doc test runs; Clippy with
+`-D warnings` at both feature boundaries; the fuzz target check and Clippy.
+Also formatting, Rustdoc with `-D warnings`, and `check` for the
+`adaptive-taylor`, `taylor-flow` and `flow-noise-evolution` features alone.
+That last check found an unused `replay` helper in `flow_noise_evolution.rs`
+without `serde`, from the WASI replay fix; it is now gated like the other
+suites. `cargo hack` and WASI run in hosted CI.
+
+Raw evidence: `docs/evidence/2026-11-22-interval-adaptive-order-continuation`.
