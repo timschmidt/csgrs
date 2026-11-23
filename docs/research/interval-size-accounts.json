@@ -2120,6 +2120,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 3970688,
+          "after": 3971264,
+          "incremental_growth_bytes": 576,
+          "incremental_growth_percent": 0.014506,
+          "charged_bytes": 576,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 576,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1988986,
+          "after": 1988986,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1970364,
+          "after": 1970364,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -2237,6 +2279,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 3738576,
+          "after": 3739168,
+          "incremental_growth_bytes": 592,
+          "incremental_growth_percent": 0.015835,
+          "charged_bytes": 592,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 592,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1830106,
+          "after": 1830106,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1813094,
+          "after": 1813094,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -2536,6 +2620,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 3684864,
+          "after": 3685440,
+          "incremental_growth_bytes": 576,
+          "incremental_growth_percent": 0.015632,
+          "charged_bytes": 576,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 584,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1800170,
+          "after": 1800170,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 16,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1783764,
+          "after": 1783764,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -2812,6 +2938,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 3785736,
+          "after": 3786312,
+          "incremental_growth_bytes": 576,
+          "incremental_growth_percent": 0.015215,
+          "charged_bytes": 576,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 584,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1858090,
+          "after": 1858090,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1840743,
+          "after": 1840743,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -2929,6 +3097,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 3779880,
+          "after": 3780472,
+          "incremental_growth_bytes": 592,
+          "incremental_growth_percent": 0.015662,
+          "charged_bytes": 592,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 592,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1838202,
+          "after": 1838202,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1820373,
+          "after": 1820373,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3406,6 +3616,90 @@
           "passes_incremental_caps": true,
           "cumulative_charged_bytes": 642,
           "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 4101712,
+          "after": 4100248,
+          "incremental_growth_bytes": -1464,
+          "incremental_growth_percent": -0.035692,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 648,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 2057802,
+          "after": 2060618,
+          "incremental_growth_bytes": 2816,
+          "incremental_growth_percent": 0.136845,
+          "charged_bytes": 2816,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 3456,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 2037838,
+          "after": 2040742,
+          "incremental_growth_bytes": 2904,
+          "incremental_growth_percent": 0.142504,
+          "charged_bytes": 2904,
+          "passes_incremental_caps": false,
+          "cumulative_charged_bytes": 3546,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-column-cutoff",
+          "metric": "file",
+          "csgrs_before": "43842984eeef51a4caa4d70009730f7226779531",
+          "csgrs_after": "75745e4ba0ef25a9d46a794727259e09a938e334",
+          "before": 4100248,
+          "after": 4102168,
+          "incremental_growth_bytes": 1920,
+          "incremental_growth_percent": 0.046826,
+          "charged_bytes": 1920,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 2568,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-column-cutoff",
+          "metric": "text",
+          "csgrs_before": "43842984eeef51a4caa4d70009730f7226779531",
+          "csgrs_after": "75745e4ba0ef25a9d46a794727259e09a938e334",
+          "before": 2060618,
+          "after": 2062442,
+          "incremental_growth_bytes": 1824,
+          "incremental_growth_percent": 0.088517,
+          "charged_bytes": 1824,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 5280,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-column-cutoff",
+          "metric": "named_text",
+          "csgrs_before": "43842984eeef51a4caa4d70009730f7226779531",
+          "csgrs_after": "75745e4ba0ef25a9d46a794727259e09a938e334",
+          "before": 2040742,
+          "after": 2042556,
+          "incremental_growth_bytes": 1814,
+          "incremental_growth_percent": 0.088889,
+          "charged_bytes": 1814,
+          "passes_incremental_caps": false,
+          "cumulative_charged_bytes": 5360,
+          "passes_cumulative_caps": false
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3565,6 +3859,48 @@
           "passes_incremental_caps": true,
           "cumulative_charged_bytes": 642,
           "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 7564808,
+          "after": 7565400,
+          "incremental_growth_bytes": 592,
+          "incremental_growth_percent": 0.007826,
+          "charged_bytes": 592,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 1240,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 4146648,
+          "after": 4146648,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 640,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 4101397,
+          "after": 4101403,
+          "incremental_growth_bytes": 6,
+          "incremental_growth_percent": 0.000146,
+          "charged_bytes": 6,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 648,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3682,6 +4018,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 3888120,
+          "after": 3888696,
+          "incremental_growth_bytes": 576,
+          "incremental_growth_percent": 0.014814,
+          "charged_bytes": 576,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 576,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1946570,
+          "after": 1946570,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1928840,
+          "after": 1928840,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3841,6 +4219,48 @@
           "passes_incremental_caps": true,
           "cumulative_charged_bytes": 545,
           "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 3799360,
+          "after": 3800080,
+          "incremental_growth_bytes": 720,
+          "incremental_growth_percent": 0.018951,
+          "charged_bytes": 720,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 1256,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1868250,
+          "after": 1868250,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 528,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 1850708,
+          "after": 1850708,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 545,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -3958,6 +4378,48 @@
           "incremental_growth_percent": 0.0,
           "charged_bytes": 0,
           "passes_incremental_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "file",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 4112488,
+          "after": 4113064,
+          "incremental_growth_bytes": 576,
+          "incremental_growth_percent": 0.014006,
+          "charged_bytes": 576,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 608,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 2118730,
+          "after": 2118730,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
+        },
+        {
+          "change": "flow-noise-rounding",
+          "metric": "named_text",
+          "csgrs_before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+          "csgrs_after": "43842984eeef51a4caa4d70009730f7226779531",
+          "before": 2099736,
+          "after": 2099736,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "charged_bytes": 0,
+          "passes_incremental_caps": true,
+          "cumulative_charged_bytes": 0,
+          "passes_cumulative_caps": true
         }
       ],
       "subsequent_charge_method": "Rust 1.100.0 stable, all features, release (examples, library tests) or bench profile, both revisions built at one checkout path and target directory. Each charge is the positive difference in that configuration, never offset; absolute sizes are not comparable with 'retained', which used the archived toolchain."
@@ -18826,5 +19288,50 @@
     },
     "result": "Every incremental and cumulative cap passes.",
     "evidence": "docs/evidence/2026-11-22-interval-adaptive-order-continuation"
+  },
+  "flow_noise_rounding_2026_11_23": {
+    "revisions": {
+      "before": "0fb217b13f3539bf4ddf6dcb089b9f01b2b3b6d9",
+      "rounding": "43842984eeef51a4caa4d70009730f7226779531",
+      "cutoff": "75745e4ba0ef25a9d46a794727259e09a938e334"
+    },
+    "record": "2026-11-23-interval-flow-noise-rounding",
+    "status": "held: the flow_noise example exceeds its 1,024-byte incremental named-text cap for each change and its 4,096-byte cumulative named-text cap after both; retention requires the budget revision proposed below",
+    "benefit": "Completeness: with round_coefficients, nonlinear correlated horizons no longer stop after two steps with SizeExhausted (Van der Pol reaches t=2.5 with 40 segments at cap 2 and completes t=4 at cap 0; Lotka-Volterra t=3.0; Lorenz t=0.086, each then limited by the default structural work budget). Performance: rounding cuts the two-dimensional rotation probe from 1.12 s to 0.43 s at cap 2, and the 16-bit column cutoff cuts it from 1.95 s to 0.40 s at cap 16 with equal printed widths. Witnesses: rounded_coefficients_complete_a_long_riccati_horizon_containing_the_flow (fails with SizeExhausted when rounding is off), rounding_keeps_on_grid_shear_states_exactly, relative_column_cutoff_bounds_rotation_columns_and_contains_the_exact_flow.",
+    "existing_charges": "Rounding: flow_noise example named text +2,904 (cumulative 3,546), text +2,816, file -1,464; other examples +576 to +720 file and 0 code; qr_evolution bench +592 file, +6 named text. Cutoff: flow_noise example named text +1,814 (cumulative 5,360), text +1,824, file +1,920; no other accounted artifact changes.",
+    "new_artifact_charges": {
+      "crates/hyperdynamics/benches/flow_noise_evolution.rs": {
+        "rounding": {
+          "file": 6208,
+          "text": 5328,
+          "named_text": 5350
+        },
+        "cutoff": {
+          "file": 3480,
+          "text": 3312,
+          "named_text": 3319
+        }
+      },
+      "crates/hyperdynamics/examples/flow_noise_evolution.rs": {
+        "rounding": {
+          "file": 6512,
+          "text": 4096,
+          "named_text": 4040
+        },
+        "cutoff": {
+          "file": 3472,
+          "text": 3296,
+          "named_text": 3297
+        }
+      }
+    },
+    "attribution": "round_down is a single non-generic 3,388-byte function in the flow_noise example; the cutoff adds about 1.8 KB to certify_from. A per-cell vector and an out-of-line real_point measured the same or larger.",
+    "evidence": "docs/evidence/2026-11-23-interval-flow-noise-rounding"
+  },
+  "flow_noise_rounding_budget_revision_proposal": {
+    "account": "crates/hyperdynamics/examples/flow_noise.rs",
+    "metric": "named_text",
+    "proposal": "Raise this account's named-text allowance to admit +2,904 bytes for rounding and +1,814 bytes for the cutoff (cumulative 5,360 against 4,096), keeping every other cap. The example links certify_noise_step, so both features' code is present even though it leaves them off.",
+    "status": "proposed, not adopted; requires the repository owner's approval before either change is retained"
   }
 }
