@@ -527,5 +527,6 @@ fn shipped_automatic_noise_example_completes() {
     shipped_example::run().unwrap();
 }
 
+#[cfg(feature = "serde")]
 #[path = "support/replay.rs"]
 mod replay;
