@@ -3,10 +3,10 @@ import copy
 from fractions import Fraction as Q
 import unittest
 
-from validate import CASES, oracle, series, sqrt_bounds, validate
+from validate import CASES, horizon, oracle, series, sqrt_bounds, validate
 
 FIELDS = ("constant", "exponential", "riccati", "oscillator", "time_growth",
-          "turnaround", "noncommuting", "two_rate")
+          "turnaround", "noncommuting", "two_rate", "oscillator_long", "riccati_long")
 
 
 def dyadic(pair):
@@ -20,11 +20,12 @@ def synthetic_corpus():
     rows = []
     for kind, box in CASES:
         initial, end, tube = oracle(kind, box)
-        pieces = 16 if kind == "two_rate" else 4
+        end_time, cap, _ = horizon(kind)
+        pieces = int(end_time / cap)
         rows.append({"kind": "certificate", "solver": "test_only", "case": f"{kind}_{'box' if box else 'point'}",
                      "status": "certified", "encoding": "dyadic", "pieces": pieces,
-                     "start": dyadic((Q(0), Q(0))), "end_time": dyadic((Q(1, 4), Q(1, 4))),
-                     "time_domains": [dyadic((Q(i, 4 * pieces), Q(i, 4 * pieces))) for i in range(pieces + 1)],
+                     "start": dyadic((Q(0), Q(0))), "end_time": dyadic((end_time, end_time)),
+                     "time_domains": [dyadic((i * cap, i * cap)) for i in range(pieces + 1)],
                      "initial": [dyadic(v) for v in initial], "end": [dyadic(v) for v in end],
                      "tube": [dyadic(v) for v in tube]})
     return rows
@@ -80,7 +81,7 @@ class OracleContract(unittest.TestCase):
 
     def test_validator_requires_new_dimensions_extrema_and_step_cap(self):
         rows = synthetic_corpus()
-        self.assertEqual(len(validate(rows)), 16)
+        self.assertEqual(len(validate(rows)), 20)
         cases = {row["case"]: i for i, row in enumerate(rows)}
         for name in ("turnaround_point", "noncommuting_box"):
             broken = copy.deepcopy(rows)
@@ -97,6 +98,30 @@ class OracleContract(unittest.TestCase):
         row = broken[cases["two_rate_point"]]
         row["pieces"] = 4
         row["time_domains"] = [dyadic((Q(i, 16), Q(i, 16))) for i in range(5)]
+        with self.assertRaises(AssertionError):
+            validate(broken)
+
+    def test_long_rotation_crosses_a_full_turn_and_long_steps_are_capped(self):
+        initial, end, tube = oracle("oscillator_long", False)
+        self.assertEqual(initial, [(1, 1), (0, 0)])
+        cos, sin = series("cos", Q(8)), series("sin", Q(8))
+        self.assertTrue(Q(-15, 100) < cos[0] <= cos[1] < Q(-14, 100))
+        self.assertTrue(Q(98, 100) < sin[0] <= sin[1] < Q(99, 100))
+        self.assertEqual(end, [cos, (-sin[1], -sin[0])])
+        self.assertEqual(tube, [(-1, 1), (-1, 1)])
+        rows = synthetic_corpus()
+        cases = {row["case"]: i for i, row in enumerate(rows)}
+        broken = copy.deepcopy(rows)
+        row = broken[cases["oscillator_long_box"]]
+        # A hull of the initial and final sets misses the turn's extrema.
+        row["tube"] = [dyadic((min(a[0], b[0]), max(a[1], b[1])))
+                       for a, b in zip(*oracle("oscillator_long", True)[:2])]
+        with self.assertRaises(AssertionError):
+            validate(broken)
+        broken = copy.deepcopy(rows)
+        row = broken[cases["riccati_long_point"]]
+        row["pieces"] = 4
+        row["time_domains"] = [dyadic((Q(i, 8), Q(i, 8))) for i in range(5)]
         with self.assertRaises(AssertionError):
             validate(broken)
 

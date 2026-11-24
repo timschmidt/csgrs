@@ -7,7 +7,7 @@ publish = false
 [workspace]
 
 [dependencies]
-hyperdynamics = { path = "../../crates/hyperdynamics", features = ["taylor-evolution"] }
+hyperdynamics = { path = "../../crates/hyperdynamics", features = ["taylor-evolution", "flow-noise-evolution"] }
 hyperinterval = { path = "../../crates/hyperinterval", features = ["dyadic"] }
 hyperlattice-interval = { path = "../../crates/hyperlattice-interval", features = ["dyadic"] }
 hypersolve = { path = "../../crates/hypersolve" }

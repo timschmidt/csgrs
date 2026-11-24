@@ -24,8 +24,8 @@ static void vector(const capd::IVector& value) {
 static const char* definition(const std::string& name) {
   if (name == "constant") return "var:x;fun:2;";
   if (name == "exponential") return "var:x;fun:x;";
-  if (name == "riccati") return "var:x;fun:x*x;";
-  if (name == "oscillator") return "var:x,y;fun:y,-x;";
+  if (name == "riccati" || name == "riccati_long") return "var:x;fun:x*x;";
+  if (name == "oscillator" || name == "oscillator_long") return "var:x,y;fun:y,-x;";
   if (name == "time_growth") return "time:t;var:x;fun:t*x;";
   if (name == "turnaround") return "time:t;var:x;fun:1-8*t;";
   if (name == "noncommuting") return "time:t;var:x,y,z;fun:y,t*z,0;";
@@ -34,10 +34,17 @@ static const char* definition(const std::string& name) {
 }
 static unsigned dimension(const std::string& name) {
   if (name == "noncommuting") return 3;
-  return name == "oscillator" || name == "two_rate" ? 2 : 1;
+  return name == "oscillator" || name == "oscillator_long" || name == "two_rate" ? 2 : 1;
 }
 static double stepCap(const std::string& name) {
+  if (name == "oscillator_long") return 1.0 / 8.0;
   return name == "two_rate" ? 1.0 / 64.0 : 1.0 / 16.0;
+}
+// Exact dyadic horizon [0, H]; H is a whole number of step caps.
+static double horizon(const std::string& name) {
+  if (name == "oscillator_long") return 8;
+  if (name == "riccati_long") return 0.5;
+  return 0.25;
 }
 struct Prepared {
   capd::IMap field;
@@ -76,13 +83,13 @@ struct Outcome {
     capd::C0Rect2Set set(initial, 0);
     // TimeMap replaces the solver's maxStep with the remaining horizon.
     // Exact checkpoints enforce the common cap without disabling adaptation.
-    const double cap = stepCap(name);
-    const unsigned checkpoints = name == "two_rate" ? 16 : 4;
+    const double cap = stepCap(name), end_time = horizon(name);
+    const unsigned checkpoints = static_cast<unsigned>(end_time / cap);
     for (unsigned checkpoint = 1; checkpoint <= checkpoints; ++checkpoint)
       end = prepared.integrate(capd::interval(checkpoint * cap), set, solution);
-    if (solution.getLeftDomain() != 0 || solution.getRightDomain() != 0.25)
+    if (solution.getLeftDomain() != 0 || solution.getRightDomain() != end_time)
       throw std::runtime_error("incomplete horizon");
-    tube = solution(capd::interval(0, 0.25));
+    tube = solution(capd::interval(0, end_time));
     solution.checkStepCap(cap);
   }
 };
@@ -92,7 +99,7 @@ static void record(const std::string& name, bool uncertain, const Outcome& resul
             << "\",\"status\":\"certified\",\"encoding\":\"ieee_hex\",\"order\":12,\"initial\":";
   vector(result.initial);
   std::cout << ",\"start\":"; bounds(capd::interval(0));
-  std::cout << ",\"end_time\":"; bounds(capd::interval(0.25));
+  std::cout << ",\"end_time\":"; bounds(capd::interval(horizon(name)));
   std::cout << ",\"end\":"; vector(result.end);
   std::cout << ",\"tube\":"; vector(result.tube);
   std::cout << ",\"time_domains\":[";
@@ -157,7 +164,7 @@ int main(int argc, char** argv) {
     const unsigned samples = argc == 3 ? std::stoul(argv[2]) : 0;
     if (iterations < 1 || iterations > 100000 || samples > 100)
       throw std::runtime_error("invalid measurement bounds");
-    for (const std::string name : {"constant", "exponential", "riccati", "oscillator", "time_growth", "turnaround", "noncommuting", "two_rate"})
+    for (const std::string name : {"constant", "exponential", "riccati", "oscillator", "time_growth", "turnaround", "noncommuting", "two_rate", "oscillator_long", "riccati_long"})
       for (bool uncertain : {false, true}) benchmark(name, uncertain, iterations, samples);
   } catch (const std::exception& error) {
     std::cerr << error.what() << '\n';

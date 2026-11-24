@@ -43,6 +43,10 @@ mutations.update({
     "two_rate_oversized_step": lambda r: (case(r, "two_rate_point").__setitem__("pieces", 4),
         case(r, "two_rate_point").__setitem__("time_domains", [[str(i), str(i), -4] for i in range(5)])),
     "stopped_with_endpoint": lambda r: case(r, "two_rate_box").__setitem__("status", "stopped"),
+    "oscillator_long_tube_misses_turn": lambda r: case(r, "oscillator_long_box")["tube"].__setitem__(
+        1, ["-1", "1", -1]),
+    "riccati_long_short_horizon": lambda r: (case(r, "riccati_long_point").__setitem__("end_time", ["1", "1", -2]),
+        case(r, "riccati_long_point")["time_domains"].__setitem__(-1, ["1", "1", -2])),
 })
 for name, mutate in mutations.items():
     incorrect = copy.deepcopy(rows)

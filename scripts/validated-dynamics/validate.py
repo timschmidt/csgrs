@@ -10,10 +10,25 @@ if not __debug__:
     raise RuntimeError("validation requires Python assertions enabled")
 
 CASES = [(kind, box) for kind in ("constant", "exponential", "riccati", "oscillator",
-                                "time_growth", "turnaround", "noncommuting", "two_rate")
+                                "time_growth", "turnaround", "noncommuting", "two_rate",
+                                "oscillator_long", "riccati_long")
          for box in (False, True)]
 END_WIDTH = Q(1, 64)
-TUBE_WIDTH = Q(1)
+
+
+def horizon(kind):
+    """Exact horizon, per-piece step cap and whole-tube width limit."""
+    if kind == "oscillator_long":
+        return Q(8), Q(1, 8), Q(4)
+    if kind == "riccati_long":
+        return Q(1, 2), Q(1, 16), Q(4)
+    return Q(1, 4), Q(1, 64) if kind == "two_rate" else Q(1, 16), Q(1)
+
+
+def product(u, v):
+    """Exact hull of {x*y : x in u, y in v} for closed rational intervals."""
+    corners = [x * y for x in u for y in v]
+    return min(corners), max(corners)
 
 
 def series(kind, x):
@@ -45,7 +60,7 @@ def sqrt_bounds(x):
 
 def oracle(kind, box):
     radius = Q(1, 1024) if box else Q(0)
-    a, b, t = 1 - radius, 1 + radius, Q(1, 4)
+    a, b, t = 1 - radius, 1 + radius, horizon(kind)[0]
     initial = [(a, b)]
     if kind == "constant":
         end = [(a + 2 * t, b + 2 * t)]
@@ -54,7 +69,7 @@ def oracle(kind, box):
         lo, hi = series("exp", t)
         end = [(a * lo, b * hi)]
         tube = [(a, end[0][1])]
-    elif kind == "riccati":
+    elif kind in ("riccati", "riccati_long"):
         end = [(a / (1 - t * a), b / (1 - t * b))]
         tube = [(a, end[0][1])]
     elif kind == "oscillator":
@@ -67,6 +82,18 @@ def oracle(kind, box):
         # y decreases throughout [0,T] for this entire initial rectangle.
         tube = [(end[0][0], sqrt_bounds(b * b + radius * radius)[1]),
                 (end[1][0], radius)]
+    elif kind == "oscillator_long":
+        initial.append((-radius, radius))
+        c, s = series("cos", t), series("sin", t)
+        x0, y0 = (a, b), (-radius, radius)
+        x = [sum(p) for p in zip(product(x0, c), product(y0, s))]
+        minus_x0 = (-b, -a)
+        y = [sum(p) for p in zip(product(minus_x0, s), product(y0, c))]
+        end = [tuple(x), tuple(y)]
+        # Horizon 8 exceeds a full turn, so both coordinates reach +-|(x0,y0)|;
+        # the (b, radius) corner has the largest modulus.
+        modulus = sqrt_bounds(b * b + radius * radius)[1]
+        tube = [(-modulus, modulus), (-modulus, modulus)]
     elif kind == "time_growth":
         lo, hi = series("exp", t*t/2)
         end = [(a*lo, b*hi)]
@@ -119,17 +146,18 @@ def validate(rows):
         assert row["status"] == "certified"
         assert 0 < row["pieces"] <= 256
         assert decode(row, row["start"]) == (0, 0)
-        assert decode(row, row["end_time"]) == (Q(1, 4), Q(1, 4))
+        end_time, cap, tube_width = horizon(kind)
+        assert decode(row, row["end_time"]) == (end_time, end_time)
         times = [decode(row, value) for value in row["time_domains"]]
         assert len(times) == row["pieces"] + 1
-        assert times[0] == (0, 0) and times[-1] == (Q(1, 4), Q(1, 4))
+        assert times[0] == (0, 0) and times[-1] == (end_time, end_time)
         for left, right in zip(times, times[1:]):
-            assert 0 < right[0] - left[1] <= right[1] - left[0] <= (Q(1, 64) if kind == "two_rate" else Q(1, 16))
+            assert 0 < right[0] - left[1] <= right[1] - left[0] <= cap
         initial, expected_end, expected_tube = oracle(kind, box)
         assert [decode(row, v) for v in row["initial"]] == initial
         widths = {}
         for label, expected, limit in [("end", expected_end, END_WIDTH),
-                                        ("tube", expected_tube, TUBE_WIDTH)]:
+                                        ("tube", expected_tube, tube_width)]:
             actual = [decode(row, v) for v in row[label]]
             assert len(actual) == len(expected)
             for lane, ((lo, hi), (el, eh)) in enumerate(zip(actual, expected)):
