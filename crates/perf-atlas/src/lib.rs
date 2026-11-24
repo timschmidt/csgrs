@@ -148,15 +148,38 @@ impl Rng {
 pub trait Outcome {
     /// `true` when the call produced its intended result.
     fn succeeded(&self) -> bool;
+    /// Why a failed call failed, shown in the report next to the point.
+    fn reason(&self) -> Option<String> {
+        None
+    }
+}
+
+/// A failure with an explicit reason, for operations whose own status types
+/// are not `Result`s; `Err(reason)` marks the point and names the cause.
+pub type Checked<T> = Result<T, String>;
+
+fn short(text: String) -> String {
+    const LIMIT: usize = 160;
+    if text.len() <= LIMIT {
+        return text;
+    }
+    let mut end = LIMIT;
+    while !text.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}…", &text[..end])
 }
 impl<T> Outcome for Option<T> {
     fn succeeded(&self) -> bool {
         self.is_some()
     }
 }
-impl<T, E> Outcome for Result<T, E> {
+impl<T, E: std::fmt::Debug> Outcome for Result<T, E> {
     fn succeeded(&self) -> bool {
         self.is_ok()
+    }
+    fn reason(&self) -> Option<String> {
+        self.as_ref().err().map(|e| short(format!("{e:?}")))
     }
 }
 impl Outcome for bool {
@@ -189,14 +212,20 @@ impl<A: Outcome, B: Outcome> Outcome for (A, B) {
     fn succeeded(&self) -> bool {
         self.0.succeeded() && self.1.succeeded()
     }
+    fn reason(&self) -> Option<String> {
+        self.0.reason().or_else(|| self.1.reason())
+    }
 }
 impl<T: Outcome> Outcome for Vec<T> {
     fn succeeded(&self) -> bool {
         self.iter().all(Outcome::succeeded)
     }
+    fn reason(&self) -> Option<String> {
+        self.iter().find_map(Outcome::reason)
+    }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct Point {
     magnitude: f64,
     median_ns: f64,
@@ -204,6 +233,7 @@ struct Point {
     max_ns: f64,
     iterations: u64,
     status: &'static str,
+    reason: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -366,9 +396,10 @@ impl Atlas {
         let input = copy();
         let t = Instant::now();
         let result = run(black_box(&input));
-        let succeeded = result.succeeded();
-        black_box(result);
         let first = t.elapsed();
+        let succeeded = result.succeeded();
+        let reason = if succeeded { None } else { result.reason() };
+        black_box(result);
         drop(input);
         let status = if succeeded { "ok" } else { "error" };
         if first > config.single_ceiling {
@@ -383,6 +414,7 @@ impl Atlas {
                 max_ns: ns,
                 iterations: 1,
                 status: if succeeded { "single" } else { "error" },
+                reason,
             });
         }
         let first_ns = first.as_nanos().max(1) as f64;
@@ -419,6 +451,7 @@ impl Atlas {
             max_ns: samples[samples.len() - 1],
             iterations: calls as u64,
             status,
+            reason,
         })
     }
 
@@ -430,6 +463,7 @@ impl Atlas {
             max_ns: f64::NAN,
             iterations: 0,
             status,
+            reason: None,
         }
     }
 
@@ -489,6 +523,7 @@ impl Atlas {
                         max_ns: ns,
                         iterations: 1,
                         status: "ceiling",
+                        reason: None,
                     }
                 }
             };
@@ -505,6 +540,8 @@ impl Atlas {
 
     /// Time `fuzz_per_magnitude` random inputs at each magnitude, each with a
     /// single short calibrated batch, to show the spread hidden by a median.
+    /// A call over the ceiling ends that magnitude; two such magnitudes in a
+    /// row end the fuzz.
     pub fn fuzz<I, R>(
         &mut self,
         kind: &str,
@@ -526,7 +563,12 @@ impl Atlas {
             ..self.config.clone()
         };
         let mut points = Vec::new();
-        'magnitudes: for &magnitude in magnitudes {
+        let mut ceilings_in_a_row = 0;
+        for &magnitude in magnitudes {
+            if ceilings_in_a_row >= 2 {
+                break;
+            }
+            let mut hit_ceiling = false;
             for _ in 0..self.config.fuzz_per_magnitude {
                 let state = Rng::new(rng.next_u64());
                 match Self::measure(
@@ -544,11 +586,18 @@ impl Atlas {
                             max_ns: ns,
                             iterations: 1,
                             status: "ceiling",
+                            reason: None,
                         });
-                        break 'magnitudes;
+                        hit_ceiling = true;
+                        break;
                     }
                 }
             }
+            ceilings_in_a_row = if hit_ceiling {
+                ceilings_in_a_row + 1
+            } else {
+                0
+            };
         }
         self.current().fuzz.push(Series {
             kind: kind.to_owned(),
@@ -719,13 +768,14 @@ fn series_json(series: &Series) -> String {
         .iter()
         .map(|p| {
             format!(
-                "[{},{},{},{},{},{}]",
+                "[{},{},{},{},{},{},{}]",
                 number(p.magnitude),
                 number(p.median_ns),
                 number(p.min_ns),
                 number(p.max_ns),
                 p.iterations,
-                quote(p.status)
+                quote(p.status),
+                p.reason.as_deref().map_or("null".to_owned(), quote)
             )
         })
         .collect();

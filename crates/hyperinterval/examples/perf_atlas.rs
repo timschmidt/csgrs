@@ -139,36 +139,14 @@ fn rational(shape: Shape, bits: u32, k: i32, rng: &mut Rng) -> RationalInterval 
     let up = k.max(0) as usize;
     let down = (-k).max(0) as usize;
     let q = |n: BigInt| {
-        let value = Rational::from_bigint_fraction(n << up, &d << down).expect("nonzero");
-        fill_memo_slots(&value);
-        // Negation and inversion results are themselves retained objects that
-        // operations such as reflected or negative powers start from.
-        fill_memo_slots(&-&value);
-        fill_memo_slots(&value.clone().inverse().expect("nonzero"));
-        value
+        // The harness gives every timed call its own copy of the input, so
+        // results Hyperreal memoizes on rational operands are never reused.
+        Rational::from_bigint_fraction(n << up, &d << down).expect("nonzero")
     };
     if lo == hi {
         RationalInterval::point(q(lo))
     } else {
         RationalInterval::new(q(lo), q(hi)).expect("ordered endpoints")
-    }
-}
-
-/// Hyperreal memoizes exact rational products, sums and differences on the
-/// operand objects, in a few write-once slots keyed by the partner's identity,
-/// so repeating one call on the same inputs would return a stored result.
-/// Filling those slots with throwaway partners before timing makes every timed
-/// call compute its result afresh. (Dropped partners stay allocated while the
-/// slots refer to them, so their identities are never reused.)
-fn fill_memo_slots(value: &Rational) {
-    for i in 0..4u8 {
-        let partner = Rational::from_bigint_fraction(BigInt::from(1u8), BigUint::from(3 + 2 * i))
-            .expect("nonzero");
-        if i == 0 {
-            black_box(value * &partner);
-        } else {
-            black_box(value + &partner);
-        }
     }
 }
 

@@ -184,6 +184,11 @@ def axes(xs, ys, xticks, yticks, xlabel):
     return out
 
 
+def why(p):
+    """Failure reason recorded with a point, if any."""
+    return p[6] if len(p) > 6 and p[6] else None
+
+
 def anomalies(points):
     """Cliffs, valleys and failures in one series of [m, median, min, max, iters, status]."""
     found = []
@@ -231,7 +236,7 @@ def line_chart(op, series, xlabel, slots):
         by_x = {p[0]: p for p in s["points"]}
         data["series"].append({"name": s["kind"], "c": var,
                                "ys": [by_x[x][1] if x in by_x else None for x in xvals],
-                               "st": [by_x[x][5] if x in by_x else None for x in xvals]})
+                               "st": [(by_x[x][5] + (": " + why(by_x[x]) if why(by_x[x]) else "")) if x in by_x else None for x in xvals]})
         for kind, ratio, a, b in anomalies(s["points"]):
             if kind == "cliff":
                 notes.append((ratio, xs(b[0]), ys(b[1])))
@@ -282,7 +287,7 @@ def fuzz_chart(op, series, xlabel):
             jitter = (i / max(len(group) - 1, 1) - 0.5) * spacing if len(group) > 1 else 0
             x, y = xs(m) + jitter, ys(p[1])
             tipd = {"title": f"{xlabel} = {fmt_mag(m)}, fuzzed input {i + 1}",
-                    "rows": [{"value": fmt_ns(p[1]), "name": "error" if p[5] == "error" else ("ceiling" if p[5] == "ceiling" else "time per call")}]}
+                    "rows": [{"value": fmt_ns(p[1]), "name": ("error: " + (why(p) or "failed")) if p[5] == "error" else ("ceiling" if p[5] == "ceiling" else "time per call")}]}
             out.append(f'<g data-tip="{esc(json.dumps(tipd))}">{marker("circle", x, y, "--series-1", hollow=p[5] == "error", size=4)}'
                        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="12" fill="transparent"/></g>')
     med = []
@@ -361,7 +366,7 @@ def table(op):
             cells = []
             for s in op["series"]:
                 p = next((p for p in s["points"] if p[0] == m), None)
-                text = "—" if p is None else (p[5] if p[1] is None else fmt_ns(p[1]) + ("" if p[5] in ("ok", "single") else f" ({p[5]})"))
+                text = "—" if p is None else (p[5] if p[1] is None else fmt_ns(p[1]) + ("" if p[5] in ("ok", "single") else f" ({p[5]}{': ' + why(p) if why(p) else ''})"))
                 cells.append(f"<td>{esc(text)}</td>")
             rows.append(f"<tr><td>{esc(fmt_mag(m))}</td>{''.join(cells)}</tr>")
         parts.append(f"<table><tr><th>{esc(op['magnitude'])}</th>{head}</tr>{''.join(rows)}</table>")
@@ -430,7 +435,7 @@ def render(docs):
         out = []
         for kind, ratio, crate, op, series, a, b in items[:limit]:
             where = f"{fmt_mag(a[0])} → {fmt_mag(b[0])}" if kind == "cliff" else fmt_mag(a[0])
-            detail = (f"×{ratio:.1f}" if kind in ("cliff", "valley") else "call failed" if kind == "error"
+            detail = (f"×{ratio:.1f}" if kind in ("cliff", "valley") else ("call failed" + (f": {why(a)}" if why(a) else "")) if kind == "error"
                       else "predicted over ceiling; not run" if a[5] == "predicted" else "single call over ceiling")
             out.append(f'<tr><td><a href="#{anchor(crate, op)}">{esc(crate)} · {esc(op["name"])}</a></td><td>{esc(series)}</td>'
                        f'<td>{esc(where)}</td><td>{esc(fmt_ns(a[1]))}</td><td>{esc(fmt_ns(b[1]))}</td><td>{esc(detail)}</td></tr>')
