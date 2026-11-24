@@ -242,7 +242,7 @@ pub fn evaluate_with_budget<T>(
 ///     &cancelled,
 ///     compare,
 /// );
-/// assert_eq!(attempt.result.unwrap_err().kind, WorkKind::Cancellation);
+/// assert_eq!(attempt.result.unwrap_err().kind(), WorkKind::Cancellation);
 ///
 /// let retry = evaluate_with_cancellable_budget(
 ///     PredicatePolicy::STRICT,
