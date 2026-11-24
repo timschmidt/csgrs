@@ -1,0 +1,61 @@
+name: perf-atlas
+
+# Builds the performance atlas: every crate's perf_atlas example sweeps its
+# operations across input kinds, magnitudes and fuzzed inputs, and
+# scripts/perf-atlas/render.py turns the results into one HTML report, kept as
+# a workflow artifact. Hosted runners are shared machines, so treat absolute
+# times as indicative; shapes, cliffs and relative costs are what the report
+# is for.
+
+on:
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: "Quick sweep (short batches, fewer samples)"
+        type: boolean
+        default: true
+      crates:
+        description: "Space-separated crates (empty for all with an atlas)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  atlas:
+    name: Performance atlas
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustc -Vv
+      - name: Sweep and render
+        env:
+          QUICK: ${{ inputs.quick }}
+          CRATES: ${{ inputs.crates }}
+        run: |
+          args=(--out target/perf-atlas)
+          if [ "$QUICK" = "true" ]; then args+=(--quick); fi
+          if [ -n "$CRATES" ]; then args+=(--crates "$CRATES"); fi
+          scripts/perf-atlas/run.sh "${args[@]}"
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: perf-atlas
+          path: target/perf-atlas/
+          retention-days: 30

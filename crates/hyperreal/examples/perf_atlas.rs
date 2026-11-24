@@ -196,7 +196,15 @@ fn main() {
             atlas.sweep(
                 kind,
                 &range,
-                |k, rng| scaled(kind, k as i32, 53, rng),
+                |k, rng| {
+                    // Irrational inputs are square roots, so scale their radicand by 2^(2k).
+                    let k = if kind == "irrational" {
+                        2 * k as i32
+                    } else {
+                        k as i32
+                    };
+                    scaled(kind, k, 53, rng)
+                },
                 |a| op(real(kind, a)),
             );
         }
@@ -213,7 +221,10 @@ fn main() {
             },
             |a| op(real("dyadic", a)),
         );
-        atlas.operation("elementary", &format!("{name} by operand size"), "operand bits", &format!("{name}(x) for x in [1, 2) (asin: [3/8, 1)) with operands of growing size, approximated to 17 significant digits."));
+        atlas.operation("elementary", &format!("{name} by operand size"), "operand bits", &format!(
+                "{name}(x) for x in {} with operands of growing size, approximated to 17 significant digits.",
+                if name == "asin" { "[3/8, 1)" } else { "[1, 3)" }
+            ));
         for kind in ["dyadic", "rational", "irrational"] {
             let exponent = match (name, kind) {
                 ("asin", "rational") => -2,
