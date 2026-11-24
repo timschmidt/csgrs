@@ -2665,6 +2665,8 @@ dependencies = [
  "geometry-predicates",
  "hyperlattice",
  "hyperreal",
+ "num",
+ "perf-atlas",
  "proptest",
  "rayon",
  "robust",
