@@ -197,7 +197,7 @@ def anomalies(points):
     for p in points:
         if p[5] == "error":
             found.append(("error", 0, p, p))
-        if p[5] == "ceiling":
+        if p[5] in ("ceiling", "predicted"):
             found.append(("ceiling", 0, p, p))
     return found
 
@@ -430,7 +430,8 @@ def render(docs):
         out = []
         for kind, ratio, crate, op, series, a, b in items[:limit]:
             where = f"{fmt_mag(a[0])} → {fmt_mag(b[0])}" if kind == "cliff" else fmt_mag(a[0])
-            detail = f"×{ratio:.1f}" if kind in ("cliff", "valley") else ("call failed" if kind == "error" else "single call over ceiling")
+            detail = (f"×{ratio:.1f}" if kind in ("cliff", "valley") else "call failed" if kind == "error"
+                      else "predicted over ceiling; not run" if a[5] == "predicted" else "single call over ceiling")
             out.append(f'<tr><td><a href="#{anchor(crate, op)}">{esc(crate)} · {esc(op["name"])}</a></td><td>{esc(series)}</td>'
                        f'<td>{esc(where)}</td><td>{esc(fmt_ns(a[1]))}</td><td>{esc(fmt_ns(b[1]))}</td><td>{esc(detail)}</td></tr>')
         if not out:
@@ -445,7 +446,8 @@ def render(docs):
 charts are logarithmic where the data spans a wide range, so equal slopes mean equal growth rates and a straight line is a power law.
 A <b>cliff</b> is a rise of at least {CLIFF:.0f}× between adjacent magnitudes; a <b>valley</b> is a point at least {VALLEY:.0f}× faster than
 both neighbours. Hollow markers are calls that returned an error, which are not fast successes. "Ceiling" marks a single call longer than the
-sweep's ceiling; larger magnitudes of that series were skipped. These are focused probes on one host; compare reports only from the
+sweep's ceiling, and "predicted" a call the series' own growth put far over it; larger magnitudes of that series were skipped.
+Every timed call gets its own freshly built copy of its input, so results a library caches on its operands are not reused. These are focused probes on one host; compare reports only from the
 same host, toolchain and settings.</p>
 <div class="toolbar"><input id="filter" placeholder="Filter operations" aria-label="Filter operations"><button id="theme">Toggle dark mode</button>
 <span class="status">{sum(len(d["operations"]) for d in docs)} operations in {len(docs)} crates, {len(cliffs)} cliffs, {len(valleys)} valleys, {len(failures)} failures or ceilings</span></div>

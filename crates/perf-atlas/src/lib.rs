@@ -11,9 +11,11 @@
 //! Timing is wall-clock with calibrated batches: each point repeats the
 //! operation until a batch reaches a target duration, then records the median,
 //! minimum and maximum per-operation time over several batches. Input
-//! construction is outside the timer. A point whose single call exceeds the
-//! configured ceiling ends that series; later magnitudes are recorded as
-//! skipped so the report can show where an operation leaves its budget.
+//! construction is outside the timer, and by default every timed call gets
+//! its own freshly built copy of the input, so operand caches are never
+//! reused. A point whose single call exceeds the configured ceiling ends that
+//! series; later magnitudes are recorded as skipped, and a series whose growth
+//! predicts a call far over the ceiling stops before making it.
 //!
 //! These are focused probes on one host, not a cross-library claim. Compare
 //! reports only when they come from the same host, toolchain and settings.
@@ -239,7 +241,14 @@ pub struct Atlas {
     output: Option<String>,
     operations: Vec<Operation>,
     started: Instant,
+    reuse: bool,
 }
+
+/// Most fresh inputs built for one timed batch.
+const MAX_FRESH: usize = 4096;
+
+/// A predicted single call this many times the ceiling ends a series early.
+const PREDICTED_FACTOR: f64 = 8.0;
 
 enum Measured {
     Done(Point),
@@ -286,7 +295,16 @@ impl Atlas {
             output,
             operations: Vec::new(),
             started: Instant::now(),
+            reuse: false,
         }
+    }
+
+    /// Time repeated calls on one input object instead of a fresh copy per
+    /// call. Only for operations whose inputs keep no caches: a library that
+    /// memoizes results on its operands would otherwise time cache lookups.
+    /// Applies to sweeps, fuzz and grids declared afterwards.
+    pub fn reuse_inputs(&mut self, reuse: bool) {
+        self.reuse = reuse;
     }
 
     /// Settings in effect.
@@ -334,11 +352,25 @@ impl Atlas {
             .expect("declare an operation before sweeping it")
     }
 
-    fn measure(config: &Config, run: &mut dyn FnMut() -> bool) -> Measured {
+    /// Time `run` on inputs from `copy`, which returns a new object with the
+    /// same value on every call. Unless `reuse` is set, every timed call gets
+    /// its own copy, built and dropped outside the timer, so results cached on
+    /// an operand by an earlier call are never reused.
+    fn measure<I, R: Outcome>(
+        config: &Config,
+        reuse: bool,
+        copy: &mut dyn FnMut() -> I,
+        run: &mut dyn FnMut(&I) -> R,
+    ) -> Measured {
         let start = Instant::now();
-        let succeeded = run();
-        let first = start.elapsed();
-        let ok = if succeeded { "ok" } else { "error" };
+        let input = copy();
+        let t = Instant::now();
+        let result = run(black_box(&input));
+        let succeeded = result.succeeded();
+        black_box(result);
+        let first = t.elapsed();
+        drop(input);
+        let status = if succeeded { "ok" } else { "error" };
         if first > config.single_ceiling {
             return Measured::TooSlow(first.as_nanos() as f64);
         }
@@ -353,23 +385,31 @@ impl Atlas {
                 status: if succeeded { "single" } else { "error" },
             });
         }
-        let mut iterations: u64 = 1;
-        let mut batch = first;
-        while batch < config.target_batch && start.elapsed() < config.point_budget / 2 {
-            iterations = iterations.saturating_mul(2);
-            let t = Instant::now();
-            for _ in 0..iterations {
-                black_box(run());
-            }
-            batch = t.elapsed();
-        }
-        let mut samples = vec![batch.as_nanos() as f64 / iterations as f64];
-        while samples.len() < config.samples && start.elapsed() < config.point_budget {
-            let t = Instant::now();
-            for _ in 0..iterations {
-                black_box(run());
-            }
-            samples.push(t.elapsed().as_nanos() as f64 / iterations as f64);
+        let first_ns = first.as_nanos().max(1) as f64;
+        let wanted = (config.target_batch.as_nanos() as f64 / first_ns).ceil() as usize;
+        let calls = wanted.clamp(1, if reuse { usize::MAX >> 1 } else { MAX_FRESH });
+        let mut samples = Vec::new();
+        let shared = if reuse { Some(copy()) } else { None };
+        while samples.len() < config.samples
+            && (samples.is_empty() || start.elapsed() < config.point_budget)
+        {
+            let ns = if let Some(input) = &shared {
+                let t = Instant::now();
+                for _ in 0..calls {
+                    black_box(run(black_box(input)));
+                }
+                t.elapsed().as_nanos()
+            } else {
+                let inputs: Vec<I> = (0..calls).map(|_| copy()).collect();
+                let t = Instant::now();
+                for input in &inputs {
+                    black_box(run(black_box(input)));
+                }
+                let ns = t.elapsed().as_nanos();
+                drop(inputs);
+                ns
+            };
+            samples.push(ns as f64 / calls as f64);
         }
         samples.sort_by(f64::total_cmp);
         Measured::Done(Point {
@@ -377,9 +417,30 @@ impl Atlas {
             median_ns: samples[samples.len() / 2],
             min_ns: samples[0],
             max_ns: samples[samples.len() - 1],
-            iterations,
-            status: ok,
+            iterations: calls as u64,
+            status,
         })
+    }
+
+    fn skipped(magnitude: f64, status: &'static str) -> Point {
+        Point {
+            magnitude,
+            median_ns: f64::NAN,
+            min_ns: f64::NAN,
+            max_ns: f64::NAN,
+            iterations: 0,
+            status,
+        }
+    }
+
+    // Growth of the last two timed points predicts the next one; a prediction
+    // far over the ceiling skips the call instead of waiting for it.
+    fn predicted_too_slow(config: &Config, previous: &[f64]) -> bool {
+        let [.., a, b] = previous else {
+            return false;
+        };
+        let growth = (b / a).max(1.0);
+        b * growth > config.single_ceiling.as_nanos() as f64 * PREDICTED_FACTOR
     }
 
     /// Sweep one input kind over `magnitudes`. `make` builds an input for a
@@ -400,25 +461,24 @@ impl Atlas {
         let mut rng = self.rng(&name, kind);
         let mut points = Vec::new();
         let mut stopped = false;
+        let mut timed: Vec<f64> = Vec::new();
         for &magnitude in magnitudes {
             if stopped {
-                points.push(Point {
-                    magnitude,
-                    median_ns: f64::NAN,
-                    min_ns: f64::NAN,
-                    max_ns: f64::NAN,
-                    iterations: 0,
-                    status: "skipped",
-                });
+                points.push(Self::skipped(magnitude, "skipped"));
                 continue;
             }
-            let input = make(magnitude, &mut rng);
-            let point = match Self::measure(&self.config, &mut || {
-                let result = run(black_box(&input));
-                let succeeded = result.succeeded();
-                black_box(result);
-                succeeded
-            }) {
+            if Self::predicted_too_slow(&self.config, &timed) {
+                stopped = true;
+                points.push(Self::skipped(magnitude, "predicted"));
+                continue;
+            }
+            let state = Rng::new(rng.next_u64());
+            let point = match Self::measure(
+                &self.config,
+                self.reuse,
+                &mut || make(magnitude, &mut state.clone()),
+                &mut run,
+            ) {
                 Measured::Done(point) => Point { magnitude, ..point },
                 Measured::TooSlow(ns) => {
                     stopped = true;
@@ -432,6 +492,9 @@ impl Atlas {
                     }
                 }
             };
+            if point.median_ns.is_finite() {
+                timed.push(point.median_ns);
+            }
             points.push(point);
         }
         self.current().series.push(Series {
@@ -465,13 +528,13 @@ impl Atlas {
         let mut points = Vec::new();
         'magnitudes: for &magnitude in magnitudes {
             for _ in 0..self.config.fuzz_per_magnitude {
-                let input = make(magnitude, &mut rng);
-                match Self::measure(&config, &mut || {
-                    let result = run(black_box(&input));
-                    let succeeded = result.succeeded();
-                    black_box(result);
-                    succeeded
-                }) {
+                let state = Rng::new(rng.next_u64());
+                match Self::measure(
+                    &config,
+                    self.reuse,
+                    &mut || make(magnitude, &mut state.clone()),
+                    &mut run,
+                ) {
                     Measured::Done(point) => points.push(Point { magnitude, ..point }),
                     Measured::TooSlow(ns) => {
                         points.push(Point {
@@ -521,21 +584,24 @@ impl Atlas {
             let mut row = Vec::new();
             let mut failed = Vec::new();
             let mut stopped = false;
+            let mut timed: Vec<f64> = Vec::new();
             for &x in a {
-                if stopped {
+                if stopped || Self::predicted_too_slow(&config, &timed) {
+                    stopped = true;
                     row.push(None);
                     failed.push(false);
                     continue;
                 }
-                let input = make(x, y, &mut rng);
-                match Self::measure(&config, &mut || {
-                    let result = run(black_box(&input));
-                    let succeeded = result.succeeded();
-                    black_box(result);
-                    succeeded
-                }) {
+                let state = Rng::new(rng.next_u64());
+                match Self::measure(
+                    &config,
+                    self.reuse,
+                    &mut || make(x, y, &mut state.clone()),
+                    &mut run,
+                ) {
                     Measured::Done(point) => {
                         row.push(Some(point.median_ns));
+                        timed.push(point.median_ns);
                         failed.push(point.status == "error");
                     }
                     Measured::TooSlow(ns) => {
@@ -770,6 +836,27 @@ mod tests {
         );
         assert_eq!(atlas.operations[0].grids[0].ns.len(), 1);
         assert_eq!(quote("a\"b\n"), "\"a\\\"b\\n\"");
+
+        // Every timed call gets its own input object with the same value.
+        use std::cell::Cell;
+        let built = Cell::new(0u64);
+        let used = Cell::new(0u64);
+        let mut atlas = Atlas::new("test", Config::quick(), None);
+        atlas.operation("g", "fresh", "m", "fresh copies");
+        atlas.sweep(
+            "k",
+            &[1.0],
+            |_, rng| {
+                built.set(built.get() + 1);
+                (rng.next_u64(), Cell::new(false))
+            },
+            |(value, seen)| {
+                assert!(!seen.replace(true), "an input object was timed twice");
+                used.set(used.get() + 1);
+                *value
+            },
+        );
+        assert!(used.get() > 1 && built.get() >= used.get());
         assert_eq!(ladder(1, 1000, 4), vec![1.0, 10.0, 100.0, 1000.0]);
     }
 }
