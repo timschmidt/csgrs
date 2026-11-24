@@ -15412,7 +15412,7 @@ suites. `cargo hack` and WASI run in hosted CI.
 
 Raw evidence: `docs/evidence/2026-11-22-interval-adaptive-order-continuation`.
 
-## Exact work-budget receipts held for a cap decision, 23 November 2026
+## Exact work-budget receipts accepted, 23 November 2026
 
 Phase 7. `hypersolve::work_budget::BudgetExceeded` now has private fields,
 read through `kind()`, `limit()`, `used()` and `requested()`, which return
@@ -15452,9 +15452,10 @@ with one codegen unit, the same revisions are 8,224 bytes smaller (text
 −8,704). In the default profile the growth sits in modules that never use
 work budgets, for example `residual_replay` +9,651 and `curve_resultant`
 −8,071. Inlining hints, non-const accessors and a derived `Debug` view gave
-+10,952 to +11,352 bytes. A budget revision is proposed in
-[the size accounts](docs/research/interval-size-accounts.json) and is not
-adopted, so the change stays on `review/budget-receipt` until it is decided.
++10,952 to +11,352 bytes. The repository owner adopted a one-time waiver of that
+incremental cap on 23 November 2026, recorded in
+[the size accounts](docs/research/interval-size-accounts.json); the growth is
+charged against the 16,384-byte cumulative cap (11,008 used).
 
 **Validation.** Locally, 120 native all-features test binaries of
 Hypersolve, Hypercurve, Hyperbrep and Hyperdrc passed. The run was stopped

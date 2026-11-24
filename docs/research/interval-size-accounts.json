@@ -20264,7 +20264,7 @@
       "after": "777d6abd5a4d86c45bc5b30d1029a59a94959750"
     },
     "record": "2026-11-23-interval-work-budget-receipt",
-    "status": "held: the hypersolve library test harness exceeds its 4,096-byte incremental file cap in the default profile; retention requires the budget revision proposed below",
+    "status": "retained under the budget revision below, adopted by the repository owner on 23 November 2026",
     "benefit": "Exactness: BudgetExceeded reports exact u64 limits, use and requests on every target. On 32-bit targets a coefficient-growth denial previously saturated its limit and observation at usize::MAX. The receipt keeps its size (16 bytes on 32-bit, 32 on 64-bit) and Option<BudgetExceeded> stays the same size. Witnesses: coefficient_bit_budget denial_above_the_word_ceiling_reports_exact_counts and receipts_are_built_only_for_reportable_denials.",
     "existing_charges": "Positive deltas are charged under subsequent_charges for 35 measured accounts, including zero and negative deltas for every changed account. The Interface WASM images shrink: raw -935 file / -892 code, final -929 / -884, gzip -552, brotli -770.",
     "failing_cap": {
@@ -20301,6 +20301,6 @@
     "account": "crates/hypersolve/src/lib.rs",
     "metric": "file",
     "proposal": "Charge the measured +10,952-byte default-profile file growth of this change against the account's 16,384-byte cumulative cap (11,008 cumulative) while waiving its 4,096-byte incremental cap for this change only, because a codegen-units=1 build of the same revisions is 8,224 bytes smaller and the growth lies in modules that do not use the changed type. Text (+1,152) and named text (+941) pass both caps unchanged.",
-    "status": "proposed, not adopted; requires the repository owner's approval before the change is retained"
+    "status": "adopted by the repository owner on 23 November 2026 for this change only; the incremental cap is unchanged for later changes"
   }
 }
