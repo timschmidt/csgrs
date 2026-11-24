@@ -43,6 +43,7 @@ num-traits = { version = "0.2", default-features = false, optional = true }
 num-integer = { version = "0.1", default-features = false, optional = true }
 
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 serde_json = "1.0"
 
 # Unix and WASI Preview 1 run the directed MPFR oracles. MSVC runs the
@@ -56,6 +57,10 @@ gmp-mpfr-sys = { version = "1.7", default-features = false, features = ["force-c
 
 [target.aarch64-unknown-linux-gnu.dev-dependencies]
 gmp-mpfr-sys = { version = "1.7", default-features = false, features = ["force-cross"] }
+
+[[example]]
+name = "perf_atlas"
+required-features = ["integer", "fixed", "float-enclosure", "float-proposal", "real-ball"]
 
 [[example]]
 name = "real_to_dyadic"

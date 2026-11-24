@@ -2625,6 +2625,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits 0.2.19",
+ "perf-atlas",
  "rug",
  "serde",
  "serde_json",
