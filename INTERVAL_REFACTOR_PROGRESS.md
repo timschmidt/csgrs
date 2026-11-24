@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order | higher-utility automatic frame strategies, global sensitivity and adaptive noise-column selection beyond the bounded automatic affine-noise horizon evolution accepted 22 November, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November) | higher-utility automatic frame strategies, global sensitivity and noise-column strategies beyond the relative cutoff accepted 23 November, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -15465,3 +15465,67 @@ hosted workflows pass on `777d6abd5`: Rust CI, Workspace, Hypersolve
 (including the 32-bit WASI suite), Hyperdynamics, Hypermesh, Hypergraphics,
 Adversarial and csgrs-ffi. Raw evidence:
 `docs/evidence/2026-11-23-interval-work-budget-receipt`.
+
+## Correlated flow rounding and column cutoff accepted, 23 November 2026
+
+Phases 12/13, adaptive noise-column selection. Two changes:
+
+1. `round_coefficients` rounds each exact endpoint center and column down onto
+   the policy grid. Each rounding error, scaled by its parameter domain, joins
+   the row's residual, which is then enclosed outward on the grid. Values
+   already on the grid keep their exact source.
+2. `column_cutoff_bits` folds columns whose certified variation is below
+   `2^-bits` of the largest into residuals. It does this by rebuilding the
+   noise model with the significant prefix as its capacity, so the original
+   omission proof covers them.
+
+Single `FlowNoiseRequest`s keep both off. `FlowNoiseEvolutionOptions::default()`
+enables rounding with a 16-bit cutoff. Hyperdynamics is unreleased, so no
+migration is needed. Old serialized requests and options deserialize with
+both off.
+
+**Why.** With exact coefficients, the endpoint center of a nonlinear field
+grows by an order of magnitude in size each step. In a focused probe, Van der
+Pol, Lotka-Volterra and Lorenz all stopped after two segments with
+`SizeExhausted`, whatever the noise capacity. Linear transport kept up to
+`maximum_noise` fresh residual columns of about 2^-60 relative size, and
+capacities of 32 and 64 ran out of budget.
+
+| Probe (cap 16 unless stated) | Exact | Rounded | Rounded, 16-bit cutoff |
+| --- | --- | --- | --- |
+| Rotation to t=8 | 2.72 s | 1.95 s | 0.40 s, 4 columns |
+| Rotation to t=8, cap 2 | 1.12 s | 0.43 s | 0.43 s |
+| Coupled oscillators to t=6 | 6.33 s | 4.62 s | 3.18 s |
+| Van der Pol to t=4, cap 2 | stops at 0.125 | t=2.5, 40 segments | same |
+| Lotka-Volterra to t=6, cap 2 | stops at 0.125 | t=3.0, 48 segments | same |
+| Lorenz to t=1, cap 2 | stops at 0.016 | t=0.086, 27 segments | same |
+
+Printed endpoint widths are equal to four digits wherever the exact run
+completed; with the cutoff, the coupled-oscillator widths are 0.04% smaller.
+The nonlinear runs then stop on the default structural work budget, not on
+coefficient size. Times are wall-clock seconds from one focused probe on one
+host, so they are not a cross-library claim.
+
+**Exactness.** `rounding_keeps_on_grid_shear_states_exactly` checks that the
+reversible shear produces identical centers, columns, domains, residuals and
+enclosures with rounding on and off. The new Riccati witness completes 16
+segments and contains `x0/(1-t*x0)` at every endpoint. It fails with
+`SizeExhausted` when rounding is off. The rotation witness contains the exact
+images of nine initial points, using series bounds for cos 2 and sin 2. It
+keeps at most 4 columns with the cutoff, against 16 without it.
+
+**Size.** These are Rust 1.100.0, all-features builds in the default profiles,
+with all revisions built at one path. The `flow_noise` example links
+`certify_noise_step`, so it carries both features' code. Its named text grows
+by 2,904 bytes for rounding and 1,814 bytes for the cutoff, against a
+1,024-byte per-change cap and a 4,096-byte cumulative cap. With the 642
+bytes already charged, the total would be 5,360. Every other accounted
+artifact passes. The repository owner adopted this budget revision on 23 November
+2026, recorded in [the size accounts](docs/research/interval-size-accounts.json).
+It leaves the account's named-text cumulative allowance exhausted.
+
+**Validation.** On stable: formatting; the no-default, all-target all-feature,
+release and doc test runs; Clippy with `-D warnings` at both boundaries; the
+fuzz target check; Rustdoc with `-D warnings`; per-feature checks. The
+Rust 1.95.0, `cargo hack` and WASI runs are in hosted CI.
+Raw evidence: `docs/evidence/2026-11-23-interval-flow-noise-rounding`.
