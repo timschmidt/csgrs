@@ -194,6 +194,36 @@ impl From<IntervalError> for DyadicFailure {
     }
 }
 
+/// Grid-aligned range of `value^power` for a positive integer power, or `None`
+/// when the general rational-power path must be used.
+///
+/// Such a power is defined on every real, and its exact image of a closed
+/// interval is a closed interval, so the tight outward grid image of the
+/// general rational power equals the exact interval power enclosed outward on
+/// the same grid. This skips the branch, pole and extended-interval machinery.
+/// When the exact endpoint powers could exceed the per-stage bit limit, the
+/// general path, which first removes each endpoint's own trailing zeros, keeps
+/// its original size behavior.
+pub(crate) fn positive_power(
+    value: &DyadicInterval,
+    power: u32,
+    precision: i32,
+    budget: &mut DyadicBudget,
+) -> Result<Option<DyadicInterval>, IntervalError> {
+    debug_assert!(power >= 1);
+    let Some((lower, upper, _)) = value.bounds() else {
+        return Ok(None);
+    };
+    let bits = lower.bits().max(upper.bits()).checked_mul(u64::from(power));
+    if bits.is_none_or(|bits| bits > budget.max_bits()) {
+        return Ok(None);
+    }
+    Ok(Some(
+        value
+            .checked_pow(power, budget)?
+            .regrid(precision, budget)?,
+    ))
+}
 fn complete<T>(image: RangeEnclosure<T>) -> Result<T, DyadicFailure> {
     if image.domain == DomainCoverage::Complete {
         Ok(image.range)
@@ -238,6 +268,11 @@ impl DyadicArithmetic<'_> {
                     } else {
                         DyadicFailure::DomainNotCertified
                     });
+                }
+                if let Ok(power @ 1..) = u32::try_from(exponent)
+                    && let Some(range) = positive_power(&value, power, p, b)?
+                {
+                    return Ok(range);
                 }
                 let image = value.pow_rational(&exponent.into(), &1.into(), p, b)?;
                 Ok(complete(image)?.hull(b)?.finite_range(b)?)

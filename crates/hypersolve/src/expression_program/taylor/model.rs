@@ -448,20 +448,46 @@ fn contribution(
             .iter()
             .position(|&v| v == variable)
             .expect("validated sparse variable");
-        let image = shifts[slot].pow_rational(
-            &BigInt::from(exponent),
-            &BigInt::from(1),
-            precision,
-            arithmetic,
-        )?;
-        if image.domain != DomainCoverage::Complete {
-            return Err(TaylorError::MonomialDomain { variable, exponent });
-        }
-        let power = image.range.hull(arithmetic)?.finite_range(arithmetic)?;
+        let power = monomial_power(&shifts[slot], exponent, precision, arithmetic)?
+            .ok_or(TaylorError::MonomialDomain { variable, exponent })?;
         monomial = monomial.mul(&power, arithmetic)?;
     }
     let contribution = coefficient.mul(&monomial, arithmetic)?;
     Ok((Some(monomial), contribution))
+}
+// Positive integer powers use the shared exact-power path; see positive_power.
+fn monomial_power(
+    shift: &DyadicInterval,
+    exponent: usize,
+    precision: i32,
+    arithmetic: &mut DyadicBudget,
+) -> Result<Option<DyadicInterval>, TaylorError> {
+    if let Ok(power @ 1..) = u32::try_from(exponent)
+        && let Some(range) =
+            crate::expression_program::dyadic::positive_power(shift, power, precision, arithmetic)?
+    {
+        return Ok(Some(range));
+    }
+    general_monomial_power(shift, exponent, precision, arithmetic)
+}
+fn general_monomial_power(
+    shift: &DyadicInterval,
+    exponent: usize,
+    precision: i32,
+    arithmetic: &mut DyadicBudget,
+) -> Result<Option<DyadicInterval>, TaylorError> {
+    let image = shift.pow_rational(
+        &BigInt::from(exponent),
+        &BigInt::from(1),
+        precision,
+        arithmetic,
+    )?;
+    if image.domain != DomainCoverage::Complete {
+        return Ok(None);
+    }
+    Ok(Some(
+        image.range.hull(arithmetic)?.finite_range(arithmetic)?,
+    ))
 }
 fn dependencies(
     source: &ExpressionDefinition,
@@ -590,3 +616,51 @@ pub use polynomial::{
 
 #[cfg(feature = "taylor-noise")]
 pub use affine::{TaylorNoiseColumn, TaylorNoiseModel};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn integer_monomial_power_equals_the_general_rational_power_image() {
+        let mut budget = DyadicBudget::new(16_384, 1_000_000_000);
+        let mut checked = 0;
+        for scale in [-12, -3, 0, 2] {
+            for lower in -9_i64..=9 {
+                for upper in lower..=9 {
+                    let shift = DyadicInterval::new(lower.into(), upper.into(), scale).unwrap();
+                    for exponent in 1..=7 {
+                        for precision in [-64, -8, -2, 0, 3] {
+                            let fast =
+                                monomial_power(&shift, exponent, precision, &mut budget).unwrap();
+                            let general =
+                                general_monomial_power(&shift, exponent, precision, &mut budget)
+                                    .unwrap();
+                            assert_eq!(fast, general, "{shift:?}^{exponent} on 2^{precision}");
+                            checked += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(checked, 4 * 190 * 7 * 5);
+    }
+
+    #[test]
+    fn oversized_exact_powers_keep_the_general_path() {
+        // 2^40 + 1 needs 41 bits; its seventh power needs 287 > 256.
+        let shift = DyadicInterval::new(1.into(), ((1_i64 << 40) + 1).into(), 0).unwrap();
+        let mut budget = DyadicBudget::new(256, 1_000_000_000);
+        assert_eq!(
+            crate::expression_program::dyadic::positive_power(&shift, 7, -8, &mut budget).unwrap(),
+            None
+        );
+        let mut fast = DyadicBudget::new(256, 1_000_000_000);
+        let mut general = DyadicBudget::new(256, 1_000_000_000);
+        assert_eq!(
+            monomial_power(&shift, 7, -8, &mut fast).map_err(|e| format!("{e:?}")),
+            general_monomial_power(&shift, 7, -8, &mut general).map_err(|e| format!("{e:?}"))
+        );
+        assert_eq!(fast.remaining_work(), general.remaining_work());
+    }
+}
