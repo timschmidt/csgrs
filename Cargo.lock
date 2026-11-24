@@ -2542,6 +2542,7 @@ dependencies = [
  "i_overlay 7.0.3",
  "nalgebra 0.35.0",
  "num",
+ "perf-atlas",
  "proptest",
  "svg",
  "svgtypes",
