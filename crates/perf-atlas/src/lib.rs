@@ -605,8 +605,8 @@ impl Atlas {
         });
     }
 
-    /// Sweep a two-argument operation over a magnitude grid. Cells past a
-    /// too-slow cell in the same row are skipped.
+    /// Sweep a two-argument operation over a magnitude grid. Cells after a
+    /// too-slow cell in its row, and cells above it in later rows, are skipped.
     pub fn grid<I, R>(
         &mut self,
         kind: &str,
@@ -629,14 +629,18 @@ impl Atlas {
         };
         let mut rows = Vec::new();
         let mut errors = Vec::new();
+        // A column whose cell hit the ceiling (or was skipped) in one row is
+        // skipped in the following rows too, assuming cost grows along both axes.
+        let mut blocked = vec![false; a.len()];
         for &y in b {
             let mut row = Vec::new();
             let mut failed = Vec::new();
             let mut stopped = false;
             let mut timed: Vec<f64> = Vec::new();
-            for &x in a {
-                if stopped || Self::predicted_too_slow(&config, &timed) {
+            for (column, &x) in a.iter().enumerate() {
+                if stopped || blocked[column] || Self::predicted_too_slow(&config, &timed) {
                     stopped = true;
+                    blocked[column] = true;
                     row.push(None);
                     failed.push(false);
                     continue;
@@ -655,6 +659,7 @@ impl Atlas {
                     }
                     Measured::TooSlow(ns) => {
                         stopped = true;
+                        blocked[column] = true;
                         row.push(Some(ns));
                         failed.push(false);
                     }
