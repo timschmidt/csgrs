@@ -2781,6 +2781,7 @@ dependencies = [
  "hyperreal",
  "nalgebra 0.35.0",
  "num",
+ "perf-atlas",
  "proptest",
  "roots",
  "serde",

@@ -36,6 +36,8 @@ hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = fals
 nalgebra = { version = "0.35.0", default-features = false, features = ["std"] }
 roots = "0.0.8"
 serde_json = "1.0.149"
+# Performance atlas sweeps (examples/perf_atlas.rs).
+perf-atlas = { path = "../perf-atlas" }
 
 # Use the in-process property runner on WASI. Criterion also requires its
 # single-threaded backend there.
@@ -105,6 +107,10 @@ required-features = ["expression-program"]
 [[example]]
 name = "enclosed_program"
 required-features = ["interval-program"]
+
+[[example]]
+name = "perf_atlas"
+required-features = ["interval-lattice", "taylor-composition", "taylor-noise", "float-proposal-program"]
 
 [[bench]]
 name = "expression_program"
