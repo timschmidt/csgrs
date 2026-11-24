@@ -2809,6 +2809,7 @@ dependencies = [
  "earcutr",
  "hyperlimit",
  "hyperreal",
+ "perf-atlas",
  "proptest",
  "serde",
  "serde_json",

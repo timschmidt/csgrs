@@ -45,6 +45,7 @@ delaunator = "1.1.0"
 earcutr = "0.5.0"
 proptest = "1.7.0"
 serde_json = "1.0.149"
+perf-atlas = { path = "../perf-atlas" }
 
 [[example]]
 name = "basic"
@@ -96,3 +97,7 @@ required-features = ["all-algorithms", "runtime-select"]
 [[example]]
 name = "allocation_profile"
 required-features = ["all-algorithms", "runtime-select"]
+
+[[example]]
+name = "perf_atlas"
+required-features = ["all-algorithms", "runtime-select", "f64-interop"]
