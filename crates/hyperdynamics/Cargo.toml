@@ -43,6 +43,7 @@ serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
 hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false }
+perf-atlas = { path = "../perf-atlas" }
 serde_json = "1.0"
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "wasi"))'.dev-dependencies]
@@ -50,6 +51,10 @@ criterion = { version = "0.5", default-features = false, features = ["plotters",
 
 [target.'cfg(not(all(target_arch = "wasm32", target_os = "wasi")))'.dev-dependencies]
 criterion = "0.5"
+
+[[example]]
+name = "perf_atlas"
+required-features = ["qr-evolution", "flow-noise-evolution", "adaptive-taylor", "rk-proposal", "taylor-model"]
 
 [[example]]
 name = "expression_field"

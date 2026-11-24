@@ -2588,6 +2588,7 @@ dependencies = [
  "hyperlattice-interval",
  "hyperreal",
  "hypersolve",
+ "perf-atlas",
  "serde",
  "serde_json",
 ]
