@@ -1,0 +1,9 @@
+[package]
+name = "perf-atlas"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Performance atlas sweeps: per-operation timing across input kinds, magnitudes and fuzzed values"
+publish = false
+
+[dependencies]

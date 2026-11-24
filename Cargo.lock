@@ -2739,6 +2739,7 @@ dependencies = [
  "ciborium",
  "criterion 0.5.1",
  "num",
+ "perf-atlas",
  "proptest",
  "rug",
  "serde",
@@ -3745,6 +3746,10 @@ name = "peg-runtime"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9555b1514d2d99d78150d3c799d4c357a3e2c2a8062cd108e93a06d9057629c5"
+
+[[package]]
+name = "perf-atlas"
+version = "0.1.0"
 
 [[package]]
 name = "petgraph"
