@@ -2642,6 +2642,7 @@ dependencies = [
  "criterion 0.7.0",
  "hyperlattice-interval",
  "hyperreal",
+ "perf-atlas",
  "proptest",
  "rug",
  "serde",
@@ -2654,6 +2655,8 @@ name = "hyperlattice-interval"
 version = "0.1.0"
 dependencies = [
  "hyperinterval",
+ "num-bigint",
+ "perf-atlas",
  "serde",
  "serde_json",
 ]

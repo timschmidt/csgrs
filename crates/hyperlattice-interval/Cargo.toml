@@ -7,7 +7,7 @@ description = "Fixed-size Cartesian interval algebra for Hyperlattice and no_std
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 readme = "README.md"
-include = ["/src/**", "/examples/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+include = ["/src/**", "/examples/affine_image.rs", "/examples/fixed_affine.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 categories = ["mathematics", "no-std", "embedded"]
 
 [package.metadata.docs.rs]
@@ -29,6 +29,8 @@ hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
+num-bigint = "0.4.6"
+perf-atlas = { path = "../perf-atlas" }
 serde_json = "1.0"
 
 [[example]]
@@ -38,6 +40,10 @@ required-features = ["fixed"]
 [[example]]
 name = "fixed_affine"
 required-features = ["fixed"]
+
+[[example]]
+name = "perf_atlas"
+required-features = ["fixed", "rational", "dyadic", "float-enclosure"]
 
 [[example]]
 name = "linear_cost"

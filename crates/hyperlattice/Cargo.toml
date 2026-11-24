@@ -25,6 +25,7 @@ serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 criterion = "0.7.0"
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 rug = { version = "1.30.0", default-features = false, features = ["float", "std"] }
 serde_json = "1.0.145"
