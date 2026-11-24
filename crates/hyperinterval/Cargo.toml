@@ -8,7 +8,9 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hyperinterval"
 readme = "README.md"
-include = ["/src/**", "/examples/*.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+include = ["/src/**", "/examples/fixed_bounds.rs",
+  "/examples/proposal_replay.rs",
+  "/examples/real_to_dyadic.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 categories = ["mathematics", "no-std", "embedded"]
 
 [package.metadata.docs.rs]

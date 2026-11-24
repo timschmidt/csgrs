@@ -7,7 +7,16 @@ description = "Owned exact vector fields and validated-computation adapters for 
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 readme = "README.md"
-include = ["/src/**", "/examples/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+include = ["/src/**", "/examples/coordinates.rs",
+  "/examples/expression_field.rs",
+  "/examples/flow_noise.rs",
+  "/examples/flow_noise_evolution.rs",
+  "/examples/reachability.rs",
+  "/examples/rk_proposal.rs",
+  "/examples/taylor_affine.rs",
+  "/examples/taylor_model.rs",
+  "/examples/taylor_noise.rs",
+  "/examples/taylor_orders.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 categories = ["mathematics", "science"]
 
 [package.metadata.docs.rs]
