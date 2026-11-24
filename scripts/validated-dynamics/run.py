@@ -38,8 +38,11 @@ def main():
     parser.add_argument("--cpu", type=int, default=min(os.sched_getaffinity(0)))
     parser.add_argument("--iterations", type=int, default=100)
     parser.add_argument("--samples", type=int, default=5)
+    parser.add_argument("--block-timeout", type=int, default=600,
+                        help="seconds allowed for each measurement block process")
     args = parser.parse_args()
     assert 1 <= args.iterations <= 100000 and 1 <= args.samples <= 100
+    assert 1 <= args.block_timeout <= 86400
     assert args.cpu in os.sched_getaffinity(0)
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -100,7 +103,8 @@ def main():
     for block, name in enumerate(("hyperdynamics", "capd", "capd", "hyperdynamics")):
         label = f"{block}-{name}"
         run(label, ["setarch", platform.machine(), "-R", "taskset", "-c", str(args.cpu),
-                    str(executables[name]), str(args.iterations), str(args.samples)])
+                    str(executables[name]), str(args.iterations), str(args.samples)],
+            timeout=args.block_timeout)
         rows = [json.loads(line) for line in (output / (label + ".log")).read_text().splitlines()]
         certificates = [row for row in rows if row["kind"] == "certificate"]
         assert certificates == accepted[name], "measurement changed certified outputs"

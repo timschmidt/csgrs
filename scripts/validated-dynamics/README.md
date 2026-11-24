@@ -14,9 +14,16 @@ The horizon is exactly `[0,1/4]`. All input values have identical exact meanings
 in both backends. The two-rate case exercises different decay scales; it is not
 a general stiff-system qualification.
 
+A long-horizon tier adds `oscillator_long`, `(x',y')=(y,-x)` from `(1,0)` to
+`t=8` with step cap `1/8`, and `riccati_long`, `x'=x²` from `1` to `t=1/2` with
+step cap `1/16`, each as a point and a box. Eight exceeds a full turn, so the
+box wrapping effect is exercised and both rotation coordinates must reach the
+initial modulus. The long tier keeps the endpoint width limit `1/64` and uses a
+whole-tube width limit of `4`.
+
 Success requires the complete certified horizon, an endpoint enclosure of width
 at most `1/64` per coordinate, and a whole-horizon tube hull of width at most `1`
-per coordinate. The retained native trajectory certificates supply the tube;
+(`4` for the long tier) per coordinate. The retained native trajectory certificates supply the tube;
 sampling is not used. `validate.py` checks every output against independent
 rational analytic bounds. Exponential uses its positive series and a geometric
 tail bound; sine/cosine use alternating-series bounds; Riccati has an exact
@@ -30,6 +37,10 @@ minimum. Their tubes must cover those extrema. Every actual endpoint and tube
 width is recorded.
 
 Hyperdynamics uses prepared order 3 with the existing default enclosure policy.
+The original sixteen cases use Cartesian whole-horizon evolution. The long tier
+uses correlated affine-noise evolution with `FlowNoiseEvolutionOptions::default()`:
+up to 16 noise columns, policy-grid rounding and a 16-bit relative column cutoff.
+Each record states its `method`.
 CAPD uses order 12, `IOdeSolver`, `C0Rect2Set`, and an interval `SolutionCurve`.
 Both cap a step at `1/16`, or `1/64` for the two-rate case. These are explicit configurations, not a claim of
 optimal tuning or identical internal algorithms. Both must pass the same quality
@@ -52,8 +63,10 @@ The Python oracle converts both to rational numbers without decimal rounding.
 Graph/scalar work counters describe Hyperdynamics integration only; they exclude
 preparation and the separate tube-publication budget. CAPD has no equivalent
 counters in this adapter. Neither counters nor the runner timeout are a universal
-memory/total-work bound. The runner has a 600-second process timeout; failures are
-not included as successful timing samples. No allocation comparison is implied.
+memory/total-work bound. Each runner process has a 600-second timeout, which `--block-timeout`
+raises for the measurement blocks; the long tier needs about 40 minutes per
+Hyperdynamics block at 100 iterations and 5 samples. Failures are not
+included as successful timing samples. No allocation comparison is implied.
 
 ## Build and run
 
@@ -95,7 +108,7 @@ The runner keeps CAPD's required `-frounding-math` and native interval definitio
 uses external headers as system headers, and compiles the adapter with warnings
 denied. Separate processes isolate CAPD's rounding environment. It pins one CPU,
 disables ASLR, and runs Hyperdynamics/CAPD/CAPD/Hyperdynamics blocks. Each block
-validates the complete sixteen-case corpus before accepting its samples, then
+validates the complete twenty-case corpus before accepting its samples, then
 requires every case/mode/sample exactly once with the configured iteration count.
 Optimized Python is rejected because it would disable assertion checks. Avoid other workloads
 during measurement. The runner records compiler versions, source/binary hashes,
