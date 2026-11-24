@@ -283,6 +283,17 @@ const PREDICTED_FACTOR: f64 = 8.0;
 enum Measured {
     Done(Point),
     TooSlow(f64),
+    /// The input builder or the operation panicked; the message is kept.
+    Panicked(String),
+}
+
+fn panic_message(payload: Box<dyn std::any::Any + Send>) -> String {
+    let text = payload
+        .downcast_ref::<&str>()
+        .map(|s| (*s).to_owned())
+        .or_else(|| payload.downcast_ref::<String>().cloned())
+        .unwrap_or_else(|| "non-string panic payload".to_owned());
+    short(format!("panic: {text}"))
 }
 
 impl Atlas {
@@ -387,6 +398,18 @@ impl Atlas {
     /// its own copy, built and dropped outside the timer, so results cached on
     /// an operand by an earlier call are never reused.
     fn measure<I, R: Outcome>(
+        config: &Config,
+        reuse: bool,
+        copy: &mut dyn FnMut() -> I,
+        run: &mut dyn FnMut(&I) -> R,
+    ) -> Measured {
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            Self::measure_unguarded(config, reuse, copy, run)
+        }))
+        .unwrap_or_else(|payload| Measured::Panicked(panic_message(payload)))
+    }
+
+    fn measure_unguarded<I, R: Outcome>(
         config: &Config,
         reuse: bool,
         copy: &mut dyn FnMut() -> I,
@@ -526,6 +549,13 @@ impl Atlas {
                         reason: None,
                     }
                 }
+                Measured::Panicked(reason) => {
+                    stopped = true;
+                    Point {
+                        reason: Some(reason),
+                        ..Self::skipped(magnitude, "error")
+                    }
+                }
             };
             if point.median_ns.is_finite() {
                 timed.push(point.median_ns);
@@ -587,6 +617,14 @@ impl Atlas {
                             iterations: 1,
                             status: "ceiling",
                             reason: None,
+                        });
+                        hit_ceiling = true;
+                        break;
+                    }
+                    Measured::Panicked(reason) => {
+                        points.push(Point {
+                            reason: Some(reason),
+                            ..Self::skipped(magnitude, "error")
                         });
                         hit_ceiling = true;
                         break;
@@ -662,6 +700,12 @@ impl Atlas {
                         blocked[column] = true;
                         row.push(Some(ns));
                         failed.push(false);
+                    }
+                    Measured::Panicked(_) => {
+                        stopped = true;
+                        blocked[column] = true;
+                        row.push(None);
+                        failed.push(true);
                     }
                 }
             }
@@ -912,6 +956,20 @@ mod tests {
             },
         );
         assert!(used.get() > 1 && built.get() >= used.get());
+
+        // A panic is recorded as a failed point and ends the series.
+        let mut atlas = Atlas::new("test", Config::quick(), None);
+        atlas.operation("g", "panics", "m", "panics at m = 2");
+        atlas.sweep(
+            "k",
+            &[1.0, 2.0, 3.0],
+            |m, _| m,
+            |m| if *m >= 2.0 { panic!("boom {m}") } else { *m },
+        );
+        let points = &atlas.operations[0].series[0].points;
+        assert_eq!(points[1].status, "error");
+        assert_eq!(points[1].reason.as_deref(), Some("panic: boom 2"));
+        assert_eq!(points[2].status, "skipped");
         assert_eq!(ladder(1, 1000, 4), vec![1.0, 10.0, 100.0, 1000.0]);
     }
 }
