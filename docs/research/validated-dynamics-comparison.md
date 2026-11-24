@@ -1,7 +1,7 @@
 # External validated-dynamics comparison
 
 The maintained [runner and acceptance contract](../../scripts/validated-dynamics/README.md)
-compare Hyperdynamics with CAPD::DynSys on sixteen exact initial-value problems.
+compare Hyperdynamics with CAPD::DynSys on twenty exact initial-value problems.
 Both complete every case and enclose the independent analytic endpoint and
 whole-horizon extrema. The original eight-case campaign is recorded first; the
 extended campaign below adds explicit time dependence, noncommuting Jacobians
@@ -240,3 +240,43 @@ An exploratory profile motivates further preparation/arithmetic work, but this
 qualification does not supply a matched wall-clock comparison with the tables
 above. Automatic noise orchestration, global sensitivity and wider workload
 qualification remain open.
+
+## Long-horizon tier — 2026-11-23
+
+The corpus now has twenty rows. `oscillator_long` integrates `(x',y')=(y,-x)`
+from `(1,0)` to `t=8` with step cap `1/8`. That is more than a full turn, so a
+box method meets the wrapping effect and both coordinates must reach the
+initial modulus. `riccati_long` integrates `x'=x²` from `1` to `t=1/2` with step
+cap `1/16`. Each has a point and a `2^-10` box. The endpoint width limit stays
+`1/64`; the tube limit is `4` because a full turn spans about `2`. The oracle
+bounds `cos 8` and `sin 8` by alternating series with exact interval products.
+Hyperdynamics runs this tier with correlated affine-noise evolution and its
+default options: order 3, up to 16 columns, policy-grid rounding and a 16-bit
+relative column cutoff. The original sixteen rows keep Cartesian evolution.
+
+The benchmark tree of `92e91f5d0` (measured as `dd87532fa` before a rebase that
+added only an unrelated Hypercurve doctest fix) and CAPD `37057e589` were measured on CPU 0 with ASLR disabled, on the same Xeon
+E5-2680 v2 host, with Rust 1.95.0 and GCC 14. The run used 100 iterations,
+5 samples per block and four Hyperdynamics/CAPD/CAPD/Hyperdynamics blocks,
+which is 800 samples. The 600-second block timeout was raised to 4,000 seconds for this tier.
+All 40 solver/case outcomes complete and pass the exact oracle in every block.
+CAPD has the lower median in all 40 case/mode configurations, from 4.6 times
+(Riccati point, fresh) to 1,258 times (long rotation box, reuse). CAPD's
+upstream tests were not rerun; they passed at this pinned commit on 15 November.
+
+| Long-tier row | Hyperdynamics reuse | CAPD reuse | Hyperdynamics endpoint width | CAPD endpoint width |
+| --- | ---: | ---: | --- | --- |
+| `oscillator_long_point` | 1,155,360 us | 931 us | 2.61e-4, 2.05e-4 | 1.27e-14, 1.78e-14 |
+| `oscillator_long_box` | 1,170,221 us | 931 us | 2.50e-3, 2.47e-3 | 2.22e-3, 2.22e-3 |
+| `riccati_long_point` | 38,152 us | 352 us | 8.84e-4 | 2.82e-14 |
+| `riccati_long_box` | 49,074 us | 352 us | 8.71e-3 | 7.83e-3 |
+
+Fresh preparation adds under 0.2% for the long Hyperdynamics rows. For the
+boxes, Hyperdynamics' endpoints are 11–13% wider than CAPD's. For the points,
+order-3 remainders over 64 and 8 steps dominate, against CAPD's order 12.
+Both meet every limit. Before the rounding change accepted on 23 November,
+correlated Hyperdynamics evolution of nonlinear fields stopped after two steps
+with `SizeExhausted`; the Riccati long row is the first nonlinear workload in this
+corpus that it completes. The rotation row shows a concrete cost gap of about
+three orders of magnitude in correlated long-horizon transport. It does not
+establish behavior beyond this corpus, at other orders, or under other options.
