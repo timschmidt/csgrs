@@ -29,12 +29,12 @@ RAMP = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7", "#3987
 CSS = """
 .viz-root{color-scheme:light;--surface-1:#fcfcfb;--page:#f9f9f7;--text-primary:#0b0b0b;--text-secondary:#52514e;
 --muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);
---series-1:#2a78d6;--series-2:#eb6834;--series-3:#1baf7a;--series-4:#eda100;--critical:#d03b3b;--warning:#fab219}
+--series-1:#2a78d6;--series-2:#eb6834;--series-3:#1baf7a;--series-4:#eda100;--series-5:#e87ba4;--series-6:#008300;--series-7:#6250d6;--series-8:#e34948;--critical:#d03b3b;--warning:#fab219}
 @media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .viz-root{color-scheme:dark;--surface-1:#1a1a19;--page:#0d0d0d;
 --text-primary:#f0efec;--text-secondary:#c3c2b7;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);
---series-1:#3987e5;--series-2:#d95926;--series-3:#199e70;--series-4:#c98500}}
+--series-1:#3987e5;--series-2:#d95926;--series-3:#199e70;--series-4:#c98500;--series-5:#d55181;--series-6:#0ca30c;--series-7:#9085e9;--series-8:#e66767}}
 :root[data-theme="dark"] .viz-root{color-scheme:dark;--surface-1:#1a1a19;--page:#0d0d0d;--text-primary:#f0efec;--text-secondary:#c3c2b7;
---grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--series-1:#3987e5;--series-2:#d95926;--series-3:#199e70;--series-4:#c98500}
+--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--series-1:#3987e5;--series-2:#d95926;--series-3:#199e70;--series-4:#c98500;--series-5:#d55181;--series-6:#0ca30c;--series-7:#9085e9;--series-8:#e66767}
 body{margin:0;background:var(--page);}
 .viz-root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text-primary);background:var(--page);
 padding:16px;max-width:1500px;margin:0 auto;line-height:1.45}
@@ -55,9 +55,12 @@ details{margin-top:6px}summary{cursor:pointer;font-size:13px;color:var(--text-se
 .ticklabel{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
 .axistitle{fill:var(--text-secondary);font-size:12px}
 .direct{font-size:11px;fill:var(--text-secondary)}.note{font-size:11px;fill:var(--text-secondary)}
-.cell{fill:var(--l)}:root[data-theme="dark"] .cell{fill:var(--d)}
-@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .cell{fill:var(--d)}}
-.cell:hover{stroke:var(--text-primary);stroke-width:1.5}
+.s1,.s2,.s3,.s4,.s5,.s6,.s7,.s8{stroke:var(--surface-1);stroke-width:1.5}.s5{fill:var(--series-5)}.s6{fill:var(--series-6)}.s7{fill:var(--series-7)}.s8{fill:var(--series-8)}.h5{stroke:var(--series-5)}.h6{stroke:var(--series-6)}.h7{stroke:var(--series-7)}.h8{stroke:var(--series-8)}.s1{fill:var(--series-1)}.s2{fill:var(--series-2)}.s3{fill:var(--series-3)}.s4{fill:var(--series-4)}
+.h1,.h2,.h3,.h4,.h5,.h6,.h7,.h8{fill:var(--surface-1);stroke-width:2}.h1{stroke:var(--series-1)}.h2{stroke:var(--series-2)}.h3{stroke:var(--series-3)}.h4{stroke:var(--series-4)}
+.ring{fill:none;stroke:var(--text-primary);stroke-width:1.5;pointer-events:none}
+.r0{fill:#cde2fb}.r1{fill:#b7d3f6}.r2{fill:#9ec5f4}.r3{fill:#86b6ef}.r4{fill:#6da7ec}.r5{fill:#5598e7}.r6{fill:#3987e5}.r7{fill:#2a78d6}.r8{fill:#256abf}.r9{fill:#1c5cab}.r10{fill:#184f95}.r11{fill:#104281}.r12{fill:#0d366b}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .viz-root .r0{fill:#0d366b}:root:where(:not([data-theme="light"])) .viz-root .r1{fill:#104281}:root:where(:not([data-theme="light"])) .viz-root .r2{fill:#184f95}:root:where(:not([data-theme="light"])) .viz-root .r3{fill:#1c5cab}:root:where(:not([data-theme="light"])) .viz-root .r4{fill:#256abf}:root:where(:not([data-theme="light"])) .viz-root .r5{fill:#2a78d6}:root:where(:not([data-theme="light"])) .viz-root .r6{fill:#3987e5}:root:where(:not([data-theme="light"])) .viz-root .r7{fill:#5598e7}:root:where(:not([data-theme="light"])) .viz-root .r8{fill:#6da7ec}:root:where(:not([data-theme="light"])) .viz-root .r9{fill:#86b6ef}:root:where(:not([data-theme="light"])) .viz-root .r10{fill:#9ec5f4}:root:where(:not([data-theme="light"])) .viz-root .r11{fill:#b7d3f6}:root:where(:not([data-theme="light"])) .viz-root .r12{fill:#cde2fb}}
+:root[data-theme="dark"] .viz-root .r0{fill:#0d366b}:root[data-theme="dark"] .viz-root .r1{fill:#104281}:root[data-theme="dark"] .viz-root .r2{fill:#184f95}:root[data-theme="dark"] .viz-root .r3{fill:#1c5cab}:root[data-theme="dark"] .viz-root .r4{fill:#256abf}:root[data-theme="dark"] .viz-root .r5{fill:#2a78d6}:root[data-theme="dark"] .viz-root .r6{fill:#3987e5}:root[data-theme="dark"] .viz-root .r7{fill:#5598e7}:root[data-theme="dark"] .viz-root .r8{fill:#6da7ec}:root[data-theme="dark"] .viz-root .r9{fill:#86b6ef}:root[data-theme="dark"] .viz-root .r10{fill:#9ec5f4}:root[data-theme="dark"] .viz-root .r11{fill:#b7d3f6}:root[data-theme="dark"] .viz-root .r12{fill:#cde2fb}
 #tip{position:fixed;pointer-events:none;background:var(--surface-1);color:var(--text-primary);border:1px solid var(--border);
 border-radius:6px;padding:6px 8px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);display:none;z-index:10;max-width:340px}
 #tip .row{display:flex;align-items:center;gap:6px}#tip b{font-variant-numeric:tabular-nums}#tip .name{color:var(--text-secondary)}
@@ -83,8 +86,17 @@ const hit=svg.querySelector('.hit');hit.addEventListener('pointermove',e=>{const
 let best=0,bd=1e9;d.px.forEach((x,i)=>{const dd=Math.abs(x-p.x);if(dd<bd){bd=dd;best=i;}});cross.setAttribute('x1',d.px[best]);cross.setAttribute('x2',d.px[best]);cross.style.display='';
 showTip(e,d.series.map(s=>({color:col(s.c),value:fmt(s.ys[best])+(s.st[best]&&s.st[best]!=='ok'&&s.st[best]!=='single'?' ('+s.st[best]+')':''),name:s.name})),d.xl+' = '+d.xs[best]);});
 hit.addEventListener('pointerleave',()=>{cross.style.display='none';hideTip();});});
-document.addEventListener('pointerover',e=>{const t=e.target.closest('[data-tip]');if(!t)return;const v=JSON.parse(t.dataset.tip);
-const move=ev=>showTip(ev,v.rows,v.title);move(e);t.addEventListener('pointermove',move);t.addEventListener('pointerleave',()=>{hideTip();t.removeEventListener('pointermove',move);},{once:true});});
+function local(svg,e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
+document.querySelectorAll('svg[data-f]').forEach(svg=>{const d=JSON.parse(svg.dataset.f);const ring=svg.querySelector('.ring');const hit=svg.querySelector('.hit');
+hit.addEventListener('pointermove',e=>{const p=local(svg,e);let best=null,bd=24*24;for(const q of d.p){const dx=q[0]-p.x,dy=q[1]-p.y,dd=dx*dx+dy*dy;if(dd<bd){bd=dd;best=q;}}
+if(!best){ring.style.display='none';hideTip();return;}ring.setAttribute('cx',best[0]);ring.setAttribute('cy',best[1]);ring.style.display='';
+showTip(e,[{value:fmt(best[2]),name:best[4]||'time per call'}],d.xl+' = '+best[3]+', fuzzed input');});
+hit.addEventListener('pointerleave',()=>{ring.style.display='none';hideTip();});});
+document.querySelectorAll('svg[data-h]').forEach(svg=>{const d=JSON.parse(svg.dataset.h);const hit=svg.querySelector('.hit');
+hit.addEventListener('pointermove',e=>{const p=local(svg,e);const i=Math.floor((p.x-d.x0)/d.w*d.a.length),j=d.b.length-1-Math.floor((p.y-d.y0)/d.h*d.b.length);
+if(i<0||j<0||i>=d.a.length||j>=d.b.length){hideTip();return;}const v=d.ns[j][i];
+showTip(e,[{value:v==null?'skipped':fmt(v),name:d.e[j]&&d.e[j][i]?'error':'time per call'}],d.al+' = '+d.a[i]+', '+d.bl+' = '+d.b[j]);});
+hit.addEventListener('pointerleave',hideTip);});
 document.getElementById('theme').addEventListener('click',()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';});
 const q=document.getElementById('filter');q.addEventListener('input',()=>{const s=q.value.toLowerCase();document.querySelectorAll('.op').forEach(o=>{o.hidden=s&&!o.dataset.name.includes(s);});});
 """
@@ -157,15 +169,22 @@ def x_ticks(mags, scale):
 
 
 def marker(shape, x, y, var, hollow=False, size=4.5):
-    fill = "var(--surface-1)" if hollow else f"var({var})"
-    common = f'fill="{fill}" stroke="{"var(" + var + ")" if hollow else "var(--surface-1)"}" stroke-width="{2 if hollow else 1.5}"'
+    """A series marker; colour comes from CSS classes (sN filled, hN hollow)."""
+    slot = var.rsplit("-", 1)[-1]
+    cls = f'class="{"h" if hollow else "s"}{slot}"'
     if shape == "square":
-        return f'<rect x="{x - size:.1f}" y="{y - size:.1f}" width="{2 * size:.1f}" height="{2 * size:.1f}" rx="1" {common}/>'
+        return f'<rect {cls} x="{x - size:.1f}" y="{y - size:.1f}" width="{2 * size:.1f}" height="{2 * size:.1f}" rx="1"/>'
     if shape == "triangle":
-        return f'<path d="M{x:.1f},{y - size * 1.2:.1f}L{x + size * 1.1:.1f},{y + size * 0.8:.1f}L{x - size * 1.1:.1f},{y + size * 0.8:.1f}Z" {common}/>'
+        return f'<path {cls} d="M{x:.1f},{y - size * 1.2:.1f}l{size * 1.1:.1f},{size * 2:.1f}h{-size * 2.2:.1f}z"/>'
     if shape == "diamond":
-        return f'<path d="M{x:.1f},{y - size * 1.2:.1f}L{x + size * 1.2:.1f},{y:.1f}L{x:.1f},{y + size * 1.2:.1f}L{x - size * 1.2:.1f},{y:.1f}Z" {common}/>'
-    return f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{size}" {common}/>'
+        return (f'<path {cls} d="M{x:.1f},{y - size * 1.2:.1f}l{size * 1.2:.1f},{size * 1.2:.1f}'
+                f'l{-size * 1.2:.1f},{size * 1.2:.1f}l{-size * 1.2:.1f},{-size * 1.2:.1f}z"/>')
+    return f'<circle {cls} cx="{x:.1f}" cy="{y:.1f}" r="{size}"/>'
+
+
+def sig(v):
+    """Three significant figures, enough for tooltips."""
+    return None if v is None or not math.isfinite(v) else float(f"{v:.3g}")
 
 
 def axes(xs, ys, xticks, yticks, xlabel):
@@ -235,7 +254,7 @@ def line_chart(op, series, xlabel, slots):
             labels.append([ys(good[-1][1]), xs(good[-1][0]), s["kind"]])
         by_x = {p[0]: p for p in s["points"]}
         data["series"].append({"name": s["kind"], "c": var,
-                               "ys": [by_x[x][1] if x in by_x else None for x in xvals],
+                               "ys": [sig(by_x[x][1]) if x in by_x else None for x in xvals],
                                "st": [(by_x[x][5] + (": " + why(by_x[x]) if why(by_x[x]) else "")) if x in by_x else None for x in xvals]})
         for kind, ratio, a, b in anomalies(s["points"]):
             if kind == "cliff":
@@ -252,7 +271,8 @@ def line_chart(op, series, xlabel, slots):
             label[0] = max(label[0], last + 13)
             last = label[0]
         for y, x, name in labels:
-            out.append(f'<text class="direct" x="{ML + PW + 8}" y="{y + 4:.1f}">{esc(name)}</text>')
+            short_name = name if len(name) <= 17 else name[:16] + "…"
+            out.append(f'<text class="direct" x="{ML + PW + 8}" y="{y + 4:.1f}">{esc(short_name)}</text>')
     out.append(f'<line class="cross axisline" x1="0" x2="0" y1="{MT}" y2="{MT + PH}" style="display:none"/>')
     out.append(f'<rect class="hit" x="{ML}" y="{MT}" width="{PW}" height="{PH}" fill="transparent"/>')
     out.append("</svg>")
@@ -274,22 +294,22 @@ def fuzz_chart(op, series, xlabel):
     pts = [p for p in series["points"] if p[1] is not None]
     xs = Scale([p[0] for p in pts], ML, ML + PW)
     ys, yt = time_scale([p[1] for p in pts])
-    out = [f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(op["name"])}: fuzzed inputs">']
+    out = [f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(op["name"])}: fuzzed inputs" data-f="__DATA__">']
     out += axes(xs, ys, x_ticks([p[0] for p in pts], xs), yt, xlabel)
     groups = {}
     for p in pts:
         groups.setdefault(p[0], []).append(p)
     mags = sorted(groups)
     spacing = (PW / max(len(mags) - 1, 1)) * 0.25
+    pdata = []
     for m in mags:
         group = groups[m]
         for i, p in enumerate(group):
             jitter = (i / max(len(group) - 1, 1) - 0.5) * spacing if len(group) > 1 else 0
             x, y = xs(m) + jitter, ys(p[1])
-            tipd = {"title": f"{xlabel} = {fmt_mag(m)}, fuzzed input {i + 1}",
-                    "rows": [{"value": fmt_ns(p[1]), "name": ("error: " + (why(p) or "failed")) if p[5] == "error" else ("ceiling" if p[5] == "ceiling" else "time per call")}]}
-            out.append(f'<g data-tip="{esc(json.dumps(tipd))}">{marker("circle", x, y, "--series-1", hollow=p[5] == "error", size=4)}'
-                       f'<circle cx="{x:.1f}" cy="{y:.1f}" r="12" fill="transparent"/></g>')
+            out.append(marker("circle", x, y, "--series-1", hollow=p[5] == "error", size=4))
+            label = ("error: " + (why(p) or "failed")) if p[5] == "error" else ("ceiling" if p[5] == "ceiling" else "")
+            pdata.append([round(x, 1), round(y, 1), sig(p[1]), fmt_mag(m), label])
     med = []
     for m in mags:
         v = sorted(p[1] for p in groups[m])
@@ -298,15 +318,9 @@ def fuzz_chart(op, series, xlabel):
         d = "M" + "L".join(f"{xs(m):.1f},{ys(v):.1f}" for m, v in med)
         out.append(f'<path d="{d}" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" stroke-dasharray="4 3"/>')
         out.append(f'<text class="direct" x="{ML + PW + 8}" y="{ys(med[-1][1]) + 4:.1f}">median</text>')
-    out.append("</svg>")
-    return "".join(out)
-
-
-def ramp_color(t, dark=False):
-    t = min(max(t, 0.0), 1.0)
-    if dark:
-        t = 1 - t
-    return RAMP[round(t * (len(RAMP) - 1))]
+    out.append('<circle class="ring" r="8" style="display:none"/>')
+    out.append(f'<rect class="hit" x="{ML - 12}" y="{MT - 12}" width="{PW + 24}" height="{PH + 24}" fill="transparent"/></svg>')
+    return "".join(out).replace("__DATA__", esc(json.dumps({"xl": xlabel, "p": pdata}, separators=(",", ":"))), 1)
 
 
 def heatmap(op, grid):
@@ -318,7 +332,10 @@ def heatmap(op, grid):
     lo, hi = math.log(min(vals)), math.log(max(vals))
     span = (hi - lo) or 1.0
     cw, ch = PW / len(a), PH / len(b)
-    out = [f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(op["name"])}: {esc(grid["kind"])} grid">']
+    hdata = {"al": grid["a_label"], "bl": grid["b_label"], "a": [fmt_mag(x) for x in a], "b": [fmt_mag(y) for y in b],
+             "ns": [[sig(v) for v in row] for row in ns], "e": errors, "x0": ML, "y0": MT, "w": PW, "h": PH}
+    out = [f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(op["name"])}: {esc(grid["kind"])} grid" '
+           f'data-h="{esc(json.dumps(hdata, separators=(",", ":")))}">']
     for j, y in enumerate(b):
         cy = MT + PH - (j + 1) * ch
         for i, x in enumerate(a):
@@ -328,10 +345,8 @@ def heatmap(op, grid):
                 out.append(f'<rect x="{cx + 1:.1f}" y="{cy + 1:.1f}" width="{cw - 2:.1f}" height="{ch - 2:.1f}" fill="none" stroke="var(--grid)"/>')
                 continue
             t = (math.log(v) - lo) / span
-            tipd = {"title": f'{grid["a_label"]} = {fmt_mag(x)}, {grid["b_label"]} = {fmt_mag(y)}',
-                    "rows": [{"value": fmt_ns(v), "name": "error" if errors[j][i] else "time per call"}]}
-            out.append(f'<rect class="cell" data-tip="{esc(json.dumps(tipd))}" style="--l:{ramp_color(t)};--d:{ramp_color(t, True)}" '
-                       f'x="{cx + 1:.1f}" y="{cy + 1:.1f}" width="{cw - 2:.1f}" height="{ch - 2:.1f}" rx="2"/>')
+            step = round(min(max(t, 0.0), 1.0) * (len(RAMP) - 1))
+            out.append(f'<rect class="r{step}" x="{cx + 1:.1f}" y="{cy + 1:.1f}" width="{cw - 2:.1f}" height="{ch - 2:.1f}" rx="2"/>')
             if errors[j][i]:
                 out.append(f'<text class="note" x="{cx + cw / 2:.1f}" y="{cy + ch / 2 + 4:.1f}" text-anchor="middle">×</text>')
     step_a = max(1, math.ceil(len(a) / 10))
@@ -349,9 +364,10 @@ def heatmap(op, grid):
     for k in range(len(RAMP)):
         t = k / (len(RAMP) - 1)
         yk = MT + PH - (k + 1) * PH / len(RAMP)
-        out.append(f'<rect class="cell" style="--l:{ramp_color(t)};--d:{ramp_color(t, True)}" x="{kx}" y="{yk:.1f}" width="14" height="{PH / len(RAMP):.1f}"/>')
+        out.append(f'<rect class="r{k}" x="{kx}" y="{yk:.1f}" width="14" height="{PH / len(RAMP):.1f}"/>')
     out.append(f'<text class="ticklabel" x="{kx + 18}" y="{MT + 10}">{esc(fmt_ns(max(vals)))}</text>')
     out.append(f'<text class="ticklabel" x="{kx + 18}" y="{MT + PH}">{esc(fmt_ns(min(vals)))}</text>')
+    out.append(f'<rect class="hit" x="{ML}" y="{MT}" width="{PW}" height="{PH}" fill="transparent"/>')
     out.append("</svg>")
     return "".join(out)
 
