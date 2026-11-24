@@ -370,9 +370,14 @@ on the same completed contract:
 - identical `dispatch-trace` counts on every path it touches. Add a count
   assertion where none exists, and never loosen an existing one;
 - no regression in the owning crate's benchmarks, `successive_operations`,
-  monomorphized code size, or binary size by default. A bounded code/binary-size
-  exception requires the evidence and per-target budgets in
+  monomorphized code size, or binary size of shipped artifacts by default. A
+  bounded code/binary-size exception requires the evidence and per-target
+  budgets in
   [the admission protocol](docs/admission.md#bounded-code-and-binary-size-exceptions).
+  Development artifacts (tests, benches, examples, fuzz targets, probes) are
+  measured but never block, size never blocks a new feature, hard platform
+  limits always bind, and features that add capability while shrinking
+  existing code are strongly preferred (24 November 2026 revision).
   Bounded memory/stack growth for demonstrated functionality requires the
   separate [memory exception](docs/admission.md#bounded-memory-growth-exceptions),
   including per-target caps, complete-lifetime measurements, headroom and

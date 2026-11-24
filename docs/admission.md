@@ -318,6 +318,30 @@ exception to exactness, certainty, provenance, dispatch/predicate order,
 performance, resource handling, or required validation. Memory and stack growth
 require the separate bounded exception below.
 
+Policy revision (24 November 2026, requested by the repository owner):
+
+- **Development artifacts never block.** Test harnesses, benchmark
+  executables, examples, fuzz targets, probes and qualification clients are
+  measured and their growth is recorded in their accounts, but exceeding their
+  caps does not block retention. The caps and accounting below bind only
+  shipped artifacts: library code as linked into released or deployed
+  consumers, such as the Interface desktop, native-library and WASM images and
+  firmware images.
+- **New features are not blocked by size.** Growth caused by a useful
+  capability, workload or contract that the codebase did not previously have
+  does not block retention on any artifact. It is measured and recorded like
+  any other growth. Behavior-preserving refactors and performance work on
+  existing features keep the shipped-artifact caps.
+- **Hard limits still bind.** Flash partitions, reserved boot and update
+  space, runtime or browser ceilings, and other platform limits apply to every
+  change.
+- **Prefer simplifying features.** Among candidates for the same benefit,
+  strongly prefer one that adds functionality while simplifying or shrinking
+  existing code. Report net source and code change, and remove older code that
+  a new feature makes redundant in the same change or an immediate follow-up.
+
+The rest of this section applies to shipped artifacts within that scope.
+
 Each exception must satisfy all of the following before retention:
 
 1. **Name the benefit and scope.** Identify the owning layer, property, affected
