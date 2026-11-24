@@ -15547,3 +15547,47 @@ is unchanged. Two new corrupted-corpus controls and a new oracle witness test
 pass, as do the existing 17 controls and nine tests. Details are in
 [the comparison report](docs/research/validated-dynamics-comparison.md). Raw evidence:
 `docs/evidence/2026-11-23-interval-external-dynamics-long`.
+
+## Exact positive integer powers and the size-policy revision, 24 November 2026
+
+Phase 13, closing the external cost gap. Hosted callgrind of one long correlated
+rotation put 81% of the instructions in Hypersolve's `taylor_model`. Of those,
+14% was in the general rational-power image used for Taylor remainder monomials
+and `PowI` interval evaluation. A positive integer power is defined
+everywhere and maps a closed interval to a closed interval. So its tight
+outward grid image equals the exact interval power regridded outward, and the
+shared `positive_power` path now computes it that way. When the exact endpoint
+powers could exceed the per-stage bit limit, the general path is kept, so no
+new size refusal is introduced.
+
+**Exactness.** `integer_monomial_power_equals_the_general_rational_power_image`
+compares both paths on 26,600 combinations: endpoints -9..9 at four scales,
+exponents 1–7 and five grids, including grids coarser than the input. All
+Hypersolve and Hyperdynamics release test binaries pass. These include the
+645-test Hypersolve library and the noise suites' exact-output assertions.
+
+**Performance.** Hosted callgrind over one long correlated rotation:
+314,135,977 to 267,117,551 instructions over 8 steps (−15.0%), and
+5,510,811,639 to 4,823,597,173 over 64 steps (−12.5%). A variant limited to
+first powers saved 10.7% and 9.2% and was not retained.
+
+**Size.** The Interface trunk release WASM images are byte-identical. In the
+development artifacts, Hyperdynamics Taylor benches and examples gain about
+1,350 bytes of named text. The Hypersolve library tests gain 87,504 file bytes,
+mostly from proptest partition shifts plus the equality test. Several Hypersolve
+benches shrink by 0.8–7.3 KB.
+
+**Policy.** The repository owner revised the size policy, recorded in
+[the admission protocol](docs/admission.md#bounded-code-and-binary-size-exceptions)
+and the agent rules:
+- Development artifacts are measured and charged but never block retention.
+- Size never blocks a new capability.
+- Hard platform limits always bind.
+- Features that add capability while improving performance, reducing memory and
+  shrinking code are favored. Any feature with one of those effects is tracked
+  in [the feature tradeoff ledger](docs/research/feature-tradeoffs.md) and
+  reconsidered at least at each release and phase close.
+
+This change's development-artifact overruns are recorded in
+[the size accounts](docs/research/interval-size-accounts.json) under that rule.
+Raw evidence: `docs/evidence/2026-11-24-interval-positive-power`.

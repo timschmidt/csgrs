@@ -376,8 +376,11 @@ on the same completed contract:
   [the admission protocol](docs/admission.md#bounded-code-and-binary-size-exceptions).
   Development artifacts (tests, benches, examples, fuzz targets, probes) are
   measured but never block, size never blocks a new feature, hard platform
-  limits always bind, and features that add capability while shrinking
-  existing code are strongly preferred (24 November 2026 revision).
+  limits always bind, and features that add capability while improving
+  performance, reducing memory and shrinking code are favored. Any feature with
+  one of those effects is tracked in
+  [the feature tradeoff ledger](docs/research/feature-tradeoffs.md) and
+  reconsidered periodically (24 November 2026 revision).
   Bounded memory/stack growth for demonstrated functionality requires the
   separate [memory exception](docs/admission.md#bounded-memory-growth-exceptions),
   including per-target caps, complete-lifetime measurements, headroom and

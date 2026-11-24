@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Taylor remainder monomials and `PowI` interval evaluation compute positive
+  integer powers exactly before regridding them outward, instead of using the
+  general rational-power image. Results are identical. A long-horizon correlated
+  rotation runs 12.5–15% fewer instructions.
+
 - **Breaking:** `work_budget::BudgetExceeded` fields are private. Use the
   `kind()`, `limit()`, `used()` and `requested()` accessors, which return exact
   `u64` counts, and `BudgetExceeded::new` to build an expected receipt. On

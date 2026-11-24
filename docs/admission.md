@@ -335,10 +335,18 @@ Policy revision (24 November 2026, requested by the repository owner):
 - **Hard limits still bind.** Flash partitions, reserved boot and update
   space, runtime or browser ceilings, and other platform limits apply to every
   change.
-- **Prefer simplifying features.** Among candidates for the same benefit,
-  strongly prefer one that adds functionality while simplifying or shrinking
-  existing code. Report net source and code change, and remove older code that
-  a new feature makes redundant in the same change or an immediate follow-up.
+- **Favor capability that also improves resources.** Among candidates for
+  the same benefit, favor a feature that adds capability while also improving
+  performance, reducing memory use and shrinking code. Report each of those
+  effects, as net source, code, instruction and memory changes. Remove older
+  code that a new feature makes redundant in the same change or an immediate
+  follow-up.
+- **Track and reconsider.** Every retained feature that improves performance,
+  memory use or code size, or trades one against another, gets an entry in
+  [the feature tradeoff ledger](research/feature-tradeoffs.md). Each entry
+  records its measured effects and evidence. Reconsider the ledger
+  occasionally, at least at each coordinated release and phase close, to keep,
+  simplify, merge or remove each entry against the current codebase.
 
 The rest of this section applies to shipped artifacts within that scope.
 
