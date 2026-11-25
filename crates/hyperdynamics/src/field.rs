@@ -489,5 +489,9 @@ pub mod coordinates;
 #[cfg(feature = "taylor-flow")]
 pub mod taylor_flow;
 
+/// Certified initial-state sensitivity of native Picard evolutions.
+#[cfg(feature = "flow-sensitivity")]
+pub mod sensitivity;
+
 mod budget_adapter;
 pub use budget_adapter::EnclosureGraphBudget;

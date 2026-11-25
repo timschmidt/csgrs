@@ -11,6 +11,7 @@ include = ["/src/**", "/examples/coordinates.rs",
   "/examples/expression_field.rs",
   "/examples/flow_noise.rs",
   "/examples/flow_noise_evolution.rs",
+  "/examples/flow_sensitivity.rs",
   "/examples/reachability.rs",
   "/examples/rk_proposal.rs",
   "/examples/taylor_affine.rs",
@@ -38,6 +39,7 @@ taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
 taylor-noise = ["taylor-affine", "hypersolve/taylor-noise"]
 taylor-polynomial = ["taylor-model", "hypersolve/taylor-polynomial"]
 reachability = ["field"]
+flow-sensitivity = ["field"]
 rk-proposal = ["field", "hypersolve/float-proposal-program", "hyperinterval/float-proposal"]
 field = ["dep:hyperreal", "dep:hyperinterval", "dep:hyperlattice-interval", "dep:hypersolve", "hypersolve/interval-program"]
 serde = ["dep:serde", "hypersolve?/serde", "hyperlattice-interval?/serde"]
@@ -63,7 +65,7 @@ criterion = "0.5"
 
 [[example]]
 name = "perf_atlas"
-required-features = ["qr-evolution", "flow-noise-evolution", "adaptive-taylor", "rk-proposal", "taylor-model"]
+required-features = ["qr-evolution", "flow-noise-evolution", "adaptive-taylor", "rk-proposal", "taylor-model", "flow-sensitivity"]
 
 [[example]]
 name = "expression_field"
@@ -80,6 +82,10 @@ required-features = ["rk-proposal"]
 [[example]]
 name = "reachability"
 required-features = ["reachability"]
+
+[[example]]
+name = "flow_sensitivity"
+required-features = ["flow-sensitivity"]
 
 [[example]]
 name = "taylor_model"

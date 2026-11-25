@@ -24,6 +24,7 @@ use hyperdynamics::field::{
     picard::{PicardProposal, PicardStatus},
     proposal::Rk4Options,
     reachability::{ReachabilityPolicy, ReachabilityRequest, ReachabilityStatus},
+    sensitivity::SensitivityOptions,
     taylor::FieldTaylorRequest,
     taylor_flow::{
         FlowTaylorProgram, FlowTaylorStatus,
@@ -599,6 +600,10 @@ enum Op {
     RationalTime {
         steps: u64,
     },
+    Sensitivity {
+        steps: u64,
+        terms: usize,
+    },
     InCoordinates,
     InQr,
     Transition {
@@ -725,6 +730,26 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
             step,
             width,
         } => integrate::<N>(spec, method, steps, step, width),
+        Op::Sensitivity { steps, terms } => {
+            // The certified source evolution is built once, outside the timer.
+            let step = spec.picard_step;
+            let request = request::<N>(spec, Some(-20), steps, step);
+            let source = Arc::new(field::<N>(spec).integrate(
+                request,
+                options(steps, step),
+                &mut EnclosureBudget::new(policy()),
+            ));
+            let options = SensitivityOptions { terms };
+            Box::new(move || match source.sensitivity(options, &mut budget()) {
+                Ok(s) => done!(s.status(), EvolutionStatus::Completed),
+                Err(error) => {
+                    if debug() {
+                        eprintln!("    failed: {error:?}");
+                    }
+                    false
+                }
+            })
+        }
         Op::Reach {
             steps,
             width,
@@ -1312,6 +1337,52 @@ fn main() {
                         steps: steps(m),
                         step: None,
                         width: near_point,
+                    },
+                )
+            },
+            call,
+        );
+    }
+
+    atlas.operation(
+        "evolution",
+        "initial-state sensitivity by horizon",
+        "horizon (multiples of the Picard step cap)",
+        "EvolutionReport::sensitivity with 8 series terms, over a completed first-order Picard evolution of n step caps from a near-point box (width 2^-20). The evolution is built outside the timer; each call derives every segment's Peano–Baker terms, tail and composed derivative. Stopped sources are marked as failures.",
+    );
+    for spec in evolving {
+        atlas.sweep(
+            &spec.name,
+            &horizons,
+            |m, _| {
+                job(
+                    spec,
+                    Op::Sensitivity {
+                        steps: steps(m),
+                        terms: 8,
+                    },
+                )
+            },
+            call,
+        );
+    }
+
+    atlas.operation(
+        "evolution",
+        "initial-state sensitivity by series terms",
+        "Peano–Baker terms per segment",
+        "EvolutionReport::sensitivity over 16 Picard step caps, by the number of nonconstant series terms per segment. Zero terms keep identity plus the certified tail.",
+    );
+    for spec in evolving {
+        atlas.sweep(
+            &spec.name,
+            &orders,
+            |m, _| {
+                job(
+                    spec,
+                    Op::Sensitivity {
+                        steps: 16,
+                        terms: m as usize,
                     },
                 )
             },

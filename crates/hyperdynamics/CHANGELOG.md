@@ -2,6 +2,14 @@
 
 ## 0.1.0 (unreleased)
 
+- Add opt-in `flow-sensitivity`: `EvolutionReport::sensitivity` encloses the
+  derivative of the flow with respect to the initial state over a certified
+  native evolution, at each segment end, across each segment and at the
+  horizon. It reuses the source's Picard Jacobians and contraction bounds,
+  sums time-ordered Peano–Baker terms as independent interval products with a
+  certified geometric tail, and composes segments on the left. Stopped
+  prefixes keep their status, and failures publish nothing.
+
 - Correlated flow endpoints can fold columns whose certified variation is
   below `2^-column_cutoff_bits` times the largest into residuals, rebuilding
   the noise model with the significant prefix as its capacity.

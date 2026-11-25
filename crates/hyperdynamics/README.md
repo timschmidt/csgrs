@@ -192,6 +192,36 @@ source/request/policies for replay; reports are not deserialized as proof.
 cargo run -p hyperdynamics --features reachability --example reachability
 ```
 
+Enable `flow-sensitivity` for certified initial-state derivatives of a native
+evolution. Wrap the report in an `Arc` and call
+`report.sensitivity(options, budget)`. The result encloses `D_x0 φ(t, t0, x0)` for
+every initial state in the request's box. `end_matrix()` gives it at the
+requested horizon, and each step gives it at its segment end and across the
+whole segment. The derivation reuses the source's certified Picard Jacobians and
+contraction bounds, without evaluating the field again:
+
+- Each segment sums time-ordered Peano–Baker terms `(h·A)^k/k!` as independent
+  interval products, so no commutativity is assumed.
+- The omitted terms are bounded by `q^(p+1)/(p+1)!/(1-q)`, where
+  `q = h·sup‖A‖∞ < 1` is the segment's certified contraction.
+- Local derivatives compose on the left of earlier ones.
+
+A stopped source keeps its status: `prefix_end_matrix()` covers its certified
+prefix and `end_matrix()` is `None`. An empty request yields the empty matrix
+set and a zero-duration request the identity. A source that certified no
+segment is an error, and so is any resource, scalar or cancellation failure;
+neither publishes partial output, and the source remains available for a retry
+with a larger budget. The matrices are Cartesian outer enclosures, not exact
+derivative sets.
+
+The example certifies a pendulum's sensitivity to its release angle and speed,
+and checks that the derivative's determinant contains 1, as Liouville's theorem
+requires for a Hamiltonian flow:
+
+```sh
+cargo run -p hyperdynamics --features flow-sensitivity --example flow_sensitivity
+```
+
 Run `cargo run -p hyperdynamics --features taylor-affine --example taylor_affine`
 for source-bound linear observables of a nonlinear field. The example retains
 shared Taylor coefficients through an exact output map, then explicitly projects
