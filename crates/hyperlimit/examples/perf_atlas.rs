@@ -50,14 +50,15 @@ use hyperlimit::{
     construct_line_intersection_point_with_policy, incircle2, incircle2_evidence,
     incircle2_with_evidence, insphere_d, insphere3, insphere3_evidence, insphere3_with_evidence,
     intersect_segment_with_plane, intersect_three_planes, line2_orientation, orient_d, orient2,
-    orient2_batch, orient2_batch_parallel, orient3, oriented_plane3_evidence, reciprocal_real,
-    ring_area_sign, ring_convexity, support_dop3_from_points,
+    orient2_batch, orient3, oriented_plane3_evidence, reciprocal_real, ring_area_sign,
+    ring_convexity, support_dop3_from_points,
 };
 use hyperlimit::{
     SegmentPlaneRelation, classify_homogeneous_point_plane, classify_point_segment3,
     classify_triangle3_degeneracy, compare_point3_lexicographic, insphere3_batch,
-    insphere3_batch_parallel,
 };
+#[cfg(feature = "parallel")]
+use hyperlimit::{insphere3_batch_parallel, orient2_batch_parallel};
 use hyperreal::Rational;
 use num::bigint::{BigInt, BigUint};
 use num::{Integer, One, Signed, ToPrimitive, Zero};
@@ -2980,7 +2981,7 @@ fn batches(atlas: &mut Atlas) {
         "orient2_batch over cases with mixed distance to degeneracy (k uniform in 0..96), sequential and rayon-parallel; time is per batch.",
     );
     for kind in [Kind::F64, Kind::Rational] {
-        for parallel in [false, true] {
+        for parallel in BATCH_MODES {
             let label = format!(
                 "{} {}",
                 kind.label(),
@@ -3006,10 +3007,10 @@ fn batches(atlas: &mut Atlas) {
                         .collect::<Vec<_>>()
                 },
                 |cases| {
-                    let out = if parallel {
-                        orient2_batch_parallel(cases, APPROX)
-                    } else {
-                        orient2_batch(cases, APPROX)
+                    let out = match parallel {
+                        #[cfg(feature = "parallel")]
+                        true => orient2_batch_parallel(cases, APPROX),
+                        _ => orient2_batch(cases, APPROX),
                     };
                     out.iter().all(|o| o.value().is_some())
                 },
@@ -3024,7 +3025,7 @@ fn batches(atlas: &mut Atlas) {
         "insphere3_batch over cases with mixed distance to degeneracy (k uniform in 0..92), sequential and rayon-parallel; time is per batch.",
     );
     for kind in [Kind::F64, Kind::Rational] {
-        for parallel in [false, true] {
+        for parallel in BATCH_MODES {
             let label = format!(
                 "{} {}",
                 kind.label(),
@@ -3056,10 +3057,10 @@ fn batches(atlas: &mut Atlas) {
                         .collect::<Vec<_>>()
                 },
                 |cases| {
-                    let out = if parallel {
-                        insphere3_batch_parallel(cases, APPROX)
-                    } else {
-                        insphere3_batch(cases, APPROX)
+                    let out = match parallel {
+                        #[cfg(feature = "parallel")]
+                        true => insphere3_batch_parallel(cases, APPROX),
+                        _ => insphere3_batch(cases, APPROX),
                     };
                     out.iter().all(|o| o.value().is_some())
                 },
@@ -3067,6 +3068,13 @@ fn batches(atlas: &mut Atlas) {
         }
     }
 }
+
+/// Batch modes to sweep: the rayon-parallel batches exist only with the
+/// `parallel` feature, which `scripts/perf-atlas/run.sh` enables.
+#[cfg(feature = "parallel")]
+const BATCH_MODES: [bool; 2] = [false, true];
+#[cfg(not(feature = "parallel"))]
+const BATCH_MODES: [bool; 1] = [false];
 
 fn main() {
     let mut atlas = Atlas::from_args("hyperlimit");

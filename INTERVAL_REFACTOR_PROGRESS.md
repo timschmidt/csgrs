@@ -15591,3 +15591,77 @@ and the agent rules:
 This change's development-artifact overruns are recorded in
 [the size accounts](docs/research/interval-size-accounts.json) under that rule.
 Raw evidence: `docs/evidence/2026-11-24-interval-positive-power`.
+
+## Performance atlas, 24 November 2026
+
+The repository owner asked for a performance report that covers every relevant
+crate. It should sweep each operation across its input kinds, magnitudes and
+fuzzed values, so reviewers can see each operation's cost profile, including
+its cliffs and valleys.
+
+**Harness.** The new development-only crate `perf-atlas` and one
+`examples/perf_atlas.rs` per crate implement it. The crates are Hyperreal,
+Hyperinterval, Hyperlimit, Hyperlattice, Hyperlattice-interval, Hypersolve,
+Hyperdynamics, Hypercurve and Hypertri.
+
+Measurement:
+- Inputs are built outside the timer.
+- Every timed call gets a fresh copy of its input, so results a library caches
+  on its operands are not reused.
+- Batches are calibrated; each point records its median, minimum and maximum.
+- Errors, refusals and panics are recorded as failed points with their reason.
+- A single call over the ceiling ends its series. A call whose predicted time
+  exceeds the ceiling is skipped.
+
+`scripts/perf-atlas/render.py` builds one self-contained HTML report with:
+- log–log line charts;
+- fuzz scatters;
+- two-operand heatmaps;
+- data tables;
+- tables of the largest cliffs, valleys, failures and ceilings.
+
+`scripts/perf-atlas/run.sh` and the manual `perf-atlas` workflow run it; see
+[the atlas README](scripts/perf-atlas/README.md).
+
+**First full run.** 442 operations, about 25,500 sweep points plus fuzz
+samples, 6,565 s on the 40-thread Xeon E5-2680 v2 development host. The
+renderer flagged 1,206 cliffs, 86 valleys, 530 failed calls and 201 ceilings.
+Most failures are documented refusals, such as fixed-point lattice overflow,
+undecidable certification boxes and integration horizons beyond certification.
+Leads for follow-up work:
+
+- Exact interval `checked_pow` jumps 230–420× from exponent 64 to 128 (1.2 µs
+  to 447 µs for a point). Exponents up to 64 use Hyperreal's direct
+  integer-power kernel and larger ones use reduced products. The direct
+  kernel's growth suggests a few microseconds at 128.
+- Hyperreal `powi` on a rational operand takes 4.7 ms at exponent 128 and 8.7
+  ms at 512. At 1024 it takes 116 µs, after the eager-growth guard hands it to
+  the lazy path. On a 64-bit integer operand, one call at exponent 1024 took
+  23 s.
+- Hyperlimit's parallel `orient2` batch costs 33 µs for two items, compared
+  with 287 ns for one. There is no serial cutoff for small batches.
+- Hyperlimit's f64 `classify_segment_triangle3_intersection` costs about 30 µs
+  except at a few coordinate exponents, where it costs under 400 ns. This
+  suggests the floating-point filter rarely resolves the predicate.
+
+No library code changes. Shipped artifacts are unaffected. The development
+artifacts are nine new release example binaries:
+
+| Example binary | Bytes |
+| --- | ---: |
+| Hyperreal | 2,746,888 |
+| Hyperinterval | 3,617,840 |
+| Hyperlimit | 5,370,496 |
+| Hyperlattice | 4,530,856 |
+| Hyperlattice-interval | 11,448,768 |
+| Hypersolve | 6,778,504 |
+| Hyperdynamics | 8,024,928 |
+| Hypercurve | 23,991,504 |
+| Hypertri | 4,425,744 |
+
+Under the size-policy revision above, these binaries are recorded but do not
+block. The Hyperinterval, Hyperlattice-interval and Hyperdynamics package
+include lists were narrowed so the atlas examples are not published.
+
+Raw evidence: `docs/evidence/2026-11-24-perf-atlas` (evidence commit
+812cdcca2), with the rendered report, all crate data and a highlights summary.

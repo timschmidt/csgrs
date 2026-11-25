@@ -91,3 +91,10 @@ same machine with the same settings, and with nothing else heavy running.
 3. Make the timed call do real work. Force lazy values to a fixed precision,
    and return `Option`, `Result` or `bool` so that failures are marked.
 4. Add the crate to the default list in `run.sh`.
+
+## Archived runs
+
+The first full run (24 November 2026, 442 operations, about 110 minutes on a
+40-thread Xeon E5-2680 v2) is archived with its rendered report at
+`docs/evidence/2026-11-24-perf-atlas` in the
+[evidence repository](../../docs/evidence-archive.md).
