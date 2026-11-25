@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart and QR-frame evolutions (25 November) | higher-utility automatic frame strategies, sensitivity-driven noise-column strategies beyond the relative cutoff accepted 23 November, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November) | higher-utility automatic frame strategies, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -15870,4 +15870,100 @@ has no Node.
 
 Raw evidence: `docs/evidence/2026-11-25-interval-source-sensitivity` (evidence
 commit 65ee1973c). Still open in this area: sensitivity of affine-noise
-evolutions, and noise-column retention driven by sensitivity.
+evolutions, and noise-column retention driven by sensitivity. Both are
+resolved in the next section.
+
+## Affine-noise sensitivity accepted and sensitivity-driven column ranking not pursued, 25 November 2026
+
+Phases 12/13.
+
+**Affine-noise sensitivity.** `FlowNoiseEvolution::sensitivity`, under
+`flow-sensitivity` with `flow-noise-evolution`, joins the other sources. It
+adds one `Source` implementation and no new derivation. Each accepted noise
+segment keeps the native Picard proof its refinement reused, reachable as
+`evidence().flow().picard()`. That proof starts from the box hull of the
+incoming correlated state rather than a wrapped native endpoint. Every true
+state lies in that hull, so the chain rule over these proofs encloses the
+derivative from the original initial box, as for native evolutions.
+
+The hull is often much smaller than the wrapped endpoint, and the Jacobians
+shrink with it. On Van der Pol from a `2^-6` box around (1, 0) to `t = 1/4`
+in steps of `2^-4`, the end derivative entries have widths
+0.0196 / 0.0087 / 0.163 / 0.081, against 0.0222 / 0.0118 / 0.204 / 0.127 from
+the native evolution, so 12–36% narrower. Both enclosures overlap, as two
+enclosures of the same derivative must. Native exact endpoints exhaust scalar
+size at `t = 5/16`, so no longer comparison was made.
+
+`affine_noise_segments_reuse_their_picard_proofs` checks:
+- rotation against the exact rotation matrix at `t = 1/2`, with width below
+  `10^-6`;
+- Riccati against 16/9;
+- the Van der Pol comparison above (narrower and overlapping);
+- a two-step stopped prefix with no whole-horizon matrix;
+- reversed time as `Source(Search(ReversedTime))`;
+- the zero-duration identity.
+
+Three mutations were each killed: skipping the first segment, mapping
+`Stopped` to `Completed`, and mapping `Identity` to `Empty`.
+
+**Sensitivity-driven column ranking.** Each noise step's candidates are the
+retained columns plus one fresh residual axis per nonzero row. The model keeps
+the `maximum_noise` largest by current certified variation and folds the rest
+into residuals. Ranking by future sensitivity could change the outcome only
+when the cap forces a choice. Retaining every column bounds what any ranking
+can achieve. A focused probe swept caps 0, 1, 2, N, 4N and 64 with order-4
+flows, default rounding and the 16-bit cutoff, from boxes of radius `2^-16`.
+One release run on one host:
+
+| System, horizon | Width at cap N vs 64 | Time at caps N / 4N / 64 |
+| --- | --- | --- |
+| Rotation, t=4 | 13.5% wider | 0.10 / 0.27 / 2.2 s |
+| Symmetric saddle, t=2 | identical at every cap, including 0 | 0.10 / 0.25 / 0.70 s |
+| Van der Pol from (2, 0), t=2 | identical | 1.1 / 5.4 / 75 s |
+| Lotka-Volterra, t=2 | identical | 3.8 / 11 / 12 s |
+| Lorenz, t=1/16 | identical | 2.5 / 12 / 57 s |
+
+At caps of N or more, four of five systems leave nothing for a ranking to
+gain. On the rotation, the only gain is the 13.5% that a larger cap already
+buys. A two-pass ranking would need a first evolution to compute future
+derivatives, doubling the cost. It is therefore not pursued. Below N the
+choice matters (rotation at cap 1 is 14× wider than at cap 2). There, raising
+the cap to N costs less than any second pass.
+
+**Tracked performance candidate.** The shipped default of 16 columns gives
+Van der Pol, Lotka-Volterra and Lorenz no narrower endpoint than a cap of N,
+at 3–30× the time. The cutoff does not fold the extra columns, because each
+step's fresh residual columns stay above `2^-16` of the largest. The default
+was accepted on 23 November against the external CAPD corpus. Its long-horizon
+rotation rows are where extra columns help, so changing it needs that corpus
+rerun. It is recorded here for reconsideration, not changed.
+
+**Atlas.** The source-method sensitivity sweep adds an order-4, 2-column
+affine-noise source. With 16 columns, building the sources outside the timer
+took 2.7 hours of the quick sweep, because the slow-point cutoff only bounds the
+timed call. With 2 columns, which matched 64 on Van der Pol in the probe, the
+filtered quick sweep takes 790 s. Median times of the timed sensitivity call
+(quick mode, one host, single samples at 128 and 256):
+- On the rotation, affine noise costs the same per segment as Taylor 4
+  (34.5 ms against 35.2 ms at 256 step caps; Picard 39.7 ms).
+- On Van der Pol, affine noise is the only source that completes beyond
+  16 step caps. It reaches 128 (81 ms) and meets the time ceiling at 256. The
+  native, Taylor, adaptive and QR sources stop at 8 or 16, as in their
+  integration sweeps. Per-segment cost rises from 0.21 ms to 0.63 ms between
+  32 and 128 caps as the derivative's dyadic sizes grow.
+
+**Size.** No shipped artifact depends on Hyperdynamics. The new code is one
+generic `Source` implementation and one public method, instantiated only by
+callers that enable both features. The all-feature release perf atlas has
+6,032,264 bytes of text, against 5,824,392 after the previous entry
+(+207,872), from the new sweep's evolution and sensitivity instantiations.
+The two builds used different target directories. The `flow_sensitivity`
+example does not use the new code.
+
+**Validation.** On stable and 1.95.0: `fmt`; Clippy with `-D warnings` for
+no features, all features, and `flow-sensitivity` with `flow-noise-evolution`,
+with `flow-noise-evolution,serde` and with `flow-noise`; the no-default,
+all-target (189), release (189) and doc test runs; Rustdoc with `-D warnings`.
+
+Raw evidence: `docs/evidence/2026-11-25-interval-noise-sensitivity` (evidence
+commit 8cf0a5192).

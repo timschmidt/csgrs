@@ -926,7 +926,9 @@ fn sensitivity<const N: usize>(
     width: i32,
 ) -> Job {
     let step = match method {
-        Method::Picard | Method::Taylor(0) | Method::Qr(0) => spec.picard_step,
+        Method::Picard | Method::Taylor(0) | Method::Noise(0, _) | Method::Qr(0) => {
+            spec.picard_step
+        }
         _ => spec.taylor_step,
     };
     let request = request::<N>(spec, Some(width), steps, step);
@@ -981,7 +983,19 @@ fn sensitivity<const N: usize>(
                 .integrate(request, &mut build()),
             AdaptiveTaylorStatus::Completed
         ),
-        Method::Noise(..) => unreachable!("affine-noise evolutions have no sensitivity source"),
+        Method::Noise(order, noise) => timed!(
+            program::<N>(spec, order).integrate_noise(
+                Arc::new(FlowNoiseState::new(time(0, 0), request.initial, &mut build()).unwrap()),
+                request.end,
+                FlowNoiseEvolutionOptions {
+                    maximum_noise: noise,
+                    native: opts,
+                    ..FlowNoiseEvolutionOptions::default()
+                },
+                &mut build()
+            ),
+            FlowNoiseEvolutionStatus::Completed
+        ),
     }
 }
 
@@ -1455,13 +1469,14 @@ fn main() {
         "evolution",
         "initial-state sensitivity by source method",
         "horizon (multiples of the source step cap)",
-        "sensitivity with 8 series terms over completed Picard, order-4 Taylor, adaptive Taylor (orders 1..=6, endpoint remainder limit 2^-20) and order-3 QR-frame evolutions of n step caps from a box of width 2^-6, as in the QR integrate sweep (near-point boxes exhaust scalar size in the first QR window). Each source is built outside the timer; every method derives from the Picard proofs its segments retain, and QR adds two chart products per segment plus one exact transition per frame change.",
+        "sensitivity with 8 series terms over completed Picard, order-4 Taylor, adaptive Taylor (orders 1..=6, endpoint remainder limit 2^-20), order-3 QR-frame and order-4 affine-noise (2 columns, default rounding and cutoff; widths matched 64 columns on Van der Pol at a tenth of the build time) evolutions of n step caps from a box of width 2^-6, as in the QR integrate sweep (near-point boxes exhaust scalar size in the first QR window). Each source is built outside the timer; every method derives from the Picard proofs its segments retain, and QR adds two chart products per segment plus one exact transition per frame change.",
     );
     for (label, method) in [
         ("Picard", Method::Picard),
         ("Taylor 4", Method::Taylor(4)),
         ("adaptive Taylor", Method::Adaptive(6, -20)),
         ("QR frames", Method::Qr(3)),
+        ("affine noise", Method::Noise(4, 2)),
     ] {
         for spec in [&rotation, &vdp] {
             atlas.sweep(

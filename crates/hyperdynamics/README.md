@@ -208,8 +208,13 @@ contraction bounds, without evaluating the field again:
 
 The same call works on the other evolutions when their features are enabled:
 `FlowTaylorEvolution`, `AdaptiveTaylorEvolution`, the fixed-chart
-`CoordinateEvolution` and `QrEvolution`. Each Taylor segment keeps the Picard
-proof its refinement consumed, and that proof supplies the Jacobian. A chart
+`CoordinateEvolution`, `QrEvolution` and the affine-noise
+`FlowNoiseEvolution`. Each Taylor or noise segment keeps the Picard proof its
+refinement consumed, and that proof supplies the Jacobian. A noise segment's
+proof starts from the box hull of the correlated state, which is often much
+smaller than a wrapped native endpoint. On Van der Pol from a `2^-6` box to
+`t = 1/4`, every derivative entry is 12–36% narrower than from the native
+evolution. A chart
 run integrates `y' = B f(t, c + A y)` with an exact `A` and a proved inverse
 `B`, so the source-coordinate derivative is `A_k · P(t) · B_0`. Here `P`
 composes the chart-coordinate segment derivatives and, at each change of QR

@@ -19,10 +19,11 @@
 //! global sensitivities on the left, following the chain rule along each
 //! trajectory.
 //!
-//! Every supported evolution reduces to that one derivation. Taylor and adaptive
-//! Taylor segments retain the Picard proof that each refinement consumed; its
-//! Jacobian covers the candidate tube, which contains every trajectory the
-//! tighter Taylor enclosure describes. Chart evolutions integrate
+//! Every supported evolution reduces to that one derivation. Taylor, adaptive
+//! Taylor and affine-noise segments retain the Picard proof that each
+//! refinement consumed; its Jacobian covers the candidate tube, which contains
+//! every trajectory the tighter Taylor or affine enclosure describes. Chart
+//! evolutions integrate
 //! `y' = B f(t, c + A y)` with exact `A`, a strictly proved inverse `B`, and
 //! retained native Picard proofs in `y`. The chain rule gives
 //! `D_x0 x(t) = A_k · P(t) · B_0`, where `P` composes the chart-coordinate
@@ -452,6 +453,52 @@ mod qr {
             options: SensitivityOptions,
             budget: &mut EnclosureBudget,
         ) -> Result<FlowSensitivity<N, Self>, SensitivityError<QrEvolutionFailure>> {
+            run(self, options, budget)
+        }
+    }
+}
+
+#[cfg(feature = "flow-noise-evolution")]
+mod noise {
+    use super::*;
+    use crate::field::taylor_flow::noise::evolution::{
+        FlowNoiseEvolution, FlowNoiseEvolutionFailure, FlowNoiseEvolutionStatus,
+    };
+
+    impl<const N: usize> Source<N> for FlowNoiseEvolution<N> {
+        type Failure = FlowNoiseEvolutionFailure;
+        fn horizon(&self) -> Status<'_, FlowNoiseEvolutionFailure> {
+            match self.status() {
+                FlowNoiseEvolutionStatus::Completed => Status::Completed,
+                FlowNoiseEvolutionStatus::Identity => Status::Identity,
+                FlowNoiseEvolutionStatus::Empty => Status::Empty,
+                FlowNoiseEvolutionStatus::Stopped(e) => Status::Stopped(e),
+            }
+        }
+        fn windows(&self) -> impl Iterator<Item = Window<'_, N>> {
+            core::iter::once(native(self.segments().map(|s| {
+                s.evidence()
+                    .flow()
+                    .expect("accepted noise segment")
+                    .picard()
+            })))
+        }
+    }
+
+    impl<const N: usize> FlowNoiseEvolution<N> {
+        /// Enclose the initial-state derivative across every accepted affine-noise segment.
+        ///
+        /// Each segment's derivative comes from the native Picard proof that
+        /// its noise refinement reused. That proof starts from the box hull of
+        /// the incoming affine state, which is often much smaller than a
+        /// wrapped native endpoint, so nonlinear Jacobians and the derivatives
+        /// built from them tighten with it. Prefix, retry and accounting rules
+        /// are those of [`EvolutionReport::sensitivity`].
+        pub fn sensitivity(
+            self: &Arc<Self>,
+            options: SensitivityOptions,
+            budget: &mut EnclosureBudget,
+        ) -> Result<FlowSensitivity<N, Self>, SensitivityError<FlowNoiseEvolutionFailure>> {
             run(self, options, budget)
         }
     }

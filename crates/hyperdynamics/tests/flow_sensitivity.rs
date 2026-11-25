@@ -658,11 +658,19 @@ mod replay;
 
 // Rotation x' = -y, y' = x has the exact derivative [[cos t, -sin t], [sin t, cos t]]
 // in source coordinates, whatever chart, frame or proof method produced it.
-#[cfg(any(feature = "taylor-evolution", feature = "coordinates"))]
+#[cfg(any(
+    feature = "taylor-evolution",
+    feature = "coordinates",
+    feature = "flow-noise-evolution"
+))]
 fn rotation() -> [Expr; 2] {
     [-s(1), s(0)]
 }
-#[cfg(any(feature = "taylor-evolution", feature = "coordinates"))]
+#[cfg(any(
+    feature = "taylor-evolution",
+    feature = "coordinates",
+    feature = "flow-noise-evolution"
+))]
 fn contains_rotation(m: &IntervalMatrix<DyadicInterval, 2, 2>, t: &Rational, bound: Rational) {
     let [(cl, ch), (sl, sh)] = cos_sin_bounds(t);
     let m = entries(m);
@@ -674,12 +682,16 @@ fn contains_rotation(m: &IntervalMatrix<DyadicInterval, 2, 2>, t: &Rational, bou
         small(x, bound.clone());
     }
 }
-#[cfg(any(feature = "taylor-evolution", feature = "coordinates"))]
+#[cfg(any(
+    feature = "taylor-evolution",
+    feature = "coordinates",
+    feature = "flow-noise-evolution"
+))]
 fn half() -> Rational {
     Rational::from(1) / Rational::from(2)
 }
 // Riccati x' = x², x(0) = 1/2: ∂x(t)/∂x0 = 1/(1 - t/2)², which is 16/9 at t = 1/2.
-#[cfg(feature = "taylor-evolution")]
+#[cfg(any(feature = "taylor-evolution", feature = "flow-noise-evolution"))]
 fn riccati_end(m: &IntervalMatrix<DyadicInterval, 1, 1>, bound: Rational) {
     included(
         &enclosure(&(Rational::from(16) / Rational::from(9))),
@@ -1328,4 +1340,133 @@ fn fresh_process_replay_reproduces_qr_sensitivity() {
     let mut changed = replay;
     changed.1.end = scaled(1, 1, -3);
     assert_ne!(signature(changed), expected);
+}
+
+#[cfg(feature = "flow-noise-evolution")]
+#[test]
+fn affine_noise_segments_reuse_their_picard_proofs() {
+    use hyperdynamics::field::taylor_flow::noise::{
+        FlowNoiseState,
+        evolution::{
+            FlowNoiseEvolution, FlowNoiseEvolutionFailure, FlowNoiseEvolutionOptions,
+            FlowNoiseEvolutionStatus,
+        },
+    };
+    fn noise<const N: usize>(
+        f: &ExpressionField<N>,
+        order: usize,
+        end: DyadicInterval,
+        initial: [DyadicInterval; N],
+        native: EvolutionOptions,
+    ) -> Arc<FlowNoiseEvolution<N>> {
+        let state =
+            Arc::new(FlowNoiseState::new(d(0, 0), BoxN::new(initial).unwrap(), &mut b()).unwrap());
+        Arc::new(f.flow_taylor(order, &mut b()).unwrap().integrate_noise(
+            state,
+            end,
+            FlowNoiseEvolutionOptions {
+                native,
+                ..Default::default()
+            },
+            &mut b(),
+        ))
+    }
+    let f = field::<2>(&rotation());
+    let source = noise(
+        &f,
+        4,
+        scaled(1, 1, -1),
+        [scaled(-1, 1, -4), scaled(-1, 1, -4)],
+        step(-3),
+    );
+    assert!(
+        matches!(source.status(), FlowNoiseEvolutionStatus::Completed),
+        "{:?}",
+        source.status()
+    );
+    let result = source
+        .sensitivity(SensitivityOptions::default(), &mut b())
+        .unwrap();
+    assert!(Arc::ptr_eq(result.source(), &source));
+    assert_eq!(result.steps().len(), source.segments().len());
+    contains_rotation(
+        result.end_matrix().unwrap(),
+        &half(),
+        Rational::from(1) / Rational::from(1_000_000),
+    );
+
+    let riccati = field::<1>(&[s(0) * s(0)]);
+    let source = noise(&riccati, 3, scaled(1, 1, -1), [scaled(1, 1, -1)], step(-3));
+    riccati_end(
+        source
+            .sensitivity(SensitivityOptions::default(), &mut b())
+            .unwrap()
+            .end_matrix()
+            .unwrap(),
+        Rational::from(1) / Rational::from(4),
+    );
+
+    // Van der Pol from a box. Each noise segment's Picard proof starts from
+    // the affine state's hull, not the wrapped native endpoint, so every
+    // derivative entry is narrower. Both enclose the true derivative, so they
+    // overlap. Native exact endpoints exhaust scalar size soon after t = 1/4.
+    let vdp = field::<2>(&[s(1), (Expr::int(1) - s(0) * s(0)) * s(1) - s(0)]);
+    let initial = [scaled(63, 65, -6), scaled(-1, 1, -6)];
+    let native = evolve(&vdp, request(scaled(1, 1, -2), initial.clone()), step(-4));
+    completed(&native);
+    let correlated = noise(&vdp, 4, scaled(1, 1, -2), initial, step(-4));
+    let wide = sensitivity(&native);
+    let tight = correlated
+        .sensitivity(SensitivityOptions::default(), &mut b())
+        .unwrap();
+    let pairs = entries(wide.end_matrix().unwrap())
+        .iter()
+        .flatten()
+        .zip(entries(tight.end_matrix().unwrap()).iter().flatten());
+    for (wide, tight) in pairs {
+        assert!(width(tight) < width(wide));
+        let [w, t] = [wide, tight].map(|x| x.to_rational(&mut scalar()).unwrap());
+        assert!(w.lower().unwrap() <= t.upper().unwrap());
+        assert!(t.lower().unwrap() <= w.upper().unwrap());
+    }
+
+    let stopped = noise(
+        &riccati,
+        3,
+        scaled(1, 1, -1),
+        [scaled(1, 1, -1)],
+        EvolutionOptions {
+            maximum_steps: 2,
+            ..step(-4)
+        },
+    );
+    let prefix = stopped
+        .sensitivity(SensitivityOptions::default(), &mut b())
+        .unwrap();
+    assert_eq!(prefix.steps().len(), 2);
+    assert!(prefix.end_matrix().is_none());
+    let none = noise(&riccati, 3, d(-1, -1), [scaled(1, 1, -1)], step(-4));
+    assert!(
+        matches!(
+            none.sensitivity(SensitivityOptions::default(), &mut b()),
+            Err(SensitivityError::Source(FlowNoiseEvolutionFailure::Search(
+                EvolutionFailure::ReversedTime
+            )))
+        ),
+        "{:?}",
+        none.status()
+    );
+    let identity = noise(&riccati, 3, d(0, 0), [scaled(1, 1, -1)], step(-4));
+    assert!(matches!(
+        identity.status(),
+        FlowNoiseEvolutionStatus::Identity
+    ));
+    let result = identity
+        .sensitivity(SensitivityOptions::default(), &mut b())
+        .unwrap();
+    assert!(result.steps().is_empty());
+    assert_eq!(
+        result.end_matrix(),
+        Some(&IntervalMatrix::new([[d(1, 1)]]).unwrap())
+    );
 }
