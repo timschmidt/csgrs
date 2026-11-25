@@ -9,6 +9,13 @@
   sums time-ordered Peano–Baker terms as independent interval products with a
   certified geometric tail, and composes segments on the left. Stopped
   prefixes keep their status, and failures publish nothing.
+  `FlowTaylorEvolution`, `AdaptiveTaylorEvolution`, `CoordinateEvolution` and
+  `QrEvolution` gain the same `sensitivity` method. Chart runs conjugate
+  chart-coordinate derivatives by the exact chart and inverse, and QR runs
+  compose the exact linear part of each certified frame transition.
+  `FlowSensitivity<N, S>` names its source type, and `SensitivityError<F>`
+  carries that source's own failure. Read status and reached time through
+  `source()`.
 
 - Correlated flow endpoints can fold columns whose certified variation is
   below `2^-column_cutoff_bits` times the largest into residuals, rebuilding

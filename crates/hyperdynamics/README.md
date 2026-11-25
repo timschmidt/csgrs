@@ -206,10 +206,23 @@ contraction bounds, without evaluating the field again:
   `q = h·sup‖A‖∞ < 1` is the segment's certified contraction.
 - Local derivatives compose on the left of earlier ones.
 
+The same call works on the other evolutions when their features are enabled:
+`FlowTaylorEvolution`, `AdaptiveTaylorEvolution`, the fixed-chart
+`CoordinateEvolution` and `QrEvolution`. Each Taylor segment keeps the Picard
+proof its refinement consumed, and that proof supplies the Jacobian. A chart
+run integrates `y' = B f(t, c + A y)` with an exact `A` and a proved inverse
+`B`, so the source-coordinate derivative is `A_k · P(t) · B_0`. Here `P`
+composes the chart-coordinate segment derivatives and, at each change of QR
+frame, the exact linear part `B_new A_old` of the certified transition. Global
+matrices are always in source coordinates. Local matrices are in the segment's
+own coordinates. The result's type names its source,
+`FlowSensitivity<N, S>`, and `source()` gives that source's own status and
+reached time. A stopped QR run contributes only its completed windows.
+
 A stopped source keeps its status: `prefix_end_matrix()` covers its certified
 prefix and `end_matrix()` is `None`. An empty request yields the empty matrix
 set and a zero-duration request the identity. A source that certified no
-segment is an error, and so is any resource, scalar or cancellation failure;
+segment is an error carrying the source's own failure, and so is any resource, scalar or cancellation failure;
 neither publishes partial output, and the source remains available for a retry
 with a larger budget. The matrices are Cartesian outer enclosures, not exact
 derivative sets.

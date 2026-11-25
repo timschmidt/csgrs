@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November) | higher-utility automatic frame strategies, sensitivity of Taylor, coordinate and QR evolutions, sensitivity-driven noise-column strategies beyond the relative cutoff accepted 23 November, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart and QR-frame evolutions (25 November) | higher-utility automatic frame strategies, sensitivity-driven noise-column strategies beyond the relative cutoff accepted 23 November, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -15752,3 +15752,122 @@ Picard evolutions stop on exact endpoint growth.
 Raw evidence: `docs/evidence/2026-11-24-interval-flow-sensitivity` (evidence
 commit 1f0a746e0). Still open in this area: sensitivity of Taylor, coordinate
 and QR evolutions, and noise-column retention driven by sensitivity.
+
+## Sensitivity of Taylor, chart and QR evolutions accepted, 25 November 2026
+
+Phases 6/13, plan 10.7. This closes the open item recorded on 24 November.
+`FlowTaylorEvolution`, `AdaptiveTaylorEvolution`, `CoordinateEvolution` and
+`QrEvolution` now have the same `sensitivity` method as the native evolution.
+Each is available when its own feature is enabled together with
+`flow-sensitivity`.
+
+**Method.** Every source reduces to windows of retained native Picard proofs,
+each in one exact chart, so one derivation serves all of them.
+- A Taylor or adaptive segment uses the Picard proof that its refinement
+  consumed. That proof's Jacobian covers the a-priori candidate tube, which
+  contains every trajectory in the tighter Taylor enclosure.
+- A chart run integrates `y' = B f(t, c + A y)`, with an exact `A` and an
+  inverse `B` proved under STRICT. Segment derivatives compose into a
+  chart-coordinate chain `P`. The published source-coordinate derivative is
+  `A_k · P · B_0`.
+- At each QR window whose comparison chose the proposed frame, `P` is
+  multiplied on the left by the exact `B_new A_old` from the certified
+  transition. A retained frame contributes nothing.
+- The conjugation by `A` and `B` never feeds back into `P`, so it widens each
+  published matrix once.
+
+A stopped QR run contributes only its completed windows. A fixed-chart run
+follows its native status, because the derivative argument does not use the
+Cartesian source projection.
+
+**API.** The feature is unreleased, so the API was changed in place:
+- `FlowSensitivity<N, S = EvolutionReport<N>>` names its source type.
+- `SensitivityError<F = EvolutionFailure>` carries that source's own failure.
+- Status and reached time are read through `source()`; the duplicated
+  `status()` and `reached_time()` accessors were removed.
+- Global matrices are always in source coordinates, and local ones are in the
+  segment's own coordinates.
+
+**Corpus.** Five new tests; 13 sensitivity tests pass in total.
+- Taylor and adaptive: rotation contains `[[cos, −sin], [sin, cos]]` to
+  1e-6. Riccati contains 16/9 at t = 1/2. Both check stopped prefixes, and
+  the Taylor test also checks a source failure carried as
+  `FlowTaylorEvolutionFailure`.
+- Fixed chart, with `A = [[1, 1], [0, 2]]`:
+  - The rotation derivative is contained, and the chart-coordinate value
+    `sin(t)/2` is excluded.
+  - Every tube spans its segment's start and end derivatives.
+  - Stopped prefixes equal the full run's steps. Reversed time is a source
+    error, and identity is exact.
+- QR, nine field/chart/order cases. Every step's endpoint derivative contains
+  the exact reference at that segment's end, to 1e-5:
+  - shear `[[1, 4t], [0, 1]]`, changing frame in all four windows;
+  - saddle `diag(e^t, e^−t)`;
+  - rotation in sheared and lower-triangular charts, with only retained
+    frames or one early proposal;
+  - ellipse `x' = 4y, y' = −x`. Its second proposed transition is a rotation
+    applied to a non-identity chain.
+
+  A pendulum with mixed frame choices has `det ∋ 1`. Window limits stop the
+  run with prefixes and source errors, and an empty request gives the empty
+  matrix.
+- QR resources: the measured graph and scalar work suffice exactly, one unit
+  less fails, cancellation fails, and a retry gives an equal result.
+- A fresh-process QR replay (`HYPERDYNAMICS_QR_SENSITIVITY_REPLAY`) reproduces
+  the status, matrix and steps. A chart with a wrong inverse is refused, and a
+  changed horizon changes the signature.
+
+**Mutations.** Seven deliberate defects, each caught:
+- dropping the transition;
+- applying it on the right;
+- applying it for retained frames;
+- using the incoming chart instead of the chosen one;
+- skipping conjugation;
+- swapping chart and inverse;
+- composing native segments on the right.
+
+Two of them, the right-side transition and the incoming chart, first
+survived. Every case then had triangular charts and fields, so QR frames stayed
+diagonal and only the first transition was non-trivial. The per-step
+references and the ellipse case were added to catch them.
+
+**Cost.** The Picard path was measured against `7a4b89b71`, with both sweeps
+pinned to one core and the fastest of four interleaved rounds taken.
+- The first candidate was 1.5–4% slower. It copied the end and tube matrices
+  every step and grew the step vector from empty. Native sources now compose
+  on the published matrices and preallocate.
+- The remaining difference is +0.8% (geometric mean, range +0.5% to +1.2%)
+  on the series-terms sweep. It is proportional to the work, and the inner
+  loop's source is unchanged, which suggests code layout. It is recorded as
+  measured rather than claimed as noise.
+- Unpinned rounds varied by up to ±10% on this 40-core host.
+
+The new atlas sweep, initial-state sensitivity by source method (2⁻⁶ box), on
+the linear rotation:
+- Taylor 4 and adaptive Taylor cost the same per segment as Picard.
+- QR frames cost about 18% more, from two chart products per segment.
+- Van der Pol sources stop beyond 4–8 step caps, as their integration sweeps
+  do. Near-point boxes exhaust scalar size in the first QR window, which is
+  why this sweep uses the 2⁻⁶ box of the QR integrate sweep.
+
+No shipped artifact depends on Hyperdynamics. Release text of the development
+artifacts built with all features:
+- the pendulum example: +13,008 bytes (1,856,394 → 1,869,402). Its output is
+  unchanged: the determinant is in [0.992970974774, 1.007048120213];
+- the perf atlas: +759,504 bytes, including the new sweep.
+
+**Validation.** On stable and 1.95.0:
+- `fmt` and docs;
+- Clippy with `-D warnings`: no features, all features, and
+  `flow-sensitivity` alone and with each of `coordinates`, `taylor-evolution`,
+  `adaptive-taylor`, `qr-evolution` and `serde,qr-evolution`;
+- 188 all-target and 188 release tests, plus doctests.
+
+The workspace all-targets check, workspace `fmt` and root all-feature Clippy
+pass. Their only warnings are the existing unused manifest dependencies. The WASI conformance discovers the new
+fresh-process replay automatically. It was not run locally, because this host
+has no Node.
+
+Raw evidence: `docs/evidence/2026-11-25-interval-source-sensitivity` (evidence
+commit 65ee1973c). Still open in this area: sensitivity of affine-noise
+evolutions, and noise-column retention driven by sensitivity.

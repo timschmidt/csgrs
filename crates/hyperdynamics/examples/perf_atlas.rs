@@ -601,8 +601,10 @@ enum Op {
         steps: u64,
     },
     Sensitivity {
+        method: Method,
         steps: u64,
         terms: usize,
+        width: i32,
     },
     InCoordinates,
     InQr,
@@ -730,26 +732,12 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
             step,
             width,
         } => integrate::<N>(spec, method, steps, step, width),
-        Op::Sensitivity { steps, terms } => {
-            // The certified source evolution is built once, outside the timer.
-            let step = spec.picard_step;
-            let request = request::<N>(spec, Some(-20), steps, step);
-            let source = Arc::new(field::<N>(spec).integrate(
-                request,
-                options(steps, step),
-                &mut EnclosureBudget::new(policy()),
-            ));
-            let options = SensitivityOptions { terms };
-            Box::new(move || match source.sensitivity(options, &mut budget()) {
-                Ok(s) => done!(s.status(), EvolutionStatus::Completed),
-                Err(error) => {
-                    if debug() {
-                        eprintln!("    failed: {error:?}");
-                    }
-                    false
-                }
-            })
-        }
+        Op::Sensitivity {
+            method,
+            steps,
+            terms,
+            width,
+        } => sensitivity::<N>(spec, method, steps, terms, width),
         Op::Reach {
             steps,
             width,
@@ -925,6 +913,75 @@ fn integrate<const N: usize>(
                 )
             })
         }
+    }
+}
+
+/// Times `sensitivity` over a source evolution built once, outside the timer,
+/// from a box of width 2^width. Stopped sources are marked as failures.
+fn sensitivity<const N: usize>(
+    spec: &Spec,
+    method: Method,
+    steps: u64,
+    terms: usize,
+    width: i32,
+) -> Job {
+    let step = match method {
+        Method::Picard | Method::Taylor(0) | Method::Qr(0) => spec.picard_step,
+        _ => spec.taylor_step,
+    };
+    let request = request::<N>(spec, Some(width), steps, step);
+    let opts = options(steps, step);
+    let options = SensitivityOptions { terms };
+    let build = || EnclosureBudget::new(policy());
+    macro_rules! timed {
+        ($source:expr, $completed:pat) => {{
+            let source = Arc::new($source);
+            Box::new(move || match source.sensitivity(options, &mut budget()) {
+                Ok(s) => done!(s.source().status(), $completed),
+                Err(error) => {
+                    if debug() {
+                        eprintln!("    failed: {error:?}");
+                    }
+                    false
+                }
+            })
+        }};
+    }
+    match method {
+        Method::Picard => timed!(
+            field::<N>(spec).integrate(request, opts, &mut build()),
+            EvolutionStatus::Completed
+        ),
+        Method::Taylor(order) => timed!(
+            program::<N>(spec, order).integrate(request, opts, &mut build()),
+            FlowTaylorEvolutionStatus::Completed
+        ),
+        Method::Qr(order) => timed!(
+            identity_chart::<N>(spec).integrate_qr(
+                request,
+                QrEvolutionOptions {
+                    window: time(1, step + 2),
+                    maximum_windows: steps.div_ceil(4) as usize + 4,
+                    taylor_order: (order > 0).then_some(order),
+                    native: opts,
+                },
+                &mut build()
+            ),
+            QrEvolutionStatus::Completed
+        ),
+        Method::Adaptive(maximum_order, limit) => timed!(
+            field::<N>(spec)
+                .adaptive_taylor(AdaptiveTaylorOptions {
+                    minimum_order: 1,
+                    maximum_order,
+                    remainder_limits: std::array::from_fn(|_| time(1, limit)),
+                    maximum_quality_halvings: 16,
+                    native: opts,
+                })
+                .integrate(request, &mut build()),
+            AdaptiveTaylorStatus::Completed
+        ),
+        Method::Noise(..) => unreachable!("affine-noise evolutions have no sensitivity source"),
     }
 }
 
@@ -1358,8 +1415,10 @@ fn main() {
                 job(
                     spec,
                     Op::Sensitivity {
+                        method: Method::Picard,
                         steps: steps(m),
                         terms: 8,
+                        width: -20,
                     },
                 )
             },
@@ -1381,13 +1440,47 @@ fn main() {
                 job(
                     spec,
                     Op::Sensitivity {
+                        method: Method::Picard,
                         steps: 16,
                         terms: m as usize,
+                        width: -20,
                     },
                 )
             },
             call,
         );
+    }
+
+    atlas.operation(
+        "evolution",
+        "initial-state sensitivity by source method",
+        "horizon (multiples of the source step cap)",
+        "sensitivity with 8 series terms over completed Picard, order-4 Taylor, adaptive Taylor (orders 1..=6, endpoint remainder limit 2^-20) and order-3 QR-frame evolutions of n step caps from a box of width 2^-6, as in the QR integrate sweep (near-point boxes exhaust scalar size in the first QR window). Each source is built outside the timer; every method derives from the Picard proofs its segments retain, and QR adds two chart products per segment plus one exact transition per frame change.",
+    );
+    for (label, method) in [
+        ("Picard", Method::Picard),
+        ("Taylor 4", Method::Taylor(4)),
+        ("adaptive Taylor", Method::Adaptive(6, -20)),
+        ("QR frames", Method::Qr(3)),
+    ] {
+        for spec in [&rotation, &vdp] {
+            atlas.sweep(
+                &format!("{}, {label}", spec.name),
+                &horizons,
+                |m, _| {
+                    job(
+                        spec,
+                        Op::Sensitivity {
+                            method,
+                            steps: steps(m),
+                            terms: 8,
+                            width: -6,
+                        },
+                    )
+                },
+                call,
+            );
+        }
     }
 
     atlas.operation(
