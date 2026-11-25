@@ -33,6 +33,9 @@ pub struct QrEvolutionOptions {
     pub taylor_order: Option<usize>,
     /// Existing native search controls within each selected frame.
     pub native: EvolutionOptions,
+    /// Which windows pay for a proposed frame and a second complete branch.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub proposals: QrProposalPolicy,
 }
 impl Default for QrEvolutionOptions {
     fn default() -> Self {
@@ -41,8 +44,27 @@ impl Default for QrEvolutionOptions {
             maximum_windows: 256,
             taylor_order: Some(3),
             native: EvolutionOptions::default(),
+            proposals: QrProposalPolicy::EveryWindow,
         }
     }
+}
+
+/// Schedule of frame proposals. Every branch is certified, so a schedule
+/// changes cost and widths, never soundness.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum QrProposalPolicy {
+    /// Propose a frame and compare both complete branches in every window.
+    #[default]
+    EveryWindow,
+    /// Defer proposals after the incoming chart wins. Each consecutive
+    /// retained win doubles the number of following windows that run only the
+    /// incoming chart (1, 2, 4, ..., at most `maximum_interval`); a proposed win
+    /// resets the schedule to every window. Zero behaves as `EveryWindow`.
+    Backoff {
+        /// Largest run of deferred windows between two proposals.
+        maximum_interval: usize,
+    },
 }
 
 /// A selection, construction, transport or original native failure.
@@ -188,6 +210,7 @@ pub struct QrEvolutionWindow<const N: usize> {
     proposed: Option<QrEvolutionBranch<N>>,
     retained: Option<QrEvolutionBranch<N>>,
     comparison: Option<QrFrameComparison<N>>,
+    deferred: bool,
 }
 /// A fully verified frame choice; ties choose the recentered proposed frame.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -297,13 +320,30 @@ impl<const N: usize> QrEvolutionWindow<N> {
     pub fn retained(&self) -> Option<&QrEvolutionBranch<N>> {
         self.retained.as_ref()
     }
-    /// Exact selection receipt, only after both branches complete.
+    /// Exact selection receipt, only after both branches complete. A deferred
+    /// window has none.
     pub fn comparison(&self) -> Option<&QrFrameComparison<N>> {
         self.comparison.as_ref()
     }
+    /// True when the proposal schedule ran only the incoming chart.
+    pub fn deferred(&self) -> bool {
+        self.deferred
+    }
+    /// Completed choice: the comparison's, or `Retained` for a deferred window
+    /// whose incoming-chart branch completed.
+    pub fn choice(&self) -> Option<QrFrameChoice> {
+        if self.deferred {
+            self.retained
+                .as_ref()
+                .and_then(QrEvolutionBranch::source_end_enclosure)
+                .map(|_| QrFrameChoice::Retained)
+        } else {
+            self.comparison.as_ref().map(QrFrameComparison::choice)
+        }
+    }
     /// Chosen complete branch. No branch is silently chosen after another fails.
     pub fn chosen(&self) -> Option<&QrEvolutionBranch<N>> {
-        match self.comparison.as_ref()?.choice {
+        match self.choice()? {
             QrFrameChoice::Proposed => self.proposed.as_ref(),
             QrFrameChoice::Retained => self.retained.as_ref(),
         }
@@ -500,6 +540,8 @@ impl<const N: usize> QrEvolution<N> {
         if order == Ordering::Equal {
             return Ok(QrEvolutionStatus::Identity);
         }
+        // Deferred windows left before the next proposal, and the current run length.
+        let (mut wait, mut interval) = (0usize, 0usize);
         loop {
             budget.graph.charge(0)?;
             if self.completed == self.options.maximum_windows {
@@ -533,6 +575,7 @@ impl<const N: usize> QrEvolution<N> {
                 )
             };
             let selection = select_frame(chart, time, duration, initial, budget)?;
+            let deferred = wait > 0;
             budget.graph.charge(1)?;
             self.windows.push(QrEvolutionWindow {
                 selection,
@@ -542,6 +585,7 @@ impl<const N: usize> QrEvolution<N> {
                 proposed: None,
                 retained: None,
                 comparison: None,
+                deferred,
             });
             let window = self.windows.last_mut().expect("published proposal");
             window.run(
@@ -550,6 +594,17 @@ impl<const N: usize> QrEvolution<N> {
                 self.options.taylor_order,
                 budget,
             )?;
+            if deferred {
+                wait -= 1;
+            } else if let QrProposalPolicy::Backoff { maximum_interval } = self.options.proposals {
+                interval = match window.choice().expect("complete comparison") {
+                    QrFrameChoice::Proposed => 0,
+                    QrFrameChoice::Retained => {
+                        interval.saturating_mul(2).max(1).min(maximum_interval)
+                    }
+                };
+                wait = interval;
+            }
             self.check_records(0, budget)?;
             budget.graph.charge(1)?;
             self.completed += 1;
@@ -619,6 +674,8 @@ impl<const N: usize> CoordinateField<N> {
     /// existing native integration, with trajectory Taylor refinement when selected.
     /// Both the incoming and proposed charts must complete; their maximum source
     /// endpoint diameters are compared exactly, with ties choosing the proposal.
+    /// [`QrProposalPolicy::Backoff`] instead runs only the incoming chart in
+    /// windows that follow retained wins, skipping their QR and second branch.
     /// The selected native chart endpoint continues, and both proofs remain available.
     /// Singular or undecided frame proposals stop with
     /// their original diagnostic; there is no silent identity-frame fallback.
@@ -655,6 +712,20 @@ impl<const N: usize> QrEvolutionWindow<N> {
         budget: &mut EnclosureBudget,
     ) -> Result<(), QrEvolutionFailure> {
         let s = &self.selection;
+        if self.deferred {
+            let request = EvolutionRequest {
+                start: s.time.checked_pow(1, &mut budget.arithmetic)?,
+                end,
+                initial: copy_state(&s.initial, budget)?,
+            };
+            self.retained = Some(QrEvolutionBranch::new(s.chart.clone()));
+            return self.retained.as_mut().expect("retained branch").run(
+                request,
+                options,
+                taylor_order,
+                budget,
+            );
+        }
         budget.graph.charge(
             N.checked_mul(N)
                 .and_then(|v| v.checked_add(N))

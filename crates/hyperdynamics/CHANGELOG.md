@@ -2,6 +2,14 @@
 
 ## 0.1.0 (unreleased)
 
+- `QrEvolutionOptions::proposals` selects a frame-proposal schedule. The
+  opt-in `QrProposalPolicy::Backoff { maximum_interval }` runs only the
+  incoming chart for doubling runs of windows after it wins, and compares every
+  window again after a proposed win. The default `EveryWindow` keeps the
+  previous behavior. Windows gain `deferred()` and `choice()`; `comparison()`
+  is `None` for a deferred window. Options serialized without the field
+  deserialize as `EveryWindow`.
+
 - Add opt-in `flow-sensitivity`: `EvolutionReport::sensitivity` encloses the
   derivative of the flow with respect to the initial state over a certified
   native evolution, at each segment end, across each segment and at the

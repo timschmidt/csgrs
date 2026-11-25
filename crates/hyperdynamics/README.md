@@ -295,7 +295,15 @@ back to a weaker success. Original source, selections, relations, native attempt
 coefficients and projections remain inspectable. Both the proposed and retained charts must complete. An exact comparison of their
 source-coordinate maximum diameters selects the smaller result (ties select the
 recentered proposal); both proofs and the comparison remain available. This local
-criterion is not a whole-horizon optimality claim. Only whole-request success
+criterion is not a whole-horizon optimality claim. `proposals:
+QrProposalPolicy::Backoff { maximum_interval }` makes comparisons cheaper. After
+the incoming chart wins, the next 1, 2, 4, … windows (at most
+`maximum_interval`) run only that chart, without a QR frame or second branch,
+and a proposed win restores comparison in every window. On a probe corpus with
+both Picard and order-3 windows, it was 1.0–5.1× faster with identical endpoint
+widths in 11 of 12 runs, and 4% wider in one where a proposal won one window
+later. Deferred windows report `deferred()` and `Retained` from `choice()`. The
+default, `EveryWindow`, compares every window. Only whole-request success
 exposes `source_end_enclosure`; stopped windows and certified prefixes are separate.
 Replay the original chart, request, options and policy. Frame changes can increase
 cost or enclosure width, and a singular Euler-basis proposal stops explicitly.

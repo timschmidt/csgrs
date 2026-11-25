@@ -91,6 +91,7 @@ fn fixture(
                 maximum_step: Some(d(1, 1, -4)),
                 ..Default::default()
             },
+            ..Default::default()
         },
         expected,
         width_limit,

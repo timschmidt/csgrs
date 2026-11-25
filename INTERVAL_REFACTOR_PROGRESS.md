@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November) | higher-utility automatic frame strategies, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November) | further automatic frame strategies (making backoff the default awaits owner review), general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -15967,3 +15967,94 @@ all-target (189), release (189) and doc test runs; Rustdoc with `-D warnings`.
 
 Raw evidence: `docs/evidence/2026-11-25-interval-noise-sensitivity` (evidence
 commit 8cf0a5192).
+
+## Backoff schedule for QR frame proposals accepted as opt-in, 25 November 2026
+
+Phase 13, higher-utility automatic frame strategies.
+
+**Finding.** `integrate_qr` evolves the incoming and the proposed chart to
+completion in every window and keeps the smaller source diameter, so each
+window costs two branches plus a QR certification. A focused probe recorded
+every window's choice. The winner comes in long runs. With the default order-3
+Taylor windows, the incoming identity chart won all 16–32 windows on rotation,
+saddle and pendulum. With Picard windows, the proposal won only the first one
+or two. In these runs, most of the second-branch cost changed nothing.
+
+**Change.** `QrEvolutionOptions::proposals` takes a `QrProposalPolicy`:
+- `EveryWindow`, the default, keeps the previous behavior.
+- `Backoff { maximum_interval }` runs only the incoming chart for the next 1,
+  2, 4, … windows after each retained win, at most `maximum_interval`. A
+  proposed win restores comparison in every window, and zero behaves as
+  `EveryWindow`.
+
+A deferred window still records its selection inputs. It has no frame,
+transition, transport, proposed branch or comparison, and reports `deferred()`
+and `Retained` from the new `choice()`. `chosen()`, `evolution()`, source
+projections and sensitivity use `choice()`. Both branches are certified, so a
+schedule changes cost and widths, never soundness. Options serialized without
+the field deserialize as `EveryWindow`.
+
+**Probe** (window `2^-3`, step cap `2^-4`, `2^-6` or `2^-10` boxes, fastest of
+three runs, release, one host):
+
+| Case | Picard: every / backoff | Order 3: every / backoff | Endpoint diameter |
+| --- | --- | --- | --- |
+| Rotation, identity chart | 0.210 / 0.102 s | 0.136 / 0.058 s | identical |
+| Saddle, identity chart | 0.288 / 0.056 s | 0.064 / 0.032 s | identical |
+| Pendulum, identity chart | 0.464 / 0.175 s | 1.174 / 0.600 s | identical |
+| Pendulum, sheared chart | 0.299 / 0.139 s | 1.033 / 0.549 s | identical; order 3: 4% wider |
+| Ellipse, lower chart | 0.146 / 0.145 s | 0.627 / 0.188 s | identical |
+| Shear, sheared chart | 0.005 / 0.005 s | 0.031 / 0.031 s | identical (all proposed) |
+
+That is 1.0–5.1× faster, with identical diameters in 11 of 12 runs, and every
+run reaches the same time. In the sheared order-3 pendulum, the winning proposal
+came one window later (choices `RP…` against `R.P…`), and the endpoint is 4%
+wider. Identity-chart Van der Pol, Lotka-Volterra and Lorenz from `2^-6` boxes
+exhaust scalar size within two windows under both schedules. That is the known
+QR limitation on exact nonlinear charts, not a schedule effect.
+
+**Atlas.** The QR integrate sweep gains a `backoff 16` series per system. It
+uses order 4 from the identity chart and one window per four step caps, in
+quick mode. Up to four caps there is a single window and both schedules take
+the same time. From eight caps:
+
+| System | Every window / backoff (ms) |
+| --- | --- |
+| Rotation, 8 / 64 / 128 caps | 19.9 / 13.1, 164.0 / 78.9, 327 (ceiling) / 144.6 |
+| Lotka-Volterra, 8 caps | 381.9 (ceiling) / 160.9 |
+| Lorenz, 8 caps | 378.4 (ceiling) / 194.9 |
+
+Every series reaches one more horizon before the quick-mode ceiling. Van der
+Pol is identical, because it reaches the ceiling within one window.
+
+**Tests.** `backoff_defers_proposals_after_retained_wins_and_resets_after_proposed_wins`
+checks:
+- the exact 32-window rotation schedule `R.R..R....R........R............`
+  with the same endpoint as every-window comparison;
+- empty deferred records;
+- the cap of 2 and the zero interval;
+- identical sensitivity end matrices;
+- reset after a proposed win in the sheared Picard pendulum
+  (`RRPRRRRRRRRRRRRR` against `R.PR.R..R....R..`).
+
+`options_without_a_proposal_schedule_compare_every_window` covers old
+serialized options. Four mutations were each killed: no reset after a proposed
+win, no cap, no countdown, and deferred windows reporting `Proposed`.
+
+**Default.** `EveryWindow` stays the default. The accepted 14 November QR
+qualification and several tests pin every-window choices, and backoff can change a choice, as the sheared pendulum shows.
+Switching the default is recorded as a tracked performance candidate for owner
+review.
+
+**Size.** No shipped artifact depends on Hyperdynamics. The all-feature
+release perf atlas has 6,043,720 bytes of text, against 6,032,264 after the
+previous entry (+11,456), including the new series. The two builds used
+different target directories.
+
+**Validation.** On stable and 1.95.0: `fmt`; Clippy with `-D warnings` for
+no features, all features, `qr-evolution`, `qr-evolution,serde` and
+`qr-evolution,flow-sensitivity`; the no-default, all-target (191), release
+(191) and doc test runs; Rustdoc with `-D warnings`.
+
+Raw evidence: `docs/evidence/2026-11-25-interval-qr-proposal-backoff` (evidence
+commit e3043f398).

@@ -18,7 +18,7 @@ use hyperdynamics::field::{
     clock::ClockStatus,
     coordinates::{
         CoordinateField,
-        qr_evolution::{QrEvolutionOptions, QrEvolutionStatus},
+        qr_evolution::{QrEvolutionOptions, QrEvolutionStatus, QrProposalPolicy},
     },
     evolution::{EvolutionOptions, EvolutionRequest, EvolutionStatus},
     picard::{PicardProposal, PicardStatus},
@@ -537,6 +537,11 @@ fn call(job: &Job) -> bool {
     job()
 }
 
+const EVERY: QrProposalPolicy = QrProposalPolicy::EveryWindow;
+const BACKOFF: QrProposalPolicy = QrProposalPolicy::Backoff {
+    maximum_interval: 16,
+};
+
 /// Whole-horizon integration method.
 #[derive(Clone, Copy)]
 enum Method {
@@ -546,8 +551,8 @@ enum Method {
     Taylor(usize),
     /// Correlated affine-noise evolution (`integrate_noise`) with a column cap.
     Noise(usize, usize),
-    /// QR-frame evolution (`integrate_qr`) with a Taylor order.
-    Qr(usize),
+    /// QR-frame evolution (`integrate_qr`) with a Taylor order and proposal schedule.
+    Qr(usize, QrProposalPolicy),
     /// Adaptive Taylor order up to the maximum, with an endpoint remainder limit 2^k.
     Adaptive(usize, i32),
 }
@@ -827,7 +832,7 @@ fn integrate<const N: usize>(
 ) -> Job {
     let step = step.unwrap_or(match method {
         Method::Picard => spec.picard_step,
-        Method::Taylor(0) | Method::Noise(0, _) | Method::Qr(0) => spec.picard_step,
+        Method::Taylor(0) | Method::Noise(0, _) | Method::Qr(0, _) => spec.picard_step,
         _ => spec.taylor_step,
     });
     let request = request::<N>(spec, width, steps, step);
@@ -877,7 +882,7 @@ fn integrate<const N: usize>(
                 )
             })
         }
-        Method::Qr(order) => {
+        Method::Qr(order, proposals) => {
             let chart = identity_chart::<N>(spec);
             // One frame selection per four nominal steps.
             let windows = steps.div_ceil(4);
@@ -886,6 +891,7 @@ fn integrate<const N: usize>(
                 maximum_windows: windows as usize + 4,
                 taylor_order: (order > 0).then_some(order),
                 native: opts,
+                proposals,
             };
             Box::new(move || {
                 done!(
@@ -926,7 +932,7 @@ fn sensitivity<const N: usize>(
     width: i32,
 ) -> Job {
     let step = match method {
-        Method::Picard | Method::Taylor(0) | Method::Noise(0, _) | Method::Qr(0) => {
+        Method::Picard | Method::Taylor(0) | Method::Noise(0, _) | Method::Qr(0, _) => {
             spec.picard_step
         }
         _ => spec.taylor_step,
@@ -958,7 +964,7 @@ fn sensitivity<const N: usize>(
             program::<N>(spec, order).integrate(request, opts, &mut build()),
             FlowTaylorEvolutionStatus::Completed
         ),
-        Method::Qr(order) => timed!(
+        Method::Qr(order, proposals) => timed!(
             identity_chart::<N>(spec).integrate_qr(
                 request,
                 QrEvolutionOptions {
@@ -966,6 +972,7 @@ fn sensitivity<const N: usize>(
                     maximum_windows: steps.div_ceil(4) as usize + 4,
                     taylor_order: (order > 0).then_some(order),
                     native: opts,
+                    proposals,
                 },
                 &mut build()
             ),
@@ -1475,7 +1482,7 @@ fn main() {
         ("Picard", Method::Picard),
         ("Taylor 4", Method::Taylor(4)),
         ("adaptive Taylor", Method::Adaptive(6, -20)),
-        ("QR frames", Method::Qr(3)),
+        ("QR frames", Method::Qr(3, EVERY)),
         ("affine noise", Method::Noise(4, 2)),
     ] {
         for spec in [&rotation, &vdp] {
@@ -1931,7 +1938,7 @@ fn main() {
         ("Picard (Cartesian)", Method::Picard, -6),
         ("Taylor order 4 (Cartesian)", Method::Taylor(4), -3),
         ("affine noise order 4", Method::Noise(4, 16), -3),
-        ("QR frames order 4", Method::Qr(4), -3),
+        ("QR frames order 4", Method::Qr(4, EVERY), -3),
     ] {
         atlas.sweep(
             kind,
@@ -1962,7 +1969,7 @@ fn main() {
         ("Taylor order 4 (Cartesian)", Method::Taylor(4)),
         ("adaptive Taylor", Method::Adaptive(8, -24)),
         ("affine noise order 4", Method::Noise(4, 16)),
-        ("QR frames order 4", Method::Qr(4)),
+        ("QR frames order 4", Method::Qr(4, EVERY)),
     ] {
         atlas.sweep(
             kind,
@@ -1986,25 +1993,27 @@ fn main() {
         "evolution",
         "QR-frame integrate_qr by horizon",
         "horizon (multiples of the Taylor step cap)",
-        "CoordinateField::integrate_qr at order 4 (one frame selection per 4 step caps) from the identity chart, box width 2^-6.",
+        "CoordinateField::integrate_qr at order 4 (one frame selection per 4 step caps) from the identity chart, box width 2^-6. Series named by system alone compare frames in every window; \"backoff 16\" series defer proposals after retained wins (QrProposalPolicy::Backoff, runs of at most 16 windows).",
     );
     for spec in [&rotation, &vdp, &lv, &lorenz] {
-        atlas.sweep(
-            &spec.name,
-            &horizons,
-            |m, _| {
-                job(
-                    spec,
-                    Op::Integrate {
-                        method: Method::Qr(4),
-                        steps: steps(m),
-                        step: None,
-                        width: noise_width,
-                    },
-                )
-            },
-            call,
-        );
+        for (suffix, proposals) in [("", EVERY), (", backoff 16", BACKOFF)] {
+            atlas.sweep(
+                &format!("{}{suffix}", spec.name),
+                &horizons,
+                |m, _| {
+                    job(
+                        spec,
+                        Op::Integrate {
+                            method: Method::Qr(4, proposals),
+                            steps: steps(m),
+                            step: None,
+                            width: noise_width,
+                        },
+                    )
+                },
+                call,
+            );
+        }
     }
 
     atlas.operation(

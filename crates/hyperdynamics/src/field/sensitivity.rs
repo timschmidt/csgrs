@@ -415,7 +415,7 @@ mod qr {
         fn windows(&self) -> impl Iterator<Item = Window<'_, N>> {
             self.completed_windows().iter().map(|window| {
                 let branch = window.chosen().expect("completed window choice");
-                let entry = match window.comparison().expect("completed window").choice() {
+                let entry = match window.choice().expect("completed window") {
                     QrFrameChoice::Proposed => Some(
                         window
                             .transition()

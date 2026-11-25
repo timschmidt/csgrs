@@ -88,6 +88,7 @@ fn options(window: DyadicInterval) -> QrEvolutionOptions {
             maximum_step: Some(d(1, 1, -4)),
             ..Default::default()
         },
+        ..Default::default()
     }
 }
 fn completed<const N: usize>(r: &QrEvolution<N>) {
@@ -95,7 +96,12 @@ fn completed<const N: usize>(r: &QrEvolution<N>) {
     assert_eq!(r.reached_time(), &r.request().end);
     assert_eq!(r.completed_windows().len(), r.windows().len());
     assert!(r.source_end_enclosure().is_some());
-    for w in r.completed_windows() {
+    for w in r.completed_windows().iter().filter(|w| w.deferred()) {
+        let retained = w.retained().unwrap().evolution().unwrap();
+        assert_eq!(&retained.request().initial, w.selection().initial());
+        assert!(retained.end_enclosure().is_some());
+    }
+    for w in r.completed_windows().iter().filter(|w| !w.deferred()) {
         let comparison = w.comparison().unwrap();
         let proposed = w.proposed().unwrap().source_end_enclosure().unwrap();
         let retained = w.retained().unwrap().source_end_enclosure().unwrap();
@@ -788,3 +794,111 @@ fn selected_frame_certifies_longer_steps_with_exact_equilibrium_output() {
 #[cfg(feature = "serde")]
 #[path = "support/replay.rs"]
 mod replay;
+
+// One character per completed window: P or R when compared, '.' when deferred.
+fn schedule<const N: usize>(r: &QrEvolution<N>) -> String {
+    use hyperdynamics::field::coordinates::qr_evolution::QrFrameChoice;
+    r.completed_windows()
+        .iter()
+        .map(|w| match (w.deferred(), w.choice().unwrap()) {
+            (true, _) => '.',
+            (false, QrFrameChoice::Proposed) => 'P',
+            (false, QrFrameChoice::Retained) => 'R',
+        })
+        .collect()
+}
+
+#[test]
+fn backoff_defers_proposals_after_retained_wins_and_resets_after_proposed_wins() {
+    use hyperdynamics::field::coordinates::qr_evolution::{QrFrameChoice, QrProposalPolicy};
+    let [x, y] = [X, Y].map(Expr::anonymous_symbol);
+    let backoff = |maximum_interval| QrProposalPolicy::Backoff { maximum_interval };
+
+    // Order-3 rotation in the identity chart: the incoming chart wins all 32
+    // windows, so deferring proposals leaves every chosen proof unchanged.
+    let rotation = identity(&field::<2>(&[-y.clone(), x.clone()], &[X, Y]));
+    let run = |proposals| {
+        let r = rotation.integrate_qr(
+            request([d(63, 65, -6), d(-1, 1, -6)], d(4, 4, 0)),
+            QrEvolutionOptions {
+                maximum_windows: 64,
+                proposals,
+                ..options(d(1, 1, -3))
+            },
+            &mut budget(),
+        );
+        completed(&r);
+        r
+    };
+    let every = run(QrProposalPolicy::EveryWindow);
+    assert_eq!(schedule(&every), "R".repeat(32));
+    let sparse = run(backoff(16));
+    assert_eq!(schedule(&sparse), "R.R..R....R........R............");
+    assert_eq!(sparse.source_end_enclosure(), every.source_end_enclosure());
+    for w in sparse.completed_windows().iter().filter(|w| w.deferred()) {
+        assert!(w.frame().is_none() && w.transition().is_none() && w.transport().is_none());
+        assert!(w.proposed().is_none() && w.comparison().is_none());
+        assert_eq!(w.choice(), Some(QrFrameChoice::Retained));
+        assert!(std::ptr::eq(w.chosen().unwrap(), w.retained().unwrap()));
+    }
+    // The cap bounds each deferred run; zero compares every window.
+    assert_eq!(
+        schedule(&run(backoff(2))),
+        format!("R.{}", "R..".repeat(10))
+    );
+    assert_eq!(schedule(&run(backoff(0))), schedule(&every));
+    #[cfg(feature = "flow-sensitivity")]
+    {
+        use hyperdynamics::field::sensitivity::SensitivityOptions;
+        let derivative = |r: QrEvolution<2>| {
+            std::sync::Arc::new(r)
+                .sensitivity(SensitivityOptions::default(), &mut budget())
+                .unwrap()
+                .end_matrix()
+                .cloned()
+        };
+        assert_eq!(derivative(sparse), derivative(every));
+    }
+
+    // A Picard pendulum in a sheared chart: a proposed win restarts the
+    // schedule at every window.
+    let half = |n: i64| Real::from(Rational::from(n) / Rational::from(2));
+    let pendulum = field::<2>(&[y, -x.sin()], &[X, Y]);
+    let sheared = pendulum
+        .in_coordinates(
+            CoordinateChange {
+                variables: pendulum.identity().state().to_vec(),
+                to_source: vec![vec![half(2), half(2)], vec![half(0), half(4)]],
+                from_source: vec![vec![half(2), half(-1)], vec![half(0), half(1)]],
+                origin: vec![Real::zero(); 2],
+            },
+            &mut budget(),
+        )
+        .unwrap();
+    let run = |proposals| {
+        let r = sheared.integrate_qr(
+            request([d(511, 513, -10), d(-1, 1, -10)], d(2, 2, 0)),
+            QrEvolutionOptions {
+                maximum_windows: 64,
+                taylor_order: None,
+                proposals,
+                ..options(d(1, 1, -3))
+            },
+            &mut budget(),
+        );
+        completed(&r);
+        schedule(&r)
+    };
+    assert_eq!(run(QrProposalPolicy::EveryWindow), "RRPRRRRRRRRRRRRR");
+    assert_eq!(run(backoff(16)), "R.PR.R..R....R..");
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn options_without_a_proposal_schedule_compare_every_window() {
+    use hyperdynamics::field::coordinates::qr_evolution::QrProposalPolicy;
+    let mut value = serde_json::to_value(options(d(1, 1, -3))).unwrap();
+    value.as_object_mut().unwrap().remove("proposals").unwrap();
+    let old: QrEvolutionOptions = serde_json::from_value(value).unwrap();
+    assert_eq!(old.proposals, QrProposalPolicy::EveryWindow);
+}

@@ -922,6 +922,7 @@ fn qr_options(
         maximum_windows,
         taylor_order,
         native: step(-4),
+        ..Default::default()
     }
 }
 
