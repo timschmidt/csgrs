@@ -705,8 +705,8 @@ coefficients and account for every truncated monomial and residual cross-product
 generated models accept further maps without new differentiation. Subdomain
 queries return `TaylorRange`, the existing Cartesian image carrier, preserving
 empty/unit products. Replay the original source/request and each map definition.
-This does not implement division or transcendental model maps; `taylor-combination`
-below combines independently centered models. Use `taylor-affine` when composing linear maps
+Division and transcendental maps go through `apply` under `taylor-composition`,
+and `taylor-combination` below combines independently centered models. Use `taylor-affine` when composing linear maps
 against the original residual coordinates is the intended operation.
 
 Enable `taylor-composition` to compose certified Taylor maps through
@@ -722,6 +722,18 @@ at the inner center. `model_map` exposes the retained outer certificate;
 definition/request and the ordered map sequence. Existing stage resource limits
 and scalar/whole-heap exclusions apply; this does not merge independently based
 parameter models or automatically select centers, orders or subdivisions.
+
+`Arc<TaylorModel>::apply` and `TaylorPolynomialModel::apply` build the outer
+model themselves: a certified Taylor model of an exact outer program over the
+current certified range, centered at its exact dyadic midpoint, at a requested
+order, then composed as above. Division, roots and the other source primitives
+thus become model maps, for example `1/u` or, after a join, `u/v`. Regularity
+failures, such as a reciprocal over a range containing zero, are returned. The
+outer remainder bounds interval-evaluated generated partials over the whole
+range, so it grows with order on wide ranges; low outer orders suit wide
+ranges. On [-1/16, 1/16], `(1+x)/(1+x)` from two differently centered models
+encloses to width 0.0031 at outer order 3, against 0.25 for the quotient of
+their ranges.
 
 Enable `taylor-combination` to combine independently built models over shared
 parameters. `Arc<TaylorModel>::join` and `TaylorPolynomialModel::join` append

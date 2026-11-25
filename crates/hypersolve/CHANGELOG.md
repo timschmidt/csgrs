@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- `taylor-composition` adds `Arc<TaylorModel>::apply` and
+  `TaylorPolynomialModel::apply`, which build a certified outer model of an
+  exact program over the current certified range, centered at its midpoint,
+  and compose through it. Division and transcendental maps of generated models
+  no longer need a hand-built outer model.
+
 - Add opt-in `taylor-combination`: `Arc<TaylorModel>::join` and
   `TaylorPolynomialModel::join` append an independently built model's rows,
   re-expanded exactly about the receiving center with every truncated term and

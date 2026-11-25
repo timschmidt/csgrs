@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters (25 November) | further automatic frame strategies (making backoff the default awaits owner review), model division and automatic common-center selection, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters, with division and transcendental maps over certified ranges (25 November) | further automatic frame strategies (making backoff the default awaits owner review), tighter high-order remainders for generated outer models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -16149,4 +16149,48 @@ the no-default test run.
 
 Raw evidence: `docs/evidence/2026-11-25-interval-taylor-combination` (evidence
 commit 0f0770d7b).
+
+## 2026-11-25: division and transcendental maps over certified ranges
+
+Composition needed a hand-built outer model whose domain covered the inner
+range. `Arc<TaylorModel>::apply` and `TaylorPolynomialModel::apply`, under
+`taylor-composition`, build it from an exact outer program:
+- domain: the current certified range;
+- center: its exact dyadic midpoint (0 for an empty coordinate);
+- order: requested; grid: the receiving model's.
+
+The certified outer model is then composed with the existing contract and is
+exposed through `model_map`. With `join`, this gives quotients of independent
+models, e.g. `u/v`. A reciprocal over a range containing zero fails in outer
+construction and publishes nothing.
+
+**Measured limit.** `(1+x)/(1+x)`, from models about 0 and about 1/32 (inner
+order 3), as join then `apply(u/v)`, against the quotient of the two ranges:
+
+| Domain | Outer order 1 / 2 / 3 / 4 / 5 | Range quotient |
+| --- | --- | --- |
+| [-1/16, 1/16] | 0.023 / 0.0059 / 0.0031 / 0.0067 / 0.14 | 0.25 |
+| [-1/4, 1/4] | 1.07 at every order (range quotient wins) | 1.07 |
+
+Reciprocal-then-multiply is similar (0.73 at order 1 on the wide domain,
+0.023 at order 3 on the narrow one). The cause is the existing
+`TaylorModel` remainder: it interval-evaluates repeatedly differentiated
+partials over the whole domain. For `1/v` on [15/16, 17/16], the order-5
+remainder width is 736, where analytic derivative bounds give about 1e-7.
+Tighter high-order remainders (for example Taylor-mode coefficient recurrences)
+are a tracked candidate. The natural intersection keeps every result no wider
+than the plain interval quotient.
+
+**Tests.** Two new tests in `program_taylor_combination`:
+- the generated outer domain [3/4, 5/4] and center 1, with reciprocal
+  containment of exact rationals at four points and overlap with a direct
+  model;
+- `(2+x)/(1+x)` across sources at three points;
+- the near-1 quotient below width 1/256 against a range quotient of at least
+  1/8;
+- zero-containing reciprocal failure;
+- square root containment and empty models.
+
+Raw evidence is in this entry; the probes ran as a temporary test that was
+then removed.
 

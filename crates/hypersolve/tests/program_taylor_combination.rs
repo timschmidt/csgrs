@@ -378,3 +378,140 @@ fn joined_rows_keep_the_dependency_that_independent_ranges_lose() {
     assert!(rational(&joined.range()[0]) < bound, "{:?}", joined.range());
     assert!(rational(&naive) > hyperreal::Rational::from(1) / hyperreal::Rational::from(5));
 }
+
+fn rational_in(value: &DyadicInterval, numerator: i64, denominator: i64) -> bool {
+    let exact = hyperreal::Rational::from(numerator) / hyperreal::Rational::from(denominator);
+    let r = value.to_rational(&mut a()).unwrap();
+    r.lower().unwrap() <= &exact && &exact <= r.upper().unwrap()
+}
+fn width_below(value: &DyadicInterval, numerator: i64, denominator: i64) -> bool {
+    let w = value
+        .width(&mut a())
+        .unwrap()
+        .to_rational(&mut a())
+        .unwrap();
+    w.upper().unwrap()
+        < &(hyperreal::Rational::from(numerator) / hyperreal::Rational::from(denominator))
+}
+
+#[test]
+fn reciprocal_and_division_apply_certified_models_over_the_current_range() {
+    let domain = || vec![d(-1, 1, -2)];
+    let denominator = model(&[s(7) + Expr::int(1)], &[7], vec![d(0, 0, 0)], domain(), 3);
+    let reciprocal = denominator
+        .clone()
+        .apply(&map(&[Expr::int(1) / s(30)], &[30]), 4, &mut g(), &mut a())
+        .unwrap();
+    // The generated outer certificate covers [3/4, 5/4] about its midpoint 1.
+    let outer = reciprocal.model_map(0).unwrap();
+    assert_eq!(outer.request().domain, vec![d(3, 5, -2)]);
+    assert_eq!(outer.request().center, vec![d(1, 1, 0)]);
+    let direct = model(
+        &[Expr::int(1) / (s(7) + Expr::int(1))],
+        &[7],
+        vec![d(0, 0, 0)],
+        domain(),
+        3,
+    );
+    for (x, n, m) in [
+        (d(0, 0, 0), 1, 1),
+        (d(1, 1, -2), 4, 5),
+        (d(-1, -1, -2), 4, 3),
+        (d(1, 1, -3), 8, 9),
+    ] {
+        let got = reciprocal
+            .enclose_on(std::slice::from_ref(&x), &mut g(), &mut a())
+            .unwrap();
+        assert!(rational_in(&got.bounds()[0], n, m), "{x:?} {got:?}");
+        let reference = direct.enclose_on(&[x], &mut g(), &mut a()).unwrap();
+        assert!(overlaps(&got.bounds()[0], &reference[0]));
+    }
+    // A quotient of rows from different sources and centers: (2+x)/(1+x).
+    let numerator = model(&[s(7) + Expr::int(2)], &[7], vec![d(0, 0, 0)], domain(), 3);
+    let shifted = model(
+        &[s(7) + Expr::int(1)],
+        &[7],
+        vec![d(1, 1, -3)],
+        vec![d(-1, 1, -1)],
+        3,
+    );
+    let quotient = numerator
+        .clone()
+        .join(shifted.clone(), &mut g(), &mut a())
+        .unwrap()
+        .apply(&map(&[s(30) / s(31)], &[30, 31]), 4, &mut g(), &mut a())
+        .unwrap();
+    assert_eq!(quotient.stage_count(), 2);
+    for (x, n, m) in [
+        (d(0, 0, 0), 2, 1),
+        (d(1, 1, -2), 9, 5),
+        (d(-1, -1, -2), 7, 3),
+    ] {
+        let got = quotient.enclose_on(&[x], &mut g(), &mut a()).unwrap();
+        assert!(rational_in(&got.bounds()[0], n, m), "{got:?}");
+    }
+    // (1+x)/(1+x) from two sources and centers stays near 1 on [-1/16, 1/16],
+    // where the quotient of the independent ranges does not. Outer remainders
+    // come from interval bounds on generated partials, so they grow with order
+    // over wide ranges; order 3 is the best of orders 1-5 here (width 0.0031).
+    let near = || vec![d(-1, 1, -4)];
+    let left = model(&[s(7) + Expr::int(1)], &[7], vec![d(0, 0, 0)], near(), 3);
+    let right = model(
+        &[s(7) + Expr::int(1)],
+        &[7],
+        vec![d(1, 1, -5)],
+        vec![d(-1, 1, -3)],
+        3,
+    );
+    let unit = left
+        .clone()
+        .join(right, &mut g(), &mut a())
+        .unwrap()
+        .apply(&map(&[s(30) / s(31)], &[30, 31]), 3, &mut g(), &mut a())
+        .unwrap();
+    assert!(rational_in(&unit.range()[0], 1, 1));
+    assert!(width_below(&unit.range()[0], 1, 256), "{:?}", unit.range());
+    let naive = left.image()[0]
+        .div(&left.image()[0], -64, &mut a())
+        .unwrap();
+    assert!(!width_below(&naive, 1, 8));
+    // A reciprocal over a range containing zero has no certified outer model.
+    assert!(matches!(
+        model(&[s(7)], &[7], vec![d(0, 0, 0)], domain(), 1).apply(
+            &map(&[Expr::int(1) / s(30)], &[30]),
+            2,
+            &mut g(),
+            &mut a()
+        ),
+        Err(E::Taylor(_))
+    ));
+}
+
+#[test]
+fn applied_roots_and_empty_models_keep_their_contracts() {
+    let root = model(
+        &[s(7) + Expr::int(2)],
+        &[7],
+        vec![d(0, 0, 0)],
+        vec![d(-1, 1, -3)],
+        2,
+    )
+    .apply(&map(&[s(30).sqrt()], &[30]), 3, &mut g(), &mut a())
+    .unwrap();
+    let at = root.enclose_on(&[d(0, 0, 0)], &mut g(), &mut a()).unwrap();
+    let r = at.bounds()[0].to_rational(&mut a()).unwrap();
+    let (lo, hi) = (r.lower().unwrap(), r.upper().unwrap());
+    assert!(lo * lo <= 2.into() && hi * hi >= 2.into());
+    assert!(width_below(&root.range()[0], 1, 8));
+    let empty = model(
+        &[s(7)],
+        &[7],
+        vec![d(0, 0, 0)],
+        vec![DyadicInterval::empty()],
+        1,
+    )
+    .apply(&map(&[s(30) * s(30)], &[30]), 2, &mut g(), &mut a())
+    .unwrap();
+    assert!(empty.is_empty());
+    assert!(empty.range()[0].is_empty());
+}

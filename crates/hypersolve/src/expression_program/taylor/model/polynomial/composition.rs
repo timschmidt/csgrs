@@ -29,7 +29,70 @@ impl TaylorModel {
         Ok(model)
     }
 }
+impl TaylorModel {
+    /// Compose an exact outer program through a certified model of it built over
+    /// this model's certified image.
+    ///
+    /// The outer model's domain is the whole image, centered at its exact dyadic
+    /// midpoint, at the given order and this model's grid. Division, roots and
+    /// the other source primitives thus become model maps; a later `join` lets
+    /// the outer program combine rows from independent models, for example `u/v`.
+    /// Outer regularity failures, such as a reciprocal over an image containing
+    /// zero, are returned as Taylor errors. `model_map` exposes the generated
+    /// outer certificate; replay it from `outer` and this image.
+    pub fn apply(
+        self: Arc<Self>,
+        outer: &ExpressionProgram,
+        order: usize,
+        graph: &mut ExpressionBudget,
+        arithmetic: &mut DyadicBudget,
+    ) -> Result<TaylorPolynomialModel, TaylorPolynomialError> {
+        let request = over(self.image(), order, self.request.precision, arithmetic)?;
+        let model = Arc::new(outer.taylor_model(request, graph, arithmetic)?);
+        self.compose(model, graph, arithmetic)
+    }
+}
+// A request covering a certified image, centered at its exact midpoint.
+fn over(
+    image: &[DyadicInterval],
+    order: usize,
+    precision: i32,
+    arithmetic: &mut DyadicBudget,
+) -> Result<TaylorRequest, TaylorPolynomialError> {
+    let mut center = Vec::new();
+    for value in image {
+        center.push(if value.is_empty() {
+            DyadicInterval::point(0.into(), 0)?
+        } else {
+            value.midpoint(arithmetic)?
+        });
+    }
+    Ok(TaylorRequest {
+        center,
+        domain: image.to_vec(),
+        order,
+        precision,
+    })
+}
 impl TaylorPolynomialModel {
+    /// Compose an exact outer program over this model's certified range.
+    /// See [`TaylorModel::apply`] for the domain, center and replay contracts.
+    pub fn apply(
+        &self,
+        outer: &ExpressionProgram,
+        order: usize,
+        graph: &mut ExpressionBudget,
+        arithmetic: &mut DyadicBudget,
+    ) -> Result<Self, TaylorPolynomialError> {
+        let request = over(
+            &self.range,
+            order,
+            self.source.request.precision,
+            arithmetic,
+        )?;
+        let model = Arc::new(outer.taylor_model(request, graph, arithmetic)?);
+        self.compose(model, graph, arithmetic)
+    }
     /// Consume this generated model in another certified Taylor map.
     /// See [`TaylorModel::compose`] for domain, remainder and replay contracts.
     /// A failed attempt leaves this model and both source certificates unchanged.
