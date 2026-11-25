@@ -69,6 +69,7 @@ cargo run --example write_benchmarks_md
 | `expression_program` | Criterion timing | `expression-program` | `cargo bench --bench expression_program --features expression-program` | this file |
 | `representations` | Criterion timing | `default` | `cargo bench --bench representations` | this file |
 | `retained_fuzz` | Criterion timing | `interval-lattice` | `cargo bench --bench retained_fuzz --features interval-lattice` | this file |
+| `taylor_combination` | Criterion timing | `taylor-combination` | `cargo bench --bench taylor_combination --features taylor-combination` | this file |
 | `taylor_composition` | Criterion timing | `taylor-composition` | `cargo bench --bench taylor_composition --features taylor-composition` | this file |
 | `taylor_noise` | Criterion timing | `taylor-noise` | `cargo bench --bench taylor_noise --features taylor-noise` | this file |
 | `taylor_polynomial` | Criterion timing | `taylor-polynomial` | `cargo bench --bench taylor_polynomial --features taylor-polynomial` | this file |

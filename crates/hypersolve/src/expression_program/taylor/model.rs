@@ -616,6 +616,8 @@ pub use polynomial::{
 
 #[cfg(feature = "taylor-noise")]
 pub use affine::{TaylorNoiseColumn, TaylorNoiseModel};
+#[cfg(feature = "taylor-combination")]
+pub use polynomial::TaylorOperand;
 
 #[cfg(test)]
 mod tests {

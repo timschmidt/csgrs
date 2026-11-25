@@ -371,5 +371,7 @@ pub use model::{
     TaylorRange,
 };
 
+#[cfg(feature = "taylor-combination")]
+pub use model::TaylorOperand;
 #[cfg(feature = "taylor-noise")]
 pub use model::{TaylorNoiseColumn, TaylorNoiseModel};

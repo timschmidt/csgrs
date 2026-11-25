@@ -705,8 +705,8 @@ coefficients and account for every truncated monomial and residual cross-product
 generated models accept further maps without new differentiation. Subdomain
 queries return `TaylorRange`, the existing Cartesian image carrier, preserving
 empty/unit products. Replay the original source/request and each map definition.
-This does not implement division, transcendental model maps, or combination of
-independently centered models. Use `taylor-affine` when composing linear maps
+This does not implement division or transcendental model maps; `taylor-combination`
+below combines independently centered models. Use `taylor-affine` when composing linear maps
 against the original residual coordinates is the intended operation.
 
 Enable `taylor-composition` to compose certified Taylor maps through
@@ -722,6 +722,23 @@ at the inner center. `model_map` exposes the retained outer certificate;
 definition/request and the ordered map sequence. Existing stage resource limits
 and scalar/whole-heap exclusions apply; this does not merge independently based
 parameter models or automatically select centers, orders or subdivisions.
+
+Enable `taylor-combination` to combine independently built models over shared
+parameters. `Arc<TaylorModel>::join` and `TaylorPolynomialModel::join` append
+another certified model's rows, a `TaylorOperand` holding either an original
+model or a generated one with its whole history, after the receiving rows.
+Parameters match by symbol: every operand parameter must be a receiving
+parameter, and the receiving domain must lie inside the operand's domain. The
+operand's exact polynomial is re-expanded about the receiving center by the same
+truncation/cross-remainder engine, and its complete remainder is added; no
+derivative is regenerated. Later maps add, subtract or multiply rows from both
+sources while keeping their shared dependence on the parameters. For example,
+`sin(x)` about 0 minus a separately built `x - x^3/6` about 1/16 encloses to width
+5.1e-7 on [-1/8, 1/8], where the difference of the two independent ranges has
+width 0.75. `joined` exposes each retained operand and `polynomial_map` its
+re-expansion graph. Replay both original definitions/requests and the ordered
+stages. Receiving center, domain and order stay authoritative; this does not
+choose a common center, subdivide domains or divide models.
 
 ### Exact coordinate programs
 

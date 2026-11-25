@@ -2,6 +2,14 @@
 
 ## [0.4.0] - Unreleased
 
+- Add opt-in `taylor-combination`: `Arc<TaylorModel>::join` and
+  `TaylorPolynomialModel::join` append an independently built model's rows,
+  re-expanded exactly about the receiving center with every truncated term and
+  the operand's complete remainder retained, so later polynomial maps combine
+  models from different sources, centers and orders over shared parameters.
+  `TaylorOperand` accepts original and generated models; `joined` exposes each
+  retained operand.
+
 - Taylor remainder monomials and `PowI` interval evaluation compute positive
   integer powers exactly before regridding them outward, instead of using the
   general rational-power image. Results are identical. A long-horizon correlated

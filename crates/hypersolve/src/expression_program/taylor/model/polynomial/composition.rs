@@ -79,7 +79,8 @@ impl TaylorPolynomialModel {
                 }
             }
         }
-        let map = polynomial(&outer, graph, arithmetic)?;
+        let outputs = outer.source.definition().outputs.len();
+        let map = expansion(&outer, None, outputs, graph, arithmetic)?;
         self.append(map, graph, arithmetic)?;
         let mut context = Context {
             source: &self.source,
@@ -120,13 +121,17 @@ impl TaylorPolynomialModel {
     }
 }
 
-fn polynomial(
+// Each row is a sum of exact coefficients times powers of (x - c) about the
+// model's center, in its parameter order. Without explicit rows, the model's
+// own exact terms are used.
+pub(super) fn expansion(
     model: &TaylorModel,
+    rows: Option<&[Arc<Value>]>,
+    outputs: usize,
     graph: &mut ExpressionBudget,
     arithmetic: &mut DyadicBudget,
 ) -> Result<ExpressionProgram, TaylorPolynomialError> {
     let source = model.source.definition();
-    let outputs = source.outputs.len();
     graph.check_entries(&[source.variables.len(), source.variables.len(), outputs])?;
     graph.charge(source.variables.len())?;
     let mut builder = Builder {
@@ -158,11 +163,13 @@ fn polynomial(
         })?;
         shifts.insert(variable, shifted);
     }
-    for term in model.terms() {
+    let mut term = |output: usize,
+                    powers: &[(crate::SymbolId, usize)],
+                    coefficient: &Real|
+     -> Result<(), ExpressionError> {
         builder.budget.charge(1)?;
-        let request = &model.program.requests()[term.request];
-        let mut value = builder.push(ExpressionNode::Constant(term.coefficient.clone()))?;
-        for &(variable, mut exponent) in &request.powers {
+        let mut value = builder.push(ExpressionNode::Constant(coefficient.clone()))?;
+        for &(variable, mut exponent) in powers {
             let mut power = shifts[&variable];
             // Exact graph exponentiation; each emitted multiply spends work and
             // will be certified by the existing polynomial remainder engine.
@@ -185,12 +192,28 @@ fn polynomial(
                 }
             }
         }
-        let left = builder.definition.outputs[request.output];
-        builder.definition.outputs[request.output] = builder.push(ExpressionNode::Binary {
+        let left = builder.definition.outputs[output];
+        builder.definition.outputs[output] = builder.push(ExpressionNode::Binary {
             operation: BinaryOperation::Add,
             left,
             right: value,
         })?;
+        Ok(())
+    };
+    match rows {
+        None => {
+            for t in model.terms() {
+                let request = &model.program.requests()[t.request];
+                term(request.output, &request.powers, &t.coefficient)?;
+            }
+        }
+        Some(rows) => {
+            for (output, row) in rows.iter().enumerate() {
+                for (powers, coefficient) in &row.terms {
+                    term(output, powers, coefficient)?;
+                }
+            }
+        }
     }
     Ok(ExpressionProgram::from_definition(
         builder.definition,

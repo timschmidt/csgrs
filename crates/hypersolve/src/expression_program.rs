@@ -634,6 +634,9 @@ pub use taylor::{
     TaylorRange,
 };
 
+#[cfg(feature = "taylor-combination")]
+pub use taylor::TaylorOperand;
+
 #[cfg(feature = "coordinate-transition")]
 pub use coordinates::{CoordinateTransition, CoordinateTransitionError};
 

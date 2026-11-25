@@ -479,6 +479,7 @@ mod tests {
                 "expression_program",
                 "representations",
                 "retained_fuzz",
+                "taylor_combination",
                 "taylor_composition",
                 "taylor_noise",
                 "taylor_polynomial",
@@ -492,6 +493,7 @@ mod tests {
         assert_eq!(expressions.required_features, ["expression-program"]);
         for (name, feature) in [
             ("retained_fuzz", "interval-lattice"),
+            ("taylor_combination", "taylor-combination"),
             ("taylor_composition", "taylor-composition"),
             ("taylor_noise", "taylor-noise"),
             ("taylor_polynomial", "taylor-polynomial"),

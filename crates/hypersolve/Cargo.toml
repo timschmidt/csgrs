@@ -61,6 +61,8 @@ taylor-affine = ["taylor-model"]
 taylor-noise = ["taylor-affine"]
 taylor-polynomial = ["taylor-affine"]
 taylor-composition = ["taylor-polynomial"]
+# Arithmetic across independently built Taylor models over shared parameters.
+taylor-combination = ["taylor-composition"]
 float-proposal-program = ["expression-program"]
 interval-program = ["expression-program", "dep:hyperinterval", "hyperinterval/hyperreal"]
 interval-lattice = ["interval-program", "hyperlattice/interval-dyadic"]
@@ -126,6 +128,11 @@ required-features = ["taylor-polynomial"]
 name = "taylor_composition"
 harness = false
 required-features = ["taylor-composition"]
+
+[[bench]]
+name = "taylor_combination"
+harness = false
+required-features = ["taylor-combination"]
 
 [[bench]]
 name = "taylor_noise"

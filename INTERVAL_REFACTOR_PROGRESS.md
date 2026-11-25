@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November) | further automatic frame strategies (making backoff the default awaits owner review), general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters (25 November) | further automatic frame strategies (making backoff the default awaits owner review), model division and automatic common-center selection, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -16058,3 +16058,95 @@ no features, all features, `qr-evolution`, `qr-evolution,serde` and
 
 Raw evidence: `docs/evidence/2026-11-25-interval-qr-proposal-backoff` (evidence
 commit e3043f398).
+
+## 2026-11-25: arithmetic across independently built Taylor models
+
+Phase 13 listed "general arithmetic across nonlinear remainder models" as open.
+Polynomial maps and certified composition already worked, but only on models
+sharing one original source, center and domain. The new opt-in Hypersolve
+feature `taylor-combination` (implies `taylor-composition`) removes that limit
+for models over shared parameters.
+
+**Operation.** `Arc<TaylorModel>::join` and `TaylorPolynomialModel::join`
+append an operand's rows after the receiving rows. A `TaylorOperand` holds
+either an original model or a generated one with its whole stage history.
+- Parameters match by `SymbolId`. Every operand parameter must be a receiving
+  parameter (`UnboundVariable` otherwise), and the receiving domain must lie
+  inside the operand's domain (`OutsideDomain` otherwise). Unused receiving
+  parameters are unconstrained.
+- The operand's exact polynomial, in powers of `x - c2`, is rebuilt as a map
+  over identity rows `c1 + (x - c1)`. The existing polynomial engine
+  re-expands it about the receiving center. Terms above the receiving order go
+  to the remainder with their product evidence. The operand's complete
+  remainder is then added. No derivative is regenerated.
+- Subdomain queries intersect the re-expanded enclosure with the operand's own
+  enclosure on the same query.
+- `joined(stage)` exposes the retained operand and `polynomial_map(stage)` the
+  re-expansion graph.
+
+Composition's re-expansion builder is now shared with join (`expansion`). The
+node-evaluation loop and the construction of source rows moved into `Context`
+helpers. The composition and polynomial paths are otherwise unchanged.
+
+**Dependence retained.** `sin(x)` about 0 at order 4, minus a separately built
+`x - x^3/6` about 1/16 at order 3, on [-1/8, 1/8]:
+
+| Method | Range width |
+| --- | --- |
+| Joined rows, then `u - v` | 5.09e-7 (bound \|x\|^5/120 gives 2.5e-7 per side) |
+| Difference of the two independent ranges | 0.755 |
+
+**Cost.** CPU 0, ASLR disabled, 1 s warm-up, 2 s measurement, 30 samples.
+Join plus map against a fresh native Taylor model of the combined expression,
+at the same domain and order. Both produce identical range widths. Source
+models are prepared outside the timer.
+
+| Case | Join + map (µs) | Fresh (µs) |
+| --- | ---: | ---: |
+| sin − cubic | 120.6 | 914.4 (7.6×) |
+| sin · cos (cos about 1/8) | 389.7 | 1,809.6 (4.6×) |
+
+The existing benches against `main`, same target directory, branch run second:
+
+| Bench | Change |
+| --- | --- |
+| polynomial reuse: logistic / product / reciprocal square | −0.38% / +1.12% / +0.09% |
+| composition reuse: nested reciprocal / sqrt | −2.41% / +0.71% |
+| fresh differentiation, six rows | −0.23% … +1.68% |
+
+Fresh differentiation does not run the changed code, so drift up to 1.7% on
+that untouched path bounds layout and ordering noise in this run. No adverse
+change exceeds it.
+
+**Tests.** Six new tests in `program_taylor_combination`:
+- exact cancellation of `x^2` about 1 re-expanded about 0, with truncation
+  `[0, 1/16]` at order 1;
+- exact coefficients 1/64, 1/4, 1 about a nonzero receiving center;
+- sin · cos from different centers, overlapping a direct model at four points;
+- symbol binding with unused parameters, `UnboundVariable`, `OutsideDomain`,
+  generated operands, chained joins and later maps;
+- empty domains;
+- work exhaustion and identical replay from definitions.
+
+Mutations: dropping the operand remainder, dropping the natural intersection,
+publishing the natural enclosure alone and ignoring the receiving center were
+each killed. Removing the explicit containment check survives, because the
+operand's own enclosure rejects the same query later with the same
+`OutsideDomain`. The check is kept so the error comes before any expansion
+work. The new suite runs in the WASI solver inventory with the other
+all-feature test binaries. No fresh-process replay child was added, unlike
+composition.
+
+**Scope.** The receiving center, domain and order stay authoritative. Division
+of models, automatic common-center selection and domain subdivision remain
+open. Scalar payload, refinement and whole-heap exclusions are as for the
+polynomial engine.
+
+**Validation.** `fmt`; `check`, all-target and all-feature tests, Clippy with
+`-D warnings` and Rustdoc with `-D warnings`, all on all features; Clippy at
+the `taylor-polynomial`, `taylor-composition` and `taylor-combination` levels;
+the no-default test run.
+
+Raw evidence: `docs/evidence/2026-11-25-interval-taylor-combination` (evidence
+commit 0f0770d7b).
+

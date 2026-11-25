@@ -87,10 +87,22 @@ struct Stage {
     map: ExpressionProgram,
     #[cfg(feature = "taylor-composition")]
     model: Option<Arc<TaylorModel>>,
+    #[cfg(feature = "taylor-combination")]
+    join: Option<combination::Join>,
     // Flat retained proof nodes share repeated map edges. Stages have no owning
     // parent link, so long composition chains do not recursively destroy parents.
     values: Vec<Option<Arc<Value>>>,
     outputs: Vec<Arc<Value>>,
+}
+impl Stage {
+    /// Number of rows this stage passes to the next map.
+    fn arity(&self) -> usize {
+        #[cfg(feature = "taylor-combination")]
+        if let Some(join) = &self.join {
+            return join.arity();
+        }
+        self.map.definition().outputs.len()
+    }
 }
 /// A retained polynomial/remainder representation transported through exact maps.
 ///
@@ -149,6 +161,14 @@ impl TaylorPolynomialModel {
         self.stages.iter().map(|s| {
             #[cfg(feature = "taylor-composition")]
             if let Some(model) = &s.model {
+                return model.source();
+            }
+            #[cfg(feature = "taylor-combination")]
+            if let Some(combination::Join {
+                operand: TaylorOperand::Model(model),
+                ..
+            }) = &s.join
+            {
                 return model.source();
             }
             &s.map
@@ -211,9 +231,10 @@ impl TaylorPolynomialModel {
         graph: &mut ExpressionBudget,
         arithmetic: &mut DyadicBudget,
     ) -> Result<(), TaylorPolynomialError> {
-        let count = self.stages.last().map_or(self.source.image().len(), |s| {
-            s.map.definition().outputs.len()
-        });
+        let count = self
+            .stages
+            .last()
+            .map_or(self.source.image().len(), |s| s.arity());
         let uses = validate(&map, count, graph)?;
         let history = self
             .stages
@@ -247,74 +268,9 @@ impl TaylorPolynomialModel {
                 context.graph.charge(count)?;
                 inputs.extend(stage.outputs.iter().cloned());
             } else {
-                #[allow(
-                    clippy::needless_range_loop,
-                    reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
-                )]
-                for output in 0..count {
-                    context.graph.charge(1)?;
-                    context.reserve(2)?;
-                    inputs.push(Arc::new(Value {
-                        terms: BTreeMap::new(),
-                        remainder: self.source.remainder[output].clone(),
-                        product: None,
-                    }));
-                }
-                for term in self.source.terms() {
-                    context.graph.charge(1)?;
-                    let request = &self.source.program.requests()[term.request];
-                    // No map node has shared these newly constructed rows yet.
-                    let input = Arc::get_mut(&mut inputs[request.output])
-                        .expect("new input row has one owner");
-                    context.insert(&mut input.terms, &request.powers, term.coefficient.clone())?;
-                }
+                inputs = context.rows(&self.source, count)?;
             }
-            // Child indices are strictly earlier. The demanded set preserves lazy
-            // source semantics; no unused operation is invoked by this traversal.
-            for (index, node) in map.definition().nodes.iter().enumerate() {
-                context.graph.charge(1)?;
-                if uses[index] == 0 {
-                    continue;
-                }
-                let value = match node {
-                    ExpressionNode::Variable(_) => {
-                        inputs[map.slots[index].expect("validated binding")].clone()
-                    }
-                    ExpressionNode::Constant(c) => {
-                        let mut terms = BTreeMap::new();
-                        context.insert(&mut terms, &[], c.clone())?;
-                        context.reserve(2)?;
-                        Arc::new(Value {
-                            terms,
-                            remainder: zero()?,
-                            product: None,
-                        })
-                    }
-                    ExpressionNode::Unary {
-                        operation: UnaryOperation::Neg,
-                        input,
-                    } => {
-                        let input = values[*input].as_ref().expect("earlier demanded input");
-                        Arc::new(context.linear(input, None, true)?)
-                    }
-                    ExpressionNode::Binary {
-                        operation,
-                        left,
-                        right,
-                    } => {
-                        let left = values[*left].as_ref().expect("earlier demanded left");
-                        let right = values[*right].as_ref().expect("earlier demanded right");
-                        Arc::new(match operation {
-                            BinaryOperation::Add => context.linear(left, Some(right), false)?,
-                            BinaryOperation::Sub => context.linear(left, Some(right), true)?,
-                            BinaryOperation::Mul => context.multiply(left, right)?,
-                            BinaryOperation::Div => unreachable!("validated polynomial map"),
-                        })
-                    }
-                    _ => unreachable!("validated polynomial map"),
-                };
-                values[index] = Some(value);
-            }
+            context.evaluate(&map, &uses, &inputs, &mut values)?;
         }
         let outputs = if self.is_empty() {
             Vec::new()
@@ -334,6 +290,8 @@ impl TaylorPolynomialModel {
             map,
             #[cfg(feature = "taylor-composition")]
             model: None,
+            #[cfg(feature = "taylor-combination")]
+            join: None,
             values,
             outputs,
         }));
@@ -367,11 +325,17 @@ impl TaylorPolynomialModel {
         };
         for stage in self.stages.iter() {
             graph.charge(1)?;
-            let outputs = stage.map.definition().outputs.len();
+            let outputs = stage.arity();
             graph.check_entries(&[shifts.len(), previous.len(), outputs, outputs])?;
             if empty {
                 graph.charge(outputs)?;
                 previous = vec![DyadicInterval::empty(); outputs];
+                continue;
+            }
+            #[cfg(feature = "taylor-combination")]
+            if let Some(join) = &stage.join {
+                previous =
+                    self.enclose_join(join, stage, previous, domain, &shifts, graph, arithmetic)?;
                 continue;
             }
             #[cfg(feature = "taylor-composition")]
@@ -472,6 +436,92 @@ struct Context<'a> {
     entries: usize,
 }
 impl Context<'_> {
+    /// Exact source rows of an original model, before any map.
+    fn rows(
+        &mut self,
+        model: &TaylorModel,
+        count: usize,
+    ) -> Result<Vec<Arc<Value>>, TaylorPolynomialError> {
+        let mut inputs = Vec::new();
+        #[allow(
+            clippy::needless_range_loop,
+            reason = "Clippy 1.100 extended this lint; the index loop is kept so generated code is unchanged"
+        )]
+        for output in 0..count {
+            self.graph.charge(1)?;
+            self.reserve(2)?;
+            inputs.push(Arc::new(Value {
+                terms: BTreeMap::new(),
+                remainder: model.remainder[output].clone(),
+                product: None,
+            }));
+        }
+        for term in model.terms() {
+            self.graph.charge(1)?;
+            let request = &model.program.requests()[term.request];
+            // No map node has shared these newly constructed rows yet.
+            let input =
+                Arc::get_mut(&mut inputs[request.output]).expect("new input row has one owner");
+            self.insert(&mut input.terms, &request.powers, term.coefficient.clone())?;
+        }
+        Ok(inputs)
+    }
+    /// Evaluate demanded polynomial-map nodes over retained input rows.
+    fn evaluate(
+        &mut self,
+        map: &ExpressionProgram,
+        uses: &[usize],
+        inputs: &[Arc<Value>],
+        values: &mut [Option<Arc<Value>>],
+    ) -> Result<(), TaylorPolynomialError> {
+        // Child indices are strictly earlier. The demanded set preserves lazy
+        // source semantics; no unused operation is invoked by this traversal.
+        for (index, node) in map.definition().nodes.iter().enumerate() {
+            self.graph.charge(1)?;
+            if uses[index] == 0 {
+                continue;
+            }
+            let value = match node {
+                ExpressionNode::Variable(_) => {
+                    inputs[map.slots[index].expect("validated binding")].clone()
+                }
+                ExpressionNode::Constant(c) => {
+                    let mut terms = BTreeMap::new();
+                    self.insert(&mut terms, &[], c.clone())?;
+                    self.reserve(2)?;
+                    Arc::new(Value {
+                        terms,
+                        remainder: zero()?,
+                        product: None,
+                    })
+                }
+                ExpressionNode::Unary {
+                    operation: UnaryOperation::Neg,
+                    input,
+                } => {
+                    let input = values[*input].as_ref().expect("earlier demanded input");
+                    Arc::new(self.linear(input, None, true)?)
+                }
+                ExpressionNode::Binary {
+                    operation,
+                    left,
+                    right,
+                } => {
+                    let left = values[*left].as_ref().expect("earlier demanded left");
+                    let right = values[*right].as_ref().expect("earlier demanded right");
+                    Arc::new(match operation {
+                        BinaryOperation::Add => self.linear(left, Some(right), false)?,
+                        BinaryOperation::Sub => self.linear(left, Some(right), true)?,
+                        BinaryOperation::Mul => self.multiply(left, right)?,
+                        BinaryOperation::Div => unreachable!("validated polynomial map"),
+                    })
+                }
+                _ => unreachable!("validated polynomial map"),
+            };
+            values[index] = Some(value);
+        }
+        Ok(())
+    }
     fn reserve(&mut self, count: usize) -> Result<(), TaylorPolynomialError> {
         self.entries = self
             .entries
@@ -657,5 +707,9 @@ fn bound(
     Ok(result)
 }
 
+#[cfg(feature = "taylor-combination")]
+mod combination;
 #[cfg(feature = "taylor-composition")]
 mod composition;
+#[cfg(feature = "taylor-combination")]
+pub use combination::TaylorOperand;
