@@ -203,13 +203,19 @@ pub enum CircleSegmentRelation {
 }
 
 /// Location of a point relative to an oriented convex region.
+///
+/// These labels rely on the producer's input contract and certainty. Convex
+/// classifiers do not validate their carriers: a repeated closing vertex or
+/// an all-zero plane constraint can mark an otherwise interior point Boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ConvexPointLocation {
-    /// The input convex carrier is too small or structurally degenerate.
+    /// Too few polygon vertices, a decided zero signed area, or no plane constraints.
+    /// A zero-area decision can itself be approximate; this is not general validity checking.
     Degenerate,
     /// The point lies outside at least one convex halfspace.
     Outside,
-    /// The point lies on at least one boundary edge or face and outside none.
+    /// At least one visited edge/plane test is zero and none excludes the point.
+    /// For a valid nondegenerate carrier this means geometric boundary contact.
     Boundary,
     /// The point lies strictly inside every boundary halfspace.
     Inside,

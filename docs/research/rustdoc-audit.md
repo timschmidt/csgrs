@@ -4915,6 +4915,109 @@ remaining predicate modules, most tests and other repository files still need
 whole-file review. The existing future-agent public/private coverage mandate
 remains in force.
 
+### Convex carriers and ring classification/report boundaries, 26 November 2026
+
+Baseline: `e20c1cfae`. Owner: Hyperlimit's convex halfspace composition, polygonal
+ring signs/turns/even-odd queries and retained report validation. Properties:
+P3/P4/P6/P8–P11/P17/P19/P37. Domain: cyclic exact Real vertex lists, indexed
+lists with repetitions/invalid indices, oriented plane lists, degenerate
+carriers, strict Unknown and terminal-qualified decisions. Missing witnesses
+were private helper/test docs and descriptions overclaiming certification,
+source validation and geometric meaning. Reviewed the current branches before
+editing, including their unchanged early-exit and predicate order.
+
+Whole-file reviews: `crates/hyperlimit/src/predicates/convex.rs` (326 baseline
+lines) and `crates/hyperlimit/src/predicates/ring.rs` (1,167). All twelve convex
+and 52 ring named declarations have Rustdoc. Reviewed all eighteen ring fields
+and eight validation-error variants. A narrow ConvexPointLocation correction
+in the previously reviewed `classify.rs` receives no new whole-file credit.
+Supporting reads of the collinear segment helper and the first 150 lines of
+`tests/retained_report_contracts.rs` are excerpts only. The previously reviewed
+plane implementation's no-filter wrapper was checked for the convex caller.
+
+Convex polygon classification assumes ordered convex input but does not check
+simplicity or nonzero edges. It decides the shoelace sign, then compares each
+cyclic edge orientation, stopping at opposite sign or Unknown. A repeated
+closing vertex adds a zero-length edge and marks otherwise interior points
+Boundary. The concrete source witness is square (0,0),(4,0),(4,4),(0,4) queried
+at (2,2): four positive edge tests give Inside; appending (0,0) adds a zero
+orientation and gives Boundary. This is a documented implementation limitation,
+not an intentional narrowing of the normative geometry contract or a runtime
+test result. Existing convex fixtures do not cover this repeated-closing case.
+
+Plane composition uses the generic point-plane route without front filters,
+Below/On as admissible sides, and an empty-list Degenerate convention rather
+than whole-space membership. It does not validate normals, feasibility,
+boundedness or dimension. A constant zero constraint contributes On and can
+turn an otherwise interior classification into Boundary. Both convex paths
+retain consumed qualification and highest stage; their first Unknown can stop
+before a later exclusion witness. The enum docs now reflect producer limits.
+
+Ring area is the shoelace algebraic area sign, not the even-odd filled area for
+a self-intersecting walk. Rational inputs use sign-only exact accumulation;
+symbolic inputs retain an expression and signed terms for policy resolution.
+Short rings give Exact/Structural Zero. Ring2Facts computes area and turns
+before raw cyclic-edge counts, discarding the area and turn receipts. Those
+fields cannot certify an approximate-policy result. Local turns remove only
+one structurally equal closing vertex, stop on Unknown or mixed turns, and do
+not prove simplicity/global convexity. These are existing evidence gaps, not
+fixed by documentation.
+
+Even-odd classification processes each edge's orientation and possible segment
+boundary before its y-straddle, rather than globally testing all boundaries
+first. It compares a.y then b.y with query y, derives upward from b_above on a
+straddle and uses the orientation sign for positive-x crossing. It constructs
+no intersection coordinate. A boundary returns a retained prefix; Unknown
+returns no partial report. Short rings return Outside even at their supplied
+point/segment. Indexed entry points check all indices first and keep ring-order
+positions in reports. Wrapper projections preserve outer certainty/stage.
+
+Report fields retain decision values without their own certainty, source
+coordinates or identity. Metadata validation checks count constraints, bounded
+indices, edge shapes, at most one boundary, crossing count and coarse location.
+It does not check index uniqueness/order, boundary-last traversal, upward equal
+to b_above, or agreement of a non-boundary segment label with orientation.
+SegmentLocationMismatch exists but is not emitted by these validators.
+Source-level acceptance witnesses for these limits (not executed runtime tests):
+
+- Three identical nonstraddling records with edge index zero, edge_count three,
+  no boundary, zero crossings and Outside satisfy every current validation
+  branch despite omitting two edge indices.
+- A straddle with a_above false, b_above true, upward false, Negative orientation
+  and crosses_right true satisfies the stored crossing truth table despite
+  contradicting the producer's upward rule; a matching aggregate parity passes.
+
+These examples are missing validation guarantees, not authorized proof fixtures.
+Source replay first checks metadata, then compares the entire newly decided
+report; Unknown or differing values becomes SourceReplayMismatch. Its receipt
+is discarded, so matching approximate replay can return Ok without exact
+certification. Reordered but geometrically equal sources need not reproduce the
+same report. Indexed reports require replay vertices in their original ring order.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Nonblank/noncomment source is
+  byte-identical to baseline in every edited Rust file; all fixtures,
+  assertions, signatures, branches and predicate order remain unchanged.
+- Scoped scans checked 64 named declarations. Inspected 58 rendered doc groups
+  across 28 private module pages, including eighteen fields/eight variants,
+  ten selected qualification/validation/degeneracy pages and the final error
+  type summary. Test-only docs were source-reviewed, not library-rendered.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed, compiling affected fixtures and report consumers without running them.
+- Downstream private csgrs Rustdoc with locked offline dependencies,
+  `--no-default-features --features curve` and broken intra-doc links denied
+  passed after the final source edit. Shared build storage remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-ring-convex-{doc,check,downstream-doc}.log`.
+The owner continues to waive full workflow/runtime/performance checks for this
+docs-only session. No implementation repair, runtime completeness or cost claim
+is made. The full repository audit remains active; other predicate modules,
+most tests and remaining repository files still need whole-file review.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

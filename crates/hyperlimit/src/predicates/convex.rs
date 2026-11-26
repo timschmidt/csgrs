@@ -1,8 +1,11 @@
 //! Convex polygon and halfspace classifiers.
 //!
-//! These helpers compose existing exact line and plane predicates. They do not
+//! These helpers compose policy-controlled line and plane predicates. They do not
 //! own polygon rings, mesh faces, or polyhedron topology; higher crates remain
 //! responsible for proving that supplied boundaries are ordered and convex.
+//! Decided results retain the weakest consumed certainty and highest stage
+//! rank. The first Unknown stops evaluation, even if a later boundary could
+//! prove exclusion. Neither classifier establishes boundedness or valid topology.
 
 use crate::classify::{ConvexPointLocation, PlaneSide};
 use crate::geometry::{Plane3, Point2, Point3};
@@ -17,10 +20,22 @@ use crate::predicates::ring::ring_area_sign_with_policy;
 /// explicit predicate policy.
 ///
 /// The polygon must be supplied as a consistently ordered convex boundary. The
-/// classifier first certifies the ring orientation, then composes exact edge
-/// orientation signs. This is the classical halfspace characterization of
-/// convex polygons. Invalid nonconvex ordering is not guessed here because
-/// topology ownership belongs to `hypercurve`, `hypertri`, or mesh crates.
+/// classifier first decides the shoelace area sign, then compares each cyclic
+/// edge orientation with that sign. Opposite signs give Outside; otherwise any
+/// zero edge sign gives Boundary, and all matching nonzero signs give Inside.
+/// Clockwise and counterclockwise input orders are accepted. Convexity, simple
+/// ordering and nonzero edge length are not validated here.
+///
+/// Fewer than three supplied vertices gives Exact/Structural Degenerate; a
+/// decided zero area gives Degenerate with the area decision's qualification.
+/// An unresolved area or edge decision stops the scan. Other successes join
+/// all consumed receipts, including Approximate under a terminal-permitting policy.
+///
+/// Every supplied cyclic edge is visited, including a zero-length edge from a
+/// repeated closing vertex. Its zero orientation marks otherwise interior
+/// points Boundary. For example, appending the first vertex to a square changes
+/// its center's result from Inside to Boundary. This is a current degeneracy
+/// limitation; the result does not validate or repair the polygon boundary.
 pub fn classify_point_convex_polygon2_with_policy(
     vertices: &[Point2],
     point: &Point2,
@@ -97,6 +112,16 @@ pub fn classify_point_convex_polygon2_with_policy(
 /// topology owner: callers that store faces with the opposite normal must flip
 /// their planes before calling. The composition reuses exact point-plane
 /// predicates rather than converting planes to primitive approximations.
+///
+/// An empty plane list returns Exact/Structural Degenerate, not a whole-space
+/// membership result. Nonempty lists use the point-plane path without its
+/// front filters, in input order: Above exits Outside, On records Boundary,
+/// and all Below gives Inside. The first Unknown stops; successful receipts
+/// join consumed certainty/stages, including approximate decisions.
+///
+/// This function does not establish nonzero normals, feasibility, boundedness or full
+/// dimension. A zero-normal constraint is evaluated as its constant offset;
+/// an all-zero constraint contributes On and can make an interior point Boundary.
 pub fn classify_point_convex_planes3_with_policy(
     planes: &[Plane3],
     point: &Point3,
@@ -148,6 +173,7 @@ pub fn classify_point_convex_planes3_with_policy(
     PredicateOutcome::decided(location, certainty, stage)
 }
 
+/// Joins local qualifications in the order Exact, Filtered, Approximate.
 fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     match (left, right) {
         (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
@@ -156,21 +182,27 @@ fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     }
 }
 
+/// Convex carrier examples, explicit degenerate cases and policy uncertainty.
 #[cfg(test)]
 mod tests {
     use super::*;
     use hyperreal::Real;
 
+    /// Allows terminal decisions while rational examples can remain certified.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Constructs an exact integer planar fixture.
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
     }
 
+    /// Constructs an exact integer spatial fixture.
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    /// Retains the proved unit-circle identity before returning a separate
+    /// angle-addition zero for strict Unknown and approximate-terminal controls.
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -185,6 +217,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks square interior, edge boundary and exterior location values.
     fn convex_polygon2_classifier_composes_edge_halfspaces() {
         let square = vec![p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
 
@@ -203,6 +236,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks empty/collinear carriers, clockwise order and area/edge uncertainty.
+    /// The approximate query asserts qualification, not a particular location.
     fn convex_polygon2_handles_degenerate_clockwise_and_undecided_inputs() {
         assert_eq!(
             crate::classify_point_convex_polygon2(&[], &p2(0, 0), APPROX).value(),
@@ -262,6 +297,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks cube interior, face boundary and exterior using outward plane normals.
     fn convex_planes3_classifier_uses_below_as_inside() {
         let planes = vec![
             Plane3::new(p3(-1, 0, 0), Real::from(0)),
@@ -287,6 +323,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks the empty-list convention, a constant unresolved constraint,
+    /// approximate qualification and selected receipt-rank joins.
     fn convex_planes3_handles_empty_and_undecided_carriers() {
         assert_eq!(
             crate::classify_point_convex_planes3(&[], &p3(0, 0, 0), APPROX).value(),

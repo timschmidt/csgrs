@@ -1,4 +1,18 @@
-//! Polygon ring Real classifiers.
+//! Shoelace signs, local turns and even-odd classification for polygonal rings.
+//!
+//! Slices specify cyclic edges; indexed variants borrow vertices in index order.
+//! These predicates do not validate simplicity, hole nesting, material side or
+//! arrangement topology. Shoelace area and local turn consistency are separate
+//! from even-odd membership. Exact coordinates remain authoritative, while the
+//! explicit policy controls whether an unresolved decision may use a qualified
+//! approximate terminal.
+//!
+//! Predicate outcomes carry local certainty/stage; bare fact summaries and
+//! retained report fields do not. Structural report validation checks internal
+//! metadata, and source replay compares results without retaining its receipt.
+//! Neither operation upgrades an approximate report into an exact proof. Ring
+//! length controls temporary/report allocation; no total resource budget is
+//! introduced by these helpers.
 
 use crate::predicate::PredicatePolicy;
 use crate::predicates::decision::{DecisionTrace, UnknownDecision, decided};
@@ -14,12 +28,16 @@ use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{resolve_real_sign, signed_term_filter};
 use hyperreal::{Rational, Real, ZeroKnowledge};
 
-/// Structural facts retained for one closed polygonal ring.
+/// Structural edge counts and policy-decided summaries for one cyclic ring.
 ///
-/// These facts are cheap summaries over exact `Real` coordinates. They are
+/// These facts are summaries over exact `Real` coordinates. They are
 /// useful for algorithm selection, but they are not topology certificates:
 /// later containment, visibility, and intersection decisions must still call
 /// exact predicates.
+/// Area and turn classification can require refinement; their certainty/stage
+/// receipts are discarded. Under an approximate policy those fields therefore
+/// cannot be treated as certified merely because they appear in this carrier.
+/// Public fields have no source binding or consistency validation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Ring2Facts {
     /// Number of vertices in the caller-supplied ring.
@@ -30,72 +48,80 @@ pub struct Ring2Facts {
     pub known_axis_aligned_edges: usize,
     /// Number of cyclic edges with unknown coordinate-zero status.
     pub unknown_edge_zero_status: usize,
-    /// Certified sign of twice the signed ring area, when available.
+    /// Decided shoelace-area sign, with certainty/stage discarded; None means Unknown.
     pub signed_area: Option<Sign>,
-    /// Certified local turn consistency for the ring.
+    /// Local turn summary, without child certainty receipts or a simplicity proof.
     pub convexity: RingConvexity,
 }
 
-/// Structural inconsistency in a retained even-odd ring report.
+/// Failure of retained even-odd report metadata validation or source replay.
 ///
 /// The report is a predicate-layer audit trail, not a polygon arrangement data
-/// structure. It validates the exact boundary and parity decisions that led to
-/// a point/ring location:
-/// exact predicates own replayable combinatorial decisions, while higher crates
-/// own loop nesting, material roles, and topology mutation.
+/// structure. These errors describe checked metadata inconsistencies or a
+/// failed source replay; absence of an error does not certify the source
+/// geometry, policy admissibility or all producer invariants.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RingEvenOddValidationError {
-    /// The retained edge count and retained edge reports disagree.
+    /// Short-ring metadata, non-boundary report length or an edge index violates
+    /// the count constraints checked by validate.
     EdgeCountMismatch,
-    /// A boundary relation was retained with an incompatible coarse location.
+    /// Boundary ray metadata, multiple boundary records or the retained boundary
+    /// index disagree with the checked boundary conventions.
     BoundaryMismatch,
     /// An edge report retained a point-on-segment decision inconsistent with
     /// its boundary metadata.
+    /// This variant is currently not emitted by the validators in this module.
     SegmentLocationMismatch,
-    /// A non-boundary crossing decision is missing y-straddle facts.
+    /// A non-boundary edge lacks above flags, or a straddle lacks upward/orientation.
     MissingStraddleFacts,
     /// A non-straddling edge retained orientation/upward facts or a crossing.
     UnexpectedStraddleFacts,
     /// A straddling edge retained a crossing decision that does not match its
     /// orientation and upward facts.
+    /// Also used when the aggregate crossing count disagrees with edge flags.
     CrossingMismatch,
     /// Retained crossing parity derives a different point/ring location.
     LocationMismatch,
-    /// Recomputing from source geometry did not reproduce this report.
+    /// Source classification was Unknown or produced a different report value.
     SourceReplayMismatch,
 }
 
-/// Retained exact evidence for one edge visited by an even-odd point/ring test.
+/// Retained decision values for one edge visited by an even-odd point/ring test.
 ///
-/// Boundary is certified first through exact point/segment classification. Only
+/// Boundary is decided first through orientation and collinear segment classification. Only
 /// non-boundary y-straddling edges retain the orientation and upward facts used
 /// by the crossing-number test.
+/// Fields carry no individual certainty, source coordinates or source identity;
+/// preserve the enclosing classifier outcome. Publicly constructed records are
+/// not automatically proofs, even if structural validation accepts them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RingEvenOddEdgeReport {
-    /// Cyclic edge index in the caller-supplied ring.
+    /// Edge position in ring order, not a global vertex index for indexed input.
     pub edge_index: usize,
-    /// Exact point/segment relation for the query point and this edge.
+    /// Decided point/segment relation, qualified by the enclosing outcome.
     pub segment_location: PointSegmentLocation,
     /// Whether the first edge endpoint is strictly above the query point.
     pub a_above: Option<bool>,
     /// Whether the second edge endpoint is strictly above the query point.
     pub b_above: Option<bool>,
     /// Whether the directed edge goes upward in y.
+    /// The producer sets this to b_above on a straddle; validate does not check that equality.
     pub upward: Option<bool>,
-    /// Exact orientation of `(a, b, point)` for y-straddling edges.
+    /// Decided orientation of `(a, b, point)` for y-straddling non-boundary edges.
     pub orientation: Option<Sign>,
     /// Whether this edge toggles even-odd parity for the positive-x ray.
     pub crosses_right: bool,
 }
 
 impl RingEvenOddEdgeReport {
-    /// Return whether this edge certified that the query point is on the
-    /// closed edge.
+    /// Tests whether the retained relation names an endpoint or segment interior.
+    /// Performs no geometric replay or certainty check.
     pub const fn is_boundary(&self) -> bool {
         self.segment_location.is_on_segment()
     }
 
-    /// Return whether this edge retained the facts needed for a ray crossing.
+    /// Tests whether both above flags exist and differ.
+    /// Does not check orientation, upward direction or their geometric validity.
     pub const fn is_y_straddling(&self) -> bool {
         matches!((self.a_above, self.b_above), (Some(a), Some(b)) if a != b)
     }
@@ -104,10 +130,12 @@ impl RingEvenOddEdgeReport {
 /// Report-bearing point-in-ring classification under the even-odd rule.
 ///
 /// The coarse [`RingPointLocation`] remains the compatibility result. This
-/// report keeps the exact per-edge evidence that produced it: boundary
+/// report keeps the per-edge decision values that produced it: boundary
 /// point/segment decisions, y-straddle comparisons, orientation signs, crossing
 /// toggles, and final parity. The standard crossing-number classifier is
-/// evaluated with exact Real predicates.
+/// evaluated with policy-controlled Real predicates. The report has no own
+/// certainty/stage receipt or source geometry; keep its producing outcome.
+/// Fields are public, and structural validation does not establish provenance.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RingEvenOddReport {
     /// Coarse point/ring location.
@@ -117,15 +145,25 @@ pub struct RingEvenOddReport {
     /// Number of retained positive-x ray crossings before classification
     /// terminated.
     pub crossing_count: usize,
-    /// Boundary edge index when the query point lies on the ring boundary.
+    /// Edge position selected by the producer's decided on-segment relation.
     pub boundary_edge: Option<usize>,
-    /// Per-edge evidence visited by the classifier. Boundary reports may stop
-    /// at the first certified boundary edge.
+    /// Per-edge decisions visited in cyclic order by the producer. A boundary
+    /// result stops at the first decided boundary edge; later edges are absent.
     pub edges: Vec<RingEvenOddEdgeReport>,
 }
 
 impl RingEvenOddReport {
     /// Validate retained parity, boundary, and edge-crossing facts.
+    ///
+    /// Checks count constraints, index bounds, edge metadata shapes, at most one
+    /// boundary record, crossing count and the resulting coarse location. A
+    /// short ring requires an empty Outside report. Non-boundary reports need
+    /// `edges.len() == edge_count`; boundary reports may retain a partial list.
+    ///
+    /// This does not validate source coordinates, index uniqueness/order,
+    /// boundary-at-end traversal, or the producer's `upward == b_above` relation.
+    /// It also does not reconcile a non-boundary segment label with orientation.
+    /// Publicly forged but internally accepted metadata is not geometric proof.
     pub fn validate(&self) -> Result<(), RingEvenOddValidationError> {
         if self.edge_count < 3 {
             if !self.edges.is_empty() || self.crossing_count != 0 || self.boundary_edge.is_some() {
@@ -179,6 +217,13 @@ impl RingEvenOddReport {
     }
 
     /// Replay this report against source ring geometry.
+    ///
+    /// First validates metadata, then requires field-for-field equality with a
+    /// newly decided report in the supplied ring order. An Unknown replay or a
+    /// different report becomes SourceReplayMismatch. Replay certainty/stage is
+    /// discarded, so Ok under an approximate policy is not exact certification.
+    /// Equivalent geometry with reordered edges need not reproduce this report.
+    /// For indexed input, pass vertices materialized in the original ring order.
     pub fn validate_against_sources(
         &self,
         ring: &[Point2],
@@ -194,6 +239,11 @@ impl RingEvenOddReport {
 }
 
 /// Build structural facts for a closed polygonal ring with an explicit policy.
+///
+/// Copies vertex references, evaluates signed area and local turns, then counts
+/// raw cyclic-edge structural patterns. Retains a repeated closing vertex in
+/// counts but omits one structurally equal closing vertex from the turn scan.
+/// The returned area/turn fields discard decision receipts; see [`Ring2Facts`].
 pub fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy) -> Ring2Facts {
     let refs: Vec<_> = points.iter().collect();
     ring2_facts_refs(&refs, policy)
@@ -201,6 +251,8 @@ pub fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy) -> Ri
 
 /// Build structural facts for an indexed closed polygonal ring with an explicit
 /// policy.
+/// Returns None for any out-of-range index; otherwise retains the supplied
+/// order/repetitions and the same receipt-loss behavior as [`ring2_facts_with_policy`].
 pub fn indexed_ring2_facts_with_policy(
     points: &[Point2],
     ring: &[usize],
@@ -210,6 +262,10 @@ pub fn indexed_ring2_facts_with_policy(
     Some(ring2_facts_refs(&refs, policy))
 }
 
+/// Builds summaries before scanning raw cyclic edge differences for structural zeros.
+/// Area is projected with `.value()` and turns return a bare enum, losing their
+/// qualification. Fewer than two vertices has no counted edges; unknown-zero
+/// status is distinct from degenerate, axis-aligned and known diagonal edges.
 fn ring2_facts_refs(points: &[&Point2], policy: PredicatePolicy) -> Ring2Facts {
     let mut facts = Ring2Facts {
         vertex_count: points.len(),
@@ -247,6 +303,12 @@ fn ring2_facts_refs(points: &[&Point2], policy: PredicatePolicy) -> Ring2Facts {
 }
 
 /// Classify local turn consistency for a closed polygonal ring with a policy.
+///
+/// Ignores one structurally repeated closing vertex, then visits local triples
+/// until Unknown, both turn signs, or the end. Zero turns are ignored; all zero
+/// or fewer than three effective vertices gives Degenerate. This is not a
+/// simplicity or global convexity test. Child certainty/stage is discarded,
+/// so approximate-policy labels are not unqualified geometric proofs.
 pub fn ring_convexity_with_policy(points: &[Point2], policy: PredicatePolicy) -> RingConvexity {
     let refs: Vec<_> = points.iter().collect();
     ring_convexity_refs(&refs, policy)
@@ -254,6 +316,8 @@ pub fn ring_convexity_with_policy(points: &[Point2], policy: PredicatePolicy) ->
 
 /// Classify local turn consistency for an indexed closed polygonal ring with a
 /// policy.
+/// None means an invalid vertex index; Some may contain RingConvexity::Unknown.
+/// Valid indices preserve the bare enum's loss of child certainty receipts.
 pub fn indexed_ring_convexity_with_policy(
     points: &[Point2],
     ring: &[usize],
@@ -266,13 +330,16 @@ pub fn indexed_ring_convexity_with_policy(
 /// Return the sign of twice the signed area of a closed polygonal ring.
 ///
 /// The input may repeat its first vertex at the end; the repeated closing edge
-/// contributes zero. The function evaluates the shoelace determinant exactly
-/// and reports only its sign. The determinant form is the standard polygon area
-/// formula. This function keeps the determinant
+/// contributes zero. The function constructs the exact shoelace expression
+/// `sum(x_i*y_next - y_i*x_next)` and decides its sign under the policy.
+/// For a simple ring, counterclockwise is positive; for a self-intersecting
+/// walk this is signed algebraic area, not the area of its even-odd filled set.
+/// This function keeps the determinant
 /// in `hyperlimit` because orientation/winding is a predicate-level decision;
 /// ring storage and material/hole roles belong in `hypercurve` or `hypertri`.
-/// Return the sign of twice the signed area of a closed polygonal ring with an
-/// explicit predicate escalation policy.
+/// Fewer than three vertices gives Exact/Structural Zero. Other rational
+/// inputs use Exact/Exact accumulation; symbolic fallback may remain Unknown
+/// or return an Approximate sign. The outcome receipt must be retained.
 pub fn ring_area_sign_with_policy(
     points: &[Point2],
     policy: PredicatePolicy,
@@ -283,6 +350,8 @@ pub fn ring_area_sign_with_policy(
 
 /// Return the sign of twice the signed area of an indexed closed polygonal ring
 /// with an explicit predicate escalation policy.
+/// Every index is checked before applying the short-ring convention. An invalid
+/// index returns Unknown/Unsupported at Undecided stage, even in a short ring.
 pub fn indexed_ring_area_sign_with_policy(
     points: &[Point2],
     ring: &[usize],
@@ -294,6 +363,10 @@ pub fn indexed_ring_area_sign_with_policy(
     ring_area_sign_refs(&refs, policy)
 }
 
+/// Handles short rings, then tries rational accumulation before a Real shoelace sum.
+/// Retains positive/negative products for the signed-term filter in cyclic
+/// order. The symbolic path has no separate exact callback and uses the policy
+/// resolver; allocation and scalar costs are not bounded by a total-work budget.
 fn ring_area_sign_refs(points: &[&Point2], policy: PredicatePolicy) -> PredicateOutcome<Sign> {
     if points.len() < 3 {
         return PredicateOutcome::decided(
@@ -335,6 +408,9 @@ fn ring_area_sign_refs(points: &[&Point2], policy: PredicatePolicy) -> Predicate
     )
 }
 
+/// Compares one rational signed product sum with zero without materializing its value.
+/// Requires every visited coordinate to have rational storage; None declines
+/// that path, without proving irrationality or a zero area. Success is Exact/Exact.
 fn exact_rational_ring_area_sign(points: &[&Point2]) -> Option<PredicateOutcome<Sign>> {
     let mut signs = Vec::with_capacity(points.len() * 2);
     let mut terms = Vec::<[&Rational; 2]>::with_capacity(points.len() * 2);
@@ -362,10 +438,15 @@ fn exact_rational_ring_area_sign(points: &[&Point2]) -> Option<PredicateOutcome<
 /// Classify a point against a closed polygonal ring by the even-odd rule with an
 /// explicit predicate escalation policy.
 ///
-/// Boundary checks are performed first with exact point-on-segment
-/// classification. Interior parity is then decided by an orientation-form ray
-/// crossing test so no edge/ray intersection coordinate is constructed. Every
-/// crossing decision is certified through exact signs.
+/// Each edge's boundary test precedes its positive-x ray-crossing test; this is
+/// one edge-by-edge pass, not a separate global boundary pass. No intersection
+/// coordinates are constructed. Strict-above y comparisons give the vertex
+/// crossing convention, and a repeated closing vertex is accepted.
+///
+/// Fewer than three supplied vertices returns Outside without testing boundary,
+/// including a query on a supplied point/segment. Other outcomes retain the
+/// weakest consumed certainty and highest stage; the first Unknown stops. This
+/// wrapper discards the per-edge report but preserves the outer receipt.
 pub fn classify_point_ring_even_odd_with_policy(
     ring: &[Point2],
     point: &Point2,
@@ -383,6 +464,8 @@ pub fn classify_point_ring_even_odd_with_policy(
 
 /// Policy-controlled report-bearing variant of
 /// [`classify_point_ring_even_odd_with_policy`].
+/// Retains visited edge decisions; the outcome, not the report fields, carries
+/// certainty/stage. A boundary result is a prefix; Unknown publishes no partial report.
 pub fn classify_point_ring_even_odd_report_with_policy(
     ring: &[Point2],
     point: &Point2,
@@ -394,6 +477,8 @@ pub fn classify_point_ring_even_odd_report_with_policy(
 
 /// Classify a point against an indexed closed polygonal ring by the even-odd
 /// rule with an explicit predicate escalation policy.
+/// Invalid indices yield Unknown/Unsupported at Undecided stage. Valid input
+/// preserves the indexed report outcome's certainty while projecting its location.
 pub fn classify_point_indexed_ring_even_odd_with_policy(
     points: &[Point2],
     ring: &[usize],
@@ -412,6 +497,8 @@ pub fn classify_point_indexed_ring_even_odd_with_policy(
 
 /// Policy-controlled report-bearing variant of
 /// [`classify_point_indexed_ring_even_odd_with_policy`].
+/// Checks all indices before classification, preserving order and repetitions.
+/// Report edge indices are positions within `ring`, not indices into `points`.
 pub fn classify_point_indexed_ring_even_odd_report_with_policy(
     points: &[Point2],
     ring: &[usize],
@@ -424,6 +511,14 @@ pub fn classify_point_indexed_ring_even_odd_report_with_policy(
     classify_point_ring_even_odd_report_refs(&refs, point, policy)
 }
 
+/// Visits cyclic edges, retaining a boundary prefix or a complete parity report.
+///
+/// Decides orientation first for every edge, even if its y range later does not
+/// straddle. Zero orientation invokes collinear segment classification; a
+/// boundary returns immediately. Otherwise compares a.y then b.y with query y.
+/// A straddle sets upward from b_above and toggles on positive/upward or
+/// negative/downward orientation. Unknown stops without publishing accumulated
+/// edges; successful results carry the joined consumed receipts.
 fn classify_point_ring_even_odd_report_refs(
     ring: &[&Point2],
     point: &Point2,
@@ -453,7 +548,7 @@ fn classify_point_ring_even_odd_report_refs(
         let b = &ring[(index + 1) % ring.len()];
 
         // The orientation is needed both for the complete point/segment report
-        // and, on y-straddling edges, for crossing parity. Certify it once and
+        // and, on y-straddling edges, for crossing parity. Decide it once and
         // retain the result for both decisions.
         let orientation = match decided(orient2d_with_policy(a, b, point, policy), &mut trace) {
             Ok(sign) => sign,
@@ -513,10 +608,9 @@ fn classify_point_ring_even_odd_report_refs(
             continue;
         }
 
-        // A certified y-straddle already proves the endpoint order: if only b
-        // is above the query then b > a, and if only a is above then b < a.
-        // Re-comparing b.y with a.y duplicated an exact predicate and exposed
-        // a logically unreachable uncertainty branch.
+        // For certified comparisons a y-straddle proves endpoint order: if only
+        // b is above the query then b > a, otherwise b < a. Reuse the decision;
+        // any terminal qualification remains in the enclosing trace receipt.
         let upward = b_above;
 
         let crosses_right = matches!(
@@ -557,6 +651,8 @@ fn classify_point_ring_even_odd_report_refs(
 
 /// Return whether `point` is inside or on the boundary of `ring` by the
 /// even-odd rule with an explicit predicate escalation policy.
+/// Maps the location to a Boolean without dropping the outcome's qualification
+/// or Unknown. Short rings return false even at a supplied vertex.
 pub fn point_in_ring_even_odd_with_policy(
     ring: &[Point2],
     point: &Point2,
@@ -574,6 +670,7 @@ pub fn point_in_ring_even_odd_with_policy(
 
 /// Return whether `point` is inside or on the boundary of an indexed ring by
 /// the even-odd rule with an explicit predicate escalation policy.
+/// Preserves invalid-index Unknown and all qualification from the indexed classifier.
 pub fn point_in_indexed_ring_even_odd_with_policy(
     points: &[Point2],
     ring: &[usize],
@@ -590,10 +687,18 @@ pub fn point_in_indexed_ring_even_odd_with_policy(
     }
 }
 
+/// Collects checked vertex references in index order; any invalid index gives None.
+/// Repeated indices are retained and no topology or coordinate equality is tested.
 fn indexed_ring_refs<'a>(points: &'a [Point2], ring: &[usize]) -> Option<Vec<&'a Point2>> {
     ring.iter().map(|&index| points.get(index)).collect()
 }
 
+/// Checks boundary/straddle metadata shape and the stored crossing truth table.
+///
+/// Boundary labels require absent ray metadata; non-boundaries require above
+/// flags, and straddles additionally require upward/orientation. It does not
+/// require upward to equal b_above, check a segment label against orientation,
+/// or replay coordinates. SegmentLocationMismatch is not produced here.
 fn validate_even_odd_edge_report(
     edge: &RingEvenOddEdgeReport,
 ) -> Result<(), RingEvenOddValidationError> {
@@ -633,6 +738,9 @@ fn validate_even_odd_edge_report(
     }
 }
 
+/// Summarizes local turn signs, stopping on Unknown or both nonzero sign classes.
+/// Drops orientation receipts via `.value()`; zero-only/short rings are Degenerate.
+/// It does not test simplicity, and a terminal-qualified sign loses its receipt.
 fn ring_convexity_refs(points: &[&Point2], policy: PredicatePolicy) -> RingConvexity {
     let len = open_ring_len(points);
     if len < 3 {
@@ -667,6 +775,9 @@ fn ring_convexity_refs(points: &[&Point2], policy: PredicatePolicy) -> RingConve
     }
 }
 
+/// Omits one final vertex only when it is structurally equal to the first.
+/// Uses point PartialEq, not policy-decided mathematical coordinate equality;
+/// no interior duplicates or additional repeated closing vertices are removed.
 fn open_ring_len(points: &[&Point2]) -> usize {
     let mut len = points.len();
     if len > 1 && points[0] == points[len - 1] {
@@ -675,6 +786,8 @@ fn open_ring_len(points: &[&Point2]) -> usize {
     len
 }
 
+/// Extracts a strict-greater comparison while joining its decided receipt.
+/// Unknown returns its hint/stage without modifying the local trace.
 fn compare_greater(
     left: &Real,
     right: &Real,
@@ -684,17 +797,21 @@ fn compare_greater(
     Ok(decided(compare_reals_with_policy(left, right, policy), trace)? == Ordering::Greater)
 }
 
+/// Finite ring fixtures, report consistency checks and policy-uncertainty controls.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::predicates::decision::{certainty_rank, stage_rank};
 
+    /// Allows terminal decisions while ordinary rational fixtures remain exact.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Constructs an exact integer planar fixture.
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
 
+    /// Constructs rational coordinates with a caller-supplied nonzero denominator.
     fn rational_p2(x: i32, y: i32, denominator: i32) -> Point2 {
         Point2::new(
             (hyperreal::Real::from(x) / hyperreal::Real::from(denominator)).unwrap(),
@@ -702,6 +819,8 @@ mod tests {
         )
     }
 
+    /// Retains a proved unit-circle identity before returning a separate
+    /// angle-addition zero used to exercise the current unresolved frontier.
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -716,6 +835,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks clockwise/counterclockwise rectangle signs and collinear/empty zeros.
     fn ring_area_sign_classifies_winding_and_degenerate_rings() {
         let ccw = [p2(0, 0), p2(4, 0), p2(4, 3), p2(0, 3)];
         let cw = [p2(0, 0), p2(0, 3), p2(4, 3), p2(4, 0)];
@@ -737,6 +857,8 @@ mod tests {
     }
 
     #[test]
+    /// Requires a positive Exact/Exact receipt for rational coordinates.
+    /// The assertion checks the receipt, not an allocation or dispatch count.
     fn exact_rational_ring_area_uses_sign_only_accumulation() {
         let ring = [
             rational_p2(0, 0, 11),
@@ -756,6 +878,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks square location values and closed-boundary Boolean membership.
     fn point_ring_even_odd_classifies_inside_outside_and_boundary() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
 
@@ -778,6 +901,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks a square interior's one crossing, all edge records and source replay.
+    /// The fixture extracts the report value rather than asserting its outer receipt.
     fn point_ring_even_odd_report_retains_crossing_parity() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let point = p2(2, 2);
@@ -806,6 +931,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks a boundary prefix with no crossings and rejection of a removed boundary index.
     fn point_ring_even_odd_report_keeps_boundary_and_parity_distinct() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let point = p2(4, 2);
@@ -828,6 +954,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks diamond inside/outside parity when the ray passes through vertex heights.
     fn point_ring_even_odd_report_handles_vertex_straddles_without_double_counting() {
         let diamond = [p2(0, 2), p2(2, 4), p2(4, 2), p2(2, 0)];
         let inside = crate::classify_point_ring_even_odd_report(&diamond, &p2(2, 2), APPROX)
@@ -846,6 +973,7 @@ mod tests {
     }
 
     #[test]
+    /// Requires CollinearOutside metadata for a query beyond a horizontal square edge.
     fn point_ring_even_odd_report_retains_collinear_outside_edge_evidence() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let report = crate::classify_point_ring_even_odd_report(&ring, &p2(6, 0), APPROX)
@@ -861,6 +989,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks an indexed square report's location/parity/metadata and invalid-index decline.
+    /// It does not invoke the source-replay validator despite the historical test name.
     fn indexed_ring_even_odd_report_replays_caller_topology() {
         let points = [p2(9, 9), p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let ring = [1, 2, 3, 4];
@@ -881,6 +1011,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks square interior membership with an explicitly repeated closing vertex.
     fn point_ring_even_odd_accepts_repeated_closing_vertex() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4), p2(0, 0)];
 
@@ -891,6 +1022,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks raw duplicate-closing edge counts alongside area and local-turn summaries.
     fn ring_facts_count_raw_edges_but_classify_open_turns() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 3), p2(0, 3), p2(0, 0)];
         let facts = crate::ring2_facts(&ring, APPROX);
@@ -904,6 +1036,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks indexed area, location, turns and Boolean membership plus invalid fact indices.
     fn indexed_ring_predicates_reuse_caller_topology() {
         let points = [p2(9, 9), p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let ring = [1, 2, 3, 4];
@@ -939,6 +1072,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks Unknown propagation through report, location, indexed and Boolean wrappers.
     fn strict_even_odd_classifier_propagates_unresolved_comparisons() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let point = Point2::new(Real::from(2), terminal_zero());
@@ -976,6 +1110,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks empty/diagonal/unknown-zero summaries and typed invalid-index area failure.
     fn ring_facts_cover_empty_indexed_diagonal_and_unknown_edges() {
         let empty = ring2_facts_with_policy(&[], APPROX);
         assert_eq!(empty.vertex_count, 0);
@@ -1007,6 +1142,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks short-ring Outside report values and strict replay, even at a supplied point.
+    /// The test extracts values and does not directly assert the certainty field.
     fn degenerate_ring_reports_are_exact_and_replayable() {
         for ring in [&[][..], &[p2(0, 0)][..], &[p2(0, 0), p2(1, 0)][..]] {
             let report = classify_point_ring_even_odd_report_with_policy(
@@ -1027,6 +1164,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks metadata rejection when the retained boundary index differs from its edge.
     fn ring_report_validation_rejects_a_different_boundary_index() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let point = p2(4, 2);
@@ -1041,6 +1179,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks short, uniform-turn, zero-turn, mixed-turn and strict unresolved summaries.
     fn ring_convexity_covers_turn_classes_and_unresolved_turns() {
         assert_eq!(
             ring_convexity_with_policy(&[p2(0, 0), p2(1, 0)], APPROX),
@@ -1071,6 +1210,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks receipt joins, all rank constants and unchanged Unknown hint/stage forwarding.
     fn decision_trace_retains_the_least_certain_and_latest_stage() {
         let mut trace = DecisionTrace::default();
         assert!(matches!(
@@ -1116,6 +1256,7 @@ mod tests {
     }
 
     #[test]
+    /// Rejects two retained boundary records and checks three strict unresolved fixtures.
     fn ring_report_rejects_multiple_boundaries_and_propagates_late_unknowns() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let boundary = classify_point_ring_even_odd_report_with_policy(&ring, &p2(4, 2), APPROX)
