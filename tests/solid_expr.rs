@@ -1,9 +1,10 @@
 //! A lazy CSG expression evaluates as one Boolean program (U06, P21).
 //!
-//! The expected sets are built independently, one regularized operation at a
-//! time, and compared through an exact empty symmetric difference and the
-//! exact enclosed volume. The volume is also checked against an independent
-//! closed-form value.
+//! Eager and lazy paths share the native kernel. Their outputs are compared using
+//! a kernel-computed empty symmetric difference and enclosed volume; this is not
+//! an independent set-equality oracle. The drilled-body fixture additionally checks
+//! volume against a closed-form expectation. Other witnesses inspect policies,
+//! inherited evidence, located errors and a feature-gated dispatch count.
 #[path = "support/uncertainty.rs"]
 mod uncertainty;
 
@@ -13,12 +14,16 @@ use csgrs::{
 };
 use hypermesh::BooleanOp;
 
+/// Compute enclosed volume with exact unit density, failing the test on an error.
 fn volume(mesh: &TriangleMesh) -> Real {
     solid::exact_mass_properties(mesh, Real::one())
         .unwrap()
         .volume
 }
 
+/// Require empty kernel symmetric difference and matching optional rational volume forms.
+/// These comparisons share the production kernel and are not an independent oracle;
+/// two absent rational normal forms alone do not establish volume equality.
 fn same_set(left: &TriangleMesh, right: &TriangleMesh) {
     let xor = solid::boolean(left, right, BooleanOp::SymmetricDifference).unwrap();
     assert!(
@@ -32,6 +37,7 @@ fn same_set(left: &TriangleMesh, right: &TriangleMesh) {
     );
 }
 
+/// Apply an eager exact integer translation for expected meshes and fixtures.
 fn translated(mesh: &TriangleMesh, x: i32, y: i32, z: i32) -> TriangleMesh {
     solid::transform(
         mesh,
@@ -71,6 +77,7 @@ fn an_expression_equals_step_by_step_evaluation() {
     assert_eq!(m.certainty(), GeometryCertainty::Certified);
 }
 
+/// Compare all four borrowed operators with their corresponding eager Booleans.
 #[test]
 fn every_operator_matches_its_eager_operation() {
     let a = solid::cube(Real::from(4)).unwrap();
@@ -90,6 +97,7 @@ fn every_operator_matches_its_eager_operation() {
     }
 }
 
+/// Compare a rotated, scaled and translated difference with its eager transform chain.
 #[test]
 fn transforms_push_down_to_the_leaves() {
     let a = solid::cuboid(Real::from(4), Real::from(2), Real::from(3)).unwrap();
@@ -126,6 +134,7 @@ fn transforms_push_down_to_the_leaves() {
     same_set(&lazy, &eager);
 }
 
+/// Check empty identities and all-empty output using valid mesh operands.
 #[test]
 fn empty_leaves_are_the_empty_set() {
     let cube = SolidExpr::from(solid::cube(Real::from(2)).unwrap());
@@ -140,6 +149,7 @@ fn empty_leaves_are_the_empty_set() {
     assert!(evaluate(&(&empty | &empty)).triangles.is_empty());
 }
 
+/// Check transform and open-input paths, native sources, and invalid path lookup.
 #[test]
 fn expression_failures_identify_the_failing_node() {
     use SolidExprChild::{Left, Right};
@@ -208,6 +218,7 @@ fn expression_failures_identify_the_failing_node() {
     }
 }
 
+/// Check repeatable first-occurrence blame and attribution of an outer failing transform.
 #[test]
 fn expression_paths_follow_transforms_and_shared_occurrences() {
     use SolidExprChild::{Input, Left, Right};
@@ -248,6 +259,7 @@ fn expression_paths_follow_transforms_and_shared_occurrences() {
     assert_eq!(*source, Error::InvalidArguments);
 }
 
+/// Pair malformed and empty operands in both orders under both policies and all operators.
 #[test]
 fn empty_expression_operands_do_not_hide_located_input_failures() {
     use SolidExprChild::{Left, Right};
@@ -276,6 +288,7 @@ fn empty_expression_operands_do_not_hide_located_input_failures() {
     }
 }
 
+/// Check that a projective pole preserves the eager unbounded cause at its transform node.
 #[test]
 fn unbounded_expression_transforms_keep_their_typed_cause() {
     let mesh = solid::cube(2).unwrap();
@@ -298,6 +311,7 @@ fn unbounded_expression_transforms_keep_their_typed_cause() {
     }
 }
 
+/// Keep a kernel error without an operand index at the expression root.
 #[test]
 fn unlocalized_mesh_failures_identify_root_evaluation() {
     let malformed = TriangleMesh::new(
@@ -322,7 +336,8 @@ fn unlocalized_mesh_failures_identify_root_evaluation() {
 }
 
 /// Regularization can produce an empty mesh while retaining approximate
-/// construction ancestry. Lowering that leaf to `false` must keep its receipt.
+/// construction ancestry. Lowering that leaf to `false` must keep that qualification
+/// separately from the certified local receipt.
 #[test]
 fn empty_leaves_keep_construction_evidence_through_further_operations() {
     let approximate = Csg::approximate_512();
@@ -368,6 +383,7 @@ fn empty_leaves_keep_construction_evidence_through_further_operations() {
     }
 }
 
+/// Check strict failure and approximate qualification for a shared touching-cube subtree.
 #[test]
 fn shared_subtrees_and_an_approximate_step_keep_their_meaning() {
     // A strict session cannot decide the touching union; an approximate one
@@ -444,6 +460,9 @@ fn an_expression_builds_one_arrangement() {
 /// Timing for the program ledger: a 24-cube drilled by eight 2×2 holes,
 /// step by step and as one expression. Run with
 /// `cargo test --release --test solid_expr -- --ignored --nocapture`.
+/// Reports median/min/max over five sequential runs of each path, including output
+/// materialization. No cache reset or performance threshold is asserted; final
+/// outputs are compared using `same_set`.
 #[test]
 #[ignore = "timing measurement"]
 fn drilled_block_timing() {

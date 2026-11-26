@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/solid_expr.rs` | Entire file; documented deferred operators, transform-dependent memoization, private lowering state, error paths and resource limits. | Private docs passed with `curve,dispatch-trace` and no default features; generated private/operator pages checked. |
+| `tests/solid_expr.rs` | Entire file including dispatch and ignored timing witnesses; documented helpers and corrected independence claims. | Formatting and comment-only comparison passed; test bodies unchanged, not rerun. |
 | `src/session.rs` | Entire file; documented conversion implementations/macro, private state, policy exceptions and receipt scope. | Private docs passed with and without `curve`; generated conversion docs checked. |
 | `tests/session.rs` | Entire file; documented every test/helper according to actual assertions. | Comment-only comparison and formatting passed; tests source-reviewed, not rerun. |
 | `tests/support/uncertainty.rs` | Entire file; existing module/helper Rustdoc matches retained witness and independent unresolved-zero assertion. No edits needed. | Source review only; no current execution claim. |
@@ -268,9 +270,65 @@ Logs: `/tmp/csgrs-rustdoc-session-doc.log` and
 Full workflow/runtime checks remain waived for this docs-only session. Test-only
 Rustdoc was reviewed in source, not claimed as rendered by the library doc build.
 
+### Lazy expression batch, 26 November 2026
+
+Owner: CSGRS expression lowering into the Hypermesh Boolean program,
+P6/P8/P9/P19/P20/P21/P25/P37. Baseline: `48d00109e`. Domain: native mesh leaves,
+shared subtrees, ordered transform chains, all four Boolean operators, canonical
+empty and malformed leaves, both policies and located/unlocated failures.
+Missing witness: private node variants/payloads, lowering state, path storage,
+helpers, operator macro and generated members lacked Rustdoc. Existing summaries
+omitted transform-dependent reuse and the all-empty no-arrangement shortcut.
+
+Read every line of `src/solid_expr.rs` and `tests/solid_expr.rs`. Cross-checked
+native transform admission and receipt handling, the kernel Boolean entry point,
+and existing session/uncertainty support reviewed in prior batches. Supporting
+kernel/grammar reads are not full-file audit credit.
+
+Documented allocation identity versus set equality, memo lifetime and keys,
+inner-to-outer transform application, left-first lowering, false-node reuse,
+ancestry retention, and first-occurrence error paths. The affine distribution
+identity is stated with its preconditions; projective leaf admission may fail
+before later Boolean selection. Recorded the existing recursive/allocating
+lowerer and its `u32` indexing panics without implying typed exhaustion or an
+expression-level resource bound. No algorithm, predicate order or bound changed.
+
+Documented each regression helper and test's actual role. Corrected the claim
+that eager/lazy comparisons supply an independent set oracle: both paths and the
+symmetric-difference helper use the native kernel. Matching absent rational normal
+forms is not a volume proof. The drilled fixture has a separate closed-form
+volume expectation; the dispatch fixture asserts one versus four starts. The
+ignored timing fixture reports five-run median/min/max without a cache reset or
+performance threshold. These are source observations, not new execution or
+performance claims.
+
+Validation after edits:
+
+- `rustfmt --check --edition 2024 src/solid_expr.rs tests/solid_expr.rs`: passed.
+- `git diff --check`: passed.
+- Compared edited Rust against baseline after removing comment lines and
+  normalizing whitespace and optional trailing commas: executable content
+  unchanged, including every assertion and ignored/feature gate.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve,dispatch-trace --document-private-items
+  --no-deps --offline`: passed without warnings. The same command without the
+  feature list passed without warnings.
+- Generated module, public expression, private node/transform/program/location,
+  dispatch helper and operator macro pages contain the new contracts. Generated
+  owned-operator method documentation appears on the public expression page.
+
+Logs: `/tmp/csgrs-rustdoc-expressions-doc.log` and
+`/tmp/csgrs-rustdoc-expressions-minimal-doc.log`; artifacts remain in the reused
+`/tmp/csgrs-rustdoc-target`, with no generated output tracked.
+
+Full workflow/runtime checks remain waived by the owner for this docs-only
+session. Test-only Rustdoc is reviewed in source; a library documentation build
+does not render the integration tests or execute their assertions.
+
 ## Next work
 
-Continue through lazy expressions, native operations and the
+Continue through native operations and the
 remaining root modules, then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file
