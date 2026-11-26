@@ -16388,3 +16388,15 @@ remains the way to get derivative and C1 evidence, which hulls do not supply.
 Evidence: csgrs-evidence 94e05c240,
 `docs/evidence/2026-11-26-interval-curve-taylor-bernstein` (probe source, all
 twelve rows, notes). Timings are means of 20 runs on one unpinned host.
+
+## 2026-11-26: reusing the incoming chart's Taylor program in QR windows (not retained)
+
+With Taylor windows, `integrate_qr` prepares `flow_taylor(order)` for both
+branches in every window. The incoming chart is the previous window's chosen
+chart, so a trial shared that program by handle instead of re-deriving it.
+Hyperdynamics' 191 all-target, all-feature tests passed. The `qr_evolution`
+bench compared main 9b1a49bb5 and the trial, built in separate target
+directories, on CPU 0 with ASLR off. QR rows moved −0.7% to +0.8%; the
+unchanged fixed path moved +1.4% to +2.7%, so all of this is noise. Endpoint
+widths were identical. At order 3 preparation is a small part of a window.
+The trial was reverted.
