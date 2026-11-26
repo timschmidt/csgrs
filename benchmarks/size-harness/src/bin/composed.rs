@@ -1,11 +1,11 @@
 //! Composed CAD consumer: profile, extrusion, Boolean, bounds, and export.
 //!
-//! The workload is the drilled-body workflow from `examples/basic.rs`: an
-//! exact cube, a square profile extruded into a tool, a regularized
-//! difference, exact bounds, the operation's certainty receipt, and both
-//! binary STL and OBJ materialization. Every stage consumes its result, so the
-//! measured artifact retains the curve grammar, the mesh Boolean kernel, and
-//! two export formats.
+//! The default workload follows the drilled-body construction in `examples/basic.rs`:
+//! an exact cube, square-profile extrusion, regularized difference, strict bounds,
+//! native triangle traversal, and binary STL/OBJ materialization. The printed receipt
+//! comes from extrusion alone; it is not an aggregate chain receipt. Runtime inputs
+//! and consumed outputs exercise these paths for artifact attribution, whose actual
+//! retained code must still be measured.
 
 use std::hint::black_box;
 
@@ -16,8 +16,12 @@ use csgrs::{
     solid::SolidExt,
 };
 
-/// One completed composed workflow. Returns the exported byte counts, the
-/// result triangle count, and the weakest consumed certainty.
+/// Subtracts a fixed 4×4×16 translated tool from a cube with integer side length.
+/// Returns STL/OBJ byte lengths, traversed triangle count and the extrusion's local
+/// certainty. Translation/difference/bounds convenience calls expose no separate
+/// receipt here. Requires nonempty result bounds; that assertion panics on emptiness.
+/// Other operation/export errors propagate boxed. Exports are materialized and dropped,
+/// not reimported or compared for source fidelity; all owned temporaries drop on return.
 fn workload(
     width: i64,
 ) -> Result<(usize, usize, usize, GeometryCertainty), Box<dyn std::error::Error>> {
@@ -42,6 +46,11 @@ fn workload(
     Ok((stl.len(), obj.len(), triangles, certainty))
 }
 
+/// Parses width/repetitions, warms once and runs the full composition repeatedly.
+/// Missing/malformed arguments default to 12/1; repetitions clamp to one. Native
+/// elapsed time includes all workflow work and destruction, excluding warmup/printing.
+/// WASM omits the timer. Errors/panics stop execution; printed certainty is only the
+/// last extrusion receipt and is not asserted or combined across stages/repetitions.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let width = std::env::args()
         .nth(1)

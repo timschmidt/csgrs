@@ -1,8 +1,9 @@
 /*
  * Real C consumer of the csgrs-ffi ABI, used for link-retention size
- * attribution. It builds a drilled body through the f64 family, reads exact
- * bounds and indexed buffers, inspects construction evidence, and frees every
- * handle. Linking this against the static library measures what one ordinary
+ * attribution. It builds a drilled body through the f64 family, reads projected
+ * bounds and indexed buffers, queries construction evidence without asserting its
+ * fields, and frees every handle on the success path. Linking this against the
+ * static library measures what one ordinary
  * C consumer retains, which is a different quantity from the complete exported
  * surface of the shared library.
  */
@@ -12,12 +13,20 @@
 
 #include "csgrs.h"
 
+/* Print the last ABI diagnostic and exit with status 1. Previously acquired handles
+ * are not explicitly freed on this path; process exit reclaims process resources. */
 static void fail(const char *stage, csgrs_status_t status) {
   fprintf(stderr, "%s failed: status=%d message=%s\n", stage, (int)status,
           csgrs_last_error_message());
   exit(1);
 }
 
+/* Repeat the fixed-tool drilled-body construction with a runtime cube width.
+ * Defaults are 12/1; atof/atol supply their usual permissive parsing and repeat
+ * counts below one clamp to one. No warmup or timer is provided here. Each success
+ * reads buffers/evidence and frees buffers and five handles, then prints only the
+ * final counts/projected height. Status failures exit immediately, without cleanup
+ * of earlier handles or any assertion about geometry, fidelity or receipt fields. */
 int main(int argc, char **argv) {
   double width = argc > 1 ? atof(argv[1]) : 12.0;
   long repeats = argc > 2 ? atol(argv[2]) : 1;

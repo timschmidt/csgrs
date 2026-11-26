@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Reproducible artifact-size attribution for root CSGRS consumers, the C ABI,
-# and the WASM bindings. Every artifact is reported with its file bytes, its
-# code and read-only data bytes separately from its debug sections, its
-# deployed stripped size, compressed sizes, and a content hash.
+# and the WASM bindings. File bytes, SHA-256 and gzip sizes are mandatory;
+# section/deployment/optional compression reports depend on installed tools.
+# Output is streamed to stdout; callers retain logs. Build products, optimized
+# WASM and perf copies remain in the target directory. Failures stop the script
+# without a cleanup trap or complete-result manifest. Builds alone do not run
+# the Rust/WASM workloads; ABI and perf scopes execute the native consumers.
 set -euo pipefail
 
 size_harness_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -25,6 +28,12 @@ read -r -a size_opt_levels <<<"${CSGRS_SIZE_OPT_LEVELS:-z s}"
 size_perf_repeats="${CSGRS_SIZE_PERF_REPEATS:-200}"
 size_perf_runs="${CSGRS_SIZE_PERF_RUNS:-5}"
 
+# Report native ELF section heuristics or WASM section payload lengths.
+# Native reporting needs readelf; its absence also skips stripping. "Allocated"
+# sums non-NOBITS sections with nonzero addresses, not runtime memory or ELF SHF_ALLOC
+# directly. The temporary stripped copy is deleted only on successful completion.
+# WASM parsing assumes trusted compiler output, skips header/framing bytes and does
+# not validate module structure; custom-section sizes include their name encoding.
 section_report() {
     local section_artifact="$1"
     local section_kind="$2"
@@ -135,6 +144,9 @@ print(f"wasm_other_section_bytes={other}")
 ' "$section_artifact"
 }
 
+# Print file identity/compression and section reports for one artifact.
+# Brotli and wasm-opt are optional. wasm-opt outputs are retained beside the input,
+# without execution/equivalence validation; the original artifact is not overwritten.
 report_artifact() {
     local size_label="$1"
     local size_artifact="$2"
@@ -165,7 +177,9 @@ report_artifact() {
     printf '\n'
 }
 
-# Build one harness binary and report the native and WASM artifacts.
+# Build/report one harness binary natively and for WASM, without executing either.
+# Arguments select binary, features, profile, optional opt-level override and label.
+# Repeated optimization levels reuse Cargo output paths; reports retain identity by hash.
 harness_build() {
     local harness_bin="$1"
     local harness_features="$2"
@@ -202,7 +216,9 @@ harness_build() {
         wasm
 }
 
-# Build the C ABI library and a real C consumer linked against the static form.
+# Build/report the complete Linux .so; when cc exists, link and execute the C consumer
+# against the static library with ordinary and GC-sections links. Missing cc silently
+# omits consumer rows. The consumer run checks ABI statuses, not receipt contents.
 abi_build() {
     local abi_profile="$1"
     local abi_opt="$2"
@@ -249,6 +265,9 @@ abi_build() {
 # Build the WASM bindings. `binding` matches scripts/test-wasm-bindings.sh
 # (`--no-default-features --features wasm`); `documented` matches the README
 # and wasm-pack command (`--features wasm` with the default features).
+# Reports raw output without execution. Absent/mismatched wasm-bindgen is a printed
+# skip, not a build failure; matching bindgen emits web-target glue and byte counts.
+# Only mode "documented" changes defaults; any other mode uses the binding feature set.
 wasm_bindings_build() {
     local bindings_profile="$1"
     local bindings_opt="$2"
@@ -304,7 +323,9 @@ print(next(p["version"] for p in packages if p["name"] == "wasm-bindgen"))
     printf '\n'
 }
 
-# Attribute retained code to crates for each embedded consumer.
+# Attribute the top 25 crate rows for all three embedded-z consumers with cargo-bloat.
+# Missing cargo-bloat prints a skip. Attribution is heuristic, not a symbol ownership
+# proof, and does not execute the workloads or compare their output semantics.
 attribute_runs() {
     if ! cargo bloat --version >/dev/null 2>&1; then
         printf 'cargo_bloat=absent\n'
@@ -334,7 +355,10 @@ attribute_runs() {
 
 # Compare completed-workload latency across embedded optimization levels.
 # Every level is built first and copied aside; runs then alternate between
-# levels so host drift affects each level alike.
+# levels in a fixed order within each round, reducing but not eliminating host drift.
+# Each process warms itself once and receives width 12 plus the configured repeats.
+# This scope runs primitive/composed only; it does not time raster or the C ABI.
+# Copies remain on disk. Raw counts/receipts are printed, not compared across levels.
 perf_runs() {
     local perf_bin="$1"
     local perf_features="$2"

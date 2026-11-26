@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `benchmarks/size-harness/src/bin/primitive.rs` | Entire file; documented argument/default handling, timing/drop boundaries and count-only result. | Standalone all-feature check/private docs passed; workload not executed. |
+| `benchmarks/size-harness/src/bin/composed.rs` | Entire file; corrected extrusion-only receipt description and documented fixed tool, bounds assertion, exports and timing. | Standalone all-feature check/private docs passed; workflow not executed. |
+| `benchmarks/size-harness/src/bin/raster.rs` | Entire file; documented thresholded-cell model, pixel pattern, lifetime, defaults and native/WASM timer split. | Standalone all-feature check/private docs passed; raster not generated/executed. |
 | `benchmarks/rust/kernel_comparison.rs` | Entire file; documented all helpers/local items, winding normalization, lossy fingerprints, setup/gating and actual timed work. | Compilation/private docs pass with curve added; manifest-declared minimal feature set fails on existing curve/torus imports. No benchmark executed. |
 | `benchmarks/rust/solidean_comparison.rs` | Entire file; documented opt-in gates, timer boundaries, finite/tolerant mass checks and nominal empty expectation. | Minimal-feature compilation/private docs passed; acquisition and benchmark not run. |
 | `benchmarks/support/solidean.rs` | Entire file; documented every instruction/field/helper, binary64 OBJ parsing, single-consumption execution and cache validation limits. | Benchmark compilation/private docs passed; tuple-field expansion adds only layout/trailing commas. No fixtures downloaded or executed. |
@@ -3636,6 +3639,61 @@ Validation after final edits:
 Logs: `/tmp/csgrs-rustdoc-kernel-declared-check.log`,
 `/tmp/csgrs-rustdoc-kernel-check.log` and
 `/tmp/csgrs-rustdoc-kernel-private.log`.
+
+### Standalone size consumers and reporting tools, 26 November 2026
+
+Baseline: `82d6f218c`. Owners: standalone benchmark package, C consumer and size
+reporting tool, P8/P9/P19/P25–P30/P36/P37. Read the three Rust binaries (56/76/57
+baseline lines), all 425 script lines, all 94 C lines, the complete 100-line README,
+61-line manifest and 358-line lockfile. Missing witnesses were undocumented entry
+points and prose overstating aggregate certainty, executed coverage, cleanup or
+section metrics. The manifest and generated lockfile were reviewed but not edited.
+
+The composed consumer returns the extrusion's local receipt; convenience translation,
+difference and bounds do not contribute separate receipts to that value. Raster
+exactness concerns thresholded unit cells. Rust timers include construction and
+destruction after one warmup, but are absent on WASM. The C consumer reads projected
+f64 bounds/buffers and queries evidence without asserting its fields; only success
+paths free every acquired handle. Failure exits are not explicit handle cleanup.
+
+The script builds/reports Rust and WASM artifacts without running them. ABI/perf
+scopes execute native consumers, while perf includes primitive/composed only.
+Documented-feature WASM has one profile row, unlike the binding-only profile sweep.
+Native section grouping is a nonzero-address/non-NOBITS heuristic, and WASM counts
+payloads without headers/framing. Optional-tool omissions, retained optimized/copied
+artifacts, lack of an error cleanup trap and absence of cross-configuration output
+comparison are now explicit. No measurement results or historical performance claims
+were created by this review.
+
+Non-Rust whole-file review records:
+
+| File | Review and validation |
+| --- | --- |
+| `benchmarks/size-harness/measure.sh` | All seven shell functions, inline parsers and dispatch read; comments corrected; Bash syntax and all three embedded Python programs parse. No build/measurement commands executed through this script. |
+| `benchmarks/size-harness/consumer/abi_consumer.c` | Both functions and all status/ownership paths read; comments corrected; strict C11 warnings-as-errors syntax check passed against the real ABI header. No link/run. |
+| `benchmarks/size-harness/README.md` | Entire guide reconciled with executable scopes, timers, receipts, metrics and optional tools; command blocks preserved. |
+| `benchmarks/size-harness/Cargo.toml` | Complete manifest reviewed unchanged; isolated workspace/feature/binary mapping checked; all three profile tables equal root tables. |
+| `benchmarks/size-harness/Cargo.lock` | Complete generated file read unchanged; TOML parsed and all 38 shared package identities/checksums match root. This is dependency consistency, not a source/dependency security audit. |
+
+Validation after final edits:
+
+- Rustfmt and `git diff --check` passed. All five changed executable sources are
+  identical after stripping comments/blank lines; Rust/C/shell operations are intact.
+- `cargo check --locked --manifest-path benchmarks/size-harness/Cargo.toml
+  --all-features --bins --offline -j 2` passed without warnings. This checks the
+  standalone package with both optional features enabled, not each minimal feature
+  combination, release linking, or WASM execution.
+- All three private binary Rustdoc builds passed with broken links denied. Checked
+  six private function summaries and three module introductions in rendered HTML.
+- `cc -std=c11 -Wall -Wextra -Werror -fsyntax-only -Icrates/csgrs-ffi/include
+  benchmarks/size-harness/consumer/abi_consumer.c`, `bash -n` on the measurement
+  script and parse-only compilation of its three embedded Python blocks passed.
+- No workflows, consumers, downloads, ABI links, size/latency measurements or WASM
+  optimizer runs were executed under the docs-only waiver. Temporary compilation
+  reused the shared target with incremental compilation disabled.
+
+Logs: `/tmp/csgrs-rustdoc-size-consumers-check.log` and the three
+`/tmp/csgrs-rustdoc-size-{primitive,composed,raster}-private.log` files.
 
 ## Next work
 

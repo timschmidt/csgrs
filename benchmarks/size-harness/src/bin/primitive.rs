@@ -1,17 +1,19 @@
 //! Small primitive consumer: construct, transform, and query one exact solid.
 //!
-//! This binary links only CSGRS primitive construction, affine transport,
+//! This binary exercises CSGRS primitive construction, affine transport,
 //! exact bounds, and native triangle traversal. It is the feature-minimal end
 //! of the size attribution; `composed` adds profiles, extrusion, Booleans, and
-//! export. The workload is argument-driven so dead-code elimination cannot
-//! reduce the measured artifact to metadata.
+//! export. Arguments and `black_box` keep runtime inputs/results observable;
+//! actual retained code size still requires inspecting the built artifact.
 
 use std::hint::black_box;
 
 use csgrs::{Real, TriangleMesh, solid, solid::SolidExt};
 
-/// One completed primitive workflow. Returns the traversed triangle count and
-/// whether exact bounds were available.
+/// Constructs a cube of integer side length, translates by `(1, 2, 3)` and traverses it.
+/// Returns triangle count and whether strict bounds are nonempty. Constructor,
+/// transform and bounds errors propagate as boxed errors; convenience calls do not
+/// expose local certainty receipts. Owned geometry is dropped before returning.
 fn workload(width: i64) -> Result<(usize, bool), Box<dyn std::error::Error>> {
     let body: TriangleMesh = solid::cube(Real::from(black_box(width)))?;
     let placed = body.translated(Real::from(1), Real::from(2), Real::from(3))?;
@@ -25,6 +27,11 @@ fn workload(width: i64) -> Result<(usize, bool), Box<dyn std::error::Error>> {
     Ok((triangles, bounds.is_some()))
 }
 
+/// Parses width/repetitions, warms once, then measures complete repeated workflows.
+/// Missing/malformed values default to width 12 and one repetition; repetitions clamp
+/// to one. Geometry validates width. Native timing excludes parsing, warmup and output,
+/// and reports truncated integer nanoseconds per iteration. WASM runs the same loop
+/// without clock/output timing. Errors stop the run; final counts are not assertions.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let width = std::env::args()
         .nth(1)
