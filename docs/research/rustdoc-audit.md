@@ -5521,6 +5521,106 @@ Full workflow/runtime/performance checks remain waived for this documentation-on
 session. Recording gaps does not repair them or establish universal geometry
 completion. The repository-wide audit remains active.
 
+## Hyperlimit axis-aligned box predicates
+
+Baseline: `40ffaf5a2`. Read all 1,822 lines of
+`crates/hyperlimit/src/predicates/aabb.rs`, including every public/private query,
+the relation enum, rational-borrowing helpers, receipt bookkeeping, all eighteen
+tests, and five nested test helpers. Revisited structural extent facts, interval
+classification, and Real's borrowed-rational accessor. Those supporting excerpts
+do not add whole-file review credit. Ownership is Hyperlimit's box predicates
+and their broad-phase consumers. Relevant properties are exact meaning,
+structural proof scope, policy/receipts, dispatch order and uncertainty
+(P1/P3/P4/P8–P11/P19). Domain: borrowed Real coordinates for closed 2D/3D boxes,
+reversed corners in general APIs, ordered corners in specialized APIs, collapsed
+axes, rational/symbolic data and cached extent facts.
+
+Acceptance witnesses were absent private/test Rustdoc, a module description
+that named only 2D despite containing 3D queries, and claims that every bound/
+interval decision was exact. Current branches preserve qualified approximate
+comparisons, and the 2D extent path has a narrower zero-area recognition contract
+than the previous positive-area wording implied. Documentation now describes
+those implementation limits without changing the acceptance contract.
+
+General point and intersection queries normalize endpoints per axis. Ordered
+queries require the caller to supply ordered bounds and neither normalize nor
+validate that precondition. Collapsed boxes remain sets rather than an empty-box
+encoding. Closed point queries classify a point on any endpoint axis as Boundary;
+relative interior uses open intervals on positive-width axes and equality on
+collapsed axes. Thus a point box contains its point in relative interior. All
+paths retain their stated axis order and stop at the first rejection or Unknown.
+An unresolved earlier axis is not bypassed for a later possible separation.
+
+Selected paths borrow structurally available rational coordinates for an
+Exact/Exact result. Borrowing does not invoke general symbolic rational
+reduction, clone or round coordinates, or force denominator normalization;
+actual Rational comparisons can still have variable cost. Generic paths join
+consumed certainty/stage and forward Unknown, without a strict-first composite
+replay. Ordered overlap compares first maximum/second minimum before second
+maximum/first minimum; containment compares corresponding minima before maxima.
+The shared non-inlined scalar-comparison boundary is documented as a code-layout
+choice, not a newly measured performance result.
+
+Triangle bounding queries select x extrema and test x membership before y.
+Extrema selection visits the second point then the third, each against current
+minimum before maximum, retaining earlier references on ties. This tests the
+box of the triple, including degenerate triples; it does not test point/triangle
+incidence. Policy qualification applies to both bound selection and membership.
+A box rejection is admissible for an enclosing object only with suitable bounds
+and certainty; a box overlap does not establish contact of the bounded objects.
+
+The 2D intersection wrapper eagerly computes both structural extent summaries
+before testing intervals. Its facts-bearing entry point normalizes/classifies
+x then y, stopping on separation/Unknown, then selects Touching for an interval
+Touching label or either `known_zero_area == Some(true)`. Only that fact field
+is consumed. Its truth and association with current corners are not validated;
+stale or caller-forged facts are not certified by the returned child receipts.
+
+The interval relation can be Overlapping for a contained singleton, with zero
+extent separately recorded. The 2D path discards that flag and instead uses
+structural facts; unknown zero-area facts take the same branch as false even
+though unknown is not proof of positive extent. Therefore an Overlapping label
+alone does not certify positive area when those facts are unavailable. This is
+a source-level implementation gap, not a measured failing automatic-facts input
+in this batch. A future acceptance witness should exercise policy-decided zero
+extent with unavailable structural zero-area facts and compare the label to an
+independent zero-area expectation. The 3D path retains the interval zero-extent
+flags (or directly tests rational widths), so a contained flat box is Touching
+with the producing receipt. No implementation or fixture was changed here.
+
+Tests now document actual finite assertions. Rational controls cover location,
+intersection, ordered containment, and planar relative interior. The symbolic
+ordered-overlap fixture checks strict Unknown versus approximate true with an
+Approximate receipt; other pi-translated tables mostly check values rather than
+dispatch counts. The fixture named for cached extent facts inspects facts but
+does not pass them to its point predicates. The borrowed-storage fixture has no
+allocation/copy measurement. Unknown helpers inspect only the outcome variant,
+and the receipt-rank fixture checks all finite rank pairs but not trace state
+after an Unknown. Original fixtures, assertions and historical names remain.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only/blank
+  lines gives identical source to baseline; no signatures, branches, predicate
+  order, inline attributes, fixtures, assertions, or lint configuration changed.
+- A scoped scan found 55 documented declarations, including the nested helpers.
+  Inspected 26 complete rendered doc groups on 24 private-module pages, including
+  both relation variants. All cfg(test) documentation was reviewed in source,
+  not claimed as rendered by library Rustdoc.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D warnings -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed, compiling affected fixtures and consumers without execution.
+- Downstream private csgrs Rustdoc with `--no-default-features --features curve`,
+  locked offline dependencies, and broken intra-doc links denied passed. Shared
+  temporary target storage remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-aabb-{doc,check,downstream-doc}.log`.
+Full workflow/runtime/performance checks remain waived for this docs-only
+session. The documented limitations remain implementation work; the full
+repository audit remains active.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,9 +1,21 @@
-//! Stateless exact predicates for 2D axis-aligned boxes.
+//! Borrowed-coordinate predicates for closed 2D and 3D axis-aligned boxes.
 //!
-//! This module deliberately does not define or own a bounding-box data
-//! structure. Curve, triangulation, and broad-phase crates keep their own
-//! storage and call these helpers to certify inclusive box predicates over
-//! borrowed min/max points.
+//! This module supplies decisions rather than a bounding-box storage type.
+//! General point/intersection queries normalize each axis through comparisons;
+//! APIs named ordered require the caller to supply ordered endpoints and do not
+//! validate that precondition. Collapsed boxes remain geometric sets, not an
+//! empty-box encoding. Relative interior has a separate 3D predicate.
+//!
+//! Selected paths first borrow structurally available rational coordinates and
+//! return Exact/Exact results. Generic paths consume comparisons under the
+//! supplied policy and join their weakest certainty and latest stage. They stop
+//! at the first rejection or Unknown in axis order; no strict-first composite
+//! replay is performed here. Approximate results retain their qualification.
+//!
+//! A box decision can reject geometry only with admissible certainty and valid
+//! enclosing bounds; overlap does not establish contact of the bounded objects.
+//! The 2D intersection classifier additionally trusts structural extent facts,
+//! with the limitations documented on its facts-bearing entry point.
 
 use crate::classify::{
     Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, Aabb3PointLocation,
@@ -21,14 +33,13 @@ use crate::predicates::order::compare_reals_with_policy;
 use core::cmp::Ordering;
 use hyperreal::Real;
 
-/// Return whether a point lies in an ordered closed 2D box using borrowed
-/// coordinates.
+/// Test inclusive point membership in an ordered 2D box without building Point2 values.
 ///
-/// `min[axis] <= max[axis]` is a caller-provided precondition. This
-/// coordinate-borrowed form lets curve and broad-phase crates reuse the
-/// canonical Hyperlimit cascade without cloning their own point carriers into
-/// [`Point2`].
-/// Policy-controlled ordered-coordinate AABB predicate.
+/// Require `min[axis] <= max[axis]`; endpoint order is neither normalized nor
+/// validated. If every coordinate exposes a borrowed rational, use rational
+/// comparisons with an Exact/Exact receipt. Otherwise compare point to minimum
+/// then maximum on x before y, returning on the first outside result or Unknown.
+/// Successful paths retain all consumed comparison qualification.
 #[inline]
 pub fn point_in_ordered_aabb2_coordinates_with_policy(
     min: [&Real; 2],
@@ -78,12 +89,13 @@ pub fn point_in_ordered_aabb2_coordinates_with_policy(
     PredicateOutcome::decided(true, trace.certainty, trace.stage)
 }
 
-/// Return whether two ordered closed 2D boxes intersect inclusively using
-/// borrowed coordinates.
+/// Test inclusive intersection of two ordered 2D boxes from borrowed coordinates.
 ///
-/// Both min/max pairs must already be ordered on every axis. Edge and corner
-/// contact count as intersection.
-/// Policy-controlled ordered-coordinate AABB intersection predicate.
+/// Both endpoint pairs must be ordered on each axis; this is not checked.
+/// Edge/corner contact counts. A fully borrowed-rational path returns Exact/Exact.
+/// Otherwise test first maximum against second minimum, then second maximum
+/// against first minimum, on x before y. The first strict separation or Unknown
+/// returns immediately; decided outcomes join consumed certainty and stage.
 #[inline]
 pub fn ordered_aabb2s_intersect_coordinates_with_policy(
     first_min: [&Real; 2],
@@ -128,14 +140,13 @@ pub fn ordered_aabb2s_intersect_coordinates_with_policy(
     PredicateOutcome::decided(true, trace.certainty, trace.stage)
 }
 
-/// Classify a point relative to a closed 2D axis-aligned box with an explicit
-/// predicate escalation policy.
+/// Classify a point in the closed box spanned by either ordering of two corners.
 ///
-/// The min/max corners may be supplied in either coordinate order; each axis is
-/// normalized by exact interval predicates. These box predicates are safe
-/// broad-phase filters for arrangements, curve intersection, and triangulation
-/// candidate pruning. Boxes reduce candidate sets, but final topology still
-/// belongs to orientation and incidence predicates.
+/// Normalize and classify the x interval, then y. The first outside or Unknown
+/// result stops evaluation. A retained endpoint label on either axis yields
+/// Boundary, otherwise Inside; points on collapsed boxes are therefore Boundary.
+/// All consumed decisions follow `policy`, and their joined receipt can be
+/// approximate. This tests box membership, not the geometry enclosed by a bound.
 pub fn classify_point_aabb2_with_policy(
     min: &Point2,
     max: &Point2,
@@ -182,8 +193,9 @@ pub fn classify_point_aabb2_with_policy(
     PredicateOutcome::decided(location, trace.certainty, trace.stage)
 }
 
-/// Return whether a point lies in a closed 2D axis-aligned box with an explicit
-/// predicate escalation policy.
+/// Map 2D box Inside/Boundary to true, retaining the classifier's receipt or Unknown.
+///
+/// Corners may be reversed; normalization belongs to the delegated classifier.
 pub fn point_in_aabb2_with_policy(
     min: &Point2,
     max: &Point2,
@@ -200,12 +212,14 @@ pub fn point_in_aabb2_with_policy(
     }
 }
 
-/// Return whether a point lies in the closed axis-aligned bounding box of a
-/// 2D triangle with an explicit predicate escalation policy.
+/// Test the query against the inclusive coordinate bounds of three planar points.
 ///
-/// This is a rejection filter for downstream exact triangle predicates. Every
-/// min/max and interval decision is exact, preserving the boundary between
-/// filters and final topology.
+/// Borrow minima/maxima on x first and test membership before doing any y bounds.
+/// For each axis, visit b then c, comparing against the current minimum then
+/// maximum; equal values retain the earlier endpoint. Unknown exits immediately.
+/// All extent-selection and interval receipts are joined, including approximation.
+/// Degenerate triples are allowed. True only establishes bounding-box membership,
+/// not triangle membership; no orientation or incidence decision is performed.
 pub fn point_in_triangle2_aabb_with_policy(
     a: &Point2,
     b: &Point2,
@@ -245,11 +259,14 @@ pub fn point_in_triangle2_aabb_with_policy(
     PredicateOutcome::decided(y.is_inside_or_boundary(), trace.certainty, trace.stage)
 }
 
-/// Classify a point relative to a closed 3D axis-aligned box with an explicit
-/// predicate escalation policy.
+/// Classify point membership in a closed 3D box with per-axis corner normalization.
 ///
-/// The min/max corners may be supplied in either coordinate order; each axis is
-/// normalized by exact interval predicates.
+/// If all nine coordinates expose borrowed rationals, compare them directly and
+/// return Exact/Exact. Otherwise classify intervals in x/y/z order under policy.
+/// Stop at the first Outside or Unknown; if all axes contain the point, any endpoint
+/// match yields Boundary, otherwise Inside. Collapsed-axis membership is Boundary,
+/// not relative interior. The generic result retains its weakest consumed certainty
+/// and latest stage rather than claiming every comparison was exact.
 pub fn classify_point_aabb3_with_policy(
     min: &Point3,
     max: &Point3,
@@ -345,12 +362,15 @@ pub fn classify_point_aabb3_with_policy(
     PredicateOutcome::decided(location, trace.certainty, trace.stage)
 }
 
-/// Return whether a point lies in the relative interior of an ordered 3D box.
+/// Test relative interior of an ordered box, including lower-dimensional cells.
 ///
-/// `min` and `max` must be ordered on every axis. Positive-width axes use open
-/// interval membership, while zero-width axes require exact equality. This is
-/// the relative-interior predicate used by lower-dimensional subdivision
-/// cells embedded in 3D.
+/// Require ordered endpoints; the precondition is not validated or normalized.
+/// Positive-width axes require strict interior membership, while zero-width axes
+/// require equality. Thus a point box contains its point in relative interior.
+/// Borrowed-rational coordinates use direct comparisons and Exact/Exact receipts.
+/// The generic path visits x/y/z, compares extent first, then checks the equality
+/// or open-interval condition. The first false or Unknown returns; all consumed
+/// certainty/stages are joined, so terminal extent equality remains approximate.
 #[inline]
 pub fn point_in_ordered_aabb3_relative_interior_with_policy(
     min: &Point3,
@@ -429,8 +449,9 @@ pub fn point_in_ordered_aabb3_relative_interior_with_policy(
     PredicateOutcome::decided(true, trace.certainty, trace.stage)
 }
 
-/// Return whether a point lies in a closed 3D axis-aligned box with an explicit
-/// predicate escalation policy.
+/// Map 3D box Inside/Boundary to true without discarding its receipt or Unknown.
+///
+/// The delegated classifier handles reversed corners and collapsed axes.
 pub fn point_in_aabb3_with_policy(
     min: &Point3,
     max: &Point3,
@@ -447,12 +468,14 @@ pub fn point_in_aabb3_with_policy(
     }
 }
 
-/// Classify the intersection relation between two closed 2D axis-aligned boxes
-/// with an explicit predicate escalation policy.
+/// Classify two closed 2D boxes after building structural facts for both extents.
 ///
-/// `Touching` covers edge and corner contact with zero area. `Overlapping`
-/// means both coordinate intervals overlap over positive length, so the box
-/// intersection has positive area.
+/// Both fact sets are computed before interval classification, even if x later
+/// separates. Endpoints may be reversed; interval predicates normalize them.
+/// Delegate to [`classify_aabb2_intersection_with_policy_and_facts`] for the
+/// Touching/Overlapping distinction, including its zero-area recognition limit.
+/// This is not an unconditional positive-area certificate for every Overlapping
+/// label, and policy-authorized approximation remains in the outcome receipt.
 pub fn classify_aabb2_intersection_with_policy(
     first_min: &Point2,
     first_max: &Point2,
@@ -471,14 +494,21 @@ pub fn classify_aabb2_intersection_with_policy(
     )
 }
 
-/// Classify the intersection relation between two closed 2D axis-aligned boxes
-/// with an explicit policy and caller-cached structural facts.
+/// Combine axis interval relations with caller-associated structural extent facts.
 ///
-/// The facts are used only after exact interval predicates prove both axes
-/// intersect. A structurally zero-area input box cannot have a positive-area
-/// box intersection, so the final relation is `Touching` rather than
-/// `Overlapping`. This is a local exact specialization of the box broad phase;
-/// uncertain extent facts do not decide topology by themselves.
+/// Normalize and classify x, then y, stopping at the first Disjoint or Unknown.
+/// After both axes intersect, an interval Touching label or either
+/// `known_zero_area() == Some(true)` produces Touching; otherwise return Overlapping.
+/// Only that fact field is consumed. Its truth and association with the current
+/// corners are trusted, not checked, so mutation requires fresh valid facts.
+///
+/// The interval relation alone can label a contained singleton Overlapping. This
+/// 2D path drops the interval helper's zero-extent flags and uses structural facts
+/// instead. None is not a proof of nonzero extent, but this branch treats it
+/// the same as false.
+/// Consequently Overlapping is not by itself a positive-area proof when zero-area
+/// facts are unavailable. Child decision receipts are joined, but they do not
+/// certify caller-authored or stale facts. Approximation remains qualified.
 pub fn classify_aabb2_intersection_with_policy_and_facts(
     first_min: &Point2,
     first_max: &Point2,
@@ -545,8 +575,10 @@ pub fn classify_aabb2_intersection_with_policy_and_facts(
     PredicateOutcome::decided(relation, trace.certainty, trace.stage)
 }
 
-/// Return whether two closed 2D axis-aligned boxes intersect with an explicit
-/// predicate escalation policy.
+/// Map both non-Disjoint 2D box relations to true, preserving receipt or Unknown.
+///
+/// This inclusive test uses general corner normalization and includes collapsed
+/// point/segment boxes. It does not require positive intersection area.
 pub fn aabb2s_intersect_with_policy(
     first_min: &Point2,
     first_max: &Point2,
@@ -566,13 +598,16 @@ pub fn aabb2s_intersect_with_policy(
     }
 }
 
-/// Classify the intersection relation between two closed 3D axis-aligned boxes
-/// with an explicit predicate escalation policy.
+/// Classify two closed 3D boxes, including contact on collapsed axes.
 ///
-/// This is the 3D counterpart to [`classify_aabb2_intersection_with_policy`].
-/// It is a certified broad-phase predicate: `Disjoint` may reject a pair, while
-/// `Touching` and `Overlapping` are still only candidates for exact
-/// narrow-phase predicates before topology is mutated.
+/// Normalize both corner pairs on each axis. A fully borrowed-rational path returns
+/// Exact/Exact after direct comparisons. Otherwise visit x/y/z interval queries,
+/// retaining their zero-extent flags as well as their relations and receipts.
+/// The first separation or Unknown stops evaluation. If all axes meet, endpoint
+/// contact or any zero-width input axis yields Touching; otherwise Overlapping.
+/// With certified comparisons this distinguishes zero from positive intersection
+/// volume. Approximate comparisons qualify the result. For enclosing bounds,
+/// non-Disjoint remains only a candidate for the objects' narrow-phase query.
 pub fn classify_aabb3_intersection_with_policy(
     first_min: &Point3,
     first_max: &Point3,
@@ -704,11 +739,10 @@ pub fn classify_aabb3_intersection_with_policy(
     PredicateOutcome::decided(relation, trace.certainty, trace.stage)
 }
 
-/// Return whether two ordered closed 3D boxes intersect inclusively.
+/// Borrow two ordered point-corner pairs and test inclusive 3D box intersection.
 ///
-/// Both min/max pairs must already be ordered on every axis. Skipping interval
-/// normalization makes this the canonical broad-phase predicate for retained
-/// AABB structures.
+/// Both boxes must already have ordered endpoints on every axis. Delegate to the
+/// coordinate form without cloning corners, preserving its outcome and receipt.
 #[inline]
 pub fn ordered_aabb3s_intersect_with_policy(
     first_min: &Point3,
@@ -726,12 +760,13 @@ pub fn ordered_aabb3s_intersect_with_policy(
     )
 }
 
-/// Return whether two ordered closed 3D boxes intersect inclusively using
-/// borrowed coordinates.
+/// Test inclusive intersection of ordered 3D boxes using borrowed coordinate arrays.
 ///
-/// Both min/max pairs must already be ordered on every axis. This form keeps
-/// exact extrema that share another geometry owner borrowed through the same
-/// canonical predicate cascade, without cloning them into temporary points.
+/// Both endpoint pairs must be ordered; no normalization or order validation occurs.
+/// Direct rational comparisons return Exact/Exact. Otherwise visit x/y/z and test
+/// first maximum against second minimum before second maximum against first minimum.
+/// Stop at the first strict separation or Unknown, retaining consumed qualification.
+/// Touching and collapsed intersections count as true.
 #[inline]
 pub fn ordered_aabb3s_intersect_coordinates_with_policy(
     first_min: [&Real; 3],
@@ -750,9 +785,13 @@ pub fn ordered_aabb3s_intersect_coordinates_with_policy(
     )
 }
 
-/// Return whether one ordered closed 3D box contains another inclusively.
+/// Test inclusive containment of one ordered 3D box by another.
 ///
-/// Both min/max pairs must already be ordered on every axis.
+/// Require both min/max pairs ordered on every axis; this is not validated.
+/// The rational path returns Exact/Exact. Otherwise, in x/y/z order, reject when
+/// outer minimum is greater than inner minimum or outer maximum is less than inner
+/// maximum. Unknown stops before later comparisons; successful paths retain joined
+/// qualification. Equal faces and contained lower-dimensional boxes are allowed.
 #[inline]
 pub fn ordered_aabb3_contains_with_policy(
     outer_min: &Point3,
@@ -771,12 +810,22 @@ pub fn ordered_aabb3_contains_with_policy(
     )
 }
 
+/// Select the comparison schedule for ordered 3D box overlap or containment.
 #[derive(Clone, Copy)]
 enum OrderedAabb3Relation {
+    /// Require opposing face intervals to meet on every axis.
     Intersects,
+    /// Require the first box to contain the second on every axis.
     Contains,
 }
 
+/// Share rational borrowing and ordered-axis traversal for two relation schedules.
+///
+/// Endpoints are trusted ordered. Intersects compares opposing faces; Contains
+/// compares corresponding minima then maxima. Rational borrowing succeeds only
+/// for the complete coordinate tuple. The generic path uses a non-inlined scalar
+/// comparison boundary, short-circuiting the first rejecting ordering or Unknown
+/// and joining successful receipts. It does not run a separate strict replay.
 #[inline]
 fn ordered_aabb3_pairwise_relation(
     first_min: [&Real; 3],
@@ -829,6 +878,11 @@ fn ordered_aabb3_pairwise_relation(
     PredicateOutcome::decided(true, trace.certainty, trace.stage)
 }
 
+/// Forward policy-controlled comparison through a deliberately non-inlined boundary.
+///
+/// This keeps the full scalar cascade out of each comparison site in the ordered
+/// box loop. The boundary is a code-layout choice; it changes neither the delegated
+/// value nor its receipt, and does not itself establish a performance measurement.
 #[inline(never)]
 fn compare_aabb_reals(
     left: &Real,
@@ -841,8 +895,10 @@ fn compare_aabb_reals(
     compare_reals_with_policy(left, right, policy)
 }
 
-/// Return whether two closed 3D axis-aligned boxes intersect with an explicit
-/// predicate escalation policy.
+/// Map Touching/Overlapping 3D boxes to true, retaining the classifier's receipt.
+///
+/// General corner normalization and zero-width axes are handled by the classifier;
+/// Unknown remains Unknown rather than being coerced to a boolean.
 pub fn aabb3s_intersect_with_policy(
     first_min: &Point3,
     first_max: &Point3,
@@ -862,6 +918,7 @@ pub fn aabb3s_intersect_with_policy(
     }
 }
 
+/// Recognize either endpoint label, excluding interval interior and exterior labels.
 fn is_interval_boundary(location: RealIntervalLocation) -> bool {
     matches!(
         location,
@@ -869,6 +926,11 @@ fn is_interval_boundary(location: RealIntervalLocation) -> bool {
     )
 }
 
+/// Borrow both structurally available rational coordinates, or return None.
+///
+/// This uses `Real::exact_rational_ref`, not general symbolic rational reduction.
+/// It does not clone or round coordinates; rational arithmetic may still have
+/// variable cost, including for lazy rational storage.
 #[inline]
 fn exact_rational_coordinates2(coordinates: [&Real; 2]) -> Option<[&hyperreal::Rational; 2]> {
     let [Some(x), Some(y)] = coordinates.map(Real::exact_rational_ref) else {
@@ -877,6 +939,11 @@ fn exact_rational_coordinates2(coordinates: [&Real; 2]) -> Option<[&hyperreal::R
     Some([x, y])
 }
 
+/// Borrow all three structurally available rationals, declining if any is unavailable.
+///
+/// Symbolic values remain on the Real comparison path even when another reducer
+/// could prove them rational. No conversion, rounding, or denominator normalization
+/// is forced by this coordinate-borrowing helper.
 #[inline]
 fn exact_rational_coordinates3(coordinates: [&Real; 3]) -> Option<[&hyperreal::Rational; 3]> {
     let [Some(x), Some(y), Some(z)] = coordinates.map(Real::exact_rational_ref) else {
@@ -885,6 +952,11 @@ fn exact_rational_coordinates3(coordinates: [&Real; 3]) -> Option<[&hyperreal::R
     Some([x, y, z])
 }
 
+/// Borrow extrema by comparing second then third against the evolving bounds.
+///
+/// Each value is compared with the current minimum before the current maximum.
+/// Ties retain the earlier reference. Decided comparisons update the caller's trace;
+/// Unknown returns immediately, leaving any prior trace updates intact.
 fn min_max3<'a>(
     first: &'a hyperreal::Real,
     second: &'a hyperreal::Real,
@@ -904,14 +976,17 @@ fn min_max3<'a>(
     Ok((min, max))
 }
 
+/// Finite box-relation, rational/symbolic, policy-qualification, and receipt-join controls.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::predicate::RefinementNeed;
     use crate::predicates::decision::{certainty_rank, max_certainty, max_stage, stage_rank};
 
+    /// Approximation-permitted policy used by rational controls and explicit terminal cases.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Assert the normalized trigonometric identity, then return a harder angle-addition zero.
     fn terminally_unresolved_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -925,14 +1000,17 @@ mod tests {
         crate::test_support::terminally_unresolved_zero()
     }
 
+    /// Construct an exact integer scalar for box fixtures.
     fn real(value: i32) -> Real {
         Real::from(value)
     }
 
+    /// Construct an exact integer-coordinate planar fixture point.
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
 
+    /// Construct an exact integer-coordinate spatial fixture point.
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(
             hyperreal::Real::from(x),
@@ -941,18 +1019,22 @@ mod tests {
         )
     }
 
+    /// Translate an integer by pi to keep fixture coordinates on the symbolic path.
     fn symbolic(value: i32) -> Real {
         Real::pi() + Real::from(value)
     }
 
+    /// Translate both integer coordinates by pi for planar comparison fixtures.
     fn symbolic_p2(x: i32, y: i32) -> Point2 {
         Point2::new(symbolic(x), symbolic(y))
     }
 
+    /// Translate all integer coordinates by pi for spatial comparison fixtures.
     fn symbolic_p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(symbolic(x), symbolic(y), symbolic(z))
     }
 
+    /// Check integer 2D location labels, a reversed-corner query, and inclusive boundary mapping.
     #[test]
     fn point_aabb_classifier_distinguishes_inside_boundary_and_outside() {
         let min = p2(0, 0);
@@ -976,6 +1058,7 @@ mod tests {
         );
     }
 
+    /// Check one contained and one x-separated query against three integer point bounds.
     #[test]
     fn point_triangle_aabb_filter_uses_exact_coordinate_bounds() {
         let a = p2(4, 1);
@@ -992,6 +1075,7 @@ mod tests {
         );
     }
 
+    /// Check integer 2D separation, edge contact, area overlap, and inclusive corner contact.
     #[test]
     fn aabb_intersection_distinguishes_disjoint_touching_and_overlap() {
         assert_eq!(
@@ -1015,6 +1099,7 @@ mod tests {
         );
     }
 
+    /// Check integer 3D separation, face contact, volume overlap, and inclusive corner contact.
     #[test]
     fn aabb3_intersection_distinguishes_disjoint_touching_and_overlap() {
         assert_eq!(
@@ -1063,6 +1148,7 @@ mod tests {
         );
     }
 
+    /// Check integer 3D labels, a reversed-corner query, and inclusive boundary mapping.
     #[test]
     fn point_aabb3_classifier_distinguishes_inside_boundary_and_outside() {
         let min = p3(0, 0, 0);
@@ -1086,6 +1172,11 @@ mod tests {
         );
     }
 
+    /// Check ordered overlap/containment and relative interior of a planar box.
+    ///
+    /// Borrowed rational overlap must be Exact under both policies. A symbolic contact
+    /// control must be strict Unknown and approximate true with Approximate certainty.
+    /// The remaining assertions check values, not dispatch counts or stage labels.
     #[test]
     fn ordered_aabb3_predicates_cover_overlap_containment_and_relative_interior() {
         let outer_min = p3(0, 0, 0);
@@ -1190,6 +1281,7 @@ mod tests {
         );
     }
 
+    /// Check borrowed integer boxes for contact/separation and three membership locations.
     #[test]
     fn ordered_aabb2_coordinate_predicates_cover_overlap_and_point_membership() {
         let outer_min = p2(0, 0);
@@ -1202,6 +1294,7 @@ mod tests {
         let boundary = p2(4, 3);
         let outside = p2(5, 3);
 
+        /// Borrow the planar fixture's x/y coordinates without constructing another point.
         fn coordinates(point: &Point2) -> [&Real; 2] {
             [&point.x, &point.y]
         }
@@ -1241,6 +1334,10 @@ mod tests {
         }
     }
 
+    /// Check segment extent facts and point queries on a collapsed integer box.
+    ///
+    /// The computed facts are inspected here but not passed into either point predicate;
+    /// this fixture does not demonstrate caller-cache consumption by those predicates.
     #[test]
     fn immediate_aabb_predicates_accept_cached_extent_facts() {
         let min = p2(0, 0);
@@ -1259,6 +1356,7 @@ mod tests {
         );
     }
 
+    /// Check point/segment/area fact classifications and selected inclusive intersections.
     #[test]
     fn immediate_aabb_intersection_preserves_point_segment_area_cases() {
         let point_min = p2(2, 2);
@@ -1306,6 +1404,9 @@ mod tests {
         );
     }
 
+    /// Check integer 3D point and box relation values through borrowed-corner APIs.
+    ///
+    /// These assertions do not measure allocations, copies, or memory usage.
     #[test]
     fn immediate_aabb3_predicates_use_borrowed_storage() {
         let min = p3(0, 0, 0);
@@ -1331,8 +1432,12 @@ mod tests {
         );
     }
 
+    /// Check pi-translated point/box overlap cases under STRICT.
+    ///
+    /// The values exercise symbolic input shapes without asserting dispatch counts.
     #[test]
     fn symbolic_ordered_aabb2_predicates_exercise_the_real_fallback() {
+        /// Borrow the planar fixture's x/y coordinates without constructing another point.
         fn coordinates(point: &Point2) -> [&Real; 2] {
             [&point.x, &point.y]
         }
@@ -1379,6 +1484,9 @@ mod tests {
         }
     }
 
+    /// Check selected pi-translated interior, endpoint, and outside locations in 2D/3D.
+    ///
+    /// The tables cover each spatial axis, not every endpoint/order combination.
     #[test]
     fn symbolic_point_box_predicates_cover_every_axis_and_boundary_route() {
         let min2 = symbolic_p2(0, 0);
@@ -1419,6 +1527,7 @@ mod tests {
         );
     }
 
+    /// Check a pi-translated planar box's interior, open-axis ends, and collapsed-axis miss.
     #[test]
     fn symbolic_relative_interior_covers_zero_and_positive_extent_axes() {
         let min = symbolic_p3(0, 0, 0);
@@ -1443,6 +1552,10 @@ mod tests {
         }
     }
 
+    /// Check symbolic 3D overlap, contact, separation on each axis, and zero-width contact.
+    ///
+    /// Also compare nested boxes in both containment directions; no cost or dispatch
+    /// assertions accompany these relation values.
     #[test]
     fn symbolic_aabb3_intersections_exercise_interval_and_extent_fallbacks() {
         let first_min = symbolic_p3(0, 0, 0);
@@ -1520,8 +1633,10 @@ mod tests {
         );
     }
 
+    /// Check selected strict Unknown paths through location, relative-interior, and overlap wrappers.
     #[test]
     fn aabb_wrappers_propagate_strict_unknowns_without_boolean_coercion() {
+        /// Test only the outcome variant, without asserting its refinement need or stage.
         fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
             matches!(outcome, PredicateOutcome::Unknown { .. })
         }
@@ -1621,8 +1736,10 @@ mod tests {
         )));
     }
 
+    /// Check symbolic uncertainty in borrowed comparisons and triangle x/y bounds or membership.
     #[test]
     fn borrowed_and_triangle_aabb_predicates_preserve_each_strict_unknown() {
+        /// Test only the outcome variant, without asserting its refinement need or stage.
         fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
             matches!(outcome, PredicateOutcome::Unknown { .. })
         }
@@ -1685,8 +1802,13 @@ mod tests {
         )));
     }
 
+    /// Check selected later-axis separations, Unknowns, and rational corner reversal.
+    ///
+    /// Includes the interval zero-extent helper, without proving exhaustive fallback
+    /// coverage or any specific dispatch count.
     #[test]
     fn aabb_fallbacks_cover_late_axis_separation_and_unknowns() {
+        /// Test only the outcome variant, without asserting its refinement need or stage.
         fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
             matches!(outcome, PredicateOutcome::Unknown { .. })
         }
@@ -1769,6 +1891,10 @@ mod tests {
         ));
     }
 
+    /// Check all finite certainty/stage rank pairs and selected DecisionTrace updates.
+    ///
+    /// A decided child updates the trace; an Unknown child returns an error. The test
+    /// does not assert the trace state after that error or arbitrary geometric decisions.
     #[test]
     fn aabb_decision_trace_rankings_are_total() {
         let certainties = [
