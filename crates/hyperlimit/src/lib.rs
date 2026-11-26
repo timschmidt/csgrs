@@ -5,27 +5,59 @@
 //! sign, exact zero, rational structure, and refinement capability before
 //! escalating a predicate.
 //!
-//! Predicate exactness means the reported classification has an exact or
-//! certified decision path, not that all input expressions were eagerly
-//! canonicalized first. Following the exact geometric computation model,
-//! filters may exploit preserved structure, but unresolved cases return
-//! explicit uncertainty or escalate through exact hyperreal refinement instead
-//! of falling back to primitive-float tolerances.
+//! Under [`PredicatePolicy::STRICT`], a decided predicate has an exact or
+//! certified decision path; input expressions need not be eagerly canonicalized.
+//! Structural facts, predicate filters, exact arithmetic and scalar refinement
+//! may establish a result. Cases beyond the enabled capabilities return explicit
+//! [`PredicateOutcome::Unknown`].
+//!
+//! [`PredicatePolicy::APPROXIMATE_512`] additionally permits a qualified terminal
+//! after the shared sign resolver's certification attempts fail. Its enclosure
+//! rule may report zero without proving equality, so retain [`Certainty`] with
+//! the value. Selecting this policy does not make already-certified results
+//! approximate. [`Escalation`] records dispatch metadata, separately from the
+//! decision's certainty. Neither field certifies input topology or source fidelity.
+//!
+//! Most root exports use concise operation names for policy-taking internal
+//! functions. Retained facts and reports let geometric consumers reuse evidence;
+//! each operation's own input and evidence-validation contract still applies.
+//! The fixed refinement precision is not a total work, memory or cancellation
+//! budget, and Unknown is not a proof of mathematical undecidability.
+//!
+//! The default `std` feature supplies standard-error integration. `parallel`
+//! enables Rayon batch entry points, `dispatch-trace` enables shared scalar and
+//! predicate instrumentation, and `serde` forwards serialization support to the
+//! scalar and lattice dependencies. Disabling default features does not declare
+//! this crate `no_std`. For internal helper documentation, build with
+//! `cargo doc -p hyperlimit --no-deps --document-private-items`;
+//! test-only modules still require a separate source review.
 
+/// Feature-gated dispatch event recording, shared with Hyperreal.
 mod trace;
 pub(crate) use trace::trace_dispatch;
 
+/// Serial and optionally parallel predicate batches and their case records.
 mod batch;
+/// Geometric relation vocabulary and convenience queries over decided values.
 mod classify;
+/// Static-message predicate diagnostics, separate from unresolved outcomes.
 pub mod error;
+/// Geometric inputs, retained facts and construction helpers for predicates.
 mod geometry;
+/// Orientation and lifted-circle/sphere predicate facade.
 mod orient;
+/// Plane classification and retained-evidence facade.
 mod plane;
+/// Signs, local outcome receipts, policy choices and dispatch metadata.
 mod predicate;
+/// Geometric predicate implementations grouped by mathematical operation.
 mod predicates;
+/// Scalar sign conversion and traced arithmetic adapters.
 mod real;
+/// Ordered sign resolution, composite policy replay and structural term filters.
 mod resolve;
 #[cfg(test)]
+/// Shared symbolic fixtures for private regression tests.
 mod test_support;
 
 pub use hyperreal::{

@@ -1,4 +1,8 @@
 //! Real-specific structural facts used by geometry predicates.
+//!
+//! This adapter translates scalar knowledge into predicate vocabulary without
+//! primitive-float conversion. It leaves scalar identity and arithmetic in
+//! Hyperreal; traced arithmetic wrappers preserve the operation boundaries.
 
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealStructuralFacts, ZeroKnowledge};
 
@@ -11,19 +15,29 @@ use crate::predicate::{Sign, SignKnowledge};
 /// Scalar structural and zero facts use `Real`'s inherent APIs directly.
 pub trait RealPredicateExt {
     /// Return known sign information without forcing full predicate evaluation.
+    ///
+    /// Uses structural facts only. Proven nonzero without a direction remains
+    /// [`SignKnowledge::NonZero`]; absence of a fact remains Unknown.
     fn known_sign(&self) -> SignKnowledge;
 
     /// Refine the sign through `hyperreal`'s exact/computable machinery.
+    ///
+    /// `min_precision` is the scalar's minimum binary precision exponent, not a
+    /// total time or memory budget. Known signs are certified and mapped to
+    /// Exact certainty; the detailed scalar certificate and unresolved precision
+    /// metadata are dropped. No approximate terminal is authorized here.
     fn refine_sign_knowledge_until(&self, min_precision: i32) -> SignKnowledge;
 }
 
 impl RealPredicateExt for Real {
+    /// Trace structural inspection, preferring an exposed sign over zero-only facts.
     #[inline(always)]
     fn known_sign(&self) -> SignKnowledge {
         crate::trace_dispatch!("hyperlimit", "real", "known-sign");
         sign_knowledge_from_real_facts(self.structural_facts())
     }
 
+    /// Translate a certified scalar sign or preserve an unresolved outcome without guessing.
     #[inline(always)]
     fn refine_sign_knowledge_until(&self, min_precision: i32) -> SignKnowledge {
         match self.certified_sign_until(min_precision) {
@@ -50,6 +64,9 @@ pub fn map_real_sign(sign: RealSign) -> Sign {
 }
 
 /// Convert structural Real facts into predicate sign knowledge.
+///
+/// Priority is explicit sign, proven zero, proven nonzero, then Unknown. The
+/// scalar layer owns fact consistency; magnitude and rational tags are unused.
 #[inline(always)]
 pub fn sign_knowledge_from_real_facts(facts: RealStructuralFacts) -> SignKnowledge {
     if let Some(sign) = facts.sign {
@@ -85,10 +102,12 @@ pub(crate) fn mul_ref(left: &Real, right: &Real) -> Real {
 }
 
 #[cfg(test)]
+/// Witnesses for scalar-to-predicate sign and zero-knowledge conversion.
 mod tests {
     use super::*;
 
     #[test]
+    /// Check signed integers and synthetic zero/nonzero facts without a sign field.
     fn real_zero_knowledge_maps_to_predicate_signs() {
         assert_eq!(Real::from(0).known_sign(), SignKnowledge::exact(Sign::Zero));
         assert_eq!(

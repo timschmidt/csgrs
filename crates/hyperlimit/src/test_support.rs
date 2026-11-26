@@ -1,8 +1,14 @@
+//! Shared exact symbolic fixtures for predicate policy and normal-form regressions.
+
 use hyperreal::Real;
 
-// Exactly 2^-3000 as a retained symbolic geometric expression. Native scalar
-// recognition and policy replay may both prove it; tests preserve exact
-// outcomes without requiring recognition to fail at an earlier layer.
+/// Exactly 2^-3000 as a retained symbolic geometric expression.
+///
+/// The contact and domain terms cancel algebraically: each reduces to
+/// `1/2 - sqrt(2)/8`. Native scalar recognition and policy replay may both
+/// prove the remaining positive power of two; consumers must not require
+/// recognition to fail at an earlier layer. Division and square-root unwraps
+/// use positive constants and the nonzero constant pi.
 pub(crate) fn exact_normal_positive() -> Real {
     let root_two = Real::from(2).sqrt().unwrap();
     let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();

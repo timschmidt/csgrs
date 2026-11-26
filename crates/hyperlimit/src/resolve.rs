@@ -1,4 +1,9 @@
 //! Shared sign-resolution helpers for predicate pipelines.
+//!
+//! Scalar facts and predicate callbacks retain separate authority. Early returns
+//! preserve proof-search order and avoid evaluating later hooks. The fixed
+//! precision request is not a cumulative work or memory bound; unresolved
+//! outcomes carry a capability hint, not an exhaustion certificate.
 
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{
@@ -15,6 +20,13 @@ use hyperreal::{CertifiedRealSign, Real, RealSignCertificate, ZeroKnowledge};
 /// stages and bounded refinement are inconclusive, an exact rational normal
 /// form, the quadratic and radical towers and finally one larger relation
 /// attempt are tried before policy-authorized approximation.
+///
+/// `filter` is called only after structural inspection fails; any `Some`
+/// outcome, even Unknown, is returned unchanged. It must describe this value
+/// and obey `policy`: the resolver does not revalidate it. `exact` is called
+/// only if the filter declines and must prove its returned sign. Both hooks
+/// are invoked at most once. `unknown_need` is used only after every enabled
+/// stage declines; it does not diagnose why those stages failed.
 pub(crate) fn resolve_real_sign(
     value: &Real,
     policy: PredicatePolicy,
@@ -161,6 +173,8 @@ pub(crate) fn resolve_real_sign_direct(
     }
 }
 
+/// Ask the scalar's bounded normal-form recognizer for a rational value and order it against zero.
+/// A declined recognition is not proof that the value is irrational.
 fn exact_rational_normal_form_sign(value: &Real) -> Option<Sign> {
     rational_sign(value.exact_rational_normal_form()?)
 }
@@ -171,6 +185,8 @@ fn extended_rational_normal_form_sign(value: &Real) -> Option<Sign> {
     rational_sign(value.extended_rational_normal_form()?)
 }
 
+/// Return Some of the exact sign; the optional shape composes with recognizer failures.
+/// The ordering assertion relies on finite rational ordering being total.
 fn rational_sign(rational: hyperreal::Rational) -> Option<Sign> {
     let zero = hyperreal::Rational::zero();
     Some(
@@ -185,10 +201,13 @@ fn rational_sign(rational: hyperreal::Rational) -> Option<Sign> {
     )
 }
 
+/// Expose already-known scalar sign facts with the caller's dispatch-stage label.
+/// Nonzero knowledge without a direction is insufficient and returns None.
 pub(crate) fn decide_real_sign(value: &Real, stage: Escalation) -> Option<PredicateOutcome<Sign>> {
     decide_sign_knowledge(value.known_sign(), stage)
 }
 
+/// Preserve a known sign and its certainty; trace and decline both unresolved forms.
 fn decide_sign_knowledge(
     knowledge: SignKnowledge,
     stage: Escalation,
@@ -209,6 +228,8 @@ fn decide_sign_knowledge(
     }
 }
 
+/// Map only a decided payload while transporting certainty, stage and unknown hints unchanged.
+/// The caller must ensure the mapping is justified by the original decision.
 pub(crate) fn map_outcome<T, U>(
     outcome: PredicateOutcome<T>,
     map: impl FnOnce(T) -> U,
@@ -231,6 +252,13 @@ pub(crate) fn map_outcome<T, U>(
 /// undecided do we replay with the caller-authorized approximation and mark the
 /// whole result approximate. This is reserved for composite implementations
 /// whose internal reports do not carry per-child certainty.
+///
+/// The callback may run twice on the same captured state. It must implement the
+/// same predicate under the supplied policy and tolerate warmed scalar caches.
+/// A successful replay is marked Approximate/Refined regardless of its returned
+/// labels; this conservatively avoids claiming stronger child evidence. An
+/// unresolved replay is returned unchanged. This helper neither rolls back
+/// callback side effects nor supplies a shared work budget.
 pub(crate) fn resolve_composite_policy<T>(
     policy: PredicatePolicy,
     mut evaluate: impl FnMut(PredicatePolicy) -> PredicateOutcome<T>,
@@ -250,6 +278,7 @@ pub(crate) fn resolve_composite_policy<T>(
     }
 }
 
+/// Invoke a trusted exact predicate hook once and attach Exact certainty and stage.
 fn exact_evaluation(exact: impl FnOnce() -> Option<Sign>) -> Option<PredicateOutcome<Sign>> {
     exact().map(|sign| {
         crate::trace_dispatch!("hyperlimit", "exact_evaluation", "decided");
@@ -257,6 +286,8 @@ fn exact_evaluation(exact: impl FnOnce() -> Option<Sign>) -> Option<PredicateOut
     })
 }
 
+/// Request scalar certification through precision -512 and mark a known result Refined.
+/// This stage label records the helper used, even if scalar facts suffice internally.
 fn refine_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
     match value.refine_sign_knowledge_until(PredicatePolicy::MAX_REFINEMENT_PRECISION) {
         SignKnowledge::Known { sign, certainty } => {
@@ -274,6 +305,12 @@ fn refine_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
     }
 }
 
+/// Apply the authorized terminal's enclosure rule and always qualify its result Approximate.
+///
+/// An interval strictly below or above zero yields that sign; every interval
+/// containing zero yields Zero without proving equality. A missing permission
+/// or unavailable scalar enclosure returns None. Even a separating enclosure
+/// receives the terminal receipt here, rather than being promoted to Exact.
 fn approximate_real_sign(value: &Real, policy: PredicatePolicy) -> Option<PredicateOutcome<Sign>> {
     let precision = policy.final_approximation_precision()?;
     let [lower, upper] = value.certified_rational_interval(precision)?;
@@ -295,6 +332,12 @@ fn approximate_real_sign(value: &Real, policy: PredicatePolicy) -> Option<Predic
 
 /// Try to decide the sign of a sum of signed terms using structural zero/sign
 /// facts only. Each input term is `(term, sign_multiplier)`.
+///
+/// Zero terms are omitted; no remaining terms proves zero, and uniform nonzero
+/// signs prove the sum's sign. Mixed signs or missing facts decline without
+/// comparing magnitudes. Up to four terms use stack storage; larger inputs
+/// allocate a vector. A zero multiplier still requires the term's structural
+/// facts in the current traversal and need not succeed for an opaque term.
 #[inline(always)]
 pub(crate) fn signed_term_filter(terms: &[(&Real, Sign)]) -> Option<PredicateOutcome<Sign>> {
     // This filter is a performance shortcut ahead of exact predicate fallback.
@@ -319,6 +362,7 @@ pub(crate) fn signed_term_filter(terms: &[(&Real, Sign)]) -> Option<PredicateOut
     finish_signed_term_filter(&nonzero[..nonzero_len])
 }
 
+/// Use the same ordered term inspection with heap storage for more than four terms.
 #[inline]
 fn signed_term_filter_dynamic(terms: &[(&Real, Sign)]) -> Option<PredicateOutcome<Sign>> {
     let mut nonzero = Vec::with_capacity(terms.len());
@@ -333,6 +377,8 @@ fn signed_term_filter_dynamic(terms: &[(&Real, Sign)]) -> Option<PredicateOutcom
     finish_signed_term_filter(&nonzero)
 }
 
+/// Return None for unknown sign, Some(None) for an omitted zero, or the signed nonzero term.
+/// Structural zero is checked before sign multiplication, preserving predicate order.
 #[inline(always)]
 fn signed_nonzero_term(term: &Real, multiplier: Sign) -> Option<Option<Sign>> {
     let facts = term.structural_facts();
@@ -350,6 +396,7 @@ fn signed_nonzero_term(term: &Real, multiplier: Sign) -> Option<Option<Sign>> {
     Some(Some(sign))
 }
 
+/// Decide an empty or same-sign list of nonzero terms; mixed signs require later work.
 #[inline(always)]
 fn finish_signed_term_filter(nonzero: &[Sign]) -> Option<PredicateOutcome<Sign>> {
     if nonzero.is_empty() {
@@ -374,6 +421,7 @@ fn finish_signed_term_filter(nonzero: &[Sign]) -> Option<PredicateOutcome<Sign>>
     None
 }
 
+/// Multiply mathematical signs, with zero absorbing and two negatives positive.
 #[inline(always)]
 fn multiply_sign(left: Sign, right: Sign) -> Sign {
     match (left, right) {
@@ -384,10 +432,12 @@ fn multiply_sign(left: Sign, right: Sign) -> Sign {
 }
 
 #[cfg(test)]
+/// Regression witnesses for dispatch order, terminal permission and retained symbolic identities.
 mod tests {
     use super::*;
     use hyperreal::Rational;
 
+    /// Retain the now-recognized Pythagorean identity beside an unresolved angle-addition control.
     fn terminally_unresolved_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -402,6 +452,7 @@ mod tests {
     }
 
     #[test]
+    /// Check stack/vector paths, zero multipliers and structural-zero omission.
     fn signed_term_filter_decides_same_sign_terms_without_magnitude() {
         let large = Real::from(10);
         let small = Real::from(1);
@@ -448,6 +499,7 @@ mod tests {
     }
 
     #[test]
+    /// Require mixed signs to decline even when a numerical magnitude comparison would be easy.
     fn signed_term_filter_leaves_mixed_signs_to_exact_pipeline() {
         let large = Real::from(10);
         let small = Real::from(1);
@@ -459,6 +511,8 @@ mod tests {
     }
 
     #[test]
+    /// Check trusted callback precedence and declines for unsigned nonzero or unknown facts.
+    /// The deliberately supplied callback signs test dispatch, not a proof about pi.
     fn resolve_real_sign_uses_exact_evaluation_callback() {
         // Use a deliberately tight rational approximation to pi so cheap
         // structural Real facts cannot decide the sign before the predicate-level
@@ -500,6 +554,7 @@ mod tests {
     }
 
     #[test]
+    /// Check strict non-decision, qualified terminal signs and two calls on unresolved composite replay.
     fn terminal_approximation_is_policy_controlled_and_reports_its_certainty() {
         // This exact identity deliberately remains outside bounded structural
         // normalization so only the terminal policy may consume it.
@@ -549,6 +604,8 @@ mod tests {
     }
 
     #[test]
+    /// Preserve cancellation to a positive 2^-600 value and its current structural exact decision.
+    /// This fixture no longer requires the later normal-form stage to be reached.
     fn general_resolver_normalizes_exact_rationals_before_approximation() {
         let root_two = Real::from(2).sqrt().unwrap();
         let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();

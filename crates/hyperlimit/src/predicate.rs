@@ -1,11 +1,19 @@
-//! Predicate result states and centralized escalation metadata.
+//! Predicate values, local certainty receipts and policy-controlled escalation.
+//!
+//! These records describe decisions about the supplied geometry. They do not
+//! validate that geometry, retain its construction history, or enforce a total
+//! resource budget. Public outcome constructors trust their caller's evidence.
 
-/// A concrete sign.
+/// A negative, zero or positive classification, interpreted with its certainty.
+///
+/// In a certified outcome this is the mathematical sign. An approximate
+/// terminal may report [`Self::Zero`] for an enclosure containing zero without
+/// proving equality; keep the accompanying [`Certainty`].
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Sign {
     /// Strictly negative.
     Negative,
-    /// Exactly zero.
+    /// Zero; exact equality only when the accompanying decision is certified.
     Zero,
     /// Strictly positive.
     Positive,
@@ -22,12 +30,17 @@ impl Sign {
     }
 }
 
-/// How strongly a predicate result is known.
+/// Qualification of the local predicate decision, separate from its dispatch stage.
+///
+/// Both [`Self::Exact`] and [`Self::Filtered`] certify the reported value.
+/// [`Self::Approximate`] records use of an authorized terminal, including the
+/// conservative qualification of a replayed composite predicate. None of these
+/// variants certifies the fidelity or topology of the input construction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Certainty {
-    /// The result follows from exact or structural information.
+    /// The result follows from structural information, exact arithmetic or certified refinement.
     Exact,
-    /// The result follows from conservative structural Real facts.
+    /// A conservative filter certifies the result, for example from term signs or enclosures.
     Filtered,
     /// The result follows from a policy-authorized terminal approximation.
     Approximate,
@@ -66,7 +79,9 @@ impl SignKnowledge {
         }
     }
 
-    /// Return the concrete sign if it is known.
+    /// Return the concrete sign if known, discarding its certainty qualification.
+    ///
+    /// Match [`Self::Known`] directly when subsequent decisions need the receipt.
     pub const fn sign(self) -> Option<Sign> {
         match self {
             Self::Known { sign, .. } => Some(sign),
@@ -75,16 +90,20 @@ impl SignKnowledge {
     }
 }
 
-/// Which stage decided, or failed to decide, a predicate.
+/// Dispatch metadata for a decision or non-decision, independent of certainty.
+///
+/// This is not a proof object or a chronological trace. In particular, exact
+/// normal-form work may run after refinement, and composite outcomes retain a
+/// ranked stage rather than every child's history.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Escalation {
     /// Decided using structural Real facts.
     Structural,
-    /// Decided using exact structural term facts.
+    /// A predicate-specific filter decided or stopped evaluation.
     Filter,
     /// Decided using exact Real arithmetic.
     Exact,
-    /// Decided after adaptive Real refinement.
+    /// Refinement or the policy-authorized terminal supplied the result.
     Refined,
     /// Not decided by the enabled stages.
     Undecided,
@@ -155,7 +174,11 @@ pub enum DeterminantScheduleHint {
     GenericRealFallback,
 }
 
-/// Exact predicate result with explicit uncertainty.
+/// Predicate result carrying local certainty or an explicit unresolved outcome.
+///
+/// A decided result can be approximate; inspect `certainty` before using it as
+/// an exact fact. These publicly constructible records do not verify evidence,
+/// input identity, policy admissibility or consistency between value and stage.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PredicateOutcome<T> {
     /// The predicate was decided.
@@ -178,6 +201,8 @@ pub enum PredicateOutcome<T> {
 
 impl<T> PredicateOutcome<T> {
     /// Construct a decided predicate outcome.
+    ///
+    /// Stores the supplied fields without validating the claimed proof or policy.
     pub const fn decided(value: T, certainty: Certainty, stage: Escalation) -> Self {
         Self::Decided {
             value,
@@ -187,11 +212,17 @@ impl<T> PredicateOutcome<T> {
     }
 
     /// Construct an undecided predicate outcome.
+    ///
+    /// Stores the caller's diagnostic hint; it does not establish impossibility
+    /// or that a particular resource limit was reached.
     pub const fn unknown(needed: RefinementNeed, stage: Escalation) -> Self {
         Self::Unknown { needed, stage }
     }
 
     /// Return the decided value, or `None` when the outcome is unknown.
+    ///
+    /// Consumes the outcome and drops certainty, escalation and unresolved-reason
+    /// metadata. Match the enum when downstream work must preserve those claims.
     #[inline]
     pub fn value(self) -> Option<T> {
         match self {
@@ -207,6 +238,10 @@ impl PredicateOutcome<bool> {
     /// A decided `false` operand is sufficient even when the other operand is
     /// unknown. Two decided `true` operands retain the weaker certainty and
     /// later escalation stage.
+    /// Both operands have already been evaluated. When both are false, the left
+    /// receipt wins; otherwise an unresolved result preserves the first unknown
+    /// operand. This is sufficient evidence for the conjunction, not a history
+    /// of all computations or a search for the strongest available receipt.
     pub const fn and(self, other: Self) -> Self {
         match (self, other) {
             (
@@ -252,6 +287,9 @@ impl PredicateOutcome<bool> {
     /// A decided `true` operand is sufficient even when the other operand is
     /// unknown. Two decided `false` operands retain the weaker certainty and
     /// later escalation stage.
+    /// Both operands have already been evaluated. When both are true, the left
+    /// receipt wins; otherwise an unresolved result preserves the first unknown
+    /// operand. No child predicate is evaluated lazily by this method.
     pub const fn or(self, other: Self) -> Self {
         match (self, other) {
             (
@@ -293,6 +331,7 @@ impl PredicateOutcome<bool> {
     }
 }
 
+/// Join required child receipts in the order Exact, Filtered, Approximate.
 const fn weaker_certainty(left: Certainty, right: Certainty) -> Certainty {
     match (left, right) {
         (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
@@ -301,6 +340,7 @@ const fn weaker_certainty(left: Certainty, right: Certainty) -> Certainty {
     }
 }
 
+/// Retain the higher-ranked stage, with a left bias on ties; this is not elapsed order.
 const fn later_stage(left: Escalation, right: Escalation) -> Escalation {
     if escalation_rank(left) >= escalation_rank(right) {
         left
@@ -309,6 +349,7 @@ const fn later_stage(left: Escalation, right: Escalation) -> Escalation {
     }
 }
 
+/// Rank stage labels for composite metadata, placing Undecided after all decision stages.
 const fn escalation_rank(stage: Escalation) -> u8 {
     match stage {
         Escalation::Structural => 0,
@@ -319,7 +360,11 @@ const fn escalation_rank(stage: Escalation) -> u8 {
     }
 }
 
-/// What additional work would be required.
+/// A caller-supplied hint about an unresolved predicate's missing capability.
+///
+/// This is not an exhaustive error taxonomy, an exhaustion receipt or a promise
+/// that further work will decide the result. Inspect the individual classifier's
+/// input contract: some use [`Self::Unsupported`] for invalid input as well.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RefinementNeed {
     /// Exact arithmetic is needed.
@@ -334,19 +379,31 @@ pub enum RefinementNeed {
 ///
 /// The private byte representation keeps operation contexts compact and prevents
 /// callers from constructing policy states that Hyperlimit does not understand.
+/// It selects terminal permission, not a cumulative work, memory or cancellation
+/// budget. Permitting approximation does not make every decision approximate.
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct PredicatePolicy(u8);
+pub struct PredicatePolicy(
+    /// Terminal permission: zero is certified-only and one permits the -512 terminal.
+    u8,
+);
 
 impl PredicatePolicy {
     /// Topology is decided only by exact or certified-refinement paths.
     pub const STRICT: Self = Self(0);
 
-    /// Permit one terminal 512-bit approximation after certification is
-    /// exhausted.
+    /// Permit a terminal at computable precision -512 after the enabled proof attempts fail.
+    ///
+    /// The sign resolver uses a certified rational enclosure and reports zero
+    /// when it contains zero; that terminal result is marked approximate. The
+    /// precision is an exponent in the scalar computation, not a universal
+    /// absolute geometric tolerance or 512 significant digits.
     pub const APPROXIMATE_512: Self = Self(1);
 
-    /// Lowest binary precision Real refinement may request.
+    /// Minimum precision exponent requested by the shared sign resolvers.
+    ///
+    /// This bounds their refinement request, not total work or retained memory;
+    /// subsequent exact normal-form and field algorithms have separate costs.
     pub const MAX_REFINEMENT_PRECISION: i32 = -512;
 
     /// Restricts this policy to certified stages, disabling its approximate
@@ -357,6 +414,9 @@ impl PredicatePolicy {
     }
 
     /// Terminal approximation precision, when one is authorized.
+    ///
+    /// Returns `None` for STRICT and `Some(-512)` for APPROXIMATE_512. The panic
+    /// arm guards an invalid private byte state, unavailable through the public API.
     pub const fn final_approximation_precision(self) -> Option<i32> {
         match self.0 {
             0 => None,
@@ -366,15 +426,19 @@ impl PredicatePolicy {
     }
 
     /// Return whether this policy permits a result at `certainty`.
+    ///
+    /// Checks the label only; it does not verify the evidence or upgrade a result.
     pub const fn accepts(self, certainty: Certainty) -> bool {
         !matches!((self.0, certainty), (0, Certainty::Approximate))
     }
 }
 
 #[cfg(test)]
+/// Source witnesses for policy representation, receipt composition and warm-state isolation.
 mod tests {
     use super::*;
 
+    /// Require a warm terminal identity to stay unresolved under certified-only policy.
     #[test]
     fn certified_subpolicy_refuses_a_warm_terminal_without_losing_exact_decisions() {
         use hyperreal::Real;
@@ -409,6 +473,7 @@ mod tests {
     }
 
     #[test]
+    /// Check compact storage and the two supported terminal-precision settings.
     fn predicate_policy_is_one_byte_and_has_no_hidden_state() {
         assert_eq!(core::mem::size_of::<PredicatePolicy>(), 1);
         assert_eq!(
@@ -422,6 +487,7 @@ mod tests {
     }
 
     #[test]
+    /// Check sufficient Boolean evidence, joined receipts and certainty admission.
     fn boolean_outcome_combinators_preserve_certainty_and_short_circuit_unknowns() {
         let exact_true = PredicateOutcome::decided(true, Certainty::Exact, Escalation::Structural);
         let filtered_true =
@@ -475,6 +541,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "internal error: entered unreachable code")]
+    /// Exercise the internal invariant panic for a byte value public callers cannot construct.
     fn invalid_private_policy_state_is_rejected() {
         let _ = PredicatePolicy(2).final_approximation_precision();
     }

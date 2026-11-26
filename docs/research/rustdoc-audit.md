@@ -4131,10 +4131,93 @@ This is a scoped source/documentation milestone, not repository-wide Rustdoc
 coverage or a cross-language conformance claim. The runtime limitations recorded
 for individual wrappers remain unresolved implementation work.
 
+### Hyperlimit outcome and sign-resolution contracts, 26 November 2026
+
+Baseline: `0c6cfffd3`. Owner: Hyperlimit's predicate policy, outcome and shared
+sign-resolution layer, with Hyperreal retaining scalar arithmetic authority.
+Properties: P3–P6/P8–P11/P19/P20/P30. Domain: structural and refined Real signs,
+trusted predicate callbacks, Boolean outcome composition and the two existing
+policy settings. Missing acceptance witnesses were undocumented private helpers,
+policy tuple storage and test functions, plus public text that did not explain
+receipt extraction, terminal zero classification or resource limits. Reproduced
+these documentation gaps against the current source before editing; no runtime
+failure is asserted by this batch.
+
+| File | Whole-file review and documentation change |
+| --- | --- |
+| `crates/hyperlimit/src/lib.rs` | All 262 baseline lines, including every re-export; corrected the crate-level strict/approximate distinction and documented module roles, feature scope and private-doc invocation. Re-export review does not imply review of the exported implementations. |
+| `crates/hyperlimit/src/predicate.rs` | All 481 baseline lines; documented local receipts, trusted public constructors, extraction loss, eager Boolean operands and left-biased sufficient evidence, stage ranking, hint limits, private policy byte and every test. |
+| `crates/hyperlimit/src/resolve.rs` | All 584 baseline lines; documented every helper and test, callback contracts/order, rational recognizer declines, composite replay, terminal enclosure rule and structural term-filter storage/decline behavior. |
+| `crates/hyperlimit/src/real.rs` | All 118 baseline lines; documented scalar fact precedence, certificate metadata loss, both trait implementation methods and the test. Arithmetic wrappers retain their existing traced boundaries. |
+| `crates/hyperlimit/src/error.rs` | All 29 baseline lines; documented static diagnostic payloads, display and standard-error integration, and separation from classifier Unknown outcomes. |
+| `crates/hyperlimit/src/trace.rs` | All 13 baseline lines; documented enabled event recording and disabled expansion that does not evaluate arguments. |
+| `crates/hyperlimit/src/test_support.rs` | All 28 baseline lines; documented the shared exact positive fixture's cancellation and scalar-domain assumptions; retained the angle-addition terminal control. |
+| `crates/hyperlimit/Cargo.toml` | Entire file; reviewed package/docs metadata, dependencies, feature wiring, example and bench declarations. Unchanged. |
+
+Supporting reads of Hyperreal's structural-sign, rational-enclosure and normal-form
+methods and Hyperlimit's enclosure classifiers establish the referenced behavior;
+these are excerpts, not whole-file kernel review. `classify.rs` was initially
+partially displayed and receives no whole-file credit here. The earlier ledger
+already covers all eleven files under `tests/wasm/`; confirming those records
+adds no new coverage and supersedes the stale suggestion to repeat that batch.
+
+The documentation distinguishes certified Exact/Filtered decisions from an
+Approximate terminal. The shared terminal requests a certified rational enclosure
+at computable precision -512, classifies a separating enclosure by its sign and
+otherwise reports zero, always with the approximate receipt. Zero in that result
+is not an equality proof. The exponent is neither a uniform geometric tolerance
+nor a total work or memory bound. Exact recognition and field algorithms remain
+separate stages after refinement, and an unresolved hint is not an exhaustion
+receipt or proof of undecidability.
+
+The general resolver trusts a supplied filter outcome, including Some(Unknown),
+and returns it without checking policy or evidence; the exact hook is also
+trusted. The direct path preserves scalar proof-route distinctions. Composite
+policy resolution may invoke the same callback twice and conservatively marks
+any successful approximate replay Approximate/Refined. It does not roll back
+side effects or aggregate a work budget. Boolean combinators take already
+computed values, retain sufficient left-biased evidence, and do not provide
+lazy child evaluation or a complete computation history. `value()` and
+`SignKnowledge::sign()` intentionally discard receipt metadata. No decision
+sequence, callback invocation, assertion or dispatch count changed.
+
+Validation after the final source edit:
+
+- Focused Rustfmt checks on all seven edited Rust files and `git diff --check`
+  passed. Comment-only comparison against the baseline passed: five files have
+  identical nonblank/noncomment lines, and the policy tuple plus two error tuple
+  payloads differ only by documentation layout and optional trailing commas.
+  Whitespace/trailing-comma normalization was restricted to those two files.
+- A local declaration scan checked 87 documented named declarations, including
+  private/test declarations. Fields and enum payloads were separately reviewed.
+  This finite source scan is not a repository-wide Rustdoc percentage.
+- With shared `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target`, `CARGO_INCREMENTAL=0`
+  and offline locked dependencies, `cargo rustdoc -p hyperlimit --lib
+  --all-features -- --document-private-items -D rustdoc::broken_intra_doc_links`
+  passed. Inspected 105 summary groups across 46 rendered pages and nine
+  explicitly selected contract pages, including private resolver functions,
+  tuple fields and the Real trait implementation on the re-exported Real page.
+- The same private-doc build with `--no-default-features` passed; inspected the
+  disabled tracing macro's different rendered contract. Normal library docs
+  omit cfg(test) helpers, which remain source-reviewed.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed, compiling affected test declarations and integration consumers without
+  executing tests. Downstream `cargo rustdoc --locked -p csgrs --lib
+  --no-default-features --features curve --offline -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links` passed.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-core-{doc,minimal-doc,check,downstream-doc}.log`.
+The shared temporary target is approximately 1.6 GiB. Full workflow/runtime and
+performance checks remain waived by the owner for this docs-only session; no
+new correctness, timing or universal closure claim is made. The 100% public and
+private Rustdoc mandate remains in root AGENTS.md. Most owning-crate sources and
+repository support files still require whole-file review.
+
 ## Next work
 
-Continue with remaining non-Rust test clients, build/support files and owning crates. Maintain review records with
-each batch. Establish automated public/private item coverage across manifests
+Continue with owning-crate implementations and remaining build/support files.
+Consult existing whole-file records before selecting the next batch, and maintain
+review records with each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation
 batches after focused checks under the owner's session-specific waiver.
