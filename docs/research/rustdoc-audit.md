@@ -4295,6 +4295,57 @@ build directory was introduced. Full workflow, runtime corpus and performance
 checks remain waived for this docs-only session. Hyperlimit's batch and geometric
 implementation modules, tests and supporting files still need full review.
 
+### Hyperlimit batch scheduling and consumer witnesses, 26 November 2026
+
+Baseline: `811e2d541`. Owners: the Hyperlimit batch wrappers and their integration
+consumer. Properties: P4/P8–P10/P19/P20/P30. Domain: the twelve scalar predicate
+families represented by ten owned case-tuple aliases, borrowed as slices under
+one selected policy, with optional Rayon execution. Reproduced missing tuple
+argument-role documentation and overstated batch provenance language against the
+current implementation before editing.
+
+Whole-file review: `crates/hyperlimit/src/batch.rs` (397 baseline lines) and
+`crates/hyperlimit/tests/batch.rs` (360). Documented all ten tuple roles, twenty-four
+sequential/parallel functions, the private parallel module, the test module's
+scope, its policy/type aliases, five point/scalar helpers and three tests. No
+signature, fixture, predicate order, trace call or assertion changed.
+
+Batches return one unchanged scalar outcome per input position. Unknown does not
+stop other queries; empty input collects an empty vector. There is no aggregate
+certainty, construction provenance, shared arrangement or cumulative resource
+budget. Ray cases pass a direction vector, not a second endpoint; circle cases
+pass a squared radius. Parallel results preserve input positions, while worker
+execution and cache/trace timing may differ. The implementation does not catch
+panics or turn allocation failure into Unknown. Indexed collection ordering was
+checked against the locally installed, locked Rayon 1.12.0 collection consumer's
+index-based split and contiguous left/right reduction; this dependency excerpt
+is not repository file-audit credit or a performance measurement.
+
+The test corpus compares wrappers of the same scalar predicates, including full
+outcome metadata, rather than independent geometric expectations. Despite its
+historical name, `batch_uses_the_strict_scalar_path_for_each_case` passes
+APPROXIMATE_512 and does not inspect dispatch. The 2048-case integer parallel
+orientation corpora and smaller other-family fixtures remain unchanged. Their
+source does not establish cold-cache equivalence, total resource bounds or
+unresolved-symbolic coverage.
+
+Validation after final source edits: focused Rustfmt and `git diff --check`
+passed; both files have byte-identical nonblank/noncomment lines relative to
+baseline. Private `cargo rustdoc --locked -p hyperlimit --lib --all-features
+--offline -j2 -- --document-private-items -D rustdoc::broken_intra_doc_links`
+passed. Inspected all 35 complete rendered item-doc groups on their corresponding
+alias/function/module pages, including the twelve parallel links. Compiled the
+affected integration consumer using `cargo check --locked -p hyperlimit --test
+batch --offline -j2` with both `--all-features` and `--no-default-features`; both
+passed. Test-only helper documentation was source-reviewed, not rendered by the
+normal library build, and runtime fixtures were not executed under the owner's
+full-check waiver.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-batch-{doc,check,minimal-check}.log`.
+The same temporary target is reused. Read-ahead of geometric fact/homogeneous
+modules is not yet a completed audit record; their documentation and validation
+remain the next batch.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

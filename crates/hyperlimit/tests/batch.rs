@@ -1,3 +1,11 @@
+//! Batch forwarding and ordered-result equivalence witnesses.
+//!
+//! These tests compare wrappers around the same scalar predicates, including
+//! their outcome metadata. They are not independent geometric oracles, a cold
+//! cache/dispatch-count equivalence test, or a batch resource-bound test. The
+//! shared fixture policy permits approximation; exact integer/dyadic examples
+//! do not establish behavior for unresolved or exhausted symbolic cases.
+
 use hyperlimit::{
     Plane3, Point2, Point3, classify_circle_line2, classify_circle_line2_batch,
     classify_circle_segment2, classify_circle_segment2_batch, classify_point_line,
@@ -9,33 +17,41 @@ use hyperlimit::{
     orient2, orient2_batch, orient3, orient3_batch,
 };
 
+/// Authorize the terminal policy in every fixture; the result may still be certified.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Exact scalar type used by the numeric fixture constructors.
 type Real = hyperreal::Real;
 
+/// Import a finite binary64 fixture exactly; panic only if the authored literal is non-finite.
 fn real(value: f64) -> Real {
     Real::try_from(value).expect("finite test scalar")
 }
 
+/// Form a planar point from the exact binary values of two fixture numbers.
 fn p2(x: f64, y: f64) -> Point2 {
     Point2::new(real(x), real(y))
 }
 
+/// Form a spatial point from the exact binary values of three fixture numbers.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(real(x), real(y), real(z))
 }
 
 #[cfg(feature = "parallel")]
+/// Form a planar integer point for the parallel orientation corpus.
 fn sp2(x: i128, y: i128) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
 #[cfg(feature = "parallel")]
+/// Form a spatial integer point for the parallel orientation corpus.
 fn sp3(x: i128, y: i128, z: i128) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
 #[test]
+/// Compare all twelve sequential entry points with scalar-call vectors, retaining full outcome equality.
 fn sequential_batches_match_scalar_predicates() {
     let orient2_cases = vec![
         (p2(0.0, 0.0), p2(1.0, 0.0), p2(0.0, 1.0)),
@@ -195,6 +211,8 @@ fn sequential_batches_match_scalar_predicates() {
 }
 
 #[test]
+/// Compare one rational orientation with its scalar call under APPROXIMATE_512.
+/// Despite the historical name, this does not select STRICT or inspect dispatch.
 fn batch_uses_the_strict_scalar_path_for_each_case() {
     let cases = vec![(p2(0.0, 0.0), p2(1.0, 0.0), p2(0.0, 1.0))];
 
@@ -211,6 +229,9 @@ fn batch_uses_the_strict_scalar_path_for_each_case() {
 
 #[cfg(feature = "parallel")]
 #[test]
+/// Compare all twelve parallel wrappers with sequential outcomes in input order.
+/// The 2048-case integer orientation sets exercise alternating signs; smaller
+/// fixtures cover the other wrappers, without independent geometric expectations.
 fn parallel_batches_match_sequential_batches() {
     let orient2_cases = (0..2048)
         .map(|i| {

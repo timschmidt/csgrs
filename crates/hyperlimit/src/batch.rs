@@ -1,4 +1,17 @@
-//! Batch predicate helpers for Real-backed geometry.
+//! Ordered batches of independent Real-backed predicate queries.
+//!
+//! Each function borrows its case slice, applies one policy to every scalar
+//! call and returns one unchanged outcome per input position. Unknown items do
+//! not stop later items; an empty slice produces an empty vector. There is no
+//! aggregate certainty receipt, geometric arrangement or cross-case report.
+//! Source construction history is not added to the scalar outcomes.
+//!
+//! Sequential calls visit cases in slice order. The optional Rayon paths retain
+//! output order while allowing calls to execute in any order; shared scalar
+//! caches and dispatch-event timing may therefore differ. Neither path supplies
+//! a cumulative work/precision/memory budget or a cancellation token. Collection
+//! allocates output storage proportional to the number of cases and does not
+//! catch panics or convert allocation failure to a predicate Unknown.
 
 use crate::classify::{
     CircleLineRelation, CircleSegmentRelation, LineSide, PlaneSide, RayTriangleIntersection,
@@ -25,35 +38,72 @@ use hyperreal::Real;
 /// Case tuple exported as [`crate::Orient2Case`] and accepted by
 /// [`crate::orient2_batch`] and, with the `parallel` feature,
 /// `crate::orient2_batch_parallel`.
+///
+/// An ordered `(a, b, c)` orientation triple; for line-side queries,
+/// `a` and `b` define the directed line and `c` is the query point.
 pub type Orient2dCase = (Point2, Point2, Point2);
 /// Case tuple exported as [`crate::Orient3Case`] and accepted by
 /// [`crate::orient3_batch`] and, with the `parallel` feature,
 /// `crate::orient3_batch_parallel`.
+///
+/// An ordered `(a, b, c, d)` orientation quadruple; for oriented-plane
+/// queries, `(a, b, c)` defines the plane and `d` is the query point.
 pub type Orient3dCase = (Point3, Point3, Point3, Point3);
 /// Case tuple exported as [`crate::Incircle2Case`] and accepted by
 /// [`crate::incircle2_batch`] and, with the `parallel` feature,
 /// `crate::incircle2_batch_parallel`.
+///
+/// An ordered `(a, b, c, query)` lifted-circle determinant case.
+/// The sign follows the scalar predicate's ordered defining points; it is not
+/// an orientation-independent inside/outside Boolean.
 pub type Incircle2dCase = (Point2, Point2, Point2, Point2);
 /// Case tuple exported as [`crate::Insphere3Case`] and accepted by
 /// [`crate::insphere3_batch`] and, with the `parallel` feature,
 /// `crate::insphere3_batch_parallel`.
+///
+/// An ordered `(a, b, c, d, query)` lifted-sphere determinant case.
+/// The sign retains the scalar predicate's defining-point orientation convention.
 pub type Insphere3dCase = (Point3, Point3, Point3, Point3, Point3);
 /// Case tuple accepted by [`crate::classify_point_plane_batch`] and
 /// `crate::classify_point_plane_batch_parallel` when the `parallel` feature is
 /// enabled.
+///
+/// A `(point, plane)` query for the signed expression
+/// `plane.normal . point + plane.offset`; the plane normal need not be unit length.
 pub type PointPlaneCase = (Point3, Plane3);
 /// Case tuple accepted by [`crate::classify_segment3_intersection_batch`].
+///
+/// Endpoints `(a, b, c, d)` for the two closed segments `[a, b]`
+/// and `[c, d]`; no separate segment carrier or retained facts are stored.
 pub type Segment3IntersectionCase = (Point3, Point3, Point3, Point3);
 /// Case tuple accepted by [`crate::classify_segment_triangle3_intersection_batch`].
+///
+/// A closed segment `(p, q)` followed by triangle vertices `(a, b, c)`.
+/// Coplanar outcomes still defer planar overlap to a subsequent predicate.
 pub type SegmentTriangle3IntersectionCase = (Point3, Point3, Point3, Point3, Point3);
 /// Case tuple accepted by [`crate::classify_ray_triangle3_intersection_batch`].
+///
+/// A ray `(origin, direction)` followed by triangle vertices `(a, b, c)`.
+/// The second Point3 stores a direction vector, not a second point on the ray;
+/// it is passed unchanged without normalization.
 pub type RayTriangle3IntersectionCase = (Point3, Point3, Point3, Point3, Point3);
 /// Case tuple accepted by [`crate::classify_circle_line2_batch`].
+///
+/// A `(center, radius_squared, a, b)` circle/line case, with `a` and `b`
+/// defining an infinite line. The scalar is the squared radius, not the radius.
 pub type CircleLine2Case = (Point2, Real, Point2, Point2);
 /// Case tuple accepted by [`crate::classify_circle_segment2_batch`].
+///
+/// A `(center, radius_squared, a, b)` circle/closed-segment case.
+/// The scalar is the squared radius; relation labels follow the endpoint
+/// partition documented by [`CircleSegmentRelation`].
 pub type CircleSegment2Case = (Point2, Real, Point2, Point2);
 
 /// Evaluate a batch of 2D orientation predicates with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn orient2d_batch_with_policy(
     cases: &[Orient2dCase],
     policy: PredicatePolicy,
@@ -66,6 +116,10 @@ pub fn orient2d_batch_with_policy(
 }
 
 /// Evaluate a batch of line-side classifications with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_point_line_batch_with_policy(
     cases: &[Orient2dCase],
     policy: PredicatePolicy,
@@ -78,6 +132,10 @@ pub fn classify_point_line_batch_with_policy(
 }
 
 /// Evaluate a batch of 3D orientation predicates with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn orient3d_batch_with_policy(
     cases: &[Orient3dCase],
     policy: PredicatePolicy,
@@ -90,6 +148,10 @@ pub fn orient3d_batch_with_policy(
 }
 
 /// Evaluate a batch of explicit point-plane classifications with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_point_plane_batch_with_policy(
     cases: &[PointPlaneCase],
     policy: PredicatePolicy,
@@ -102,6 +164,10 @@ pub fn classify_point_plane_batch_with_policy(
 }
 
 /// Evaluate a batch of oriented-plane classifications with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_point_oriented_plane_batch_with_policy(
     cases: &[Orient3dCase],
     policy: PredicatePolicy,
@@ -118,6 +184,10 @@ pub fn classify_point_oriented_plane_batch_with_policy(
 }
 
 /// Evaluate a batch of 2D in-circle predicates with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn incircle2d_batch_with_policy(
     cases: &[Incircle2dCase],
     policy: PredicatePolicy,
@@ -130,6 +200,10 @@ pub fn incircle2d_batch_with_policy(
 }
 
 /// Evaluate a batch of 3D in-sphere predicates with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn insphere3d_batch_with_policy(
     cases: &[Insphere3dCase],
     policy: PredicatePolicy,
@@ -144,9 +218,13 @@ pub fn insphere3d_batch_with_policy(
 /// Evaluate a batch of closed 3D segment/segment relation predicates with an
 /// explicit policy.
 ///
-/// Batch APIs are scheduling helpers only: every item still returns its own
-/// exact predicate outcome and provenance. Batching can reuse object structure
-/// but cannot turn unknown or lossy answers into topology.
+/// This is a scheduling wrapper over the scalar classifier. It preserves each
+/// local certainty and escalation label, including approximate or unknown
+/// outcomes; it does not create source-provenance or topology evidence.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_segment3_intersection_batch_with_policy(
     cases: &[Segment3IntersectionCase],
     policy: PredicatePolicy,
@@ -160,6 +238,10 @@ pub fn classify_segment3_intersection_batch_with_policy(
 
 /// Evaluate a batch of closed segment/triangle relation predicates with an
 /// explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_segment_triangle3_intersection_batch_with_policy(
     cases: &[SegmentTriangle3IntersectionCase],
     policy: PredicatePolicy,
@@ -179,6 +261,10 @@ pub fn classify_segment_triangle3_intersection_batch_with_policy(
 
 /// Evaluate a batch of ray/triangle relation predicates with an explicit
 /// policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_ray_triangle3_intersection_batch_with_policy(
     cases: &[RayTriangle3IntersectionCase],
     policy: PredicatePolicy,
@@ -197,6 +283,10 @@ pub fn classify_ray_triangle3_intersection_batch_with_policy(
 }
 
 /// Evaluate a batch of circle/line relation predicates with an explicit policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_circle_line2_batch_with_policy(
     cases: &[CircleLine2Case],
     policy: PredicatePolicy,
@@ -212,6 +302,10 @@ pub fn classify_circle_line2_batch_with_policy(
 
 /// Evaluate a batch of circle/segment relation predicates with an explicit
 /// policy.
+///
+/// Return one unchanged scalar outcome per case, in input order. Unknown
+/// items remain in the vector and do not stop evaluation. No aggregate
+/// certainty or additional geometric validation is supplied.
 pub fn classify_circle_segment2_batch_with_policy(
     cases: &[CircleSegment2Case],
     policy: PredicatePolicy,
@@ -226,11 +320,17 @@ pub fn classify_circle_segment2_batch_with_policy(
 }
 
 #[cfg(feature = "parallel")]
+/// Rayon implementations using indexed slice iteration to preserve result positions.
 mod parallel {
     use super::*;
     use rayon::prelude::*;
 
     /// Evaluate a batch of 2D orientation predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::orient2_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn orient2d_batch_parallel_with_policy(
         cases: &[Orient2dCase],
         policy: PredicatePolicy,
@@ -243,6 +343,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of line-side classifications in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_point_line_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_point_line_batch_parallel_with_policy(
         cases: &[Orient2dCase],
         policy: PredicatePolicy,
@@ -255,6 +360,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of 3D orientation predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::orient3_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn orient3d_batch_parallel_with_policy(
         cases: &[Orient3dCase],
         policy: PredicatePolicy,
@@ -267,6 +377,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of explicit point-plane classifications in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_point_plane_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_point_plane_batch_parallel_with_policy(
         cases: &[PointPlaneCase],
         policy: PredicatePolicy,
@@ -279,6 +394,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of oriented-plane classifications in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_point_oriented_plane_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_point_oriented_plane_batch_parallel_with_policy(
         cases: &[Orient3dCase],
         policy: PredicatePolicy,
@@ -297,6 +417,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of 2D in-circle predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::incircle2_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn incircle2d_batch_parallel_with_policy(
         cases: &[Incircle2dCase],
         policy: PredicatePolicy,
@@ -309,6 +434,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of 3D in-sphere predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::insphere3_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn insphere3d_batch_parallel_with_policy(
         cases: &[Insphere3dCase],
         policy: PredicatePolicy,
@@ -321,6 +451,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of closed 3D segment/segment relation predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_segment3_intersection_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_segment3_intersection_batch_parallel_with_policy(
         cases: &[Segment3IntersectionCase],
         policy: PredicatePolicy,
@@ -333,6 +468,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of closed segment/triangle relation predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_segment_triangle3_intersection_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_segment_triangle3_intersection_batch_parallel_with_policy(
         cases: &[SegmentTriangle3IntersectionCase],
         policy: PredicatePolicy,
@@ -351,6 +491,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of ray/triangle relation predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_ray_triangle3_intersection_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_ray_triangle3_intersection_batch_parallel_with_policy(
         cases: &[RayTriangle3IntersectionCase],
         policy: PredicatePolicy,
@@ -365,6 +510,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of circle/line relation predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_circle_line2_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_circle_line2_batch_parallel_with_policy(
         cases: &[CircleLine2Case],
         policy: PredicatePolicy,
@@ -379,6 +529,11 @@ mod parallel {
     }
 
     /// Evaluate a batch of circle/segment relation predicates in parallel with an explicit policy.
+    ///
+    /// Return one outcome per case in input order, with the same tuple layout
+    /// and policy forwarding as [`crate::classify_circle_segment2_batch`]. Rayon may evaluate
+    /// cases in a different order; this wrapper does not join their certainty. No
+    /// case is skipped merely because another outcome is Unknown.
     pub fn classify_circle_segment2_batch_parallel_with_policy(
         cases: &[CircleSegment2Case],
         policy: PredicatePolicy,
