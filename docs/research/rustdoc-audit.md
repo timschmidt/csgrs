@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `benchmarks/rust/kernel_comparison.rs` | Entire file; documented all helpers/local items, winding normalization, lossy fingerprints, setup/gating and actual timed work. | Compilation/private docs pass with curve added; manifest-declared minimal feature set fails on existing curve/torus imports. No benchmark executed. |
 | `benchmarks/rust/solidean_comparison.rs` | Entire file; documented opt-in gates, timer boundaries, finite/tolerant mass checks and nominal empty expectation. | Minimal-feature compilation/private docs passed; acquisition and benchmark not run. |
 | `benchmarks/support/solidean.rs` | Entire file; documented every instruction/field/helper, binary64 OBJ parsing, single-consumption execution and cache validation limits. | Benchmark compilation/private docs passed; tuple-field expansion adds only layout/trailing commas. No fixtures downloaded or executed. |
 | `benchmarks/rust/profile_primitives.rs` | Entire file; documented constructor/path counts, receipt loss, finite projection and disjoint cubic/square union timing. | Feature-bundle compilation/private docs passed; benchmark not run. |
@@ -3589,6 +3590,52 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-solidean-check.log` and
 `/tmp/csgrs-rustdoc-solidean-private.log`.
+
+### Cross-kernel Rust workload consumer, 26 November 2026
+
+Baseline: `020873fa8`. Owner: root kernel-comparison benchmark, P8/P19/P25/P36/
+P37/P39. Read all 1018 baseline lines plus relevant native edge-pairing/finite
+projection and shared-harness implementations. Domain: fixed sampled primitives,
+exact rational sliver, generated OBJ corpus, optional control/hull and transformed
+operands. Missing witnesses were undocumented helpers/local declarations and
+claims stronger than the measured operations or fingerprints.
+
+Coordinate fingerprints first allocate a projected position vector, then hash
+rounded triangle corners. Failed aggregate conversion triggers per-coordinate
+fallback with zero for failed/nonfinite values; large casts saturate. These are
+diagnostic hashes, not equality proofs or certified sub-grid errors. The triangulate
+case clones an already triangular source. Other count-only rows, timed normal search,
+unconditional generated-corpus setup and dispatch-feature prewarming are explicit.
+The optional control's hull proxy and original geometry remain distinct workloads.
+
+The winding helper pairs indexed edges, propagates face flip parity and chooses
+positive signed six-volume for each component. It is not a general cavity-preserving
+normalizer, vertex-link validator or embeddedness proof. It preserves shared native
+storage/evidence on an unchanged clone, but rebuilding after flips does not transport
+old construction evidence. All eight function-local item/field/method doc groups
+were source-reviewed; Rustdoc does not publish their standalone pages.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comments/blank lines
+  yields identical source, including predicate order and all workload assertions.
+- The manifest-declared required set `attributed,obj-io,stl-io`, with defaults
+  disabled, fails compilation: E0432 for `csgrs::curve` and E0425 for `solid::torus`.
+  This unchanged source/configuration gap was reproduced and is now explained in
+  module Rustdoc. The docs-only batch does not change Cargo feature requirements.
+- Adding `curve` makes `cargo check --locked -p csgrs --no-default-features
+  --features attributed,curve,obj-io,stl-io --bench kernel_comparison --offline -j 2`
+  pass without warnings. Private Rustdoc passes with matching library metadata and
+  broken links denied. All nineteen top-level summaries and the module introduction
+  were checked in rendered pages; local declarations were checked in source.
+- No geometry benchmark, generated fixture, optional acquisition, dispatch count or
+  cross-engine timing was run. The owner waived full checks for this docs-only
+  session; the pre-existing minimal-feature failure remains recorded, not fixed or
+  counted as a pass. Existing temporary artifacts were reused (~1.5 GiB at review).
+
+Logs: `/tmp/csgrs-rustdoc-kernel-declared-check.log`,
+`/tmp/csgrs-rustdoc-kernel-check.log` and
+`/tmp/csgrs-rustdoc-kernel-private.log`.
 
 ## Next work
 

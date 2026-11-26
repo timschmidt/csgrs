@@ -1,9 +1,23 @@
-//! Workloads with counterparts in `benchmarks/native` for direct kernel comparison.
+//! Fixed workloads with counterparts in `benchmarks/native` for kernel comparison.
+//!
+//! Matching case names alone do not establish matched geometry, certainty, output
+//! materialization or timing boundaries across engines. Most rows fingerprint counts
+//! or quantized coordinates; they are not exact equivalence or topology certificates.
+//! Expected successes panic on error, and local certainty receipts are not reported.
+//! The harness includes closure work, measurement and output destruction in timing,
+//! with shared process caches and setup outside the measured closures.
+//!
+//! This source needs `curve` as well as `attributed`, `obj-io` and `stl-io`.
+//! The benchmark manifest currently lists only the latter three as required features;
+//! include `curve` explicitly when disabling default features.
 
+/// Deterministic retained OBJ fixtures generated from voxel occupancy workloads.
 #[path = "../support/generated_corpus.rs"]
 mod generated_corpus;
+/// Shared CSV timing, case selection and environment-controlled repetition.
 #[path = "../support/harness.rs"]
 mod support;
+/// Optional pinned control acquisition and derived convex-hull fixture cache.
 #[path = "../support/yeahright.rs"]
 #[allow(dead_code)]
 mod yeahright_fixture;
@@ -26,6 +40,8 @@ use hyperlimit::PredicatePolicy;
 use hypermesh::{Plane, Triangle, TriangleMesh};
 use support::{Config, Measurement};
 
+/// Records nominal input facets, output faces and a face/position-count fingerprint.
+/// Reads lengths only; coordinate values, winding and certainty do not affect it.
 fn measurement(mesh: &TriangleMesh, input_facets: usize) -> Measurement {
     let facets = mesh.triangles.len();
     let vertices = mesh.positions.len();
@@ -36,13 +52,20 @@ fn measurement(mesh: &TriangleMesh, input_facets: usize) -> Measurement {
     )
 }
 
+/// Hashes triangle-corner order using binary64 projections rounded on a `1e-9` grid.
+/// First projects every position into an owned vector. If any conversion fails, it
+/// retries each referenced coordinate separately, replacing failed/nonfinite values
+/// by zero. Float-to-i64 casts saturate out-of-range values, and checksums can collide.
+/// This is a lossy benchmark fingerprint, not a bound on source error or an equality
+/// test. Invalid indices panic; repeated corners are deliberately counted repeatedly.
 fn geometry_measurement(mesh: &TriangleMesh, input_facets: usize) -> Measurement {
+    /// Quantizes one projected coordinate; unavailable/nonfinite projections map to zero.
+    /// Large scaled values saturate on integer conversion before reinterpretation as u64.
     fn coordinate_fingerprint(coordinate: &Real) -> u64 {
-        // `Real` may rebuild an equivalent symbolic approximation graph when a
-        // transformed mesh is cloned. Hashing every raw f64 mantissa bit would
-        // then make a harmless sub-nanometre approximation difference look like
-        // nondeterministic geometry. Quantize only at this benchmark/export
-        // boundary; all geometric construction and predicates remain exact.
+        // Coarsen this diagnostic fingerprint to reduce sensitivity to projected
+        // low bits. This does not prove equality or a sub-grid error bound, and
+        // the quantized value is never fed back into geometry construction.
+        /// Diagnostic units per model-coordinate unit, giving a nominal `1e-9` grid.
         const UNITS_PER_COORDINATE: f64 = 1_000_000_000.0;
         coordinate
             .to_f64_lossy()
@@ -75,10 +98,13 @@ fn geometry_measurement(mesh: &TriangleMesh, input_facets: usize) -> Measurement
     Measurement::new(input_facets as u64, facets as u64, checksum ^ corners as u64)
 }
 
+/// Returns stored triangle count without geometry/topology validation.
 fn facet_count(mesh: &TriangleMesh) -> usize {
     mesh.triangles.len()
 }
 
+/// Computes exact `(b - a) × (c - a)`, preserving triangle winding and area scale.
+/// The vector is unnormalized; a degenerate triangle can yield zero. Bad indices panic.
 fn triangle_normal(mesh: &TriangleMesh, triangle: Triangle) -> Vector3 {
     let [a, b, c] = triangle.indices().map(|index| {
         mesh.positions
@@ -88,14 +114,18 @@ fn triangle_normal(mesh: &TriangleMesh, triangle: Triangle) -> Vector3 {
     (b - a).cross(&(c - a))
 }
 
+/// Delegates opt-in control-fixture acquisition and hash checks to the shared loader.
 fn yeahright_control_path() -> PathBuf {
     yeahright_fixture::control_mesh_path()
 }
 
+/// Obtains the loader's derived convex-hull proxy, which changes the control geometry.
+/// Existing proxy reuse follows the loader's presence check, not a fresh source proof.
 fn yeahright_boolean_hull_path() -> PathBuf {
     yeahright_fixture::boolean_hull_path()
 }
 
+/// Imports native geometry through the public OBJ reader; open/import failures panic.
 fn import_obj(path: &Path) -> TriangleMesh {
     let file = File::open(path)
         .unwrap_or_else(|error| panic!("failed to open {}: {error}", path.display()));
@@ -103,20 +133,26 @@ fn import_obj(path: &Path) -> TriangleMesh {
         .unwrap_or_else(|error| panic!("failed to import {}: {error}", path.display()))
 }
 
+/// Imports and applies fixture-specific component winding normalization.
+/// See [`orient_closed_triangle_mesh`] for topology and cavity limitations.
 fn import_oriented_obj(path: &Path) -> TriangleMesh {
     orient_closed_triangle_mesh(&import_obj(path))
 }
 
+/// Acquires, imports and normalizes the optional control; all three costs occur here.
 fn import_yeahright_control() -> TriangleMesh {
     import_oriented_obj(&yeahright_control_path())
 }
 
+/// Acquires and imports attributed control geometry without winding normalization.
+/// Uses the public attributed OBJ path with unit metadata; failures panic.
 fn import_yeahright_control_attributed() -> AttributedMesh<()> {
     let file = File::open(yeahright_control_path()).expect("YeahRight control OBJ");
     csgrs::io::obj::from_obj_attributed(BufReader::new(file))
         .expect("full-resolution attributed OBJ")
 }
 
+/// Imports attributed OBJ geometry with unit metadata, panicking on file/import errors.
 fn import_attributed_obj(path: &Path) -> AttributedMesh<()> {
     let file = File::open(path)
         .unwrap_or_else(|error| panic!("failed to open {}: {error}", path.display()));
@@ -124,6 +160,11 @@ fn import_attributed_obj(path: &Path) -> AttributedMesh<()> {
         .unwrap_or_else(|error| panic!("failed to import {}: {error}", path.display()))
 }
 
+/// Imports one generated fixture and runs six import/transform/analysis cases.
+/// Setup import and indexed-edge pairing assertion occur even if all cases are
+/// filtered out. The native `is_closed_manifold` check used here does not prove
+/// vertex-link manifoldness or geometric embeddedness. Timed cases share the source;
+/// transforms include coordinate fingerprinting, while import rows only count output.
 fn run_generated_corpus(config: &Config, case: &str, path: &Path) {
     let attributed = import_attributed_obj(path);
     let source = attributed.geometry();
@@ -182,16 +223,31 @@ fn run_generated_corpus(config: &Config, case: &str, path: &Path) {
     });
 }
 
+/// Makes each indexed face-connected component consistent and positive in signed volume.
+/// Requires exactly two incidences per undirected indexed edge, propagates flip parity
+/// by breadth-first search, then strictly classifies each component's signed six-volume.
+/// Inconsistent parity, missing pairs and zero/undecided volume panic. This fixture
+/// normalizer does not establish embeddedness, nondegeneracy or vertex-link topology;
+/// making every component positive does not preserve nested cavity winding in general.
+///
+/// If no flip is needed, clones the native carrier and preserves its shared storage.
+/// Otherwise rebuilds from coordinates/indices without transporting prior construction
+/// evidence. Source buffers are not mutated. Empty input returns an unchanged clone.
 fn orient_closed_triangle_mesh(source: &TriangleMesh) -> TriangleMesh {
+    /// Face index and whether its edge traverses from smaller to larger vertex index.
     type EdgeIncidence = (usize, bool);
 
+    /// Up to two edge uses plus a sticky record that a third or later use was seen.
     #[derive(Default)]
     struct EdgeIncidences {
+        /// First two incidences in triangle/edge encounter order; default slots are empty.
         rows: [Option<EdgeIncidence>; 2],
+        /// True after capacity is exceeded; later pairing must reject this edge.
         overflow: bool,
     }
 
     impl EdgeIncidences {
+        /// Stores a use in the first empty slot, otherwise marks overflow permanently.
         fn push(&mut self, incidence: EdgeIncidence) {
             if let Some(slot) = self.rows.iter_mut().find(|slot| slot.is_none()) {
                 *slot = Some(incidence);
@@ -200,6 +256,8 @@ fn orient_closed_triangle_mesh(source: &TriangleMesh) -> TriangleMesh {
             }
         }
 
+        /// Returns exactly two recorded uses only when neither is missing and no overflow.
+        /// Does not itself check distinct faces, opposite direction or vertex validity.
         fn pair(&self) -> Option<[EdgeIncidence; 2]> {
             if self.overflow {
                 return None;
@@ -295,9 +353,8 @@ fn orient_closed_triangle_mesh(source: &TriangleMesh) -> TriangleMesh {
         }
     }
 
-    // Preserve the native allocation when no winding changes are needed. The
-    // control mesh is already outward-oriented, so rebuilding 11,894 rows here
-    // would benchmark setup loss rather than OBJ import.
+    // Preserve native storage/evidence when no change was found, avoiding a
+    // needless copy of the control's position and triangle buffers.
     if !orientation_changed {
         return source.clone();
     }
@@ -305,19 +362,33 @@ fn orient_closed_triangle_mesh(source: &TriangleMesh) -> TriangleMesh {
     TriangleMesh::new(source.positions.to_vec(), triangles)
 }
 
+/// Rotates +90 degrees about Y, then translates by exact `(1, 12, 1)`.
+/// Used for both the original control and its hull proxy; transform errors panic.
+/// Overlap depends on the supplied geometry and is not established by this helper.
 fn yeahright_boolean_operand(source: &TriangleMesh) -> TriangleMesh {
-    // The quarter turn has exact coefficients, and the offset keeps the two
-    // genus-131 surfaces in substantial but non-identical overlap.
     solid::rotate(source, Real::zero(), Real::from(90_u8), Real::zero())
         .expect("valid transform fixture")
         .translated(Real::one(), Real::from(12_u8), Real::one())
         .expect("valid transform fixture")
 }
 
+/// Runs the configured comparison catalog; panics abort without a typed failure row.
 fn main() {
     run();
 }
 
+/// Runs fixed construction, Boolean, analysis, generated-corpus and optional control cases.
+/// Setup outside closures is unconditional except for the control opt-in. Generated
+/// OBJ files are acquired/generated even when corpus timings are filtered out. With
+/// `dispatch-trace`, extra difference/intersection/XOR calls precede their timing rows
+/// and can warm shared proofs even if those rows are unselected.
+///
+/// Historical labels are not uniform work definitions: `triangulate` clones an
+/// existing triangular mesh and `vertices` reads lengths. Boolean control cases use
+/// the hull proxy except the separately gated full-resolution dangerous case. Strict
+/// convenience calls and approximate-policy ray queries do not emit local receipts.
+/// Sliver thickness and selected nonempty outputs are asserted, but most rows only
+/// count/fingerprint results; they do not independently certify the intended set.
 fn run() {
     support::print_header();
     let config = Config::from_env();
@@ -574,9 +645,8 @@ fn run() {
         )
     });
 
-    // An exact rational overlap ten times larger than OCCT's documented
-    // Precision::Confusion() threshold. This anchors thin-feature behavior
-    // without asking the double/tolerance kernel to resolve below its contract.
+    // Exact rational overlap of 1e-6 in X. This case checks retained thickness;
+    // comparison kernels' tolerances and completion contracts need separate evidence.
     let sliver_shift =
         (Real::from(1_999_999_u64) / Real::from(1_000_000_u64)).expect("nonzero denominator");
     let sliver_thickness =
@@ -664,6 +734,7 @@ fn run() {
     let analysis_source =
         solid::sphere(Real::from(10_u8), 32, 16).expect("valid primitive fixture");
     config.run("kernel", "triangulate", "sphere_medium", 16, || {
+        // Historical label: the native source already contains triangles.
         let mesh = black_box(&analysis_source).clone();
         measurement(&mesh, facet_count(&analysis_source))
     });
@@ -778,6 +849,8 @@ fn run() {
         },
     );
     config.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, || {
+        // Selection checks orthogonal normals, not whether the chosen triangles
+        // share an indexed edge; box construction and this search are also timed.
         let box_mesh = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let first = box_mesh.triangles[0];
         let first_normal = triangle_normal(&box_mesh, first);
