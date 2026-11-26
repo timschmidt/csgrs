@@ -1,3 +1,7 @@
+//! Fixed native modeling regressions for exact ingress, transforms and downstream consumption.
+//! The witnesses use boundary classification, stored indices, mesh predicates and
+//! bounds; sampled profiles and discarded local receipts retain their usual API scope.
+
 use csgrs::{
     TriangleMesh, curve,
     solid::{self, SolidExt},
@@ -6,17 +10,23 @@ use hyperlattice::{Point3, Real};
 use hyperlimit::PredicatePolicy;
 use hypermesh::{MeshContext, Triangle};
 
+/// Strict policy for the direct arrangement and geometric validation queries.
 const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
+/// Imports the exact binary64 value; decimal literals are not interpreted as exact decimals.
+/// Panics if a fixture supplies NaN or infinity.
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("test values must be finite")
 }
 
+/// Constructs a native point by exact finite conversion of each fixture coordinate.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
 #[test]
+/// Requires strict-interior containment to exclude `(1e-12, 0, 0)` on a cube edge.
+/// The point is on the boundary, so this assertion alone does not detect vertex merging.
 fn exact_near_vertices_are_not_tolerance_merged() {
     let mesh = solid::cube(r(1.0)).expect("valid primitive fixture");
     let near = p3(1.0e-12, 0.0, 0.0);
@@ -25,6 +35,8 @@ fn exact_near_vertices_are_not_tolerance_merged() {
 }
 
 #[test]
+/// Checks that the public native carrier retains one triangle's authored index triple.
+/// This open triangle is not submitted to closed-solid validation.
 fn public_mesh_construction_is_the_native_indexed_triangle_carrier() {
     let mesh = TriangleMesh::new(
         vec![p3(0.0, 0.0, 0.0), p3(1.0, 0.0, 0.0), p3(0.0, 1.0, 0.0)],
@@ -36,6 +48,9 @@ fn public_mesh_construction_is_the_native_indexed_triangle_carrier() {
 }
 
 #[test]
+/// Exercises direct difference and a wrapper difference/intersection/union chain on shifted boxes.
+/// Checks face uniqueness, nondegeneracy and geometric edge pairing for the wrapper results,
+/// then nonemptiness and positive X extent; it does not independently prove the final set identity.
 fn boolean_pipeline_accepts_hyperreal_transforms() {
     let a = solid::center(&solid::cube(r(2.0)).expect("valid primitive fixture"))
         .expect("valid modeling fixture");
@@ -90,6 +105,8 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
 }
 
 #[test]
+/// Unites two separated translated cubes and requires every projected vertex X to be at least ten.
+/// The binary64 check targets gross origin-fallback errors, not exact equality of the union set.
 fn translated_union_does_not_emit_origin_fallback_vertices() {
     let left = solid::cube(r(1.0))
         .expect("valid primitive fixture")
@@ -116,6 +133,7 @@ fn translated_union_does_not_emit_origin_fallback_vertices() {
 }
 
 #[test]
+/// Checks the minimum X bound retains the exact imported binary64 `1e-12` translation.
 fn exact_near_plane_translation_is_preserved_by_native_geometry() {
     let shift = r(1.0e-12);
     let mesh = solid::cube(r(2.0))
@@ -133,6 +151,9 @@ fn exact_near_plane_translation_is_preserved_by_native_geometry() {
 }
 
 #[test]
+/// Extrudes a square, optionally after a bounded-miter offset when `offset` is enabled.
+/// Requires nonempty triangles and maximum Z at least the authored height; no receipt
+/// or full offset/extrusion set equality is asserted here.
 fn curve_offset_and_extrude_keep_hyperreal_scalars() {
     let region = curve::square(r(2.0)).expect("valid planar fixture");
     #[cfg(feature = "offset")]

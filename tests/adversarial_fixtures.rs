@@ -1,9 +1,13 @@
-//! Tests that load and validate adversarial fixture descriptions.
+//! Lexical metadata checks for recorded adversarial fixture descriptions.
+//! Geometry, feature selections and expected/observed outcomes are not replayed here.
 
 use std::fs;
 use std::path::Path;
 
 #[test]
+/// Requires a nonempty directory and six literal labels in each immediate `.txt` entry.
+/// Sorts paths for deterministic checking; does not parse field values or require
+/// that at least one entry is a text fixture. I/O errors panic with test diagnostics.
 fn adversarial_regression_fixtures_are_recorded() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/adversarial");
     let mut entries = fs::read_dir(&root)

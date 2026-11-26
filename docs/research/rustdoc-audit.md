@@ -34,6 +34,11 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/adversarial.rs` | Entire file; documented exact float ingress, boundary-point witness, Boolean/transform assertions and optional offset extrusion. | Focused compilation passed with and without offset; private helper docs inspected. Geometry tests unchanged, not run. |
+| `tests/adversarial_deep.rs` | Entire file; documented three-step box chain and sampled-circle union/extrusion at actual assertion strength. | Focused compilation and private docs passed; geometry tests unchanged, not run. |
+| `tests/adversarial_extrusions.rs` | Entire file; documented face/edge predicate helper and segmented revolution, sweep and loft fixtures. | Focused compilation and private docs passed; geometry tests unchanged, not run. |
+| `tests/adversarial_fixtures.rs` | Entire file; documented lexical label checks, deterministic path ordering and lack of geometric replay. | Focused compilation/private module docs passed; existing metadata test compiled directly and passed. |
+| `tests/adversarial_stress.rs` | Entire file; documented eight-box fold and three sampled-profile extrusions without resource/completeness claims. | Focused compilation and private docs passed; geometry tests unchanged, not run. |
 | `tests/adapter_boolean_failures.rs` | Entire file; documented operation variants, dispatch/context matrix, native wrapping and typed cause assertions. | Focused test compilation and private helper docs passed; assertions unchanged, not executed. |
 | `tests/adapter_curve_failures.rs` | Entire file; documented failure transport, synthetic policy error, finite rectangle composition and revolution receipt/volume scope. | Focused test compilation and private helper docs passed; assertions unchanged, not executed. |
 | `tests/scalar_certificate_failures.rs` | Entire file; documented inconsistent/undefined scalar wire fixtures, constructor guards and scalar source chains. | Focused test compilation and module docs passed; test-only items source-reviewed, not executed. |
@@ -2571,6 +2576,62 @@ Validation after final edits:
 Logs: `/tmp/csgrs-rustdoc-failure-tests-check.log`,
 `/tmp/csgrs-rustdoc-failure-tests-doc.log` (initial linkage failure), and
 `/tmp/csgrs-rustdoc-failure-tests-private.log` (successful private docs).
+
+### Adversarial modeling and fixture consumers, 26 November 2026
+
+Baseline: `130422d9f`. Owner: root modeling regression consumers,
+P1/P3/P8/P9/P17–P20/P24/P25/P35/P37. Domain: finite binary64 fixture ingress,
+native boxes, short Boolean/transform chains, sampled profiles, extrusion,
+segmented revolution, sweep, loft and lexical fixture records. Read all five
+test files in full. Supporting reads of native constructors, containment,
+face/edge predicates and manifest gates do not add whole-file owner credit.
+
+Missing witnesses: all 21 declarations lacked Rustdoc, and several names imply
+more than their assertions establish. The near-origin point `(1e-12, 0, 0)` is
+on an edge of `[0,1]^3`; its exclusion from strict interior alone cannot detect
+vertex merging. The separate translation witness compares the exact bound.
+`is_exact_solid` checks triangle validity/uniqueness and geometric edge pairing,
+not vertex links or embedding. Circle fixtures are sampled polygons. Nonempty
+output, positive extent and fixed iteration counts do not prove arbitrary set
+equality or a resource bound. These limits are now explicit without changing
+any fixture, assertion, predicate order or feature gate.
+
+The metadata test requires a nonempty directory and literal labels in immediate
+`.txt` entries. It neither requires a text entry nor parses/replays a described
+operation. Read all four current records completely; preserved their historical
+text rather than treating legacy `f64`/polygon/contained-panic descriptions as
+current native API acceptance rules:
+
+| File | Whole-file review | Evidence limit |
+| --- | --- | --- |
+| `tests/fixtures/adversarial/difference_metadata_sources.txt` | Source-label preservation narrative for attributed difference; unchanged. | No replay or current metadata correctness claim. |
+| `tests/fixtures/adversarial/zero_by_zero_image_import.txt` | Empty raster narrative with permissive historical expected behavior; unchanged. | Current admission forbids replacing ordinary failure with a contained panic; this text is not that contract. |
+| `tests/fixtures/adversarial/nonfinite_curve_shape_parameters.txt` | Legacy invalid-parameter/NaN filtering narrative; unchanged. | Does not establish current constructor behavior or authorize filtering authoritative geometry. |
+| `tests/fixtures/adversarial/svg_path_order_roundtrip.txt` | Path-order-independent polygon/triangle roundtrip narrative; unchanged. | No semantic replay or triangle-count verification performed in this batch. |
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Comment/blank-line removal gives
+  identical executable source to baseline in all five files; all 21 declarations
+  are documented.
+- Focused `cargo check` for all five test targets passed with defaults disabled
+  and `curve,sdf,svg-io`; the `adversarial` target also passed with
+  `curve,offset,stl-io` to compile its optional offset block. Extra features reuse
+  existing metadata. Both checks used `--locked --offline -j 2` and produced no warnings.
+- Private Rustdoc for all five test targets passed with broken links denied,
+  using the checked own-library metadata and dependency paths as in the previous
+  batch. Inspected all 14 top-level pages, all nine rendered declaration descriptions
+  and the module descriptions. Test-function Rustdoc remains source-reviewed.
+- Compiled `tests/adversarial_fixtures.rs` directly with `rustc --edition 2024 --test`
+  and repository `CARGO_MANIFEST_DIR`, then ran its single existing test: passed.
+  This establishes label presence only, not fixture semantics.
+- Geometry execution and full workflows remain waived. The same temporary target
+  was reused with incremental compilation disabled; no model or fixture output was written.
+
+Logs: `/tmp/csgrs-rustdoc-adversarial-check.log`,
+`/tmp/csgrs-rustdoc-adversarial-offset-check.log`,
+`/tmp/csgrs-rustdoc-adversarial-private.log`, and
+`/tmp/csgrs-rustdoc-adversarial-fixtures-run.log`.
 
 ## Next work
 

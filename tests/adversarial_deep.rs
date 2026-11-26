@@ -1,3 +1,6 @@
+//! Short transform/Boolean and sampled-profile/extrusion composition regressions.
+//! Assertions establish nonemptiness and, for the box chain, positive X extent.
+
 use csgrs::{
     curve,
     solid::{self, SolidExt},
@@ -5,11 +8,14 @@ use csgrs::{
 use hyperlattice::Real;
 use hyperlimit::PredicatePolicy;
 
+/// Imports a finite fixture float as its exact binary value, panicking on invalid input.
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("test values must be finite")
 }
 
 #[test]
+/// Accumulates three translated, quarter-turn box copies and checks nonempty output with X extent.
+/// The fixed three-step case supplies neither a general depth bound nor an independent set oracle.
 fn repeated_boolean_and_transform_sequence_stays_nonempty() {
     let base = solid::center(&solid::cube(r(1.0)).expect("valid primitive fixture"))
         .expect("valid modeling fixture");
@@ -41,6 +47,8 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
 }
 
 #[test]
+/// Consumes the union of a rectangle and translated 32-chord circle in a strict extrusion.
+/// Requires nonempty triangles; the circle is a sampled polygon, not an analytic disk.
 fn native_curve_boolean_outputs_can_be_extruded() {
     let left = curve::rectangle(r(2.0), r(1.0)).expect("valid planar fixture");
     let right = curve::transformed(
