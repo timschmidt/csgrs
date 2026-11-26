@@ -28,23 +28,43 @@ pub enum RasterTraceError {
     },
     /// Hypercurve rejected an exact contour assembled from the raster boundary.
     #[error(transparent)]
-    Curve(#[from] CurveError),
+    Curve(
+        /// Native contour or segment cause, exposed through the error source.
+        #[from]
+        CurveError,
+    ),
     /// Hypercurve rejected explicit material/hole topology.
     #[error(transparent)]
-    ExactCurve(#[from] ExactCurveError),
+    ExactCurve(
+        /// Native filled-region admission cause, exposed through the error source.
+        #[from]
+        ExactCurveError,
+    ),
     /// A closed boundary had no decidable nonzero orientation.
     #[error("raster contour orientation is zero, unsupported, or uncertain")]
     UncertainContourOrientation,
 }
 
 /// Report for direct integer-grid raster tracing.
+///
+/// Counts describe the input cells and emitted boundary work before native
+/// admission. They are not final segment counts or resource budgets. Exactness
+/// is relative to the thresholded cell model, not the scene represented by the
+/// raster. [`super::from_image`] consumes this internal report and returns only
+/// its region.
 #[derive(Clone, Debug)]
 pub struct RasterTraceReport {
+    /// Native filled region after loop orientation and material/hole admission.
     region: CurveRegion2,
+    /// Source width in pixels, including empty columns.
     width: u32,
+    /// Source height in pixels, including empty rows.
     height: u32,
+    /// Number of source pixels whose grayscale value met the inclusive threshold.
     solid_pixel_count: usize,
+    /// Exposed unit edges before collinear runs are simplified.
     boundary_edge_count: usize,
+    /// Number of traced loops submitted to native contour/region admission.
     contour_count: usize,
 }
 
@@ -54,7 +74,7 @@ impl RasterTraceReport {
         &self.region
     }
 
-    /// Consume the report and return the constructed region.
+    /// Consume the report and return its region, discarding dimensions and work counts.
     pub fn into_region(self) -> CurveRegion2 {
         self.region
     }
@@ -74,7 +94,8 @@ impl RasterTraceReport {
         self.solid_pixel_count
     }
 
-    /// Return the number of unit cell edges retained on the boundary.
+    /// Return exposed unit-edge count before collinear simplification.
+    /// A long straight run contributes one count per pixel edge, not one per final segment.
     pub const fn boundary_edge_count(&self) -> usize {
         self.boundary_edge_count
     }
@@ -85,15 +106,23 @@ impl RasterTraceReport {
     }
 }
 
+/// Integer pixel corner used for exact endpoint identity and outgoing-edge lookup.
+/// Coordinates keep the raster's row direction; no Y reflection is applied.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct GridPoint {
+    /// Horizontal cell-corner coordinate, possibly at the image's right edge.
     x: u32,
+    /// Vertical cell-corner coordinate, possibly at the image's final row boundary.
     y: u32,
 }
 
+/// Directed exposed cell edge with selected material on its left in numeric XY coordinates.
+/// The raster emitter supplies distinct axis-aligned unit endpoints.
 #[derive(Clone, Copy, Debug)]
 struct GridEdge {
+    /// Traversal origin used as the outgoing-map key.
     start: GridPoint,
+    /// Traversal destination where the next unused edge is selected.
     end: GridPoint,
 }
 
@@ -101,6 +130,15 @@ struct GridEdge {
 ///
 /// Pixels whose grayscale value is at least `threshold` are closed unit
 /// cells. The report retains source dimensions and boundary-work counts.
+/// Emits exposed edges in row-major pixel order, then top/right/bottom/left
+/// order per cell. Tracing separates diagonal contacts into loops; signed area
+/// selects material versus hole roles before native region admission. Empty
+/// images or no selected pixels produce an empty region and zero work counts.
+///
+/// Zero, unavailable or undecided contour orientation shares the typed
+/// `UncertainContourOrientation` outcome. Curve construction/admission causes
+/// remain wrapped separately. Buffer growth uses ordinary collections here;
+/// counts are not a checked allocation, cancellation or total-work contract.
 pub(crate) fn try_from_image(
     img: &GrayImage,
     threshold: u8,
@@ -163,6 +201,8 @@ pub(crate) fn try_from_image(
 }
 
 impl GridEdge {
+    /// Stores endpoints without validating axis alignment, length or nondegeneracy.
+    /// The exposed-cell emitter establishes those invariants before traversal.
     const fn new(start_x: u32, start_y: u32, end_x: u32, end_y: u32) -> Self {
         Self {
             start: GridPoint {
@@ -173,6 +213,9 @@ impl GridEdge {
         }
     }
 
+    /// Encodes +X, +Y, -X, -Y as 0, 1, 2, 3 for turn selection.
+    /// Accepts any nonzero axis-aligned length; diagonal or zero edges panic as
+    /// violations of the emitter's invariant.
     fn direction(self) -> u8 {
         match (self.end.x.cmp(&self.start.x), self.end.y.cmp(&self.start.y)) {
             (std::cmp::Ordering::Greater, std::cmp::Ordering::Equal) => 0,
@@ -184,10 +227,23 @@ impl GridEdge {
     }
 }
 
+/// Inclusive grayscale threshold at a caller-validated in-bounds pixel.
+/// All neighbors are bounds-checked by the emitter before this indexing call.
 fn pixel_is_solid(img: &GrayImage, x: u32, y: u32, threshold: u8) -> bool {
     img.get_pixel(x, y)[0] >= threshold
 }
 
+/// Walks unused directed edges into separate closed pixel-boundary loops.
+///
+/// Seeds follow input order. At each destination, [`turn_priority`] chooses
+/// among unused outgoing edges, with input candidate order breaking ties. The
+/// positive-turn preference keeps diagonal cell contacts separate instead of
+/// joining them into a crossing contour. Returning to the seed vertex closes
+/// the walk without repeating that vertex; collinear runs are then simplified.
+///
+/// Requires the emitter's oriented axis-aligned edge set. A missing continuation
+/// returns `OpenBoundary` at its destination, discarding all partial local loops.
+/// This is not a validator for arbitrary directed graphs or their embedding.
 fn trace_boundary_loops(edges: &[GridEdge]) -> Result<Vec<Vec<GridPoint>>, RasterTraceError> {
     let mut outgoing = BTreeMap::<GridPoint, Vec<usize>>::new();
     for (index, edge) in edges.iter().enumerate() {
@@ -232,6 +288,9 @@ fn trace_boundary_loops(edges: &[GridEdge]) -> Result<Vec<Vec<GridPoint>>, Raste
     Ok(loops)
 }
 
+/// Ranks a positive quarter turn, straight motion, negative quarter turn and reversal.
+/// Inputs must be direction codes 0..=3 from [`GridEdge::direction`]; smaller
+/// output wins. Positive turn refers to numeric XY orientation, not screen Y.
 fn turn_priority(incoming: u8, outgoing: u8) -> u8 {
     match (outgoing + 4 - incoming) % 4 {
         1 => 0,
@@ -242,6 +301,12 @@ fn turn_priority(incoming: u8, outgoing: u8) -> u8 {
     }
 }
 
+/// Removes axis-collinear vertices of an implicitly closed raster loop until stable.
+///
+/// Retained vertices keep their traversal order, and wraparound neighbors count.
+/// Stops at three or fewer vertices without validating them. The caller supplies
+/// a nonbacktracking cell boundary: the coordinate-equality test does not check
+/// betweenness or justify removing reversals from arbitrary input paths.
 fn remove_collinear_grid_points(mut points: Vec<GridPoint>) -> Vec<GridPoint> {
     loop {
         let len = points.len();
@@ -266,6 +331,9 @@ fn remove_collinear_grid_points(mut points: Vec<GridPoint>) -> Vec<GridPoint> {
     }
 }
 
+/// Promotes one simplified grid loop to exact lines, including last-to-first closure.
+/// Native line and contour constructors own degeneracy and connectivity errors;
+/// no orientation or filled-region role is assigned in this helper.
 fn grid_loop_to_contour(points: Vec<GridPoint>) -> Result<Contour2, CurveError> {
     let mut segments = Vec::with_capacity(points.len());
     for index in 0..points.len() {
@@ -276,16 +344,19 @@ fn grid_loop_to_contour(points: Vec<GridPoint>) -> Result<Contour2, CurveError> 
     Contour2::try_new(segments)
 }
 
+/// Promotes unsigned grid coordinates exactly, preserving numeric Y and unit scale.
 fn grid_point(point: GridPoint) -> Point2 {
     Point2::new(Real::from(point.x), Real::from(point.y))
 }
 
+/// Raster count/ownership witnesses for empty input, holes and diagonal contacts.
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use image::Luma;
 
+    /// Requires native material/hole loop counts, propagating classification failures.
     fn assert_role_counts(region: &CurveRegion2, expected: (usize, usize)) {
         let actual = region
             .loop_role_counts()
@@ -293,6 +364,7 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
+    /// A zero-by-zero raster produces empty geometry and no traced work.
     #[test]
     fn empty_image_returns_an_empty_report_without_panicking() {
         let report = try_from_image(&GrayImage::new(0, 0), 128).unwrap();
@@ -302,6 +374,9 @@ mod tests {
         assert_eq!(report.contour_count(), 0);
     }
 
+    /// Six solid cells expose ten unit edges and one material loop without holes.
+    /// The historical test name mentions four segments, but no final segment-count
+    /// assertion is made here; the measured edge count precedes simplification.
     #[test]
     fn solid_rectangle_collapses_pixel_edges_to_four_exact_segments() {
         let image = GrayImage::from_pixel(3, 2, Luma([255]));
@@ -312,6 +387,7 @@ mod tests {
         assert_role_counts(report.region(), (1, 0));
     }
 
+    /// Removing the center cell of a 3x3 block yields one material loop and one hole.
     #[test]
     fn ring_preserves_one_material_and_one_hole() {
         let image = GrayImage::from_fn(3, 3, |x, y| {
@@ -326,6 +402,7 @@ mod tests {
         assert_role_counts(report.region(), (1, 1));
     }
 
+    /// Two corner-touching cells remain separate material loops under the turn rule.
     #[test]
     fn diagonal_pixels_remain_two_four_connected_components() {
         let image =

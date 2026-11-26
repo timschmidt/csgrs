@@ -2,13 +2,20 @@
 //! blank glyphs, and an intentionally incomplete glyph. No external font data.
 #![allow(dead_code)]
 
+/// Writes a big-endian u16 into caller-sized fixture storage; invalid bounds panic.
 fn put16(bytes: &mut [u8], offset: usize, value: u16) {
     bytes[offset..offset + 2].copy_from_slice(&value.to_be_bytes());
 }
+/// Writes a big-endian u32 into caller-sized fixture storage; invalid bounds panic.
 fn put32(bytes: &mut [u8], offset: usize, value: u32) {
     bytes[offset..offset + 4].copy_from_slice(&value.to_be_bytes());
 }
 
+/// Encodes one simple glyf contour with explicit i16 coordinate deltas and on-curve flags.
+///
+/// Uses a fixed 0..100 bounding box and no hint instructions. Fixture inputs must
+/// be nonempty, fit a u16 point count and have i16-representable consecutive deltas;
+/// this is a small synthetic-font encoder, not a general glyph serializer.
 fn outline(points: &[(i16, i16, bool)]) -> Vec<u8> {
     let mut bytes = vec![0; 14];
     put16(&mut bytes, 0, 1); // one contour
@@ -29,6 +36,9 @@ fn outline(points: &[(i16, i16, bool)]) -> Vec<u8> {
 
 /// R = square, Q = quadratic arch, space/B = blank, X = malformed.
 /// The optional GPOS class-zero adjustment covers only R and moves by -200.
+/// Uses 1000 units per em and 1000-unit horizontal advances. Empty loca ranges
+/// certify the blank glyphs; X has a present contour header but missing point
+/// data, distinguishing parser failure from legitimate absence of ink.
 pub fn font(with_gpos: bool) -> Vec<u8> {
     let mut head = vec![0; 54];
     put32(&mut head, 0, 0x0001_0000);
@@ -85,6 +95,9 @@ pub fn font(with_gpos: bool) -> Vec<u8> {
     sfnt(tables)
 }
 
+/// One format-2 pair lookup with an R-only coverage table and a -200 class-zero X advance.
+/// Empty Script/Feature lists deliberately exercise the adapter's all-lookup
+/// behavior; Q must not acquire the adjustment merely by belonging to class zero.
 fn gpos() -> Vec<u8> {
     let mut bytes = Vec::new();
     // GPOS 1.0, empty Script/Feature lists, one Pair lookup at offset 18.
@@ -116,6 +129,11 @@ fn gpos() -> Vec<u8> {
     bytes
 }
 
+/// Builds a small sorted sfnt directory and four-byte-aligned table payloads.
+///
+/// Leaves checksums/search metadata zero because these fixtures target the parser
+/// paths under test. Caller-supplied sizes/counts fit the unchecked u16/u32 casts;
+/// the output is not a general standards-conformance or checksum fixture.
 fn sfnt(mut tables: Vec<([u8; 4], Vec<u8>)>) -> Vec<u8> {
     tables.sort_by_key(|entry| entry.0);
     let mut bytes = vec![0; 12 + tables.len() * 16];
@@ -136,6 +154,8 @@ fn sfnt(mut tables: Vec<([u8; 4], Vec<u8>)>) -> Vec<u8> {
 }
 
 /// Corrupt a declared table length, retaining its presence in the directory.
+/// Does not remove payload bytes or move offsets. Assumes a complete directory
+/// and an existing tag; malformed fixture storage or a missing tag panics.
 pub fn truncate_table(bytes: &mut [u8], tag: [u8; 4], length: u32) {
     let count = u16::from_be_bytes([bytes[4], bytes[5]]) as usize;
     let row = (0..count)

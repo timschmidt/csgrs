@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/curve/image.rs` | Entire file; documented report/error payloads, exact grid identity, directed-edge traversal, turn selection, simplifier assumptions and all tests. Corrected the documented scope of the rectangle witness. | Private docs with image/text features passed; all eleven public/private pages inspected. Runtime tests unchanged, not rerun. |
+| `src/curve/truetype.rs` | Entire file; documented table checks, blank-glyph proof cases, limited layout/kerning, every collector field/helper/callback and both unit witnesses. | Private docs with image/text features passed; all eight helper/type pages inspected, including private fields and trait overrides. Runtime tests unchanged, not rerun. |
+| `tests/text_contracts.rs` | Entire file; documented helpers, gated modules, independent outline/placement expectations, errors, policy/scale/composition and qualified STL replay. | Source, formatting and documentation-only comparison passed; assertions and optional STL branch not rerun. |
+| `tests/support/text_font.rs` | Entire file; documented synthetic glyph/table encoding, size assumptions, class-zero coverage and deliberate length corruption. | Source, formatting and documentation-only comparison passed; fixture bytes and behavior unchanged. |
 | `src/curve/metaballs.rs` | Entire file; documented strict field construction versus policy-selected extraction, empty validation, indexed sample errors, checked buffer scope and axis preconditions. | Private docs passed with `curve,metaballs,image-io,truetype-text,hershey-text`; all three helper pages inspected. Runtime checks waived. |
 | `tests/sweep_frames.rs` | Entire file; documented all 21 function/constant declarations, exact rational frame invariants, finite helix/grouping oracles, typed failures and terminal certainty. | Source, formatting and comment-only checks passed; runtime assertions and timing diagnostics unchanged, not rerun. |
 | `tests/exact_profile_sweeps.rs` | Entire file; documented all 50 function/constant/type declarations, exact prism fixtures, signed revolution phases, independent winding/sector oracles, policy/composition and qualified STL replay. | Source, formatting and comment-only checks passed; assertions and optional STL branch unchanged, not rerun. |
@@ -1310,11 +1314,94 @@ is about 542 MiB after checking the additional image/font feature dependencies.
 No separate target tree or runtime build was created. Full workflow/runtime
 checks remain waived for this docs-only session; no performance claim is made.
 
+### Image tracing and TrueType internals, 26 November 2026
+
+Owner: CSGRS raster/font conversion boundaries and their private topology/layout
+adapters; P1/P6/P8/P9/P12/P19/P25/P30/P37. Baseline: `98ec9042e`.
+Read every line of `src/curve/image.rs`, `src/curve/truetype.rs`,
+`tests/text_contracts.rs` and `tests/support/text_font.rs`. Supporting reads
+checked the locked ttf-parser 0.25.1 CFF completion/`ZeroBBox` path and existing
+uncertainty helpers. Third-party parser reads and the real-font workload's
+asset reference are not credited as separate repository-file audits.
+
+Missing witnesses: raster report/grid fields, tracing helpers and tests lacked
+complete Rustdoc; the TrueType collector and its trait overrides/fields were
+undocumented. The raster rectangle test's historical name overstates what its
+assertions inspect, so this batch describes exactly which quantities and
+decisions each test asserts.
+
+Raster docs distinguish exposed unit-edge work counts from final simplified
+segments, preserve direct numeric Y coordinates and explain the positive-turn
+rule separating diagonal contacts. The outgoing-edge walk assumes the emitter's
+oriented grid graph; the collinear simplifier assumes a nonbacktracking boundary
+and does not check betweenness on arbitrary paths. Native contour/region
+admission remains the topology authority. Zero/unavailable/undecided orientation
+share the existing explicit error, and ordinary collection growth is not a
+typed resource-budget contract. Two tuple error variants were expanded solely
+to attach Rustdoc to their retained native error payloads.
+
+The raster rectangle witness checks six selected cells, ten exposed edges and
+one material loop without holes. Despite its historical name, it does not
+assert four final segments. Its assertions are preserved, and the documentation
+states that evidence limit rather than claiming stronger validation.
+
+Font docs specify required versus declared-but-unparsed tables and lazy glyph
+validation. Blank glyf evidence requires valid loca ranges and either no bytes
+or a complete zero-contour header; CFF accepts only the parser's completed
+charstring with untouched bounds. CFF2 absence remains explicitly unsupported.
+Callbacks preserve exact parser-coordinate promotion and offset-before-scale
+placement, retain line/quadratic/cubic families, and save the first failure.
+They may leave partial local state, but text assembly rejects it before any
+successful geometry is published. Private fields and all callback overrides
+are documented and visible in the generated private API pages.
+
+Layout docs describe exact font/point units, control-character cursor behavior,
+default space fallback and the adapter's limited pair handling. A nonzero GPOS
+sum wins; zero, including cancellation, falls back to eligible kern tables.
+All parsed GPOS lookups are visited without script/feature selection, and class
+zero still requires left-glyph coverage. This is not a full shaping engine or a
+certificate of source-font fidelity before parser coordinate rounding.
+
+Text tests document independent square/arch area and membership expectations,
+extreme and symbolic scales, native error causes, empty/Boolean/extrusion reuse,
+Hershey placement and retained real-font/catalog workloads. Optional STL checks
+compare binary32 position sets and local edge/face validation, not original
+exact curved geometry. Synthetic sfnt helpers document their small-count/delta
+assumptions, intentionally zero checksum/search metadata, R-only GPOS coverage
+and directory-length corruption without payload removal.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/image.rs src/curve/truetype.rs
+  tests/text_contracts.rs tests/support/text_font.rs`: passed.
+  `git diff --check`: passed.
+- Nonblank, non-comment source matches baseline after accounting explicitly for
+  the two tuple-field layout expansions. No expressions, assertions, fixtures,
+  callback order or control flow changed.
+- Local declaration scans found Rustdoc on 26 image declarations, 31 TrueType
+  declarations, 18 text-test declarations and seven synthetic-font helpers;
+  fields were checked separately. These are file-local checks, not a general
+  repository coverage metric.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features
+  curve,metaballs,image-io,truetype-text,hershey-text --document-private-items
+  --no-deps --offline`: passed without warnings.
+- Inspected nineteen rendered image/TrueType pages, including private fields,
+  tuple error payloads and trait callback documentation. A rendered-text check
+  initially searched for “suppress” instead of the actual “suppresses”; correcting
+  that check confirmed the existing generated text. Test-only items remain
+  source-reviewed; ordinary library docs do not render them.
+
+Log: `/tmp/csgrs-rustdoc-image-text-doc.log`. Reused temporary build storage is
+about 543 MiB. No runtime build or separate target tree was created. Full
+workflow/runtime checks remain waived for this docs-only session; no runtime
+completion or performance claim is made.
+
 ## Next work
 
-Review `src/curve/image.rs` and `src/curve/truetype.rs` completely, including
-private tracing/outline/layout helpers and their tests, then
-review the remaining root modules and owning crates. Maintain review records with
+Continue with the root `src/io` interchange modules and downstream witnesses,
+then the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation

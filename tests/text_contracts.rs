@@ -1,5 +1,12 @@
 #![cfg(any(feature = "truetype-text", feature = "hershey-text"))]
+//! Native text boundary witnesses for exact placement, typed failures and composition.
+//!
+//! Synthetic font data supplies independent square/arch/layout expectations;
+//! retained real-font and Hershey workloads add coverage without replacing those
+//! oracles. Optional STL checks compare the format's quantized position set, not
+//! fidelity to the original exact font outlines.
 
+/// Shared certified-zero control and independently unresolved sine-addition fixture.
 #[path = "support/uncertainty.rs"]
 mod uncertainty;
 
@@ -8,41 +15,54 @@ use csgrs::{
     errors::{ValidationError, ValidationErrorKind},
 };
 
+/// Exact signed-integer test literal.
 fn r(n: i32) -> Real {
     n.into()
 }
+/// Exact rational test literal; a zero denominator is a fixture-author error.
 #[cfg(feature = "truetype-text")]
 fn q(n: i32, d: i32) -> Real {
     (r(n) / r(d)).unwrap()
 }
+/// Requires a certified equality decision at the fixture's -1024 refinement limit.
+/// An unresolved decision fails the witness rather than becoming tolerance equality.
 fn exact(left: &Real, right: &Real) {
     assert_eq!(left.certified_eq_until(right, -1024).as_bool(), Some(true));
 }
+/// Verifies the old unit-circle identity, then obtains the separate unresolved zero control.
 fn unresolved_zero() -> Real {
     let s = Real::e().sin();
     let c = Real::e().cos();
     uncertainty::terminal_zero(&s * &s + &c * &c - r(1))
 }
 
+/// Synthetic sfnt/glyph/table fixtures, including deliberate corruption helpers.
 #[cfg(feature = "truetype-text")]
 #[path = "support/text_font.rs"]
 mod text_font;
 
+/// Filled TrueType outline, exact scale, layout, failure and downstream witnesses.
 #[cfg(feature = "truetype-text")]
 mod truetype {
     use super::*;
     use hypercurve::{BooleanOp, CurveFamily2, CurveRegion2};
 
+    /// Point size making one font unit one model unit for the 1000-unit/em fixture.
     fn unit_size() -> Real {
         q(360_000, 127)
     }
+    /// Requires a native exact filled-area result for a fixture with area support.
     fn area(region: &CurveRegion2) -> Real {
         region.filled_area().unwrap().unwrap()
     }
+    /// Checks strict classification at an integer witness, with `None` meaning boundary.
     fn inside(region: &CurveRegion2, x: i32, y: i32, expected: Option<bool>) {
         assert_eq!(curve::contains_xy(region, r(x), r(y)).unwrap(), expected);
     }
 
+    /// Blank text/glyphs compose as empty while font, scale, glyph and table failures stay typed.
+    /// Retains invalid-input companions to empty requests and checks native error sources;
+    /// incomplete outline data must not be mistaken for a certified blank glyph.
     #[test]
     fn blank_text_is_distinct_from_font_glyph_and_scale_failures() {
         let font = text_font::font(false);
@@ -101,6 +121,9 @@ mod truetype {
         ));
     }
 
+    /// Synthetic square/quadratic outlines retain exact area, contacts and curve families.
+    /// Both policies certify; translation and empty Boolean composition preserve
+    /// the arch, while square extrusion has paired geometric edges and six-volume 120000.
     #[test]
     fn independent_square_and_quadratic_semantics_survive_composition() {
         let font = text_font::font(false);
@@ -156,6 +179,9 @@ mod truetype {
         }
     }
 
+    /// Point-to-millimeter scaling retains symbolic, sub-binary64 and enormous exact sizes.
+    /// Compares square area with the independent quadratic scale law and distinguishes
+    /// sizes separated by 2^-100; no finite-coordinate export participates.
     #[test]
     fn requested_scale_and_point_units_never_round_through_binary64() {
         let font = text_font::font(false);
@@ -182,6 +208,9 @@ mod truetype {
         );
     }
 
+    /// Independent point probes distinguish covered pair adjustment and newline/carriage/tab layout.
+    /// An uncovered Q pair must not inherit R's class-zero adjustment; a space still
+    /// participates in pair history, unlike explicit layout controls.
     #[test]
     fn layout_advances_controls_and_class_coverage_have_independent_witnesses() {
         let font = text_font::font(true);
@@ -203,6 +232,10 @@ mod truetype {
         }
     }
 
+    /// Retained Asar text workloads certify and survive translation, empty union and extrusion.
+    /// Checks boundary counts and geometric edge closure under both policies.
+    /// Optional STL replay compares binary32 position sets after reimport and
+    /// local validation, without claiming preservation of exact curved outlines.
     #[test]
     fn original_readme_and_benchmark_workloads_complete_under_both_policies() {
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
@@ -262,6 +295,7 @@ mod truetype {
     }
 }
 
+/// Open Hershey stroke diagnostics, exact Cartesian placement and retained catalog witnesses.
 #[cfg(feature = "hershey-text")]
 mod hershey {
     use super::*;
@@ -270,6 +304,8 @@ mod hershey {
         hershey::{Font, HersheyError, TextError, fonts},
     };
 
+    /// Malformed records, missing glyphs, degenerate strokes and invalid sizes keep native causes.
+    /// Empty requests still validate the font and size; unresolved size remains undecided.
     #[test]
     fn failures_retain_native_causes_through_public_wrappers() {
         let valid = Font::new(&["MWRMNV RRMVV"], 'A');
@@ -306,6 +342,8 @@ mod hershey {
         }
     }
 
+    /// Exact stroke endpoints and advances survive negative/symbolic size under both policies.
+    /// Also requires certified empty whitespace output and retained catalog stroke/edge counts.
     #[test]
     fn exact_cartesian_strokes_spacing_negative_and_symbolic_sizes() {
         let font = Font::new(&["MWRMNV RRMVV"], 'A');

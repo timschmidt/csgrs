@@ -13,6 +13,19 @@ use ttf_parser::{Face, GlyphId, OutlineBuilder, Tag};
 
 /// Construct complete text under the enclosing GeometryDecisions scope.
 /// The public modeling entry point has already checked scale positive.
+///
+/// Parses face zero and validates relevant table availability before processing
+/// even empty text. One font unit becomes `scale * 127 / (360 * units_per_em)`
+/// millimeters. Cursor offsets stay in font units until each parser coordinate
+/// is placed. Newline resets X and subtracts at least one em from Y; carriage
+/// return resets X; tab adds four default advances. These controls clear pair
+/// history, and other control characters are missing-glyph errors.
+///
+/// Every glyph must complete its callbacks or supply a supported blank-glyph
+/// certificate. No partial paths escape on failure. The final paths are admitted
+/// together with nonzero-winding fill. This is horizontal scalar layout with
+/// limited pair adjustments, not script shaping or bidirectional layout; exact
+/// parser-coordinate promotion does not recover pre-parser font fidelity.
 pub(crate) fn text_region(
     text: &str,
     font_data: &[u8],
@@ -89,6 +102,12 @@ pub(crate) fn text_region(
     )?)
 }
 
+/// Requires cmap/hmtx and rejects recognized declared tables the parser could not load.
+///
+/// Presence is checked in the raw directory separately from parsed table options,
+/// so an invalid optional table cannot silently act as absent. Checks the listed
+/// layout/outline tables only; lazily parsed glyph records still require later
+/// validation, and this is not whole-font conformance or checksum validation.
 fn validate_layout_tables(face: &Face<'_>) -> Result<(), ValidationError> {
     let raw = face.raw_face();
     let tables = face.tables();
@@ -123,6 +142,14 @@ fn validate_layout_tables(face: &Face<'_>) -> Result<(), ValidationError> {
 }
 
 /// Prove absence of ink rather than treating every parser failure as blank.
+///
+/// For glyf, validates loca endpoints against the outline buffer, accepting an
+/// empty byte range or a complete ten-byte header with zero contours. Other
+/// records return `false`; invalid ranges return a glyph-specific error.
+/// For CFF, only the parser's completed-charstring `ZeroBBox` outcome is accepted;
+/// other parser outcomes return `false`. CFF2 absence and missing supported
+/// outline tables are explicit unsupported errors. The caller separately rejects
+/// any previously emitted partial callbacks before asking for this certificate.
 fn proven_blank_glyph(face: &Face<'_>, glyph: GlyphId) -> Result<bool, ValidationError> {
     let invalid = || ValidationError::InvalidFontOutline { glyph_id: glyph.0 };
     if face.tables().glyf.is_some() {
@@ -176,15 +203,24 @@ fn proven_blank_glyph(face: &Face<'_>, glyph: GlyphId) -> Result<bool, Validatio
     })
 }
 
+/// Discards callbacks while CFF independently checks whether a charstring leaves no bounds.
+/// The parser's result, not this sink, supplies the blank-glyph certificate.
 struct NoOutline;
 impl OutlineBuilder for NoOutline {
+    /// Ignore a move while the parser tracks its own bounds and validity.
     fn move_to(&mut self, _: f32, _: f32) {}
+    /// Ignore line geometry during the blank-glyph probe.
     fn line_to(&mut self, _: f32, _: f32) {}
+    /// Ignore quadratic controls during the blank-glyph probe.
     fn quad_to(&mut self, _: f32, _: f32, _: f32, _: f32) {}
+    /// Ignore cubic controls during the blank-glyph probe.
     fn curve_to(&mut self, _: f32, _: f32, _: f32, _: f32, _: f32, _: f32) {}
+    /// Ignore closure; successful absence is determined by the parser result.
     fn close(&mut self) {}
 }
 
+/// Positive space advance in font units, falling back to exactly half an em.
+/// Used to define tab displacement when the space glyph or its advance is absent/zero.
 fn default_advance(face: &Face<'_>) -> Real {
     face.glyph_index(' ')
         .and_then(|glyph| face.glyph_hor_advance(glyph))
@@ -195,6 +231,11 @@ fn default_advance(face: &Face<'_>) -> Real {
         })
 }
 
+/// Chooses a nonzero summed GPOS pair adjustment, otherwise sums eligible legacy kern entries.
+///
+/// A zero GPOS sum, including cancellation, falls back to horizontal kern tables
+/// without cross-stream or state-machine semantics. Returns font units, with
+/// zero for absent/unmatched data; does not combine nonzero GPOS with kern.
 fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> i64 {
     let gpos = gpos_pair_adjustment(face, left, right);
     if gpos != 0 {
@@ -213,6 +254,13 @@ fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> i64 {
         .sum()
 }
 
+/// Sums left X advance plus right X placement across parsed GPOS pair subtables.
+///
+/// Format 1 uses covered pair sets; format 2 requires left-glyph coverage before
+/// querying the class matrix, including class zero. Every parsed lookup is
+/// visited without script/feature selection; non-pair subtables are ignored.
+/// Device/variation adjustments and other value-record components are not applied.
+/// The result is a limited horizontal-layout rule, not a complete shaping engine.
 fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> i64 {
     let Some(gpos) = face.tables().gpos else {
         return 0;
@@ -249,20 +297,38 @@ fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> i64 {
     adjustment
 }
 
+/// Stateful parser callback collector retaining native line/quadratic/cubic geometry.
+///
+/// One active contour is accumulated until close, then moved into `paths`.
+/// Callbacks cannot return errors, so [`Self::capture`] records the first failure
+/// and suppresses later operations. The text assembler must inspect that error
+/// and parser completion before publishing any paths.
 struct NativeOutline<'a> {
+    /// Glyph identity attached to coordinate and outline diagnostics.
     glyph: GlyphId,
+    /// Exact millimeters per emitted font unit, already validated by the caller.
     scale: &'a Real,
+    /// Horizontal cursor offset in font units, applied before scaling.
     offset_x: &'a Real,
+    /// Vertical baseline offset in font units, applied before scaling.
     offset_y: &'a Real,
+    /// Ordered native curves of the currently open contour.
     current: Vec<Curve2>,
+    /// Completed contours retained locally until the entire glyph is accepted.
     paths: Vec<CurvePath2>,
+    /// Active contour's first placed point, needed for explicit closing lines.
     first: Option<Point2>,
+    /// Latest placed point; absent before a move or after closing/taking state.
     last: Option<Point2>,
+    /// Whether any callback occurred, including moves and callbacks after failure.
     emitted: bool,
+    /// First callback failure; later callbacks must not replace its cause.
     error: Option<ValidationError>,
 }
 
 impl<'a> NativeOutline<'a> {
+    /// Creates an empty collector borrowing the glyph's placement parameters.
+    /// Does not independently check scale or validate the glyph identifier.
     const fn new(
         glyph: GlyphId,
         scale: &'a Real,
@@ -282,11 +348,15 @@ impl<'a> NativeOutline<'a> {
             error: None,
         }
     }
+    /// Associates an invalid callback sequence/unfinished contour with this glyph.
     const fn invalid(&self) -> ValidationError {
         ValidationError::InvalidFontOutline {
             glyph_id: self.glyph.0,
         }
     }
+    /// Promotes X then Y exactly from parser f32 and applies `(coordinate + offset) * scale`.
+    /// Nonfinite parser coordinates retain both the glyph and scalar error source;
+    /// earlier rounding inside the parser is not reversed by this promotion.
     fn point(&self, x: f32, y: f32) -> Result<Point2, ValidationError> {
         let x = Real::try_from(x).map_err(|source| ValidationError::FontCoordinate {
             glyph_id: self.glyph.0,
@@ -301,17 +371,23 @@ impl<'a> NativeOutline<'a> {
             (y + self.offset_y) * self.scale,
         ))
     }
+    /// Reserves one checked slot before appending an already constructed native curve.
+    /// Does not certify connectivity or bound the retained curve's scalar memory.
     fn push(&mut self, curve: Curve2) -> Result<(), ValidationError> {
         solid::reserve_additional(&mut self.current, 1)?;
         self.current.push(curve);
         Ok(())
     }
+    /// Marks callback activity and runs its operation only while no error is retained.
+    /// Keeps the first failure without rolling back partial local state; the
+    /// enclosing text assembly rejects that collector instead of publishing it.
     fn capture(&mut self, operation: impl FnOnce(&mut Self) -> Result<(), ValidationError>) {
         self.emitted = true;
         if self.error.is_none() {
             self.error = operation(self).err();
         }
     }
+    /// Starts a contour at a placed parser point, rejecting an unclosed predecessor.
     fn begin(&mut self, x: f32, y: f32) -> Result<(), ValidationError> {
         if self.first.is_some() || !self.current.is_empty() {
             return Err(self.invalid());
@@ -321,6 +397,9 @@ impl<'a> NativeOutline<'a> {
         self.last = Some(point);
         Ok(())
     }
+    /// Adds a native line from the prior point, suppressing structurally equal endpoints.
+    /// A preceding move is required. Native line validation handles remaining
+    /// degeneracy; endpoint equality here is not a policy-directed comparison.
     fn line(&mut self, x: f32, y: f32) -> Result<(), ValidationError> {
         let point = self.point(x, y)?;
         let last = self.last.take().ok_or_else(|| self.invalid())?;
@@ -330,6 +409,8 @@ impl<'a> NativeOutline<'a> {
         self.last = Some(point);
         Ok(())
     }
+    /// Places control then endpoint and retains a quadratic from the prior point.
+    /// Requires a preceding move; equal endpoints do not by themselves suppress a curve.
     fn quadratic(&mut self, x1: f32, y1: f32, x: f32, y: f32) -> Result<(), ValidationError> {
         let control = self.point(x1, y1)?;
         let point = self.point(x, y)?;
@@ -338,6 +419,8 @@ impl<'a> NativeOutline<'a> {
         self.last = Some(point);
         Ok(())
     }
+    /// Places two controls and the endpoint in order, retaining a native cubic.
+    /// Requires a preceding move and leaves curve admission to later native checks.
     fn cubic(&mut self, controls: [(f32, f32); 3]) -> Result<(), ValidationError> {
         let [(x1, y1), (x2, y2), (x, y)] = controls;
         let first = self.point(x1, y1)?;
@@ -348,6 +431,10 @@ impl<'a> NativeOutline<'a> {
         self.last = Some(point);
         Ok(())
     }
+    /// Closes an active contour and moves any nonempty curve sequence into `paths`.
+    /// Adds a line only when last/first points are structurally unequal; a lone
+    /// move-and-close contributes no path. Missing active state, closing-line,
+    /// path-admission and reservation errors are retained by the callback wrapper.
     fn finish(&mut self) -> Result<(), ValidationError> {
         let first = self.first.take().ok_or_else(|| self.invalid())?;
         let last = self.last.take().ok_or_else(|| self.invalid())?;
@@ -364,27 +451,36 @@ impl<'a> NativeOutline<'a> {
 }
 
 impl OutlineBuilder for NativeOutline<'_> {
+    /// Captures a parser move as contour initialization with first-error retention.
     fn move_to(&mut self, x: f32, y: f32) {
         self.capture(|this| this.begin(x, y));
     }
+    /// Captures a parser line without replacing a previously retained failure.
     fn line_to(&mut self, x: f32, y: f32) {
         self.capture(|this| this.line(x, y));
     }
+    /// Captures a quadratic control/endpoint pair as native exact curve data.
     fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
         self.capture(|this| this.quadratic(x1, y1, x, y));
     }
+    /// Captures two cubic controls and an endpoint, preserving their parser order.
     fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
         self.capture(|this| this.cubic([(x1, y1), (x2, y2), (x, y)]));
     }
+    /// Captures closure, including any failure to construct/admit the final contour.
     fn close(&mut self) {
         self.capture(Self::finish);
     }
 }
 
+/// Callback-level witnesses independent of a complete font file.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Cubic callbacks retain their family, exact scaled area and placed peak contacts.
+    /// Uses the independent arch integral 6000, scaled by four, and three point
+    /// classifications to distinguish interior, peak boundary and exterior.
     #[test]
     fn cubic_callback_preserves_exact_controls_scale_and_layout() {
         let scale = Real::from(2);
@@ -419,6 +515,8 @@ mod tests {
         }
     }
 
+    /// A NaN cubic control retains glyph 7 and its scalar source without publishing paths.
+    /// Subsequent close must preserve that first callback failure.
     #[test]
     fn invalid_parser_coordinate_retains_its_glyph_and_scalar_cause() {
         let one = Real::one();
