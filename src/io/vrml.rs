@@ -2,8 +2,9 @@
 //!
 //! The importer targets the polygonal subset used by KiCad package models:
 //! transform/group/shape scene graphs and `IndexedFaceSet` geometry. Rendering
-//! attributes are intentionally ignored. Unsupported geometry fails explicitly
-//! instead of producing an incomplete mesh.
+//! attributes are intentionally ignored. Line/point nodes and decided-degenerate
+//! surface pieces are omitted with counts; other unsupported geometry fails.
+//! A scene with no surviving triangles is an error, not canonical empty output.
 
 use crate::context::GeometryDecisions;
 use crate::io::{IoError, triangulate_planar_face};
@@ -13,6 +14,9 @@ use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hypermesh::{Triangle, TriangleMesh};
 
 /// Geometry evidence produced while flattening a VRML scene.
+/// Counts describe traversed instances and selected-policy omissions, not closed
+/// topology or fidelity to ignored rendering attributes. Geometry retains missing
+/// source history and any consumed predicate qualification.
 #[derive(Clone, Debug)]
 pub struct VrmlMeshImport {
     /// Flattened native triangle mesh.
@@ -23,7 +27,8 @@ pub struct VrmlMeshImport {
     pub indexed_face_set_count: usize,
     /// Number of line or point geometry nodes intentionally omitted.
     pub ignored_non_mesh_geometry_count: usize,
-    /// Number of degenerate polygons that could not form a surface.
+    /// Number of polygons omitted after all first-vertex fan triples were decided
+    /// degenerate, or shared triangulation returned no triangles.
     pub ignored_degenerate_polygon_count: usize,
     /// Number of emitted triangles omitted after degeneracy checks under the selected policy.
     pub ignored_degenerate_triangle_count: usize,
@@ -35,12 +40,37 @@ pub struct VrmlMeshImport {
 /// flattening. `DEF`/`USE` reuse is supported for geometry and scene nodes.
 /// Appearance, material, normal, color, and texture data are accepted but do
 /// not cross this geometry-only boundary.
+/// Uses [`from_vrml_with_context`] with strict decisions, consuming the separate
+/// outcome while retaining embedded mesh qualification. Omission and nonempty
+/// requirements are the same as that entry point.
 pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
     from_vrml_with_context(bytes, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Import a VRML scene with the selected mesh and triangulation policy.
 /// Undecided degeneracy checks return an error instead of omitting geometry.
+///
+/// Requires a UTF-8 VRML V2.0 header. Geometry nodes are `IndexedFaceSet` with
+/// `Coordinate` data, under recursive `Transform`/`Group`/`Shape` nodes. Numeric
+/// text is parsed directly into exact scalars; axis-angle trigonometry remains
+/// in native scalar expressions. Transform order is `T C R SR S SR⁻¹ C⁻¹`.
+/// Each face-set instance appends all its transformed positions without welding;
+/// `ccw FALSE` reverses face indices, but reflections do not trigger another reversal.
+///
+/// `DEF` stores an owned parsed subtree and `USE` clones an already defined one;
+/// reuse is not shared scene-graph storage. Definitions inside skipped appearance
+/// fields are not registered and skipped `USE` names are not resolved. Recognized
+/// rendering fields are discarded rather than fully semantically validated.
+/// Line/point geometry is counted and skipped. Larger polygons with no decided
+/// nondegenerate fan triple are omitted; emitted triangles receive another native
+/// degeneracy check. A completely empty/omitted scene returns `IoError::Geometry`.
+///
+/// Shared triangulation can fan nonplanar polygons. Success does not establish
+/// closed topology, manifoldness or faithful rendering. Local predicate certainty
+/// is returned separately from missing source history and inherited qualification.
+/// Parser/transform/native geometry failures here retain text diagnostics rather
+/// than typed nested causes. Parsing and flattening recurse, and subtree clones
+/// can expand storage; no total depth, allocation or work limit is declared.
 pub fn from_vrml_with_context(
     bytes: &[u8],
     context: GeometryContext,
@@ -121,16 +151,33 @@ pub fn from_vrml_with_context(
     }))
 }
 
+/// Lexical tokens retained for the geometry subset's cursor parser.
 #[derive(Clone, Debug, PartialEq)]
 enum Token {
-    Word(String),
-    String(String),
+    /// Unquoted node/field/name/number token, interpreted by its parser context.
+    Word(
+        /// Original token text, without separators.
+        String,
+    ),
+    /// Quoted text retained so rendering bodies can be skipped safely.
+    String(
+        /// Text with each backslash removed before the following character.
+        String,
+    ),
+    /// Opening node/body delimiter.
     LeftBrace,
+    /// Closing node/body delimiter.
     RightBrace,
+    /// Opening list delimiter.
     LeftBracket,
+    /// Closing list delimiter.
     RightBracket,
 }
 
+/// Tokenizes whitespace/comma-separated words, quoted strings, delimiters and `#` comments.
+/// Backslash quotes the next string character verbatim; no escape-code decoding
+/// is performed. Unterminated strings/escapes fail. This does not validate full
+/// VRML grammar or impose a token/depth/work bound.
 fn lex(text: &str) -> Result<Vec<Token>, IoError> {
     let mut tokens = Vec::new();
     let mut characters = text.chars().peekable();
@@ -189,38 +236,73 @@ fn lex(text: &str) -> Result<Vec<Token>, IoError> {
     Ok(tokens)
 }
 
+/// Parsed geometry subset, including placeholders for deliberately omitted data.
+/// Owned subtrees are cloned for DEF/USE; this is staging, not a geometry kernel.
 #[derive(Clone, Debug)]
 enum Node {
-    Transform(Box<TransformNode>),
-    Group(Vec<Node>),
-    Shape(Option<Box<Node>>),
+    /// Local transform and recursively instantiated children.
+    Transform(
+        /// Owned transform fields and child nodes.
+        Box<TransformNode>,
+    ),
+    /// Children inheriting their parent's transform unchanged.
+    Group(
+        /// Child traversal order as parsed.
+        Vec<Node>,
+    ),
+    /// Counted shape with an optional geometry child; appearance is discarded.
+    Shape(
+        /// Retained geometry node, or none when absent/initially NULL.
+        Option<Box<Node>>,
+    ),
+    /// Polygon index rings over exact local coordinates awaiting triangulation.
     IndexedFaceSet {
+        /// Complete authored position array, including unused coordinates.
         positions: Vec<Point3>,
+        /// Nonnegative index rings split on -1; bounds/lengths are checked while flattening.
         polygons: Vec<Vec<usize>>,
+        /// Authored winding flag; false reverses each index ring before triangulation.
         ccw: bool,
     },
-    Coordinate(Vec<Point3>),
+    /// Reusable coordinate node, with no geometry emitted when visited alone.
+    Coordinate(
+        /// Exact local points grouped from scalar triples.
+        Vec<Point3>,
+    ),
+    /// Skipped IndexedLineSet/PointSet body, counted when the node is flattened.
     NonMeshGeometry,
+    /// Recognized rendering/scene metadata whose body was skipped.
     Ignored,
 }
 
+/// Exact VRML transform fields composed according to the authored center/orientation order.
 #[derive(Clone, Debug)]
 struct TransformNode {
+    /// Pivot used by rotation and oriented scaling; defaults to the origin.
     center: [Real; 3],
+    /// Axis-angle rotation applied after oriented scaling about the pivot.
     rotation: Rotation,
+    /// Component scales in the scale-orientation frame; default one.
     scale: [Real; 3],
+    /// Rotation selecting the scale frame, inverted on the right of scaling.
     scale_orientation: Rotation,
+    /// Final local translation, applied after the pivot operations.
     translation: [Real; 3],
+    /// Ordered child instances inheriting the composed transform.
     children: Vec<Node>,
 }
 
+/// Exact axis-angle fields awaiting checked native rotation construction.
 #[derive(Clone, Debug)]
 struct Rotation {
+    /// Authored axis, normalized/validated by the matrix layer rather than the parser.
     axis: [Real; 3],
+    /// Rotation angle in radians, retained as an exact scalar expression.
     angle: Real,
 }
 
 impl Default for Rotation {
+    /// Supplies the zero-angle rotation about positive Z used by absent fields.
     fn default() -> Self {
         Self {
             axis: [Real::zero(), Real::zero(), Real::one()],
@@ -229,13 +311,18 @@ impl Default for Rotation {
     }
 }
 
+/// Recursive geometry-subset parser with one document-wide DEF name table.
 struct Parser {
+    /// Entire token stream, retained until parsing completes.
     tokens: Vec<Token>,
+    /// Index of the next unconsumed token.
     cursor: usize,
+    /// Fully parsed named subtrees; later definitions replace earlier entries.
     definitions: HashMap<String, Node>,
 }
 
 impl Parser {
+    /// Starts before the first token with no registered definitions.
     fn new(tokens: Vec<Token>) -> Self {
         Self {
             tokens,
@@ -244,6 +331,7 @@ impl Parser {
         }
     }
 
+    /// Parses ordered roots until token exhaustion; there is no separate document terminator.
     fn parse_document(&mut self) -> Result<Vec<Node>, IoError> {
         let mut roots = Vec::new();
         while self.peek().is_some() {
@@ -252,6 +340,10 @@ impl Parser {
         Ok(roots)
     }
 
+    /// Parses a supported node or resolves DEF/USE with owned subtree copies.
+    /// DEF registers only after its body succeeds; forward/self references cannot
+    /// resolve unless an older definition already supplies that name. Recognized
+    /// rendering bodies are skipped by brace balance, not validated by their grammar.
     fn parse_node(&mut self) -> Result<Node, IoError> {
         if self.consume_word("DEF") {
             let name = self.word("DEF name")?;
@@ -299,6 +391,8 @@ impl Parser {
         }
     }
 
+    /// Parses transform fields with identity defaults and last-value replacement.
+    /// Bounding-box triples are parsed then discarded; unknown fields fail.
     fn parse_transform(&mut self) -> Result<Node, IoError> {
         let mut center = zero3();
         let mut rotation = Rotation::default();
@@ -331,6 +425,7 @@ impl Parser {
         })))
     }
 
+    /// Parses children and discarded bounding-box triples; repeated children replace the list.
     fn parse_group(&mut self) -> Result<Node, IoError> {
         let mut children = Vec::new();
         while !self.consume(&Token::RightBrace) {
@@ -346,6 +441,8 @@ impl Parser {
         Ok(Node::Group(children))
     }
 
+    /// Parses optional geometry while skipping appearance without registering its definitions.
+    /// Repeated non-NULL geometry replaces the prior child; NULL leaves it unchanged.
     fn parse_shape(&mut self) -> Result<Node, IoError> {
         let mut geometry = None;
         while !self.consume(&Token::RightBrace) {
@@ -360,6 +457,10 @@ impl Parser {
         Ok(Node::Shape(geometry))
     }
 
+    /// Requires Coordinate data and coordIndex rings, retaining only winding and geometry.
+    /// Rendering node fields are skipped; known scalar/list/boolean fields are
+    /// parsed then discarded. Bounds and polygon lengths are deferred to flattening.
+    /// Repeated values replace prior ones, except coord NULL does not clear a prior node.
     fn parse_indexed_face_set(&mut self) -> Result<Node, IoError> {
         let mut positions = None;
         let mut coordinate_indices = None;
@@ -405,6 +506,8 @@ impl Parser {
         })
     }
 
+    /// Parses the required bracketed point field into exact triples, allowing an empty array.
+    /// Rejects incomplete triples/unknown fields; a repeated point field replaces its predecessor.
     fn parse_coordinate(&mut self) -> Result<Node, IoError> {
         let mut points = None;
         while !self.consume(&Token::RightBrace) {
@@ -444,6 +547,7 @@ impl Parser {
         })?))
     }
 
+    /// Accepts NULL, a single node or a bracketed ordered list of parsed nodes.
     fn node_list(&mut self) -> Result<Vec<Node>, IoError> {
         if self.consume_word("NULL") {
             return Ok(Vec::new());
@@ -458,6 +562,8 @@ impl Parser {
         Ok(nodes)
     }
 
+    /// Skips a NULL, USE name or optionally DEF-prefixed braced node value.
+    /// Does not resolve USE or register DEF, and checks neither node kind nor fields.
     fn skip_node_value(&mut self) -> Result<(), IoError> {
         if self.consume_word("NULL") {
             return Ok(());
@@ -474,6 +580,9 @@ impl Parser {
         self.skip_braced_body()
     }
 
+    /// Consumes through the closing brace after an already-consumed opening brace.
+    /// Counts nested braces iteratively; brackets and field semantics are ignored.
+    /// Quoted delimiters are string tokens. End of input before closure fails.
     fn skip_braced_body(&mut self) -> Result<(), IoError> {
         let mut depth = 1usize;
         while depth > 0 {
@@ -489,6 +598,7 @@ impl Parser {
         Ok(())
     }
 
+    /// Parses a bracketed list of signed i64 tokens without interpreting index separators.
     fn integer_list(&mut self) -> Result<Vec<i64>, IoError> {
         self.expect(Token::LeftBracket, "integer list")?;
         let mut values = Vec::new();
@@ -503,6 +613,7 @@ impl Parser {
         Ok(values)
     }
 
+    /// Accepts exactly TRUE/true or FALSE/false, rejecting mixed-case spellings.
     fn boolean(&mut self) -> Result<bool, IoError> {
         let text = self.word("boolean")?;
         match text.as_str() {
@@ -512,6 +623,7 @@ impl Parser {
         }
     }
 
+    /// Reads three axis components and a radian angle, leaving axis validation to construction.
     fn rotation(&mut self) -> Result<Rotation, IoError> {
         let [x, y, z] = self.real3()?;
         Ok(Rotation {
@@ -520,16 +632,19 @@ impl Parser {
         })
     }
 
+    /// Parses exactly three scalar tokens in component order.
     fn real3(&mut self) -> Result<[Real; 3], IoError> {
         Ok([self.real()?, self.real()?, self.real()?])
     }
 
+    /// Parses a word through Real's exact text parser, retaining parse failures as context text.
     fn real(&mut self) -> Result<Real, IoError> {
         let text = self.word("number")?;
         text.parse()
             .map_err(|error| malformed(format!("invalid number {text:?}: {error}")))
     }
 
+    /// Consumes one unquoted word or reports the encountered token/end with caller context.
     fn word(&mut self, context: &str) -> Result<String, IoError> {
         match self.next() {
             Some(Token::Word(word)) => Ok(word),
@@ -541,6 +656,7 @@ impl Parser {
         }
     }
 
+    /// Consumes one token and requires exact token equality; mismatches are not rolled back.
     fn expect(&mut self, expected: Token, context: &str) -> Result<(), IoError> {
         match self.next() {
             Some(token) if token == expected => Ok(()),
@@ -553,6 +669,7 @@ impl Parser {
         }
     }
 
+    /// Advances only when the next token is the exact case-sensitive word requested.
     fn consume_word(&mut self, expected: &str) -> bool {
         if matches!(self.peek(), Some(Token::Word(word)) if word == expected) {
             self.cursor += 1;
@@ -562,6 +679,7 @@ impl Parser {
         }
     }
 
+    /// Advances only on exact token equality, leaving nonmatches untouched.
     fn consume(&mut self, expected: &Token) -> bool {
         if self.peek() == Some(expected) {
             self.cursor += 1;
@@ -571,10 +689,12 @@ impl Parser {
         }
     }
 
+    /// Borrows the next token without advancing, or returns none at end of input.
     fn peek(&self) -> Option<&Token> {
         self.tokens.get(self.cursor)
     }
 
+    /// Clones and advances past one available token; exhaustion leaves the cursor unchanged.
     fn next(&mut self) -> Option<Token> {
         let token = self.tokens.get(self.cursor).cloned();
         self.cursor += usize::from(token.is_some());
@@ -582,6 +702,9 @@ impl Parser {
     }
 }
 
+/// Splits -1-delimited coordIndex rings, accepting a final ring without its terminator.
+/// Empty rings/no rings and non-usize indices fail; minimum ring length and
+/// coordinate-array bounds are checked later by flattening.
 fn split_coordinate_indices(indices: Vec<i64>) -> Result<Vec<Vec<usize>>, IoError> {
     let mut polygons = Vec::new();
     let mut polygon = Vec::new();
@@ -606,17 +729,33 @@ fn split_coordinate_indices(indices: Vec<i64>) -> Result<Vec<Vec<usize>>, IoErro
     Ok(polygons)
 }
 
+/// Accumulated transformed geometry and traversal/omission counts before final admission.
 #[derive(Default)]
 struct Flattened {
+    /// Per-instance transformed positions, including unused or later-degenerate vertices.
     positions: Vec<Point3>,
+    /// Shared-triangulator index triples pending the final per-triangle degeneracy pass.
     triangles: Vec<[usize; 3]>,
+    /// Shape instances visited, including shapes without retained geometry.
     shape_count: usize,
+    /// Face-set instances visited, including those whose polygons are all omitted.
     indexed_face_set_count: usize,
+    /// Line/point placeholder instances deliberately omitted.
     ignored_non_mesh_geometry_count: usize,
+    /// Rings omitted by fan nondegeneracy screening or empty triangulation output.
     ignored_degenerate_polygon_count: usize,
+    /// Emitted triples omitted in the final native degeneracy pass.
     ignored_degenerate_triangle_count: usize,
 }
 
+/// Recursively instantiates one parsed node under `parent`, accumulating geometry and counts.
+///
+/// Checks face sizes/indices and applies ccw reversal after exact transformation.
+/// Larger faces search first-vertex consecutive triples for decided nondegeneracy;
+/// the first unresolved/native failure aborts, while all-degenerate rings are counted
+/// and skipped. Shared triangulation supplies the surviving triples, with final
+/// triangle degeneracy checked by the outer importer. Scratch output may be partial
+/// on failure and is then discarded. Neither recursion nor clone expansion has a budget.
 fn flatten_node(
     node: &Node,
     parent: &Matrix4,
@@ -772,6 +911,9 @@ fn flatten_node(
     Ok(())
 }
 
+/// Composes the exact affine VRML transform `T C R SR S SR⁻¹ C⁻¹`.
+/// Rotations are checked by the matrix layer. Zero/negative scales are not
+/// independently rejected here; transformed faces undergo later geometry checks.
 fn transform_matrix(
     center: &[Real; 3],
     rotation: &Rotation,
@@ -797,6 +939,8 @@ fn transform_matrix(
         * &inverse_center)
 }
 
+/// Delegates exact axis-angle construction, retaining native failures as VRML geometry text.
+/// Uses checked scalar/matrix rules rather than the selected triangulation policy.
 fn rotation_matrix(rotation: &Rotation) -> Result<Matrix4, IoError> {
     Matrix4::rotation_axis_angle(
         &Vector3::from_xyz(
@@ -812,24 +956,29 @@ fn rotation_matrix(rotation: &Rotation) -> Result<Matrix4, IoError> {
     })
 }
 
+/// Supplies the exact zero triple for absent center and translation fields.
 fn zero3() -> [Real; 3] {
     [Real::zero(), Real::zero(), Real::zero()]
 }
 
+/// Supplies the exact identity scale triple.
 fn one3() -> [Real; 3] {
     [Real::one(), Real::one(), Real::one()]
 }
 
+/// Adds the VRML label to a text-only malformed-input diagnostic.
 fn malformed(message: impl Into<String>) -> IoError {
     IoError::MalformedInput(format!("VRML: {}", message.into()))
 }
 
 #[cfg(test)]
+/// Parser, transform, omission and triangulation-policy regression witnesses.
 mod tests {
     use super::from_vrml;
     use hyperlattice::Real;
 
     #[test]
+    /// Checks parsed render-data omission, counts and one independently expected transformed corner.
     fn imports_transformed_polygon_with_render_attributes() {
         let source = br#"#VRML V2.0 utf8
 Transform {
@@ -866,6 +1015,7 @@ Transform {
     }
 
     #[test]
+    /// Checks Coordinate DEF/USE and the exact negative-Z normal induced by ccw FALSE.
     fn resolves_coordinate_def_use_and_reverses_clockwise_faces() {
         let source = br#"#VRML V2.0 utf8
 DEF points Coordinate { point [ 0 0 0, 1 0 0, 0 1 0 ] }
@@ -888,6 +1038,7 @@ Shape {
     }
 
     #[test]
+    /// Rejects a Box geometry node with an explicit unsupported-geometry diagnostic.
     fn rejects_non_indexed_face_geometry() {
         let source = br#"#VRML V2.0 utf8
 Shape { geometry Box { size 1 1 1 } }
@@ -897,6 +1048,7 @@ Shape { geometry Box { size 1 1 1 } }
     }
 
     #[test]
+    /// Counts a skipped line-set instance beside a retained face-set instance.
     fn counts_ignored_line_geometry_beside_surface_geometry() {
         let source = br#"#VRML V2.0 utf8
 Group { children [
@@ -916,6 +1068,7 @@ Group { children [
     }
 
     #[test]
+    /// Separates skipped lines, degenerate polygon rings and final degenerate triangles in counts.
     fn retains_valid_faces_while_counting_degenerate_geometry() {
         let source = br#"#VRML V2.0 utf8
 Group { children [
@@ -937,16 +1090,16 @@ Group { children [
         assert_eq!(imported.ignored_degenerate_triangle_count, 1);
     }
 
-    /// A rotation about X by an angle within 1e-200 of pi/4 gives a face
-    /// normal (0, -sin, cos) whose two nonzero components cannot be ordered
-    /// within strict refinement precision. Either one proves the coordinate
-    /// projection invertible, so strict import succeeds, and the approximate
-    /// policy need not consume its terminal decision.
+    /// Exercises near-tied normal components under X/Z rotations near pi/4.
+    /// Checks certified triangulation in both policies and exact aggregate vector
+    /// area. This does not independently assert full triangle coverage/nonoverlap
+    /// or that the component-order predicate itself remains unresolved.
     #[test]
     fn unordered_normal_components_still_project_with_certified_nonzero_axis() {
         use crate::{GeometryCertainty, GeometryContext};
         use hyperlattice::{Point3, Vector3};
 
+        /// Long exact decimal near pi/4, used to make normal-component ordering difficult.
         const NEAR_QUARTER_TURN: &str = "0.785398163397448309615660845819875721049292349843776455243736148076954101571552249657008706335529266995537021628320576661773461152387645557931339852032120279362571025675484630276389911155737238732595";
         // A concave pentagon of area 3, so ear clipping must choose diagonals.
         let points = [[0, 0], [2, 0], [1, 1], [2, 2], [0, 2]];
@@ -967,8 +1120,8 @@ Group { children [
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified);
                 let mesh = outcome.value.mesh;
                 assert_eq!(mesh.triangles.len(), 3);
-                // The triangles' vector area equals the face's own vector area,
-                // so they cover it once with the authored winding.
+                // Compare aggregate oriented vector area. Equality alone does
+                // not establish complete coverage or absence of overlaps.
                 let cross = |a: &Point3, b: &Point3| a.to_vector().cross(&b.to_vector());
                 let mut boundary = Vector3::zero();
                 for index in 0..mesh.positions.len() {
@@ -996,6 +1149,7 @@ Group { children [
     }
 
     #[test]
+    /// Rejects a VRML 1.0 header before attempting to parse its scene grammar.
     fn rejects_vrml_one() {
         let error = from_vrml(b"#VRML V1.0 ascii\nSeparator { }").unwrap_err();
         assert!(error.to_string().contains("only VRML V2.0"));

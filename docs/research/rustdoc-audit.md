@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/io/vrml.rs` | Entire file; documented public omission/nonempty contracts, every parser/helper/state/variant field, exact transform order, recursive ownership and all unit witnesses. Corrected aggregate-area evidence claims. | Private docs with `vrml-io` passed; all seventeen API/type/helper pages inspected, including private methods, fields and payloads. Tests unchanged, not rerun. |
+| `tests/geometry_context.rs` | Entire file; documented all helpers, policy constants and witnesses across native/scalar/curve/sample/JS/interchange boundaries. Clarified the scope of count, area, finite-view and local-certainty assertions. | Source, formatting and documentation-only comparison passed; all gated test bodies unchanged and source-reviewed, not compiled or rerun as tests. |
 | `src/io/gltf.rs` | Entire file; documented all private staging/cache fields, parse/layout/forest checks, transform arithmetic, scene capture, finite output limits and writer behavior. | Private docs with `gltf-io,obj-io,ply-io` passed; all 27 type/helper/public API pages inspected, including fields and constructor. |
 | `tests/gltf_empty_composition.rs` | Entire file; documented independent GLB/accessor bytes, box expectations, empty/qualified reuse, malformed graphs/layouts, cache behavior and full-depth witness. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
 | `tests/interchange_failures.rs` | Entire file; documented native cause chains, independent projected rows, cache/retry/error witnesses and downstream empty/solid reuse. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
@@ -1694,10 +1696,80 @@ Log: `/tmp/csgrs-rustdoc-gltf-doc.log`. Shared temporary build storage is about
 815 MiB. Full workflow/runtime checks remain waived for this docs-only session;
 no new runtime completion or performance claim is made.
 
+### VRML import and geometry-context witnesses, 26 November 2026
+
+Baseline: `f6cbab622`. Owners: CSGRS VRML parser/interchange adapter and explicit
+policy/receipt consumers, P6/P8/P9/P19/P20/P25/P26/P30/P37. Domain: UTF-8 VRML
+2.0 polygonal scenes, recursive node instances, exact numeric transforms,
+selected-policy triangulation and omission diagnostics. Read both files above
+in full. Supporting reads of native axis-angle construction and the already
+audited shared face triangulator do not add whole-file kernel audit credit.
+
+Missing witnesses: private tokens/nodes, payloads/fields, parser methods,
+transform/flattening helpers and nearly all unit/context-test declarations lacked
+Rustdoc. The module summary said unsupported geometry fails without explaining
+the deliberately counted line/point and degenerate omissions. An area-test
+comment overstated aggregate vector-area equality as proof of complete coverage.
+
+Public docs now distinguish omitted line/point instances, degenerate rings and
+degenerate emitted triangles. Indeterminate checks fail; a scene with no
+surviving triangles remains a geometry error, not successful empty geometry.
+This documents current behavior without claiming the repository's empty-result
+target is thereby satisfied. Imported meshes retain missing source history and
+any consumed predicate qualification; no whole-mesh closure claim is made.
+
+Parser docs describe case-sensitive words, exact scalar tokens, string escaping,
+last-value replacement and NULL fields that leave earlier non-NULL geometry or
+coordinates intact. DEF/USE uses owned subtree clones and a document-wide name
+table; definitions inside skipped appearance fields are not registered and
+skipped USE names are not resolved. Brace-skipped rendering bodies do not receive
+full grammar/semantic validation. These limits remain visible rather than being
+presented as complete VRML validation.
+
+Transform docs give `T C R SR S SR⁻¹ C⁻¹`, native checked rotation behavior,
+unrestricted zero/negative scales at assembly and preserved index order under
+reflections. Flattening appends every instance's positions, including unused
+ones, and applies ccw reversal before shared triangulation. Larger rings search
+fan triples in order, stopping on uncertainty; final emitted triangles receive
+another degeneracy pass. Partial scratch output is discarded on failure.
+Recursive parsing/flattening and cloned subtrees have no declared total resource
+bound. Six tuple variants were expanded only to attach payload Rustdoc.
+
+The full geometry-context file now documents actual evidence: strict/terminal
+policy transitions, cache admissibility, local receipts, selected membership and
+count checks, sampled-field output, Rust calls into JS-facing wrappers and
+interchange continuation. DXF count/certainty does not prove source fidelity;
+VRML's narrow area enclosure does not alone prove coverage/nonoverlap. The unit
+near-pi/4 witness compares aggregate oriented vector area and certified outcomes;
+it does not directly assert the normal-order predicate remains unresolved.
+No assertions or fixture precision were changed to obtain these descriptions.
+
+Validation after final edits:
+
+- `rustfmt --check --edition 2024 --config skip_children=true src/io/vrml.rs
+  tests/geometry_context.rs` and `git diff --check`: passed.
+- Nonblank, non-comment source matches baseline after explicitly normalizing
+  six tuple-payload layout expansions. No expressions, decision order, fixture
+  values or assertions changed.
+- File-local scans found Rustdoc on 49 VRML declarations and 23 geometry-context
+  declarations. Variant payloads and fields were separately checked; this is not
+  a repository coverage metric.
+- With `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target`, `CARGO_INCREMENTAL=0`
+  and `RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links'`, ran
+  `cargo doc --locked -p csgrs --no-default-features --features vrml-io
+  --document-private-items --no-deps --offline`: passed without warnings.
+  Inspected seventeen rendered pages, including parser methods and private
+  variant/struct fields. Test-only declarations and local constants remain
+  source-reviewed; the feature-gated context tests were not rerun.
+
+Log: `/tmp/csgrs-rustdoc-vrml-doc.log`. Shared temporary build storage is about
+816 MiB. Full workflow/runtime checks remain waived for this docs-only session;
+no new runtime completion or performance claim is made.
+
 ## Next work
 
-Continue with the remaining root `src/io` interchange modules (VRML and Gerber)
-and downstream witnesses,
+Continue with the remaining root `src/io/gerber.rs` interchange adapter and
+downstream witnesses,
 then the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every

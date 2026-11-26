@@ -1,18 +1,26 @@
+//! Explicit policy propagation, local certainty and strict reuse across modeling boundaries.
+
 #[path = "support/uncertainty.rs"]
+/// Shared terminal fixture retaining unresolved equality for policy-sensitive tests.
 mod uncertainty;
 
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
 use hyperlattice::{Matrix4, Point3, Vector3};
 
+/// Explicit strict decision context used before and after qualified operations.
 const STRICT: GeometryContext = GeometryContext::STRICT;
+/// Context permitting the terminal interpretation, without assuming every result consumes it.
 const APPROXIMATE: GeometryContext = GeometryContext::APPROXIMATE_512;
 
+/// Keeps the trigonometric zero identity unresolved using the shared finite-terminal fixture.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Makes two unreferenced positions whose X/Z ordering depends on unresolved zero.
+/// This is a bounds/query fixture, not a closed triangle solid.
 fn uncertain_bounds() -> TriangleMesh {
     let a = Real::e().sin();
     let b = &a + unresolved_zero();
@@ -26,6 +34,8 @@ fn uncertain_bounds() -> TriangleMesh {
 }
 
 #[test]
+/// Requires bounds/centering/floating and adapter paths to retain consumed terminal certainty.
+/// A later strict bounds query must still fail rather than reuse inadmissible evidence.
 fn bounds_and_positioning_propagate_policy_and_certainty() {
     let mesh = uncertain_bounds();
     assert!(solid::bounding_box(&mesh).is_err());
@@ -61,6 +71,8 @@ fn bounds_and_positioning_propagate_policy_and_certainty() {
 }
 
 #[test]
+/// Rejects unresolved/terminal-zero scales while preserving certified valid reflections/rotation.
+/// Checks geometric closure separately from each operation's local certainty.
 fn transformation_policy_does_not_allow_collapsed_geometry() {
     let mesh = solid::cube(Real::one()).expect("valid primitive fixture");
     let zero = unresolved_zero();
@@ -106,6 +118,9 @@ fn transformation_policy_does_not_allow_collapsed_geometry() {
 }
 
 #[test]
+/// Distinguishes point-set hull terminal equality from represented-set Minkowski behavior.
+/// Also checks boundary membership and polyline hit-count qualification; these
+/// assertions do not independently establish complete hull/sum set equality.
 fn hulls_and_queries_accept_terminal_equality() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let mut positions = cube.positions.to_vec();
@@ -155,6 +170,7 @@ fn hulls_and_queries_accept_terminal_equality() {
 }
 
 #[test]
+/// Checks qualified distribution reuse cannot satisfy strict calls and retains arc output counts.
 fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let step = Real::one() + unresolved_zero();
@@ -210,6 +226,7 @@ fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
 }
 
 #[test]
+/// Checks a scalar-adapter drilled block's certified Boolean result, closure and selected membership.
 fn scalar_mesh_booleans_expose_context_without_losing_certainty() {
     use csgrs::adapter::TriangleMeshF64;
     let body = TriangleMeshF64::cuboid(12.0, 12.0, 4.0).unwrap();
@@ -245,6 +262,8 @@ fn scalar_mesh_booleans_expose_context_without_losing_certainty() {
 }
 
 #[test]
+/// Requires strict/terminal/strict Boolean calls to preserve the unresolved source distinction.
+/// The terminal difference is canonical empty, but cannot authorize a later strict result.
 fn scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean() {
     use csgrs::{adapter::TriangleMeshF64, solid::SolidExt};
     let cube = solid::cube(Real::one()).unwrap();
@@ -266,6 +285,7 @@ fn scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean() {
 
 #[cfg(feature = "curve")]
 #[test]
+/// Checks uncertain slicing remains qualified/retry-sensitive and malformed flattening never succeeds empty.
 fn slices_and_flattening_report_uncertainty_instead_of_empty_success() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let z = unresolved_zero();
@@ -289,6 +309,7 @@ fn slices_and_flattening_report_uncertainty_instead_of_empty_success() {
 
 #[cfg(feature = "curve")]
 #[test]
+/// Distinguishes a terminal-qualified boundary result from certified interior membership in both policies.
 fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
     let square = csgrs::curve::square(Real::one()).expect("valid planar fixture");
     let half = (Real::one() / Real::from(2)).unwrap();
@@ -325,6 +346,7 @@ fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
 
 #[cfg(feature = "curve")]
 #[test]
+/// Ensures enclosing display-preview policy cannot override an explicitly selected query policy.
 fn explicit_geometry_context_is_independent_of_enclosing_display_preview() {
     let square = csgrs::curve::square(Real::one()).expect("valid planar fixture");
     let half = (Real::one() / Real::from(2)).unwrap();
@@ -364,6 +386,8 @@ fn explicit_geometry_context_is_independent_of_enclosing_display_preview() {
 
 #[cfg(feature = "sdf")]
 #[test]
+/// Requires uncertain sampled-plane meshing to fail strictly and retain terminal certainty when allowed.
+/// Nonempty output is asserted without claiming a continuous-field fidelity certificate.
 fn sdf_meshing_consumes_the_selected_policy() {
     let point = |v| Point3::new(Real::from(v), Real::from(v), Real::from(v));
     let field = |p: &Point3| p.x.clone() + unresolved_zero();
@@ -394,6 +418,8 @@ fn sdf_meshing_consumes_the_selected_policy() {
 }
 
 #[test]
+/// Tracks terminal decisions from face planarity, triangulation equality and loft cap construction.
+/// Checks triangle counts and loft closure without replacing certainty assertions with topology checks.
 fn polyhedron_and_loft_use_context_for_planarity_and_caps() {
     let points = [
         [Real::zero(), Real::zero(), Real::zero()],
@@ -450,6 +476,8 @@ fn polyhedron_and_loft_use_context_for_planarity_and_caps() {
 
 #[cfg(feature = "curve")]
 #[test]
+/// Retains nested terminal certainty in clipped-circle and rounded-rectangle construction.
+/// Clipped bounds are checked through selected finite views, not an independent exact-set oracle.
 fn composite_curve_constructors_preserve_nested_predicate_certainty() {
     let distance = unresolved_zero();
     assert!(csgrs::curve::circle_with_flat(Real::one(), 8, distance.clone(), STRICT).is_err());
@@ -481,6 +509,8 @@ fn composite_curve_constructors_preserve_nested_predicate_certainty() {
 
 #[cfg(feature = "wasm")]
 #[test]
+/// Checks JS-facing Boolean/query/bounds wrappers expose their consumed certainty and query status.
+/// Runs the Rust wrapper APIs; it is not a browser or external JavaScript integration test.
 fn javascript_mesh_results_expose_the_consumed_certainty() {
     use csgrs::solid::SolidExt;
     use csgrs::wasm::{
@@ -531,6 +561,7 @@ fn javascript_mesh_results_expose_the_consumed_certainty() {
 
 #[cfg(feature = "obj-io")]
 #[test]
+/// Checks certified concave OBJ triangle counts, malformed references and optional attributed certainty.
 fn obj_context_preserves_certified_concave_triangulation_and_parse_errors() {
     let source = b"v 0 0 0\nv 2 0 0\nv 2 2 0\nv 1 1 0\nv 0 2 0\nf 1 2 3 4 5\n";
     for context in [STRICT, APPROXIMATE] {
@@ -553,6 +584,8 @@ fn obj_context_preserves_certified_concave_triangulation_and_parse_errors() {
 
 #[cfg(feature = "dxf-io")]
 #[test]
+/// Checks certified local DXF import and twelve cube triangles in both policies.
+/// The witness does not compare source-coordinate fidelity despite its historical name.
 fn dxf_context_preserves_exact_imports() {
     let source =
         csgrs::io::dxf::to_dxf(&solid::cube(Real::one()).expect("valid primitive fixture"))
@@ -566,6 +599,9 @@ fn dxf_context_preserves_exact_imports() {
 
 #[cfg(feature = "vrml-io")]
 #[test]
+/// Checks transformed concave VRML triangulation, omission counts and certified local certainty.
+/// Independently bounds total triangle area within 1e-12 of the pre-rotation area;
+/// area alone does not prove complete coverage or absence of overlaps.
 fn vrml_context_reaches_transformed_polygon_triangulation() {
     let source = br"#VRML V2.0 utf8
 Transform {
@@ -609,6 +645,8 @@ Transform {
 
 #[cfg(feature = "gerber-io")]
 #[test]
+/// Exercises aperture composition, projected Gerber replay and malformed input under explicit policy.
+/// Checks nonempty continuation and import certainty, not exact source/replay set equality.
 fn gerber_context_reaches_aperture_composition_and_projection() {
     use csgrs::io::gerber::{self, GerberExportOptions};
     let source =
@@ -636,6 +674,8 @@ fn gerber_context_reaches_aperture_composition_and_projection() {
 
 #[cfg(feature = "gerber-io")]
 #[test]
+/// Checks nested Gerber contour parity and selected inside/outside/boundary points before/after replay.
+/// The point witnesses and local certainty are not a universal exact-interchange proof.
 fn gerber_boundary_contours_preserve_nested_parity_and_roundtrip() {
     use csgrs::io::gerber;
     use hypercurve::{Point2, RegionPointLocation};
