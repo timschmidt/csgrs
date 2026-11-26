@@ -11,6 +11,7 @@
 //! tolerance or a sampled-profile bound is a smoke check, labelled as such,
 //! never an exactness certificate.
 
+/// Shared exact scalar, native validity, topology and signed-volume assertions.
 #[allow(dead_code)]
 #[path = "support/downstream_workloads.rs"]
 mod support;
@@ -32,6 +33,10 @@ use support::*;
 // are rational turns of order 3,600,000, far beyond the cyclotomic zero
 // proof, so exact zeros among their coordinates need `sin^2 + cos^2 = 1`.
 
+/// Rotates through an exact axis-angle matrix, converting fixture degrees to radians.
+///
+/// Integer axes are imported exactly; matrix construction and transformation must
+/// succeed. A zero/undecidable axis or failed transform panics.
 fn axis_angle(mesh: &TriangleMesh, axis: [i64; 3], degrees: &Real) -> TriangleMesh {
     let matrix = hyperlattice::Matrix4::rotation_axis_angle(
         &hyperlattice::Vector3::from_xyz(r(axis[0]), r(axis[1]), r(axis[2])),
@@ -41,11 +46,16 @@ fn axis_angle(mesh: &TriangleMesh, axis: [i64; 3], degrees: &Real) -> TriangleMe
     solid::transform(mesh, &matrix).expect("rotation")
 }
 
+/// Applies the production Euler rotation using exact degree inputs; failure panics.
 fn euler(mesh: &TriangleMesh, degrees: [Real; 3]) -> TriangleMesh {
     let [x, y, z] = degrees;
     solid::rotate(mesh, x, y, z).expect("rotation")
 }
 
+/// Compares equal-length position buffers in order by strict X, Y then Z equality.
+///
+/// Stops at the first mismatch; unresolved comparisons panic. Ignores triangle
+/// indices, winding and construction evidence, so it is not mesh/set equality.
 fn same_positions(left: &TriangleMesh, right: &TriangleMesh) -> bool {
     left.positions.len() == right.positions.len()
         && left
@@ -59,6 +69,12 @@ fn same_positions(left: &TriangleMesh, right: &TriangleMesh) -> bool {
             })
 }
 
+/// Checks exact angle parsing and coordinate equivalence of rotation forms.
+///
+/// Five spellings must parse to the same rational. An octagonal prism rotated
+/// about coordinate axes must have the same ordered positions through Euler and
+/// axis-angle paths; positive axis scaling is immaterial and axis negation flips
+/// the angle. Triangle rows and provenance are not compared here.
 #[test]
 fn equivalent_rotation_syntax_gives_identical_exact_geometry() {
     let spellings = ["0.0001", "1e-4", "1/10000", "1E-4", "0.00010"].map(literal);
@@ -97,6 +113,8 @@ fn equivalent_rotation_syntax_gives_identical_exact_geometry() {
 /// origin: a prism of height 2 over the quadrilateral
 /// `(0, 0), (2c, 2s), ((2 - 2s)/c, 2), (0, 2)`, of area `2c + 2(1 - s)^2/c`.
 /// A negative angle gives the mirror image, of the same area.
+/// The fixture uses `0 < angle < pi/2` with `s² + c² = 1` and positive cosine;
+/// this quadrilateral formula is not an unrestricted rotation-angle oracle.
 fn rotated_cube_overlap_six_volume(sine: &Real, cosine: &Real) -> Real {
     let one_minus = r(1) - sine.clone();
     let area = r(2) * cosine.clone()
@@ -104,6 +122,12 @@ fn rotated_cube_overlap_six_volume(sine: &Real, cosine: &Real) -> Real {
     r(12) * area
 }
 
+/// Requires certified cube Booleans at ±0.0001 degrees about all three axes.
+///
+/// Difference/intersection/union use an independent quadrilateral overlap-volume
+/// formula and require native closed-PWN validation to succeed. Exact rotated
+/// volume and an XY coordinate round trip at 12.345 degrees supply further
+/// checks. Volume plus topology does not alone certify general set equality.
 #[test]
 fn near_coincident_rotated_cube_booleans_complete_exactly() {
     let cube = solid::cube(r(2)).expect("cube");
@@ -158,6 +182,9 @@ fn near_coincident_rotated_cube_booleans_complete_exactly() {
 /// face plane, oriented outward by the face's winding, is negative there.
 /// Each sign is decided exactly from the operand's own vertices, so the
 /// answer does not depend on the Boolean kernel.
+/// Assumes valid indices, nonempty nondegenerate outward triangles and a closed
+/// convex boundary. Does not validate these assumptions; an empty triangle list
+/// passes vacuously. Boundary points fail the strict negative half-space test.
 fn strictly_inside_convex(mesh: &TriangleMesh, point: &hyperlattice::Vector3) -> bool {
     mesh.triangles.iter().all(|triangle| {
         let [a, b, c] = triangle
@@ -168,6 +195,11 @@ fn strictly_inside_convex(mesh: &TriangleMesh, point: &hyperlattice::Vector3) ->
     })
 }
 
+/// Combines two exact convex-interior predicates by the selected Boolean truth table.
+///
+/// Both operand queries run before dispatch. Supports union, intersection and
+/// left difference only; other operations panic. Boundary-free queries and the
+/// convex/outward/closed operand assumptions belong to the caller.
 fn convex_membership(
     operation: hypermesh::BooleanOp,
     left: &TriangleMesh,
@@ -186,15 +218,16 @@ fn convex_membership(
     }
 }
 
-/// Checks a Boolean of two convex operands against exact membership: for
-/// every result triangle, the point `2^-60` times its outward normal behind
-/// its centroid must belong to the operation's set and the point in front
-/// must not. The operands are convex, so their membership is exact
-/// half-space arithmetic on the input vertices, an oracle independent of
-/// the arrangement. The offset is far below every feature of these solids,
-/// so neither point crosses another boundary. Every result triangle that
-/// does not separate the set from its complement fails the check; a
-/// component of the set missing from the result entirely would not.
+/// Checks exact operand membership at two probes per returned triangle.
+///
+/// Probes are the centroid plus/minus `2^-60` times the unnormalized cross-product
+/// normal, so this multiplier is not a fixed Euclidean distance. Behind must be
+/// inside the Boolean set and in front outside, using the operands' own convex
+/// half-spaces independently of the arrangement. Assumes valid outward convex
+/// operands and nondegenerate result triangles. The fixture chooses a small
+/// multiplier but does not prove a minimum separation from other boundaries.
+/// These finite probes cannot certify every point on a face or detect an entire
+/// missing component; empty results pass this helper vacuously.
 fn assert_boundary_matches_convex_operands(
     result: &TriangleMesh,
     left: &TriangleMesh,
@@ -229,6 +262,11 @@ fn assert_boundary_matches_convex_operands(
     }
 }
 
+/// Requires a certified, nonempty Boolean of two convex polygonal cylinder operands.
+///
+/// Runs native face/edge checks and exact finite probes on both sides of each
+/// result triangle before returning it. This preserves the boundary-probe
+/// helper's limits, including failure to detect a wholly missing component.
 fn assert_exact_cylinder_boolean(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -245,8 +283,9 @@ fn assert_exact_cylinder_boolean(
     mesh
 }
 
-/// The SynapsCAD rotations whose Booleans with the unrotated cylinder decide
-/// under `STRICT`.
+/// Constructs eight coordinate-axis rotation fixtures with required strict-success gates.
+/// Includes ±0.0001 degrees on each axis and +0.000001/+0.01 about Y.
+/// The helper only constructs operands; consuming tests establish Boolean outcomes.
 fn decided_cylinder_rotations(cylinder: &TriangleMesh) -> Vec<(&'static str, TriangleMesh)> {
     let angle = literal("0.0001");
     let zero = || r(0);
@@ -268,14 +307,18 @@ fn decided_cylinder_rotations(cylinder: &TriangleMesh) -> Vec<(&'static str, Tri
     ]
 }
 
+/// Checks two octagonal-prism differences and the retained four-sided reproduction.
+///
+/// Positive-Y/Z rotations require positive sliver volume below the source volume,
+/// local certification, native face/edge checks and exact boundary probes.
+/// For the four-sided difference, APPROXIMATE_512 must also return Certified with
+/// the same ordered coordinates and triangle indices as STRICT.
 #[test]
 fn near_coincident_rotated_cylinder_booleans_complete_exactly() {
-    // The cylinders' arrangement builds points on face edges and on the
-    // shared plane of coplanar cap triangles. Their incidences follow from how
-    // they were built, and the arrangement now takes them from construction
-    // instead of proving the zeros numerically (crates/hypermesh/FUTURE_WORK.md).
-    // The differences about y and z are checked here; every decided rotation
-    // and operation is the ignored test below.
+    // These regressions exercise points on face edges and the shared plane of
+    // coplanar cap triangles. Historical construction-incidence work is recorded
+    // in crates/hypermesh/FUTURE_WORK.md; this test does not assert dispatch paths.
+    // Differences about y and z run here; the ignored matrix broadens coverage.
     let cylinder = solid::cylinder(r(8), r(40), 8).expect("cylinder");
     for (label, rotated) in decided_cylinder_rotations(&cylinder)
         .iter()
@@ -318,11 +361,10 @@ fn near_coincident_rotated_cylinder_booleans_complete_exactly() {
     assert_eq!(approximate.value.triangles, strict.triangles);
 }
 
-/// The SynapsCAD rotations about a skew axis. Their pairwise face tests meet
-/// zeros that no construction implies, an input vertex on the other
-/// cylinder's face plane and two crossings of one face pair that coincide;
-/// identities of the rotation's sines and cosines of degree above 8 decide
-/// them, through Hyperlimit's final extended relation stage.
+/// Constructs skew-axis `(1,1,1)` and compound Euler `(a,-a,a)` fixtures at a=0.0001°.
+/// Historical failures involved high-degree trigonometric zero relations (see
+/// `crates/hypermesh/FUTURE_WORK.md`). This helper constructs operands only;
+/// consuming success gates do not assert which predicate stage proves incidences.
 fn skew_cylinder_rotations(cylinder: &TriangleMesh) -> Vec<(&'static str, TriangleMesh)> {
     let angle = literal("0.0001");
     vec![
@@ -334,6 +376,11 @@ fn skew_cylinder_rotations(cylinder: &TriangleMesh) -> Vec<(&'static str, Triang
     ]
 }
 
+/// Requires two skew/compound octagonal-prism differences to complete under STRICT.
+///
+/// Checks local certification, face/edge validity, boundary probes and a positive
+/// signed volume below the source volume. It does not assert predicate-stage
+/// dispatch counts or a current runtime bound.
 #[test]
 fn skew_near_coincident_cylinder_rotations_complete_exactly() {
     // Before the extended stage both differences ended `PredicateUndecided`
@@ -356,6 +403,12 @@ fn skew_near_coincident_cylinder_rotations_complete_exactly() {
     }
 }
 
+/// Retains the ignored eighteen-operation rotation matrix with full fixture resolution.
+///
+/// Covers eight coordinate-axis differences, four skew/compound unions or
+/// intersections, and six positive-Y Booleans across centered/uncentered prisms.
+/// Every output uses the same certified boundary-probe helper. The ignore reason's
+/// timing is historical guidance, not a fresh performance measurement.
 #[test]
 #[ignore = "full rotation matrix; run with --release -- --ignored (under a minute)"]
 fn near_coincident_rotated_cylinder_boolean_matrix_completes_exactly() {
@@ -413,6 +466,12 @@ fn near_coincident_rotated_cylinder_boolean_matrix_completes_exactly() {
 // outside, so the authored surface is inside out; nonzero winding still
 // makes it material.
 
+/// Builds the authored radius-55 dodecahedron and returns its positive axis extent.
+///
+/// Exact golden-ratio coordinates and twelve clockwise-outside pentagons preserve
+/// the source's inward orientation. The extent is `55*phi/sqrt(3)`; signed volume
+/// and native validity are checked separately by consumers. Construction panics
+/// on failure; the helper does not reverse faces to change the authored winding.
 fn planter_dodecahedron() -> (TriangleMesh, Real) {
     let phi = ((r(1) + sqrt(5)) / r(2)).expect("division");
     let s = (r(55) / sqrt(3)).expect("division");
@@ -462,7 +521,9 @@ fn planter_dodecahedron() -> (TriangleMesh, Real) {
     (solid::polyhedron(&points, &faces).expect("polyhedron"), p)
 }
 
-/// An axis-aligned box from its minimum and maximum corners.
+/// Builds an exact axis-aligned box from integer minimum/maximum corners.
+/// Fixture differences must fit i64 and dimensions must satisfy cuboid admission;
+/// constructor or translation failures panic.
 fn planter_box(min: [i64; 3], max: [i64; 3]) -> TriangleMesh {
     solid::cuboid(r(max[0] - min[0]), r(max[1] - min[1]), r(max[2] - min[2]))
         .expect("cuboid")
@@ -470,6 +531,11 @@ fn planter_box(min: [i64; 3], max: [i64; 3]) -> TriangleMesh {
         .expect("translation")
 }
 
+/// Executes a strict planter Boolean and requires a locally Certified receipt.
+///
+/// Panics with the operation on failure and returns the mesh for later checks.
+/// This assertion does not erase inherited source qualifications or establish
+/// fidelity to an analytic primitive.
 fn strict_boolean(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -489,6 +555,8 @@ fn strict_boolean(
 /// 360 k / n degrees from +x. A csgrs frustum starts its samples at -y, so
 /// it is turned a quarter turn about z, exactly; for n divisible by four the
 /// two sample sets coincide, but the planter's hexagons differ by 30 degrees.
+/// Returns the polygonal frustum/cone, retaining its construction qualifications;
+/// this phase correction does not recover an analytic cylindrical surface.
 fn scad_cylinder(bottom: Real, top: Real, height: Real, segments: usize) -> TriangleMesh {
     let frustum = solid::frustum(bottom, top, height, segments).expect("frustum");
     solid::rotate(&frustum, r(0), r(0), r(90)).expect("quarter turn")
@@ -496,6 +564,8 @@ fn scad_cylinder(bottom: Real, top: Real, height: Real, segments: usize) -> Tria
 
 /// `cylinder(r = tray_r, h = 6, $fn = 6)` minus its interior from z = 2,
 /// placed at (154, 0, 14), with tray_r = 55 * 0.65 + 1 + 2 = 155/4.
+/// The cavity radius is 147/4; its seven-unit height extends beyond the outer top.
+/// Strict subtraction must be locally certified, and construction failures panic.
 fn planter_tray() -> TriangleMesh {
     let outer = scad_cylinder(q(155, 4), q(155, 4), r(6), 6);
     let inner = scad_cylinder(q(147, 4), q(147, 4), r(7), 6)
@@ -508,6 +578,8 @@ fn planter_tray() -> TriangleMesh {
 
 /// `rotate([180, 0, 0]) cylinder(h = 5, r1 = 0, r2 = 66, $fn = 12)` lowered
 /// to z = -14.1: a cone from its apex at z = -14.1 down to z = -19.1.
+/// This twelve-sided source child lies below the planter slab floor at -14;
+/// consumers separately check that subtraction preserves the triangle rows.
 fn planter_chamfer() -> TriangleMesh {
     solid::rotate(&scad_cylinder(r(0), r(66), r(5), 12), r(180), r(0), r(0))
         .expect("rotation")
@@ -515,6 +587,12 @@ fn planter_chamfer() -> TriangleMesh {
         .expect("translation")
 }
 
+/// Checks the inward-authored body, regularized slab, inactive chamfer and separate tray.
+///
+/// Body signed six-volume is compared by a certified `10^-30` enclosure; slab
+/// orientation and bounds are checked independently. The below-floor chamfer
+/// preserves triangle rows and has no intersection triangles. Tray bounds and
+/// signed volume are exact, with native face/edge and index-topology checks.
 #[test]
 fn planter_body_and_tray_admit_with_exact_measures() {
     let (body, p) = planter_dodecahedron();
@@ -575,6 +653,15 @@ fn planter_body_and_tray_admit_with_exact_measures() {
     );
 }
 
+/// Retains the full ignored planter construction with every source child present.
+///
+/// Builds the slab, rim, cavity, rim interior, four 48-sided drains, disjoint
+/// chamfer and separate tray. Each drain's removed signed six-volume matches its
+/// polygonal plug within a certified `10^-30` enclosure. Selected memberships,
+/// two unobstructed cavity-exit segments, exact bounds, native face/edge validity
+/// and index components constrain the result. Scene volume is also enclosed;
+/// these witnesses are not an exhaustive independent set oracle. The ignore
+/// reason's runtime estimate is historical, not measured by documentation checks.
 #[test]
 #[ignore = "full-resolution planter; run with --release -- --ignored (about three minutes)"]
 fn viral_planter_keeps_every_child() {

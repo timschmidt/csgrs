@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/downstream_solids.rs` | Entire file; documented rotation equivalence, convex probes, required success matrices, authored planter parts and exact/enclosed measures. | Focused compilation/private docs passed; all assertions and ignored full workloads unchanged and unrun. |
 | `tests/downstream_exact_inputs.rs` | Entire file; documented exact ingress, bounded integer line oracle, overlap payloads, full-circle support relations and all tests. | Focused compilation/private docs passed; tuple layout adds only trailing commas; assertions unchanged and unrun. |
 | `tests/downstream_profiles.rs` | Entire file; documented parabola/offset/twist fixtures, area enclosures, sampled smoke bounds, side/cap oracles and continuation limits. | Focused compilation/private docs passed; comments corrected without changing formulas, expected blockers or assertions. |
 | `tests/strict_boolean_workflows.rs` | Entire file; documented corpus module, nested generator macros, generated modules and all test definitions. | Focused compilation/private docs passed; 45 workflows and five controls remain unchanged and unrun. |
@@ -3078,6 +3079,56 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-downstream-inputs-profiles-check.log` and
 `/tmp/csgrs-rustdoc-downstream-inputs-profiles-private.log`.
+
+### Downstream rotated-solid and planter witnesses, 26 November 2026
+
+Baseline: `d3daed290`. Owner: root downstream solid acceptance consumer,
+P1/P3/P4/P8/P17–P19/P24/P25/P37. Domain: exact equivalent angle spellings,
+near-coincident rotations of cubes and four/eight-sided prisms, and the full
+algebraic/polyhedral planter with polygonal rim, cavity, four 48-sided drains,
+below-floor chamfer and separate hexagonal tray. Read all 687 baseline lines,
+including both ignored workloads. Historical kernel notes and current adapter
+contracts were consulted as excerpts, not credited as whole-file reviews.
+
+Missing witnesses were undocumented declarations and overbroad statements about
+what finite checks establish. Documented ordered-coordinate equality separately
+from triangle/provenance equality, the overlap formula's angle domain, convex
+operand assumptions, and the ignored matrix's actual eighteen operations.
+Successful fixtures remain required successes; documentation does not claim
+fresh execution or predicate-stage trace evidence.
+
+Boundary probes use the centroid plus/minus `2^-60` times an unnormalized normal.
+The implementation has no minimum-separation proof; finite exact point decisions
+neither validate every point on a face nor find a wholly missing component.
+Removed the stronger clearance/universal-face claim while preserving both probes
+and every assertion. Empty input passes that helper vacuously, whereas its caller
+separately requires nonempty output. This records evidence scope, not an observed
+wrong geometry result.
+
+Planter documentation preserves inward authored winding and distinguishes exact
+tray measures from certified `10^-30` signed-six-volume enclosures for the body,
+drains and scene. The chamfer is a retained source child whose placement implies
+no removal. Full-source construction, selected memberships, exit segments, bounds,
+index components and native face/edge checks remain separate witnesses. Historical
+ignore-reason timings remain untouched and are not current performance evidence.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline, including ignored annotations and all
+  arithmetic, predicate order, geometry inputs and assertions.
+- All 24 declarations have Rustdoc. Private docs matched 17 rendered summaries
+  across 18 top-level HTML pages and the support module page. Seven test bodies
+  were source-reviewed; Rustdoc does not render them as test-function pages.
+- `cargo check --locked -p csgrs --no-default-features --features curve,stl-io
+  --test downstream_solids --offline -j 2` passed without warnings. Private
+  Rustdoc passed with broken links denied and checked dependency metadata supplied.
+- No runtime geometry, ignored workload, external CAD program, benchmark or full
+  CI execution under the docs-only waiver. The existing temporary target was
+  reused with incremental compilation disabled; no scene exports were generated.
+
+Logs: `/tmp/csgrs-rustdoc-downstream-solids-check.log` and
+`/tmp/csgrs-rustdoc-downstream-solids-private.log`.
 
 ## Next work
 
