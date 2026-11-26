@@ -4815,6 +4815,106 @@ docs-only session; no runtime or universal-completeness claim is made. The
 repository-wide audit remains active, with most predicate modules, tests and
 other repository files still requiring whole-file review and documentation.
 
+### Orientation and retained lifted-predicate evidence, 26 November 2026
+
+Baseline: `b50c2c58f`. Owner: Hyperlimit's orientation/lifted-sign predicates,
+retained line/circle/sphere evidence and scheduling snapshots. Properties:
+P1/P3/P4/P5/P6/P8–P11/P37. Domain: ordered exact Real source/query coordinates,
+rational and symbolic representations, degenerate source tuples, retained
+queries, explicit policies and filter declines. Missing acceptance witnesses
+were undocumented private helpers/fields/tests, vague spatial sign conventions,
+and insufficiently explicit source-association and fact-versus-proof boundaries.
+All findings were checked against current dispatch branches before editing.
+
+Whole-file review: `crates/hyperlimit/src/predicates/orient.rs`, all 2,588
+baseline lines. All 118 named declarations now have Rustdoc, including private
+functions/types, test functions inside proptest, the test module, constant and
+nested static. All 47 fields were reviewed and documented, together with the
+point re-export and module contract. A narrow LineSide clarification in the
+previously reviewed `classify.rs` does not count as a new whole-file review.
+Supporting reads of Hyperreal's `arithmetic/linear_algebra.rs`,
+`arithmetic/facts.rs` and `exact_set.rs` were excerpts only and earn no whole-file
+credit. They establish the called scalar filter/storage and scheduling roles.
+
+Docs specify planar determinant orientation, the spatial rows a-d/b-d/c-d and
+its negative standard-tetrahedron sign, and the full lifted circle/sphere row
+layouts. For a nondegenerate tetrahedron the interior sphere sign matches its
+spatial orientation, so the standard tetrahedron's interior sign is negative.
+Zero determinants can result from repeated or dependent defining points;
+construction of a retained polynomial is not a circle/sphere existence proof.
+Line classification preserves the outcome receipt, but mapping a decided zero
+to On does not validate distinct line endpoints. Approximate terminal outcomes
+remain qualified, and fixed schedules do not add a total resource contract.
+
+Retained line evidence owns dyadic/checked-word arithmetic data without binding
+later source arguments. Circle/sphere evidence owns exact lifted coefficients
+and optional filters without retaining the authoritative source Point objects.
+Those paths can answer before the supplied source points are read. The caller
+must preserve the same ordered exact source coordinates and rebuild after
+changes/transforms; no source comparison, invalidation or replay validation is
+provided here. Retained query coordinates have the same unchecked association
+requirement. An empty supplied word query skips that path instead of rebuilding
+it from the current point. The fallback can use current source coordinates,
+so stale evidence is not uniformly detected or made safe by fallback behavior.
+
+Public PredicateFacts and LiftedPolynomialFacts are mutable-value snapshots,
+not source-bound certificates. Their counts/masks and schedule priorities are
+documented; inconsistent supplied facts are not validated. Current retained
+query paths inspect scalar values/filters rather than dispatching from the
+coefficient-fact snapshot. The sparse-coefficient hint includes an all-zero
+polynomial and does not certify geometry. Private mask builders preserve
+known-zero/nonzero/unknown distinctions and require at most 128 entries. Scalar
+representation and zero-status authority remain in their existing lower layers.
+
+Private arithmetic docs describe exact norms, unit-column reduction, cofactor
+signs and fixed product sums without changing their order. The retained rational
+circle filter produces Exact/Filter, followed by Exact/Exact signed-sum fallback;
+the sphere's retained rational sum produces Exact/Exact. The private
+exact_outcome wrapper calls its callback once and attaches Exact/Exact, while
+its policy and kernel-tag arguments are unused. It does not validate that proof
+or preserve the kernel tag in the result. No new arithmetic authority was added.
+
+Test docs distinguish value comparisons from full receipts and exact trace
+counts. Existing word-filter witnesses retain their one-hit/zero-fallback
+assertions; the overflow witness retains zero word hits/one rational hit;
+retained line routing retains one hit for each of three query representations.
+The five bounded property generators still request 256 cases each. The wide
+orientation generator uses an independent i128 determinant before positive
+scaling; the other equivalence fixtures share implementation/scalar machinery.
+Repeated-source-row zeros do not certify nondegenerate circles/spheres. Private
+tests that deliberately disable filters or change a coefficient exercise source
+callback reachability, not stale-evidence safety. Binary64 fixture literals
+remain exact binary values rather than their displayed decimal ratios.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing only comment/blank
+  lines yields byte-identical source to baseline in both edited Rust files.
+  No signatures, expressions, branches, fixture values, assertion counts or
+  dispatch order changed.
+- Scoped declaration scan checked all 118 names. Inspected 124 rendered
+  documentation groups across 54 private module pages, including all 47
+  fields, plus twelve selected sign/evidence/dispatch contracts and the updated
+  public LineSide limitation. Test-only docs were source-reviewed rather than
+  claimed as rendered by normal library Rustdoc.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed after the final source edit, including compilation of trace and
+  proptest fixtures. These runtime fixtures were not executed in this batch.
+- Downstream private csgrs Rustdoc with locked offline dependencies,
+  `--no-default-features --features curve` and broken intra-doc links denied
+  passed. The reused build target remains approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-orient-{doc,check,downstream-doc}.log`.
+Full workflow/runtime/performance checks remain waived for this docs-only
+session. No timing, stale-evidence validation or universal closure claim is
+established by these documentation changes. The audit remains active; the
+remaining predicate modules, most tests and other repository files still need
+whole-file review. The existing future-agent public/private coverage mandate
+remains in force.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

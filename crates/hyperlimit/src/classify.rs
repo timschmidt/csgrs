@@ -10,6 +10,10 @@
 use crate::predicate::Sign;
 
 /// Side of an oriented line in 2D.
+///
+/// Interpreting the labels as line incidence requires distinct defining
+/// endpoints. A decided zero orientation maps to On even for coincident
+/// endpoints; this does not validate a line. Retain the producer's certainty.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineSide {
     /// Point lies to the right of the oriented line.

@@ -1,7 +1,20 @@
-//! Orientation predicates.
+//! Oriented determinant signs and reusable line/circle/sphere query evidence.
+//!
+//! Scalar filters and rational kernels precede exact Real expressions and the
+//! policy resolver. A declined filter is inconclusive; a terminal-permitting
+//! policy can return an Approximate sign whose receipt must remain attached.
+//! A determinant zero alone does not validate a nondegenerate supporting object.
+//!
+//! Retained evidence stores arithmetic data, not a checked association with later
+//! source arguments. Reuse requires the same ordered source coordinates and,
+//! for retained queries, the same query coordinates. Rebuild after a changed
+//! source or transform. Public fact snapshots are scheduling hints, not proofs
+//! of incidence, source identity or validity. These schedules add no total-work,
+//! retained-memory or cancellation budget beyond their underlying scalar calls.
 
 use crate::SymbolicDependencyMask;
 use crate::classify::LineSide;
+/// Shared point carriers used by orientation predicates; no alternate geometry type.
 pub use crate::geometry::{Point2, Point3};
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{
@@ -18,6 +31,11 @@ use hyperreal::{
 };
 
 /// Orientation of three 2D points with an explicit escalation policy.
+///
+/// Returns the sign of `(b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x)`:
+/// counterclockwise is positive. Collinear or repeated points may give Zero;
+/// no distinctness check is performed. Keep the outcome's certainty, including
+/// any approximate terminal qualification.
 pub fn orient2d_with_policy(
     a: &Point2,
     b: &Point2,
@@ -27,6 +45,11 @@ pub fn orient2d_with_policy(
     orient2d_coordinates_with_policy([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y], policy)
 }
 
+/// Runs the 2D orientation cascade over borrowed coordinates in x/y order.
+///
+/// Tries certified dyadic, checked word, certified rational and full rational
+/// paths in that order, then the Real-expression resolver. These successful
+/// shortcuts use Exact/Exact receipts; decline does not classify the geometry.
 pub(crate) fn orient2d_coordinates_with_policy(
     a: [&Real; 2],
     b: [&Real; 2],
@@ -61,6 +84,7 @@ pub(crate) fn orient2d_coordinates_with_policy(
     orient2d_real_coordinates(a, b, c, policy)
 }
 
+/// Adapts points to the Real-expression orientation path without front filters.
 fn orient2d_real_expr(
     a: &Point2,
     b: &Point2,
@@ -70,6 +94,11 @@ fn orient2d_real_expr(
     orient2d_real_coordinates([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y], policy)
 }
 
+/// Resolves the exact difference-of-products orientation expression.
+///
+/// Retains factor identity for scalar cancellation. The resolver can use a
+/// signed-term filter or rational callback before refinement/terminal policy;
+/// constructing the expression alone does not certify its sign.
 pub(crate) fn orient2d_real_coordinates(
     a: [&Real; 2],
     b: [&Real; 2],
@@ -97,6 +126,8 @@ pub(crate) fn orient2d_real_coordinates(
     )
 }
 
+/// Tries the scalar's certified dyadic affine determinant and maps its sign.
+/// `None` leaves the exact fallback available; no approximate sign is returned.
 #[inline]
 pub(crate) fn orient2d_certified_real_filter(
     a: [&Real; 2],
@@ -108,6 +139,7 @@ pub(crate) fn orient2d_certified_real_filter(
     Some(crate::real::map_real_sign(sign))
 }
 
+/// Tries checked rational homogeneous word arithmetic; unsupported sizes decline.
 #[inline]
 pub(crate) fn orient2d_exact_word_filter(
     a: [&Real; 2],
@@ -119,6 +151,9 @@ pub(crate) fn orient2d_exact_word_filter(
     Some(crate::real::map_real_sign(sign))
 }
 
+/// Checks all six coordinates for rational storage before the rational filter.
+/// Eligibility queries retain a-x/a-y/b-x/b-y/c-x/c-y order; no symbolic
+/// rational normalization is attempted by this guard.
 #[inline]
 pub(crate) fn orient2d_certified_rational_filter(
     a: [&Real; 2],
@@ -139,6 +174,8 @@ pub(crate) fn orient2d_certified_rational_filter(
     orient2d_certified_rational_filter_exact(a, b, c)
 }
 
+/// Calls the certified rational line filter after the caller's representation guard.
+/// An inconclusive enclosure, including possible exact contact, returns `None`.
 #[inline(never)]
 fn orient2d_certified_rational_filter_exact(
     a: [&Real; 2],
@@ -151,6 +188,13 @@ fn orient2d_certified_rational_filter_exact(
 }
 
 /// Orientation of four 3D points with an explicit escalation policy.
+///
+/// Uses the determinant with rows `a-d`, `b-d`, `c-d`. The origin followed
+/// by the ordered standard basis has negative sign, opposite to
+/// [`crate::orient_d`]'s first-point-anchored convention in three dimensions.
+/// Tries certified dyadic, checked word and rational paths before a six-term
+/// Real determinant. Degenerate inputs are admitted; Zero does not prove a
+/// valid tetrahedron, and an approximate result retains its qualification.
 pub fn orient3d_with_policy(
     a: &Point3,
     b: &Point3,
@@ -228,6 +272,10 @@ pub fn orient3d_with_policy(
 
 /// Classify `point` relative to the oriented line from `from` to `to` with an
 /// explicit escalation policy.
+///
+/// Maps negative/zero/positive orientation to Right/On/Left without dropping
+/// the receipt. Distinct endpoints are required to interpret this as a line:
+/// coincident endpoints give a zero determinant for every query point.
 pub fn classify_point_line_with_policy(
     from: &Point2,
     to: &Point2,
@@ -246,6 +294,11 @@ pub fn classify_point_line_with_policy(
 /// not about the query point. Repeated predicates can use them to select exact
 /// rational, dyadic, or future shared-scale schedules before building scalar
 /// expression trees for every query.
+///
+/// Fields are public snapshots with no source binding or consistency checks.
+/// Bit positions follow source-point order. Constructors supply at most four
+/// points here; the mask representation has capacity for 128. These summaries
+/// do not establish nondegeneracy or force a particular dispatch path.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PredicateFacts {
     /// Every fixed coordinate is represented as an exact rational `Real`.
@@ -346,6 +399,9 @@ impl PredicateFacts {
     /// payoff estimates, but it is not a predicate certificate. Exact predicate
     /// reports still certify topology after reusable object structure selects a
     /// candidate arithmetic schedule.
+    /// Priority is no kernel → generic, then sparse support with no unknown
+    /// zero facts, shared denominator, dyadic, and finally the rational kernel.
+    /// Publicly supplied inconsistent facts are not validated by this selection.
     pub fn determinant_schedule_hint(self) -> DeterminantScheduleHint {
         let Some(kernel) = self.exact_kernel_hint else {
             return DeterminantScheduleHint::GenericRealFallback;
@@ -367,14 +423,17 @@ impl PredicateFacts {
         DeterminantScheduleHint::ExactRationalKernel { kernel }
     }
 
+    /// Collects source-point facts in from/to order with the rational 2D kernel hint.
     fn line2(from: &Point2, to: &Point2) -> Self {
         fixed_point_facts_2([from, to], ExactPredicateKernel::Orient2RationalDet2)
     }
 
+    /// Collects a/b/c facts for the lifted rational circle kernel, without a circle test.
     fn incircle2(a: &Point2, b: &Point2, c: &Point2) -> Self {
         fixed_point_facts_2([a, b, c], ExactPredicateKernel::Incircle2RationalLiftedDet3)
     }
 
+    /// Collects a/b/c/d facts for the lifted rational sphere kernel, without a rank test.
     fn insphere3(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Self {
         fixed_point_facts_3(
             [a, b, c, d],
@@ -389,8 +448,11 @@ impl PredicateFacts {
 /// query point's coordinates. This fact package summarizes those fixed
 /// coefficients so downstream caches can retain exact-set, dyadic,
 /// shared-scale, and sparse-support opportunities without exposing internal
-/// coefficient storage. Predicate calls use those retained object facts to
-/// select certified arithmetic.
+/// coefficient storage. Current query paths inspect scalar values and prepared
+/// filters directly rather than dispatching from this snapshot.
+///
+/// Public fields are snapshots, not validated certificates bound to a
+/// polynomial. Bits use coefficient order x, y, optional z, lift, constant.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct LiftedPolynomialFacts {
     /// Exact-rational representation facts for the fixed polynomial coefficients.
@@ -435,6 +497,8 @@ impl LiftedPolynomialFacts {
     /// certified sparse path, and predicate signs still come from exact
     /// evaluation. Sparse schedule selection belongs here rather than in
     /// topology crates because this type owns the retained coefficient facts.
+    /// The test is any known zero with no unknown zeros; an all-zero polynomial
+    /// also qualifies, so true does not establish a nondegenerate circle/sphere.
     pub fn has_sparse_coefficient_support(self) -> bool {
         self.coefficient_zero_count() > 0 && self.coefficient_unknown_zero_mask == 0
     }
@@ -444,6 +508,8 @@ impl LiftedPolynomialFacts {
 ///
 /// Query evaluation uses `x_coeff*x + y_coeff*y + lift_coeff*(x^2+y^2) +
 /// constant`, where the sign is interpreted by the in-circle convention.
+/// No normalization, radius, center or nondegeneracy is established by this
+/// view; its public references can also describe an arbitrary lifted quadratic.
 #[derive(Clone, Copy, Debug)]
 pub struct Circle2Polynomial<'a> {
     /// Coefficient multiplied by query `x`.
@@ -461,6 +527,8 @@ pub struct Circle2Polynomial<'a> {
 /// Query evaluation uses `x_coeff*x + y_coeff*y + z_coeff*z +
 /// lift_coeff*(x^2+y^2+z^2) + constant`, with sign interpreted by the
 /// in-sphere convention.
+/// The view supplies no center, radius or nondegeneracy validation; public
+/// references need not have come from sphere evidence.
 #[derive(Clone, Copy, Debug)]
 pub struct Sphere3Polynomial<'a> {
     /// Coefficient multiplied by query `x`.
@@ -481,10 +549,16 @@ pub struct Sphere3Polynomial<'a> {
 /// scheduling facts, but not the line endpoints. Retaining it alongside the
 /// endpoints also lets wide rational queries use their scalar-local conversion
 /// schedules before the arbitrary-precision determinant fallback.
+/// Reuse with changed or reordered endpoints is not checked. A filter may
+/// decide without reading the supplied endpoint values, so source association
+/// must be maintained by the caller. This is not a serialized proof receipt.
 #[derive(Clone, Copy, Debug)]
 pub struct Line2Orientation {
+    /// Fixed-input scheduling summary; does not itself decide an orientation.
     facts: PredicateFacts,
+    /// Optional certified dyadic filter compiled from the ordered endpoints.
     filter: Option<AffineDet2Filter>,
+    /// Optional checked homogeneous i128 line coefficients.
     exact_word_filter: Option<AffineDet2ExactWordFilter>,
 }
 
@@ -493,8 +567,11 @@ pub struct Line2Orientation {
 /// The carrier only schedules a checked exact filter. Unsupported points keep
 /// an empty schedule and enter the same arbitrary-precision/refinement cascade
 /// when queried.
+/// It does not retain or validate the source point; a stale retained query can
+/// disagree with the current point on paths that consume its word coordinates.
 #[derive(Clone, Copy, Debug)]
 pub struct Line2OrientationQuery {
+    /// Checked homogeneous query coordinates, absent when conversion declines.
     exact_word: Option<AffineDet2ExactWordQuery>,
 }
 
@@ -506,11 +583,13 @@ impl Line2Orientation {
 }
 
 /// Derive reusable exact-predicate evidence for oriented line `from -> to`.
+/// Includes coincident endpoints; constructing evidence does not validate a line.
 pub fn line2_orientation(from: &Point2, to: &Point2) -> Line2Orientation {
     line2_orientation_with_facts(from, to, PredicateFacts::line2(from, to))
 }
 
 /// Derive reusable exact-word query evidence for one point.
+/// Retain it only with that point's unchanged exact coordinates.
 pub fn line2_orientation_query(point: &Point2) -> Line2OrientationQuery {
     Line2OrientationQuery {
         exact_word: AffineDet2ExactWordQuery::from_reals([&point.x, &point.y]),
@@ -518,6 +597,10 @@ pub fn line2_orientation_query(point: &Point2) -> Line2OrientationQuery {
 }
 
 /// Derive line-orientation evidence from already-collected fixed-input facts.
+///
+/// Stores `facts` as supplied, without verifying them against the endpoints.
+/// Both filters are independently derived from `from` and `to`. The caller
+/// must keep the fact snapshot and future endpoint arguments consistent.
 pub fn line2_orientation_with_facts(
     from: &Point2,
     to: &Point2,
@@ -537,6 +620,8 @@ pub fn line2_orientation_with_facts(
 ///
 /// `orientation` must have been derived from the same ordered endpoints with
 /// [`line2_orientation`] or [`line2_orientation_with_facts`].
+/// This precondition is not checked; retained filters can decide before the
+/// endpoint arguments are read. Maps the sign while preserving its receipt.
 pub fn classify_point_line_with_orientation_and_policy(
     from: &Point2,
     to: &Point2,
@@ -554,8 +639,10 @@ pub fn classify_point_line_with_orientation_and_policy(
 ///
 /// `orientation` and `query` must have been derived from the same ordered line
 /// endpoints and query point passed here. An unavailable or inconclusive query
-/// filter enters the same complete exact/refinement cascade as
+/// filter enters the same rational/exact-expression resolver as
 /// [`classify_point_line_with_orientation_and_policy`].
+/// No endpoint or query association is validated. An absent retained word
+/// query skips that word path rather than reconstructing it from `point`.
 pub fn classify_point_line_with_orientation_and_query_and_policy(
     from: &Point2,
     to: &Point2,
@@ -570,6 +657,8 @@ pub fn classify_point_line_with_orientation_and_query_and_policy(
     )
 }
 
+/// Runs retained line orientation without a precompiled query; source matching
+/// is a caller precondition, not checked here.
 pub(crate) fn orient2d_with_orientation_and_policy(
     from: &Point2,
     to: &Point2,
@@ -580,6 +669,8 @@ pub(crate) fn orient2d_with_orientation_and_policy(
     orient2d_with_retained_evidence(from, to, point, orientation, None, policy)
 }
 
+/// Runs retained line orientation with a matching precompiled query; neither
+/// the line nor query association is revalidated.
 pub(crate) fn orient2d_with_orientation_and_query_and_policy(
     from: &Point2,
     to: &Point2,
@@ -591,6 +682,12 @@ pub(crate) fn orient2d_with_orientation_and_query_and_policy(
     orient2d_with_retained_evidence(from, to, point, orientation, Some(query), policy)
 }
 
+/// Tries retained dyadic and word filters, then current-source rational paths.
+///
+/// A supplied query's empty word schedule declines without a fresh conversion.
+/// After the rational line filter and full rational determinant decline, uses
+/// the Real orientation resolver. Stored facts are not consumed by this path;
+/// stale filters/query data are not detected before an answer is published.
 fn orient2d_with_retained_evidence(
     from: &Point2,
     to: &Point2,
@@ -663,6 +760,10 @@ fn orient2d_with_retained_evidence(
 /// Positive means `d` lies inside the oriented circumcircle through `a`, `b`,
 /// and `c` when those three points are counter-clockwise. Reversing the
 /// orientation of `a`, `b`, and `c` reverses the sign.
+/// The raw determinant has rows a,b,c,d and columns `[x,y,x²+y²,1]`.
+/// Noncollinearity is needed for the circle interpretation but is not checked;
+/// degenerate inputs still evaluate the polynomial. Dyadic and rational paths
+/// precede the Real resolver, which retains any approximate qualification.
 pub fn incircle2d_with_policy(
     a: &Point2,
     b: &Point2,
@@ -695,6 +796,9 @@ pub fn incircle2d_with_policy(
     incircle2d_real_expr(a, b, c, d, policy)
 }
 
+/// Resolves the six-term lifted determinant after translating by query `d`.
+/// Uses an exact rational callback and no signed-term filter; the expression
+/// retains the full polynomial even for degenerate defining points.
 fn incircle2d_real_expr(
     a: &Point2,
     b: &Point2,
@@ -744,15 +848,28 @@ fn incircle2d_real_expr(
 }
 
 /// Reusable exact-predicate evidence for an oriented circle through three points.
+///
+/// Owns lifted polynomial coefficients and optional filters, not the source
+/// points or a validated circle. Collinear/repeated sources are accepted.
+/// Later queries must supply the same ordered sources; their association with
+/// the retained polynomial/filter is not checked.
 #[derive(Clone, Debug)]
 pub struct Incircle2Evidence {
+    /// Source-coordinate scheduling snapshot, separate from coefficient facts.
     facts: PredicateFacts,
+    /// Optional certified dyadic filter for the three fixed source points.
     filter: Option<Incircle2Filter>,
+    /// Optional rational linear-form filter for x, y, squared norm and one.
     rational_filter: Option<RationalLinearForm4Filter>,
+    /// Retained coefficient representation and structural-zero summary.
     coefficient_facts: LiftedPolynomialFacts,
+    /// Cofactor multiplying query x in the full lifted determinant.
     x_coeff: Real,
+    /// Cofactor multiplying query y.
     y_coeff: Real,
+    /// Cofactor multiplying the query's squared Euclidean norm.
     lift_coeff: Real,
+    /// Cofactor of the query row's final one.
     constant: Real,
 }
 
@@ -779,6 +896,10 @@ impl Incircle2Evidence {
 }
 
 /// Derive reusable evidence for the oriented circumcircle through `a`, `b`, and `c`.
+///
+/// Expands the query row of the lifted determinant into four coefficients and
+/// derives optional filters. No division, center/radius construction or
+/// noncollinearity decision is required; existence of a circle is not certified.
 pub fn incircle2_evidence(a: &Point2, b: &Point2, c: &Point2) -> Incircle2Evidence {
     crate::trace_dispatch!("hyperlimit", "incircle2_evidence", "derive");
     let a_lift = point2_lift(a);
@@ -818,6 +939,11 @@ pub fn incircle2_evidence(a: &Point2, b: &Point2, c: &Point2) -> Incircle2Eviden
 ///
 /// `evidence` must have been derived from the same ordered source points with
 /// [`incircle2_evidence`].
+/// The association is not rechecked: retained filter/polynomial paths can
+/// answer without consulting a,b,c. Tries the dyadic filter, rational retained
+/// polynomial, source rational determinant, then the retained Real polynomial
+/// resolver. All paths retain their local certainty, but none recovers source
+/// provenance or validates a unique circle.
 pub fn incircle2d_with_evidence_and_policy(
     a: &Point2,
     b: &Point2,
@@ -874,9 +1000,13 @@ pub fn incircle2d_with_evidence_and_policy(
 
 /// In-sphere predicate for five 3D points with an explicit escalation policy.
 ///
-/// Positive means `e` lies inside the oriented circumsphere through `a`, `b`,
-/// `c`, and `d` when the tetrahedron orientation matches the exact kernel's
-/// convention. Reversing that orientation reverses the sign.
+/// Returns the raw determinant with rows a,b,c,d,e and columns
+/// `[x,y,z,x²+y²+z²,1]`. For a nondegenerate defining tetrahedron, an interior
+/// query has the same sign as [`orient3d_with_policy`], an exterior query the
+/// opposite sign, and a sphere point gives Zero. In particular, the ordered
+/// standard tetrahedron gives a negative interior sign. Reversing orientation
+/// reverses the sign. Degeneracy is not rejected, so zero alone does not prove
+/// a unique sphere; policy-qualified terminal results retain their certainty.
 pub fn insphere3d_with_policy(
     a: &Point3,
     b: &Point3,
@@ -914,6 +1044,11 @@ pub fn insphere3d_with_policy(
     insphere3d_real_expr(a, b, c, d, e, policy)
 }
 
+/// Resolves the query-translated lifted 4x4 determinant as exact Real arithmetic.
+///
+/// Forms xy minors, z cofactors and squared lifts, then a difference of two
+/// sums. Supplies their signed-term filter and a rational kernel callback to
+/// the resolver; no sphere nondegeneracy check is performed.
 fn insphere3d_real_expr(
     a: &Point3,
     b: &Point3,
@@ -1027,15 +1162,27 @@ fn insphere3d_real_expr(
 }
 
 /// Reusable exact-predicate evidence for an oriented sphere through four points.
+///
+/// Stores lifted coefficients and an optional filter without owning or binding
+/// the four source points. Degenerate tuples are accepted; this carrier does
+/// not certify a sphere's existence. Rebuild for changed or reordered sources.
 #[derive(Clone, Debug)]
 pub struct Insphere3Evidence {
+    /// Optional certified dyadic filter compiled from the ordered source tuple.
     filter: Option<Insphere3Filter>,
+    /// Source-coordinate scheduling summary.
     facts: PredicateFacts,
+    /// Coefficient representation and structural-zero snapshot.
     coefficient_facts: LiftedPolynomialFacts,
+    /// Cofactor multiplying query x in the full lifted determinant.
     x_coeff: Real,
+    /// Cofactor multiplying query y.
     y_coeff: Real,
+    /// Cofactor multiplying query z.
     z_coeff: Real,
+    /// Cofactor multiplying the query's squared Euclidean norm.
     lift_coeff: Real,
+    /// Cofactor of the query row's final one.
     constant: Real,
 }
 
@@ -1063,6 +1210,10 @@ impl Insphere3Evidence {
 }
 
 /// Derive reusable evidence for the oriented sphere through `a`, `b`, `c`, and `d`.
+///
+/// Expands the final query row of the 5x5 lifted determinant into five exact
+/// coefficients. Does not divide, construct a center/radius or test affine
+/// independence; degenerate sources retain their determinant polynomial.
 pub fn insphere3_evidence(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Insphere3Evidence {
     crate::trace_dispatch!("hyperlimit", "insphere3_evidence", "derive");
     let a_lift = point3_lift(a);
@@ -1130,6 +1281,10 @@ pub fn insphere3_evidence(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Ins
 ///
 /// `evidence` must have been derived from the same ordered source points with
 /// [`insphere3_evidence`].
+/// The association is not validated. Tries retained dyadic filtering and
+/// rational polynomial evaluation before the source rational determinant and
+/// retained Real polynomial resolver. Earlier paths can answer without reading
+/// a,b,c,d; a stale evidence object therefore violates the input contract.
 pub fn insphere3d_with_evidence_and_policy(
     a: &Point3,
     b: &Point3,
@@ -1187,6 +1342,12 @@ pub fn insphere3d_with_evidence_and_policy(
     )
 }
 
+/// Evaluates a retained circle polynomial when query and coefficients are rational.
+///
+/// First tries the retained four-term linear-form filter with Exact/Filter
+/// receipt, then compares the exact signed product sum with Exact/Exact receipt.
+/// `None` means a coordinate/coefficient lacks rational storage; no source
+/// point association is checked and no final rational determinant is required.
 #[inline]
 fn exact_rational_circle_polynomial_sign(
     point: &Point2,
@@ -1238,6 +1399,9 @@ fn exact_rational_circle_polynomial_sign(
     ))
 }
 
+/// Evaluates a rational retained sphere polynomial by a five-term product sum.
+/// Returns Exact/Exact on success and declines nonrational storage. It consumes
+/// only the query and retained coefficients, without checking source identity.
 #[inline]
 fn exact_rational_sphere_polynomial_sign(
     point: &Point3,
@@ -1275,22 +1439,27 @@ fn exact_rational_sphere_polynomial_sign(
     ))
 }
 
+/// Delegates borrowed exact addition to the predicate scalar adapter.
 fn add(left: &Real, right: &Real) -> Real {
     add_ref(left, right)
 }
 
+/// Delegates borrowed exact subtraction to the predicate scalar adapter.
 fn sub(left: &Real, right: &Real) -> Real {
     sub_ref(left, right)
 }
 
+/// Forms the additive inverse as `(value-value)-value` using the existing adapters.
 fn neg(value: &Real) -> Real {
     sub(&sub(value, value), value)
 }
 
+/// Constructs the exact squared norm x²+y² for a planar lifted row.
 fn point2_lift(point: &Point2) -> Real {
     add(&mul(&point.x, &point.x), &mul(&point.y, &point.y))
 }
 
+/// Constructs the exact squared norm `(x²+y²)+z²` for a spatial lifted row.
 fn point3_lift(point: &Point3) -> Real {
     add(
         &add(&mul(&point.x, &point.x), &mul(&point.y, &point.y)),
@@ -1298,6 +1467,8 @@ fn point3_lift(point: &Point3) -> Real {
     )
 }
 
+/// Constructs the determinant of rows a,b,c as one six-term signed product sum.
+/// Retains scalar reduction opportunities; this constructs a value, not a sign receipt.
 fn det3_refs(a: [&Real; 3], b: [&Real; 3], c: [&Real; 3]) -> Real {
     // Preserve this frequently rebuilt 3x3 determinant as a fixed six-term
     // product-sum so exact rationals use one delayed reduction.
@@ -1314,6 +1485,7 @@ fn det3_refs(a: [&Real; 3], b: [&Real; 3], c: [&Real; 3]) -> Real {
     )
 }
 
+/// Expands rows `[a0,a1,1]`, `[b0,b1,1]`, `[c0,c1,1]` without multiplying by ones.
 fn det3_with_unit_col2(a0: &Real, a1: &Real, b0: &Real, b1: &Real, c0: &Real, c1: &Real) -> Real {
     Real::signed_product_sum(
         [true, false, false, true, true, false],
@@ -1321,6 +1493,8 @@ fn det3_with_unit_col2(a0: &Real, a1: &Real, b0: &Real, b1: &Real, c0: &Real, c1
     )
 }
 
+/// Expands a 4x4 determinant along row a with alternating 3x3 cofactors.
+/// Combines them in one product sum without scalar division or pivot decisions.
 fn det4_refs(a: [&Real; 4], b: [&Real; 4], c: [&Real; 4], d: [&Real; 4]) -> Real {
     let minor0 = det3_refs([b[1], b[2], b[3]], [c[1], c[2], c[3]], [d[1], d[2], d[3]]);
     let minor1 = det3_refs([b[0], b[2], b[3]], [c[0], c[2], c[3]], [d[0], d[2], d[3]]);
@@ -1341,6 +1515,9 @@ fn det4_refs(a: [&Real; 4], b: [&Real; 4], c: [&Real; 4], d: [&Real; 4]) -> Real
     )
 }
 
+/// Evaluates the 4x4 determinant whose rows append one to a,b,c,d.
+/// Subtracting d from the first three rows reduces it to a 3x3 determinant
+/// with the same sign and value, without constructing the final unit column.
 fn det4_with_unit_col3(a: [&Real; 3], b: [&Real; 3], c: [&Real; 3], d: [&Real; 3]) -> Real {
     let ad0 = sub(a[0], d[0]);
     let ad1 = sub(a[1], d[1]);
@@ -1354,10 +1531,14 @@ fn det4_with_unit_col3(a: [&Real; 3], b: [&Real; 3], c: [&Real; 3], d: [&Real; 3
     det3_refs([&ad0, &ad1, &ad2], [&bd0, &bd1, &bd2], [&cd0, &cd1, &cd2])
 }
 
+/// Delegates borrowed exact multiplication to the predicate scalar adapter.
 fn mul(left: &Real, right: &Real) -> Real {
     mul_ref(left, right)
 }
 
+/// Calls the supplied rational kernel once and wraps success as Exact/Exact.
+/// The policy and kernel-tag arguments are currently unused; this wrapper
+/// neither validates the callback's proof nor records its kernel identity.
 fn exact_outcome(
     _policy: PredicatePolicy,
     _kernel: ExactPredicateKernel,
@@ -1366,6 +1547,9 @@ fn exact_outcome(
     exact().map(|sign| PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact))
 }
 
+/// Summarizes planar source representation facts and point masks in input order.
+/// Uses scalar/point fact owners, setting the kernel hint only when all
+/// coordinates have rational storage. Requires N <= 128 for the masks.
 fn fixed_point_facts_2<const N: usize>(
     points: [&Point2; N],
     kernel: ExactPredicateKernel,
@@ -1389,6 +1573,8 @@ fn fixed_point_facts_2<const N: usize>(
     }
 }
 
+/// Collects scalar-set and zero-status facts in retained coefficient order.
+/// Requires N <= 128 (debug-asserted); this snapshot does not validate geometry.
 fn lifted_polynomial_facts<const N: usize>(coefficients: [&Real; N]) -> LiftedPolynomialFacts {
     debug_assert!(N <= u128::BITS as usize);
     // Keep coefficient facts at the evidence boundary rather than
@@ -1406,6 +1592,9 @@ fn lifted_polynomial_facts<const N: usize>(coefficients: [&Real; N]) -> LiftedPo
     }
 }
 
+/// Partitions coordinate bits into known-zero, known-nonzero and unknown masks.
+/// Uses structural facts without policy decisions; requires N <= 128
+/// (debug-asserted). Unknown is never treated as known nonzero.
 fn real_zero_masks<const N: usize>(coordinates: [&Real; N]) -> (u128, u128, u128) {
     debug_assert!(N <= u128::BITS as usize);
     let mut known_zero_mask = 0_u128;
@@ -1422,6 +1611,9 @@ fn real_zero_masks<const N: usize>(coordinates: [&Real; N]) -> (u128, u128, u128
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
 }
 
+/// Summarizes spatial source representations and ordered point masks.
+/// The kernel hint requires rational storage for every coordinate; mask
+/// construction requires N <= 128 and performs no affine-independence test.
 fn fixed_point_facts_3<const N: usize>(
     points: [&Point3; N],
     kernel: ExactPredicateKernel,
@@ -1446,15 +1638,24 @@ fn fixed_point_facts_3<const N: usize>(
     }
 }
 
+/// Temporary point-level summaries used to populate retained predicate facts.
+/// Default has empty masks/dependencies; no geometric claim follows from it.
 #[derive(Clone, Copy, Debug, Default)]
 struct FixedPointStructureMasks {
+    /// Points whose coordinates have a common reduced rational denominator.
     shared_scale: u128,
+    /// Points structurally known to have all-zero coordinates.
     origin: u128,
+    /// Points with one known-nonzero coordinate and all others known zero.
     one_hot: u128,
+    /// Points with at least one coordinate of unknown zero status.
     unknown_zero: u128,
+    /// Union of scalar dependency families, without individual source identities.
     symbolic_dependencies: SymbolicDependencyMask,
 }
 
+/// Collects planar point masks and dependency families with bit i for point i.
+/// Requires N <= 128 (debug-asserted); point structural facts own each claim.
 #[inline]
 fn fixed_point_structure_masks_2<const N: usize>(points: [&Point2; N]) -> FixedPointStructureMasks {
     debug_assert!(N <= u128::BITS as usize);
@@ -1481,6 +1682,8 @@ fn fixed_point_structure_masks_2<const N: usize>(points: [&Point2; N]) -> FixedP
     masks
 }
 
+/// Collects spatial point masks and dependency families with bit i for point i.
+/// Requires N <= 128 (debug-asserted); no predicate refinement is requested.
 #[inline]
 fn fixed_point_structure_masks_3<const N: usize>(points: [&Point3; N]) -> FixedPointStructureMasks {
     debug_assert!(N <= u128::BITS as usize);
@@ -1507,6 +1710,7 @@ fn fixed_point_structure_masks_3<const N: usize>(points: [&Point3; N]) -> FixedP
     masks
 }
 
+/// Sign conventions, retained-path comparisons, exact dispatch and finite generators.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1516,44 +1720,55 @@ mod tests {
     use hyperreal::Rational;
     use proptest::prelude::*;
 
+    /// Allows a terminal while the rational fixtures still require exact results.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Serializes this module's tests that reset and inspect shared dispatch traces.
     #[cfg(feature = "dispatch-trace")]
     fn dispatch_trace_test_lock() -> &'static std::sync::Mutex<()> {
+        /// Lazily initialized process-local lock for this test module's trace fixtures.
         static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
         LOCK.get_or_init(|| std::sync::Mutex::new(()))
     }
 
+    /// Imports a finite binary64 fixture exactly, not as its displayed decimal ratio.
     fn real(value: f64) -> Real {
         Real::try_from(value).expect("finite test Real")
     }
 
+    /// Constructs a planar fixture from the exact binary values of finite inputs.
     fn p2(x: f64, y: f64) -> Point2 {
         Point2::new(real(x), real(y))
     }
 
+    /// Constructs a spatial fixture from the exact binary values of finite inputs.
     fn p3(x: f64, y: f64, z: f64) -> Point3 {
         Point3::new(real(x), real(y), real(z))
     }
 
+    /// Imports an integer fixture without floating-point conversion.
     fn rational(value: i32) -> Real {
         Real::from(value)
     }
 
+    /// Constructs an exact integer planar fixture.
     fn rp2(x: i32, y: i32) -> Point2 {
         Point2::new(rational(x), rational(y))
     }
 
+    /// Constructs an exact integer spatial fixture.
     fn rp3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(rational(x), rational(y), rational(z))
     }
 
+    /// Multiplies integer coordinates by an exact scale for wide-rational tests.
     fn wide_rp3(scale: &Rational, x: i32, y: i32, z: i32) -> Point3 {
         let coordinate = |value| Real::from(scale * &Rational::new(i64::from(value)));
         Point3::new(coordinate(x), coordinate(y), coordinate(z))
     }
 
     #[test]
+    /// Checks positive orientation of a counterclockwise binary-exact unit triangle.
     fn orient2d_classifies_simple_triangle() {
         let a = p2(0.0, 0.0);
         let b = p2(1.0, 0.0);
@@ -1565,6 +1780,7 @@ mod tests {
     }
 
     #[test]
+    /// Requires an Exact/Exact zero receipt for a strict collinear integer fixture.
     fn orient2d_decides_strict_degenerate_reals_exactly() {
         let a = p2(0.0, 0.0);
         let b = p2(1.0, 1.0);
@@ -1576,6 +1792,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks Exact/Exact receipts for four rational orientation/lifted predicates.
+    /// This asserts result metadata, not a measured total-work or refinement count.
     fn exact_rational_predicates_do_not_need_refinement_budget() {
         let policy = PredicatePolicy::STRICT;
 
@@ -1614,6 +1832,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks the negative orientation convention for the ordered standard tetrahedron.
     fn orient3d_classifies_simple_tetrahedron() {
         let a = p3(0.0, 0.0, 0.0);
         let b = p3(1.0, 0.0, 0.0);
@@ -1627,6 +1846,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Requires one word-filter hit and zero full rational-kernel hits for denominator five.
     fn orient2d_uses_exact_word_filter_for_common_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -1661,6 +1881,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Requires one word-filter hit and zero full rational-kernel hits for mixed point scales.
     fn orient2d_uses_exact_word_filter_for_mixed_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -1693,6 +1914,7 @@ mod tests {
         );
     }
 
+    /// Builds the exact positive integer 8*(i64::MAX)², beyond signed i128 range.
     fn rational_beyond_i128() -> Rational {
         let word = Rational::new(i64::MAX);
         let square = &word * &word;
@@ -1700,6 +1922,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks word decline, rational-filter success and exact receipts under both policies.
     fn orient2d_certified_rational_filter_handles_values_beyond_word_kernel() {
         let zero = Real::zero();
         let wide = Real::from(rational_beyond_i128());
@@ -1725,6 +1948,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks both fast filters decline on a wide collinear case, retaining exact zero.
     fn orient2d_certified_rational_filter_falls_through_on_exact_boundary() {
         let zero = Real::zero();
         let wide = rational_beyond_i128();
@@ -1753,6 +1977,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Requires the negative spatial sign, one word hit and zero full rational hits.
     fn orient3d_uses_exact_word_filter_for_common_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -1789,6 +2014,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Requires the mixed-scale spatial sign, one word hit and zero full rational hits.
     fn orient3d_uses_exact_word_filter_for_mixed_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -1825,6 +2051,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Checks positive orientation with zero word hits and one full rational-kernel hit.
     fn orient3d_word_overflow_uses_compact_rational_fallback() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -1856,6 +2083,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Checks positive circle sign, one direct rational hit and one retained polynomial-filter hit.
     fn incircle2d_uses_compact_rational_kernel_for_exact_inputs() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -1903,6 +2131,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Checks negative interior sign and one hit each for direct and retained rational paths.
     fn insphere3d_uses_compact_rational_kernel_for_exact_inputs() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -1959,6 +2188,8 @@ mod tests {
     }
 
     #[test]
+    /// Compares retained/direct side values and selected facts on three dyadic queries.
+    /// This shares predicate machinery rather than supplying an independent geometry oracle.
     fn retained_line_orientation_matches_orient2d_side() {
         let a = p2(-1.0, -1.0);
         let b = p2(1.0, 1.0);
@@ -1979,6 +2210,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Checks a wide-rational Left result, one retained rational-filter hit and both policies.
     fn retained_line_orientation_certifies_wide_rational_queries() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -2022,6 +2254,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Requires one hit each for retained dyadic, word and rational filters on three Left queries.
     fn retained_line_orientation_cascades_by_query_representation() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
@@ -2068,6 +2301,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks point-local shared scales without a shared denominator across both points.
     fn line_orientation_facts_distinguish_mixed_denominators() {
         let a = Point2::new(
             Real::from(Rational::fraction(1, 3).unwrap()),
@@ -2086,6 +2320,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks global and per-point denominator summaries for line, circle and sphere sources.
     fn line_orientation_facts_detect_common_reduced_denominator() {
         let p2r = |x, y| {
             Point2::new(
@@ -2146,6 +2381,8 @@ mod tests {
     }
 
     #[test]
+    /// Recomputes coefficient summaries and compares polynomial/evidence signs on two fixtures.
+    /// The comparisons share scalar and fact helpers and do not prove general equivalence.
     fn lifted_polynomial_facts_match_retained_coefficients() {
         let a = rp2(1, 0);
         let b = rp2(0, 1);
@@ -2255,6 +2492,8 @@ mod tests {
     }
 
     #[test]
+    /// Compares retained/direct circle signs for interior, exterior and source-point queries.
+    /// Decimal literals enter as their exact binary64 values; receipts are not compared.
     fn incircle_evidence_matches_incircle2d_sign() {
         let a = p2(0.82, 0.0);
         let b = p2(0.0, 0.82);
@@ -2273,6 +2512,8 @@ mod tests {
     }
 
     #[test]
+    /// Compares retained/direct sphere signs for interior, exterior and source-point queries.
+    /// The binary64 fixture imports are exact; only returned sign values are compared.
     fn insphere_evidence_matches_insphere3d_sign() {
         let a = p3(0.82, 0.0, 0.0);
         let b = p3(-0.82, 0.0, 0.0);
@@ -2293,6 +2534,7 @@ mod tests {
     }
 
     #[test]
+    /// Compares forced Real-expression and ordinary paths on finite rational sign controls.
     fn generic_real_lifted_determinants_match_exact_rational_kernels() {
         let a = rp2(0, 0);
         let b = rp2(2, 0);
@@ -2330,6 +2572,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks retained query results, symbolic fallback signs and coefficient-mask partitions.
+    /// Disabling filters selects internal paths; it does not validate arbitrary evidence mutation.
     fn retained_query_and_polynomial_fallbacks_match_scalar_predicates() {
         let from = rp2(0, 0);
         let to = rp2(2, 0);
@@ -2414,6 +2658,8 @@ mod tests {
     }
 
     #[test]
+    /// Disables filters and makes selected coefficients nonrational to reach source callbacks.
+    /// Exact source-boundary receipts test branch reachability, not stale-evidence safety.
     fn retained_exact_callbacks_cover_filter_decline_boundaries() {
         let from = rp2(0, 0);
         let to = rp2(2, 0);
@@ -2468,10 +2714,13 @@ mod tests {
         assert_eq!(sign_from_ordering(Ordering::Greater), Sign::Positive);
     }
 
+    // Each bounded generator below requests 256 cases; this finite corpus is
+    // evidence for its assertions, not a universal determinant-closure proof.
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(256))]
 
         #[test]
+        /// Compares complete strict outcomes before/after bounded integer planar translations.
         fn exact_orient2d_is_translation_invariant(
             ax in -64_i32..64, ay in -64_i32..64,
             bx in -64_i32..64, by in -64_i32..64,
@@ -2493,6 +2742,7 @@ mod tests {
         }
 
         #[test]
+        /// Compares complete strict outcomes before/after bounded integer spatial translations.
         fn exact_orient3d_is_translation_invariant(
             ax in -16_i32..16, ay in -16_i32..16, az in -16_i32..16,
             bx in -16_i32..16, by in -16_i32..16, bz in -16_i32..16,
@@ -2517,6 +2767,7 @@ mod tests {
         }
 
         #[test]
+        /// Uses an independent i128 determinant sign before positive wide scaling of all coordinates.
         fn sign_only_exact_orient3d_matches_wide_integer_determinants(
             ax in -16_i32..16, ay in -16_i32..16, az in -16_i32..16,
             bx in -16_i32..16, by in -16_i32..16, bz in -16_i32..16,
@@ -2550,6 +2801,8 @@ mod tests {
         }
 
         #[test]
+        /// Requires exact zero when the query repeats a source row, including degenerate triples.
+        /// The determinant identity alone does not assert a valid circle.
         fn exact_incircle_reports_boundary_for_input_site(
             ax in -16_i32..16, ay in -16_i32..16,
             bx in -16_i32..16, by in -16_i32..16,
@@ -2567,6 +2820,8 @@ mod tests {
         }
 
         #[test]
+        /// Requires exact zero for a repeated query/source row, including degenerate tetrahedra.
+        /// The finite generator does not establish existence of a sphere.
         fn exact_insphere_reports_boundary_for_input_site(
             ax in -8_i32..8, ay in -8_i32..8, az in -8_i32..8,
             bx in -8_i32..8, by in -8_i32..8, bz in -8_i32..8,
