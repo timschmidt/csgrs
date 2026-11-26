@@ -5115,6 +5115,104 @@ session. Documenting the receipt and validation gaps does not repair them or
 establish completed geometric support. The repository-wide audit remains
 active, with remaining predicate modules, tests and other files still to review.
 
+## Hyperlimit coplanar reports and projection helpers
+
+Reviewed all 1,359 baseline lines of
+`crates/hyperlimit/src/predicates/coplanar.rs` at `0ee79cde6`, including all
+private helpers and test fixtures. Also revisited the relevant segment-label
+helper and shared symbolic-zero fixture; those excerpts do not add whole-file
+credit. Ownership is Hyperlimit's projected predicate/construction boundary.
+The affected properties are policy-explicit decisions and receipts (P8/P9),
+least-cost proof order (P10), explicit uncertainty (P11), and source-bound
+validation. Inputs are exact Real-coordinate triples, indexed triangles,
+projected rings/vectors, and retained reports under explicit predicate policies.
+The acceptance witness was missing private/test documentation plus claims of
+certification contradicted by the current return types and value extraction.
+This is a documentation correction, not a change to the required contracts.
+
+The module now distinguishes receipt-bearing triangle degeneracy from bare
+coplanar reports. Degeneracy searches XY/XZ/YZ by arithmetic stage: dyadic
+filter, checked-word kernel, rational filter, full rational kernel, then generic
+policy-driven orientation for unresolved planes. Exact zeros suppress later
+work on that projection. A nonzero witness alone suffices and returns its own
+receipt, even after an unresolved projection. All-zero completion joins zero
+certainty and stage from an Exact initial receipt. Without a nonzero witness,
+an unresolved projection produces the first retained Unknown. Documentation
+preserves this order and the approximate-degeneracy possibility.
+
+Coplanar classification assumes rather than verifies 3D coplanarity. Projection
+selection uses the first left-triangle plane with a policy-decided nonzero
+orientation, dropping its receipt; the right triangle is not independently
+checked for degeneracy. Invalid indices and unsuccessful projection selection
+both produce projectionless Unknown. All nine edge pairs are evaluated in
+left-edge-major order unless one is unresolved; a known contact does not stop
+that work. Then all right vertex queries precede all left queries. Any missing
+vertex location clears every vertex label from the Unknown report, while
+retaining its edges. Overlap witnesses take precedence over touch; Degenerate
+vertex locations are ignored. These labels alone do not prove positive area
+for degenerate input. The general label reducer even maps empty/missing facts
+to Disjoint, never Unknown, and the segment helper accepts Identical point
+segments as overlap without establishing positive length.
+
+Local report validation accepts every Unknown carrying a projection without
+checking the remaining fields. Without a projection, only fact-free Unknown
+passes. Decided reports require nine edge labels, six present vertex labels,
+and agreement with the reducer. No source incidence, projection validity,
+fact ordering, coplanarity, or certainty is checked. Replay first performs
+these checks and bounds checks, then requires field equality with a fresh
+report. Matching Unknown can pass; this does not restore dropped receipts or
+bind a unique source. Public fields remain mutable. The docs now state those
+limits rather than claiming a certified handoff.
+
+Projection clones coordinates without establishing faithful source incidence.
+Projected area is signed algebraic shoelace area, not general 3D Euclidean or
+filled-set area; the sign helper preserves its outcome. The absolute-value
+helper drops the comparison receipt and retains the signed expression on Equal,
+so a terminal Equal need not produce a nonnegative exact expression. Turn
+ordering relies on unchecked nonzero vectors, uses left bucket before right,
+and drops comparison receipts. Point-in-projected-triangle preserves its 2D
+receipt but does not establish 3D coplanarity.
+
+Parameter recovery tries projected x before y, falling back on any None,
+including uncertainty or errors. It establishes neither cross-coordinate
+agreement nor a unit-interval bound. Projected line intersection uses
+`d0/(d0-d1)` and interpolates all original 3D coordinates; skew 3D lines can
+still intersect in projection. Division errors and Unknown collapse to None,
+and successful certainty is lost. Midpoint, vector, raw determinant,
+interpolation, cross/dot, bucket, indexing, edge ordering, report reduction,
+and receipt-join helpers now document their specific roles and limits.
+
+Test docs describe their actual finite assertions without upgrading names to
+coverage claims. In particular, the Unknown-completion fixture checks the
+relation rather than retained vertex labels, the strict unresolved-edge fixture
+does not inspect its edge-prefix content, and the representation-stage fixture
+does not count dispatches. Existing fixtures, assertions, predicate order, and
+implementation expressions are unchanged.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only
+  lines leaves byte-identical source to the baseline.
+- A scoped declaration scan found 55 documented names. Checked 60 complete
+  rendered documentation groups across 37 private-module pages, including all
+  five fields and fifteen enum variants. Test-only documentation was reviewed
+  in source rather than claimed as rendered by library Rustdoc.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed; fixtures compiled but were not executed.
+- Downstream `cargo rustdoc --locked -p csgrs --lib --no-default-features
+  --features curve --offline -j2 -- --document-private-items
+  -D rustdoc::broken_intra_doc_links` passed. Shared target storage remains
+  approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-coplanar-{doc,check,downstream-doc}.log`.
+Full workflow/runtime/performance checks remain waived for this docs-only
+session. These records expose existing qualification/validation gaps; they do
+not repair them or establish completed geometric support. Repository-wide
+coverage and the line-by-line audit remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
