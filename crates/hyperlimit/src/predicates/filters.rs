@@ -1,9 +1,14 @@
-//! Certified predicate filters.
+//! Policy-controlled signs of closed interval and ball enclosures.
 //!
-//! Filters in this module are exact, policy-visible shortcuts. They may decide
-//! a predicate before expensive refinement, or return explicit uncertainty.
-//! They are not primitive-float tolerances. Approximate or interval information is useful only
-//! when it produces a certificate or a bounded non-decision.
+//! Endpoint comparisons can certify a uniform sign or consume an approximate
+//! terminal allowed by the policy. Results preserve that qualification; the
+//! `certified_*` names alone do not imply a certified outcome. Callers supplying
+//! enclosures must establish that their target value lies within them: these
+//! functions receive no target or source relation to validate.
+//!
+//! A filter-stage result summarizes the local enclosure decision, not the
+//! deepest endpoint-comparison stage or inherited source provenance. A decline
+//! is inconclusive and supplies no total-work or memory-bound guarantee.
 
 use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
@@ -14,6 +19,13 @@ use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, 
 use crate::predicates::order::compare_reals_with_policy;
 
 /// Classify a closed ball enclosure, preserving invalid-radius uncertainty.
+///
+/// For a nonnegative radius the enclosure is `[center-radius, center+radius]`.
+/// A negative radius comparison yields Unknown/Unsupported; an unresolved
+/// radius or an interval with no uniform decided sign yields
+/// Unknown/RealRefinement. Both use Filter stage and discard child failure
+/// details. Decided signs retain the weakest qualification of radius and
+/// endpoint comparisons, including Approximate when the policy permits it.
 pub fn classify_ball_sign_with_policy(
     center: &Real,
     radius: &Real,
@@ -30,11 +42,12 @@ pub fn classify_ball_sign_with_policy(
     }
 }
 
-/// Try to certify a sign from an exact closed ball enclosure with policy.
+/// Tries to classify a closed ball's sign under the supplied policy.
 ///
-/// Returns `Some` only when the nonnegative ball certifies a sign. Use
-/// [`classify_ball_sign_with_policy`] when invalid-radius and inconclusive
-/// outcomes must remain distinct.
+/// `Some` contains a Decided outcome, which can be Approximate; inspect its
+/// certainty before using it as proof. `None` merges invalid-radius and
+/// inconclusive cases. Use [`classify_ball_sign_with_policy`] to distinguish
+/// their Unsupported and RealRefinement hints.
 pub fn certified_ball_sign_with_policy(
     center: &Real,
     radius: &Real,
@@ -46,11 +59,18 @@ pub fn certified_ball_sign_with_policy(
     }
 }
 
-/// Try to certify a sign from an exact closed interval enclosure with policy.
+/// Tries to classify the uniform sign of a closed interval's endpoint values.
 ///
-/// Returns `Some` only when the interval proves a sign. This shape is intended
-/// for predicate filter callbacks such as `resolve_real_sign(..., || {
-/// certified_interval_sign_with_policy(...) }, ...)`.
+/// Endpoints may arrive in either order. Compares the first and then the second
+/// with zero, stopping at an Unknown. Two positive, two negative, or two zero
+/// comparisons yield that sign; mixed signs, including a single zero endpoint,
+/// return `None`. It does not compare endpoints with each other.
+///
+/// Successful results use Filter stage and Filtered certainty when both child
+/// comparisons certify, or Approximate if either consumed the policy terminal.
+/// Thus an approximate Zero is not an equality proof. `None` discards child
+/// uncertainty details and also covers intervals that cross or touch zero.
+/// This optional shape is suitable for a predicate resolver's filter callback.
 pub fn certified_interval_sign_with_policy(
     first: &Real,
     second: &Real,
@@ -59,10 +79,8 @@ pub fn certified_interval_sign_with_policy(
     crate::trace_dispatch!("hyperlimit", "certified_interval_sign", "start");
     let zero = Real::from(0);
 
-    // Endpoint comparisons are themselves exact predicates. Use their
-    // report-bearing forms so trace/report users can audit the sub-decisions
-    // that fed this interval certificate, keeping endpoint ordering inside the
-    // certified-filter layer rather than treating it as anonymous scalar work.
+    // Consume report-bearing comparisons so terminal qualification survives.
+    // The enclosure result retains certainty, but not each child's stage.
     let (first_cmp, first_certainty) =
         ordering_and_certainty(compare_reals_with_policy(first, &zero, policy))?;
     let (second_cmp, second_certainty) =
@@ -91,13 +109,25 @@ pub fn certified_interval_sign_with_policy(
     }
 }
 
+/// Internal ball classification, separating a negative radius from a decline.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BallFilterResult {
-    Decided(PredicateOutcome<Sign>),
+    /// Radius and endpoint decisions supplied a uniform sign.
+    Decided(
+        /// Local sign receipt; the constructor path supplies a Decided outcome.
+        PredicateOutcome<Sign>,
+    ),
+    /// Radius ordering was unresolved or endpoint signs did not give one sign.
     Uncertain,
+    /// The radius comparison returned Less; its child receipt is not retained.
     InvalidRadius,
 }
 
+/// Checks radius sign before constructing the two exact ball endpoints.
+///
+/// A nonnegative decided radius permits interval classification, whose certainty
+/// is joined with the radius receipt. Failure paths collapse child diagnostics
+/// into this module's result categories; the caller chooses Option or Unknown.
 fn certified_ball_sign_outcome_with_policy(
     center: &Real,
     radius: &Real,
@@ -146,11 +176,13 @@ fn certified_ball_sign_outcome_with_policy(
     }
 }
 
+/// Attaches Filter stage to the supplied sign and already-composed certainty.
 #[inline(always)]
 fn filtered(sign: Sign, certainty: Certainty) -> PredicateOutcome<Sign> {
     PredicateOutcome::decided(sign, certainty, Escalation::Filter)
 }
 
+/// Extracts a decided ordering/qualification, dropping stage and Unknown details.
 #[inline(always)]
 fn ordering_and_certainty(outcome: PredicateOutcome<Ordering>) -> Option<(Ordering, Certainty)> {
     match outcome {
@@ -161,6 +193,7 @@ fn ordering_and_certainty(outcome: PredicateOutcome<Ordering>) -> Option<(Orderi
     }
 }
 
+/// Marks a certified endpoint pair Filtered, retaining any Approximate child.
 #[inline(always)]
 const fn filter_certainty(left: Certainty, right: Certainty) -> Certainty {
     match weaker_certainty(left, right) {
@@ -169,6 +202,7 @@ const fn filter_certainty(left: Certainty, right: Certainty) -> Certainty {
     }
 }
 
+/// Joins qualifications in the order Exact, Filtered, Approximate.
 #[inline(always)]
 const fn weaker_certainty(left: Certainty, right: Certainty) -> Certainty {
     match (left, right) {
@@ -178,6 +212,7 @@ const fn weaker_certainty(left: Certainty, right: Certainty) -> Certainty {
     }
 }
 
+/// Selects the lower sign-order rank, choosing the left operand on ties.
 #[inline(always)]
 fn min_ordering(left: Ordering, right: Ordering) -> Ordering {
     if ordering_rank(left) <= ordering_rank(right) {
@@ -187,6 +222,7 @@ fn min_ordering(left: Ordering, right: Ordering) -> Ordering {
     }
 }
 
+/// Selects the higher sign-order rank, choosing the left operand on ties.
 #[inline(always)]
 fn max_ordering(left: Ordering, right: Ordering) -> Ordering {
     if ordering_rank(left) >= ordering_rank(right) {
@@ -196,6 +232,7 @@ fn max_ordering(left: Ordering, right: Ordering) -> Ordering {
     }
 }
 
+/// Encodes Less, Equal and Greater as -1, 0 and 1 for endpoint sign bounds.
 #[inline(always)]
 fn ordering_rank(ordering: Ordering) -> i8 {
     match ordering {
@@ -205,12 +242,16 @@ fn ordering_rank(ordering: Ordering) -> i8 {
     }
 }
 
+/// Integer enclosure certificates and symbolic terminal-qualification controls.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Permits terminal decisions while leaving exact integer cases certified.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Preserves a proved unit-circle identity before returning the separate
+    /// angle-addition zero used to exercise terminal-policy behavior.
     fn terminally_unresolved_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -224,6 +265,7 @@ mod tests {
         crate::test_support::terminally_unresolved_zero()
     }
 
+    /// Checks positive, negative and singleton-zero Filtered receipts and a crossing decline.
     #[test]
     fn certified_interval_sign_decides_strict_and_zero_enclosures() {
         assert_eq!(
@@ -256,6 +298,7 @@ mod tests {
         );
     }
 
+    /// Checks ball Filtered receipts for separated/zero cases and a crossing decline.
     #[test]
     fn certified_ball_sign_decides_strict_zero_and_crossing_balls() {
         assert_eq!(
@@ -288,6 +331,8 @@ mod tests {
         );
     }
 
+    /// Checks strict declines, approximate zero receipts, invalid-radius hint/Option
+    /// behavior and the lower-rank ordering helper on a reversed pair.
     #[test]
     fn interval_and_ball_filters_preserve_terminal_approximation_certainty() {
         let undecidable = terminally_unresolved_zero();

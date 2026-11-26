@@ -4658,6 +4658,79 @@ claim follows from this documentation batch. Most predicate modules and the
 remaining repository still need whole-file review; the existing future-agent
 100% public/private Rustdoc mandate remains in force.
 
+### Interval classification and enclosure-filter receipts, 26 November 2026
+
+Baseline: `9712bd2c5`. Owner: Hyperlimit's interval normalization/classification
+and enclosure-sign filters, with the shared relation vocabulary. Properties:
+P3/P4/P6/P8–P11/P37. Domain: exact Real endpoints in either order, positive- and
+zero-length intervals, center/radius enclosures, strict Unknown and approximate
+terminal outcomes. The missing acceptance witnesses were undocumented private
+helpers/tests and public descriptions claiming all decisions were certified.
+Read current producer branches and comparison/receipt helpers before editing.
+
+Whole-file reviews: `crates/hyperlimit/src/predicates/filters.rs` (333 baseline
+lines) and `crates/hyperlimit/src/predicates/interval.rs` (527). Both now document
+all eighteen named declarations apiece, including test modules, constants and
+the nested Unknown helper. Also documented all three private BallFilterResult
+variants and its tuple payload. Corrected the ClosedIntervalIntersection docs
+in the previously reviewed `classify.rs`; this narrow revisit does not count as
+another whole-file pass. AABB consumer excerpts establish why zero-extent
+information matters but do not earn whole-file review credit.
+
+Filters compare supplied endpoint values under the policy and can return
+Approximate even through a `certified_*` function. Their module and public docs
+now require inspection of certainty. No target value or source relation is
+passed, so proving that the supplied enclosure contains the intended target
+remains the caller's obligation. Endpoint comparisons run first then second,
+stop on Unknown, and decide only matching positive/negative/zero signs. A single
+zero endpoint declines. Filter stage replaces child stages while the weakest
+certainty survives. The ball radius is compared before endpoint construction;
+negative radius becomes Unsupported and unresolved/crossing cases become
+RealRefinement, both at Filter stage. The Option wrapper merges those failures.
+These wrappers do not retain child failure details or full source provenance.
+
+Interval classification normalizes first, tests the lower endpoint before the
+upper, and gives AtLowerEndpoint precedence for a matching singleton. Intersection
+normalizes both inputs, tests first upper against second lower, then reverses
+the separating comparison only if needed. The extent Boolean records either
+normalization equality and has the same qualification as the outcome.
+
+A newly recorded limitation: the strict rational input `[1,1]` versus `[0,2]`
+produces Overlapping, despite the intersection being a singleton. Source replay
+of its comparisons is Equal, Less, Greater, Greater, selecting that branch;
+the extent-bearing internal report additionally returns true, but the public
+relation discards that flag. The same holds with operand order reversed. Enum
+and function docs now describe this degenerate case and require separate extent
+evidence before inferring positive length. This is an implementation limitation,
+not a migration weakening the normative exact classification contract. No new
+runtime regression test was added or executed in this docs-only batch; the
+existing positive-length fixtures do not cover this contained-singleton gap.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Nonblank/noncomment source is
+  identical to baseline except the documented tuple payload's whitespace and
+  optional trailing comma; normalizing that one variant makes it identical too.
+  No expressions, signatures, call order, fixtures or assertions changed.
+- Scoped source checks found 36 documented named declarations. Inspected all
+  eighteen non-test function documentation blocks in private rendered pages
+  and seven selected contract/enum pages, including the private tuple payload.
+  Test-only comments were source-reviewed; normal library docs omit cfg(test).
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed, compiling consumers and existing test fixtures without running them.
+- Downstream private csgrs Rustdoc with locked offline dependencies,
+  `--no-default-features --features curve` and broken intra-doc links denied
+  passed. The reused target remains approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-interval-filters-{doc,check,downstream-doc}.log`.
+The owner's docs-only waiver remains in effect for full workflow, runtime and
+performance checks. No implementation-completeness or performance claim is
+made. The repository-wide audit and public/private documentation mandate remain
+active; the remaining predicate modules and other files still need review.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

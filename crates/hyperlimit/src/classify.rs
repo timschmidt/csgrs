@@ -590,13 +590,19 @@ impl RealIntervalLocation {
 }
 
 /// Intersection relation between two closed Real intervals.
+///
+/// The current classifier's Overlapping variant also includes a zero-length
+/// interval strictly inside another. Inspect source extents separately before
+/// inferring positive-length intersection; retain the producer's certainty.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ClosedIntervalIntersection {
     /// The closed intervals have no value in common.
     Disjoint,
-    /// The closed intervals intersect at exactly one endpoint value.
+    /// One normalized upper endpoint equals the other's lower endpoint.
     Touching,
-    /// The closed intervals overlap over more than one value.
+    /// Neither normalized interval ends at or before the other's start.
+    /// For positive-length inputs this implies more than one common value;
+    /// a contained singleton interval also receives this label.
     Overlapping,
 }
 

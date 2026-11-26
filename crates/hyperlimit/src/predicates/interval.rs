@@ -1,9 +1,14 @@
-//! Exact closed-interval classifiers.
+//! Closed-interval classifiers over exact Real endpoints with explicit policy.
 //!
-//! The functions here classify Real ranges by exact sign decisions over
-//! endpoint differences. They are intentionally Real predicates, not bounding
+//! The functions here classify Real ranges by policy-controlled comparisons of
+//! endpoints and queried values. They are intentionally Real predicates, not bounding
 //! box or sweep-line data structures; higher crates own those objects and call
-//! this module for certified interval decisions.
+//! this module for interval decisions and their certainty receipts.
+//!
+//! Decided results join the weakest consumed certainty and highest stage rank.
+//! They can be approximate under a terminal-permitting policy. The first
+//! unresolved comparison stops the classifier and returns that child's hint
+//! and stage, without an earlier decision history or source provenance.
 
 use crate::predicate::PredicatePolicy;
 use crate::predicates::decision::{DecisionTrace, UnknownDecision, decided};
@@ -18,12 +23,17 @@ use hyperreal::Real;
 /// escalation policy.
 ///
 /// Endpoints may be supplied in either order; this function first normalizes
-/// them by exact Real comparison. The result is useful for segment parameter
+/// them by policy-controlled Real comparison. The result is useful for segment parameter
 /// checks, bounding-box point tests, and candidate filtering in arrangement or
 /// triangulation code. The interval itself is not a geometric object here.
 /// Interval tests are candidate filters; final topology must still be certified
-/// by geometric predicates. Every comparison is a certified sign, not a
-/// primitive-float tolerance.
+/// by geometric predicates with admissible certainty.
+///
+/// After normalization, compares `value` with the lower endpoint first. Below
+/// and equal return immediately; only a greater result needs the upper test.
+/// Thus a singleton interval's matching value is AtLowerEndpoint. Decided
+/// results preserve the weakest consumed certainty, including Approximate;
+/// an unresolved child is forwarded without further comparisons.
 pub fn classify_real_closed_interval_with_policy(
     value: &Real,
     first: &Real,
@@ -70,6 +80,9 @@ pub fn classify_real_closed_interval_with_policy(
 
 /// Return whether `value` lies in a closed interval with an explicit predicate
 /// escalation policy.
+///
+/// Accepts either endpoint order and includes both boundaries. Maps the
+/// location classifier without discarding its certainty, stage or Unknown.
 pub fn real_in_closed_interval_with_policy(
     value: &Real,
     first: &Real,
@@ -90,8 +103,16 @@ pub fn real_in_closed_interval_with_policy(
 /// policy.
 ///
 /// Endpoint order does not matter for either interval. `Touching` means the
-/// intervals share exactly one endpoint value, which is a useful distinction for
-/// curve splitting, sweep events, and conservative broad-phase pruning.
+/// normalized upper endpoint of one equals the other's lower endpoint.
+/// The remaining nonseparated case is Overlapping. For positive-length inputs
+/// these distinguish singleton contact from positive-length intersection.
+///
+/// A zero-length interval strictly inside another is also Overlapping (for
+/// example `[1,1]` and `[0,2]`), despite their singleton intersection. The
+/// public result drops the internal zero-extent flag, so this label alone is
+/// insufficient evidence for positive-length overlap. This is a limitation
+/// of the current classification, not a proof of a larger intersection.
+/// Certainty and stage survive the projection, including approximate results.
 pub fn classify_closed_interval_intersection_with_policy(
     first_start: &Real,
     first_end: &Real,
@@ -119,7 +140,14 @@ pub fn classify_closed_interval_intersection_with_policy(
 ///
 /// AABB classifiers need this fact in addition to the overlap relation. Keeping
 /// it in the interval normalization pass avoids repeating the same endpoint
-/// comparisons after all four orders have already been certified.
+/// comparisons. The Boolean is true if either normalization comparison returns
+/// Equal; under an approximate policy it carries the outcome's qualification.
+///
+/// Normalizes the first interval and then the second, compares first upper
+/// against second lower, and only if greater compares second upper against
+/// first lower. Less separates, Equal touches, and two Greater results give
+/// Overlapping even for a contained point interval. The first Unknown is
+/// returned unchanged; successful paths join all consumed receipts.
 pub(crate) fn classify_closed_interval_intersection_with_extent_policy(
     first_start: &Real,
     first_end: &Real,
@@ -187,6 +215,9 @@ pub(crate) fn classify_closed_interval_intersection_with_extent_policy(
 
 /// Return whether two closed Real intervals intersect with an explicit
 /// predicate escalation policy.
+///
+/// Maps Touching and Overlapping to true, including contained singleton
+/// intervals. Retains the classifier's qualification and unresolved outcome.
 pub fn closed_intervals_intersect_with_policy(
     first_start: &Real,
     first_end: &Real,
@@ -210,6 +241,9 @@ pub fn closed_intervals_intersect_with_policy(
     }
 }
 
+/// Borrows endpoints in decided ascending order, omitting the zero-extent flag.
+///
+/// Updates the local receipt on success; forwards an unresolved comparison.
 fn ordered_pair<'a>(
     first: &'a Real,
     second: &'a Real,
@@ -220,6 +254,11 @@ fn ordered_pair<'a>(
     Ok((lower, upper))
 }
 
+/// Orders borrowed endpoints and reports whether their policy comparison is Equal.
+///
+/// Greater swaps references; Less and Equal preserve input order. Joins a
+/// decided comparison into `trace`, while Unknown leaves the trace untouched.
+/// The Boolean is not an unqualified equality proof if the receipt is Approximate.
 fn ordered_pair_with_zero_extent<'a>(
     first: &'a Real,
     second: &'a Real,
@@ -235,6 +274,7 @@ fn ordered_pair_with_zero_extent<'a>(
     )
 }
 
+/// Interval locations, separating comparisons and receipt aggregation controls.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -242,12 +282,16 @@ mod tests {
     use crate::predicate::{Certainty, Escalation};
     use crate::predicates::decision::{certainty_rank, max_certainty, max_stage, stage_rank};
 
+    /// Terminal-permitting policy used by the exact integer wrapper fixtures.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Converts an integer fixture to an exact Real.
     fn real(value: i32) -> hyperreal::Real {
         hyperreal::Real::from(value)
     }
 
+    /// Retains the now-proved unit-circle identity and returns a separate
+    /// angle-addition zero for strict unresolved-comparison controls.
     fn terminally_unresolved_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -261,6 +305,7 @@ mod tests {
         crate::test_support::terminally_unresolved_zero()
     }
 
+    /// Checks lower endpoint, reversed-order interior, above and included upper values.
     #[test]
     fn real_interval_classifies_ordered_and_reversed_endpoints() {
         assert_eq!(
@@ -281,6 +326,8 @@ mod tests {
         );
     }
 
+    /// Checks positive-length disjoint, touching and overlapping fixtures plus
+    /// the Boolean wrapper on reversed endpoints, comparing values only.
     #[test]
     fn closed_interval_intersection_distinguishes_disjoint_touching_and_overlap() {
         assert_eq!(
@@ -323,6 +370,7 @@ mod tests {
         );
     }
 
+    /// Checks every location label and an outside Boolean under strict policy.
     #[test]
     fn real_interval_covers_every_location_and_boolean_result() {
         for (value, expected) in [
@@ -356,8 +404,11 @@ mod tests {
         );
     }
 
+    /// Places an unresolved zero at normalization and separating comparisons.
+    /// Checks Unknown presence, not its particular hint, stage or dispatch count.
     #[test]
     fn interval_classifiers_preserve_unknowns_at_each_comparison_stage() {
+        /// Tests the outcome variant without consuming or comparing failure details.
         fn is_unknown<T>(outcome: PredicateOutcome<T>) -> bool {
             matches!(outcome, PredicateOutcome::Unknown { .. })
         }
@@ -437,6 +488,7 @@ mod tests {
         )));
     }
 
+    /// Exercises reverse separation/contact and a disjoint Boolean with reversed bounds.
     #[test]
     fn reverse_interval_separation_and_contact_are_distinguished() {
         assert_eq!(
@@ -474,6 +526,7 @@ mod tests {
         );
     }
 
+    /// Checks every certainty/stage rank pair, one trace update and Unknown rejection.
     #[test]
     fn decision_trace_rankings_are_total() {
         let certainties = [
