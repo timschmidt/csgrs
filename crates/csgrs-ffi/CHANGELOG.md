@@ -31,9 +31,13 @@ later.
   bounds query on empty geometry reports `CSGRS_STATUS_NO_BOUNDS`. A failed
   call publishes no output handle.
 - `csgrs_last_error_message()` returns a borrowed, thread-local diagnostic
-  that stays valid until the next ABI call on that thread. Panics are caught
-  at the boundary and reported as `CSGRS_STATUS_PANIC`.
-- Float ingress rejects non-finite values. Integer and opaque-real egress
-  fails when a value cannot be represented.
+  valid until the next ABI call on that thread or thread exit. Status-returning
+  calls catch unwinding panics in their actions as `CSGRS_STATUS_PANIC`;
+  aborts, invalid-pointer access and failures in diagnostic formatting are
+  outside that catcher, and free functions have no unwind wrapper.
+- Float ingress rejects non-finite values and preserves finite binary values
+  exactly. Float egress is lossy; integer egress requires a recognized in-range
+  integer. Real mesh-coordinate export clones native scalars, while region
+  profiles pass through sampled binary64 points even in the real family.
 - The C++, Python and Go wrappers in the CSGRS repository's `bindings/`
   directory keep the C status in their exceptions or errors.

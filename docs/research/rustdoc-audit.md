@@ -3940,6 +3940,40 @@ disabled. No tests, geometry operations, shared-library link smoke tests or full
 workflow checks were executed under the documentation-only waiver. Successful
 compilation/rendering is not a claim of complete ABI safety or runtime conformance.
 
+### C header and FFI package documentation, 26 November 2026
+
+Baseline: `bdadad40d`. Owner: ABI declarations/package guide, P19/P25/P28–P30/P37.
+Completed whole-file non-Rust review of the package's remaining seven files:
+
+| File | Original lines | Whole-file result |
+| --- | ---: | --- |
+| `crates/csgrs-ffi/include/csgrs.h` | 206 | Documented pointer/ownership rules, status and scalar layouts, buffers and all 56 direct/generated declaration templates, reusing the reviewed Rust operation contracts. |
+| `crates/csgrs-ffi/README.md` | 153 | Corrected scalar/profile, ownership, receipt and panic scope; described current behavior instead of migration history; identified separate release-consumer checks. |
+| `crates/csgrs-ffi/CHANGELOG.md` | 39 | Qualified initial-release scalar projection and unwind-catching claims; no release/version change. |
+| `crates/csgrs-ffi/Cargo.toml` | 20 | Unchanged: workspace path dependencies, curve feature, three library artifact kinds and packaged source/header/docs/license include rules reviewed. |
+| `crates/csgrs-ffi/.rustfmt.toml` | 6 | Unchanged: local formatting widths and shorthand/match-arm options. |
+| `crates/csgrs-ffi/.gitignore` | 3 | Unchanged: local target directory, swap files and macOS metadata excluded. |
+| `crates/csgrs-ffi/LICENSE` | 22 | Unchanged: MIT terms, notices, attribution and disclaimer reviewed. |
+
+The header's continued macros retain every executable token. Expanded declarations
+before/after are identical under both C and C++ preprocessing after whitespace
+normalization. The 176 expanded export names exactly match the reviewed Rustdoc
+function pages; name parity is not an independent cross-language layout proof.
+The copied per-function comments retain the actual operation domain and caller
+obligations, including signed cylinder height, family checks, empty bounds,
+sampled revolution/profile semantics and separate receipt loss.
+
+Validation after final edits: C11 and C++17 `-Wall -Wextra -Werror -fsyntax-only`
+header checks passed, as did `git diff --check`. README/CHANGELOG fenced commands
+are unchanged and relative Markdown targets exist. Inspected the relevant
+`scripts/release-check.sh` consumer build/run excerpts to correct the guide's
+validation location; this is not whole-file credit for that script. No Doxygen
+renderer is installed, so no rendered C-documentation claim is made. No library
+link/runtime smoke checks or packaging were run under the docs-only waiver.
+Together with the preceding Rust implementation batch, all eight tracked files
+in `crates/csgrs-ffi/` now have whole-file review records. Language wrappers remain
+separate pending work; this milestone does not establish full repository coverage.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with
