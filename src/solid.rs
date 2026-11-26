@@ -992,7 +992,16 @@ fn torus_uncached(
     ))
 }
 
-/// Extruded teardrop solid.
+/// Extrudes a sampled teardrop from Z = 0 to the signed `height`.
+///
+/// The XY profile has its tip at the origin and a semicircular end of radius
+/// `width / 2`, centered at `(0, length - width / 2)`. Requires positive width
+/// and length, `length > width / 2`, at least two `shape_segments`, and nonzero
+/// height. The semicircle is represented by chords with exact angular samples.
+///
+/// Profile construction runs before extrusion validation. Both stages use
+/// `context`, propagate typed failures, and contribute to the returned predicate
+/// receipt. That receipt does not bound the sampled profile's analytic error.
 #[cfg(feature = "curve")]
 pub fn teardrop_cylinder(
     width: Real,
@@ -1013,7 +1022,14 @@ pub fn teardrop_cylinder(
     Ok(decisions.finish_mesh(mesh))
 }
 
-/// Extruded involute spur gear.
+/// Extrudes a sampled involute gear from Z = 0 to the signed `thickness`.
+///
+/// Profile parameters follow [`crate::curve::involute_gear`], including its
+/// positive-module, tooth-count, flank-resolution, pressure-angle and derived
+/// tooth-width constraints. Thickness must be nonzero. Profile construction
+/// precedes extrusion, and both stages contribute their local certainty under
+/// `context`. Exact coordinates describe the sampled polygonal gear; no
+/// analytic-fidelity error bound is supplied.
 #[cfg(feature = "curve")]
 pub fn spur_gear_involute(
     module: Real,
@@ -1040,7 +1056,13 @@ pub fn spur_gear_involute(
     Ok(decisions.finish_mesh(mesh))
 }
 
-/// Extruded cycloidal spur gear.
+/// Extrudes a sampled cycloidal gear from Z = 0 to the signed `thickness`.
+///
+/// Profile parameters follow [`crate::curve::cycloidal_gear`], including its
+/// positive-module/generating-radius, tooth-count, flank-resolution and
+/// noncrossing-flank constraints. Thickness must be nonzero. Profile construction
+/// precedes extrusion; the returned receipt combines both stages under `context`.
+/// The modeled boundary is the sampled polygon, without an analytic error bound.
 #[cfg(feature = "curve")]
 pub fn spur_gear_cycloid(
     module: Real,
@@ -1065,7 +1087,19 @@ pub fn spur_gear_cycloid(
     Ok(decisions.finish_mesh(mesh))
 }
 
-/// Twisted extrusion of an involute gear region.
+/// Twists a sampled involute gear through a sequence of triangulated sections.
+///
+/// Profile parameters follow [`crate::curve::involute_gear`]. Despite its name,
+/// `helix_angle_degrees` is passed directly as the **total twist** about +Z,
+/// without conversion from a tooth helix angle or pitch radius. Section `i`
+/// lies at `thickness * i / slices` and is rotated by
+/// `helix_angle_degrees * i / slices`; its XY scale remains one.
+///
+/// Requires nonzero signed thickness and at least one slice. Profile construction
+/// runs first. [`crate::curve::extrude_twisted`] triangulates each section band
+/// and checks closure, without certifying absence of self-intersection or
+/// fidelity to an analytic helical surface. Both stages contribute certainty
+/// under `context`, and their errors propagate unchanged.
 #[cfg(feature = "curve")]
 #[allow(clippy::too_many_arguments)]
 pub fn helical_involute_gear(
@@ -1104,8 +1138,13 @@ pub fn helical_involute_gear(
 /// Builds native triangle geometry from simple planar polygon index rows.
 ///
 /// Faces retain their authored winding and may form an open surface. A repeated
-/// closing coordinate is accepted; crossed or self-touching faces are rejected.
+/// closing coordinate at a distinct index is accepted; repeating an index in
+/// one face is invalid. Crossed or self-touching faces are rejected. Each face
+/// must have at least three indices and a nondegenerate planar support.
 /// This does not validate the topology of the complete collection of faces.
+///
+/// Uses [`GeometryContext::STRICT`] and returns the mesh without a separate
+/// predicate receipt; see [`polyhedron_with_context`] for explicit policy.
 pub fn polyhedron(
     points: &[[Real; 3]],
     faces: &[&[usize]],
@@ -1115,6 +1154,16 @@ pub fn polyhedron(
 }
 
 /// Triangulates polyhedron faces with the selected policy and aggregate certainty.
+///
+/// Checks face lengths, distinct indices, bounds, planarity and simple-ring
+/// triangulation in that order for each face. Coordinate projection drops a
+/// nonzero normal component without normalizing the support vectors. Approximate
+/// terminal consumption is retained in the receipt and mesh construction evidence.
+///
+/// All supplied positions are retained, including unused rows. No faces yields
+/// a position-only mesh when `points` is nonempty; only two empty inputs produce
+/// canonical empty geometry. Admission of individual faces does not certify a
+/// closed or embedded solid, nor validate unused coordinates.
 pub fn polyhedron_with_context(
     points: &[[Real; 3]],
     faces: &[&[usize]],
@@ -1160,6 +1209,13 @@ pub fn polyhedron_with_context(
     )))
 }
 
+/// Projects and triangulates one planar ring, retaining each predicate receipt.
+///
+/// The returned unnormalized normal is the support-triple cross product, negated
+/// when the projected ring winds negatively, so it follows the whole boundary's
+/// orientation. Triangle indices refer to the original point rows. Requires at
+/// least three input points; projection and Hypertri enforce support, planarity
+/// and simple-ring constraints, with typed failures propagated.
 fn triangulate_planar_ring(
     points: &[&Point3],
     decisions: &GeometryDecisions,
@@ -1183,12 +1239,13 @@ fn triangulate_planar_ring(
 /// onto the other two coordinates, with the sign of that normal component.
 ///
 /// The projection is one-to-one exactly when the dropped component is nonzero,
-/// so any component the policy proves nonzero is sufficient; no comparison of
+/// so any component the policy classifies as nonzero is sufficient; no comparison of
 /// magnitudes or normalization is needed. Components are tried in axis order,
-/// and an undecided component does not block a later component's proof.
-/// `Ok(None)` means every component was proved zero. When none is proved
-/// nonzero and some are undecided, the last undecided component's error is
-/// returned.
+/// and an undecided component does not block a later component's classification.
+/// `Ok(None)` means every component was classified as zero. When none is
+/// classified nonzero and some are undecided, the last error is returned.
+/// Approximate classifications remain qualified through `decisions`; they do
+/// not establish the mathematical projection condition by proof.
 pub(crate) fn certified_projection_axis(
     normal: &[Real; 3],
     predicate: &'static str,
@@ -1205,9 +1262,19 @@ pub(crate) fn certified_projection_axis(
     blocker.map_or(Ok(None), Err)
 }
 
-// A planar ring only needs an invertible coordinate projection for triangulation.
-// Normalizing its support vectors adds square roots and strict scalar guards
-// that do not contribute to topology or to the returned triangle coordinates.
+/// Finds a planar support and projects onto an oriented coordinate plane.
+///
+/// Requires at least three points. Searches pairs with the first point for a
+/// nondegenerate support, deferring failed decisions while a later pair may
+/// succeed. If none succeeds, returns the last blocker or `InvalidArguments`.
+/// Every point must then classify as coplanar under the supplied policy.
+///
+/// Drops the first normal component classified nonzero, using cyclic coordinate
+/// order and negating the second coordinate for a negative component. The
+/// returned support normal is unnormalized. Avoiding normalization removes
+/// unnecessary square roots and strict scalar guards; simple-ring validation
+/// remains the caller's responsibility. Consumed approximate decisions remain
+/// recorded in `decisions`.
 fn project_planar_ring(
     points: &[&Point3],
     decisions: &GeometryDecisions,
@@ -1280,6 +1347,11 @@ pub fn boolean(
 /// The other operand is still validated and regularized by Hypermesh, including
 /// when the requested set is empty. A mesh missing only positions or only
 /// triangles is not canonical empty geometry and remains a typed input error.
+/// Two canonical empties return empty geometry without calling the kernel.
+///
+/// Input construction qualifications are combined even when the result is empty;
+/// they remain separate from the operation-local predicate receipt. For one empty
+/// operand, input-specific kernel errors retain the original left/right index.
 pub fn boolean_with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -1356,7 +1428,11 @@ pub fn boolean_with_context(
     Ok(decisions.finish_mesh(mesh))
 }
 
-/// Applies a homogeneous transform and returns native geometry.
+/// Applies a nonsingular homogeneous transform under [`GeometryContext::STRICT`].
+///
+/// Uses [`transform_with_context`]'s finite-triangle and orientation rules,
+/// returning the mesh without a separate predicate receipt. Source construction
+/// qualifications remain attached to the mesh.
 pub fn transform(
     mesh: &TriangleMesh,
     matrix: &Matrix4,
@@ -1365,7 +1441,17 @@ pub fn transform(
         .map(GeometryOutcome::into_value)
 }
 
-/// Applies a transform with the selected policy, preserving orientation and certainty.
+/// Applies a nonsingular homogeneous transform with policy-qualified orientation.
+///
+/// Classifies the determinant before processing the mesh, rejecting zero even
+/// for empty input. A negative determinant reverses every transformed triangle's
+/// winding. The native transform validates indices and requires a nonzero
+/// homogeneous scale at every position, with the same sign at all vertices of
+/// each triangle. Separate components may have opposite scale signs. A point at
+/// infinity or triangle crossing infinity is a typed unbounded result.
+///
+/// Preserves source construction qualifications and records local predicate
+/// certainty. This does not certify source closure, manifoldness or embedding.
 pub fn transform_with_context(
     mesh: &TriangleMesh,
     matrix: &Matrix4,
@@ -1385,6 +1471,12 @@ pub fn transform_with_context(
     Ok(decisions.finish_mesh(transformed))
 }
 
+/// Transforms through Hypermesh, retaining its receipt and optionally reversing winding.
+///
+/// Callers establish nonsingularity and the orientation sign (or a construction
+/// identity such as reflection) before calling. This helper does not test the
+/// determinant; native index and projective-finiteness checks still run. Winding
+/// reversal preserves the transformed mesh's construction evidence.
 fn try_transform_with_known_orientation(
     mesh: &TriangleMesh,
     matrix: &Matrix4,
@@ -1400,7 +1492,11 @@ fn try_transform_with_known_orientation(
     })
 }
 
-/// Rotates native geometry by Euler angles in degrees, reporting uncertainty.
+/// Rotates by Euler angles in degrees under [`GeometryContext::STRICT`].
+///
+/// Applies X, then Y, then Z rotation, equivalently `Rz * Ry * Rx` to column
+/// vectors. Inputs use exact [`IntoReal`] conversion; coordinates are not rounded
+/// to floating point. See [`rotate_with_context`] for the receipt-bearing form.
 pub fn rotate(
     mesh: &TriangleMesh,
     x: impl IntoReal,
@@ -1414,7 +1510,12 @@ pub fn rotate(
         .map(GeometryOutcome::into_value)
 }
 
-/// Rotates with the selected policy and reports aggregate certainty.
+/// Applies the native `Rz * Ry * Rx` Euler rotation in degrees with a receipt.
+///
+/// Hypermesh constructs the rotation from exact sine/cosine expressions and
+/// validates indices through its transform path. The known rotation identity
+/// avoids a separate determinant classification. Construction qualifications
+/// survive the operation; the receipt records only its consumed predicates.
 pub fn rotate_with_context(
     mesh: &TriangleMesh,
     x: Real,
@@ -1432,7 +1533,11 @@ pub fn rotate_with_context(
     Ok(decisions.finish_mesh(rotated))
 }
 
-/// Scales native geometry independently along each axis, reporting degeneracy.
+/// Scales about the origin along each axis under [`GeometryContext::STRICT`].
+///
+/// Inputs use exact [`IntoReal`] conversion. All factors must be nonzero;
+/// negative factors are allowed, with winding corrected for an odd number of
+/// reflections. See [`scale_with_context`] for explicit policy and certainty.
 pub fn scale(
     mesh: &TriangleMesh,
     x: impl IntoReal,
@@ -1446,6 +1551,12 @@ pub fn scale(
 }
 
 /// Scales with the selected policy, rejecting collapsed axes and retaining certainty.
+///
+/// Classifies all three factors in X/Y/Z order before inspecting the mesh,
+/// including for empty input. A zero factor returns `InvalidArguments`; an
+/// unresolved classification remains an error. An odd number of negative factors
+/// reverses triangle winding. Native index checks and inherited construction
+/// qualifications are retained through the transform.
 pub fn scale_with_context(
     mesh: &TriangleMesh,
     x: Real,
@@ -1476,12 +1587,21 @@ pub fn scale_with_context(
     Ok(decisions.finish_mesh(scaled))
 }
 
-/// Reflects native geometry across a plane, reporting an invalid plane.
+/// Reflects across a plane under [`GeometryContext::STRICT`], correcting winding.
+///
+/// The plane need not have a unit normal. Invalid or undecidable plane geometry
+/// returns an error, including for empty input. See [`mirror_with_context`] for
+/// the explicit policy and predicate receipt.
 pub fn mirror(mesh: &TriangleMesh, plane: &Plane) -> Result<TriangleMesh, ValidationError> {
     mirror_with_context(mesh, plane, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Reflects across a plane with the selected policy and aggregate certainty.
+///
+/// For `n · x + d = 0`, uses Hypermesh's reflection
+/// `x - 2 (n · x + d) n / (n · n)`, then reverses every triangle. The nonzero
+/// normal requirement is checked before transforming the mesh. Plane and
+/// transform receipts are combined; source construction qualifications persist.
 pub fn mirror_with_context(
     mesh: &TriangleMesh,
     plane: &Plane,
@@ -1494,7 +1614,15 @@ pub fn mirror_with_context(
     Ok(decisions.finish_mesh(mirrored))
 }
 
-/// Uniformly subdivides every native triangle.
+/// Splits each triangle into four per level using exact edge midpoints.
+///
+/// Adjacent triangles with the same undirected index edge share its midpoint;
+/// coincident edges with different indices are not welded. Winding and inherited
+/// construction evidence are retained. This refines the existing piecewise
+/// planar surface without smoothing it or validating its embedding.
+///
+/// Native subdivision reports invalid indices, triangle-count overflow and
+/// arithmetic failures. Allocation is not governed by a total-work or byte budget.
 pub fn subdivide(
     mesh: &TriangleMesh,
     levels: NonZeroU32,
@@ -1502,7 +1630,11 @@ pub fn subdivide(
     mesh.subdivide_triangles(levels)
 }
 
-/// Rebuilds exact coordinates into their normalized representation.
+/// Clones native geometry without rebuilding or changing its coordinates.
+///
+/// Hyperreal owns coordinate normalization; native meshes have no authored face
+/// normals or duplicated polygon planes to renormalize here. This compatibility
+/// operation performs no additional simplification or topology validation.
 pub fn renormalized(mesh: &TriangleMesh) -> TriangleMesh {
     // Native geometry does not store authored face normals or duplicated
     // polygon planes. Hyperreal coordinates normalize themselves, so there is
@@ -1510,19 +1642,33 @@ pub fn renormalized(mesh: &TriangleMesh) -> TriangleMesh {
     mesh.clone()
 }
 
-/// Materializes every coordinate as finite exact geometry.
+/// Promotes the mesh's lossy finite binary64 projection back into exact scalars.
 ///
-/// Returns `None` if any coordinate cannot be represented as a finite value.
+/// The new exact coordinates denote the projected binary values, which can
+/// differ from the source coordinates. Inherited construction evidence is retained
+/// and marked with coordinate projection. Triangle indices are copied without
+/// revalidation; no topology-preservation or approximation-error bound is given.
+/// Returns `None` if a coordinate has no finite projection or cannot be promoted.
 pub fn materialize_finite(mesh: &TriangleMesh) -> Option<TriangleMesh> {
     mesh.materialize_finite()
 }
 
-/// Checks indexed edge pairing for a closed, consistently oriented manifold.
+/// Checks that every indexed edge occurs once in each direction.
+///
+/// Returns false for no triangles, out-of-range indices, repeated indices within
+/// a triangle, or incorrect edge pairing. Uses indices alone: coincident points
+/// are not welded, geometric degeneracy and intersections are not tested, and
+/// vertex links are not checked. A true result is an edge-pairing check, not a
+/// complete geometric or topological manifold certificate.
 pub fn is_closed_manifold(mesh: &TriangleMesh) -> bool {
     mesh.is_closed_manifold()
 }
 
-/// Inverts triangle winding.
+/// Reverses every triangle's winding while retaining positions and construction evidence.
+///
+/// Shares the immutable position buffer and creates reversed index rows. No
+/// validation or Boolean regularization is performed; this is not construction
+/// of the unbounded set complement of a solid.
 pub fn inverse(mesh: &TriangleMesh) -> TriangleMesh {
     mesh.reversed_winding()
 }

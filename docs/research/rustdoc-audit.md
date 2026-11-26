@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/transform_failures.rs` | Entire file; documented every helper and transform failure/composition witness. | Source review, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/primitive_failures.rs` | Entire file; documented all primitive-failure and empty-composition helpers/witnesses. | Source review, formatting and comment-only checks passed; test bodies unchanged, not rerun. |
 | `src/solid/cache.rs` | Entire file; documented thread-local state, default implementation and local restoration guard; clarified receipt reuse. | Private docs passed with and without `curve`; local guard reviewed in source. |
 | `src/solid/cache/storage.rs` | Entire file; documented all private keys, fields, retention helpers and completed-result contracts. | Private pages with `curve` checked; minimal build also passed. |
@@ -486,9 +487,66 @@ Logs: `/tmp/csgrs-rustdoc-primitives-doc.log` and
 waived for this docs-only session. No executable behavior or performance claim
 changed; test-only docs were reviewed in source.
 
+### Solid construction and transforms, partial-file batch, 26 November 2026
+
+Owner: CSGRS native solid grammar and its Hypertri/Hypermesh policy bridges,
+P1/P6/P8/P9/P17/P18/P19/P20/P25/P30/P37. Baseline: `f85b58f70`.
+**Partial file:** reviewed `src/solid.rs` from `teardrop_cylinder` through `inverse`
+(baseline lines 995–1528), including each body, guard and receipt path. Combined
+with the previous batch, review reaches the sampled-field options boundary;
+whole-file credit remains open. Read every line of `tests/transform_failures.rs`.
+Supporting reads covered the relevant curve constructors/extruders, Hypertri
+simple-ring contract, Hypermesh transforms, reflection, subdivision, finite
+materialization, winding reversal and indexed edge check. Those reads do not
+earn whole-file credit for their owning modules.
+
+Missing witnesses: private planar projection/triangulation and orientation-aware
+transform helpers lacked Rustdoc; several public summaries overstated or omitted
+their actual behavior. `renormalized` clones the mesh without coordinate rebuild.
+`materialize_finite` performs lossy binary64 projection before exact promotion,
+retaining coordinate-projection provenance without an error or topology bound.
+`is_closed_manifold` checks indexed edge pairing, without geometric tests or
+vertex-link validation. Documented these limitations without changing behavior.
+
+Documented teardrop placement and sampled profile, gear profile delegation,
+signed nonzero extrusion thickness, and the use of `helix_angle_degrees` as total
+twist rather than conversion from a tooth helix angle. Polyhedron docs distinguish
+per-face admission from closed-solid admission, distinct closing indices from
+repeated coordinates, and canonical empty geometry from position-only buffers.
+Projection docs distinguish policy classifications from proofs and retain the
+support-search/decision order. Boolean docs explain the two-empty shortcut and
+inherited qualifications; transform docs specify determinant checks, index
+validation, per-triangle projective scale signs, infinity failures, Euler order,
+reflection and winding correction. Subdivision docs describe exact shared indexed
+midpoints and the absence of a total resource budget.
+
+Transform witness documentation describes actual independent coordinate/winding
+and volume expectations, policy retry, typed error/source preservation, valid
+empty composition and invalidated indices. No test assertion was changed and no
+runtime execution or universal correctness claim follows from this source review.
+
+Validation after edits:
+
+- `rustfmt --check --edition 2024 src/solid.rs tests/transform_failures.rs`: passed.
+- `git diff --check`: passed. Every nonblank, non-comment source line matches
+  baseline in both Rust files.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps --offline`:
+  passed without warnings. The same command without `--features curve` passed.
+- Generated teardrop, helical gear, polyhedron, transform, normalization,
+  materialization and edge-check pages contain the revised contracts. Private
+  triangulation, projection-axis, ring-projection and orientation-helper pages
+  also contain the new Rustdoc. Integration-test docs were reviewed in source.
+
+Logs: `/tmp/csgrs-rustdoc-transforms-doc.log` and
+`/tmp/csgrs-rustdoc-transforms-minimal-doc.log`. The existing temporary build
+directory is reused. Full workflow/runtime checks remain waived for this docs-only
+session. No executable behavior, predicate order or performance claim changed.
+
 ## Next work
 
-Resume `src/solid.rs` at `teardrop_cylinder`, then continue through native operations and the
+Resume `src/solid.rs` at `SampleOptions`, then continue through native operations and the
 remaining root modules, then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file

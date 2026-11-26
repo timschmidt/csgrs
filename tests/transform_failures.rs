@@ -12,15 +12,18 @@ use hyperlattice::{Matrix4, Point3};
 use hypermesh::{HypermeshError, MeshContext, Plane, Triangle};
 use std::error::Error;
 
+/// A mesh whose only triangle references a missing position row.
 fn malformed() -> TriangleMesh {
     TriangleMesh::new(vec![Point3::origin()], vec![Triangle::new(0, 1, 0)])
 }
 
+/// Invertible projective map `(x, y, z) -> (1/x, y/x, z/x)`, undefined at X = 0.
 fn reciprocal_x() -> Matrix4 {
     // (x, y, z) -> (1/x, y/x, z/x). Invertible, but undefined on x = 0.
     Matrix4::from_row_major([0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0].map(Real::from))
 }
 
+/// Singular scale is rejected through free and fluent APIs, including on empties.
 #[test]
 fn singular_transform_is_a_failure_even_for_empty_input() {
     let singular = Matrix4::affine_nonuniform_scale([Real::zero(), Real::one(), Real::one()]);
@@ -31,6 +34,7 @@ fn singular_transform_is_a_failure_even_for_empty_input() {
     }
 }
 
+/// A plane with zero normal cannot silently produce an empty reflection result.
 #[test]
 fn invalid_plane_does_not_become_empty_geometry() {
     let invalid =
@@ -38,6 +42,7 @@ fn invalid_plane_does_not_become_empty_geometry() {
     assert!(solid::mirror(&solid::cube(Real::one()).unwrap(), &invalid).is_err());
 }
 
+/// Native matrix and Euler paths both reject malformed triangle indices.
 #[test]
 fn native_transforms_reject_invalid_indices() {
     let mesh = malformed();
@@ -49,6 +54,7 @@ fn native_transforms_reject_invalid_indices() {
     );
 }
 
+/// Translation and rotation wrappers retain native index validation.
 #[test]
 fn modeling_transforms_reject_invalid_indices() {
     let mesh = malformed();
@@ -59,6 +65,8 @@ fn modeling_transforms_reject_invalid_indices() {
     assert!(solid::rotate(&mesh, Real::zero(), Real::zero(), Real::zero()).is_err());
 }
 
+/// Finite vertices do not admit an edge crossing infinity; preserve the indexed
+/// unbounded error, its category, source chain and scalar-adapter payload.
 #[test]
 fn projective_triangle_cannot_cross_infinity_between_finite_vertices() {
     let mesh = TriangleMesh::new(
@@ -98,6 +106,8 @@ fn projective_triangle_cannot_cross_infinity_between_finite_vertices() {
     ));
 }
 
+/// Per-triangle scale signs permit disconnected charts on opposite sides of
+/// infinity; both policies return the independently computed positions and winding.
 #[test]
 fn separate_components_may_have_opposite_projective_scale_signs() {
     let positions = [
@@ -138,6 +148,7 @@ fn separate_components_may_have_opposite_projective_scale_signs() {
     }
 }
 
+/// An unreferenced position at infinity still yields the typed unbounded category.
 #[test]
 fn a_vertex_at_infinity_is_a_typed_unbounded_result() {
     let point = TriangleMesh::new(vec![Point3::origin()], Vec::new());
@@ -146,6 +157,8 @@ fn a_vertex_at_infinity_is_a_typed_unbounded_result() {
     assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::Unbounded);
 }
 
+/// An unresolved zero scale stays undecided under strict policy before and after
+/// an approximate call interprets it as an invalid collapsed axis.
 #[test]
 fn unknown_transform_is_not_invalid_input_or_empty_success() {
     let sine = Real::e().sin();
@@ -175,6 +188,8 @@ fn unknown_transform_is_not_invalid_input_or_empty_success() {
     ));
 }
 
+/// A scale/translation/rotation/reflection chain retains independently expected
+/// signed volume 24, geometric edge closure and Boolean self-removal to empty.
 #[test]
 fn exact_transforms_preserve_topology_volume_and_subsequent_composition() {
     let cube = solid::cube(Real::one()).unwrap();
@@ -200,6 +215,8 @@ fn exact_transforms_preserve_topology_volume_and_subsequent_composition() {
     }
 }
 
+/// Valid transforms preserve canonical emptiness, while mutation after a
+/// successful Boolean and translation does not bypass later index validation.
 #[test]
 fn canonical_empty_transforms_compose_and_mutated_indices_still_fail() {
     let empty = solid::empty().translated(1, 2, 3).unwrap();
@@ -219,6 +236,7 @@ fn canonical_empty_transforms_compose_and_mutated_indices_still_fail() {
     ));
 }
 
+/// The scalar adapter retains the invalid-scale payload and native error source.
 #[test]
 fn adapter_preserves_the_native_validation_payload() {
     let cube = RawTriangleMesh::cube(Real::one()).unwrap();
