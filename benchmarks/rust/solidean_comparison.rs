@@ -1,7 +1,17 @@
+//! Opt-in timing of pinned Solidean request graphs with projected mass-property checks.
+//!
+//! `SOLIDEAN_BENCH` enables acquisition/execution. Loading is outside each timer;
+//! request execution includes exact ingress from parsed binary64 coordinates,
+//! intermediate destruction and optional diagnostics. Validation, count checksums
+//! and final-output destruction are outside the reported interval. Successful rows
+//! do not establish source fidelity, exact set equality or topology independently.
+
+/// Shared selection and caller-supplied-duration CSV harness.
 #[path = "../support/harness.rs"]
 #[allow(dead_code)]
 mod support;
 
+/// Pinned fixture acquisition, restricted request interpreter and projected measures.
 #[path = "../support/solidean.rs"]
 mod solidean;
 
@@ -12,8 +22,12 @@ use csgrs::TriangleMesh;
 use solidean::Request;
 use support::{Config, Measurement, print_header};
 
+/// Suite label used by shared filters, stress sampling and emitted CSV rows.
 const SUITE: &str = "published-solidean";
 
+/// Prints the header, checks opt-in, then selects three fixed requests and dome levels.
+/// Expected area/volume pairs are retained decimal benchmark references with
+/// tolerance checks, not exact geometric oracles. Any loader/validation panic aborts.
 fn main() {
     print_header();
     if !solidean::enabled() {
@@ -62,6 +76,10 @@ fn main() {
     }
 }
 
+/// Loads a selected request once, then times execution and validates every repetition.
+/// Unselected cases never call `load`. Only `execute` lies inside each returned
+/// duration; warmups also execute validation. Requests/caches are reused. Operation
+/// and input-triangle totals are printed after timing; no certainty receipt is emitted.
 fn run_case<F>(
     config: &Config,
     load: F,
@@ -97,6 +115,10 @@ fn run_case<F>(
     );
 }
 
+/// Requires finite projected area/absolute volume and checks supplied reference values.
+/// Without references, requires faces and positive measures. With `(0, 0)`, a
+/// tolerance-sized nonempty result can pass; this is not a canonical-empty assertion.
+/// Neither branch establishes closedness, winding or exact represented-set equality.
 fn validate(mesh: &TriangleMesh, case: &str, expected: Option<(f64, f64)>) {
     let (area, volume) = solidean::area_and_volume(mesh);
     assert!(
@@ -114,6 +136,8 @@ fn validate(mesh: &TriangleMesh, case: &str, expected: Option<(f64, f64)>) {
     }
 }
 
+/// Asserts absolute error at most `max(5e-4, abs(expected) * 1e-8)`.
+/// Current callers supply finite reference values and separately check finite actuals.
 fn assert_close(actual: f64, expected: f64, case: &str, property: &str) {
     let tolerance = 5.0e-4_f64.max(expected.abs() * 1.0e-8);
     assert!(
@@ -122,6 +146,8 @@ fn assert_close(actual: f64, expected: f64, case: &str, property: &str) {
     );
 }
 
+/// Selects 10/100 by default, 250 for stress and 1000/5000 for dangerous mode.
+/// Both gates require exactly `"1"`; dangerous mode alone does not add level 250.
 fn dome_levels() -> Vec<usize> {
     let mut levels = vec![10, 100];
     if env_enabled("CSGRS_BENCH_ENABLE_STRESS") {
@@ -133,6 +159,7 @@ fn dome_levels() -> Vec<usize> {
     levels
 }
 
+/// Recognizes exactly `"1"`; missing, non-Unicode and other values disable the gate.
 fn env_enabled(name: &str) -> bool {
     std::env::var(name).is_ok_and(|value| value == "1")
 }

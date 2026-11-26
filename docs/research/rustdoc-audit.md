@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `benchmarks/rust/solidean_comparison.rs` | Entire file; documented opt-in gates, timer boundaries, finite/tolerant mass checks and nominal empty expectation. | Minimal-feature compilation/private docs passed; acquisition and benchmark not run. |
+| `benchmarks/support/solidean.rs` | Entire file; documented every instruction/field/helper, binary64 OBJ parsing, single-consumption execution and cache validation limits. | Benchmark compilation/private docs passed; tuple-field expansion adds only layout/trailing commas. No fixtures downloaded or executed. |
 | `benchmarks/rust/profile_primitives.rs` | Entire file; documented constructor/path counts, receipt loss, finite projection and disjoint cubic/square union timing. | Feature-bundle compilation/private docs passed; benchmark not run. |
 | `benchmarks/rust/feature_pipeline.rs` | Entire file; documented all helpers, nominal work units, immediate Boolean order, length-only cases and export/import timing boundaries. | Declared feature-bundle compilation/private docs passed; runtime catalog and numerical outcomes not executed. |
 | `benchmarks/rust/adapter_graphics_export.rs` | Entire file; documented projected-buffer equality, native intermediate allocation, warmup order and timer/drop boundaries. | Minimal-feature compilation/private docs passed; benchmark unrun. |
@@ -3536,6 +3538,57 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-feature-profiles-check.log` and
 `/tmp/csgrs-rustdoc-feature-profiles-private.log`.
+
+### Optional Solidean request interpreter and benchmark, 26 November 2026
+
+Baseline: `15b18c971`. Owners: benchmark acquisition/interpreter and its timing
+consumer, P6/P19/P25–P27/P36/P37/P39. Read all 733/138 original lines. Domain:
+the pinned version-one, single-run JSON workloads, OBJ payloads and five admitted
+dome levels. Missing witnesses were undocumented private/public items and implicit
+assumptions about parsing, cache integrity, graph execution and geometric validation.
+
+The interpreter converts OBJ decimal text to binary64 before exact native ingress,
+fans polygon faces without convexity/planarity checks, and validates final index
+bounds. Zero OBJ indices are not explicitly rejected: they map to the current
+position count and can survive if later vertices exist. Backward instruction
+references are checked while loading; aliasing and repeated consumption panic only
+at execution. These are documented implementation limits, not repaired behavior or
+proof of general OBJ/request support. No predicate calls or operation order changed.
+
+Acquisition hashes compressed archive bytes and selected control files. Repository
+reuse does not hash every OBJ, and derived dome reuse checks only three files for
+presence. The lexical path guard does not confine symlinks. External-command/I/O
+failures can leave staging; no lock, cancellation cleanup or durability contract
+is claimed. This audit invoked none of the acquisition or mutation paths.
+
+Execution timing includes native conversion, intermediate destruction and optional
+diagnostics. Validation/checksums/final-output destruction are outside that duration.
+Projected area and absolute signed volume are checked for finiteness and against
+retained tolerant expectations; these are not independent topology or set-equality
+oracles. The checker-grid `(0, 0)` reference can admit tolerance-sized nonempty
+geometry and does not assert canonical emptiness. Workloads and thresholds remain
+unchanged and were not executed.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comments/blank lines
+  leaves identical benchmark code. Support code is identical except layout and
+  trailing commas needed to document individual tuple fields; scoped enum token
+  comparison verified unchanged variants, field types and order.
+- Minimal-feature `cargo check --locked -p csgrs --no-default-features --bench
+  solidean_comparison --offline -j 2` passed without warnings.
+- Private Rustdoc passed with broken links denied. Its first invocation lacked
+  the dev-dependency `serde_json`; the successful rerun supplied the exact metadata
+  identified by the checked benchmark's dependency fingerprint, alongside the
+  matching csgrs library. No manifest changes were needed.
+- Checked all seventy declaration/field/variant summary groups in rendered docs,
+  including private instruction payloads and request state, plus both module
+  introductions. Source review covered every declaration and execution branch.
+- No downloads, extraction, geometry measurements or full workflows ran under
+  the docs-only waiver. Existing temporary build output was reused.
+
+Logs: `/tmp/csgrs-rustdoc-solidean-check.log` and
+`/tmp/csgrs-rustdoc-solidean-private.log`.
 
 ## Next work
 
