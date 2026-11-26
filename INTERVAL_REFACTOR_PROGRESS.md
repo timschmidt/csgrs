@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters, with division and transcendental maps over certified ranges and interval Taylor-mode remainder recurrences (25 November), with exact centered coefficients from the same recurrences (26 November) | further automatic frame strategies (making backoff the default awaits owner review), wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters, with division and transcendental maps over certified ranges and interval Taylor-mode remainder recurrences (25 November), with exact centered coefficients from the same recurrences (26 November); Taylor curve ranges measured against exact Bernstein hulls and not adopted (26 November) | further automatic frame strategies (making backoff the default awaits owner review), wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -16345,8 +16345,7 @@ existing `hypercurve/interval-ranges` boxes. It found no adoption case yet:
 - they cost 5–6 times as much as a natural box even after this change.
 
 No comparison with Bernstein subdivision boxes or with the cost of the
-subdivision a natural box needs was made. A curve consumer is not added; that
-comparison remains open.
+subdivision a natural box needs was made here; the next section makes it.
 
 Checks: `cargo fmt`, strict all-target/all-feature Clippy and rustdoc, the
 1,607 all-target/all-feature Hypersolve tests, all-target/all-feature
@@ -16356,3 +16355,36 @@ Evidence: csgrs-evidence daf58e5d6,
 `docs/evidence/2026-11-26-interval-taylor-exact-recurrence`. It holds the
 Criterion outputs, the superseded shared-target runs, the curve probe and its
 outputs, the mutation log, `.text` sizes, test summaries and the diff.
+
+## 2026-11-26: curve range boxes, Taylor against Bernstein subdivision (not adopted)
+
+This closes the comparison left open above. A temporary Hypercurve probe
+compared x/y box widths and costs for the same three positive-weight rational
+spans (conic, cubic, quartic) over [0,1], [0,1/2], [1/4,1/2] and [3/8,1/2].
+It ran in release at main 9b1a49bb5. The methods were:
+- the existing natural `interval-ranges` box;
+- the hull of 2 or 4 natural sub-boxes;
+- Taylor images at orders 2 and 4;
+- the exact `Aabb2` of the affine control points after two exact
+  `split_at_exact` calls, a valid range box because every weight is positive.
+
+| Span | Natural | Natural ×4 | Taylor order 4 | Bernstein hull |
+| --- | --- | --- | --- | --- |
+| conic [0,1] | fails | 1.33/1.33, 164 µs | fails | 1.00/1.00, 8 µs |
+| conic [1/4,1/2] | 0.63/0.51, 36 µs | 0.34/0.39, 140 µs | 0.29/0.38, 255 µs | 0.26/0.36, 15 µs |
+| cubic [1/4,1/2] | 2.96/5.08, 49 µs | 1.19/1.25, 192 µs | 1.65/1.50, 350 µs | 0.63/0.12, 23 µs |
+| quartic [0,1/2] | fails | 4.93/5.88, 219 µs | fails | 2.00/1.60, 16 µs |
+| quartic [3/8,1/2] | 4.26/5.82, 57 µs | 1.25/1.26, 227 µs | 0.59/0.13, 439 µs | 0.48/0.015, 30 µs |
+
+On all twelve rows the Bernstein box is the narrowest and never fails. It
+costs 8–30 µs, less than one natural box (12–57 µs). Taylor boxes cost
+190–440 µs and fail wherever the natural weight enclosure contains zero.
+Taylor-model curve ranges therefore have no adoption case for positive-weight
+rational spans. None is added, and this Phase 13 curve-consumer question is
+closed. The exact hull needs positive weights; mixed-sign weights have no
+convex-hull property, and that domain was not measured. The interval adapter
+remains the way to get derivative and C1 evidence, which hulls do not supply.
+
+Evidence: csgrs-evidence 94e05c240,
+`docs/evidence/2026-11-26-interval-curve-taylor-bernstein` (probe source, all
+twelve rows, notes). Timings are means of 20 runs on one unpinned host.
