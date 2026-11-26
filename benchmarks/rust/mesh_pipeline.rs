@@ -1,4 +1,9 @@
-//! Repeatable mesh conversion and Boolean benchmark for timing and heap tracing.
+//! Repeated native operation loops and mesh-length counters for timing/heap tracing.
+//!
+//! Construction, union, hull and Minkowski loops materialize/drop their outputs.
+//! The row labelled mesh_buffers only reads lengths and sums nominal coordinate/
+//! index counts; it does not export or allocate graphics buffers. Counts are
+//! workload diagnostics, not independent geometry or source-fidelity checks.
 
 use std::hint::black_box;
 use std::time::Instant;
@@ -10,8 +15,11 @@ use csgrs::{
 use hyperlimit::PredicatePolicy;
 use hypermesh::MeshContext;
 
+/// Strict native policy for the direct point-cloud hull loop.
 const MESH_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
+/// Reads a usize environment override, defaulting missing/non-Unicode/malformed values.
+/// Zero is accepted and causes the caller's loop to execute no operations.
 fn iterations(name: &str, default: usize) -> usize {
     std::env::var(name)
         .ok()
@@ -19,6 +27,13 @@ fn iterations(name: &str, default: usize) -> usize {
         .unwrap_or(default)
 }
 
+/// Times six independent loops over fixed sphere, translated-box and cube-sum fixtures.
+/// Iteration overrides default to 128 construction, 128 length-count, 8 union,
+/// 4 adapter hull, 4 native hull and 16 Minkowski calls. Each aggregate timer
+/// includes loop work, counters and owned output destruction, but excludes fixture
+/// setup outside its loop and printing. Reused inputs may retain cached facts.
+/// Convenience outcomes discard receipts; native hull also extracts only its value.
+/// No timing row independently validates topology or exact geometry.
 fn main() {
     let construction_iterations = iterations("CSGRS_CONSTRUCTION_BENCH_ITERS", 128);
     let start = Instant::now();

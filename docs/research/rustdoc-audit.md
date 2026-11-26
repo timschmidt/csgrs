@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `benchmarks/rust/adapter_graphics_export.rs` | Entire file; documented projected-buffer equality, native intermediate allocation, warmup order and timer/drop boundaries. | Minimal-feature compilation/private docs passed; benchmark unrun. |
+| `benchmarks/rust/mesh_boolean_context.rs` | Entire file; documented historical failure/approximate outcome assertions, upper-median timing and per-policy storage rebuilding. | Minimal-feature compilation/private docs passed; assertions unchanged, runtime outcomes not reproduced. |
+| `benchmarks/rust/mesh_pipeline.rs` | Entire file; documented six loops, length-only buffer row, override defaults, output destruction and receipt loss. | Minimal-feature compilation/private docs passed; benchmark unrun. |
 | `tests/successive_operations.rs` | Entire file; documented observer ordering, every finite/ignored chain gate, rational row comparison and representation limits. | Focused compilation/private docs passed; all counts, graph rows and assertions unchanged and unrun. |
 | `benchmarks/rust/successive_operations.rs` | Entire file; documented allocator methods/state, requested-byte limitations, snapshots, timing boundaries and raw journal lifecycle. | Focused compilation/private docs passed; allocator, file I/O and chain execution unchanged and unrun. |
 | `tests/support/successive_operations.rs` | Entire file; documented step lifecycle, receipts/errors, timings, coordinate metrics, rational-box oracle and every chain factory. | Test/benchmark compilation and private docs passed; failure tuple layout adds only a trailing comma; runtime chains unchanged and unrun. |
@@ -3448,6 +3451,48 @@ Temporary documentation outputs: `/tmp/csgrs-rustdoc-successive-operations-pydoc
 `/tmp/csgrs-rustdoc-test-successive-evidence-pydoc.txt`,
 `/tmp/csgrs-rustdoc-successive-driver-help.txt` and
 `/tmp/csgrs-rustdoc-successive-evidence-help.txt`.
+
+### Mesh operation, policy-outcome and graphics timing boundaries, 26 November 2026
+
+Baseline: `6f616289f`. Owners: three standalone root benchmark consumers,
+P8/P19/P25/P35–P37/P39. Domain: sampled spheres/cylinders, translated boxes,
+native hulls/Minkowski sums and f32/f64 graphics exports. Read all three files
+completely (95/79/120 baseline lines); existing adapter and shared harness contracts
+provide context but no new whole-file owner credit.
+
+Missing witnesses were undocumented declarations and misleading workload labels.
+The mesh_buffers row only reads lengths and sums nominal coordinate/index counts;
+it does not convert, export or materialize buffers. Aggregate operation loops do
+include output destruction, while graphics export and Boolean-context timers stop
+before output destruction. Projected-buffer equality tests compare the two export
+paths, not analytic-source fidelity; warmups/order and count fingerprints are explicit.
+
+The retained Boolean-context assertions require all STRICT attempts to be undecided
+and all APPROXIMATE_512 attempts to consume the terminal. They compare different
+completion outcomes, not the same completed contract, and would reject newly
+certified completion. This audit records the code's expectations without changing
+them or claiming a reproduced current runtime failure. New per-policy mesh buffers
+do not guarantee globally cold scalar caches and do not transport old construction
+evidence. Timings include undecided attempts and report the last successful face
+count. No expectation, input, policy or measurement loop was changed.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline in all three files.
+- All eleven declarations have Rustdoc. Private builds passed with broken links
+  denied; inspected seventeen HTML pages and matched all declaration summaries
+  plus the three module descriptions.
+- `cargo check --locked -p csgrs --no-default-features --bench adapter_graphics_export
+  --bench mesh_boolean_context --bench mesh_pipeline --offline -j 2` passed without
+  warnings. Private Rustdoc used the matching checked minimal-library metadata
+  and dependency search paths.
+- No geometry benchmark, heap trace, timing measurement or full workflow was run
+  under the docs-only waiver. Existing target artifacts were reused with incremental
+  compilation disabled; no geometry/renderer exports were created.
+
+Logs: `/tmp/csgrs-rustdoc-small-benches-check.log` and
+`/tmp/csgrs-rustdoc-small-benches-private.log`.
 
 ## Next work
 

@@ -1,4 +1,8 @@
-//! Primitive-scalar graphics export benchmark.
+//! Warm primitive-scalar graphics export timings for a fixed sampled sphere.
+//!
+//! Compares direct scalar-adapter buffers with native buffers followed by explicit
+//! projection. Equality assertions compare their projected outputs, not fidelity
+//! to an analytic sphere. Export timing excludes printing and final buffer drop.
 
 use std::hint::black_box;
 use std::time::Instant;
@@ -10,9 +14,14 @@ use csgrs::{
 };
 use hypermesh::TriangleMesh;
 
+/// Number of timed exports emitted for each path after warmup.
 const SAMPLES: usize = 10;
+/// Untimed exports discarded before each path's samples.
 const WARMUP: usize = 2;
 
+/// Builds native interleaved graphics rows, then projects every position/normal to f32.
+/// Clones the native mesh carrier and preserves returned indices; export/projection
+/// failure panics. This materializes an intermediate native graphics buffer.
 fn separate_then_merge_f32(mesh: &TriangleMesh) -> GraphicsMesh<f32> {
     let buffers = RawTriangleMesh::from_native(mesh.clone())
         .graphics_mesh()
@@ -34,6 +43,9 @@ fn separate_then_merge_f32(mesh: &TriangleMesh) -> GraphicsMesh<f32> {
     }
 }
 
+/// Builds native interleaved graphics rows, then projects every position/normal to f64.
+/// Clones the native mesh carrier and preserves returned indices; export/projection
+/// failure panics. This materializes an intermediate native graphics buffer.
 fn separate_then_merge_f64(mesh: &TriangleMesh) -> GraphicsMesh<f64> {
     let buffers = RawTriangleMesh::from_native(mesh.clone())
         .graphics_mesh()
@@ -55,6 +67,10 @@ fn separate_then_merge_f64(mesh: &TriangleMesh) -> GraphicsMesh<f64> {
     }
 }
 
+/// Warms an export closure twice, then prints ten individual nanosecond samples.
+/// Times creation/materialization through black_box, excluding count fingerprinting,
+/// printing and destruction of the retained sample buffer. The count-only fingerprint
+/// is consumed but not emitted; neither it nor the vertex column certifies geometry.
 fn measure<S>(name: &str, mut export: impl FnMut() -> GraphicsMesh<S>) {
     for _ in 0..WARMUP {
         black_box(export());
@@ -69,6 +85,10 @@ fn measure<S>(name: &str, mut export: impl FnMut() -> GraphicsMesh<S>) {
     }
 }
 
+/// Builds a radius-ten 128-by-64 sampled sphere and compares two paths at each precision.
+/// Native export is attempted before adapter creation; equality checks further
+/// warm shared data. Times f32 paths before f64 paths without cache resets, and
+/// requires exact equality of the corresponding projected graphics buffers.
 fn main() {
     let native = solid::sphere(Real::from(10_u8), 128, 64).expect("valid primitive fixture");
     let _ = RawTriangleMesh::from_native(native.clone()).graphics_mesh();

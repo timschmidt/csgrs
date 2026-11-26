@@ -1,4 +1,9 @@
-//! Predicate-policy comparison for subtracting a sampled drill cylinder.
+//! Historical policy-outcome timing gate for sampled polygonal drill subtraction.
+//!
+//! Retained assertions require every STRICT attempt to be PredicateUndecided and
+//! every APPROXIMATE_512 attempt to consume its terminal. This compares different
+//! completion outcomes, not the same completed exact contract. A newly certified
+//! path fails this benchmark's expectations; documentation does not update them.
 
 use std::{hint::black_box, time::Instant};
 
@@ -8,6 +13,13 @@ use csgrs::{
 };
 use hypermesh::HypermeshError;
 
+/// Times repeated differences and checks the historical policy-specific outcome counts.
+///
+/// Requires positive iterations. Times only the operation call, excluding outcome
+/// inspection/drop; later attempts reuse input storage/facts. Reports the first
+/// duration and upper median of all attempts, including undecided results, plus
+/// the most recent successful face count. Other error variants panic. STRICT
+/// requires all undecided; any other supplied context requires all approximate.
 fn measure(
     body: &TriangleMesh,
     drill: &TriangleMesh,
@@ -56,6 +68,11 @@ fn measure(
     }
 }
 
+/// Compares 16/32-sided drills under two policies with a positive environment iteration count.
+/// CSGRS_BOOLEAN_CONTEXT_BENCH_ITERS defaults to five when unreadable/absent;
+/// malformed readable values or zero panic. Rebuilds mesh buffers per policy to
+/// avoid sharing their mesh facts, but does not guarantee globally cold scalar
+/// caches. TriangleMesh::new also does not transport prior construction evidence.
 fn main() {
     let iterations = std::env::var("CSGRS_BOOLEAN_CONTEXT_BENCH_ITERS")
         .map(|value| value.parse::<usize>().expect("iterations must be an integer"))
