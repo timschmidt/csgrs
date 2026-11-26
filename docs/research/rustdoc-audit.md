@@ -6065,6 +6065,100 @@ Logs: `/tmp/csgrs-rustdoc-hyperlimit-dop-{doc,check,downstream-doc}.log`.
 The owner's full-workflow waiver remains in effect. The complete repository
 semantic/coverage audit is still unfinished; existing global instructions remain.
 
+## Hyperlimit closed-segment predicates and line construction
+
+Baseline: `f0aa9eef4` on `rustdoc`. Read every line of
+`crates/hyperlimit/src/predicates/segment.rs` (2461 baseline lines), including
+all inline tests. Owning layer: Hyperlimit segment incidence, intersection
+classification, and supporting-line construction. Relevant properties are
+P1/P3/P4 and P8–P11/P19: exact input expressions, retained source associations,
+policy receipts, collinearity preconditions, and downstream construction use.
+Missing acceptance witnesses were private-item Rustdoc and accurate descriptions
+of trust boundaries, receipt accumulation, and Option failure semantics.
+
+Reviewed/documented all 83 declarations and five private fields. The 31 cfg(test)
+declarations are the module, policy constant, five helpers, and 24 test functions;
+the remaining 52 declarations render in private library docs. All code, fixtures,
+assertions, dispatch calls, and predicate order remain identical after removing
+comment-only and blank lines. The whole file received semantic review, not just
+a declaration scan.
+
+Planar classification evaluates orientation then inclusive coordinate intervals
+and endpoint equality. Spatial classification checks collapse first, then all
+three cross-product signs before deciding off-line status. An earlier nonzero
+component does not short-circuit later unresolved components. The between-closed
+helper similarly evaluates both scalar comparisons even if the first is zero.
+Documented all helper assumptions and order, including no collinearity check in
+the collinear entrypoint and no zero-denominator rejection in the unit-parameter
+helper. The vector accessor asserts axis < 3 in debug builds but otherwise
+maps any index other than zero/one to z.
+
+Retained line/query associations are caller preconditions; stale compiled filters
+can decide before current coordinates are checked. Revisited the already audited
+orientation owner at baseline lines 650–754 to confirm this path. Known-sign
+entrypoints check only policy acceptance of certainty, trusting sign, stage, and
+current source association. Facts marking collapse bypass endpoint revalidation.
+Revisited the Segment2Facts accessor to confirm it returns the retained snapshot.
+Neither kind of trusted evidence can silently be described as independently
+verified by these wrappers. The internal collinear helper starts a fresh trace;
+callers must transport any inherited collinearity qualification themselves.
+
+The spatial intersection classifier's exactly-one-collapsed-operand branches
+return point-classifier outcomes directly, without merging the trace from the
+two preceding endpoint-pair equality checks. Source inspection reproduces this
+receipt gap on the current revision; no runtime approximate-collapse witness
+was added or executed in this docs-only session. Other classification branches
+accumulate consumed receipts and propagate the encountered Unknown. Collinear
+relations count unique shared endpoints after checking identity in either order;
+proper/endpoint/skew relations return labels without constructing geometry.
+
+Supporting-line construction tries eligible small/wide dyadic and fused rational
+paths before general Real expressions. In the general path it drops the
+policy denominator comparison receipt, returns None for decided zero, uses the
+assuming-nonzero inverse hook for decided nonzero, and still tries ordinary
+inversion on Unknown. Thus Unknown does not itself mandate failure. Any inverse
+error maps to None; failure does not distinguish parallel/coincident/degenerate
+geometry from scalar failure. A successful Option carries no comparison receipt
+or explicit source-incidence record, and no closed-segment parameter bound is
+checked. Revisited Hyperreal inversion excerpts at 570–595 and 807–843, including
+the external nonzero hook; these excerpts are not a full inversion-file audit.
+Documented receipt loss under approximate policy without changing the API.
+
+The tests now distinguish complete retained/direct outcome comparisons from
+value-only checks and names that overstate scope. The purported skew planar
+control is actually two disjoint 2D arrangements; wide/nondyadic constructor
+fixtures check outputs without asserting successful dispatch paths; the endpoint
+collection control covers three arrangements rather than every permutation.
+Replaced the claim that no proof decides a fixture zero with the observed
+expectation that the current strict query remains unresolved. Existing hard
+fixtures and all assertions are preserved.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Non-comment/nonblank source
+  equals baseline; scoped scans confirm Rustdoc on all 83 declarations and five
+  fields, including tests and helpers omitted from ordinary library docs.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed, compiling inline and integration consumers without executing them.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D warnings -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed. Verified 58 complete rendered doc
+  groups across 53 pages, including all five fields.
+- Downstream `cargo rustdoc --locked -p csgrs --lib --no-default-features
+  --features curve --offline -j2 -- --document-private-items
+  -D rustdoc::broken_intra_doc_links` passed.
+- Independent Python Fraction line-parameter calculations verified four fixture
+  expectations: `(2,2)`, supporting-line intersection `(2,0)` outside the first
+  segment, `(1/3,1/3)`, and the midpoint with extent `(2^63-1)^2`. These establish
+  fixture arithmetic only, not Rust algorithm execution or dispatch selection.
+- No runtime tests, approximate-collapse repro, cache/dispatch measurements, or
+  performance tests ran. Shared target storage remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-segment-{doc,check,downstream-doc}.log`.
+Full workflow checks remain waived by the owner. The repository-wide audit is
+still active and incomplete; documentation of implementation gaps does not
+establish conformance to the target contract.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

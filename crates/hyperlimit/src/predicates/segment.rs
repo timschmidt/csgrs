@@ -1,9 +1,12 @@
-//! Segment incidence and intersection classifiers.
+//! Closed-segment incidence, intersection relations, and supporting-line construction.
 //!
-//! The algorithms here use only orientation signs and exact interval tests.
-//! This keeps segment topology in `hyperlimit` while leaving segment storage,
-//! DCELs, rings, and sweep state to higher crates such as `hypercurve` and
-//! `hypertri`.
+//! Orientation, cross-product, and scalar interval decisions follow the selected
+//! policy; exact coordinate storage does not make every decision exact. Retained
+//! orientation/fact entrypoints require matching current sources and do not
+//! independently validate that association. Most classifiers accumulate local
+//! receipts, with the one-collapsed-spatial-segment delegation exception documented
+//! below. Line construction instead returns an Option and drops decision metadata.
+//! Geometry storage, rings, and sweep state remain in consuming crates.
 
 use crate::classify::{PointSegmentLocation, Segment3Intersection, SegmentIntersection};
 use crate::geometry::{Point2, Point3, Segment2Facts};
@@ -20,12 +23,14 @@ use crate::resolve::{map_outcome, resolve_real_sign_direct};
 use core::cmp::Ordering;
 use hyperreal::Real;
 
-/// Classify `point` relative to the closed 3D segment `ab` with an explicit
-/// predicate escalation policy.
+/// Classify a point against a closed spatial segment under the supplied policy.
 ///
-/// Collinearity is certified by the three exact components of
-/// `(b - a) x (point - a)`. Interval containment then uses exact coordinate
-/// comparisons on all three axes.
+/// Checks endpoint equality first; a collapsed segment gives OnEndpoint for an
+/// equal query and CollinearOutside otherwise. For a noncollapsed segment, resolves
+/// all three components of `(b-a) x (point-a)` before deciding OffLine or testing
+/// coordinate intervals and endpoints. A later unresolved component can therefore
+/// return Unknown even after an earlier nonzero component. Accumulates consumed
+/// decision receipts; approximate-policy decisions retain their qualification.
 pub fn classify_point_segment3_with_policy(
     a: &Point3,
     b: &Point3,
@@ -63,8 +68,12 @@ pub fn classify_point_segment3_with_policy(
     }
 }
 
-/// Classify `point` relative to the closed segment `ab` with an explicit
-/// predicate escalation policy.
+/// Classify a point against a closed planar segment using orientation then intervals.
+///
+/// A nonzero orientation gives OffLine. Zero proceeds through inclusive x/y bounds
+/// and endpoint equality to OnEndpoint, OnSegment, or CollinearOutside. Collapsed
+/// segments follow the same zero-orientation path. Consumed receipts are retained
+/// and an encountered Unknown propagates.
 pub fn classify_point_segment_with_policy(
     a: &Point2,
     b: &Point2,
@@ -74,13 +83,13 @@ pub fn classify_point_segment_with_policy(
     classify_point_segment_impl(a, b, point, policy, None, None, None)
 }
 
-/// Classify `point` relative to closed segment `ab` while reusing exact
-/// orientation evidence for the same ordered endpoints.
+/// Classify a planar point using retained line evidence for the same ordered endpoints.
 ///
-/// The retained evidence only schedules certified determinant filters. An
-/// inconclusive filter enters the same complete exact/refinement cascade as
-/// [`classify_point_segment_with_policy`], and interval containment remains a
-/// policy-aware exact decision.
+/// Source association is a caller precondition: retained filters can decide before
+/// reading current endpoint coordinates and are not revalidated here. Rebuild
+/// stale evidence after changes. A filter decline uses the orientation owner's
+/// remaining cascade; interval checks follow the supplied policy and retain their
+/// receipts rather than guaranteeing an exact result under every policy.
 pub fn classify_point_segment_with_orientation_and_policy(
     a: &Point2,
     b: &Point2,
@@ -91,8 +100,11 @@ pub fn classify_point_segment_with_orientation_and_policy(
     classify_point_segment_impl(a, b, point, policy, None, Some(orientation), None)
 }
 
-/// Classify `point` relative to closed segment `ab` while reusing exact
-/// evidence for both the ordered line and query point.
+/// Classify a planar point with matching retained line and query evidence.
+///
+/// Both records must correspond to the supplied current coordinates and ordered
+/// endpoints. Neither association is checked before reuse. Inherits the scheduling
+/// and receipt behavior of [`classify_point_segment_with_orientation_and_policy`].
 pub fn classify_point_segment_with_orientation_and_query_and_policy(
     a: &Point2,
     b: &Point2,
@@ -104,18 +116,14 @@ pub fn classify_point_segment_with_orientation_and_query_and_policy(
     classify_point_segment_impl(a, b, point, policy, None, Some(orientation), Some(query))
 }
 
-/// Classify `point` relative to closed segment `ab` using a retained
-/// orientation.
+/// Classify a planar point using a caller-established orientation outcome when admissible.
 ///
-/// `orientation` must be a decided outcome of [`crate::orient2`] for `a`, `b`
-/// and `point`, either computed earlier or established by a certificate the
-/// caller holds, such as a construction that placed `point` on the line
-/// through `a` and `b`. A nonzero sign classifies the point as off the line. A
-/// zero sign skips the determinant and decides only the position along the
-/// line, by the exact comparisons [`classify_point_segment_with_policy`] makes
-/// after a zero determinant. An undecided outcome, or one the policy does not
-/// accept, is replaced by the determinant. The result carries the weaker of
-/// the retained certainty and that of the comparisons.
+/// The outcome must describe `orient2(a, b, point)` for these current inputs.
+/// Only policy acceptance of its certainty is checked; source identity, the sign,
+/// and the claimed certificate/stage are trusted. Unknown or disallowed receipts
+/// trigger fresh orientation. Nonzero gives OffLine; zero skips the determinant
+/// and tests coordinate bounds/endpoints. The result combines the retained or
+/// recomputed receipt with those consumed by interval/equality decisions.
 pub fn classify_point_segment_with_known_orientation_and_policy(
     a: &Point2,
     b: &Point2,
@@ -145,8 +153,9 @@ pub fn classify_point_segment_with_known_orientation_and_policy(
     }
 }
 
-/// A retained orientation outcome that `policy` may consume in place of the
-/// determinant, or `None` when the determinant must be evaluated.
+/// Accept a decided orientation if the policy accepts its certainty; otherwise return None.
+///
+/// Does not validate the claimed sign, stage, source tuple, or evidence identity.
 fn reusable_orientation(
     orientation: PredicateOutcome<Sign>,
     policy: PredicatePolicy,
@@ -159,11 +168,12 @@ fn reusable_orientation(
     }
 }
 
-/// Classify a point already certified collinear with the segment endpoints.
+/// Classify a point assumed collinear with the planar endpoints, without an orientation query.
 ///
-/// This is an internal composition helper for predicates that already retain
-/// an `orient2d(a, b, point) == 0` certificate. It avoids rebuilding the same
-/// determinant while preserving the full endpoint/interior/outside report.
+/// Callers must establish the collinearity relation and combine any inherited
+/// qualification themselves. This outcome starts a fresh trace for coordinate
+/// interval/equality decisions only; an off-line point inside the box can otherwise
+/// be classified as OnSegment.
 pub(crate) fn classify_collinear_point_segment_with_policy(
     a: &Point2,
     b: &Point2,
@@ -177,13 +187,12 @@ pub(crate) fn classify_collinear_point_segment_with_policy(
     }
 }
 
-/// Classify `point` relative to the closed segment `ab` with both an explicit
-/// policy and cached segment structural facts.
+/// Classify a planar point using segment facts that must match the current endpoints.
 ///
-/// The facts are advisory exact metadata. They can skip the orientation
-/// determinant for a structurally degenerate segment, but the point equality
-/// decision still goes through exact Real predicates while retaining reusable
-/// object facts for degeneracy-aware algorithms.
+/// Known-degenerate facts bypass orientation and compare only `a` with the query;
+/// `b` is not rechecked. Other facts fall through to the ordinary path. Stale facts
+/// can change the answer, so source association is a caller precondition. Consumed
+/// predicate receipts are preserved, but facts carry no inherited receipt here.
 pub fn classify_point_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
@@ -194,6 +203,12 @@ pub fn classify_point_segment_with_policy_and_facts(
     classify_point_segment_impl(a, b, point, policy, Some(segment_facts), None, None)
 }
 
+/// Apply a trusted degeneracy shortcut, then selected retained/direct orientation and bounds.
+///
+/// Known-degenerate facts use only endpoint a. Otherwise line+query evidence takes
+/// priority over line evidence, then direct orientation. Query evidence without a
+/// line is ignored. Nonzero orientation returns OffLine; zero delegates to the
+/// collinear classifier, accumulating receipts and propagating Unknown.
 fn classify_point_segment_impl(
     a: &Point2,
     b: &Point2,
@@ -240,8 +255,7 @@ fn classify_point_segment_impl(
     }
 }
 
-/// Return whether `point` lies on the closed 3D segment `ab` with an explicit
-/// predicate escalation policy.
+/// Map the spatial classifier to closed-segment membership, preserving its receipt or Unknown.
 pub fn point_on_segment3_with_policy(
     a: &Point3,
     b: &Point3,
@@ -258,8 +272,7 @@ pub fn point_on_segment3_with_policy(
     }
 }
 
-/// Return whether `point` lies on the closed segment `ab` with an explicit
-/// predicate escalation policy.
+/// Map the planar classifier to closed-segment membership, preserving its receipt or Unknown.
 pub fn point_on_segment_with_policy(
     a: &Point2,
     b: &Point2,
@@ -276,8 +289,10 @@ pub fn point_on_segment_with_policy(
     }
 }
 
-/// Return whether `point` lies on closed segment `ab` while reusing exact
-/// orientation evidence for the same ordered endpoints.
+/// Map retained-line classification to closed membership, preserving its outcome metadata.
+///
+/// Inherits the matching-source precondition of
+/// [`classify_point_segment_with_orientation_and_policy`].
 pub fn point_on_segment_with_orientation_and_policy(
     a: &Point2,
     b: &Point2,
@@ -295,8 +310,10 @@ pub fn point_on_segment_with_orientation_and_policy(
     }
 }
 
-/// Return whether `point` lies on closed segment `ab` while reusing exact
-/// evidence for both the ordered line and query point.
+/// Map retained line/query classification to closed membership with the same receipt.
+///
+/// Both retained records must match current inputs, as required by
+/// [`classify_point_segment_with_orientation_and_query_and_policy`].
 pub fn point_on_segment_with_orientation_and_query_and_policy(
     a: &Point2,
     b: &Point2,
@@ -322,8 +339,10 @@ pub fn point_on_segment_with_orientation_and_query_and_policy(
     }
 }
 
-/// Return whether `point` lies on the closed segment `ab` with both an explicit
-/// policy and cached segment structural facts.
+/// Map fact-assisted classification to closed membership, preserving its receipt or Unknown.
+///
+/// Facts must match the supplied endpoints; see
+/// [`classify_point_segment_with_policy_and_facts`] for the trusted degeneracy shortcut.
 pub fn point_on_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
@@ -341,15 +360,14 @@ pub fn point_on_segment_with_policy_and_facts(
     }
 }
 
-/// Construct the exact intersection point of two supporting 2D lines.
+/// Construct a supporting-line intersection using STRICT policy.
 ///
-/// The construction uses the standard line parameter
-/// `t = cross(c - a, d - c) / cross(b - a, d - c)` and returns
-/// `a + t (b - a)`. It does not classify the closed segments: callers that
-/// require segment topology must first use [`classify_segment_intersection_with_policy`]
-/// and invoke this constructor only for a certified proper crossing. `None`
-/// means the lines are parallel or the exact scalar backend could not form the
-/// required quotient.
+/// Uses the policy-bearing constructor's exact rational paths or the expression
+/// `a + t*(b-a)`, where `t = cross(c-a,d-c) / cross(b-a,d-c)`. Parameters need not
+/// lie in `[0, 1]`; segment membership requires a separate incidence/classification
+/// check. None combines parallel/coincident/degenerate lines with scalar quotient
+/// failure or unresolved nonzeroness; it is not a typed no-solution proof. No
+/// certainty receipt or explicit intersection-incidence record is returned.
 pub fn construct_line_intersection_point(
     a: &Point2,
     b: &Point2,
@@ -359,13 +377,18 @@ pub fn construct_line_intersection_point(
     construct_line_intersection_point_with_policy(a, b, c, d, PredicatePolicy::STRICT)
 }
 
-/// Construct the exact intersection point of two supporting 2D lines under an
-/// explicit predicate policy.
+/// Construct a supporting-line intersection, using policy ordering in the general fallback.
 ///
-/// This is the policy-bearing counterpart of
-/// [`construct_line_intersection_point`]. A certified nonzero line determinant
-/// is reused directly when forming the affine parameter; unresolved
-/// denominators still fail closed.
+/// Tries the small dyadic, wide dyadic, and fused exact-rational paths in that
+/// order before general Real expressions. A decided zero denominator returns
+/// None; a decided nonzero denominator uses the assuming-nonzero reciprocal hook.
+/// If the comparison is Unknown, ordinary reciprocal construction is still tried
+/// and may succeed. Any reciprocal error becomes None.
+///
+/// The comparison's certainty/stage are discarded, including approximate decisions.
+/// The returned point therefore carries no receipt justifying policy-dependent
+/// construction or source incidence. No segment-domain check is performed; retain
+/// external evidence when consuming this Option as an exact construction.
 pub fn construct_line_intersection_point_with_policy(
     a: &Point2,
     b: &Point2,
@@ -448,16 +471,20 @@ pub fn construct_line_intersection_point_with_policy(
     ))
 }
 
-/// Classify the intersection of closed 3D segments `ab` and `cd` with an
-/// explicit predicate escalation policy.
+/// Classify two closed spatial segments, including collapsed, parallel, and skew cases.
 ///
-/// The nonparallel branch uses the standard exact line-parameter identities
-/// `t = ((c-a) x (d-c))_k / ((b-a) x (d-c))_k` and
-/// `u = ((c-a) x (b-a))_k / ((b-a) x (d-c))_k` on a certified nonzero
-/// component `k`. It compares the rational parameters to `[0, 1]` without
-/// division. The parallel branch reduces to exact collinear point/segment
-/// tests. Exact signs decide the combinatorial relation, with explicit
-/// skew/coplanar separation in 3D.
+/// Tests both endpoint pairs for collapse. Two collapsed segments are Identical
+/// or CoplanarDisjoint; one collapsed segment delegates to point membership.
+/// Otherwise cross-product signs distinguish parallel lines, a scalar triple
+/// product checks coplanarity, and a nonzero normal component supplies line
+/// parameters `t = ((c-a)x(d-c))_k / ((b-a)x(d-c))_k` and
+/// `u = ((c-a)x(b-a))_k / ((b-a)x(d-c))_k`. Parameter membership in `[0, 1]` is
+/// compared without division. Parallel collinear segments use endpoint incidence.
+///
+/// Most branches accumulate consumed receipts and propagate Unknown. The
+/// one-collapsed-segment branches return a fresh point-classifier outcome without
+/// combining the preceding collapse-test trace; their receipt omits that earlier
+/// qualification. Classification constructs no intersection point or overlap arc.
 pub fn classify_segment3_intersection_with_policy(
     a: &Point3,
     b: &Point3,
@@ -581,8 +608,12 @@ pub fn classify_segment3_intersection_with_policy(
     PredicateOutcome::decided(relation, trace.certainty, trace.stage)
 }
 
-/// Classify the intersection of closed segments `ab` and `cd` with an explicit
-/// predicate escalation policy.
+/// Classify closed planar segments from four ordered orientations and endpoint incidence.
+///
+/// All four signs are obtained before selecting the all-collinear, proper-crossing,
+/// or endpoint-touch/disjoint branch. Collinear reversed endpoints can be Identical;
+/// point segments are included. Accumulates consumed receipts and stops on an
+/// encountered Unknown. Returns a relation, not constructed intersection geometry.
 pub fn classify_segment_intersection_with_policy(
     a: &Point2,
     b: &Point2,
@@ -593,13 +624,13 @@ pub fn classify_segment_intersection_with_policy(
     classify_segment_intersection_impl(a, b, c, d, policy, None, None)
 }
 
-/// Classify the intersection of closed segments `ab` and `cd` with both an
-/// explicit policy and cached structural facts for both segments.
+/// Classify planar segments using source-matching facts for optional collapse reductions.
 ///
-/// Known-degenerate facts let this function reduce point-segment or point-point
-/// cases before evaluating the four-orientation classifier. The reduction never
-/// accepts lossy coordinates: every remaining equality or containment question
-/// is certified by exact Real predicates.
+/// Known-degenerate facts are trusted without rechecking their endpoints. Two
+/// collapsed operands reduce to point equality; one reduces to point membership.
+/// Other inputs use four orientations. Facts carry no source binding or receipt
+/// here, so stale or misassociated snapshots can produce incorrect classifications.
+/// The remaining decisions use the supplied policy and preserve their receipts.
 pub fn classify_segment_intersection_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
@@ -612,6 +643,7 @@ pub fn classify_segment_intersection_with_policy_and_facts(
     classify_segment_intersection_impl(a, b, c, d, policy, Some(first_facts), Some(second_facts))
 }
 
+/// Try trusted known-collapse reductions, then use the ordinary four-orientation classifier.
 fn classify_segment_intersection_impl(
     a: &Point2,
     b: &Point2,
@@ -636,16 +668,13 @@ fn classify_segment_intersection_impl(
     classify_segment_intersection_from_orientations(a, b, c, d, None, policy)
 }
 
-/// Classify closed segments `ab` and `cd` using retained orientations.
+/// Classify planar segments with four caller-established orientation outcomes.
 ///
-/// `orientations` must hold decided outcomes of [`crate::orient2`] for
-/// `(a, b, c)`, `(a, b, d)`, `(c, d, a)` and `(c, d, b)`, in that order,
-/// either computed earlier or established by a certificate the caller holds,
-/// such as constructions that placed points on a known line. Each undecided
-/// outcome, or one the policy does not accept, is replaced by its
-/// determinant. Collinear and endpoint cases are then decided by the exact
-/// comparisons of [`classify_segment_intersection_with_policy`], and the
-/// result carries the weakest certainty consumed.
+/// Array order is `(a,b,c)`, `(a,b,d)`, `(c,d,a)`, `(c,d,b)`. Each accepted decided
+/// outcome must describe that current tuple; only policy acceptance of certainty
+/// is checked. Unknown/disallowed entries are recomputed in order. Collinear and
+/// endpoint checks then use coordinate comparisons, combining consumed receipts.
+/// Claimed signs, stages, and source identities are not independently validated.
 pub fn classify_segment_intersection_with_known_orientations_and_policy(
     a: &Point2,
     b: &Point2,
@@ -657,6 +686,12 @@ pub fn classify_segment_intersection_with_known_orientations_and_policy(
     classify_segment_intersection_from_orientations(a, b, c, d, Some(orientations), policy)
 }
 
+/// Resolve four signs in tuple order, then classify collinearity, crossing, or endpoint contact.
+///
+/// Accepted retained outcomes bypass determinant evaluation. All-zero signs invoke
+/// collinear endpoint collection; two opposite sign pairs give Proper. Remaining
+/// zero-sign endpoints are checked in order until contact is found, after which
+/// later endpoint checks are skipped. Unknown preserves its reason/stage.
 fn classify_segment_intersection_from_orientations(
     a: &Point2,
     b: &Point2,
@@ -667,9 +702,8 @@ fn classify_segment_intersection_from_orientations(
 ) -> PredicateOutcome<SegmentIntersection> {
     let mut trace = DecisionTrace::default();
 
-    // This is the standard four-orientation segment classifier. Every
-    // orientation and interval comparison routes through exact
-    // hyperreal-backed determinant signs, unless a caller retained one.
+    // Resolve the four orientations in this order, reusing policy-admissible
+    // caller outcomes when supplied; later interval decisions use the same policy.
     let triples = [(a, b, c), (a, b, d), (c, d, a), (c, d, b)];
     let mut signs = [Sign::Zero; 4];
     for (index, (first, second, point)) in triples.into_iter().enumerate() {
@@ -719,6 +753,7 @@ fn classify_segment_intersection_from_orientations(
     finish_planar_endpoint_touch(endpoint_touch, trace)
 }
 
+/// Package EndpointTouch or Disjoint with the accumulated trace, or propagate the endpoint-check Unknown.
 fn finish_planar_endpoint_touch(
     endpoint_touch: Result<bool, UnknownDecision>,
     trace: DecisionTrace,
@@ -736,6 +771,11 @@ fn finish_planar_endpoint_touch(
     }
 }
 
+/// Reduce only facts known to mark collapsed planar segments, trusting their source association.
+///
+/// Return None if neither operand is known collapsed. For both, compare a and c;
+/// for one, map membership against the other segment. No endpoint collapse is
+/// revalidated, and the facts themselves contribute no certainty receipt.
 fn classify_known_degenerate_segment_intersection(
     a: &Point2,
     b: &Point2,
@@ -775,6 +815,7 @@ fn classify_known_degenerate_segment_intersection(
     }
 }
 
+/// Map point membership to EndpointTouch or Disjoint, forwarding the supplied receipt or Unknown.
 fn point_segment_intersection_from_classifier(
     outcome: PredicateOutcome<PointSegmentLocation>,
 ) -> PredicateOutcome<SegmentIntersection> {
@@ -796,6 +837,7 @@ fn point_segment_intersection_from_classifier(
     }
 }
 
+/// Map point membership to EndpointTouch or CoplanarDisjoint, forwarding only the supplied outcome metadata.
 fn point_segment3_intersection_from_classifier(
     outcome: PredicateOutcome<PointSegmentLocation>,
 ) -> PredicateOutcome<Segment3Intersection> {
@@ -817,6 +859,12 @@ fn point_segment3_intersection_from_classifier(
     }
 }
 
+/// Assume a common planar support and classify identical endpoints or unique shared endpoints.
+///
+/// Check equal endpoint pairs in either order first. Then test c, d against ab
+/// and a, b against cd, deduplicating by policy equality. Zero, one, or multiple
+/// shared endpoints give Disjoint, EndpointTouch, or CollinearOverlap. Updates
+/// the caller trace; collinearity and its qualification are caller responsibilities.
 fn classify_collinear_segments(
     a: &Point2,
     b: &Point2,
@@ -852,6 +900,12 @@ fn classify_collinear_segments(
     })
 }
 
+/// Assume a common spatial support and classify identity or unique shared endpoints.
+///
+/// Tests endpoint equality in both orders, then c/d on ab and a/b on cd. Zero,
+/// one, or multiple distinct shared endpoints give CoplanarDisjoint, EndpointTouch,
+/// or CollinearOverlap. Consumed receipts update the caller trace; no supporting
+/// line collinearity is established here.
 fn classify_collinear_segments3(
     a: &Point3,
     b: &Point3,
@@ -887,6 +941,11 @@ fn classify_collinear_segments3(
     })
 }
 
+/// Assume planar collinearity and check inclusive x then y intervals before endpoint equality.
+///
+/// An excluded coordinate gives CollinearOutside; matching a or b gives OnEndpoint;
+/// otherwise return OnSegment. Updates the trace and propagates Unknown. Without
+/// the collinearity precondition this is only a bounding-box membership test.
 fn classify_collinear_point_segment(
     a: &Point2,
     b: &Point2,
@@ -907,6 +966,7 @@ fn classify_collinear_point_segment(
     }
 }
 
+/// Compare a collapsed planar endpoint with the query, yielding OnEndpoint or CollinearOutside.
 fn classify_degenerate_point_segment(
     endpoint: &Point2,
     point: &Point2,
@@ -920,6 +980,10 @@ fn classify_degenerate_point_segment(
     }
 }
 
+/// Assume spatial collinearity and test inclusive x/y/z bounds, then endpoint equality.
+///
+/// Returns CollinearOutside, OnEndpoint, or OnSegment while updating the trace.
+/// Does not establish collinearity or distinguish off-line points inside the box.
 fn classify_collinear_point_segment3(
     a: &Point3,
     b: &Point3,
@@ -941,6 +1005,7 @@ fn classify_collinear_point_segment3(
     }
 }
 
+/// Compare a collapsed spatial endpoint with the query, yielding OnEndpoint or CollinearOutside.
 fn classify_degenerate_point_segment3(
     endpoint: &Point3,
     point: &Point3,
@@ -954,6 +1019,10 @@ fn classify_degenerate_point_segment3(
     }
 }
 
+/// Construct `(b-a) x (point-a)` and resolve x, y, z signs in order.
+///
+/// Stops on Unknown, not on a nonzero component; successful decisions update the
+/// caller trace even when a later component prevents classification.
 fn point_segment3_cross_signs(
     a: &Point3,
     b: &Point3,
@@ -979,19 +1048,27 @@ fn point_segment3_cross_signs(
     ])
 }
 
+/// Three exact scalar expressions used for spatial differences, cross products, and dot products.
 #[derive(Clone, Debug)]
 struct Vector3Real {
+    /// Exact x-component expression.
     x: Real,
+    /// Exact y-component expression.
     y: Real,
+    /// Exact z-component expression.
     z: Real,
 }
 
+/// Closed-unit-interval and endpoint flags for a ratio with a nonzero denominator.
 #[derive(Clone, Copy, Debug)]
 struct Parameter01 {
+    /// Whether the normalized numerator lies between zero and denominator, inclusively.
     on_segment: bool,
+    /// Whether an admitted parameter equals zero or one; false when outside.
     on_boundary: bool,
 }
 
+/// Form the exact vector difference end minus start without normalization.
 fn vector3_between(start: &Point3, end: &Point3) -> Vector3Real {
     Vector3Real {
         x: sub_ref(&end.x, &start.x),
@@ -1000,10 +1077,12 @@ fn vector3_between(start: &Point3, end: &Point3) -> Vector3Real {
     }
 }
 
+/// Form the planar determinant `left_x*right_y - left_y*right_x` as a scalar expression.
 fn cross2(left_x: &Real, left_y: &Real, right_x: &Real, right_y: &Real) -> Real {
     sub_ref(&mul_ref(left_x, right_y), &mul_ref(left_y, right_x))
 }
 
+/// Form the spatial cross-product expressions in x/y/z order without resolving signs.
 fn cross3(left: &Vector3Real, right: &Vector3Real) -> Vector3Real {
     Vector3Real {
         x: sub_ref(&mul_ref(&left.y, &right.z), &mul_ref(&left.z, &right.y)),
@@ -1012,6 +1091,7 @@ fn cross3(left: &Vector3Real, right: &Vector3Real) -> Vector3Real {
     }
 }
 
+/// Build the three positive signed-product terms of a spatial dot product through Real arithmetic.
 fn dot3(left: &Vector3Real, right: &Vector3Real) -> Real {
     Real::signed_product_sum(
         [true; 3],
@@ -1023,6 +1103,7 @@ fn dot3(left: &Vector3Real, right: &Vector3Real) -> Real {
     )
 }
 
+/// Resolve vector components x, y, z in order, updating the trace and stopping at Unknown.
 fn signs3(
     value: &Vector3Real,
     policy: PredicatePolicy,
@@ -1035,10 +1116,15 @@ fn signs3(
     ])
 }
 
+/// Return the first x/y/z index whose supplied sign is nonzero, without validating its proof.
 fn nonzero_axis(signs: [Sign; 3]) -> Option<usize> {
     signs.into_iter().position(|sign| sign != Sign::Zero)
 }
 
+/// Borrow x, y, or z for an axis index required to be below three.
+///
+/// Invalid indices trigger a debug assertion; without debug assertions every
+/// index other than zero or one selects z.
 fn coordinate(vector: &Vector3Real, axis: usize) -> &Real {
     debug_assert!(axis < 3, "3D vector axis is in 0..3");
     match axis {
@@ -1048,6 +1134,12 @@ fn coordinate(vector: &Vector3Real, axis: usize) -> &Real {
     }
 }
 
+/// Classify numerator/denominator in `[0, 1]` without division, assuming nonzero denominator.
+///
+/// Resolve denominator sign and negate both values if negative. Then check the
+/// normalized numerator and denominator-minus-numerator, stopping at negativity;
+/// equality to either endpoint marks boundary. A zero denominator is not rejected
+/// here, so callers must establish nonzeroness separately. Updates the trace.
 fn classify_parameter_01(
     numerator: &Real,
     denominator: &Real,
@@ -1084,6 +1176,10 @@ fn classify_parameter_01(
     })
 }
 
+/// Check inclusive membership between unordered scalar endpoints using both difference signs.
+///
+/// Both comparisons run even when the first gives zero; a later Unknown prevents
+/// a result. Equality to either endpoint or opposing signs means membership.
 fn between_closed(
     a: &Real,
     b: &Real,
@@ -1102,6 +1198,7 @@ fn between_closed(
     ))
 }
 
+/// Compare planar coordinates x then y under policy, short-circuiting at a nonzero difference or Unknown.
 fn points_equal(
     left: &Point2,
     right: &Point2,
@@ -1114,6 +1211,7 @@ fn points_equal(
     )
 }
 
+/// Compare spatial coordinates x, y, z under policy, short-circuiting at a nonzero difference or Unknown.
 fn points_equal3(
     left: &Point3,
     right: &Point3,
@@ -1127,6 +1225,10 @@ fn points_equal3(
     )
 }
 
+/// Append a borrowed planar point only after it differs from every retained point under policy.
+///
+/// A matching point stops the scan; Unknown aborts without appending. Earlier
+/// comparison receipts remain in the caller trace.
 fn push_unique_point<'a>(
     points: &mut Vec<&'a Point2>,
     point: &'a Point2,
@@ -1142,6 +1244,9 @@ fn push_unique_point<'a>(
     Ok(())
 }
 
+/// Append a borrowed spatial point unless an earlier point compares equal; propagate Unknown before append.
+///
+/// Comparisons follow vector order and update the caller trace.
 fn push_unique_point3<'a>(
     points: &mut Vec<&'a Point3>,
     point: &'a Point3,
@@ -1157,6 +1262,7 @@ fn push_unique_point3<'a>(
     Ok(())
 }
 
+/// Map policy scalar ordering to a sign while recording its receipt or forwarding Unknown.
 fn sign_of_difference(
     left: &Real,
     right: &Real,
@@ -1176,6 +1282,7 @@ fn sign_of_difference(
     )
 }
 
+/// Resolve a scalar sign with RealRefinement as the uncertainty need, updating the caller trace.
 fn sign_of_real(
     value: &Real,
     policy: PredicatePolicy,
@@ -1187,6 +1294,7 @@ fn sign_of_real(
     )
 }
 
+/// Return true only for one Positive and one Negative sign; Zero is never opposite.
 fn opposite_strict(left: Sign, right: Sign) -> bool {
     matches!(
         (left, right),
@@ -1194,6 +1302,9 @@ fn opposite_strict(left: Sign, right: Sign) -> bool {
     )
 }
 
+/// Extract a decided value while combining weakest certainty and latest stage into the trace.
+///
+/// Unknown returns its reason/stage unchanged and does not update the trace.
 fn decided<T: Copy>(
     outcome: PredicateOutcome<T>,
     trace: &mut DecisionTrace,
@@ -1212,6 +1323,11 @@ fn decided<T: Copy>(
     }
 }
 
+/// Finite segment, supporting-line, retained-evidence, and uncertainty controls.
+///
+/// Most integer assertions extract values. Selected retained/direct checks compare
+/// complete outcomes; the retained-collinearity control explicitly tests policy
+/// receipt reuse. These fixtures do not constitute exhaustive segment closure.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1219,20 +1335,28 @@ mod tests {
     use crate::predicates::decision::{certainty_rank, stage_rank};
     use crate::test_support::exact_normal_positive;
 
+    /// Policy allowing an approximate terminal for the decided controls; strict cases select STRICT explicitly.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Convert a test integer exactly to Real.
     fn real(value: i32) -> hyperreal::Real {
         hyperreal::Real::from(value)
     }
 
+    /// Build a planar test point from exact integer coordinates.
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(real(x), real(y))
     }
 
+    /// Build a spatial test point from exact integer coordinates.
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(real(x), real(y), real(z))
     }
 
+    /// Require normal-form proof of the unit-circle identity at e, then return the shared unresolved zero.
+    ///
+    /// Keeps the original certified regression alongside the angle-addition fixture
+    /// used for strict uncertainty controls.
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -1246,6 +1370,7 @@ mod tests {
         crate::test_support::terminally_unresolved_zero()
     }
 
+    /// Extract parameter flags or panic with fixture context when the helper returns Unknown.
     fn decided_parameter(
         outcome: Result<Parameter01, UnknownDecision>,
         message: &str,
@@ -1256,6 +1381,7 @@ mod tests {
         }
     }
 
+    /// Check planar interior, endpoint, collinear-exterior, and off-line values on an integer segment.
     #[test]
     fn point_segment_classifier_distinguishes_endpoint_inside_and_outside() {
         let a = p2(0, 0);
@@ -1279,6 +1405,10 @@ mod tests {
         );
     }
 
+    /// Compare complete direct, retained-line, and retained-query outcomes for four rational queries.
+    ///
+    /// Both policies exercise interior, endpoint, outside, and off-line cases, including
+    /// Boolean wrappers. Agreement does not independently measure dispatch counts.
     #[test]
     fn retained_line_orientation_preserves_complete_point_segment_classification() {
         let rational = |numerator, denominator| {
@@ -1336,6 +1466,7 @@ mod tests {
         }
     }
 
+    /// Check spatial location values, Boolean membership, and collapsed endpoint controls.
     #[test]
     fn point_segment3_classifier_distinguishes_endpoint_inside_outside_and_offline() {
         let a = p3(0, 0, 0);
@@ -1372,6 +1503,7 @@ mod tests {
         );
     }
 
+    /// Check planar proper crossing, endpoint touch, partial collinear overlap, and reversed identity.
     #[test]
     fn segment_classifier_reports_proper_endpoint_overlap_and_identical() {
         assert_eq!(
@@ -1420,6 +1552,7 @@ mod tests {
         );
     }
 
+    /// Check a rational crossing, parallel rejection, and supporting-line crossing outside a segment.
     #[test]
     fn line_intersection_point_constructs_exact_crossing() {
         assert_eq!(
@@ -1438,6 +1571,10 @@ mod tests {
         );
     }
 
+    /// Check symbolic positive-extent construction and strict rejection of an unresolved zero extent.
+    ///
+    /// Both strict constructor entrypoints must produce the expected x and zero y;
+    /// the classification control checks a Proper value. No dispatch count is asserted.
     #[test]
     fn line_intersection_point_reuses_policy_nonzero_determinant() {
         let extent = exact_normal_positive();
@@ -1479,6 +1616,10 @@ mod tests {
         );
     }
 
+    /// Require small dyadic-kernel decline and the exact midpoint of a large-integer crossing.
+    ///
+    /// Extent is `i64::MAX^2`; the final constructor result is checked, without an
+    /// assertion selecting its successful dispatch path.
     #[test]
     fn line_intersection_point_uses_wide_dyadic_carrier() {
         let word = hyperreal::Rational::new(i64::MAX);
@@ -1510,6 +1651,7 @@ mod tests {
         );
     }
 
+    /// Require the exact `(1/3, 1/3)` crossing from non-dyadic endpoints; no dispatch stage is asserted.
     #[test]
     fn line_intersection_point_fuses_nondyadic_exact_rationals() {
         let rational = |numerator, denominator| {
@@ -1529,6 +1671,9 @@ mod tests {
         assert_eq!(point.y, one_third);
     }
 
+    /// Check planar disjoint values for collinear and parallel separated segments.
+    ///
+    /// Despite the historical name, these are 2D fixtures and do not exercise skew 3D lines.
     #[test]
     fn segment_classifier_reports_disjoint_collinear_and_skew_cases() {
         assert_eq!(
@@ -1555,6 +1700,7 @@ mod tests {
         );
     }
 
+    /// Check matching and distinct point queries using facts derived from a collapsed planar segment.
     #[test]
     fn fact_aware_point_segment_classifier_handles_degenerate_segments() {
         let endpoint = p2(2, 3);
@@ -1585,6 +1731,7 @@ mod tests {
         );
     }
 
+    /// Check collapsed point-on-segment, disjoint point pairs, and identical points with matching facts.
     #[test]
     fn fact_aware_segment_classifier_reduces_point_segment_cases() {
         let point = p2(2, 0);
@@ -1637,6 +1784,7 @@ mod tests {
         );
     }
 
+    /// Check noncollapsed facts and a collapsed-second-operand control; no cache-hit count is asserted.
     #[test]
     fn immediate_segment_predicates_reuse_cached_facts() {
         let a = p2(0, 0);
@@ -1665,6 +1813,7 @@ mod tests {
         );
     }
 
+    /// Check spatial interior membership and an off-line Boolean query using borrowed endpoints.
     #[test]
     fn immediate_segment3_predicates_use_borrowed_endpoints() {
         let a = p3(0, 0, 0);
@@ -1680,6 +1829,7 @@ mod tests {
         );
     }
 
+    /// Check spatial Proper, EndpointTouch, CoplanarDisjoint, and SkewDisjoint values.
     #[test]
     fn segment3_classifier_distinguishes_skew_coplanar_and_crossing_cases() {
         assert_eq!(
@@ -1728,6 +1878,7 @@ mod tests {
         );
     }
 
+    /// Check spatial collinear overlap, reversed identity, separation, and collapsed-operand relations.
     #[test]
     fn segment3_classifier_reports_collinear_overlap_and_identical() {
         assert_eq!(
@@ -1804,6 +1955,7 @@ mod tests {
         );
     }
 
+    /// Require a Proper value through the public spatial segment wrapper on an integer crossing.
     #[test]
     fn immediate_segment3_classifies_intersection() {
         let a = p3(0, 0, 0);
@@ -1817,6 +1969,10 @@ mod tests {
         );
     }
 
+    /// Require Unknown for selected orientation, coordinate, collapse, and retained-evidence queries.
+    ///
+    /// Exercises planar/spatial and Boolean wrappers; assertions leave uncertainty
+    /// reason and stage unconstrained.
     #[test]
     fn strict_point_segment_apis_propagate_each_unresolved_decision_class() {
         let origin2 = p2(0, 0);
@@ -1948,6 +2104,10 @@ mod tests {
         ));
     }
 
+    /// Require Unknown for selected spatial collapse, cross-product, parallel, and coplanarity controls.
+    ///
+    /// Two decided controls check that supporting-line crossings outside finite
+    /// segments are disjoint in 2D and coplanar-disjoint in 3D.
     #[test]
     fn strict_segment_intersection_propagates_unresolved_geometry() {
         let origin = p3(0, 0, 0);
@@ -2037,6 +2197,10 @@ mod tests {
         );
     }
 
+    /// Check selected collinear/fact uncertainties and relation-packaging helper outputs.
+    ///
+    /// Unknown and decided wrappers are tested without independently inspecting every
+    /// receipt field.
     #[test]
     fn strict_planar_segment_intersection_propagates_collinear_and_fact_uncertainty() {
         let unresolved = Point2::new(terminal_zero(), real(0));
@@ -2124,6 +2288,9 @@ mod tests {
         ));
     }
 
+    /// Require Unknown for selected later orientation, normal, collinear, and parameter decisions.
+    ///
+    /// Despite the name, assertions do not constrain the reported escalation stage.
     #[test]
     fn strict_segment_classifiers_propagate_each_late_uncertainty_stage() {
         let unresolved_d = Point2::new(terminal_zero(), real(1));
@@ -2185,6 +2352,9 @@ mod tests {
         ));
     }
 
+    /// Check partial overlap in 2D/3D and one 3D endpoint touch using the internal collinear helpers.
+    ///
+    /// These are three fixed arrangements, not every endpoint permutation.
     #[test]
     fn collinear_overlap_collection_covers_each_endpoint_order() {
         let mut trace = DecisionTrace::default();
@@ -2230,6 +2400,10 @@ mod tests {
         );
     }
 
+    /// Check symbolic crossing at `(pi, 1)`, four ratio cases, and the three vector coordinates.
+    ///
+    /// Ratio controls include below/above, negative-denominator interior, and zero
+    /// boundary; they do not exercise zero denominators.
     #[test]
     fn line_constructor_and_parameter_helpers_cover_general_real_and_bounds() {
         let pi = Real::pi();
@@ -2276,6 +2450,7 @@ mod tests {
         assert_eq!(coordinate(&vector, 2), &real(3));
     }
 
+    /// Check duplicate suppression, strict opposite signs, certainty/stage rankings, and Unknown forwarding.
     #[test]
     fn segment_decision_helpers_cover_uniqueness_signs_and_trace_ranks() {
         let a = p2(0, 0);
@@ -2325,10 +2500,17 @@ mod tests {
         assert_eq!(b, p2(1, 0));
     }
 
+    /// Check caller-established zero orientations bypass unresolved determinant expressions.
+    ///
+    /// Strict policy must recompute disallowed approximate or Unknown outcomes, while
+    /// approximate policy must retain the supplied approximate receipt. Also checks
+    /// all-collinear segment relations, partial-retention uncertainty, and a fresh
+    /// proper crossing. Supplied signs are justified by fixture identities; the API
+    /// does not validate their source association.
     #[test]
     fn retained_collinearity_decides_only_the_position_along_the_line() {
-        // `point` is on the line through `a` and `b` by construction, but the
-        // determinant is four times a zero no proof decides.
+        // The fixture identity puts the point on the line, while the current
+        // strict determinant query leaves four times that zero unresolved.
         let a = p2(0, 0);
         let b = p2(4, 4);
         let inside = Point2::new(real(2), real(2) + terminal_zero());
