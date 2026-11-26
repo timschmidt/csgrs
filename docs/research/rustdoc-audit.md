@@ -34,6 +34,13 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/parts/mod.rs` | Entire file; documented module roles and authored metadata versus geometric evidence. | Minimal and attributed private docs passed; module page inspected. |
+| `src/parts/scalar.rs` | Entire file; documented strict predicates, diagnostic-erasing comparisons, translation and unconstrained interpolation. | Private helper pages inspected; implementation unchanged. |
+| `src/parts/metadata.rs` | Entire file; documented every record/payload, unchecked identity/geometry labels, installation admission and presence-only queries. | Private docs and payload rendering passed; no validation behavior changed. |
+| `src/parts/attachment.rs` | Entire file; documented frame admission, normalized-axis mating, roll selection, private basis state and unit witnesses. | Private pages inspected; test bodies source-reviewed, not rerun. |
+| `src/parts/assembly.rs` | Entire file; documented all fields, constructors, traversal, pose roots, explode propagation, partial blockers and count/tree assumptions. | Private pages inspected; test assertions unchanged, not rerun. |
+| `src/parts/bom.rs` | Entire file; documented step traversal, keys/order, merge columns, global counts and zero/omission/saturation behavior. | Private pages inspected including final root-merge clarification; unit witness unchanged, not rerun. |
+| `examples/assembly_manual.rs` | Entire file; documented stand-in geometry, exact placement/BOM assertions, drawing/manual output and fixed output directory. | Source and formatting checked; example not executed and no generated artifacts written. |
 | `src/wasm/curve_js.rs` | Entire file; documented profile records, all modeling/query/constructor methods, outcome fields/conversions, finite arrays and legacy string-error boundaries. | Private docs with `wasm` passed; all eight module/type/helper pages and method summaries inspected. No executable changes. |
 | `src/wasm/mesh_js.rs` | Entire file; documented raw-buffer admission, display normal/coordinate behavior, every modeling/constructor method, categorized errors, count limits and STL artifact ownership. | Private docs with `wasm` passed; all nine module/type/helper pages and method summaries inspected. No executable changes. |
 | `src/wasm/mod.rs` | Entire file; documented modules, exact numeric ingress, lossy/NaN egress, policy selection and unvalidated native matrix wrapping. | Private WASM-feature docs passed; shared helper pages inspected. Test-only threshold remains source-reviewed. |
@@ -2051,6 +2058,61 @@ All eleven tracked files directly in `tests/wasm/` now have recorded full-file
 reviews across the two batches. The shell runner has its own full-file record;
 the rest of the workflow and repository remain in scope. No build trees or
 generated artifacts were added, and no new runtime or performance result is claimed.
+
+### Parts metadata, attachment, assembly and BOM, 26 November 2026
+
+Baseline: `affc4070a`. Owners: csgrs parts metadata and documentation assembly,
+P3/P6/P8/P9/P19/P25/P30/P37. Domain: authored node trees, exact native frame
+arithmetic, selected documentation poses, explode guides and finite BOM counts.
+Read the seven files recorded above in full, including private helpers and unit
+tests. Partial reads of blueprint/manual consumers provide context but do not
+earn whole-file review credit for those modules.
+
+Missing witnesses were absent private Rustdoc and claims stronger than the
+implementation: frame mating matches normalized axis directions, certainty
+labels are authored metadata rather than geometric proofs, and installation
+presence is not replay validation. Public mutation and cloned nodes can violate
+the intended acyclic tree. Root poses start a selected documentation frame;
+ancestor placements and the selected node's placement are not reapplied. Counts
+affect BOM quantities rather than geometric instance expansion. Explode blockers
+can accompany retained partial output and do not constitute complete geometry
+validation. These implementation limits are documented, not repaired or accepted
+as satisfying the wider geometry contract.
+
+BOM traversal follows step children only. Missing/overflowed step quantities
+become zero, failed part counts omit lines, and flattened sums saturate. Hidden
+steps remain; references and hidden parts are omitted. Merged columns concatenate
+lines without aggregation, and a merged root has no column. The example uses
+cuboid stand-ins, writes SVG/Markdown into the manifest-root `target` directory,
+and does not prove hole construction, STL export or general attachment behavior.
+
+Validation after edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on all
+  seven Rust files and `git diff --check`: passed.
+- Documentation-only comparisons against baseline passed. Three tuple
+  declarations were expanded solely to document payloads; their new trailing
+  commas/layout were explicitly normalized. No executable expression, signature,
+  assertion, fixture or decision order changed.
+- Local declaration scans found documentation for all 111 declarations in the
+  seven files; fields and variants were checked separately. Test-only items were
+  inspected in source. This is batch evidence, not repository-wide coverage.
+- Reused the shared temporary target with incremental compilation disabled and
+  `-D rustdoc::broken_intra_doc_links`: `cargo doc --locked -p csgrs
+  --no-default-features --document-private-items --no-deps --offline` passed, as
+  did the same command with `--features attributed`. The latter ran after the
+  final BOM root-merge clarification; neither build emitted warnings.
+- Inspected 66 rendered module/type/helper pages, all 82 non-test declaration
+  summaries, private payloads/fields and material contract text. The final BOM
+  sentence was checked again in attributed output. An initial follow-up used
+  the wrong function filename; correcting the inspector path required no source
+  change.
+- Runtime tests, the example and full workflows were not run under the owner's
+  docs-only waiver. No performance, runtime completion or universal proof claim
+  is made. One approximately 1.1 GiB temporary build tree remains in use.
+
+Logs: `/tmp/csgrs-rustdoc-parts-assembly-doc.log` and
+`/tmp/csgrs-rustdoc-parts-attributed-doc.log`.
 
 ## Next work
 

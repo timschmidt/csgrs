@@ -22,13 +22,15 @@ pub enum AttachmentRole {
 }
 
 /// Attachment point in a part's local coordinates.
+/// Public fields permit unchecked construction/mutation. Role and handle are
+/// labels; [`mate`] does not check mechanical compatibility or handle identity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AttachmentFrame {
     /// Stable handle.
     pub handle: String,
     /// Origin of the frame.
     pub origin: Point3,
-    /// Mate or insertion axis. A zero axis is rejected.
+    /// Mate or insertion axis; [`Self::try_new`] rejects a zero or undecided axis.
     pub axis: Vector3,
     /// Roll vector. When absent, a deterministic basis is chosen from the axis.
     pub up: Option<Vector3>,
@@ -36,14 +38,21 @@ pub struct AttachmentFrame {
     pub role: AttachmentRole,
 }
 
+/// Constructed right-handed orthonormal frame, decomposed for its native rigid inverse.
 struct RigidParts {
+    /// Basis columns X, Y and normalized mate axis stored as matrix rows.
     linear: [[Real; 3]; 3],
+    /// Frame origin components used in the inverse translation.
     translation: [Real; 3],
+    /// Combined local-frame-to-part affine matrix.
     matrix: Matrix4,
 }
 
 impl AttachmentFrame {
     /// Builds a frame after rejecting a zero or undecided axis.
+    /// Uses strict squared-length classification, but does not normalize the axis
+    /// or validate origin, roll vector, role or handle. A successful record can
+    /// still fail later basis construction; `None` does not retain the failure reason.
     pub fn try_new(
         handle: impl Into<String>,
         origin: Point3,
@@ -66,10 +75,14 @@ impl AttachmentFrame {
 
 /// Returns the rigid transform that maps `child` onto `parent`.
 ///
-/// The child attachment origin lands on the parent origin, and the child axis
-/// lands on the parent axis. When both frames supply an up vector, roll is
-/// matched too. A missing up vector uses `Vector3::orthonormal_basis_checked`.
-/// Parallel up and axis, or a basis that cannot be certified, returns `None`.
+/// The child attachment origin lands on the parent origin, and its normalized
+/// axis direction maps to the parent's normalized direction. Axis magnitudes
+/// need not agree and are not rescaled. Roll matches normalized projections of
+/// supplied up vectors perpendicular to each axis. Each missing up vector uses
+/// `Vector3::orthonormal_basis_checked` independently.
+/// Parallel up/axis, failed checked normalization or unresolved basis checks
+/// return `None` without a typed reason. The result is `parent * inverse(child)`;
+/// no role compatibility, source provenance or operation receipt is checked/returned.
 pub fn mate(child: &AttachmentFrame, parent: &AttachmentFrame) -> Option<Matrix4> {
     let child_rigid = rigid_parts(child)?;
     let parent_rigid = rigid_parts(parent)?;
@@ -78,6 +91,10 @@ pub fn mate(child: &AttachmentFrame, parent: &AttachmentFrame) -> Option<Matrix4
     Some(&parent_rigid.matrix * &child_inverse)
 }
 
+/// Normalizes the mate axis and constructs a right-handed basis plus origin translation.
+/// With explicit up, rejects its axis component, uses the unit remainder as Y,
+/// and forms X as `Y × axis`. Otherwise delegates deterministic basis selection
+/// to Hyperlattice. All arithmetic/validation failures collapse to `None`.
 fn rigid_parts(frame: &AttachmentFrame) -> Option<RigidParts> {
     let axis = frame.axis.normalize_checked().ok()?;
     let (x_axis, y_axis) = match &frame.up {
@@ -110,6 +127,8 @@ fn rigid_parts(frame: &AttachmentFrame) -> Option<RigidParts> {
     })
 }
 
+/// Removes `(vector · unit_axis) * unit_axis`; callers must supply a unit axis.
+/// Keeps native scalar expressions and performs no normalization or predicate decision.
 fn reject_component(vector: &Vector3, unit_axis: &Vector3) -> Vector3 {
     let scale = vector.dot(unit_axis);
     Vector3::new([
@@ -119,19 +138,23 @@ fn reject_component(vector: &Vector3, unit_axis: &Vector3) -> Vector3 {
     ])
 }
 
+/// Exact small-coordinate witnesses for axis admission and rigid mating direction/origin.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::parts::scalar::{real_eq, vector_is_zero};
 
+    /// Constructs an exact integer vector fixture without normalization.
     fn axis(x: i64, y: i64, z: i64) -> Vector3 {
         Vector3::new([Real::from(x), Real::from(y), Real::from(z)])
     }
 
+    /// Constructs an exact integer point fixture.
     fn point(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    /// Requires an exactly zero mate axis to fail frame construction.
     #[test]
     fn zero_axis_is_rejected() {
         assert!(
@@ -146,6 +169,8 @@ mod tests {
         );
     }
 
+    /// Strictly checks the mapped origin, parallel axes and positive direction for one fallback-basis mate.
+    /// Does not exercise explicit up vectors, unequal axis magnitudes or general source compatibility.
     #[test]
     fn mate_matches_origin_and_axis() {
         let child = AttachmentFrame::try_new(

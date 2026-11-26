@@ -3,14 +3,21 @@
 //! NopSCADlib popularized the practical split between parametric part geometry,
 //! vitamin metadata, and assembly documentation. Coordinates on these records
 //! are `hyperlattice` points and vectors of `hyperreal::Real`.
+//! These public records are authored metadata, not validated proofs or automatic
+//! links to a geometry kernel. Handles, cross-references and certainty labels
+//! are not checked here; consumers establish any facts they require.
 
 use hyperlattice::{Point3, Vector3};
 
 use super::scalar::vector_is_zero;
 
 /// Index of a node in an [`super::AssemblyDocument`].
+/// Document-local numeric identity; no document/generation tag prevents cross-document reuse.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct NodeId(pub u32);
+pub struct NodeId(
+    /// Insertion-table index; existence must be checked against the intended document.
+    pub u32,
+);
 
 /// Source evidence for a part-interface fact.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -22,6 +29,7 @@ pub struct PartSource {
 }
 
 /// Certainty of a source field before it is consumed by another Hyper crate.
+/// An authored classification, not a predicate receipt or a validator of the source claim.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SourceCertainty {
     /// Native exact value or symbolic construction.
@@ -37,6 +45,8 @@ pub enum SourceCertainty {
 }
 
 /// Geometry status for the CSG object associated with a part interface.
+/// This metadata enum is distinct from [`crate::GeometryCertainty`]'s consumed
+/// predicate receipt; assigning a variant does not validate geometry or replay.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GeometryCertainty {
     /// Native CSG/curve-region construction over exact Hyper scalar carriers.
@@ -74,7 +84,10 @@ pub enum InterfaceKind {
     /// Manufacturing or tool-process interface.
     Process,
     /// Source-specific aspect.
-    Custom(String),
+    Custom(
+        /// Unvalidated source-specific family label.
+        String,
+    ),
 }
 
 /// Geometry-attached mechanical, thermal, or process attachment point.
@@ -89,6 +102,8 @@ pub struct PartTerminal {
 }
 
 /// Named port frame used by mating, callouts, and downstream handoff.
+/// Stores an origin/direction but no complete roll basis. Direction, terminal
+/// references and handle uniqueness are not validated by this record.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PortFrame {
     /// Stable port handle.
@@ -102,6 +117,7 @@ pub struct PortFrame {
 }
 
 /// Named anchor frame for attachment.
+/// Direct construction does not validate nonzero normal or independence of the up vector.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AnchorFrame {
     /// Stable anchor handle.
@@ -129,6 +145,9 @@ pub struct MaterialRegion {
 /// local frame. `explode_offset` is the vector used for exploded diagrams.
 /// Keeping both vectors explicit prevents a display transform from becoming an
 /// unreviewable assembly fact.
+/// Public fields allow unchecked construction/mutation; [`Self::new`] validates
+/// only the installation direction. Bounds drawings consume the explode offset,
+/// not an automatic insertion simulation or propagation/guide policy.
 #[derive(Clone, Debug, PartialEq)]
 pub struct InstallationVector {
     /// Direction used for insertion/removal.
@@ -142,6 +161,9 @@ pub struct InstallationVector {
 }
 
 /// Documentation flags for a part or subassembly.
+/// These are metadata intents, not [`super::BomPolicy`] or [`super::ExplodeSpec`].
+/// Current bounds drawing consumes `NoExplode`; document BOM/pose traversal uses
+/// its separate node policies rather than automatically applying these flags.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AssemblyFlag {
     /// Do not include this part in BOM output.
@@ -164,6 +186,8 @@ pub struct AssemblyDocumentation {
 }
 
 /// Full CSG-side part interface.
+/// Stores source declarations and references without checking uniqueness,
+/// referential integrity, geometric incidence or compatibility of terminals.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CsgPartInterface {
     /// Part family id.
@@ -206,12 +230,13 @@ pub struct PartMetadata {
 }
 
 impl InstallationVector {
-    /// Creates an installation vector after rejecting zero directions.
+    /// Creates an installation vector after strictly deciding the direction is nonzero.
     ///
     /// The validation uses exact sign refinement over the squared vector length
     /// rather than an epsilon. This follows Yap's exact-computation boundary:
     /// a zero installation vector is rejected as source data, not accepted
-    /// because it is "small enough."
+    /// because it is "small enough." An undecided sign also returns `None`,
+    /// erasing its reason. The direction is not normalized, and offset/flags are stored unchecked.
     pub fn new(
         install_direction: Vector3,
         explode_offset: Vector3,
@@ -232,6 +257,9 @@ impl InstallationVector {
 
 impl CsgPartInterface {
     /// Creates a minimal interface with exact native CSG geometry status.
+    /// This assigns an authored label without examining a mesh or proving source
+    /// fidelity. All aspect/terminal/frame/material/note collections start empty,
+    /// with no installation, pose hint or documentation flags.
     pub fn exact_csg(
         family_id: impl Into<String>,
         variant_id: impl Into<String>,
@@ -256,7 +284,7 @@ impl CsgPartInterface {
         }
     }
 
-    /// Returns true when a part has a replayable installation vector.
+    /// Reports presence of installation metadata, without validating it or establishing replayability.
     pub const fn has_installation_vector(&self) -> bool {
         self.documentation.installation.is_some()
     }
@@ -264,6 +292,7 @@ impl CsgPartInterface {
 
 impl PartMetadata {
     /// Creates metadata for a CSG object handle.
+    /// Leaves the assembly link absent; neither handle nor interface facts are validated.
     pub fn new(handle: impl Into<String>, interface: CsgPartInterface) -> Self {
         Self {
             handle: handle.into(),
@@ -273,6 +302,7 @@ impl PartMetadata {
     }
 
     /// Records the assembly node that owns this face.
+    /// Replaces any earlier numeric link without checking a document or actual face ownership.
     pub const fn with_assembly_node(mut self, node: NodeId) -> Self {
         self.assembly_node = Some(node);
         self

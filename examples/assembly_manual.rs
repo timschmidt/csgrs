@@ -8,6 +8,10 @@
 //! ```
 //!
 //! Output is written under `target/assembly_manual`, which Cargo already ignores.
+//! This path is fixed beneath the manifest directory, independently of Cargo's
+//! target-directory override. Existing SVG/Markdown files are overwritten. The
+//! block, insert and screw are cuboid stand-ins; no hole is cut and no STL file
+//! is exported despite fabrication filenames appearing in the manual.
 
 use std::fs;
 use std::path::PathBuf;
@@ -21,6 +25,9 @@ use csgrs::parts::{BlueprintProjection, NodeId, PosedAssembly};
 use csgrs::solid::{self, SolidExt};
 use hyperlattice::{Point3, Real, Vector3};
 
+/// Checks fixture BOM/pose/dimension observations, then writes two SVGs and a Markdown manual.
+/// Assertions and filesystem/geometry errors panic; writes are not atomic as a group.
+/// SVG line presence and selected pose values do not certify the entire drawing's fidelity.
 fn main() {
     let (document, insert_id, screw_id) = build_document();
     let bom = bill_of_materials(&document);
@@ -97,6 +104,9 @@ fn main() {
     println!("wrote {}", directory.display());
 }
 
+/// Builds three cuboid stand-ins and explicitly mates insert/screw seats to authored +Z frames.
+/// Attaches separate guide origins/offsets and instructions; attachment records
+/// alone do not place geometry or create mechanical compatibility proofs.
 fn build_document() -> (AssemblyDocument, NodeId, NodeId) {
     let mut document = AssemblyDocument::new("Printed block", "main");
     document
@@ -147,6 +157,7 @@ fn build_document() -> (AssemblyDocument, NodeId, NodeId) {
     (document, insert_id, screw_id)
 }
 
+/// Constructs a checked +Z mounting frame at exact integer coordinates with deterministic fallback roll.
 fn frame(handle: &str, x: i64, y: i64, z: i64) -> AttachmentFrame {
     AttachmentFrame::try_new(
         handle,
@@ -158,6 +169,7 @@ fn frame(handle: &str, x: i64, y: i64, z: i64) -> AttachmentFrame {
     .expect("attachment axis is +Z")
 }
 
+/// Stores an exact parent-frame guide origin and translation, with guides enabled and propagation disabled.
 fn guide_offset(x: i64, y: i64, z: i64, dx: i64, dy: i64, dz: i64) -> ExplodeSpec {
     let mut spec = ExplodeSpec::translation(Vector3::new([
         Real::from(dx),
@@ -168,6 +180,7 @@ fn guide_offset(x: i64, y: i64, z: i64, dx: i64, dy: i64, dz: i64) -> ExplodeSpe
     spec
 }
 
+/// Finds one emitted fixture pose and returns its transformed origin's native Z coordinate.
 fn origin_z(posed: &PosedAssembly, id: NodeId) -> Real {
     let part = posed
         .parts
@@ -180,6 +193,7 @@ fn origin_z(posed: &PosedAssembly, id: NodeId) -> Real {
         .z
 }
 
+/// Requires strictly decided scalar value equality; uncertainty fails the assertion condition.
 fn same(left: &Real, right: &Real) -> bool {
     hyperlimit::compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT).value()
         == Some(std::cmp::Ordering::Equal)

@@ -3,6 +3,9 @@
 //! Quantities multiply instance counts from the root. A step marked
 //! `merge_into_parent` contributes its parts to the nearest ancestor column
 //! and does not receive a column of its own.
+//! This report has no overflow/error channel: step-count failures become zero,
+//! part-count failures omit their lines, and flat duplicate totals saturate.
+//! These are implementation limits, not evidence that every reported count is exact.
 
 use super::assembly::{AssemblyDocument, AssemblyNode, NodeKind, instance_count};
 use super::metadata::NodeId;
@@ -16,7 +19,7 @@ pub enum BomCategory {
     Printed,
     /// Routed sheet.
     Routed,
-    /// Named build step.
+    /// Named build-step category available to callers; this collector represents steps separately.
     Subassembly,
 }
 
@@ -32,18 +35,19 @@ pub struct BomLine {
     pub description: String,
     /// Project-wide quantity, after ancestor instance counts.
     pub quantity: u64,
-    /// Node that contributed the line.
+    /// Contributing node, or the first contributing node retained when flat duplicates are merged.
     pub node: NodeId,
 }
 
-/// A named step and the parts directly inside it.
+/// Reference to a named child step from a hierarchical or global-column row.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BomSubassembly {
     /// Child step.
     pub node: NodeId,
     /// Child name.
     pub name: String,
-    /// How many of that step this parent uses.
+    /// Project-wide count including all ancestors, not a per-parent multiplicity.
+    /// Stored as zero if count multiplication or link lookup failed.
     pub quantity: u64,
 }
 
@@ -54,11 +58,11 @@ pub struct BomAssembly {
     pub node: NodeId,
     /// Step name.
     pub name: String,
-    /// How many of this step the project builds.
+    /// Project-wide step count, or zero when count multiplication/link lookup failed.
     pub quantity: u64,
     /// Parts of this step are folded into the parent column.
     pub merge_into_parent: bool,
-    /// Printed, routed, and vitamin lines directly inside the step.
+    /// Direct part lines for hierarchical rows; global columns also concatenate merged descendants' lines.
     pub lines: Vec<BomLine>,
     /// Child steps.
     pub subassemblies: Vec<BomSubassembly>,
@@ -67,15 +71,25 @@ pub struct BomAssembly {
 /// Flat and hierarchical bills, plus the columns of the global table.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BomReport {
-    /// Every step in tree order.
+    /// Steps reached through step-only child links, in depth-first insertion order.
     pub hierarchical: Vec<BomAssembly>,
-    /// Parts summed across the project, vitamins sorted by description.
+    /// Lines merged by category/key with saturating quantities and first-source text/ID.
+    /// Sorted by category, then description text and key.
     pub flat: Vec<BomLine>,
     /// Steps that own a column in the global table.
     pub columns: Vec<BomAssembly>,
 }
 
 /// Builds the bill of materials for `document`.
+/// Traverses step children only; non-step nodes contribute lines but their
+/// descendants are not searched. Hidden parts/references are omitted, while
+/// hidden step rows remain. BOM-only parts still contribute quantities.
+/// Flat duplicate keys retain the first description/source and saturate sums;
+/// global columns concatenate merged-step lines without duplicate aggregation.
+/// Marking the root merged removes its column without an ancestor to receive it;
+/// its hierarchical and flat lines remain.
+/// Missing/overflowed counts have no diagnostic channel. Requires a consistent
+/// acyclic document; recursion and collection growth have no declared resource bound.
 pub fn bill_of_materials(document: &AssemblyDocument) -> BomReport {
     let mut hierarchical = Vec::new();
     collect_steps(document, document.root(), &mut hierarchical);
@@ -92,6 +106,9 @@ pub fn bill_of_materials(document: &AssemblyDocument) -> BomReport {
     }
 }
 
+/// Emits one hierarchical row per reachable step, then recurses into its direct step children.
+/// Missing/non-step roots are ignored; failed step quantities become zero. Child
+/// step references use project-wide counts, and non-step count failures omit lines.
 fn collect_steps(document: &AssemblyDocument, id: NodeId, output: &mut Vec<BomAssembly>) {
     let Some(node) = document.node(id) else {
         return;
@@ -133,6 +150,9 @@ fn collect_steps(document: &AssemblyDocument, id: NodeId, output: &mut Vec<BomAs
     }
 }
 
+/// Builds one nonhidden printed/routed/vitamin line with ancestor-multiplied quantity.
+/// References/steps and failed quantity lookup are omitted; BOM-only is not an
+/// exclusion. Empty descriptions fall back to the node name before key derivation.
 fn part_line(document: &AssemblyDocument, node: &AssemblyNode, id: NodeId) -> Option<BomLine> {
     if node.bom.hidden || node.kind == NodeKind::Reference {
         return None;
@@ -158,6 +178,9 @@ fn part_line(document: &AssemblyDocument, node: &AssemblyNode, id: NodeId) -> Op
     })
 }
 
+/// Uses a vitamin's nonempty trimmed prefix before the first colon, otherwise the node name.
+/// Non-vitamin categories always use the unmodified name; a colon-free vitamin
+/// description does not itself become its key.
 fn line_key(category: BomCategory, name: &str, description: &str) -> String {
     match category {
         BomCategory::Vitamin => description
@@ -171,6 +194,7 @@ fn line_key(category: BomCategory, name: &str, description: &str) -> String {
     }
 }
 
+/// Stably sorts by enum category, display-sort text and key, preserving ties' existing order.
 fn sort_lines(lines: &mut [BomLine]) {
     lines.sort_by(|left, right| {
         left.category
@@ -180,6 +204,8 @@ fn sort_lines(lines: &mut [BomLine]) {
     });
 }
 
+/// Returns trimmed post-colon vitamin text or the full description for sorting.
+/// Other categories and colon-free vitamin descriptions retain their exact text.
 fn sort_text(line: &BomLine) -> String {
     if line.category == BomCategory::Vitamin {
         line.description
@@ -191,6 +217,9 @@ fn sort_text(line: &BomLine) -> String {
     }
 }
 
+/// Aggregates matching category/key lines with saturating `u64` addition, then sorts.
+/// Keeps the first contributor's description and node ID; does not retain a full
+/// contributor list or report overflow. Lookup scans the accumulating vector.
 fn flatten(hierarchical: &[BomAssembly]) -> Vec<BomLine> {
     let mut lines = Vec::new();
     for assembly in hierarchical {
@@ -208,6 +237,10 @@ fn flatten(hierarchical: &[BomAssembly]) -> Vec<BomLine> {
     lines
 }
 
+/// Builds a visible step column, recursively appending lines from merged child steps.
+/// Direct unmerged child references are retained; subassembly references found
+/// inside merged children are not forwarded. Duplicate lines remain separate.
+/// The step must exist in the hierarchical report or this helper panics.
 fn column_assembly(
     document: &AssemblyDocument,
     hierarchical: &[BomAssembly],
@@ -248,6 +281,7 @@ fn column_assembly(
     }
 }
 
+/// Small-tree quantity, merge, category sorting and hidden-part witnesses.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -255,6 +289,7 @@ mod tests {
     use crate::solid;
     use hyperlattice::{Real, Vector3};
 
+    /// Builds a count-two merged handle with printed/insert lines, root screws and a hidden nut.
     fn sample() -> AssemblyDocument {
         let mut document = AssemblyDocument::new("Handle", "main");
         let mut handle = AssemblyNode::step("handle");
@@ -297,6 +332,8 @@ mod tests {
         document
     }
 
+    /// Requires exact expected counts/order in the root column, hidden-nut omission and retained merged hierarchy.
+    /// Does not cover overflow, duplicate descriptions, arbitrary mutation or cyclic documents.
     #[test]
     fn quantities_merge_and_sort() {
         let report = bill_of_materials(&sample());

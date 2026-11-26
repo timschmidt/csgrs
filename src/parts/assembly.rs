@@ -1,8 +1,9 @@
 //! Assembly tree, placement, and exploded poses.
 //!
-//! A named step freezes the explode offsets of its descendants unless that
-//! step is the view being drawn. That matches the NopSCADlib rule that a
-//! nested assembly stays assembled while its parent is exploded.
+//! Descendant steps freeze their children's explode offsets; the selected view
+//! root starts traversal in its own documentation frame. Counts affect BOM
+//! quantities, not the number of geometric placements emitted here. Public node
+//! mutation and insertion of cloned nodes do not enforce a valid acyclic tree.
 
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -16,7 +17,10 @@ use super::scalar::{translation, vector_is_zero};
 pub enum AssemblyError {
     /// The parent id is not in the document.
     #[error("assembly parent {id} is not in the document", id = .0.0)]
-    MissingParent(NodeId),
+    MissingParent(
+        /// Requested parent index that could not be found in this document.
+        NodeId,
+    ),
     /// A node asked for a count of zero.
     #[error("assembly instance count must be at least one")]
     ZeroCount,
@@ -25,11 +29,11 @@ pub enum AssemblyError {
 /// Which documentation pose to evaluate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AssemblyView {
-    /// Placements only.
+    /// Root documentation pose and descendant placements, without explode offsets.
     Assembled,
-    /// Explode offsets owned by `step`.
+    /// Traverse from the selected node's exploded documentation frame with offsets enabled.
     Exploded {
-        /// Step whose children move.
+        /// Intended step root; existence is checked, but `NodeKind::Step` is not required.
         step: NodeId,
     },
 }
@@ -45,7 +49,7 @@ pub enum NodeKind {
     Routed,
     /// A catalog part that is not fabricated by this project.
     Vitamin,
-    /// Geometry drawn for context and omitted from the BOM by default.
+    /// Geometry drawn for context and always omitted by the part-line BOM collector.
     Reference,
 }
 
@@ -58,13 +62,14 @@ pub struct ExplodeSpec {
     pub guide_origin: Point3,
     /// Draw the guide from `guide_origin` to `guide_origin + offset`.
     pub show_guide: bool,
-    /// Keep explode active for descendants after this offset is applied.
+    /// Keep descendant offsets enabled after this offset, unless a nested step freezes them.
     pub propagate_to_children: bool,
     /// Skip the offset. The part still participates in occlusion.
     pub suppressed: bool,
 }
 
 impl Default for ExplodeSpec {
+    /// Selects zero offset/origin, no guide, no propagation and no suppression.
     fn default() -> Self {
         Self {
             offset: Vector3::new([Real::zero(), Real::zero(), Real::zero()]),
@@ -78,6 +83,7 @@ impl Default for ExplodeSpec {
 
 impl ExplodeSpec {
     /// Moves by `offset` and draws a guide from the parent origin.
+    /// Merely stores the offset; posing later decides whether it is nonzero.
     pub fn translation(offset: Vector3) -> Self {
         Self {
             offset,
@@ -94,9 +100,9 @@ impl ExplodeSpec {
 pub struct BomPolicy {
     /// Vitamin call and description, or the fabrication filename.
     pub description: String,
-    /// Omit the node from every BOM table.
+    /// Omit a non-step part line; step rows and their descendants are still traversed.
     pub hidden: bool,
-    /// Keep the node on the BOM and omit its geometry from drawings.
+    /// Omit this node's geometry from posed parts without pruning its descendants or BOM line.
     pub bom_only: bool,
     /// Fold this step's parts into the parent column.
     pub merge_into_parent: bool,
@@ -117,15 +123,19 @@ impl BomPolicy {
 /// Optional camera placement for the assembled and exploded manual views.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DocumentationPose {
-    /// Extra rigid transform applied to the assembled view.
+    /// Assembled-view root transform; rigidness is intended but not validated here.
     pub assembled: Option<Matrix4>,
-    /// Extra rigid transform applied to the exploded view.
+    /// Exploded-view root transform; rigidness is intended but not validated here.
     pub exploded: Option<Matrix4>,
     /// Camera distance retained for the manual. Rendering does not consume it.
     pub camera_distance: Option<Real>,
 }
 
 /// One node in an [`AssemblyDocument`].
+/// Public data is mutable without revalidation. Cloning copies parent/child IDs
+/// as well as geometry; use detached constructors for ordinary tree insertion.
+/// Constructors assign `NativeExactCsg` metadata without inspecting the mesh's
+/// construction history, topology or source fidelity.
 #[derive(Clone, Debug)]
 pub struct AssemblyNode {
     /// Stable name. Printed and routed nodes use this as the output filename.
@@ -134,7 +144,8 @@ pub struct AssemblyNode {
     pub kind: NodeKind,
     /// How many identical instances this one modeled placement stands for.
     pub count: u64,
-    /// Child coordinates to parent coordinates, before the explode offset.
+    /// Child coordinates to parent coordinates, before parent-frame explode translation.
+    /// Ignored when this node is the selected view root; no rigidness check is made.
     pub placement: Matrix4,
     /// Local attachment frames.
     pub attachments: Vec<AttachmentFrame>,
@@ -146,11 +157,13 @@ pub struct AssemblyNode {
     pub instructions: String,
     /// Manual camera pose.
     pub pose: Option<DocumentationPose>,
-    /// How much the geometry can be trusted.
+    /// Authored geometry-status label; not a consumed predicate receipt or validation proof.
     pub geometry_certainty: GeometryCertainty,
     /// Triangle geometry. Steps usually leave this empty.
     pub geometry: Option<TriangleMesh>,
+    /// Parent link used for quantity multiplication; absent for a detached node/root.
     pub(super) parent: Option<NodeId>,
+    /// Child links in insertion order; cloned nodes retain these references.
     pub(super) children: Vec<NodeId>,
 }
 
@@ -187,6 +200,7 @@ impl AssemblyNode {
         Self::solid(name, NodeKind::Vitamin, description, mesh)
     }
 
+    /// Creates a detached solid node and installs a visible BOM description without validating its mesh.
     fn solid(
         name: impl Into<String>,
         kind: NodeKind,
@@ -198,6 +212,9 @@ impl AssemblyNode {
         node
     }
 
+    /// Creates a detached count-one node with identity placement and inactive documentation settings.
+    /// Labels geometry `NativeExactCsg` even if absent or unvalidated; reference
+    /// kind initializes hidden BOM intent, and all hierarchy links start empty.
     fn bare(name: impl Into<String>, kind: NodeKind, geometry: Option<TriangleMesh>) -> Self {
         let hidden = kind == NodeKind::Reference;
         Self {
@@ -224,12 +241,15 @@ impl AssemblyNode {
 }
 
 /// A project assembly: one tree of parts, steps, and documentation.
+/// The intended tree invariant is caller-maintained when replacing/mutating nodes
+/// or inserting clones. Recursive consumers add no cycle detection or total-work bound.
 #[derive(Clone, Debug)]
 pub struct AssemblyDocument {
     /// Manual title.
     pub title: String,
     /// Markdown sections placed before the parts list.
     pub description: Vec<String>,
+    /// Document-local insertion table; numeric node IDs index this vector.
     nodes: Vec<AssemblyNode>,
 }
 
@@ -253,7 +273,7 @@ impl AssemblyDocument {
         self.nodes.get(id.0 as usize)
     }
 
-    /// Mutably borrows a node.
+    /// Mutably borrows a node without rechecking count, hierarchy or authored geometry labels afterward.
     pub fn node_mut(&mut self, id: NodeId) -> Option<&mut AssemblyNode> {
         self.nodes.get_mut(id.0 as usize)
     }
@@ -264,6 +284,7 @@ impl AssemblyDocument {
     }
 
     /// Children of a node, in insertion order.
+    /// Missing IDs yield an empty slice, indistinguishable from a leaf through this accessor.
     pub fn children(&self, id: NodeId) -> &[NodeId] {
         self.node(id)
             .map(|node| node.children.as_slice())
@@ -271,6 +292,10 @@ impl AssemblyDocument {
     }
 
     /// Inserts `node` under `parent`.
+    /// Rejects zero count before testing parent existence. Replaces the parent link
+    /// but preserves any existing child links; does not validate tree ownership,
+    /// cycles, geometry, placement or uniqueness of names. Panics if the insertion
+    /// index cannot fit in `u32`; allocation is not covered by a declared resource budget.
     pub fn insert(
         &mut self,
         parent: NodeId,
@@ -298,7 +323,7 @@ pub struct PosedPart {
     pub node: NodeId,
     /// Node name.
     pub name: String,
-    /// Child-local coordinates to world coordinates.
+    /// Node-local coordinates to the selected view's documentation coordinates.
     pub world: Matrix4,
 }
 
@@ -316,17 +341,23 @@ pub struct GuideSegment {
 /// Result of evaluating one assembled or exploded view.
 #[derive(Clone, Debug)]
 pub struct PosedAssembly {
-    /// Whether explode offsets were applied.
+    /// Whether an exploded view was requested, even if no offset moved or the root was missing.
     pub exploded: bool,
-    /// Parts that have drawable geometry.
+    /// Nodes with a present geometry handle and `bom_only == false`, without mesh validation or count expansion.
     pub parts: Vec<PosedPart>,
     /// Explode guide segments.
     pub guides: Vec<GuideSegment>,
-    /// Offsets or transforms the policy could not decide.
+    /// Missing-node, undecided-offset and guide-transform diagnostic strings; not exhaustive geometry validation.
     pub blockers: Vec<String>,
 }
 
 /// Evaluates placements and, for an exploded step, the offsets that step owns.
+/// Starts at the document root for assembled views or the selected node for
+/// exploded views. The root's optional documentation matrix replaces its placement
+/// and ancestors; descendant poses are not used. Each eligible node contributes
+/// one placement regardless of count. Missing nodes and unresolved offsets/guides
+/// append blockers while available output continues; callers must inspect them.
+/// Does not transform/validate mesh geometry or enforce an acyclic hierarchy.
 pub fn posed_parts(document: &AssemblyDocument, view: AssemblyView) -> PosedAssembly {
     let (start, exploded) = match view {
         AssemblyView::Assembled => (document.root(), false),
@@ -355,6 +386,8 @@ pub fn posed_parts(document: &AssemblyDocument, view: AssemblyView) -> PosedAsse
     posed
 }
 
+/// Returns the selected documentation pose or identity, always inside `Some`.
+/// Ignores node placement and camera distance; performs no matrix validity check.
 fn view_root_matrix(node: &AssemblyNode, exploded: bool) -> Option<Matrix4> {
     let pose = node.pose.as_ref();
     let extra = if exploded {
@@ -365,6 +398,11 @@ fn view_root_matrix(node: &AssemblyNode, exploded: bool) -> Option<Matrix4> {
     Some(extra.cloned().unwrap_or_else(Matrix4::identity))
 }
 
+/// Recursively composes `parent_world * translate(offset) * placement` when offset motion is decided.
+/// Suppression/disabled explode short-circuit offset classification. Guides use
+/// the parent frame, not the node placement. Nested steps freeze descendant
+/// offsets; an applied nonpropagating offset also stops them. Missing/failed
+/// guide data adds blockers without discarding other placed output.
 fn place_instance(
     document: &AssemblyDocument,
     id: NodeId,
@@ -413,6 +451,8 @@ fn place_instance(
     }
 }
 
+/// Strictly tests squared offset length, recording uncertainty and skipping that offset if undecided.
+/// A skipped undecided offset does not itself disable descendants' explode processing.
 fn offset_moves(node: &AssemblyNode, posed: &mut PosedAssembly) -> bool {
     match vector_is_zero(&node.explode.offset) {
         Some(true) => false,
@@ -426,6 +466,8 @@ fn offset_moves(node: &AssemblyNode, posed: &mut PosedAssembly) -> bool {
     }
 }
 
+/// Appends one pose for a present mesh unless this node is BOM-only; silently ignores missing IDs.
+/// Does not inspect triangles, certainty labels, hidden BOM flags, counts or descendant geometry.
 fn push_geometry(
     document: &AssemblyDocument,
     id: NodeId,
@@ -446,6 +488,9 @@ fn push_geometry(
 }
 
 /// Product of instance counts from the root through `id`, including `id`.
+/// Follows stored parent links until absence; returns `None` for a missing link
+/// or checked `u64` multiplication overflow. Counts mutated to zero produce zero.
+/// Requires an acyclic parent chain; no cycle detection or work bound is imposed.
 pub fn instance_count(document: &AssemblyDocument, id: NodeId) -> Option<u64> {
     let mut count = 1u64;
     let mut cursor = Some(id);
@@ -457,16 +502,19 @@ pub fn instance_count(document: &AssemblyDocument, id: NodeId) -> Option<u64> {
     Some(count)
 }
 
+/// Exact small-tree witnesses for local exploded views, step freezing and suppression.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::parts::scalar::real_eq;
     use crate::solid::{self, SolidExt};
 
+    /// Transforms the origin and extracts native Z, requiring a finite affine fixture result.
     fn point_z(world: &Matrix4) -> Real {
         world.transform_point3(&Point3::origin()).expect("origin").z
     }
 
+    /// Builds a merged handle step with counted inserts and a root screw, each with independent offsets.
     fn handle_document() -> (AssemblyDocument, NodeId, NodeId, NodeId) {
         let mut document = AssemblyDocument::new("Handle", "main");
         let mut handle = AssemblyNode::step("handle");
@@ -514,6 +562,7 @@ mod tests {
         (document, handle_id, insert_id, screw_id)
     }
 
+    /// Finds the fixture node's emitted pose and reads the transformed origin Z coordinate.
     fn z_of(posed: &PosedAssembly, id: NodeId) -> Real {
         let part = posed
             .parts
@@ -523,6 +572,7 @@ mod tests {
         point_z(&part.world)
     }
 
+    /// Checks parent-view child-step freezing, assembled Z values and local handle-view membership/guides.
     #[test]
     fn parent_explode_keeps_child_step_seated() {
         let (document, handle_id, insert_id, screw_id) = handle_document();
@@ -566,6 +616,7 @@ mod tests {
         assert!(handle_view.guides.iter().any(|guide| guide.node == insert_id));
     }
 
+    /// Requires suppression to keep the screw at assembled Z while retaining its drawable pose.
     #[test]
     fn suppressed_explode_stays_put() {
         let (mut document, _, _, screw_id) = handle_document();
