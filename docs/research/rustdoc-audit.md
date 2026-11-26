@@ -5717,6 +5717,82 @@ checked artifact metadata is in the corresponding `artifacts.jsonl`. Full
 workflow/runtime/performance checks remain waived by the owner. The complete
 repository audit remains active; this is scoped coverage evidence only.
 
+## Hyperlimit symbolic predicate fixtures and quickstart
+
+Baseline: `fa953fd57` on `rustdoc`. Read every line of
+`crates/hyperlimit/tests/cyclotomic_zero_predicates.rs` (120 baseline lines),
+`extended_normal_form_predicates.rs` (87), `lazy_scalar_certificates.rs` (33),
+`repeated_symbolic_products.rs` (141), `readme.rs` (41), and
+`crates/hyperlimit/examples/readme_quickstart.rs` (11). Their owning layer is
+Hyperlimit's predicate qualification corpus and package documentation. Relevant
+contracts are P1/P3/P4 and P8–P11/P19: exact scalar meaning, reusable construction
+identity, policy-sensitive decisions, and explicit certainty. The missing
+acceptance witness was documentation for private helpers, constants, tests and
+example entrypoint, plus misleading explanations of existing assertions.
+Implementation and test assertions remain unchanged.
+
+Added or reviewed Rustdoc for all 22 named declarations in these six files
+(counts 6, 5, 1, 5, 4, 1). Sphere samples retain rational-angle trigonometric
+coordinates; crossing uses a supporting line and does not assert its parameter
+lies in `[0, 1]`. The translated fixture uses exact binary f64 values. Zero and
+On checks require Exact certainty, while adjacent-quad nonzero controls inspect
+values only. These fixtures isolate mesh-consumer predicates, without running
+hulls or Booleans.
+
+The degree-ten fixture asserts ordinary normal-form decline and subsequent
+exact strict results, without asserting the successful stage. Replaced the
+incorrect description of `2^-60` offsets as below refinement precision. Its
+angle-addition control checks strict Unknown and an approximate decided receipt,
+not the approximate value. The retained-product control does assert approximate
+Zero, with strict Unknown before and after. Retained replay here means reuse in
+one process, with no cache-count or serialization assertion. Documented the
+unit chord normal and independent normal/determinant formulas used by the
+symbolic geometry fixtures.
+
+The serde fixture removes the `computable` member if present, without asserting
+that removal found one. It reloads pi, sqrt(2), and ln(3), then checks strict
+scalar/orientation values; it does not separately inspect certainty or prove
+whole-value equivalence through a fresh process. Read supporting excerpts of
+Hyperreal's `serde.rs` (through line 75), arithmetic facts and relation-normal-form
+code, plus previously reviewed Hyperlimit resolution code; these excerpts do
+not establish full review of the Hyperreal files.
+
+Read the complete Hyperlimit README for context, but its broader claims about
+coverage, bounds, and replay still require semantic review. This batch changes
+only its marked quickstart block to match the newly documented runnable example.
+The README tests check source equality after outer whitespace trimming, package
+version presence, and eight heading substrings, not all documentation semantics.
+The example asserts positive orientation and prints the full outcome; its
+assertion itself extracts only the value.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. All six Rust files are identical
+  to baseline after removing comment-only and blank lines. The README change
+  consists solely of synchronized example comments.
+- `cargo check --locked -p hyperlimit --test cyclotomic_zero_predicates --test
+  extended_normal_form_predicates --test lazy_scalar_certificates --test
+  repeated_symbolic_products --test readme --example readme_quickstart
+  --all-features --offline -j2` passed. The same target list with
+  `--no-default-features` passed; the serde fixture is excluded in that mode.
+- Private Rustdoc passed for all five test targets and the example with all
+  features, checked own-library metadata and cached dependency search paths,
+  `--document-private-items`, warnings denied, and broken/private links denied.
+  Verified 18 complete rendered module/helper/constant/main doc groups against
+  source. Ten test functions remain source-reviewed and compiled rather than
+  exposed on standalone Rustdoc pages.
+- Independently checked the README/source text equality, manifest version
+  substring, and all eight heading substrings in Python. These are static
+  checks, not Rust test execution. No runtime scalar, geometry, or example tests
+  ran. The focused targets are the affected downstream consumers; no library
+  API or implementation changed. Shared target storage remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-symbolic-{check,minimal-check,private}.log`;
+checked artifact metadata is in `symbolic-artifacts.jsonl` under the same prefix.
+The owner's full-check waiver applies. The future-agent public/private 100%
+Rustdoc mandate remains in root AGENTS.md. Overall repository coverage and the
+complete-file semantic audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

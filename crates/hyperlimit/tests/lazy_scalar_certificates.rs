@@ -1,8 +1,20 @@
+//! Serde scalar-certificate fixtures consumed by strict sign and orientation queries.
+//!
+//! Each serialized scalar has its `computable` member removed if present, then
+//! is reloaded in the same process. These are predicate-value checks, not a
+//! fresh-process replay or a complete serialized-value equivalence proof.
+
 #![cfg(feature = "serde")]
 
 use hyperlimit::{Point2, PredicatePolicy, Sign, classify_real_sign, orient2};
 use hyperreal::Real;
 
+/// Reload pi, sqrt(2), and ln(3) after removing the optional computable member.
+///
+/// Require a positive strict scalar sign and opposite orientation signs for
+/// `(0, 0), (1, 0), (0, value)` and its reversal. The assertions extract values;
+/// they do not independently inspect certainty or require that removal found a
+/// member.
 #[test]
 fn lazy_scalar_certificates_reach_strict_geometric_predicates() {
     for value in [

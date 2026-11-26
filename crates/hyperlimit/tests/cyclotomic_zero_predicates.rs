@@ -1,9 +1,8 @@
-//! Strict predicates over sampled-sphere coordinates.
+//! Exact orientation regressions at rational-angle sampled-sphere vertices.
 //!
-//! Sampled circles and spheres place vertices at sines and cosines of
-//! rational multiples of pi. Their exact coplanarities and collinearities
-//! are zeros in a cyclotomic field. These tests reproduce the predicates that
-//! stopped strict convex hulls and Booleans of the README sphere.
+//! The fixtures exercise cyclotomic coplanarity and collinearity directly,
+//! including reuse of a line orientation. They isolate predicates needed by
+//! sampled-mesh operations; they do not run a convex hull or Boolean operation.
 
 use hyperlimit::{
     Certainty, LineSide, Point2, Point3, PredicateOutcome, PredicatePolicy, Sign,
@@ -11,12 +10,16 @@ use hyperlimit::{
 };
 use hyperreal::{Rational, Real};
 
+/// Construct an exact rational scalar; a zero denominator panics.
 fn q(numerator: i64, denominator: u64) -> Real {
     Real::new(Rational::fraction(numerator, denominator).unwrap())
 }
 
-// csgrs sphere vertex: longitude 2*pi*i/segments, colatitude pi*j/stacks,
-// scaled by `radius` and translated by `shift`.
+/// Construct a sphere sample at longitude `2*pi*i/segments` and colatitude
+/// `pi*j/stacks`, scaled by `radius` and translated by `shift`.
+///
+/// The y axis is polar. Counts must be nonzero; indices are not range-checked.
+/// The returned coordinates retain exact trigonometric expressions.
 fn vertex(segments: u64, stacks: u64, i: i64, j: i64, radius: &Real, shift: &[Real; 3]) -> Point3 {
     let longitude = Real::tau() * q(i, segments);
     let colatitude = Real::pi() * q(j, stacks);
@@ -29,12 +32,17 @@ fn vertex(segments: u64, stacks: u64, i: i64, j: i64, radius: &Real, shift: &[Re
     )
 }
 
-// Where the line through `a` and `b` meets z = 0, projected to (x, y).
+/// Intersect the supporting line through `a` and `b` with `z = 0`, returning x/y.
+///
+/// The parameter is `-a.z / (b.z - a.z)` and need not lie in `[0, 1]`.
+/// Division must succeed; this helper panics on a rejected denominator and does
+/// not establish segment membership.
 fn crossing(a: &Point3, b: &Point3) -> Point2 {
     let t = (-a.z.clone() / (&b.z - &a.z)).unwrap();
     Point2::new(&a.x + &t * (&b.x - &a.x), &a.y + &t * (&b.y - &a.y))
 }
 
+/// Require the expected decided value and Exact certainty, without constraining stage.
 fn assert_exact<T: PartialEq + std::fmt::Debug>(outcome: PredicateOutcome<T>, expected: T) {
     match outcome {
         PredicateOutcome::Decided {
@@ -47,6 +55,10 @@ fn assert_exact<T: PartialEq + std::fmt::Debug>(outcome: PredicateOutcome<T>, ex
     }
 }
 
+/// Require exact zero orientation for four coplanar sphere samples.
+///
+/// A nearby indexed vertex supplies a decided nonzero control; its certainty
+/// is not separately asserted.
 #[test]
 fn sampled_sphere_coincident_planes_are_certified_zeros() {
     let unit = Real::one();
@@ -70,6 +82,12 @@ fn sampled_sphere_coincident_planes_are_certified_zeros() {
     assert_ne!(value, Sign::Zero);
 }
 
+/// Require exact collinearity of edge-line and diagonal-line crossings for two grids.
+///
+/// Both direct orientation and retained line-side classification must be exact.
+/// Radius and translation preserve the binary values of the supplied `f64`
+/// literals. A crossing from the next quad must decide nonzero; that control
+/// has no separate certainty assertion.
 #[test]
 fn plane_crossings_of_one_sampled_quad_are_certified_collinear() {
     // The README fixture: sphere(1.35, segments, stacks) translated by

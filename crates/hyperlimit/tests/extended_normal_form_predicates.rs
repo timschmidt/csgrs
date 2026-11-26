@@ -1,9 +1,9 @@
-//! The last exact stage of the strict sign cascade: one larger relation
-//! attempt after the normal form and the radical towers decline.
+//! Strict decisions for a degree-ten unit-circle identity and policy boundaries.
 //!
-//! Rotations by rational turns beyond the cyclotomic order limit, such as
-//! 1/10000 degree, leave zeros that only `sin^2 + cos^2 = 1` decides, at a
-//! degree above the ordinary limit of 8.
+//! The ordinary rational normal form declines the constructed zero; the strict
+//! predicate must nevertheless prove it exactly. The assertions leave the
+//! successful dispatch stage unconstrained. A separate angle-addition identity
+//! exercises an unresolved strict result and an approximate-policy receipt.
 
 use std::cmp::Ordering;
 
@@ -12,12 +12,15 @@ use hyperlimit::{
 };
 use hyperreal::{Rational, Real};
 
+/// Return sine and cosine of exactly 1/10000 degree, or `pi/1800000` radians.
 fn tiny_turn() -> (Real, Real) {
     let angle = Real::new(Rational::fraction(1, 10_000).unwrap()).to_radians();
     (angle.clone().sin(), angle.cos())
 }
 
-/// `(sin^2 + cos^2)^5`, which is exactly one.
+/// Construct `(sin^2 + cos^2)^5`, exactly one, with formal degree ten in sine/cosine.
+///
+/// The shared squared subexpression retains the product construction under test.
 fn unit_circle_fifth_power() -> Real {
     let (sine, cosine) = tiny_turn();
     let circle = &sine * &sine + &cosine * &cosine;
@@ -25,6 +28,7 @@ fn unit_circle_fifth_power() -> Real {
     &squared * &squared * &circle
 }
 
+/// Extract a decided value only after requiring Exact certainty; panic on uncertainty.
 fn decided<T: std::fmt::Debug>(outcome: PredicateOutcome<T>) -> T {
     match outcome {
         PredicateOutcome::Decided {
@@ -37,6 +41,10 @@ fn decided<T: std::fmt::Debug>(outcome: PredicateOutcome<T>) -> T {
     }
 }
 
+/// Check exact zero/equality after ordinary normal-form decline, and signs of offsets.
+///
+/// The offsets are exactly plus and minus `2^-60`. No assertion selects which
+/// strict decision stage succeeds.
 #[test]
 fn degree_ten_unit_circle_zeros_decide_under_strict() {
     let zero = unit_circle_fifth_power() - Real::one();
@@ -54,7 +62,7 @@ fn degree_ten_unit_circle_zeros_decide_under_strict() {
         )),
         Ordering::Equal
     );
-    // Nonzero offsets keep their signs, also far below refinement precision.
+    // Nonzero offsets of plus and minus 2^-60 keep their exact signs.
     for (numerator, sign) in [(-1, Sign::Negative), (1, Sign::Positive)] {
         let offset = Real::new(Rational::fraction(numerator, 1_u64 << 60).unwrap());
         let value = unit_circle_fifth_power() - Real::one() + offset;
@@ -65,11 +73,14 @@ fn degree_ten_unit_circle_zeros_decide_under_strict() {
     }
 }
 
+/// Require strict uncertainty for the angle-addition zero at `e + 1`.
+///
+/// Approximate policy must return a decided approximate receipt; this fixture
+/// does not assert its value, uncertainty reason, or dispatch stage.
 #[test]
 fn identities_outside_the_extended_attempt_stay_undecided() {
-    // Angle addition is outside every exact stage; strict policy reports it
-    // undecided instead of guessing, and the approximate terminal remains
-    // the only route that answers.
+    // This angle-addition fixture currently remains unresolved under STRICT.
+    // The approximate-policy assertion below checks its receipt, not its value.
     let zero = (Real::e() + Real::one()).sin()
         - Real::e().sin() * Real::one().cos()
         - Real::e().cos() * Real::one().sin();

@@ -1,9 +1,19 @@
-//! Product identity must survive determinant construction and retained replay.
+//! Symbolic product identities through direct and retained geometric predicates.
+//!
+//! Reusing the same points and retained constructions across STRICT,
+//! APPROXIMATE_512, and STRICT checks policy-sensitive outcomes in one process.
+//! These fixtures do not measure cache hits or perform serialized replay.
+
 use hyperlimit::{
     Certainty, LineSide, Point2, Point3, PredicateOutcome, PredicatePolicy, Real, Sign,
     Triangle3Location,
 };
 
+/// Build three positive-coordinate fixtures from constants, radicals, and a chord normal.
+///
+/// The last point is the radius-15 circle point at `pi/20`, shifted by the unit
+/// left normal of the chord from `(15, 0)`. Its normalization requires successful
+/// square root and division by the nonzero chord length.
 fn symbolic_points() -> [Point2; 3] {
     let angle = (Real::pi() / Real::from(20)).unwrap();
     let cosine = angle.clone().cos();
@@ -21,12 +31,18 @@ fn symbolic_points() -> [Point2; 3] {
     ]
 }
 
+/// Require a decided expected value with Exact certainty, leaving stage unconstrained.
 fn exact<T: PartialEq + std::fmt::Debug>(outcome: PredicateOutcome<T>, expected: T) {
     assert!(
         matches!(outcome, PredicateOutcome::Decided { value, certainty: Certainty::Exact, .. } if value == expected)
     );
 }
 
+/// Require exact zero/On results for repeated points through direct and retained paths.
+///
+/// Four point arrangements run through both policies and back to STRICT. A
+/// separate x shift of `2^-80` gives determinant `-y*2^-80`; reversing it must
+/// reverse the exact nonzero sign.
 #[test]
 fn repeated_symbolic_points_have_zero_orientation_under_replay() {
     let origin = Point2::new(Real::zero(), Real::zero());
@@ -75,6 +91,11 @@ fn repeated_symbolic_points_have_zero_orientation_under_replay() {
     }
 }
 
+/// Check exact normal signs and off-plane/degenerate classifications across policies.
+///
+/// The normal is `(20*y, -20*x, 0)` and its dot product with the query is
+/// `20*(x*x+y*y) > 0`. Direct and retained paths must agree on OffPlane;
+/// repeating a triangle vertex must yield Degenerate.
 #[test]
 fn vertical_symbolic_triangles_retain_certified_normal_components() {
     let origin = Point3::new(Real::zero(), Real::zero(), Real::zero());
@@ -112,6 +133,11 @@ fn vertical_symbolic_triangles_retain_certified_normal_components() {
     }
 }
 
+/// Keep the angle-addition determinant unresolved under STRICT after approximate queries.
+///
+/// Two rounds require strict uncertainty followed by an approximate Zero, then
+/// a final strict query must remain unknown. The same source points are reused;
+/// no particular uncertainty reason or stage is asserted.
 #[test]
 fn unrelated_unresolved_determinant_keeps_its_policy_receipt() {
     let z = (Real::e() + Real::one()).sin()
