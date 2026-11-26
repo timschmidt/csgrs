@@ -1,7 +1,7 @@
 //! Successive-operation chains shared by the corpus test and timing harness.
 //!
 //! Each chain feeds the previous result into the next public `csgrs`
-//! operation under [`GeometryContext::STRICT`] and records, per step, the P39
+//! operation under [`csgrs::GeometryContext::STRICT`] and records, per step, the P39
 //! local outcome category, optional native edge validation, mesh counts and stored
 //! coordinate sizes. A returned error ends the chain with a record; validation,
 //! graph-limit or callback panics do not become typed failure records. These are

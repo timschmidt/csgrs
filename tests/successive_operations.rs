@@ -3,7 +3,8 @@
 //! Every chain runs under `GeometryContext::STRICT` through the public API.
 //! Each step must reach its stated P39 outcome. Box chains are compared with
 //! an independent exact volume oracle, and every completed step is checked
-//! for certified closed-manifold topology. Where the represented set fixes
+//! for certified native geometric edge pairing. These checks do not independently
+//! establish every vertex link, embedding or source fidelity. Where the set fixes
 //! the fewest vertices and triangles a triangulation needs, the chains assert
 //! exactly that size; elsewhere exact triangle rows and sizes pin the
 //! measured representation growth documented in
@@ -13,6 +14,7 @@
 #![cfg(all(feature = "curve", feature = "stl-io", feature = "obj-io"))]
 
 // The timing harness also uses the table header.
+/// Shared chain factories, local outcome records, coordinate metrics and box-volume oracle.
 #[allow(dead_code)]
 #[path = "support/successive_operations.rs"]
 mod chains;
@@ -21,6 +23,10 @@ use chains::{BoxSet, Chain, Outcome, StepRecord, q, r};
 use csgrs::{GeometryCertainty, Real, solid, solid::SolidExt};
 use hyperreal::{CertifiedRealSign, Rational, RealSign};
 
+/// Checks synchronous observer ordering across one success followed by a typed failure.
+/// The successful validation/check precedes its record callback, and that callback
+/// precedes step two. Failure has no validation time and stops before step three.
+/// This is an in-memory event-order check, not a filesystem durability test.
 #[test]
 fn completed_records_are_observable_before_the_next_step_or_failure() {
     use std::{cell::RefCell, rc::Rc};
@@ -71,14 +77,18 @@ fn completed_records_are_observable_before_the_next_step_or_failure() {
     );
 }
 
+/// Prints each formatted step row for test diagnostics without asserting timings.
 fn report(name: &str, records: &[StepRecord]) {
     for row in chains::table_rows(name, records) {
         println!("{row}");
     }
 }
 
-/// Run a chain whose every step must be certified and closed manifold, and
-/// compare each step with its oracle when one is supplied.
+/// Requires all requested steps to return Certified and true native edge validation.
+/// Optional oracle rows compare exact signed volume with independently integrated
+/// box volume after each success; the supplied slice must cover every step.
+/// Prints diagnostic rows and returns records. Unknown/error/panic does not count
+/// as a completed success, and empty results cannot satisfy the manifold assertion.
 fn certified_chain(chain: &Chain, oracle: Option<&[BoxSet]>) -> Vec<StepRecord> {
     let records = chains::run(chain, |step, mesh| {
         if let Some(oracle) = oracle {
@@ -104,10 +114,13 @@ fn certified_chain(chain: &Chain, oracle: Option<&[BoxSet]>) -> Vec<StepRecord> 
     records
 }
 
+/// Extracts a record field/computed value in step order for expectation comparisons.
 fn column<T>(records: &[StepRecord], value: impl Fn(&StepRecord) -> T) -> Vec<T> {
     records.iter().map(value).collect()
 }
 
+/// Computes adjacent usize differences, assuming nondecreasing fixture counts.
+/// Fewer than two values yield no increments; subtraction is not checked.
 fn increments(values: &[usize]) -> Vec<usize> {
     values.windows(2).map(|pair| pair[1] - pair[0]).collect()
 }
@@ -115,6 +128,8 @@ fn increments(values: &[usize]) -> Vec<usize> {
 /// The fewest triangles and vertices of a block with `k` through-holes of
 /// `sides` sides: the top and bottom are one polygon with `k` holes, each
 /// wall is a quadrilateral, and only block and hole corners are vertices.
+/// Assumes distinct nonintersecting through-holes with noncollinear corners and
+/// no extra vertices. Returns `(triangles, vertices)`; usize arithmetic is unchecked.
 fn drilled_block_size(sides: usize, k: usize) -> (usize, usize) {
     // Any triangulation of a polygon with n vertices and h holes, using no
     // other vertex, has n + 2h - 2 triangles.
@@ -123,6 +138,9 @@ fn drilled_block_size(sides: usize, k: usize) -> (usize, usize) {
     (2 * top + 2 * 4 + 2 * k * sides, 8 + 2 * k * sides)
 }
 
+/// Checks sixteen rational square drills against independent box volume and minimal counts.
+/// Requires certified local outcomes/edge checks, no symbolic coordinates and
+/// three-bit maximum denominators; source thirds/sevenths must not expand.
 #[test]
 fn square_drills_stay_minimal_with_constant_denominators() {
     let (chain, oracle) = chains::square_drills(16);
@@ -142,6 +160,9 @@ fn square_drills_stay_minimal_with_constant_denominators() {
     assert_eq!(drilled_block_size(4, 16), (12 + 20 * 16, 136));
 }
 
+/// Checks sixteen inscribed-square drills against exact removed volume and size formulas.
+/// Requires certified local outcomes/edge checks and one-bit denominators; exact
+/// triangle/vertex rows enforce all sixteen completed steps.
 #[test]
 fn rational_polygon_drills_keep_their_minimal_size() {
     let chain = chains::polygon_drills(4, 16);
@@ -170,6 +191,9 @@ fn rational_polygon_drills_keep_their_minimal_size() {
     );
 }
 
+/// Checks a crossed-tunnel mesh has 32 integer corners and no three retained regressions.
+/// Four repeated alternating cuts must preserve the set of oriented rational
+/// triangle rows; that comparison discards duplicate triangle multiplicity.
 #[test]
 fn crossing_bars_leave_no_steiner_points_in_coincident_faces() {
     let cube = solid::cube(r(12)).unwrap();
@@ -217,7 +241,10 @@ fn crossing_bars_leave_no_steiner_points_in_coincident_faces() {
     }
 }
 
-/// Order-independent exact triangle rows of a rational mesh.
+/// Canonical oriented rational triangle rows, independent of index/row ordering.
+/// Coordinates are rational strings; cyclic rotations are normalized, reversal
+/// is retained. BTreeSet removes duplicate triangles, so multiplicity is not
+/// compared. Nonrational values or invalid indices panic.
 fn triangle_rows(mesh: &csgrs::TriangleMesh) -> std::collections::BTreeSet<[[String; 3]; 3]> {
     let point = |index: usize| {
         let point = &mesh.positions[index];
@@ -238,6 +265,8 @@ fn triangle_rows(mesh: &csgrs::TriangleMesh) -> std::collections::BTreeSet<[[Str
         .collect()
 }
 
+/// Checks ten crossing-bar steps against box volume and the authored/reentrant corner count.
+/// Requires local certification, native edge checks and only integer coordinates.
 #[test]
 fn crossing_bars_fed_forward_keep_only_integer_corners() {
     let (chain, oracle) = chains::cross_bars(10);
@@ -258,6 +287,10 @@ fn crossing_bars_fed_forward_keep_only_integer_corners() {
     );
 }
 
+/// Checks three hexagonal drills for minimal sizes and fixed five-node/depth-four graphs.
+/// Reconstructs the three cuts separately and certifies signed six-volume error
+/// below `10^-12` against the hexagonal formula at precision limit -512.
+/// The bound is an enclosure, not exact equality or a total work limit.
 #[test]
 fn sqrt3_drills_certify_with_constant_expression_size() {
     let chain = chains::polygon_drills(6, 3);
@@ -307,6 +340,9 @@ fn sqrt3_drills_certify_with_constant_expression_size() {
     }
 }
 
+/// Pins eight 3-4-5 rotation cuts to exact triangle and rational-bit-count rows.
+/// All coordinates remain stored rational with five-bit maximum denominators;
+/// seven successive triangle increments must be twelve. This is finite evidence.
 #[test]
 fn rational_rotation_cuts_grow_linearly_with_bounded_coefficients() {
     let chain = chains::rational_rotation_cuts(8);
@@ -331,6 +367,8 @@ fn rational_rotation_cuts_grow_linearly_with_bounded_coefficients() {
     assert_eq!(increments(&triangles), [12; 7]);
 }
 
+/// Pins three successively 30-degree-turned cuts to triangle counts and graph depth four.
+/// Requires local certification and native edge checks, without a separate set oracle.
 #[test]
 fn sqrt3_rotation_cuts_certify() {
     let records = certified_chain(&chains::degree_rotation_cuts(30, 3), None);
@@ -345,10 +383,13 @@ fn sqrt3_rotation_cuts_certify() {
     );
 }
 
+/// Pins three successively ten-degree-turned cuts to 60-node/depth-18 coordinate maxima.
+/// Tests completed outcomes and stored representation, not predicate-stage tracing.
 #[test]
 fn ten_degree_rotation_cuts_stay_certified_with_constant_depth() {
-    // sin(pi/18) is cubic, so no radical tower decides the exact zeros among
-    // later cuts' derived coordinates; the cyclotomic zero proof does.
+    // sin(pi/18) has degree three and is not expressible solely by iterated
+    // square roots. These rows retain the cyclotomic-proof regression without
+    // asserting which predicate stage decides it on this revision.
     let records = certified_chain(&chains::degree_rotation_cuts(10, 3), None);
     // Every cut overlaps the previous one. Its corners on the earlier walls'
     // creases are built from planes, so the graphs keep one size; built by
@@ -362,6 +403,7 @@ fn ten_degree_rotation_cuts_stay_certified_with_constant_depth() {
     );
 }
 
+/// Checks sixteen rational cube unions against box volume, denominator cap and final 316 faces.
 #[test]
 fn cube_unions_match_the_box_oracle() {
     let (chain, oracle) = chains::cube_unions(16);
@@ -374,6 +416,9 @@ fn cube_unions_match_the_box_oracle() {
     assert_eq!(records[15].triangles, 316);
 }
 
+/// Pins sixteen octahedron union triangle counts and two icosahedron size rows.
+/// Requires certified local outcomes/edge checks; finite rows do not establish
+/// asymptotic behavior or an independent filled-set oracle.
 #[test]
 fn polyhedron_unions_stay_linear() {
     let records = certified_chain(&chains::polyhedron_unions(false, 16), None);
@@ -389,6 +434,7 @@ fn polyhedron_unions_stay_linear() {
     );
 }
 
+/// Checks six two-difference/one-union feedback steps against box volume and five-bit denominators.
 #[test]
 fn boolean_results_fed_back_match_the_box_oracle() {
     let (chain, oracle) = chains::feedback_boxes(6);
@@ -399,6 +445,10 @@ fn boolean_results_fed_back_match_the_box_oracle() {
     );
 }
 
+/// Checks six STL and six OBJ continuation steps relative to the reimported model.
+/// Requires local certified receipts/edge checks, missing-source-history flags
+/// and binary32 projection flags for STL. Denominator caps constrain the projected
+/// fixture coordinates; they do not prove exact replay of the authored rationals.
 #[test]
 fn interchange_round_trips_between_steps_stay_certified() {
     for format in ["stl", "obj"] {
@@ -431,6 +481,7 @@ fn interchange_round_trips_between_steps_stay_certified() {
     }
 }
 
+/// Checks six L-profile cuts against independent box volume and final three-bit denominators.
 #[test]
 fn extruded_profile_cuts_match_the_box_oracle() {
     let (chain, oracle) = chains::extruded_profile_cuts(6);
@@ -438,6 +489,9 @@ fn extruded_profile_cuts_match_the_box_oracle() {
     assert_eq!(records[5].size.max_denominator_bits, 3);
 }
 
+/// Checks two adjacent cuts of a sampled revolved ring and pins faces/symbolic counts.
+/// Local certification and edge validity refer to the polygonal model; the test
+/// does not establish analytic-ring fidelity or assert a specific proof path.
 #[test]
 fn revolved_ring_accepts_a_cut_in_the_previous_cut_plane() {
     // The second cutter's face lies in the first cut face x = -5/2. Crossings
@@ -450,6 +504,9 @@ fn revolved_ring_accepts_a_cut_in_the_previous_cut_plane() {
     );
 }
 
+/// Checks sixteen planar holes, extrusion and a 3D slot against independent box volume.
+/// Requires a certified returned receipt and the convenience manifold predicate;
+/// the volume scalar alone does not establish full set equality.
 #[test]
 fn planar_region_operations_then_extrusion_and_cut() {
     let holes = 16;
@@ -474,7 +531,10 @@ fn planar_region_operations_then_extrusion_and_cut() {
     assert_eq!(chains::exact_volume(&outcome.value), Some(oracle.volume()));
 }
 
-/// Results of every step, validating each before the next step or not.
+/// Retains the initial mesh and every successful step, optionally checking edges.
+/// Extracts values without checking operation receipts; optional edge checks only
+/// assert their Boolean value. Failures panic. Retaining every mesh differs from
+/// the shared runner's replace/drop lifetime and is not a memory measurement.
 fn chain_results(chain: &Chain, validate: bool) -> Vec<csgrs::TriangleMesh> {
     let mut results: Vec<csgrs::TriangleMesh> = vec![(chain.initial)()];
     for step in 1..=chain.steps {
@@ -490,6 +550,9 @@ fn chain_results(chain: &Chain, validate: bool) -> Vec<csgrs::TriangleMesh> {
     results
 }
 
+/// Compares ordered outputs with/without intermediate edge validation for two chains.
+/// Every triangle row and scalar coordinate must agree under strict comparison.
+/// This does not compare dispatch counts, timings, provenance or operation receipts.
 #[test]
 fn validation_between_steps_does_not_change_results() {
     // Validation decides exact predicates on each result and can leave facts
@@ -522,6 +585,9 @@ fn validation_between_steps_does_not_change_results() {
 // ---------------------------------------------------------------------------
 // Long chains: `cargo test --release --test successive_operations -- --ignored`.
 
+/// Requires the ignored longer polygon-drill matrix and constant tilted-drill graph maxima.
+/// Includes 6/8/16/32-sided tools plus four tilted 32-sided cuts; expected success
+/// is retained without replacing a failure by a passing resource outcome.
 #[test]
 #[ignore = "long chain; run with --release -- --ignored"]
 fn long_symbolic_drills() {
@@ -545,6 +611,9 @@ fn long_symbolic_drills() {
     );
 }
 
+/// Pins ignored long rotation/icosahedron graph rows and requires six revolved-ring cuts.
+/// Exact depth/triangle rows are finite representation regressions, not fresh
+/// speed, memory or general algebraic-completeness evidence.
 #[test]
 #[ignore = "long chain; run with --release -- --ignored"]
 fn long_symbolic_cuts_and_unions() {
@@ -588,6 +657,9 @@ fn long_symbolic_cuts_and_unions() {
     certified_chain(&chains::revolved_ring_cuts(6), None);
 }
 
+/// Runs the ignored twenty-bar, thirty-two-square-drill and sixteen-rational-rotation chains.
+/// Box-volume oracles accompany bars and square drills; every chain requires its
+/// full number of certified nonempty edge-valid results.
 #[test]
 #[ignore = "long chain; run with --release -- --ignored"]
 fn long_rational_chains() {

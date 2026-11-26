@@ -2,12 +2,16 @@
 //!
 //! Runs the shared corpus chains at their long lengths, one step at a time on
 //! one thread, and prints a Markdown table. Each row reports the step's P39
-//! outcome, its certified manifold validation, triangle and vertex counts, the
+//! local outcome, optional certified geometric edge-check answer, mesh counts, the
 //! stored coordinate sizes, and the wall time of the step, of the validation
 //! after it and of dropping the previous result. The counting allocator adds
 //! the bytes allocated during the step, the peak live heap growth during the
 //! step, the live heap when the step starts and the allocator calls during the
-//! step. These are focused timer-scale probes, not matched benchmarks: compare
+//! step. Counters are process-global requested sizes, updated before System calls;
+//! allocation/reallocation failure is not rolled back. They assume successful
+//! allocation and nonoverflowing counters, and do not measure allocator overhead,
+//! RSS, other allocation APIs or full-lifetime peak memory. These are focused
+//! timer-scale probes, not matched benchmarks: compare
 //! rows of one run, and repeat runs before drawing any performance conclusion.
 //!
 //! "Allocated" sums the size of every `alloc` and `alloc_zeroed` request and
@@ -22,15 +26,19 @@
 //! ```
 //!
 //! `--untouched` feeds each result to the next step without validating it or
-//! measuring its sizes, so no later step can reuse facts that validation
-//! cached; the default validates between steps, as the corpus test does.
+//! measuring its sizes, so those inspections do not populate caches for later
+//! steps; operations may still populate/reuse their own caches. The default
+//! queries native edge validity between steps, as the corpus test does.
 //! Setting `SUCCESSIVE_OPERATIONS_RAW=<path>` also writes every row in exact
 //! units (bytes, nanoseconds) to that file as tab-separated values, after
 //! header lines with the build identity and run arguments. Each completed
 //! record is synced before the next step. Use `scripts/successive-operations.py`
 //! to embed source/compiler identity and record the actual binary's hash and
 //! interruption status; a direct Cargo build is explicitly unattributed.
+//! Final `# completed` marks normal harness termination, even when a chain recorded
+//! a typed failure. It does not mean every geometry workload completed successfully.
 
+/// Shared chain execution, optional validation, failure records and display rows.
 #[allow(dead_code)]
 #[path = "../../tests/support/successive_operations.rs"]
 mod chains;
@@ -44,12 +52,22 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use chains::{Between, Chain, StepRecord};
 use csgrs::solid::{self, SolidExt};
 
+/// System allocator wrapper counting requested traffic and net requested live bytes.
+/// Global relaxed counters include other threads' allocations if any occur;
+/// snapshots are not a synchronized whole-process accounting transaction.
 struct CountingAllocator;
+/// Cumulative allocated requested bytes plus positive realloc growth, excluding shrinking reallocs.
 static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
+/// Net requested live bytes tracked from alloc/realloc/dealloc calls, assuming successful allocations.
 static LIVE: AtomicUsize = AtomicUsize::new(0);
+/// Highest tracked live count since the latest measured step reset.
 static PEAK: AtomicUsize = AtomicUsize::new(0);
+/// Cumulative alloc/alloc_zeroed/realloc calls; dealloc calls are not included.
 static CALLS: AtomicUsize = AtomicUsize::new(0);
 
+/// Accounts one allocation/growing-reallocation call and raises live/peak counters.
+/// A zero-size increment still counts a call. Runs before System and does not
+/// roll back if System fails; all counter arithmetic assumes the probe fits usize.
 fn grow(size: usize) {
     CALLS.fetch_add(1, Ordering::Relaxed);
     ALLOCATED.fetch_add(size, Ordering::Relaxed);
@@ -60,14 +78,21 @@ fn grow(size: usize) {
 // SAFETY: The original pointers and layouts pass unchanged to System; the
 // counters neither inspect allocations nor change their lifetime.
 unsafe impl GlobalAlloc for CountingAllocator {
+    /// Counts the requested layout before forwarding allocation unchanged to System.
+    /// Caller must satisfy GlobalAlloc's layout contract; a null result is not rolled back.
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         grow(layout.size());
         unsafe { System.alloc(layout) }
     }
+    /// Counts requested bytes before forwarding zeroed allocation to System.
+    /// Caller must satisfy GlobalAlloc's layout contract; a null result is not rolled back.
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         grow(layout.size());
         unsafe { System.alloc_zeroed(layout) }
     }
+    /// Counts one resize and its requested net size change before forwarding to System.
+    /// Caller must supply a valid live pointer/layout and admissible new size.
+    /// Shrinks reduce live bytes without allocation traffic; failure is not rolled back.
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, size: usize) -> *mut u8 {
         if size >= layout.size() {
             grow(size - layout.size());
@@ -77,24 +102,39 @@ unsafe impl GlobalAlloc for CountingAllocator {
         }
         unsafe { System.realloc(ptr, layout, size) }
     }
+    /// Subtracts the requested layout size and forwards deallocation to System.
+    /// Caller must supply the original valid live allocation and matching layout.
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         LIVE.fetch_sub(layout.size(), Ordering::Relaxed);
         unsafe { System.dealloc(ptr, layout) }
     }
 }
 
+/// Process-wide allocator used by this standalone benchmark executable.
 #[global_allocator]
 static GLOBAL: CountingAllocator = CountingAllocator;
 
 /// Allocation during one step, in bytes and calls.
 #[derive(Clone, Copy)]
 struct StepAllocation {
+    /// Requested allocation traffic during the wrapped operation only.
     allocated: usize,
+    /// Maximum tracked live-byte increase above the starting count, saturating at zero.
     peak_growth: usize,
+    /// Process-global tracked live bytes immediately before the operation.
     live_at_start: usize,
+    /// Alloc/alloc_zeroed/realloc call delta during the wrapped operation.
     calls: usize,
 }
 
+/// Wraps each step with allocator snapshots and appends its measurement, even for returned errors.
+///
+/// Resets the global peak to current live bytes before invoking the original step.
+/// Snapshots exclude the following measurement-vector push, validation, journal
+/// I/O and result replacement; shared-runner elapsed time does include wrapper
+/// overhead. Initial construction and final teardown are outside these snapshots.
+/// A panic bypasses the appended measurement. Concurrent allocations can contaminate
+/// the global deltas; this harness executes its chain loop sequentially.
 fn measured(chain: Chain, allocations: Rc<RefCell<Vec<StepAllocation>>>) -> Chain {
     let step = chain.step;
     Chain {
@@ -118,8 +158,9 @@ fn measured(chain: Chain, allocations: Rc<RefCell<Vec<StepAllocation>>>) -> Chai
     }
 }
 
-/// The sampled 32 x 16 sphere drilled by a box. It decides under `STRICT`
-/// through hyperreal's cyclotomic zero proof.
+/// Builds a one-step strict box drill through a radius-ten, 32-by-16 sampled sphere.
+/// Historical cyclotomic-proof coverage motivates the case; this timing harness
+/// records its actual outcome and does not assert a particular predicate stage.
 fn sampled_sphere_cut() -> Chain {
     Chain {
         name: "sampled 32x16 sphere cut",
@@ -136,6 +177,10 @@ fn sampled_sphere_cut() -> Chain {
     }
 }
 
+/// Constructs twenty-one fixed chain descriptors for timing, including one sampled-sphere cut.
+/// Some factories build/clone independent box oracles that are immediately dropped;
+/// this setup happens before name filtering and outside step timing. Most initial
+/// meshes are deferred to each selected chain's initial closure.
 fn corpus() -> Vec<Chain> {
     vec![
         chains::square_drills(32).0,
@@ -162,6 +207,8 @@ fn corpus() -> Vec<Chain> {
     ]
 }
 
+/// Compile-time attribution text, or an explicit unattributed JSON fallback.
+/// Content supplied by the build environment is not parsed or verified here.
 const BUILD_INFO: &str = match option_env!("CSGRS_SUCCESSIVE_BUILD_INFO") {
     Some(info) => info,
     None => {
@@ -169,14 +216,22 @@ const BUILD_INFO: &str = match option_env!("CSGRS_SUCCESSIVE_BUILD_INFO") {
     },
 };
 
+/// Formats raw-journal schema comments with embedded build text and debug-formatted arguments.
+/// Embedded build text is emitted verbatim; this function does not verify its identity.
 fn raw_header(arguments: &[String]) -> String {
     format!(
         "# successive_operations raw rows\n# build\t{BUILD_INFO}\n# arguments\t{arguments:?}\n",
     )
 }
 
+/// Stable raw TSV column order, matching raw_row with byte/nanosecond units.
 const RAW_COLUMNS: &str = "chain\tstep\toutcome\tmanifold\ttriangles\tvertices\trational\tsymbolic\tmax_denominator_bits\tmax_graph_nodes\tmax_graph_depth\tstep_ns\tvalidation_ns\tdrop_ns\tallocated_bytes\tpeak_growth_bytes\tlive_bytes_at_start\tallocator_calls\n";
 
+/// Formats a completed step and allocation snapshot as a tab-separated exact-unit row.
+/// Emits bytes and nanoseconds; failed outcomes retain only their category here,
+/// with detail written separately by main. Untouched sizes are zero defaults,
+/// not measurements; validation/manifold fields use dashes when absent. Static
+/// chain names are inserted without TSV escaping.
 fn raw_row(name: &str, record: &StepRecord, allocation: &StepAllocation) -> String {
     let outcome = match &record.outcome {
         chains::Outcome::Certified => "certified".to_owned(),
@@ -209,6 +264,15 @@ fn raw_row(name: &str, record: &StepRecord, allocation: &StepAllocation) -> Stri
     )
 }
 
+/// Runs filtered chains and synchronously journals records when a fresh raw path is requested.
+///
+/// A sole `--build-info` prints embedded attribution and exits. `--untouched`
+/// skips validation/size inspection; the first non-option argument is a name
+/// substring filter, and other option-like arguments are ignored. Raw output uses
+/// create_new, syncs its header before corpus construction, and syncs each record
+/// before the next step. A returned failure stops that chain, not the entire corpus;
+/// normal termination appends `# completed` even after such failures. Panics/I/O
+/// errors abort without that marker. No full-lifetime resource bound is enforced.
 fn main() {
     // Cargo passes `--bench`; `--untouched` selects the mode, and any other
     // argument filters chain names.

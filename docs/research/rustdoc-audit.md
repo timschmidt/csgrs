@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/successive_operations.rs` | Entire file; documented observer ordering, every finite/ignored chain gate, rational row comparison and representation limits. | Focused compilation/private docs passed; all counts, graph rows and assertions unchanged and unrun. |
+| `benchmarks/rust/successive_operations.rs` | Entire file; documented allocator methods/state, requested-byte limitations, snapshots, timing boundaries and raw journal lifecycle. | Focused compilation/private docs passed; allocator, file I/O and chain execution unchanged and unrun. |
 | `tests/support/successive_operations.rs` | Entire file; documented step lifecycle, receipts/errors, timings, coordinate metrics, rational-box oracle and every chain factory. | Test/benchmark compilation and private docs passed; failure tuple layout adds only a trailing comma; runtime chains unchanged and unrun. |
 | `tests/competitive.rs` | Entire file; documented tolerant three-engine comparison, quantized half-edge validation and input-only large-fixture gate. | Focused compilation/private docs passed; tests unchanged and unrun. |
 | `benchmarks/support/competitive.rs` | Entire file; documented all adapters, records, fields, variants, projected measures, hull fallback and tolerance limits. | Test and benchmark consumers compile; private descriptions/fields render; no measurements executed. |
@@ -3340,6 +3342,65 @@ Validation after final edits:
 Logs: `/tmp/csgrs-rustdoc-successive-support-check.log`,
 `/tmp/csgrs-rustdoc-successive-support-private.log` and
 `/tmp/csgrs-rustdoc-successive-support-bench.log`.
+
+### Successive-operation tests and allocation/journal consumer, 26 November 2026
+
+Baseline: `748d61a1d`. Owners: root chain acceptance tests and standalone timing/
+allocation consumer, P4/P6/P8/P17–P20/P25/P26/P35/P37/P39. Domain: the retained
+finite and ignored long chain matrices, validation-cache comparisons, synchronous
+observer ordering, process-global requested-byte counters and optional raw TSV
+journaling. Completed the declaration audit of both files read in the preceding
+batch (599 and 292 baseline lines); all formulas, ignored annotations and size
+rows remain intact. The external runner script and measurement document remain
+separate review work, not newly credited whole-file sources.
+
+Test docs distinguish independent volume from set equality, native edge checks
+from embedding, exact output-coordinate comparisons from trace/receipt equality,
+and finite graph/count rows from universal resource/completeness claims. Rational
+triangle canonicalization uses BTreeSet and therefore discards multiplicity.
+Corrected the ambiguous radical-tower comment: cubic sin(pi/18) is not expressible
+solely through iterated square roots; no current proof-stage trace is asserted.
+
+Allocator docs state that counters track requested sizes before System calls,
+without failure rollback, overhead/RSS coverage or full-lifetime accounting.
+Global relaxed snapshots can include other threads. Allocation deltas exclude
+record-vector growth after the snapshot, while the runner's step timer includes
+wrapper overhead. Initial/final lifetimes, validation and journal I/O are distinct.
+Raw header/records sync before continuing, but `# completed` means normal harness
+termination even after a chain returned a typed failure. None of these existing
+behaviors was changed or executed as a new performance measurement.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source in both consumers and the shared helper's one link edit.
+  All 28 test declarations and 21 benchmark declarations/methods plus four fields
+  have Rustdoc; unsafe allocator contracts are documented in their implementations.
+- Private test docs matched eight rendered summaries in nine top-level pages plus
+  the chains module; twenty test definitions remain source-reviewed. Benchmark
+  docs matched all 25 declaration/member/field summaries in seventeen explicit
+  current pages plus the chains module. Stale pages from the identically named
+  test target were not credited to the benchmark.
+- `cargo check --locked -p csgrs --no-default-features --features
+  attributed,curve,obj-io,stl-io --test successive_operations --offline -j 2`
+  and the same configuration with `--bench successive_operations` passed without
+  warnings. Both private Rustdoc targets passed with broken links denied and
+  checked own-library/dependency metadata supplied.
+- The first private build exposed a scope-sensitive shared module link after the
+  consumer gained outer module docs. Fully qualifying it as
+  `csgrs::GeometryContext::STRICT` fixed the link; final builds passed.
+- No chain execution, allocator/timing measurement, filesystem journal or full CI
+  was run under the docs-only waiver. Reused target remained approximately 1.3 GiB.
+
+After adding this batch, every tracked Rust file under the root `tests/` inventory
+has a whole-file ledger row. This is a bounded review milestone, not automated
+all-feature documentation coverage or repository-wide completion; owning crates,
+remaining benchmarks, nested packages and non-Rust sources remain substantial work.
+
+Logs: `/tmp/csgrs-rustdoc-successive-consumers-check.log`,
+`/tmp/csgrs-rustdoc-successive-consumers-private.log`,
+`/tmp/csgrs-rustdoc-successive-consumers-bench.log` and
+`/tmp/csgrs-rustdoc-successive-consumers-bench-private.log`.
 
 ## Next work
 
