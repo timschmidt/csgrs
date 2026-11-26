@@ -5213,6 +5213,106 @@ session. These records expose existing qualification/validation gaps; they do
 not repair them or establish completed geometric support. Repository-wide
 coverage and the line-by-line audit remain incomplete.
 
+## Hyperlimit triangle-pair report composition
+
+Reviewed all 1,141 baseline lines of
+`crates/hyperlimit/src/predicates/triangle_triangle.rs` at `f68fc6c10`, including
+private aliases/helpers and every test. Revisited the composite-policy wrapper,
+preclassified segment/triangle implementation, shared relation vocabulary,
+and triangle-pair subsection of `tests/retained_report_contracts.rs`; these
+supporting excerpts do not constitute additional whole-file review. Ownership
+is Hyperlimit's 3D predicate composition and retained-report boundary. Relevant
+properties are policy and receipts (P8/P9), dispatch order (P10), uncertainty
+(P11), and source validation. Inputs are exact Real-coordinate closed triangle
+pairs, including degenerate/coplanar pairs and public mutable reports.
+Acceptance witnesses were undocumented private/test declarations and overly
+strong claims that every accepted relation was replayable from retained facts.
+Implementation inspection on this revision identifies missing coplanar-edge
+contact data and unchecked report shapes; documenting them does not change the
+contract or repair the implementation.
+
+Public classification uses strict-first composite replay. Under APPROXIMATE_512,
+a decided strict pass remains unchanged; strict uncertainty triggers an
+approximate replay whose decided outcome is conservatively Approximate/Refined.
+The internal pass discards child receipts and attaches Exact/Exact to success,
+so its stage does not represent the deepest child escalation. Its direct use
+under approximate policy does not independently preserve qualification. The
+report alone has neither certainty, source identity, nor source coordinates;
+consumers must retain the public outcome. Replay supplies no shared total-work
+budget or rollback across evaluations.
+
+Evaluation order is left degeneracy, right degeneracy, then the degeneracy
+branch. Even a decided degenerate left input still queries right degeneracy;
+an unresolved right result returns Unknown before publishing a degenerate
+report. The two plane queries follow right-against-left then left-against-right.
+Both Coplanar selects projected classification; either strict separating plane
+selects Disjoint without edges. Remaining cases query left edges before right,
+using directed 01/12/20 order and reusing endpoint sides. Proper crossing beats
+boundary contact. Success retains all six edge labels; uncertainty publishes
+no partial arrays, although private accumulated flags can already be updated.
+An unresolved coplanar report becomes Unsupported/Undecided without preserving
+its original reason. Other child Unknown need/stage pairs are forwarded.
+
+A Coplanar segment label means the edge lies in the supporting plane, not that
+it meets the triangle. Classification therefore checks projected endpoints
+first and then triangle edges, returning on a contact witness or first Unknown.
+Only completed misses return false. The final report retains the Coplanar label
+but not that additional contact boolean. Local reduction instead treats every
+Coplanar edge as a touch. Source inspection therefore exposes a validation gap:
+a classifier-produced Disjoint report with coplanar edges missing the opposite
+triangle can be rejected by local validation. A targeted missing regression
+candidate is left `(0,0,0),(4,0,0),(0,4,0)` and right
+`(6,0,0),(7,0,0),(6,0,1)`: nondegenerate disjoint triangles on intersecting planes,
+with disjoint edges along the planes' intersection. This candidate was derived
+from the branch logic, not executed in this docs-only batch. A future behavior
+fix should reproduce it and retain the needed contact evidence, not weaken
+validation or label meaning.
+
+Other validator limits are now explicit. A retained Degenerate label requires
+only a matching final relation and bypasses all remaining fields. The coplanar
+branch checks the nested label/report but ignores plane and edge fields.
+Noncoplanar non-Disjoint reports need six labels; Disjoint is exempt. Plane
+separation overrides even contradictory edge labels, and absent facts are
+skipped, so a nondegenerate Disjoint report with no plane or edge facts passes.
+No source incidence or certainty is verified. Source validation first runs
+these local checks, then requires a decided field-equal replay while dropping
+its receipt. It cannot restore qualification or establish unique source identity,
+and it cannot bypass a local rejection caused by missing coplanar-edge facts.
+
+Private aliases document the ordering and optional entries of their carriers;
+the Unknown alias remains a full PredicateOutcome type by convention. Side
+aggregation, edge pairing, outcome extraction, relation translation, strict
+plane-separation recognition, and success packaging now state their roles and
+preconditions. All eight fields and seven error variants are documented.
+Test docs describe the finite controls: plane separation, crossing, boundary
+contact, planar labels, degeneracy, six-edge disjointness, selected forged
+reports, and symbolic uncertainty. They do not promote historical fixture names
+to exhaustive path coverage or claim tests of the public approximate receipt
+where the fixtures call internal helpers and only assert Unknown.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Non-comment, nonblank source
+  remains byte-identical to baseline; signatures, predicate order, fixtures,
+  assertions, and lint configuration are unchanged.
+- Scoped declaration scan found 42 documented names. Checked 41 complete
+  rendered doc groups across 23 private-module pages, including eight fields,
+  seven variants, and the three private aliases. Test-only docs were reviewed
+  in source; library Rustdoc does not render cfg(test) items.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed. Existing fixtures compiled but were not executed.
+- Downstream `cargo rustdoc --locked -p csgrs --lib --no-default-features
+  --features curve --offline -j2 -- --document-private-items
+  -D rustdoc::broken_intra_doc_links` passed. Shared target remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-triangle-pair-{doc,check,downstream-doc}.log`.
+Full workflow/runtime/performance checks remain waived by the owner for this
+session. These source-level findings are not measured performance claims or
+proof of completed geometry support. The repository-wide audit remains active.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
