@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/readme.rs` | Entire file; documented embedded snapshots, exact quickstart synchronization and selected metadata/layout assertions. | Both existing tests compiled directly and passed after restoring README synchronization; assertions unchanged. |
 | `examples/multi_format_export.rs` | Entire file; documented independently gated writers, output/truncation order, text statistics and all eight test intentions/limits. | Minimal and all-three-format private docs passed. Metadata-only test compilation reproduced eleven existing baseline/current errors; tests remain blocked and unchanged. |
 | `examples/basic.rs` | Entire file; documented strict-session receipt scope, through opening, terminal STL and working-directory output. | Private example docs/rendering passed; assertions unchanged, example not run. |
 | `examples/scalar_adapter.rs` | Entire file; documented adapter alias, exact finite ingress, projected bounds and fixture-specific equality assertions. | Private example docs/rendering passed; assertions unchanged, example not run. |
@@ -2419,6 +2420,32 @@ Validation:
 Logs: `/tmp/csgrs-rustdoc-multi-format-doc.log`,
 `/tmp/csgrs-rustdoc-multi-format-minimal-doc.log`, and
 `/tmp/csgrs-rustdoc-multi-format-test-{baseline,current}.log`.
+
+### README quickstart synchronization correction, 26 November 2026
+
+Baseline: `56466ea99`. Owner: README/example consistency witness, P37. Read
+`tests/readme.rs` in full and the marked README quickstart block in context.
+This is not whole-file review credit for `readme.md`. The earlier example audit
+added Rustdoc to `examples/basic.rs` but missed its downstream byte-equality
+contract with the README snippet. Reproduced the resulting failure: quickstart
+equality failed while the release-metadata test passed. This regression was
+caused by the documentation batch, not a pre-existing implementation blocker.
+
+Copied the complete documented example into the existing marked fence. Verified
+the README prefix/suffix are byte-identical to baseline, so no text outside that
+block changed. Added Rustdoc to the two test constants and two test functions;
+their executable lines and assertions remain identical to baseline.
+
+Compiled `tests/readme.rs` directly with `rustc --edition 2024 --test`, supplying
+`CARGO_PKG_VERSION` from the current manifest, then ran its two tests. Both passed.
+This dependency-free check executes the unchanged source assertions without
+building the broader Cargo test graph. Focused Rustfmt and `git diff --check`
+also passed. No model rendering, geometry operations, asset writes or full
+workflow checks were run. Future edits to `examples/basic.rs` must repeat this
+downstream synchronization check even when only comments change.
+
+Logs: `/tmp/csgrs-rustdoc-readme-before.log` and
+`/tmp/csgrs-rustdoc-readme-after.log`.
 
 ## Next work
 
