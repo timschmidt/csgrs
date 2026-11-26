@@ -4423,6 +4423,99 @@ checks remain waived for this docs-only session. The large geometric plane modul
 actual predicate implementations and most kernel crates remain unaudited in full;
 this batch completes neither Hyperlimit coverage nor the repository goal.
 
+### Hyperlimit plane inputs, evidence and report validation, 26 November 2026
+
+Baseline: `cb0673445`. Owner: Hyperlimit's geometric plane predicates and retained
+reports, with scalar filters/arithmetic in Hyperreal and point facts in
+Hyperlattice. Properties: P3/P4/P6/P8–P10/P19/P25/P30. Domain: explicit Real plane
+coefficients, oriented triples, point/segment/triangle queries, closed boxes with
+independently reversible bounds, retained filters and structural/source replay.
+Missing documentation witnesses were private evidence fields, helpers/tests and
+public descriptions that omitted receipt loss, validator limits and orientation
+conventions. Reproduced these gaps against current source before editing.
+
+Read all 1,771 baseline lines of `crates/hyperlimit/src/geometry/plane.rs`,
+including every type, field, method, helper and test. Added documentation to all
+previously undocumented named declarations, including the test-local static lock.
+Supporting excerpts of Hyperlattice Point3Facts, Hyperreal filter definitions and
+the orientation dispatcher establish the referenced roles; those excerpts do not
+add whole-file review credit for their owning implementations.
+
+The revised contracts document:
+
+- Explicit planes retain unnormalized exact coefficients and accept zero normals.
+  Classifiers evaluate the resulting constant expression without validating an
+  ordinary geometric plane. Derived equality compares stored representations,
+  not equality of oriented planes under coefficient scaling.
+- Plane3Facts is a public-field snapshot. Its sparse-normal query includes the
+  zero normal, and false known-zero is not proof of nonzero. Plane3Evidence stores
+  filters/facts without source identity and relies on unchanged matching
+  coefficients. The retained dyadic filter can answer before inspecting the
+  supplied plane, and trusted exactness facts can select a known-exact scalar
+  path; callers must rebuild after mutation/transform. No stale-evidence check
+  or proof transport was added.
+- OrientedPlane3Evidence owns its derived plane and exposes only shared access,
+  but does not retain/validate the original point triple. Its normal is
+  `-(b-a) x (c-a)`, with offset `((b-a) x (c-a)) . a`: positive z is Below for
+  the standard counterclockwise xy triple. A collinear triple is not rejected.
+  The checked i128 filter is prepared only when the dyadic filter is unavailable.
+- The internal no-filter point-plane path also skips the public direct rational
+  route; it uses the generic exact Real expression/sign pipeline. Prior wording
+  about an identical fallback ladder was inaccurate. No dispatch ordering or
+  trace count changed.
+- Segment classification stops before the end query if the start is Unknown;
+  explicit triangle classification eagerly computes all three side queries before
+  checking outcomes. Both completed relation outcomes join consumed receipts.
+  TrianglePlaneReport instead extracts bare side values, losing certainty,
+  escalation and Unknown diagnostics. Its approximate-policy reports therefore
+  remain an evidentiary gap rather than certified support.
+- Triangle report validation checks the side/relation truth table. Replay compares
+  those fields under the selected policy, and matching Unknown reports can pass.
+  Indexed replay checks bounds but not distinctness, nondegeneracy or original
+  source identity. Success is not a new geometry/receipt certificate.
+- AABB support selection compares x/y/z products, keeps the authored endpoint
+  pairing on ties, then resolves the upper expression before the lower. Both
+  signs are required. Exact point expressions survive, but support selection and
+  signs can be policy-qualified; the outer outcome owns their aggregate receipt.
+- AABB validation checks value order, signs and relation, not support points or
+  axis-ordering fields. Unknown comparisons are folded into existing mismatch
+  errors; approximate validation may return Ok without retaining its certainty.
+  Source replay compares all stored fields after local validation, discards replay
+  certainty and maps unresolved replay to SourceReplayMismatch. Representation or
+  tie-corner differences can fail this equality despite equivalent geometry.
+
+These are current behavior and implementation-limit descriptions, not a normative
+contract relaxation or completed closure claim. Source/receipt gaps are not fixed
+by documenting them. All seventeen tests retain their original assertions,
+including the dispatch witness's one rational-filter hit and two zero-hit counts.
+Test docs distinguish independent rational/geometric expectations, value-only
+agreement, full receipt comparisons, unknown paths and actual trace evidence.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing only blank/comment lines
+  gives byte-identical source to baseline; no expression, fixture, signature,
+  field layout, call order or assertion changed.
+- A scoped scan checked 83 documented named declarations including private items,
+  tests and the local static; fields/variants were separately reviewed. This is
+  not a repository-wide coverage metric.
+- Private Rustdoc with `--locked -p hyperlimit --lib --all-features --offline -j2`
+  and `--document-private-items -D rustdoc::broken_intra_doc_links` passed.
+  Inspected 94 rendered documentation groups across 42 module pages and fourteen
+  specifically selected contract pages, including private fields and helpers.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed, compiling the affected private and integration tests without executing
+  them. Normal library docs omit cfg(test), whose comments were source-reviewed.
+- Downstream private csgrs docs with `--no-default-features --features curve`
+  passed with locked offline dependencies and broken intra-doc links denied.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-plane-{doc,check,downstream-doc}.log`.
+The shared target remains about 1.6 GiB. Full workflow/runtime/performance checks
+remain waived for this docs-only session. All eleven Rust files directly under
+Hyperlimit's src and all five under src/geometry now have whole-file records;
+actual predicate implementation modules, most tests and other crate files remain
+substantial work. This is a scoped review milestone, not complete crate coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,4 +1,14 @@
 //! Plane classification helpers.
+//!
+//! Explicit planes use `normal . point + offset`; oriented point triples use
+//! the sign convention of the 3D orientation determinant. Retained filters
+//! accelerate those same expressions without changing their meaning. A chosen
+//! policy governs unresolved signs, not plane validity or a total work budget.
+//!
+//! Keep operation outcomes with their local certainty. AABB reports rely on
+//! that outer receipt, while triangle-plane reports currently discard child
+//! certainty. Report validation checks specified consistency/replay conditions;
+//! success does not independently establish geometry validity or source fidelity.
 
 use crate::predicate::PredicatePolicy;
 use crate::predicates::decision::{max_certainty, max_stage};
@@ -22,6 +32,14 @@ use crate::resolve::{
 };
 
 /// Plane represented by `normal . point + offset = 0`.
+///
+/// Coefficients remain exact and need not form a unit normal. No constructor
+/// check excludes a zero normal: then the expression is constant and does not
+/// define an ordinary oriented plane. Classifiers evaluate that expression
+/// without diagnosing the degenerate carrier. Public mutation invalidates any
+/// previously derived facts or filters unless their transport is proved.
+/// Derived equality compares stored scalar representations, not geometric
+/// equivalence under a common nonzero coefficient scale.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Plane3 {
     /// Plane normal vector.
@@ -38,6 +56,10 @@ pub struct Plane3 {
 /// side a query point lies on. Object structure remains at the geometry layer,
 /// while certified predicates decide topology. Sparse coefficient support
 /// carries the same structure into linear-form scheduling.
+///
+/// This Copy snapshot has public fields and no source identity or validation.
+/// Query methods trust it; rebuild after changing coefficients. Masks produced
+/// by [`Plane3::structural_facts`] use only their low four bits.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Plane3Facts {
     /// Exact-rational representation facts for normal coordinates plus offset.
@@ -62,27 +84,29 @@ pub struct Plane3Facts {
     pub coefficient_unknown_zero_mask: u8,
 }
 
-/// Structural inconsistency in a retained plane/AABB report.
+/// Failure to validate a retained plane/AABB report under the supplied policy.
 ///
 /// The report validates the support-extrema reduction used to classify a box
-/// against an oriented plane. This keeps the mesh-kernel style broad-phase
-/// shortcut inside the exact predicate layer: extrema may be cached and replayed
-/// as object evidence, but the relation is still certified by exact signs. The
-/// extrema selection specializes the interval AABB transform to one plane
-/// expression.
+/// against an oriented plane. These variants conflate some unresolved decisions
+/// with detected mismatches; they do not retain the predicate's Unknown reason
+/// or a validation certainty receipt. The report's validation methods describe
+/// which fields and source relationships each check actually covers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlaneAabbReportValidationError {
-    /// The retained lower/upper expression values are ordered incorrectly.
+    /// Lower exceeds upper, or the validator could not decide their ordering.
     ExtremumOrderMismatch,
-    /// A retained sign does not match its retained expression value.
+    /// A sign differs from its recomputed value, or a sign could not be decided.
     ExtremumSignMismatch,
     /// The retained extrema signs derive a different coarse relation.
     RelationMismatch,
-    /// Recomputing from source geometry did not reproduce this report.
+    /// Source replay is unresolved or fails stored-field equality with this report.
     SourceReplayMismatch,
 }
 
-/// Exact relation between one triangle and an oriented plane.
+/// Coarse vertex-side relation between a query triangle and an oriented plane.
+///
+/// This label carries no certainty or plane-nondegeneracy proof. The producing
+/// triangle-report API may use approximate signs and does not retain that fact.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TrianglePlaneRelation {
     /// Every query vertex is strictly above the oriented plane.
@@ -102,12 +126,16 @@ pub enum TrianglePlaneRelation {
 pub enum TrianglePlaneReportValidationError {
     /// The retained vertex sides do not derive the retained relation.
     RelationMismatch,
-    /// Recomputing the classifier from supplied source geometry did not
-    /// reproduce this retained report.
+    /// Recomputed relation/side fields differ, or supplied source indices are out of range.
     SourceReplayMismatch,
 }
 
 /// Report-bearing triangle/plane classification with retained side facts.
+///
+/// Retains only side values or missing decisions: per-vertex certainty,
+/// escalation and Unknown reasons are discarded by the producer. Public fields
+/// may also be authored directly. A self-consistent Unknown report can validate
+/// successfully; this record alone does not certify triangle/plane topology.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrianglePlaneReport {
     /// Coarse relation.
@@ -118,6 +146,9 @@ pub struct TrianglePlaneReport {
 
 impl TrianglePlaneReport {
     /// Validate that retained vertex side facts imply the reported relation.
+    ///
+    /// Checks the relation truth table only, without source geometry or predicate
+    /// replay. None sides are consistent with Unknown and can produce Ok.
     pub fn validate(&self) -> Result<(), TrianglePlaneReportValidationError> {
         if triangle_plane_relation_from_sides(self.vertex_sides) == self.relation {
             Ok(())
@@ -127,6 +158,11 @@ impl TrianglePlaneReport {
     }
 
     /// Validate this report by recomputing it from source triangles.
+    ///
+    /// After structural validation, compares the complete relation/side arrays
+    /// from the same classifier under `policy`. Matching unresolved reports are
+    /// accepted. No child certainty is available to validate, and neither source
+    /// plane nondegeneracy nor original source identity is established.
     pub fn validate_against_triangles(
         &self,
         plane: [&Point3; 3],
@@ -143,6 +179,11 @@ impl TrianglePlaneReport {
     }
 
     /// Validate this report against indexed source triangles.
+    ///
+    /// Checks structural consistency first, then bounds of all six indices,
+    /// then relation/side replay equality. Out-of-range indices map to
+    /// SourceReplayMismatch. Repeated indices and degenerate faces are not
+    /// separately rejected; matching Unknown reports can pass.
     pub fn validate_against_sources(
         &self,
         points: &[Point3],
@@ -170,25 +211,27 @@ impl TrianglePlaneReport {
 /// Report-bearing closed AABB/oriented-plane classification.
 ///
 /// The coarse [`PlaneAabbRelation`] is retained for cheap callers. This report
-/// keeps the exact lower and upper support points selected by comparing each
-/// `normal_i * bound_i` term, the exact plane-expression value at both extrema,
-/// the certified signs of those values, and the per-axis term orderings that
-/// chose the support points.
+/// keeps selected support points, exact expressions at those points, their sign
+/// classifications and the per-axis term orderings used for selection. Under
+/// certified decisions these points are the extrema. An approximate policy may
+/// qualify selection or signs, so retain the enclosing [`PredicateOutcome`]'s
+/// certainty; this record contains no independent certainty field.
+/// Public fields and derived structural equality do not authenticate the source.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PlaneAabbReport {
     /// Coarse relation between the closed box and plane.
     pub relation: PlaneAabbRelation,
-    /// Point in the box minimizing `normal . point + offset`.
+    /// Selected lower support corner; minimizing when the selection decisions are certified.
     pub lower_point: Point3,
-    /// Point in the box maximizing `normal . point + offset`.
+    /// Selected upper support corner; maximizing when the selection decisions are certified.
     pub upper_point: Point3,
     /// Exact expression value at [`Self::lower_point`].
     pub lower_value: Real,
     /// Exact expression value at [`Self::upper_point`].
     pub upper_value: Real,
-    /// Certified sign of [`Self::lower_value`].
+    /// Sign classification of [`Self::lower_value`], qualified by the outer outcome.
     pub lower_sign: Sign,
-    /// Certified sign of [`Self::upper_value`].
+    /// Sign classification of [`Self::upper_value`], qualified by the outer outcome.
     pub upper_sign: Sign,
     /// Per-axis ordering of `normal_i * min_i` versus `normal_i * max_i`.
     pub axis_term_orderings: [Ordering; 3],
@@ -196,6 +239,12 @@ pub struct PlaneAabbReport {
 
 impl PlaneAabbReport {
     /// Validate retained extrema ordering, signs, and derived relation.
+    ///
+    /// Checks lower <= upper, each stored sign, and the relation truth table in
+    /// that order. It does not check support points, axis orderings or that the
+    /// values were evaluated from any plane/box. Unresolved comparisons become
+    /// mismatch errors; permitted approximate decisions can produce Ok without
+    /// a returned certainty receipt. Use source replay to compare all fields.
     pub fn validate(&self, policy: PredicatePolicy) -> Result<(), PlaneAabbReportValidationError> {
         match compare_reals_with_policy(&self.lower_value, &self.upper_value, policy) {
             PredicateOutcome::Decided {
@@ -222,6 +271,11 @@ impl PlaneAabbReport {
     }
 
     /// Replay this report against source plane and box bounds.
+    ///
+    /// Runs [`Self::validate`] first, then requires a decided replay whose whole
+    /// record equals this one by stored-field equality. An equivalent box or
+    /// plane can choose different representations/tie corners and fail equality.
+    /// Replay certainty is discarded, and unresolved replay is SourceReplayMismatch.
     pub fn validate_against_sources(
         &self,
         plane: &Plane3,
@@ -258,11 +312,13 @@ impl Plane3Facts {
     /// A zero normal is usually invalid domain geometry for oriented topology,
     /// but this fact remains advisory: callers must decide domain policy above
     /// the predicate layer.
+    /// False is absence of this proof, not proof that the normal is nonzero.
     pub fn normal_known_zero(self) -> bool {
         self.normal.known_zero
     }
 
-    /// Returns whether the nonzero normal support is certified sparse.
+    /// Returns whether the normal has known zero or one-hot support.
+    /// Zero normals qualify as sparse; this is not an oriented-plane validity test.
     pub fn normal_has_sparse_support(self) -> bool {
         self.normal.has_sparse_support()
     }
@@ -280,11 +336,13 @@ impl Plane3Facts {
 
 impl Plane3 {
     /// Construct a plane from a normal vector and offset.
+    /// Stores coefficients unchanged, without normalizing or validating the normal.
     pub const fn new(normal: Point3, offset: Real) -> Self {
         Self { normal, offset }
     }
 
     /// Return structural facts for this plane's coefficients.
+    /// The snapshot does not retain coefficient identity and is not updated by later mutation.
     pub fn structural_facts(&self) -> Plane3Facts {
         plane3_facts(self)
     }
@@ -295,10 +353,16 @@ impl Plane3 {
 /// This value owns coefficient facts plus certified dyadic and rational
 /// linear-form filters, but not the plane. Retain it alongside the source
 /// plane when classifying many points against the same plane.
+/// The Copy record does not bind itself to a source identity or detect changes:
+/// callers must rebuild it after coefficient mutation or transformation. A
+/// missing filter means that specialization declined, not that the plane is invalid.
 #[derive(Clone, Copy, Debug)]
 pub struct Plane3Evidence {
+    /// Structural coefficient snapshot used to select exact expression schedules.
     facts: Plane3Facts,
+    /// Optional certified floating linear-form filter for eligible exact-dyadic coefficients.
     filter: Option<LinearForm3Filter>,
+    /// Optional certified floating filter with rational conversion-error bounds.
     rational_filter: Option<RationalLinearForm4Filter>,
 }
 
@@ -310,6 +374,8 @@ impl Plane3Evidence {
 }
 
 /// Derive reusable exact-predicate evidence for an explicit plane.
+/// Prepares dyadic and rational filters before collecting structural facts;
+/// neither filter availability nor the facts validate a nonzero normal.
 pub fn plane3_evidence(plane: &Plane3) -> Plane3Evidence {
     crate::trace_dispatch!("hyperlimit", "plane3_evidence", "derive");
     let coefficients = [
@@ -330,6 +396,11 @@ pub fn plane3_evidence(plane: &Plane3) -> Plane3Evidence {
 /// Classify a point using retained explicit-plane evidence and a policy.
 ///
 /// `evidence` must have been derived from `plane` with [`plane3_evidence`].
+/// Its coefficients must still match: no runtime source check protects against
+/// stale or mismatched filters. Tries the retained dyadic filter, then the exact
+/// rational path with its optional retained filter, then the generic Real path
+/// with trusted facts. Successful filters remain certified under either policy;
+/// only subsequent unresolved sign work may consume an approximate terminal.
 #[inline]
 pub fn classify_point_plane_with_evidence_and_policy(
     point: &Point3,
@@ -365,16 +436,24 @@ pub fn classify_point_plane_with_evidence_and_policy(
 /// This reduces the oriented plane through `a`, `b`, and `c` once into an exact
 /// explicit plane. Repeated point queries can then share the same retained
 /// point-plane evidence instead of rebuilding the `orient3d` determinant.
+/// Unlike [`Plane3Evidence`], it owns the derived plane and offers only shared
+/// access to it. It does not retain the original points or verify their affine
+/// independence. The plane normal is `-(b-a) x (c-a)`, matching `orient3d` here.
 #[derive(Clone, Debug)]
 pub struct OrientedPlane3Evidence {
+    /// Certified floating determinant filter for eligible exact-dyadic source triples.
     filter: Option<AffineDet3Filter>,
+    /// Checked i128 homogeneous-plane fallback, prepared only when the dyadic filter is unavailable.
     exact_word_filter: Option<Box<AffineDet3ExactWordFilter>>,
+    /// Exact explicit coefficients with the orientation determinant's sign convention.
     plane: Plane3,
+    /// Snapshot derived from the owned plane, reused for expression scheduling.
     facts: Plane3Facts,
 }
 
 impl OrientedPlane3Evidence {
     /// Return the explicit plane built from the oriented point triple.
+    /// This immutable view has the negative cross-product normal and is not normalized.
     pub fn plane(&self) -> &Plane3 {
         &self.plane
     }
@@ -386,6 +465,11 @@ impl OrientedPlane3Evidence {
 }
 
 /// Derive reusable evidence for the oriented plane through `a`, `b`, and `c`.
+///
+/// Let `cross = (b-a) x (c-a)`. The owned plane is `(-cross, cross . a)`, so
+/// `(a,b,c) = ((0,0,0),(1,0,0),(0,1,0))` classifies positive z as Below.
+/// Collinear input is not rejected and may yield an all-zero expression.
+/// Construction retains exact coefficients without a policy or normalizing division.
 pub fn oriented_plane3_evidence(a: &Point3, b: &Point3, c: &Point3) -> OrientedPlane3Evidence {
     crate::trace_dispatch!("hyperlimit", "oriented_plane3_evidence", "derive");
     let abx = sub(&b.x, &a.x);
@@ -432,6 +516,9 @@ pub fn oriented_plane3_evidence(a: &Point3, b: &Point3, c: &Point3) -> OrientedP
 }
 
 /// Classify a point using retained oriented-plane evidence and a policy.
+/// Tries its dyadic determinant filter, then the optional checked-word filter,
+/// falling back to its owned explicit plane and facts. Each declined filter
+/// leaves the exact fallback available; no source triple is reconstructed.
 #[inline]
 pub fn classify_point_oriented_plane_with_evidence_and_policy(
     point: &Point3,
@@ -459,6 +546,8 @@ pub fn classify_point_oriented_plane_with_evidence_and_policy(
     classify_point_plane_with_facts(point, &evidence.plane, evidence.facts, policy)
 }
 
+/// Try the retained checked-word determinant, then classify with the owned explicit plane.
+/// Kept as a separate cold route; calling it without a word filter also reaches the fallback.
 #[cold]
 #[inline(never)]
 fn classify_point_oriented_plane_exact_word(
@@ -485,6 +574,8 @@ fn classify_point_oriented_plane_exact_word(
     classify_point_plane_with_facts(point, &evidence.plane, evidence.facts, policy)
 }
 
+/// Enter generic point-plane classification with a trusted coefficient snapshot.
+/// Facts must still match the plane, especially before the known-exact scalar path.
 #[inline(always)]
 fn classify_point_plane_with_facts(
     point: &Point3,
@@ -496,6 +587,11 @@ fn classify_point_plane_with_facts(
 }
 
 /// Classify a point relative to a plane with an explicit escalation policy.
+///
+/// Signs of `normal . point + offset` map to Below/On/Above. Tries a certified
+/// dyadic filter, then a direct rational product sum, then the shared Real
+/// pipeline. No normal-length or plane-validity check is performed. Approximate
+/// On is qualified by the outcome and need not prove exact incidence.
 pub fn classify_point_plane_with_policy(
     point: &Point3,
     plane: &Plane3,
@@ -527,6 +623,10 @@ pub fn classify_point_plane_with_policy(
     classify_point_plane_real(point, plane, None, policy)
 }
 
+/// Decide an exposed-rational plane/query pair, using a retained filter before exact summation.
+/// Requires all seven input scalars to expose rational references; otherwise
+/// declines. A supplied filter must match the plane. Filter hits are Exact at
+/// Filter stage, while complete rational product sums are Exact at Exact stage.
 #[inline]
 fn classify_exact_rational_point_plane(
     point: &Point3,
@@ -583,11 +683,13 @@ fn classify_exact_rational_point_plane(
     ))
 }
 
-/// Classify a point/plane pair without attempting the primitive dyadic filter.
+/// Classify a point/plane pair directly through the generic Real expression pipeline.
 ///
 /// Use this internal route when the caller already knows the pair is ineligible
 /// or when constructing a filter for a single comparison would cost more than
-/// it saves. The exact fallback ladder is identical to the public classifier.
+/// it saves. This skips both initial dyadic filtering and the separate direct
+/// rational point-plane route of the public classifier. The generic sign
+/// resolver still has its structural, exact-recognition and refinement stages.
 #[inline(always)]
 pub(crate) fn classify_point_plane_without_filter_with_policy(
     point: &Point3,
@@ -597,6 +699,8 @@ pub(crate) fn classify_point_plane_without_filter_with_policy(
     classify_point_plane_real(point, plane, None, policy)
 }
 
+/// Try a locally prepared dyadic plane filter before the generic Real expression route.
+/// The filter must match the supplied plane; no retained rational filter is tried here.
 #[inline(always)]
 fn classify_point_plane_with_filter(
     filter: Option<LinearForm3Filter>,
@@ -621,6 +725,11 @@ fn classify_point_plane_with_filter(
 
 /// Classify a closed segment relative to a plane with an explicit escalation
 /// policy.
+///
+/// Queries start and then end through the generic point-plane route; an unknown
+/// start prevents querying end. A decided relation joins both local certainty
+/// and stage labels. Endpoint equality and plane nondegeneracy are not separately
+/// validated, and no intersection coordinate is constructed.
 pub fn classify_plane_segment_with_policy(
     plane: &Plane3,
     start: &Point3,
@@ -668,6 +777,11 @@ pub fn classify_plane_segment_with_policy(
 }
 
 /// Classify a triangle relative to a plane with an explicit escalation policy.
+///
+/// Prepares one dyadic filter, then eagerly classifies all three vertices in
+/// a/b/c order before examining their outcomes. The first Unknown in that array
+/// is returned; a decided result joins all three certainty/stage labels. This
+/// classifies vertex sides without proving nonzero triangle area or plane validity.
 pub fn classify_plane_triangle_with_policy(
     plane: &Plane3,
     a: &Point3,
@@ -729,6 +843,12 @@ pub fn classify_plane_triangle_with_policy(
 
 /// Classify a query triangle against an oriented plane triangle with an
 /// explicit predicate policy and retained per-vertex side facts.
+///
+/// Eagerly evaluates all three orientation predicates, then extracts only their
+/// side values. Certainty, stage and Unknown reasons are lost. The bare report
+/// can therefore contain approximate sides without recording their qualification;
+/// it must not alone be treated as certified evidence after an approximate call.
+/// The defining point triple is not checked for noncollinearity.
 pub fn classify_triangle_against_oriented_plane_with_policy(
     plane: [&Point3; 3],
     query: [&Point3; 3],
@@ -752,6 +872,9 @@ pub fn classify_triangle_against_oriented_plane_with_policy(
 }
 
 /// Derive a retained triangle/plane relation from per-vertex side facts.
+/// Any missing side yields Unknown, even if present sides already differ.
+/// Three equal sides yield the corresponding strict-side or coplanar label;
+/// every other complete combination is Straddling. No geometry is inspected.
 pub fn triangle_plane_relation_from_sides(sides: [Option<PlaneSide>; 3]) -> TrianglePlaneRelation {
     let Some([a, b, c]) = transpose_plane_sides(sides) else {
         return TrianglePlaneRelation::Unknown;
@@ -777,10 +900,12 @@ pub fn triangle_plane_relation_from_sides(sides: [Option<PlaneSide>; 3]) -> Tria
     }
 }
 
+/// Extract three side labels in order, declining on the first missing value.
 fn transpose_plane_sides(sides: [Option<PlaneSide>; 3]) -> Option<[PlaneSide; 3]> {
     Some([sides[0]?, sides[1]?, sides[2]?])
 }
 
+/// Check only index bounds; repeated indices and degenerate geometry remain allowed.
 fn triangle_indices_in_range(points: &[Point3], indices: [usize; 3]) -> bool {
     indices.iter().all(|&index| index < points.len())
 }
@@ -793,6 +918,9 @@ fn triangle_indices_in_range(points: &[Point3], indices: [usize; 3]) -> bool {
 /// selecting the lower/upper contribution for each source axis, then certifies
 /// only those two extrema. It preserves exact `Real` arithmetic while avoiding
 /// eight point-plane classifications.
+/// It builds the full report internally and drops its fields while preserving
+/// the outer certainty/stage. Bounds may be supplied in either order per axis;
+/// degenerate boxes are accepted. No validity check rejects a zero plane normal.
 pub fn classify_plane_aabb3_with_policy(
     plane: &Plane3,
     min: &Point3,
@@ -815,6 +943,14 @@ pub fn classify_plane_aabb3_with_policy(
 /// support corners. The retained `axis_term_orderings` document which bound was
 /// chosen on each axis, so callers can audit the interval reduction
 /// without enumerating all eight corners.
+///
+/// Each coordinate pair defines a closed interval regardless of argument order.
+/// Products are compared in x/y/z order; ties keep the first bound for the lower
+/// corner and the second for the upper corner. The upper expression is resolved
+/// before the lower, and both are required for a completed report. Every consumed
+/// ordering/sign contributes to the outer certainty; report fields do not retain
+/// their separate receipts. Under approximation, selected corners/signs need not
+/// constitute exact support certificates. Unknown aborts without a partial report.
 pub fn classify_plane_aabb3_report_with_policy(
     plane: &Plane3,
     min: &Point3,
@@ -913,6 +1049,9 @@ pub fn classify_plane_aabb3_report_with_policy(
     )
 }
 
+/// Build the exact plane expression and resolve its sign with a lazy same-sign term filter.
+/// Optional facts must match the coefficients; the filter constructs x/y/z
+/// products only if structural expression facts did not already decide the sign.
 fn classify_point_plane_real(
     point: &Point3,
     plane: &Plane3,
@@ -944,6 +1083,8 @@ fn classify_point_plane_real(
     )
 }
 
+/// Map extrema signs to a box relation, testing strictly negative upper before positive lower.
+/// Assumes consistent lower/upper selection; this truth table does not check ordering.
 fn plane_aabb_relation_from_extrema(lower_sign: Sign, upper_sign: Sign) -> PlaneAabbRelation {
     if upper_sign == Sign::Negative {
         PlaneAabbRelation::Below
@@ -954,10 +1095,12 @@ fn plane_aabb_relation_from_extrema(lower_sign: Sign, upper_sign: Sign) -> Plane
     }
 }
 
+/// Resolve a sign for report validation, dropping certainty, stage and Unknown diagnostics.
 fn sign_real_with_policy(value: &Real, policy: PredicatePolicy) -> Option<Sign> {
     resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement).value()
 }
 
+/// Clone three exact scalar coordinates into an owned support-point record.
 fn point3_from_coords(coordinates: [&Real; 3]) -> Point3 {
     Point3::new(
         coordinates[0].clone(),
@@ -987,6 +1130,10 @@ fn point_plane_expression(
     )
 }
 
+/// Form the four-term plane polynomial, trusting retained coefficient exactness when supplied.
+/// Query exactness is inspected afresh. Only coefficient exact-rational facts
+/// select the known-exact aggregate path here; sparse masks do not independently
+/// select it. `trace_operation` labels this construction when tracing is enabled.
 fn point_plane_expression_from_coords(
     coordinates: [&Real; 3],
     plane: &Plane3,
@@ -1014,6 +1161,8 @@ fn point_plane_expression_from_coords(
     Real::signed_product_sum([true; 4], terms)
 }
 
+/// Snapshot coefficient exactness, zero masks, symbolic dependencies and normal support.
+/// Preserves the inspection order; neither source identity nor normal validity is retained.
 fn plane3_facts(plane: &Plane3) -> Plane3Facts {
     let coefficients = [
         &plane.normal.x,
@@ -1035,6 +1184,7 @@ fn plane3_facts(plane: &Plane3) -> Plane3Facts {
     }
 }
 
+/// Union the four coefficients' detailed symbolic dependency families in coordinate order.
 fn plane_coefficient_symbolic_dependencies(coordinates: [&Real; 4]) -> SymbolicDependencyMask {
     coordinates
         .into_iter()
@@ -1043,6 +1193,8 @@ fn plane_coefficient_symbolic_dependencies(coordinates: [&Real; 4]) -> SymbolicD
         })
 }
 
+/// Partition coefficient indices into known-zero, known-nonzero and unknown masks.
+/// Bits 0 through 3 follow the supplied normal-x/y/z/offset order.
 fn plane_coefficient_zero_masks(coordinates: [&Real; 4]) -> (u8, u8, u8) {
     let mut known_zero_mask = 0_u8;
     let mut known_nonzero_mask = 0_u8;
@@ -1058,6 +1210,8 @@ fn plane_coefficient_zero_masks(coordinates: [&Real; 4]) -> (u8, u8, u8) {
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
 }
 
+/// Join a consumed decision's certainty and ranked stage into an aggregate receipt.
+/// Stage ranking records summary metadata rather than chronological evaluation order.
 fn absorb_trace(
     certainty: &mut Certainty,
     stage: &mut Escalation,
@@ -1070,6 +1224,11 @@ fn absorb_trace(
 
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`
 /// with an explicit escalation policy.
+///
+/// Maps the orientation determinant sign directly to Below/On/Above, preserving
+/// its outcome metadata. This corresponds to the normal `-(b-a) x (c-a)`:
+/// the positive z side of the standard counterclockwise xy triple is Below.
+/// A degenerate defining triple is not rejected as invalid plane input.
 pub fn classify_point_oriented_plane_with_policy(
     a: &Point3,
     b: &Point3,
@@ -1084,44 +1243,56 @@ pub fn classify_point_oriented_plane_with_policy(
     )
 }
 
+/// Forward borrowed exact addition to the shared traced arithmetic helper.
 fn add(left: &Real, right: &Real) -> Real {
     add_ref(left, right)
 }
 
+/// Forward borrowed exact multiplication to the shared traced arithmetic helper.
 fn mul(left: &Real, right: &Real) -> Real {
     mul_ref(left, right)
 }
 
+/// Forward borrowed exact subtraction to the shared traced arithmetic helper.
 fn sub(left: &Real, right: &Real) -> Real {
     sub_ref(left, right)
 }
 
 #[cfg(test)]
+/// Plane relation, retained-evidence, policy/replay and dispatch-count regression witnesses.
+/// Value-only comparisons are distinguished from complete receipt and trace assertions.
 mod tests {
     use super::*;
     use crate::predicates::decision::{certainty_rank, stage_rank};
     use hyperreal::Rational;
 
+    /// Permit approximate terminals in general fixtures; specific strict checks select their own policy.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
     #[cfg(feature = "dispatch-trace")]
+    /// Return this module's lazily initialized lock for trace reset/record/take sequences.
     fn dispatch_trace_test_lock() -> &'static std::sync::Mutex<()> {
+        /// Process-lifetime mutex shared by this module's dispatch instrumentation tests.
         static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
         LOCK.get_or_init(|| std::sync::Mutex::new(()))
     }
 
+    /// Import a finite fixture number as its exact binary64 value.
     fn real(value: f64) -> Real {
         Real::try_from(value).expect("finite test Real")
     }
 
+    /// Construct a point or coefficient vector from three exact binary64 fixture values.
     fn p3(x: f64, y: f64, z: f64) -> Point3 {
         Point3::new(real(x), real(y), real(z))
     }
 
+    /// Construct an exact ratio; authored fixture denominators must be nonzero.
     fn rational(numerator: i64, denominator: u64) -> Real {
         Real::new(Rational::fraction(numerator, denominator).expect("valid test rational"))
     }
 
+    /// Retain the now-recognized Pythagorean zero before returning an angle-addition terminal control.
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -1136,6 +1307,7 @@ mod tests {
     }
 
     #[test]
+    /// Check independent above/below expectations for the plane z = 2.
     fn classifies_point_plane() {
         let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
 
@@ -1150,6 +1322,7 @@ mod tests {
     }
 
     #[test]
+    /// Exercise all five endpoint-side relations against z = 2 with integer fixtures.
     fn classifies_plane_segment_relation() {
         let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
 
@@ -1181,6 +1354,7 @@ mod tests {
     }
 
     #[test]
+    /// Exercise all five triangle-side relations against z = 2 without inferring area validity.
     fn classifies_plane_triangle_relation() {
         let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
 
@@ -1242,6 +1416,7 @@ mod tests {
     }
 
     #[test]
+    /// Check below/above/intersecting boxes and reversed bounds against x - 2*y + z - 1.
     fn classifies_plane_aabb3_relation_from_extreme_terms() {
         let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
 
@@ -1268,6 +1443,7 @@ mod tests {
     }
 
     #[test]
+    /// Check independent support corners, signs and axis ordering, then forged values/signs and changed-source rejection.
     fn plane_aabb3_report_retains_support_extrema() {
         let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
         let min = p3(0.0, 0.0, 0.0);
@@ -1312,6 +1488,7 @@ mod tests {
     }
 
     #[test]
+    /// Check strict-side reports, reversed endpoint order and rejection of a forged coarse relation.
     fn plane_aabb3_report_distinguishes_strict_sides_and_reversed_bounds() {
         let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
         let below = crate::classify_plane_aabb3_report(
@@ -1357,6 +1534,7 @@ mod tests {
     }
 
     #[test]
+    /// Pin the orientation convention: the counterclockwise xy triple labels positive z Below.
     fn classifies_point_oriented_plane_from_points() {
         let a = p3(0.0, 0.0, 0.0);
         let b = p3(1.0, 0.0, 0.0);
@@ -1369,6 +1547,7 @@ mod tests {
     }
 
     #[test]
+    /// Check exact coefficient masks/schedules and retained-versus-immediate side-value agreement.
     fn plane_evidence_preserves_coefficient_structure() {
         let plane = Plane3::new(
             Point3::new(Real::from(0), Real::from(3), Real::from(0)),
@@ -1398,6 +1577,7 @@ mod tests {
     }
 
     #[test]
+    /// Require exact On/Exact-stage receipts for 3/3 + 5/5 + 7/7 - 3 in both plane paths.
     fn exact_rational_plane_cascade_preserves_cancellation_and_evidence() {
         let plane = Plane3::new(
             Point3::new(rational(1, 3), rational(1, 5), rational(1, 7)),
@@ -1419,6 +1599,8 @@ mod tests {
     }
 
     #[test]
+    /// Compare 25 rational query side values with a materialized-expression sign from the same scalar kernel.
+    /// This checks path agreement, not an independent sign oracle or complete receipt equality.
     fn exact_rational_plane_cascade_matches_materialized_expression_signs() {
         let plane = Plane3::new(
             Point3::new(rational(17, 19), rational(-23, 29), rational(31, 37)),
@@ -1455,6 +1637,8 @@ mod tests {
     }
 
     #[test]
+    /// Compare three binary64 query side values from retained and direct orientation routes.
+    /// Calling the word helper here does not itself prove a word-filter hit; it can fall back.
     fn oriented_plane_evidence_matches_orient3d_side() {
         let a = p3(-0.85, -0.7, -0.25);
         let b = p3(0.9, -0.35, 0.35);
@@ -1480,6 +1664,7 @@ mod tests {
     }
 
     #[test]
+    /// Require rational source word evidence and full retained/direct outcome equality for a pi query.
     fn oriented_plane_exact_word_evidence_falls_back_for_symbolic_queries() {
         let a = Point3::new(rational(1, 3), Real::from(0), Real::from(0));
         let b = Point3::new(Real::from(0), rational(1, 5), Real::from(0));
@@ -1496,6 +1681,7 @@ mod tests {
     }
 
     #[test]
+    /// Require the exact structural Below receipt for pi - 4.
     fn classifies_point_plane_with_hyperreal_structural_facts() {
         use crate::predicate::{Certainty, Escalation};
 
@@ -1509,6 +1695,7 @@ mod tests {
     }
 
     #[test]
+    /// Check PI/TRIG/EXP dependency-family propagation through plane facts and retained evidence.
     fn plane_evidence_summarizes_symbolic_dependencies() {
         let trig = (Real::from(hyperreal::Rational::fraction(1, 5).unwrap()) * Real::pi()).sin();
         let plane = Plane3::new(Point3::new(Real::pi(), trig, 0.into()), Real::e());
@@ -1538,6 +1725,7 @@ mod tests {
     }
 
     #[test]
+    /// Exercise strict unknowns at segment endpoints, triangle vertices, box terms and extrema, plus receipt rankings.
     fn plane_unknown_paths_and_helper_rankings_are_explicit() {
         let uncertain = terminal_zero();
         let uncertain_plane = Plane3::new(
@@ -1649,6 +1837,8 @@ mod tests {
     }
 
     #[test]
+    /// Exercise symbolic filter declines, exact-word completion, changed-triangle replay and unresolved-order validation.
+    /// The unresolved comparison intentionally maps to the existing extremum-order mismatch variant.
     fn plane_evidence_and_report_replay_cover_fallback_and_mismatch_paths() {
         let plane = Plane3::new(
             Point3::new(Real::pi(), Real::e(), Real::from(2).sqrt().unwrap()),
@@ -1726,6 +1916,8 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
+    /// Require one rational-filter trace hit and zero generic/known-shared-denominator product-sum hits.
+    /// The fifths fixture has an independent negative plane-expression expectation under STRICT.
     fn point_plane_evidence_reuses_rational_linear_form_filter() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
