@@ -52,8 +52,9 @@ use crate::{Real, TriangleMesh, solid};
 
 /// The single public error type of CSGRS modeling operations.
 ///
-/// Kernel failures are kept as the error's [`std::error::Error::source`], and
-/// [`ValidationError::kind`] classifies every failure.
+/// Typed kernel failures remain in the error's variant payloads; source-chain
+/// exposure follows [`ValidationError`]'s variant-specific contract.
+/// [`ValidationError::kind`] supplies a coarser category for callers and bindings.
 pub type Error = ValidationError;
 
 /// Result of a CSGRS modeling operation.

@@ -41,6 +41,15 @@
 //! - **attributed**: aligned face-metadata and authored-normal sidecar
 //! - **wasm**: WebAssembly/browser wrappers
 //! - **dispatch-trace**: computation-path evidence for tests and benchmarks
+//! - **bench-feature-pipeline**: feature bundle for the feature-pipeline benchmark,
+//!   including attributed geometry, format adapters, sampled fields, text, and Bevy
+//!
+//! # Private API documentation
+//!
+//! Build this crate's internal documentation with
+//! `cargo doc -p csgrs --no-deps --document-private-items`. Select the desired
+//! Cargo features to include their gated APIs. Private Rustdoc describes internal
+//! implementation contracts; it does not make those items a stable public API.
 
 #![forbid(unsafe_code)]
 #![deny(unused)]
@@ -84,8 +93,12 @@ pub use hyperreal::Real;
 pub use session::{Csg, Error, IntoReal, Result, decimal, ratio};
 pub use solid_expr::{SolidExpr, SolidExprChild};
 
+/// Strict policy shared by boundary helpers that do not accept a caller context.
+/// Context-bearing modeling operations forward their explicitly selected policy
+/// separately; this constant is not a mutable process-wide policy setting.
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::STRICT;
+/// Strict mesh context shared by internal topology regression checks.
 #[cfg(test)]
 pub(crate) const MESH_CONTEXT: hypermesh::MeshContext =
     hypermesh::MeshContext::new(PREDICATE_POLICY);

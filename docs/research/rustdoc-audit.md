@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/errors.rs` | Entire file and classification match arms; documented payload fields, categories and private classifiers. | Private docs passed with all error-gating features and no default features; formatting passed. |
+| `src/lib.rs` | Entire file; checked feature overview and policy uses, added private API build guidance and private constant docs. | Crate page and private policy page checked; broader gated API review remains in owning modules. |
 | `src/adapter/mesh.rs` | Entire file; documented scalar facade operations, graphics cache, exports and private helpers. | Private docs passed with and without `curve`, with broken links denied. |
 | `src/adapter/curve.rs` | Entire file; documented region operations, sampled profile/revolution boundaries and private conversion helper. | Private docs passed with `curve`, with broken links denied. |
 | `src/adapter/scalar.rs` | Entire file and conversion implementations; documented all declarations and native error distinctions. | Private docs passed with and without `curve`, with broken links denied. |
@@ -163,10 +165,60 @@ Logs: `/tmp/csgrs-rustdoc-mesh-curve-doc.log` and
 no generated artifacts are tracked. Full workflow checks remain waived by the
 owner for this documentation-only session.
 
+### Error API and crate root batch, 26 November 2026
+
+Owner: CSGRS error and binding boundary, P6/P8/P30/P37. Baseline: `e5e8487f1`.
+Domain: every modeling error variant and classification branch, including optional
+font and sampled-field diagnostics. Missing witness: variant payload fields,
+most category variants, `kind`, and both private classifiers lacked Rustdoc.
+
+Read every line of `src/errors.rs` and `src/lib.rs`. Inspected session aliases,
+JavaScript category export, expression and scalar wrappers, allocation helpers,
+curve diagnostics, and the installed thiserror source-chain expansion. Checked
+crate-root feature declarations against Cargo configuration and boundary module
+exports. Supporting files are not credited as fully audited. `src/session.rs`
+has only a targeted alias-doc correction; its full review remains pending.
+
+Documented actual classification semantics, including the coarse resource bucket
+that currently includes cancellation, capacity overflow and several allocation
+failures. `ResourceUnavailable` is used for explicit curve storage uncertainty,
+not every failed allocation. Documented that transparent scalar wrappers forward
+the payload's source chain and polynomial topology retains its payload without
+exposing it as `Error::source()`. Corrected the session error-alias claim to agree.
+These are existing implementation limits, not algorithm fixes or claims of
+compliance with the stronger failure/resource target contract. Future changes to
+classification or source-chain behavior require separate admission.
+
+Crate-root docs now describe the benchmark feature bundle, private-documentation
+command, strict helper policy, and test-only mesh context. Test-only constant
+documentation was reviewed in source; ordinary Rustdoc builds exclude test cfg.
+
+Validation after edits:
+
+- `git diff --check`: passed.
+- Code comparison against baseline, removing comments and normalizing whitespace
+  and optional trailing record/tuple commas: unchanged for all three Rust files.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve,truetype-text,hershey-text,sdf,metaballs
+  --document-private-items --no-deps --offline`: passed without warnings.
+  This enables every feature-gated variant in `src/errors.rs`.
+- Generated HTML checked for error payloads/categories, both private classifier
+  pages, private policy constant, root build guidance, and session error alias.
+- The same private-doc command without the feature list: passed without warnings.
+- `cargo fmt --all -- --check`: initial failure required splitting attributes onto
+  their own lines beside documented tuple fields; final check passed after that
+  formatting correction.
+
+Logs remain in `/tmp/csgrs-rustdoc-errors-doc.log` and
+`/tmp/csgrs-rustdoc-errors-minimal-doc.log`. Source behavior, category mapping and
+error-source attributes are unchanged. Full workflow checks remain waived for
+this docs-only session; no runtime or performance claim is made.
+
 ## Next work
 
-Continue through the remaining root API (crate root, errors, modeling sessions,
-expressions, and native operations), then the owning crates. Maintain review records with each batch. Establish
+Continue through modeling sessions, expressions, native operations and the
+remaining root modules, then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file
 before claiming completion. Commit and push documentation batches after focused
