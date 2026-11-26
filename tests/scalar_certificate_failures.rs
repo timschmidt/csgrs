@@ -1,7 +1,13 @@
+//! Scalar certificate/domain failures retained through modeling and native-SVG import boundaries.
+//! Hand-authored inconsistent or undefined scalar wires must fail before a model
+//! constructor runs; category-only checks are distinct from source-chain checks.
+
 use csgrs::errors::{ValidationError, ValidationErrorKind};
 use hyperreal::Problem;
 
 #[test]
+/// Distinguishes unknown certificates/zero decisions from actual exhaustion and
+/// checks their direct and marching-squares modeling classifications/text.
 fn scalar_uncertainty_remains_undecided_through_modeling_errors() {
     for problem in [Problem::UnknownCertificate, Problem::UnknownZero] {
         let direct = ValidationError::from(problem);
@@ -21,6 +27,8 @@ fn scalar_uncertainty_remains_undecided_through_modeling_errors() {
 
 #[test]
 #[cfg(any(feature = "sdf", feature = "metaballs"))]
+/// Checks an authored field error and indexed sample wrapper retain the downcastable scalar cause.
+/// Does not invoke a field sampler or assert preservation of the sample coordinates.
 fn field_and_sample_errors_preserve_the_undecided_scalar_cause() {
     let source = hypersdf::SdfEvaluationError::Scalar {
         operation: "import exact coordinate",
@@ -45,6 +53,7 @@ fn field_and_sample_errors_preserve_the_undecided_scalar_cause() {
 
 #[test]
 #[cfg(feature = "svg-io")]
+/// Rejects an unproved Pi/E scalar relationship as undecided before the cube callback executes.
 fn an_undecided_import_cannot_publish_a_model() {
     let wire = r#"{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"Pi","computable":{"internal":{"Constant":"E"}}}"#;
     let mut constructed = false;
@@ -60,6 +69,8 @@ fn an_undecided_import_cannot_publish_a_model() {
 
 #[test]
 #[cfg(feature = "svg-io")]
+/// Requires parse failure for inverse-of-`1 + (-1)` wires at both zero and unit outer scale.
+/// The constructor guard proves the invalid scalar never reaches cube construction.
 fn an_undefined_arithmetic_import_cannot_publish_a_model() {
     // The inner denominator is 1 + (-1), even when the outer scale is zero.
     let graph = r#"{"internal":{"Inverse":{"internal":{"Add":[{"internal":{"Int":[1,[1]]}},{"internal":{"Int":[-1,[1]]}}]}}}}"#;
@@ -86,6 +97,8 @@ fn an_undefined_arithmetic_import_cannot_publish_a_model() {
 
 #[test]
 #[cfg(feature = "svg-io")]
+/// Requires parse failure for inverse-of-`pi - pi`, even behind zero outer scale,
+/// and checks that no cube construction callback ran.
 fn a_symbolically_undefined_import_cannot_publish_a_model() {
     // pi - pi is zero independently of any numerical refinement.
     let pi = r#"{"internal":{"Constant":"Pi"}}"#;
@@ -115,6 +128,8 @@ fn a_symbolically_undefined_import_cannot_publish_a_model() {
 
 #[test]
 #[cfg(feature = "svg-io")]
+/// Embeds a hand-authored unproved CBOR scalar in an HCP3 native SVG path extension.
+/// Requires the SVG/modeling wrapper to retain `UnknownCertificate` and its undecided category.
 fn svg_import_retains_the_typed_scalar_failure() {
     use csgrs::io::{IoError, svg::import_svg};
     use std::fmt::Write;

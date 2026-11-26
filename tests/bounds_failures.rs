@@ -1,5 +1,9 @@
 //! Bounds preserve absence and uncertainty through the modeling boundary.
+//! Fixtures cover malformed topology, cached-position reuse, exact box placement,
+//! empty operands and downstream sampled-field/TPMS consumers; each test names
+//! its actual category, geometry or receipt assertions.
 #[path = "support/uncertainty.rs"]
+/// Shared proved-zero control and strictly unresolved scalar witness.
 mod uncertainty;
 
 #[cfg(feature = "sdf")]
@@ -14,6 +18,8 @@ use hyperlattice::Point3;
 use hypermesh::Triangle;
 use std::error::Error;
 
+/// Creates two unreferenced position rows with an unresolved-zero X/Z separation.
+/// No triangles are present, so bounds still have to order stored positions.
 fn uncertain_points() -> TriangleMesh {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -28,6 +34,8 @@ fn uncertain_points() -> TriangleMesh {
 }
 
 #[test]
+/// Distinguishes repeated empty-bound queries from a one-position origin box,
+/// then checks centering/floating retains that point.
 fn empty_bounds_are_absent_rather_than_a_point_at_the_origin() {
     let mesh = solid::empty();
     assert!(solid::bounding_box(&mesh).unwrap().is_none());
@@ -41,6 +49,8 @@ fn empty_bounds_are_absent_rather_than_a_point_at_the_origin() {
 }
 
 #[test]
+/// Requires errors from strict bounds, centering and floating of the unresolved point pair.
+/// This case checks failure presence; category retention is asserted separately.
 fn undecided_bounds_do_not_become_an_origin_box_or_empty_model() {
     let mesh = uncertain_points();
     assert!(solid::bounding_box(&mesh).is_err());
@@ -49,6 +59,7 @@ fn undecided_bounds_do_not_become_an_origin_box_or_empty_model() {
 }
 
 #[test]
+/// Rejects an out-of-range triangle before bounds/placement and retains its typed kernel cause.
 fn bounds_reject_malformed_indices() {
     let mesh = TriangleMesh::new(vec![Point3::origin()], vec![Triangle::new(0, 1, 0)]);
     assert!(
@@ -69,6 +80,9 @@ fn bounds_reject_malformed_indices() {
 }
 
 #[test]
+/// Checks independently specified centered/floated box bounds, signed six-volume 288
+/// and native edge pairing, then consumes an empty placement through Boolean removal.
+/// These invariants are fixture evidence rather than a general shape-equivalence proof.
 fn placement_preserves_exact_box_geometry_and_empty_composition() {
     let source = solid::cuboid(2, 4, 6).unwrap().translated(7, -3, 11).unwrap();
     let centered = solid::center(&source).unwrap();
@@ -109,6 +123,7 @@ fn placement_preserves_exact_box_geometry_and_empty_composition() {
 }
 
 #[test]
+/// Warms valid cube bounds, corrupts an index through copy-on-write and requires rejection.
 fn cached_position_bounds_do_not_validate_mutated_indices() {
     let mut mesh = solid::cube(Real::one()).unwrap();
     solid::bounding_box(&mesh).unwrap();
@@ -117,6 +132,7 @@ fn cached_position_bounds_do_not_validate_mutated_indices() {
 }
 
 #[test]
+/// Requires the raw scalar adapter to retain a structured undecided bounds error.
 fn undecided_bounds_retain_their_category_through_the_adapter() {
     let mesh = RawTriangleMesh::from_native(uncertain_points());
     let error = mesh.bounding_box().unwrap_err();
@@ -128,6 +144,8 @@ fn undecided_bounds_retain_their_category_through_the_adapter() {
 
 #[cfg(feature = "curve")]
 #[test]
+/// Checks repeated empty curve bounds, certified empty Hilbert output, invalid-order
+/// validation before empty success and exact rectangle extrema.
 fn empty_curve_bounds_are_absent() {
     let curve = hypercurve::CurveRegion2::empty();
     assert!(csgrs::curve::bounding_box(&curve).unwrap().is_none());
@@ -158,6 +176,7 @@ fn empty_curve_bounds_are_absent() {
 
 #[cfg(feature = "sdf")]
 #[test]
+/// Requires gyroid consumers to retain undecided bounds and distinguish grid capacity overflow.
 fn tpms_consumers_preserve_bounds_and_capacity_failures() {
     assert_eq!(
         solid::gyroid(&uncertain_points(), 4, 1, 0)
@@ -174,6 +193,8 @@ fn tpms_consumers_preserve_bounds_and_capacity_failures() {
 
 #[cfg(feature = "sdf")]
 #[test]
+/// Exercises three sheet and three band-solid TPMS families on empty/zero-thickness inputs.
+/// Checks empty reuse and distinguishes invalid from undecided frequency/thickness parameters.
 fn all_tpms_families_compose_on_empty_and_zero_thickness() {
     let empty = solid::empty();
     let cube = solid::cube(Real::one()).unwrap();
@@ -225,6 +246,7 @@ fn all_tpms_families_compose_on_empty_and_zero_thickness() {
 
 #[cfg(feature = "sdf")]
 #[test]
+/// Rejects zero frequency, negative thickness and undersized grids on empty and nonempty bounds.
 fn tpms_invalid_parameters_are_not_successful_empty_models() {
     for mesh in [solid::empty(), solid::cube(Real::one()).unwrap()] {
         assert!(solid::gyroid(&mesh, 4, 0, 0).is_err());
@@ -235,6 +257,9 @@ fn tpms_invalid_parameters_are_not_successful_empty_models() {
 
 #[cfg(feature = "sdf")]
 #[test]
+/// Retains the native unknown-sample-sign cause, then verifies a fresh positive-field
+/// call returns a certified empty mesh under the same strict context.
+/// This is recovery with different field values, not a higher-budget retry of the failing field.
 fn shared_sampled_field_path_retains_native_failure_and_recovers() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();

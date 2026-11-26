@@ -34,6 +34,11 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/adapter_boolean_failures.rs` | Entire file; documented operation variants, dispatch/context matrix, native wrapping and typed cause assertions. | Focused test compilation and private helper docs passed; assertions unchanged, not executed. |
+| `tests/adapter_curve_failures.rs` | Entire file; documented failure transport, synthetic policy error, finite rectangle composition and revolution receipt/volume scope. | Focused test compilation and private helper docs passed; assertions unchanged, not executed. |
+| `tests/scalar_certificate_failures.rs` | Entire file; documented inconsistent/undefined scalar wire fixtures, constructor guards and scalar source chains. | Focused test compilation and module docs passed; test-only items source-reviewed, not executed. |
+| `tests/bounds_failures.rs` | Entire file; documented empty/invalid/undecided bounds, cache mutation, placement invariants and TPMS/sample consumers. | Focused test compilation and private helper docs passed; assertions unchanged, not executed. |
+| `tests/storage_failures.rs` | Entire file; documented authored error classification/source transport without claiming allocator or budget exercise. | Focused test compilation and module docs passed; test-only item source-reviewed, not executed. |
 | `examples/readme_renders.rs` | Entire file; documented fixtures, exact ingress/finite display, all constants/helpers/fields, raster math, endpoint markers, receipts and output behavior. | Private docs and focused example check passed with actual required features; 69 pages inspected. Missing-Hershey configuration reproduced; renderer/geometry unit witness not executed. |
 | `tests/readme_render_regression.rs` | Entire file; documented lexical asset discovery, retained output directories, subprocess/environment behavior and byte-comparison scope. | Directly compiled existing tests and ran only the PNG-reference existence test: passed. Ignored renderer/byte-comparison test unchanged and not run. |
 | `tests/readme.rs` | Entire file; documented embedded snapshots, exact quickstart synchronization and selected metadata/layout assertions. | Both existing tests compiled directly and passed after restoring README synchronization; assertions unchanged. |
@@ -2520,6 +2525,52 @@ All 13 tracked Rust files under the root `examples/` directory now have whole-fi
 review rows, checked against `git ls-files examples`. This is directory review
 coverage, not proof of all example/test feature combinations or repository-wide
 Rustdoc completeness. The recorded multi-format test and renderer feature gaps remain.
+
+### Adapter, scalar, bounds and storage failure witnesses, 26 November 2026
+
+Baseline: `d37124484`. Owners: root modeling acceptance consumers,
+P3/P6/P8/P9/P19/P20/P25/P30/P37. Domain: malformed native meshes, unresolved
+scalar identities, four adapter scalar families, finite rectangle operations,
+sampled revolution, scalar wire admission, bounds, empty TPMS inputs and authored
+resource errors. Read all five files in full, including feature-gated test bodies.
+Supporting reads of the shared uncertainty fixture, owning adapters/errors and
+bounds consumers do not add new whole-file kernel credit.
+
+Missing witnesses were undocumented private helpers/tests, an operation enum and
+its variants, and statements stronger than the assertions. The shared unresolved
+zero is a sine-addition identity; the supplied Pythagorean expression is its
+separate proved control. Adapter fixtures wrap native geometry without testing
+coordinate export through each scalar type. Authored incompatible-policy and
+storage errors check transport, not actual retries or resource exhaustion.
+Documented exact area/volume, finite point membership, edge pairing and constructor
+guards at their actual strength. Recovery with a different sampled field is not
+a larger-budget retry. No executable line, fixture or assertion changed.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline in all five files. All 46 declarations have
+  Rustdoc; the four operation variants were checked separately.
+- `cargo check --locked -p csgrs --no-default-features --features curve,sdf,svg-io`
+  with the five explicit `--test` targets, `--offline -j 2`, passed without warnings.
+  This compiles all affected conditional test bodies, including the field-error
+  arm shared by SDF and metaballs. No runtime assertion result is claimed.
+- `cargo rustdoc` for each selected test target with the same features,
+  `--document-private-items` and denied broken intra-doc links passed after
+  explicitly supplying the checked `csgrs` metadata and cached dependency search
+  directories. The initial ordinary Cargo invocation could not link its own
+  library; adding only `--extern` still lacked transitive dependency paths.
+  The final invocation resolves both without changing repository configuration.
+- Inspected all 22 top-level generated pages and verified the complete text of
+  all 17 rendered declaration summaries plus four enum variants. Rustdoc omits
+  `#[test]` functions; those remain source-reviewed, not claimed as rendered API.
+- Geometry execution and full workflows were not run under the docs-only waiver.
+  Builds reused `/tmp/csgrs-rustdoc-target` with incremental compilation disabled;
+  its total size remained approximately 1.3 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-failure-tests-check.log`,
+`/tmp/csgrs-rustdoc-failure-tests-doc.log` (initial linkage failure), and
+`/tmp/csgrs-rustdoc-failure-tests-private.log` (successful private docs).
 
 ## Next work
 

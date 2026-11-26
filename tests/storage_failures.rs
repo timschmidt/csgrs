@@ -1,7 +1,12 @@
+//! Mapping of authored finite-projection failure reasons into the public error vocabulary.
+//! No allocator or resource limit is exercised; this tests category/source transport.
+
 use csgrs::errors::{ValidationError, ValidationErrorKind};
 use hypercurve::{CurveError, UncertaintyReason};
 
 #[test]
+/// Distinguishes unavailable storage, exhausted budget, undecided predicate and
+/// unsupported representation, retaining source text and the storage category's stable string.
 fn unavailable_storage_is_distinct_from_limits_invalid_input_and_undecided_predicates() {
     for (reason, expected) in [
         (

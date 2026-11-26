@@ -1,4 +1,9 @@
+//! Native-to-scalar-adapter Boolean failure preservation for malformed and undecided meshes.
+//! Inputs are wrapped native meshes across four scalar families; these cases do
+//! not materialize their coordinates through the selected output scalar type.
+
 #[path = "support/uncertainty.rs"]
+/// Shared retained-proof control and independently unresolved zero fixture.
 mod uncertainty;
 
 use csgrs::{
@@ -10,13 +15,19 @@ use csgrs::{
 use std::error::Error;
 
 #[derive(Clone, Copy, Debug)]
+/// The four regularized Boolean dispatches compared at the native and adapter boundaries.
 enum Operation {
+    /// Material in either operand.
     Union,
+    /// Left material outside the right operand.
     Difference,
+    /// Material common to both operands.
     Intersection,
+    /// Material in exactly one operand.
     Xor,
 }
 
+/// Fixed operation order used by every failure matrix.
 const OPERATIONS: [Operation; 4] = [
     Operation::Union,
     Operation::Difference,
@@ -24,6 +35,9 @@ const OPERATIONS: [Operation; 4] = [
     Operation::Xor,
 ];
 
+/// Obtains the native error for an ordinary strict or explicit-context Boolean call.
+/// Panics on success; explicit outcomes are reduced to values only on the unexpected
+/// success path. Converts the retained kernel error to the modeling error vocabulary.
 fn native_failure(
     a: &TriangleMesh,
     b: &TriangleMesh,
@@ -51,6 +65,8 @@ fn native_failure(
     result.expect_err("fixture must fail natively").into()
 }
 
+/// Mirrors the native dispatch through a scalar adapter and requires an error.
+/// `None` selects the ordinary wrapper; explicit-context success receipts are not inspected.
 fn adapter_failure<A: ScalarAdapter>(
     a: &ScalarMesh<A>,
     b: &ScalarMesh<A>,
@@ -80,6 +96,9 @@ fn adapter_failure<A: ScalarAdapter>(
         .expect("failure cannot become successful geometry")
 }
 
+/// Compares every operation/context error's category and display text with the native call.
+/// Counts structured errors separately and, when present, checks exact modeling-error
+/// equality plus the downcastable kernel source. Callers require structured count == total.
 fn preserves_failure<A: ScalarAdapter>(
     a: TriangleMesh,
     b: TriangleMesh,
@@ -114,6 +133,8 @@ fn preserves_failure<A: ScalarAdapter>(
     (structured, total)
 }
 
+/// Exercises an out-of-range triangle against empty and cube operands in both orders.
+/// Covers the ordinary wrapper and explicit strict/approximate policies for all operations.
 fn invalid_cases<A: ScalarAdapter>() -> (usize, usize) {
     let invalid = TriangleMesh::new(Vec::new(), vec![hypermesh::Triangle::new(0, 1, 2)]);
     let contexts = [
@@ -136,6 +157,8 @@ fn invalid_cases<A: ScalarAdapter>() -> (usize, usize) {
     (structured, total)
 }
 
+/// Translates a cube by the independently unresolved zero and requires strict Boolean failure.
+/// The shared helper first checks the retained Pythagorean expression's exact-zero control.
 fn undecided_cases<A: ScalarAdapter>() -> (usize, usize) {
     let cube = solid::cube(Real::one()).unwrap();
     let sine = Real::e().sin();
@@ -151,6 +174,8 @@ fn undecided_cases<A: ScalarAdapter>() -> (usize, usize) {
 }
 
 #[test]
+/// Requires structured native invalid-input causes for every exercised scalar-family case,
+/// including malformed operands paired with canonical empty geometry.
 fn invalid_operands_keep_typed_failures_even_when_paired_with_empty() {
     let counts = [
         invalid_cases::<RawReal>(),
@@ -168,6 +193,8 @@ fn invalid_operands_keep_typed_failures_even_when_paired_with_empty() {
 }
 
 #[test]
+/// Requires structured undecided causes across raw Real, binary32, binary64 and integer wrappers.
+/// Checks failure transport rather than an approximate-policy retry or coordinate export.
 fn undecided_booleans_keep_typed_failures_across_scalar_families() {
     let counts = [
         undecided_cases::<RawReal>(),

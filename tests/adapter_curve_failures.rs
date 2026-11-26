@@ -1,6 +1,11 @@
+//! Curve-adapter error transport and finite composition witnesses across scalar families.
+//! Most fixtures wrap native regions directly, avoiding scalar-coordinate demotion.
+//! Independent cell/area expectations cover the specified rectangle fixtures only.
+
 #![cfg(feature = "curve")]
 
 #[path = "support/uncertainty.rs"]
+/// Shared proved-zero control and deliberately unresolved sine-addition zero.
 mod uncertainty;
 
 use csgrs::{
@@ -12,6 +17,7 @@ use csgrs::{
 use hypercurve::{BooleanOp, CurveRegion2, RegionPointLocation};
 use std::error::Error;
 
+/// Fixed native/adapter Boolean order, paired with expected areas in the composition fixture.
 const OPERATIONS: [BooleanOp; 4] = [
     BooleanOp::Union,
     BooleanOp::Difference,
@@ -19,12 +25,14 @@ const OPERATIONS: [BooleanOp; 4] = [
     BooleanOp::Xor,
 ];
 
+/// Checks the retained Pythagorean zero, then returns the shared strictly unresolved zero.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Dispatches a chosen Boolean through the adapter's ordinary strict geometry-only API.
 fn boolean<A: ScalarAdapter>(
     a: &ScalarCurve<A>,
     b: &ScalarCurve<A>,
@@ -38,6 +46,8 @@ fn boolean<A: ScalarAdapter>(
     }
 }
 
+/// Requires the expected category, exact structured modeling error and preserved source text.
+/// Downcasts the immediate source; deeper sources are compared by display strings.
 fn assert_cause(error: AdapterError, native: ValidationError, kind: ValidationErrorKind) {
     assert_eq!(native.kind(), kind);
     assert_eq!(error.to_string(), native.to_string());
@@ -51,6 +61,8 @@ fn assert_cause(error: AdapterError, native: ValidationError, kind: ValidationEr
 }
 
 #[test]
+/// Wraps an authored incompatible-policy error and checks its undecided classification/cause.
+/// Does not execute a failed geometry operation or an actual larger-policy retry.
 fn retained_policy_mismatch_remains_retryable_at_the_adapter_boundary() {
     let native = ValidationError::from(hypercurve::CurveError::IncompatiblePredicatePolicy);
     assert_cause(
@@ -60,6 +72,9 @@ fn retained_policy_mismatch_remains_retryable_at_the_adapter_boundary() {
     );
 }
 
+/// Checks native/adapter agreement on unresolved translated-square failures, then
+/// area/empty expectations for a 13-degree rotation followed by its inverse.
+/// Successful union/intersection evidence here is exact area, not full set reconstruction.
 fn boolean_failures<A: ScalarAdapter>() {
     let square = curve::square(Real::from(2)).unwrap();
     let shifted = curve::translated(&square, unresolved_zero(), Real::zero()).unwrap();
@@ -72,10 +87,9 @@ fn boolean_failures<A: ScalarAdapter>() {
             .expect("undecided is an error");
         assert_cause(error, native.into(), ValidationErrorKind::Undecided);
     }
-    // Rotating by 13 degrees and back returns the square exactly. That
-    // coincidence was the second undecided fixture; it is a cyclotomic
-    // identity, which the scalar normal form now proves, so every operation
-    // completes with the exact set.
+    // The inverse rotations mathematically recover the square. Check exact
+    // area for union/intersection and emptiness for difference/XOR; this block
+    // does not independently inspect every resulting boundary segment.
     let rotated = curve::rotated(&curve::rotated(&square, 13).unwrap(), -13).unwrap();
     let r = ScalarCurve::<A>::from_native(rotated);
     let square_area = Some(Real::from(4));
@@ -92,6 +106,7 @@ fn boolean_failures<A: ScalarAdapter>() {
 }
 
 #[test]
+/// Runs the Boolean failure/control matrix through all four scalar adapter families.
 fn curve_booleans_preserve_native_blockers_in_every_scalar_family() {
     boolean_failures::<RawReal>();
     boolean_failures::<F32>();
@@ -99,6 +114,8 @@ fn curve_booleans_preserve_native_blockers_in_every_scalar_family() {
     boolean_failures::<I128>();
 }
 
+/// Checks invalid revolution resolution and unrepresentable finite-profile export
+/// against native errors under both policies, without exporting the wrapped coordinates first.
 fn boundary_failures<A: ScalarAdapter>() {
     let square = curve::square(Real::from(2)).unwrap();
     let raw = ScalarCurve::<A>::from_native(square.clone());
@@ -119,6 +136,7 @@ fn boundary_failures<A: ScalarAdapter>() {
 }
 
 #[test]
+/// Requires native modeling causes for revolution/profile errors across all scalar families.
 fn revolve_and_profile_failures_retain_native_causes() {
     boundary_failures::<RawReal>();
     boundary_failures::<F32>();
@@ -127,6 +145,8 @@ fn revolve_and_profile_failures_retain_native_causes() {
 }
 
 #[test]
+/// Requires undecided errors for the unresolved angle through swept-boundary and
+/// regularized-solid revolution on the raw-Real adapter.
 fn unresolved_revolve_angle_is_not_invalid_input_or_empty_geometry() {
     let square = curve::square(2).unwrap();
     let raw = ScalarCurve::<RawReal>::from_native(square.clone());
@@ -144,9 +164,9 @@ fn unresolved_revolve_angle_is_not_invalid_input_or_empty_geometry() {
     assert_cause(error, native, ValidationErrorKind::Undecided);
 }
 
-// Axis-aligned integer rectangles partition the plane into unit cells. The
-// Boolean truth table at each cell center and exact area are independent of
-// contour ordering, triangulation, and the adapter implementation.
+/// Checks exact area and 25 half-grid point locations against two integer squares' Boolean table.
+/// Expectations are independent of output contour order and native-wrapper agreement;
+/// finite membership samples plus area alone are not a general set-equivalence proof.
 fn assert_set(region: &CurveRegion2, operation: BooleanOp, area: i32) {
     assert_eq!(region.filled_area().unwrap(), Some(Real::from(area)));
     for x in -1..4 {
@@ -175,6 +195,8 @@ fn assert_set(region: &CurveRegion2, operation: BooleanOp, area: i32) {
     }
 }
 
+/// Reuses rectangle Boolean results with empty operands and repeated removals.
+/// Checks area/cell expectations before and after continuation, then canonical empty identities.
 fn composition<A: ScalarAdapter>() {
     let a = ScalarCurve::<A>::from_native(curve::square(2).unwrap());
     let b = ScalarCurve::<A>::from_native(curve::translated(a.native(), 1, 1).unwrap());
@@ -199,6 +221,7 @@ fn composition<A: ScalarAdapter>() {
 }
 
 #[test]
+/// Runs the finite rectangle/empty composition chain through all scalar wrapper families.
 fn successful_curve_booleans_and_empty_results_remain_composable() {
     composition::<RawReal>();
     composition::<F32>();
@@ -206,6 +229,9 @@ fn successful_curve_booleans_and_empty_results_remain_composable() {
     composition::<I128>();
 }
 
+/// Checks certified local receipts and exact volume 31 for a three-step, 270-degree
+/// axis-crossing rectangle revolution under both policies, then zero-angle error transport.
+/// Volume is the asserted geometric invariant, not an exhaustive boundary oracle.
 fn regularized_revolution_adapter<A: ScalarAdapter>() {
     let source = curve::translated(&curve::rectangle(5, 2).unwrap(), -2, 0).unwrap();
     let wrapped = ScalarCurve::<A>::from_native(source.clone());
@@ -231,6 +257,7 @@ fn regularized_revolution_adapter<A: ScalarAdapter>() {
 }
 
 #[test]
+/// Runs the regularized revolution receipt/volume/error fixture through all four scalar families.
 fn regularized_revolution_survives_every_scalar_adapter() {
     regularized_revolution_adapter::<RawReal>();
     regularized_revolution_adapter::<F32>();
