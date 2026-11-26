@@ -1,3 +1,10 @@
+//! Orientation and lifted-circle/sphere predicate facade.
+//!
+//! Re-export the shared geometric point carriers, retained predicate records and
+//! policy-taking implementations under concise operation names. Internal callers
+//! also retain the explicit `*_with_policy` names; both paths refer to the same
+//! implementation and do not introduce another dispatch or arithmetic kernel.
+
 pub use crate::geometry::Point2;
 pub use crate::geometry::Point3;
 pub use crate::predicates::orient::{

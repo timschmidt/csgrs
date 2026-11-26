@@ -4213,6 +4213,88 @@ new correctness, timing or universal closure claim is made. The 100% public and
 private Rustdoc mandate remains in root AGENTS.md. Most owning-crate sources and
 repository support files still require whole-file review.
 
+### Hyperlimit classification vocabulary and facades, 26 November 2026
+
+Baseline: `610f17c2c`. Owner: Hyperlimit's relation labels and variant helpers;
+producing geometric classifiers remain in their existing predicate modules.
+Properties: P3/P6/P9/P17/P19/P25/P30. Domain: signed line/plane sides, simplex
+locations, closed-segment contacts, circle endpoint partitions, closed balls,
+intervals, box/DOP candidates and ring turn summaries. Missing documentation
+witnesses included private test/conversion methods and several descriptions
+that asserted more geometric information than their enum/helper retains.
+
+Whole-file review: `crates/hyperlimit/src/classify.rs` (649 baseline lines),
+`crates/hyperlimit/src/orient.rs` (18), and `crates/hyperlimit/src/plane.rs` (21).
+The two facades re-export existing carriers, evidence and policy-taking functions;
+added module documentation explains that they introduce no second implementation
+or implicit policy. Excerpts of `predicates/{distance,segment,triangle,ring,
+interval,halfspace}.rs` establish producer behavior and existing fixture
+expectations, but those larger files still lack whole-file audit credit.
+
+Current behavior reproduced in source, with the enum helper paths also compiled
+and executed in a temporary standalone probe:
+
+- `SegmentIntersection::Identical` includes identical zero-length point-segments,
+  and `has_positive_length_overlap()` unconditionally accepts that variant.
+  Positive-length use therefore needs separate source degeneracy evidence.
+  The existing point-segment fixture and classifier branch retain this behavior;
+  no fixture or assertion was changed.
+- Segment/triangle and ray/triangle `intersects()` accept Coplanar. Their producers
+  can return Coplanar before any planar overlap test, so those true values are
+  retained candidates rather than proofs of a common point. For example, the
+  triangle with vertices (0,0,0), (1,0,0), (0,1,0) is disjoint from the segment
+  (2,2,0)–(3,2,0) and the ray starting at (2,2,0) in direction (1,0,0), despite
+  the shared supporting plane. This fixture geometry is an independent source
+  argument; the full geometric classifiers were not executed in this batch.
+- Circle/segment labels describe an endpoint partition, not an intersection
+  count or differential tangency proof. For a unit circle, (1,0)–(2,0) receives
+  Secant despite one boundary point, while (1,0)–(0,0) receives Tangent despite
+  a radial supporting line. Both expectations already exist in the exact-kernel
+  fixture. A point-segment inside the disk receives ContainedInside; a degenerate
+  infinite-line input returns DegenerateLine without classifying its point.
+- Sphere intersection classifies closed balls by center distance versus the sum
+  of radii; it does not classify surface-sphere intersections or internal
+  tangency separately. AABB/ball labels use nearest distance: a zero-radius ball
+  centered inside a box receives Touching, and zero-volume boxes can receive
+  Overlapping. Neither label alone certifies positive intersection volume.
+- The ring-turn classifier calls `.value()` on policy-controlled orientations
+  and returns a bare RingConvexity. Its approximate-policy result has no child
+  certainty receipt; this remains an evidentiary gap, not certified support.
+  MixedTurns can short-circuit the scan. Interval endpoint equality gives
+  AtLowerEndpoint precedence when both endpoints coincide.
+
+These are documentation corrections and explicit implementation limitations,
+not migration of the normative geometry/evidence contract. Missing overlap or
+certainty evidence is not supplied by wording, and no completed closure claim
+is added. Other enum docs retain their mathematical relation definitions with
+an explicit requirement to preserve the producer's certainty and input contract.
+
+Validation after final source edits:
+
+- Focused Rustfmt, `git diff --check` and byte comparison of all nonblank,
+  noncomment source lines against baseline passed for all three files.
+- Offline locked private Rustdoc for `hyperlimit --lib --all-features`, with
+  broken intra-doc links denied, passed. Inspected 180 classification doc groups
+  across 32 rendered classification pages, nine selected limitation contracts and
+  both facade summaries. Test-only declarations were reviewed in source.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed. This compiles the affected tests and integration consumers without
+  running their geometry fixtures.
+- Compiled and ran `/tmp/csgrs-rustdoc-classify-probe.rs` with Rust 2024, importing
+  the actual current predicate/classification source modules. Its seven assertions
+  verify Identical's overlap flag, the two Coplanar/Disjoint helper pairs and two
+  sign conversions. It does not construct geometry or call the geometric
+  classifiers. No probe was added to the repository.
+- Downstream private docs for `csgrs --lib --no-default-features --features curve`
+  passed with locked offline dependencies, the shared target and broken intra-doc
+  links denied.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-classify-{doc,check,downstream-doc}.log`.
+Shared build storage remains about 1.6 GiB; no extra dependency installation or
+build directory was introduced. Full workflow, runtime corpus and performance
+checks remain waived for this docs-only session. Hyperlimit's batch and geometric
+implementation modules, tests and supporting files still need full review.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

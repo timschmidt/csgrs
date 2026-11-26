@@ -1,4 +1,9 @@
 //! Plane classification helpers.
+//!
+//! This facade re-exports the shared plane carrier, retained evidence and report
+//! validation types. Concise names refer directly to policy-taking implementations
+//! in the geometry layer. The crate-private names support internal composition;
+//! no separate plane formula, validation pass or policy default is added here.
 
 pub use crate::geometry::Plane3;
 pub use crate::geometry::plane::{

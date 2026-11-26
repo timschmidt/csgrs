@@ -1,4 +1,11 @@
 //! Classification enums for geometry helpers.
+//!
+//! These are relation labels, not geometry carriers or standalone proof objects.
+//! Keep the producing predicate's certainty and input-domain contract with each
+//! label. Conversions and Boolean helpers only inspect variants; they neither
+//! validate source geometry nor recover a discarded receipt. In particular,
+//! coplanarity can defer a planar overlap decision, and an identical segment
+//! label does not distinguish a positive-length segment from a point-segment.
 
 use crate::predicate::Sign;
 
@@ -14,6 +21,7 @@ pub enum LineSide {
 }
 
 impl From<Sign> for LineSide {
+    /// Map negative/zero/positive orientation to right/on/left without a certainty receipt.
     fn from(sign: Sign) -> Self {
         match sign {
             Sign::Negative => Self::Right,
@@ -24,6 +32,9 @@ impl From<Sign> for LineSide {
 }
 
 /// Side of an oriented plane.
+///
+/// Below and above refer to the sign of `normal . point + offset`, not a
+/// world-coordinate height. Reversing the plane orientation exchanges them.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlaneSide {
     /// Point lies below the oriented plane.
@@ -77,6 +88,7 @@ pub enum PlaneTriangleRelation {
 }
 
 impl From<Sign> for PlaneSide {
+    /// Map the signed plane expression to below/on/above without rechecking geometry.
     fn from(sign: Sign) -> Self {
         match sign {
             Sign::Negative => Self::Below,
@@ -110,7 +122,7 @@ pub enum Triangle3Location {
     OffPlane,
     /// The point lies on the supporting plane but outside the triangle.
     Outside,
-    /// The point lies strictly inside the triangle.
+    /// The point lies in the triangle's relative interior within its supporting plane.
     Inside,
     /// The point lies on one triangle edge and is not a vertex.
     OnEdge,
@@ -155,22 +167,34 @@ pub enum CircleLineRelation {
     Tangent,
     /// The line crosses the circle boundary at two points.
     Secant,
-    /// The supplied line endpoints are identical, so the query degenerates to
-    /// point/circle classification.
+    /// The supplied endpoints coincide, so they do not define a line.
+    /// The classifier returns this label without deciding the point/circle relation.
     DegenerateLine,
 }
 
 /// Relation between a 2D circle boundary and a closed segment.
+///
+/// The labels follow the current endpoint-distance partition. In particular,
+/// Tangent is not a differential tangency certificate and Secant does not
+/// promise two boundary intersections. The circle is specified by its center
+/// and nonnegative squared radius in the producing classifier.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CircleSegmentRelation {
     /// The segment does not meet the circle boundary.
     Disjoint,
-    /// The segment touches the circle boundary at exactly one point.
+    /// The point-segment is on the circle, one endpoint is on and the other
+    /// strictly inside, or two outside endpoints have minimum distance equal
+    /// to the radius. The endpoint case need not be geometrically tangent.
     Tangent,
-    /// The segment crosses the circle boundary at two boundary points.
+    /// Both distinct endpoints are on the circle, one is on and the other
+    /// outside, one is inside and the other outside, or two outside endpoints
+    /// have minimum distance less than the radius.
+    ///
+    /// This can describe just one boundary point: for the unit circle, the
+    /// segment from (1, 0) to (2, 0) receives this label.
     Secant,
-    /// The nondegenerate segment lies strictly inside the circle disk, so it
-    /// has no boundary intersection.
+    /// Both endpoints lie strictly inside the disk, including a coincident
+    /// point-segment; there is no boundary intersection.
     ContainedInside,
 }
 
@@ -195,6 +219,10 @@ impl ConvexPointLocation {
 }
 
 /// Feasibility status for a closed intersection of oriented plane halfspaces.
+///
+/// Halfspaces use `normal . point + offset <= 0`. This status alone contains
+/// neither a witness nor a nonnegative-multiplier infeasibility certificate;
+/// preserve the report and its outcome qualification for downstream replay.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum HalfspaceFeasibility {
     /// At least one exact point satisfies every halfspace.
@@ -254,14 +282,19 @@ impl SupportDopPlaneRelation {
     }
 }
 
-/// Intersection relation between two explicit 3D spheres.
+/// Intersection relation between two closed 3D balls, including their interiors.
+///
+/// The producer compares center-distance squared with the squared sum of the
+/// nonnegative radii. It does not classify intersection of surface spheres or
+/// distinguish containment and internal tangency.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SphereIntersection {
     /// The closed spheres have no point in common.
     Disjoint,
-    /// The closed spheres touch at one or more boundary points.
+    /// Center distance equals the sum of radii (external contact, including zero-radius cases).
     Touching,
-    /// The closed spheres have positive-volume or contained overlap.
+    /// Center distance is less than the sum of radii, including contained overlap.
+    /// A contained zero-radius ball need not give positive intersection volume.
     Overlapping,
 }
 
@@ -272,14 +305,20 @@ impl SphereIntersection {
     }
 }
 
-/// Intersection relation between a closed 3D AABB and an explicit sphere.
+/// Nearest-distance relation between a closed 3D AABB and a closed ball.
+///
+/// The producer compares the center's squared distance to the box with the
+/// squared radius. Degenerate boxes and zero radius make the labels unsuitable
+/// for inferring intersection dimension or positive volume.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AabbSphereIntersection {
     /// The box and sphere have no point in common.
     Disjoint,
-    /// The box and sphere touch at a boundary point or boundary patch.
+    /// Nearest squared distance equals squared radius.
+    /// This also labels a zero-radius ball whose center is anywhere in the box.
     Touching,
-    /// The box and sphere overlap beyond boundary contact.
+    /// Nearest squared distance is less than squared radius.
+    /// At least one box point is in the ball's interior; the box may have zero volume.
     Overlapping,
 }
 
@@ -290,7 +329,7 @@ impl AabbSphereIntersection {
     }
 }
 
-/// Location of a point relative to a closed 2D segment.
+/// Location of a point relative to a closed segment in 2D or 3D.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PointSegmentLocation {
     /// The point is not on the segment's supporting line.
@@ -323,7 +362,8 @@ pub enum SegmentIntersection {
     /// The segments are collinear and overlap over a positive-length interval,
     /// but they are not identical as closed endpoint pairs.
     CollinearOverlap,
-    /// The segments have the same two endpoints, in either order.
+    /// The segments have the same two endpoints, in either order, including
+    /// two identical degenerate point-segments.
     Identical,
 }
 
@@ -352,13 +392,12 @@ impl SegmentIntersection {
         matches!(self, Self::EndpointTouch)
     }
 
-    /// Returns whether the common set contains a positive-length interval.
+    /// Return true for CollinearOverlap or Identical.
     ///
-    /// Identical closed segments are included because they have the strongest
-    /// possible positive-length overlap. Keeping this policy on the
-    /// classification enum avoids each caller needing an exhaustive local match
-    /// when new exact topological distinctions are added and keeps combinatorial
-    /// decisions explicit at the predicate-object layer.
+    /// This proves positive-length overlap only when identical point-segments
+    /// have been excluded separately. The enum does not retain segment length,
+    /// so Identical returns true even for two equal zero-length inputs. Preserve
+    /// source degeneracy evidence before using this helper as a dimension test.
     pub const fn has_positive_length_overlap(self) -> bool {
         matches!(self, Self::CollinearOverlap | Self::Identical)
     }
@@ -399,11 +438,15 @@ pub enum SegmentTriangleIntersection {
     /// segment/triangle overlap needs a planar arrangement predicate owned by a
     /// higher crate, so `hyperlimit` reports the exact coplanar relation
     /// explicitly instead of using a tolerance projection.
+    /// Coplanarity alone does not imply any shared point.
     Coplanar,
 }
 
 impl SegmentTriangleIntersection {
-    /// Returns whether the relation has at least one shared point.
+    /// Return true for every relation except Disjoint, retaining coplanar candidates.
+    ///
+    /// Coplanar returns true even when the segment lies outside the triangle.
+    /// A planar overlap decision is still required to establish intersection.
     pub const fn intersects(self) -> bool {
         !matches!(self, Self::Disjoint)
     }
@@ -419,12 +462,16 @@ pub enum RayTriangleIntersection {
     Proper,
     /// The ray touches a triangle edge or vertex, or starts on the triangle.
     BoundaryTouch,
-    /// The ray lies on the triangle's supporting plane.
+    /// The ray lies on the triangle's supporting plane; overlap with the triangle
+    /// has not been decided and the sets may be disjoint.
     Coplanar,
 }
 
 impl RayTriangleIntersection {
-    /// Returns whether the relation has at least one shared point.
+    /// Return true for every relation except Disjoint, retaining coplanar candidates.
+    ///
+    /// Coplanar is not an intersection witness; a separate planar ray/triangle
+    /// query must decide whether any common point exists.
     pub const fn intersects(self) -> bool {
         !matches!(self, Self::Disjoint)
     }
@@ -494,25 +541,30 @@ impl RingPointLocation {
     }
 }
 
-/// Certified local turn consistency for a polygonal ring.
+/// Local turn consistency for a polygonal ring under the producer's policy.
 ///
-/// This is an object fact, not a polygon validity proof. It summarizes exact
-/// local orientation predicates so higher crates can choose algorithms without
-/// replacing later visibility, containment, or intersection predicates. That is
-/// the object/predicate split used by the exact-computation model.
+/// This summarizes cyclic orientation signs, not polygon validity or absence
+/// of self-intersections. The current ring classifier extracts child values
+/// without retaining their certainty in this enum, so a result obtained under
+/// an approximate policy is not by itself a certified turn-consistency proof.
+/// Later visibility, containment and intersection still need their predicates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RingConvexity {
-    /// Fewer than three useful vertices, or every certified local turn is zero.
+    /// Fewer than three vertices after removing a structurally repeated closing
+    /// vertex, or every decided local turn is zero.
     Degenerate,
-    /// Every certified nonzero local turn has the same sign and no turn is unknown.
+    /// Every decided nonzero local turn has the same sign and no turn is unknown.
     LocallyConvex,
-    /// Certified nonzero local turns contain both signs.
+    /// Visited nonzero turns contain both signs; the scan can stop before later turns.
     MixedTurns,
-    /// At least one local turn could not be certified under the requested policy.
+    /// A visited local turn remained unresolved under the requested policy.
     Unknown,
 }
 
 /// Location of a [`hyperreal::Real`] value relative to a closed Real interval.
+///
+/// The classifier orders the supplied endpoints before locating the value. If
+/// both endpoints and the value coincide, AtLowerEndpoint takes precedence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RealIntervalLocation {
     /// The value is strictly below the interval's lower endpoint.
@@ -633,10 +685,12 @@ impl Aabb3Intersection {
 }
 
 #[cfg(test)]
+/// Direct variant-query witnesses; source geometry and degeneracy are not constructed here.
 mod tests {
     use super::SegmentIntersection;
 
     #[test]
+    /// Check helper truth tables, including Identical's unconditional overlap flag.
     fn segment_intersection_policy_helpers_cover_identical_overlap() {
         assert!(SegmentIntersection::Disjoint.is_disjoint());
         assert!(!SegmentIntersection::Disjoint.intersects());
