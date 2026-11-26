@@ -21,10 +21,19 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 
 thread_local! {
+    /// Up to 64 successful strict ring constructions, oldest insertion first.
+    ///
+    /// Keys own the exact coordinate rows and are compared with `Real` equality,
+    /// without a policy-directed geometric equivalence query. Hits do not refresh
+    /// insertion order. This bounds entry count, not retained bytes or proof work.
     static REGION_RING_CACHE: RefCell<Vec<(Vec<[Real; 2]>, CurveRegion2)>> =
         const { RefCell::new(Vec::new()) };
 }
 
+/// Requires a positive dimension under the selected policy and records its certainty.
+///
+/// Zero and negative decisions become `NonPositiveParameter`; an unresolved
+/// decision propagates its error instead of being classified as nonpositive.
 fn positive_with(
     value: &Real,
     name: &'static str,
@@ -36,6 +45,10 @@ fn positive_with(
     }
 }
 
+/// Rejects a negative dimension and returns its policy-selected sign for collapse checks.
+///
+/// The shared decisions object retains any approximation consumed by the sign
+/// query. Unresolved signs propagate as errors.
 fn nonnegative_with(
     value: &Real,
     name: &'static str,
@@ -47,6 +60,7 @@ fn nonnegative_with(
     }
 }
 
+/// Orders curve dimensions under the selected policy, retaining certainty or failure.
 fn compare_with(
     left: &Real,
     right: &Real,
@@ -58,6 +72,12 @@ fn compare_with(
     )
 }
 
+/// Admits coordinate rows as one native material contour, reusing strict cached results.
+///
+/// Cache misses run contour construction and region admission through the shared
+/// decision scope. Only successful strict requests insert entries; approximate
+/// requests may reuse those entries but cannot populate the cache. The native
+/// constructors own ring validity and filled-region semantics.
 fn ring_with(
     points: &[[Real; 2]],
     decisions: &GeometryDecisions,
@@ -91,6 +111,10 @@ fn ring_with(
     Ok(region)
 }
 
+/// Builds the positive-axis rectangle after checking width and then height.
+///
+/// Both dimensions are checked before a policy-selected zero yields canonical
+/// empty geometry. The caller retains the shared decision receipt.
 fn rectangle_with(
     width: Real,
     height: Real,
@@ -112,6 +136,12 @@ fn rectangle_with(
     )
 }
 
+/// Connects equally spaced angular samples of an origin-centered ellipse as a ring.
+///
+/// Callers validate radii and sample count. Samples start at `(radius_x, 0)`
+/// and increase angle through one turn without duplicating the endpoint. Exact
+/// sine/cosine expressions define polygon vertices, not analytic ellipse arcs;
+/// no ellipse-to-polygon fidelity bound is established here.
 fn ellipse_points_with(
     radius_x: Real,
     radius_y: Real,
@@ -131,6 +161,9 @@ fn ellipse_points_with(
     ring_with(&points, decisions)
 }
 
+/// Checks sample count and capacity before radius sign, then builds a sampled circle.
+///
+/// At least three samples are required even when a zero radius returns empty.
 fn circle_with(
     radius: Real,
     segments: usize,
@@ -144,6 +177,7 @@ fn circle_with(
     ellipse_points_with(radius.clone(), radius, segments, decisions)
 }
 
+/// Applies native exact affine translation inside the shared curve decision scope.
 fn translate_with(
     region: &CurveRegion2,
     x: Real,
@@ -167,8 +201,10 @@ fn translate_with(
 ///
 /// Hypertri emits caps with a normalized positive outer winding and negative
 /// hole winding. Exact curve-region profiles preserve authored loop
-/// orientation, so each loop is aligned with its cap role from its exact
-/// signed area instead of assuming that every material loop arrived CCW.
+/// orientation, so each loop is aligned with its cap role from the signed area
+/// of its segment-start polygon, evaluated under the selected policy. This is
+/// the polygonal side-wall contract, not integration along arbitrary curved
+/// edges. Zero signed area is an error. Material precedes holes in the result.
 fn oriented_profile_rings<'a>(
     material: &'a Contour2,
     holes: &'a [Contour2],
@@ -206,6 +242,9 @@ fn oriented_profile_rings<'a>(
 
 /// The start and end points of each loop edge, in the side-wall direction
 /// chosen by [`oriented_profile_rings`].
+///
+/// Reversal swaps each pair's endpoints but preserves segment iteration order;
+/// the output is for independent wall construction, not a reversed connected wire.
 fn oriented_ring_edges(ring: &Contour2, reverse: bool) -> impl Iterator<Item = [&Point2; 2]> {
     ring.segments().iter().map(move |segment| {
         if reverse {
@@ -216,6 +255,10 @@ fn oriented_ring_edges(ring: &Contour2, reverse: bool) -> impl Iterator<Item = [
     })
 }
 
+/// Converts counts through checked `u64` values and divides without floating-point rounding.
+///
+/// Conversion overflow is a capacity error; a zero denominator propagates the
+/// scalar division error.
 fn exact_ratio(numerator: usize, denominator: usize) -> Result<Real, ValidationError> {
     let numerator = u64::try_from(numerator).map_err(|_| ValidationError::CapacityOverflow)?;
     let denominator =
@@ -223,6 +266,9 @@ fn exact_ratio(numerator: usize, denominator: usize) -> Result<Real, ValidationE
     Ok((Real::from(numerator) / Real::from(denominator))?)
 }
 
+/// Returns `(radius * cos(angle), radius * sin(angle))` as exact scalar expressions.
+///
+/// Angle is in radians; this helper does not constrain the sign of the radius.
 fn exact_polar(radius: &Real, angle: Real) -> [Real; 2] {
     [
         radius.clone() * angle.clone().cos(),
@@ -230,6 +276,11 @@ fn exact_polar(radius: &Real, angle: Real) -> [Real; 2] {
     ]
 }
 
+/// Concatenates equally rotated copies of a point pattern in copy-then-point order.
+///
+/// Rotations are exact expressions at fractions of a full turn. Checked output
+/// capacity precedes allocation; zero copies returns no points without division.
+/// This helper neither welds repeated endpoints nor validates a filled ring.
 fn repeat_exact_rotational_pattern(
     local_points: &[[Real; 2]],
     copies: usize,
@@ -250,7 +301,7 @@ fn repeat_exact_rotational_pattern(
     Ok(points)
 }
 
-/// Empty filled curve topology.
+/// Returns the canonical empty filled region, with no boundary contours.
 pub fn empty() -> CurveRegion2 {
     CurveRegion2::empty()
 }
@@ -271,6 +322,8 @@ pub fn rectangle(
 }
 
 /// Axis-aligned square with its minimum corner at the origin.
+///
+/// Uses the strict [`rectangle`] contract for both equal dimensions.
 pub fn square(width: impl IntoReal) -> Result<CurveRegion2, ValidationError> {
     let width = width.into_real()?;
     rectangle(width.clone(), width)
@@ -281,6 +334,8 @@ pub fn square(width: impl IntoReal) -> Result<CurveRegion2, ValidationError> {
 /// The radius is nonnegative and at least three segments are required, even
 /// for zero radius. Certification concerns the sampled polygon; no analytic
 /// circle fidelity bound is implied.
+/// The center is the origin and the first vertex is `(radius, 0)`, followed
+/// counterclockwise. Dimensions and topology are decided under the strict policy.
 pub fn circle(
     radius: impl IntoReal,
     segments: usize,
@@ -291,6 +346,10 @@ pub fn circle(
 }
 
 /// Constructs a rectangle with the selected policy and retains predicate certainty.
+///
+/// The minimum corner is the origin. Width and height must be nonnegative;
+/// both are validated before a selected zero returns empty geometry. An
+/// approximate zero decision remains qualified in the outcome.
 pub fn rectangle_with_context(
     width: Real,
     height: Real,
@@ -302,6 +361,9 @@ pub fn rectangle_with_context(
 }
 
 /// Constructs a square with the selected policy and retains predicate certainty.
+///
+/// Delegates equal dimensions to [`rectangle_with_context`], including collapse
+/// and validation behavior.
 pub fn square_with_context(
     width: Real,
     context: GeometryContext,
@@ -310,6 +372,11 @@ pub fn square_with_context(
 }
 
 /// Constructs a sampled circle with the selected policy and retains predicate certainty.
+///
+/// The polygon is centered at the origin with its first vertex at `(radius, 0)`.
+/// At least three segments and representable sample capacity are required before
+/// validating the nonnegative radius; a selected zero then returns empty.
+/// Certification applies to the polygon and its decisions, not analytic-circle fidelity.
 pub fn circle_with_context(
     radius: Real,
     segments: usize,
@@ -321,6 +388,13 @@ pub fn circle_with_context(
 }
 
 /// Constructs a sampled ellipse with the selected policy and retains predicate certainty.
+///
+/// Width and height are full axis lengths, centered at the origin. At least
+/// three samples and representable capacity are required, then both dimensions
+/// are checked as nonnegative before a selected zero returns empty. Positive
+/// dimensions give counterclockwise angular samples starting at `(width / 2, 0)`.
+/// The result has straight edges; certification supplies no analytic-ellipse
+/// approximation bound.
 pub fn ellipse_with_context(
     width: Real,
     height: Real,
@@ -346,6 +420,9 @@ pub fn ellipse_with_context(
 }
 
 /// Constructs a regular polygon with the selected policy and retains predicate certainty.
+///
+/// Radius is the circumradius. Delegates to [`circle_with_context`] with `sides`
+/// samples, sharing its origin, orientation, validation and collapse contract.
 pub fn regular_ngon_with_context(
     sides: usize,
     radius: Real,
@@ -355,6 +432,10 @@ pub fn regular_ngon_with_context(
 }
 
 /// Right triangle with its right-angle corner at the origin.
+///
+/// The other vertices are `(width, 0)` and `(0, height)`. Both dimensions must
+/// be nonnegative under the strict policy; a zero returns empty only after both
+/// arguments are validated.
 pub fn right_triangle(
     width: impl IntoReal,
     height: impl IntoReal,
@@ -366,6 +447,9 @@ pub fn right_triangle(
 }
 
 /// Constructs a right triangle, retaining the certainty of dimension and topology decisions.
+///
+/// Vertices are `(0, 0)`, `(width, 0)` and `(0, height)`. Both dimensions are
+/// checked as nonnegative before a selected zero produces empty geometry.
 pub fn right_triangle_with_context(
     width: Real,
     height: Real,
@@ -392,11 +476,17 @@ pub fn right_triangle_with_context(
 ///
 /// Requires a valid ring with at least three vertices. Use [`empty`] for
 /// canonical absence; an empty or malformed ring is an error.
+/// A repeated closing point is accepted and removed before contour construction;
+/// at least three vertices must remain. Edges are straight, coordinates stay
+/// exact, and admission uses the strict policy with native nonzero fill semantics.
 pub fn polygon(points: &[[Real; 2]]) -> Result<CurveRegion2, ValidationError> {
     polygon_with_context(points, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Publishes a filled ring with the selected policy and aggregate certainty.
+///
+/// Native contour and region admission validate the coordinate rows; invalid
+/// or empty rings remain errors. A successful strict cache entry may be reused.
 pub fn polygon_with_context(
     points: &[[Real; 2]],
     context: GeometryContext,
@@ -407,6 +497,9 @@ pub fn polygon_with_context(
 }
 
 /// Closed polygon from native Hypercurve points.
+///
+/// Clones exact coordinates into checked temporary storage and delegates to
+/// strict [`polygon`] admission; this does not sample or round the points.
 pub fn polygon_points(points: &[Point2]) -> Result<CurveRegion2, ValidationError> {
     let mut rows = solid::reserved(points.len())?;
     rows.extend(
@@ -417,7 +510,12 @@ pub fn polygon_points(points: &[Point2]) -> Result<CurveRegion2, ValidationError
     polygon(&rows)
 }
 
-/// Sampled ellipse.
+/// Origin-centered ellipse represented by a polygon with equally spaced angular samples.
+///
+/// Width and height are full nonnegative axis lengths. Uses strict
+/// [`ellipse_with_context`] validation, including at least three samples even
+/// for a collapsed ellipse. The first vertex is `(width / 2, 0)`; no bound on
+/// approximation to analytic ellipse arcs is supplied.
 pub fn ellipse(
     width: impl IntoReal,
     height: impl IntoReal,
@@ -429,7 +527,11 @@ pub fn ellipse(
         .map(GeometryOutcome::into_value)
 }
 
-/// Regular polygon.
+/// Origin-centered regular polygon specified by side count and circumradius.
+///
+/// Uses strict [`regular_ngon_with_context`] validation: at least three sides,
+/// nonnegative radius and an empty result for zero radius. Positive-radius
+/// vertices run counterclockwise from `(radius, 0)`.
 pub fn regular_ngon(
     sides: usize,
     radius: impl IntoReal,

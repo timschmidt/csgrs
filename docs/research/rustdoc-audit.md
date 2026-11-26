@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
+| `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
+| `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
+| `src/curve/native.rs` | **Partial:** file start through `regular_ngon`, inclusive; cache, predicates, orientation helpers and initial primitives documented. Resume at `arrow`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -757,11 +761,65 @@ workflow/runtime checks remain waived for this docs-only session. No executable
 behavior, test assertion or performance claim changed. Completion here describes
 this file's source audit, not repository-wide Rustdoc coverage or kernel closure.
 
+### Slice/Minkowski witnesses and initial curve grammar, 26 November 2026
+
+Owner: CSGRS section/projection and represented-solid Minkowski regression
+contracts; native planar construction adapters and private predicate/cache
+helpers. Relevant properties: P1/P6/P8/P9/P17/P18/P19/P20/P30/P37. Baseline:
+`0665cc8f5`. Read every line of `tests/slice_projection_contract.rs`,
+`tests/minkowski_contracts.rs` and `src/curve/mod.rs`. Read `src/curve/native.rs`
+from its beginning through `regular_ngon`, inclusive. Supporting reads covered
+side-wall helper consumers, native exact ring admission and bounded scalar
+equality; these do not earn whole-file credit for their owning modules.
+
+Missing witnesses: test helpers, test declarations, the compatibility trait and
+private curve helpers lacked Rustdoc. Initial primitive summaries omitted
+placement, sampling, validation order and collapse details. Documented the
+actual assertions for holes, signed multiplicity, coincident faces, permutations,
+open wires, canonical empties, invalid inputs, cache mutation/eviction, thread-local
+policies, strict retries, native diagnostics, configured resource limits and
+pre-set cancellation. Minkowski docs distinguish independent volume/decomposition
+expectations from shared-kernel Boolean comparisons and analytic-ball claims.
+The full sampled-sphere fixture remains unchanged. These are source-reviewed
+witnesses, not claims of execution or universal geometric proof.
+
+Curve docs now describe the strict-only 64-entry FIFO, coordinate equality keys,
+non-refreshing hits and the distinction between entry bounds and memory/work
+bounds. Sampled circle/ellipse docs give full-axis versus radius meanings,
+starting points, orientation, straight edges, minimum samples, nonnegative
+validation and qualified collapse. Polygon docs describe exact coordinates,
+optional repeated closing points and native admission. Orientation helpers use
+the segment-start polygon's policy-decided signed area; reversing endpoint pairs
+does not reverse segment iteration. Exact ratio, polar and rotational-pattern
+helpers document conversion errors, angular units, ordering and zero-copy behavior.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs
+  tests/slice_projection_contract.rs tests/minkowski_contracts.rs`: passed.
+  `git diff --check`: passed.
+- Every nonblank, non-comment source line matches baseline in all three edited
+  Rust files, including assertions, feature gates and predicate order.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps
+  --offline`: passed without warnings.
+- Inspected thirteen rendered contracts, including the macro-generated private
+  cache item, predicate/ring helpers, wall orientation, exact ratio/pattern
+  construction and public polygon/circle/ellipse/triangle entry points.
+  Integration-test Rustdoc was reviewed in source; ordinary library docs do not
+  render test items.
+
+Log: `/tmp/csgrs-rustdoc-curve-primitives-doc.log`. Reused temporary build storage
+is about 498 MiB, with over 125 GiB available on `/tmp`. No runtime builds or
+additional target trees were created. Full workflow/runtime checks remain waived
+for this docs-only session. No executable behavior or performance claim changed.
+
 ## Next work
 
-Review `tests/slice_projection_contract.rs` and `tests/minkowski_contracts.rs`,
-then continue through the remaining root modules and owning crates. Maintain review records with each batch. Establish
-automated public/private item coverage across manifests and features without
-confusing that metric with semantic review. Review every remaining tracked file
-before claiming completion. Commit and push documentation batches after focused
-checks under the owner's session-specific waiver.
+Continue `src/curve/native.rs` at `arrow`, then review the remaining root modules
+and owning crates. Maintain review records with each batch. Establish automated
+public/private item coverage across manifests and features without confusing
+that metric with semantic review. Review every remaining tracked file before
+claiming completion. Commit and push documentation batches after focused checks
+under the owner's session-specific waiver.

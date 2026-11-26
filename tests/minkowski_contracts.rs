@@ -1,3 +1,8 @@
+//! Represented-solid Minkowski sums: topology, composition, policy and typed failures.
+//!
+//! Exact volume and membership witnesses are combined with native admission and
+//! selected Boolean comparisons; they are not a universal set-equality proof.
+
 #[path = "support/uncertainty.rs"]
 mod uncertainty;
 
@@ -10,15 +15,22 @@ use hypermesh::{HypermeshError, MinkowskiOptions, Point3, Triangle};
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+/// Converts an integer fixture coordinate exactly.
 fn r(n: i32) -> Real {
     n.into()
 }
+/// Forms an exact rational fixture value; callers supply a nonzero denominator.
 fn q(n: i32, d: i32) -> Real {
     (r(n) / r(d)).unwrap()
 }
+/// Constructs a point from three exact integer coordinates.
 fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
+/// Requires a certified equality between six times expected volume and the face determinant sum.
+///
+/// The equality search uses precision exponent -1024 and rejects undecided
+/// results. The sum alone does not prove closure or geometric set equality.
 fn volume(mesh: &TriangleMesh, expected: Real) {
     let six = mesh.triangles.iter().fold(r(0), |sum, t| {
         let [a, b, c] = t.indices().map(|i| mesh.positions[i].to_vector());
@@ -29,6 +41,11 @@ fn volume(mesh: &TriangleMesh, expected: Real) {
         Some(true)
     );
 }
+/// Requires a certified sum, native closed-PWN and geometric manifold admission, and volume.
+///
+/// Certification is required even when the supplied policy permits approximation.
+/// Empty triangle output must also have no positions; the completed mesh is
+/// returned for downstream operation and membership witnesses.
 fn complete(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -51,6 +68,7 @@ fn complete(
     volume(&mesh, expected);
     mesh
 }
+/// Lofts an L-shaped region of area five between heights zero and two.
 fn l_prism() -> TriangleMesh {
     let xy = [(3, 1), (1, 1), (1, 3), (0, 3), (0, 0), (3, 0)];
     let sections = [0, 2].map(|z| xy.iter().map(|&(x, y)| p(x, y, z)).collect());
@@ -58,6 +76,9 @@ fn l_prism() -> TriangleMesh {
 }
 
 #[test]
+/// Checks disconnected sums retain gaps, expected volumes and Boolean composability.
+///
+/// Both policies must complete with certification, including empty-result reuse.
 fn disconnected_sum_keeps_gaps_and_composes() {
     let cube = solid::cube(r(1)).unwrap();
     let a = solid::merge(&[cube.clone(), cube.translated(r(4), r(0), r(0)).unwrap()]).unwrap();
@@ -83,6 +104,10 @@ fn disconnected_sum_keeps_gaps_and_composes() {
 }
 
 #[test]
+/// Checks operand order through volume, notch probes and intersection volume.
+///
+/// Two empty differences compare the first sum to a separately constructed box
+/// union. The comparison Booleans still use the repository geometry kernel.
 fn concave_sum_preserves_notch_and_commutes() {
     let source = l_prism();
     let cube = solid::cube(r(1)).unwrap();
@@ -93,7 +118,7 @@ fn concave_sum_preserves_notch_and_commutes() {
             assert_eq!(solid::contains_point(&sum, &point).unwrap(), inside);
             assert_eq!(solid::contains_point(&reversed, &point).unwrap(), inside);
         }
-        // Independent box union oracle: ([0,4]×[0,2] ∪ [0,2]×[0,4])×[0,3].
+        // Independent box decomposition: ([0,4]×[0,2] ∪ [0,2]×[0,4])×[0,3].
         let expected = solid::cuboid(r(4), r(2), r(3))
             .unwrap()
             .try_union(&solid::cuboid(r(2), r(4), r(3)).unwrap())
@@ -105,6 +130,9 @@ fn concave_sum_preserves_notch_and_commutes() {
 }
 
 #[test]
+/// Checks holes, nested material, duplicate and reversed shells under both policies.
+///
+/// Opposite shells must produce canonical empty output that remains consumable.
 fn hollow_nested_and_multiply_wound_solids_use_nonzero_winding() {
     let cube = solid::cube(r(1)).unwrap();
     let outer = solid::cube(r(4)).unwrap();
@@ -131,6 +159,10 @@ fn hollow_nested_and_multiply_wound_solids_use_nonzero_winding() {
 }
 
 #[test]
+/// Checks unreferenced positions are ignored and malformed operands still fail beside empty ones.
+///
+/// Mutation after a successful query must invalidate native index evidence,
+/// while the unchanged source continues to complete.
 fn source_storage_and_empty_identities_do_not_hide_failures() {
     let cube = solid::cube(r(1)).unwrap();
     let mut positions = cube.positions.to_vec();
@@ -174,6 +206,10 @@ fn source_storage_and_empty_identities_do_not_hide_failures() {
 }
 
 #[test]
+/// Checks three configured limits and a pre-set cancellation flag produce typed errors.
+///
+/// Clearing the flag must allow certified completion with expected volume;
+/// this does not exercise asynchronous cancellation during work.
 fn limits_and_cancellation_fail_typed_then_recover() {
     let cube = solid::cube(r(1)).unwrap();
     let a = solid::merge(&[cube.clone(), cube.translated(r(4), r(0), r(0)).unwrap()]).unwrap();
@@ -221,6 +257,7 @@ fn limits_and_cancellation_fail_typed_then_recover() {
 }
 
 #[test]
+/// Checks the explicit convex hull fills a disconnected gap and rejects a point-only sum.
 fn explicit_hull_preserves_point_set_interpretation_and_typed_failure() {
     let cube = solid::cube(r(1)).unwrap();
     let source =
@@ -236,6 +273,7 @@ fn explicit_hull_preserves_point_set_interpretation_and_typed_failure() {
 }
 
 #[test]
+/// Checks determinant-24 affine images, repeated sums and a surviving rational 10^-12 gap.
 fn sums_survive_linear_transforms_repetition_and_exact_small_gaps() {
     use hyperlattice::Matrix4;
     let cube = solid::cube(r(1)).unwrap();
@@ -271,6 +309,10 @@ fn sums_survive_linear_transforms_repetition_and_exact_small_gaps() {
 }
 
 #[test]
+/// Checks a shared pi translation completes, while an unresolved zero respects policy transitions.
+///
+/// An approximate completion must retain its receipt and cannot certify the
+/// subsequent strict retry.
 fn referenced_symbolic_coordinates_preserve_policy_and_receipts() {
     let cube = solid::cube(r(1)).unwrap();
     let shifted = cube.translated(Real::pi(), r(0), r(0)).unwrap();
@@ -297,6 +339,11 @@ fn referenced_symbolic_coordinates_preserve_policy_and_receipts() {
 }
 
 #[test]
+/// Checks original example sizes without reducing the sampled sphere resolution.
+///
+/// The cube/octahedron case has an independent exact volume formula. The
+/// 16-by-8 sampled-sphere case checks certification, native closure, exact
+/// bounds and two membership probes, not equality with an analytic ball sum.
 fn original_readme_and_full_example_inputs_complete_strictly() {
     let a = Real::try_from(1.1_f64).unwrap();
     let b = Real::try_from(0.45_f64).unwrap();

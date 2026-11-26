@@ -10,33 +10,48 @@ use hypercurve::{BooleanOp, CurveRegion2};
 use hyperlattice::{Matrix4, Point3};
 use solid::cache::{self, CachePolicy};
 
-// A baseline empty fallback is observed as success, never reinterpreted as error.
+/// Adapts historical infallible and current fallible results to the same assertions.
+///
+/// An empty fallback from an infallible API remains successful, so a regression
+/// cannot satisfy an assertion that expects an explicit error.
 trait Attempt<T> {
+    /// Preserves successful geometry and converts only an existing error.
     fn attempt(self) -> Result<T, ValidationError>;
 }
 impl Attempt<CurveRegion2> for CurveRegion2 {
+    /// Wraps a region, including an empty region, as success.
     fn attempt(self) -> Result<CurveRegion2, ValidationError> {
         Ok(self)
     }
 }
 impl Attempt<solid::SliceResult> for solid::SliceResult {
+    /// Wraps all three section components as success without inspecting them.
     fn attempt(self) -> Result<solid::SliceResult, ValidationError> {
         Ok(self)
     }
 }
 impl<T, E: Into<ValidationError>> Attempt<T> for Result<T, E> {
+    /// Converts the error type while preserving the original success or failure.
     fn attempt(self) -> Result<T, ValidationError> {
         self.map_err(Into::into)
     }
 }
+/// Obtains a mathematically zero expression that remains unresolved by the strict policy.
+///
+/// The shared helper checks the legacy trigonometric identity before returning
+/// its independent terminal-zero witness.
 fn unknown_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
+/// Returns the exact rational one half for interior membership probes.
 fn half() -> Real {
     (Real::one() / Real::from(2)).unwrap()
 }
+/// Builds a single face with indices 0, 1, 2 over arbitrary fixture positions.
+///
+/// Deliberately skips validation so callers can construct malformed inputs.
 fn triangle(points: Vec<Point3>) -> TriangleMesh {
     let cube = solid::cube(1).unwrap();
     let mut face = cube.triangles[0];
@@ -45,12 +60,19 @@ fn triangle(points: Vec<Point3>) -> TriangleMesh {
     face.v2 = 2;
     TriangleMesh::new(points, vec![face])
 }
+/// Sums exact oriented tetrahedron determinants, equal to six times signed volume.
+///
+/// This algebraic sum alone does not establish closure or the represented set.
 fn volume_six(mesh: &TriangleMesh) -> Real {
     mesh.triangles.iter().fold(Real::zero(), |sum, face| {
         let [a, b, c] = face.indices().map(|i| mesh.positions[i].to_vector());
         sum + a.dot(&b.cross(&c))
     })
 }
+/// Extrudes a 4-by-4 square with a centered 2-by-2 hole through height two.
+///
+/// Checks area 12, certified construction, signed volume 24 and geometric
+/// manifold admission before returning the fixture.
 fn hollow_prism() -> TriangleMesh {
     let outer = curve::square(4).unwrap();
     let hole = curve::translated(&curve::square(2).unwrap(), 1, 1).unwrap();
@@ -67,6 +89,10 @@ fn hollow_prism() -> TriangleMesh {
     );
     mesh.value
 }
+/// Checks the hollow section through area, two membership probes and re-extrusion.
+///
+/// Height-three extrusion must be certified, have signed volume 36 and pass
+/// geometric manifold admission. Area and probes alone are not set equality.
 fn assert_hollow(region: &CurveRegion2) {
     assert_eq!(
         region.filled_area().unwrap(),
@@ -90,6 +116,7 @@ fn assert_hollow(region: &CurveRegion2) {
 }
 
 #[test]
+/// Requires invalid-index slicing to return invalid input rather than empty success.
 fn malformed_slice_is_an_error_not_empty_geometry() {
     let error = solid::slice_z(&triangle(Vec::new()), 0)
         .attempt()
@@ -97,17 +124,20 @@ fn malformed_slice_is_an_error_not_empty_geometry() {
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
 }
 #[test]
+/// Requires invalid-index projection to return invalid input rather than empty success.
 fn malformed_projection_is_an_error_not_empty_geometry() {
     let error = solid::flatten(&triangle(Vec::new())).attempt().unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
 }
 #[test]
+/// Requires an unresolved section height to remain an explicit strict-policy failure.
 fn undecided_slice_is_an_error_not_empty_geometry() {
     let mesh = solid::cube(1).unwrap();
     let error = solid::slice_z(&mesh, unknown_zero()).attempt().unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::Undecided);
 }
 #[test]
+/// Requires an unresolved projected triangle orientation to remain undecided.
 fn undecided_projection_is_an_error_not_empty_geometry() {
     let mesh = triangle(vec![
         Point3::origin(),
@@ -118,24 +148,28 @@ fn undecided_projection_is_an_error_not_empty_geometry() {
     assert_eq!(error.kind(), ValidationErrorKind::Undecided);
 }
 #[test]
+/// Checks an interior hollow section and its extrusion, with no residual open components.
 fn hollow_interior_slice_keeps_hole_and_composes() {
     let (region, strings, paths) = solid::slice_z(&hollow_prism(), 1).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
+/// Checks the bottom coplanar cap retains the hollow section and composes by extrusion.
 fn coplanar_bottom_slice_keeps_hole_and_composes() {
     let (region, strings, paths) = solid::slice_z(&hollow_prism(), 0).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
+/// Checks the top coplanar cap retains the hollow section and composes by extrusion.
 fn coplanar_top_slice_keeps_hole_and_composes() {
     let (region, strings, paths) = solid::slice_z(&hollow_prism(), 2).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
+/// Reverses face order and every triangle winding, then checks the hollow interior section.
 fn face_permutation_and_global_reversal_preserve_hollow_set() {
     let mesh = hollow_prism();
     let mut faces = mesh.triangles.to_vec();
@@ -147,6 +181,7 @@ fn face_permutation_and_global_reversal_preserve_hollow_set() {
     assert_hollow(&solid::slice_z(&reversed, 1).attempt().unwrap().0);
 }
 #[test]
+/// Checks nested positive shells retain area 16 and material at their common center.
 fn nested_material_shells_do_not_become_parity_holes() {
     let outer = solid::cube(4).unwrap();
     let inner = solid::transform(
@@ -161,6 +196,7 @@ fn nested_material_shells_do_not_become_parity_holes() {
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
+/// Checks coincident positive shells retain a filled square under nonzero winding.
 fn duplicate_material_shells_do_not_cancel() {
     let cube = solid::cube(2).unwrap();
     let mesh = solid::merge(&[cube.clone(), cube]).expect("valid concatenation fixture");
@@ -170,6 +206,7 @@ fn duplicate_material_shells_do_not_cancel() {
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
+/// Checks two disconnected hollow sections have total area 24 and two empty centers.
 fn disconnected_hollow_components_preserve_both_voids() {
     let first = hollow_prism();
     let second = solid::transform(
@@ -186,6 +223,9 @@ fn disconnected_hollow_components_preserve_both_voids() {
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
+/// Checks empty sections from empty and missed solids compose with union and extrusion.
+///
+/// Also checks projecting the canonical empty mesh returns an empty region.
 fn canonical_empty_and_outside_slices_remain_consumable() {
     let empty = TriangleMesh::new(Vec::new(), Vec::new());
     let cube = solid::cube(1).unwrap();
@@ -212,6 +252,9 @@ fn canonical_empty_and_outside_slices_remain_consumable() {
     assert!(solid::flatten(&empty).attempt().unwrap().is_empty());
 }
 #[test]
+/// Checks an open triangle produces one segment with exact unordered endpoints.
+///
+/// The filled region and path list remain empty.
 fn open_triangle_intersection_remains_an_open_wire() {
     let mesh = triangle(vec![
         Point3::new(0.into(), 0.into(), (-1).into()),
@@ -228,10 +271,15 @@ fn open_triangle_intersection_remains_an_open_wire() {
     assert!(points.contains(&[0.into(), 1.into()]));
 }
 #[test]
+/// Checks projection of the hollow prism retains its void and supports extrusion.
 fn projection_of_hollow_prism_keeps_void() {
     assert_hollow(&solid::flatten(&hollow_prism()).attempt().unwrap());
 }
 #[test]
+/// Checks slice reuse and eviction under disabled and one-entry cache policies.
+///
+/// Invalidated position storage must fail slicing and projection, while the
+/// unchanged source still yields the hollow section.
 fn cache_states_and_mutation_preserve_section_meaning() {
     let mesh = hollow_prism();
     for policy in [
@@ -258,6 +306,7 @@ fn cache_states_and_mutation_preserve_section_meaning() {
     }
 }
 #[test]
+/// Checks strict/approximate/strict slicing preserves undecided failures and qualification.
 fn approximate_slice_never_certifies_a_later_strict_request() {
     let mesh = solid::cube(1).unwrap();
     let z = unknown_zero();
@@ -277,6 +326,7 @@ fn approximate_slice_never_certifies_a_later_strict_request() {
     }
 }
 
+/// Copies positions and face rows, swapping each face winding for cancellation fixtures.
 fn reversed(mesh: &TriangleMesh) -> TriangleMesh {
     let mut faces = mesh.triangles.to_vec();
     for face in &mut faces {
@@ -286,6 +336,7 @@ fn reversed(mesh: &TriangleMesh) -> TriangleMesh {
 }
 
 #[test]
+/// Checks opposite coincident shells cancel at both caps and the interior section.
 fn opposite_shells_cancel_interior_and_coplanar_sections() {
     let cube = solid::cube(2).unwrap();
     let mesh =
@@ -298,6 +349,7 @@ fn opposite_shells_cancel_interior_and_coplanar_sections() {
 }
 
 #[test]
+/// Checks two positive shells minus one opposite shell retain square area at three heights.
 fn signed_multiplicity_is_preserved_interior_and_coplanar() {
     let cube = solid::cube(2).unwrap();
     let mesh = solid::merge(&[cube.clone(), cube.clone(), reversed(&cube)])
@@ -310,6 +362,7 @@ fn signed_multiplicity_is_preserved_interior_and_coplanar() {
 }
 
 #[test]
+/// Checks the shared cap of stacked hollow prisms retains the hole and no open remnants.
 fn shared_on_plane_edges_do_not_change_hole_winding() {
     let lower = hollow_prism();
     let upper = solid::transform(
@@ -324,6 +377,7 @@ fn shared_on_plane_edges_do_not_change_hole_winding() {
 }
 
 #[test]
+/// Checks square sections touching at one vertex retain both interiors and total area eight.
 fn vertex_touching_components_retain_both_material_regions() {
     let first = solid::cube(2).unwrap();
     let second = solid::transform(
@@ -341,6 +395,7 @@ fn vertex_touching_components_retain_both_material_regions() {
 }
 
 #[test]
+/// Checks both policies retain the native mesh error and its source for malformed indices.
 fn contextual_invalid_indices_preserve_the_native_diagnostic() {
     let mesh = triangle(Vec::new());
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
@@ -356,6 +411,9 @@ fn contextual_invalid_indices_preserve_the_native_diagnostic() {
 }
 
 #[test]
+/// Checks signed multiplicity after interleaving face rows and cyclically permuting them.
+///
+/// One positive copy cancels; two retain area four at interior and cap heights.
 fn interleaved_opposite_faces_preserve_winding_after_permutation() {
     let cube = solid::cube(2).unwrap();
     for copies in [1, 2] {
@@ -388,6 +446,7 @@ fn interleaved_opposite_faces_preserve_winding_after_permutation() {
 }
 
 #[test]
+/// Checks hollow-section witnesses in separate workers using default and disabled caches.
 fn thread_local_cache_modes_preserve_hollow_sections() {
     let workers = [CachePolicy::DEFAULT, CachePolicy::DISABLED].map(|policy| {
         std::thread::spawn(move || {
@@ -403,6 +462,7 @@ fn thread_local_cache_modes_preserve_hollow_sections() {
 }
 
 #[test]
+/// Duplicates positions per face and checks coordinate incidence still assembles hollow sections.
 fn independent_position_rows_preserve_the_same_section() {
     let source = hollow_prism();
     let mut positions = Vec::new();
@@ -428,6 +488,7 @@ fn independent_position_rows_preserve_the_same_section() {
 }
 
 #[test]
+/// Checks cancellation survives 32 deterministic shuffles of coincident opposite shell faces.
 fn shuffled_coincident_shell_faces_preserve_signed_set() {
     let cube = solid::cube(2).unwrap();
     let source =
