@@ -1,4 +1,8 @@
 //! Planar sampling of the native Hypersdf field into native Hypercurve contours.
+//!
+//! Samples the normalized inverse-square field on a bounded XY grid and adopts
+//! marching-squares chords as native filled geometry. Exact sampling decisions
+//! do not certify those chords' fidelity to the continuous level set.
 
 use crate::{
     GeometryContext, GeometryOutcome, context::GeometryDecisions, errors::ValidationError,
@@ -7,6 +11,18 @@ use hypercurve::{CurveRegion2, MarchingSquaresGrid, Point2};
 use hyperlattice::{Point3, Real};
 use hypersdf::{Metaball, MetaballField};
 
+/// Builds a planar field grid, then extracts native contours under the requested policy.
+///
+/// Checks grid dimensions/count before allocating sources; native field creation
+/// validates iso and radii strictly, then bounds validate padding even for no
+/// sources. An empty field returns an empty region only after those checks.
+/// Samples cover both ends of each axis, with X varying fastest and no extra
+/// border. Field errors retain `[ix, iy, 0]` and the native cause.
+///
+/// Only marching squares/region admission runs in the selected curve decision
+/// scope; field construction, evaluation and bounds use Hypersdf's strict
+/// construction contract. The generic outcome carries extraction certainty,
+/// not a continuous-field fidelity certificate or mesh construction receipt.
 pub(crate) fn sample(
     balls: &[(Point2, Real)],
     resolution: (usize, usize),
@@ -54,6 +70,12 @@ pub(crate) fn sample(
     Ok(decisions.finish(region))
 }
 
+/// Reserves an empty buffer after checking its requested addressable byte count.
+///
+/// Multiplication overflow or more than `isize::MAX` bytes is `CapacityOverflow`;
+/// reservation failure is `AllocationFailed` with the element count. Length
+/// remains zero, and allocator rounding or subsequent scalar allocations are
+/// not bounded by this local capacity check.
 fn buffer<T>(count: usize) -> Result<Vec<T>, ValidationError> {
     count
         .checked_mul(size_of::<T>())
@@ -66,6 +88,13 @@ fn buffer<T>(count: usize) -> Result<Vec<T>, ValidationError> {
     Ok(result)
 }
 
+/// Equally spaced exact coordinates including `min` and `max`.
+///
+/// The grid validator must already establish `count >= 2`; this helper does
+/// not guard the `count - 1` subtraction itself. Computes the step before
+/// reserving storage and preserves conversion, scalar and allocation failures.
+/// Bounds order is the caller's responsibility; no finite-coordinate projection
+/// or independent interval validation is performed here.
 fn axis(min: &Real, max: &Real, count: usize) -> Result<Vec<Real>, ValidationError> {
     let step = ((max - min)
         / Real::from(

@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/curve/metaballs.rs` | Entire file; documented strict field construction versus policy-selected extraction, empty validation, indexed sample errors, checked buffer scope and axis preconditions. | Private docs passed with `curve,metaballs,image-io,truetype-text,hershey-text`; all three helper pages inspected. Runtime checks waived. |
 | `tests/sweep_frames.rs` | Entire file; documented all 21 function/constant declarations, exact rational frame invariants, finite helix/grouping oracles, typed failures and terminal certainty. | Source, formatting and comment-only checks passed; runtime assertions and timing diagnostics unchanged, not rerun. |
 | `tests/exact_profile_sweeps.rs` | Entire file; documented all 50 function/constant/type declarations, exact prism fixtures, signed revolution phases, independent winding/sector oracles, policy/composition and qualified STL replay. | Source, formatting and comment-only checks passed; assertions and optional STL branch unchanged, not rerun. |
 | `tests/mixed_modeling_profiles.rs` | Entire file; documented numeric/contour fixtures, consumer dispatch, exact-member measures, mixed holes/spans and repeated thin-wall cuts. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
@@ -45,7 +46,7 @@ repository rules for later sessions or authorize implementation edits.
 | `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
-| `src/curve/native.rs` | **Partial:** file start through `extrude_twisted`, inclusive, plus the complete `native_boundary_source_probe` module and the sweep-related test/helper items recorded below; frame construction, closure seam, policy/error flow and twist validation documented. Resume at `metaballs`; most of the main test module remains pending. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
+| `src/curve/native.rs` | Entire file, cumulatively across the recorded constructor, path, meshing, revolution, sweep and final adapter/query/test batches. All 162 detected declarations have Rustdoc; enum variants and local items were included in their owning batches. | Private docs passed with `curve` and with `curve,metaballs,image-io,truetype-text,hershey-text`; affected public/private pages inspected. Unit/integration witnesses remain source-reviewed, not rerun. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -1228,10 +1229,91 @@ about 499 MiB. No additional target tree or runtime build was created. Full
 workflow/runtime checks remain waived for this docs-only session. No predicate,
 construction, assertion or executable behavior changed.
 
+### Final native curve adapters, transforms, queries and tests, 26 November 2026
+
+Owner: CSGRS curve modeling/conversion boundary and planar metaball adapter;
+P1/P4/P6/P8/P9/P12/P16/P17/P18/P19/P25/P30/P37. Baseline: `f187abd82`.
+Completed the item audit from `metaballs` through `translated_solid` and every
+remaining main-module test in `src/curve/native.rs`. Together with prior
+contiguous batches and the already reviewed final validation-probe module,
+this completes the file's line-by-line review. Also read and documented every
+line/item in `src/curve/metaballs.rs`.
+
+Supporting reads inspected image cell tracing and coordinate conversion,
+TrueType text assembly/layout, Hershey stroke assembly, native region affine
+transforms/classification/envelopes, Hypersdf field validation/evaluation/bounds,
+solid translation and Cargo feature wiring. The image/TrueType implementation
+files and supporting kernel files are not credited as completed audits here.
+
+Missing witnesses: raster and convenience-wrapper summaries omitted the model
+being adopted, discarded report/receipt details and empty-input validation;
+generic transform summaries omitted planar homogeneous semantics and native
+representation blockers. Planar metaball internals and remaining unit witnesses
+lacked Rustdoc. Documented these without changing code, tests or feature wiring.
+
+Raster tracing adopts thresholded integer unit cells, keeps image Y coordinates
+without reflection and drops the internal trace report when returning a region.
+TrueType preserves parser-emitted line/Bézier outlines with nonzero fill, selects
+face zero, validates even empty text and uses explicit newline/carriage/tab
+behavior. Its receipt does not repair upstream parser rounding. Hershey returns
+open strokes after an exact Y reflection; all whitespace, including newlines,
+advances horizontally. Entire-font record and size validation also precedes
+empty-text success. Partial text is not published after failures.
+
+Planar metaballs sample `(iso-I)/(iso+I)`, including the continuous -1 value at
+centers. The native chord region is a discrete model, not a continuous-field
+fidelity certificate. Grid count, field parameters and padding precede empty
+handling. X varies fastest, without the 3D sampler's extra border. Sampling
+errors retain grid index and source; buffer addressability/reservation checks
+do not establish a global work/memory budget. Field construction/evaluation and
+bounds remain strict while extraction uses the selected curve policy.
+
+Planar matrix docs specify the restriction to `(x,y,0,1)`, irrelevant third
+column, constant-weight normalization, pre-empty validation order and native
+determinant/topology authority. A singular full 4x4 matrix can still have an
+admissible planar restriction. Point queries distinguish boundary from missing
+evidence; bound queries distinguish a certified envelope from tight retained
+algebraic-fragment extrema. The legacy solid-translation bridge remains a 3D
+mesh transform with construction history, not a planar conversion.
+
+Remaining tests now describe cache/policy isolation, certified versus terminal
+zero controls, finite-export qualifications, constructor/catalog smoke tests,
+structural inequality, exact sampled extents, rack contacts, Hilbert centers and
+Hershey coordinates according to their actual assertions. They do not upgrade
+projected measurements, wrapper agreement or structural inequality to general
+geometric-set proofs. A declaration scan found Rustdoc on all 162 named
+function/type/enum/module/static/constant declarations in `native.rs` and all
+three functions in planar `metaballs.rs`. These local counts are not a
+repository-wide coverage metric or a substitute for the recorded source reads.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs src/curve/metaballs.rs`:
+  passed. `git diff --check`: passed.
+- All nonblank, non-comment source lines match baseline in both edited Rust
+  files; assertions, decision order, geometry and feature wiring are unchanged.
+- With `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0` and
+  `RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links'`, both commands passed
+  without warnings:
+  - `cargo doc --locked -p csgrs --no-default-features --features
+    curve,metaballs,image-io,truetype-text,hershey-text --document-private-items
+    --no-deps --offline`.
+  - `cargo doc --locked -p csgrs --no-default-features --features curve
+    --document-private-items --no-deps --offline`.
+- Inspected twenty rendered adapter/transform/query pages and all three planar
+  metaball helper pages in the combined-feature build. Test-only items remain
+  source-reviewed; ordinary library docs do not render them.
+
+Logs: `/tmp/csgrs-rustdoc-curve-adapters-doc.log` and
+`/tmp/csgrs-rustdoc-curve-tail-minimal-doc.log`. The shared temporary build tree
+is about 542 MiB after checking the additional image/font feature dependencies.
+No separate target tree or runtime build was created. Full workflow/runtime
+checks remain waived for this docs-only session; no performance claim is made.
+
 ## Next work
 
-Continue `src/curve/native.rs` at `metaballs`, including optional image/text
-adapters, planar transforms, queries and the remaining main-module tests, then
+Review `src/curve/image.rs` and `src/curve/truetype.rs` completely, including
+private tracing/outline/layout helpers and their tests, then
 review the remaining root modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every

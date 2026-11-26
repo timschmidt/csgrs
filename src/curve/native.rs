@@ -4218,6 +4218,12 @@ pub fn extrude_twisted(
 /// required, including for empty inputs. Errors remain typed. The exact chord
 /// proposal uses native marching squares and nesting-aware region admission;
 /// its numerical certainty does not certify fidelity to the continuous field.
+/// With influence `I = sum(radius² / distance²)`, samples use
+/// `(iso_value - I) / (iso_value + I)`, continuously extended to -1 at centers.
+/// Interpolating that normalized field differs from interpolating the singular
+/// influence itself. The result adopts the extracted chords as its native model.
+/// This convenience wrapper uses strict policy and returns the region alone;
+/// [`metaballs_with_context`] retains the extraction's separate certainty receipt.
 #[cfg(feature = "metaballs")]
 pub fn metaballs(
     balls: &[(Point2, Real)],
@@ -4233,6 +4239,14 @@ pub fn metaballs(
 
 /// Planar metaball sampling with the selected extraction policy and certainty.
 /// Field construction and conservative bounds remain strict.
+///
+/// Uses the core `resolution` grid, including its bounds, with no extra border.
+/// Dimensions and checked sample count precede field/iso/radius validation;
+/// padding is validated before an empty field returns an empty region. Failed
+/// field samples retain their native cause and grid index `[x, y, 0]`. Checked
+/// buffers report capacity/allocation failures but do not bound total work or
+/// scalar-expression memory. The receipt concerns extraction decisions, not
+/// continuous-field fidelity; see [`metaballs`].
 #[cfg(feature = "metaballs")]
 pub fn metaballs_with_context(
     balls: &[(Point2, Real)],
@@ -4244,7 +4258,17 @@ pub fn metaballs_with_context(
     super::metaballs::sample(balls, resolution, iso_value, padding, context)
 }
 
-/// Filled contours traced from a grayscale image.
+/// Models pixels at or above `threshold` as exact closed unit cells.
+///
+/// Pixel `(x, y)` occupies `[x, x + 1] × [y, y + 1]`. Raster row coordinates
+/// are used directly, without a Y reflection, rescaling or smoothing. Directed
+/// exposed cell edges form native line contours with material/hole ownership;
+/// no finite-coordinate projection or SVG round trip decides their topology.
+/// Empty images and images with no selected pixels yield an empty region.
+///
+/// Exactness is relative to the thresholded cell model. This convenience path
+/// consumes the internal trace report, returning its region without source
+/// dimensions or work counts. Tracing and native admission errors remain typed.
 #[cfg(feature = "image-io")]
 pub fn from_image(
     image: &image::GrayImage,
@@ -4262,6 +4286,12 @@ pub fn from_image(
 /// Layout uses horizontal advances and pair adjustments, with newline, carriage
 /// return and tab controls; it is not a shaping or bidirectional-text engine.
 /// Invalid fonts, missing glyphs and failed outlines return typed errors.
+/// All retained outlines use native nonzero-winding fill. Face index zero is
+/// selected, and scale/font/layout-table validation runs even for empty text.
+/// A newline resets X and moves the baseline downward; a carriage return only
+/// resets X; a tab adds four default advances rather than snapping to tab stops.
+/// No partial text is returned after an outline failure. This wrapper selects
+/// strict policy and removes the separate operation receipt from the return type.
 #[cfg(feature = "truetype-text")]
 pub fn truetype_text(
     text: &str,
@@ -4274,6 +4304,11 @@ pub fn truetype_text(
 }
 
 /// Policy-explicit text construction with an operation-local certainty receipt.
+///
+/// Uses [`truetype_text`]'s parser, scale, layout and fill contract. Scale
+/// positivity is decided before font parsing, then native outline admission
+/// runs inside the same curve decision scope. The receipt does not certify
+/// source-font fidelity lost before the parser emitted its coordinates.
 #[cfg(feature = "truetype-text")]
 pub fn truetype_text_with_context(
     text: &str,
@@ -4295,6 +4330,12 @@ pub fn truetype_text_with_context(
 /// points up, consistently with the rest of the planar curve API.
 /// Size must be provably nonzero; negative sizes are supported. Missing glyphs,
 /// malformed records and failed strokes return typed errors without partial text.
+/// Each pen-down run with at least two points becomes an open string. Whitespace,
+/// including newlines, advances X by six times `size` in a single-line layout;
+/// glyph advances use four-fifths of the encoded bearing width times `size`.
+/// The entire font record set and size are validated even for empty text.
+/// This wrapper selects strict policy; [`hershey_strings_with_context`] retains
+/// the separate operation receipt. Neither entry point creates filled glyphs.
 #[cfg(feature = "hershey-text")]
 pub fn hershey_strings(
     text: &str,
@@ -4307,6 +4348,12 @@ pub fn hershey_strings(
 }
 
 /// Policy-explicit Hershey text with an operation-local certainty receipt.
+///
+/// Applies [`hershey_strings`]'s layout, then reflects every native string by
+/// the exact similarity `(x, y) -> (x, -y)`. Construction and reflection share
+/// the decision scope. A failed stroke, transform or checked output allocation
+/// returns an error instead of a partial vector; checked buffers are not a
+/// total-work or retained-memory bound.
 #[cfg(feature = "hershey-text")]
 pub fn hershey_strings_with_context(
     text: &str,
@@ -4343,6 +4390,13 @@ pub fn hershey_strings_with_context(
 /// constant weight with a nonzero coordinate image returns an unbounded error;
 /// an all-zero homogeneous image is invalid. Hypercurve validates the planar
 /// map's nonsingularity and topology, including for empty inputs.
+///
+/// For `(x, y, 0, 1)`, the image is
+/// `((m00*x + m01*y + m03)/m33, (m10*x + m11*y + m13)/m33)`.
+/// The third column has no effect; invertibility of the full 4×4 matrix is not
+/// required when its planar restriction is nonsingular. Native retained-curve
+/// transforms own representation support and can return typed blockers.
+/// Uses strict policy and returns geometry without a separate operation receipt.
 pub fn transformed(
     input: &CurveRegion2,
     matrix: &Matrix4,
@@ -4352,6 +4406,13 @@ pub fn transformed(
 }
 
 /// Applies the same planar matrix contract with aggregate predicate certainty.
+///
+/// Checks constant weight first, XY-plane preservation second, then the constant
+/// weight's sign. At zero weight, visits all six planar numerator coefficients
+/// before selecting invalid or unbounded output; an undecided coefficient can
+/// therefore propagate even after another was nonzero. These are conditions on
+/// the whole XY-plane map, not only the input region's occupied points. Only
+/// after normalization does Hypercurve own the determinant and topology checks.
 pub fn transformed_with_context(
     input: &CurveRegion2,
     matrix: &Matrix4,
@@ -4414,6 +4475,8 @@ pub fn transformed_with_context(
 }
 
 /// Applies an exact planar translation to a filled native region.
+/// Converts X then Y exactly and delegates to the strict native affine path;
+/// retained curves and holes are transformed without constructing display chords.
 pub fn translated(
     input: &CurveRegion2,
     x: impl IntoReal,
@@ -4425,7 +4488,8 @@ pub fn translated(
         .map(GeometryOutcome::into_value)
 }
 
-/// Applies the curve transform with the selected policy and aggregate certainty.
+/// Translates by `(x, y)` through native affine transformation under the selected policy.
+/// The outcome retains aggregate certainty from native topology/evidence admission.
 pub fn translated_with_context(
     input: &CurveRegion2,
     x: Real,
@@ -4447,6 +4511,8 @@ pub fn translated_with_context(
 }
 
 /// Rotates a filled native region counterclockwise about the origin in degrees.
+/// Converts the angle exactly, forms its symbolic sine/cosine and uses strict
+/// native affine transformation. No degree rounding or polygonal rotation is used.
 pub fn rotated(
     input: &CurveRegion2,
     z_degrees: impl IntoReal,
@@ -4456,7 +4522,9 @@ pub fn rotated(
         .map(GeometryOutcome::into_value)
 }
 
-/// Applies the curve transform with the selected policy and aggregate certainty.
+/// Rotates by `z_degrees * pi / 180` under the selected native curve policy.
+/// Uses the matrix `[cos, -sin; sin, cos]` and retains transformation certainty;
+/// native retained-carrier or predicate failures are propagated without sampling.
 pub fn rotated_with_context(
     input: &CurveRegion2,
     z_degrees: Real,
@@ -4484,6 +4552,9 @@ pub fn rotated_with_context(
 /// A zero factor is a singular transform, not a zero-size feature: it returns
 /// a typed invalid-input error, for empty input too, rather than an empty
 /// region.
+/// Negative factors are allowed reflections. Native affine transformation owns
+/// determinant decisions and any loop reversal needed to preserve filled-side
+/// semantics. This wrapper converts X then Y and uses strict policy.
 pub fn scaled(
     input: &CurveRegion2,
     x: impl IntoReal,
@@ -4494,7 +4565,9 @@ pub fn scaled(
     scaled_with_context(input, x, y, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
-/// Applies the curve transform with the selected policy and aggregate certainty.
+/// Applies diagonal scale `(x, y)` through native affine transformation and retains certainty.
+/// Uses [`scaled`]'s noncollapse/reflection contract; native topology is validated
+/// before determinant handling, and representation or decision blockers propagate.
 pub fn scaled_with_context(
     input: &CurveRegion2,
     x: Real,
@@ -4517,6 +4590,9 @@ pub fn scaled_with_context(
 
 /// Classifies an exact XY point. Only a proved boundary returns `Ok(None)`;
 /// undecided classifications and native failures return typed errors.
+/// `Some(true)` denotes material interior and `Some(false)` exterior, including
+/// hole interiors. Converts X then Y and selects strict policy; this is native
+/// region classification, not a sampled-boundary or bounding-box test.
 pub fn contains_xy(
     input: &CurveRegion2,
     x: impl IntoReal,
@@ -4531,6 +4607,9 @@ pub fn contains_xy(
 /// Classifies a point with the selected policy. Boundaries return `None`;
 /// undecided classifications retain their native error and context.
 /// Empty regions retain any inherited topology qualification.
+/// `Some(true)` and `Some(false)` map native inside/outside decisions directly;
+/// `None` is a boundary decision, not missing evidence. Any authorized terminal
+/// consumption remains visible in the outcome's certainty.
 pub fn contains_xy_with_context(
     input: &CurveRegion2,
     x: Real,
@@ -4548,18 +4627,23 @@ pub fn contains_xy_with_context(
     Ok(decisions.finish(inside))
 }
 
-/// Returns certified planar bounds with exact coordinates, embedded in the XY
-/// plane.
+/// Returns a strict native boundary envelope with exact coordinates in the XY plane.
 ///
 /// Line and arc boundaries and native curve extrema give the region's exact
 /// bounds. A boundary fragment cut at an algebraic parameter contributes the
 /// certified envelope of its source curve over a rational parameter interval,
-/// which encloses the region but can be looser; see `CurveRegion2::bounds`.
+/// which encloses the region but can be looser; see [`CurveRegion2::bounds`].
+/// `None` denotes an empty region after native topology validation; missing
+/// interior-bound evidence remains a typed blocker. Both returned Z bounds are
+/// exactly zero. This wrapper returns no separate operation receipt.
 pub fn bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
     bounding_box_with_context(input, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Computes curve bounds with the selected policy and aggregate certainty.
+/// Uses [`bounding_box`]'s envelope semantics; the receipt does not assert that
+/// a retained algebraic fragment's enclosing parameter interval is tight.
+/// Native topology and bound-order decisions remain in the curve layer.
 pub fn bounding_box_with_context(
     input: &CurveRegion2,
     context: GeometryContext,
@@ -4574,7 +4658,13 @@ pub fn bounding_box_with_context(
     Ok(decisions.finish(bounds))
 }
 
-/// Returns the same native solid translation helper used by the 3D grammar.
+/// Translates a triangle mesh through the strict 3D solid transform path.
+///
+/// Converts X/Y/Z in order and delegates to [`solid::SolidExt::translated`],
+/// preserving its mesh validation and construction-history contract. Despite
+/// this function's location in the curve module, Z displacement is unrestricted
+/// and no planar region is constructed. Returns the mesh without a separate
+/// operation-local certainty receipt.
 pub fn translated_solid(
     mesh: &TriangleMesh,
     x: impl IntoReal,
@@ -4587,10 +4677,18 @@ pub fn translated_solid(
     solid::SolidExt::translated(mesh, x, y, z)
 }
 
+/// Modeling-boundary witnesses for native carriers, cache scope and policy receipts.
+///
+/// Includes constructor failure/catalog smoke checks, exact-coordinate assertions,
+/// selected membership probes and mesh edge/face checks. Projected measurements
+/// and structural inequality are scoped witnesses, not universal set or embedding proofs.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Failures and approximate requests do not populate the bounded thread-local cache.
+    /// Strict successes may serve approximate requests without losing certification;
+    /// transformed clones preserve the original area, and child-thread entries stay local.
     #[test]
     fn ring_cache_keeps_only_strict_success_and_owned_identity() {
         REGION_RING_CACHE.with_borrow_mut(Vec::clear);
@@ -4657,6 +4755,8 @@ mod tests {
         zero
     }
 
+    /// A certified trigonometric zero produces empty squares and exact sweep deduplication.
+    /// Both policies retain certified receipts and the prism's exact six-volume 24.
     #[test]
     fn unit_circle_zero_is_certified_in_empty_profiles_and_sweep_deduplication() {
         let zero = certified_unit_circle_zero();
@@ -4726,6 +4826,9 @@ mod tests {
         );
     }
 
+    /// Approximate closure history survives finite export and warm policy transitions.
+    /// Strict export remains undecided; authorized approximate export retains the
+    /// consumed-terminal receipt and one closed, hole-free material profile.
     #[test]
     fn finite_profiles_reuse_retained_loop_topology_without_reconsumption() {
         let start_x = Real::e().sin();
@@ -4779,6 +4882,8 @@ mod tests {
         }
     }
 
+    /// A sampled-circle region extrudes directly to reusable native mesh input.
+    /// Checks nonempty buffers, indexed edge closure and native polygon-soup admission.
     #[test]
     fn filled_constructor_and_extrusion_remain_native() {
         let region: CurveRegion2 = circle(Real::from(2_u8), 32).expect("valid planar fixture");
@@ -4988,6 +5093,8 @@ mod tests {
         }
     }
 
+    /// Native square/rectangle union returns a nonempty `CurveRegion2` directly.
+    /// This carrier/type smoke check does not assert an independent union boundary.
     #[test]
     fn native_region_boolean_does_not_construct_a_public_facade() {
         let left = square(Real::from(2_u8)).expect("valid planar fixture");
@@ -4999,6 +5106,9 @@ mod tests {
         assert!(!union.is_empty());
     }
 
+    /// Invalid dimensions, ranges and extreme counts must fail across the shape catalog.
+    /// Checks rejection only; dedicated integration witnesses inspect typed causes
+    /// and distinguish resource failures from ordinary invalid input.
     #[test]
     fn planar_constructors_reject_invalid_dimensions_and_ranges() {
         let negative = -Real::one();
@@ -5121,6 +5231,8 @@ mod tests {
         assert!(bspline_path(&[], usize::MAX, 1).is_err());
     }
 
+    /// Sampled egg/heart envelopes have the exact requested width and height.
+    /// These expectations concern the adopted polygon, not the unsampled formulas.
     #[test]
     fn normalized_egg_and_heart_match_requested_sampled_bounds() {
         let egg_bounds = bounding_box(
@@ -5154,6 +5266,9 @@ mod tests {
         );
     }
 
+    /// Mechanical parameter/resolution changes produce unequal native region representations.
+    /// Exercises involute pressure angle, cycloidal radius/resolution and NACA camber.
+    /// Nonemptiness and `PartialEq` inequality are not independent filled-set comparisons.
     #[test]
     fn analytic_shape_parameters_change_their_geometry() {
         let involute_20 = involute_gear(
@@ -5224,6 +5339,10 @@ mod tests {
         assert_ne!(symmetric, cambered);
     }
 
+    /// Rack flanks cross pitch twice per tooth and retain certified contact/side probes.
+    /// Uses exact pitch comparisons and offsets of 10^-12, independent of whether
+    /// native admission removes collinear pitch vertices. Tip/root counts include
+    /// only decided coordinate equalities; blocked comparisons are not matches.
     #[test]
     fn cycloidal_rack_alternates_face_and_root_flanks() {
         let teeth = 4;
@@ -5302,6 +5421,10 @@ mod tests {
         );
     }
 
+    /// Gear/rack fixtures project to one material profile without holes and one boundary path.
+    /// Retains the README's binary-valued input fixture, rejects overlapping root
+    /// flanks, and checks rack backing extends below Y=-1. Projection/path counts
+    /// are topology witnesses for these fixtures, not analytic gear-fidelity proofs.
     #[test]
     fn gear_and_rack_profiles_form_one_hole_free_material_component() {
         let cycloidal = cycloidal_gear(
@@ -5390,6 +5513,9 @@ mod tests {
         }
     }
 
+    /// Path/region constructors distinguish open controls, explicit closure and display counts.
+    /// Also checks a square triangulates to four positions and two valid-index faces;
+    /// it does not require solid closure from that flat surface.
     #[test]
     fn higher_order_curve_constructors_and_flat_triangulation_are_usable() {
         let zero = Real::zero();
@@ -5434,6 +5560,10 @@ mod tests {
         );
     }
 
+    /// Catalog smoke coverage requires nonempty native regions and finite profiles.
+    /// A separate crescent subcase checks certified receipts and three independent
+    /// membership expectations under both construction policies. Other catalog
+    /// entries may use approximate policy and do not assert certified receipts.
     #[test]
     fn nominal_planar_shape_catalog_constructs_material() {
         let one = Real::one();
@@ -5567,6 +5697,8 @@ mod tests {
         }
     }
 
+    /// Order-three Hilbert cell centers span [11/8, 53/8] inside a padded eight-unit square.
+    /// Both axes use exact endpoint ordering and independently specified extrema.
     #[test]
     fn hilbert_samples_are_centered_symmetrically_in_the_usable_grid() {
         let strings = hilbert_strings(
@@ -5600,6 +5732,7 @@ mod tests {
         assert_eq!(max_y, &expected_max);
     }
 
+    /// The compiled 32-font catalog produces nonempty native strokes for a nominal label.
     #[cfg(feature = "hershey-text")]
     #[test]
     fn hershey_catalog_is_native_hypercurve_code() {
@@ -5612,6 +5745,7 @@ mod tests {
         assert!(strings.iter().all(|string| !string.segments().is_empty()));
     }
 
+    /// A two-stroke custom glyph preserves exact endpoints after reflecting source Y.
     #[cfg(feature = "hershey-text")]
     #[test]
     fn hershey_strings_convert_source_coordinates_to_y_up() {
