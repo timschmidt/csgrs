@@ -34,6 +34,11 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/exact_linear_modeling.rs` | Entire file; documented rational hole/area/volume/coordinate witnesses, huge exact shift and adapter failure distinctions. | Focused compilation and private helper docs passed; geometry assertions unchanged, not run. |
+| `tests/batch_common_cells.rs` | Entire file; documented 26-box construction, cavity invariants, shell concatenation/regularization and empty continuation. | Focused compilation and private helper docs passed; geometry assertions unchanged, not run. |
+| `tests/hull_determinism.rs` | Entire file; documented ordered rows/evidence, source matching, cache warmups and temporary-file child protocol. | Focused compilation and private helper docs passed; hull and child-process geometry tests not run. |
+| `tests/compound_rotations.rs` | Entire file; documented binary64/decimal angle families, no-prewarming order, independent cube-support oracle and continuation. | Focused compilation/private docs passed; assertions and predicate order unchanged, not run. |
+| `tests/support/downstream_workloads.rs` | Entire file; documented all helpers including local disjoint-set root, exact comparisons/enclosures, flags, topology and triangle-row matching limits. | All five consuming test targets compiled; private helpers rendered through compound rotations. Function-local root source-reviewed. |
 | `tests/adversarial.rs` | Entire file; documented exact float ingress, boundary-point witness, Boolean/transform assertions and optional offset extrusion. | Focused compilation passed with and without offset; private helper docs inspected. Geometry tests unchanged, not run. |
 | `tests/adversarial_deep.rs` | Entire file; documented three-step box chain and sampled-circle union/extrusion at actual assertion strength. | Focused compilation and private docs passed; geometry tests unchanged, not run. |
 | `tests/adversarial_extrusions.rs` | Entire file; documented face/edge predicate helper and segmented revolution, sweep and loft fixtures. | Focused compilation and private docs passed; geometry tests unchanged, not run. |
@@ -2632,6 +2637,62 @@ Logs: `/tmp/csgrs-rustdoc-adversarial-check.log`,
 `/tmp/csgrs-rustdoc-adversarial-offset-check.log`,
 `/tmp/csgrs-rustdoc-adversarial-private.log`, and
 `/tmp/csgrs-rustdoc-adversarial-fixtures-run.log`.
+
+### Exact downstream witnesses and shared helpers, 26 November 2026
+
+Baseline: `9ab43450b`. Owners: root exact modeling acceptance consumers and their
+shared test helper layer, P1/P3/P4/P8/P9/P17–P20/P24/P25/P35/P37. Domain: rational
+line regions with holes, exact shifts beyond binary64 range, overlapping box
+shells, sampled-sphere hulls, same-axis rotation identities, scalar comparisons,
+finite enclosures, construction flags and indexed triangle topology. Read all
+five changed files in full. Supporting reads of scalar sign certification,
+filled-area semantics, mesh validation, sphere/hull/merge consumers and downstream
+call sites do not add whole-file kernel or downstream-test credit.
+
+Missing acceptance witnesses were undocumented declarations and overly broad
+helper descriptions. Documented the rational profile's exact `23/3` area and 92
+signed six-volume separately from flags and native edge validation. The 26-box
+workload distinguishes concatenated shells from regularized material; its volume
+and three point probes are not a general surface-equivalence oracle. Hull tests
+separately check deterministic storage/evidence, closed-PWN validity and retained
+source vertices, including a temporary signature in a fresh child process.
+Compound rotations retain an independent six-support-plane/outward-orientation
+and volume oracle. No intermediate query was inserted before the original union.
+
+Shared helper corrections preserve mathematical distinctions: face uniqueness
+and geometric edge pairing do not check vertex links or embedding; construction
+flags alone do not certify source fidelity; a strict `1e-30` enclosure is not
+equality; index Euler counts do not merge equal-coordinate rows. The oriented
+triangle comparator maps every right position to the first matching left row,
+including unused right rows, but does not canonicalize duplicate left rows.
+Thus it can reject geometrically equivalent input and is not a general set test.
+Documented its exact structural/strict-Z/X/Y comparison order and the validation
+helper's eager pair of queries; all executable ordering remains unchanged.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Comment/blank-line removal gives
+  identical executable source to baseline for all five files. All 46 declarations,
+  including the function-local disjoint-set root, now have Rustdoc.
+- Focused `cargo check --locked -p csgrs --no-default-features --features
+  curve,sdf,svg-io` passed for the four edited root test targets and
+  `downstream_exact_inputs`, `downstream_profiles`, `downstream_solids`, and
+  `enclosure_workflows`. These include all five consumers of the shared helper.
+  A separate `curve,obj-io` check of `enclosure_workflows` also passed to include
+  its conditional OBJ consumer. Checks used `--offline -j 2`, without warnings.
+- Private Rustdoc for the four edited root targets passed with broken links
+  denied, checked own-library metadata and cached dependency search paths.
+  Inspected 39 pages across those targets and the shared module, verifying all
+  34 rendered declaration descriptions and five module descriptions. `#[test]`
+  functions and the nested root helper remain source-reviewed rather than
+  credited as standalone rendered API pages.
+- No geometry, hull child process or full workflow execution was performed under
+  the owner's docs-only waiver. Existing assertions/fixtures remain unchanged.
+  Builds reused the single temporary target with incremental compilation disabled.
+
+Logs: `/tmp/csgrs-rustdoc-exact-consumers-check.log`,
+`/tmp/csgrs-rustdoc-exact-consumers-obj-check.log`, and
+`/tmp/csgrs-rustdoc-exact-consumers-private.log`.
 
 ## Next work
 

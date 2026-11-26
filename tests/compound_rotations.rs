@@ -5,6 +5,7 @@
 
 #[allow(dead_code)]
 #[path = "support/downstream_workloads.rs"]
+/// Shared strict scalar, face/edge and signed-volume acceptance helpers.
 mod support;
 
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
@@ -12,6 +13,9 @@ use hyperlimit::Sign;
 use std::cmp::Ordering;
 use support::{assert_certified_closed_manifold, r, six_volume, strict_order, strict_sign};
 
+/// Checks a nonempty cube boundary using strict face/edge predicates and six outward support planes.
+/// Every coordinate is in `[0,1]`, each triangle has the appropriate axial normal, and signed
+/// six-volume is six. The oracle is independent of the output's triangulation and row order.
 fn assert_unit_cube(mesh: &TriangleMesh) {
     assert!(!mesh.triangles.is_empty());
     assert_certified_closed_manifold(mesh, "compound rotation union");
@@ -63,6 +67,9 @@ fn assert_unit_cube(mesh: &TriangleMesh) {
     assert_eq!(strict_order(&six_volume(mesh), &r(6)), Ordering::Equal);
 }
 
+/// Cancels four Z rotations using either exact binary64 imports or exact decimal strings.
+/// Leaves intermediate proof caches unqueried before strict union, then requires certified
+/// cube-boundary, empty-difference and restored-union witnesses.
 fn compound_union(binary64: bool) {
     let angles = if binary64 {
         [13.1_f64, 17.3_f64, -13.1_f64, -17.3_f64].map(|value| Real::try_from(value).unwrap())
@@ -111,16 +118,20 @@ fn compound_union(binary64: bool) {
 }
 
 #[test]
+/// Exercises same-axis cancellation for the exact binary values of the four signed float angles.
 fn binary64_compound_round_trip_union_matches_unit_cube() {
     compound_union(true);
 }
 
 #[test]
+/// Exercises the corresponding exact decimal-angle family and strict continuation witnesses.
 fn decimal_compound_round_trip_union_matches_unit_cube() {
     compound_union(false);
 }
 
 #[test]
+/// Runs three zero-sum binary64 angle sequences on each axis under both Boolean policies.
+/// Requires certified cube and canonical-empty continuation, with restoration under strict policy.
 fn compound_rotation_families_on_each_axis_retain_exact_continuation() {
     let families = [
         [13.1_f64, 17.3_f64, -13.1_f64, -17.3_f64],

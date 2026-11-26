@@ -1,14 +1,20 @@
 #![cfg(feature = "curve")]
 //! Exact line profiles keep their meaning across triangulation and extrusion.
+//! Rational area/volume and allowed-coordinate witnesses cover a rectangle with
+//! a square hole, both at the origin and translated beyond binary64 range.
 #[path = "support/uncertainty.rs"]
+/// Proved scalar control and independent unresolved-zero fixture for adapter failures.
 mod uncertainty;
 
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve};
 use hypercurve::{Contour2, CurveRegion2};
 
+/// Forms an exact rational fixture value, panicking on a zero denominator.
 fn q(n: i32, d: i32) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()
 }
+/// Builds a `10/3` by `7/3` rectangle with a `1/3` by `1/3` square hole, shifted in X.
+/// Explicitly closed native line rings preserve thirds and arbitrarily large exact shifts.
 fn profile(shift: &Real) -> CurveRegion2 {
     let rectangle = |x0: Real, y0: Real, x1: Real, y1: Real| {
         Contour2::from_real_ring(&[
@@ -26,6 +32,9 @@ fn profile(shift: &Real) -> CurveRegion2 {
     )
     .unwrap()
 }
+/// Checks area `23/3`, signed triangulated double-area `46/3`, and height-two six-volume 92.
+/// Under both policies, also requires certified construction, paired geometric edges
+/// and extrusion X coordinates drawn from the four exact source columns.
 fn validate(shift: Real) {
     let region = profile(&shift);
     assert_eq!(region.filled_area().unwrap(), Some(q(23, 3)));
@@ -56,15 +65,20 @@ fn validate(shift: Real) {
     }
 }
 #[test]
+/// Runs the rational holed-profile witnesses without translation under both policies.
 fn rational_material_and_hole_keep_exact_area_and_volume() {
     validate(Real::zero());
 }
 #[test]
+/// Runs the same witnesses after an exact `10^400` X translation, without finite projection.
 fn exact_profiles_beyond_float_range_are_still_modeling_inputs() {
     validate(Real::from(10).powi(400.into()).unwrap());
 }
 
 #[test]
+/// Requires structured undecided errors and sources for unresolved scalar/vector heights,
+/// distinguishes invalid zero height, then checks a fresh unit-height call succeeds.
+/// Source presence is checked without downcasting, and no larger-budget retry is performed.
 fn extrusion_adapters_retain_native_failure_categories_and_sources() {
     use csgrs::adapter::{AdapterError, RawCurveRegion};
     use csgrs::errors::ValidationErrorKind;

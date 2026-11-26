@@ -1,12 +1,18 @@
 //! R30: cache state may accelerate the hull, but must not select its rows.
+//! Fixed sampled-sphere inputs separate row/evidence determinism from closed-PWN
+//! validation and source-vertex retention. The parent/child signature is test text,
+//! not an exact geometry interchange format.
 use csgrs::{GeometryCertainty, GeometryContext, TriangleMesh, solid};
 use hypermesh::{MeshCertainty, MeshContext};
 use std::process::Command;
 
+/// Copies oriented triangle index triples in stored order without canonicalization.
 fn rows(mesh: &TriangleMesh) -> Vec<[usize; 3]> {
     mesh.triangles.iter().map(|t| t.indices()).collect()
 }
 
+/// Formats source-row identities, hull triangle rows and construction evidence for a child check.
+/// Each hull point must match a source point by `PartialEq`; duplicate sources use the first match.
 fn signature(mesh: &TriangleMesh, source: &TriangleMesh) -> String {
     let vertices = mesh
         .positions
@@ -27,6 +33,8 @@ fn signature(mesh: &TriangleMesh, source: &TriangleMesh) -> String {
     )
 }
 
+/// Requires identical stored positions, oriented triangle rows and construction evidence.
+/// This is fixed-input determinism, not row-order-independent geometric equivalence.
 fn assert_same(first: &TriangleMesh, next: &TriangleMesh) {
     assert!(
         first.positions == next.positions,
@@ -40,6 +48,11 @@ fn assert_same(first: &TriangleMesh, next: &TriangleMesh) {
 }
 
 #[test]
+/// Checks strict/repeated/display-warmed and approximate-policy hulls of a 32-by-16 sampled sphere.
+/// Requires certified receipts, matching rows/evidence, closed-PWN validation and all 482 source
+/// vertices with 960 faces; then compares a fresh-process child's signature with the first hull.
+/// The environment-selected child returns after that comparison. The parent writes a PID-named
+/// temporary signature, removes it after the child exits and requires child success.
 fn cold_and_repeated_sampled_sphere_hulls_have_identical_rows() {
     let sphere = solid::cache::with_policy(solid::cache::CachePolicy::DISABLED, || {
         solid::sphere(1, 32, 16).unwrap()
@@ -104,6 +117,8 @@ fn cold_and_repeated_sampled_sphere_hulls_have_identical_rows() {
 }
 
 #[test]
+/// Requires certified, identical hull rows/evidence under both policies for 24-by-12 and 17-by-9 spheres.
+/// Disables the constructor cache while creating each sampled source; no child process runs here.
 fn neighboring_sample_counts_are_stable_under_both_policies() {
     for (segments, stacks) in [(24, 12), (17, 9)] {
         let sphere = solid::cache::with_policy(solid::cache::CachePolicy::DISABLED, || {

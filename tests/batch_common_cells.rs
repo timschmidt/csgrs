@@ -1,4 +1,6 @@
 //! The original 26-box workload through the public modeling layer.
+//! Overlapping shells cover `[0,5]^3` except the central open unit cube.
+//! Assertions track certified composition, signed volume and three selected locations.
 
 use csgrs::{
     GeometryCertainty, GeometryContext, Real, TriangleMesh,
@@ -6,10 +8,13 @@ use csgrs::{
 };
 use hypermesh::{MeshCertainty, Point3};
 
+/// Imports an integer fixture coordinate exactly.
 fn r(value: i32) -> Real {
     Real::from(value)
 }
 
+/// Builds the 27 axis-interval combinations except the all-middle box.
+/// Per axis the intervals are `[0,2]`, `[1,4]`, `[3,5]`; retained boxes form the cavity workload.
 fn boxes() -> Vec<TriangleMesh> {
     let mut boxes = Vec::new();
     for (x, a) in [(0, 2), (1, 3), (3, 2)] {
@@ -29,6 +34,9 @@ fn boxes() -> Vec<TriangleMesh> {
     boxes
 }
 
+/// Requires certified closed-PWN validation, signed six-volume 744 and three certified point queries.
+/// Translates material/cavity/exterior probes with the fixture; volume and these probes alone
+/// are not a general equality proof for an arbitrary output surface.
 fn assert_cavity(mesh: &TriangleMesh, offset: [i32; 3]) {
     let context = GeometryContext::STRICT.mesh_context();
     assert_eq!(
@@ -55,6 +63,9 @@ fn assert_cavity(mesh: &TriangleMesh, offset: [i32; 3]) {
 }
 
 #[test]
+/// Compares fixture invariants after concatenated-shell regularization and incremental union,
+/// then after translation before/after union, self-removal and reuse of canonical empty output.
+/// Every Boolean result must have a certified local receipt; no row-order equality is required.
 fn original_batch_shells_and_incremental_union_remain_consumable() {
     let context = GeometryContext::STRICT;
     let cells = boxes();
