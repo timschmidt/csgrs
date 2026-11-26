@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Validate and summarize benchmark CSV files without third-party packages."""
+"""Check CSV structure/repeatability and report median per-iteration timings.
+
+The checks do not establish geometry correctness, matched timing boundaries,
+certainty, complete workload coverage or provenance. Legacy rows become warm.
+Engine parity covers only workload keys present in the supplied files, and
+checksums are compared within groups without normalization by iteration count.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +16,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+# Required ordered header; numerical fields start at sample, not at elapsed_ns.
 FIELDS = [
     "engine",
     "temperature",
@@ -23,17 +30,28 @@ FIELDS = [
     "output_size",
     "checksum",
 ]
+# Accepted historical header, interpreted as warm regardless of actual cache state.
 LEGACY_FIELDS = [field for field in FIELDS if field != "temperature"]
 
+# Exact engine-label set required for every observed portable workload key.
 CROSS_KERNEL_ENGINES = {
     "csgrs",
     "cgal-epeck",
     "opencascade-double-tight",
 }
+# Only these suites participate in engine parity and the cold/warm comparison table.
 CROSS_KERNEL_SUITES = {"kernel", "precision", "corpus"}
 
 
 def load(paths: list[Path]) -> list[dict[str, str]]:
+    """Load ordered current/legacy CSV headers, temperature and integer fields.
+
+    Iterations must be positive; other numeric fields may be negative or zero.
+    Requires at least one row overall, but accepts empty individual files with
+    valid headers. Does not reject duplicate samples or extra row columns.
+    Short rows can raise TypeError when int(None) is attempted, outside the CLI's
+    handled error set. File/CSV errors otherwise follow the underlying readers.
+    """
     rows: list[dict[str, str]] = []
     for path in paths:
         with path.open(newline="", encoding="utf-8") as source:
@@ -62,6 +80,14 @@ def load(paths: list[Path]) -> list[dict[str, str]]:
 
 
 def summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
+    """Group by temperature/workload/engine and compute per-iteration statistics.
+
+    Divides elapsed time and output size by iterations, not work_units. Requires
+    identical raw accumulated checksums per group, so different iteration plans
+    may fail despite identical per-iteration output. Duplicate sample indices
+    are retained as samples. Returns sorted groups with median/min/max time;
+    these statistics do not compare geometry or certify workload completion.
+    """
     groups: dict[tuple[str, str, str, str, str], list[dict[str, str]]] = defaultdict(list)
     for row in rows:
         key = (
@@ -101,6 +127,13 @@ def summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
 
 
 def validate_engine_parity(summaries: list[dict[str, object]]) -> tuple[int, int]:
+    """Require the exact engine set for each observed portable-suite key.
+
+    Returns distinct workload and temperature counts, not a proof that their
+    Cartesian product is present. Missing workloads absent from every engine
+    are invisible; no portable rows returns (0, 0). Set membership does not
+    detect duplicate engine rows or compare samples, output sizes or receipts.
+    """
     engines_by_workload: dict[
         tuple[object, object, object, object], set[object]
     ] = defaultdict(set)
@@ -134,6 +167,13 @@ def markdown(
     summaries: list[dict[str, object]],
     parity: tuple[int, int] | None = None,
 ) -> str:
+    """Render median timing/output tables and ratios to matching csgrs rows.
+
+    The cold/warm table needs all six engine/temperature values for a workload.
+    Other rows render even without a csgrs baseline. Zero baseline medians cause
+    division errors; caller-supplied labels are not Markdown-escaped. Optional
+    parity counts are displayed as a product without verifying a complete grid.
+    """
     baselines = {
         (
             row["temperature"],
@@ -240,6 +280,13 @@ def markdown(
 
 
 def main() -> int:
+    """Parse paths/options, summarize and print or overwrite the selected report.
+
+    Read/validation OSError and ValueError return status 1 with a diagnostic.
+    Output writes occur outside that handler; TypeError, division errors and
+    other failures can escape with a traceback. No parent directory is created,
+    atomic report installation performed or raw input modified.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("csv", nargs="+", type=Path)
     parser.add_argument("--output", type=Path)

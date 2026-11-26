@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Build and run the Rust/native benchmark programs serially, then summarize CSV.
+# Output streams are overwritten at the selected paths; the timestamp default is
+# not a collision lock. Failures stop this script with partial files retained and
+# no final manifest/cleanup trap. This is an execution driver, not a sandbox.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -24,6 +28,8 @@ while (($#)); do
   shift
 done
 
+# Quick mode changes ordinary samples/warmups and selected skip gates. Stress-family
+# sample settings remain independently configurable; setup can still generate/import.
 if ((quick)); then
   export CSGRS_BENCH_SAMPLES=1
   export CSGRS_BENCH_WARMUP=0
@@ -31,6 +37,9 @@ if ((quick)); then
   export CSGRS_BENCH_SKIP_CORPUS_BOOLEANS=1
 fi
 
+# The output directory is created before changing cwd. A relative --output value
+# is used again after cd to the repository root, so callers outside the root should
+# pass an absolute path to keep directory creation and later writes aligned.
 mkdir -p "$output"
 cd "$root"
 
@@ -41,6 +50,11 @@ fi
 yeahright_fixture_dir="$cargo_target_dir/benchmark-fixtures/yeahright"
 generated_fixture_dir="$cargo_target_dir/benchmark-fixtures/generated"
 
+# Launch one fresh command process per cold sample, retaining the first CSV header
+# and appending later data lines verbatim. Sets ordinary counts/iterations only;
+# stress-family counts are not reset. Earlier cases/setup within each fresh process
+# can warm caches before a measured case. The shared temporary is removed only after
+# a successful loop; header consistency, row completion and sample count are unchecked.
 run_cold_samples() {
   local destination="$1"
   shift
@@ -76,6 +90,9 @@ if ((cold_warm)); then
     -DCSGRS_GENERATED_FIXTURE_DIR="$generated_fixture_dir"
   CCACHE_DISABLE=1 cmake --build target/native-benchmarks --parallel
 
+  # Unlike the ordinary branch, these Rust commands omit --features attributed,
+  # although kernel_comparison declares it required. Keep this configuration gap
+  # visible when interpreting the intended cold/warm protocol.
   CSGRS_BENCH_TEMPERATURE=warm \
     cargo bench --bench kernel_comparison >"$output/csgrs-kernel-warm.csv"
   CSGRS_BENCH_TEMPERATURE=warm \
@@ -115,6 +132,8 @@ csv_files=(
   "$output/csgrs-feature.csv"
   "$output/rust-competitive.csv"
 )
+# This shell gate accepts only the spellings listed below; the Rust loader's
+# case-insensitive parser accepts additional mixed-case spellings when run directly.
 case "${SOLIDEAN_BENCH:-}" in
   1|true|TRUE|yes|YES|on|ON)
     cargo bench --bench solidean_comparison >"$output/solidean-comparison.csv"

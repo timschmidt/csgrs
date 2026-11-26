@@ -3695,6 +3695,47 @@ Validation after final edits:
 Logs: `/tmp/csgrs-rustdoc-size-consumers-check.log` and the three
 `/tmp/csgrs-rustdoc-size-{primitive,composed,raster}-private.log` files.
 
+### Benchmark orchestration and CSV summarization, 26 November 2026
+
+Baseline: `5b9212fb5`. Owners: benchmark execution/evidence tools, P6/P20/P36/
+P37/P39. Read all 140 runner lines and 265 summarizer lines. Both receive only
+comments/docstrings; this non-Rust batch does not claim Rustdoc coverage for Python
+or shell. Missing witnesses were undocumented parsing/statistical functions and
+implicit claims about complete parity, coldness, result validation and cleanup.
+
+| File | Whole-file review and validation |
+| --- | --- |
+| `benchmarks/run.sh` | Documented execution/partial-output lifecycle, quick/cold settings, relative-output path caveat, optional gate spellings and omitted feature requirement. Bash syntax passes; non-comment source identical. |
+| `benchmarks/summarize.py` | Documented module, all five functions and four header/label constants; parsed AST identical excluding docstrings, CLI help and Pydoc inspected. No sample files or reports were generated through its execution path. |
+
+The loader accepts negative numeric counters except iterations, duplicate sample
+indices and extra row columns; short rows can cause an uncaught TypeError. Summary
+times/output divide by iterations, not work units; raw checksums are not normalized.
+Parity requires engine sets only for observed keys. It cannot see a workload missing
+from every engine or prove a full workload/temperature Cartesian product. Markdown
+ratios can fail on zero medians; output-write errors lie outside the main handler.
+No parser, validation gate or reporting calculation was changed.
+
+Fresh command processes do not make every case globally cold: setup/earlier cases
+can warm proofs, and cold mode does not override the stress-family sample settings.
+The runner retains partial files after failure and can resolve relative output paths
+against different directories before/after its `cd`. Its cold/warm Cargo calls omit
+`attributed`. Reproduced target selection with `cargo check --locked --bench
+kernel_comparison --offline -j 2`: Cargo rejects the target because required features
+are not enabled. The ordinary branch explicitly adds attributed; the cold/warm branch
+remains an unchanged configuration gap. No benchmark execution was attempted.
+
+Validation after final edits: Bash syntax, Python parsing, CLI help, AST equality,
+all five rendered Pydoc function descriptions and `git diff --check` passed. The
+recorded required-feature error is not a successful build or a repaired workflow.
+No CMake/native builds, fixture acquisition or performance measurements ran under
+the owner's docs-only waiver. Outputs: `/tmp/csgrs-rustdoc-summary-help.txt`,
+`/tmp/csgrs-rustdoc-summary-pydoc.txt` and
+`/tmp/csgrs-rustdoc-runner-features-check.log`.
+
+The complete benchmark README was read, but its cross-native claims still require
+the native consumer review; reading alone is not recorded as completed qualification.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with
