@@ -1,31 +1,46 @@
+//! Rational active-set and Farkas replay controls for public halfspace feasibility.
+//!
+//! Fixtures use `n . x + d <= 0` with integer or rational coefficients. They
+//! assert selected witnesses, active indices, certificate fields, and replay
+//! booleans; the value-extraction helper discards certainty. Constructor tests
+//! also preserve the existing certificate-free validation behavior, which is
+//! not a proof of the supplied system's infeasibility.
+
 use hyperlimit::{
     HalfspaceFeasibility, HalfspaceFeasibilityReport, HalfspaceInfeasibilityCertificate, Plane3,
     Point3, PredicateOutcome, classify_halfspace_feasibility3,
 };
 use hyperreal::{Rational, Real};
 
+/// Approximation-permitted policy used by these rational controls; receipts are not asserted.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Convert an integer fixture value exactly to Real.
 fn r(value: i64) -> Real {
     Real::from(value)
 }
 
+/// Construct a rational fixture value, requiring a nonzero denominator.
 fn q(num: i64, den: u64) -> Real {
     Real::from(Rational::fraction(num, den).expect("test denominator is nonzero"))
 }
 
+/// Construct a point from three supplied Real coordinates.
 fn p(x: Real, y: Real, z: Real) -> Point3 {
     Point3::new(x, y, z)
 }
 
+/// Construct an exact integer-coordinate point; the name does not denote the pi constant.
 fn pi(x: i64, y: i64, z: i64) -> Point3 {
     p(r(x), r(y), r(z))
 }
 
+/// Construct an integer-coefficient closed inequality `n . x + offset <= 0`.
 fn plane(nx: i64, ny: i64, nz: i64, offset: i64) -> Plane3 {
     Plane3::new(pi(nx, ny, nz), r(offset))
 }
 
+/// Extract a decided test value, discarding its receipt and panicking on Unknown.
 fn decided<T>(outcome: PredicateOutcome<T>) -> T {
     match outcome {
         PredicateOutcome::Decided { value, .. } => value,
@@ -33,6 +48,9 @@ fn decided<T>(outcome: PredicateOutcome<T>) -> T {
     }
 }
 
+/// Check origin acceptance and replay for the box from zero to four on every axis.
+///
+/// Despite the fixture name, this box has side length four, not one.
 #[test]
 fn halfspace_feasibility_accepts_origin_for_unit_box() {
     let planes = vec![
@@ -55,6 +73,7 @@ fn halfspace_feasibility_accepts_origin_for_unit_box() {
     );
 }
 
+/// Check the slab `2 <= x <= 5` returns `(2,0,0)`, the first active index, and valid replay.
 #[test]
 fn halfspace_feasibility_finds_single_plane_projection_when_origin_fails() {
     let planes = vec![plane(-1, 0, 0, 2), plane(1, 0, 0, -5)];
@@ -70,6 +89,7 @@ fn halfspace_feasibility_finds_single_plane_projection_when_origin_fails() {
     );
 }
 
+/// Check two lower bounds yield `(2,3,0)` with the first two active indices.
 #[test]
 fn halfspace_feasibility_finds_line_projection_for_two_active_planes() {
     let planes = vec![
@@ -86,6 +106,7 @@ fn halfspace_feasibility_finds_line_projection_for_two_active_planes() {
     assert_eq!(report.active_planes, [Some(0), Some(1), None]);
 }
 
+/// Require the rational witness `(1/2,1/3,1/5)` and all three lower-bound indices.
 #[test]
 fn halfspace_feasibility_finds_exact_rational_vertex() {
     let planes = vec![
@@ -104,6 +125,7 @@ fn halfspace_feasibility_finds_exact_rational_vertex() {
     assert_eq!(report.active_planes, [Some(0), Some(1), Some(2)]);
 }
 
+/// Check opposed slabs produce two-plane contradiction data with offset sum one and replay.
 #[test]
 fn halfspace_feasibility_rejects_inconsistent_parallel_slabs() {
     let planes = vec![plane(1, 0, 0, 1), plane(-1, 0, 0, 0)];
@@ -124,6 +146,7 @@ fn halfspace_feasibility_rejects_inconsistent_parallel_slabs() {
     );
 }
 
+/// Check `0 . x + 1 <= 0` produces a one-plane certificate with offset sum one and replay.
 #[test]
 fn halfspace_feasibility_rejects_zero_normal_positive_offset() {
     let planes = vec![plane(0, 0, 0, 1)];
@@ -144,6 +167,7 @@ fn halfspace_feasibility_rejects_zero_normal_positive_offset() {
     );
 }
 
+/// Check incompatible tetrahedral bounds yield four selected planes, offset sum one, and replay.
 #[test]
 fn halfspace_feasibility_reports_four_plane_farkas_certificate() {
     let planes = vec![
@@ -171,6 +195,12 @@ fn halfspace_feasibility_reports_four_plane_farkas_certificate() {
     );
 }
 
+/// Check constructor labels and selected status/witness shape handling.
+///
+/// An Infeasible report without a certificate validates true against the feasible
+/// halfspace `x <= 0`, exposing structural acceptance rather than geometric proof.
+/// Two inconsistent status/witness combinations validate false; the fixture does
+/// not enumerate all mutable-field shapes.
 #[test]
 fn halfspace_report_constructors_and_shape_validation_are_total() {
     let planes = [plane(1, 0, 0, 0)];
@@ -215,6 +245,12 @@ fn halfspace_report_constructors_and_shape_validation_are_total() {
     );
 }
 
+/// Check a valid constant contradiction and selected forged replay components.
+///
+/// Mutations cover negative/missing/all-zero multipliers, invalid indices, stored
+/// offset mismatch, nonzero normal sum, and nonpositive offset. These rational
+/// boolean checks do not cover approximate receipt loss or every representation
+/// of mathematically equivalent weighted sums.
 #[test]
 fn farkas_certificate_replay_rejects_each_invalid_proof_component() {
     let contradiction = [plane(0, 0, 0, 1)];

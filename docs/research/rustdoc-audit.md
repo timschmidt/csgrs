@@ -5409,6 +5409,118 @@ checked artifact metadata is in the corresponding `artifacts.jsonl`. Full
 workflow/runtime/performance checks remain waived by the owner for this docs-only
 session. Coverage here is scoped evidence; the repository-wide audit is ongoing.
 
+## Hyperlimit halfspace feasibility and Farkas replay
+
+Baseline: `9207b87e9`. Read all 1,440 lines of
+`crates/hyperlimit/src/predicates/halfspace.rs` and all 298 lines of
+`crates/hyperlimit/tests/halfspace_feasibility.rs`, including private states,
+helper arithmetic, every branch, and all fixtures. Revisited the composite
+policy wrapper and acceptance rules; supporting excerpts add no whole-file
+credit. Ownership is Hyperlimit's active-set feasibility and certificate replay.
+Relevant properties are exact construction, explicit failure, policy/receipts,
+decision order, and composable evidence (P1/P3/P6/P8–P11/P19). Inputs are finite
+3D systems `n.x+d <= 0` over Real coordinates, including constant inequalities,
+empty systems, singular plane combinations, rational data, and undecided symbolic
+expressions. Missing witnesses were private/member/test Rustdoc and unqualified
+claims that candidates/certificates and their replay were always exact.
+
+Documentation now separates the mathematical motivation from the implemented
+search. A closest-point active basis motivates origin, plane, line, and vertex
+candidates in three dimensions, but search returns the first accepted candidate,
+not necessarily a globally closest point. It visits singles, increasing-index
+pairs and triples, replaying each candidate against planes in input order. A
+violation advances search; an Unknown stops immediately, even if a later
+candidate or constraint might suffice. Empty input accepts the origin with
+Exact/Structural. Zero-normal planes remain constant inequalities. No shared
+work/memory/cancellation contract or uniform practical completion bound is
+provided by finite subset enumeration.
+
+The public classifier uses strict-first replay for APPROXIMATE_512. Strict
+completion preserves its outcome; an approximate replay's decided result is
+conservatively Approximate/Refined. Candidate construction and certificate
+helpers lose child receipts, so bare report data cannot recover the original
+qualification. Feasible membership replay joins consumed certainty/stages;
+certificate-result packaging attaches Exact/Exact and relies on the surrounding
+public policy wrapper. A completed certificate search with NotFound still yields
+Infeasible with no certificate, relying on prior active-set rejection. The
+report does not retain all rejected-candidate evidence for standalone replay.
+
+Farkas search visits constant, pair, triple and quadruple candidates in order,
+stopping at the first accepted contradiction or Unknown. Pair nomination cancels
+only the first coordinate on which both normals decide nonzero; full normal
+and cone checks occur later. Triple nomination tries YZ/XZ/XY minors, checks
+nonnegative orientation and full normal sum, but leaves offset positivity to
+acceptance. Four-normal nomination uses alternating 3x3 minors and can produce
+an all-zero vector at lower rank. Orientation scans all four signs, so a later
+Unknown overrides already observed mixed signs. Successful sign receipts are
+not retained. Dependency acceptance skips absent slots without itself requiring
+their multipliers to be zero; internal callers supply that condition, whereas
+public certificate replay checks it.
+
+Report constructors only arrange fields; `is_feasible` reads the label alone.
+Feasible validation checks the point against planes but ignores active indices
+and any attached infeasibility certificate. Infeasible without a witness and
+without a certificate returns true/Exact/Structural without inspecting planes.
+The unchanged integration fixture explicitly expects true for such a report
+against the feasible halfspace `x <= 0`. This is structural acceptance, not a
+proof of infeasibility; docs no longer imply otherwise.
+
+Direct certificate validation checks multiplier signs and selected-index bounds,
+requires zero multipliers in absent slots and a positive multiplier somewhere,
+recomputes weighted sums, compares the stored offset structurally, and then
+checks zero normal and positive offset. Repeated indices are allowed. Structural
+Real inequality can reject mathematically equal representations. Every decided
+boolean is labeled Exact/Exact while child sign receipts are dropped; the method
+has no strict-first wrapper. The source branches therefore do not justify
+interpreting that label as independent exact certification under approximation.
+The rational forged-component fixture does not cover this receipt gap. These
+are documented implementation limits, not changes to the acceptance contract.
+
+Projection helpers now specify `-d*n/(n.n)`, the 2x2 normal Gram solve, and
+homogeneous affine recovery. DivideByZero skips a candidate, including a terminal
+zero decision; other construction errors become Unsupported/Undecided. An
+unresolved homogeneous reciprocal may fall back to direct affine conversion.
+Successful reciprocal receipts are discarded and every constructed point still
+needs system membership replay. Private determinant/vector/scalar helpers,
+certainty joins, result enums, tuple payloads and Unknown fields are documented.
+
+Test docs retain the finite scope of value/branch assertions rather than claiming
+exhaustive search, cache reuse counts, or cost evidence. The nominal unit-box
+fixture actually uses side length four. Rational controls assert origin/single/
+pair/triple witnesses, selected active indices, one/two/four-plane certificates,
+replay booleans and selected malformed components. Private tests cover deep
+positive constructions, symbolic Unknown, dependency orientation and receipt
+ranks. All original fixtures and assertions are unchanged; no runtime tests were
+executed in this batch.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comments/blank lines
+  and normalizing only the four expanded tuple-field layouts gives identical
+  source to baseline. Tuple fields were expanded solely to attach field Rustdoc;
+  no signature, branch, predicate ordering, fixture, assertion, or lint changed.
+- Scoped scans found 53 documented owning-module declarations and sixteen
+  integration-test declarations. Checked 71 complete rendered module doc groups
+  across 35 pages, including nineteen named/tuple fields and twelve variants.
+- Private all-feature Hyperlimit Rustdoc passed with locked offline dependencies,
+  warnings denied, and broken/private intra-doc links denied. `cargo check
+  --locked -p hyperlimit --lib --tests --all-features --offline -j2` passed,
+  compiling affected local and integration consumers without executing them.
+- Private Rustdoc for the halfspace integration target passed using the checked
+  own-library metadata and cached dependency paths. The metadata selection
+  initially encountered both library and test-harness artifacts; selecting the
+  non-test library fixed the inspection script. All eight rendered module/helper/
+  constant blocks match current source. Its nine test functions, and owning
+  cfg(test) docs, remain source-reviewed rather than claimed as rendered pages.
+- Downstream private csgrs Rustdoc with `--no-default-features --features curve`,
+  locked offline dependencies, and broken links denied passed. Shared temporary
+  target storage remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-halfspace-{doc,check,test-private,downstream-doc}.log`.
+Full workflow/runtime/performance checks remain waived for this documentation-only
+session. Recording gaps does not repair them or establish universal geometry
+completion. The repository-wide audit remains active.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
