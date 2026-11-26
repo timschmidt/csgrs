@@ -1,3 +1,16 @@
+//! Criterion workloads for generated seeds associated with the two Hyperlimit fuzz target names.
+//!
+//! The generators are defined here; they do not replay libFuzzer corpus bytes or
+//! invoke fuzz-target invariant checks. APPROXIMATE_512 outcomes are black-boxed,
+//! so elapsed times alone do not establish certified geometric completion.
+//!
+//! Criterion 0.5 generates two harness functions below. The public benches function
+//! creates a default Criterion instance, configures it from argv, calls
+//! bench_retained_fuzz, then the shared report callback. Generated main invokes that
+//! group and a separate default Criterion instance's final_summary after argument
+//! configuration. The macros do not attach item Rustdoc to those generated functions;
+//! their behavior is described here rather than claimed as per-item doc coverage.
+
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{
     Point2, Point3, PredicatePolicy, classify_real_sign, compare_reals, incircle2, insphere3,
@@ -7,18 +20,23 @@ use hyperreal::{Rational, Real};
 use std::hint::black_box;
 use std::time::Duration;
 
+/// Shared stored-Criterion report writer, invoked after retained-case benchmark registration.
 mod benchmark_report;
+/// Shared seed timing, historical retention, promotion, and best-effort report support.
 #[path = "support/retained_fuzz.rs"]
 mod retained_fuzz;
 
+/// Crate-local report names and environment controls for retained-case selection.
 const CONFIG: retained_fuzz::Config = retained_fuzz::Config {
     crate_title: "Hyperlimit",
     bench_target: "retained_fuzz",
     skip_env: "HYPERLIMIT_SKIP_BENCHMARK_REPORTS",
     case_count_env: "HYPERLIMIT_RETAINED_FUZZ_CASES",
 };
+/// Approximation-permitting policy used by all generated predicate probes, without outcome assertions.
 const POLICY: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+/// Mix seed and lane with wrapping u64 arithmetic to obtain reproducible generator bits.
 fn mix(seed: u64, lane: u64) -> u64 {
     let mut value = seed.wrapping_add(lane.wrapping_mul(0x9e37_79b9_7f4a_7c15));
     value = (value ^ (value >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
@@ -26,6 +44,10 @@ fn mix(seed: u64, lane: u64) -> u64 {
     value ^ (value >> 31)
 }
 
+/// Construct a nonzero rational with signed numerator magnitude 1..=2001 and denominator 1..=1009.
+///
+/// Both are deterministically derived from the same mixed bits. Positive denominator
+/// and bounded conversion justify the constructor expects; no float input is used.
 fn real(seed: u64, lane: u64) -> Real {
     let bits = mix(seed, lane);
     let magnitude = i64::try_from(bits % 2_001).expect("bounded magnitude fits i64") + 1;
@@ -34,14 +56,36 @@ fn real(seed: u64, lane: u64) -> Real {
     Real::from(Rational::fraction(numerator, denominator).expect("positive denominator"))
 }
 
+/// Build two rational coordinates from adjacent lanes.
+///
+/// The caller must keep lane+1 within u64 to avoid ordinary addition overflow.
 fn point2(seed: u64, lane: u64) -> Point2 {
     Point2::new(real(seed, lane), real(seed, lane + 1))
 }
 
+/// Build three rational coordinates from adjacent lanes.
+///
+/// The caller must keep lane+2 within u64; benchmark call sites use small fixed lanes.
 fn point3(seed: u64, lane: u64) -> Point3 {
     Point3::new(real(seed, lane), real(seed, lane + 1), real(seed, lane + 2))
 }
 
+/// Construct and execute the generated workload selected by one of two manifest target names.
+///
+/// predicate_invariants runs planar/spatial orientation and in-circle/in-sphere on
+/// nonzero rational coordinates. hyperreal_representations uses pi times a rational
+/// for even seeds or sqrt(offset^2+1) for odd seeds, then tests an axis-aligned unit
+/// triangle on symbolic offsets, scalar sign, and ordering. These are benchmark
+/// generators, not decoders of the corresponding fuzz targets' corpus bytes.
+///
+/// Input construction and result destruction are part of each call. Black-boxes
+/// outcomes without asserting values, certainty, or success; names do not establish
+/// that invariants or all representations were tested.
+///
+/// # Panics
+///
+/// Panics on an unmapped target. Also expects construction of a square root with
+/// strictly positive radicand to succeed in the odd-seed representation branch.
 fn run_case(target: &str, seed: u64) {
     match target {
         "predicate_invariants" => {
@@ -81,6 +125,19 @@ fn run_case(target: &str, seed: u64) {
     }
 }
 
+/// Collect and rotate cases, then register individual and aggregate Criterion replay workloads.
+///
+/// Metadata-only invocations return before registration. Otherwise parses target
+/// names from the embedded fuzz manifest and performs initial probes/refresh before
+/// Criterion filters the registered rows. The report skip flag does not suppress
+/// initial sampling or existing-promotion re-probes. Report writes can occur during
+/// refresh before any timed Criterion iteration.
+///
+/// Both groups use sample size 10, 25 ms warm-up, and 100 ms requested measurement
+/// time. The aggregate row name replay_promoted_100 is fixed even when promotion
+/// returns fewer cases. Timed calls include generated-input construction and do not
+/// assert exact completion. Existing/historical target mismatches can panic during
+/// replay; support-module write failures are logged rather than propagated.
 fn bench_retained_fuzz(c: &mut Criterion) {
     if retained_fuzz::metadata_only_invocation() {
         return;

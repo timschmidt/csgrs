@@ -6593,6 +6593,102 @@ The initial bare-command failure is retained in the separate `bench-trace-doc.lo
 The helper review is complete; remaining benchmark workloads, retained-fuzz
 support, perf-atlas example, fuzz targets, and wider repository work remain open.
 
+## Hyperlimit retained-case benchmark and support
+
+Audited every baseline line of `crates/hyperlimit/benches/retained_fuzz.rs` (126)
+and `crates/hyperlimit/benches/support/retained_fuzz.rs` (588) at `e496c81ec`.
+Ownership is benchmark generation, timing-based selection, and persistence, not
+geometric predicates or libFuzzer execution. Relevant contracts are P5 and the
+admission protocol's evidence, resource, and same-completed-workload requirements.
+The domain includes target/seed callbacks, environment/argv, historical Markdown,
+promoted TSV, score metadata, and the compiled fuzz-target inventory. The missing
+witness was accurate documentation of every authored item and private field,
+including skipped work, malformed history, and measurement limitations.
+
+Documented all 48 support declarations and 13 fields, plus ten authored benchmark
+declarations and both module introductions. Executable source is identical after
+removing comment-only/blank lines: generators, retention, macros, output strings,
+policies, sampling parameters, and persistence behavior were not changed.
+
+The benchmark dispatches by two fuzz-target names but constructs its own bounded
+rational and symbolic fixtures. It does not decode saved fuzz bytes, invoke the
+fuzz targets, assert invariants, or check predicate certainty/success. Rational
+numerator magnitudes are 1–2001 and denominators 1–1009. The representation branch
+uses either pi times a rational or sqrt(offset squared plus one), then an
+axis-aligned unit triangle on those offsets and scalar comparisons. These are
+two constructions, not exhaustive representation coverage. Each timed call
+includes construction and destruction. Criterion registration follows initial
+collection/refresh, so row filtering does not suppress that pre-registration work.
+
+The configured default is 20,000 cases total across targets, not per target.
+Round-robin selection gives 10,000 seeds per each of the two current targets,
+and five immediate probes per case, if all calls return normally. These counts
+follow the source loops, not a measured run. Invalid/zero/non-Unicode environment
+counts fall back to the default. A smaller configured count can leave targets
+unsampled. Fresh case timing is the minimum wall-clock duration, clamped to at
+least one nanosecond; no separate warm-up, timeout, isolation, success assertion,
+or total-work/memory bound exists for collection or re-probing.
+
+History deduplicates by target/seed and retains the maximum recorded probe value,
+then truncates to 1,000 rows. Human-readable durations round through f64 and may
+lose precision; parser inputs are not checked for nonnegativity/finiteness/range.
+Promoted-file loading filters current targets but keeps duplicates and zero times.
+Rotation re-times all accepted existing rows before truncation, preserves their
+historical maxima, releases the fastest one, excludes that key from same-refresh
+additions, and backfills toward at most 100 cases. Historical candidates are not
+filtered by current target names or re-timed during selection. Stale names can
+therefore reach a later callback and panic. The fixed replay_promoted_100 row
+name does not guarantee that 100 cases were available.
+
+The report-skip variable suppresses writes and score probes, not collection or
+promotion re-probes. With writes enabled, promoted TSV and history are written
+before scoring; errors log without being returned or rolled back. A score panic
+can occur after earlier files changed. Existing promoted-path presence alone
+enables previous-score lookup, regardless of whether promoted contents parsed.
+The score is an integer arithmetic mean of fresh minima, with saturating sum;
+delta and change in delta use unchecked signed-range conversions/arithmetic.
+Despite output terminology it is not lexicase selection, deterministic wall time,
+or a time-normalized derivative. Prior metadata cannot establish comparable
+case sets, revisions, policies, or machines. A missing score closing marker
+prepends a new section while leaving the old unterminated section intact.
+
+Read the complete fuzz Cargo.toml as configuration context: it is an isolated
+cargo-fuzz workspace, declares the two callback target names, and marks both
+bins test=false/doc=false. This does not review their Rust implementations or
+exempt those targets from the documentation goal. Also inspected the locked
+Criterion 0.5.1 macro definitions at macros.rs lines 65–82 and 120–133 in the
+local dependency cache. They generate public benches and private main without
+item Rustdoc. Their behavior is now described accurately in benchmark module
+prose, but their individual rendered pages still lack attached documentation.
+This is an explicit remaining generated-item coverage gap, not a 100% coverage
+claim or an exception to the repository mandate. The macros were not rewritten
+or the dependency patched during this documentation-only batch.
+
+Validation after final edits:
+
+- Focused Rustfmt, `git diff --check`, authored-item/field scans, and exact
+  comment-stripped source comparisons passed for both files.
+- `cargo check --locked -p hyperlimit --bench retained_fuzz --offline -j2`
+  passed with `--all-features` and `--no-default-features`. No new test source
+  was added; these modules contain no authored test functions.
+- Private benchmark Rustdoc passed in both configurations with `-D warnings`,
+  broken/private intra-doc links denied, and the same checked dependency-rmeta
+  and transitive search-path method established in the previous trace batch.
+  Verified all 73 authored doc groups across 57 pages: 62 support groups,
+  including 13 fields, and 11 benchmark groups. Separately inspected generated
+  benches/main pages and confirmed the unresolved attached-item-doc gap above.
+- No benchmark, timing probe, fuzz target, test, or report writer ran. Stored
+  history, promotion, score, and Criterion output files were not refreshed.
+  Shared target storage remains about 1.6 GiB with incremental compilation off.
+  Full workflow validation remains waived by the owner this docs-only session.
+
+Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-retained-fuzz-{all,minimal}` with
+`-check.log`, `-artifacts.jsonl`, `-doc-command.json`, and `-doc.log` suffixes.
+The whole-file reading and authored documentation are complete for this batch;
+generated-item coverage and the wider repository audit remain open. Remaining
+Hyperlimit work includes predicates.rs workloads, the perf-atlas example, fuzz
+targets, and support/documentation artifacts.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
