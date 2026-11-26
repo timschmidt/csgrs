@@ -5018,6 +5018,103 @@ docs-only session. No implementation repair, runtime completeness or cost claim
 is made. The full repository audit remains active; other predicate modules,
 most tests and remaining repository files still need whole-file review.
 
+### Segment/plane construction events and validation, 26 November 2026
+
+Baseline: `966dedc0b`. Owner: Hyperlimit's segment/plane relation construction,
+retained ratio/event fields and local/source validation. Properties:
+P1/P3/P6/P8–P11/P17/P19/P30/P37. Domain: point-defined or explicit planes,
+segment endpoints, supplied plane values/side labels, exact affine parameters,
+strict Unknown and policy-terminal decisions. Missing witnesses included
+private helper/field/test docs and public descriptions calling receipt-free
+events certified. Reproduced the current projections, constructors and validation
+branches before editing; the existing forged-point fixture directly exposes
+the local/source-validation distinction.
+
+Whole-file review: `crates/hyperlimit/src/predicates/segment_plane.rs`, all 996
+baseline lines. All 36 named declarations, fourteen fields and 24 enum variants
+have explanatory Rustdoc. The previously reviewed ordering/division helper was
+revisited to verify Unknown, scalar-error and qualification handling. No other
+file receives new whole-file review credit in this batch.
+
+The point-defined entry point evaluates both endpoint orientations before
+deriving its plane and both plane values, even if a side is already Unknown
+or interpolation will not be needed. The explicit-plane entry point builds
+both values before its two comparisons. Both discard the side predicates'
+certainty/stages and unresolved hints. Events are therefore exact expressions
+plus labels, not self-contained certified constructions. Degenerate planes
+and segments are not independently rejected. Documentation no longer implies
+that the returned record establishes source validity or qualification.
+
+The values-based entry point trusts the supplied side labels and their
+association with d0/d1/endpoints. Missing labels select Unknown; On/On selects
+Coplanar; one On copies an endpoint; equal strict labels select Disjoint;
+opposite labels attempt t=d0/(d0-d1). The crossing constructor does not verify
+opposite signs, source incidence or the open-unit parameter bound. It can
+construct extrapolated points when called directly with another nonzero ratio.
+Successful division discards its receipt; DivideByZero maps to ZeroDenominator,
+including a possible terminal Zero, while Unknown and other errors collapse
+to ParameterDivisionFailed. Existing tests deliberately supply inconsistent
+side/value pairs to exercise these branches; they do not prove those inputs
+describe geometric crossings.
+
+Interpolation preserves start+t*(end-start) for arbitrary Real t. Plane
+evaluation is the unnormalized linear form, not generally signed Euclidean
+distance, and a zero normal is evaluated as a constant. Axis-parameter extraction
+tests only its one denominator; it merges errors/Unknown into None and loses
+successful certainty. Neither a unit-interval bound nor agreement with other
+coordinates is established by that scalar parameter.
+
+Local validation checks relation/field shapes and retained side labels. Endpoint
+events additionally compare t with the selected 0/1 index; proper crossings
+require decided 0<t<1 and agreement with a quotient rebuilt from retained ratio
+fields. It does not inspect point coordinates or establish the ratios as source
+plane values. Unknown comparisons/division become mismatch errors, and accepted
+approximate decisions have no returned receipt. A failure record's reason is
+required but not independently reproduced. The unchanged fixture explicitly
+replaces a proper-crossing point with (9,9,0), accepts local validation, then
+rejects source replay.
+
+Source validation first runs those checks, then uses derived field equality
+against a fresh point-defined event. This includes Real structural equality,
+not universal geometric equality, and does not bind a unique source. Matching
+Unknown/failure events may pass; replay cannot restore missing certainty or
+certify approximate history. Enum/error docs now distinguish stored label
+patterns, missing fields, unresolved scalar checks and actual replay mismatch.
+The private field-bundle constructors only organize data; they do not add proofs.
+
+Test docs state the finite assertions: successful relation/side controls,
+midpoint ratio replay, selected forged-field failures, a proved tiny positive
+denominator, unresolved tiny symbolic divisions, and rational/symbolic axis
+parameters. Historical test names remain unchanged, without claiming all
+inconsistencies are caught or all decided relation classes occur in one fixture.
+All original fixtures, assertions and expressions are preserved.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment lines
+  gives byte-identical source to baseline; signatures, fields, branches,
+  predicate order, fixtures and assertions are unchanged.
+- A scoped scan checked 36 documented names. Inspected 65 rendered doc groups
+  across nineteen private module pages, including fourteen fields/24 variants,
+  and eight selected construction/receipt/validation contracts. Test-only docs
+  were source-reviewed rather than claimed as rendered by library Rustdoc.
+- The first private Rustdoc attempt rejected three unformatted `[0,1]` literals
+  as unresolved links. Changed them to inline code. Final `cargo rustdoc --locked
+  -p hyperlimit --lib --all-features --offline -j2 -- --document-private-items
+  -D rustdoc::broken_intra_doc_links -D rustdoc::private_intra_doc_links` passed
+  without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed, compiling affected fixtures/consumers without executing them.
+- Downstream private csgrs Rustdoc with locked offline dependencies,
+  `--no-default-features --features curve` and broken intra-doc links denied
+  passed. Shared target storage remains approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-segment-plane-{doc,check,downstream-doc}.log`.
+Full workflow/runtime/performance checks remain waived for this docs-only
+session. Documenting the receipt and validation gaps does not repair them or
+establish completed geometric support. The repository-wide audit remains
+active, with remaining predicate modules, tests and other files still to review.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
