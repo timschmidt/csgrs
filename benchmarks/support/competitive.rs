@@ -1,7 +1,14 @@
-//! Shared competitive correctness corpus and engine adapters.
+//! Shared finite comparison corpus, projected measurements and engine adapters.
+//!
+//! Raw coordinates are binary64. CSGRS ingress preserves those exact binary values,
+//! while output projection, subdivision and quantized vertex keys are benchmark
+//! approximations. Tolerant volume/area/bounds and welded edge checks are smoke
+//! evidence, not exact set equivalence or source-fidelity certificates. Convex
+//! preparation can replace only the CSGRS operand with a rebuilt hull.
 
 use std::{collections::BTreeMap, num::NonZeroU32};
 
+/// Opt-in hashed acquisition and retained files for the external control mesh.
 mod yeahright;
 
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
@@ -18,25 +25,39 @@ use manifold_rust::{
 };
 use three_d_asset::{Indices, Positions, TriMesh};
 
+/// Relative comparison factor with unit scale floor, also used as an absolute doubled-area cutoff.
 const TOLERANCE: f64 = 1.0e-8;
+/// Scale 10^9 for rounded coordinate keys used by benchmark welding and edge summaries.
 const KEY_SCALE: f64 = 1.0e9;
+/// Strict native policy used to attempt convex-input certification.
 const MESH_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
+/// Barycentric subdivisions per triangle edge for the large box fixture.
 pub const LARGE_SUBDIVISIONS: usize = 16;
+/// Expected 3,072 faces per subdivided twelve-triangle box.
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
+/// Barycentric subdivisions per edge of the projected control hull.
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
+/// Pinned raw vertex count of the verified external control OBJ.
 pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
+/// Pinned triangle count after fan triangulation of the external control OBJ.
 pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
 
+/// The three regularized Boolean operations compared by the finite corpus.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Operation {
+    /// Material belonging to either operand.
     Union,
+    /// Material common to both operands.
     Intersection,
+    /// Left material with right material removed.
     Difference,
 }
 
 impl Operation {
+    /// Fixed union/intersection/difference order used by expectation arrays.
     pub const ALL: [Self; 3] = [Self::Union, Self::Intersection, Self::Difference];
 
+    /// Stable lowercase label for benchmark rows and failure diagnostics.
     pub const fn name(self) -> &'static str {
         match self {
             Self::Union => "union",
@@ -46,52 +67,83 @@ impl Operation {
     }
 }
 
+/// Binary64 positions and triangle indices exchanged by the benchmark adapters.
 #[derive(Clone, Debug)]
 pub struct RawMesh {
+    /// Stored coordinate rows; no validation or native provenance is retained.
     pub positions: Vec<[f64; 3]>,
+    /// Oriented triples indexing positions; validity is checked only by consumers.
     pub triangles: Vec<[usize; 3]>,
 }
 
+/// Binary64 axis-aligned extrema used by tolerant corpus comparisons.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Bounds {
+    /// Per-axis lower extrema.
     pub min: [f64; 3],
+    /// Per-axis upper extrema.
     pub max: [f64; 3],
 }
 
+/// Two raw operands with hand-derived floating expectations for three Booleans.
 #[derive(Clone, Debug)]
 pub struct Case {
+    /// Stable workload label.
     pub name: &'static str,
+    /// First raw operand.
     pub left: RawMesh,
+    /// Second raw operand, subtracted from the first for difference.
     pub right: RawMesh,
+    /// Expected volumes in Operation::ALL order; fractional values are binary64.
     pub volumes: [f64; 3],
+    /// Expected bounds in Operation::ALL order; None denotes an empty result.
     pub bounds: [Option<Bounds>; 3],
 }
 
+/// Named raw operand pair without independent per-operation expected measures.
 #[derive(Clone, Debug)]
 pub struct MeshPair {
+    /// Benchmark workload label.
     pub name: &'static str,
+    /// First raw operand.
     pub left: RawMesh,
+    /// Second raw operand.
     pub right: RawMesh,
 }
 
+/// Projected and quantized diagnostic summary, not an exact geometry certificate.
 #[derive(Clone, Debug)]
 pub struct Summary {
+    /// Distinct quantized position keys, or raw position count when triangles are empty.
     pub vertices: usize,
+    /// Stored triangle row count.
     pub triangles: usize,
+    /// Absolute value of the binary64 signed tetrahedral volume sum.
     pub volume: f64,
+    /// Binary64 sum of triangle areas, retaining multiplicity.
     pub area: f64,
+    /// Extrema of all positions when triangles exist; otherwise None.
     pub bounds: Option<Bounds>,
+    /// Every quantized edge has two opposite uses; empty triangles pass vacuously.
     pub closed: bool,
+    /// All stored coordinate components are finite, including unused rows.
     pub finite: bool,
+    /// Each triangle doubled-area exceeds TOLERANCE; empty triangles pass vacuously.
     pub nondegenerate: bool,
 }
 
+/// Engine-native operand pairs prepared before Boolean timing.
 pub struct Prepared {
+    /// Exact binary-coordinate meshes, possibly rebuilt/subdivided as convex hulls.
     pub csgrs: [TriangleMesh; 2],
+    /// Boolmesh imports of the original raw operands.
     pub boolmesh: [BoolmeshManifold; 2],
+    /// Manifold-rust imports of the original raw operands.
     pub manifold: [ManifoldRs; 2],
 }
 
+/// Builds four small cases: overlapping/disjoint/nested boxes and overlapping tetrahedra.
+/// Expected volumes and bounds are hand-derived but stored/compared as binary64.
 pub fn corpus() -> Vec<Case> {
     vec![
         Case {
@@ -141,6 +193,8 @@ pub fn corpus() -> Vec<Case> {
     ]
 }
 
+/// Subdivides the overlapping-box case to 3,072 faces per operand, retaining its expectations.
+/// Counts are asserted; subdivision uses floating interpolation and quantized welding.
 pub fn large_boolean_case() -> Case {
     let mut case = corpus()
         .into_iter()
@@ -154,6 +208,10 @@ pub fn large_boolean_case() -> Case {
     case
 }
 
+/// Builds an optional projected/subdivided control hull against a fixed half-space-sized box.
+/// Acquires the opt-in control, builds a native hull, projects it to binary64 and
+/// subdivides twice per edge. Does not use the original nonconvex control surface
+/// as the Boolean operand or supply an independent result-volume oracle.
 pub fn yeahright_boolean_case() -> MeshPair {
     let control = yeahright_control_mesh();
     let base = raw_from_csgrs(
@@ -168,10 +226,13 @@ pub fn yeahright_boolean_case() -> MeshPair {
     }
 }
 
+/// Delegates to the external fixture's runtime opt-in flag without downloading it.
 pub fn yeahright_enabled() -> bool {
     yeahright::enabled()
 }
 
+/// Acquires/parses the optional control OBJ and asserts its pinned vertex/triangle counts.
+/// Parsing is the benchmark's binary64/fan path, not native exact OBJ import.
 pub fn yeahright_control_mesh() -> RawMesh {
     let mesh = parse_triangle_obj(&yeahright::control_mesh_source());
     assert_eq!(mesh.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
@@ -179,10 +240,14 @@ pub fn yeahright_control_mesh() -> RawMesh {
     mesh
 }
 
+/// Prepares both case operands for all three engines through the shared adapters.
 pub fn prepare(case: &Case) -> Prepared {
     prepare_meshes(&case.left, &case.right)
 }
 
+/// Imports two raw meshes, attempting convex certification/reconstruction only for CSGRS.
+/// Other engines receive the original raw geometry; this is not an unconditional
+/// guarantee that all three prepared operand sets are identical.
 pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> Prepared {
     Prepared {
         csgrs: [to_convex_csgrs(left), to_convex_csgrs(right)],
@@ -191,6 +256,7 @@ pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> Prepared {
     }
 }
 
+/// Prepares the optional hull/box pair with CSGRS convex repair and direct competitor imports.
 pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
     let exact_hull = to_convex_csgrs(&case.left);
     Prepared {
@@ -200,15 +266,21 @@ pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
     }
 }
 
+/// Returns the exact binary import when strict convex certification succeeds; otherwise rebuilds.
+///
+/// On any certification error, computes a convex hull of all points. If that hull
+/// has fewer faces than the raw input, applies one native subdivision level.
+/// This can change geometry/triangulation and is not general invalid-input repair
+/// or a guarantee of matching the original face count. Construction failure panics.
 fn to_convex_csgrs(mesh: &RawMesh) -> TriangleMesh {
     let direct = to_csgrs(mesh);
     if certify_convex_mesh(&MESH_CONTEXT, direct.as_ref()).is_ok() {
         return direct;
     }
 
-    // YeahRight is distributed as a decimal serialization of a CGAL convex
-    // hull. Rebuild the exact hull after parsing and restore its benchmark
-    // subdivision so csgrs still receives the full 4,512-face workload.
+    // A projected hull may fail exact convexity after decimal/binary ingress.
+    // Rebuild from those points and apply one subdivision level when face count
+    // drops. This branch does not assert an exact target face count.
     let hull = solid::convex_hull(&direct).expect("fixture point cloud spans 3D");
     if hull.triangles.len() < mesh.triangles.len() {
         solid::subdivide(&hull, NonZeroU32::new(1).expect("one is nonzero"))
@@ -218,6 +290,8 @@ fn to_convex_csgrs(mesh: &RawMesh) -> TriangleMesh {
     }
 }
 
+/// Runs the strict convenience Boolean and projects its output to binary64 raw rows.
+/// Operation errors panic; local receipts and construction evidence are not returned.
 pub fn run_csgrs(inputs: &[TriangleMesh; 2], operation: Operation) -> RawMesh {
     let output = match operation {
         Operation::Union => inputs[0].try_union(&inputs[1]),
@@ -228,6 +302,9 @@ pub fn run_csgrs(inputs: &[TriangleMesh; 2], operation: Operation) -> RawMesh {
     raw_from_csgrs(&output)
 }
 
+/// Runs Boolmesh and copies its binary64 output rows.
+/// The exact error string `empty pos matrix` maps to empty buffers; every other
+/// error panics. This adapter convention is not an independent proof of emptiness.
 pub fn run_boolmesh(inputs: &[BoolmeshManifold; 2], operation: Operation) -> RawMesh {
     let op = match operation {
         Operation::Union => BoolmeshOp::Add,
@@ -258,6 +335,7 @@ pub fn run_boolmesh(inputs: &[BoolmeshManifold; 2], operation: Operation) -> Raw
     }
 }
 
+/// Runs the selected Manifold-rust Boolean, requires NoError, and copies its output mesh.
 pub fn run_manifold(inputs: &[ManifoldRs; 2], operation: Operation) -> RawMesh {
     let output = match operation {
         Operation::Union => inputs[0].union(&inputs[1]),
@@ -268,6 +346,13 @@ pub fn run_manifold(inputs: &[ManifoldRs; 2], operation: Operation) -> RawMesh {
     raw_from_manifold(&output)
 }
 
+/// Computes floating measures and quantized-edge diagnostics for raw output.
+///
+/// Valid indices are asserted. Coordinate keys round at 10^-9; closure counts
+/// opposite edge uses after that welding. Nondegeneracy uses an absolute doubled-
+/// area threshold. Bounds and finite checks include unused positions. Empty
+/// triangles report zero measures/no bounds and vacuous closure/nondegeneracy,
+/// even if positions remain. Neither arbitrary set equality nor embedding follows.
 pub fn summarize(mesh: &RawMesh) -> Summary {
     if mesh.triangles.is_empty() {
         return Summary {
@@ -331,6 +416,9 @@ pub fn summarize(mesh: &RawMesh) -> Summary {
     }
 }
 
+/// Checks finite coordinates, tolerant measures/bounds and quantized closure for one case.
+/// Uses the operation's floating expectations and requires positive finite area
+/// for nonempty triangles. These are benchmark diagnostics, not exact conformance.
 pub fn assert_output(engine: &str, case: &Case, operation: Operation, summary: &Summary) {
     let index = operation_index(operation);
     assert!(summary.finite, "{engine} produced non-finite coordinates");
@@ -355,6 +443,9 @@ pub fn assert_output(engine: &str, case: &Case, operation: Operation, summary: &
     );
 }
 
+/// Imports quantized-welded rows into tri-mesh and requires validity and closure.
+/// Returns its vertex/face counts; empty triangles return `(0,0)` immediately.
+/// Validation concerns the welded model rather than the original exact surface.
 pub fn validate_with_tri_mesh(mesh: &RawMesh, context: &str) -> (usize, usize) {
     if mesh.triangles.is_empty() {
         return (0, 0);
@@ -370,6 +461,9 @@ pub fn validate_with_tri_mesh(mesh: &RawMesh, context: &str) -> (usize, usize) {
     (half_edge.no_vertices(), half_edge.no_faces())
 }
 
+/// Imports finite binary64 coordinates exactly and copies triangle indices.
+/// Panics on nonfinite coordinates but does not validate topology or recover any
+/// prior source/operation evidence. Exactness is relative to these binary values.
 pub fn to_csgrs(mesh: &RawMesh) -> TriangleMesh {
     TriangleMesh::new(
         mesh.positions
@@ -383,6 +477,7 @@ pub fn to_csgrs(mesh: &RawMesh) -> TriangleMesh {
     )
 }
 
+/// Flattens raw coordinates and indices for Boolmesh import; rejected input panics.
 pub fn to_boolmesh(mesh: &RawMesh) -> BoolmeshManifold {
     BoolmeshManifold::new(
         &mesh.positions.iter().flatten().copied().collect::<Vec<_>>(),
@@ -391,6 +486,7 @@ pub fn to_boolmesh(mesh: &RawMesh) -> BoolmeshManifold {
     .expect("fixture is valid boolmesh input")
 }
 
+/// Imports XYZ-only MeshGL64 rows and requires Manifold-rust NoError status.
 pub fn to_manifold(mesh: &RawMesh) -> ManifoldRs {
     let output = ManifoldRs::from_mesh_gl64(&MeshGL64 {
         num_prop: 3,
@@ -407,6 +503,10 @@ pub fn to_manifold(mesh: &RawMesh) -> ManifoldRs {
     output
 }
 
+/// Welds positions by rounded 10^-9 keys, retaining the first coordinate for each key.
+/// Remaps indices to u32 for the half-edge consumer. Requires valid raw indices
+/// and a vertex count fitting u32; the cast has no separate overflow check.
+/// Distinct nearby coordinates may merge, so this changes the validation model.
 pub fn to_three_d_asset(mesh: &RawMesh) -> TriMesh {
     let mut canonical = BTreeMap::<[i64; 3], u32>::new();
     let mut positions = Vec::new();
@@ -435,6 +535,9 @@ pub fn to_three_d_asset(mesh: &RawMesh) -> TriMesh {
     }
 }
 
+/// Projects every native coordinate to binary64 and copies triangle rows.
+/// Projection failure panics; native scalar identity, receipts and provenance
+/// are absent from the returned raw mesh.
 fn raw_from_csgrs(mesh: &TriangleMesh) -> RawMesh {
     RawMesh {
         positions: mesh
@@ -456,6 +559,9 @@ fn raw_from_csgrs(mesh: &TriangleMesh) -> RawMesh {
     }
 }
 
+/// Copies the first three properties per MeshGL64 vertex and complete index triples.
+/// Assumes a valid engine mesh with stride at least three and indices fitting
+/// usize; incomplete property/index tails are ignored by chunk iteration.
 fn raw_from_manifold(manifold: &ManifoldRs) -> RawMesh {
     let mesh = manifold.get_mesh_gl64(-1);
     let stride = mesh.num_prop as usize;
@@ -475,6 +581,8 @@ fn raw_from_manifold(manifold: &ManifoldRs) -> RawMesh {
     }
 }
 
+/// Creates a fixed outward twelve-triangle box for finite ordered bounds.
+/// Does not validate bounds order or nonzero extents.
 fn box_mesh(min: [f64; 3], max: [f64; 3]) -> RawMesh {
     RawMesh {
         positions: vec![
@@ -504,6 +612,8 @@ fn box_mesh(min: [f64; 3], max: [f64; 3]) -> RawMesh {
     }
 }
 
+/// Creates an outward four-face axis tetrahedron from a finite origin and positive size.
+/// Arithmetic is binary64 and those fixture preconditions are not checked.
 fn tetrahedron([x, y, z]: [f64; 3], size: f64) -> RawMesh {
     RawMesh {
         positions: vec![
@@ -516,6 +626,10 @@ fn tetrahedron([x, y, z]: [f64; 3], size: f64) -> RawMesh {
     }
 }
 
+/// Splits each triangle into divisions² barycentric triangles with quantized vertex sharing.
+/// Requires positive divisions and valid indices; arithmetic/count growth is
+/// unchecked. Floating interpolation and 10^-9-key welding need not preserve an
+/// arbitrary exact input surface, despite preserving these intended benchmark shapes.
 fn subdivide(mesh: &RawMesh, divisions: usize) -> RawMesh {
     assert!(divisions > 0);
     let mut positions = Vec::<[f64; 3]>::new();
@@ -563,6 +677,12 @@ fn subdivide(mesh: &RawMesh, divisions: usize) -> RawMesh {
     }
 }
 
+/// Parses the control fixture's OBJ positions as binary64 and fan-triangulates faces.
+///
+/// Accepts only positive one-based position indices, ignoring slash suffixes and
+/// other record types. Extra vertex fields are ignored; faces need at least three
+/// corners. Final indices are range-checked, but coordinate finiteness, polygon
+/// planarity/convexity and topology are not checked here. Parse failures panic.
 fn parse_triangle_obj(source: &str) -> RawMesh {
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
@@ -628,6 +748,7 @@ fn parse_triangle_obj(source: &str) -> RawMesh {
     }
 }
 
+/// Maps union/intersection/difference to the corresponding expectation-array slot.
 fn operation_index(operation: Operation) -> usize {
     match operation {
         Operation::Union => 0,
@@ -636,10 +757,14 @@ fn operation_index(operation: Operation) -> usize {
     }
 }
 
+/// Wraps supplied extrema in Some without validating them.
 fn bounds_of(min: [f64; 3], max: [f64; 3]) -> Option<Bounds> {
     Some(Bounds { min, max })
 }
 
+/// Reduces all binary64 positions into per-axis extrema.
+/// Empty input leaves infinity sentinels; callers normally supply nonempty rows.
+/// This reduction does not independently reject NaN or infinity.
 fn mesh_bounds(positions: &[[f64; 3]]) -> Bounds {
     let mut min = [f64::INFINITY; 3];
     let mut max = [f64::NEG_INFINITY; 3];
@@ -652,6 +777,7 @@ fn mesh_bounds(positions: &[[f64; 3]]) -> Bounds {
     Bounds { min, max }
 }
 
+/// Requires matching optional-bound presence and tolerant equality of six extrema.
 fn assert_bounds(actual: Option<Bounds>, expected: Option<Bounds>, context: &str) {
     match (actual, expected) {
         (None, None) => {},
@@ -665,6 +791,9 @@ fn assert_bounds(actual: Option<Bounds>, expected: Option<Bounds>, context: &str
     }
 }
 
+/// Checks absolute error against `10^-8 * max(1, |actual|, |expected|)`.
+/// Intended for finite benchmark values; does not independently reject every
+/// nonfinite case or certify rounding error. Failure includes the context label.
 pub fn assert_close(actual: f64, expected: f64, context: &str) {
     let scale = actual.abs().max(expected.abs()).max(1.0);
     assert!(
@@ -673,22 +802,29 @@ pub fn assert_close(actual: f64, expected: f64, context: &str) {
     );
 }
 
+/// Imports the exact binary value of a finite fixture float, panicking otherwise.
 fn real(value: f64) -> Real {
     Real::try_from(value).expect("fixture coordinate is finite")
 }
 
+/// Requests a lossy binary64 projection, panicking if unavailable.
 fn approximate(value: &Real) -> f64 {
     value.to_f64_lossy().expect("result is finite")
 }
 
+/// Rounds a coordinate scaled by 10^9 into an i64 diagnostic key.
+/// The float cast saturates out-of-range values and maps NaN to zero; finite,
+/// moderate coordinates are assumed. Keys are not exact point identities.
 fn quantize(value: f64) -> i64 {
     (value * KEY_SCALE).round() as i64
 }
 
+/// Subtracts binary64 vector components for projected measurement arithmetic.
 fn subtract(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
     [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
 }
 
+/// Computes a binary64 cross product for projected area/volume measurements.
 fn cross(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
     [
         left[1] * right[2] - left[2] * right[1],
@@ -697,6 +833,7 @@ fn cross(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
     ]
 }
 
+/// Computes a binary64 dot product for projected area/volume measurements.
 fn dot(left: [f64; 3], right: [f64; 3]) -> f64 {
     left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
 }

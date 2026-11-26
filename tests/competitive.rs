@@ -1,3 +1,10 @@
+//! Finite cross-engine smoke checks on shared binary64 box/tetrahedron fixtures.
+//!
+//! Tolerant measures, quantized edge checks and a welded half-edge import are
+//! separate diagnostics; they do not certify exact set equality or preservation
+//! of arbitrary native source geometry.
+
+/// Corpus construction, engine adapters and projected diagnostic helpers.
 #[path = "../benchmarks/support/competitive.rs"]
 #[allow(dead_code)]
 mod support;
@@ -9,6 +16,9 @@ use support::{
     validate_with_tri_mesh,
 };
 
+/// Checks three engines on four fixtures using tolerant volumes, bounds and areas.
+/// Also checks two volume identities per engine and compares surface area with
+/// the CSGRS row. Shared floating/quantized diagnostics are not an exact oracle.
 #[test]
 fn public_csgrs_booleans_match_boolmesh_and_manifold_on_shared_corpus() {
     for case in corpus() {
@@ -58,6 +68,9 @@ fn public_csgrs_booleans_match_boolmesh_and_manifold_on_shared_corpus() {
     }
 }
 
+/// Validates projected CSGRS outputs after quantized welding into tri-mesh.
+/// Requires closure/validity plus vertex and face counts matching the projected
+/// summary. This checks the welded half-edge model, not native-source fidelity.
 #[test]
 fn public_csgrs_outputs_round_trip_through_tri_mesh_topology() {
     for case in corpus() {
@@ -86,6 +99,8 @@ fn public_csgrs_outputs_round_trip_through_tri_mesh_topology() {
     }
 }
 
+/// Checks native and Boolmesh input validity plus Manifold-rust's tolerant input volume.
+/// Does not directly compare every prepared engine's coordinates or volume.
 #[test]
 fn competitor_inputs_preserve_public_csgrs_volume_and_manifoldness() {
     for case in corpus() {
@@ -118,6 +133,9 @@ fn competitor_inputs_preserve_public_csgrs_volume_and_manifoldness() {
     }
 }
 
+/// Checks the large fixture's 3,072 faces per operand and prepared input validity.
+/// Raw closure/nondegeneracy use projected diagnostics; no large Boolean result
+/// or performance measurement is executed by this test.
 #[test]
 fn large_boolean_benchmark_inputs_are_closed_and_keep_the_intended_scale() {
     let case = large_boolean_case();
@@ -140,6 +158,7 @@ fn large_boolean_benchmark_inputs_are_closed_and_keep_the_intended_scale() {
     );
 }
 
+/// Maps the fixed operation order into local volume and surface-area arrays.
 fn operation_index(operation: Operation) -> usize {
     match operation {
         Operation::Union => 0,

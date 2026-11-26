@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/competitive.rs` | Entire file; documented tolerant three-engine comparison, quantized half-edge validation and input-only large-fixture gate. | Focused compilation/private docs passed; tests unchanged and unrun. |
+| `benchmarks/support/competitive.rs` | Entire file; documented all adapters, records, fields, variants, projected measures, hull fallback and tolerance limits. | Test and benchmark consumers compile; private descriptions/fields render; no measurements executed. |
+| `benchmarks/support/yeahright.rs` | Entire file; documented opt-in parsing, pinned archive/control checks, existence-only derived hull reuse and staging lifecycle. | Both benchmark consumers compile; private docs passed; no download/cache mutation executed. |
+| `benchmarks/rust/competitive.rs` | Entire file; documented timed boundaries, setup/filter behavior, count measurements and optional acquisition. | Focused compilation/private docs passed with explicit dev-dependency metadata; benchmark not run. |
 | `tests/generated_benchmark_corpus.rs` | Entire file; documented import/byte-stability checks, same-process scope and retained generated files. | Focused compilation/private docs passed with OBJ enabled; no fixture generation executed. |
 | `benchmarks/support/generated_corpus.rs` | Entire file; documented voxel domains, foam contact filling, deterministic boundary order, local face constant and file lifecycle. | Test and benchmark consumers compile; private docs passed; no serialized assets generated. |
 | `tests/enclosure_workflows.rs` | Entire file; documented wall/base and cut helpers, dyadic/collapsed/split offsets, OBJ continuation, exact measures and sampled round-plan limits. | Focused compilation/private docs passed with OBJ enabled; all assertions unchanged and unrun. |
@@ -3224,6 +3228,66 @@ Validation after final edits:
 Logs: `/tmp/csgrs-rustdoc-generated-corpus-check.log`,
 `/tmp/csgrs-rustdoc-generated-corpus-private.log` and
 `/tmp/csgrs-rustdoc-generated-corpus-bench.log`.
+
+### Competitive adapters, acquisition and timing consumers, 26 November 2026
+
+Baseline: `ce429f009`. Owners: benchmark comparison adapters, root acceptance
+consumer, optional fixture acquisition and timing registration, P1/P6/P8/P19/P25/
+P26/P29/P35/P37. Domain: four binary64 box/tetrahedron cases, 3,072-face subdivided
+boxes, optional control-hull/full-control workloads, projected output and tolerant
+summaries. Read all four files completely (149/702/210/362 baseline lines). Kernel
+comparison call sites and shared harness contracts were consulted; this does not
+add whole-file kernel-comparison review credit.
+
+Missing witnesses were undocumented declarations/records and hidden comparison
+qualifications. Native import preserves the binary coordinate value, while output
+projection, floating subdivision and 10^-9 keys are approximation boundaries.
+Quantized closure/half-edge validation concern that adopted welded model. Floating
+volume/area/bounds, vertex counts and a shared kernel are not exact universal set
+oracles. Summary empty handling and unchecked finite-range assumptions are explicit.
+The generic tolerance helper does not independently exclude every nonfinite case.
+
+Documented the CSGRS-only convex fallback: any convex-certification failure can
+trigger hull reconstruction and conditional subdivision; no fixed reconstructed
+face count is asserted. This is a potential operand-comparability limitation,
+not proof of a newly observed wrong benchmark. Boolmesh's exact-string empty-error
+mapping is an adapter convention, not independent emptiness evidence. Operation
+receipts and native source evidence do not survive the raw projected output.
+All these existing implementations are unchanged.
+
+Acquisition documentation separates archive/control hash checks from existence-only
+reuse of a derived hull, and states opt-in values, runtime paths, curl/unzip/hash
+commands, staging, failures and retained files. No network request or acquisition
+command was executed. Benchmark setup remains outside Boolean timing; adapter
+output materialization is inside. Count-based checksum fields do not certify
+geometry, and filters do not suppress every setup step.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline across all four files, including tolerances,
+  operation order, fallback/error branches, external commands and assertions.
+- All 77 declarations/members, 23 record fields and three enum variants have
+  Rustdoc. Inspected 69 test-configuration HTML pages and matched 95 descriptions;
+  four test definitions remain source-reviewed. Separately inspected the benchmark
+  root, two modules and two function pages, matching its four declaration summaries
+  and module overview. Shared private field/variant descriptions render.
+- `cargo check --locked -p csgrs --no-default-features --features curve,obj-io
+  --test competitive --offline -j 2` passed. Downstream checks with features
+  `attributed,curve,obj-io,stl-io`, `--bench competitive --bench kernel_comparison`
+  and the same locked/offline/jobs options passed without warnings.
+- Private Rustdoc for the test and benchmark passed with broken links denied.
+  The first benchmark invocation lacked Cargo-supplied dev-dependency externs;
+  retrying with the already checked boolmesh/manifold-rust/three-d-asset/tri-mesh
+  metadata supplied explicitly passed. No manifest or implementation edit was needed.
+- Runtime comparisons, benchmarks, acquisition and full workflows were not run
+  under the docs-only waiver. Reused the temporary target without incremental
+  compilation; no archive, hull, model or renderer outputs were generated.
+
+Logs: `/tmp/csgrs-rustdoc-competitive-check.log`,
+`/tmp/csgrs-rustdoc-competitive-private.log`,
+`/tmp/csgrs-rustdoc-competitive-benches.log` and
+`/tmp/csgrs-rustdoc-competitive-bench-private.log`.
 
 ## Next work
 

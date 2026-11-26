@@ -1,7 +1,16 @@
+//! Timed engine comparisons over small, subdivided and optional external inputs.
+//!
+//! Preparation is outside Boolean timing, while output conversion/materialization
+//! is inside each engine adapter call. Count-based measurements are not geometric
+//! checksums; correctness diagnostics live in the separate competitive test.
+//! Optional YeahRight setup may download/cache assets when its flag is enabled.
+
+/// Shared environment-controlled timing and measurement reporting.
 #[path = "../support/harness.rs"]
 #[allow(dead_code)]
 mod support;
 
+/// Raw corpus, engine adapters, projected diagnostics and optional external setup.
 #[path = "../support/competitive.rs"]
 #[allow(dead_code)]
 mod competitive_support;
@@ -15,6 +24,8 @@ use competitive_support::{
 };
 use support::{Config, Measurement, print_header};
 
+/// Records input faces, output triangles and raw position count for a timed Boolean.
+/// The checksum slot carries a count, so agreement does not establish geometry.
 fn measurement(output: &competitive_support::RawMesh, input_faces: usize) -> Measurement {
     Measurement::new(
         input_faces as u64,
@@ -23,6 +34,13 @@ fn measurement(output: &competitive_support::RawMesh, input_faces: usize) -> Mea
     )
 }
 
+/// Registers/times Boolean, import and topology workloads with the shared harness.
+///
+/// Prepares the three Boolean engines before timing; imports are separate rows
+/// for those engines and tri-mesh. The optional external hull and full control
+/// use different workloads. Final topology timing validates the quantized CSGRS
+/// box-union output. Harness filters affect timing, but setup still occurs as
+/// execution reaches each block. Panics on fixture, engine or validation failure.
 fn main() {
     print_header();
     let config = Config::from_env();
