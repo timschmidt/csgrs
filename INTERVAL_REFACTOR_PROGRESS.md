@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters, with division and transcendental maps over certified ranges (25 November) | further automatic frame strategies (making backoff the default awaits owner review), tighter high-order remainders for generated outer models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters, with division and transcendental maps over certified ranges and interval Taylor-mode remainder recurrences (25 November) | further automatic frame strategies (making backoff the default awaits owner review), a fixed 1–3 µs recurrence overhead on tiny polynomial models (tracked), wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -16193,4 +16193,76 @@ than the plain interval quotient.
 
 Raw evidence is in this entry; the probes ran as a temporary test that was
 then removed.
+
+## 2026-11-25: interval Taylor-mode remainder recurrences
+
+`taylor_model` now bounds every degree-(n+1) normalized partial over the
+domain box with interval Taylor-mode recurrences (Moore's method) in
+`taylor/model/recurrence.rs`. Each reached source node becomes a dense
+truncated series in X + h; coefficients use only lower degrees, so repeated
+symbolic differentiation and its expression swell no longer enter the bound.
+
+- Add, subtract, negate and multiply act on series; division uses the quotient
+  recurrence.
+- Integer powers compose certified power images,
+  sum_m binom(k, m) u_0^(k-m) (u - u_0)^m. A quotient recurrence on the wide
+  cube made (1+x)^-3 about 60 to 80000 times wider.
+- Square root uses the self-convolution recurrence. Sine and cosine are paired.
+  The logarithm, base-ten logarithm and inverse functions integrate dw = h du
+  along the first differentiated axis, with h built from the same series
+  arithmetic.
+- Degree zero is always the primitive's own certified image, which also
+  enforces its domain guard.
+
+When a recurrence meets a domain boundary or zero divisor (in practice, very
+coarse grids), natural evaluation of the generated partials is the bound,
+exactly as before. Resource exhaustion is still reported.
+
+**Widths.** Full tables are in the evidence archive
+`docs/evidence/2026-11-25-interval-taylor-recurrence` (csgrs-evidence
+ee1352e9b), together with the Criterion outputs, mutation log and diff. Highlights, natural to
+recurrence, on [-1/4, 1/4]:
+
+| Case | Natural | Recurrence |
+| --- | --- | --- |
+| 1/(1+x), order 6 remainder | 2.1e26 | 1.2e-3 |
+| ln(2+x), order 6 remainder | 26 | 3.5e-7 |
+| x/(2+y)+sin(xy), order 6 remainder | 4.1e22 | 4.7e-6 |
+| 1/(1+x), order 8 | fails (ContainsZero) | 1.4e-4 |
+| join + apply u/v, order 6 range | 1.07 | 2.4e-3 |
+| join + apply u/v on [-1/16,1/16], order 7 | 0.25 | 1.2e-9 |
+
+Computing both bounds and intersecting gave the same widths as the recurrence
+alone on every probe row, so only the recurrence is computed.
+
+**Benchmarks.** CPU 0, ASLR off, Criterion against a saved baseline of main
+46d7368f4:
+- fresh `taylor_combination` builds: -29.7% and -33.7%;
+- `taylor_composition` re-differentiation: -15.1% and -16.9%;
+- outer preparation: -4.7% and -17.1%;
+- `reciprocal_square` re-differentiation: -12.6%;
+- noise cold and warm: -0.6% to -8.0%;
+- tiny polynomial builds: `centered_logistic` +4.6%, `algebraic_product`
+  +8.3%, `algebraic_sqrt` inner preparation +8.2%, `full_affine` +3.0% and
+  +4.5% (1–3 µs each).
+
+Reuse paths, whose code is unchanged, moved -1.2% to +1.8%. The small-model
+overhead is a tracked candidate. Skipping exact zero coefficients in products
+already cut it from +9.9% to +8.3% on `algebraic_product`.
+
+**Tests.** New `program_taylor_recurrence` suite:
+- every primitive at order 6, with remainder thresholds within a factor of two
+  of the attained enclosure;
+- at nine sample points, each remainder term's exact normalized partial (the
+  coefficient program evaluated at the point) lies in its bound, and the point
+  enclosure meets the source value;
+- bivariate quotient/sine and logarithm models, monotone in order;
+- the natural fallback on a quarter grid.
+
+The combination test now asserts the quotient on [-1/4, 1/4] at order 6
+(< 1/256) and on [-1/16, 1/16] at order 7 (< 2^-28). Fourteen distinct hand mutations of
+the recurrences were all detected (sign, weight, axis, binomial, divisor,
+scale, radicand, convolution and pairing mutants). Removing the redundant
+degree-zero override survived as an equivalent mutant, so the override was
+deleted.
 

@@ -348,22 +348,36 @@ impl ExpressionProgram {
             ));
         }
         let exact = program.program().eval_real(&center, graph)?;
-        let bounds =
-            program
-                .program()
-                .eval_dyadic(&request.domain, request.precision, graph, arithmetic)?;
+        // Without variables the order is irrelevant and may be usize::MAX.
+        let last = if variables.is_empty() {
+            0
+        } else {
+            request
+                .order
+                .checked_add(1)
+                .ok_or(TaylorError::DegreeOverflow)?
+        };
+        // Interval Taylor-mode recurrences avoid the expression swell of
+        // repeatedly differentiated partial formulas. Natural evaluation of
+        // those formulas remains the bound when a recurrence is unavailable.
+        let partials =
+            match recurrence::bounds(self, &variables, &request, last, graph, arithmetic)? {
+                Some(recurrence) => Partials::Recurrence(recurrence),
+                None => Partials::Natural(program.program().eval_dyadic(
+                    &request.domain,
+                    request.precision,
+                    graph,
+                    arithmetic,
+                )?),
+            };
         let shifts = shifts(&request.domain, &request.center, graph, arithmetic)?;
         graph.check_entries(&[requests.len(), powers, outputs])?;
         graph.charge(outputs)?;
         let mut remainder = vec![zero()?; outputs];
         let mut terms = Vec::new();
         let mut remainder_terms = Vec::new();
-        for (index, ((coefficient, bound), degree)) in exact
-            .into_iter()
-            .skip(outputs)
-            .zip(bounds.into_iter().skip(outputs))
-            .zip(degrees)
-            .enumerate()
+        for (index, (coefficient, degree)) in
+            exact.into_iter().skip(outputs).zip(degrees).enumerate()
         {
             graph.charge(1)?;
             if degree <= request.order {
@@ -373,6 +387,10 @@ impl ExpressionProgram {
                 });
             } else {
                 let spec = &requests[index];
+                let bound = match &partials {
+                    Partials::Recurrence(recurrence) => recurrence.coefficient(spec).clone(),
+                    Partials::Natural(bounds) => bounds[outputs + index].clone(),
+                };
                 let (monomial, contribution) = contribution(
                     spec,
                     &bound,
@@ -408,6 +426,12 @@ impl ExpressionProgram {
         graph.charge(0)?;
         Ok(model)
     }
+}
+// Enclosures of the degree-(n+1) normalized partials on the whole domain.
+enum Partials {
+    Recurrence(recurrence::Bounds),
+    // Natural evaluation of every coefficient-program output, originals first.
+    Natural(Vec<DyadicInterval>),
 }
 fn zero() -> Result<DyadicInterval, hyperinterval::IntervalError> {
     DyadicInterval::point(0.into(), 0)
@@ -596,6 +620,8 @@ fn generate(
     }
     Ok(())
 }
+
+mod recurrence;
 
 #[cfg(feature = "taylor-affine")]
 mod affine;

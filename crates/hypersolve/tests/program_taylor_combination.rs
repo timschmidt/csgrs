@@ -450,31 +450,43 @@ fn reciprocal_and_division_apply_certified_models_over_the_current_range() {
         let got = quotient.enclose_on(&[x], &mut g(), &mut a()).unwrap();
         assert!(rational_in(&got.bounds()[0], n, m), "{got:?}");
     }
-    // (1+x)/(1+x) from two sources and centers stays near 1 on [-1/16, 1/16],
-    // where the quotient of the independent ranges does not. Outer remainders
-    // come from interval bounds on generated partials, so they grow with order
-    // over wide ranges; order 3 is the best of orders 1-5 here (width 0.0031).
-    let near = || vec![d(-1, 1, -4)];
-    let left = model(&[s(7) + Expr::int(1)], &[7], vec![d(0, 0, 0)], near(), 3);
-    let right = model(
-        &[s(7) + Expr::int(1)],
-        &[7],
-        vec![d(1, 1, -5)],
-        vec![d(-1, 1, -3)],
-        3,
-    );
-    let unit = left
-        .clone()
-        .join(right, &mut g(), &mut a())
-        .unwrap()
-        .apply(&map(&[s(30) / s(31)], &[30, 31]), 3, &mut g(), &mut a())
-        .unwrap();
-    assert!(rational_in(&unit.range()[0], 1, 1));
-    assert!(width_below(&unit.range()[0], 1, 256), "{:?}", unit.range());
-    let naive = left.image()[0]
-        .div(&left.image()[0], -64, &mut a())
-        .unwrap();
-    assert!(!width_below(&naive, 1, 8));
+    // (1+x)/(1+x) from two sources and centers stays near 1, where the
+    // quotient of the independent ranges does not. Interval Taylor-mode
+    // remainders keep higher outer orders useful on the wider domain too
+    // (natural bounds on generated partials gave 1.07 there at every order).
+    for (exponent, order, denominator) in [(-4, 7, 1_i64 << 28), (-2, 6, 256)] {
+        let domain = || vec![d(-1, 1, exponent)];
+        let left = model(
+            &[s(7) + Expr::int(1)],
+            &[7],
+            vec![d(0, 0, 0)],
+            domain(),
+            order,
+        );
+        let right = model(
+            &[s(7) + Expr::int(1)],
+            &[7],
+            vec![d(1, 1, -5)],
+            vec![d(-1, 1, -1)],
+            order,
+        );
+        let unit = left
+            .clone()
+            .join(right, &mut g(), &mut a())
+            .unwrap()
+            .apply(&map(&[s(30) / s(31)], &[30, 31]), order, &mut g(), &mut a())
+            .unwrap();
+        assert!(rational_in(&unit.range()[0], 1, 1));
+        assert!(
+            width_below(&unit.range()[0], 1, denominator),
+            "{:?}",
+            unit.range()
+        );
+        let naive = left.image()[0]
+            .div(&left.image()[0], -64, &mut a())
+            .unwrap();
+        assert!(!width_below(&naive, 1, 8));
+    }
     // A reciprocal over a range containing zero has no certified outer model.
     assert!(matches!(
         model(&[s(7)], &[7], vec![d(0, 0, 0)], domain(), 1).apply(

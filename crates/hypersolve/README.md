@@ -103,6 +103,15 @@ evidence through `enclose_regular`; no serialized proof flag is accepted.
 `taylor_model`. Supply an exact singleton dyadic center, a finite box, total
 polynomial degree and enclosure grid. The model retains exact `Real` coefficients,
 source regularity and every degree-(n+1) contribution to a certified remainder.
+Each degree-(n+1) partial is bounded over the box by interval Taylor-mode
+recurrences: every node becomes a truncated series whose coefficients come only
+from lower degrees, so repeated symbolic differentiation and its expression swell
+do not enter the bound. Integer powers compose certified power images instead of
+dividing by a wide base. When a recurrence would meet a domain boundary or a zero
+divisor, for example on a very coarse grid, natural evaluation of the generated
+partials is the bound instead. For `1/(1+x)` on [-1/4, 1/4] at order 6 the
+remainder width falls from about 2e26 to 1.2e-3, and partials of `x/(2+y)` that
+natural evaluation could not bound at all are now enclosed.
 Its image includes that remainder and intersects an independent natural source
 enclosure. Subdomain reuse retains the original global remainder and grid;
 replay regenerates evidence from the source and request. This requires the
@@ -728,12 +737,10 @@ model themselves: a certified Taylor model of an exact outer program over the
 current certified range, centered at its exact dyadic midpoint, at a requested
 order, then composed as above. Division, roots and the other source primitives
 thus become model maps, for example `1/u` or, after a join, `u/v`. Regularity
-failures, such as a reciprocal over a range containing zero, are returned. The
-outer remainder bounds interval-evaluated generated partials over the whole
-range, so it grows with order on wide ranges; low outer orders suit wide
-ranges. On [-1/16, 1/16], `(1+x)/(1+x)` from two differently centered models
-encloses to width 0.0031 at outer order 3, against 0.25 for the quotient of
-their ranges.
+failures, such as a reciprocal over a range containing zero, are returned.
+`(1+x)/(1+x)` from two differently centered models encloses to width 1.2e-9 on
+[-1/16, 1/16] at outer order 7 and 2.4e-3 on [-1/4, 1/4] at order 6, against
+0.25 and 1.07 for the quotient of their ranges.
 
 Enable `taylor-combination` to combine independently built models over shared
 parameters. `Arc<TaylorModel>::join` and `TaylorPolynomialModel::join` append

@@ -224,6 +224,22 @@ pub(crate) fn positive_power(
             .regrid(precision, budget)?,
     ))
 }
+/// Image of one unary primitive over a whole interval, with the same domain
+/// and guard contract as [`ExpressionProgram::eval_dyadic`]; `None` when the
+/// operand is not certified to lie inside the primitive's domain.
+#[cfg(feature = "taylor-model")]
+pub(crate) fn unary_image(
+    operation: UnaryOperation,
+    value: DyadicInterval,
+    precision: i32,
+    budget: &mut DyadicBudget,
+) -> Result<Option<DyadicInterval>, IntervalError> {
+    match (DyadicArithmetic { precision, budget }).unary(operation, value) {
+        Ok(value) => Ok(Some(value)),
+        Err(DyadicFailure::DomainNotCertified) => Ok(None),
+        Err(DyadicFailure::Native(error)) => Err(error),
+    }
+}
 fn complete<T>(image: RangeEnclosure<T>) -> Result<T, DyadicFailure> {
     if image.domain == DomainCoverage::Complete {
         Ok(image.range)

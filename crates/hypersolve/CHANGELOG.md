@@ -2,6 +2,19 @@
 
 ## [0.4.0] - Unreleased
 
+- `taylor-model` bounds each degree-(n+1) remainder partial with interval
+  Taylor-mode recurrences over the domain box instead of natural evaluation of
+  repeatedly differentiated partials. Integer powers compose certified power
+  images. Natural evaluation remains the fallback when a recurrence meets a
+  domain boundary or zero divisor. Remainders are much tighter at higher orders
+  (`1/(1+x)` on [-1/4, 1/4] at order 6: about 2e26 to 1.2e-3), some models that
+  previously failed with a zero-containing generated partial now build, and
+  `apply`/`join` quotients improve over wide ranges.
+  Model construction in the Taylor benchmarks is 4.7–34% faster where it
+  builds transcendental or rational models (fresh builds of sine/cosine models
+  about 30% faster); builds of tiny polynomial models of 16–45 µs gain a fixed
+  1–3 µs (+3% to +8%).
+
 - `taylor-composition` adds `Arc<TaylorModel>::apply` and
   `TaylorPolynomialModel::apply`, which build a certified outer model of an
   exact program over the current certified range, centered at its midpoint,
