@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 # Exercise the generated WASM ABI and TypeScript declarations with real clients.
+# Run from any directory; paths below are resolved after changing to the repository.
+# Requires Python 3 with tomllib, Cargo's wasm32 target, Node, wasm-bindgen-cli
+# matching Cargo.lock and the pinned test TypeScript dependency already installed.
+# WASM_BINDGEN and TSC override executable paths; this script installs no tools.
+# Cargo metadata selects the target directory, honoring Cargo configuration such
+# as CARGO_TARGET_DIR. Generated bindings and copied/compiled consumers live there.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+# Select tools without changing their versions; the bindgen CLI must match its Rust crate.
 bindgen_bin="${WASM_BINDGEN:-wasm-bindgen}"
 tsc_bin="${TSC:-tests/wasm/node_modules/.bin/tsc}"
 locked_version="$(python3 - <<'PY'
@@ -17,6 +24,7 @@ if [[ "$("${bindgen_bin}" --version)" != "wasm-bindgen ${locked_version}" ]]; th
     exit 1
 fi
 
+# Build the actual wasm profile and generate Node glue, rather than substituting a native loader.
 wasm_target_dir="$(cargo metadata --locked --no-deps --format-version 1 |
     python3 -c 'import json, sys; print(json.load(sys.stdin)["target_directory"])')"
 wasm_bindings_dir="${wasm_target_dir}/wasm-bindings-node"
@@ -29,6 +37,7 @@ node tests/wasm/export_projection.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/io_contracts.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/mesh_errors.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/containment_winding.cjs "${wasm_bindings_dir}/csgrs.js"
+# This consumer is type-checked only; the CJS witness above supplies runtime coverage.
 cp tests/wasm/geometry_certainty.ts "${wasm_bindings_dir}/geometry_certainty.ts"
 "${tsc_bin}" --noEmit --strict --target ES2020 --lib ES2020,DOM,ESNext.Disposable \
     --module Node16 --moduleResolution Node16 \

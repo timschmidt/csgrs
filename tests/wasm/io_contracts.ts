@@ -1,11 +1,15 @@
 // Compile and execute beside the actual generated csgrs.js and csgrs.d.ts.
+// Covers discriminated format-error fields, owned outcomes and selected native
+// STL continuation. The twelve-triangle count alone does not certify the intended set.
 import { MeshJs, GeometryCertaintyJs, GeometryMeshResultJs } from "./csgrs";
 import type { GeometryIoError, GeometryValidationError } from "./csgrs";
 
+/** Require exhaustive discriminant handling at compile time and reject unexpected runtime variants. */
 function unreachable(value: never): never {
   throw new Error(`Unexpected IO variant: ${value}`);
 }
 
+/** Read each variant's declared fields after narrowing by code, including optional OS codes and causes. */
 function describe(error: GeometryIoError): string {
   const format: string = error.format;
   switch (error.code) {
@@ -50,10 +54,13 @@ function describe(error: GeometryIoError): string {
   }
 }
 
+/** Fail a witness and narrow its condition for subsequent typed field access. */
 function ensure(value: boolean, message: string): asserts value {
   if (!value) throw new Error(message);
 }
 
+/** Capture documented format-entry failures, checking host identity before using the declared IO union. */
+// The cast relies on the called boundary's contract; it is not a full runtime schema validator.
 function caughtIo(operation: () => unknown): GeometryIoError {
   let value: unknown;
   try { value = operation(); }
@@ -70,10 +77,12 @@ function caughtIo(operation: () => unknown): GeometryIoError {
 }
 
 const owned: Array<{ free(): void }> = [];
+/** Register a native handle while preserving its concrete TypeScript type. */
 function keep<T extends { free(): void }>(value: T): T {
   owned.push(value);
   return value;
 }
+/** Consume a registered mesh outcome and transfer cleanup responsibility to its returned mesh. */
 function takeMesh(result: GeometryMeshResultJs): MeshJs {
   const index = owned.indexOf(result);
   ensure(index >= 0, "owned result required");

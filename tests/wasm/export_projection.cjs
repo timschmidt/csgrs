@@ -1,10 +1,15 @@
 // Exercise actual wasm-bindgen output. No mocked loader or native substitute.
+// Independent decimal-rational checks cover finite output spellings. Native
+// continuation is checked separately through selected coordinates, axis-plane
+// incidence, oriented volume and a successful empty Boolean result.
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { MeshJs, GeometryCertaintyJs } = require(path.resolve(process.argv[2]));
 const owned = [];
+/** Register a native handle for final cleanup; unregister before consuming it. */
 const keep = (value) => { owned.push(value); return value; };
 
+/** Transfer an owned outcome into an owned mesh without double-freeing the consumed handle. */
 function takeMesh(result) {
   const slot = owned.indexOf(result);
   assert.notEqual(slot, -1);
@@ -13,6 +18,8 @@ function takeMesh(result) {
   return keep(result.intoMesh());
 }
 
+/** Parse a finite decimal into BigInt integers and require exact cross-product equality with a ratio. */
+// The fixture bounds decimal exponents to 2000; the oracle never compares rounded Number parses.
 function exactDecimal(text, numerator, denominator) {
   const match = /^(-?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/.exec(text);
   assert.ok(match, `finite decimal required: ${text}`);
@@ -26,6 +33,7 @@ function exactDecimal(text, numerator, denominator) {
   assert.equal(n * denominator, numerator * d);
 }
 
+/** Extract ASCII STL vertex fields as text, leaving decimal interpretation to independent checks. */
 function vertices(text) {
   return text.split("\n").map((line) => line.trim())
     .filter((line) => line.startsWith("vertex "))

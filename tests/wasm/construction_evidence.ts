@@ -1,6 +1,10 @@
 // The runner compiles and executes this beside the generated declarations.
+// Distinguishes operation-local certainty from retained dependency flags, plain
+// STL reimport and an immutable bound artifact. No analytic fidelity bound is tested.
 import { MeshJs, CurveRegionJs, GeometryCertaintyJs, ConstructionEvidenceJs } from './csgrs';
+/** Fail a fixture condition; this helper does not narrow TypeScript types. */
 function check(condition: boolean): void { if (!condition) throw new Error('construction evidence assertion failed'); }
+/** Require available certified predicate history, without asserting topology or source fidelity. */
 function known(mesh: MeshJs): void {
   const evidence: ConstructionEvidenceJs = mesh.constructionEvidence;
   check(!evidence.sourceHistoryMissing);

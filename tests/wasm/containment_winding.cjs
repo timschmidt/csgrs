@@ -1,8 +1,13 @@
+// Generated-binding containment witnesses for regularized nonzero winding.
+// Integer box planes and half-grid query points permit an independent local
+// cell oracle; this finite fixture argument is not a general sampled-solid test.
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
 const { MeshJs, Point3Js, GeometryCertaintyJs, GeometryQueryStatusJs } = require(path.resolve(process.argv[2]));
 
+/** Build signed box shells from a native unit-cube triangle template, preserving separate source rows. */
+// All fixture bounds are integers; negative signs reverse winding, not coordinate orientation.
 function source(boxes) {
   const unit = MeshJs.cube(1);
   let template;
@@ -19,6 +24,11 @@ function source(boxes) {
   }
   return MeshJs.fromArrays(Float64Array.from(positions),Uint32Array.from(indices));
 }
+/** Require nonzero signed box coverage in every adjacent octant at a doubled-coordinate query. */
+// Samples are query +/- 1/8 on each axis, encoded as integer eighths. For these
+// integer box boundaries and half-grid queries, no other plane lies between the
+// query and a sample. All eight incident full-dimensional cells must be material
+// for strict interior; a cancelled or exterior cell makes the point non-interior.
 function expectedInterior(boxes,twice) {
   for (const dx of [-1,1]) for (const dy of [-1,1]) for (const dz of [-1,1]) {
     const sample=twice.map((v,i)=>4*v+[dx,dy,dz][i]);
@@ -27,6 +37,8 @@ function expectedInterior(boxes,twice) {
   }
   return true;
 }
+// Preserve the original nested, coincident, overlapping, reversed, cavity and
+// tangent-ray fixtures beside their independently selected half-grid probes.
 const cases=[
   ['nested material',[[[0,0,0],[3,3,3],1],[[1,1,1],[2,2,2],1]],[[3,3,3],[2,3,3],[2,2,3],[2,2,2],[0,3,3]]],
   ['coincident cancellation',[[[0,0,0],[2,2,2],1],[[0,0,0],[2,2,2],-1]],[[1,1,1],[0,1,1],[0,0,0]]],

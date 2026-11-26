@@ -1,26 +1,34 @@
 // Real generated bindings; independent geometry and exception contracts.
+// Distinguishes local validation of binary32 imports from their finite source
+// values, and checks ordinary host diagnostics after native handle disposal.
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const path = require("node:path");
 const { MeshJs, GeometryCertaintyJs } = require(path.resolve(process.argv[2]));
 const encoder = new TextEncoder();
 
+/** Run a synchronous test with cleanup of registered handles, including assertion/exception paths. */
 function scoped(name, operation) {
   test(name, () => {
     const owned = [];
+    /** Register a handle for reverse-order cleanup. */
     const keep = (value) => { owned.push(value); return value; };
+    /** Require and remove one registration before its handle is consumed or freed. */
     const remove = (value) => {
       const slot = owned.indexOf(value);
       assert.notEqual(slot, -1);
       owned.splice(slot, 1);
     };
+    /** Consume a registered result and register its returned mesh. */
     const takeMesh = (result) => { remove(result); return keep(result.intoMesh()); };
+    /** Explicitly free one registered handle without leaving a stale cleanup entry. */
     const release = (value) => { remove(value); value.free(); };
     try { operation({ keep, takeMesh, release }); }
     finally { for (const value of owned.reverse()) value.free(); }
   });
 }
 
+/** Require a thrown failure and no returned geometry; free an unexpected successful native handle. */
 function capture(operation) {
   let value;
   try { value = operation(); }
@@ -29,6 +37,7 @@ function capture(operation) {
   assert.fail("failed operation returned an apparently successful value");
 }
 
+/** Require the invalid_input modeling category and nonempty diagnostic on a host Error. */
 function geometryError(error) {
   assert.ok(error instanceof Error);
   assert.equal(error.name, "GeometryError");
@@ -36,6 +45,7 @@ function geometryError(error) {
   assert.ok(error.message.length > 0);
 }
 
+/** Require an STL-tagged host IO Error with the expected discriminant and no native free method. */
 function ioError(error, code) {
   assert.ok(error instanceof Error);
   assert.equal(error.name, "GeometryIoError");
@@ -45,10 +55,14 @@ function ioError(error, code) {
   assert.equal(typeof error.free, "undefined");
 }
 
+/** Admit one raw indexed triangle without requiring closed-solid topology. */
 function triangle(points) {
   return MeshJs.fromArrays(Float64Array.from(points.flat()), Uint32Array.from([0, 1, 2]));
 }
 
+/** Check exact finite corner values, outward axis faces, geometric edge pairing and normalized six-volume. */
+// Mapping the known side values to 0/1 keeps this fixture's combinatorial and
+// volume arithmetic integral; it does not independently certify arbitrary mesh embedding.
 function assertCube(mesh, side) {
   assert.ok(side > 0 && Number.isFinite(side));
   const arrays = mesh.toArrays();

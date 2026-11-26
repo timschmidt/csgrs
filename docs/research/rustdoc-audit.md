@@ -1992,10 +1992,69 @@ temporary build directory was reused. All root `src/wasm/*.rs` files now have
 recorded whole-file reviews; remaining JS consumers and lower-layer binding
 implementations are still in scope. No new performance claim is made.
 
+### Remaining WASM consumer corpus and runner, 26 November 2026
+
+Baseline: `5f720a75b`. Owners: generated-binding acceptance witnesses and their
+test harness, P6/P9/P19/P20/P26/P28/P30/P37. Domain: binary32/decimal STL
+boundaries, retained construction summaries, raw buffer rejection, host error
+lifetime and strict interior of regularized nonzero-winding box fixtures.
+Read every file listed below in full. Supporting reads of already audited STL
+artifact methods and the workflow's WASM job do not add whole-file workflow
+or kernel credit.
+
+Missing witnesses: private test helpers and runner tool/ownership assumptions
+lacked explanatory documentation. Added JSDoc/comments describing actual
+assertions and limits without changing test behavior. This is non-Rust source
+coverage; it does not contribute to a Rust item-coverage percentage.
+
+| File | Review and change | Validation scope |
+| --- | --- | --- |
+| `tests/wasm/construction_evidence.ts` | Entire file; documented the predicate-history helper and distinction among local receipts, missing history, projected artifacts and analytic fidelity. Reviewed all extraction, mutation-of-copy, reimport and continuation checks. | Comment-only comparison passed; generated TypeScript/runtime execution not rerun. |
+| `tests/wasm/export_projection.cjs` | Entire file; documented owned-handle transfer, exact BigInt decimal oracle, textual row extraction and finite geometry witnesses. Reviewed immutable copies, collapse/collinearity rejection, cache churn and tiny-cube continuation. | Comment-only comparison passed; Node execution remains unavailable in PATH. |
+| `tests/wasm/containment_winding.cjs` | Entire file; documented signed-shell construction and the independent eight-cell nonzero-winding oracle for integer box planes and half-grid queries. Reviewed all cancellation, cavity, overlap, tangent and nearby-boundary witnesses. | Comment-only comparison passed; Node execution not rerun. |
+| `tests/wasm/io_contracts.cjs` | Entire file; documented scoped ownership, capture/error helpers, raw-triangle fixture and normalized cube oracle. Reviewed every format/payload/lifetime/empty/retry witness. | Comment-only comparison passed; Node execution not rerun. |
+| `tests/wasm/io_contracts.ts` | Entire file; documented exhaustive discriminant handling, assertion narrowing, contract-based error cast and consuming handle transfer. | Comment-only comparison passed; generated TypeScript/runtime execution not rerun. |
+| `tests/wasm/package.json` | Entire file; private test package pins only TypeScript 5.7.3; no scripts or publishing behavior. No edit needed. | JSON parsed; package identity/version/dependency pin matches lockfile. |
+| `tests/wasm/package-lock.json` | Entire file; reviewed root package, single dev dependency, registry/integrity record, executable mappings, license and Node engine metadata. No edit needed. | JSON parsed and pinned version agrees with manifest; no registry download/integrity verification or dependency upgrade claimed. |
+| `scripts/test-wasm-bindings.sh` | Entire file; documented prerequisites/overrides, repo-relative paths, Cargo target-directory selection, generated Node artifact and the type-check-only consumer. Reviewed all build, CJS, TS compile and emitted-JS execution commands. | `bash -n` and comment-only comparison passed; full runner not executed. |
+
+The winding oracle's finite offsets are appropriate to this fixture domain:
+queries lie on the half grid and all box planes have integer coordinates, so
+query-plus/minus-one-eighth samples inspect every incident octant without
+crossing an unrelated plane. This explains the independent expected membership;
+it is not a generic sampled test for arbitrary solid boundaries. Cube checks
+separately require finite corner values, outward axis faces, edge pairing and
+integer normalized volume. Neither volume nor selected membership alone is
+described as a universal geometry proof.
+
+The runner changes directory before interpreting relative tool paths, requires
+the bindgen CLI version from Cargo.lock, uses Cargo metadata for build storage,
+and generates the actual Node binding. It runs five CJS consumers, only
+type-checks `geometry_certainty.ts`, and compiles/executes the other three TS
+consumers. Documentation now makes that distinction visible. No command,
+assertion, fixture, package version or workflow configuration was modified.
+
+Validation after final edits:
+
+- `bash -n scripts/test-wasm-bindings.sh` and `git diff --check`: passed.
+- Comment-only comparisons against baseline passed for all six edited consumer/
+  runner files, including the embedded Python and all shell commands unchanged.
+- Parsed both package JSON files and verified matching names, versions and the
+  exact TypeScript 5.7.3 pin. The workflow's bindgen CLI version matches the
+  locked Rust crate version 0.2.126. This is local consistency evidence only.
+- Node/TypeScript/generated-WASM runtime checks remain unexecuted; Node was
+  already confirmed absent from PATH in the preceding batch. Full workflow
+  checks remain waived for this docs-only session. No Rust source changed, so
+  the preceding private Rustdoc build was not repeated for this comment batch.
+
+All eleven tracked files directly in `tests/wasm/` now have recorded full-file
+reviews across the two batches. The shell runner has its own full-file record;
+the rest of the workflow and repository remain in scope. No build trees or
+generated artifacts were added, and no new runtime or performance result is claimed.
+
 ## Next work
 
-Continue with remaining downstream JS witnesses, then the remaining parts and
-owning crates. Maintain review records with
+Continue with the remaining parts modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation
