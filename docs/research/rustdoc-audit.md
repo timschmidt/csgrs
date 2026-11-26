@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/stl_import_contracts.rs` | Entire file; documented independent encoders, binary32 scale/row expectations, winding integrals, typed topology errors and continuation. | Focused compilation/private docs passed; assertions and encoded fixtures unchanged, not run. |
+| `tests/sampled_sphere_strict.rs` | Entire file; documented private ball fields/helpers, finite oracle limits, exact local receipts, projected checks and timing scope. | Focused compilation/private docs passed; test thresholds and ignored workload unchanged, not run. |
 | `tests/curve_metaball_failures.rs` | Entire file; documented result traits, validation categories, sampled diamond/ring witnesses and Boolean/extrusion continuation. | Focused compilation/private docs passed; assertions and source/grid fixtures unchanged, not run. |
 | `tests/curve_metaball_workloads.rs` | Entire file; documented original renderer/benchmark inputs, loop-role, area and membership assertions. | Focused compilation/private docs passed; workload execution/timing not performed. |
 | `tests/metaball_failures.rs` | Entire file; documented result traits, singular influence, normalized-field coordinates, bordered diagnostics and recovery. | Focused compilation/private docs passed; assertions unchanged, not run. |
@@ -2924,6 +2926,55 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-implicit-tests-check.log` and
 `/tmp/csgrs-rustdoc-implicit-tests-private.log`.
+
+### STL imported-model and sampled-sphere witnesses, 26 November 2026
+
+Baseline: `b08c2a34e`. Owners: root interchange and sampled-geometry acceptance
+consumers, P1/P3/P4/P6/P8/P9/P17–P19/P22/P25/P26/P29/P30/P37. Domain: independently
+encoded ASCII/binary STL across finite binary32 scales and malformed topology,
+sampled rational-angle spheres, strict Boolean/hull composition and finite
+expectation probes. Read both files in full, including the ignored hull test and
+all timing/query bodies. Supporting reads of STL parsing/validation and sphere
+construction do not add whole-file owner credit.
+
+Missing witnesses were undocumented private declarations/fields and descriptions
+stronger than the implemented checks. STL rows compare promoted scalar values;
+mixed signed zero does not assert bitwise identity. Independent encoders bypass
+the production exporter, and winding integrals retain multiplicity rather than
+proving arbitrary regularized-set volume. Parsed geometry validation is distinct
+from fidelity to an earlier exact source. The cube helper's support-plane/volume
+and native edge checks do not independently inspect every outward face normal.
+
+Corrected the sphere module's overbroad oracle narrative. Its `Ball` helper uses
+binary64 distances, an assumed `0.8 * radius` inner ball and `1e-9` margins. The
+implementation contains neither a certified inradius check nor a floating-error
+enclosure for those comparisons. Finite probe agreement therefore must not be
+reported as an exact universal set oracle. This records an evidence limitation;
+it does not modify the fixture or claim an observed wrong answer. Cube helper
+`None` also covers points on support planes outside finite faces. Hull face-side
+cross-checks use unnormalized projected normals. Timing messages and historical
+ignore-reason costs remain diagnostics, not fresh performance evidence.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline. All 37 declarations/members are documented,
+  with the two private ball fields checked separately. No threshold, input, test
+  assertion, ignore annotation or executable ordering changed.
+- `cargo check --locked -p csgrs --no-default-features --features curve,stl-io
+  --test stl_import_contracts --test sampled_sphere_strict --offline -j 2` passed
+  without warnings. The extra curve feature reuses existing checked metadata.
+- Private Rustdoc for both targets passed with broken links denied, using checked
+  own-library metadata and dependency paths. Inspected all 24 top-level pages,
+  both module descriptions, 23 rendered declaration/member descriptions and two
+  private fields. Test functions remain source-reviewed rather than credited as
+  standalone rendered API pages.
+- STL parsing/geometry execution, the ignored hull workload, timing measurements
+  and full workflows were not run under the docs-only waiver. The temporary target
+  was reused with incremental compilation disabled; no STL/model files were emitted.
+
+Logs: `/tmp/csgrs-rustdoc-stl-sphere-check.log` and
+`/tmp/csgrs-rustdoc-stl-sphere-private.log`.
 
 ## Next work
 

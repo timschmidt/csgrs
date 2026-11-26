@@ -1,3 +1,7 @@
+//! Independent ASCII/binary STL fixtures exercise exact promotion of parsed binary32 coordinates.
+//! Row preservation, signed winding integrals, closed-PWN admission and downstream empty reuse
+//! concern the imported model; they do not certify fidelity to a pre-serialization source.
+
 #![cfg(feature = "stl-io")]
 
 use csgrs::{
@@ -9,8 +13,11 @@ use csgrs::{
 use hypermesh::{HypermeshError, MeshCertainty, Triangle};
 use std::{error::Error, sync::Arc};
 
+/// Three ordered binary32 XYZ corners of one encoded STL triangle.
 type Face = [[f32; 3]; 3];
 
+/// Generates twelve outward cube faces using binary32 origin/side arithmetic and a fixed winding.
+/// Fixture callers supply representable corners; this helper does not validate overflow or side sign.
 fn cube_faces(origin: [f32; 3], side: f32) -> Vec<Face> {
     let corners = [
         [0_u8, 0, 0],
@@ -41,8 +48,9 @@ fn cube_faces(origin: [f32; 3], side: f32) -> Vec<Face> {
     .to_vec()
 }
 
-// Independent format fixtures bypass exporters that reject malformed faces or
-// currently round small text coordinates. Numeric expectations are binary32.
+/// Independently encodes faces with zero file normals, including intentionally malformed geometry.
+/// ASCII uses scientific binary32 formatting; binary uses an 80-byte zero header, little-endian
+/// count/coordinates and zero attribute words. Does not call the production exporters or validate topology.
 fn encode(faces: &[Face], ascii: bool) -> Vec<u8> {
     if ascii {
         let mut text = String::from("solid contract\n");
@@ -68,6 +76,8 @@ fn encode(faces: &[Face], ascii: bool) -> Vec<u8> {
     bytes
 }
 
+/// Requires face count/order and every corner value to equal the exact imported binary32 expectation.
+/// Vertex indexing may be shared or reordered; comparison follows the stored face references.
 fn assert_rows(mesh: &TriangleMesh, expected: &[Face]) {
     assert_eq!(mesh.triangles.len(), expected.len());
     for (triangle, face) in mesh.triangles.iter().zip(expected) {
@@ -80,6 +90,8 @@ fn assert_rows(mesh: &TriangleMesh, expected: &[Face]) {
     }
 }
 
+/// Requires certified closed-PWN validation across strict/approximate/strict passes on the same mesh.
+/// This is a local topology receipt, not a source-fidelity certificate.
 fn assert_certified(mesh: &TriangleMesh) {
     for context in [
         GeometryContext::STRICT,
@@ -95,6 +107,8 @@ fn assert_certified(mesh: &TriangleMesh) {
     }
 }
 
+/// Checks the exact sum of oriented scalar triple products against an independent expectation.
+/// The integral counts winding multiplicity and orientation rather than general regularized-set volume.
 fn assert_winding_integral(mesh: &TriangleMesh, six_volume: Real) {
     let actual = mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
         let [a, b, c] = triangle.indices().map(|i| mesh.positions[i].to_vector());
@@ -103,6 +117,8 @@ fn assert_winding_integral(mesh: &TriangleMesh, six_volume: Real) {
     assert_eq!(actual, six_volume);
 }
 
+/// Checks certified PWN, geometric edge pairing, cube corner/support-plane incidence and signed volume.
+/// The fixture is anchored at zero with positive side; no independent per-face normal test is performed.
 fn assert_cube(mesh: &TriangleMesh, side: &Real) {
     assert_certified(mesh);
     assert!(
@@ -126,6 +142,8 @@ fn assert_cube(mesh: &TriangleMesh, side: &Real) {
     assert_winding_integral(mesh, Real::from(6) * side * side * side);
 }
 
+/// Imports six scales from the least positive subnormal through binary32 maximum in one encoding.
+/// Preserves exact rows and cube invariants, then consumes empty identities/self-removal and restores a unit cube.
 fn scales_compose(ascii: bool) {
     for side in [
         f32::from_bits(1),
@@ -149,15 +167,19 @@ fn scales_compose(ascii: bool) {
 }
 
 #[test]
+/// Runs the six-scale exact-import and downstream-composition matrix through binary STL.
 fn binary_scales_reimport_and_compose() {
     scales_compose(false);
 }
 
 #[test]
+/// Runs the same scale matrix through independently formatted ASCII STL parsed as binary32.
 fn ascii_scales_reimport_and_compose() {
     scales_compose(true);
 }
 
+/// Requires the STL construction label, invalid-input category and exact native topology error chain.
+/// Downcasts both modeling and mesh causes instead of relying only on diagnostic text.
 fn assert_invalid(faces: &[Face], ascii: bool, expected: HypermeshError) {
     let error = stl::from_stl(&encode(faces, ascii)).unwrap_err();
     let IoError::Construction { format, source } = &error else {
@@ -174,6 +196,8 @@ fn assert_invalid(faces: &[Face], ascii: bool, expected: HypermeshError) {
     );
 }
 
+/// Checks missing, reversed and duplicated cube faces plus a collinear triangle in the selected encoding.
+/// Expected open-edge, unbalanced-edge and indexed degeneracy diagnostics are independently specified.
 fn malformed_topology(ascii: bool) {
     let cube = cube_faces([0.0; 3], 1.0);
     let mut open = cube.clone();
@@ -211,16 +235,19 @@ fn malformed_topology(ascii: bool) {
 }
 
 #[test]
+/// Runs the malformed-topology and typed-source-chain matrix for binary STL.
 fn binary_invalid_topology_retains_native_error_chain() {
     malformed_topology(false);
 }
 
 #[test]
+/// Runs the same malformed-topology matrix for ASCII STL.
 fn ascii_invalid_topology_retains_native_error_chain() {
     malformed_topology(true);
 }
 
 #[test]
+/// Requires valid zero-face files in either encoding to compose as empty, while junk remains a parse error.
 fn canonical_empty_and_parse_failure_remain_distinct() {
     for ascii in [false, true] {
         let empty = stl::from_stl(&encode(&[], ascii)).unwrap();
@@ -234,6 +261,7 @@ fn canonical_empty_and_parse_failure_remain_distinct() {
 }
 
 #[test]
+/// Requires NaN and either infinity in a face coordinate to fail in both encodings; category is not asserted.
 fn nonfinite_coordinates_never_become_geometry() {
     for value in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
         let mut faces = cube_faces([0.0; 3], 1.0);
@@ -245,6 +273,9 @@ fn nonfinite_coordinates_never_become_geometry() {
 }
 
 #[test]
+/// Imports doubled, inverted, disconnected, hollow and mixed-signed-zero surfaces in both encodings.
+/// Checks exact face values, certified PWN and independent winding integrals, then self-subtraction
+/// to canonical empty and restoration of a unit cube. Binary sign-bit identity of zero is not asserted.
 fn closed_pwn_variations_preserve_rows_winding_and_later_operations() {
     let cube = cube_faces([0.0; 3], 1.0);
     let mut doubled = cube.clone();
@@ -291,6 +322,8 @@ fn closed_pwn_variations_preserve_rows_winding_and_later_operations() {
 }
 
 #[test]
+/// Corrupts an index or collapses a cloned imported face after warming validation.
+/// Fresh validation and empty union must fail while the original cube still passes its invariants.
 fn mutation_cannot_reuse_an_import_validation_fact() {
     let imported = stl::from_stl(&encode(&cube_faces([0.0; 3], 1.0), false)).unwrap();
     assert_certified(&imported);
