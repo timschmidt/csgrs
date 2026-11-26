@@ -6,6 +6,11 @@
 //! [`PredicateOutcome`](crate::PredicateOutcome) values rather
 //! than silent approximate signs. Object crates retain combinatorics while a
 //! shared exact predicate layer decides orientation and lifted in-sphere signs.
+//!
+//! Structurally rational inputs use Bareiss elimination; other inputs retain
+//! a division-free exact expression whose sign is resolved under the policy.
+//! Shape validation does not require a nondegenerate simplex. Neither path
+//! imposes a total arithmetic-work, coefficient-size or allocation budget.
 
 use crate::predicate::PredicatePolicy;
 use hyperreal::{Rational, Real};
@@ -15,9 +20,16 @@ use crate::resolve::resolve_real_sign_direct;
 
 /// Decides the orientation sign of `dimension + 1` points in `dimension` space.
 ///
-/// The determinant is built from edge vectors relative to the first point. The
-/// function returns [`PredicateOutcome::Unknown`] when dimensions/arity are
-/// invalid or when the active policy cannot decide the exact sign.
+/// Columns are `points[i+1] - points[0]`, in the supplied coordinate order.
+/// The origin followed by the ordered standard basis has positive sign.
+/// In three dimensions this is the opposite sign to
+/// [`crate::orient3`]'s last-point-anchored convention.
+///
+/// Requires a positive dimension and equal coordinate counts. Invalid shape
+/// returns Unknown/Unsupported at Exact stage. Structurally rational inputs
+/// return Exact certainty at Structural stage; other inputs use the policy's
+/// scalar sign resolver. An approximate terminal sign remains qualified, and
+/// an unresolved decision remains Unknown. Zero does not reject the input.
 pub fn orient_d_with_policy(
     points: &[Vec<Real>],
     policy: PredicatePolicy,
@@ -36,9 +48,15 @@ pub fn orient_d_with_policy(
 /// Decides the lifted D-dimensional in-sphere determinant sign.
 ///
 /// `simplex` must contain `dimension + 1` points and `query` must have the same
-/// dimension. The returned sign is the raw lifted determinant sign under row
-/// layout `[x_0, ..., x_d, ||x||^2, 1]`; triangulation code remains responsible
-/// for applying its orientation convention.
+/// positive dimension. Rows are the simplex points in order followed by the
+/// query, with layout `[x_0, ..., x_(dimension-1), ||x||², 1]`.
+/// The returned sign is raw; interpreting inside/outside requires a
+/// nondegenerate simplex and the caller's orientation convention.
+///
+/// Shape errors return Unknown/Unsupported at Exact stage. Rational success is
+/// Exact/Structural; otherwise the scalar sign resolver preserves the active
+/// policy's qualification or unresolved outcome. A zero determinant alone
+/// does not establish existence of a unique circumsphere.
 pub fn insphere_d_with_policy(
     simplex: &[Vec<Real>],
     query: &[Real],
@@ -56,6 +74,10 @@ pub fn insphere_d_with_policy(
 }
 
 /// Returns whether a `dimension + 1` point set is affinely independent.
+///
+/// Maps the orientation sign to `sign != Zero`, preserving its certainty,
+/// stage and any Unknown outcome. An approximate false result is not an
+/// exact proof of affine dependence; callers must consume the receipt.
 pub fn affine_independent_d_with_policy(
     points: &[Vec<Real>],
     policy: PredicatePolicy,
@@ -70,6 +92,9 @@ pub fn affine_independent_d_with_policy(
     }
 }
 
+/// Returns the positive dimension of a consistently shaped simplex tuple.
+///
+/// Requires exactly `dimension + 1` rows; performs no independence test.
 fn validate_orientation_points(points: &[Vec<Real>]) -> Option<usize> {
     let dimension = points.first()?.len();
     if dimension == 0 || points.len() != dimension + 1 {
@@ -81,6 +106,9 @@ fn validate_orientation_points(points: &[Vec<Real>]) -> Option<usize> {
         .then_some(dimension)
 }
 
+/// Checks positive dimension, simplex arity, and all row/query lengths.
+///
+/// Returns `None` for shape errors, without testing sphere existence.
 fn validate_insphere_points(simplex: &[Vec<Real>], query: &[Real]) -> Option<usize> {
     let dimension = simplex.first()?.len();
     if dimension == 0 || simplex.len() != dimension + 1 || query.len() != dimension {
@@ -92,6 +120,11 @@ fn validate_insphere_points(simplex: &[Vec<Real>], query: &[Real]) -> Option<usi
         .then_some(dimension)
 }
 
+/// Builds the rational edge-column matrix and returns its Bareiss sign.
+///
+/// Assumes validated shape. Copies canonical rational coordinates using
+/// `Real::exact_rational`; `None` declines a representation, not a geometry
+/// or a mathematically rational value hidden in a symbolic expression.
 fn orient_d_exact_rational_sign(points: &[Vec<Real>], dimension: usize) -> Option<Sign> {
     let anchor = points[0]
         .iter()
@@ -108,6 +141,12 @@ fn orient_d_exact_rational_sign(points: &[Vec<Real>], dimension: usize) -> Optio
     Some(exact_rational_determinant_sign(matrix))
 }
 
+/// Eliminates the query row from a rational lifted determinant.
+///
+/// Assumes validated shape and declines any structurally nonrational coordinate.
+/// Subtracting the final query row and expanding along the last column yields
+/// rows `[point-query, |point|²-|query|²]`, with the full determinant's sign.
+/// The last entry is a difference of norms, not a squared translated norm.
 fn insphere_d_exact_rational_sign(
     simplex: &[Vec<Real>],
     query: &[Real],
@@ -137,17 +176,23 @@ fn insphere_d_exact_rational_sign(
     Some(exact_rational_determinant_sign(matrix))
 }
 
+/// Sums exact coordinate squares in order, using zero for an empty slice.
 fn rational_squared_norm(point: &[Rational]) -> Rational {
     point.iter().fold(Rational::zero(), |sum, coordinate| {
         sum + coordinate * coordinate
     })
 }
 
-/// Bareiss elimination over exact rationals.
+/// Returns a square rational matrix's determinant sign by Bareiss elimination.
 ///
-/// Although rational inputs do not require the exact-division property for
-/// correctness, Bareiss keeps intermediate numerator/denominator growth far
-/// below recursive minor expansion and uses O(n^3) arithmetic operations.
+/// Requires square input (debug-asserted). Each column uses its first nonzero
+/// remaining entry as pivot, tracking row-swap parity. Missing pivots yield
+/// zero; division uses the preceding nonzero pivot. The empty determinant is
+/// one. Rational arithmetic does not require integer exact divisibility.
+///
+/// The schedule uses O(n³) rational arithmetic operations and O(n²) stored
+/// entries. These are not bit-complexity or byte bounds: coefficient growth
+/// and scalar arithmetic costs remain input-dependent.
 fn exact_rational_determinant_sign(mut matrix: Vec<Vec<Rational>>) -> Sign {
     let size = matrix.len();
     debug_assert!(matrix.iter().all(|row| row.len() == size));
@@ -192,6 +237,7 @@ fn exact_rational_determinant_sign(mut matrix: Vec<Vec<Rational>>) -> Sign {
     if odd_swaps { sign.reversed() } else { sign }
 }
 
+/// Classifies an exact rational, testing positive before negative.
 fn rational_sign(value: &Rational) -> Sign {
     if value.is_positive() {
         Sign::Positive
@@ -202,6 +248,9 @@ fn rational_sign(value: &Rational) -> Sign {
     }
 }
 
+/// Builds an exact edge-column determinant expression from validated points.
+///
+/// Construction alone does not decide its sign or attach certainty.
 fn orient_d_determinant(points: &[Vec<Real>], dimension: usize) -> Real {
     let anchor = &points[0];
     let mut matrix = Vec::with_capacity(dimension);
@@ -215,6 +264,10 @@ fn orient_d_determinant(points: &[Vec<Real>], dimension: usize) -> Real {
     determinant(&matrix)
 }
 
+/// Builds the full lifted determinant, with the query as the final row.
+///
+/// Assumes validated shape; retains coordinate, squared-norm and final-one
+/// columns without a symbolic pivot or sign decision.
 fn insphere_d_determinant(simplex: &[Vec<Real>], query: &[Real], dimension: usize) -> Real {
     let mut matrix = Vec::with_capacity(dimension + 2);
     for point in simplex.iter().chain(std::iter::once(&query.to_vec())) {
@@ -227,12 +280,18 @@ fn insphere_d_determinant(simplex: &[Vec<Real>], query: &[Real], dimension: usiz
     determinant(&matrix)
 }
 
+/// Builds the ordered sum of exact coordinate squares, starting at zero.
 fn squared_norm(point: &[Real]) -> Real {
     point.iter().fold(Real::zero(), |sum, coordinate| {
         sum + coordinate * coordinate
     })
 }
 
+/// Constructs a square matrix determinant without scalar division.
+///
+/// Uses subset expansion through size sixteen, recursive minors above it.
+/// This threshold limits the subset table, not total work or expression size;
+/// the recursive fallback can take factorially many expansion steps.
 fn determinant(matrix: &[Vec<Real>]) -> Real {
     if matrix.len() <= 16 {
         determinant_subset_dp(matrix)
@@ -245,9 +304,12 @@ fn determinant(matrix: &[Vec<Real>]) -> Real {
 ///
 /// A state records the signed sum for assigning the first `popcount(mask)`
 /// rows to the selected columns. This evaluates the same Leibniz polynomial as
-/// recursive minors in O(n 2^n) states without pivot sign decisions, so it is
-/// valid for symbolic `Real` entries where Gaussian elimination cannot safely
-/// choose a nonzero pivot.
+/// recursive minors with 2^n table slots and O(n 2^n) scalar arithmetic steps,
+/// without requiring a proof of a nonzero symbolic pivot. Those counts exclude
+/// expression and scalar-operation costs. Requires a square matrix and a size
+/// small enough for the bit mask and allocation; the dispatcher caps it at 16.
+/// The empty determinant is one. Appending a column changes sign for each
+/// previously selected column to its right, counting permutation inversions.
 fn determinant_subset_dp(matrix: &[Vec<Real>]) -> Real {
     let size = matrix.len();
     debug_assert!(matrix.iter().all(|row| row.len() == size));
@@ -283,6 +345,11 @@ fn determinant_subset_dp(matrix: &[Vec<Real>]) -> Real {
     sums[state_count - 1].take().unwrap_or_else(Real::zero)
 }
 
+/// Expands a square matrix along its first row, recursively cloning minors.
+///
+/// Skips only structurally known zero coefficients, preserving symbolic
+/// possibilities. The empty determinant is one; dense expansion has factorial
+/// work and supplies no total-resource bound.
 fn determinant_recursive(matrix: &[Vec<Real>]) -> Real {
     match matrix.len() {
         0 => Real::one(),
@@ -306,6 +373,10 @@ fn determinant_recursive(matrix: &[Vec<Real>]) -> Real {
     }
 }
 
+/// Clones entries except the selected row and column for cofactor expansion.
+///
+/// Internal callers supply valid indices in a square matrix; this helper
+/// filters rather than validating those preconditions.
 fn determinant_minor(
     matrix: &[Vec<Real>],
     remove_row: usize,
@@ -325,12 +396,15 @@ fn determinant_minor(
         .collect()
 }
 
+/// Determinant-schedule comparisons, symbolic fallbacks and explicit failures.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Policy permitting the qualified terminal used by fallback fixtures.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Advances a deterministic xorshift stream and emits an integer in -5..=5.
     fn next_coordinate(state: &mut u64) -> Real {
         *state ^= *state << 13;
         *state ^= *state >> 7;
@@ -338,6 +412,7 @@ mod tests {
         Real::from(((*state >> 32) % 11) as i32 - 5)
     }
 
+    /// Constructs the same edge matrix using recursive minors as a schedule oracle.
     fn recursive_orient_d_determinant(points: &[Vec<Real>], dimension: usize) -> Real {
         let anchor = &points[0];
         let matrix = (0..dimension)
@@ -351,6 +426,7 @@ mod tests {
         determinant_recursive(&matrix)
     }
 
+    /// Constructs the full lifted matrix for comparison with reduced Bareiss.
     fn recursive_insphere_d_determinant(
         simplex: &[Vec<Real>],
         query: &[Real],
@@ -371,6 +447,7 @@ mod tests {
         determinant_recursive(&matrix)
     }
 
+    /// Compares rational orientation signs with recursive expansion in dimensions 1–5.
     #[test]
     fn exact_rational_orient_d_path_matches_recursive_determinant() {
         let mut state = 0x243f_6a88_85a3_08d3_u64;
@@ -397,6 +474,7 @@ mod tests {
         }
     }
 
+    /// Compares reduced rational sphere signs with full lifted minors in dimensions 1–4.
     #[test]
     fn exact_rational_insphere_d_path_matches_recursive_determinant() {
         let mut state = 0x1319_8a2e_0370_7344_u64;
@@ -426,6 +504,9 @@ mod tests {
         }
     }
 
+    /// Checks pi-coordinate rational declines and generic orientation/sphere values.
+    ///
+    /// Translation compares returned signs, not their certainty or dispatch counts.
     #[test]
     fn symbolic_nd_inputs_retain_generic_real_fallback() {
         let points = vec![
@@ -469,6 +550,8 @@ mod tests {
         );
     }
 
+    /// Retains invalid shape, strict unresolved identity, empty determinant and
+    /// sparse size-seventeen fallback witnesses alongside the proved identity.
     #[test]
     fn invalid_and_unresolved_nd_inputs_remain_explicit() {
         let invalid_simplex = vec![vec![Real::zero()], vec![Real::one()]];
@@ -504,6 +587,9 @@ mod tests {
         );
     }
 
+    /// Compares subset and recursive exact values for integer matrices of sizes 0–7.
+    ///
+    /// This checks two schedules sharing scalar arithmetic, not a universal proof.
     #[test]
     fn subset_determinant_matches_recursive_minors() {
         let mut state = 0xa409_3822_299f_31d0_u64;

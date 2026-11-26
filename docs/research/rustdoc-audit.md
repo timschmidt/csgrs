@@ -4582,6 +4582,82 @@ runtime and performance checks for this docs-only session. No implementation,
 fixture, gate, predicate order or dispatch count changed; most predicate module
 bodies and the remaining repository still need whole-file review.
 
+### Rational and general-dimensional determinant kernels, 26 November 2026
+
+Baseline: `28ffd9a7b`. Owner: Hyperlimit's fixed rational determinant schedules
+and general-dimensional predicate implementation. Properties: P1/P3/P5/P6/P8–P11
+and P37. Domain: structurally rational fixed-dimensional point tuples and
+positive-dimensional coordinate arrays, including degenerate tuples, symbolic
+fallbacks and malformed shapes. Before editing, reproduced missing private
+helper/test docs, an incorrect lifted-row coordinate index and the subset-state
+complexity claim by reading the implementations on this revision. The acceptance
+witness is documented declarations plus rendered, linked contracts checked
+against the unchanged expressions; this batch extends no geometric capability.
+
+Whole-file reviews: `crates/hyperlimit/src/predicates/exact.rs` (287 baseline
+lines) and `crates/hyperlimit/src/predicates/nd.rs` (527). All 42 named
+declarations, including test modules, helpers and constants, have Rustdoc.
+Supporting excerpts in Hyperreal's `real/arithmetic/facts.rs`, Hyperlimit's
+`predicates/orient.rs` and the public re-export index do not establish new
+whole-file review credit for those implementation files.
+
+The fixed kernels borrow only structurally rational coordinates; a declined
+path is not an irrationality or invalid-geometry proof. Docs specify the raw
+orientation and lifted circle/sphere matrices, including degenerate determinant
+zeros that do not establish a unique circle/sphere. Fixed 3D orientation uses
+rows a-d, b-d, c-d, whereas general-dimensional orientation uses columns
+points[i+1]-points[0]; the ordered standard tetrahedron consequently has opposite
+signs. Public cross-references make this convention difference explicit.
+Rational squared lifts and product-order cofactor helpers now explain their
+mathematical role without moving scalar arithmetic into a new authority.
+
+General-dimensional docs distinguish shape validation from affine independence,
+raw lifted signs from inside/outside interpretation, Exact/Structural rational
+outcomes from policy-qualified symbolic outcomes, and an approximate zero from
+an exact dependence proof. The reduced rational sphere matrix uses coordinate
+differences and a difference of squared norms, preserving the full determinant
+by query-row subtraction and last-column expansion. Bareiss pivot selection,
+swap parity and the empty determinant convention are documented. Its cubic
+rational-operation count is not a bit-complexity or memory-byte bound. Removed
+the unmeasured blanket intermediate-growth comparison with recursive minors.
+Subset expansion has 2^n table slots and O(n 2^n) scalar arithmetic steps;
+the size-sixteen dispatch threshold does not bound the recursive fallback's
+factorial work or total expression size. No total resource guarantee is added.
+
+The unchanged tests compare exact schedules on finite integer corpora, retain
+symbolic rational declines and policy controls, and cover invalid shape, the
+empty determinant and a sparse size-seventeen fallback. Their docs state what
+is asserted and distinguish shared-arithmetic comparisons from independent
+universal proofs. Runtime fixtures were not executed in this batch.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing only blank/comment
+  lines yields identical source to baseline; signatures, expressions, call
+  order, fixtures and assertions are unchanged.
+- Scoped declaration checks found 15 documented names in exact.rs and 27 in
+  nd.rs. Inspected all 28 non-test function documentation blocks in rendered
+  private pages and seven selected sign/layout/resource contract pages.
+  Test-only docs were source-reviewed because library Rustdoc omits cfg(test).
+- Initial private Rustdoc passed but warned about a public link to a private
+  kernel. Replacing it first exposed an incorrect guessed public name; changed
+  it to the actual exported `orient3` and inspected the rendered target.
+  Final `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline
+  -j2 -- --document-private-items -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed after the final source edit, compiling affected test consumers.
+- Downstream private csgrs Rustdoc with locked offline dependencies,
+  `--no-default-features --features curve` and broken intra-doc links denied
+  passed. Shared target storage remains approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-determinants-{doc,check,downstream-doc}.log`.
+Full workflow, runtime and performance checks remain waived by the owner for
+this docs-only session. No measured performance or implementation-completeness
+claim follows from this documentation batch. Most predicate modules and the
+remaining repository still need whole-file review; the existing future-agent
+100% public/private Rustdoc mandate remains in force.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

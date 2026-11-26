@@ -2,20 +2,34 @@
 //!
 //! This module is deliberately private to `hyperlimit`: callers should consume
 //! predicate outcomes, not determinant implementation details. Keeping the
-//! exact schedules here leaves room for integer-grid and dyadic kernels without
-//! leaking those representations across crate boundaries.
+//! fixed polynomial schedules here exposes signed products to the rational
+//! scalar kernels without leaking their storage across crate boundaries.
+//!
+//! Entry points require structurally rational coordinates. `None` declines
+//! that representation path; it does not prove irrationality or geometric
+//! invalidity. `Some(Zero)` is an exact determinant zero, including degenerate
+//! inputs. These kernels neither validate a unique circle/sphere nor attach
+//! policy, certainty, provenance or a total-work budget; callers supply those
+//! parts of the predicate contract.
 
 use crate::geometry::{Point2, Point3};
 use crate::predicate::Sign;
 use core::cmp::Ordering;
 use hyperreal::{Rational, Real};
 
-/// Try the exact rational 2D orientation kernel.
+/// Returns the sign of `det(b - a, c - a)` for structurally rational coordinates.
+///
+/// Counterclockwise order is positive. Delegates to the borrowed-coordinate
+/// kernel; any coordinate outside the rational representation returns `None`.
 pub(super) fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
     orient2d_coordinates([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y])
 }
 
 /// Try the exact rational 2D orientation kernel over borrowed coordinates.
+///
+/// Evaluates `(bx-ax)*(cy-ay) - (by-ay)*(cx-ax)` as one signed product sum.
+/// All six shape queries precede the representation check. No scalar
+/// refinement or symbolic rational normalization is attempted.
 #[inline]
 pub(super) fn orient2d_coordinates(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Option<Sign> {
     let [ax, ay] = a.map(exact_rational_ref);
@@ -37,7 +51,12 @@ pub(super) fn orient2d_coordinates(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) 
     Some(sign_from_rational(&det))
 }
 
-/// Try the exact rational 3D orientation kernel.
+/// Returns the sign of the matrix with rows `a-d`, `b-d`, and `c-d`.
+///
+/// For `(a,b,c,d) = (0, e_x, e_y, e_z)` this is negative, the opposite of
+/// the first-point-anchored convention in [`super::nd::orient_d_with_policy`].
+/// Requires structurally rational coordinates and compares the six signed
+/// products without materializing a final rational determinant.
 pub(super) fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Option<Sign> {
     let ax = exact_rational_ref(&a.x)?;
     let ay = exact_rational_ref(&a.y)?;
@@ -82,7 +101,13 @@ pub(super) fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Option
     Some(sign_from_ordering(ordering))
 }
 
-/// Try the exact rational in-circle kernel.
+/// Returns the rational lifted determinant sign for rows `a,b,c,d`.
+///
+/// The full row layout is `[x,y,x²+y²,1]`. Translating by query `d`
+/// reduces evaluation to three rows `[x-dx,y-dy,|point-d|²]`.
+/// For a noncollinear counterclockwise `a,b,c`, positive means inside their
+/// circle; reversing their orientation reverses the sign. Degenerate defining
+/// triples still produce a determinant, not a circle-existence certificate.
 pub(super) fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Option<Sign> {
     let ax = exact_rational_ref(&a.x)?;
     let ay = exact_rational_ref(&a.y)?;
@@ -122,7 +147,12 @@ pub(super) fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Opti
     Some(sign_from_rational(&det))
 }
 
-/// Try the exact rational in-sphere kernel.
+/// Returns the rational lifted determinant sign for rows `a,b,c,d,e`.
+///
+/// The full row layout is `[x,y,z,x²+y²+z²,1]`; translation by query `e`
+/// gives four rows `[x-ex,y-ey,z-ez,|point-e|²]`. This is a raw sign:
+/// interpreting inside/outside requires the defining tetrahedron's orientation
+/// and nondegeneracy. A zero determinant alone does not certify a unique sphere.
 pub(super) fn insphere3d(
     a: &Point3,
     b: &Point3,
@@ -199,22 +229,32 @@ pub(super) fn insphere3d(
     Some(sign_from_rational(&det))
 }
 
+/// Borrows retained rational storage, declining other scalar representations.
+///
+/// The ratio may be internally unreduced; its numeric operations remain exact.
+/// This performs neither symbolic normalization nor a rationality decision.
 fn exact_rational_ref(value: &Real) -> Option<&Rational> {
     value.exact_rational_ref()
 }
 
+/// Computes `x² + y²` for a translated in-circle row.
 fn rational_lift2(x: &Rational, y: &Rational) -> Rational {
     &(x * x) + &(y * y)
 }
 
+/// Computes `(x² + y²) + z²` for a translated in-sphere row.
 fn rational_lift3(x: &Rational, y: &Rational, z: &Rational) -> Rational {
     &(&(x * x) + &(y * y)) + &(z * z)
 }
 
+/// Computes `a*b - c*d` as a signed product sum for lifted cofactors.
+///
+/// Arguments are in product order, not row-major matrix order.
 fn rational_det2(a: &Rational, b: &Rational, c: &Rational, d: &Rational) -> Rational {
     Rational::signed_product_sum([true, false], [[a, b], [c, d]])
 }
 
+/// Compares an exact rational with zero, testing negative before positive.
 fn sign_from_rational(value: &Rational) -> Sign {
     let zero = Rational::zero();
     if value < &zero {
@@ -226,6 +266,9 @@ fn sign_from_rational(value: &Rational) -> Sign {
     }
 }
 
+/// Maps an ordering relative to zero to its corresponding determinant sign.
+///
+/// The caller supplies the meaning of the comparison; this adds no proof.
 pub(crate) fn sign_from_ordering(ordering: Ordering) -> Sign {
     match ordering {
         Ordering::Less => Sign::Negative,
@@ -234,18 +277,23 @@ pub(crate) fn sign_from_ordering(ordering: Ordering) -> Sign {
     }
 }
 
+/// Small integer sign conventions and a symbolic representation-decline witness.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Constructs a planar fixture without floating-point conversion.
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
     }
 
+    /// Constructs a spatial fixture without floating-point conversion.
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    /// Checks planar signs, spatial orientation/zero, one circle interior,
+    /// a repeated-vertex sphere zero, and rejection of a pi coordinate.
     #[test]
     fn exact_kernel_entry_points_cover_signs_and_decline_symbolic_inputs() {
         assert_eq!(
