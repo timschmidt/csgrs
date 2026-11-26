@@ -71,6 +71,7 @@ cargo run --example write_benchmarks_md
 | `retained_fuzz` | Criterion timing | `interval-lattice` | `cargo bench --bench retained_fuzz --features interval-lattice` | this file |
 | `taylor_combination` | Criterion timing | `taylor-combination` | `cargo bench --bench taylor_combination --features taylor-combination` | this file |
 | `taylor_composition` | Criterion timing | `taylor-composition` | `cargo bench --bench taylor_composition --features taylor-composition` | this file |
+| `taylor_model_orders` | Criterion timing | `taylor-model` | `cargo bench --bench taylor_model_orders --features taylor-model` | this file |
 | `taylor_noise` | Criterion timing | `taylor-noise` | `cargo bench --bench taylor_noise --features taylor-noise` | this file |
 | `taylor_polynomial` | Criterion timing | `taylor-polynomial` | `cargo bench --bench taylor_polynomial --features taylor-polynomial` | this file |
 | `cgal_quadratic` | external exact comparison | `CGAL, GMP` | `benches/competitors/run_cgal_quadratic.sh` | [cgal_quadratic_benchmarks.md](cgal_quadratic_benchmarks.md) |

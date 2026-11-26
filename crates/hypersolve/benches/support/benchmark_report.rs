@@ -481,6 +481,7 @@ mod tests {
                 "retained_fuzz",
                 "taylor_combination",
                 "taylor_composition",
+                "taylor_model_orders",
                 "taylor_noise",
                 "taylor_polynomial",
             ]
@@ -495,6 +496,7 @@ mod tests {
             ("retained_fuzz", "interval-lattice"),
             ("taylor_combination", "taylor-combination"),
             ("taylor_composition", "taylor-composition"),
+            ("taylor_model_orders", "taylor-model"),
             ("taylor_noise", "taylor-noise"),
             ("taylor_polynomial", "taylor-polynomial"),
         ] {
