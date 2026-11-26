@@ -9,8 +9,11 @@ use csgrs::{GeometryCertainty, GeometryContext, GeometryOutcome, Real, TriangleM
 use hyperlattice::Vector3;
 use solid::cache::{self, CachePolicy, CacheUsage};
 
+/// Strict operation policy for cache-key and receipt comparisons.
 const STRICT: GeometryContext = GeometryContext::STRICT;
+/// Policy permitting terminal consumption when certification is unavailable.
 const APPROXIMATE: GeometryContext = GeometryContext::APPROXIMATE_512;
+/// One-entry limits for every grammar cache, used to force eviction.
 const ONE_EACH: CachePolicy = CachePolicy {
     primitives: 1,
     distributions: 1,
@@ -19,11 +22,13 @@ const ONE_EACH: CachePolicy = CachePolicy {
     slices: 1,
 };
 
+/// Compare exact position/index rows, without comparing inherited evidence or proving set equality.
 fn assert_mesh_eq(left: &TriangleMesh, right: &TriangleMesh) {
     assert_eq!(left.positions, right.positions);
     assert_eq!(left.triangles, right.triangles);
 }
 
+/// Compare mesh rows and local receipts; construction ancestry is not asserted here.
 fn assert_outcome_eq(
     left: &GeometryOutcome<TriangleMesh>,
     right: &GeometryOutcome<TriangleMesh>,
@@ -32,12 +37,14 @@ fn assert_outcome_eq(
     assert_eq!(left.certainty, right.certainty);
 }
 
+/// Reuse the retained identity witness and shared terminal-only zero fixture.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Compare cold, warm and disabled cube rows across exact scalar forms and invalid width.
 #[test]
 fn primitives_preserve_scalar_structure_with_and_without_retention() {
     cache::clear();
@@ -80,6 +87,7 @@ fn primitives_preserve_scalar_structure_with_and_without_retention() {
     }
 }
 
+/// Check all enabled primitive families for shared warm storage and equal rebuilt rows.
 #[test]
 fn every_cached_primitive_family_replays_the_same_exact_rows() {
     use hyperlattice::Point3;
@@ -121,6 +129,7 @@ fn every_cached_primitive_family_replays_the_same_exact_rows() {
     }
 }
 
+/// Verify a hit does not prevent eviction of the oldest primitive.
 #[test]
 fn fifo_hits_do_not_refresh_insertion_order() {
     cache::clear();
@@ -153,6 +162,7 @@ fn fifo_hits_do_not_refresh_insertion_order() {
     );
 }
 
+/// Check immediate eviction, nested limits, clearing and policy restoration after a panic.
 #[test]
 fn nested_scopes_shrink_immediately_and_restore_after_unwinding() {
     cache::clear();
@@ -182,6 +192,7 @@ fn nested_scopes_shrink_immediately_and_restore_after_unwinding() {
     assert_eq!(cache::policy(), original);
 }
 
+/// Check that a spawned worker starts with default limits and independent entries.
 #[test]
 fn workers_have_independent_policy_and_retained_storage() {
     cache::with_policy(CachePolicy::DISABLED, || {
@@ -197,6 +208,7 @@ fn workers_have_independent_policy_and_retained_storage() {
     });
 }
 
+/// Compare merge rebuilds after operand reorder or buffer mutation, preserving prior outputs.
 #[test]
 fn merge_keys_include_input_order_and_both_storage_identities() {
     cache::clear();
@@ -229,6 +241,7 @@ fn merge_keys_include_input_order_and_both_storage_identities() {
     }
 }
 
+/// Compare row and receipt reuse for all layouts under both policies.
 #[test]
 fn each_distribution_family_preserves_geometry_and_certainty() {
     cache::clear();
@@ -274,6 +287,7 @@ fn each_distribution_family_preserves_geometry_and_certainty() {
     }
 }
 
+/// Require policy separation after an approximate distribution consumes the terminal.
 #[test]
 fn approximate_distribution_cannot_satisfy_a_strict_request() {
     cache::clear();
@@ -296,6 +310,7 @@ fn approximate_distribution_cannot_satisfy_a_strict_request() {
     assert_outcome_eq(&cold, &uncached);
 }
 
+/// Exercise one-entry retention and disabling across every enabled cache category.
 #[test]
 fn all_active_caches_obey_their_limits_and_release_entries() {
     cache::clear();
@@ -335,6 +350,7 @@ fn all_active_caches_obey_their_limits_and_release_entries() {
 }
 
 #[cfg(feature = "curve")]
+/// Compare slice/projection values and receipts while checking strict rejection where approximate decisions were consumed.
 #[test]
 fn curve_results_preserve_boundaries_and_context_when_warm_or_disabled() {
     use hyperlattice::Point3;

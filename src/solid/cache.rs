@@ -68,6 +68,7 @@ impl CachePolicy {
 }
 
 impl Default for CachePolicy {
+    /// Use the standard per-thread entry limits in [`Self::DEFAULT`].
     fn default() -> Self {
         Self::DEFAULT
     }
@@ -92,6 +93,9 @@ pub struct CacheUsage {
 }
 
 std::thread_local! {
+    /// Current thread's policy and entries; no cache state is shared with workers.
+    /// Entries live until eviction, clearing or thread teardown; external clones
+    /// may keep their underlying storage alive after removal here.
     static STATE: RefCell<CacheState> = const { RefCell::new(CacheState::new()) };
 }
 
@@ -124,16 +128,23 @@ pub fn clear() {
 /// Increasing a limit never reserves capacity in advance. Entries admitted by
 /// an inner scope remain available only within the restored outer limits.
 ///
-/// The policy affects retention and reuse only. Predicate context, exact
-/// coordinates, topology, and certainty do not depend on these limits.
+/// The policy affects retention and reuse only; it does not authorize a weaker
+/// predicate policy or change the meaning of retained values and receipts.
+/// Rebuilding after eviction can use scalar proofs established since insertion;
+/// a retained receipt is returned as stored, not recomputed on a cache hit.
 ///
 /// Spawned threads start with [`CachePolicy::DEFAULT`]. This scope does not
 /// follow a future across suspension or thread migration; pass the policy to
 /// each synchronous worker explicitly.
 pub fn with_policy<T>(policy: CachePolicy, operation: impl FnOnce() -> T) -> T {
-    struct RestorePolicy(CachePolicy);
+    /// Restore the outer limits on scope exit, including unwinding.
+    struct RestorePolicy(
+        /// Policy active immediately before entering this scope.
+        CachePolicy,
+    );
 
     impl Drop for RestorePolicy {
+        /// Reapply the prior limits, trimming inner-scope entries if necessary.
         fn drop(&mut self) {
             STATE.with_borrow_mut(|state| state.set_policy(self.0));
         }

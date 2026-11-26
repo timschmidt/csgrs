@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/solid/cache.rs` | Entire file; documented thread-local state, default implementation and local restoration guard; clarified receipt reuse. | Private docs passed with and without `curve`; local guard reviewed in source. |
+| `src/solid/cache/storage.rs` | Entire file; documented all private keys, fields, retention helpers and completed-result contracts. | Private pages with `curve` checked; minimal build also passed. |
+| `tests/solid_cache.rs` | Entire file; documented constants, comparison/uncertainty helpers and all cache regression witnesses. | Formatting and comment-only comparison passed; assertions unchanged, not rerun. |
 | `src/attributed.rs` | Entire file including tests; documented alignment-only admission, equality, private fields/helpers and shared export cache. | Private docs passed with `attributed,curve`; generated sidecar page checked. |
 | `src/hyper_math.rs` | Entire file; documented internal conversion implementations, strict predicate helpers and diagnostic-erasing convenience semantics. | Private docs passed with `attributed,curve` and no default features; generated private pages checked. |
 | `src/solid_expr.rs` | Entire file; documented deferred operators, transform-dependent memoization, private lowering state, error paths and resource limits. | Private docs passed with `curve,dispatch-trace` and no default features; generated private/operator pages checked. |
@@ -380,6 +383,61 @@ Logs remain at `/tmp/csgrs-rustdoc-attributes-math-doc.log` and
 reviewed in source. Full runtime/workflow checks remain waived for this docs-only
 session; no correctness or performance result beyond documentation validation is
 claimed.
+
+### Modeling cache batch, 26 November 2026
+
+Owner: CSGRS completed-operation retention, P4/P5/P8/P9/P19/P20/P25/P37.
+Baseline: `281c53cd0`. Domain: strict primitive keys, ordered merges, distribution
+layouts, curve projections/slices, exact policy keys, scoped entry limits,
+thread-local ownership, mutation/evidence changes and repeated requests. Missing
+witness: private storage variants and fields, matching/retention helpers, local
+scope guard, and test declarations lacked Rustdoc.
+
+Read every line of `src/solid/cache.rs`, `src/solid/cache/storage.rs`, and
+`tests/solid_cache.rs`. Cross-checked primitive/distribution key construction and
+retention call sites in `src/solid.rs`, including early successful empty returns
+that need not insert an entry. Those caller reads are partial and do not earn
+whole-file credit.
+
+Documented structural parameter equality, owned allocation identities and
+construction snapshots, exact context matching, first matching FIFO lookup,
+nonrefreshing hits, entry lifetimes, active insertion policy and no error caching.
+Private insertion helpers trust caller-completed outcomes and do not revalidate
+geometry. Zero limits skip entry construction; policy shrinking trims oldest
+entries, with vector capacity released at zero and otherwise available for reuse.
+No limit is a retained-byte or total-work budget. A scope guard restores prior
+limits during unwinding, without resurrecting evicted entries. A cache hit
+returns its stored receipt; rebuilding can use stronger scalar proofs acquired
+since insertion, consistent with P4's distinction between proof reuse and value
+semantics. This clarification does not authorize weaker policies or altered values.
+
+Test docs describe row/receipt comparisons separately from construction ancestry
+and set equivalence. Witnesses cover FIFO, nested unwinding, workers, source order
+and mutation, policy separation, and all enabled cache categories. Source review
+is not a claim of executing these tests or proving universal cache correctness.
+
+Validation after edits:
+
+- `rustfmt --check --edition 2024 src/solid/cache.rs src/solid/cache/storage.rs
+  tests/solid_cache.rs`: passed.
+- `git diff --check`: passed.
+- Baseline comparison after removing comment lines and normalizing whitespace
+  and optional trailing commas: code identical in all three edited Rust files.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps --offline`:
+  passed without warnings.
+- Generated private key enums, mesh storage, cache state, retention/lookup helpers,
+  thread-local state and public policy scope pages contain the new contracts.
+  Function-local guard and integration-test docs were reviewed in source rather
+  than claimed as rendered by the library build.
+- The same private-doc command without `--features curve`: passed without warnings.
+
+Logs: `/tmp/csgrs-rustdoc-cache-doc.log` and
+`/tmp/csgrs-rustdoc-cache-minimal-doc.log`; existing temporary build storage is
+reused. Full workflow/runtime checks remain waived for this docs-only session.
+No predicate ordering, cache key, capacity, test assertion or source behavior was
+changed, and no new runtime/performance claim is made.
 
 ## Next work
 
