@@ -6159,6 +6159,109 @@ Full workflow checks remain waived by the owner. The repository-wide audit is
 still active and incomplete; documentation of implementation gaps does not
 establish conformance to the target contract.
 
+## Hyperlimit triangle containment and retained reports
+
+Audited every line of `crates/hyperlimit/src/predicates/triangle.rs` (3,044 lines
+at baseline `61c931768`). Owning layer: Hyperlimit orientation, incidence, retained
+evidence, and policy-controlled classification. Relevant contracts: P4, P6,
+P8–P10, and preservation of qualification for downstream consumers. The domain
+is planar/spatial Real-coordinate triangles, points, closed segments, forward
+rays, tetrahedra, and retained normal/report records under both policies.
+Degenerate inputs, zero directions, coplanar support relations, mutable report
+fields, stale source associations, and unresolved scalar signs all matter here.
+The missing acceptance witness was complete accurate private/public Rustdoc and
+rendered coverage; this docs-only change does not repair implementation gaps or
+claim new geometric support.
+
+Documented all 99 declarations, 23 named/tuple fields, and 13 error variants.
+The 34 test-only declarations are the module, policy constant, four helpers, and
+28 test functions. The other 65 declarations render in private library docs.
+Only comments and the layout of one enum tuple payload changed; all executable
+source, fixtures, assertions, predicate order, and dispatch calls are preserved.
+The tuple field now has its own Rustdoc without changing its type or variant.
+Confirmed the existing root AGENTS.md public/private 100% coverage mandate.
+
+Reproduced the following distinctions by reading current implementation paths:
+
+- Retained planar orientation accepts Unknown unchanged, as does spatial normal
+  evidence. A different policy therefore does not itself retry cached Unknown.
+  Disallowed decided certainty is recomputed; spatial recomputation uses the
+  stored normal, not current vertices. Neither form checks source identity.
+  Known-degenerate planar facts similarly bypass vertex checks and supply an
+  Exact/Structural zero orientation. Documented these caller preconditions and
+  the unresolved retry limitation without changing them.
+- Spatial point containment runs all three edge-halfspace calls before reducing
+  their results; tetrahedron containment similarly evaluates four replacement
+  determinants. Later uncertainty can prevent a definite Outside result.
+  Planar edge calls are sequential until Unknown, but do not short-circuit on
+  the first outside sign. Documentation preserves these distinct schedules.
+- Both public report builders use the strict-first composite-policy wrapper.
+  Internal attempts discard child certainty/stages and label success Exact/Exact;
+  an approximate replay is conservatively marked Approximate/Refined by the
+  wrapper. Revisited the previously audited resolver at lines 248–280 to confirm
+  that retry applies specifically to APPROXIMATE_512 and only after Unknown.
+  Bare reports carry no aggregate receipt; validators discard successful check
+  and replay receipts as well.
+- The coarse segment classifier is not a projection of the report classifier.
+  A transverse coarse path requires successful homogeneous-to-affine conversion,
+  discards that point, then uses input line/edge triple products. The report path
+  classifies its constructed candidate. The preclassified-side helper trusts its
+  side labels and retained plane and starts Exact/Exact without a receipt input.
+- Coplanar is a support-plane relation, not finite triangle overlap. Segment/ray
+  paths do not reject triangle degeneracy before those support tests. A zero ray
+  direction is classified through the parallel-plane branch, including Coplanar
+  for an on-plane origin. A transverse ray outside the finite triangle still
+  retains its candidate and parameter in a Disjoint report.
+- Ray vertex contacts reuse the source vertex and a dot-product parameter while
+  retaining the original plane ratio. Local validation must compare those
+  parameter representations. Reciprocal hooks are followed by `expect`; their
+  panic conditions are now explicit. No new runtime failure was asserted or
+  manufactured from the mere presence of those invariant checks.
+- Local report validation checks stored consistency, not candidate containment
+  or source fidelity. In particular, ray Disjoint-without-candidate accepts its
+  side/sign labels without checking them, and the ratio branch does not reject
+  missing side/sign labels. Ray validation does not establish the point's ray
+  equation or the ratio's source derivation. Unknown parameter checks map to
+  validation errors; source replay maps Unknown to SourceReplayMismatch and
+  compares report values without preserving the replay receipt. These are
+  source-confirmed limitations, not completed proof obligations.
+
+Test Rustdoc describes the actual finite assertions. The location-collapse loop
+asserts permitted result sets rather than each individual expected mapping.
+The corruption and optional-shape controls are not exhaustive despite their
+names. Cached-sign and nonzero-direction controls do not assert dispatch counts;
+most geometry tests inspect values without asserting the outer certainty/stage.
+The original unit-circle zero normalization remains asserted separately from
+the shared terminally unresolved control. No assertion or hard fixture changed.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Source identity comparison strips
+  only comment-only/blank lines and normalizes only the documented
+  `PlaneEventInvalid(SegmentPlaneValidationError)` tuple layout. The result is
+  identical to baseline. Scoped scans confirm all item, field, and variant docs.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed, compiling library, inline tests, and integration consumers.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D warnings -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed. Verified all 102 complete rendered
+  doc groups across 58 pages, including 23 fields and 13 variants. Test-only
+  declarations were source-reviewed and compiled, not rendered in library docs.
+- Downstream `cargo rustdoc --locked -p csgrs --lib --no-default-features
+  --features curve --offline -j2 -- --document-private-items
+  -D rustdoc::broken_intra_doc_links` passed.
+- Independent Python Fraction arithmetic verifies the finite ray fixture's
+  t = 2, point (1,1,0), and strictly positive barycentric weights (1/2,1/4,1/4).
+  This verifies fixture mathematics, not execution of the Rust implementation.
+- No runtime tests, dispatch/cache measurements, or performance tests ran.
+  Shared target storage remains approximately 1.6 GiB; incremental compilation
+  remains disabled. Full workflow validation is waived by the owner this session.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-triangle-{doc,check,downstream-doc}.log`.
+The repository-wide audit remains incomplete. The next remaining whole
+predicate implementation in Hyperlimit is `distance.rs`; the existing tests and
+other completed predicate records should not be re-counted as new coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

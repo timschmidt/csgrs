@@ -1,4 +1,10 @@
-//! Triangle classification predicates.
+//! Triangle containment, segment/ray contact reports, and tetrahedron classification.
+//!
+//! Orientation and scalar sign decisions follow an explicit policy. Retained
+//! normal/fact records require matching sources; local report validation checks
+//! stored consistency, while source replay recomputes. Coplanar contact labels
+//! leave finite planar overlap to another operation. Report values alone do not
+//! carry the producing outcome's certainty receipt.
 
 use crate::predicate::PredicatePolicy;
 use crate::predicates::decision::{certainty_rank, max_certainty, max_stage, stage_rank};
@@ -20,34 +26,41 @@ use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{resolve_composite_policy, resolve_real_sign_direct};
 use hyperreal::Real;
 
-/// Derived orientation evidence for one ordered 3D triangle.
+/// Retained winding normal and component-sign outcome for one ordered spatial triangle.
 ///
-/// This value owns the exact winding normal and its certified component signs,
-/// but not the triangle vertices. Retain it when classifying many points
-/// against the same triangle.
+/// Owns exact scalar expressions, but no vertices or checked source identity. Signs
+/// may be Unknown or policy-qualified. Reuse requires the same current ordered
+/// vertices; changes require rebuilding this record. It carries no point-query
+/// containment result.
 #[derive(Clone, Debug)]
 pub struct Triangle3Orientation {
+    /// Unnormalized winding-normal expressions for the original ordered triangle.
     normal: Triangle3Normal,
+    /// Stored component-sign outcome, including possible uncertainty or approximation.
     normal_signs: PredicateOutcome<[Sign; 3]>,
 }
 
 impl Triangle3Orientation {
-    /// Return the certified signs of the winding-normal components.
+    /// Return the stored normal-sign outcome, including its receipt or unresolved reason.
+    ///
+    /// Does not refine, revalidate source association, or apply a new policy.
     pub const fn normal_signs(&self) -> PredicateOutcome<[Sign; 3]> {
         self.normal_signs
     }
 }
 
-/// Structural inconsistency in a retained segment/triangle report.
+/// Failure of local segment-report consistency checking or source replay.
 ///
-/// The report validates the composition of a segment/plane construction event
-/// with a point/triangle classifier. The exact predicate layer owns replayable evidence,
-/// while mesh, voxel, and boolean crates own any topology mutation derived from
-/// that evidence.
+/// Local validation checks the plane event and the combination of stored labels;
+/// only source replay recomputes triangle containment. Neither validator returns
+/// the certainty receipts of its checks.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SegmentTriangleValidationError {
     /// The retained segment/plane event is internally inconsistent.
-    PlaneEventInvalid(SegmentPlaneValidationError),
+    PlaneEventInvalid(
+        /// Underlying local segment/plane validation failure.
+        SegmentPlaneValidationError,
+    ),
     /// A retained point/triangle location was missing when the plane event
     /// constructed a candidate point.
     MissingTriangleLocation,
@@ -61,28 +74,30 @@ pub enum SegmentTriangleValidationError {
     SourceReplayMismatch,
 }
 
-/// Report-bearing segment/triangle intersection classification.
+/// Retained segment/support-plane event and its triangle-location claim.
 ///
-/// The coarse [`SegmentTriangleIntersection`] relation is kept for cheap
-/// callers, while this report retains the exact segment/plane construction and
-/// the point/triangle location that justified it. Proper crossings keep the
-/// determinant-ratio segment parameter through [`SegmentPlaneIntersection`].
-/// This is the construction-preserving counterpart to the
-/// standard triangle-intersection decomposition and retains evidence before
-/// topology is changed.
+/// Proper plane crossings retain a determinant-ratio segment parameter through
+/// [`SegmentPlaneIntersection`], even if the candidate lies outside the triangle.
+/// Coplanar means that the support-plane test is coplanar, not that the finite
+/// segment intersects the triangle. Public fields are mutable claims; the record
+/// itself contains no aggregate certainty receipt. Keep the producing
+/// [`PredicateOutcome`] when consuming policy-dependent results.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SegmentTriangleIntersectionReport {
-    /// Coarse segment/triangle relation.
+    /// Stored coarse relation, checked against the other labels by local validation.
     pub relation: SegmentTriangleIntersection,
-    /// Exact segment against triangle-supporting-plane event.
+    /// Retained segment/support-plane event; public contents require validation.
     pub plane_event: SegmentPlaneIntersection,
-    /// Location of the constructed endpoint or proper-crossing point relative
-    /// to the closed triangle.
+    /// Stored candidate location; None for disjoint-plane and coplanar events.
     pub triangle_location: Option<Triangle3Location>,
 }
 
 impl SegmentTriangleIntersectionReport {
-    /// Validate retained construction and classification facts.
+    /// Check the plane event locally, then compare the relation derived from stored labels.
+    ///
+    /// Trusts `triangle_location`: no triangle is supplied and containment is not
+    /// recomputed. Propagates plane-validation errors but discards successful check
+    /// receipts. Success establishes local consistency, not source fidelity.
     pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SegmentTriangleValidationError> {
         self.plane_event
             .validate(policy)
@@ -96,7 +111,11 @@ impl SegmentTriangleIntersectionReport {
         }
     }
 
-    /// Replay this report against source segment and triangle geometry.
+    /// Validate locally, then recompute with these sources and compare the report value.
+    ///
+    /// Unknown replay or unequal reports become SourceReplayMismatch. The fresh
+    /// outcome's certainty/stage are discarded; success does not return a receipt or
+    /// establish equivalence between arbitrary alternative representations.
     pub fn validate_against_sources(
         &self,
         p: &Point3,
@@ -113,18 +132,16 @@ impl SegmentTriangleIntersectionReport {
         }
     }
 
-    /// Return whether this report retained a constructed candidate point.
+    /// Test whether the plane event stores a point, without validating it or proving a hit.
     pub fn has_candidate_point(&self) -> bool {
         self.plane_event.point.is_some()
     }
 }
 
-/// Structural inconsistency in a retained ray/triangle report.
+/// Failure of ray-report field consistency, parameter checks, or source replay.
 ///
-/// The ray report validates the exact ray/support-plane construction before
-/// trusting the coarse triangle relation. Topology-facing callers receive a
-/// replayable certificate-shaped object instead of an untestable floating
-/// intersection.
+/// Unresolved scalar checks are mapped to parameter errors. This vocabulary does
+/// not distinguish an invalid scalar relation from inability to decide it.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RayTriangleValidationError {
     /// A relation that should not construct a candidate retained one.
@@ -135,9 +152,9 @@ pub enum RayTriangleValidationError {
     UnexpectedTriangleLocation,
     /// A constructed candidate did not retain its point/triangle location.
     MissingTriangleLocation,
-    /// The ray parameter ratio was missing or present for the wrong event.
+    /// Ratio shape, division, or equality failed or was undecided under policy.
     InvalidParameterRatio,
-    /// The retained parameter was negative or could not be ordered.
+    /// A parameter was missing, negative, inconsistent with an origin event, or undecidable.
     InvalidParameter,
     /// Retained construction facts derive a different coarse relation.
     RelationMismatch,
@@ -145,48 +162,57 @@ pub enum RayTriangleValidationError {
     SourceReplayMismatch,
 }
 
-/// Exact numerator and denominator for a ray/support-plane crossing.
+/// Retained scalar expressions for a transverse ray/support-plane parameter.
 ///
-/// For ray `r(t) = origin + t * direction` and supporting plane expression
-/// `E(x) = normal . x + offset`, the strict crossing parameter is
-/// `t = -E(origin) / (normal . direction)`. Retaining the ratio keeps the
-/// division auditable and separates certified predicates from constructed geometry.
+/// For `r(t) = origin + t * direction` and `E(x) = normal . x + offset`, the
+/// construction uses `t = -E(origin) / (normal . direction)`. Public fields do
+/// not enforce this source association or a nonzero denominator. Local report
+/// validation compares the quotient with the retained parameter, not its derivation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RayTriangleParameterRatio {
-    /// Numerator `-E(origin)`.
+    /// Claimed numerator `-E(origin)`; source derivation is not enforced by this field.
     pub numerator: Real,
-    /// Denominator `normal . direction`.
+    /// Claimed denominator `normal . direction`; nonzeroness is not enforced by this field.
     pub denominator: Real,
 }
 
-/// Report-bearing ray/triangle intersection classification.
+/// Retained ray/support-plane candidate and triangle-location claim.
 ///
-/// The coarse [`RayTriangleIntersection`] relation remains available for cheap
-/// callers. This report retains the exact ray/plane parameter, constructed
-/// candidate point, and point/triangle replay location when a single candidate
-/// exists. The decomposition first certifies the
-/// supporting-plane event, then replay containment with exact predicates.
+/// A transverse plane crossing can retain a point outside the finite triangle.
+/// Origin-on-plane events with nonzero normal-direction dot product retain t = 0;
+/// coplanar events retain no single candidate and do not test planar overlap.
+/// Fields contain claims and exact expressions, without an aggregate certainty
+/// receipt. Keep the producing [`PredicateOutcome`]; local validation alone does
+/// not establish that the candidate belongs to the supplied ray or triangle.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RayTriangleIntersectionReport {
-    /// Coarse ray/triangle relation.
+    /// Stored coarse relation, which may describe a candidate outside the triangle.
     pub relation: RayTriangleIntersection,
-    /// Certified side of the ray origin relative to the triangle's supporting
-    /// plane.
+    /// Stored origin-side claim; no per-field certainty receipt is retained.
     pub origin_side: Option<PlaneSide>,
-    /// Certified sign of `normal . direction`.
+    /// Stored sign claim for `normal . direction`, without its original receipt.
     pub direction_sign: Option<Sign>,
-    /// Exact ray parameter for retained candidate-point events.
+    /// Candidate ray parameter; may use the source-vertex projection formula.
     pub parameter: Option<Real>,
-    /// Exact numerator/denominator for strict support-plane crossings.
+    /// Original support-plane ratio for transverse events, including vertex contacts.
     pub parameter_ratio: Option<RayTriangleParameterRatio>,
-    /// Exact candidate point for origin-on-plane or strict crossing events.
+    /// Stored candidate, not necessarily a triangle hit; mutable without source revalidation.
     pub point: Option<Point3>,
-    /// Location of [`Self::point`] relative to the closed triangle.
+    /// Stored location of the candidate relative to the closed triangle.
     pub triangle_location: Option<Triangle3Location>,
 }
 
 impl RayTriangleIntersectionReport {
-    /// Validate retained construction and classification facts.
+    /// Check optional-field consistency, nonnegative parameter, ratio, and derived relation.
+    ///
+    /// With no ratio, a retained parameter must be zero and origin_side must be On.
+    /// With a ratio, checks its quotient and rejects an explicitly On origin or Zero
+    /// direction sign; missing side/sign labels are not rejected by that branch.
+    /// A Disjoint report without a candidate does not have its side/sign claims checked.
+    ///
+    /// Does not check the point against a ray equation, supporting plane, or triangle,
+    /// nor derive the ratio from sources. Unknown scalar checks become parameter errors
+    /// and successful check receipts are discarded. Use source replay for recomputation.
     pub fn validate(&self, policy: PredicatePolicy) -> Result<(), RayTriangleValidationError> {
         match (self.point.is_some(), self.parameter.is_some()) {
             (true, false) => return Err(RayTriangleValidationError::InvalidParameter),
@@ -222,7 +248,10 @@ impl RayTriangleIntersectionReport {
         }
     }
 
-    /// Replay this report against source ray and triangle geometry.
+    /// Validate locally, then recompute with these sources and compare the report value.
+    ///
+    /// Unknown replay or unequal values become SourceReplayMismatch. Comparison does
+    /// not retain the new certainty/stage or prove equality of alternative constructions.
     pub fn validate_against_sources(
         &self,
         origin: &Point3,
@@ -241,14 +270,18 @@ impl RayTriangleIntersectionReport {
         }
     }
 
-    /// Return whether this report retained a constructed candidate point.
+    /// Test whether a candidate point is stored, without checking validity or triangle membership.
     pub fn has_candidate_point(&self) -> bool {
         self.point.is_some()
     }
 }
 
-/// Classify `point` relative to triangle `abc` with an explicit escalation
-/// policy.
+/// Classify a planar point relative to a closed triangle of either winding.
+///
+/// Zero triangle orientation yields Degenerate before any query-edge test. For a
+/// nondegenerate triangle, resolves AB, BC, CA orientations in that order, propagates
+/// the first Unknown, then distinguishes outside, interior, edge, and vertex.
+/// Combines consumed receipts; approximate policy does not guarantee exact decisions.
 pub fn classify_point_triangle_with_policy(
     a: &Point2,
     b: &Point2,
@@ -259,7 +292,10 @@ pub fn classify_point_triangle_with_policy(
     classify_point_triangle_impl(a, b, c, point, policy, None, None)
 }
 
-/// Derive reusable orientation evidence for ordered triangle `abc`.
+/// Construct `(b-a) x (c-a)` and retain its component-sign outcome under policy.
+///
+/// Does not reject a zero normal or Unknown signs. The returned record is associated
+/// with the ordered source vertices only by caller discipline.
 pub fn triangle3_orientation(
     a: &Point3,
     b: &Point3,
@@ -274,11 +310,13 @@ pub fn triangle3_orientation(
     }
 }
 
-/// Classify `point` relative to triangle `abc` using retained orientation.
+/// Classify a spatial point using orientation retained for the same ordered vertices.
 ///
-/// `orientation` must have been derived from the same ordered vertices with
-/// [`triangle3_orientation`]. The derived normal and its signs are reused while
-/// the point query remains immediate.
+/// The source association is required but unchecked. Accepted decided signs and
+/// Unknown outcomes are reused; a cached Unknown therefore propagates without a
+/// fresh sign attempt. Disallowed certainty triggers new signs of the stored normal,
+/// not reconstruction from the current vertices. Remaining plane/edge checks follow
+/// the supplied policy and accumulate consumed receipts.
 pub fn classify_point_triangle3_with_orientation(
     a: &Point3,
     b: &Point3,
@@ -292,13 +330,13 @@ pub fn classify_point_triangle3_with_orientation(
     classify_point_triangle3_impl(a, b, c, point, policy, &orientation.normal, normal_signs)
 }
 
-/// Classify `point` relative to the 3D triangle `abc` with an explicit
-/// predicate escalation policy.
+/// Classify a spatial point by normal nondegeneracy, coplanarity, and edge halfspaces.
 ///
-/// The classifier first certifies that `abc` has a nonzero normal, then
-/// certifies that `point` is on the supporting plane. Containment is decided by
-/// exact signs of `normal . ((edge_end - edge_start) x (point - edge_start))`
-/// for each oriented edge.
+/// A zero winding normal yields Degenerate; a nonzero plane orientation yields
+/// OffPlane. Otherwise tests `normal . ((edge_end-edge_start) x (point-edge_start))`
+/// for AB, BC, CA. All three edge calls run before their outcomes are reduced, so
+/// an unresolved edge can prevent an Outside answer even after another is negative.
+/// Decisions retain consumed certainty/stage; encountered Unknown remains explicit.
 pub fn classify_point_triangle3_with_policy(
     a: &Point3,
     b: &Point3,
@@ -311,12 +349,11 @@ pub fn classify_point_triangle3_with_policy(
     classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs)
 }
 
-/// Decide the policy-controlled sign of a triangle winding normal dotted with a
-/// reference normal.
+/// Decide the sign of `((b-a) x (c-a)) . reference_normal` under policy.
 ///
-/// The triangle normal is `(b - a) x (c - a)`. The returned sign is positive
-/// when that winding agrees with `reference_normal`, negative when it is
-/// reversed, and zero when the dot product is exactly zero.
+/// Positive/negative distinguish the two dot-product hemispheres, not parallelism.
+/// Zero includes a degenerate triangle, zero reference, or orthogonal normals.
+/// Neither vector is normalized; the scalar resolver's receipt is returned.
 pub fn triangle3_winding_normal_sign_with_policy(
     a: &Point3,
     b: &Point3,
@@ -337,14 +374,22 @@ pub fn triangle3_winding_normal_sign_with_policy(
     resolve_real_sign_direct(&dot, policy, RefinementNeed::RealRefinement)
 }
 
-/// Policy-controlled report-bearing variant of
-/// [`classify_segment_triangle3_intersection_with_policy`].
+/// Classify a segment and retain its support-plane construction and triangle location.
 ///
-/// Endpoint signs are first certified against the triangle's supporting plane.
-/// A single candidate point is retained only for endpoint-on-plane and proper
-/// crossing events, using an exact segment/plane determinant ratio. The candidate is then replayed
-/// through the exact 3D point/triangle classifier before the coarse relation is
-/// accepted.
+/// Resolves both endpoint plane orientations, constructs the segment/plane event,
+/// then classifies a single candidate against the triangle. Coplanar is a support
+/// relation without a finite-overlap test; triangle degeneracy is not rejected
+/// up front. A candidate outside the triangle is retained in a Disjoint report.
+///
+/// APPROXIMATE_512 first tries STRICT; only an unresolved attempt is retried with
+/// approximation, with successful replay marked Approximate/Refined. The internal
+/// attempt drops child receipts and labels success Exact/Exact; the wrapper does
+/// not preserve the individual decision stages. Retain the outer outcome.
+///
+/// # Panics
+///
+/// The report finisher expects a point in endpoint/proper plane events; violating
+/// that internal event invariant panics.
 pub fn classify_segment_triangle3_intersection_report_with_policy(
     p: &Point3,
     q: &Point3,
@@ -358,6 +403,12 @@ pub fn classify_segment_triangle3_intersection_report_with_policy(
     })
 }
 
+/// Build one segment report attempt under the supplied policy.
+///
+/// Evaluates both endpoint orientations before selecting the first Unknown. Their
+/// receipts are discarded when converting to side labels; the finisher also labels
+/// success Exact/Exact. Must remain behind the composite-policy wrapper when
+/// approximation is allowed.
 fn classify_segment_triangle3_intersection_report_impl(
     p: &Point3,
     q: &Point3,
@@ -393,6 +444,16 @@ fn classify_segment_triangle3_intersection_report_impl(
     finish_segment_triangle3_report(plane_event, a, b, c, policy)
 }
 
+/// Combine a plane event with candidate containment, returning a bare report in an outcome.
+///
+/// Unknown events become Unsupported/Undecided, construction failure becomes
+/// Unsupported/Exact, and every success is labelled Exact/Exact without child
+/// receipt aggregation. Disjoint/coplanar events skip containment. Endpoint/proper
+/// events classify their point and propagate Unknown.
+///
+/// # Panics
+///
+/// Panics if an endpoint/proper event has no point; callers must supply a valid event.
 fn finish_segment_triangle3_report(
     plane_event: SegmentPlaneIntersection,
     a: &Point3,
@@ -449,15 +510,15 @@ fn finish_segment_triangle3_report(
     }
 }
 
-/// Classify the intersection of a closed 3D segment `pq` with triangle `abc`
-/// using an explicit predicate policy.
+/// Classify a closed spatial segment against a triangle without retaining a report.
 ///
-/// The classifier first uses exact orientation signs to locate the segment
-/// endpoints relative to the triangle's supporting plane. A strict crossing is
-/// lowered through a homogeneous line-plane construction and only then through
-/// the existing exact point/triangle classifier. Coplanar cases are reported as
-/// a first-class exact relation instead of being projected with a primitive
-/// tolerance, keeping planar arrangement ownership in higher crates.
+/// Resolves endpoint orientations in order, merging their receipts. Both zero yields
+/// Coplanar without testing finite overlap or rejecting a degenerate triangle.
+/// Equal nonzero sides yield Disjoint; an on-plane endpoint uses point containment.
+/// A strict crossing first requires a homogeneous line/plane point to convert to
+/// affine form, then discards that point and tests input line/edge determinants.
+/// Affine conversion failure becomes Unsupported/Undecided. This path differs from
+/// the report builder, which classifies its constructed candidate.
 pub fn classify_segment_triangle3_intersection_with_policy(
     p: &Point3,
     q: &Point3,
@@ -490,8 +551,13 @@ pub fn classify_segment_triangle3_intersection_with_policy(
     )
 }
 
-/// Classify an edge against a triangle when a caller has already certified
-/// both endpoint sides against the supplied supporting plane.
+/// Classify an edge using trusted endpoint sides and a matching triangle support plane.
+///
+/// The caller must establish the side labels and source association. They are not
+/// revalidated and carry no receipt input: accumulation starts Exact/Exact. Any
+/// inherited qualification must be transported by the caller. Only zero/equal/opposite
+/// side relationships are used, so simultaneous reversal of the side convention
+/// does not change the branch.
 pub(crate) fn classify_segment_triangle3_intersection_with_preclassified_sides(
     edge: [&Point3; 2],
     triangle: [&Point3; 3],
@@ -519,6 +585,13 @@ pub(crate) fn classify_segment_triangle3_intersection_with_preclassified_sides(
     )
 }
 
+/// Reduce trusted endpoint signs, then handle endpoint or transverse containment.
+///
+/// Both zero gives Coplanar, equal nonzero gives Disjoint, and a single zero delegates
+/// to endpoint containment. A crossing uses the retained plane if present, otherwise
+/// constructs one; affine conversion is only a success gate before line/edge tests.
+/// Combines those tests with the incoming receipt. Sources, signs, and any retained
+/// plane must correspond; this helper does not check that association.
 #[allow(clippy::too_many_arguments)]
 fn classify_segment_triangle3_intersection_from_sides(
     p: &Point3,
@@ -593,16 +666,24 @@ fn classify_segment_triangle3_intersection_from_sides(
     }
 }
 
-/// Policy-controlled report-bearing variant of
-/// [`classify_ray_triangle3_intersection_with_policy`].
+/// Classify `origin + t*direction`, t >= 0, retaining a support-plane candidate when unique.
 ///
-/// The ray first certifies the origin side and the sign of
-/// `normal . direction` against the triangle's supporting plane. A candidate is
-/// retained only when the origin lies on the plane or the ray parameter
-/// `-E(origin) / (normal . direction)` is certified by sign logic to be
-/// nonnegative. The retained ratio and point/triangle replay preserve evidence
-/// before topology changes, while keeping the classic
-/// ray-plane-then-triangle-containment decomposition explicit.
+/// Zero normal-direction dot product gives Coplanar for an on-plane origin and
+/// Disjoint otherwise, including zero directions. Coplanar does not test finite
+/// triangle overlap; triangle degeneracy is not rejected up front. A ray pointing
+/// away retains no candidate. An on-plane transverse origin retains t = 0; other
+/// forward crossings use line/edge determinants and retain even outside candidates.
+/// Vertex contacts reuse the source vertex and its projection parameter while
+/// retaining the original support-plane ratio.
+///
+/// APPROXIMATE_512 tries STRICT first, then retries Unknown with approximation;
+/// successful replay is Approximate/Refined. Internal attempts discard child
+/// receipts and label success Exact/Exact. Keep the outer outcome with the report.
+///
+/// # Panics
+///
+/// Panics if reciprocal construction fails after a policy-decided nonzero plane
+/// denominator, or for the squared direction length used at a vertex contact.
 pub fn classify_ray_triangle3_intersection_report_with_policy(
     origin: &Point3,
     direction: &Point3,
@@ -616,6 +697,16 @@ pub fn classify_ray_triangle3_intersection_report_with_policy(
     })
 }
 
+/// Build one ray report attempt by origin/direction signs and triangle containment.
+///
+/// Drops child receipts and labels successful branches Exact/Exact; approximate
+/// use requires the public composite wrapper. Transverse vertex hits reuse the
+/// source vertex and dot-product parameter but keep the original plane ratio.
+///
+/// # Panics
+///
+/// Expects reciprocal construction to succeed for the decided nonzero plane
+/// denominator and, at a vertex, the direction's squared length.
 fn classify_ray_triangle3_intersection_report_impl(
     origin: &Point3,
     direction: &Point3,
@@ -755,13 +846,11 @@ fn classify_ray_triangle3_intersection_report_impl(
     }
 }
 
-/// Classify the intersection of a 3D ray with triangle `abc` using an explicit
-/// predicate policy.
+/// Return the ray report's coarse relation, preserving the outer outcome receipt.
 ///
-/// The ray parameter is tested without division by comparing the signs of
-/// `-(plane(origin))` and `normal.direction`. The actual candidate point is
-/// constructed only after the parameter is certified nonnegative. The final triangle
-/// containment reuses the existing exact edge-halfspace classifier.
+/// Uses [`classify_ray_triangle3_intersection_report_with_policy`], including its
+/// strict-first retry, candidate construction, coplanar convention, and panic paths.
+/// This is not a construction-free classifier.
 pub fn classify_ray_triangle3_intersection_with_policy(
     origin: &Point3,
     direction: &Point3,
@@ -781,6 +870,12 @@ pub fn classify_ray_triangle3_intersection_with_policy(
     }
 }
 
+/// Consume a matching winding normal, reject degeneracy/off-plane queries, then test edges.
+///
+/// Trusts the normal/source association and supplied sign outcome. Evaluates all
+/// three edge calls before reducing AB, BC, CA outcomes; a later Unknown prevents
+/// an earlier negative edge from becoming Outside. Combines consumed receipts,
+/// then uses zero counts to distinguish interior, edge, and vertex.
 fn classify_point_triangle3_impl(
     a: &Point3,
     b: &Point3,
@@ -849,8 +944,13 @@ fn classify_point_triangle3_impl(
     PredicateOutcome::decided(location, certainty, stage)
 }
 
-/// Classify `point` relative to tetrahedron `abcd` with an explicit predicate
-/// escalation policy.
+/// Classify a point in a closed tetrahedron using oriented-volume signs.
+///
+/// Zero base orientation yields Degenerate. Otherwise evaluates all four vertex
+/// replacement determinants before reducing them in order. A sign opposite the
+/// base means Outside; with no opposite sign, zero counts 0, 1, 2, and >= 3 mean
+/// Inside, OnFace, OnEdge, and OnVertex. An encountered Unknown propagates and
+/// successful decisions combine the consumed receipts, for either winding.
 pub fn classify_point_tetrahedron_with_policy(
     a: &Point3,
     b: &Point3,
@@ -921,12 +1021,12 @@ pub fn classify_point_tetrahedron_with_policy(
     PredicateOutcome::decided(location, certainty, stage)
 }
 
-/// Classify `point` relative to triangle `abc` using a retained orientation.
+/// Classify a planar point using an orientation outcome for the same ordered triangle.
 ///
-/// `orientation` must be the exact [`crate::orient2`] outcome for the same
-/// ordered vertices `a`, `b`, and `c`. Retaining that compact outcome avoids
-/// recomputing the triangle's fixed orientation across repeated point queries
-/// while keeping the query itself immediate.
+/// Source identity and the claimed sign/stage are trusted. Decided certainty must
+/// be accepted by policy or orientation is recomputed. Unknown is reused unchanged,
+/// so it prevents classification without a fresh orientation attempt. Subsequent
+/// edge checks combine their receipts with the retained or recomputed orientation.
 pub fn classify_point_triangle_with_orientation(
     a: &Point2,
     b: &Point2,
@@ -939,12 +1039,13 @@ pub fn classify_point_triangle_with_orientation(
     classify_point_triangle_impl(a, b, c, point, policy, None, orientation)
 }
 
-/// Classify `point` relative to triangle `abc` with both an explicit policy and
-/// cached structural facts.
+/// Classify a planar point using facts associated with the current triangle.
 ///
-/// Cached facts can certify structurally degenerate triangles without building
-/// the orientation determinant. Non-degenerate containment still uses exact
-/// orientation signs for the three triangle edges.
+/// Known-degenerate facts supply a Zero/Exact/Structural orientation and return
+/// Degenerate without checking vertices.
+/// All other facts fall through to direct orientation; containment still resolves
+/// edge signs under policy. The source association is an unchecked precondition,
+/// and the fact record supplies no inherited certainty receipt.
 pub fn classify_point_triangle_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
@@ -956,6 +1057,12 @@ pub fn classify_point_triangle_with_policy_and_facts(
     classify_point_triangle_impl(a, b, c, point, policy, Some(facts), None)
 }
 
+/// Select cached, fact-assisted, or direct orientation, then resolve three edge signs.
+///
+/// Cached orientation takes precedence over facts and is trusted as already policy
+/// screened. Zero returns Degenerate; otherwise AB, BC, CA run sequentially until
+/// Unknown, without early Outside short-circuiting. Four successful receipts are
+/// combined before opposite-sign and zero-count classification.
 fn classify_point_triangle_impl(
     a: &Point2,
     b: &Point2,
@@ -1062,6 +1169,10 @@ fn classify_point_triangle_impl(
     PredicateOutcome::decided(location, certainty, stage)
 }
 
+/// Reject only decided outcomes whose certainty the policy disallows.
+///
+/// Returns Some for accepted decisions and for Unknown, so cached uncertainty is
+/// not retried. Does not validate the value, stage, source identity, or proof scope.
 #[inline]
 fn reusable_outcome<T: Copy>(
     outcome: PredicateOutcome<T>,
@@ -1073,6 +1184,7 @@ fn reusable_outcome<T: Copy>(
     }
 }
 
+/// Select fact-assisted orientation when facts exist, otherwise direct planar orientation.
 fn triangle_orientation_with_optional_facts(
     a: &Point2,
     b: &Point2,
@@ -1087,6 +1199,10 @@ fn triangle_orientation_with_optional_facts(
     }
 }
 
+/// Trust known degeneracy as Zero/Exact/Structural; otherwise compute planar orientation.
+///
+/// Facts must correspond to the supplied vertices. Known nondegeneracy alone does
+/// not determine winding and does not bypass the determinant.
 fn triangle_orientation_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
@@ -1104,13 +1220,20 @@ fn triangle_orientation_with_policy_and_facts(
     }
 }
 
+/// Unnormalized exact component expressions of a spatial triangle's winding normal.
+///
+/// May be zero; construction alone does not decide degeneracy or retain vertex identity.
 #[derive(Clone, Debug)]
 struct Triangle3Normal {
+    /// X component of the unnormalized winding normal.
     x: Real,
+    /// Y component of the unnormalized winding normal.
     y: Real,
+    /// Z component of the unnormalized winding normal.
     z: Real,
 }
 
+/// Construct `(b-a) x (c-a)` with difference-of-products kernels preserving cancellations.
 fn triangle3_normal(a: &Point3, b: &Point3, c: &Point3) -> Triangle3Normal {
     let abx = sub_ref(&b.x, &a.x);
     let aby = sub_ref(&b.y, &a.y);
@@ -1128,6 +1251,9 @@ fn triangle3_normal(a: &Point3, b: &Point3, c: &Point3) -> Triangle3Normal {
     }
 }
 
+/// Construct the oriented support equation `normal . x - normal . a = 0`.
+///
+/// Does not reject a zero normal: degenerate triangles produce a zero equation.
 fn triangle_support_plane(a: &Point3, b: &Point3, c: &Point3) -> Plane3 {
     let normal = triangle3_normal(a, b, c);
     let normal_point = Point3::new(normal.x, normal.y, normal.z);
@@ -1135,6 +1261,9 @@ fn triangle_support_plane(a: &Point3, b: &Point3, c: &Point3) -> Plane3 {
     Plane3::new(normal_point, offset)
 }
 
+/// Construct a homogeneous line with direction `end-start` and moment `start x direction`.
+///
+/// Does not reject coincident endpoints; callers must establish a usable line.
 fn line_from_points(start: &Point3, end: &Point3) -> HomogeneousLine3 {
     let direction = Point3::new(
         sub_ref(&end.x, &start.x),
@@ -1158,6 +1287,7 @@ fn line_from_points(start: &Point3, end: &Point3) -> HomogeneousLine3 {
     HomogeneousLine3::new(direction, moment)
 }
 
+/// Form `plane.normal . point + plane.offset` as a four-term signed product sum.
 fn plane_expression_at(plane: &Plane3, point: &Point3) -> Real {
     let one = Real::one();
     Real::signed_product_sum(
@@ -1171,6 +1301,7 @@ fn plane_expression_at(plane: &Plane3, point: &Point3) -> Real {
     )
 }
 
+/// Form a three-component dot product with the shared signed-product-sum kernel.
 fn dot_point3(left: &Point3, right: &Point3) -> Real {
     Real::signed_product_sum(
         [true; 3],
@@ -1182,10 +1313,15 @@ fn dot_point3(left: &Point3, right: &Point3) -> Real {
     )
 }
 
+/// Represent exact negation as zero minus the supplied scalar expression.
 fn neg_real(value: &Real) -> Real {
     sub_ref(&Real::from(0), value)
 }
 
+/// Classify an on-plane endpoint and map closed-triangle membership to BoundaryTouch.
+///
+/// Outside, OffPlane, and Degenerate map to Disjoint. Preserves Unknown and merges
+/// the point-classifier receipt with the incoming segment-side receipt.
 fn segment_endpoint_triangle_relation(
     endpoint: &Point3,
     a: &Point3,
@@ -1219,6 +1355,11 @@ fn segment_endpoint_triangle_relation(
     }
 }
 
+/// Derive a relation from plane-event kind and an optional, trusted triangle-location label.
+///
+/// Disjoint/coplanar require no location; endpoint/proper require one. Unknown or
+/// failed construction is a RelationMismatch. Does not validate the event itself
+/// or recompute containment; the outer validator checks the plane event first.
 fn relation_from_segment_plane_event(
     plane_event: &SegmentPlaneIntersection,
     triangle_location: Option<Triangle3Location>,
@@ -1253,6 +1394,10 @@ fn relation_from_segment_plane_event(
     }
 }
 
+/// Map a single plane candidate's location to segment contact, trusting the inputs.
+///
+/// Proper+Inside gives Proper; included endpoint locations and proper edge/vertex
+/// locations give BoundaryTouch. All other combinations give Disjoint.
 fn relation_from_constructed_segment_triangle_point(
     plane_relation: SegmentPlaneRelation,
     location: Triangle3Location,
@@ -1273,6 +1418,13 @@ fn relation_from_constructed_segment_triangle_point(
     }
 }
 
+/// Reduce the report's optional-field shape and stored location to a ray relation.
+///
+/// Coplanar requires no candidate data and On/Zero side/direction. Other candidate
+/// branches require point, parameter, and location, then choose origin or transverse
+/// mapping by ratio presence. Disjoint without a candidate checks absent data but
+/// does not verify side/direction claims. Does not validate parameter values or
+/// point geometry, and may derive a relation different from the stored one.
 fn relation_from_ray_report_facts(
     report: &RayTriangleIntersectionReport,
 ) -> Result<RayTriangleIntersection, RayTriangleValidationError> {
@@ -1332,6 +1484,7 @@ fn relation_from_ray_report_facts(
     }
 }
 
+/// Map an included origin-on-plane location to BoundaryTouch and every other label to Disjoint.
 fn relation_from_ray_origin_triangle_point(location: Triangle3Location) -> RayTriangleIntersection {
     match location {
         Triangle3Location::Inside | Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
@@ -1343,18 +1496,14 @@ fn relation_from_ray_origin_triangle_point(location: Triangle3Location) -> RayTr
     }
 }
 
-/// Locate where a line crosses triangle `abc`, given that it crosses the
-/// support plane transversally (so the triangle is not degenerate).
+/// Locate a transverse line/triangle crossing by scalar triple products on source coordinates.
 ///
-/// Each edge `pq` is classified by the Plucker side product
-/// `det(p - origin, q - origin, direction)`. The line passes through the
-/// interior exactly when the three products share a strict sign, and through
-/// an edge or vertex when one or two of them are zero. Only the input
-/// coordinates enter these products, so a line through a vertex or edge
-/// yields zeros that structural facts can certify; classifying the
-/// constructed intersection point instead would ask refinement to prove
-/// exact zeros it cannot. A vertex contact also reports which vertex
-/// (0, 1 or 2 for a, b, c).
+/// Requires a nondegenerate triangle and a line transverse to its support plane.
+/// Computes `det(edge_start-origin, edge_end-origin, direction)` for AB, BC, CA
+/// before reducing outcomes in that order. Mixed strict signs give Outside; zeros
+/// select an edge or vertex (indices 0=A, 1=B, 2=C), and all zero gives Degenerate.
+/// Avoiding reconstructed coordinates can preserve useful source cancellations,
+/// but unresolved signs still return Unknown. Successful receipts are combined.
 fn line_triangle3_crossing_location(
     origin: &Point3,
     direction: &Point3,
@@ -1412,6 +1561,7 @@ fn line_triangle3_crossing_location(
     PredicateOutcome::decided(crossing, certainty, stage)
 }
 
+/// Map transverse candidate Inside to Proper, edge/vertex to BoundaryTouch, otherwise Disjoint.
 fn relation_from_constructed_ray_triangle_point(
     location: Triangle3Location,
 ) -> RayTriangleIntersection {
@@ -1426,6 +1576,9 @@ fn relation_from_constructed_ray_triangle_point(
     }
 }
 
+/// Require parameter >= 0 under policy, mapping negative or Unknown to InvalidParameter.
+///
+/// Discards the successful ordering receipt.
 fn assert_ray_parameter_nonnegative(
     parameter: &Real,
     policy: PredicatePolicy,
@@ -1440,6 +1593,10 @@ fn assert_ray_parameter_nonnegative(
     }
 }
 
+/// Divide the retained ratio under policy and require equality with the parameter.
+///
+/// Division failure, Unknown, or unequal values become InvalidParameterRatio.
+/// Discards successful receipts and does not verify the ratio's source derivation.
 fn validate_ray_parameter_ratio(
     ratio: &RayTriangleParameterRatio,
     parameter: &Real,
@@ -1459,6 +1616,10 @@ fn validate_ray_parameter_ratio(
     }
 }
 
+/// Require an On origin label and a policy-decided zero parameter.
+///
+/// Other labels, nonzero values, and Unknown become InvalidParameter. Successful
+/// comparison receipts are discarded; the source origin is not supplied.
 fn validate_ray_origin_parameter(
     origin_side: Option<PlaneSide>,
     parameter: &Real,
@@ -1477,6 +1638,7 @@ fn validate_ray_origin_parameter(
     }
 }
 
+/// Construct `origin + parameter*direction` without checking parameter domain or incidence.
 fn ray_point_at(origin: &Point3, direction: &Point3, parameter: &Real) -> Point3 {
     Point3::new(
         add_ref(&origin.x, &mul_ref(&direction.x, parameter)),
@@ -1485,6 +1647,7 @@ fn ray_point_at(origin: &Point3, direction: &Point3, parameter: &Real) -> Point3
     )
 }
 
+/// Merge a decided sign's receipt into segment accumulators or return a typed Unknown outcome.
 fn segment_triangle_sign(
     outcome: PredicateOutcome<Sign>,
     certainty: &mut Certainty,
@@ -1506,10 +1669,12 @@ fn segment_triangle_sign(
     }
 }
 
+/// Resolve a ray-construction scalar sign directly under policy with RealRefinement fallback.
 fn sign_for_ray_triangle(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<Sign> {
     resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement)
 }
 
+/// Resolve normal components in x/y/z order, returning their combined receipt or first Unknown.
 fn triangle3_normal_signs_outcome(
     normal: &Triangle3Normal,
     policy: PredicatePolicy,
@@ -1527,6 +1692,10 @@ fn triangle3_normal_signs_outcome(
     }
 }
 
+/// Resolve `normal . ((edge_end-edge_start) x (point-edge_start))` and merge its receipt.
+///
+/// The normal must correspond to the containing triangle; this helper checks no
+/// source association, coplanarity, or normal nondegeneracy.
 fn edge_halfspace3_sign(
     normal: &Triangle3Normal,
     start: &Point3,
@@ -1560,6 +1729,7 @@ fn edge_halfspace3_sign(
     )
 }
 
+/// Resolve three scalar signs sequentially, accumulating receipts until the first Unknown.
 fn real_signs3(
     values: [&Real; 3],
     policy: PredicatePolicy,
@@ -1585,6 +1755,7 @@ fn real_signs3(
     ])
 }
 
+/// Extract a sign while merging its receipt, or preserve uncertainty in Triangle3Unknown.
 fn triangle3_sign(
     outcome: PredicateOutcome<Sign>,
     certainty: &mut Certainty,
@@ -1604,6 +1775,7 @@ fn triangle3_sign(
     }
 }
 
+/// Extract a sign while merging its receipt, or return uncertainty typed for tetrahedron location.
 fn tetrahedron_sign(
     outcome: PredicateOutcome<Sign>,
     certainty: &mut Certainty,
@@ -1625,25 +1797,36 @@ fn tetrahedron_sign(
     }
 }
 
+/// One decided orientation sign and its receipt, retained until four-way planar aggregation.
 #[derive(Clone, Copy)]
 struct DecidedSign {
+    /// Decided orientation sign.
     sign: Sign,
+    /// Qualification of this sign decision.
     certainty: Certainty,
+    /// Escalation reached by this sign decision.
     stage: Escalation,
 }
 
+/// Unresolved reason/stage transported through spatial triangle sign helpers.
 #[derive(Clone, Copy, Debug)]
 struct Triangle3Unknown {
+    /// Reason the sign query remains unresolved.
     needed: RefinementNeed,
+    /// Escalation stage reported by that unresolved query.
     stage: Escalation,
 }
 
 impl Triangle3Unknown {
+    /// Rebuild an Unknown outcome of the caller's result type without changing reason or stage.
     fn into_outcome<T>(self) -> PredicateOutcome<T> {
         PredicateOutcome::unknown(self.needed, self.stage)
     }
 }
 
+/// Select the weakest of four certainties by the shared rank ordering.
+///
+/// The Exact fallback is unreachable for this fixed nonempty array.
 fn combine_certainties(values: [Certainty; 4]) -> Certainty {
     values
         .into_iter()
@@ -1651,6 +1834,9 @@ fn combine_certainties(values: [Certainty; 4]) -> Certainty {
         .unwrap_or(Certainty::Exact)
 }
 
+/// Select the furthest of four escalation stages by the shared rank ordering.
+///
+/// The Undecided fallback is unreachable for this fixed nonempty array.
 fn combine_stages(values: [Escalation; 4]) -> Escalation {
     values
         .into_iter()
@@ -1658,25 +1844,37 @@ fn combine_stages(values: [Escalation; 4]) -> Escalation {
         .unwrap_or(Escalation::Undecided)
 }
 
+/// Finite triangle, tetrahedron, retained-report, and unresolved-sign regression controls.
+///
+/// Most geometry checks compare values only; helper controls separately assert
+/// selected receipt ranks. These fixtures do not prove universal exact closure.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::test_support::exact_normal_positive;
 
+    /// Policy permitting the terminal approximation in finite geometry controls.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Import a finite binary64 fixture exactly; panic on an invalid scalar literal.
     fn real(value: f64) -> hyperreal::Real {
         hyperreal::Real::try_from(value).expect("finite test Real")
     }
 
+    /// Build a planar fixture from the exact binary values of two finite literals.
     fn p2(x: f64, y: f64) -> Point2 {
         Point2::new(real(x), real(y))
     }
 
+    /// Build a spatial fixture from the exact binary values of three finite literals.
     fn p3(x: f64, y: f64, z: f64) -> Point3 {
         Point3::new(real(x), real(y), real(z))
     }
 
+    /// Assert normalization of the original unit-circle identity, then return the unresolved control.
+    ///
+    /// Uses the shared angle-addition zero to keep uncertainty tests distinct from the
+    /// now-certified `sin(e)^2 + cos(e)^2 - 1` identity.
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -1690,6 +1888,7 @@ mod tests {
         crate::test_support::terminally_unresolved_zero()
     }
 
+    /// Check interior classification for both planar windings under APPROX, comparing values.
     #[test]
     fn classifies_point_inside_triangle() {
         let a = p2(0.0, 0.0);
@@ -1707,6 +1906,7 @@ mod tests {
         );
     }
 
+    /// Check one planar edge-interior query returns OnEdge under APPROX.
     #[test]
     fn classifies_point_on_triangle_edge() {
         let a = p2(0.0, 0.0);
@@ -1720,6 +1920,7 @@ mod tests {
         );
     }
 
+    /// Check five spatial point locations: inside, edge, vertex, outside, and off plane.
     #[test]
     fn classifies_point_inside_3d_triangle() {
         let a = p3(0.0, 0.0, 0.0);
@@ -1748,6 +1949,7 @@ mod tests {
         );
     }
 
+    /// Check winding-normal dot signs for upward and downward reference normals.
     #[test]
     fn triangle_winding_normal_sign_classifies_reference_direction() {
         let a = p3(0.0, 0.0, 0.0);
@@ -1766,6 +1968,9 @@ mod tests {
         );
     }
 
+    /// Check retained normal signs are decided and an immediate spatial query is Inside.
+    ///
+    /// Does not assert a particular receipt or dispatch count.
     #[test]
     fn immediate_triangle3_classifier_reuses_orientation_evidence() {
         let a = p3(0.0, 0.0, 0.0);
@@ -1791,6 +1996,9 @@ mod tests {
         );
     }
 
+    /// Inject disallowed approximate normal-sign evidence and check STRICT still returns Inside.
+    ///
+    /// Checks the resulting value, not the recomputed receipt or dispatch count.
     #[test]
     fn strict_triangle3_classifier_recomputes_rejected_cached_certainty() {
         let a = p3(0.0, 0.0, 0.0);
@@ -1819,6 +2027,7 @@ mod tests {
         );
     }
 
+    /// Check coarse segment relations for crossing, boundary, outside, and coplanar controls.
     #[test]
     fn segment_triangle3_intersection_distinguishes_crossing_boundary_and_coplanar() {
         let a = p3(0.0, 0.0, 0.0);
@@ -1875,6 +2084,9 @@ mod tests {
         );
     }
 
+    /// Check a crossing report retains event, ratio, point presence, and Inside location.
+    ///
+    /// Runs local/source validation but does not assert the candidate coordinates.
     #[test]
     fn segment_triangle3_report_retains_crossing_construction() {
         let a = p3(0.0, 0.0, 0.0);
@@ -1902,6 +2114,7 @@ mod tests {
         );
     }
 
+    /// Distinguish endpoint-vertex and coplanar reports, including location presence and local validation.
     #[test]
     fn segment_triangle3_report_keeps_endpoint_and_coplanar_cases_distinct() {
         let a = p3(0.0, 0.0, 0.0);
@@ -1950,6 +2163,7 @@ mod tests {
         assert_eq!(coplanar.validate(APPROX), Ok(()));
     }
 
+    /// Check ray relations for forward crossing, away direction, vertex contact, and coplanarity.
     #[test]
     fn ray_triangle3_intersection_distinguishes_direction_and_origin_cases() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2006,6 +2220,7 @@ mod tests {
         );
     }
 
+    /// Check a forward report's t = 2, point (1,1,0), side/sign, ratio, location, and replay.
     #[test]
     fn ray_triangle3_report_retains_crossing_construction() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2034,6 +2249,10 @@ mod tests {
         );
     }
 
+    /// Check STRICT crossing with a positive exact-normal-form direction retains t = 1/2.
+    ///
+    /// Checks the candidate's zero z coordinate and local/source validation; no dispatch
+    /// count assertion establishes which successful proof path ran.
     #[test]
     fn ray_triangle3_report_reuses_policy_certified_nonzero_direction() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2086,6 +2305,7 @@ mod tests {
         );
     }
 
+    /// Distinguish t = 0 origin contact from coplanarity and reject a forged nonzero origin parameter.
     #[test]
     fn ray_triangle3_report_keeps_origin_touch_and_coplanar_cases_distinct() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2136,6 +2356,7 @@ mod tests {
         );
     }
 
+    /// Check parallel/away reports omit candidates while an outside forward crossing retains one.
     #[test]
     fn ray_triangle3_report_validates_parallel_away_and_outside_candidates() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2193,6 +2414,7 @@ mod tests {
         assert_eq!(outside_candidate.validate(APPROX), Ok(()));
     }
 
+    /// Check a collinear spatial triangle is Degenerate under APPROX.
     #[test]
     fn classifies_degenerate_3d_triangle() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2205,6 +2427,7 @@ mod tests {
         );
     }
 
+    /// Check tetrahedron interior, face, edge, vertex, and outside values for finite fixtures.
     #[test]
     fn classifies_point_relative_to_tetrahedron() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2234,6 +2457,7 @@ mod tests {
         );
     }
 
+    /// Check a coplanar four-vertex tetrahedron is Degenerate under APPROX.
     #[test]
     fn classifies_degenerate_tetrahedron() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2247,6 +2471,7 @@ mod tests {
         );
     }
 
+    /// Check a collinear planar triangle is Degenerate under APPROX.
     #[test]
     fn classifies_degenerate_triangle() {
         let a = p2(0.0, 0.0);
@@ -2260,6 +2485,7 @@ mod tests {
         );
     }
 
+    /// Check axis-aligned triangle facts identify degeneracy and the STRICT classifier consumes it.
     #[test]
     fn fact_aware_classifier_uses_structural_triangle_degeneracy() {
         let a = p2(0.0, 0.0);
@@ -2277,6 +2503,7 @@ mod tests {
         );
     }
 
+    /// Check retained planar orientation/facts and immediate Inside/Outside classifications.
     #[test]
     fn immediate_triangle_classifier_accepts_cached_orientation() {
         let a = p2(0.0, 0.0);
@@ -2317,6 +2544,10 @@ mod tests {
         );
     }
 
+    /// Exercise selected segment-report corruptions, replay mismatch, and unresolved construction branches.
+    ///
+    /// Includes missing/unexpected locations, failed/unknown plane events, and terminal
+    /// zero candidates. These finite controls do not enumerate every malformed report.
     #[test]
     fn retained_segment_triangle_report_rejects_relation_location_and_replay_corruption() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2431,6 +2662,9 @@ mod tests {
         ));
     }
 
+    /// Exercise selected ray field-shape, replay, ratio, negative, and unresolved-parameter failures.
+    ///
+    /// Despite the test name, the finite mutations are not exhaustive over all reports.
     #[test]
     fn retained_ray_report_rejects_every_shape_and_parameter_corruption() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2543,6 +2777,9 @@ mod tests {
         );
     }
 
+    /// Visit all six location labels and assert mapper results belong to permitted relation sets.
+    ///
+    /// Does not assert the expected mapping separately for each individual label.
     #[test]
     fn relation_helpers_cover_all_segment_and_ray_location_collapses() {
         for location in [
@@ -2586,6 +2823,10 @@ mod tests {
         }
     }
 
+    /// Exercise selected optional-field shapes in the relation reducers directly.
+    ///
+    /// Bypasses outer scalar validation and includes derived relations differing from
+    /// stored labels; does not enumerate all field combinations or prove source geometry.
     #[test]
     fn retained_report_fact_reduction_rejects_every_optional_field_shape() {
         let candidate = p3(0.0, 0.0, 0.0);
@@ -2717,6 +2958,7 @@ mod tests {
         );
     }
 
+    /// Check STRICT propagates retained, triangle, and each planar edge uncertainty; check fact-assisted success.
     #[test]
     fn strict_planar_triangle_classifier_propagates_triangle_and_each_edge_uncertainty() {
         let a = p2(0.0, 0.0);
@@ -2791,6 +3033,7 @@ mod tests {
         );
     }
 
+    /// Check STRICT spatial normal/plane/edge and tetrahedron determinant uncertainties remain Unknown.
     #[test]
     fn strict_spatial_triangle_and_tetrahedron_classifiers_propagate_uncertainty() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2866,6 +3109,7 @@ mod tests {
         }
     }
 
+    /// Check unresolved segment/ray sources propagate Unknown and an inconsistent retained plane is Unsupported.
     #[test]
     fn strict_segment_and_ray_triangle_apis_propagate_unresolved_constructions() {
         let a = p3(0.0, 0.0, 0.0);
@@ -2985,6 +3229,7 @@ mod tests {
         ));
     }
 
+    /// Check uncertainty transport at each three-sign position and explicit certainty/stage rank controls.
     #[test]
     fn triangle_sign_and_trace_helpers_cover_unknown_positions_and_all_ranks() {
         for values in [
