@@ -1,3 +1,4 @@
+//! Hidden SVG syntax/extension validation versus successful reusable empty geometry.
 #![cfg(feature = "svg-io")]
 
 use csgrs::io::{
@@ -7,6 +8,8 @@ use csgrs::io::{
 use hypercurve::{BooleanOp, CurveCertainty, PredicatePolicy, evaluate_under};
 
 #[test]
+/// Separates malformed hidden paths from a valid hidden elliptical path in both policies.
+/// Checks certified empty replay, deterministic bytes and union/XOR reuse with a square.
 fn svg_adapter_keeps_hidden_path_errors_distinct_from_replayable_empty() {
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let outcome = evaluate_under(policy, || {

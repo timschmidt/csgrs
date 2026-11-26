@@ -1,3 +1,4 @@
+//! Generated circular fillet replay with a selected algebraic coordinate dependency.
 #![cfg(feature = "svg-io")]
 
 use csgrs::io::svg::{export_svg, import_svg};
@@ -8,6 +9,9 @@ use hypercurve::{
 };
 
 #[test]
+/// Replays a radius-1/4 fillet translated by a selected seventh-degree root.
+/// Checks family, exact contacts and interior incidence, then subdivision,
+/// reversed traversal, endpoint identity and deterministic second serialization.
 fn svg_adapter_replays_a_selected_circle_before_split_reversal_and_another_archive() {
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     let mut coefficients = vec![Real::zero(); 8];

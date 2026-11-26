@@ -1,7 +1,9 @@
+//! Filled SVG replay with independent exact expectations and subsequent modeling operations.
 #![cfg(feature = "svg-io")]
 
 #[macro_use]
 #[path = "../crates/hypercurve/src/test_macros.rs"]
+/// Shared exact-literal test macros from the owning curve layer.
 mod test_macros;
 
 use csgrs::io::svg::{export_svg, import_svg};
@@ -11,6 +13,9 @@ use hypercurve::{
 };
 
 #[test]
+/// Replays an annulus centered at `(sqrt(2), 3)` with its hole and exact membership.
+/// Separately checks XOR equality, deterministic bytes and reversible offsets for
+/// this fixture; the offset identity is not claimed for arbitrary regularized regions.
 fn svg_adapter_retains_exact_filled_annulus_before_further_offsets() {
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     let x = Real::from(2).sqrt().unwrap();
@@ -70,6 +75,9 @@ fn svg_adapter_retains_exact_filled_annulus_before_further_offsets() {
 }
 
 #[test]
+/// Consumes the archived selected-center half-circle in a constrained radius-1/4 fillet.
+/// Checks independent contacts/material probes, loop structure, XOR replay and
+/// fixture-specific growth/shrink recovery without materializing the center coordinates.
 fn svg_adapter_consumes_generated_selected_circle_fillet_and_offsets() {
     use hypercurve::{
         BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
@@ -187,6 +195,8 @@ fn svg_adapter_consumes_generated_selected_circle_fillet_and_offsets() {
 }
 
 #[test]
+/// Replays canonical and Boolean-empty regions through union/offset continuation.
+/// Also requires strict export to reject an empty region with unresolved inherited qualification.
 fn svg_adapter_replays_empty_results_and_preserves_qualification() {
     let center = Point2::new(Real::zero(), Real::zero());
     let start = Point2::new(Real::one(), Real::zero());
@@ -253,6 +263,8 @@ fn svg_adapter_replays_empty_results_and_preserves_qualification() {
 }
 
 #[test]
+/// Checks exact nested affine cancellation against an independently constructed rational rectangle.
+/// Exercises both policy envelopes, deterministic replay and difference/union continuation.
 fn svg_adapter_retains_exact_authored_affine_composition_through_replay() {
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
@@ -319,6 +331,8 @@ fn svg_adapter_retains_exact_authored_affine_composition_through_replay() {
 }
 
 #[test]
+/// Keeps tiny positive paint active, signed zero empty and out-of-range paint malformed.
+/// Checks independent rational fill/stroke geometry, replay and empty-result reuse in both policies.
 fn svg_adapter_retains_exact_paint_selection_and_typed_range_errors() {
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
@@ -427,6 +441,8 @@ fn svg_adapter_retains_exact_paint_selection_and_typed_range_errors() {
 }
 
 #[test]
+/// Combines exact polygon/polyline/line coordinates, affine transforms and tiny paint values.
+/// Checks independent bounds/endpoints, set equality, replay, continuation and invalid hidden input.
 fn svg_adapter_combines_exact_primitive_coordinates_paint_and_transforms() {
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
@@ -550,6 +566,8 @@ fn svg_adapter_combines_exact_primitive_coordinates_paint_and_transforms() {
 }
 
 #[test]
+/// Checks exact unrounded rectangles, including one zero corner radius, against rational bounds.
+/// Separates validated hidden emptiness from malformed dimensions/radii and exercises replay/reuse.
 fn svg_adapter_preserves_exact_rectangles_and_validated_empty_selection() {
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
@@ -654,6 +672,7 @@ fn svg_adapter_preserves_exact_rectangles_and_validated_empty_selection() {
 }
 
 #[test]
+/// Keeps visible rounded-rectangle underflow/overflow cases explicitly unsupported in both policies.
 fn svg_adapter_keeps_rounded_sampling_limits_unsupported() {
     for policy in [
         hypercurve::PredicatePolicy::STRICT,

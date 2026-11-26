@@ -11,12 +11,13 @@ use hypermesh::{Triangle, TriangleMesh};
 use std::cmp::Ordering;
 use std::io::Cursor;
 
-// `Drawing::new()` initializes its creation and update dates from the wall
-// clock. Besides making otherwise identical exports differ, the decimal DXF
-// representation of those dates can change length from one second to the next.
-// Use a documented sentinel so `to_dxf` is reproducible.
+/// Fixed creation/update instant: 2000-01-01 12:00:00 UTC.
+/// Replaces `Drawing::new()` wall-clock dates so export does not vary with call time.
 const DXF_EXPORT_TIMESTAMP_SECONDS: i64 = 946_728_000; // 2000-01-01 12:00:00 UTC
 
+/// Creates the library's default drawing with fixed local and universal date fields.
+/// The local fields still use the host timezone; this does not promise identical
+/// bytes across different timezone configurations or DXF library versions.
 fn reproducible_drawing() -> Drawing {
     let mut drawing = Drawing::new();
     let timestamp = DateTime::<Utc>::from_timestamp(DXF_EXPORT_TIMESTAMP_SECONDS, 0)
@@ -29,12 +30,22 @@ fn reproducible_drawing() -> Drawing {
     drawing
 }
 
+/// Promotes a finite parser/sampler binary64 value exactly, with a labeled text error.
+/// Exactness is relative to that value, not to an original decimal token or analytic curve.
 fn real(value: f64, field: &'static str) -> Result<Real, IoError> {
     Real::try_from(value).map_err(|error| {
         IoError::MalformedInput(format!("DXF {field} is not finite: {error}"))
     })
 }
 
+/// Builds the object-coordinate basis from a checked normalized extrusion direction.
+///
+/// The arbitrary-axis rule chooses world Y when both normalized X and Y
+/// magnitudes are strictly below 1/64, otherwise world Z. Comparisons use the
+/// selected policy, short-circuit X before Y, and contribute certainty; vector
+/// normalization uses the scalar layer's checked operation. An unresolved axis
+/// comparison is a textual geometry error, while normalization failures become
+/// textual malformed-input errors. Returns `(X, Y, normal)` with `Y = normal × X`.
 fn ocs_basis(
     normal: dxf::Vector,
     decisions: &GeometryDecisions,
@@ -76,6 +87,9 @@ fn ocs_basis(
     Ok((x_axis, y_axis, normal))
 }
 
+/// Maps parser coordinates to world space by the supplied `(X, Y, normal)` basis.
+/// Promotes each finite component exactly and forms the linear combination;
+/// the caller supplies a valid basis, and no extra origin translation is applied.
 fn ocs_point(
     point: dxf::Point,
     basis: &(Vector3, Vector3, Vector3),
@@ -91,6 +105,12 @@ fn ocs_point(
     ))
 }
 
+/// Validates the first three corners, then triangulates the full local index ring.
+///
+/// Requires at least three points. A collinear leading triple fails even if later
+/// points could define a plane. Shared triangulation may fan a nonplanar ring;
+/// success does not prove a simple polygon or a closed mesh. Native certainty is
+/// accumulated, but failures are converted to textual geometry diagnostics.
 fn push_polygon(
     points: Vec<Point3>,
     decisions: &GeometryDecisions,
@@ -118,11 +138,33 @@ fn push_polygon(
 }
 
 /// Imports supported DXF surface entities as native triangle geometry.
+/// Uses [`from_dxf_with_context`] with strict decisions and consumes the separate
+/// outcome; embedded construction qualification remains on the returned mesh.
 pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
     from_dxf_with_context(data, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Import DXF surfaces using the selected predicates and triangulation policy.
+///
+/// Accepts closed `POLYLINE`, `CIRCLE`, `SOLID` and `3DFACE` entities from the DXF
+/// reader. Other entities, including open polylines, fail explicitly. Polylines
+/// use straight edges between stored vertices in the object-coordinate basis;
+/// bulges, widths and special polyline modes are not interpreted. Nonzero
+/// polyline/circle thickness is unsupported. Circles use 64 binary64-trigonometric
+/// samples and retain sampling qualification, not an exact analytic circle.
+///
+/// SOLID corners are ordered first/second/fourth/third in object coordinates.
+/// Nonzero signed thickness adds a reversed bottom, translated top and four
+/// side polygons; orientation is not normalized for negative thickness.
+/// `3DFACE` uses world coordinates and omits its fourth corner only when equality
+/// with the third is decided under the selected policy. Degenerate leading
+/// triples fail before shared polygon triangulation.
+///
+/// Entity vertices are appended without welding. Empty drawings are accepted;
+/// there is no whole-mesh closure validation. Local predicate certainty is
+/// returned separately from retained missing-history/coordinate-projection
+/// qualification. Parser binary64 values are promoted exactly, which does not
+/// recover the source text's pre-rounding coordinates.
 pub fn from_dxf_with_context(
     data: &[u8],
     context: GeometryContext,
@@ -270,6 +312,7 @@ pub fn from_dxf_with_context(
     ))
 }
 
+/// Promotes a world-coordinate DXF point's finite components without an OCS transform.
 fn point_from_wcs(point: dxf::Point) -> Result<Point3, IoError> {
     Ok(Point3::new(
         real(point.x, "point x")?,
@@ -279,6 +322,20 @@ fn point_from_wcs(point: dxf::Point) -> Result<Point3, IoError> {
 }
 
 /// Export triangles as DXF `3DFACE` entities.
+///
+/// Each face duplicates its third corner in the fourth slot. Referenced vertices
+/// must project to finite binary64 and pass the finite normal calculation; that
+/// check can fail through arithmetic underflow/overflow and does not certify
+/// exact nondegeneracy or closed topology. Open and empty meshes are allowed,
+/// and unused positions are omitted. The DXF library controls numeric spelling;
+/// no exact scalar replay or construction receipt is serialized.
+///
+/// Drawing timestamps use a fixed instant, with local fields in the host timezone.
+///
+/// # Panics
+///
+/// Panics if any triangle references a missing position: indices are used
+/// directly before fallible coordinate conversion.
 pub fn to_dxf(mesh: &TriangleMesh) -> Result<Vec<u8>, IoError> {
     let mut drawing = reproducible_drawing();
     for triangle in mesh.triangles.iter() {
@@ -311,10 +368,13 @@ pub fn to_dxf(mesh: &TriangleMesh) -> Result<Vec<u8>, IoError> {
 }
 
 #[cfg(test)]
+/// Smoke coverage for sampled geometry at the DXF interchange boundary.
 mod tests {
     use super::*;
 
     #[test]
+    /// Checks successful sampled-sphere export/import and triangle-count preservation.
+    /// Does not establish source-coordinate fidelity or whole-mesh closure.
     fn sampled_sphere_is_representable_at_the_dxf_boundary() {
         let sphere =
             crate::solid::sphere(Real::from(4_u8), 20, 10).expect("valid primitive fixture");

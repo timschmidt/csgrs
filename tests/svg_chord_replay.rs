@@ -1,3 +1,4 @@
+//! Selected algebraic chord replay and subsequent exact incidence/subdivision.
 #![cfg(feature = "svg-io")]
 
 use csgrs::io::svg::{export_svg, import_svg};
@@ -8,6 +9,8 @@ use hypercurve::{
 };
 
 #[test]
+/// Replays a vertical chord at the selected root of `2t^7 - 1`, without scalar materialization.
+/// Checks exact endpoints, unique midpoint incidence, splitting and another archive.
 fn svg_adapter_replays_a_selected_chord_before_further_split() {
     let mut coefficients = vec![Real::zero(); 8];
     coefficients[0] = (-1).into();

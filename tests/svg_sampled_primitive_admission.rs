@@ -1,9 +1,12 @@
+//! Sampled SVG primitive selection: validate authored inputs before selecting emptiness.
 #![cfg(feature = "svg-io")]
 
 use csgrs::io::svg::{export_svg, import_svg};
 use hypercurve::{BooleanOp, Curve2, CurvePath2, CurveRegion2, FillRule, Point2};
 
 #[test]
+/// Checks hidden/unpainted empty replay and Boolean reuse against an independent square.
+/// Negative radii and nonfinite centers remain malformed even when no geometry is selected.
 fn svg_adapter_validates_empty_circle_and_ellipse_selection_before_continuation() {
     for policy in [
         hypercurve::PredicatePolicy::STRICT,
@@ -69,6 +72,8 @@ fn svg_adapter_validates_empty_circle_and_ellipse_selection_before_continuation(
 }
 
 #[test]
+/// Keeps positive visible radii that underflow the sampler explicitly unsupported.
+/// Checks both policy envelopes and their certified failure-classification receipts.
 fn svg_adapter_keeps_positive_circle_and_ellipse_underflow_unsupported() {
     for policy in [
         hypercurve::PredicatePolicy::STRICT,

@@ -1,3 +1,4 @@
+//! Replay of fillet-generated endpoint relations followed by exact line subdivision.
 #![cfg(feature = "svg-io")]
 
 use csgrs::io::svg::{export_svg, import_svg};
@@ -8,6 +9,8 @@ use hypercurve::{
 };
 
 #[test]
+/// Keeps a supporting-line intersection definition at a selected-root fillet cut.
+/// Checks its exact location, midpoint incidence, split connectivity and replayed endpoints.
 fn svg_adapter_replays_a_fillet_cut_before_another_exact_split() {
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     let mut coefficients = vec![Real::zero(); 8];

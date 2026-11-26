@@ -34,6 +34,17 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/io/dxf.rs` | Entire file; documented timestamp scope, exact finite promotion, OCS basis, polygon preconditions, supported entity interpretation, projection/qualification and export index panics. | Private docs with `dxf-io,svg-io` passed; all ten constant/helper/public-function pages inspected. Unit witness unchanged, not rerun. |
+| `src/io/svg.rs` | Entire file; documented error mapping, native options re-export, carrier tuple, strict replay, sampled standard primitives and exact-extension/display distinction. | Private docs with `dxf-io,svg-io` passed; three function pages and the options re-export page inspected. |
+| `tests/svg_hidden_path_admission.rs` | Entire file; documented hidden grammar/extension failures, certified empty replay and downstream reuse. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_sampled_primitive_admission.rs` | Entire file; documented valid unselected emptiness versus invalid input and visible sampler underflow. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_chord_replay.rs` | Entire file; documented selected seventh-degree root, retained chord identity, midpoint incidence and repeated split replay. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_circle_replay.rs` | Entire file; documented selected-coordinate fillet family/contacts, interior incidence, reversal and byte stability. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_point_replay.rs` | Entire file; documented supporting-line intersection retention and subsequent exact subdivision/replay. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_parallel_replay.rs` | Entire file; documented rational helper and independent parabola normal-shift/incidence expectation. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_selected_replay.rs` | Entire file; documented retained source restriction, unused invalid selector and typed exhaustion/retry witnesses. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_polynomial_replay.rs` | Entire file; documented graph-byte helper, native error categories, vertical image/chart distinction and retained parabola subdivision. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/svg_region_replay.rs` | Entire file; documented all eight region witnesses and shared macro module, exact independent expectations, qualified empty rejection and fixture-specific offset identities. | Source, formatting and comment-only comparison passed; assertions and archived fixture unchanged, not rerun. |
 | `src/io/stl.rs` | Entire file; documented byte-cache fields, artifact ownership/evidence, finite normal calculation, validation order, import qualifications and all unit witnesses. | Private docs with `stl-io,obj-io` passed; all eleven helper/type/export/import pages inspected, including private fields and artifact methods. |
 | `tests/export_projection_contracts.rs` | Entire file; documented OBJ decimal replay, STL independent byte/normal expectations, projection collapse and cache/Boolean reuse. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
 | `tests/support/construction_evidence_pipeline.rs` | Entire file; documented rational/uncertainty/box helpers and all twelve policy/placement/cache pipeline cases. Clarified fresh-process selection and printed intent-volume evidence. | Source, formatting and comment-only comparison passed; tests unchanged, not rerun. |
@@ -1539,10 +1550,82 @@ Log: `/tmp/csgrs-rustdoc-stl-doc.log`. Shared temporary build storage remains
 about 693 MiB. Full workflow/runtime checks remain waived for this docs-only
 session. No runtime completion or performance claim is made.
 
+### DXF and SVG adapters and SVG witness corpus, 26 November 2026
+
+Baseline: `aba5b96b6`. Owners: CSGRS interchange adapters, with geometry decisions
+owned by native scalar, mesh and curve layers. Relevant properties: P6/P8/P9,
+P12/P15–P20, P25–P27/P29/P30/P37. Domain: DXF surface-entity interpretation and
+triangle output; SVG default-options native import/export, selected definitions,
+qualified empty geometry and downstream exact operations. Read both adapter
+files and all nine `tests/svg*.rs` files in full. Supporting reads of Hypercurve
+SVG options/geometry/replay paths, checked vector normalization, the locked DXF
+library's date conversion and the DXF context integration witness are not
+credited as additional whole-file audits. The referenced archived selected-circle
+fixture and shared macro source remain separate audit work.
+
+Missing documentation witnesses included all private DXF helpers, the SVG error
+mapper and SVG test declarations. Public adapter summaries did not describe
+important conversion and validation limits. These findings were reproduced by
+reading the current implementations; this session's docs-only waiver does not
+turn that source review into a new runtime execution claim.
+
+DXF docs now state that OCS axis selection compares normalized components against
+1/64 in short-circuit order, while checked normalization has its own failure
+path. A polygon's first three corners must be nondegenerate before the shared
+triangulator runs. Closed polylines use straight stored-vertex loops without
+bulge/width/special-mode interpretation, and circles use 64 finite trigonometric
+samples. Signed SOLID thickness uses a fixed face assembly without reorienting
+negative extrusion. Import retains coordinate-projection/missing-history
+qualification and does not validate whole-mesh closure.
+
+The DXF exporter directly indexes positions before fallible conversion: malformed
+triangle references can panic. This is documented under `Panics`, not relabeled
+as a typed failure or fixed in this docs-only batch. The finite normal calculation
+also remains distinct from exact nondegeneracy. Fixed timestamps remove call-time
+variation, but local date fields still depend on host timezone; no cross-timezone
+determinism or exact decimal-source replay is claimed.
+
+SVG docs identify the tuple's filled region, native stroke wires and remaining
+stroke paths. Strokes are centerlines, not width-expanded material. The wrapper
+uses native defaults and strict topology/replay; it does not return a separate
+aggregate certainty outcome. Standard circle/ellipse and rounded-rectangle
+primitives use the current sampled model. Exact extensions retain supported
+definitions and selections, while standard display paths alone are not native
+replay. Hidden/unused definitions remain subject to validation. Scalar, exact
+curve and polynomial topology causes remain typed through the adapter.
+
+SVG witnesses now explain independent algebraic contacts, rational rectangles,
+parabola normal shifts, selected-root/chord/circle definitions, chart-aware
+polynomial identity and subsequent restriction/split/reversal/Boolean/offset
+operations. Semantic XOR checks are distinct from stable bytes. The annulus and
+selected-circle grow/shrink equalities apply to those fixtures, not arbitrary
+regularized regions. Qualified empty export rejection, invalid unused selectors,
+zero-work exhaustion and larger-budget retry retain their actual assertion scope.
+
+Validation after final edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on both
+  adapters and all nine SVG integration files: passed. `git diff --check`: passed.
+- Nonblank, non-comment source matches baseline exactly in all eleven files.
+  No expressions, fixtures, assertions, predicate order or behavior changed.
+- File-local scans found Rustdoc on twelve DXF declarations, three SVG functions
+  and 25 declarations across the SVG integration files. The options re-export
+  was checked separately. These are local checks, not repository coverage.
+- With `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target`, `CARGO_INCREMENTAL=0`
+  and `RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links'`, ran
+  `cargo doc --locked -p csgrs --no-default-features --features dxf-io,svg-io
+  --document-private-items --no-deps --offline`: passed without warnings.
+  Inspected fourteen rendered pages, including private helpers, export panic
+  documentation and the options re-export. Test items remain source-reviewed.
+
+Log: `/tmp/csgrs-rustdoc-dxf-svg-doc.log`. Shared temporary build storage is about
+789 MiB. Full workflow/runtime checks remain waived for this documentation-only
+session; no new runtime completion or performance claim is made.
+
 ## Next work
 
-Continue with the remaining root `src/io` interchange modules (DXF, SVG,
-glTF, VRML and Gerber) and downstream witnesses,
+Continue with the remaining root `src/io` interchange modules (glTF, VRML and
+Gerber) and downstream witnesses,
 then the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every

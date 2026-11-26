@@ -1,3 +1,4 @@
+//! Selected-source SVG replay, invalid-selector diagnostics and work-budget retry.
 #![cfg(feature = "svg-io")]
 
 use csgrs::errors::{ValidationError, ValidationErrorKind};
@@ -13,6 +14,8 @@ use hypercurve::{
 use std::fmt::Write;
 
 #[test]
+/// Replays a quadratic restricted at the selected root of `2t² - 1`.
+/// Checks source geometry retention and a further restriction's independently known start.
 fn svg_adapter_replays_selected_source_before_further_restriction() {
     let point = |x: i32, y: i32| Point2::new(x.into(), y.into());
     let source: Curve2 = QuadraticBezier2::new(point(0, 0), point(1, 2), point(2, 0)).into();
@@ -59,6 +62,8 @@ fn svg_adapter_replays_selected_source_before_further_restriction() {
 }
 
 #[test]
+/// Rejects an unused HCP4 root selector for `t² + 1` with a typed invalid-input cause.
+/// An empty final path must not hide an invalid definition graph.
 fn invalid_native_selector_keeps_its_typed_cause_at_the_svg_adapter() {
     // HCP4 with one selected-root record for t² + 1 on (0, 1).
     // The invalid definition must be rejected even though the final path is empty.
@@ -92,6 +97,8 @@ fn invalid_native_selector_keeps_its_typed_cause_at_the_svg_adapter() {
 }
 
 #[test]
+/// Preserves typed arrangement exhaustion at zero refinements and completes a larger-budget retry.
+/// Retry checks a nonempty filled region with no stroke carriers, not full set equivalence.
 fn svg_arrangement_failure_keeps_its_exact_budget_cause_at_the_adapter() {
     use hypersolve::work_budget::{WorkBudget, with_budget};
     let document =

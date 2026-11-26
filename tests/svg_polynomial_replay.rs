@@ -1,3 +1,4 @@
+//! Implicit polynomial SVG source validation, typed failures and continued exact operations.
 #![cfg(feature = "svg-io")]
 
 use csgrs::errors::{ValidationError, ValidationErrorKind};
@@ -13,6 +14,9 @@ use hypersolve::bivariate_topology::{
 use hypersolve::{AlgebraicFiberRootIsolationConfig, BivariatePolynomial};
 use std::fmt::Write;
 
+/// Encodes an HCP5 polynomial source with no boundary roots to test eager graph validation.
+/// Domain entries are the two ordered coordinate intervals; small fixture lengths
+/// must fit u32. Remaining topology limits are fixed in the byte fixture.
 fn unused_source(equation: &[&[i32]], domain: [i32; 4], max_degree: u32) -> String {
     // A version-5 compound graph with one source and no boundary roots.
     // Every source is still validated before the empty region is published.
@@ -47,6 +51,7 @@ fn unused_source(equation: &[&[i32]], domain: [i32; 4], max_degree: u32) -> Stri
     )
 }
 
+/// Checks SVG format context, native polynomial error identity and its public category.
 fn expect_source_error(
     document: &str,
     expected: BivariateTopologyError,
@@ -65,6 +70,9 @@ fn expect_source_error(
 }
 
 #[test]
+/// Checks invalid domain/zero polynomial, degree/work limits and a successful empty retry.
+/// The vertical-component category assertion is direct error classification;
+/// it does not assert that all vertical sources are rejected by the importer.
 fn svg_adapter_preserves_polynomial_failure_categories() {
     let parabola: &[&[i32]] = &[&[1, 2], &[], &[-2]];
     expect_source_error(
@@ -103,6 +111,8 @@ fn svg_adapter_preserves_polynomial_failure_categories() {
 }
 
 #[test]
+/// Validates unused and retained vertical sources, checking the image equation across charts.
+/// Checks exact endpoints, midpoint, subdivision, reversal and deterministic serialization.
 fn svg_adapter_retains_vertical_sources_for_further_operations() {
     let (region, wires, paths) =
         import_svg(&unused_source(&[&[0], &[1]], [-1, 1, -1, 1], 8)).unwrap();
@@ -164,6 +174,8 @@ fn svg_adapter_retains_vertical_sources_for_further_operations() {
 }
 
 #[test]
+/// Replays the implicit parabola `1 + 2y - 2x² = 0` and subdivides its retained branch.
+/// Checks equation identity, split incidence, original endpoints and stable export bytes.
 fn svg_adapter_retains_polynomial_sources_for_further_subdivision() {
     let equation =
         BivariatePolynomial::new(vec![vec![1.into(), 2.into()], vec![], vec![(-2).into()]]);

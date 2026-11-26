@@ -1,3 +1,4 @@
+//! Source-preserving procedural parallel replay and exact downstream incidence.
 #![cfg(feature = "svg-io")]
 
 use csgrs::io::svg::{export_svg, import_svg};
@@ -6,11 +7,14 @@ use hypercurve::{
     CurveRegion2, Point2, QuadraticBezier2, Real,
 };
 
+/// Constructs an exact rational fixture; a zero denominator is a test setup error.
 fn q(n: i32, d: i32) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()
 }
 
 #[test]
+/// Replays the -1/4 left parallel of `(t, t²)` with its procedural support intact.
+/// Checks the independent normal-shift expectation at t=1/2 and unique parameter recovery.
 fn svg_adapter_replays_a_procedural_parallel_before_further_incidence() {
     let source = QuadraticBezier2::new(
         Point2::new(0.into(), 0.into()),
