@@ -1,4 +1,14 @@
 //! Fuzz target for CSG part blueprint reports.
+//!
+//! Uses at most twelve six-byte records for integer-positioned cubes, sizes
+//! 1 through 16 and optional installation offsets. The first two input bytes
+//! also select projection and hidden-line suppression. Checks minimum edge
+//! counts and nonempty handles/notes, not visibility correctness or certainty.
+//!
+//! Inputs shorter than six bytes are ignored. The current `chunks(6)` loop can
+//! index a short final record when input length is 6 through 71 and not divisible
+//! by six; that harness panic is not a geometric failure. Bytes beyond the first
+//! 72 are ignored.
 
 #![no_main]
 
@@ -13,14 +23,18 @@ use csgrs::{
 use hyperlattice::{Real, Vector3};
 use libfuzzer_sys::fuzz_target;
 
+/// Promotes a signed fixture integer exactly through `i64`.
 fn real(value: i16) -> Real {
     Real::from(i64::from(value))
 }
 
+/// Constructs an exact integer translation/explode offset.
 fn vector(x: i16, y: i16, z: i16) -> Vector3 {
     Vector3::new([real(x), real(y), real(z)])
 }
 
+/// Authors an exact-CSG label and optionally a fixed +Z installation with this offset.
+/// Omitting installation exercises report blockers; no geometric proof is attached.
 fn metadata(handle: String, offset: Vector3, include_install: bool) -> PartMetadata {
     let mut interface = CsgPartInterface::exact_csg(
         "fuzz-family",

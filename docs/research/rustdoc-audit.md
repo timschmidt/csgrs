@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `benchmarks/rust/part_blueprint.rs` | Entire file; documented fixture construction, authored metadata, fixed timing boundary and edge-count limitations. | Formatting/comment-only comparison passed; benchmark source-reviewed, not executed or newly compiled. |
+| `benchmarks/support/harness.rs` | Entire file; documented every setting, timing/selection method, field, measurement helper, CSV formatter and trace helper. | Standalone private Rustdoc passed with and without dispatch tracing; 13 rendered pages inspected. Benchmark workloads not run. |
+| `fuzz/fuzz_targets/fuzz_part_blueprint.rs` | Entire file; documented exact fixture ingress, byte grammar, witness scope and existing short-record indexing gap. | Formatting/comment-only comparison passed; independent byte-chunk domain check executed. No fuzz runtime/compile result claimed. |
+| `fuzz/fuzz_targets/support/mod.rs` | Entire file; documented fixed policy, assertion order, empty behavior, receipt extraction and limits of mesh validation. | Source/formatting/comment-only comparison passed; callers/kernel contracts inspected in context, fuzz validation not executed. |
 | `src/parts/blueprint.rs` | Entire file; documented all box projection/splitting/ordering helpers, fields/variants, metadata gates, certainty limits and lossy SVG behavior. | Minimal and attributed/Hershey private docs passed; all rendered items inspected. Tests source-reviewed, unchanged and not rerun. |
 | `src/parts/occlude.rs` | Entire file; documented index adjacency, dihedral tests, midpoint coverage, boundary pairing, omitted depth events, partial reports and evidence loss. | Private pages, tuple payloads and material contracts inspected; local rank/test helpers source-reviewed. No geometry behavior changed. |
 | `src/parts/manual.rs` | Entire file; documented verbatim Markdown, callback/section order, table aggregation, anchor rules, private helpers and the unit witness. | Minimal and Hershey private docs passed; all rendered items/fields inspected. Test assertions unchanged, not rerun. |
@@ -2239,6 +2243,63 @@ rows in this ledger. This was checked against `git ls-files src`; it is review
 coverage for that directory, not a repository-wide item-coverage percentage or
 proof that every feature combination has been built. Remaining crates, tests,
 examples, build/configuration files and documentation are still in scope.
+
+### Blueprint benchmark/fuzz consumers and shared harnesses, 26 November 2026
+
+Baseline: `66d0dc12d`. Owners: development workload/validation consumers,
+P6/P8/P9/P19/P20/P29/P30/P35/P36/P37. Domain: integer cube bounds reports,
+environment-selected benchmark repetitions, measurement counters and native mesh
+assertions. Read all four files listed above in full. Supporting reads of target
+manifest entries, benchmark/fuzz callers, kernel mesh-validation methods and
+dispatch reset/correlation code provide context only, not additional whole-file
+review credit.
+
+Missing acceptance witnesses were absent private helper/field docs and incomplete
+timing/input-domain descriptions. The part benchmark uses a separate fixed loop,
+not the shared configurable harness: 64 cubes are constructed before timing and
+512 front-view calls count both output slots. No independent visibility oracle,
+blocker check, certainty check or sample distribution is asserted. The fuzz target
+checks counts/handles/notes and an exhaustive style match, not geometric visibility.
+Its `chunks(6)` loop indexes incomplete final records for nonmultiples of six
+between 6 and 71 bytes; this is an existing harness gap. A standalone byte-chunk
+calculation confirmed all 55 affected lengths below 72, without running Rust or
+geometry. The target/fixtures/assertions were preserved; fixing that gap is outside
+this docs-only batch.
+
+The shared benchmark harness now documents live environment selection versus
+captured counts, temperature labels without cache control, ordinary/stress sample
+plans, warmup inclusion in traces, caller-timed versus wall-clock timing boundaries,
+saturating counters and wrapping checksums. The trace assertion includes a synthetic
+entry event and alone does not establish native geometry dispatch. CSV labels are
+unescaped. Shared fuzz validation asserts finite positions, valid indices and
+unique/nondegenerate triangles, with optional nonempty edge-pairing checks; it does
+not establish source fidelity, non-self-intersection or intended Boolean semantics.
+
+Validation after final edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on all four
+  files and `git diff --check`: passed.
+- Removing only blank/comment lines yields identical source to baseline in all
+  four files. No fixture, assertion, timing loop, environment interpretation or
+  predicate order changed. Scans found all 28 declarations documented, with
+  record fields separately inspected and macro-body intent in module docs.
+- Standalone `rustdoc --edition 2024 --crate-name csgrs_bench_harness
+  --document-private-items -D rustdoc::broken_intra_doc_links
+  benchmarks/support/harness.rs -o /tmp/csgrs-rustdoc-target/doc` passed.
+  Repeated with `--cfg 'feature="dispatch-trace"'`, the existing dispatch-enabled
+  hyperreal metadata and cached dependency search paths: passed. No dependency
+  rebuild or extra build tree was needed. Both final logs are empty (no warnings).
+- The initial builds warned about a public constant linking to private `emit`;
+  its prose was corrected and both configurations rebuilt. Inspected 13 rendered
+  pages, all 20 harness declaration summaries, private fields and timing/trace
+  contracts; checked the final constant prose again after that edit.
+- Benchmarks/fuzz targets were not executed or newly compiled, and standalone
+  helper documentation does not establish those target configurations build or
+  complete. Full workflows remain waived. No new performance/fuzz-completion
+  claim is made.
+
+Logs: `/tmp/csgrs-rustdoc-bench-harness-doc.log` and
+`/tmp/csgrs-rustdoc-bench-harness-trace-doc.log`.
 
 ## Next work
 

@@ -2,6 +2,11 @@
 //!
 //! This uses a simple wall-clock loop instead of an external benchmark
 //! dependency so the bench target remains available in minimal checkouts.
+//! Requires `attributed`. Constructs 64 translated cubes before timing, then
+//! performs 512 front-view bounds-report extractions with hidden edges retained.
+//! The printed total counts assembled and exploded edges; it is not a geometry
+//! checksum or correctness oracle. No warmup, per-sample distribution, blocker/
+//! certainty assertion or shared-harness environment controls are used here.
 
 use std::time::Instant;
 
@@ -15,10 +20,13 @@ use csgrs::{
 };
 use hyperlattice::{Real, Vector3};
 
+/// Constructs an exact integer offset for benchmark installation metadata.
 fn vector(x: i64, y: i64, z: i64) -> Vector3 {
     Vector3::new([Real::from(x), Real::from(y), Real::from(z)])
 }
 
+/// Authors an exact-CSG label and fixed +Z installation with the supplied explode offset.
+/// The label is metadata, not a geometric validation of the associated cube.
 fn metadata(handle: &str, offset: Vector3) -> PartMetadata {
     let mut interface = CsgPartInterface::exact_csg(
         "bench-family",
@@ -39,6 +47,9 @@ fn metadata(handle: &str, offset: Vector3) -> PartMetadata {
     PartMetadata::new(handle, interface)
 }
 
+/// Times report construction/destruction and edge-count accumulation after fixture setup.
+/// Prints one millisecond duration for all 512 calls; does not isolate cold/warm
+/// behavior or verify visibility against an independent expectation.
 fn main() {
     let parts = (0..64)
         .map(|idx| {

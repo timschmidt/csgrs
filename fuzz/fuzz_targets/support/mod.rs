@@ -1,8 +1,19 @@
+//! Shared assertions for materialized native meshes in root fuzz targets.
+//! These checks inspect the returned mesh, not its fidelity to an authored source
+//! or completeness of an operation that may have failed before this helper ran.
+
 use hyperlimit::PredicatePolicy;
 use hypermesh::{MeshContext, TriangleMesh};
 
+/// Fixed strict policy for geometric uniqueness and optional edge-pairing checks.
 const MESH_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
+/// Asserts valid indices, finite exact coordinates and unique nondegenerate triangles.
+/// With `require_closed_solid`, additionally checks exact geometric edge pairing
+/// for nonempty triangle lists; empty output skips that check. Native errors,
+/// including undecided validation, panic through `expect`. Receipts are not retained.
+/// These checks do not establish intended volume, global non-self-intersection,
+/// analytic fidelity or the full regularized-set semantics of a Boolean result.
 pub fn validate_triangle_mesh(mesh: &TriangleMesh, require_closed_solid: bool) {
     assert!(
         mesh.triangles.iter().all(|triangle| {
