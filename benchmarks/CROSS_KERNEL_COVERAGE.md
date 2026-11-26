@@ -1,12 +1,13 @@
 # Cross-kernel benchmark coverage
 
-`kernel_comparison` measures the portable solid-kernel surface shared by
-CSGRS, CGAL EPECK, and OpenCascade. Every `kernel`, `precision`, and `corpus`
-workload is required to occur in all three runners; `benchmarks/summarize.py
---require-engine-parity` rejects missing or extra engine rows. Opt-in `stress`
+`kernel_comparison` groups nominal solid-kernel scenarios across CSGRS, CGAL EPECK
+and OpenCascade. The target comparison contract requires every `kernel`, `precision`
+and `corpus` workload in all three runners. `benchmarks/summarize.py --require-engine-parity`
+checks engine-label sets for observed keys; it cannot find workloads absent from
+all inputs or validate equivalent geometry/work. Opt-in `stress`
 and `dangerous` rows are diagnostic ceilings outside the portable parity set.
 
-## Covered portable API
+## Represented scenario families
 
 | CSGRS surface | Cross-kernel workloads |
 |---|---|
@@ -22,10 +23,14 @@ and `dangerous` rows are diagnostic ceilings outside the portable parity set.
 | Deterministic complex corpus | OBJ import, translation, bounds, graphics buffers, connectivity, and manifold validation for an 8,020-triangle concave labyrinth and a 36,096-triangle level-3 Sierpiński foam |
 | Optional external corpus | full-resolution transform, bounds, carrier, connectivity, and manifold checks; combined clipping-box Booleans on a generated convex hull |
 
-The runners use equivalent geometric inputs and operation semantics. Output
-facet counts are reported but are not required to match because OpenCascade
-tessellates analytic B-reps, CGAL operates on exact `Surface_mesh`, and CSGRS
-retains its exact polygon mesh.
+The current runners do not establish equivalent inputs or operation semantics for
+every row. CSGRS boxes are origin-anchored and native boxes centered, affecting
+sphere/box overlap and contained-box subtraction. Sphere sampling axes/arithmetic
+differ, and OCCT uses analytic geometry. Native graphics rows only count corners;
+OCCT subdivision remeshes, while native identical-box intersection uses a shortcut.
+The table is a scenario index, not certified API coverage. See
+[workload definitions](WORKLOADS.md) for current per-row differences. Output counts
+and matching labels cannot discharge the repository's matched-contract requirement.
 
 The full external-corpus intersection remains a disabled-by-default
 `dangerous` tier. It additionally requires `YEAHRIGHT_BENCH=1`; enable it only
@@ -33,24 +38,25 @@ on a disposable, memory-limited benchmark host.
 
 ## Deliberately outside the three-kernel matrix
 
-These APIs remain exercised by `feature_pipeline`, tests, or dependency
-benchmarks. They are not assigned misleading native no-ops where one of the
-comparison kernels has no corresponding abstraction.
+These surfaces require feature-specific tests or benchmarks outside this matrix.
+The table explains intended scope; it does not certify that every named API exists,
+is currently exercised, or completes. Native placeholders must not be interpreted
+as equivalent operations when their implemented work differs.
 
 | CSGRS-only or nonportable surface | Reason it is not a three-kernel workload |
 |---|---|
-| Metadata filtering, mapping, and source-face propagation | CGAL and OpenCascade carriers do not expose CSGRS metadata semantics |
+| Metadata filtering, mapping, and source-face propagation | Native runners do not implement the CSGRS provenance contract |
 | Hyperreal expression evaluation and finite-boundary conversion | Scalar/exactness substrate rather than a shared solid-kernel operation |
-| HyperMesh exact metadata-preserving output adaptation | No equivalent source-metadata contract exists in both native kernels |
-| Convex hull and Minkowski sum | CGAL has direct facilities, but the installed OpenCascade modeling API has no corresponding general mesh operator |
+| HyperMesh exact metadata-preserving output adaptation | No matched source-metadata adaptation is implemented in the native runners |
+| Convex hull and Minkowski sum | No corresponding OCCT workload is implemented here |
 | Laplacian/Taubin smoothing | No common operator with matching boundary and weighting semantics |
 | Loft, twist, revolve, and path sweep | No single high-level operator with matching profile, cap, seam, and discretization contracts across all three kernels |
 | Gear, egg, teardrop, arrow, text, and raster-derived constructors | Domain constructors, not common kernel primitives |
-| CurveRegion2 Boolean, offset, skeleton, flatten, and slice APIs | Planar/profile topology has no common representation in this 3D kernel harness |
+| CurveRegion2 Boolean, offset, flatten and slice APIs; planned skeleton work | Planar/profile topology has no common implementation in this 3D kernel harness |
 | SDF, TPMS, and metaball meshing | Sampling algorithms rather than shared boundary-representation kernel calls |
 | AMF, DXF, Gerber, glTF, PLY, SVG, and application adapters | Optional format or application layers; STL and the optional OBJ corpus case are the shared interchange cases |
 | Bevy, WASM, and JavaScript adapters | Host integration rather than geometric-kernel work |
 
-When a genuinely equivalent operation becomes available in all three kernels,
-it should move into `kernel_comparison` and will then be protected by the
-engine-parity check.
+An operation can enter a matched comparison after its input sets, semantics,
+certainty, validation and measured materialization agree. Engine-label parity is
+then an additional presence check, not the proof of that agreement.

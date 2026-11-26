@@ -3836,6 +3836,49 @@ path, is blocked by missing `BRepAlgoAPI_Common.hxx`; see
 Doxygen remains unavailable. No dependencies were installed, no fixtures acquired,
 and no CMake build, meshing, Boolean or export ran under the docs-only waiver.
 
+### Benchmark guides and ignore rules, 26 November 2026
+
+Baseline: `0d37f0f28`. Owner: benchmark documentation, P19/P25/P36/P37/P39.
+The missing acceptance witness was agreement between the guides' claims and the
+already reviewed executable runners. Read every line of these seven files:
+
+| File | Baseline lines | Whole-file result |
+| --- | ---: | --- |
+| `benchmarks/README.md` | 292 | Corrected measurement, filtering, feature-selection, validation and cross-engine scope claims. |
+| `benchmarks/WORKLOADS.md` | 60 | Documented actual per-engine operands and implemented work; retained the matched-contract requirement. |
+| `benchmarks/CROSS_KERNEL_COVERAGE.md` | 56 | Separated required portable coverage from observed-label parity and scenario inventory. |
+| `benchmarks/SOLIDEAN.md` | 110 | Qualified local cache, timing, certainty and mass checks; preserved published numerical tables. |
+| `benchmarks/mesh-boolean-context-2026-09-05.md` | 41 | Identified historical evidence and distinct strict-failure/approximate-completion contracts. |
+| `benchmarks/results/.gitignore` | 2 | Unchanged: ignores result files while retaining this rule file. |
+| `benchmarks/size-harness/.gitignore` | 1 | Unchanged: ignores this standalone workspace's target directory. |
+
+Source inspection of `src/solid.rs` and the reviewed native builders establishes
+that csgrs boxes start at the origin while native boxes are centered. The shared
+sphere/box translation therefore gives csgrs box bounds `[3,17] × [2,16] × [1,15]`
+versus native bounds `[-4,10] × [-5,9] × [-6,8]`. The contained-box difference removes
+a corner in csgrs and an enclosed cavity in the native runners. Sphere construction,
+graphics output, mass queries, subdivision, ray intervals and identity shortcuts
+also differ. This is source evidence of unmatched scenarios, not a new geometry
+execution. Neither labels, counts nor fingerprints establish equivalent completed
+contracts. The target comparison requirement remains; no fixture or gate changed.
+
+Checked all four linked Solidean publisher articles against the retained numerical
+reference tables. Read the pinned upstream README license notice and parsed its
+primitive, terrain and cube-grid request JSON: respectively nine differences,
+224 differences, and 999 unions followed by 1000 differences. Recorded the terrain
+article/request discrepancy and the grid publisher's per-step validation versus
+the local final tolerant mass check. Links identify the primary sources. No mesh
+assets or archives were acquired, and none of these requests was executed.
+
+Validation after final edits: `git diff --check` passed; all fenced command blocks
+are byte-identical, all five guides' relative Markdown link targets exist, and the
+Solidean/context historical table rows are byte-identical. Only Markdown changed,
+so no new Cargo compilation or runtime check was needed under the docs-only waiver.
+Historical pass statements were not rerun and are not current validation claims.
+All 36 tracked files below `benchmarks/` now have explicit whole-file review records
+across these batches; this scoped milestone does not establish repository-wide
+coverage, native compilation, geometric correctness or performance equivalence.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with

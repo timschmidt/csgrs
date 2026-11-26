@@ -4,25 +4,39 @@
 Boolean-kernel articles. The fixture loader pins
 [`solidean/bench-blog-data`](https://github.com/solidean/bench-blog-data) at
 commit `80900cf867fb690e6c7571880857e82f6f45ae34`, verifies the downloaded archive
-and request files by SHA-256, and caches them below
-`target/benchmark-fixtures/solidean`. Dataset assets remain under their
-published CC BY 4.0 terms and are not vendored into csgrs.
+and selected request files by SHA-256, and caches them below
+`target/benchmark-fixtures/solidean` (or the selected Cargo target directory).
+Reused extracted OBJs are not individually hashed; derived dome caches check only
+three filenames for presence. The
+[pinned upstream license notice](https://github.com/solidean/bench-blog-data/blob/80900cf867fb690e6c7571880857e82f6f45ae34/README.md)
+defaults non-code assets to CC BY 4.0, subject to asset-specific overrides.
+Dataset assets are not vendored into csgrs.
 
-The measured boundary follows the
-[Open Boolean Benchmark runners](https://github.com/Open-Boolean-Benchmark/boolean-benchmark-runners):
+The local boundary follows the broad import-plus-operation scope described in the
+[publisher's measurement notes](https://solidean.com/blog/2026/first-benchmark-results-iterated-csg/#measurement):
 request and OBJ parsing and disk I/O are excluded; conversion from indexed
 double-precision triangles, all ordered Boolean operations, and final result
 materialization are included. csgrs executes each request serially. The final
-area and volume check, or the required empty-result check for the cube grid,
-runs after the per-sample timer stops.
+projected area and absolute signed volume check runs after the per-sample timer
+stops. Optional per-operation diagnostics and intermediate destruction are inside
+execution timing; final-output destruction is outside it. OBJ decimals pass through
+binary64 before exact native ingress, and local certainty receipts are not emitted.
+
+The cube grid is intended to become empty, but the local runner only checks
+area/volume against zero with absolute tolerance `5e-4`. It neither asserts a
+canonical empty carrier nor checks every intermediate shape, unlike the publisher's
+[per-step grid validation](https://solidean.com/blog/2026/iterated-cube-grid-benchmark/).
+Other references use `max(5e-4, abs(expected) * 1e-8)` after checking finite measures.
+These checks are not independent topology or exact-set oracles. A successful local
+CSV row therefore must not be equated with the publisher's full correctness verdict.
 
 ## Published reference times
 
 These values are transcribed from the linked Solidean articles. They were
 recorded on the publisher's hardware—principally a Ryzen 9 5900X, 64 GiB
 DDR4-2666, and Windows 11—and may include each kernel's supported parallelism.
-Local csgrs CSV rows therefore provide a reproducible workload comparison, not
-a same-machine speed ratio.
+Local csgrs CSV rows describe local attempts; their execution, validation scope and
+host must be recorded separately before comparing them with these historical times.
 
 ### First iterated CSG
 
@@ -54,9 +68,10 @@ volume `0.5477`.
 | CGAL Nef | 330 s |
 
 The article reports these four as producing the canonical result.
-It describes the workload as 223 subtractions even though its current public
-version-1 request contains 224 difference operations (tools `0.obj` through
-`223.obj`). The csgrs row follows the request file exactly and carries `_224`
+It describes the workload as 223 subtractions even though the
+[pinned version-one request](https://github.com/solidean/bench-blog-data/blob/80900cf867fb690e6c7571880857e82f6f45ae34/blog/2026/terrain-carve-benchmark/0.2_-y.request.json)
+contains 224 difference operations (tools `0.obj` through `223.obj`). The csgrs
+row follows those instructions and carries `_224`
 in its case name so this upstream off-by-one discrepancy is visible when
 comparing the published time.
 
@@ -78,8 +93,8 @@ the final result is empty.
 | Blender exact | 294 s |
 | Geogram 1.9.8 | about 37 min |
 
-CGAL corefine correctly declines the early non-manifold intermediate produced
-by this request and consequently has no completion time.
+The publisher records CGAL corefine declining an early non-manifold intermediate;
+its partial timing is not a completed-run time.
 
 ### Dome carve
 

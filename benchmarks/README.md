@@ -1,6 +1,6 @@
 # csgrs benchmark suite
 
-This suite provides three complementary optimization anchors:
+This suite provides four complementary benchmark groups:
 
 - `kernel_comparison` runs the same named CAD scenarios in csgrs, CGAL, and
   OpenCascade (OCCT).
@@ -12,7 +12,7 @@ This suite provides three complementary optimization anchors:
   validation. A dedicated large workload runs union, intersection, and
   difference on two 3,072-triangle closed meshes.
 - `solidean_comparison` replays Solidean's published ordered Boolean requests
-  in csgrs, preserving the published timing boundary and correctness oracles.
+  in csgrs, with conversion-plus-operation timing and local final mass checks.
   It is opt-in because the datasets are downloaded and the larger requests are
   intentionally expensive.
 
@@ -28,11 +28,13 @@ directory:
 - `run.sh` orchestrates serialized runs; `summarize.py` validates and compares
   their output.
 
-Every runner emits the same CSV schema. Raw samples are intentionally retained;
-`summarize.py` validates them and reports median nanoseconds per operation plus
-the ratio to csgrs. Full native runs also enforce that every `kernel`,
-`precision`, and `corpus` workload has exactly one implementation in each of
-the three engines. Opt-in `stress` and `dangerous` workloads are diagnostic
+Every runner emits the same CSV schema. Raw samples are retained;
+`summarize.py` checks headers, numeric fields, positive iterations and within-group
+checksum stability, then reports median nanoseconds per iteration plus the ratio
+to csgrs. One iteration can contain several operations. Native-run parity requires
+the three engine labels for each observed `kernel`, `precision` and `corpus` key;
+it cannot detect workloads absent from every engine or establish geometric equality.
+Opt-in `stress` and `dangerous` workloads are diagnostic
 ceilings and are not part of the portable parity contract.
 See [the cross-kernel coverage matrix](CROSS_KERNEL_COVERAGE.md) for
 the portable API boundary and explicitly excluded nonportable surfaces.
@@ -57,15 +59,18 @@ benchmarks/run.sh --quick
 
 Quick runs skip the long combined corpus Boolean and opt-in stress workloads.
 
-To record cold and warm cross-kernel results together:
+The driver contains a cold/warm mode:
 
 ```sh
 benchmarks/run.sh --cold-warm
 ```
 
-Cold samples launch each runner in a fresh process, disable warmups, and force
-one operation per case. Warm samples retain the normal warmup and iteration
-settings. Input construction remains outside the timed region in both modes.
+The current cold/warm branch omits the `attributed` feature required by
+`kernel_comparison`, so Cargo target selection fails until that configuration gap
+is repaired. Its intended cold sampling launches a fresh runner process and sets
+ordinary warmups to zero and iterations to one. Stress-family sample settings are
+separate, and setup/earlier cases can warm caches inside each process. Only setup
+outside a closure is excluded from timing; constructor cases time their construction.
 
 To exercise only csgrs on a host without the native kernels:
 
@@ -97,7 +102,9 @@ uses `curl`, `tar`, and `sha256sum`. See
 times recorded on different hardware.
 
 Results are written below `benchmarks/results/` by default and ignored by Git.
-Pass `--output DIRECTORY` to select a durable result location. Native discovery
+Pass an absolute `--output DIRECTORY` when invoking outside the repository root;
+relative paths are used before and after the driver's directory change. Failures
+leave partial files; no completion manifest is written. Native discovery
 honors normal CMake controls such as `CMAKE_PREFIX_PATH` and the package-specific
 `CGAL_DIR` or `OpenCASCADE_DIR` environment/toolchain configuration.
 
@@ -107,8 +114,8 @@ The runners share these environment variables:
 |---|---:|---|
 | `CSGRS_BENCH_SAMPLES` | 10 | Independently timed samples per case |
 | `CSGRS_BENCH_WARMUP` | 2 | Untimed warmup batches per case |
-| `CSGRS_BENCH_STRESS_SAMPLES` | 1 | Samples for `corpus`, `competitive-large`, `competitive-yeahright`, `stress`, and `dangerous` cases |
-| `CSGRS_BENCH_STRESS_WARMUP` | 0 | Untimed warmup batches for `corpus`, `competitive-large`, `competitive-yeahright`, `stress`, and `dangerous` cases |
+| `CSGRS_BENCH_STRESS_SAMPLES` | 1 | Rust samples for `corpus`, `competitive-large`, `competitive-yeahright`, `competitive-full`, `published-solidean`, `stress`, and `dangerous`; native runners use it for `corpus`, `stress`, `dangerous` |
+| `CSGRS_BENCH_STRESS_WARMUP` | 0 | Untimed batches for the same stress-family suites |
 | `CSGRS_BENCH_SCALE` | 1 | Multiplier for iterations within each sample |
 | `CSGRS_BENCH_ITERATIONS` | unset | Override iterations per sample; the cold runner sets this to 1 |
 | `CSGRS_BENCH_SAMPLE_OFFSET` | 0 | First emitted sample number |
@@ -122,7 +129,12 @@ The runners share these environment variables:
 | `YEAHRIGHT_BENCH` | unset | Set to `1` to download and run the optional public-domain mesh corpus from `target/benchmark-fixtures/yeahright` |
 | `SOLIDEAN_BENCH` | unset | Set to `1` to download and replay the pinned Solidean published benchmark requests |
 
-For example, this runs only Boolean cases with five samples:
+Parsing is not identical across runners. Rust trims filter tokens and an empty
+filter selects nothing; native filters preserve whitespace and an empty value
+selects all gated cases. Native integer parsing accepts prefixes and uses wrapping
+arithmetic where the Rust harness uses whole-value parsing and saturation.
+
+For example, this selects Boolean cases with five ordinary samples:
 
 ```sh
 CSGRS_BENCH_FILTER=boolean CSGRS_BENCH_SAMPLES=5 benchmarks/run.sh
@@ -141,6 +153,9 @@ is excluded. Each policy starts with fresh mesh storage; later samples reuse
 those inputs and their retained facts. Set `CSGRS_BOOLEAN_CONTEXT_BENCH_ITERS`
 to change the default five samples. Scalar expression caches may already be
 warm, so the first sample is not a cold-process measurement.
+The retained assertions expect STRICT to be undecided and APPROXIMATE_512 to
+complete using approximation. Those are different completion contracts, and newly
+certified completion would fail these historical assertions.
 The [2026-09-05 measurement](mesh-boolean-context-2026-09-05.md) records the
 workload, local timings, output counts, and correctness checks.
 
@@ -164,29 +179,40 @@ per-operation trace for each independently recorded workload.
 
 ## Comparison protocol
 
-The comparison corpus fixes dimensions, tessellation counts, transforms, and
-operation names in source. Timed work includes result materialization and the
-lightweight output-complexity/checksum traversal. Transform rows fingerprint
-coordinates and face order/orientation so the result cannot collapse into a
-topology-only no-op. Setup objects that can be
-reused without changing operation semantics are built outside the timed region.
-Failed Booleans, invalid mass properties, or failed serialization abort a run
-instead of producing deceptively fast rows.
+The comparison corpus fixes nominal dimensions and labels in source. The current
+runners do **not** establish matched geometric inputs or completed work for every
+same-named row. CSGRS boxes span from the origin; native boxes are centered. Thus
+the sphere/box and contained-box scenarios differ geometrically. CSGRS sphere
+samples have Y-axis poles and native exact trigonometric coordinates; CGAL uses
+Z-axis poles and double samples; OCCT uses an analytic sphere.
+
+Timing includes each closure's implemented work and destruction, which varies by
+engine. For example, native graphics cases count corners rather than exporting
+graphics buffers, CGAL mass-properties computes volume alone, and OCCT subdivision
+is finer remeshing. Identical-box intersection in both native runners uses an
+identity shortcut. Checksums and engine-label parity cannot certify equivalence.
+See [workload definitions and differences](WORKLOADS.md) before interpreting ratios.
+Failed calls with explicit success checks abort; most measured rows do not contain
+an independent geometric oracle or expose certainty receipts.
 
 The Solidean runner follows the request files rather than approximating their
 scenario in code. OBJ parsing and request decoding occur outside the timed
 window. Timed work begins with conversion from indexed `f64` triangles into
 the native Hypermesh carrier, includes every ordered Boolean, and ends once
 the final mesh is materialized. The same execution then checks the published
-area/volume oracle outside the recorded interval where one is available; the
-cube grid must finish empty. This matches the published “import conversion plus
-Booleans, excluding file I/O and export” boundary without performing each
-expensive request twice.
+area/volume reference outside the recorded interval where one is available. The
+cube grid's intended result is empty, but the local check only requires projected
+area/volume near zero; it does not assert canonical emptiness or check every
+intermediate shape. Optional diagnostics and intermediate destruction are included
+in execution timing. This follows the broad conversion-plus-Booleans timing scope,
+not necessarily every publisher implementation's detailed boundary or oracle.
 
 The generated corpus contributes two closed native meshes to all three
 engines: an 8,020-triangle orthogonal concave labyrinth and a 36,096-triangle
-level-3 Sierpiński foam. Their position and triangle counts, manifold status,
-and serialized bytes are hard regression checks.
+level-3 Sierpiński-derived foam with diagonal edge contacts filled by the generator.
+The local regression checks fix position/triangle counts, indexed edge pairing and
+serialized-byte stability. Those checks alone do not prove vertex-link manifoldness,
+embeddedness or identical post-import geometry in all three engines.
 
 The engines use their natural representations:
 
@@ -201,17 +227,16 @@ The engines use their natural representations:
 
 ### High-precision policy
 
-CGAL EPECK supplies exact predicates and exact constructions through its lazy
-exact field type. Sampled round primitives necessarily begin with the fixed
-binary floating-point trigonometric samples shared by the corpus, but EPECK
-promotes those values exactly and performs subsequent topology and construction
-decisions in the exact kernel. The runner has a compile-time guard preventing a
-floating-point `Kernel::FT` from being substituted accidentally.
+CGAL EPECK supplies exact predicates and constructions through its lazy exact
+field type. This runner's sampled round primitives begin with binary floating-point
+trigonometric coordinates; EPECK promotes those values exactly. These are not the
+same coordinate construction as CSGRS native exact expressions. A compile-time guard
+prevents a built-in floating-point `Kernel::FT` from being substituted accidentally.
 Translation, non-uniform scaling, plane reflection, and affine shear use
 integer or rational coefficients in csgrs and CGAL, so those transform paths
 remain exact after construction. The rotation row is called out separately
-because its fixed sine/cosine samples originate in floating-point before EPECK
-promotes them exactly.
+because it projects points to double, performs the entire rotation in double,
+then promotes the resulting coordinates.
 
 OCCT does not expose an arbitrary-precision scalar mode: `Standard_Real` is an
 IEEE double and accuracy is managed by algorithm and topology tolerances. The
@@ -219,21 +244,21 @@ explicit tight profile therefore:
 
 - sets Boolean fuzzy tolerance to zero, so no tolerance is added beyond the
   values stored on OCCT topology;
-- keeps deterministic, non-parallel Boolean execution for repeatability;
-- exercises a `1e-6` thin overlap, ten times OCCT's documented
-  `Precision::Confusion()` value of `1e-7`;
+- requests non-parallel execution for the explicit Boolean Build call;
+- exercises a nominal `1e-6` thin overlap, with a compile-time assertion that this
+  exceeds the installed `Precision::Confusion()` value;
 - includes a dedicated high-resolution sphere mesh using linear deflection
-  `0.005` and angular deflection `0.07` radians, safely above OCCT's minimum
-  `Precision::Confusion()` and `Precision::Angular()` contracts.
+  `0.005` and angular deflection `0.07` radians. Meshing itself requests parallel
+  execution and does not return a source-fidelity receipt.
 
 The OCCT rows are consequently labeled `opencascade-double-tight`, not
-"exact" or "arbitrary precision." This is the highest-accuracy mode represented
-by these native B-rep workloads without mischaracterizing OCCT's numeric model.
+"exact" or "arbitrary precision." These are selected runner settings, not a proof
+of the highest achievable accuracy.
 
-This makes the results representative end-to-end CAD comparisons, not claims
-that the internal algorithms or representations are identical. `work_units`
-records input facets when a facet stream exists, while `output_size` records
-output triangles/facets. OCCT's analytic analysis cases report B-rep input faces.
+Comparisons need per-row review of inputs, operations and validated outputs.
+`work_units` and `output_size` are case-specific nominal counters, not uniform
+complexity measures. Some OCCT inputs are hard-coded polygon-counterpart counts;
+analytic query rows can use one. CSV ratios alone do not compare matched contracts.
 The fixed sphere/box Boolean uses a deliberately moderate 12×6 mesh on the
 polygon kernels because exact topology dominates runtime; larger 32×16 and
 64×32 meshes remain in construction, transformation, analysis, and I/O cases.
@@ -247,23 +272,21 @@ but serialization-only conclusions should account for that boundary difference.
 
 ## Coverage
 
-Coverage is audited by executable public family. Data-only types, constants,
-report accessors, and binding wrappers are validated through their producing
-operation or their compile/test workflow rather than assigned meaningless
-standalone timings. Each runtime-bearing family in the table has semantic
-tests and a `feature_pipeline` or focused release benchmark. With
-`dispatch-trace`, every `feature_pipeline` row is independently recorded;
+This table indexes representative benchmark families; it is not a complete public
+API inventory or proof that every listed path currently completes. Data-only types,
+accessors and bindings require their own producing-operation/consumer validation.
+With `dispatch-trace`, every `feature_pipeline` row is independently recorded;
 mesh and curve-region trace integration is additionally enforced by
 `dispatch_trace_tests`.
 
 | Area | Representative cases | Principal implementation/dependencies |
 |---|---|---|
 | Exact scalar/lattice | expression evaluation; isolated translation, rotation, non-uniform scale, affine shear, mirror, and inverse | `hyperreal`, `hyperlattice` |
-| 3D construction | every public mesh constructor: boxes, round/frustum solids, polyhedron, revolved/extruded specialty solids, Platonic solids, torus, arrow, and gear variants | csgrs mesh shapes |
+| 3D construction | selected boxes, round/frustum solids, polyhedron, extruded gears, Platonic solids, torus and arrow | csgrs mesh shapes |
 | TriangleMesh topology | union, difference, intersection, XOR, inverse orientation, connectivity, manifold test, triangulation | `hypermesh`, `hypertri`, `hyperlimit` |
 | Geometry algorithms | hull, Minkowski sum, subdivision, smoothing | `hypermesh`, csgrs mesh pipeline |
 | Analysis/query | bounds, rays, exact mass properties, graphics buffers | `hyperlimit`, `hyperphysics` |
-| 2D curve regions | every public region constructor (including polygon, Bezier/B-spline, gear/rack, airfoil, and Hilbert paths), all Booleans, all CSG transform helpers, triangulation, offsets | `hypercurve`, `hypertri` |
+| 2D curve regions | selected polygon/Bezier/B-spline/gear/rack/airfoil/Hilbert cases, four Booleans, selected transforms, triangulation and offsets | `hypercurve`, `hypertri` |
 | 2D→3D | extrusion, revolution, twist, sweep, loft | `hypercurve`, csgrs mesh lowering |
 | Implicit geometry | retained SDF, 2D/3D metaballs, TPMS catalog | `hypersdf`, `fast-surface-nets` |
 | Projection | slice and flatten | `hypercurve`, `hyperlimit` |
@@ -284,9 +307,9 @@ CGAL/OCCT versions, and relevant environment values with any published result.
 Do not compare a `--quick` run to a full run.
 
 `checksum` is a repeatability guard within one engine and case; it is not a
-cross-kernel geometry hash. Transform-coordinate fingerprints are quantized to
-one-billionth of a model unit at the primitive export boundary so equivalent
-symbolic `Real` graphs do not differ only because of adaptive f64 approximation
-state. `summarize.py` rejects changing checksums across
-samples. Output-size differences across engines should be reviewed before
-attributing a speed ratio solely to implementation quality.
+cross-kernel geometry hash. CSGRS transform fingerprints quantize projected
+coordinates to a nominal `1e-9` grid; CGAL hashes projected double bits, and OCCT
+hashes bounds/orientation. None proves exact equality. `summarize.py` rejects
+changing raw aggregate checksums within a group, so differing iteration counts can
+also trigger rejection. Review geometric and measurement differences before making
+performance claims, even when counts and checksums are stable.
