@@ -3,6 +3,11 @@
 //! The homogeneous point and Pluecker line carriers live in `hyperlattice`.
 //! This module keeps incidence classification in `hyperlimit`, where predicate
 //! policy, provenance, and exact/unknown outcomes are owned.
+//!
+//! Construction wrappers retain division-free homogeneous coordinates, not an
+//! affine existence/uniqueness certificate. Incidence checks a linear expression
+//! without validating the carriers. Preserve its local certainty; no source
+//! construction history is attached by this module.
 
 use crate::predicate::PredicatePolicy;
 pub use hyperlattice::{HomogeneousLine3, HomogeneousPoint3};
@@ -16,6 +21,16 @@ use core::cmp::Ordering;
 use hyperreal::Rational;
 
 /// Constructs the homogeneous intersection point of three planes.
+///
+/// Delegates to Hyperlattice's signed 3-by-3 minors of the three coefficient
+/// rows, retaining a common determinant as `w`. For a unique finite intersection,
+/// dividing `(x, y, z)` by nonzero `w` gives the affine point. A nonzero tuple
+/// with `w = 0` represents a projective point at infinity; dependent rows can
+/// produce the all-zero tuple, which is not a projective point.
+///
+/// No rank, plane validity, uniqueness or affine-conversion check is performed.
+/// The returned carrier is not normalized, and its coordinate equality is not
+/// equality up to a nonzero homogeneous scale.
 pub fn intersect_three_planes(
     first: &Plane3,
     second: &Plane3,
@@ -25,11 +40,23 @@ pub fn intersect_three_planes(
 }
 
 /// Constructs the homogeneous Pluecker line where two planes intersect.
+///
+/// For normals `n1`, `n2` and offsets `d1`, `d2`, the shared construction returns
+/// direction `n1 x n2` and moment `d1*n2 - d2*n1`. A nonzero direction defines
+/// the usual affine intersection line. Parallel or coincident planes can give
+/// zero direction or an all-zero carrier; this wrapper neither rejects those
+/// cases nor claims a unique affine line. No division or normalization occurs.
 pub fn intersect_two_planes(first: &Plane3, second: &Plane3) -> HomogeneousLine3 {
     hyperlattice::intersect_two_planes(first, second)
 }
 
 /// Intersects a homogeneous Pluecker line and a plane as a homogeneous point.
+///
+/// For line direction `u`, moment `m`, and plane coefficients `(n, d)`, delegates
+/// the exact tuple `(n x m - d*u, n . u)`. The line's Pluecker relation and
+/// nondegeneracy are assumed, not checked. A parallel line may give `w = 0`;
+/// a contained line may give the all-zero tuple rather than a selected point.
+/// Convert to affine coordinates separately when a finite point is required.
 pub fn intersect_homogeneous_line_plane(
     line: &HomogeneousLine3,
     plane: &Plane3,
@@ -39,6 +66,18 @@ pub fn intersect_homogeneous_line_plane(
 
 /// Classifies homogeneous point/plane incidence with an explicit predicate
 /// policy.
+///
+/// Tests whether `normal.x*x + normal.y*y + normal.z*z + offset*w` is zero,
+/// without dividing by `w`, so valid points at infinity can be queried. This
+/// is incidence, not affine sidedness: the sign of a homogeneous expression
+/// also depends on the representative's scale.
+///
+/// Directly exposed rational coefficients and coordinates use an exact product
+/// sum; other values enter the shared sign resolver with a structural term
+/// filter. The resulting Boolean keeps that resolver's certainty and stage.
+/// Approximate true may reflect a terminal zero classification rather than
+/// proven incidence. No carrier validity check is made: an all-zero point or
+/// plane expression is accepted as zero, not diagnosed as invalid geometry.
 pub fn classify_homogeneous_point_plane_with_policy(
     point: &HomogeneousPoint3,
     plane: &Plane3,
@@ -72,6 +111,9 @@ pub fn classify_homogeneous_point_plane_with_policy(
     )
 }
 
+/// Decide the four-term incidence form only when all eight scalars expose rational references.
+/// A missing rational representation declines without asserting non-incidence;
+/// an available exact form returns Exact certainty and stage, independently of policy.
 #[inline]
 fn classify_exact_rational_homogeneous_point_plane(
     point: &HomogeneousPoint3,
@@ -107,35 +149,43 @@ fn classify_exact_rational_homogeneous_point_plane(
 }
 
 impl Plane3Coefficients for Plane3 {
+    /// Borrow the native normal coefficients without cloning or normalizing them.
     fn normal(&self) -> &hyperlattice::Point3 {
         &self.normal
     }
 
+    /// Borrow the additive coefficient in the native plane equation.
     fn offset(&self) -> &hyperreal::Real {
         &self.offset
     }
 }
 
 #[cfg(test)]
+/// Rational and symbolic construction/incidence witnesses, including affine rejection at infinity.
 mod tests {
     use super::*;
     use crate::{Point3, Real};
 
+    /// Permit terminal decisions; these fixtures inspect values, not complete certainty receipts.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Construct an exact integer scalar for geometric expectations.
     fn r(value: i32) -> Real {
         value.into()
     }
 
+    /// Construct a spatial point or coefficient vector from exact integers.
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
     }
 
+    /// Construct integer coefficients of `a*x + b*y + c*z + d = 0` without normalization.
     fn plane(a: i32, b: i32, c: i32, d: i32) -> Plane3 {
         Plane3::new(p3(a, b, c), r(d))
     }
 
     #[test]
+    /// Check the independent (1,2,3,1) solution and incidence with all three axis planes.
     fn three_plane_intersection_preserves_homogeneous_point() {
         let x_eq_1 = plane(1, 0, 0, -1);
         let y_eq_2 = plane(0, 1, 0, -2);
@@ -154,6 +204,7 @@ mod tests {
     }
 
     #[test]
+    /// Check exact direction/moment expectations and compose line-plane with affine conversion.
     fn two_plane_line_and_line_plane_match_three_plane_intersection() {
         let x_eq_1 = plane(1, 0, 0, -1);
         let y_eq_2 = plane(0, 1, 0, -2);
@@ -169,6 +220,8 @@ mod tests {
     }
 
     #[test]
+    /// Exercise symbolic point/plane inputs and an erf expression with known nonzero expectation.
+    /// Value assertions alone do not establish which generic resolver stage was used.
     fn symbolic_homogeneous_incidence_uses_the_generic_real_pipeline() {
         let pi = Real::pi();
         let point = HomogeneousPoint3::new(pi.clone(), r(0), r(0), r(1));
@@ -197,6 +250,7 @@ mod tests {
     }
 
     #[test]
+    /// Check zero homogeneous weight and failed affine conversion for parallel x constraints.
     fn parallel_planes_produce_point_at_infinity_without_affine_division() {
         let x_eq_1 = plane(1, 0, 0, -1);
         let x_eq_2 = plane(1, 0, 0, -2);
@@ -208,6 +262,7 @@ mod tests {
     }
 
     #[test]
+    /// Query both generating planes at a line's projective intersection with a parallel plane.
     fn homogeneous_incidence_handles_points_at_infinity() {
         let x_eq_1 = plane(1, 0, 0, -1);
         let y_eq_2 = plane(0, 1, 0, -2);

@@ -1,6 +1,18 @@
+//! Predicate inputs, structural summaries and retained geometric evidence.
+//!
+//! Point and homogeneous storage are re-exported from Hyperlattice; Hyperlimit
+//! owns predicate policy, classification and the associated reports. Structural
+//! summaries expose only proven facts or explicit unknowns and must remain tied
+//! to the source geometry when reused. Public record fields do not enforce that
+//! association automatically.
+
+/// Zero-support summaries for planar displacements, segments, triangles and boxes.
 pub mod facts;
+/// Shared homogeneous carriers with predicate-layer incidence and construction adapters.
 pub mod homogeneous;
+/// Oriented plane inputs, reusable predicate evidence and report validation.
 pub mod plane;
+/// Shared point carriers and point facts owned by Hyperlattice.
 pub mod point;
 
 pub use self::facts::{

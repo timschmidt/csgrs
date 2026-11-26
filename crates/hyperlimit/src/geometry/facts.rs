@@ -3,6 +3,14 @@
 //! The types in this module are intentionally small metadata carriers. They
 //! help higher crates cache exact duplicate, degenerate, and axis-aligned hints
 //! without letting those hints replace certified predicates.
+//!
+//! Records are Copy snapshots with public fields, not source-bound certificates.
+//! Constructors from geometry inspect exact scalar zero knowledge without a
+//! policy-driven refinement pass. Constructors from other fact records trust
+//! their consistency; no method validates hand-edited fields or links a record
+//! back to its points. Recompute or prove transport after changing the source.
+//! A false `known_*` flag can mean absence of a proof rather than the opposite
+//! geometric fact; the Option and ZeroKnowledge fields preserve that distinction.
 
 use crate::geometry::Point2;
 use crate::real::sub_ref;
@@ -47,6 +55,7 @@ pub struct Point2DisplacementFacts {
     /// known zero.
     pub known_axis: Option<CoordinateAxis2>,
     /// Whether both displacement components are known zero.
+    /// False includes unknown components and is not proof of a nonzero displacement.
     pub known_zero: bool,
 }
 
@@ -56,6 +65,7 @@ impl Point2DisplacementFacts {
     /// This form lets algorithms cache exact differences once and then reuse
     /// their cheap zero masks when selecting exact kernels, exploiting geometric
     /// object structure before Real refinement.
+    /// The deltas are inspected in x/y order and are not retained in the result.
     pub fn from_deltas(dx: &hyperreal::Real, dy: &hyperreal::Real) -> Self {
         let component_zero = [dx.zero_status(), dy.zero_status()];
         let known_zero = matches!(component_zero, [ZeroKnowledge::Zero, ZeroKnowledge::Zero]);
@@ -140,7 +150,9 @@ impl Point2DisplacementFacts {
         self.unknown_zero_mask() != 0
     }
 
-    /// Return whether the displacement has exactly one known nonzero component.
+    /// Return whether one component is known nonzero and the other is known zero.
+    /// A nonzero component paired with Unknown does not qualify. This method
+    /// reads the retained axis field without revalidating the component facts.
     pub fn is_one_hot(self) -> bool {
         self.known_axis.is_some()
     }
@@ -210,6 +222,8 @@ pub struct Triangle2Facts {
     /// Structural facts for `c - a`.
     pub ac: Point2DisplacementFacts,
     /// Segment facts for `ab`, `bc`, and `ca`.
+    /// The last slot reuses `ac` zero-support facts, which are invariant under
+    /// reversal; it does not store a signed `ca` displacement or traversal.
     pub edges: [Segment2Facts; 3],
     /// Zero knowledge for the two orientation product terms:
     /// `(b.x - a.x) * (c.y - a.y)` and `(b.y - a.y) * (c.x - a.x)`.
@@ -217,13 +231,18 @@ pub struct Triangle2Facts {
     /// Whether determinant zero/nonzero status is known structurally.
     ///
     /// `Some(true)` means the triangle is known degenerate. `Some(false)` means
-    /// exactly one signed determinant product term is structurally nonzero, so
-    /// cancellation cannot make the determinant zero.
+    /// exactly one determinant product term is structurally nonzero and the
+    /// other is zero, so cancellation cannot make the determinant zero.
+    /// Two nonzero terms remain None because their difference may cancel.
     pub known_degenerate: Option<bool>,
 }
 
 impl Segment2Facts {
     /// Build segment facts from displacement facts.
+    ///
+    /// Trusts the supplied snapshot. Known zero gives Some(true), any known
+    /// nonzero component gives Some(false), and otherwise degeneracy is unknown.
+    /// No endpoint identity or consistency check is performed.
     pub fn from_displacement(displacement: Point2DisplacementFacts) -> Self {
         let known_degenerate = if displacement.known_zero {
             Some(true)
@@ -288,6 +307,12 @@ impl Triangle2Facts {
     /// facts here only expose zero/nonzero structure so
     /// higher layers can choose faster exact kernels without replacing certified
     /// predicates.
+    ///
+    /// Inputs must describe `ab = b-a`, `ac = c-a` and `bc = c-b` for the same
+    /// triangle. This relationship is not checked. The `ca` edge slot reuses
+    /// the reversal-invariant zero facts of `ac`. Both-zero determinant terms
+    /// prove degeneracy; one zero and one nonzero prove nondegeneracy; all other
+    /// combinations remain unknown, without testing cancellation.
     pub fn from_parts(
         ab: Point2DisplacementFacts,
         ac: Point2DisplacementFacts,
@@ -378,6 +403,8 @@ impl Triangle2Facts {
     /// incomplete product support as certified degeneracy, preserving the
     /// boundary between structural hints and
     /// certified predicate decisions.
+    /// False only says both product statuses are known; two nonzero products
+    /// can still leave determinant cancellation and triangle degeneracy unknown.
     pub fn has_unknown_determinant_zero(self) -> bool {
         self.determinant_unknown_zero_mask() != 0
     }
@@ -395,6 +422,7 @@ pub struct Aabb2Facts {
     /// Structural facts for `max - min`.
     pub extent: Point2DisplacementFacts,
     /// Whether the box is structurally known to collapse to one point.
+    /// False is not proof of a non-point box when extent facts are unknown.
     pub known_point: bool,
     /// Whether the box is structurally known to have zero area, known to have
     /// nonzero area, or not known either way.
@@ -406,6 +434,11 @@ pub struct Aabb2Facts {
 
 impl Aabb2Facts {
     /// Build AABB facts from already-computed extent facts.
+    ///
+    /// A known zero extent component proves zero area; two known nonzero
+    /// components prove positive area, independent of their signs. Other cases
+    /// remain unknown. The supplied fact fields are trusted, and this method
+    /// does not order corners or retain their identity.
     pub fn from_extent(extent: Point2DisplacementFacts) -> Self {
         let known_point = extent.known_zero;
         let known_axis_segment = if known_point { None } else { extent.known_axis };
@@ -474,6 +507,8 @@ impl Aabb2Facts {
     }
 }
 
+/// Propagate zero knowledge through a two-factor product: any zero wins, both nonzero prove nonzero.
+/// All other combinations remain Unknown without constructing or refining a product.
 fn product_zero_knowledge(factors: [ZeroKnowledge; 2]) -> ZeroKnowledge {
     if zero_knowledge_is_zero(factors[0]) || zero_knowledge_is_zero(factors[1]) {
         ZeroKnowledge::Zero
@@ -484,6 +519,8 @@ fn product_zero_knowledge(factors: [ZeroKnowledge; 2]) -> ZeroKnowledge {
     }
 }
 
+/// Decide degeneracy of a two-term determinant only from zero support, without cancellation tests.
+/// Two zeros give Some(true); exactly one zero and one nonzero give Some(false).
 fn triangle_degenerate_from_terms(terms: [ZeroKnowledge; 2]) -> Option<bool> {
     let zero_count = terms
         .into_iter()
@@ -503,6 +540,7 @@ fn triangle_degenerate_from_terms(terms: [ZeroKnowledge; 2]) -> Option<bool> {
     }
 }
 
+/// Mark determinant term indices whose retained knowledge exactly equals the requested status.
 fn determinant_term_mask(statuses: [ZeroKnowledge; 2], needle: ZeroKnowledge) -> u8 {
     let mut mask = 0;
     for (index, status) in statuses.into_iter().enumerate() {
@@ -513,19 +551,24 @@ fn determinant_term_mask(statuses: [ZeroKnowledge; 2], needle: ZeroKnowledge) ->
     mask
 }
 
+/// Recognize only a proven-zero label; Unknown does not satisfy it.
 const fn zero_knowledge_is_zero(knowledge: ZeroKnowledge) -> bool {
     matches!(knowledge, ZeroKnowledge::Zero)
 }
 
+/// Recognize only a proven-nonzero label, without inferring a sign.
 const fn zero_knowledge_is_nonzero(knowledge: ZeroKnowledge) -> bool {
     matches!(knowledge, ZeroKnowledge::NonZero)
 }
 
+/// Identify missing zero knowledge, which is distinct from either proved result.
 const fn zero_knowledge_is_unknown(knowledge: ZeroKnowledge) -> bool {
     matches!(knowledge, ZeroKnowledge::Unknown)
 }
 
 /// Return structural facts about the displacement `to - from`.
+/// Differences are constructed in x/y order through traced native subtraction;
+/// only their zero facts survive in the returned snapshot.
 pub fn point2_displacement_facts(from: &Point2, to: &Point2) -> Point2DisplacementFacts {
     crate::trace_dispatch!("hyperlimit", "geometry_facts", "point2-displacement");
     let dx = sub_ref(&to.x, &from.x);
@@ -565,13 +608,18 @@ pub fn aabb2_facts(min: &Point2, max: &Point2) -> Aabb2Facts {
 }
 
 #[cfg(test)]
+/// Integer degeneracy/support expectations and conservative treatment of a symbolic-zero fixture.
 mod tests {
     use super::*;
 
+    /// Construct an exact integer planar fixture.
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
 
+    /// Construct sin(e)^2 + cos(e)^2 - 1 for structural-only unknown checks.
+    /// This mathematical zero can be recognized by stronger normal-form work;
+    /// the tests below specifically expect these cheap fact queries to decline.
     fn terminal_zero() -> hyperreal::Real {
         let sine = hyperreal::Real::e().sin();
         let cosine = hyperreal::Real::e().cos();
@@ -579,6 +627,7 @@ mod tests {
     }
 
     #[test]
+    /// Check duplicate, horizontal and dense displacement masks against integer geometry.
     fn point_displacement_facts_track_duplicate_and_axis_cases() {
         let origin = p2(0, 0);
         let horizontal = p2(7, 0);
@@ -615,6 +664,7 @@ mod tests {
     }
 
     #[test]
+    /// Check point, vertical and diagonal segment degeneracy and sparse-support facts.
     fn segment_facts_distinguish_degenerate_axis_and_dense_segments() {
         let origin = p2(0, 0);
         let vertical = p2(0, 5);
@@ -640,6 +690,7 @@ mod tests {
     }
 
     #[test]
+    /// Check point, horizontal-segment and positive-area box summaries and query complements.
     fn aabb_facts_distinguish_point_segment_and_area_boxes() {
         let origin = p2(0, 0);
         let horizontal = p2(5, 0);
@@ -670,6 +721,7 @@ mod tests {
     }
 
     #[test]
+    /// Check collinear and perpendicular integer triangles, determinant masks and edge roles.
     fn triangle_facts_track_axis_degeneracy_and_non_degeneracy() {
         let origin = p2(0, 0);
         let x_axis = p2(4, 0);
@@ -716,6 +768,7 @@ mod tests {
     }
 
     #[test]
+    /// Require unresolved scalar zero support to survive displacement, segment, box and triangle summaries.
     fn structural_facts_keep_unknown_zero_status_conservative() {
         let origin = p2(0, 0);
         let unknown = terminal_zero();

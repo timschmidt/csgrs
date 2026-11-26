@@ -4346,6 +4346,83 @@ The same temporary target is reused. Read-ahead of geometric fact/homogeneous
 modules is not yet a completed audit record; their documentation and validation
 remain the next batch.
 
+### Hyperlimit structural facts and homogeneous adapters, 26 November 2026
+
+Baseline: `6a784db3d`. Owners: predicate-facing geometric summaries and homogeneous
+incidence, with Hyperlattice retaining point/projective storage and construction
+arithmetic. Properties: P3/P4/P6/P8/P9/P15/P19/P25/P30. Domain: planar displacement,
+segment, triangle and box zero-support metadata; exact homogeneous point/line
+construction and point/plane linear-form incidence, including zero weight and
+unvalidated degenerate tuples. Missing acceptance witnesses were undocumented
+private helpers/tests and incomplete explanations of trusted snapshots, unknown
+flags and construction-versus-validity distinctions. Reproduced against current
+source before changes.
+
+| File | Whole-file review and change |
+| --- | --- |
+| `crates/hyperlimit/src/geometry/mod.rs` | All 15 baseline lines; documented owning-layer separation and all four module roles. |
+| `crates/hyperlimit/src/geometry/point.rs` | All 7 lines; existing module docs correctly identify the Hyperlattice aliases and single storage/fact authority. Unchanged. |
+| `crates/hyperlimit/src/geometry/facts.rs` | All 759 baseline lines; reviewed every public type/field/method and test. Documented six private helpers, test module, two test helpers and five witnesses; clarified false/unknown meanings, trusted record construction, determinant cancellation and reversed-edge zero evidence. |
+| `crates/hyperlimit/src/geometry/homogeneous.rs` | All 228 baseline lines; documented all three construction wrappers, incidence policy/domain limits, private rational helper, both coefficient-trait methods and all test declarations. |
+
+Supporting reads: Hyperlattice `projective.rs` through the construction and
+incidence definitions, Hyperreal's sparse rational homogeneous-intersection
+adapter, and the beginning of Hyperlimit's plane-carrier module. These are
+excerpts and do not establish whole-file review of those implementations.
+
+Structural facts are Copy records with public fields, not automatically
+source-bound proofs. Geometry constructors collect exact zero knowledge;
+constructors from fact records trust consistency and do not validate source
+identity. A false known-zero/known-point flag need not prove the opposite.
+One-hot displacement requires a known nonzero component and a known zero other
+component. Triangle determinant structure proves degeneracy for two zero
+products and nondegeneracy for one zero plus one nonzero product; two nonzero
+products still need a cancellation decision. The ca edge slot reuses ac facts
+because zero support is unchanged by reversal, not because it stores signed
+traversal. Changed source geometry requires recomputation or proven transport.
+
+Homogeneous construction forwards exact polynomial expressions without dividing
+by weight or proving a unique affine result. Three-plane minors can give a valid
+point at infinity or an all-zero tuple when rank is insufficient. Two-plane and
+line/plane wrappers likewise do not reject zero-direction, contained or otherwise
+invalid carriers. Incidence tests `a*x+b*y+c*z+d*w == 0` without affine division
+or carrier validation; all-zero data can therefore yield true, and an approximate
+true is not an exact incidence proof. These are documented validation/evidence
+limits, not newly completed support or relaxed normative requirements. Derived
+coordinate equality is distinguished from projective equality up to scale.
+
+Existing tests retain independent rational coordinates, direction/moment
+expectations, symbolic incidence checks, affine rejection at infinity and
+conservative zero-fact expectations. Their comments distinguish value-only
+assertions from certainty/dispatch evidence. The sin(e)^2+cos(e)^2-1 helper is a
+mathematical zero used by structural-only unknown expectations; stronger scalar
+recognition is not contradicted. No test expectation was changed or rerun.
+
+Validation after final source edits:
+
+- Focused Rustfmt, `git diff --check` and comparison of nonblank/noncomment lines
+  passed for all three edited files; executable source is byte-identical to the
+  baseline after removing comments/blank lines.
+- A scoped source scan found 85 documented named declarations including private
+  and test items; fields and variants were reviewed separately. This is not a
+  repository-wide coverage percentage.
+- Offline locked `cargo rustdoc -p hyperlimit --lib --all-features -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links` passed. Inspected
+  83 summary groups and eight selected full-contract passages across 27 rendered
+  pages, including the private rational helper and Plane3's coefficient-trait
+  implementation. Normal library Rustdoc omits cfg(test) modules.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed, compiling affected unit and integration consumers without executing
+  their fixtures. Downstream private csgrs docs with `--no-default-features
+  --features curve` also passed with locked offline dependencies and broken-link
+  denial. Shared build storage remains approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-geometry-{doc,check,downstream-doc}.log`.
+The shared temporary target remains in use. Full workflow/runtime/performance
+checks remain waived for this docs-only session. The large geometric plane module,
+actual predicate implementations and most kernel crates remain unaudited in full;
+this batch completes neither Hyperlimit coverage nor the repository goal.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
