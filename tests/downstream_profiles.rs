@@ -11,6 +11,7 @@
 //! tolerance or a sampled-profile bound is a smoke check, labelled as such,
 //! never an exactness certificate.
 
+/// Shared strict geometry, evidence-flag and index-topology test helpers.
 #[allow(dead_code)]
 #[path = "support/downstream_workloads.rs"]
 mod support;
@@ -37,6 +38,10 @@ use support::*;
 // The cut corners (+-sqrt 2, 2) are algebraic, so the region keeps algebraic
 // fragments until the explicit meshing step, which samples it and says so.
 
+/// Builds the exact region `x² <= y <= 4` from one quadratic span and its closing line.
+///
+/// The control net `(-2,4), (0,-4), (2,4)` parameterizes `y=x²` on `[-2,2]`.
+/// Nonzero-fill admission is required; failures panic.
 fn parabola_region() -> CurveRegion2 {
     let boundary = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(-2, 4), p(0, -4), p(2, 4))),
@@ -46,11 +51,19 @@ fn parabola_region() -> CurveRegion2 {
     CurveRegion2::try_from_boundary_paths(&[boundary], FillRule::NonZero).expect("region")
 }
 
+/// Builds the exact rectangle `[-3,3] × [2,5]` that removes the parabola's upper part.
 fn upper_cutter() -> CurveRegion2 {
     curve::translated(&curve::rectangle(r(6), r(3)).expect("rectangle"), r(-3), r(2))
         .expect("translation")
 }
 
+/// Checks algebraic trims through difference, scaling and explicit sampled extrusion.
+///
+/// Exact areas, selected memberships and conservative X/exact Y bounds are checked
+/// against the scaled parabola. The scaled-first construction has the same area
+/// and probes; this is not an exhaustive independent set-equality check.
+/// Extrusion requires local certification, native face/edge validity and sampling
+/// flags; projected volume deficit below 0.014 is only a binary64 smoke bound.
 #[test]
 fn quadratic_bezier_region_keeps_algebraic_fragments_until_meshing() {
     let region = parabola_region();
@@ -147,7 +160,11 @@ fn quadratic_bezier_region_keeps_algebraic_fragments_until_meshing() {
 // fixture `offset(delta = -2) square(1)`, which must be empty rather than the
 // unchanged square.
 
-/// Area of the mesh faces in the plane `z = 0`, from their exact coordinates.
+/// Absolute signed XY area sum of triangles lying exactly in `z = 0`.
+///
+/// Uses strict zero/sign decisions and sums oriented determinants before taking
+/// the absolute value. Requires valid indices; it does not validate cap coverage,
+/// remove multiplicity or compute the union area of overlapping faces.
 fn base_area(mesh: &TriangleMesh) -> Real {
     let twice = mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
         let [a, b, c] = triangle.indices().map(|index| &mesh.positions[index]);
@@ -167,6 +184,12 @@ fn base_area(mesh: &TriangleMesh) -> Real {
     (twice / r(2)).expect("division")
 }
 
+/// Checks an exact rounded-square profile and a taper of its sampled boundary.
+///
+/// Requires area `4500 + 100*pi`, exact bounds, local certification, sampling
+/// flags and index topology. Signed six-volume equals 70 times the sampled base
+/// area, with the same volume after four slices. The projected base-area deficit
+/// below 0.063 is a smoke check, not a certified analytic error bound.
 #[test]
 fn round_offset_square_taper_keeps_its_exact_profile_measures() {
     let square = curve::translated(&curve::square(r(50)).expect("square"), r(-25), r(-25))
@@ -233,6 +256,13 @@ fn round_offset_square_taper_keeps_its_exact_profile_measures() {
     assert!((0.0..0.063).contains(&deficit), "base area deficit {deficit}");
 }
 
+/// Checks a round-offset wall of a 40-gon, its hole and sampled tube continuation.
+///
+/// The source is the radius-15 inscribed polygon. Independent area formulas are
+/// compared within a certified `10^-30` enclosure, not proved equal. Selected
+/// memberships, loop roles, sampling flags, native face/edge validity and index
+/// topology constrain the result. Two expected ordering blockers are matched by
+/// diagnostic text; they are limitations, not successful exact queries.
 #[test]
 fn circle_wall_from_opposite_offsets_keeps_one_hole() {
     // `outline(wall = 2) circle(15)` with `$fn = 40`: a regular 40-gon of
@@ -317,6 +347,12 @@ fn circle_wall_from_opposite_offsets_keeps_one_hole() {
     );
 }
 
+/// Checks collapse and a surviving rational sliver under all three corner styles.
+///
+/// Erosions -2 and -1/2 of a unit square must yield empty regions, absent bounds
+/// and empty extrusion buffers. Subsequent mesh/region unions check volume/area.
+/// A distance `-1/2 + 10^-12` retains the expected tiny square area, loop roles
+/// and selected bounds. These paths do not separately assert every local receipt.
 #[test]
 fn collapsed_negative_offsets_are_empty_not_the_input() {
     let unit = curve::square(r(1)).expect("unit square");
@@ -384,7 +420,11 @@ fn twist_profile_rings() -> [[[i64; 2]; 4]; 2] {
     ]
 }
 
-/// Point `vertex` of section `slice`, and its height.
+/// Independently derives one authored corner at section `slice` of the twist.
+///
+/// For fixture sections 0 through 12, scales by `(1-i/48,1+i/48)`, rotates by
+/// `i*pi/16`, and raises to `5*i/12`. Arithmetic uses exact scalars; the helper
+/// does not validate the slice range or guard general i64 multiplication overflow.
 fn twist_section_point(vertex: [i64; 2], slice: i64) -> [Real; 3] {
     let angle = Real::pi() * q(slice, 16);
     let (sine, cosine) = (angle.clone().sin(), angle.cos());
@@ -397,7 +437,9 @@ fn twist_section_point(vertex: [i64; 2], slice: i64) -> [Real; 3] {
     ]
 }
 
-/// Twice the signed area of section `slice`: 2 * 12 (1 - i/48)(1 + i/48).
+/// Derives twice the signed holed-section area, `24*(1-i/48)*(1+i/48)`.
+/// Rotation preserves the area; scale factors apply to material and hole alike.
+/// Intended for the fixture's sections 0 through 12 without range validation.
 fn twist_section_twice_area(slice: i64) -> Real {
     r(24) * (r(1) - q(slice, 48)) * (r(1) + q(slice, 48))
 }
@@ -413,6 +455,8 @@ fn twist_section_twice_area(slice: i64) -> Real {
 /// `Am` passes through the midpoints of the side edges; `forward_diagonal`
 /// splits each side quadrilateral from an edge's start on the lower section
 /// to its end on the upper one, and otherwise from its end to its start.
+/// This is an oriented integral for the fixed sections 0 through 12, not a
+/// standalone proof of embedding; `slice` selects an interval from 0 through 11.
 fn twist_slice_side_six_volume(slice: i64, forward_diagonal: bool) -> Real {
     let shoelace = |polygon: &[[Real; 2]]| {
         let mut twice = Real::zero();
@@ -454,7 +498,7 @@ fn twist_slice_side_six_volume(slice: i64, forward_diagonal: bool) -> Real {
     prismatoid - q(5 * (slice + 1), 12) * upper + q(5 * slice, 12) * lower
 }
 
-/// The exact rational height of every vertex of a mesh triangle.
+/// Extracts the three stored rational heights; invalid indices/nonrational values panic.
 fn triangle_heights(mesh: &TriangleMesh, triangle: hypermesh::Triangle) -> [Rational; 3] {
     triangle.indices().map(|index| {
         mesh.positions[index]
@@ -464,7 +508,10 @@ fn triangle_heights(mesh: &TriangleMesh, triangle: hypermesh::Triangle) -> [Rati
     })
 }
 
-/// Six times the volume terms of the side triangles between two heights.
+/// Sums signed tetrahedral six-volume terms joining two exact height planes.
+/// Requires every vertex of an included triangle on either plane and at least
+/// one on each; excludes cap triangles. This does not clip spanning triangles or
+/// validate surface coverage, and height extraction requires rational coordinates.
 fn side_six_volume(mesh: &TriangleMesh, lower: &Rational, upper: &Rational) -> Real {
     mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
         let heights = triangle_heights(mesh, *triangle);
@@ -479,7 +526,8 @@ fn side_six_volume(mesh: &TriangleMesh, lower: &Rational, upper: &Rational) -> R
     })
 }
 
-/// Six times the volume terms of the triangles in the plane `z = height`.
+/// Sums signed tetrahedral six-volume terms with all vertices at `height`.
+/// Filters exact rational heights without clipping or validating cap coverage.
 fn cap_six_volume(mesh: &TriangleMesh, height: &Rational) -> Real {
     mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
         if triangle_heights(mesh, *triangle).iter().any(|z| z != height) {
@@ -494,6 +542,9 @@ fn cap_six_volume(mesh: &TriangleMesh, height: &Rational) -> Real {
 
 /// Requires the side triangles of `slices` to match the prismatoid oracle
 /// for one fixed diagonal convention, and returns that convention.
+/// The fixture supplies 6 or 12 intervals. Both candidate integrals must differ,
+/// and every interval must select the same candidate. Panics for zero intervals
+/// or any failed comparison; matching sums alone does not identify every triangle.
 fn assert_twist_slices(mesh: &TriangleMesh, slices: i64) -> bool {
     let height = |slice: i64| Rational::fraction(5 * slice, 12).expect("nonzero denominator");
     let mut convention = None;
@@ -516,6 +567,11 @@ fn assert_twist_slices(mesh: &TriangleMesh, slices: i64) -> bool {
     convention.expect("at least one slice")
 }
 
+/// Builds a twelve-slice, height-five extrusion of a square with one square hole.
+///
+/// Requires one material/one hole loop and local certification for 135 degrees
+/// of twist and final scales `(3/4,5/4)`. Returns the mesh for separate coordinate,
+/// face/edge, volume, topology and continuation assertions; failures panic.
 fn twisted_extrusion() -> TriangleMesh {
     let hole = curve::translated(&curve::square(r(2)).expect("square"), r(1), r(1))
         .expect("translation");
@@ -537,6 +593,12 @@ fn twisted_extrusion() -> TriangleMesh {
     outcome.into_value()
 }
 
+/// Checks all 104 section vertices and the holed mesh's finite invariants.
+///
+/// Requires no sampling/projection flags, certified face/edge checks, index Euler
+/// characteristic zero and one component. Side and cap signed-volume sums match
+/// the independent section oracle. These checks do not independently validate
+/// every vertex link or embeddedness.
 #[test]
 fn twisted_scaled_holed_extrusion_keeps_exact_sections_and_its_hole() {
     let mesh = twisted_extrusion();
@@ -574,13 +636,19 @@ fn twisted_scaled_holed_extrusion_keeps_exact_sections_and_its_hole() {
     );
 }
 
+/// Checks empty-union triangle preservation and a cut at section six.
+///
+/// Both Booleans must be locally certified. The half-height cut retains the
+/// expected side/cap signed-volume sums, index topology and upper-height bound.
+/// Triangle-row agreement after regularization is a representation witness;
+/// this test contains no separate general embedded-surface validator.
 #[test]
 fn twisted_extrusion_continues_through_strict_booleans() {
     let mesh = twisted_extrusion();
 
-    // Regularizing through a union with empty returns the same triangles, so
-    // the surface already bounds its nonzero-winding set: this workload is
-    // embedded, which the construction itself does not promise.
+    // Union with empty must preserve the oriented triangle rows after native
+    // regularization. This representation check does not independently validate
+    // every vertex link or establish general embedded-surface validity.
     let regularized = solid::boolean_with_context(
         &mesh,
         &solid::empty(),

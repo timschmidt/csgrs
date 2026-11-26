@@ -11,6 +11,7 @@
 //! tolerance or a sampled-profile bound is a smoke check, labelled as such,
 //! never an exactness certificate.
 
+/// Shared strict scalar, bounds, topology and winding-volume assertions.
 #[allow(dead_code)]
 #[path = "support/downstream_workloads.rs"]
 mod support;
@@ -33,6 +34,11 @@ use support::*;
 // OpenSCAD numeric source enters `Real` without a binary64 parse (P34), so
 // the bounds are the exact rationals and the volumes their products.
 
+/// Checks rational/decimal ingress, exact cuboid bounds and signed volume.
+///
+/// Distinguishes decimal `0.1` from its exact binary64 import, checks rational
+/// centering and a `10^-30` translation. Native face/edge checks apply to the
+/// fractional cuboid; these witnesses do not execute the external CAD parser.
 #[test]
 fn exact_and_decimal_literals_reach_native_bounds() {
     let width = q(1, 3) + q(1, 6);
@@ -106,6 +112,10 @@ fn exact_and_decimal_literals_reach_native_bounds() {
     );
 }
 
+/// Checks certified subtraction of nested literal cuboids with exact volume 219/2800.
+///
+/// Also checks retained outer bounds and native face/edge validity; these finite
+/// invariants do not alone establish general Boolean set equality.
 #[test]
 fn literal_cuboids_compose_through_a_strict_difference() {
     // [0, 1/2] x [0, 2/5] x [0, 3/7] minus [0, 1/10] x [0, 1/4] x [0, 3/10].
@@ -136,10 +146,11 @@ fn literal_cuboids_compose_through_a_strict_difference() {
 //
 // exactcore-hyper-comparison `tests/curves.rs`: crossing, endpoint, overlap
 // and disjoint segment pairs, and direct versus `Segment2` enum dispatch. The
-// oracle solves `p + t r = q + u s` by Cramer's rule in rationals, and every
-// returned parameter is replayed on its own segment.
+// oracle solves `p + t r = q + u s` by Cramer's rule in rationals. Point
+// parameters are replayed on both segments; overlap ranges are compared
+// independently, with endpoint replay on the first segment.
 
-/// Exact rational coordinates of a point.
+/// Extracts stored exact rational point coordinates; panics if either is not rational.
 fn rational_point(point: &Point2) -> [Rational; 2] {
     [point.x(), point.y()].map(|value| value.exact_rational().expect("rational coordinate"))
 }
@@ -147,13 +158,31 @@ fn rational_point(point: &Point2) -> [Rational; 2] {
 /// Independent line relation of two integer segments.
 #[derive(Debug)]
 enum LineOracle {
+    /// The two closed finite segments do not meet.
     None,
-    /// The crossing parameters on the first and second segment.
-    Point(Rational, Rational),
-    /// The overlap parameter ranges on the first and second segment.
-    Overlap([Rational; 2], [Rational; 2]),
+    /// A single point, including proper crossing or endpoint contact.
+    Point(
+        /// Affine parameter on the first segment.
+        Rational,
+        /// Affine parameter on the second segment.
+        Rational,
+    ),
+    /// A nonzero collinear overlap, ordered along the first segment.
+    Overlap(
+        /// Increasing first-segment parameter endpoints.
+        [Rational; 2],
+        /// Corresponding second-segment endpoints, possibly decreasing.
+        [Rational; 2],
+    ),
 }
 
+/// Solves closed-segment incidence independently by integer determinants and rationals.
+///
+/// Inputs are `[start_x, start_y, end_x, end_y]`. Both segments must be nonzero,
+/// and all intermediate differences/products/sums must fit i64, as these small
+/// fixtures do. Nonparallel supports use Cramer's rule; collinear supports are
+/// projected and clipped to `[0,1]`. The second overlap range follows the first
+/// segment's traversal and may descend. This is not a full-range i64 oracle.
 fn line_oracle(first: [i64; 4], second: [i64; 4]) -> LineOracle {
     let [px, py, rx, ry] = [first[0], first[1], first[2] - first[0], first[3] - first[1]];
     let [qx, qy, sx, sy] = [
@@ -215,6 +244,7 @@ fn line_oracle(first: [i64; 4], second: [i64; 4]) -> LineOracle {
     LineOracle::Overlap([low.clone(), high.clone()], [back(&low), back(&high)])
 }
 
+/// Builds an exact integer endpoint segment, panicking if the endpoints coincide.
 fn segment(coordinates: [i64; 4]) -> LineSeg2 {
     LineSeg2::try_new(
         p(coordinates[0], coordinates[1]),
@@ -223,12 +253,18 @@ fn segment(coordinates: [i64; 4]) -> LineSeg2 {
     .expect("nondegenerate segment")
 }
 
+/// Sorts the two rational endpoints, discarding traversal for range comparison.
 fn as_unordered(range: [Rational; 2]) -> [Rational; 2] {
     let [a, b] = range;
     if a <= b { [a, b] } else { [b, a] }
 }
 
-/// Checks one direct line relation against the oracle and replays it.
+/// Checks one direct line relation against the small-integer oracle and returns it.
+///
+/// Point parameters are compared independently and replayed on both segments;
+/// endpoint versus interior crossing is checked. Overlap ranges are compared
+/// without orientation, and returned endpoints are replayed on the first segment.
+/// Requires the nonzero, nonoverflowing fixture domain of [`line_oracle`].
 fn check_line_relation(
     first: [i64; 4],
     second: [i64; 4],
@@ -303,6 +339,10 @@ fn check_line_relation(
     relation
 }
 
+/// Checks ten integer relations, operand swaps and first-segment reversal.
+///
+/// Independent parameters and replay cover crossings, endpoint contacts,
+/// collinear overlap/disjointness, parallel lines and support-only crossings.
 #[test]
 fn line_relations_replay_exact_parameters() {
     for (first, second, label) in [
@@ -324,6 +364,7 @@ fn line_relations_replay_exact_parameters() {
     }
 }
 
+/// Distinguishes a `2^-80` endpoint gap from an exact contact just inside the segment.
 #[test]
 fn line_relations_keep_sub_binary64_separation() {
     // A gap of 2^-80 after an endpoint is disjoint, not an endpoint contact.
@@ -350,6 +391,9 @@ fn line_relations_keep_sub_binary64_separation() {
     ));
 }
 
+/// Requires enum dispatch to preserve three direct line-relation results.
+///
+/// This is dispatch consistency; the independent oracle is exercised separately.
 #[test]
 fn segment_enum_dispatch_matches_direct_line_relation() {
     for (first, second) in [
@@ -366,6 +410,10 @@ fn segment_enum_dispatch_matches_direct_line_relation() {
     }
 }
 
+/// Checks exact side labels separately from finite-segment containment.
+///
+/// A collinear point beyond the endpoint remains on the supporting line but is
+/// outside the segment; both an interior point and an endpoint are contained.
 #[test]
 fn line_side_and_containment_match_the_determinant() {
     let a = segment([0, 0, 6, 0]);
@@ -391,21 +439,36 @@ fn line_side_and_containment_match_the_determinant() {
 // difference, and every returned contact point must satisfy both circle
 // equations exactly.
 
-/// A circle of the given centre and radius, as an arc of its full support.
+/// Builds a counterclockwise semicircle carrying the desired full-circle support.
+///
+/// Fixtures pass a positive radius. Endpoints are center plus/minus that radius
+/// on X; construction failure panics. Relation queries intentionally ignore this
+/// half-circle sweep, so the carrier itself is not a full-circle boundary.
 fn circle(center: Point2, radius: &Real) -> CircularArc2 {
     let start = Point2::new(center.x().clone() + radius.clone(), center.y().clone());
     let end = Point2::new(center.x().clone() - radius.clone(), center.y().clone());
     CircularArc2::try_from_center(start, end, center, false).expect("nonzero radius")
 }
 
+/// Independent relation categories for full positive-radius circle supports.
 #[derive(Debug, PartialEq, Eq)]
 enum CircleOracle {
+    /// Same center and radius, with infinitely many common points.
     Coincident,
+    /// No common support point, including strict nesting or concentric inequality.
     Disjoint,
+    /// Exactly one common point, at internal or external tangency.
     Tangent,
+    /// Two distinct common points.
     Secant,
 }
 
+/// Classifies positive-radius circle supports from squared center distance.
+///
+/// Compares against squared radius sum and difference using strict scalar
+/// decisions. Zero distance at the inner equality identifies coincidence.
+/// Assumes nonnegative squared distance and positive radii; undecided comparisons
+/// panic through the shared helpers instead of becoming a relation.
 fn circle_oracle(distance_squared: &Real, first: &Real, second: &Real) -> CircleOracle {
     let sum = (first.clone() + second.clone()) * (first.clone() + second.clone());
     let difference = (first.clone() - second.clone()) * (first.clone() - second.clone());
@@ -424,6 +487,9 @@ fn circle_oracle(distance_squared: &Real, first: &Real, second: &Real) -> Circle
     }
 }
 
+/// Requires decided exact equality of squared distance and squared radius.
+///
+/// Tests the full support equation, without restricting an arc sweep.
 fn on_circle(point: &Point2, center: &Point2, radius: &Real) -> bool {
     strictly_equal(
         &point.distance_squared(center),
@@ -431,6 +497,11 @@ fn on_circle(point: &Point2, center: &Point2, radius: &Real) -> bool {
     )
 }
 
+/// Checks a positive-radius circle against the radius-five circle at the origin.
+///
+/// Independently classifies supports by squared-distance inequalities. Returned
+/// contact points must satisfy both equations; secant witnesses must also differ.
+/// Operation errors, uncertainty or failed expectations panic.
 fn check_circle_pair(center: Point2, radius: Real, label: &str) -> CircleCircleRelation {
     let origin = p(0, 0);
     let five = r(5);
@@ -463,6 +534,11 @@ fn check_circle_pair(center: Point2, radius: Real, label: &str) -> CircleCircleR
     relation
 }
 
+/// Checks eleven support configurations, including `10^-12` tangency perturbations.
+///
+/// Also requires rational secant witnesses `(4,±3)` and external contact `(5,0)`.
+/// Nested/concentric circles, internal tangency and off-axis contact are distinct
+/// cases; finite arc-sweep filtering is outside these support-relation tests.
 #[test]
 fn circle_relations_follow_the_exact_discriminant() {
     let tiny = q(1, 1_000_000_000_000);
@@ -513,6 +589,12 @@ fn circle_relations_follow_the_exact_discriminant() {
     assert_eq!(rational_point(&point), [Rational::new(5), Rational::zero()]);
 }
 
+/// Checks horizontal-line support relations with the radius-five circle.
+///
+/// Heights 7, 5, 0 and -5 distinguish disjoint, tangent and secant supports.
+/// Every contact satisfies the circle equation and affine line-parameter replay;
+/// secant parameters must increase. The queried API ignores finite segment and
+/// arc domains, even though these particular line segments span their contacts.
 #[test]
 fn supporting_line_circle_relations_follow_the_exact_discriminant() {
     let five = r(5);

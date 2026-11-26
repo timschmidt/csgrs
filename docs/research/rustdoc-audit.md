@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/downstream_exact_inputs.rs` | Entire file; documented exact ingress, bounded integer line oracle, overlap payloads, full-circle support relations and all tests. | Focused compilation/private docs passed; tuple layout adds only trailing commas; assertions unchanged and unrun. |
+| `tests/downstream_profiles.rs` | Entire file; documented parabola/offset/twist fixtures, area enclosures, sampled smoke bounds, side/cap oracles and continuation limits. | Focused compilation/private docs passed; comments corrected without changing formulas, expected blockers or assertions. |
 | `tests/strict_boolean_workflows.rs` | Entire file; documented corpus module, nested generator macros, generated modules and all test definitions. | Focused compilation/private docs passed; 45 workflows and five controls remain unchanged and unrun. |
 | `tests/strict_drilled_workflows.rs` | Entire file; documented polygonal drill construction, signed six-volume enclosure, membership and empty reuse assertions. | Focused compilation/private docs passed; corrected enclosure units in comments only; runtime assertions not run. |
 | `tests/support/strict_boolean_workflows/mod.rs` | Entire file; documented truth tables, strict operations, check sequencing, 21-output chains and oracle controls. | Consumer compilation/private docs passed; call order, counters and assertions unchanged. |
@@ -3027,6 +3029,55 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-strict-workflows-check.log` and
 `/tmp/csgrs-rustdoc-strict-workflows-private.log`.
+
+### Downstream exact inputs and profile witnesses, 26 November 2026
+
+Baseline: `add25e883`. Owners: root downstream acceptance consumers and independent
+line/circle/section oracles, P1/P3/P4/P6/P8/P17–P19/P24/P25/P34/P37. Domain: exact
+fraction/decimal boxes, small nonzero integer segments, positive-radius circle
+supports, an algebraically trimmed parabola, rounded polygon offsets/collapse,
+and a twelve-slice anisotropically scaled holed extrusion. Read both files
+completely and checked the shared helpers' relevant bodies and native circle
+relation/arc construction entries. Native owner excerpts and external historical
+CAD snapshots receive no whole-file or fresh execution credit.
+
+Missing witnesses were undocumented private declarations, enum variants/payloads
+and scope distinctions. The integer line oracle requires intermediate i64
+arithmetic to fit; overlap ranges are compared independently with endpoint replay
+on the first segment, while point contacts replay both parameters. Circle helpers
+construct semicircles but query full supports. Wrapper agreement is dispatch
+evidence, not an independent oracle. Exact decimal parsing remains distinct from
+binary64 import, and the test does not execute the original external CAD parser.
+
+Profile documentation separates exact area/coordinate assertions, certified
+`10^-30` enclosures, retained sampling flags and projected smoke bounds. Existing
+ordering limitations remain expected diagnostic-text assertions. Section-side
+prismatoid and cap integrals are signed sums; matching them does not identify
+individual triangles. Corrected an overbroad comment that promoted empty-union
+triangle preservation into an independent embeddedness proof. No geometry failure
+is claimed; face/edge, index topology, row preservation and embedding are distinct
+evidence. All fixtures, blockers, thresholds and assertions remain intact.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Source comparison after removing
+  blank/comment-only lines is identical for the profile file. Exact-input changes
+  additionally lay out two tuple variants to document all four payloads; comparison
+  verifies their identical tokens except the two formatting trailing commas.
+- All 39 declarations, seven enum variants and four tuple payloads have Rustdoc.
+  Private docs matched 36 rendered descriptions across 27 top-level HTML pages
+  and both support module pages; 14 test bodies remain source-reviewed because
+  Rustdoc omits test-function pages.
+- `cargo check --locked -p csgrs --no-default-features --features curve,stl-io
+  --test downstream_exact_inputs --test downstream_profiles --offline -j 2`
+  passed without warnings. Private Rustdoc for both targets also passed with
+  broken links denied and checked own-library/dependency metadata supplied.
+- Runtime geometry, external CAD programs, benchmarks and full workflows were not
+  run under the docs-only waiver. Reused target remains approximately 1.3 GiB with
+  incremental compilation disabled; no geometry/renderer artifacts were generated.
+
+Logs: `/tmp/csgrs-rustdoc-downstream-inputs-profiles-check.log` and
+`/tmp/csgrs-rustdoc-downstream-inputs-profiles-private.log`.
 
 ## Next work
 
