@@ -2,7 +2,10 @@
 //!
 //! [`AttributedMesh`] is deliberately a boundary carrier, not a second mesh
 //! implementation. Geometry remains a [`TriangleMesh`]; metadata and authored
-//! normals are parallel arrays whose alignment is checked at construction.
+//! normals are parallel arrays whose lengths are checked at construction.
+//! Alignment does not validate mesh topology or certify the authored normals.
+//! Modeling consumes the native mesh; there is no automatic attribute propagation
+//! through a Boolean or other geometry-changing operation.
 
 use hyperlattice::Vector3;
 use hypermesh::TriangleMesh;
@@ -34,15 +37,28 @@ pub enum AttributeAlignmentError {
 /// Boolean and modeling operations consume [`TriangleMesh`] directly.
 /// Callers construct this type only when an interchange format or renderer
 /// needs one metadata value per face or an authored normal per position.
+/// Metadata is required even when normals are absent. A clone shares native mesh
+/// allocations and the successful export cache, while cloning attribute vectors.
+/// Equality compares geometry buffers and attribute rows, not construction
+/// qualifications, cached exports, or equality of the represented filled sets.
 #[derive(Clone, Debug)]
 pub struct AttributedMesh<M> {
+    /// Authoritative mesh, including its independent construction qualifications.
     geometry: TriangleMesh,
+    /// Exactly one metadata row per triangle, preserving triangle order.
     face_metadata: Vec<M>,
+    /// Optional per-position rows, retained without normalization or direction checks.
     authored_normals: Option<Vec<Vector3>>,
+    /// Shared first-success export cache, tied to immutable geometry and normal rows.
+    /// Metadata mappings reuse it; a newly constructed sidecar starts a fresh cache.
+    /// No eviction, reset or retained-byte cap is provided.
     exact_gpu: Arc<OnceLock<hypermesh::ExactGpuMeshBuffers>>,
 }
 
 impl<M: PartialEq> PartialEq for AttributedMesh<M> {
+    /// Compare native buffer values, metadata and authored normals in that order.
+    /// The cache and native construction evidence do not participate; this is
+    /// representation equality rather than a geometric set-equivalence predicate.
     fn eq(&self, other: &Self) -> bool {
         self.geometry == other.geometry
             && self.face_metadata == other.face_metadata
@@ -51,7 +67,10 @@ impl<M: PartialEq> PartialEq for AttributedMesh<M> {
 }
 
 impl<M> AttributedMesh<M> {
-    /// Attaches one metadata row per native triangle.
+    /// Attach one metadata row per triangle without authored normals.
+    ///
+    /// Rejects a row-count mismatch; does not validate triangle indices or topology.
+    /// Later graphics export derives face normals from the geometry.
     pub fn new(
         geometry: TriangleMesh,
         face_metadata: Vec<M>,
@@ -59,7 +78,11 @@ impl<M> AttributedMesh<M> {
         Self::with_authored_normals(geometry, face_metadata, None)
     }
 
-    /// Attaches face metadata and, when supplied, one normal per position.
+    /// Attach metadata and optional authored normals after checking row counts.
+    ///
+    /// Metadata alignment is checked first, then normals against position count.
+    /// No topology, index, unit-length or normal-direction test is performed.
+    /// Zero and nonunit authored normals remain unchanged for boundary export.
     pub fn with_authored_normals(
         geometry: TriangleMesh,
         face_metadata: Vec<M>,
@@ -97,17 +120,23 @@ impl<M> AttributedMesh<M> {
         &self.face_metadata
     }
 
-    /// Borrows authored normals in native position order.
+    /// Borrow authored normals in position order; `None` requests derived export normals.
     pub fn authored_normals(&self) -> Option<&[Vector3]> {
         self.authored_normals.as_deref()
     }
 
-    /// Consumes the sidecar and returns all aligned components.
+    /// Consume the sidecar and return geometry, metadata and authored normals.
+    ///
+    /// Drops this sidecar's export-cache reference. Other clones or metadata
+    /// mappings may still retain the cached buffer.
     pub fn into_parts(self) -> (TriangleMesh, Vec<M>, Option<Vec<Vector3>>) {
         (self.geometry, self.face_metadata, self.authored_normals)
     }
 
-    /// Replaces each face metadata value without touching native geometry.
+    /// Map each metadata row in triangle order while retaining geometry and normals.
+    ///
+    /// Moves the successful export-cache handle unchanged because metadata does
+    /// not affect the exported rows. The callback runs once per metadata row.
     pub fn map_metadata<N>(self, f: impl FnMut(M) -> N) -> AttributedMesh<N> {
         AttributedMesh {
             geometry: self.geometry,
@@ -125,7 +154,13 @@ impl<M> AttributedMesh<M> {
     /// lifetime. Failures are returned by value and retried on the next call,
     /// so stronger scalar evidence can make a formerly undecided export succeed.
     /// Concurrent callers may compute the same exact rows before sharing the
-    /// first success. This cache retains one buffer, without a heap-byte limit.
+    /// first success. A failing concurrent attempt returns that success if it is
+    /// already published when the failure is checked. This cache retains one
+    /// buffer until the last sharing owner is dropped, without a heap-byte limit.
+    ///
+    /// Authored normals are copied as supplied: they bypass derived-normal
+    /// nondegeneracy checks and need not be unit length or match the surface.
+    /// Success with authored normals therefore does not certify mesh validity.
     ///
     /// Migration: the error type is now owned `GpuMeshError`, replacing
     /// `&GpuMeshError`; callers that previously cloned the error can remove that
@@ -142,6 +177,12 @@ impl<M> AttributedMesh<M> {
         }
     }
 
+    /// Build uncached triangle-corner rows after checking every source index.
+    ///
+    /// Without authored normals, delegate to native flat-normal construction and
+    /// its failure checks. With authored normals, copy aligned position/normal
+    /// values directly without geometric normal validation. Native buffer assembly
+    /// supplies sequential `u32` indices and can reject index-capacity overflow.
     fn build_exact_gpu_mesh_buffers(
         &self,
     ) -> Result<hypermesh::ExactGpuMeshBuffers, hypermesh::GpuMeshError> {
@@ -182,7 +223,10 @@ impl<M> AttributedMesh<M> {
 }
 
 impl<M: Clone> AttributedMesh<M> {
-    /// Attaches the same metadata value to every native triangle.
+    /// Clone one metadata value across all triangles without authored normals.
+    ///
+    /// Alignment follows from the triangle count; geometry is not validated and
+    /// the new export cache starts empty. Allocation failure is not a typed result.
     pub fn from_uniform(geometry: TriangleMesh, metadata: M) -> Self {
         let face_metadata = vec![metadata; geometry.triangles.len()];
         Self {
@@ -194,12 +238,14 @@ impl<M: Clone> AttributedMesh<M> {
     }
 }
 
+/// Constructor witnesses for metadata alignment, independent of topology validation.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::solid;
     use hyperlattice::Real;
 
+    /// Check uniform metadata count and preservation of native geometry buffers.
     #[test]
     fn attributes_are_strictly_aligned_to_native_geometry() {
         let geometry = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
@@ -208,6 +254,7 @@ mod tests {
         assert_eq!(attributed.face_metadata().len(), geometry.triangles.len());
     }
 
+    /// Check that missing metadata rows produce the alignment-specific error.
     #[test]
     fn rejects_misaligned_metadata() {
         let geometry = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");

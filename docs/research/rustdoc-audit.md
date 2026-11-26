@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/attributed.rs` | Entire file including tests; documented alignment-only admission, equality, private fields/helpers and shared export cache. | Private docs passed with `attributed,curve`; generated sidecar page checked. |
+| `src/hyper_math.rs` | Entire file; documented internal conversion implementations, strict predicate helpers and diagnostic-erasing convenience semantics. | Private docs passed with `attributed,curve` and no default features; generated private pages checked. |
 | `src/solid_expr.rs` | Entire file; documented deferred operators, transform-dependent memoization, private lowering state, error paths and resource limits. | Private docs passed with `curve,dispatch-trace` and no default features; generated private/operator pages checked. |
 | `tests/solid_expr.rs` | Entire file including dispatch and ignored timing witnesses; documented helpers and corrected independence claims. | Formatting and comment-only comparison passed; test bodies unchanged, not rerun. |
 | `src/session.rs` | Entire file; documented conversion implementations/macro, private state, policy exceptions and receipt scope. | Private docs passed with and without `curve`; generated conversion docs checked. |
@@ -325,6 +327,59 @@ Logs: `/tmp/csgrs-rustdoc-expressions-doc.log` and
 Full workflow/runtime checks remain waived by the owner for this docs-only
 session. Test-only Rustdoc is reviewed in source; a library documentation build
 does not render the integration tests or execute their assertions.
+
+### Attribute sidecar and scalar helpers batch, 26 November 2026
+
+Owner: CSGRS boundary attributes and internal scalar conveniences,
+P1/P3/P4/P6/P8/P19/P25/P26/P29/P37. Baseline: `4faf22d51`. Domain: aligned
+metadata, optional authored normals, successful/failed/concurrent graphics
+exports, native and primitive scalars, strict predicates and exact vector/point
+construction. Missing witness: sidecar fields, equality, uncached exporter and
+tests, plus every internal scalar-helper declaration, lacked Rustdoc. Existing
+sidecar summaries did not distinguish count validation from geometric validity.
+
+Read every line of `src/attributed.rs` and `src/hyper_math.rs`. Inspected native
+mesh equality, point/vector conversion and interpolation, exact GPU row assembly,
+OBJ sidecar import, helper call sites, and cache recovery/concurrency/authored-normal
+regression witnesses in `tests/native_boundary_failures.rs`. Those partial reads
+are not whole-file review credit or claims that the tests were run.
+
+Documented unchanged geometry/attribute ownership, cache sharing by clone and
+metadata mapping, first-success publication, retry and racing-success behavior,
+lifetime, lack of eviction/reset/byte cap, and separation from modeling authority.
+Authored normals are copied without normalization or degeneracy checks; geometry
+validity is not implied by successful authored-row export. Equality ignores
+construction evidence and the export cache, following native buffer equality.
+
+Internal scalar docs distinguish exact ingress from lossy export, the private
+conversion trait from the public session trait, and strict positive evidence from
+absence of proof. `hreal_gt_f64` and triangle nondegeneracy return false for
+undecided cases; comparison and arithmetic helpers erase particular diagnostics
+into `None`; several wrappers always return `Some`. Their documentation now
+states this without changing behavior or presenting the wrappers as complete
+failure/provenance-preserving APIs. The test-only threshold is the exact value
+of a binary float, not an exact decimal or modeling coincidence rule.
+
+Validation after edits:
+
+- `rustfmt --check --edition 2024 src/attributed.rs src/hyper_math.rs`: passed.
+- `git diff --check`: passed.
+- Nonblank, non-comment line comparison against baseline: identical for both
+  edited Rust files, including test assertions and cache control flow.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features attributed,curve --document-private-items
+  --no-deps --offline`: passed without warnings.
+- Generated attributed sidecar page includes private state and exporter docs;
+  private scalar module, conversion trait and representative predicate/arithmetic
+  helper pages contain the revised contracts.
+- The same private-doc command without the feature list: passed without warnings.
+
+Logs remain at `/tmp/csgrs-rustdoc-attributes-math-doc.log` and
+`/tmp/csgrs-rustdoc-math-minimal-doc.log`. Test-only helper documentation was
+reviewed in source. Full runtime/workflow checks remain waived for this docs-only
+session; no correctness or performance result beyond documentation validation is
+claimed.
 
 ## Next work
 
