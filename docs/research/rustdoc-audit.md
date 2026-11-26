@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/parts/blueprint.rs` | Entire file; documented all box projection/splitting/ordering helpers, fields/variants, metadata gates, certainty limits and lossy SVG behavior. | Minimal and attributed/Hershey private docs passed; all rendered items inspected. Tests source-reviewed, unchanged and not rerun. |
+| `src/parts/occlude.rs` | Entire file; documented index adjacency, dihedral tests, midpoint coverage, boundary pairing, omitted depth events, partial reports and evidence loss. | Private pages, tuple payloads and material contracts inspected; local rank/test helpers source-reviewed. No geometry behavior changed. |
 | `src/parts/manual.rs` | Entire file; documented verbatim Markdown, callback/section order, table aggregation, anchor rules, private helpers and the unit witness. | Minimal and Hershey private docs passed; all rendered items/fields inspected. Test assertions unchanged, not rerun. |
 | `src/parts/dimension.rs` | Entire file; documented component admission, public-field consistency, optional lossy labels, glyph placement, error atomicity and all helpers/tests. | Minimal label stub and Hershey private pages inspected; formatting and comment-only comparisons passed. Tests unchanged, not rerun. |
 | `src/parts/mod.rs` | Entire file; documented module roles and authored metadata versus geometric evidence. | Minimal and attributed private docs passed; module page inspected. |
@@ -2169,9 +2171,78 @@ Logs: `/tmp/csgrs-rustdoc-dimension-manual-minimal-doc.log` and
 `/tmp/csgrs-rustdoc-dimension-manual-hershey-doc.log`. No generated artifacts were
 added to the repository; the same temporary build tree remains in use.
 
+### Bounds blueprints and posed-mesh occlusion, 26 November 2026
+
+Baseline: `48bbe34d5`. Owners: csgrs parts drawing projection/visibility,
+P3/P6/P8/P9/P19/P20/P25/P26/P29/P30/P37. Domain: authored axis-aligned bounds,
+posed indexed triangle meshes, orthographic feature/guide segments and terminal
+SVG display. Read both modules in full, including every helper, field, variant
+and unit witness. Supporting reads of native mesh construction/dihedral,
+homogeneous transforms, AABB and the already-reviewed example do not add
+whole-file kernel audit credit.
+
+Missing acceptance witnesses were undocumented private items and overbroad
+certification descriptions. The bounds path draws projected rectangle outlines,
+requires ordered bounds/distinct handles without validating them, and uses
+non-strict depth separation despite its existing "strictly nearer" note. The
+metadata adapter uses only the first face's metadata and drops all output on any
+input blocker. Successful bounds reports hard-code `NativeExactCsg` independently
+of authored certainty and unknown edges. SVG exports finite lossy coordinates,
+but its padded view-box arithmetic is unchecked and it omits exact definitions,
+notes and certainty. Documentation describes these facts without changing output.
+
+The mesh path uses vertex-index adjacency, not geometric welding. Local transformed
+meshes are constructed with untracked history, native angle receipts are extracted
+without retention, and report certainty ranks authored node labels separately.
+Partial output survives missing nodes/transforms/indices; not every unknown edge
+adds a blocker. Only one pose slot is populated. Boundary hits use shared-sample
+incidence and opposite triangle sides; they do not require identical edge endpoints.
+
+Most significantly, projected triangle-boundary crossings are the only split events:
+the code adds no interior depth-equality event, and collinear segments report no
+intersection. Extending a midpoint decision to a whole piece assumes constant
+coverage/depth order between cuts, which is not validated. This is established by
+inspection of the current event construction and classifier; no new executed Rust
+counterexample or universal visibility theorem is claimed. The documentation now
+states this implementation gap rather than describing every emitted `ExactMesh`
+status as whole-piece certification. The existing box fixtures do not cover that
+general intersecting-surface domain. No algorithm, fixture, assertion or policy
+was weakened or repaired in this documentation-only batch.
+
+Validation after final source edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` and
+  `git diff --check`: passed.
+- All non-comment lines match baseline after explicitly collapsing only three
+  tuple-payload layouts expanded for their field documentation. A second
+  whitespace-normalized comparison also passed. No expressions/signatures or
+  predicate order changed. Local scans found 45 documented blueprint declarations
+  and 33 occlusion declarations, including tests and the nested rank helper.
+- With the shared temporary target, incremental compilation disabled and broken
+  Rustdoc links denied, `cargo doc --locked -p csgrs --no-default-features
+  --features attributed,hershey-text --document-private-items --no-deps --offline`
+  passed, as did the same command without the feature argument. The first build
+  exposed an incorrect relative module-doc link; it was corrected to the public
+  `crate::parts` path before both final builds passed without warnings.
+- Inspected 61 rendered pages and 61 non-test declaration summaries, plus private
+  fields, variants/payloads and material contract text. Nested rank/test items
+  remain source-reviewed. Source comparison and formatting passed after final edits.
+- Runtime tests/full workflows remain waived for this docs-only session. No new
+  runtime, performance or mathematical completion claim is made. The same temporary
+  build directory was reused, without repository build artifacts.
+
+Logs: `/tmp/csgrs-rustdoc-blueprint-occlude-feature-doc.log` and
+`/tmp/csgrs-rustdoc-blueprint-occlude-minimal-doc.log`.
+
+All 53 tracked files under the root package's `src/` now have whole-file review
+rows in this ledger. This was checked against `git ls-files src`; it is review
+coverage for that directory, not a repository-wide item-coverage percentage or
+proof that every feature combination has been built. Remaining crates, tests,
+examples, build/configuration files and documentation are still in scope.
+
 ## Next work
 
-Continue with `src/parts/blueprint.rs`, `src/parts/occlude.rs` and owning crates. Maintain review records with
+Continue with remaining test/example/build sources and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation

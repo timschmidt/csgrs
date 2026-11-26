@@ -4,8 +4,11 @@
 //! drawings of solids ("The Notion of Quantitative Invisibility and the Machine
 //! Rendering of Solids," *Proceedings of the 1967 22nd ACM National Conference*,
 //! 1967), bounded to orthographic views and to comparisons `hyperlimit` can
-//! decide. The axis-aligned pass certifies box edges. The mesh pass certifies
-//! feature edges of a triangle mesh.
+//! decide. The axis-aligned pass classifies projected box outlines; these are
+//! bounds drawings, not silhouettes of the enclosed meshes. The mesh pass has
+//! the splitting and evidence limitations documented by
+//! [`crate::parts::blueprint_from_posed_mesh`]. Status names and authored
+//! certainty labels do not by themselves certify a complete drawing.
 
 use hyperlattice::{Aabb, Point3, Real};
 
@@ -36,6 +39,7 @@ pub struct ProjectedPoint2 {
 }
 
 /// Projected rectangle plus depth interval.
+/// Public fields are unchecked; bounds consumers assume ordered endpoints.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProjectedRect {
     /// Minimum projected x.
@@ -72,32 +76,37 @@ pub enum BlueprintEdgeStyle {
 /// Status of the occlusion decision.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BlueprintOcclusionStatus {
-    /// Exact AABB projection and depth decided the line style.
+    /// Box projection/depth comparisons chose the style under the bounds-pass assumptions.
     ExactAabb,
-    /// The edge is partly overlapped and a piece stays unresolved.
+    /// A covering rectangle has overlapping depth intervals, leaving visibility unresolved.
+    /// Emitted after projected splitting; further planar splitting alone need not resolve it.
     PartialOverlapNeedsSplit,
     /// The part is deliberately not exploded. Visibility is decided separately.
+    /// Available vocabulary; the current bounds/mesh passes do not emit this status.
     NoExplodeFlag,
     /// The source did not include an installation or explode vector.
+    /// Available vocabulary; the bounds pass currently reports this only in blocker text.
     MissingInstallationVector,
     /// A placement or explode vector could not be applied.
+    /// Available vocabulary; the current mesh pass reports placement failures in blocker text.
     InvalidInstallationVector,
     /// A `hyperlimit` comparison did not decide the style.
     UndecidedComparison,
-    /// A mesh feature edge was classified against projected triangles.
+    /// A feature-edge or guide piece received a decided midpoint classification.
+    /// Does not prove visibility is constant across an unsplit depth crossing.
     ExactMesh,
-    /// A dihedral or cover test did not decide, so the edge stays unknown.
+    /// Nonmanifold incidence or a failed/undecided dihedral or cover test leaves the edge unknown.
     UndecidedMesh,
     /// The segment is a dimension or witness, not an occluded solid edge.
     DrawingEntity,
 }
 
-/// Per-edge evidence for visibility.
+/// Drawing status and explanatory notes, without retained predicate receipts or replay proofs.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OcclusionEvidence {
     /// Decision status.
     pub status: BlueprintOcclusionStatus,
-    /// Blockers or proof notes.
+    /// Explanations or blockers; descriptive text is not an independently checked certificate.
     pub notes: Vec<String>,
 }
 
@@ -121,45 +130,56 @@ pub struct BlueprintEdge {
 pub struct BlueprintView {
     /// Projection used for this view.
     pub projection: BlueprintProjection,
-    /// Whether exploded offsets were applied.
+    /// Whether this is the requested exploded view; offsets may be absent or suppressed.
     pub exploded: bool,
     /// Edges in deterministic source order.
     pub edges: Vec<BlueprintEdge>,
 }
 
-/// Complete report with assembled and exploded views.
+/// Drawing views plus diagnostic text and a separate authored-geometry label.
+/// The bounds pass fills both views; the posed-mesh pass fills only the requested
+/// pose and leaves the other empty. A report can retain partial output with blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BlueprintReport {
     /// Assembled pose.
     pub assembled: BlueprintView,
     /// Exploded pose.
     pub exploded: BlueprintView,
-    /// Report-level blockers.
+    /// Report-level blockers; per-edge unknown statuses need not add a message here.
     pub blockers: Vec<String>,
-    /// Weakest geometry certainty among the parts that were drawn.
+    /// Geometry label, not a visibility receipt. The mesh pass takes the weakest
+    /// encountered node label, including nodes whose geometry is absent/rejected;
+    /// the bounds pass currently returns `NativeExactCsg` regardless of input labels.
     pub certainty: GeometryCertainty,
 }
 
 /// One axis-aligned part submitted to the box blueprint pass.
 #[derive(Clone, Debug)]
 pub struct BoundsPart {
-    /// Stable part handle.
+    /// Handle used to skip self-occlusion; distinct parts must use distinct handles.
     pub handle: String,
-    /// Exact bounds.
+    /// Authored bounds; ordering and enclosure of any underlying mesh are not validated here.
     pub bounds: Aabb,
     /// Installation and explode metadata.
     pub metadata: PartMetadata,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// Separation of a candidate depth interval from the target's interval.
 enum DepthRelation {
+    /// Candidate back is at or ahead of target front, including equality.
     InFront,
+    /// Target back is at or ahead of candidate front, after the first test was false.
     Behind,
+    /// Neither whole-interval separation holds.
     Ambiguous,
+    /// A consumed strict scalar comparison was unresolved.
     Undecided,
 }
 
 impl ProjectedRect {
+    /// Returns minimum/minimum, maximum/minimum, maximum/maximum and minimum/maximum.
+    /// This is counterclockwise only for ordered, nondegenerate bounds.
     fn corners(&self) -> [ProjectedPoint2; 4] {
         [
             ProjectedPoint2 {
@@ -181,6 +201,7 @@ impl ProjectedRect {
         ]
     }
 
+    /// Joins consecutive corners and closes the rectangle, retaining degenerate edges.
     fn edges(&self) -> [(ProjectedPoint2, ProjectedPoint2); 4] {
         let corners = self.corners();
         [
@@ -193,6 +214,11 @@ impl ProjectedRect {
 }
 
 /// Builds assembled and exploded blueprint reports from CSG part meshes.
+/// Uses only the first face's metadata and native bounding box for each mesh;
+/// does not check that metadata is uniform or the mesh fills that box. Missing
+/// metadata, empty bounds or a bounding-box error produces blockers and discards
+/// all drawings, including otherwise usable inputs. Error categories are flattened.
+/// Successful inputs use [`blueprint_from_bounds`], including its certainty limits.
 #[cfg(feature = "attributed")]
 pub fn blueprint_from_aabb_parts(
     parts: &[AttributedMesh<PartMetadata>],
@@ -226,6 +252,18 @@ pub fn blueprint_from_aabb_parts(
 }
 
 /// Builds assembled and exploded reports from exact part bounds.
+/// Draws four projected rectangle edges per part before splitting/merging, not
+/// all twelve spatial box edges or the source mesh's outline. Requires ordered
+/// bounds and distinct handles; neither is validated. A covering box whose back
+/// depth equals the target's front is treated as in front (`>=`, not `>`).
+///
+/// Missing installation metadata adds a blocker unless `NoExplode` is set.
+/// Exploded bounds use only `explode_offset`; absent/suppressed offsets leave
+/// the box in place. Direction, pose hints, guide and propagation metadata are
+/// not consumed. Unknown edges retain their status even when hidden lines are
+/// suppressed. The report label is always `NativeExactCsg`, including empty
+/// input; inherited metadata certainty and unknown drawing decisions are not
+/// folded into it. No total-work, allocation or cancellation budget is enforced.
 pub fn blueprint_from_bounds(
     parts: &[BoundsPart],
     projection: BlueprintProjection,
@@ -254,6 +292,7 @@ pub fn blueprint_from_bounds(
 }
 
 #[cfg(feature = "attributed")]
+/// Returns both requested projection slots empty with `Missing` certainty and supplied blockers.
 const fn empty_report(
     projection: BlueprintProjection,
     blockers: Vec<String>,
@@ -274,6 +313,8 @@ const fn empty_report(
     }
 }
 
+/// Projects one assembled/exploded bounds set and classifies rectangle edges in input order.
+/// Each edge is split independently; coincident edges across parts are not deduplicated.
 fn blueprint_view_from_bounds(
     parts: &[BoundsPart],
     projection: BlueprintProjection,
@@ -311,6 +352,8 @@ fn blueprint_view_from_bounds(
     }
 }
 
+/// Applies the installation's stored explode offset unless `NoExplode` is set.
+/// Missing installation keeps the original bounds; direction/other flags are ignored.
 fn exploded_bounds(part: &BoundsPart) -> Aabb {
     if part
         .metadata
@@ -327,6 +370,7 @@ fn exploded_bounds(part: &BoundsPart) -> Aabb {
     translate_aabb(&part.bounds, &installation.explode_offset)
 }
 
+/// Adds the exact offset to both corners without validating bounds or metadata.
 fn translate_aabb(bounds: &Aabb, offset: &hyperlattice::Vector3) -> Aabb {
     Aabb::new(
         Point3::new(
@@ -342,6 +386,8 @@ fn translate_aabb(bounds: &Aabb, offset: &hyperlattice::Vector3) -> Aabb {
     )
 }
 
+/// Selects XY/Z, XZ/Y or YZ/X coordinates/depth directly from authored bounds.
+/// Larger depth is nearer; no coordinate ordering or geometry check is performed.
 pub(super) fn project_aabb(bounds: &Aabb, projection: BlueprintProjection) -> ProjectedRect {
     match projection {
         BlueprintProjection::Front => ProjectedRect {
@@ -371,6 +417,7 @@ pub(super) fn project_aabb(bounds: &Aabb, projection: BlueprintProjection) -> Pr
     }
 }
 
+/// Selects XY/Z, XZ/Y or YZ/X drawing coordinates/depth without numeric projection loss.
 pub(super) fn project_point(
     point: &Point3,
     projection: BlueprintProjection,
@@ -400,6 +447,9 @@ pub(super) fn project_point(
     }
 }
 
+/// Splits at other-handle rectangle coordinate crossings and classifies interval midpoints.
+/// A failed split/order returns one unknown original edge. Successful neighboring
+/// pieces may merge by handle/style/status, retaining only the earlier note.
 fn split_bounds_edge(
     part: &BoundsPart,
     rect: &ProjectedRect,
@@ -453,6 +503,10 @@ fn split_bounds_edge(
     pieces
 }
 
+/// Classifies one point against other-handle closed rectangles and depth intervals.
+/// Returns on the first decided cover or undecided test, so an early uncertainty
+/// can precede a later covering box. Depth overlap is remembered if neither occurs.
+/// The emitted "strictly nearer" note includes equality in the actual depth test.
 fn classify_bounds_point(
     point: &ProjectedPoint2,
     target: &ProjectedRect,
@@ -513,6 +567,8 @@ fn classify_bounds_point(
     }
 }
 
+/// Tests candidate-back >= target-front first, then the reversed whole-interval relation.
+/// Endpoint equality counts as separation; zero-thickness equal intervals prefer `InFront`.
 fn depth_relation(target: &ProjectedRect, candidate: &ProjectedRect) -> DepthRelation {
     match real_ge(&candidate.back_depth, &target.front_depth) {
         Some(true) => DepthRelation::InFront,
@@ -525,6 +581,8 @@ fn depth_relation(target: &ProjectedRect, candidate: &ProjectedRect) -> DepthRel
     }
 }
 
+/// Tests closed-rectangle membership with short-circuit comparisons in X then Y.
+/// Returns `None` only for an undecided comparison actually reached.
 fn point_in_rect(point: &ProjectedPoint2, rect: &ProjectedRect) -> Option<bool> {
     Some(
         real_le(&rect.min_x, &point.x)?
@@ -534,6 +592,9 @@ fn point_in_rect(point: &ProjectedPoint2, rect: &ProjectedRect) -> Option<bool> 
     )
 }
 
+/// Appends open-segment crossings of both X and Y bounds, including redundant cuts.
+/// Does not test the other coordinate. Failure can leave already-appended parameters;
+/// the caller discards that partial split list.
 fn push_split_parameters(
     parameters: &mut Vec<Real>,
     start: &ProjectedPoint2,
@@ -557,12 +618,22 @@ fn push_split_parameters(
     true
 }
 
+/// Result of intersecting one scalar segment coordinate with a bound value.
 enum AxisHit {
+    /// Constant coordinate or a decided crossing outside the open parameter interval.
     Miss,
-    Split(Real),
+    /// Interior crossing selected by the scalar axis equation.
+    Split(
+        /// Exact parameter strictly between zero and one.
+        Real,
+    ),
+    /// Sign/order was unresolved or native division failed.
     Undecided,
 }
 
+/// Solves `(value - start) / (end - start)` and admits only `0 < t < 1`.
+/// A constant coordinate is a miss even when equal to the bound. Both parameter
+/// comparisons are evaluated, and any undecided result makes the hit undecided.
 fn parameter_along(start: &Real, end: &Real, value: &Real) -> AxisHit {
     let span = end - start;
     match real_eq(&span, &Real::zero()) {
@@ -584,6 +655,9 @@ fn parameter_along(start: &Real, end: &Real, value: &Real) -> AxisHit {
     }
 }
 
+/// Preflights all parameter pairs, sorts with repeated strict comparisons, then deduplicates.
+/// Returns false before mutation on failed preflight; sorting expects those decisions
+/// to remain available. Undecided equality during deduplication retains both entries.
 fn sort_unique_parameters(parameters: &mut Vec<Real>) -> bool {
     for (index, left) in parameters.iter().enumerate() {
         for right in parameters.iter().skip(index + 1) {
@@ -599,11 +673,13 @@ fn sort_unique_parameters(parameters: &mut Vec<Real>) -> bool {
     true
 }
 
+/// Computes the native arithmetic midpoint using the known nonzero divisor two.
 fn midpoint_parameter(start: &Real, end: &Real) -> Real {
     let two = Real::from(2);
     ((start.clone() + end.clone()) / &two).expect("two is nonzero")
 }
 
+/// Interpolates through the shared 3D helper at zero depth; permits extrapolation.
 fn lerp_projected(
     start: &ProjectedPoint2,
     end: &ProjectedPoint2,
@@ -618,6 +694,8 @@ fn lerp_projected(
     }
 }
 
+/// Copies endpoints/handle and attaches the caller's style/status plus one explanatory note.
+/// Does not establish the claimed status or validate geometry.
 pub(super) fn edge(
     handle: &str,
     start: &ProjectedPoint2,
@@ -638,6 +716,9 @@ pub(super) fn edge(
     }
 }
 
+/// Extends the last edge on matching handle/style/status and proved endpoint equality.
+/// Keeps its original notes. Assumes consecutive pieces of one support; collinearity
+/// and traversal equivalence are not checked by this drawing-only helper.
 fn push_merged(edges: &mut Vec<BlueprintEdge>, next: BlueprintEdge) {
     if let Some(previous) = edges.last_mut()
         && previous.part_handle == next.part_handle
@@ -656,6 +737,12 @@ fn push_merged(edges: &mut Vec<BlueprintEdge>, next: BlueprintEdge) {
 ///
 /// Coordinates are decimal exports of `Real`. The file is a picture; reading
 /// it back does not recover the exact edge geometry.
+/// Omits suppressed edges and projects remaining endpoints to finite lossy binary64.
+/// Emits drawing Y unchanged, fixed line styles and a one-unit padded view box;
+/// padding/span arithmetic is not checked for overflow. Empty output uses a unit
+/// view box. Handles, notes, certainty and exact definitions are not serialized.
+/// A failed coordinate export returns a string error without a partial SVG;
+/// no fidelity/topology/error bound or checked allocation budget is supplied.
 pub fn export_blueprint_svg(view: &BlueprintView) -> Result<String, String> {
     let drawable: Vec<_> = view
         .edges
@@ -705,10 +792,12 @@ pub fn export_blueprint_svg(view: &BlueprintView) -> Result<String, String> {
     Ok(svg)
 }
 
+/// Returns the canonical no-line SVG with unit view box.
 fn empty_svg() -> String {
     "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1 1\"></svg>\n".to_string()
 }
 
+/// Maps drawing styles to fixed colors/dashes; suppression is normally filtered earlier.
 const fn svg_style(style: BlueprintEdgeStyle) -> (&'static str, Option<&'static str>) {
     match style {
         BlueprintEdgeStyle::Visible | BlueprintEdgeStyle::Dimension => ("#111111", None),
@@ -719,6 +808,8 @@ const fn svg_style(style: BlueprintEdgeStyle) -> (&'static str, Option<&'static 
     }
 }
 
+/// Projects a scalar to finite lossy binary64, flattening unavailable/nonfinite results.
+/// Does not supply a precision bound or validate later display arithmetic.
 pub(super) fn export_real(value: &Real) -> Result<f64, String> {
     value
         .to_f64_lossy()
@@ -727,6 +818,7 @@ pub(super) fn export_real(value: &Real) -> Result<f64, String> {
 }
 
 #[cfg(test)]
+/// Finite box-fixture and SVG token witnesses; not a complete drawing correctness corpus.
 mod tests {
     use super::*;
     use crate::parts::{
@@ -735,10 +827,12 @@ mod tests {
     };
     use hyperlattice::Vector3;
 
+    /// Constructs an exact integer displacement.
     fn vector(x: i64, y: i64, z: i64) -> Vector3 {
         Vector3::new([Real::from(x), Real::from(y), Real::from(z)])
     }
 
+    /// Constructs integer bounds without independent endpoint-order validation.
     fn bounds(min_x: i64, min_y: i64, min_z: i64, max_x: i64, max_y: i64, max_z: i64) -> Aabb {
         Aabb::new(
             Point3::new(Real::from(min_x), Real::from(min_y), Real::from(min_z)),
@@ -746,6 +840,7 @@ mod tests {
         )
     }
 
+    /// Attaches authored exact-CSG metadata and optional offset with fixed +Z installation.
     fn part(
         handle: &str,
         bounds: Aabb,
@@ -774,6 +869,7 @@ mod tests {
         }
     }
 
+    /// Collects styles for a matching handle while preserving iterator order.
     fn styles_for<'a>(
         report_edges: impl Iterator<Item = &'a BlueprintEdge>,
         handle: &str,
@@ -785,6 +881,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks assembled rear-box hiding and a visible front edge; does not assert
+    /// exploded output despite setting `NoExplode` on the rear fixture.
     fn nearer_box_hides_a_covered_edge_and_no_explode_still_occludes() {
         let rear = part(
             "rear",
@@ -808,6 +906,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks visible and unknown pieces among edges starting on the rear box's bottom line.
+    /// Does not compare a complete split-point list or all edge endpoints.
     fn overlapping_depth_splits_an_edge_into_visible_and_unknown() {
         let left = part(
             "left",
@@ -844,6 +944,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks a dash attribute and one expected X token, not full SVG or round-trip fidelity.
     fn svg_export_records_hidden_dashes() {
         let rear = part(
             "rear",

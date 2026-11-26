@@ -1,10 +1,12 @@
 //! Orthographic feature-edge occlusion for posed triangle meshes.
 //!
-//! A feature edge is a boundary edge, or an interior edge whose dihedral angle
-//! is certified away from both zero and pi. Each edge is split where a
-//! projected triangle boundary crosses it, then each piece is tested at its
-//! midpoint. A strictly nearer triangle hides a piece. An undecided comparison
-//! leaves the piece unknown.
+//! Feature candidates are index-boundary edges, sharp two-owner edges and
+//! unknown/nonmanifold edges. Projected triangle-boundary crossings split a
+//! candidate; midpoint tests choose each piece's style. Strictly nearer interior
+//! cover hides a sample, while unresolved tests can leave it unknown. No split
+//! is added for an interior depth-order crossing, and collinear overlaps are
+//! not parameterized. A decided sample is therefore not a general proof of
+//! whole-piece visibility for arbitrary intersecting geometry.
 
 use std::collections::BTreeMap;
 
@@ -19,25 +21,59 @@ use super::blueprint::{
 use super::metadata::GeometryCertainty;
 use super::scalar::{lerp_point, real_eq, real_ge, real_gt, real_le, real_lt};
 
+/// One transformed triangle retained for projected cover tests, without source proof state.
 struct WorldTriangle {
+    /// Vertices in the posed documentation frame, in source triangle order.
     points: [Point3; 3],
 }
 
+/// Candidate spatial edge and the triangle incidences excluded from self-cover tests.
 struct FeatureSegment {
+    /// Source posed-part name used for the emitted drawing handle.
     handle: String,
+    /// Endpoint at the smaller source vertex index.
     start: Point3,
+    /// Endpoint at the larger source vertex index.
     end: Point3,
+    /// Incident triangle indices: mesh-local on extraction, global after collection.
     skip: Vec<usize>,
+    /// Nonmanifold incidence or unresolved/failed dihedral classification.
     unknown: bool,
 }
 
+/// Transverse projected-segment intersection result used for split parameters.
 enum Hit {
+    /// No admitted transverse intersection; includes parallel/collinear segments.
     None,
-    Parameter(Real),
+    /// Interior parameter on the classified segment, with a closed hit on the other.
+    Parameter(
+        /// Exact selected parameter in `(0, 1)`.
+        Real,
+    ),
+    /// A required comparison or division did not complete with a usable value.
     Undecided,
 }
 
 /// Projects a posed assembly and classifies feature edges and guide lines.
+///
+/// Reads geometry/labels from `document` using the posed node IDs, without checking
+/// that the pose came from that document or is current. Missing nodes, failed
+/// vertex transforms and bad indices add text blockers while usable output remains.
+/// Missing node geometry is silently skipped; missing guide nodes are also skipped.
+/// Only the pose selected by `posed.exploded` is populated; the other view is empty.
+///
+/// Uses strict native predicates and index-based adjacency, without welding
+/// equal-coordinate vertices or validating closedness, winding or self-intersection.
+/// Nonmanifold/undecided feature candidates remain unsplit and unknown. Other edges
+/// and guides split only at transverse projected triangle-boundary intersections,
+/// then classified at midpoints. Whole-piece visibility requires depth order and
+/// coverage to remain constant between those cuts; this is not validated. Interior
+/// depth crossings and collinear-overlap endpoints are not added as events.
+///
+/// Certainty is the weakest encountered authored node label, not an accumulated
+/// predicate receipt; missing nodes do not downgrade it. Local transformed meshes
+/// do not retain source construction evidence. Unknown edge statuses need not add
+/// report blockers. No total-work, allocation or cancellation budget is enforced.
 pub fn blueprint_from_posed_mesh(
     document: &AssemblyDocument,
     posed: &PosedAssembly,
@@ -158,6 +194,10 @@ pub fn blueprint_from_posed_mesh(
     }
 }
 
+/// Transforms every stored vertex, copies indices and constructs an untracked local mesh.
+/// Flattens the first homogeneous point-transform error to `None`. Does not
+/// validate rigidity, nonsingularity, indices or the image between vertices, and
+/// does not transport the source mesh's construction evidence.
 fn transform_mesh(mesh: &TriangleMesh, world: &hyperlattice::Matrix4) -> Option<TriangleMesh> {
     let mut positions = Vec::with_capacity(mesh.positions.len());
     for point in mesh.positions.iter() {
@@ -166,6 +206,11 @@ fn transform_mesh(mesh: &TriangleMesh, world: &hyperlattice::Matrix4) -> Option<
     Some(TriangleMesh::new(positions, mesh.triangles.to_vec()))
 }
 
+/// Collects edges in sorted undirected vertex-index order, retaining incidence multiplicity.
+/// Skips repeated indices and proved coincident endpoints. One owner is a boundary;
+/// two owners use the native dihedral test; other incidences are unknown. Invalid
+/// endpoints add blockers, but uncertain equality and invalid/degenerate incident
+/// faces can survive as unknown candidates. Coordinate-equal indices are not welded.
 fn feature_segments(
     handle: &str,
     mesh: &TriangleMesh,
@@ -220,6 +265,8 @@ fn feature_segments(
     segments
 }
 
+/// Decides whether the native angle differs from both zero and pi, in that order.
+/// No angular tolerance is used; any failed angle/equality query returns `None`.
 fn dihedral_is_sharp(
     mesh: &TriangleMesh,
     context: &hypermesh::MeshContext,
@@ -232,6 +279,8 @@ fn dihedral_is_sharp(
     Some(!flat_zero && !flat_pi)
 }
 
+/// Retrieves two indexed faces and extracts their native normal angle.
+/// Missing faces or kernel errors become `None`; the outcome receipt is discarded.
 fn dihedral(
     mesh: &TriangleMesh,
     context: &hypermesh::MeshContext,
@@ -245,6 +294,11 @@ fn dihedral(
         .map(|outcome| outcome.into_value())
 }
 
+/// Cuts a segment at transverse projected boundaries of nonincident triangles.
+/// An unresolved intersection/order test yields one unknown original segment; otherwise
+/// each interval gets its midpoint style and neighboring matching styles merge.
+/// Does not split at depth equality or collinear overlap, nor omit a segment
+/// projected to a point. Whole-interval interpretation assumes constant cover/depth order.
 fn classify_segment(
     handle: &str,
     start: &Point3,
@@ -334,6 +388,10 @@ fn classify_segment(
     edges
 }
 
+/// Tests all nonincident triangles at one projected point and depth.
+/// Any strict interior cover wins, even after earlier uncertainty. Otherwise,
+/// paired nearer boundary hits can establish cover; unresolved pairing/cover
+/// leaves the sample unknown. Guides use the same tests with a visible-guide style.
 fn classify_sample(
     point: &ProjectedPoint2,
     depth: &Real,
@@ -370,21 +428,33 @@ fn classify_sample(
     }
 }
 
+/// Local sample classification against one projected triangle and interpolated depth.
 enum Cover {
     /// Strict projected interior of a strictly nearer triangle.
     Strict,
     /// Relative interior of one edge of a strictly nearer triangle.
-    Boundary(Box<BoundaryHit>),
+    Boundary(
+        /// Edge and opposite vertex used to recognize cover from adjacent projected faces.
+        Box<BoundaryHit>,
+    ),
+    /// Outside, equal/farther depth, projected degeneracy or a triangle-vertex hit.
     None,
+    /// A required strict orientation/depth comparison was unresolved.
     Undecided,
 }
 
+/// Relative-interior edge hit from a triangle already proved nearer at the query point.
+/// Pairing assumes all hits refer to the same query; no query coordinate is stored.
 struct BoundaryHit {
+    /// First endpoint of the projected edge opposite the zero barycentric weight.
     start: Point2,
+    /// Second endpoint of that edge.
     end: Point2,
+    /// Triangle vertex off the edge, used to identify its occupied side.
     opposite: Point2,
 }
 
+/// Projects a triangle's vertices/depths and delegates local barycentric cover classification.
 fn triangle_covers(
     triangle: &WorldTriangle,
     point: &ProjectedPoint2,
@@ -404,9 +474,14 @@ fn triangle_covers(
 /// A strict interior and a strictly nearer plane hides the sample. A sample on
 /// the relative interior of an edge does not, by itself: the silhouette of the
 /// occluder is that boundary. The caller hides it only when a second nearer
-/// triangle lies across the same edge, which is an internal triangulation
-/// diagonal rather than the outline. An equal depth is decided and is not
+/// triangle lies across a collinear edge through the same sample, as at an
+/// internal triangulation diagonal. An equal depth is decided and is not
 /// nearer. A comparison `hyperlimit` cannot decide returns [`Cover::Undecided`].
+///
+/// Zero projected area and vertex-only hits do not cover. Signed barycentric
+/// numerators weight the vertex-depth differences; their sum has the triangle's
+/// orientation sign exactly when its plane is nearer, avoiding division by area.
+/// This decides one sample only, not visibility over a segment interval.
 fn cover_projected(triangle: &[(Point2, Real); 3], point: &Point2, depth: &Real) -> Cover {
     let (a, depth_a) = &triangle[0];
     let (b, depth_b) = &triangle[1];
@@ -477,7 +552,9 @@ fn cover_projected(triangle: &[(Point2, Real); 3], point: &Point2, depth: &Real)
     }
 }
 
-/// A sample on a triangulation diagonal is inside the union of the two faces.
+/// Searches hit pairs for nearer faces on opposite sides of a shared supporting line.
+/// Assumes all records are relative-interior hits at the same sample. The first
+/// positive pair or undecided pair returns immediately, before any later pairs.
 fn interior_of_adjacent_boundaries(hits: &[BoundaryHit]) -> Option<bool> {
     for (index, left) in hits.iter().enumerate() {
         for right in hits.iter().skip(index + 1) {
@@ -491,6 +568,9 @@ fn interior_of_adjacent_boundaries(hits: &[BoundaryHit]) -> Option<bool> {
     Some(false)
 }
 
+/// Tests collinearity of edge supports and strictly opposite triangle-vertex sides.
+/// Does not require identical endpoints or separately test interval overlap;
+/// shared-sample relative-interior incidence must already hold for both records.
 fn opposite_sides_of_shared_edge(left: &BoundaryHit, right: &BoundaryHit) -> Option<bool> {
     let start_on = orientation(&left.start, &left.end, &right.start)?;
     let end_on = orientation(&left.start, &left.end, &right.end)?;
@@ -506,10 +586,13 @@ fn opposite_sides_of_shared_edge(left: &BoundaryHit, right: &BoundaryHit) -> Opt
     )
 }
 
+/// Extracts the strict native planar orientation sign, erasing uncertainty reason/receipt.
 fn orientation(a: &Point2, b: &Point2, c: &Point2) -> Option<hyperlimit::Sign> {
     hyperlimit::orient2(a, b, c, crate::PREDICATE_POLICY).value()
 }
 
+/// Checks every unordered parameter pair until the first unresolved strict comparison.
+/// Does not retain an ordering certificate; the caller repeats comparisons to sort.
 fn parameters_are_comparable(parameters: &[Real]) -> bool {
     parameters.iter().enumerate().all(|(index, left)| {
         parameters
@@ -537,6 +620,10 @@ pub(super) const fn visibility_from_decision(
     }
 }
 
+/// Solves two transverse segment equations by determinants, admitting `0 < t < 1`
+/// on this segment and `0 <= u <= 1` on the other. Parallel/collinear segments
+/// return no hit, including overlap. Failed division or any undecided consumed
+/// admission comparison yields `Undecided`, even if another bound was false.
 fn intersection_parameter(
     start: &ProjectedPoint2,
     end: &ProjectedPoint2,
@@ -575,10 +662,12 @@ fn intersection_parameter(
     }
 }
 
+/// Tests `0 < parameter < 1`, short-circuiting after the lower bound when false/undecided.
 fn open_unit(parameter: &Real) -> Option<bool> {
     Some(real_gt(parameter, &Real::zero())? && real_lt(parameter, &Real::one())?)
 }
 
+/// Applies componentwise affine interpolation without restricting the parameter.
 fn lerp_projected(
     start: &ProjectedPoint2,
     end: &ProjectedPoint2,
@@ -590,6 +679,9 @@ fn lerp_projected(
     }
 }
 
+/// Joins adjacent matching-handle/style pieces when their endpoints prove equal.
+/// Keeps the first status/notes without comparing evidence. The caller supplies
+/// pieces of one support; no collinearity or traversal proof is checked here.
 fn push_merged(edges: &mut Vec<BlueprintEdge>, next: BlueprintEdge) {
     if let Some(previous) = edges.last_mut()
         && previous.style == next.style
@@ -603,7 +695,10 @@ fn push_merged(edges: &mut Vec<BlueprintEdge>, next: BlueprintEdge) {
     edges.push(next);
 }
 
+/// Selects the worse authored label under the drawing module's fixed rank.
+/// Does not evaluate geometry or combine native predicate/construction receipts.
 const fn weaker(current: GeometryCertainty, next: GeometryCertainty) -> GeometryCertainty {
+    /// Orders native, imported, preview, display, stale and missing labels from zero to five.
     const fn rank(certainty: GeometryCertainty) -> u8 {
         match certainty {
             GeometryCertainty::NativeExactCsg => 0,
@@ -622,6 +717,7 @@ const fn weaker(current: GeometryCertainty, next: GeometryCertainty) -> Geometry
 }
 
 #[cfg(test)]
+/// Box/pose witnesses and direct style checks; no general intersecting-surface oracle.
 mod tests {
     use super::*;
     use crate::parts::assembly::{
@@ -631,6 +727,7 @@ mod tests {
     use crate::solid::{self, SolidExt};
     use hyperlattice::{Real, Vector3};
 
+    /// Inserts named printed meshes under an instructed root and computes its assembled pose.
     fn document_with(parts: Vec<(&str, TriangleMesh)>) -> (AssemblyDocument, PosedAssembly) {
         let mut document = AssemblyDocument::new("occlusion", "main");
         document.node_mut(document.root()).expect("root").instructions = "n/a".into();
@@ -644,6 +741,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks twelve visible cube features, including depth edges projected to points.
+    /// Does not require twelve distinct nondegenerate segments in the 2D drawing.
     fn cube_feature_edges_are_visible() {
         let (document, posed) = document_with(vec![(
             "cube",
@@ -662,6 +761,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks that a strictly front, larger box hides all emitted rear-box features.
     fn front_box_hides_rear_feature_edges() {
         let rear = solid::cube(Real::from(2))
             .expect("valid primitive fixture")
@@ -689,6 +789,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks both visible and hidden rear pieces along Y=0, without a full endpoint oracle.
     fn half_covered_edge_splits() {
         let rear = solid::cube(Real::from(4)).expect("valid primitive fixture");
         let front = solid::cube(Real::from(2))
@@ -721,6 +822,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks that suppressing a front part's explode translation keeps it as an occluder.
     fn suppressed_front_box_still_hides_the_rear_box() {
         let rear = solid::cube(Real::from(2))
             .expect("valid primitive fixture")
@@ -766,6 +868,8 @@ mod tests {
     }
 
     #[test]
+    /// Directly checks unknown-style preservation with and without suppression/guide flags.
+    /// Does not construct an undecidable geometric depth predicate.
     fn undecided_depth_stays_unknown() {
         assert_eq!(
             visibility_from_decision(None, false, false),
@@ -778,6 +882,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks the hidden dash pattern and an X=1 coordinate token, not a full SVG snapshot.
     fn svg_snapshot_mentions_a_rear_coordinate() {
         let rear = solid::cube(Real::from(2))
             .expect("valid primitive fixture")
