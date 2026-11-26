@@ -3772,6 +3772,10 @@ fn split_at_revolution_axis(
 ///
 /// A scalar that could not be proved nonzero is an undecided predicate, not
 /// invalid input; exhaustion and other scalar problems keep their own cause.
+/// `UnknownZero` and `UnknownCertificate` acquire the caller's predicate label
+/// and selected policy. Every other problem remains a `Scalar` error, including
+/// definite division by zero; this helper neither retries nor reclassifies it
+/// as bad path input.
 const fn sweep_scalar_error(
     problem: hyperreal::Problem,
     predicate: &'static str,
@@ -3788,11 +3792,14 @@ const fn sweep_scalar_error(
     }
 }
 
-/// Normalizes a sweep direction already proved nonzero by policy decisions.
+/// Normalizes a sweep direction accepted as nonzero by the caller's policy decisions.
 ///
 /// The structural normalization is tried first, retaining its representation.
-/// Missing structural evidence is not a zero: the value is then normalized
-/// with the scalar layer's certified magnitude.
+/// Only `UnknownZero` retries through the scalar magnitude/inverse path; missing
+/// structural evidence is not treated as a zero vector. All remaining failures
+/// pass through [`sweep_scalar_error`]. The caller establishes nonzeroness from
+/// distinct path points or a nonreversing chord pair; no policy proof object is
+/// passed into the vector normalizer, so scalar certification can still fail.
 fn sweep_unit_direction(
     direction: &Vector3,
     predicate: &'static str,
@@ -3808,6 +3815,14 @@ fn sweep_unit_direction(
 
 /// Decides whether two path chords point in exactly opposite directions,
 /// where the bisector tangent of a sweep vertex is undefined.
+///
+/// The caller has established that both chords are nonzero. Visits cross-product
+/// components in coordinate order: any decided nonzero component proves the
+/// chords nonparallel and returns `false`, even after an earlier component
+/// failed. If no such component exists, the last encountered error propagates.
+/// Only when every component is decided zero is the dot-product sign consumed;
+/// a negative dot product then denotes reversal. All consumed decisions retain
+/// the supplied policy's certainty, including any authorized approximate terminal.
 fn sweep_chords_reverse(
     incoming: &Vector3,
     outgoing: &Vector3,
@@ -3838,6 +3853,11 @@ fn sweep_chords_reverse(
 /// Normals along the `z` axis are decided under the policy and receive the
 /// identity or the half turn about `y`; all others receive the minimal
 /// rotation.
+/// The caller supplies a nonzero direction and its corresponding unit tangent.
+/// A decided nonzero X or Y component selects native unit-vector rotation even
+/// if an earlier component failed. Otherwise the last component error propagates,
+/// or, with both zero, Z selects the axial branch. This helper does not validate
+/// the direction/tangent correspondence or normalize `tangent` again.
 fn sweep_initial_frame(
     direction: &Vector3,
     tangent: &Vector3,
@@ -3869,18 +3889,27 @@ fn sweep_initial_frame(
 
 /// Sweeps a native filled region along a 3D point path.
 ///
-/// Consecutive points proved equal are coalesced, and a path whose last point
-/// equals its first is closed. Each remaining point carries one copy of the
-/// profile, placed rigidly in the plane through that point whose normal is the
-/// unit chord at an open endpoint, or otherwise the normalized bisector of the
+/// Consecutive points decided equal under the selected policy are coalesced,
+/// and an equal first/last pair marks a closed path. Each remaining point carries
+/// one copy of the profile, placed rigidly in the plane through that point.
+/// Its normal is the unit chord at an open endpoint, or otherwise the normalized bisector of the
 /// two adjacent unit chords. The first slice is rotated minimally from `+z` (a
 /// half turn about `y` for `-z`), and every later frame is transported by the
 /// exact minimal rotation between consecutive normals. An exact line profile
 /// keeps its own coordinates; other profiles are sampled at
 /// [`SAMPLED_PROFILE_CHORD_ERROR`]. Slice coordinates are exact images of
 /// those profile coordinates. They are rational when the profile and every
-/// unit chord and bisector are rational; for a general path they are nested
-/// square roots, and later strict predicates on them can be undecidable.
+/// unit chord and bisector are rational. A rational path can introduce nested
+/// square roots through normalization; arbitrary `Real` inputs can carry
+/// further symbolic structure. Later strict predicates can remain undecided.
+/// Policy-authorized approximate decisions are reported in the certainty
+/// receipt and mesh construction history.
+///
+/// Open paths receive start and end caps. Closed paths omit the repeated final
+/// point and connect the last stored frame directly to the first, without
+/// distributing residual frame rotation around the loop. Straight triangle
+/// bands connect corresponding profile edges with a fixed diagonal; they are
+/// not an analytic swept surface. Holes retain their classified material side.
 ///
 /// Fewer than two distinct points, a closed path with fewer than three, a
 /// revisited point, or a chord that exactly reverses its predecessor returns
@@ -3888,6 +3917,20 @@ fn sweep_initial_frame(
 /// cannot decide returns [`ValidationError::PredicateUndecided`] naming the
 /// sweep step, and other scalar failures keep their
 /// [`hyperreal::Problem`] cause.
+/// Path validation and frame construction precede profile conversion, including
+/// for an empty region; a valid empty source returns canonical empty geometry.
+/// Repeated-point checking compares all earlier retained points, and this API
+/// adds no total-work, allocation or cancellation bound.
+///
+/// Final validation checks unique nondegenerate faces and paired directed
+/// geometric edges. It does not check vertex links, self-intersection, unit
+/// winding or embedding; a successful mesh need not bound an embedded solid.
+///
+/// # Panics
+///
+/// In debug builds, wall and cap emission asserts strict triangle nondegeneracy.
+/// A degenerate or strictly undecided placed triangle can panic before final
+/// policy-directed mesh validation.
 pub fn try_sweep(
     region: &CurveRegion2,
     path: &[Point3],
@@ -4015,8 +4058,9 @@ pub fn try_sweep(
             )?;
         }
     }
-    // Frame transport can collapse otherwise valid source geometry, so sweep
-    // performs one policy-consistent whole-mesh certification before return.
+    // Frame transport can collapse otherwise valid source geometry. Before
+    // return, check face validity and edge pairing under the selected policy;
+    // this does not establish embedding or unit winding.
     let mesh = validate_closed_mesh(
         TriangleMesh::new(positions, triangles),
         region.is_empty(),
@@ -4042,11 +4086,26 @@ pub fn try_sweep(
 /// would collapse or reflect the top section and returns
 /// [`ValidationError::NonPositiveParameter`].
 ///
-/// Each side quadrilateral between consecutive sections is split along a
-/// fixed diagonal, and the result is validated as a closed manifold, not as an
-/// embedded solid. Side walls of a thin profile can cross: the strip
+/// Requires at least one slice. Slice count, height and both scale signs are
+/// checked before profile conversion, even for an empty region. Negative height
+/// reverses side and cap winding. The parameter table has `slices + 1` entries
+/// and is built before inspecting the profile; no table-capacity preflight or
+/// construction-wide work, memory or cancellation budget is imposed here.
+///
+/// Each side quadrilateral between consecutive sections is split along the
+/// diagonal from its starting edge vertex to the opposite vertex in the next
+/// section. Final validation checks unique nondegenerate faces and geometric
+/// edge pairing; it does not check vertex links or embedding, or regularize
+/// self-overlap. Side walls of a thin profile can cross: the strip
 /// `[1, 1 + 2^-20] x [0, 2]` with a 90 degree twist in three slices and end
-/// scale `(1/2, 2/3)` gives a closed mesh with negative signed volume.
+/// scale `(1/2, 2/3)` at unit height gives a closed mesh with negative signed
+/// volume.
+///
+/// # Panics
+///
+/// In debug builds, wall and cap emission asserts strict triangle nondegeneracy.
+/// A degenerate or strictly undecided placed triangle can panic before final
+/// policy-directed mesh validation.
 pub fn extrude_twisted(
     input: &CurveRegion2,
     height: Real,
@@ -4572,12 +4631,15 @@ mod tests {
         assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 0);
     }
 
+    /// Exact Pythagorean sine/cosine identity retained as the certified-zero control.
     fn certified_unit_circle_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         &sine * &sine + &cosine * &cosine - Real::one()
     }
 
+    /// Sine-addition identity whose strict comparison must remain explicitly unresolved.
+    /// Consumers separately check rejection or qualified approximate-terminal use.
     fn terminally_unresolved_zero() -> Real {
         // Angle addition remains outside the bounded exact normal form. The
         // unit-circle identity now has a proof and is tested separately below.
@@ -4630,6 +4692,9 @@ mod tests {
         }
     }
 
+    /// Diagnostic signed volume from separately projected scalar triple products.
+    /// Unprojectable contributions are skipped; this is not an exact volume
+    /// certificate and assumes valid indices and a suitable closed fixture.
     fn signed_volume(mesh: &TriangleMesh) -> f64 {
         mesh.triangles
             .iter()
@@ -4643,6 +4708,9 @@ mod tests {
             / 6.0
     }
 
+    /// Requires strict unique nondegenerate faces and geometric edge pairing.
+    /// Does not inspect vertex links, embedding or unit winding; the historical
+    /// helper name and assertion message do not strengthen those predicates.
     fn assert_exact_solid_boundary(mesh: &TriangleMesh, label: &str) {
         assert!(
             mesh.has_unique_nondegenerate_triangles(&crate::MESH_CONTEXT)
@@ -4725,6 +4793,9 @@ mod tests {
             .expect("native extrusion must be reusable Hypermesh input");
     }
 
+    /// Extrusion, twist, duplicate-point sweep and revolution share valid edge/face output.
+    /// Both height/partial-turn signs retain positive projected signed volume;
+    /// these predicates and volume checks do not establish embedding.
     #[test]
     fn profile_solid_constructors_share_closed_indexed_topology() {
         let square = square(Real::from(2_u8)).expect("valid planar fixture");
@@ -4792,6 +4863,8 @@ mod tests {
         }
     }
 
+    /// An open path with nonconsecutive repeated vertices must fail construction.
+    /// This witness checks failure only; integration tests assert the error category.
     #[test]
     fn sweep_rejects_revisited_open_path_vertices() {
         let square = square(Real::from(2_u8)).expect("valid planar fixture");
@@ -4809,6 +4882,9 @@ mod tests {
         assert!(try_sweep(&square, &path, GeometryContext::STRICT).is_err());
     }
 
+    /// Degenerate extrusion/sweep/revolution/twist parameters must not publish solids.
+    /// Checks failure, including an overflowing partial-revolution sample count,
+    /// without asserting each operation's diagnostic payload.
     #[test]
     fn degenerate_profile_solid_requests_do_not_claim_solids() {
         let square = square(Real::from(2_u8)).expect("valid planar fixture");
@@ -4845,6 +4921,8 @@ mod tests {
         );
     }
 
+    /// Terminal point deduplication retains an approximate receipt and indexed closure.
+    /// The strict attempt must fail; its exact error category is not asserted here.
     #[test]
     fn approximate_sweep_reports_consumed_terminal_point_equality() {
         let square = square(Real::from(2_u8)).expect("valid planar fixture");
@@ -4865,6 +4943,9 @@ mod tests {
         assert!(outcome.value.is_closed_manifold());
     }
 
+    /// Scalar unknowns acquire sweep labels while exhaustion and division keep their causes.
+    /// Both policies preserve undecided/resource categories; definite division
+    /// failure after accepted nonzeroness remains a geometry error, not invalid input.
     #[test]
     fn sweep_scalar_failures_keep_their_outcome_category() {
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {

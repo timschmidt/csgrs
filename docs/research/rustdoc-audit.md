@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/sweep_frames.rs` | Entire file; documented all 21 function/constant declarations, exact rational frame invariants, finite helix/grouping oracles, typed failures and terminal certainty. | Source, formatting and comment-only checks passed; runtime assertions and timing diagnostics unchanged, not rerun. |
 | `tests/exact_profile_sweeps.rs` | Entire file; documented all 50 function/constant/type declarations, exact prism fixtures, signed revolution phases, independent winding/sector oracles, policy/composition and qualified STL replay. | Source, formatting and comment-only checks passed; assertions and optional STL branch unchanged, not rerun. |
 | `tests/mixed_modeling_profiles.rs` | Entire file; documented numeric/contour fixtures, consumer dispatch, exact-member measures, mixed holes/spans and repeated thin-wall cuts. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/exact_path_failures.rs` | Entire file; documented control-net helpers, native causes, display-count invariance, reversal, exact area and empty-region witnesses. Clarified the limited diagnostic evidence in the historical symbolic-endpoint test. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
@@ -44,7 +45,7 @@ repository rules for later sessions or authorize implementation edits.
 | `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
-| `src/curve/native.rs` | **Partial:** file start through `split_at_revolution_axis`, inclusive, plus the complete `native_boundary_source_probe` test module; revolution dispatch, signed-radius composition and output validation documented. Resume at `sweep_scalar_error`; the main test module remains pending. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
+| `src/curve/native.rs` | **Partial:** file start through `extrude_twisted`, inclusive, plus the complete `native_boundary_source_probe` module and the sweep-related test/helper items recorded below; frame construction, closure seam, policy/error flow and twist validation documented. Resume at `metaballs`; most of the main test module remains pending. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -1139,10 +1140,98 @@ remains about 499 MiB. No runtime build or additional target tree was created.
 Full workflow/runtime checks remain waived for this docs-only session. Test
 execution, optional STL replay and performance were not revalidated here.
 
+### Sweep frames and twisted extrusion, 26 November 2026
+
+Owner: CSGRS profile placement/frame construction and native mesh validation;
+P1/P4/P6/P8/P9/P16/P17/P18/P19/P25/P30/P37. Baseline: `943279e05`.
+Read every line from `sweep_scalar_error` through `extrude_twisted` in
+`src/curve/native.rs`, and every line of `tests/sweep_frames.rs`. Supporting
+reads covered vector normalization, minimal unit-vector rotations, shared wall
+and cap emission, the previous exact-profile fixtures, and scalar uncertainty
+controls. The later optional/transform wrappers were read for context but are
+not yet credited as completed item audits.
+
+Also reviewed/documented these main-module items completely: the certified and
+terminal zero helpers, `signed_volume`, `assert_exact_solid_boundary`,
+`profile_solid_constructors_share_closed_indexed_topology`,
+`sweep_rejects_revisited_open_path_vertices`,
+`degenerate_profile_solid_requests_do_not_claim_solids`,
+`approximate_sweep_reports_consumed_terminal_point_equality`, and
+`sweep_scalar_failures_keep_their_outcome_category`. The remaining main-module
+tests still require their own audits.
+
+Missing witnesses: sweep/twist docs omitted the closed-frame seam, validation
+before empty input, allocation scope and emitter debug assertions; twist docs
+overstated manifold validation. Private frame docs omitted predicate order,
+fallback conditions and which errors can be superseded by an independent
+nonzero component. Test docs called approximate terminal resolution a
+certificate, treated unnormalized dot products as basis coordinates and
+overstated the nearest-center grouping's separation assumption.
+
+The sweep retains one frame per distinct path vertex, using chord normals at
+open endpoints and normalized unit-chord bisectors elsewhere. Closed paths
+connect the final stored frame directly to the first, without redistributing
+residual rotation. Scalar normalization retries only `UnknownZero`; a caller's
+nonzero decision is not passed as a proof object into the normalizer. Reversal
+and initial-axis helpers preserve component order, permit a later independent
+nonzero component to resolve an earlier failure, and otherwise propagate the
+last component error. Unknown scalar certificates acquire the sweep label and
+policy; exhaustion and other scalar causes remain typed scalar failures.
+
+Sweep path/frame construction and twist parameter-table construction precede
+empty-profile handling. Neither entry point introduces a total-work/heap or
+cancellation budget; twist has no angular-table addressability preflight.
+Wall/cap debug assertions can precede final validation. The latter proves
+unique nondegenerate faces and directed edge pairing, not vertex-link
+manifoldness, embedding or unit winding. Negative twist-extrusion height
+reverses wall/cap orientation; apex tapering has no top cap.
+
+Rechecked the documented thin-strip counterexample independently with exact
+Python `Fraction` arithmetic in Q(sqrt(3)): width 2^-20 at X=1, Y in [0,2],
+height 1, twist 90 degrees, three equal bands and final scale (1/2,2/3).
+Placed four sections using the documented linear scales and 0/30/60/90-degree
+sines/cosines, split each wall on the implemented diagonal and added planar
+caps. All 28 triangles were nondegenerate and every directed geometric edge
+had one reverse. The exact scalar-triple-product sum (six-volume) was
+
+```text
+-1495330579284247/1068725302198272 + (205/169869312) * sqrt(3).
+```
+
+Its upper bound using sqrt(3) < 2 is negative. This checks the mathematical
+construction formula and the limited meaning of edge closure; it is not a
+runtime execution or completion claim for the Rust constructor.
+
+Frame tests now distinguish stored-rational checks, exact distance/normal/axis
+invariants, binary64 helix residuals, approximate nearest-center grouping,
+Boolean volume identities and error-category witnesses. Printed timings have
+no performance threshold. The local projected-volume helper skips failed
+projections, and its Rustdoc no longer implies an exact volume certificate.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs tests/sweep_frames.rs`:
+  passed. `git diff --check`: passed.
+- All nonblank, non-comment source lines match baseline in both Rust files.
+  A file-local declaration scan found Rustdoc on all 21 test functions/constants;
+  this does not establish repository-wide documentation coverage.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps
+  --offline`: passed without warnings.
+- Inspected six generated public/private pages for sweep, twist and frame/error
+  helpers. Integration and unit tests were inspected in source; ordinary
+  library documentation does not render test-only items.
+
+Log: `/tmp/csgrs-rustdoc-sweep-frames-doc.log`. Reused build storage remains
+about 499 MiB. No additional target tree or runtime build was created. Full
+workflow/runtime checks remain waived for this docs-only session. No predicate,
+construction, assertion or executable behavior changed.
+
 ## Next work
 
-Continue `src/curve/native.rs` at `sweep_scalar_error`, including sweep/twist
-construction and downstream witnesses, then
+Continue `src/curve/native.rs` at `metaballs`, including optional image/text
+adapters, planar transforms, queries and the remaining main-module tests, then
 review the remaining root modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every

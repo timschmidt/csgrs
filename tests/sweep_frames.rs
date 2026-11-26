@@ -2,8 +2,12 @@
 //!
 //! The sweep places each profile slice rigidly in the plane normal to the
 //! path's chord bisector and transports frames by exact minimal rotations.
-//! These tests check the outcome vocabulary, the frames' defining properties
-//! with exact rational oracles, and strict composition of the swept solid.
+//! These tests check outcome categories, rational frame invariants and strict
+//! Boolean composition. The helix uses a finite-coordinate placement oracle;
+//! the rational fixture compares exact distances, normal projections and
+//! transport-axis projections. Native edge/face checks do not prove embedding
+//! or vertex-link manifoldness, and volume identities alone do not prove set
+//! equality. Printed timings are diagnostics without performance thresholds.
 
 use csgrs::errors::{ValidationError, ValidationErrorKind};
 use csgrs::{GeometryCertainty, GeometryContext, curve, solid, solid::SolidExt};
@@ -14,28 +18,37 @@ use hyperreal::Rational;
 use std::cmp::Ordering;
 use std::time::Instant;
 
+/// Strict native policy for face validity and geometric edge-pairing witnesses.
 const STRICT_MESH: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
+/// Policies compared where exact inputs should certify or terminal use must differ.
 const CONTEXTS: [GeometryContext; 2] =
     [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512];
 
+/// Preserves a finite binary64 fixture's exact binary value, not its decimal spelling.
 fn dyadic(value: f64) -> Real {
     Real::try_from(value).expect("finite fixture")
 }
 
+/// Exact signed-integer fixture literal.
 fn int(value: i64) -> Real {
     Real::from(value)
 }
 
+/// Exact integer path vertex without finite-coordinate conversion.
 fn point(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(int(x), int(y), int(z))
 }
 
+/// Rational fixture literal; a zero denominator is a test-author error.
 fn fraction(numerator: i64, denominator: u64) -> Real {
     Rational::fraction(numerator, denominator)
         .expect("nonzero denominator")
         .into()
 }
 
+/// Divides an integer direction by its caller-supplied exact positive length.
+///
+/// Fixture authors establish unit norm; this helper does not normalize or check it.
 fn unit(x: i64, y: i64, z: i64, length: u64) -> Vector3 {
     Vector3::new([
         fraction(x, length),
@@ -44,6 +57,9 @@ fn unit(x: i64, y: i64, z: i64, length: u64) -> Vector3 {
     ])
 }
 
+/// Requires the stored rational form expected of the chosen rational-frame fixture.
+///
+/// This does not prove or recover rationality of an arbitrary symbolic expression.
 fn exact(value: &Real) -> Rational {
     value
         .exact_rational_ref()
@@ -51,7 +67,10 @@ fn exact(value: &Real) -> Rational {
         .clone()
 }
 
-/// A zero that strict refinement cannot certify; the 512-bit terminal can.
+/// Sine-addition zero with an asserted unresolved strict comparison.
+///
+/// Consumers exercise the policy-authorized 512-bit terminal separately; its
+/// approximate decision is not an exact certificate of this identity.
 fn terminally_unresolved_zero() -> Real {
     let zero = (Real::e() + Real::one()).sin()
         - Real::e().sin() * Real::one().cos()
@@ -66,10 +85,15 @@ fn terminally_unresolved_zero() -> Real {
 /// An irregular profile, so no nontrivial rotation maps it onto itself.
 const PROFILE: [[i64; 2]; 4] = [[-1, -1], [2, -1], [1, 1], [-1, 2]];
 
+/// Admits the asymmetric integer quadrilateral used to distinguish frame rotations.
 fn irregular_profile() -> hypercurve::CurveRegion2 {
     curve::polygon(&PROFILE.map(|[x, y]| [int(x), int(y)])).expect("valid profile fixture")
 }
 
+/// Requires indexed edge closure and certified native face/geometric-edge checks.
+///
+/// Despite the helper's historical name, these predicates do not inspect vertex
+/// links, self-intersection or unit winding, and do not prove an embedded solid.
 fn assert_certified_closed_solid(mesh: &TriangleMesh, label: &str) {
     assert!(mesh.is_closed_manifold(), "{label}: open index topology");
     for outcome in [
@@ -85,6 +109,10 @@ fn assert_certified_closed_solid(mesh: &TriangleMesh, label: &str) {
     }
 }
 
+/// Rational scalar-triple-product sum, six times signed volume for a closed mesh.
+///
+/// Assumes valid indices and stored rational results; overlaps contribute with
+/// multiplicity. This helper does not establish closure or material ownership.
 fn six_volume(mesh: &TriangleMesh) -> Rational {
     let sum = mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
         let a = mesh.positions[triangle.v0].to_vector();
@@ -95,8 +123,11 @@ fn six_volume(mesh: &TriangleMesh) -> Rational {
     exact(&sum)
 }
 
-/// Groups output positions by their path point. Slices are much farther apart
-/// than the profile radius, so the nearest path point is the slice center.
+/// Groups positions by the nearest path point using lossy binary64 distances.
+///
+/// Returned offsets retain exact coordinates. This fixture-only grouping
+/// assumes nearest-center ownership, which callers check through slice counts
+/// and placement invariants; it is not a certified general slice classifier.
 fn slice_offsets(mesh: &TriangleMesh, path: &[Point3]) -> Vec<Vec<Vector3>> {
     let approximate = |point: &Point3| {
         [&point.x, &point.y, &point.z].map(|value| value.to_f64_lossy().expect("finite"))
@@ -119,6 +150,7 @@ fn slice_offsets(mesh: &TriangleMesh, path: &[Point3]) -> Vec<Vec<Vector3>> {
     slices
 }
 
+/// Lexicographically orders exact projection pairs without depending on mesh row order.
 fn sorted_pairs(mut pairs: Vec<(Rational, Rational)>) -> Vec<(Rational, Rational)> {
     pairs.sort_by(|left, right| {
         left.0
@@ -132,9 +164,12 @@ fn sorted_pairs(mut pairs: Vec<(Rational, Rational)>) -> Vec<(Rational, Rational
     pairs
 }
 
-/// Coordinates of `offsets` in the plane basis `(axis, normal × axis)`. The
-/// minimal rotation from normal `a` to normal `b` fixes `axis = a × b` and
-/// maps `a × axis` to `b × axis`, so it preserves these coordinates.
+/// Sorted, unnormalized dot projections onto `(axis, normal × axis)`.
+///
+/// For the fixture's unit normals `a` and `b`, minimal rotation fixes
+/// `axis = a × b` and maps `a × axis` to `b × axis`, preserving both dot
+/// products. No axis-length division is needed for this transport witness;
+/// the pairs are not coefficients in a normalized basis.
 fn axis_coordinates(
     offsets: &[Vector3],
     normal: &Vector3,
@@ -149,6 +184,11 @@ fn axis_coordinates(
     )
 }
 
+/// The 40-slice example helix completes with certified native edge/face predicates.
+///
+/// Checks exact output counts and binary64 radius/normal residuals below 1e-12.
+/// Those finite checks concern the polygonal profile and authored sampled path,
+/// not exact equality to a continuous circular helix or an analytic swept tube.
 #[test]
 fn strict_sweep_completes_the_sampled_helix_of_the_extrude_example() {
     // The path and profile of examples/extrude.rs. The strict sweep formerly
@@ -218,6 +258,12 @@ fn strict_sweep_completes_the_sampled_helix_of_the_extrude_example() {
     }
 }
 
+/// Rational chord/bisector fixtures preserve rigid slices and minimal frame transport.
+///
+/// Checks stored rational coordinates, exact radii/pairwise distances, normal
+/// orthogonality and transport-axis projections. Three strict Booleans with a
+/// cube must certify, pass native mesh checks and satisfy rational volume
+/// identities with a nontrivial intersection; the identities are not set proofs.
 #[test]
 fn rational_rotation_minimizing_frames_are_exact_and_compose_with_a_cube() {
     // Chords of length 15 along rational unit directions whose bisectors are
@@ -322,6 +368,10 @@ fn rational_rotation_minimizing_frames_are_exact_and_compose_with_a_cube() {
     assert_eq!(union + intersection, tube_volume + cube_volume);
 }
 
+/// Unresolved strict reversal names its predicate; terminal resolution rejects the path.
+///
+/// Both calls use the same symbolic zero and distinguish undecided geometry
+/// from an invalid reversal after the approximate policy decides that zero.
 #[test]
 fn undecided_path_reversal_is_reported_as_undecided() {
     let zero = terminally_unresolved_zero();
@@ -348,6 +398,10 @@ fn undecided_path_reversal_is_reported_as_undecided() {
     );
 }
 
+/// A -Z start reflects X by a Y half turn, with exact first-slice vertex checks.
+///
+/// A symbolic axis relation is undecided under strict policy; approximate
+/// terminal use must appear in the successful outcome's certainty receipt.
 #[test]
 fn initial_tangent_orientation_is_decided_under_the_policy() {
     // An initial chord along -z receives the half turn about y.
@@ -390,6 +444,10 @@ fn initial_tangent_orientation_is_decided_under_the_policy() {
     assert!(outcome.value.is_closed_manifold());
 }
 
+/// Empty/short, revisited and reversing paths retain typed invalid-input outcomes.
+///
+/// Exercises both policies, including closure with only two distinct vertices
+/// and an all-duplicate path; unresolved predicates have separate witnesses.
 #[test]
 fn invalid_sweep_paths_remain_invalid_arguments() {
     let a = Point3::new(int(-1), int(1), int(-1));
