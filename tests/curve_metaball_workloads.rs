@@ -1,7 +1,12 @@
+//! Fixed published planar metaball workloads with their original source counts and grid resolutions.
+//! Completion, loop roles, positive area and source-center membership concern the sampled region.
+
 #![cfg(all(feature = "curve", feature = "metaballs"))]
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve};
 use hypercurve::{CurveRegionLoopRole, Point2};
 
+/// Samples at isovalue one under strict policy and requires a single material loop with positive area.
+/// Every source center must be inside; no continuous-field fidelity or timing bound is asserted.
 fn validate(balls: &[(Point2, Real)], resolution: usize, padding: Real) {
     let result = curve::metaballs_with_context(
         balls,
@@ -31,12 +36,14 @@ fn validate(balls: &[(Point2, Real)], resolution: usize, padding: Real) {
 }
 
 #[test]
+/// Exercises the renderer's single unit source on its unchanged 24-by-24 grid without padding.
 fn readme_planar_metaball_completes_at_original_resolution_twenty_four() {
     let balls = [(Point2::new(Real::zero(), Real::zero()), Real::one())];
     validate(&balls, 24, Real::zero());
 }
 
 #[test]
+/// Exercises the benchmark's two radius-two sources with padding one on the unchanged 48-by-48 grid.
 fn benchmark_planar_metaballs_complete_at_original_resolution_forty_eight() {
     let balls = [
         (Point2::new(Real::zero(), Real::zero()), Real::from(2)),

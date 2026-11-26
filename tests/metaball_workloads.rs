@@ -1,17 +1,23 @@
 #![cfg(feature = "metaballs")]
 //! Preserve the published rendering and benchmark workloads through exact extraction.
+//! Native sample decisions and bounded mesh invariants do not certify the continuous field's surface.
 use csgrs::{
     GeometryCertainty, GeometryContext, Real,
     solid::{self, MetaBall},
 };
 use hyperlattice::Point3;
 
+/// Imports the exact binary64 fixture value, panicking for NaN or infinity.
 fn r(value: f64) -> Real {
     Real::try_from(value).unwrap()
 }
+/// Constructs a native point from three exact finite-float imports.
 fn point(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
+/// Samples a nonempty field strictly at the requested core resolution and requires certified output.
+/// Checks geometric edge pairing, positive signed volume and every mesh extremum strictly inside the
+/// field's conservative sampling bounds; bounds come from the field implementation, not an independent oracle.
 fn validate(balls: &[MetaBall], resolution: usize, iso: Real, padding: Real) {
     let bounds = hypersdf::MetaballField::new(balls, iso.clone())
         .unwrap()
@@ -67,6 +73,7 @@ fn validate(balls: &[MetaBall], resolution: usize, iso: Real, padding: Real) {
 }
 
 #[test]
+/// Retains the feature benchmark's two radius-two sources, isovalue/padding one and 20-cubed core grid.
 fn feature_pipeline_metaballs_complete_at_original_resolution_twenty() {
     let balls = [
         MetaBall::new(Point3::origin(), 2.into()),
@@ -76,6 +83,7 @@ fn feature_pipeline_metaballs_complete_at_original_resolution_twenty() {
 }
 
 #[test]
+/// Retains all three renderer sources and exact binary64 parameters on the original 8-cubed core grid.
 fn readme_metaballs_complete_with_all_three_original_sources() {
     let balls = [
         MetaBall::new(point(-0.55, 0.0, 0.0), r(0.65)),

@@ -34,6 +34,11 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/curve_metaball_failures.rs` | Entire file; documented result traits, validation categories, sampled diamond/ring witnesses and Boolean/extrusion continuation. | Focused compilation/private docs passed; assertions and source/grid fixtures unchanged, not run. |
+| `tests/curve_metaball_workloads.rs` | Entire file; documented original renderer/benchmark inputs, loop-role, area and membership assertions. | Focused compilation/private docs passed; workload execution/timing not performed. |
+| `tests/metaball_failures.rs` | Entire file; documented result traits, singular influence, normalized-field coordinates, bordered diagnostics and recovery. | Focused compilation/private docs passed; assertions unchanged, not run. |
+| `tests/metaball_workloads.rs` | Entire file; documented exact float ingress, retained workload sizes, edge/volume and implementation-derived bounds checks. | Focused compilation/private docs passed; workload execution/timing not performed. |
+| `tests/sdf_failures.rs` | Entire file; documented field/domain/branch failures, sample indices, capacity preflight, preview and diagnostic-on/off comparisons. | Focused compilation/private docs passed; assertions and callback order unchanged, not run. |
 | `tests/native_boundary_failures.rs` | Entire file; documented typed polyhedron/point/graphics failures, exact normals, scalar projection, mutation and attributed cache witnesses. | Focused compilation/private docs passed with attributed cases enabled; runtime assertions unchanged, not run. |
 | `tests/planar_operation_failures.rs` | Entire file; documented compatibility trait/members, homogeneous matrix admission, typed query failures, empty/holed continuation and adapter semantics. | Focused compilation/private docs passed; trait implementation docs rendered and assertions unchanged, not run. |
 | `crates/hypermesh/src/construction.rs` | Entire file; documented private bit storage/flags, default/mutation semantics and missing-history precedence. | Owning private docs and downstream compilation passed; tuple-field formatting adds only a trailing comma. No geometry behavior changed. |
@@ -2869,6 +2874,56 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-native-planar-check.log` and
 `/tmp/csgrs-rustdoc-native-planar-private.log`.
+
+### Implicit-field acceptance and retained workloads, 26 November 2026
+
+Baseline: `fb48e8eac`. Owners: root planar/3D metaball and sampled-field
+acceptance consumers, P1/P3/P4/P6/P8/P9/P17–P20/P25/P30/P37. Domain: positive
+inverse-square sources and normalized sampling, invalid/undecided parameters,
+finite grids, scalar expression domains/branches, diagnostics, sampled topology
+and continued modeling. Read all five files completely, including private trait
+methods and implementations. Supporting reads of field sampling/borders, planar
+wrappers, renderer/benchmark fixture excerpts, properties and admission rules do
+not add new whole-file owner or benchmark credit.
+
+Missing witnesses were undocumented declarations and missing limits on assertion
+scope. Exact diamond area and Surface Nets coordinates describe the adopted
+sampled models, not their continuous level sets. The 3D 3-cubed core uses a
+one-cell exterior border and therefore 5-cubed diagnostics. Raw inverse-square
+influence remains singular at a center, while the normalized sampling field has
+its declared continuous extension. A ring's selected memberships do not alone
+count holes. Published workload sources/resolutions match the inspected renderer
+and feature-benchmark excerpts; their bounds assertions use the field's own
+conservative bounds, not an independent analytic oracle.
+
+Documented strict field evaluation separately from policy-selected sample signs
+and extraction. Approximate meshing does not authorize an undecided expression
+branch. Indexed scalar failure retains `[2,0,0]` and `SqrtNegative`; later recovery
+changes field inputs rather than increasing a budget. Huge-grid tests exercise
+capacity preflight/category mapping, not measured allocator or total-work
+exhaustion. Diagnostic comparisons check stored mesh equality and local receipts,
+not every evidence field. No code, policy, source count, resolution or assertion
+was changed.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline in all five files. All 71 declarations and
+  trait members have Rustdoc.
+- `cargo check --locked -p csgrs --no-default-features --features curve,metaballs,sdf`
+  with all five explicit test targets and `--offline -j 2` passed without warnings.
+  Every file's feature gate was enabled.
+- Private Rustdoc for all five targets passed with broken links denied, supplying
+  the checked own-library metadata and dependency search paths. Inspected all 22
+  top-level pages, five module descriptions and 29 rendered declaration/member
+  descriptions. Test-function docs remain source-reviewed rather than credited
+  as standalone rendered pages.
+- Geometry, sampling workloads, benchmarks, rendering and full workflows were not
+  executed under the docs-only waiver. The existing temporary target was reused
+  with incremental compilation disabled; no model or image outputs were created.
+
+Logs: `/tmp/csgrs-rustdoc-implicit-tests-check.log` and
+`/tmp/csgrs-rustdoc-implicit-tests-private.log`.
 
 ## Next work
 

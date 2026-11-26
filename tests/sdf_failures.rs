@@ -1,6 +1,8 @@
 #![cfg(feature = "sdf")]
 //! An unresolved or invalid sampled field must not publish successful geometry.
+//! Field expression evaluation, meshing policy, diagnostics and sampled geometry have separate contracts.
 #[path = "support/uncertainty.rs"]
+/// Shared proved-zero control and independently unresolved sample/branch witness.
 mod uncertainty;
 
 use csgrs::{
@@ -11,18 +13,23 @@ use csgrs::{
 use hyperlattice::Point3;
 use hypersdf::SdfExpr;
 
+/// Observes typed modeling failure without reinterpreting successful geometry.
 trait FailureKind {
+    /// Returns the existing failure category or `None` on success.
     fn failure_kind(&self) -> Option<ValidationErrorKind>;
 }
 impl<T> FailureKind for Result<T, ValidationError> {
+    /// Borrows the result and classifies its error without inspecting or modifying success values.
     fn failure_kind(&self) -> Option<ValidationErrorKind> {
         self.as_ref().err().map(ValidationError::kind)
     }
 }
 
+/// Constructs an exact diagonal point `(n,n,n)` for sampling bounds.
 fn point(n: i32) -> Point3 {
     Point3::new(n.into(), n.into(), n.into())
 }
+/// Checks the retained Pythagorean identity and returns the shared strictly unresolved exact zero.
 fn unknown_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -30,6 +37,7 @@ fn unknown_zero() -> Real {
 }
 
 #[test]
+/// Requires an unresolved constant closure to report undecided rather than an empty extracted mesh.
 fn closure_uncertainty_is_not_successful_empty_geometry() {
     let zero = unknown_zero();
     let field = |_: &Point3| zero.clone();
@@ -40,6 +48,7 @@ fn closure_uncertainty_is_not_successful_empty_geometry() {
 }
 
 #[test]
+/// Requires the same undecided sample category when strict diagnostics are explicitly requested.
 fn diagnostic_uncertainty_is_not_nonfinite_empty_geometry() {
     let zero = unknown_zero();
     assert_eq!(
@@ -58,6 +67,7 @@ fn diagnostic_uncertainty_is_not_nonfinite_empty_geometry() {
 }
 
 #[test]
+/// Requires square root of a negative constant expression to remain invalid input.
 fn invalid_expression_domains_remain_invalid_input() {
     let expr = SdfExpr::constant((-1).into()).sqrt();
     assert_eq!(
@@ -67,6 +77,7 @@ fn invalid_expression_domains_remain_invalid_input() {
 }
 
 #[test]
+/// Requires a negative-radius sphere expression to fail through the diagnostic contextual API.
 fn diagnostic_expression_domains_remain_invalid_input() {
     let expr = SdfExpr::sphere(
         hyperlimit::Point3::new(0.into(), 0.into(), 0.into()),
@@ -88,6 +99,7 @@ fn diagnostic_expression_domains_remain_invalid_input() {
 }
 
 #[test]
+/// Requires an unresolved minimum/union branch between equal-valued constants to remain undecided.
 fn expression_branch_uncertainty_retains_its_category() {
     let a = Real::e().sin();
     let expr = SdfExpr::constant(a.clone()).union(SdfExpr::constant(a + unknown_zero()));
@@ -107,6 +119,7 @@ fn expression_branch_uncertainty_retains_its_category() {
 }
 
 #[test]
+/// Checks the contextual nondiagnostic expression path keeps square-root domain failure distinct from uncertainty.
 fn context_expression_domain_errors_are_distinct_from_uncertainty() {
     let expr = SdfExpr::constant((-1).into()).sqrt();
     assert_eq!(
@@ -125,6 +138,8 @@ fn context_expression_domain_errors_are_distinct_from_uncertainty() {
 }
 
 #[test]
+/// Uses a panicking field callback to require grid-capacity rejection before any sample evaluation.
+/// The resource-exhausted category reflects an unaddressable grid, not measured allocator exhaustion.
 fn overflow_is_resource_exhaustion_before_sampling() {
     let field =
         |_: &Point3| -> Real { panic!("capacity must be checked before invoking the field") };
@@ -135,6 +150,7 @@ fn overflow_is_resource_exhaustion_before_sampling() {
 }
 
 #[test]
+/// Requires a one-sample axis to be invalid even for a trivially positive field.
 fn undersized_resolution_is_rejected_instead_of_clamped() {
     assert_eq!(
         solid::sdf_with_context(
@@ -152,6 +168,9 @@ fn undersized_resolution_is_rejected_instead_of_clamped() {
 }
 
 #[test]
+/// Requires `sqrt(-x)` to fail at grid index `[2,0,0]` with a downcastable `SqrtNegative` cause.
+/// A later positive field yields canonical empty, which is consumed by box union/removal; the restored
+/// box is checked by bounds, not a full independent set oracle.
 fn partial_sampling_failure_keeps_sample_index_and_native_source() {
     use std::error::Error;
     // x visits -1, 0, 1, so sqrt(-x) fails only at the third sample.
@@ -200,6 +219,8 @@ fn partial_sampling_failure_keeps_sample_index_and_native_source() {
 }
 
 #[test]
+/// Checks the sampled plane `x=1/3`, certified local receipt, 18/0/9 sign counts and raw field extrema -1/1.
+/// Preview self-consistency is checked separately; the open plane mesh is not validated as a closed solid.
 fn diagnostic_plane_has_independently_known_coordinates_and_counts() {
     // Samples x=-1,0,1 at iso=1/3: 18 negative and 9 positive.
     let third = (Real::one() / Real::from(3)).unwrap();
@@ -237,6 +258,9 @@ fn diagnostic_plane_has_independently_known_coordinates_and_counts() {
 }
 
 #[test]
+/// Runs an unresolved plane through strict failure, qualified extraction and strict failure again.
+/// Preview retains nine unknown sample signs; an approximate meshing policy still cannot decide an
+/// unresolved expression branch. A positive constant provides a certified local control.
 fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queries() {
     let expr = SdfExpr::x().add_expr(SdfExpr::constant(unknown_zero()));
     let sample = |context| {
@@ -300,6 +324,9 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
 }
 
 #[test]
+/// Compares diagnostic-on/off closure and expression sampling of the rational plane under both policies.
+/// Requires matching geometry/receipts and selected diagnostic counts, plus ordinary-wrapper agreement;
+/// it does not compare every construction-evidence field or diagnostic statistic.
 fn diagnostics_are_returned_exactly_when_requested_and_change_nothing_else() {
     use csgrs::solid::SampleOptions;
     let third = (Real::one() / Real::from(3)).unwrap();
