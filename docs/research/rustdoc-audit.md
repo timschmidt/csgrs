@@ -6262,6 +6262,108 @@ The repository-wide audit remains incomplete. The next remaining whole
 predicate implementation in Hyperlimit is `distance.rs`; the existing tests and
 other completed predicate records should not be re-counted as new coverage.
 
+## Hyperlimit squared distances and circle/ball contacts
+
+Audited every line of `crates/hyperlimit/src/predicates/distance.rs` (3,103 lines
+at baseline `a9227a641`). Ownership is Hyperlimit's scalar comparisons, closest
+feature selection, and contact labels. Relevant contracts are P5, P6, P8–P10,
+and downstream qualification preservation. Inputs include Real-coordinate points,
+lines, closed segments/triangles, plane equations, boxes, circles, and closed
+balls under both predicate policies. Scalar distance thresholds may be negative;
+geometric squared radii require caller validation at most entrypoints. The
+missing acceptance witness was accurate complete public/private Rustdoc with
+rendered coverage. This documentation-only batch changes no algorithms, branch
+order, tests, fixtures, policies, or dispatch assertions.
+
+All 85 declarations and five private vector fields now have Rustdoc. Of those,
+36 declarations are test-only: the module, policy constant, eight helpers, and
+26 test functions. The remaining 49 declarations render in private library docs.
+Source after removing comment-only and blank lines is identical to baseline;
+no formatting normalization of executable code was needed.
+
+The review distinguishes these current behaviors from stronger target claims:
+
+- Rational kernels use borrowed `exact_rational_ref` data, not arbitrary exact
+  rational normal forms. Point-distance ordering and triangle distance try them
+  unconditionally; several other entrypoints gate them on a nondyadic rational
+  threshold/radius. The helpers themselves also accept dyadic data. None means
+  the needed representation was unavailable, not a geometric decision. Rational
+  successes attach Exact/Exact; generic paths follow the requested policy.
+- Circle-line, point-line, point-plane, planar/spatial point-segment, and
+  circle-segment paths discard some successful norm/projection guard receipts.
+  Sphere/sphere classification discards successful radius-validation receipts.
+  Final outcomes may therefore omit approximate branch qualification. These
+  are source-confirmed omissions; no runtime witness for the omitted-receipt
+  cases was added or executed in this docs-only session. Documentation does not
+  repair them or establish P9 conformance.
+- Triangle distance aggregates its own normal and decided barycentric checks,
+  but cannot recover qualification discarded inside edge helpers. It evaluates
+  all three projection numerators; one negative suffices to select edge distance
+  even if another is unresolved. With no negative, unresolved projection remains
+  Unknown. The edge-minimum helper may return a later Less with only that edge's
+  receipt, because that single comparison suffices to show the minimum is Less.
+  If no edge is Less, any encountered Unknown prevents Equal/Greater completion.
+  This sufficient-witness behavior is distinct from missing branch receipts.
+- Zero-normal planes compare offset squared with the threshold. For example,
+  offset 5 yields the scalar equality 25 = 25 even though the equation has an
+  empty zero set. The fallback is not a geometric distance or typed invalid-plane
+  result. Collapsed lines/segments instead use point distance, and degenerate
+  triangles use closed-edge minima. The triangle path alone explicitly maps a
+  decided negative squared normal to Unsupported at the decision's stage.
+- Circle/segment Tangent and Secant follow the endpoint partition, not a
+  differential-tangency or intersection-count guarantee. Revisited the already
+  audited relation definitions at `classify.rs` lines 155–205 and 294–339; those
+  definitions already state these conventions and closed-ball semantics. The
+  producer docs now agree. Sphere/sphere tests concern balls including interiors,
+  not surface intersection. A negative radius becomes Unknown/Unsupported rather
+  than a distinct invalid-input result; other squared-radius APIs do not check
+  nonnegativity.
+- AABB/ball classification sorts coordinate endpoints under policy, accepts
+  degenerate boxes, and preserves all consumed axis and final-comparison receipts.
+  A zero-radius ball anywhere in the box receives Touching. Overlapping does
+  not prove positive volume for a degenerate box. All routines avoid square-root
+  construction but provide no separate total-work/coefficient-growth budget.
+
+The AABB approximate-axis test creates fresh inputs for each STRICT/APPROX/STRICT
+iteration, so its sequence is not a retained-object cache-transition witness.
+Its feature-gated dispatch checks remain unchanged: ten comparisons on completed
+approximate cases and the specified strict prefix at unresolved axes. The
+rational AABB grid contains 216 cases with independent integer expectations and
+complete Exact/Exact assertions. Most other tests check values only. Docs no
+longer imply exhaustive partitions, asserted dispatch selection, or absence of
+square-root calls based on those value-only tests. The exact-normal identity
+control and separate terminally unresolved expression remain intact.
+
+Validation after final source edits:
+
+- Focused Rustfmt, `git diff --check`, scoped declaration/field documentation scan,
+  and comment-stripped source identity comparison passed.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed, compiling the library, inline tests, and integration consumers.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D warnings -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed. Verified 55 complete rendered doc
+  groups across 50 pages, including all five private fields. The 36 test-only
+  declarations were reviewed and compiled, not rendered by library Rustdoc.
+- Downstream `cargo rustdoc --locked -p csgrs --lib --no-default-features
+  --features curve --offline -j2 -- --document-private-items
+  -D rustdoc::broken_intra_doc_links` passed.
+- Independent integer/Fraction arithmetic checked the 25, 9, and 1/9 squared
+  distance expectations, triangle face/edge/vertex residual squares 9/25/1,
+  and the single admitted boundary root for the outward unit-circle segment
+  `(1+t,0)`, t in [0,1]. These are fixture-mathematics checks, not execution of
+  the Rust kernels or their dispatch paths.
+- No runtime tests, dispatch measurements, or performance tests ran. Incremental
+  compilation remains disabled and shared target storage remains about 1.6 GiB.
+  Full workflow checks remain waived by the owner for this docs-only session.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-distance-{doc,check,downstream-doc}.log`.
+The current inventory has 19 files under Hyperlimit's predicates directory;
+with the prior whole-file records, each has now received implementation and
+Rustdoc review. This is not a crate-wide or repository-wide completion claim:
+Hyperlimit's remaining examples, benches, fuzz programs, and support/documentation
+files still require review, as does the much larger remaining repository.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

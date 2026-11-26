@@ -1,7 +1,11 @@
-//! Exact point-distance comparison predicates.
+//! Squared-distance comparisons and circle/ball contact classifications.
 //!
-//! Distance comparisons use squared Euclidean distance so predicate callers do
-//! not force square-root construction or lossy approximations.
+//! Rational kernels preserve exact arithmetic; generic expressions use explicit
+//! predicate policies and can return Unknown or approximate decisions. Squared
+//! formulas avoid square roots, but some composite paths discard branch receipts;
+//! each entrypoint documents its aggregation limits. Degenerate-carrier conventions
+//! and circle/segment endpoint labels are not universal geometric certificates.
+//! These functions supply no separate total-work or coefficient-growth budget.
 
 use core::cmp::Ordering;
 
@@ -15,14 +19,12 @@ use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use hyperreal::{Rational, Real};
 
-/// Compare squared distances from `anchor` to `left` and `right` with an
-/// explicit predicate escalation policy.
+/// Compare `|anchor-left|^2` with `|anchor-right|^2` without constructing square roots.
 ///
-/// Squared-distance comparison is the exact form needed by nearest-candidate
-/// selection in bridge construction, snapping, and broad-phase refinement. It
-/// avoids constructing a square root and asks the Real sign resolver to
-/// certify `|anchor-left|^2 - |anchor-right|^2`. This standard distance-ordering
-/// reduction keeps the final sign decision exact.
+/// First tries a fused rational difference when every coordinate exposes a borrowed
+/// exact rational, returning Exact/Exact. Otherwise builds Real squared distances
+/// and returns the policy-controlled comparison, including approximation or Unknown.
+/// Less selects the nearer left candidate; equality preserves a distance tie.
 pub fn compare_point2_distance_squared_with_policy(
     anchor: &Point2,
     left: &Point2,
@@ -37,12 +39,11 @@ pub fn compare_point2_distance_squared_with_policy(
     compare_reals_with_policy(&left_distance, &right_distance, policy)
 }
 
-/// Compare squared 3D distances from `anchor` to `left` and `right` with an
-/// explicit predicate escalation policy.
+/// Compare two squared spatial distances from a common anchor without square roots.
 ///
-/// This is the 3D lift of [`compare_point2_distance_squared_with_policy`]. It compares
-/// `|anchor-left|^2` and `|anchor-right|^2` through exact `Real` predicates,
-/// avoiding square-root construction and primitive-float tie decisions.
+/// Uses a fused rational difference when all coordinates expose borrowed exact
+/// rationals, otherwise compares Real expressions under policy. Returns the
+/// selected path's receipt or Unknown; see the planar counterpart for ordering.
 pub fn compare_point3_distance_squared_with_policy(
     anchor: &Point3,
     left: &Point3,
@@ -57,13 +58,18 @@ pub fn compare_point3_distance_squared_with_policy(
     compare_reals_with_policy(&left_distance, &right_distance, policy)
 }
 
-/// Classify the relation between a 2D circle boundary and an infinite line
-/// using an explicit predicate policy.
+/// Classify a circle boundary against the infinite line through a and b.
 ///
-/// The decision compares `|(center-a) x (b-a)|^2` with
-/// `radius_squared * |b-a|^2`, so it never constructs a square root or divides
-/// by line length. This is the standard line/circle discriminant written as an
-/// exact squared-distance sign comparison.
+/// For a nonzero direction d, compares `((center-a) x d)^2` with
+/// `radius_squared * |d|^2`: less/equal/greater gives Secant/Tangent/Disjoint.
+/// Coincident endpoints give DegenerateLine without classifying the point.
+/// Nonnegative squared radius is a caller precondition, not checked here.
+///
+/// A borrowed nondyadic rational squared radius enables the all-rational fast path.
+/// Otherwise the direction-norm guard runs before the discriminant. Its receipt
+/// is retained for DegenerateLine but discarded on the nondegenerate path, whose
+/// outcome contains only the final comparison receipt. Thus approximate-policy
+/// branch qualification is not fully aggregated. Encountered Unknown propagates.
 pub fn classify_circle_line2_with_policy(
     center: &Point2,
     radius_squared: &Real,
@@ -116,14 +122,22 @@ pub fn classify_circle_line2_with_policy(
     }
 }
 
-/// Classify the relation between a 2D circle boundary and a closed segment
-/// using an explicit predicate policy.
+/// Classify a circle boundary and closed segment using endpoint-distance partitions.
 ///
-/// Endpoint distance signs decide whether a crossing can occur on the closed
-/// interval. When both endpoints are outside, the exact point-segment distance
-/// comparison distinguishes disjoint, tangent, and secant cases without a
-/// primitive tolerance. Degenerate segments reduce to exact point/circle
-/// classification.
+/// Requires a nonnegative squared radius; this is not validated. A collapsed
+/// segment is ContainedInside, Tangent, or Disjoint according to its point distance.
+/// For distinct endpoints, two on-boundary points give Secant; one on-boundary
+/// endpoint gives Tangent if the other is inside, and Secant if it is outside.
+/// One inside/one outside gives Secant; two inside give ContainedInside. For two
+/// outside endpoints, minimum segment distance selects Secant/Tangent/Disjoint.
+/// These labels do not certify differential tangency or the number of boundary
+/// intersections; see [`CircleSegmentRelation`].
+///
+/// Tries the rational kernel for a borrowed nondyadic rational squared radius.
+/// The generic path discards the direction-norm guard's receipt, then combines endpoint and
+/// any minimum-distance receipts. The latter helper also discards its projection
+/// guards, so the outer receipt may omit branch qualification. Both endpoint calls
+/// run before the first Unknown is selected; other encountered Unknown propagates.
 pub fn classify_circle_segment2_with_policy(
     center: &Point2,
     radius_squared: &Real,
@@ -244,14 +258,17 @@ pub fn classify_circle_segment2_with_policy(
     }
 }
 
-/// Compare the squared distance from `point` to the infinite 3D line `ab`
-/// against `threshold_squared` with an explicit predicate policy.
+/// Compare squared distance to the infinite spatial line ab with a scalar threshold.
 ///
-/// The predicate avoids constructing the projected point or dividing by
-/// `|b-a|^2`: it compares `|(point-a) x (b-a)|^2` with
-/// `threshold_squared * |b-a|^2`. This is the standard squared-distance
-/// reduction for point-line queries in computational geometry with a
-/// division-free exact decision boundary.
+/// For nonzero d = b-a, compares `|(point-a) x d|^2` with
+/// `threshold_squared * |d|^2`, without projection, division, or square root.
+/// Coincident endpoints reduce to distance from a. The threshold may be any Real;
+/// a negative value is compared algebraically rather than rejected.
+///
+/// A borrowed nondyadic rational threshold enables the rational kernel. The
+/// generic path drops the direction-norm guard's receipt and returns the selected
+/// distance comparison's receipt, so qualification may omit a branch decision.
+/// An unresolved guard or final comparison returns Unknown.
 pub fn compare_point_line3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
@@ -292,12 +309,17 @@ pub fn compare_point_line3_distance_squared_with_policy(
     compare_reals_with_policy(&numerator, &scaled_threshold, policy)
 }
 
-/// Compare the squared distance from `point` to the closed 3D segment `ab`
-/// against `threshold_squared` with an explicit predicate policy.
+/// Compare squared distance to closed segment ab with a scalar threshold.
 ///
-/// Projection signs select the closest endpoint or the interior line-distance
-/// branch exactly. No square roots, normalized direction vectors, or
-/// primitive-float tolerances are used.
+/// Coincident endpoints use distance to a. Otherwise projection `u = (point-a).d`
+/// selects a for u <= 0, b for u >= |d|^2, or the infinite-line distance between
+/// them. No division or square root is needed; negative thresholds are not rejected.
+///
+/// A borrowed nondyadic rational threshold enables the rational kernel. In the
+/// generic path, norm and projection guard receipts are discarded; only the chosen
+/// distance outcome is returned. The interior line helper checks the norm again.
+/// Unknown guards propagate, but successful approximate guards are not necessarily
+/// represented by the final receipt.
 pub fn compare_point_segment3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
@@ -370,15 +392,22 @@ pub fn compare_point_segment3_distance_squared_with_policy(
     compare_point_line3_distance_squared_with_policy(point, a, b, threshold_squared, policy)
 }
 
-/// Compare the squared distance from `point` to the closed 3D triangle `abc`
-/// against `threshold_squared` with an explicit predicate policy.
+/// Compare squared distance to a closed spatial triangle with a scalar threshold.
 ///
-/// A non-degenerate triangle first classifies the orthogonal projection using
-/// unnormalized barycentric numerators. An interior projection uses the
-/// division-free point/plane comparison; an exterior projection uses the
-/// minimum of the three exact point/segment comparisons. Degenerate triangles
-/// reduce to that same closed-edge minimum, covering collinear and repeated
-/// vertices without dividing by a zero Gram determinant.
+/// First tries the all-rational kernel, including dyadic thresholds. Otherwise a
+/// zero squared normal reduces to the minimum distance to AB, BC, CA, covering
+/// collinear or repeated vertices. A positive squared normal permits barycentric
+/// numerators for the orthogonal projection. All three are compared with zero;
+/// any negative numerator selects the edge minimum even if another is unresolved.
+/// With no negative numerator, uncertainty propagates; all nonnegative numerators
+/// select the squared plane-expression comparison scaled by the squared normal.
+/// A decided negative squared normal becomes Unsupported with that decision's stage.
+///
+/// The generic path aggregates its decided normal/barycentric receipts with the
+/// selected distance outcome. Edge helpers currently discard some internal branch
+/// receipts, so this aggregation does not restore all inherited qualification.
+/// Negative scalar thresholds are accepted for comparison, not validated as radii.
+/// No closest point or barycentric coordinates are constructed.
 pub fn compare_point_triangle3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
@@ -482,14 +511,18 @@ pub fn compare_point_triangle3_distance_squared_with_policy(
     )
 }
 
-/// Compare the squared distance from `point` to `plane` against
-/// `threshold_squared` with an explicit predicate policy.
+/// Compare a squared plane expression with a scaled squared-distance threshold.
 ///
-/// The signed plane expression is squared and compared against
-/// `threshold_squared * |normal|^2`, so the predicate never normalizes the
-/// plane or constructs a square root. Degenerate zero-normal planes fall back
-/// to comparing the squared offset expression directly, making invalid input
-/// behavior explicit and exact rather than tolerance-defined.
+/// For nonzero normal n, compares `(n.point + offset)^2` with
+/// `threshold_squared * |n|^2`, without normalization or square root. A zero normal
+/// instead compares `offset^2` directly with the threshold. That fallback is a
+/// scalar convention, not Euclidean distance to the zero-normal equation's set;
+/// invalid planes are not rejected. Negative thresholds are also not rejected.
+///
+/// A borrowed nondyadic rational threshold enables the rational kernel. The
+/// generic path discards the normal-norm guard's receipt, returning only the
+/// selected comparison outcome. Unknown propagates, but successful branch
+/// qualification may be missing from the final receipt.
 pub fn compare_point_plane_distance_squared_with_policy(
     point: &Point3,
     plane: &crate::plane::Plane3,
@@ -519,13 +552,16 @@ pub fn compare_point_plane_distance_squared_with_policy(
     compare_reals_with_policy(&numerator, &scaled_threshold, policy)
 }
 
-/// Classify the intersection of two closed explicit 3D spheres with an
-/// explicit predicate policy.
+/// Classify intersection of two closed balls using radii, not squared radii.
 ///
-/// The API accepts radii, not squared radii, because sphere-sphere contact is
-/// decided by `|c0-c1|^2` versus `(r0+r1)^2`. Negative radii are rejected as
-/// unsupported domain input instead of being silently reinterpreted, keeping
-/// invalid or undecidable geometric states explicit.
+/// Checks each radius against zero in order. A negative radius returns
+/// Unknown(Unsupported, Undecided); unresolved radius checks propagate. Otherwise
+/// compares center-distance squared with `(first_radius + second_radius)^2`.
+/// Less/equal/greater means Overlapping/Touching/Disjoint, including containment
+/// and zero-radius cases; it does not classify intersection of surface spheres.
+///
+/// Successful radius-validation receipts are discarded. The result carries only
+/// the distance-comparison receipt, which may omit approximate domain decisions.
 pub fn classify_sphere3_intersection_with_policy(
     first_center: &Point3,
     first_radius: &Real,
@@ -564,14 +600,17 @@ pub fn classify_sphere3_intersection_with_policy(
     }
 }
 
-/// Classify the intersection of a closed 3D AABB and an explicit sphere with
-/// an explicit predicate policy.
+/// Compare a ball's squared radius with its center's minimum squared distance to a box.
 ///
-/// The nearest-point distance is formed as the sum of squared outside-axis
-/// violations, which is the standard AABB/sphere broad-phase predicate. Each
-/// axis comparison is policy-controlled and inclusive. The final comparison
-/// stays in squared-distance form and retains the certainty of every consumed
-/// axis decision.
+/// Each pair of corner coordinates may be reversed: sorts them under policy,
+/// then clamps the center on x, y, z in order. Sums squared outside-axis distances
+/// and compares with radius_squared, combining all consumed decision receipts.
+/// An encountered Unknown stops the query. No square root is constructed.
+///
+/// Requires a nonnegative squared radius, without checking it. Zero-width boxes
+/// are accepted. Touching means equality of the two squared quantities, including
+/// a zero-radius ball centered anywhere in the box; Overlapping does not promise
+/// positive intersection volume for degenerate inputs.
 pub fn classify_aabb3_sphere_intersection_with_policy(
     min: &Point3,
     max: &Point3,
@@ -616,12 +655,11 @@ pub fn classify_aabb3_sphere_intersection_with_policy(
     }
 }
 
-/// Classify a point relative to an explicit 3D sphere with squared radius and
-/// an explicit predicate escalation policy.
+/// Map squared center-to-point distance versus squared radius to Inside, On, or Outside.
 ///
-/// The API accepts squared radius so callers do not need to construct square
-/// roots. Domain validation for nonnegative radius remains with the caller that
-/// owns the sphere object; this predicate only certifies the distance relation.
+/// Uses Real squared-distance expressions and retains the comparison receipt or
+/// Unknown. Nonnegative radius_squared is a caller precondition and is not checked;
+/// there is no separate rational-kernel dispatch at this entrypoint.
 pub fn classify_point_sphere3_with_policy(
     center: &Point3,
     radius_squared: &Real,
@@ -646,6 +684,10 @@ pub fn classify_point_sphere3_with_policy(
     }
 }
 
+/// Return a typed Unknown for a negative or unresolved radius; None permits continuation.
+///
+/// Negative maps to Unsupported/Undecided. Successful nonnegative comparisons lose
+/// their receipts, including approximate qualification; None is not proof data.
 fn reject_negative_radius<T>(
     radius: &Real,
     policy: PredicatePolicy,
@@ -665,6 +707,12 @@ fn reject_negative_radius<T>(
     }
 }
 
+/// Compute distance to the interval spanned by two endpoints, accumulating decision receipts.
+///
+/// Orders endpoints first, then compares with the lower bound; a strict lower
+/// violation returns immediately. Otherwise checks the upper bound and returns its
+/// violation or zero for inclusive membership. Unknown stops with the AABB/ball
+/// outcome type. Successful earlier decisions remain in trace even on later failure.
 #[inline(always)]
 fn outside_interval_delta(
     value: &Real,
@@ -727,6 +775,13 @@ fn outside_interval_delta(
     }
 }
 
+/// Compare the minimum of three closed-edge squared distances with the threshold.
+///
+/// Queries AB, BC, CA in order. A Less result is sufficient by itself and returns
+/// immediately with that edge's receipt, even after earlier Unknown or weaker
+/// decisions. Otherwise remembers the first Unknown and returns it after the scan;
+/// only an entirely decided scan can yield Equal or Greater with combined receipts.
+/// Does not repair receipts omitted by the segment helpers.
 fn compare_point_triangle_edge_minimum(
     point: &Point3,
     a: &Point3,
@@ -784,6 +839,7 @@ fn compare_point_triangle_edge_minimum(
     }
 }
 
+/// Merge incoming certainty/stage into a decided distance outcome; forward Unknown unchanged.
 fn merge_distance_outcome(
     outcome: PredicateOutcome<Ordering>,
     certainty: Certainty,
@@ -803,6 +859,11 @@ fn merge_distance_outcome(
     }
 }
 
+/// Compare spatial point distance with an arbitrary scalar threshold under policy.
+///
+/// A borrowed nondyadic rational threshold first enables the all-rational kernel;
+/// otherwise compares the constructed squared-distance expression. Returns the
+/// selected comparison receipt, without validating threshold nonnegativity.
 fn compare_point3_distance_squared_to_threshold_with_policy(
     point: &Point3,
     target: &Point3,
@@ -819,6 +880,10 @@ fn compare_point3_distance_squared_to_threshold_with_policy(
     compare_reals_with_policy(&distance_squared, threshold_squared, policy)
 }
 
+/// Compare planar point distance with an arbitrary scalar threshold under policy.
+///
+/// Tries the all-rational kernel only for a borrowed nondyadic rational threshold,
+/// then falls back to Real expressions. Preserves the selected comparison outcome.
 fn compare_point2_distance_squared_to_threshold_with_policy(
     point: &Point2,
     target: &Point2,
@@ -835,13 +900,17 @@ fn compare_point2_distance_squared_to_threshold_with_policy(
     compare_reals_with_policy(&distance_squared, threshold_squared, policy)
 }
 
-/// Compare the squared distance from `point` to the closed 2D segment `ab`
-/// against `threshold_squared` with an explicit predicate policy.
+/// Compare squared distance to a closed planar segment with a scalar threshold.
 ///
-/// Projection signs select the closest endpoint or the interior line-distance
-/// branch exactly. No square roots, normalized direction vectors, or
-/// primitive-float tolerances are used. Degenerate segments reduce to an exact
-/// point-distance comparison.
+/// Tests the direction norm, then projection against zero and that norm to select
+/// endpoint a, endpoint b, or the interior line. The interior comparison is
+/// `cross(point-a,b-a)^2` versus `threshold_squared * |b-a|^2`. Coincident endpoints
+/// use distance to a; negative thresholds are compared without rejection.
+///
+/// Unlike the spatial entrypoint, has no whole-segment rational dispatch. Norm and
+/// projection guards discard their successful receipts; the returned outcome is
+/// only the chosen distance comparison, so branch qualification can be lost.
+/// An encountered Unknown propagates.
 pub fn compare_point_segment2_distance_squared_with_policy(
     point: &Point2,
     a: &Point2,
@@ -912,12 +981,17 @@ pub fn compare_point_segment2_distance_squared_with_policy(
     compare_reals_with_policy(&numerator, &scaled_threshold, policy)
 }
 
+/// Construct `(right.x-left.x)^2 + (right.y-left.y)^2` as Real expressions.
 fn squared_distance2(left: &Point2, right: &Point2) -> Real {
     let dx = sub_ref(&right.x, &left.x);
     let dy = sub_ref(&right.y, &left.y);
     add_ref(&mul_ref(&dx, &dx), &mul_ref(&dy, &dy))
 }
 
+/// Compare planar squared distances using one fused rational signed product sum.
+///
+/// Requires borrowed exact rationals for all six coordinates; otherwise returns
+/// None without symbolic normalization. Success carries Exact/Exact.
 #[inline]
 fn exact_rational_point2_distance_ordering(
     anchor: &Point2,
@@ -942,6 +1016,10 @@ fn exact_rational_point2_distance_ordering(
     ))
 }
 
+/// Compare spatial squared distances using a fused rational signed product sum.
+///
+/// Requires borrowed exact rationals for all nine coordinates, otherwise None.
+/// No symbolic normalization is attempted; success carries Exact/Exact.
 #[inline]
 fn exact_rational_point3_distance_ordering(
     anchor: &Point3,
@@ -978,6 +1056,7 @@ fn exact_rational_point3_distance_ordering(
     ))
 }
 
+/// Attach Exact/Exact to the rational planar threshold comparison, or forward its None.
 #[inline]
 fn exact_rational_point2_distance_threshold_ordering(
     point: &Point2,
@@ -989,6 +1068,10 @@ fn exact_rational_point2_distance_threshold_ordering(
     ))
 }
 
+/// Compare planar squared distance minus threshold in one rational product sum.
+///
+/// Returns None if any coordinate or threshold lacks a borrowed exact rational.
+/// The threshold may be negative; no geometric radius validation occurs.
 #[inline]
 fn exact_rational_point2_distance_threshold(
     point: &Point2,
@@ -1009,6 +1092,7 @@ fn exact_rational_point2_distance_threshold(
     ))
 }
 
+/// Attach Exact/Exact to the rational spatial threshold comparison, or forward its None.
 #[inline]
 fn exact_rational_point3_distance_threshold_ordering(
     point: &Point3,
@@ -1020,6 +1104,10 @@ fn exact_rational_point3_distance_threshold_ordering(
     ))
 }
 
+/// Compare spatial squared distance minus threshold in one rational product sum.
+///
+/// Requires borrowed exact rationals for all coordinates and threshold, otherwise
+/// None. Does not normalize symbolic expressions or validate a radius domain.
 #[inline]
 fn exact_rational_point3_distance_threshold(
     point: &Point3,
@@ -1043,6 +1131,12 @@ fn exact_rational_point3_distance_threshold(
     ))
 }
 
+/// Classify circle/line contact entirely with borrowed rational data, or return None.
+///
+/// Zero direction yields DegenerateLine; otherwise compares squared cross product
+/// with radius_squared times squared direction. Every result is Exact/Exact, but
+/// radius nonnegativity is a caller precondition. Supports dyadic values too;
+/// the public caller's nondyadic gate is a dispatch choice.
 #[inline]
 fn exact_rational_circle_line2(
     center: &Point2,
@@ -1086,6 +1180,13 @@ fn exact_rational_circle_line2(
     ))
 }
 
+/// Apply the circle/segment endpoint partition using rational arithmetic only.
+///
+/// Requires borrowed rationals for all coordinates and radius_squared, otherwise
+/// None; does not validate the radius domain. Handles collapse, endpoint contacts,
+/// inside/outside partitions, and the projected minimum for two outside endpoints.
+/// Uses the same Tangent/Secant conventions as [`CircleSegmentRelation`] and returns
+/// Exact/Exact. Dyadic values are supported when this helper is called directly.
 #[inline]
 fn exact_rational_circle_segment2(
     center: &Point2,
@@ -1162,6 +1263,11 @@ fn exact_rational_circle_segment2(
     ))
 }
 
+/// Compare rational squared line distance against a rational threshold, or return None.
+///
+/// All coordinates and threshold must expose borrowed exact rationals. Collapsed
+/// endpoints reduce to point distance; otherwise a fused cross-norm/threshold sum
+/// avoids division. Success is Exact/Exact; negative thresholds are allowed.
 #[inline]
 fn exact_rational_point_line3_distance_ordering(
     point: &Point3,
@@ -1223,6 +1329,12 @@ fn exact_rational_point_line3_distance_ordering(
     ))
 }
 
+/// Select a rational closest endpoint or interior line and compare its squared distance.
+///
+/// Coordinates must expose borrowed exact rationals; the selected delegate also
+/// requires a rational threshold. Collapse uses a; projection <= 0 uses a and
+/// projection >= squared direction uses b. Missing rational data gives None;
+/// success is Exact/Exact, without threshold-domain validation.
 #[inline]
 fn exact_rational_point_segment3_distance_ordering(
     point: &Point3,
@@ -1269,6 +1381,13 @@ fn exact_rational_point_segment3_distance_ordering(
     exact_rational_point_line3_distance_ordering(point, a, b, threshold_squared)
 }
 
+/// Compare rational closed-triangle distance by projection numerators or edge minimum.
+///
+/// Requires borrowed exact rationals for every coordinate and threshold, otherwise
+/// None. Zero normal or an outside orthogonal projection uses AB/BC/CA distances;
+/// an included projection uses squared plane expression scaled by squared normal.
+/// No division or closest-point construction is required. Success is Exact/Exact,
+/// including dyadic data and degenerate triangles; thresholds are not validated.
 #[inline]
 fn exact_rational_point_triangle3_distance_ordering(
     point: &Point3,
@@ -1374,6 +1493,11 @@ fn exact_rational_point_triangle3_distance_ordering(
     ))
 }
 
+/// Compare rational distances to AB, BC, CA, stopping at the first Less.
+///
+/// None from any visited delegate returns immediately. If all decide without Less,
+/// any Equal yields Equal, otherwise Greater. Extracts values from delegates that
+/// produce Exact/Exact; this helper returns only the ordering.
 #[inline]
 fn exact_rational_point_triangle_edge_minimum(
     point: &Point3,
@@ -1399,6 +1523,12 @@ fn exact_rational_point_triangle_edge_minimum(
     })
 }
 
+/// Compare rational plane-expression square with a scaled threshold, or return None.
+///
+/// Requires borrowed rational point, normal, offset, and threshold data. For zero
+/// normal compares offset squared directly with threshold, matching the generic
+/// scalar fallback rather than geometric distance to that equation. Success is
+/// Exact/Exact; there is no plane validity or threshold-domain check.
 #[inline]
 fn exact_rational_point_plane_distance_ordering(
     point: &Point3,
@@ -1446,11 +1576,16 @@ fn exact_rational_point_plane_distance_ordering(
     Some(exact_distance_outcome(ordering))
 }
 
+/// Attach Exact certainty and Exact escalation to a rationally established ordering.
 #[inline]
 fn exact_distance_outcome(ordering: Ordering) -> PredicateOutcome<Ordering> {
     PredicateOutcome::decided(ordering, Certainty::Exact, Escalation::Exact)
 }
 
+/// Test whether a scalar exposes a borrowed rational whose denominator is not a power of two.
+///
+/// This is a dispatch gate, not a proof that other representations are irrational;
+/// it does not ask for an exact rational normal form.
 #[inline(always)]
 fn exact_non_dyadic_rational(value: &Real) -> bool {
     value
@@ -1458,6 +1593,7 @@ fn exact_non_dyadic_rational(value: &Real) -> bool {
         .is_some_and(|rational| !rational.is_dyadic())
 }
 
+/// Construct the sum of squared coordinate differences for two spatial points.
 fn squared_distance3(left: &Point3, right: &Point3) -> Real {
     let dx = sub_ref(&right.x, &left.x);
     let dy = sub_ref(&right.y, &left.y);
@@ -1466,12 +1602,16 @@ fn squared_distance3(left: &Point3, right: &Point3) -> Real {
     add_ref(&xy, &mul_ref(&dz, &dz))
 }
 
+/// Private unnormalized planar displacement expressions used by distance formulas.
 #[derive(Clone, Debug)]
 struct Vector2Real {
+    /// X component of the unnormalized vector expression.
     x: Real,
+    /// Y component of the unnormalized vector expression.
     y: Real,
 }
 
+/// Construct the planar displacement end-start without any length or nonzero test.
 fn vector2_between(start: &Point2, end: &Point2) -> Vector2Real {
     Vector2Real {
         x: sub_ref(&end.x, &start.x),
@@ -1479,21 +1619,28 @@ fn vector2_between(start: &Point2, end: &Point2) -> Vector2Real {
     }
 }
 
+/// Construct a planar dot product using the shared signed-product-sum kernel.
 fn dot2(left: &Vector2Real, right: &Vector2Real) -> Real {
     Real::signed_product_sum([true; 2], [[&left.x, &right.x], [&left.y, &right.y]])
 }
 
+/// Construct the sum of two squared displacement components without taking a square root.
 fn norm_squared2(vector: &Vector2Real) -> Real {
     Real::signed_product_sum([true; 2], [[&vector.x, &vector.x], [&vector.y, &vector.y]])
 }
 
+/// Private unnormalized spatial vector expressions for projection, normal, and distance formulas.
 #[derive(Clone, Debug)]
 struct Vector3Real {
+    /// X component of the unnormalized vector expression.
     x: Real,
+    /// Y component of the unnormalized vector expression.
     y: Real,
+    /// Z component of the unnormalized vector expression.
     z: Real,
 }
 
+/// Construct the spatial displacement end-start without a nondegeneracy test.
 fn vector3_between(start: &Point3, end: &Point3) -> Vector3Real {
     Vector3Real {
         x: sub_ref(&end.x, &start.x),
@@ -1502,6 +1649,7 @@ fn vector3_between(start: &Point3, end: &Point3) -> Vector3Real {
     }
 }
 
+/// Construct left cross right from three differences of Real products, without resolving signs.
 fn cross3(left: &Vector3Real, right: &Vector3Real) -> Vector3Real {
     Vector3Real {
         x: sub_ref(&mul_ref(&left.y, &right.z), &mul_ref(&left.z, &right.y)),
@@ -1510,6 +1658,7 @@ fn cross3(left: &Vector3Real, right: &Vector3Real) -> Vector3Real {
     }
 }
 
+/// Construct a spatial dot product with the shared signed-product-sum kernel.
 fn dot3(left: &Vector3Real, right: &Vector3Real) -> Real {
     Real::signed_product_sum(
         [true; 3],
@@ -1521,6 +1670,7 @@ fn dot3(left: &Vector3Real, right: &Vector3Real) -> Real {
     )
 }
 
+/// Construct the sum of three squared vector components without normalizing the vector.
 fn norm_squared3(vector: &Vector3Real) -> Real {
     Real::signed_product_sum(
         [true; 3],
@@ -1532,6 +1682,7 @@ fn norm_squared3(vector: &Vector3Real) -> Real {
     )
 }
 
+/// Treat point coordinates as a vector and form their squared norm.
 fn squared_point3_norm(point: &Point3) -> Real {
     Real::signed_product_sum(
         [true; 3],
@@ -1543,6 +1694,7 @@ fn squared_point3_norm(point: &Point3) -> Real {
     )
 }
 
+/// Construct `plane.normal . point + plane.offset` as a four-term signed product sum.
 fn point_plane_expression(point: &Point3, plane: &crate::plane::Plane3) -> Real {
     let one = Real::one();
     Real::signed_product_sum(
@@ -1556,6 +1708,7 @@ fn point_plane_expression(point: &Point3, plane: &crate::plane::Plane3) -> Real 
     )
 }
 
+/// Select the weaker qualification in the order Exact, Filtered, Approximate.
 fn max_distance_certainty(
     left: crate::predicate::Certainty,
     right: crate::predicate::Certainty,
@@ -1570,6 +1723,7 @@ fn max_distance_certainty(
     }
 }
 
+/// Select the more advanced distance escalation stage, retaining left on an equal rank.
 fn max_distance_stage(
     left: crate::predicate::Escalation,
     right: crate::predicate::Escalation,
@@ -1581,6 +1735,7 @@ fn max_distance_stage(
     }
 }
 
+/// Rank Structural, Filter, Exact, Refined, Undecided as 0 through 4 for receipt aggregation.
 fn distance_stage_rank(stage: crate::predicate::Escalation) -> u8 {
     match stage {
         crate::predicate::Escalation::Structural => 0,
@@ -1591,16 +1746,24 @@ fn distance_stage_rank(stage: crate::predicate::Escalation) -> u8 {
     }
 }
 
+/// Finite distance, contact-label, rational-kernel, and policy-receipt controls.
+///
+/// Most tests compare values; the rational and AABB-specific controls also inspect
+/// selected complete receipts or dispatch counts. These are not exhaustive geometric
+/// or representation-closure tests.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Policy authorizing the terminal approximation used by finite distance controls.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Construct a planar fixture with exact integer coordinates.
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
 
+    /// Construct a spatial fixture with exact integer coordinates.
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(
             hyperreal::Real::from(x),
@@ -1609,18 +1772,25 @@ mod tests {
         )
     }
 
+    /// Construct an exact integer ratio; panic if the denominator makes division invalid.
     fn r(numerator: i32, denominator: i32) -> Real {
         (Real::from(numerator) / Real::from(denominator)).unwrap()
     }
 
+    /// Construct a planar point from two exact numerator/denominator pairs.
     fn rp2(x: (i32, i32), y: (i32, i32)) -> Point2 {
         Point2::new(r(x.0, x.1), r(y.0, y.1))
     }
 
+    /// Construct a spatial point from three exact numerator/denominator pairs.
     fn rp3(x: (i32, i32), y: (i32, i32), z: (i32, i32)) -> Point3 {
         Point3::new(r(x.0, x.1), r(y.0, y.1), r(z.0, z.1))
     }
 
+    /// Assert the original unit-circle identity normalizes to zero, then return the unresolved control.
+    ///
+    /// Separates that now-certified identity from the shared angle-addition expression
+    /// used to exercise terminal-policy behavior.
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -1634,10 +1804,12 @@ mod tests {
         crate::test_support::terminally_unresolved_zero()
     }
 
+    /// Translate an integer planar fixture by the symbolic vector (pi, e).
     fn shifted2(x: i32, y: i32) -> Point2 {
         Point2::new(Real::pi() + Real::from(x), Real::e() + Real::from(y))
     }
 
+    /// Translate an integer spatial fixture by the symbolic vector (pi, e, pi).
     fn shifted3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(
             Real::pi() + Real::from(x),
@@ -1646,6 +1818,10 @@ mod tests {
         )
     }
 
+    /// Check rational contact equality at squared distance 1/9.
+    ///
+    /// Circle tests compare relation values; line, segment, and plane tests assert the
+    /// complete Equal/Exact/Exact outcome.
     #[test]
     fn exact_rational_distance_kernels_preserve_tangent_boundaries() {
         let zero2 = rp2((0, 1), (0, 1));
@@ -1686,6 +1862,10 @@ mod tests {
         }
     }
 
+    /// Check planar distance ordering for the 3-4-5, doubled, and reflected fixtures.
+    ///
+    /// Asserts ordering values; absence of square-root construction is established by
+    /// implementation inspection, not a dispatch assertion in this test.
     #[test]
     fn squared_distance_comparison_avoids_square_roots() {
         let anchor = p2(0, 0);
@@ -1707,6 +1887,9 @@ mod tests {
         );
     }
 
+    /// Check spatial distance ordering for (1,2,2), its double, and its reflection.
+    ///
+    /// Compares values only; the test does not count square-root dispatches.
     #[test]
     fn squared_distance3_comparison_avoids_square_roots() {
         let anchor = p3(0, 0, 0);
@@ -1728,6 +1911,7 @@ mod tests {
         );
     }
 
+    /// Check Inside, On, and Outside values for a ball of squared radius 25.
     #[test]
     fn point_sphere3_classifier_uses_squared_radius() {
         let center = p3(0, 0, 0);
@@ -1747,6 +1931,7 @@ mod tests {
         );
     }
 
+    /// Check line-distance squared 25 against thresholds 24, 25, and 26 without asserting dispatch.
     #[test]
     fn point_line3_distance_comparison_is_scaled_without_division() {
         let point = p3(0, 3, 4);
@@ -1770,6 +1955,7 @@ mod tests {
         );
     }
 
+    /// Check secant, tangent, disjoint, and coincident-endpoint line controls.
     #[test]
     fn circle_line2_relation_uses_squared_discriminant() {
         let center = p2(0, 0);
@@ -1797,6 +1983,7 @@ mod tests {
         );
     }
 
+    /// Check finite segment secant, tangent, contained, and disjoint relation values.
     #[test]
     fn circle_segment2_relation_respects_closed_segment_interval() {
         let center = p2(0, 0);
@@ -1848,6 +2035,7 @@ mod tests {
         );
     }
 
+    /// Check spatial segment distances for interior, beyond-b, and before-a projections.
     #[test]
     fn point_segment3_distance_comparison_selects_endpoint_or_interior() {
         let a = p3(0, 0, 0);
@@ -1888,6 +2076,10 @@ mod tests {
         );
     }
 
+    /// Check finite triangle face/edge/vertex distances and collinear/point degeneracy.
+    ///
+    /// Includes symbolically translated face, edge, and collinear controls; compares
+    /// values without asserting complete receipts or dispatch paths.
     #[test]
     fn point_triangle3_distance_comparison_covers_face_edges_vertices_and_degeneracy() {
         let a = p3(0, 0, 0);
@@ -1977,6 +2169,9 @@ mod tests {
         );
     }
 
+    /// Assert Equal/Exact/Exact for a rational face distance of 1/9, plus edge/degenerate values.
+    ///
+    /// Also checks the rational helper declines a pi coordinate; no dispatch count is asserted.
     #[test]
     fn non_dyadic_point_triangle3_distance_uses_exact_rational_boundary() {
         let a = rp3((0, 1), (0, 1), (1, 3));
@@ -2031,6 +2226,7 @@ mod tests {
         );
     }
 
+    /// Check distance squared 4 to plane 2z-6=0 against thresholds 3, 4, and 5.
     #[test]
     fn point_plane_distance_comparison_uses_unnormalized_normal() {
         let plane = crate::plane::Plane3::new(p3(0, 0, 2), Real::from(-6));
@@ -2053,6 +2249,10 @@ mod tests {
         );
     }
 
+    /// Check collapsed line/segment point-distance values and the zero-normal plane scalar convention.
+    ///
+    /// The plane with offset 5 compares as squared value 25; this is not a geometric
+    /// distance to its empty zero set. Assertions inspect values, not receipts.
     #[test]
     fn degenerate_distance_carriers_have_explicit_exact_fallbacks() {
         let point = p3(3, 4, 0);
@@ -2093,6 +2293,7 @@ mod tests {
         );
     }
 
+    /// Check closed-ball disjoint, external-contact, and overlap values, plus no value for a negative radius.
     #[test]
     fn sphere3_intersection_uses_radius_sum_squared() {
         let first = p3(0, 0, 0);
@@ -2144,6 +2345,7 @@ mod tests {
         );
     }
 
+    /// Check finite box/ball disjoint, equality-contact, and interior-center overlap values.
     #[test]
     fn aabb3_sphere_intersection_uses_closest_box_point_distance() {
         let min = p3(0, 0, 0);
@@ -2184,6 +2386,10 @@ mod tests {
         );
     }
 
+    /// Check translated distance/contact fixtures using shared pi/e coordinate shifts.
+    ///
+    /// Includes the current endpoint Tangent/Secant partition and reversed box corners.
+    /// Tests expected values, not selected dispatches or complete certainty receipts.
     #[test]
     fn symbolic_translations_exercise_generic_distance_cascades() {
         let anchor2 = shifted2(0, 0);
@@ -2327,6 +2533,10 @@ mod tests {
         );
     }
 
+    /// Check finite circle and spatial-distance relation tables with squared threshold 1/9.
+    ///
+    /// Covers named relations and orderings, not every endpoint partition or geometric
+    /// configuration; assertions compare values without dispatch counts.
     #[test]
     fn non_dyadic_rational_distance_kernels_cover_every_relation() {
         let center = rp2((0, 1), (0, 1));
@@ -2436,6 +2646,7 @@ mod tests {
         }
     }
 
+    /// Check rational point thresholds in 2D/3D and None for a pi coordinate.
     #[test]
     fn exact_rational_threshold_helpers_cover_two_and_three_dimensions() {
         let origin2 = rp2((0, 1), (0, 1));
@@ -2493,6 +2704,10 @@ mod tests {
         );
     }
 
+    /// Check selected unresolved source/radius inputs remain Unknown under STRICT.
+    ///
+    /// Also checks a negative second radius under APPROX yields Unknown; does not assert
+    /// specific unresolved reasons or stages.
     #[test]
     fn strict_distance_predicates_preserve_unresolved_input() {
         let zero = terminal_zero();
@@ -2581,6 +2796,10 @@ mod tests {
         ));
     }
 
+    /// Check selected strict norm, projection, threshold, and radius comparison failures.
+    ///
+    /// Finite fixtures assert Unknown without constraining its reason/stage; the test
+    /// name does not establish exhaustive coverage of all comparison paths.
     #[test]
     fn strict_distance_subpredicates_propagate_each_unresolved_comparison() {
         let unresolved = terminal_zero();
@@ -2694,6 +2913,12 @@ mod tests {
         ));
     }
 
+    /// Check all three axes and three interval branches across STRICT/APPROX/STRICT calls.
+    ///
+    /// Rebuilds inputs for each policy, so this is not a retained-object cache transition
+    /// test. Requires strict Unknown and approximate Overlapping/Approximate/Refined.
+    /// With dispatch-trace, checks 10 comparisons for completed approximate queries
+    /// and the expected strict prefix count at the first unresolved decision.
     #[test]
     fn aabb3_sphere_preserves_approximate_axis_decisions() {
         let mut failures = Vec::new();
@@ -2779,6 +3004,10 @@ mod tests {
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
 
+    /// Check 216 integer box/ball cases against independent interval-distance arithmetic.
+    ///
+    /// Varies both policies, corner order, axis, center coordinate, and squared radius;
+    /// asserts each complete Exact/Exact relation, including zero-radius equality.
     #[test]
     fn aabb3_sphere_rational_relations_and_receipts_survive_axis_ordering() {
         for policy in [PredicatePolicy::STRICT, APPROX] {
@@ -2828,6 +3057,10 @@ mod tests {
         }
     }
 
+    /// Check interval lower/upper Unknown and selected planar segment endpoint/projection paths.
+    ///
+    /// The collapsed segment assertion only requires a decided result; the beyond-b
+    /// fixture asserts Equal, while unresolved projections assert Unknown.
     #[test]
     fn interval_distance_helper_propagates_lower_and_upper_order_uncertainty() {
         assert!(matches!(
@@ -2894,6 +3127,7 @@ mod tests {
         );
     }
 
+    /// Check seven rational segment cases, including endpoint-label conventions and outside projection intervals.
     #[test]
     fn exact_circle_segment_kernel_covers_endpoint_and_interval_partitions() {
         let center = p2(0, 0);
@@ -2919,6 +3153,7 @@ mod tests {
         );
     }
 
+    /// Check rational-helper refusal of pi and collapsed/endpoint/zero-normal scalar fallback values.
     #[test]
     fn exact_distance_helpers_cover_nonrational_and_degenerate_endpoint_fallbacks() {
         let symbolic2 = Point2::new(Real::pi(), Real::from(0));
@@ -3009,6 +3244,7 @@ mod tests {
         );
     }
 
+    /// Check selected certainty/stage maxima and every stage rank, not every pair of ranks.
     #[test]
     fn distance_trace_ranking_covers_all_certainties_and_stages() {
         assert_eq!(
@@ -3030,6 +3266,7 @@ mod tests {
         assert_eq!(distance_stage_rank(Escalation::Undecided), 4);
     }
 
+    /// Check nondyadic point thresholds, a second-endpoint boundary label, and selected strict Unknown paths.
     #[test]
     fn generic_distance_threshold_and_late_unknown_paths_are_covered() {
         let third = r(1, 3);
