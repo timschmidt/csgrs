@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/adapter/mesh.rs` | Entire file; documented scalar facade operations, graphics cache, exports and private helpers. | Private docs passed with and without `curve`, with broken links denied. |
+| `src/adapter/curve.rs` | Entire file; documented region operations, sampled profile/revolution boundaries and private conversion helper. | Private docs passed with `curve`, with broken links denied. |
 | `src/adapter/scalar.rs` | Entire file and conversion implementations; documented all declarations and native error distinctions. | Private docs passed with and without `curve`, with broken links denied. |
 | `src/adapter/mod.rs` | Entire file including tests; documented bound conversion, fields and test intent. | Private docs passed with and without `curve`, with broken links denied. |
 | `src/context.rs` | Entire file, including tests. Documented every previously undocumented private declaration; corrected approximate-policy wording and documented receipt loss at `into_value`. | Private docs passed with no default features and with `curve`; broader feature checks pending; full workflow checks waived for this docs-only session. |
@@ -114,10 +116,57 @@ Logs remain under `/tmp/csgrs-rustdoc-adapter-*.log`; reused artifacts remain un
 `/tmp/csgrs-rustdoc-target`. Full workflow checks waived explicitly by the owner
 for this documentation-only session; no runtime or performance claims are made.
 
+### Mesh and curve adapter batch, 26 November 2026
+
+Owner: CSGRS modeling and display adapters, P6/P8/P9/P19/P25/P26/P29/P37.
+Baseline: `14ab38d45`. Domain: native mesh/region wrappers, primitive scalar
+construction, Booleans, transforms, bounds, extrusion, sampled revolution,
+finite profiles, graphics buffers and cached exports. Missing witness: most
+facade methods and private storage/conversion declarations lacked Rustdoc;
+context method summaries did not identify the operation or receipt scope.
+
+Read every line of `src/adapter/mesh.rs` and `src/adapter/curve.rs`. Cross-checked
+constructor validation, face triangulation, empty handling, transforms,
+bounds, Boolean forwarding, finite-profile projection, extrusion and revolution
+in the CSG grammar. Inspected Hypercurve's principal policy scope and Boolean
+entry point, and Hypermesh's exact graphics export and normal construction.
+Supporting reads are partial, not whole-file review credit.
+
+Documented the distinction between primitive-scalar conversion and authoritative
+native geometry, local predicate receipts and inherited qualification, winding
+reversal and set complement, polygon triangulation and whole-mesh validation,
+swept and regularized sampled revolution. The finite-profile path explicitly
+projects to `f64` even with `RawReal`; converting those points back cannot recover
+the original exact source. Bounds may be loose for algebraic trims and rounded
+exports need not remain outward enclosures. The graphics cache documentation
+specifies allocation/type keys, retained ownership, per-thread FIFO lifetime,
+eight-entry capacity, failure handling, lack of a byte cap/reset, and the stable
+conversion assumption for custom adapters.
+
+Validation after final edits:
+
+- Private Rustdoc with `curve`, broken links denied: passed without warnings.
+  Command: `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps --offline`.
+- The same command without `--features curve`: passed without warnings.
+- Parsed generated HTML for both facade types, `RegionProfile`, private
+  `finite2_to_scalar`, `point3_to_scalar`, `CachedGraphicsMesh`, and the
+  macro-generated thread-local cache page: expected contract text present.
+- Compared all nonblank, non-comment Rust lines against the batch baseline:
+  identical in both files. No executable changes or performance claims.
+- `git diff --check`: passed after removing trailing whitespace in new docs.
+- Final `cargo fmt --all -- --check`: passed.
+
+Logs: `/tmp/csgrs-rustdoc-mesh-curve-doc.log` and
+`/tmp/csgrs-rustdoc-mesh-minimal-doc.log`. Reused build tree remains about 97 MiB;
+no generated artifacts are tracked. Full workflow checks remain waived by the
+owner for this documentation-only session.
+
 ## Next work
 
-Continue through the mesh and curve adapter implementations, then the remaining
-root API and owning crates. Maintain review records with each batch. Establish
+Continue through the remaining root API (crate root, errors, modeling sessions,
+expressions, and native operations), then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file
 before claiming completion. Commit and push documentation batches after focused

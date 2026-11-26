@@ -1,3 +1,10 @@
+//! Host-scalar facade over filled XY regions and their mesh conversions.
+//!
+//! Geometry stays in [`CurveRegion2`]; scalar conversion happens at ingress and
+//! explicit output boundaries. Context-bearing operations retain local predicate
+//! receipts. [`ScalarCurve::region_profiles`] is a finite display/interchange
+//! projection even when the chosen adapter is [`RawReal`].
+
 use super::Aabb3;
 use super::mesh::ScalarMesh;
 use super::scalar::{
@@ -12,24 +19,37 @@ use hyperreal::Real;
 use std::marker::PhantomData;
 
 /// Primitive-scalar boundary over a native filled Hypercurve region.
+///
+/// Wrapping does not validate or approximate the region. Constructors delegate
+/// to the CSG grammar; Booleans delegate directly to Hypercurve. Methods returning
+/// a bare region do not expose a separate predicate receipt. Retain outcomes from
+/// context-bearing methods when a chain needs to combine local certainty.
+/// Scalar conversion failures and native operation failures remain typed.
 #[derive(Clone, Debug)]
 pub struct ScalarCurve<A>
 where
     A: ScalarAdapter,
 {
+    /// Authoritative region, including its selected exact boundary definitions.
     inner: CurveRegion2,
+    /// Selects scalar conversions without storing an adapter instance.
     _adapter: PhantomData<fn() -> A>,
 }
 
+/// Region facade with native-real scalar inputs and outputs.
 pub type RawCurveRegion = ScalarCurve<RawReal>;
+/// Region facade with exact binary32 ingress and lossy scalar egress.
 pub type CurveRegionF32 = ScalarCurve<F32>;
+/// Region facade with exact binary64 ingress and lossy scalar egress.
 pub type CurveRegionF64 = ScalarCurve<F64>;
+/// Region facade with exact integer ingress and checked integer egress.
 pub type CurveRegionI128 = ScalarCurve<I128>;
 
 impl<A> ScalarCurve<A>
 where
     A: ScalarAdapter,
 {
+    /// Wrap a native region without conversion or additional topology validation.
     pub fn from_native(inner: CurveRegion2) -> Self {
         Self {
             inner,
@@ -37,22 +57,33 @@ where
         }
     }
 
+    /// Consume the facade and return its unchanged native region.
     pub fn into_native(self) -> CurveRegion2 {
         self.inner
     }
 
+    /// Borrow the authoritative region without scalar conversion.
     pub const fn native(&self) -> &CurveRegion2 {
         &self.inner
     }
 
+    /// Construct the canonical empty filled region.
     pub fn empty() -> Self {
         Self::from_native(curve::empty())
     }
 
+    /// Construct an origin-anchored square under strict predicates.
+    ///
+    /// The width must be nonnegative; zero gives the canonical empty region.
+    /// Scalar import, negative dimensions, and undecided predicates can fail.
     pub fn square(width: A::Scalar) -> AdapterResult<Self> {
         Ok(Self::from_native(curve::square(A::into_real(width)?)?))
     }
 
+    /// Construct an axis-aligned XY rectangle with minimum corner at the origin.
+    ///
+    /// Both dimensions are validated as nonnegative under strict predicates. A
+    /// zero dimension gives the canonical empty region after validation.
     pub fn rectangle(width: A::Scalar, length: A::Scalar) -> AdapterResult<Self> {
         Ok(Self::from_native(curve::rectangle(
             A::into_real(width)?,
@@ -60,6 +91,11 @@ where
         )?))
     }
 
+    /// Construct a regular sampled polygon centered at the origin.
+    ///
+    /// Requires nonnegative radius and at least three segments, including when
+    /// the radius is zero. This is the polygonal region from [`curve::circle`],
+    /// not an analytic circular boundary or a certified circle approximation.
     pub fn circle(radius: A::Scalar, segments: usize) -> AdapterResult<Self> {
         Ok(Self::from_native(curve::circle(
             A::into_real(radius)?,
@@ -67,6 +103,10 @@ where
         )?))
     }
 
+    /// Import XY rows and construct a filled polygon under strict predicates.
+    ///
+    /// Requires a valid ring of at least three vertices. Empty or malformed rings
+    /// fail; use [`Self::empty`] for absence. See [`curve::polygon`].
     pub fn polygon(points: &[[A::Scalar; 2]]) -> AdapterResult<Self> {
         let points = points
             .iter()
@@ -76,6 +116,10 @@ where
         Ok(Self::from_native(curve::polygon(&points)?))
     }
 
+    /// Compute the regularized union through Hypercurve.
+    ///
+    /// Uses Hypercurve's active evaluation scope (strict outside a provisional or
+    /// preview scope) and returns no separate predicate receipt.
     pub fn union(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Union)
@@ -83,6 +127,9 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Compute the regularized part of this region outside `other`.
+    ///
+    /// Uses the same active Hypercurve policy and receipt contract as [`Self::union`].
     pub fn difference(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Difference)
@@ -90,6 +137,9 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Compute the regularized common material of both regions.
+    ///
+    /// Uses the same active Hypercurve policy and receipt contract as [`Self::union`].
     pub fn intersection(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection)
@@ -97,6 +147,9 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Compute the regularized material belonging to exactly one operand.
+    ///
+    /// Uses the same active Hypercurve policy and receipt contract as [`Self::union`].
     pub fn xor(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .boolean_region(&other.inner, hypercurve::BooleanOp::Xor)
@@ -104,7 +157,12 @@ where
             .map_err(AdapterError::from)
     }
 
-    /// Applies a checked transform whose image remains in the XY plane.
+    /// Apply a strict homogeneous transform whose XY restriction is affine.
+    ///
+    /// Requires a constant nonzero homogeneous weight and a nonsingular planar
+    /// image. Perspective and out-of-plane maps are unsupported; zero weight
+    /// can be unbounded or invalid. See [`curve::transformed`]. The separate
+    /// operation receipt is discarded.
     pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
         self.transform_with_context(matrix, GeometryContext::STRICT)
             .map(GeometryOutcome::into_value)
@@ -133,6 +191,12 @@ where
             .map(GeometryOutcome::into_value)
     }
 
+    /// Compute native bounds under strict predicates, then export their coordinates.
+    ///
+    /// Algebraically trimmed fragments may use a looser certified source envelope;
+    /// see [`curve::bounding_box`]. Returns `None` for an empty region.
+    /// Scalar export may fail or be lossy;
+    /// [`Aabb3`] is not an outward-enclosure certificate for rounded coordinates.
     pub fn bounding_box(&self) -> AdapterResult<Option<Aabb3<A::Scalar>>> {
         curve::bounding_box(&self.inner)?
             .map(super::convert_bounds::<A>)
@@ -186,7 +250,7 @@ where
         )
     }
 
-    /// Applies X/Y/Z rotations through shared planar matrix admission.
+    /// Apply X, then Y, then Z rotations in degrees through planar matrix admission.
     pub fn rotate_with_context(
         &self,
         x: A::Scalar,
@@ -200,7 +264,12 @@ where
         self.transform_with_context(&(z * y * x), context)
     }
 
-    /// Computes bounds before scalar conversion, retaining predicate certainty.
+    /// Compute native bounds with the selected policy, then convert their scalars.
+    ///
+    /// Native bounds follow [`curve::bounding_box`], including potentially loose
+    /// envelopes for algebraic trims. The receipt covers native decisions, not
+    /// conversion fidelity. `None`
+    /// denotes an empty region; rounded bounds need not enclose the source.
     pub fn bounding_box_with_context(
         &self,
         context: GeometryContext,
@@ -224,6 +293,11 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Extrude along Z using an imported, nonzero signed height.
+    ///
+    /// Returns the local predicate receipt with native mesh geometry. Exact line
+    /// pieces and native endpoints are retained; nonlinear interiors may be sampled
+    /// with construction qualifications. See [`curve::try_extrude`] for fidelity.
     pub fn extrude(
         &self,
         height: A::Scalar,
@@ -234,6 +308,10 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Extrude along an imported vector whose Z component must be nonzero.
+    ///
+    /// Uses the selected predicate policy and the same profile fidelity contract
+    /// as [`Self::extrude`]. Unresolved direction or topology decisions fail typed.
     pub fn extrude_vector(
         &self,
         direction: [A::Scalar; 3],
@@ -245,6 +323,13 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Build a segmented swept boundary about Y, with profile X as signed radius.
+    ///
+    /// The angle is in degrees. Requires at least two segments, or three for a
+    /// full turn. Zero and oversized noninteger-turn angles are invalid. Partial
+    /// sweeps reject axis-crossing loops and may retain overlapping winding.
+    /// See [`curve::revolve`] for signed-radius, full-turn and sampling rules.
+    /// The mesh is polyhedral, not an analytic surface of revolution.
     pub fn revolve(
         &self,
         angle_degrees: A::Scalar,
@@ -256,6 +341,12 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Build the regularized union of the sampled revolution pieces about Y.
+    ///
+    /// Uses [`Self::revolve`]'s angular lattice and angle domain, but admits
+    /// axis-crossing partial profiles and counts overlapping material once.
+    /// Point/edge contacts can remain nonmanifold. See [`curve::revolve_solid`];
+    /// its predicate receipt does not certify analytic-surface fidelity.
     pub fn revolve_solid(
         &self,
         angle_degrees: A::Scalar,
@@ -267,6 +358,13 @@ where
             .map_err(AdapterError::from)
     }
 
+    /// Export sampled material and hole rings for display or interchange.
+    ///
+    /// First projects every boundary to `f64` through [`curve::try_finite_profiles`]
+    /// using [`curve::SAMPLED_PROFILE_CHORD_ERROR`], then imports those binary values
+    /// to `Real` and exports them through `A`. Even `RawReal` therefore describes
+    /// the projected points, not the original exact curves. Integer export can fail.
+    /// The local predicate receipt does not certify fidelity after scalar export.
     pub fn region_profiles(
         &self,
         context: GeometryContext,
@@ -302,12 +400,20 @@ where
     }
 }
 
+/// One projected material ring with its projected hole rings.
+///
+/// Produced by [`ScalarCurve::region_profiles`]; these host-scalar coordinates
+/// are a finite view, not retained exact curve supports or a new topology proof.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionProfile<S> {
+    /// XY vertices of the projected material boundary.
     pub exterior: Vec<[S; 2]>,
+    /// XY vertex rings of the projected holes associated with that material.
     pub holes: Vec<Vec<[S; 2]>>,
 }
 
+/// Reimport finite-projection coordinates exactly as binary rationals, then export
+/// through `A`. This cannot recover the source geometry lost during projection.
 fn finite2_to_scalar<A: ScalarAdapter>(point: [f64; 2]) -> AdapterResult<[A::Scalar; 2]> {
     let [x, y] = point;
     real2_to_scalar::<A>(&[
