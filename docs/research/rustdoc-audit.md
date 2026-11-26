@@ -4731,6 +4731,90 @@ performance checks. No implementation-completeness or performance claim is
 made. The repository-wide audit and public/private documentation mandate remain
 active; the remaining predicate modules and other files still need review.
 
+### Scalar ordering, coordinate witnesses and selection, 26 November 2026
+
+Baseline: `47db1d795`. Owner: Hyperlimit's scalar order/equality/selection
+predicates and their point-equality integration consumer. Properties:
+P1/P3/P4/P6/P8–P11/P37. Domain: exact Real values and 2D/3D coordinates,
+rational and symbolic comparisons, strict Unknown, terminal-qualified results,
+ordered clamp bounds and reciprocal construction. Missing witnesses included
+private helper/test docs, a paired-sign description incorrectly claiming one
+cascade, and undocumented receipt/error boundaries. Reproduced dispatch and
+return branches on this revision before editing; no implementation changes.
+
+Whole-file reviews: `crates/hyperlimit/src/predicates/order.rs` (891 baseline
+lines) and `crates/hyperlimit/tests/point_equality.rs` (100). They now document
+all 37 and five named declarations respectively. A local fixture-building
+closure also has an explanatory source comment. Supporting excerpts of
+Hyperreal's `arithmetic/facts.rs` and `arithmetic/inversion.rs` establish the
+called comparison and assuming-nonzero contracts; those files remain outside
+this batch's whole-file credit. Previously reviewed PredicateOutcome conjunction
+semantics were checked again for the coordinate witness explanation.
+
+Scalar comparison tries direct rational ordering, certified scalar comparison
+down to precision -512, then a policy-controlled difference-sign resolver.
+Docs separate precision from total work and preserve qualification on terminal
+Equal. Paired signs use a rational shortcut or evaluate both scalar cascades
+left then right, forwarding the first Unknown if needed. Receipt ranks describe
+the weakest consumed certainty and highest stage kind, not execution chronology.
+
+Coordinate equality searches under STRICT first and continues past Unknown to
+find a later unequal coordinate. A false witness supplies its own sufficient
+receipt; true requires all coordinates and composes their receipts. Only a still
+unresolved strict pass is retried under a different requested policy. Rational
+2D shortcuts retain their existing order. Lexicographic comparison instead
+stops on Unknown or a non-equal earlier coordinate, and joins later receipts
+only after Equal. Coordinate equality does not establish construction/source
+identity. Private helpers explain the empty conjunction and replay behavior.
+
+Min/max select the left reference on ties and retain qualification. Clamp first
+checks bound order, rejects reversed bounds with Unknown/Unsupported at
+Undecided stage, then checks the lower and upper comparisons in order; equality
+with the lower bound still requires the upper comparison. It returns a bound
+clone or the original owned value with the consumed decisions' receipt.
+
+Reciprocal construction forwards Unknown, uses the scalar assuming-nonzero
+constructor on a decided nonzero sign and preserves its receipt on success.
+Any decided Zero, including Approximate, becomes Problem::DivideByZero without
+its certainty receipt. Documentation now states that this error alone cannot
+prove mathematical zero under a terminal-permitting policy. This information
+loss is recorded as a current API limitation, not repaired by documentation.
+The private quotient helper still decides the denominator for a zero numerator.
+No new error or zero-handling behavior is introduced.
+
+Test documentation identifies finite value assertions, selected receipt/rank
+checks and the 2^-600 symbolic residual proof retained in scalar facts. Existing
+historical test names are unchanged; their docs do not claim dispatch or reuse
+counts that assertions do not check. The point-inequality policy loop creates
+fresh inputs each iteration; the original unit-circle equality fixture reuses
+its objects through strict/approximate/strict queries. The unresolved
+angle-addition fixture is described as a current proof-frontier control, not
+an impossibility claim. The original certified identity remains intact.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing only comment/blank
+  lines yields byte-identical source to baseline in both files. No calls,
+  signatures, branches, fixtures, assertions or dispatch counts changed.
+- Scoped declaration checks found 42 documented names. Inspected all 22
+  non-test function documentation blocks in rendered private pages and seven
+  selected reciprocal, paired-sign, ordering, equality and clamp contract pages.
+  Test-only comments were source-reviewed, not claimed as library-rendered.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed without warnings.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline
+  -j2` passed, compiling the affected integration and private fixtures.
+- Downstream private csgrs documentation with locked offline dependencies,
+  `--no-default-features --features curve` and broken intra-doc links denied
+  passed. The shared build target remains approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-order-{doc,check,downstream-doc}.log`.
+Runtime fixtures, full workflow and performance checks remain waived for this
+docs-only session; no runtime or universal-completeness claim is made. The
+repository-wide audit remains active, with most predicate modules, tests and
+other repository files still requiring whole-file review and documentation.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
