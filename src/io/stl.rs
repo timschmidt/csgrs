@@ -9,14 +9,20 @@ use std::cell::RefCell;
 use std::io::Cursor;
 use std::sync::Arc;
 
+/// Successful binary output retained with both source buffer allocations.
 #[derive(Clone)]
 struct CachedBinaryStl {
+    /// Position identity; ownership prevents reuse of the allocation while cached.
     positions: Arc<[Point3]>,
+    /// Triangle identity, paired with positions rather than a geometric equality test.
     triangles: Arc<[Triangle]>,
+    /// Complete immutable bytes, copied into an independent vector for each caller.
     bytes: Arc<[u8]>,
 }
 
 thread_local! {
+    /// Four successful exports per thread, with insertion-order eviction.
+    /// Hits do not refresh order; this count is not a retained-memory byte bound.
     static BINARY_STL_CACHE: RefCell<Vec<CachedBinaryStl>> = const { RefCell::new(Vec::new()) };
 }
 
@@ -28,7 +34,9 @@ thread_local! {
 /// There is intentionally no constructor accepting arbitrary bytes and a flag.
 #[derive(Clone, Debug)]
 pub struct BinaryStlArtifact {
+    /// Immutable exported bytes shared by artifact clones, without serialized evidence.
     bytes: Arc<[u8]>,
+    /// Source qualification captured separately from the geometry-only byte cache.
     source: ConstructionEvidence,
 }
 
@@ -50,11 +58,13 @@ impl BinaryStlArtifact {
 
     /// Validate and import these exact bytes while retaining their bound summary.
     /// The topology proof concerns the parsed geometry only.
+    /// An exported open surface can fail this stricter closed-PWN admission.
     pub fn import(&self) -> Result<TriangleMesh, IoError> {
         from_stl_with_construction(self.bytes(), self.construction_evidence())
     }
 
     /// Extract plain bytes, explicitly discarding the bound source receipt.
+    /// Copies the shared storage into a vector even when this consumes the last artifact.
     pub fn into_bytes(self) -> Vec<u8> {
         self.bytes.to_vec()
     }
@@ -63,6 +73,7 @@ impl BinaryStlArtifact {
 /// Export binary32 STL while retaining a bound source construction summary.
 /// Geometry bytes are identical to [`to_stl_binary`]. The native source remains
 /// authoritative and unchanged; the artifact does not assert lossless export.
+/// The summary is taken from this mesh even if geometry bytes come from a cache hit.
 pub fn to_stl_binary_artifact(
     mesh: &TriangleMesh,
     name: &str,
@@ -73,6 +84,8 @@ pub fn to_stl_binary_artifact(
     })
 }
 
+/// Clones triangle coordinates in corner order, rejecting missing indices as text.
+/// This checks references only, not geometric nondegeneracy or mesh topology.
 fn triangle_points(mesh: &TriangleMesh, triangle: &Triangle) -> Result<[Point3; 3], IoError> {
     let [a, b, c] = triangle.indices();
     let point = |index| {
@@ -87,10 +100,14 @@ fn triangle_points(mesh: &TriangleMesh, triangle: &Triangle) -> Result<[Point3; 
     Ok([point(a)?, point(b)?, point(c)?])
 }
 
+/// Computes the shared finite binary64 normal, retaining its STL-labeled failures.
+/// Cross-product underflow/overflow can fail even for an exact nondegenerate face.
 fn triangle_normal(points: &[Point3; 3]) -> Result<[f64; 3], IoError> {
     finite_triangle_normal(points.each_ref(), "STL")
 }
 
+/// Checks the binary header's unsigned 32-bit face count before encoding or caching.
+/// This is a format limit, not a bound on allocation size or total conversion work.
 fn validate_binary_triangle_count(count: usize) -> Result<(), IoError> {
     u32::try_from(count)
         .map(|_| ())
@@ -105,6 +122,12 @@ fn validate_binary_triangle_count(count: usize) -> Result<(), IoError> {
 /// Finite binary64 coordinates and computed normals use exact decimal spelling.
 /// Reimport through [`from_stl`] subsequently quantizes coordinates to binary32;
 /// its proof concerns that parsed geometry, not the original exact model.
+///
+/// Rejects control characters in the solid name before visiting triangles.
+/// Each face requires valid references and a finite nonzero binary64 cross-product
+/// length. This numerical normal check can reject exact nondegenerate faces;
+/// it is not a native topology certificate. Unused positions are omitted, open
+/// surfaces are allowed and empty meshes emit matching solid/end-solid lines.
 pub fn to_stl_ascii(mesh: &TriangleMesh, name: &str) -> Result<String, IoError> {
     let name = single_line_metadata(name, "STL", "solid name")?;
     let mut output = format!("solid {name}\n");
@@ -140,6 +163,16 @@ pub fn to_stl_ascii(mesh: &TriangleMesh, name: &str) -> Result<String, IoError> 
 /// closed topology and fidelity before projection are separate claims.
 /// Plain bytes omit construction history. Use [`to_stl_binary_artifact`] when
 /// the next operation must retain a bound source summary.
+///
+/// Validates the name and 32-bit triangle count before cache lookup. The name
+/// is not encoded: the binary header is zero-filled. Unused positions are omitted.
+/// Normals come from binary64-projected source points and are then cast to f32;
+/// they are not recomputed from the encoded vertices. The preliminary normal
+/// calculation can fail by arithmetic underflow/overflow before native validation.
+///
+/// Only complete successful bytes enter the per-thread four-entry FIFO cache,
+/// keyed by both source array allocations. Each return owns a separate byte vector.
+/// Empty geometry emits a zero-count header. No whole-mesh closure check is made.
 pub fn to_stl_binary(mesh: &TriangleMesh, name: &str) -> Result<Vec<u8>, IoError> {
     use stl_io::{Normal, Triangle as StlTriangle, Vertex, write_stl};
 
@@ -204,6 +237,7 @@ pub fn to_stl_binary(mesh: &TriangleMesh, name: &str) -> Result<Vec<u8>, IoError
     write_stl(&mut cursor, triangles.iter())?;
     let bytes = cursor.into_inner();
     BINARY_STL_CACHE.with_borrow_mut(|entries| {
+        /// Maximum successful entries per thread, not a byte or work budget.
         const CAPACITY: usize = 4;
         if entries.len() == CAPACITY {
             entries.remove(0);
@@ -228,6 +262,9 @@ pub fn to_stl_binary(mesh: &TriangleMesh, name: &str) -> Result<Vec<u8>, IoError
 /// This certifies the parsed geometry, not fidelity to an earlier exact model
 /// or analytic surface. Invalid topology returns [`IoError::Construction`] with
 /// the native mesh error preserved as its cause; parsing errors remain IO errors.
+/// Nonfinite parsed coordinates become textual malformed-input errors. File
+/// normals are ignored. Plain input is marked as projected with missing source
+/// history, even when every encoded coordinate happened to preserve its source.
 pub fn from_stl(data: &[u8]) -> Result<TriangleMesh, IoError> {
     from_stl_with_construction(
         data,
@@ -235,6 +272,13 @@ pub fn from_stl(data: &[u8]) -> Result<TriangleMesh, IoError> {
     )
 }
 
+/// Parses with `stl_io`, promotes binary32 coordinates and attaches trusted local evidence.
+///
+/// Parser indexing shares bit-identical vertex triples; native geometric edge
+/// validation remains authoritative. File normals are discarded. Nonempty output
+/// must pass strict closed-PWN admission, caching that local proof without
+/// upgrading inherited qualification. Canonical empty output bypasses nonempty
+/// validation. Only this module can supply the artifact's bound evidence summary.
 fn from_stl_with_construction(
     data: &[u8],
     evidence: ConstructionEvidence,
@@ -278,10 +322,12 @@ fn from_stl_with_construction(
 }
 
 #[cfg(test)]
+/// STL boundary smoke witnesses; topology checks occur inside the importer.
 mod tests {
     use super::*;
 
     #[test]
+    /// Requires validated binary cube replay with twelve resulting triangles.
     fn binary_cube_round_trips_through_validated_import() {
         let cube = crate::solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let bytes = to_stl_binary(&cube, "cube").unwrap();
@@ -289,6 +335,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks successful sampled-sphere binary replay and preservation of triangle count.
     fn sampled_sphere_is_representable_at_the_stl_boundary() {
         let sphere =
             crate::solid::sphere(Real::from(10_u8), 32, 16).expect("valid primitive fixture");
@@ -300,6 +347,7 @@ mod tests {
     }
 
     #[test]
+    /// Rejects name injection, a repeated-point ASCII facet and unparseable STL bytes.
     fn rejects_injected_names_and_degenerate_geometry() {
         let cube = crate::solid::cube(Real::one()).expect("valid primitive fixture");
         assert!(to_stl_ascii(&cube, "safe\nendsolid forged").is_err());

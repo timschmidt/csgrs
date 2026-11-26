@@ -1,18 +1,22 @@
+//! OBJ/STL selected-projection spelling, binary-face validation and reuse witnesses.
 #![cfg(any(feature = "obj-io", feature = "stl-io"))]
 
 use csgrs::{Real, TriangleMesh};
 use hyperlattice::Point3;
 
+/// Promotes a finite fixture's exact binary64 value without decimal reinterpretation.
 fn real(value: f64) -> Real {
     Real::try_from(value).unwrap()
 }
 
 #[cfg(feature = "obj-io")]
+/// OBJ exact decimal replay and unchanged legacy byte fixtures.
 mod obj_contract {
     use super::*;
     use csgrs::io::obj;
 
     #[test]
+    /// Replays vertex-only extrema and seeded finite values as their exact binary64 scalars.
     fn decimal_text_preserves_the_exact_binary64_projection() {
         let mut values = vec![
             1.1,
@@ -48,6 +52,7 @@ mod obj_contract {
     }
 
     #[test]
+    /// Checks legacy 17-place bytes and exact vertex replay when that spelling suffices.
     fn already_exact_fixed_spelling_stays_byte_identical() {
         let values = [0.0, 1.0, -1.5, 2_f64.powi(-17), 2_f64.powi(60)];
         let source = TriangleMesh::new(
@@ -71,6 +76,7 @@ mod obj_contract {
 }
 
 #[cfg(feature = "stl-io")]
+/// STL precision boundaries, independent byte fixtures and downstream closed-body reuse.
 mod stl_contract {
     use super::*;
     use csgrs::{
@@ -81,6 +87,7 @@ mod stl_contract {
     use hypermesh::{MeshCertainty, Plane, Triangle};
     use std::sync::Arc;
 
+    /// Makes an open single-triangle mesh with exact promotion of finite coordinates.
     fn triangle(points: [[f64; 3]; 3]) -> TriangleMesh {
         TriangleMesh::new(
             points
@@ -90,6 +97,8 @@ mod stl_contract {
         )
     }
 
+    /// Independently decodes binary STL vertex records and checks exact payload length.
+    /// Assumes a header of at least 84 bytes and ignores encoded normals/attributes.
     fn projected_rows(bytes: &[u8]) -> Vec<[[f32; 3]; 3]> {
         let count = u32::from_le_bytes(bytes[80..84].try_into().unwrap()) as usize;
         assert_eq!(bytes.len(), 84 + 50 * count);
@@ -108,6 +117,7 @@ mod stl_contract {
             .collect()
     }
 
+    /// Checks strict closure, box corners/support planes and independent signed volume.
     fn assert_cube(mesh: &TriangleMesh, side: &Real) {
         let context = GeometryContext::STRICT.mesh_context();
         assert_eq!(
@@ -136,6 +146,7 @@ mod stl_contract {
     }
 
     #[test]
+    /// Parses ASCII vertex text directly as exact scalars, independently of binary32 import.
     fn ascii_fields_preserve_their_binary64_values_exactly() {
         let tiny = 2_f64.powi(-70);
         let mesh = triangle([[0.0; 3], [1.1, 0.0, 0.0], [0.0, 1.0, tiny]]);
@@ -156,6 +167,7 @@ mod stl_contract {
     }
 
     #[test]
+    /// Preserves a tiny normal component when binary64 normalization rounds its length to one.
     fn ascii_normal_does_not_lose_a_small_nonzero_component() {
         let tiny = 2_f64.powi(-70);
         let mesh = triangle([[0.0; 3], [1.0, 0.0, 0.0], [0.0, 1.0, tiny]]);
@@ -172,6 +184,7 @@ mod stl_contract {
     }
 
     #[test]
+    /// Reimports a binary32-representable tiny cube and checks empty-result Boolean reuse.
     fn tiny_ascii_cube_reimports_and_composes() {
         let side = real(2_f64.powi(-70));
         let cube = solid::cube(side.clone()).unwrap();
@@ -188,6 +201,7 @@ mod stl_contract {
     }
 
     #[test]
+    /// Proves source nondegeneracy, then requires rejection when f32 rounding makes it collinear.
     fn three_distinct_collinear_projected_vertices_are_rejected() {
         let mesh = triangle([[0.0; 3], [1.0, 1.0, 0.0], [2.0, 2.0 + 2_f64.powi(-25), 0.0]]);
         assert!(
@@ -207,6 +221,7 @@ mod stl_contract {
     }
 
     #[test]
+    /// Checks exact encoded rows at three nonzero f32 heights, including the least subnormal.
     fn binary_export_uses_no_area_epsilon_on_representable_faces() {
         for height in [f32::from_bits(1), f32::MIN_POSITIVE, f32::EPSILON] {
             let mesh = triangle([[0.0; 3], [1.0, 0.0, 0.0], [1.0, f64::from(height), 0.0]]);
@@ -219,6 +234,7 @@ mod stl_contract {
     }
 
     #[test]
+    /// Compares cold/warm exports to independently assembled bytes, with names absent from encoding.
     fn valid_binary_triangle_bytes_remain_identical() {
         let mesh = triangle([[0.0; 3], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]);
         let mut expected = vec![0; 80];
@@ -232,6 +248,8 @@ mod stl_contract {
     }
 
     #[test]
+    /// Rejects collapsed projections across retry, eviction and copy-on-write mutation.
+    /// Also verifies recovery of the original cached geometry and validated cube replay.
     fn binary_cache_cannot_publish_collapsed_geometry() {
         let original = solid::cube(Real::one()).unwrap();
         let valid = stl::to_stl_binary(&original, "valid").unwrap();

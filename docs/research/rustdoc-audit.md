@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/io/stl.rs` | Entire file; documented byte-cache fields, artifact ownership/evidence, finite normal calculation, validation order, import qualifications and all unit witnesses. | Private docs with `stl-io,obj-io` passed; all eleven helper/type/export/import pages inspected, including private fields and artifact methods. |
+| `tests/export_projection_contracts.rs` | Entire file; documented OBJ decimal replay, STL independent byte/normal expectations, projection collapse and cache/Boolean reuse. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/support/construction_evidence_pipeline.rs` | Entire file; documented rational/uncertainty/box helpers and all twelve policy/placement/cache pipeline cases. Clarified fresh-process selection and printed intent-volume evidence. | Source, formatting and comment-only comparison passed; tests unchanged, not rerun. |
 | `src/io/mod.rs` | Entire file; documented every error payload, shared triangulation/projection/metadata helper, local formatter and test. | Gated and minimal private docs passed; error and seven helper pages inspected. No implementation change. |
 | `src/io/amf.rs` | Entire file; documented unit labels, projected color bounds, serialization order, validation scope and writer behavior. | Gated private docs passed; all six function pages inspected. |
 | `src/io/obj.rs` | Entire file; documented parsers, policy qualification, attributed corner selection, validation order and all unit witnesses. | Gated private docs passed including attributed readers; all eleven function pages inspected. Tests unchanged, not rerun. |
@@ -1475,9 +1478,70 @@ Logs: `/tmp/csgrs-rustdoc-io-common-doc.log` and
 runtime checks remain waived by the owner for this docs-only session; no
 runtime correctness or performance claim is made.
 
+### STL boundary and construction-evidence pipeline batch, 26 November 2026
+
+Baseline: `3e608bbff`. Owner: CSGRS STL interchange boundary and its qualification
+witnesses, P6/P8/P9/P18–P20/P25–P27/P29/P30/P37. Domain: ASCII binary64 spelling,
+binary32 STL projection, encoded-face nondegeneracy, closed-PWN import, immutable
+bound artifacts and geometry-byte caching. Read the three files above in full.
+Supporting native closed-PWN cache validation, the parent test-module declaration
+and installed `stl_io` parsing/writing were inspected without additional
+whole-file audit credit. SVG adapter/kernel exploratory reads remain pending
+documentation review and are not credited in this batch.
+
+Missing witnesses: private cache and artifact fields, local count bound, triangle
+helpers, construction-aware import and test declarations lacked complete Rustdoc.
+The public descriptions omitted several distinctions between export and import.
+
+Documented that ASCII uses finite binary64 normal arithmetic, which can fail by
+underflow/overflow even for nondegenerate exact input. Binary export computes
+normals before binary32 coordinate projection, then separately validates encoded
+triangle nondegeneracy under strict native decisions. It allows open surfaces;
+artifact import still requires closed PWN geometry or canonical empty output.
+Names are validated but absent from the zero-filled binary header. Unused source
+positions and file normals are not retained by the respective conversions.
+
+The byte cache owns both source allocations, retains only complete successes,
+evicts in insertion order and returns independent vectors. The entry cap is not
+a memory/work budget. Artifact evidence comes from the current source mesh even
+on a geometry cache hit. Plain import records projected coordinates and missing
+source history; artifact import keeps its bound qualification while proving only
+local parsed topology. Artifact byte extraction copies the shared bytes and
+deliberately loses the receipt.
+
+Test docs preserve independent binary record construction, tiny-normal and box
+volume expectations, exact-vs-projected geometry, collapsed-face rejection and
+cache retry/eviction/mutation. The construction-evidence matrix distinguishes
+exact fractional placement from its later lossy STL projection. Its twelve names
+permit fresh-process invocation but the normal test harness does not guarantee
+it. The outside-point case delays stronger sign proof until after observation;
+the printed missing-pyramid-volume formula is a mathematical explanation, not
+an independently constructed reference hull assertion.
+
+Validation:
+
+- `rustfmt --check --edition 2024 src/io/stl.rs
+  tests/export_projection_contracts.rs
+  tests/support/construction_evidence_pipeline.rs`: passed after final edits.
+  `git diff --check`: passed.
+- Nonblank, non-comment source matches baseline exactly in all three files.
+  File-local scans found Rustdoc on 21 STL declarations, 15 export-projection
+  declarations and 16 pipeline declarations; private fields were separately
+  checked. No behavior, fixtures or assertions changed.
+- After the final library edit, with the shared temporary target,
+  `CARGO_INCREMENTAL=0` and broken Rustdoc links denied, ran
+  `cargo doc --locked -p csgrs --no-default-features --features stl-io,obj-io
+  --document-private-items --no-deps --offline`: passed without warnings.
+  Inspected eleven rendered STL pages, including fields and artifact methods.
+  Local constants and test items remain source-reviewed.
+
+Log: `/tmp/csgrs-rustdoc-stl-doc.log`. Shared temporary build storage remains
+about 693 MiB. Full workflow/runtime checks remain waived for this docs-only
+session. No runtime completion or performance claim is made.
+
 ## Next work
 
-Continue with the remaining root `src/io` interchange modules (STL, DXF, SVG,
+Continue with the remaining root `src/io` interchange modules (DXF, SVG,
 glTF, VRML and Gerber) and downstream witnesses,
 then the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests

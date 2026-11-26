@@ -1,16 +1,25 @@
+//! Hull/transform/Boolean/STL pipeline separating local proof from source qualification.
+//!
+//! Each named test can be selected in a fresh process for cold/warm comparisons;
+//! the ordinary test harness does not itself guarantee process isolation.
+
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
 use hyperlattice::{Matrix4, Point3};
 use hypermesh::{BooleanOp, MeshCertainty};
 use hyperreal::Rational;
 
+/// Creates an exact rational fixture, requiring a nonzero denominator.
 fn q(n: i64, d: u64) -> Real {
     Real::from(Rational::fraction(n, d).unwrap())
 }
+/// Wraps the trigonometric zero identity in the shared finite-terminal uncertainty fixture.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     crate::uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
+/// Checks rational bounds, box support planes, independent signed volume and strict closure.
+/// Coordinates and expected bounds must admit exact rational normal forms.
 fn check_box(mesh: &TriangleMesh, low: [Real; 3], high: [Real; 3]) {
     for p in mesh.positions.iter() {
         for (axis, value) in [&p.x, &p.y, &p.z].into_iter().enumerate() {
@@ -48,6 +57,18 @@ fn check_box(mesh: &TriangleMesh, low: [Real; 3], high: [Real; 3]) {
     assert!(manifold.value);
     assert_eq!(manifold.certainty, MeshCertainty::Certified);
 }
+/// Runs a named provenance witness through hull, translation, union and STL replay.
+///
+/// Sources are `exact`, `approximate` (an unresolved zero point) or `outside`
+/// (that point shifted by -2^-1200). Translations are `integral` or `fractional`;
+/// `warm` explicitly validates the hull before reuse, while `cold` omits that step.
+/// Other selectors panic. Names alone do not guarantee a fresh process/cache.
+///
+/// Checks inherited evidence separately from strict local certainty, contrasts
+/// bare bytes with bound artifacts, and independently checks binary32 box bounds.
+/// The outside case delays its stronger sign proof until after the pipeline so
+/// it cannot warm the observed hull decisions. Its printed missing-volume formula
+/// explains source intent; the test does not construct a separate exact reference hull.
 fn run(source: &str, translation: &str, cache: &str) {
     let args: Vec<String> = ["pipeline", source, translation, cache]
         .into_iter()
@@ -241,50 +262,62 @@ fn run(source: &str, translation: &str, cache: &str) {
 
 // Separate named tests permit a fresh process for every cold/warm fixture.
 #[test]
+/// Exact source with an integral translation, without explicit prevalidation warming.
 fn exact_integral_cold() {
     run("exact", "integral", "cold");
 }
 #[test]
+/// Exact source with an integral translation and strict hull prevalidation.
 fn exact_integral_warm() {
     run("exact", "integral", "warm");
 }
 #[test]
+/// Exact fractional placement followed by lossy STL projection, without explicit warming.
 fn exact_fractional_cold() {
     run("exact", "fractional", "cold");
 }
 #[test]
+/// Exact fractional placement followed by lossy STL projection, with strict prevalidation.
 fn exact_fractional_warm() {
     run("exact", "fractional", "warm");
 }
 #[test]
+/// Terminal-qualified zero-point hull with integral placement and no explicit warming.
 fn approximate_integral_cold() {
     run("approximate", "integral", "cold");
 }
 #[test]
+/// Terminal-qualified zero-point hull with integral placement and strict prevalidation.
 fn approximate_integral_warm() {
     run("approximate", "integral", "warm");
 }
 #[test]
+/// Terminal-qualified zero-point hull with fractional projection and no explicit warming.
 fn approximate_fractional_cold() {
     run("approximate", "fractional", "cold");
 }
 #[test]
+/// Terminal-qualified zero-point hull with fractional projection and strict prevalidation.
 fn approximate_fractional_warm() {
     run("approximate", "fractional", "warm");
 }
 #[test]
+/// Outside-point terminal witness with integral placement and the stronger proof deferred.
 fn outside_integral_cold() {
     run("outside", "integral", "cold");
 }
 #[test]
+/// Outside-point terminal witness with integral placement after strict hull prevalidation.
 fn outside_integral_warm() {
     run("outside", "integral", "warm");
 }
 #[test]
+/// Outside-point terminal witness with fractional projection and the stronger proof deferred.
 fn outside_fractional_cold() {
     run("outside", "fractional", "cold");
 }
 #[test]
+/// Outside-point terminal witness with fractional projection after strict hull prevalidation.
 fn outside_fractional_warm() {
     run("outside", "fractional", "warm");
 }
