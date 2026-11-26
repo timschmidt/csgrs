@@ -7,7 +7,8 @@
 //! Primitive constructors return [`ValidationError`] on invalid parameters,
 //! undecided strict predicates, unsupported representations, or checked buffer
 //! capacity/reservation failures. Dimensions and radii are nonnegative; a
-//! proven zero size yields canonical empty geometry after validating all inputs.
+//! supported zero-size collapse yields canonical empty geometry after validation;
+//! not every zero parameter describes such a collapse (see the `torus` constructor when enabled).
 //! Frustum/cylinder height is directed and may be negative. Sample counts need
 //! at least three segments and two sphere/ellipsoid stacks. Nonempty tori need
 //! `major_radius > minor_radius`. Only successful results are cached.
@@ -50,10 +51,14 @@ pub use crate::implicit::metaballs::{MetaBall, MetaballDiagnostics};
 #[cfg(feature = "sdf")]
 pub use crate::implicit::sdf::SdfDiagnostics;
 
+/// Classify a primitive parameter under strict policy, preserving undecided failure.
+/// The supplied predicate label identifies the decision in `ValidationError`.
 fn primitive_sign(value: &Real, predicate: &'static str) -> Result<RealSign, ValidationError> {
     GeometryDecisions::new(GeometryContext::STRICT).sign(value, predicate)
 }
 
+/// Certify a nonnegative primitive parameter, retaining the zero/positive sign.
+/// A negative sign becomes `NegativeParameter`; inability to decide remains an error.
 fn nonnegative(value: &Real, name: &'static str) -> Result<RealSign, ValidationError> {
     match primitive_sign(value, name)? {
         RealSign::Negative => Err(ValidationError::NegativeParameter { name }),
@@ -61,6 +66,8 @@ fn nonnegative(value: &Real, name: &'static str) -> Result<RealSign, ValidationE
     }
 }
 
+/// Check an integer resolution against an inclusive minimum.
+/// Failure retains the field name, required minimum and actual supplied count.
 pub(crate) const fn sample_minimum(
     value: usize,
     min: usize,
@@ -77,6 +84,10 @@ pub(crate) const fn sample_minimum(
     }
 }
 
+/// Validate an optional element count and its inline byte size for a `Vec<T>`.
+/// `None`, multiplication overflow, or more than `isize::MAX` bytes becomes
+/// `CapacityOverflow`. Does not account for heap data owned by each element,
+/// allocator overhead, total work or allocations made elsewhere.
 pub(crate) fn capacity<T>(count: Option<usize>) -> Result<usize, ValidationError> {
     count
         .filter(|count| {
@@ -87,6 +98,9 @@ pub(crate) fn capacity<T>(count: Option<usize>) -> Result<usize, ValidationError
         .ok_or(ValidationError::CapacityOverflow)
 }
 
+/// Create an empty vector after checked exact reservation for `count` elements.
+/// Count/inline-size failure is `CapacityOverflow`; reservation failure is
+/// `AllocationFailed`. The vector length remains zero and no elements are initialized.
 pub(crate) fn reserved<T>(count: usize) -> Result<Vec<T>, ValidationError> {
     let mut values = Vec::new();
     values
@@ -95,7 +109,11 @@ pub(crate) fn reserved<T>(count: usize) -> Result<Vec<T>, ValidationError> {
     Ok(values)
 }
 
-/// Reserve input-controlled growth before publishing or appending geometry.
+/// Reserve room for `additional` elements after checking `len + additional`.
+///
+/// Overflow of the count or inline byte size is typed separately from reservation
+/// failure. Existing length and contents are unchanged; spare capacity may grow.
+/// This checks one vector, not a total memory or computation budget.
 pub(crate) fn reserve_additional<T>(
     values: &mut Vec<T>,
     additional: usize,
@@ -106,6 +124,9 @@ pub(crate) fn reserve_additional<T>(
         .map_err(|_| ValidationError::AllocationFailed { elements })
 }
 
+/// Build `(sin, cos)` pairs at exact angles `2π k / count` for `0 <= k < count`.
+/// Requires at least one sample, checks integer conversion and reservation, and
+/// does not duplicate the endpoint. Polygon callers impose their stronger minimum.
 fn sampled_circle(count: usize) -> Result<Vec<(Real, Real)>, ValidationError> {
     sample_minimum(count, 1, "circle samples")?;
     let denominator =
@@ -121,6 +142,9 @@ fn sampled_circle(count: usize) -> Result<Vec<(Real, Real)>, ValidationError> {
     Ok(samples)
 }
 
+/// Convert authored index triples into native triangles with declared-coordinate evidence.
+/// Does not check indices, winding, closure, degeneracy or analytic-source fidelity.
+/// The iterator collection can allocate outside the checked reservation helpers.
 fn indexed(
     positions: Vec<Point3>,
     triangles: impl IntoIterator<Item = [usize; 3]>,
@@ -135,6 +159,9 @@ fn indexed(
     )
 }
 
+/// Forward a primitive builder's purported convex mesh to [`indexed`].
+/// The name records caller intent; this helper performs no convexity validation
+/// and attaches no additional convexity proof.
 fn indexed_convex(
     positions: Vec<Point3>,
     triangles: impl IntoIterator<Item = [usize; 3]>,
@@ -142,7 +169,8 @@ fn indexed_convex(
     indexed(positions, triangles)
 }
 
-/// Empty native triangle geometry.
+/// Canonical empty mesh with no positions or triangles and declared-coordinate evidence.
+/// No prior construction history or analytic source is implied by this new value.
 pub fn empty() -> TriangleMesh {
     TriangleMesh::from_construction(
         Vec::new(),
@@ -151,13 +179,22 @@ pub fn empty() -> TriangleMesh {
     )
 }
 
-/// Axis-aligned cube with its minimum corner at the origin.
+/// Axis-aligned cube spanning `[0, width]` on each axis.
+///
+/// Imports width exactly and delegates to [`cuboid`] under strict predicates.
+/// A negative or undecided width fails; zero produces canonical empty geometry.
 pub fn cube(width: impl IntoReal) -> Result<TriangleMesh, ValidationError> {
     let width = width.into_real()?;
     cuboid(width.clone(), width.clone(), width)
 }
 
 /// Axis-aligned cuboid with its minimum corner at the origin.
+///
+/// Width, length and height are X/Y/Z dimensions. All must be certified
+/// nonnegative under strict predicates, even if another dimension is zero.
+/// A zero dimension returns canonical empty geometry; positive dimensions produce
+/// eight exact corners and twelve triangles. Successful meshes may be reused by
+/// the structural-parameter [`cache`] without changing those coordinates.
 pub fn cuboid(
     width: impl IntoReal,
     length: impl IntoReal,
@@ -171,6 +208,9 @@ pub fn cuboid(
     retained_primitive(parameters, || cuboid_uncached(width, length, height))
 }
 
+/// Validate XYZ dimensions, then emit eight corners and twelve authored triangles.
+/// All signs are checked before accepting a zero-dimension collapse as empty.
+/// This fixed-size builder does not pass its allocations through `reserved`.
 fn cuboid_uncached(
     width: Real,
     length: Real,
@@ -214,7 +254,18 @@ fn cuboid_uncached(
     ))
 }
 
-/// Tessellated sphere centered at the origin.
+/// Tessellated sphere centered at the origin, with its poles on the Y axis.
+///
+/// Requires nonnegative radius, at least three longitude segments and two
+/// pole-to-pole stacks. Resolution and primary capacities are checked even for
+/// zero radius, which then returns canonical empty geometry. Nonempty output
+/// has `segments * (stacks - 1) + 2` positions and
+/// `2 * segments * (stacks - 1)` triangles.
+///
+/// At longitude θ and polar angle φ, the point is
+/// `(r cos θ sin φ, r cos φ, r sin θ sin φ)`. Trigonometric coordinates remain
+/// native exact expressions, but faces form a sampled polyhedron, not an analytic
+/// sphere. Construction evidence records sampling; no surface error bound is returned.
 pub fn sphere(
     radius: impl IntoReal,
     segments: usize,
@@ -225,6 +276,9 @@ pub fn sphere(
     retained_primitive(parameters, || sphere_uncached(radius, segments, stacks))
 }
 
+/// Build a longitude/latitude polyhedron with shared north and south poles.
+/// Validate segment/stack minima, radius sign and primary capacities before an
+/// empty-radius return. Nonempty results carry the sampling qualification.
 fn sphere_uncached(
     radius: Real,
     segments: usize,
@@ -308,7 +362,12 @@ fn sphere_uncached(
     )
 }
 
-/// Tessellated cylinder along +Z.
+/// Tessellated cylinder from the origin to `(0, 0, height)`.
+///
+/// Height is directed and may be negative. Radius must be nonnegative and at
+/// least three segments are required. Delegates to [`frustum`] with equal radii;
+/// zero height or radius yields empty geometry after validation. Nonempty output
+/// is a sampled polygonal solid with construction qualifications.
 pub fn cylinder(
     radius: impl IntoReal,
     height: impl IntoReal,
@@ -319,7 +378,12 @@ pub fn cylinder(
     frustum(radius.clone(), radius, height, segments)
 }
 
-/// Tessellated ellipsoid centered at the origin.
+/// Tessellated ellipsoid obtained by scaling the sampled unit sphere along XYZ.
+///
+/// All three radii must be nonnegative; segment/stack requirements match [`sphere`].
+/// Sign and primary capacity checks precede an empty result for any zero radius.
+/// Positive radii preserve the unit sphere's angular lattice and sampling history;
+/// exact coordinates do not make the triangular surface an analytic ellipsoid.
 pub fn ellipsoid(
     radius_x: impl IntoReal,
     radius_y: impl IntoReal,
@@ -342,6 +406,10 @@ pub fn ellipsoid(
     })
 }
 
+/// Validate all radii and counts before scaling a sampled unit sphere.
+/// A certified zero radius yields canonical empty geometry; negative or unresolved
+/// radii fail even when another radius is zero. The unit-sphere sampling history
+/// is carried through the strict scale operation.
 fn ellipsoid_uncached(
     radius_x: Real,
     radius_y: Real,
@@ -377,7 +445,11 @@ fn ellipsoid_uncached(
     )
 }
 
-/// Tessellated conical frustum along +Z.
+/// Tessellated conical frustum from the origin to `(0, 0, height)`.
+///
+/// Height is signed. Bottom/top radii belong to the start/end centers respectively
+/// and must be nonnegative. Delegates to [`frustum_between`], including its sample
+/// phase, cone-tip, empty-collapse and typed-failure rules.
 pub fn frustum(
     radius_bottom: impl IntoReal,
     radius_top: impl IntoReal,
@@ -405,6 +477,12 @@ pub fn frustum(
 /// seen from +Z. `curve::circle` and OpenSCAD start at
 /// `(radius, 0)`; the two sample sets coincide only when `segments` is a
 /// multiple of four.
+///
+/// Requires at least three segments and nonnegative endpoint radii. Resolution,
+/// radius signs and primary capacities are checked before empty collapse. A zero
+/// radius at one end is a cone tip; two zero radii or coincident centers give
+/// canonical empty geometry. Otherwise axis normalization and basis construction
+/// must succeed. Nonempty output records sampling without an analytic fidelity bound.
 pub fn frustum_between(
     start: Point3,
     end: Point3,
@@ -426,6 +504,10 @@ pub fn frustum_between(
     })
 }
 
+/// Emit endpoint cap fans and connecting sides in an orthonormal axis frame.
+/// Zero endpoint radii become cone tips; coincident centers or two zero radii
+/// yield empty geometry after resolution, sign and primary capacity checks.
+/// Native normalization or frame construction may fail even after axis classification.
 fn frustum_between_uncached(
     start: Point3,
     end: Point3,
@@ -498,13 +580,19 @@ fn frustum_between_uncached(
     )
 }
 
-/// Regular octahedron centered at the origin.
+/// Exact regular octahedron with vertices at ±`radius` on the coordinate axes.
+///
+/// The nonnegative radius is the circumradius, not the edge length. Strict sign
+/// failure is typed; zero gives canonical empty geometry. Positive radius gives
+/// six vertices and eight faces without sampling an analytic surface.
 pub fn octahedron(radius: impl IntoReal) -> Result<TriangleMesh, ValidationError> {
     let radius = radius.into_real()?;
     let parameters = PrimitiveParameters::Octahedron(radius.clone());
     retained_primitive(parameters, || octahedron_uncached(radius))
 }
 
+/// Validate radius and emit six axial vertices with eight fixed triangular faces.
+/// Zero radius yields canonical empty geometry; no sampling approximation is introduced.
 fn octahedron_uncached(radius: Real) -> Result<TriangleMesh, ValidationError> {
     if nonnegative(&radius, "radius")? == RealSign::Zero {
         return Ok(empty());
@@ -532,13 +620,20 @@ fn octahedron_uncached(radius: Real) -> Result<TriangleMesh, ValidationError> {
     ))
 }
 
-/// Regular icosahedron centered at the origin.
+/// Exact regular icosahedron centered at the origin with the given circumradius.
+///
+/// The nonnegative radius scales normalized golden-ratio vertices. Positive radius
+/// gives twelve vertices and twenty faces; zero gives canonical empty geometry.
+/// Uses strict sign validation and native algebraic coordinates, not float vertices.
 pub fn icosahedron(radius: impl IntoReal) -> Result<TriangleMesh, ValidationError> {
     let radius = radius.into_real()?;
     let parameters = PrimitiveParameters::Icosahedron(radius.clone());
     retained_primitive(parameters, || icosahedron_uncached(radius))
 }
 
+/// Scale twelve normalized golden-ratio vertices and emit twenty fixed faces.
+/// Radius is the circumradius. Zero yields empty geometry; square-root and
+/// normalization expectations concern the fixed positive canonical construction.
 fn icosahedron_uncached(radius: Real) -> Result<TriangleMesh, ValidationError> {
     if nonnegative(&radius, "radius")? == RealSign::Zero {
         return Ok(empty());
@@ -597,7 +692,21 @@ fn icosahedron_uncached(radius: Real) -> Result<TriangleMesh, ValidationError> {
     ))
 }
 
-/// Tessellated arrow from a start point and direction vector.
+/// Tessellated arrow on the segment from `start` to `start + direction`.
+///
+/// Requires at least three segments. A certified zero direction yields empty
+/// geometry after primary capacity checks. For length L, the shaft occupies 4L/5
+/// with radius 3L/100; the head occupies L/5 with base radius 3L/50. Ordinarily
+/// the tip is at the end. With `mirrored`, the tip is at `start` and the shaft
+/// extends toward the end; this does not reflect coordinates through a plane.
+///
+/// Builds three sampled rings, cap fans, shoulders and side triangles. Strict face
+/// orientation decisions precede shared-edge orientation propagation and a final
+/// aggregate orientation decision. Zero orientation yields `UnsupportedPrimitive`;
+/// undecided predicates and native normalization failures remain typed. The edge
+/// pass is not a general mesh-validity certificate. Adjacency tables and scalar
+/// expression allocations are outside the primary checked buffer reservations.
+/// Nonempty output retains sampling qualifications and is not primitive-cached.
 pub fn arrow(
     start: Point3,
     direction: Vector3,
@@ -792,7 +901,17 @@ pub fn arrow(
     ))
 }
 
-/// Tessellated torus around the Z axis.
+/// Tessellated ring torus around the Z axis.
+///
+/// Major radius measures the tube-center circle; minor radius is the tube radius.
+/// Both radii must be nonnegative and both sample counts at least three, with
+/// primary capacity checks before an empty return for zero minor radius. For a
+/// nonzero minor radius, strict predicates must prove `major_radius > minor_radius`;
+/// horn/spindle cases are unsupported and an undecided comparison remains typed.
+///
+/// Nonempty output has `major_segments * minor_segments` vertices and twice as
+/// many triangles on the periodic angular grid. Exact sample coordinates retain
+/// their definitions, but the sampled mesh is not the analytic torus.
 #[cfg(feature = "curve")]
 pub fn torus(
     major_radius: impl IntoReal,
@@ -814,6 +933,10 @@ pub fn torus(
 }
 
 #[cfg(feature = "curve")]
+/// Validate the ring-torus domain and emit a periodic major/minor angular grid.
+/// Both sample counts, radius signs and primary capacities are checked before
+/// accepting zero tube radius as empty. Each grid quad becomes two triangles;
+/// nonempty output retains the sampling qualification.
 fn torus_uncached(
     major_radius: Real,
     minor_radius: Real,

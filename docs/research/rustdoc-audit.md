@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/primitive_failures.rs` | Entire file; documented all primitive-failure and empty-composition helpers/witnesses. | Source review, formatting and comment-only checks passed; test bodies unchanged, not rerun. |
 | `src/solid/cache.rs` | Entire file; documented thread-local state, default implementation and local restoration guard; clarified receipt reuse. | Private docs passed with and without `curve`; local guard reviewed in source. |
 | `src/solid/cache/storage.rs` | Entire file; documented all private keys, fields, retention helpers and completed-result contracts. | Private pages with `curve` checked; minimal build also passed. |
 | `tests/solid_cache.rs` | Entire file; documented constants, comparison/uncertainty helpers and all cache regression witnesses. | Formatting and comment-only comparison passed; assertions unchanged, not rerun. |
@@ -439,9 +440,55 @@ reused. Full workflow/runtime checks remain waived for this docs-only session.
 No predicate ordering, cache key, capacity, test assertion or source behavior was
 changed, and no new runtime/performance claim is made.
 
+### Solid primitives, partial-file batch, 26 November 2026
+
+Owner: CSGRS native primitive grammar, P1/P6/P17/P18/P19/P20/P25/P26/P37.
+Baseline: `4a75b574b`. **Partial file:** reviewed `src/solid.rs` from its module
+header through the end of `torus_uncached` (baseline lines 1–869). Whole-file
+credit remains open; resume at `teardrop_cylinder`. Read every line of
+`tests/primitive_failures.rs`. Inspected native orthonormal-frame construction;
+that supporting read does not earn full kernel-file credit.
+
+Missing witness: private strict sign, parameter, capacity, reservation, sampled
+circle, indexed assembly and uncached primitive helpers lacked Rustdoc. Public
+primitive summaries omitted important domains, sample conventions and failure
+rules. Documented all declarations in this reviewed section, including source
+validation before empty-collapse shortcuts, checked inline bytes versus nested
+allocation cost, and `indexed_convex`'s absence of convexity validation.
+
+Specified sphere Y-axis poles and exact angular samples, signed cylinder/frustum
+height, cone tips, octahedron/icosahedron circumradius, arrow proportions and
+mirrored-tip placement, and the sampled ring-torus domain. Exact coordinates,
+polyhedral geometry, sampling history and analytic fidelity remain distinct.
+Arrow orientation propagation is described as its actual construction sequence,
+not a general topology certificate; secondary adjacency allocations remain
+outside the primary reservation checks. No new resource guarantee is asserted.
+
+Regression documentation describes negative/undecided input, resolution/capacity,
+zero-size validation, typed adapter failures, signed-height volume, cache recovery
+and further operations on canonical empties. Their source inspection establishes
+what is asserted, not that this revision passed runtime tests or proves closure.
+
+Validation after edits:
+
+- `rustfmt --check --edition 2024 src/solid.rs tests/primitive_failures.rs`: passed.
+- `git diff --check`: passed; every nonblank, non-comment source line matches
+  baseline in both edited files, including all assertions and orientation logic.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps --offline`:
+  passed without warnings. The same command without `--features curve` passed.
+- Generated sphere, cylinder, frustum, arrow, torus, private capacity, sample-table,
+  indexed-convex and uncached icosahedron pages contain the revised contracts.
+
+Logs: `/tmp/csgrs-rustdoc-primitives-doc.log` and
+`/tmp/csgrs-rustdoc-primitives-minimal-doc.log`. Full workflow/runtime checks remain
+waived for this docs-only session. No executable behavior or performance claim
+changed; test-only docs were reviewed in source.
+
 ## Next work
 
-Continue through native operations and the
+Resume `src/solid.rs` at `teardrop_cylinder`, then continue through native operations and the
 remaining root modules, then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file

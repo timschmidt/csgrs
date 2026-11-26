@@ -10,12 +10,14 @@ use csgrs::{
 };
 use hyperlattice::{Point3, Vector3};
 
+/// Retain the earlier identity witness and obtain the shared strict-undecided zero fixture.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Check negative dimensions/radii fail through native-real adapter constructors.
 #[test]
 fn negative_dimensions_are_errors_through_the_public_adapter() {
     assert!(RawTriangleMesh::cube(-Real::one()).is_err());
@@ -24,11 +26,13 @@ fn negative_dimensions_are_errors_through_the_public_adapter() {
     assert!(RawTriangleMesh::cylinder(-Real::one(), Real::one(), 8).is_err());
 }
 
+/// Check a strict-undecided width is not accepted as an adapter cube.
 #[test]
 fn undecided_dimensions_are_errors_through_the_public_adapter() {
     assert!(RawTriangleMesh::cube(unresolved_zero()).is_err());
 }
 
+/// Check sample minima are enforced before zero-radius empty shortcuts.
 #[test]
 fn invalid_resolution_is_an_error_even_for_zero_radius() {
     for radius in [Real::one(), Real::zero()] {
@@ -38,12 +42,14 @@ fn invalid_resolution_is_an_error_even_for_zero_radius() {
     }
 }
 
+/// Exercise huge sample counts that fail checked capacity through adapters.
 #[test]
 fn capacity_overflow_is_an_error_through_the_public_adapter() {
     assert!(RawTriangleMesh::sphere(Real::one(), usize::MAX, 2).is_err());
     assert!(RawTriangleMesh::cylinder(Real::one(), Real::one(), usize::MAX).is_err());
 }
 
+/// Match negative, undecided, resolution and capacity diagnostics through adapter wrapping.
 #[test]
 fn native_errors_remain_structured_through_adapters() {
     use csgrs::adapter::AdapterError;
@@ -79,6 +85,7 @@ fn native_errors_remain_structured_through_adapters() {
     ));
 }
 
+/// Check native negative-radius/dimension failures and arrow resolution rejection.
 #[test]
 fn all_native_primitive_families_expose_invalid_parameters() {
     let results = [
@@ -110,6 +117,9 @@ fn all_native_primitive_families_expose_invalid_parameters() {
     ));
 }
 
+/// Require canonical empty buffers, union with a unit cube, check determinant volume,
+/// then subtract the cube and require canonical emptiness again. This is a finite
+/// composition witness, not a universal set-equality proof.
 fn assert_canonical_empty(mesh: TriangleMesh) {
     assert!(mesh.positions.is_empty() && mesh.triangles.is_empty());
     let cube = solid::cube(Real::one()).unwrap();
@@ -124,6 +134,7 @@ fn assert_canonical_empty(mesh: TriangleMesh) {
     assert!(removed.positions.is_empty() && removed.triangles.is_empty());
 }
 
+/// Consume zero-size outputs of the listed primitives in further Boolean operations.
 #[test]
 fn proven_degeneracies_are_composable_empty_sets() {
     for result in [
@@ -154,6 +165,7 @@ fn proven_degeneracies_are_composable_empty_sets() {
     }
 }
 
+/// Require negative and unresolved arguments to fail despite another zero dimension.
 #[test]
 fn zero_size_does_not_conceal_invalid_or_undecided_parameters() {
     for result in [
@@ -178,6 +190,7 @@ fn zero_size_does_not_conceal_invalid_or_undecided_parameters() {
     }
 }
 
+/// Check that an addressable element count can still fail inline-byte capacity.
 #[test]
 fn representable_counts_with_unrepresentable_byte_sizes_fail_before_allocation() {
     let count = isize::MAX as usize / std::mem::size_of::<Point3>() + 1;
@@ -191,6 +204,7 @@ fn representable_counts_with_unrepresentable_byte_sizes_fail_before_allocation()
     ));
 }
 
+/// Check ±3-height four-sided cylinders for closure, signed-coordinate extent and exact volume.
 #[test]
 fn directed_negative_height_keeps_its_exact_solid() {
     for height in [-3, 3] {
@@ -207,6 +221,7 @@ fn directed_negative_height_keeps_its_exact_solid() {
     }
 }
 
+/// Compare enabled/disabled caches for repeated failures followed by a valid cube.
 #[test]
 fn failed_construction_is_not_retained_and_does_not_poison_recovery() {
     use solid::cache::{self, CachePolicy};
@@ -227,6 +242,7 @@ fn failed_construction_is_not_retained_and_does_not_poison_recovery() {
     }
 }
 
+/// Allow cold success or uncertainty, then require success after a stronger width proof.
 #[test]
 fn stronger_scalar_proof_can_recover_the_same_constructor() {
     use solid::cache;
@@ -253,6 +269,7 @@ fn stronger_scalar_proof_can_recover_the_same_constructor() {
 }
 
 #[cfg(feature = "curve")]
+/// Match torus domain blockers, uncertainty, invalid radius and composable empty output.
 #[test]
 fn torus_unsupported_undecided_invalid_and_empty_are_distinct() {
     for major in [Real::one(), Real::zero()] {
