@@ -1,15 +1,21 @@
 #![cfg(feature = "curve")]
 //! Sampling fidelity is separate from a certified topology decision.
+//! These witnesses check selected polygonal rounded rectangles through exact area,
+//! tangent vertices, composition, policy transitions and optional format boundaries.
+//! They do not establish analytic circular-boundary fidelity for arbitrary sampling.
+/// Shared unresolved-expression fixtures for testing certainty and strict retries.
 #[path = "support/uncertainty.rs"]
 mod uncertainty;
 
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve};
 use hypercurve::CurveRegion2;
 
+/// Constructs a small exact rational fixture; the caller supplies a nonzero denominator.
 fn q(n: i32, d: i32) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()
 }
 
+/// Requires one hole-free linear profile and returns each oriented edge's start point.
 fn vertices(region: &CurveRegion2) -> Vec<[Real; 2]> {
     let profiles = region.boundary_profiles().unwrap();
     assert_eq!(profiles.len(), 1);
@@ -22,6 +28,8 @@ fn vertices(region: &CurveRegion2) -> Vec<[Real; 2]> {
         .collect()
 }
 
+/// Checks all eight tangent vertices and area 15/2 for a 4-by-2 one-chord-corner polygon.
+/// Vertex containment and count do not assert a particular traversal order.
 #[test]
 fn one_chord_per_corner_retains_all_straight_sides_and_exact_area() {
     let region = curve::rounded_rectangle(4, 2, q(1, 2), 1).unwrap();
@@ -42,6 +50,7 @@ fn one_chord_per_corner_retains_all_straight_sides_and_exact_area() {
     assert!(expected.iter().all(|point| actual.contains(point)));
 }
 
+/// Checks horizontal/vertical capsules at the radius clamp and beyond it: six vertices, area six.
 #[test]
 fn clamped_capsules_keep_nonzero_straight_sides() {
     for (width, height) in [(4, 2), (2, 4)] {
@@ -54,6 +63,8 @@ fn clamped_capsules_keep_nonzero_straight_sides() {
     }
 }
 
+/// Requires strict certification and every tangent vertex at published sampling resolutions.
+/// Includes exact rational and binary64-literal ingress; does not compare every sampled edge.
 #[test]
 fn original_published_sampling_resolutions_retain_tangent_vertices() {
     for (label, width, height, requested_radius, radius, samples) in [
@@ -104,6 +115,7 @@ fn original_published_sampling_resolutions_retain_tangent_vertices() {
     }
 }
 
+/// Checks the full-radius diamond and sharp-rectangle controls from zero radius or zero samples.
 #[test]
 fn full_radius_and_sharp_corner_controls_remain_defined() {
     let diamond = curve::rounded_rectangle(2, 2, 1, 1).unwrap();
@@ -116,6 +128,8 @@ fn full_radius_and_sharp_corner_controls_remain_defined() {
     }
 }
 
+/// Proves independently derived areas 7 + sqrt(2)/2 and 2*pi - 2 with strict scalar comparisons.
+/// These area witnesses do not alone prove equality of arbitrary represented regions.
 #[test]
 fn algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas() {
     let octants = curve::rounded_rectangle(4, 2, q(1, 2), 2).unwrap();
@@ -144,6 +158,9 @@ fn algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas() {
     );
 }
 
+/// Builds a certified dyadic rounded polygon, translates it, cuts a square hole and extrudes.
+/// Checks cut/restored areas, one directed restoration difference, construction receipts,
+/// and the resulting solid's manifold geometry and independently derived volume.
 fn pipeline() -> csgrs::TriangleMesh {
     use hypercurve::BooleanOp;
     let source = curve::rounded_rectangle_with_context(
@@ -186,6 +203,8 @@ fn pipeline() -> csgrs::TriangleMesh {
     solid.value
 }
 
+/// Requires closed manifold geometry and oriented six-volume 117 for the pipeline fixture.
+/// Consumes the manifold result's value; the caller separately checks construction certainty.
 fn assert_solid(mesh: &csgrs::TriangleMesh) {
     assert!(
         mesh.is_closed_manifold_geometry(&GeometryContext::STRICT.mesh_context())
@@ -199,11 +218,14 @@ fn assert_solid(mesh: &csgrs::TriangleMesh) {
     assert_eq!(six_volume, Real::from(117));
 }
 
+/// Exercises the rounded-profile composition pipeline through a hole and solid extrusion.
 #[test]
 fn corrected_profiles_compose_with_transforms_holes_booleans_and_extrusion() {
     pipeline();
 }
 
+/// Checks exact position preservation, certified import and solid invariants for this dyadic OBJ case.
+/// Does not claim lossless interchange of arbitrary coordinates or analytic curves.
 #[cfg(feature = "obj-io")]
 #[test]
 fn dyadic_profile_pipeline_survives_the_obj_boundary_without_value_loss() {
@@ -219,6 +241,7 @@ fn dyadic_profile_pipeline_survives_the_obj_boundary_without_value_loss() {
     assert_solid(&restored.value);
 }
 
+/// Requires an unresolved clamp to fail strict, succeed with qualification, then fail strict again.
 #[test]
 fn approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success() {
     let sine = Real::e().sin();
@@ -257,6 +280,7 @@ fn approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success() {
     );
 }
 
+/// Requires corner-endpoint capacity validation before the zero-width empty shortcut.
 #[test]
 fn capacity_covers_every_corner_endpoint_even_before_empty_shortcuts() {
     let count = (isize::MAX as usize) / (4 * std::mem::size_of::<[Real; 2]>());
@@ -266,6 +290,9 @@ fn capacity_covers_every_corner_endpoint_even_before_empty_shortcuts() {
     ));
 }
 
+/// Checks four tangent boundary points and inside/outside probes across obround Gerber replay.
+/// Both policies must certify the initial import; the finite probes do not prove
+/// complete source/replay equality or an analytic approximation bound.
 #[cfg(feature = "gerber-io")]
 #[test]
 fn public_gerber_obrounds_retain_straight_sides_through_format_roundtrip() {

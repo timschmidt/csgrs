@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/io/gerber.rs` | Entire file; documented modal state, all fields/helpers, sampled construction, strict finite predicates, exposure ordering, unsupported/ignored commands and quantized export limits. | Private docs with `gerber-io` passed; 53 rendered pages inspected, including private methods/fields. No implementation changes. |
+| `tests/rounded_rectangle_fidelity.rs` | Entire file; documented exact polygon areas/tangent vertices, clamp/control cases, composition/volume, policy retry, capacity and optional OBJ/Gerber witnesses. | Source, formatting and comment-only comparison passed; all assertions unchanged, not rerun. |
 | `src/io/vrml.rs` | Entire file; documented public omission/nonempty contracts, every parser/helper/state/variant field, exact transform order, recursive ownership and all unit witnesses. Corrected aggregate-area evidence claims. | Private docs with `vrml-io` passed; all seventeen API/type/helper pages inspected, including private methods, fields and payloads. Tests unchanged, not rerun. |
 | `tests/geometry_context.rs` | Entire file; documented all helpers, policy constants and witnesses across native/scalar/curve/sample/JS/interchange boundaries. Clarified the scope of count, area, finite-view and local-certainty assertions. | Source, formatting and documentation-only comparison passed; all gated test bodies unchanged and source-reviewed, not compiled or rerun as tests. |
 | `src/io/gltf.rs` | Entire file; documented all private staging/cache fields, parse/layout/forest checks, transform arithmetic, scene capture, finite output limits and writer behavior. | Private docs with `gltf-io,obj-io,ply-io` passed; all 27 type/helper/public API pages inspected, including fields and constructor. |
@@ -1766,11 +1768,72 @@ Log: `/tmp/csgrs-rustdoc-vrml-doc.log`. Shared temporary build storage is about
 816 MiB. Full workflow/runtime checks remain waived for this docs-only session;
 no new runtime completion or performance claim is made.
 
+### Gerber interchange and rounded-profile witnesses, 26 November 2026
+
+Baseline: `d3edf129d`. Owners: CSGRS Gerber interchange adapter and sampled
+profile consumers, P6/P8/P9/P19/P20/P25/P26/P30/P37. Domain: parsed Gerber modal
+commands, standard aperture exposures, region contours, polarity/repetition and
+finite output encoding. Read both files above in full. Supporting reads of
+native contour/region admission, already audited modeling constructors/context
+witnesses and the locked `gerber-types` coordinate serializer do not add
+whole-file kernel or dependency audit credit.
+
+Missing witnesses: private state, transform/coordinate records, fields and most
+helpers lacked Rustdoc. Public import descriptions did not distinguish sampled
+geometry from native decision certainty. Circular sweep comments overstated
+topology preservation, and the radial allowance comment asserted a rounding
+bound without supporting analysis. Documentation now describes the implemented
+sampling and allowance without claiming an analytic-source certificate.
+
+Import docs explain empty string/path channels, finite coordinate/image
+arithmetic, sampled flashes/strokes, ignored stroke holes, ignored quadrant/EOF
+commands, macro/block failures and parser-only unwind protection. Region closure
+uses EvenOdd native admission; clear exposure flushes preceding balanced dark
+unions before subtraction. Modal transform changes do not retroactively remap
+stored positions. Strict hull predicates operate on promoted finite values;
+image orientation classifies an already rounded determinant. Equal zero image
+scales satisfy the circle-scale comparison without proving nonsingularity.
+
+Export docs distinguish native finite projection from subsequent fixed-point
+quantization. The locked serializer truncates to millionths before possible
+coarser rounding. Duplicate suppression does not validate surviving topology,
+area or vertex count; invalid raw digit formats are not comprehensively
+prevalidated. Import/export have no total work/allocation bound. These are
+recorded implementation limits, not changes to the repository's exactness,
+closure, resource or explicit-failure targets. No algorithm was changed here.
+
+The test documentation describes independent polygon areas and tangent points,
+the translated hole/extrusion pipeline, exact dyadic OBJ positions, strict
+retry after approximate clamp consumption, and capacity priority. The Gerber
+roundtrip witness checks selected boundary/inside/outside points; it does not
+prove full source equality or an analytic error bound.
+
+Validation after final edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on both
+  Rust files and `git diff --check`: passed.
+- Removing only blank/comment lines gives identical source to baseline for both
+  files. No executable expression, fixture, assertion or predicate order changed.
+- File-local scans found Rustdoc on 72 Gerber declarations and 15 test/helper
+  declarations. Fields were checked separately; this is not repository coverage.
+- With `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target`, `CARGO_INCREMENTAL=0` and
+  `RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links'`, ran
+  `cargo doc --locked -p csgrs --no-default-features --features gerber-io
+  --document-private-items --no-deps --offline`: passed without warnings.
+  Inspected 53 rendered pages, including private methods and fields. Initial
+  text-check mismatches came from inline-code spacing and Rustdoc's typographic
+  apostrophes; normalizing those presentation differences passed all checks.
+  Test-only items remain source-reviewed, not rerun.
+
+Log: `/tmp/csgrs-rustdoc-gerber-doc.log`. Shared temporary build storage is about
+831 MiB. Full workflow/runtime checks remain waived for this docs-only session;
+no new runtime completion or performance claim is made. All root `src/io/*.rs`
+files now have recorded full-file reviews; this does not cover every downstream
+consumer, dependency or kernel interchange implementation.
+
 ## Next work
 
-Continue with the remaining root `src/io/gerber.rs` interchange adapter and
-downstream witnesses,
-then the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
+Continue with the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation

@@ -1,10 +1,11 @@
 //! Gerber (RS-274X) input and output for native 2D curve geometry.
 //!
 //! The implementation uses `gerber-types` for code generation and `gerber_parser`
-//! for parsing. Gerber regions map directly to filled Hypercurve regions. Simple
-//! circular, rectangular, obround, and regular-polygon flashes are imported as
-//! filled shapes. Linear and circular aperture-stroked traces are imported for
-//! standard apertures by constructing the swept aperture area.
+//! for parsing. Region contours and supported aperture exposures become filled
+//! Hypercurve regions; line/path return channels are currently empty. Coordinates
+//! and image transforms pass through binary64, and curved boundaries use sampled
+//! polygons. Predicate certification concerns those constructed regions, not exact
+//! analytic Gerber artwork or fidelity through export quantization.
 
 use crate::curve;
 use crate::{GeometryContext, GeometryOutcome, context::GeometryDecisions};
@@ -29,30 +30,27 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use super::IoError;
 
-/// Finite XY coordinate used only while reading or writing Gerber records.
-///
-/// This is deliberately a local file-format boundary type, not CAD topology.
-/// Imported coordinates are promoted into `hypercurve::CurveRegion2` and
-/// `CurveString2` as soon as enough structure is known; exported coordinates
-/// are lossy projections from hypercurve objects. Keeping primitive numbers at
-/// the format boundary follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Hobby, "Practical
-/// Segment Intersection with Finite Precision Output," *Computational
-/// Geometry* 13(4), 1999
-/// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
+/// Local XY record used for file coordinates, finite sampling and serialization.
+/// The generic container does not enforce finiteness; consumers validate values
+/// before native promotion. It carries no independent topology or source evidence.
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct GerberCoord<T> {
+    /// Horizontal component in the consumer's current coordinate frame/units.
     x: T,
+    /// Vertical component in the consumer's current coordinate frame/units.
     y: T,
 }
 
+/// Short local spelling for the format-boundary coordinate record.
 type Coord<T> = GerberCoord<T>;
 
+/// Promotes a finite binary64 value exactly, erasing conversion failure to `None`.
 fn real(value: f64) -> Option<Real> {
     Real::try_from(value).ok()
 }
 
+/// Requires finite binary64 promotion with a field-specific boundary error.
+/// Does not recover pre-rounding source coordinates or an analytic sampling formula.
 fn required_real(value: f64, field: &'static str) -> Result<Real, IoError> {
     real(value).ok_or(IoError::UnrepresentableCoordinate {
         format: "Gerber",
@@ -61,6 +59,7 @@ fn required_real(value: f64, field: &'static str) -> Result<Real, IoError> {
     })
 }
 
+/// Requires a finite strictly positive boundary dimension, reporting malformed input otherwise.
 fn positive(value: f64, field: &'static str) -> Result<f64, IoError> {
     if value.is_finite() && value > 0.0 {
         Ok(value)
@@ -71,6 +70,8 @@ fn positive(value: f64, field: &'static str) -> Result<f64, IoError> {
     }
 }
 
+/// Evaluates one binary64 trigonometric circle sample at a radian angle.
+/// No finite/radius validation or rounding-error bound is established here.
 fn coord_on_circle(center: Coord<f64>, radius: f64, angle: f64) -> Coord<f64> {
     Coord {
         x: center.x + angle.cos() * radius,
@@ -78,6 +79,7 @@ fn coord_on_circle(center: Coord<f64>, radius: f64, angle: f64) -> Coord<f64> {
     }
 }
 
+/// Samples the origin-centered circle in binary64 using the supplied radian angle.
 fn origin_circle_coord(radius: f64, angle: f64) -> Coord<f64> {
     coord_on_circle(Coord { x: 0.0, y: 0.0 }, radius, angle)
 }
@@ -85,13 +87,17 @@ fn origin_circle_coord(radius: f64, angle: f64) -> Coord<f64> {
 /// Options used when exporting a native filled region to Gerber.
 #[derive(Clone, Copy, Debug)]
 pub struct GerberExportOptions {
-    /// Gerber file units. Defaults to millimeters.
+    /// Gerber file units; native coordinates are treated as millimeters and
+    /// divided by 25.4 for inch output. Defaults to millimeters.
     pub unit: Unit,
-    /// Coordinate encoding used for emitted X/Y values.
+    /// Coordinate encoding for emitted X/Y values; only absolute mode is supported.
+    /// Use the dependency's supported integer/decimal digit limits. Defaults to
+    /// leading-zero omission with four integer and six fractional digits.
     pub coordinate_format: CoordinateFormat,
 }
 
 impl Default for GerberExportOptions {
+    /// Selects millimeters, absolute coordinates and leading-zero-omitted 4.6 encoding.
     fn default() -> Self {
         Self {
             unit: Unit::Millimeters,
@@ -106,14 +112,40 @@ impl Default for GerberExportOptions {
 }
 
 /// Distinct native filled, string, and path carriers imported from Gerber.
+/// The current adapter populates only the filled region; both vector channels
+/// are empty, including for traces whose aperture exposure is filled material.
 pub type GerberImport = (CurveRegion2, Vec<CurveString2>, Vec<hypercurve::CurvePath2>);
 
 /// Parses Gerber into distinct native filled, string, and path carriers.
+/// Uses strict decisions through [`import_gerber_with_context`] and consumes its
+/// separate outcome. See that function for finite construction and subset limits.
 pub fn import_gerber(data: &[u8]) -> Result<GerberImport, IoError> {
     import_gerber_with_context(data, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Parses Gerber with the selected policy through region construction and composition.
+///
+/// Requires declared units and a parser-clean document. Source coordinates,
+/// image transforms and interpolation geometry use binary64 in millimeters.
+/// Circular flashes use 64-sided sampled polygons; obround flashes use sixteen
+/// chords per quarter corner. Region arcs and circular strokes use finite
+/// angular samples. Certification covers native decisions on these constructed
+/// polygons, not an analytic-source error bound or a complete fidelity receipt.
+///
+/// Supports region contours with EvenOdd fill, standard flashes, straight
+/// standard-aperture strokes, circular-aperture arc strokes, polarity and
+/// step-repeat. Clear exposure subtracts from preceding dark material. Aperture
+/// holes are applied to flashes but ignored for nonzero-length strokes. Aperture
+/// macros/blocks, negative unbounded image polarity, non-circular curved strokes
+/// and partial circular strokes reaching the interpolation center fail explicitly.
+/// Quadrant-mode commands are ignored; offsets use the direct signed-center rule.
+/// Image transforms act on positions/arc offsets, not the complete aperture shape;
+/// non-uniform image scaling is rejected for circular interpolation.
+///
+/// Native composition uses the selected policy; finite hull/orientation helpers
+/// use the crate's strict policy. Empty accumulated material can succeed. Both
+/// stroke-carrier vectors are empty. Counts/allocations and parser work have no
+/// total resource bound; only parser unwinding, not every downstream panic, is caught.
 pub fn import_gerber_with_context(
     data: &[u8],
     context: GeometryContext,
@@ -124,11 +156,16 @@ pub fn import_gerber_with_context(
 }
 
 /// Serializes a native filled region to Gerber.
+/// Uses default options and strict decisions, consuming the separate certainty
+/// outcome. Empty regions are rejected; output is projected and quantized, not native replay.
 pub fn export_gerber(region: &CurveRegion2) -> Result<Vec<u8>, IoError> {
     export_gerber_with_options(region, GerberExportOptions::default())
 }
 
 #[allow(clippy::result_large_err)]
+/// Runs UTF-8 preflight, catches parser unwinding and applies a fully parsed command stream.
+/// Parser diagnostics reject the entire document; no partial parse is adopted.
+/// Declared units initialize state, which must finish outside region/repeat blocks.
 fn parse_gerber(
     gerber_data: &[u8],
     decisions: &GeometryDecisions,
@@ -161,12 +198,15 @@ fn parse_gerber(
     state.finish()
 }
 
+/// Rejects non-UTF-8 bytes before invoking the external parser; does not validate syntax.
 fn preflight_gerber_input(gerber_data: &[u8]) -> Result<(), IoError> {
     std::str::from_utf8(gerber_data)
         .map_err(|error| IoError::GerberParsing(format!("Invalid UTF-8: {error}")))?;
     Ok(())
 }
 
+/// Exports with caller-selected encoding and strict native projection decisions.
+/// Consumes the separate outcome from [`export_gerber_with_options_and_context`].
 pub fn export_gerber_with_options(
     region: &CurveRegion2,
     options: GerberExportOptions,
@@ -176,6 +216,20 @@ pub fn export_gerber_with_options(
 }
 
 /// Exports projected curve topology with the selected policy and aggregate certainty.
+///
+/// Rejects incremental encoding and empty input, then requests native finite
+/// region profiles at tolerance `1e-3` in native millimeter coordinates. Material
+/// and its holes share one Gerber region block. All emitted interpolation is
+/// linear; a small circular aperture is declared for format completeness.
+///
+/// The locked serializer converts finite coordinates to integer millionths of
+/// the output unit by binary64 multiplication and truncation, then rounds again
+/// if the chosen format has fewer than six fractional digits. Consecutive equal
+/// intermediate coordinates are omitted; no post-quantization topology or
+/// noncollapse check is performed. Native projection certainty does not certify
+/// the original region survived these later encoding steps. Exact definitions
+/// and source evidence are not serialized. Options are not comprehensively
+/// prevalidated here; raw invalid digit counts can fail or panic in dependency arithmetic.
 pub fn export_gerber_with_options_and_context(
     region: &CurveRegion2,
     options: GerberExportOptions,
@@ -246,24 +300,40 @@ pub fn export_gerber_with_options_and_context(
     Ok(decisions.finish(bytes))
 }
 
+/// Modal Gerber interpreter accumulating native filled material and deferred dark exposures.
 struct ImportState<'a> {
+    /// Selected native policy and aggregate decision receipts for this import.
     decisions: &'a GeometryDecisions,
+    /// Completed material up to the last dark flush/clear subtraction.
     curve: CurveRegion2,
+    /// Consecutive dark exposure regions awaiting balanced union.
     pending_dark: Vec<CurveRegion2>,
+    /// Binary64 conversion from current file units to millimeters.
     unit_scale: f64,
+    /// Absolute versus incremental interpretation of supplied coordinates.
     coordinate_mode: CoordinateMode,
+    /// Modal point in millimeters before the image transform.
     source_current: Coord<f64>,
+    /// Current image-space point, including intermediate sampled region-arc points.
     current: Coord<f64>,
+    /// Selected D-code, resolved against the parser's aperture table when used.
     selected_aperture: Option<i32>,
+    /// Linear or oriented circular interpolation mode.
     interpolation_mode: InterpolationMode,
+    /// Dark union or clear subtraction applied to each completed exposure.
     polarity: Polarity,
+    /// Modal aperture-local mirror, scale and rotation settings.
     aperture_transform: ApertureTransform,
+    /// Modal image mapping for coordinates and circular offsets.
     image_transform: ImageTransform,
+    /// Optional grid of copies, whose spacing is fixed in millimeters when opened.
     step_repeat: Option<StepRepeatState>,
+    /// Active region-contour accumulator, if region mode is open.
     region: Option<RegionBuilder>,
 }
 
 impl<'a> ImportState<'a> {
+    /// Starts with empty material, origin coordinates, dark/linear/absolute modes and identity transforms.
     fn new(unit: Unit, decisions: &'a GeometryDecisions) -> Self {
         Self {
             decisions,
@@ -283,6 +353,7 @@ impl<'a> ImportState<'a> {
         }
     }
 
+    /// Rejects unclosed region/repeat blocks, flushes dark exposures and returns material, possibly empty.
     fn finish(mut self) -> Result<CurveRegion2, IoError> {
         if self.region.is_some() {
             return Err(IoError::MalformedInput(
@@ -298,6 +369,11 @@ impl<'a> ImportState<'a> {
         Ok(self.curve)
     }
 
+    /// Updates modal state or executes one command in document order.
+    /// Region closure constructs and applies an exposure. Metadata, definitions
+    /// already held by the parser, quadrant modes and EOF are ignored here; EOF
+    /// does not itself terminate this command loop. Image-setting changes do not
+    /// retroactively transform stored positions or earlier exposures.
     fn apply_command(
         &mut self,
         command: &Command,
@@ -406,6 +482,8 @@ impl<'a> ImportState<'a> {
         Ok(())
     }
 
+    /// Opens/closes one nonnested repeat grid, validating positive counts and finite scaled spacing.
+    /// Zero/negative spacing is allowed. Image transforms do not remap these grid offsets.
     fn apply_step_repeat(&mut self, step_repeat: &StepAndRepeat) -> Result<(), IoError> {
         self.step_repeat = match *step_repeat {
             StepAndRepeat::Open {
@@ -450,6 +528,8 @@ impl<'a> ImportState<'a> {
         Ok(())
     }
 
+    /// Expands the current repeat grid and queues dark copies or subtracts clear copies in order.
+    /// Clear exposure first flushes pending dark material; native failures become geometry text.
     fn apply_polarity(&mut self, curve: CurveRegion2) -> Result<(), IoError> {
         let curves = repeat_curves(curve, self.step_repeat, self.decisions)?;
         for curve in curves {
@@ -479,6 +559,8 @@ impl<'a> ImportState<'a> {
     /// object appears. Pairwise rounds prevent a large accumulated region from
     /// being rebuilt for every flash or region while preserving command-order
     /// semantics at each clear boundary.
+    /// Each union contributes certainty through `decisions`. On failure, consumed
+    /// pending scratch state is not restored; the outer importer abandons this state.
     fn flush_pending_dark(&mut self) -> Result<(), IoError> {
         if self.pending_dark.is_empty() {
             return Ok(());
@@ -521,6 +603,12 @@ impl<'a> ImportState<'a> {
         Ok(())
     }
 
+    /// Executes a move, interpolation or flash using current coordinate/image/aperture modes.
+    /// Missing circular offsets fall back to a line. Region interpolation appends
+    /// sampled arc points without requiring an aperture; outside regions, strokes
+    /// require a selected defined aperture. Flashes also apply while region mode
+    /// is open, independently of its contour accumulator. Errors abort the import
+    /// rather than publishing partially accumulated material.
     fn apply_operation(
         &mut self,
         operation: &Operation,
@@ -676,27 +764,40 @@ impl<'a> ImportState<'a> {
     }
 }
 
+/// Finite polyline contours collected during a G36/G37 region block.
 struct RegionBuilder {
+    /// Active contour, possibly not yet explicitly closed.
     current_ring: Vec<[f64; 2]>,
+    /// Completed explicitly closed contours awaiting EvenOdd native admission.
     rings: Vec<Vec<[f64; 2]>>,
 }
 
+/// Validated repeat counts and finite spacing captured when a step-repeat block opens.
 #[derive(Clone, Copy, Debug)]
 struct StepRepeatState {
+    /// Number of copies along X, including the zero-offset copy.
     repeat_x: u32,
+    /// Number of copies along Y, including the zero-offset copy.
     repeat_y: u32,
+    /// Millimeter X spacing, before multiplication by the instance index.
     distance_x: f64,
+    /// Millimeter Y spacing, before multiplication by the instance index.
     distance_y: f64,
 }
 
+/// Modal aperture-local settings; dimensions absorb scale before mirror/rotation application.
 #[derive(Clone, Copy, Debug)]
 struct ApertureTransform {
+    /// Sign changes applied in the local aperture frame.
     mirroring: Mirroring,
+    /// Uniform dimension multiplier, validated only when dimensions are consumed.
     scaling: Scaling,
+    /// Counterclockwise rotation in degrees after mirroring.
     rotation: Rotation,
 }
 
 impl Default for ApertureTransform {
+    /// Selects no mirror, unit dimension scale and zero-degree rotation.
     fn default() -> Self {
         Self {
             mirroring: Mirroring::None,
@@ -706,26 +807,40 @@ impl Default for ApertureTransform {
     }
 }
 
+/// Modal finite image transform applied to source positions and offset vectors.
 #[derive(Clone, Copy, Debug)]
 struct ImageTransform {
+    /// Identity or swapped source axes, applied first.
     axis_select: AxisSelect,
+    /// Image-axis sign changes applied after component scaling.
     mirroring: ImageMirroring,
+    /// File-unit translation applied last to points, never to vectors.
     offset: ImageOffset,
+    /// Independent image-axis scale factors.
     scaling: ImageScaling,
+    /// Discrete counterclockwise image rotation, evaluated through binary64 trigonometry.
     rotation: ImageRotation,
 }
 
+/// Finite center/radius/sweep interpretation of one circular interpolation command.
 #[derive(Clone, Debug)]
 struct CircularInterpolation {
+    /// Image-space start plus transformed I/J offset, in millimeters.
     center: Coord<f64>,
+    /// Positive start-to-center binary64 hypot radius.
     radius: f64,
+    /// Start polar angle in radians.
     start_angle: f64,
+    /// Signed radian travel after mode and image-orientation handling.
     sweep: f64,
+    /// Whether start/end binary64 coordinates compare exactly equal.
     full_circle: bool,
+    /// Angular samples excluding the start, with a recomputed finite end sample.
     points: Vec<Coord<f64>>,
 }
 
 impl Default for ImageTransform {
+    /// Selects AXBY, no mirror/offset, unit scales and no image rotation.
     fn default() -> Self {
         Self {
             axis_select: AxisSelect::AXBY,
@@ -738,6 +853,7 @@ impl Default for ImageTransform {
 }
 
 impl RegionBuilder {
+    /// Starts without a contour or completed rings.
     const fn new() -> Self {
         Self {
             current_ring: Vec::new(),
@@ -745,12 +861,14 @@ impl RegionBuilder {
         }
     }
 
+    /// Finishes the prior ring before starting a new one at the supplied finite point.
     fn move_to(&mut self, point: Coord<f64>) -> Result<(), IoError> {
         self.finish_ring()?;
         self.current_ring.push(point_from_coord(point));
         Ok(())
     }
 
+    /// Seeds an empty ring with the modal start, then appends the end without deduplication.
     fn line_to(&mut self, start: Coord<f64>, end: Coord<f64>) {
         if self.current_ring.is_empty() {
             self.current_ring.push(point_from_coord(start));
@@ -758,6 +876,9 @@ impl RegionBuilder {
         self.current_ring.push(point_from_coord(end));
     }
 
+    /// Moves a nonempty ring to completed storage after requiring three stored entries.
+    /// Closes by exact binary64 endpoint equality; distinct-point/nondegeneracy
+    /// checks are left to native contour admission, and an absent ring is a no-op.
     fn finish_ring(&mut self) -> Result<(), IoError> {
         if self.current_ring.is_empty() {
             return Ok(());
@@ -777,6 +898,9 @@ impl RegionBuilder {
         Ok(())
     }
 
+    /// Promotes closed finite contours and admits their EvenOdd filled region under the selected policy.
+    /// Requires at least one ring. Native contour/arrangement failures remain text;
+    /// exactness after promotion is relative to the finite contour coordinates.
     fn into_curve(mut self, decisions: &GeometryDecisions) -> Result<CurveRegion2, IoError> {
         self.finish_ring()?;
 
@@ -807,18 +931,9 @@ impl RegionBuilder {
     }
 }
 
-/// Emit native hypercurve region profiles as Gerber regions grouped by
-/// material-contour ownership.
-///
-/// Gerber regions are finite serialization records; `CurveRegion2` remains the
-/// source of topology. Grouping holes by their containing material contour
-/// follows the point-in-polygon classification family surveyed by Hormann and
-/// Agathos, "The point in polygon problem for arbitrary polygons,"
-/// *Computational Geometry* 20(3), 2001
-/// (<https://doi.org/10.1016/S0925-7721(01)00012-8>), while keeping exact
-/// hyper geometry internal follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+/// Emits each native profile's material and owned holes in one G36/G37 block.
+/// Ownership comes from the supplied profiles; this adapter does not reclassify
+/// nesting. An error can leave partial commands, discarded by the outer exporter.
 fn emit_region_profiles(
     profiles: &[FiniteRegionProfile2],
     commands: &mut Vec<Command>,
@@ -835,6 +950,10 @@ fn emit_region_profiles(
     Ok(())
 }
 
+/// Emits a nonempty ring as a move followed by linear draws and closure.
+/// Removes consecutive equal millionth-unit coordinates before serialization;
+/// coarser formatting can collapse further points. Does not require three
+/// surviving vertices or validate area/topology after quantization.
 fn emit_point_ring(
     ring: &[[f64; 2]],
     commands: &mut Vec<Command>,
@@ -893,6 +1012,7 @@ fn emit_point_ring(
     Ok(())
 }
 
+/// Converts X then Y to fixed-point output numbers with the selected format metadata.
 fn gerber_coordinates(
     coord: Coord<f64>,
     options: GerberExportOptions,
@@ -902,6 +1022,9 @@ fn gerber_coordinates(
     Ok(Coordinates::new(x, y, options.coordinate_format))
 }
 
+/// Converts native millimeters to the output unit and validates its fixed-point range.
+/// The dependency truncates binary64 values to millionths; later serialization
+/// rounds to fewer decimal places when requested. This is a lossy boundary.
 fn export_coordinate_number(
     value: f64,
     options: GerberExportOptions,
@@ -913,6 +1036,9 @@ fn export_coordinate_number(
     Ok(CoordinateNumber::try_from(value)?.validate(&options.coordinate_format)?)
 }
 
+/// Resolves modal coordinates to source and image-transformed millimeter positions.
+/// Missing absolute axes retain their source value; missing incremental axes
+/// contribute zero. Binary64 unit conversion and arithmetic are not validated here.
 fn resolve_coordinates(
     coords: &Coordinates,
     source_current: Coord<f64>,
@@ -937,6 +1063,8 @@ fn resolve_coordinates(
     (source, image_transform.apply_point(source, unit_scale))
 }
 
+/// Resolves I/J offsets, defaulting missing axes to zero, then transforms the vector.
+/// Unit scaling precedes image scaling/mirroring/rotation; translation is excluded.
 fn resolve_offset(
     offset: &CoordinateOffset,
     unit_scale: f64,
@@ -950,6 +1078,8 @@ fn resolve_offset(
 }
 
 impl ImageTransform {
+    /// Tests equality of finite absolute scale factors using the crate's strict policy.
+    /// Zero scales also compare equal: this is not a nonsingularity certificate.
     fn preserves_circles(self) -> bool {
         let (Ok(a), Ok(b)) = (
             Real::try_from(self.scaling.a.abs()),
@@ -961,6 +1091,9 @@ impl ImageTransform {
             == Some(Ordering::Equal)
     }
 
+    /// Classifies the binary64 determinant of transformed unit axes with strict decisions.
+    /// Returns `None` for failed promotion/decision and false for zero determinant.
+    /// The promoted determinant does not recover exact pre-rounding transform data.
     fn reverses_orientation(self) -> Option<bool> {
         let x = self.apply_vector(Coord { x: 1.0, y: 0.0 });
         let y = self.apply_vector(Coord { x: 0.0, y: 1.0 });
@@ -970,6 +1103,8 @@ impl ImageTransform {
             .map(|sign| sign == hyperlimit::Sign::Negative)
     }
 
+    /// Applies axis exchange, scale, mirror, rotation, then unit-scaled translation.
+    /// Arithmetic is binary64; finiteness is checked by downstream consumers.
     fn apply_point(self, point: Coord<f64>, unit_scale: f64) -> Coord<f64> {
         let mut point = match self.axis_select {
             AxisSelect::AXBY => point,
@@ -998,6 +1133,7 @@ impl ImageTransform {
         point
     }
 
+    /// Applies the image's linear part in binary64, excluding its translation.
     fn apply_vector(self, vector: Coord<f64>) -> Coord<f64> {
         let mut vector = match self.axis_select {
             AxisSelect::AXBY => vector,
@@ -1024,6 +1160,12 @@ impl ImageTransform {
     }
 }
 
+/// Constructs one standard aperture exposure, applies aperture settings and places it.
+/// Dimensions are unit/scaling-adjusted before native promotion. Circles use 64
+/// sides; obround corners use sixteen chords per quarter. Supported aperture
+/// holes are subtracted under the selected policy. Polygon hole validation uses
+/// the circumdiameter, not a separate proof that the hole fits inside every edge.
+/// Macros fail explicitly; native construction outcomes feed the caller's receipt.
 fn flash_to_curve(
     aperture: &Aperture,
     center: Coord<f64>,
@@ -1159,6 +1301,9 @@ fn flash_to_curve(
     })
 }
 
+/// Subtracts a centered aperture hole with native regularized Boolean decisions.
+/// Consumes operation certainty and maps failures to Gerber geometry diagnostics;
+/// this operation alone does not certify containment of the hole in the aperture.
 fn add_aperture_hole(
     outer: CurveRegion2,
     hole: CurveRegion2,
@@ -1173,11 +1318,16 @@ fn add_aperture_hole(
 }
 
 impl ApertureTransform {
+    /// Multiplies a dimension by the modal binary64 scale; callers validate positivity.
     fn scale_length(self, value: f64) -> f64 {
         value * self.scaling.scale
     }
 }
 
+/// Builds a centered rectangle or sampled obround with an optional circular hole.
+/// Requires positive scaled dimensions; an obround uses half the smaller dimension
+/// as radius and sixteen chords per quarter. A hole must be positive and smaller
+/// than both dimensions. Mirror/rotation are applied by the caller afterward.
 fn aperture_rect_curve(
     rect: &Rectangular,
     unit_scale: f64,
@@ -1258,6 +1408,10 @@ fn aperture_rect_curve(
     Ok(curve)
 }
 
+/// Builds a straight standard-aperture exposure from the hull of endpoint outlines.
+/// Equal endpoints use flash construction, including holes. Nonzero-length strokes
+/// ignore aperture holes; circles use sampled caps, other standard apertures use
+/// finite outlines, and macros fail. Hull predicates use the crate's strict policy.
 fn trace_to_curve(
     aperture: &Aperture,
     start: Coord<f64>,
@@ -1301,6 +1455,9 @@ fn trace_to_curve(
     }
 }
 
+/// Forms a finite capsule from the hull of two translated 64-point circles.
+/// Requires positive aperture radius and promotes the sampled hull to a native
+/// region. No analytic capsule error bound is established by these samples.
 fn linear_circular_sweep_curve(
     start: Coord<f64>,
     end: Coord<f64>,
@@ -1319,6 +1476,8 @@ fn linear_circular_sweep_curve(
     polygon_from_coords(convex_hull(points)?, decisions)
 }
 
+/// Dispatches circular-aperture arc strokes, with scaled-radius validation in the sweep builder.
+/// Ignores the aperture's hole; other aperture families fail explicitly.
 fn trace_arc_to_curve(
     aperture: &Aperture,
     arc: &CircularInterpolation,
@@ -1344,12 +1503,11 @@ fn trace_arc_to_curve(
     }
 }
 
-/// Construct the complete bounded projection of a circular Gerber interpolation
-/// swept by a circular aperture.
-///
-/// The boundary is an annular sector with semicircular end caps. Full circles
-/// become a disk or annulus. This retains the command's topology directly and
-/// only samples its circular boundary at the finite file-import boundary.
+/// Constructs a polygonal circular stroke from finite outer/inner arcs and end caps.
+/// Full turns use 96-point circles and become a disk or annulus; partial turns
+/// require a positive inner radius and use angular sampling with semicircular caps.
+/// Native region construction resolves the sampled boundary. Sampling alone does
+/// not certify the analytic sweep's topology or a geometric approximation bound.
 fn circular_arc_sweep_curve(
     arc: &CircularInterpolation,
     aperture_radius: f64,
@@ -1424,6 +1582,10 @@ fn circular_arc_sweep_curve(
     polygon_from_coords(boundary, decisions)
 }
 
+/// Samples a standard aperture outline for a straight-stroke hull, ignoring holes.
+/// Uses 64 circle points, four rectangle corners, sixteen segments per obround
+/// quarter, or the polygon's vertex count. Dimensions absorb unit/aperture scale;
+/// polygon rotation and aperture mirror/rotation act on finite coordinates.
 fn aperture_outline_points(
     aperture: &Aperture,
     unit_scale: f64,
@@ -1498,6 +1660,12 @@ fn aperture_outline_points(
         .collect())
 }
 
+/// Interprets a signed-center circular command and samples its directed boundary.
+/// Requires positive finite start radius and finite end radius within a scaled
+/// binary64 allowance. Exact coordinate equality selects a full turn; direction
+/// combines the command mode and image orientation. Samples omit the start and
+/// recompute the endpoint trigonometrically, so it can differ from the literal end.
+/// Neither the radial allowance nor angular sampling certifies source fidelity.
 fn circular_interpolation(
     start: Coord<f64>,
     end: Coord<f64>,
@@ -1518,9 +1686,9 @@ fn circular_interpolation(
     let end_radius = (end.x - center.x).hypot(end.y - center.y);
     let full_circle = nearly_same(start, end);
     let radius_scale = radius.max(end_radius).max(1.0);
-    // Gerber-parser coordinates cross this adapter as binary floats. Bound
-    // only the accumulated subtraction/hypot roundoff in ULPs; this is not a
-    // retained geometric tolerance or a topology predicate.
+    // Finite-coordinate admission allowance, scaled to the observed radii.
+    // This heuristic does not prove that the original decimal endpoints share
+    // a circle, nor is it retained as a source-fidelity or topology certificate.
     let radius_roundoff_bound = 32.0 * f64::EPSILON * radius_scale;
     if !end_radius.is_finite()
         || (!full_circle && (end_radius - radius).abs() > radius_roundoff_bound)
@@ -1562,6 +1730,11 @@ fn circular_interpolation(
     })
 }
 
+/// Samples a directed arc, including both trigonometrically evaluated endpoints.
+/// Adjusts a conflicting sweep sign by one full turn and uses at least
+/// `min_segments`, otherwise enough segments for a nominal pi/24 angular step.
+/// Callers supply finite geometry and positive minimum counts; there is no
+/// adaptive distance bound or allocation/work budget here.
 fn arc_points(
     center: Coord<f64>,
     radius: f64,
@@ -1587,6 +1760,8 @@ fn arc_points(
         .collect()
 }
 
+/// Returns an unclosed binary64 circle sample with `segments` equally spaced angles.
+/// Zero segments yields an empty vector; radius/finiteness are caller responsibilities.
 fn circle_points(radius: f64, segments: usize) -> Vec<Coord<f64>> {
     (0..segments)
         .map(|i| {
@@ -1596,6 +1771,7 @@ fn circle_points(radius: f64, segments: usize) -> Vec<Coord<f64>> {
         .collect()
 }
 
+/// Adds a finite center to origin-centered circle samples using binary64 arithmetic.
 fn translated_circle_points(
     center: Coord<f64>,
     radius: f64,
@@ -1610,6 +1786,10 @@ fn translated_circle_points(
         .collect()
 }
 
+/// Samples a centered rounded rectangle, clamping radius to half either dimension.
+/// Nonpositive radius yields four sharp corners. Otherwise each quarter includes
+/// both endpoints, retaining possible duplicates; callers must provide a positive
+/// segment count and valid dimensions. No analytic error bound is computed.
 fn rounded_rect_points(
     width: f64,
     height: f64,
@@ -1658,6 +1838,10 @@ fn rounded_rect_points(
         .collect()
 }
 
+/// Closes at least three coordinate entries and admits their finite material contour.
+/// Native contour/region construction owns validation and topology; entry count
+/// alone does not prove distinct vertices. Certainty is consumed for the promoted
+/// polygon, while geometry failures are converted to format-specific diagnostics.
 fn polygon_from_coords(
     mut points: Vec<Coord<f64>>,
     decisions: &GeometryDecisions,
@@ -1687,10 +1871,15 @@ fn polygon_from_coords(
         })
 }
 
+/// Copies the local XY record into the finite contour boundary's array layout.
 const fn point_from_coord(coord: Coord<f64>) -> [f64; 2] {
     [coord.x, coord.y]
 }
 
+/// Materializes repeat instances in X-major/Y-minor order, consuming translation receipts.
+/// Without repeat state, returns the original region. Count multiplication is
+/// checked, but allocations/work have no total bound. Translation products are
+/// binary64 before exact promotion; zero spacing can retain duplicate instances.
 fn repeat_curves(
     curve: CurveRegion2,
     step_repeat: Option<StepRepeatState>,
@@ -1747,6 +1936,8 @@ fn repeat_curves(
     Ok(curves)
 }
 
+/// Applies native aperture mirroring followed by rotation, retaining policy receipts.
+/// Uniform aperture scale has already been applied to dimensions and is not repeated.
 fn apply_aperture_transform(
     curve: CurveRegion2,
     aperture_transform: ApertureTransform,
@@ -1781,6 +1972,7 @@ fn apply_aperture_transform(
     })
 }
 
+/// Mirrors then rotates a sampled aperture point in binary64; dimensions already include scale.
 fn apply_aperture_transform_to_coord(
     point: Coord<f64>,
     aperture_transform: ApertureTransform,
@@ -1798,6 +1990,8 @@ fn apply_aperture_transform_to_coord(
     rotate_coord(point, aperture_transform.rotation.rotation)
 }
 
+/// Rotates a finite point using binary64 degree conversion and trigonometry.
+/// Even quadrant angles use this numerical path; no exact-axis shortcut or validation occurs.
 fn rotate_coord(point: Coord<f64>, degrees: f64) -> Coord<f64> {
     let radians = degrees.to_radians();
     let (sin, cos) = radians.sin_cos();
@@ -1806,6 +2000,7 @@ fn rotate_coord(point: Coord<f64>, degrees: f64) -> Coord<f64> {
     Coord { x, y }
 }
 
+/// Maps the format's four discrete image rotations to counterclockwise degrees.
 const fn image_rotation_degrees(rotation: ImageRotation) -> f64 {
     match rotation {
         ImageRotation::None => 0.0,
@@ -1815,6 +2010,10 @@ const fn image_rotation_degrees(rotation: ImageRotation) -> f64 {
     }
 }
 
+/// Builds an Andrew monotone-chain hull with exact promotion of finite turn inputs.
+/// Sorts lexicographically, removes exact duplicate coordinates and discards
+/// non-left turns, including collinear interiors. At most three distinct inputs
+/// return directly without turn validation; native contour admission follows later.
 fn convex_hull(mut points: Vec<Coord<f64>>) -> Result<Vec<Coord<f64>>, IoError> {
     // Andrew's monotone-chain hull keeps the finite Gerber aperture sweep
     // bounded, while turn classification is delegated to the shared hyperreal
@@ -1855,6 +2054,9 @@ fn convex_hull(mut points: Vec<Coord<f64>>) -> Result<Vec<Coord<f64>>, IoError> 
     Ok(lower)
 }
 
+/// Requires a strictly positive native orientation under the crate's strict policy.
+/// Finite binary coordinates are promoted exactly; zero/negative returns false,
+/// conversion failure or an undecided sign returns an error rather than a guessed turn.
 fn is_left_turn(origin: Coord<f64>, a: Coord<f64>, b: Coord<f64>) -> Result<bool, IoError> {
     let origin = real(origin.x)
         .zip(real(origin.y))
@@ -1890,10 +2092,14 @@ fn is_left_turn(origin: Coord<f64>, a: Coord<f64>, b: Coord<f64>) -> Result<bool
     }
 }
 
+/// Tests componentwise binary64 equality despite the historical name; uses no tolerance.
+/// Signed zeros compare equal and NaNs do not compare equal.
 fn nearly_same(a: Coord<f64>, b: Coord<f64>) -> bool {
     a.x == b.x && a.y == b.y
 }
 
+/// Returns the binary64 millimeter conversion factor (one or the literal `25.4`).
+/// The inch factor is not represented here as the exact rational 127/5.
 const fn unit_scale(unit: Unit) -> f64 {
     match unit {
         Unit::Millimeters => 1.0,
