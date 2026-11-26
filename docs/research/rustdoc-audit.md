@@ -6516,6 +6516,83 @@ and `/tmp/csgrs-rustdoc-hyperlimit-report-harness-{check,minimal-check}.log`.
 This advances the complete-repository audit without closing the remaining
 benchmark, trace, fuzz, example, support-file, or wider kernel work.
 
+## Hyperlimit benchmark dispatch-trace helper
+
+Audited all 162 baseline lines of `crates/hyperlimit/benches/dispatch_trace.rs`
+at `eeb18f2e4`, including both feature implementations and crate-visible aliases.
+Ownership is diagnostic sampling/reporting for the predicate benchmark. Relevant
+contracts are P5 and the admission protocol's distinction between observed
+dispatch paths, resource measurements, correctness, and completed equivalent
+workloads. Input is caller-created names/case slices/closures, feature selection,
+thread-local trace state, retained process-global rows, and the output directory.
+The missing witness was accurate public/private/conditional Rustdoc with checked
+feature-specific rendering. All 17 declarations/re-exports now have docs; only
+comments changed, with executable source identical after comment/blank removal.
+
+The process-global enable flag is sticky and begin-run does not clear retained
+rows. Sampling resets, records, and drains the calling thread's scalar trace
+state. It does not automatically collect worker threads, and nesting can erase
+an enclosing trace's counters even though the scalar guard restores the previous
+recording flag. Samples with an empty dispatch vector are discarded even when
+rational counters exist; an older same-name row remains. Nonempty samples replace
+same-name rows. Sample/name conversion panics propagate, and poisoned row mutexes
+panic; there is no rollback or recovery protocol here. Disabled-feature shims do
+not invoke callbacks or convert names, but arguments/captured values are still
+constructed by the caller and dropped normally.
+
+The writer holds the global map mutex through formatting and direct file I/O,
+keeps the rows afterward, and writes dispatch_trace.md relative to process cwd.
+An empty map leaves an existing report untouched. Errors print without returning
+failure; writes are not atomic. Row labels are not Markdown-escaped. Correlation
+categories can overlap, and rational peak operand bits are not heap-memory usage.
+Neither trace counts nor this report establish correctness, certainty, completed
+workload, or non-instrumented timing. No row-count/retained-memory bound exists.
+
+Supporting reads of `hyperreal/src/dispatch_trace.rs` at lines 100–225,
+430–550, and 700–765 confirm thread-local recording, reset/drain, guard behavior,
+and summary delegation. These are excerpts, not a whole-file scalar trace audit.
+Revisited predicate-benchmark imports, selected sample call sites, and the
+previously read trace-mode main path to confirm this helper is called outside
+the Criterion timing loops. The complete benchmark workload file still awaits
+semantic/Rustdoc review.
+
+Validation after final edits:
+
+- Focused Rustfmt, `git diff --check`, scoped docs on all 17 declarations/aliases,
+  and comment-stripped source identity passed. Existing lint attributes and
+  diagnostic behavior remain untouched.
+- `cargo check --locked -p hyperlimit --bench predicates --offline -j2` passed
+  with `--all-features`, `--no-default-features`, and
+  `--no-default-features --features parallel`. These exercise the recorder,
+  minimal shims, and parallel-only row shim respectively.
+- Bare `cargo rustdoc --bench predicates` omitted development/self dependencies
+  in this environment and failed with unresolved imports. Supplying direct
+  dependency metadata alone still lacked transitive search paths. Recovered
+  without code/manifest changes: collect compiler-artifact records from the
+  corresponding successful `cargo check --message-format=json`, pass checked
+  rmeta files for the library/dev dependencies via `--extern`, and add dependency
+  search paths for their artifact directories. Metadata here is distributed
+  under debug/build/package/hash/out, not solely debug/deps.
+- With those matching inputs, `cargo rustdoc --locked -p hyperlimit --bench
+  predicates` passed for all three feature configurations, using
+  `--document-private-items -D warnings -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links`. Exact augmented command arrays are saved
+  in the per-configuration doc-command JSON files alongside the artifact lists.
+  Verified 11 complete doc groups/pages with all features, seven with minimal
+  features, and eight with parallel only. Rustdoc omits crate-visible import
+  re-exports even in private docs: their one/two comments are source-reviewed and
+  compiled, not counted as rendered; underlying function docs render correctly.
+- No trace workload, benchmark, test, or report writer ran. No dispatch counts,
+  memory/performance measurements, or implementation correctness claims were
+  newly established. Shared target storage remains approximately 1.6 GiB with
+  incremental compilation disabled. Full workflow checks remain owner-waived.
+
+Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-bench-trace-{all,minimal,parallel}`
+with `-check.log`, `-artifacts.jsonl`, `-doc-command.json`, and `-doc.log` suffixes.
+The initial bare-command failure is retained in the separate `bench-trace-doc.log`.
+The helper review is complete; remaining benchmark workloads, retained-fuzz
+support, perf-atlas example, fuzz targets, and wider repository work remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
