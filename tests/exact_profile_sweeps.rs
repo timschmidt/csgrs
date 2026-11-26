@@ -4,8 +4,12 @@
 //!
 //! The fixtures use non-dyadic, irrational and sub-binary64 coordinates, which
 //! a finite profile projection would round. Volumes are compared with
-//! independently derived exact values; revolution checks only the authored
-//! meridian, since a segmented revolution is not the analytic solid.
+//! independently derived exact values. Revolution witnesses check authored
+//! meridians, signed-radius phase, finite sector membership and oriented cap
+//! winding for the segmented polyhedra, not analytic solids of revolution.
+//! Finite query grids and volume comparisons are scoped regression witnesses,
+//! not general proofs of set equality or closure for arbitrary profiles.
+//! Optional STL replay is explicitly qualified as coordinate projection.
 
 use csgrs::errors::{ValidationError, ValidationErrorKind};
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, curve, solid};
@@ -15,18 +19,23 @@ use hyperlimit::PredicatePolicy;
 use hypermesh::{BooleanOp, MeshCertainty, MeshContext};
 use std::cmp::Ordering;
 
+/// Strict native policy for independent mesh predicates and containment probes.
 const STRICT_MESH: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
+/// Modeling policies exercised by fixtures whose results must remain certified.
 const CONTEXTS: [GeometryContext; 2] =
     [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512];
 
+/// Exact rational fixture literal; a zero denominator is a test-author error.
 fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / Real::from(denominator)).expect("nonzero denominator")
 }
 
+/// Promotes a signed integer without a finite-coordinate round trip.
 fn int(value: i64) -> Real {
     Real::from(value)
 }
 
+/// Positive irrational width used to detect loss of native scalar coordinates.
 fn sqrt2() -> Real {
     Real::from(2).sqrt().expect("two is nonnegative")
 }
@@ -43,6 +52,7 @@ fn power_of_two(exponent: i32) -> Real {
     }
 }
 
+/// Closes a nonempty fixture polygon, optionally reversing its authored order.
 fn ring(points: &[[Real; 2]], reversed: bool) -> Contour2 {
     let mut points = points.to_vec();
     if reversed {
@@ -52,6 +62,7 @@ fn ring(points: &[[Real; 2]], reversed: bool) -> Contour2 {
     Contour2::from_real_ring(&points).expect("valid ring fixture")
 }
 
+/// Four unclosed rectangle corners; ordered bounds give counterclockwise order.
 fn rectangle(x0: &Real, y0: &Real, x1: &Real, y1: &Real) -> Vec<[Real; 2]> {
     vec![
         [x0.clone(), y0.clone()],
@@ -61,6 +72,10 @@ fn rectangle(x0: &Real, y0: &Real, x1: &Real, y1: &Real) -> Vec<[Real; 2]> {
     ]
 }
 
+/// Admits explicit material/hole roles with opposite authored loop orientations.
+///
+/// Reversal changes both orders without swapping their declared roles. Invalid
+/// fixture topology is a test-author error and panics during native admission.
 fn region(
     materials: &[Vec<[Real; 2]>],
     holes: &[Vec<[Real; 2]>],
@@ -76,6 +91,7 @@ fn region(
     .expect("valid region fixture")
 }
 
+/// Requires a strict equality decision; inequality and undecided both fail.
 fn strictly_equal(left: &Real, right: &Real) -> bool {
     matches!(
         hyperlimit::compare_reals(left, right, PredicatePolicy::STRICT),
@@ -86,6 +102,10 @@ fn strictly_equal(left: &Real, right: &Real) -> bool {
     )
 }
 
+/// Sums oriented scalar triple products: six times signed enclosed volume.
+///
+/// Assumes valid triangle indices. Closure, orientation and overlap are not
+/// checked here; overlapping shells contribute with winding multiplicity.
 fn six_volume(mesh: &TriangleMesh) -> Real {
     mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
         let [a, b, c] = triangle
@@ -95,8 +115,12 @@ fn six_volume(mesh: &TriangleMesh) -> Real {
     })
 }
 
-/// Requires a certified closed manifold whose construction claims no
-/// sampling or coordinate projection, and returns its exact six-fold volume.
+/// Requires certified unique nondegenerate faces and geometric edge pairing,
+/// with no source sampling or coordinate projection, then returns six-volume.
+///
+/// The native predicates do not test vertex links, embedding or unit winding.
+/// In particular, overlapping closed shells can pass; independent winding
+/// witnesses below distinguish those from regularized material.
 fn exact_solid(
     outcome: Result<csgrs::GeometryOutcome<TriangleMesh>, ValidationError>,
     label: &str,
@@ -125,6 +149,9 @@ fn exact_solid(
     (mesh, volume)
 }
 
+/// Tests exact membership in the position buffer, not containment in material.
+///
+/// Every coordinate must be strictly equal; unresolved equality is not a match.
 fn contains_point(mesh: &TriangleMesh, point: &Point3) -> bool {
     mesh.positions.iter().any(|candidate| {
         strictly_equal(&candidate.x, &point.x)
@@ -133,6 +160,7 @@ fn contains_point(mesh: &TriangleMesh, point: &Point3) -> bool {
     })
 }
 
+/// Two-point path from the origin along Z for the prism sweep fixtures.
 fn straight_path(length: Real) -> Vec<Point3> {
     vec![
         Point3::new(Real::zero(), Real::zero(), Real::zero()),
@@ -194,6 +222,7 @@ fn check_prisms(region: &CurveRegion2, area: &Real, vertices: &[[Real; 2]], labe
     }
 }
 
+/// A width of 1/3 survives three prism constructors with exact vertices/volume.
 #[test]
 fn third_width_profile_keeps_exact_cap_and_volume() {
     let (zero, one, third) = (Real::zero(), Real::one(), q(1, 3));
@@ -206,6 +235,7 @@ fn third_width_profile_keeps_exact_cap_and_volume() {
     );
 }
 
+/// The same prism witnesses retain a positive square-root width under both policies.
 #[test]
 fn irrational_width_profile_keeps_exact_cap_and_volume() {
     let (zero, one, width) = (Real::zero(), Real::one(), sqrt2());
@@ -218,6 +248,7 @@ fn irrational_width_profile_keeps_exact_cap_and_volume() {
     );
 }
 
+/// A slanted rational parallelogram retains its determinant area in each prism.
 #[test]
 fn rational_shear_profile_keeps_exact_cap_and_volume() {
     let points = vec![
@@ -235,6 +266,7 @@ fn rational_shear_profile_keeps_exact_cap_and_volume() {
     );
 }
 
+/// Rectangular annulus fixture, its exact area 66/9, and both boundary vertex sets.
 fn holed_profile(reversed: bool) -> (CurveRegion2, Real, Vec<[Real; 2]>) {
     let outer = rectangle(&Real::zero(), &Real::zero(), &q(10, 3), &q(7, 3));
     let hole = rectangle(&q(1, 3), &q(1, 3), &q(2, 3), &q(5, 3));
@@ -246,6 +278,7 @@ fn holed_profile(reversed: bool) -> (CurveRegion2, Real, Vec<[Real; 2]>) {
     )
 }
 
+/// Reversing authored loops preserves the annulus's cap vertices and prism volume.
 #[test]
 fn reversed_material_and_hole_loops_keep_their_roles() {
     for reversed in [false, true] {
@@ -254,6 +287,7 @@ fn reversed_material_and_hole_loops_keep_their_roles() {
     }
 }
 
+/// Both disconnected rectangles contribute their vertices and additive prism volume.
 #[test]
 fn disconnected_profiles_keep_every_component() {
     let left = rectangle(&Real::zero(), &Real::zero(), &q(1, 3), &q(1, 3));
@@ -270,6 +304,7 @@ fn disconnected_profiles_keep_every_component() {
     }
 }
 
+/// A width of 2^-80 beside X=1 must survive exact prism construction.
 #[test]
 fn sub_binary64_sliver_keeps_its_width() {
     let width = power_of_two(-80);
@@ -283,6 +318,7 @@ fn sub_binary64_sliver_keeps_its_width() {
     );
 }
 
+/// Two holes separated by 2^-80 retain their vertices and area at X near 2^60.
 #[test]
 fn holes_separated_below_binary64_stay_distinct_under_translation() {
     let shift = power_of_two(60);
@@ -306,6 +342,10 @@ fn holes_separated_below_binary64_stay_distinct_under_translation() {
     );
 }
 
+/// Signed quarter turns retain both exact meridians and positive oriented volume.
+///
+/// Exercises an irrationally translated holed profile, both loop orders and
+/// both modeling policies; no analytic revolution-volume equality is asserted.
 #[test]
 fn quarter_revolution_preserves_the_authored_meridian() {
     for reversed in [false, true] {
@@ -347,6 +387,7 @@ fn quarter_revolution_preserves_the_authored_meridian() {
     }
 }
 
+/// Four-slice full turns pass native edge/face checks and retain the start meridian.
 #[test]
 fn full_revolution_of_an_exact_ring_is_closed_without_caps() {
     let outer = rectangle(&q(1, 3), &Real::zero(), &q(5, 3), &q(4, 3));
@@ -370,6 +411,7 @@ fn full_revolution_of_an_exact_ring_is_closed_without_caps() {
     }
 }
 
+/// Partial and full turns reuse exactly one position per authored axis vertex.
 #[test]
 fn revolution_profile_touching_the_axis_collapses_axis_vertices() {
     let points = vec![
@@ -392,6 +434,9 @@ fn revolution_profile_touching_the_axis_collapses_axis_vertices() {
     }
 }
 
+/// Negative radii retain the signed meridian and positive volume for either loop order.
+///
+/// Includes both quarter-turn directions and a positive full turn.
 #[test]
 fn partial_revolution_at_negative_radius_is_outward_oriented() {
     let points = rectangle(&q(-5, 3), &Real::zero(), &q(-1, 3), &Real::one());
@@ -462,6 +507,10 @@ fn full_revolution_preserves_each_disjoint_components_authored_meridian() {
     }
 }
 
+/// Two/three full turns produce exactly the one-turn position and triangle buffers.
+///
+/// Checks both directions on odd and even lattices; this is a deterministic
+/// representation assertion in addition to the shared native mesh checks.
 #[test]
 fn full_revolution_canonicalizes_integer_turn_coverage() {
     let profile = region(&[rectangle(&int(-2), &int(0), &int(-1), &int(1))], &[], false);
@@ -493,6 +542,10 @@ fn full_revolution_canonicalizes_integer_turn_coverage() {
     }
 }
 
+/// A 37-degree start survives signed and repeated turns; oversized fractions fail.
+///
+/// Retains valid sweeps 2^-20 degrees below a full turn and rejects 450 degrees
+/// and 2^-20 degrees above a full turn in either direction.
 #[test]
 fn revolution_keeps_explicit_start_and_rejects_oversized_partial_turns() {
     let profile = region(&[rectangle(&int(-2), &int(0), &int(-1), &int(1))], &[], false);
@@ -544,6 +597,10 @@ fn revolution_keeps_explicit_start_and_rejects_oversized_partial_turns() {
     }
 }
 
+/// Eight cut/restore generations retain signed components after source regions drop.
+///
+/// Checks volumes, a negative-phase interior witness, certified native mesh
+/// predicates, canonical self-difference and subsequent empty-union recovery.
 #[test]
 fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
     for segments in [3, 5, 6] {
@@ -627,6 +684,10 @@ fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
     }
 }
 
+/// An intentionally merged pair has winding two where the combined revolution has one.
+///
+/// This mutation witness checks that the cap-ray oracle detects overlapping
+/// shells which the shared edge/face predicates accept.
 #[test]
 fn revolution_winding_oracle_detects_unregularized_overlapping_components() {
     let right = rectangle(&int(1), &int(0), &int(3), &int(2));
@@ -660,6 +721,7 @@ fn revolution_winding_oracle_detects_unregularized_overlapping_components() {
     }
 }
 
+/// Legacy partial revolution reports invalid input for a single crossing loop.
 #[test]
 fn revolution_profile_crossing_the_axis_is_invalid_input() {
     let points = rectangle(&q(-1, 3), &Real::zero(), &q(1, 3), &Real::one());
@@ -725,14 +787,18 @@ fn vertical_prism_winding(mesh: &TriangleMesh, point: &Point3) -> Option<i32> {
 
 /// Independent prism half-space oracle for rectangular radial profiles. Each
 /// signed side has its own polygon phase; remove that side's holes before
-/// uniting the two swept sets. Query points on any support plane are omitted
-/// here; authored meridian and axis-contact tests cover boundary behavior.
+/// uniting the two swept sets. Queries on tested polygon edge supports are
+/// omitted; height intervals are strict. Authored meridian and axis-contact
+/// tests separately cover boundary behavior. A fixed rational grid checks
+/// containment and selected ray windings, with minimum coverage counts.
 fn check_rectangular_revolution_membership(
     mesh: &TriangleMesh,
     materials: &[Vec<[Real; 2]>],
     holes: &[Vec<[Real; 2]>],
     segments: usize,
 ) {
+    /// Height interval, outer polygon and inner polygon of one signed radial band.
+    /// An empty inner polygon denotes an axis-reaching band with no inner void.
     type Prism = ([Real; 2], Vec<[Real; 2]>, Vec<[Real; 2]>);
     let prepare = |rectangles: &[Vec<[Real; 2]>], negative: bool| -> Vec<Prism> {
         rectangles
@@ -1100,6 +1166,10 @@ fn twisted_extrusion_names_its_invalid_parameters() {
     }
 }
 
+/// A quarter-twisted, anisotropically scaled annulus keeps exact start/end vertices.
+///
+/// Scale precedes rotation; both policies must return certified edge-closed
+/// meshes with positive volume and no profile sampling/projection evidence.
 #[test]
 fn nonzero_twist_keeps_the_exact_start_cap() {
     let (region, _, vertices) = holed_profile(false);
@@ -1124,6 +1194,7 @@ fn nonzero_twist_keeps_the_exact_start_cap() {
     }
 }
 
+/// A swept annulus survives a strict cut and touching union with exact volume witnesses.
 #[test]
 fn exact_sweeps_compose_through_strict_booleans() {
     // The holed profile has area 66/9; swept by 3/7 its six-fold volume is 132/7.
@@ -1164,6 +1235,10 @@ fn exact_sweeps_compose_through_strict_booleans() {
     assert!(strictly_equal(&union_volume, &(q(62, 7) + tool_volume)));
 }
 
+/// Cubic-boundary sampling/projection flags survive extrusion, sweep, twist and revolution.
+///
+/// Includes a full-turn axis fold; inspects construction evidence rather than
+/// claiming fidelity of the resulting finite mesh to the original curve.
 #[test]
 fn sampled_nonlinear_profiles_remain_qualified() {
     // A cubic Bezier boundary has no exact line contour, so these operations
@@ -1235,6 +1310,10 @@ fn regularized_revolution_removes_overlap_without_changing_legacy_semantics() {
     assert_eq!(vertical_prism_winding(&result.value, &off_diagonal), Some(1));
 }
 
+/// Crossing material gives six-volume 186 and unit winding at an interior witness.
+///
+/// Independently authored halves also compose to an empty symmetric difference;
+/// the sector oracle below supplies expectations beyond shared Boolean machinery.
 #[test]
 fn regularized_revolution_splits_crossing_material_at_the_axis() {
     let profile = region(&[rectangle(&int(-2), &int(0), &int(3), &int(2))], &[], false);
@@ -1274,8 +1353,11 @@ fn regularized_revolution_splits_crossing_material_at_the_axis() {
 }
 
 /// Membership in the independently constructed convex trapezoids between
-/// consecutive authored meridians. A point on any support is excluded from
-/// this interior oracle, even if that support is only an internal subdivision.
+/// consecutive authored meridians of these axis-aligned rectangular fixtures.
+/// The caller uses nonzero sweeps with each sector narrower than a half turn.
+/// A query on a tested radial edge support returns `None`, even for an internal
+/// subdivision; height-boundary queries are outside the strict height interval.
+/// Undecided strict signs are fixture failures, not indeterminate memberships.
 fn rectangular_sector_membership(
     rectangles: &[Vec<[Real; 2]>],
     negative_radius: bool,
@@ -1352,8 +1434,9 @@ fn rectangular_sector_membership(
     Some(any)
 }
 
-/// The complete R20 angle/lattice and ownership corpus. CSGRS_R20_CASE selects
-/// one row for fresh-process containment; the ordinary test runs every row.
+/// The 576-row R20 angle/lattice and ownership corpus. `CSGRS_R20_CASE` selects
+/// one zero-based row for fresh-process containment; the ordinary test runs
+/// every row. A malformed or out-of-range selector fails the test.
 /// Each result is checked against source-sector membership and independent
 /// oriented cap winding, rather than only an area/volume or another wrapper.
 #[test]
@@ -1453,6 +1536,10 @@ fn regularized_revolution_declared_matrix() {
     assert_eq!(executed, if selected.is_some() { 1 } else { 576 });
 }
 
+/// One-sided regularized/legacy meshes have identical buffers, certainty and evidence.
+///
+/// Also checks full-turn segment minima, invalid angles and angular-table
+/// capacity failures on nonempty/empty sources, plus a valid canonical empty result.
 #[test]
 fn regularized_revolution_preserves_same_side_rows_and_input_validation() {
     let positive = region(&[rectangle(&q(1, 3), &int(0), &q(5, 3), &int(2))], &[], false);
@@ -1525,6 +1612,7 @@ fn regularized_revolution_preserves_same_side_rows_and_input_validation() {
     assert!(empty.value.positions.is_empty() && empty.value.triangles.is_empty());
 }
 
+/// A 2^-80 signed-radius crossing retains its exact quadratic volume without projection.
 #[test]
 fn regularized_revolution_retains_sub_binary64_axis_features() {
     let tiny = power_of_two(-80);
@@ -1542,6 +1630,11 @@ fn regularized_revolution_retains_sub_binary64_axis_features() {
     assert!(!result.value.construction_evidence().coordinates_projected());
 }
 
+/// Dropped-source revolution supports cut/restore equality across policy transitions.
+///
+/// With `stl-io`, repeats composition after lossy binary export/import and
+/// requires projection evidence even on the final empty symmetric difference.
+/// Replay equality is relative to the imported mesh, not the original source.
 #[test]
 fn regularized_revolution_continues_through_export_and_subtraction() {
     let result = {

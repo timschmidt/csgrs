@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/exact_profile_sweeps.rs` | Entire file; documented all 50 function/constant/type declarations, exact prism fixtures, signed revolution phases, independent winding/sector oracles, policy/composition and qualified STL replay. | Source, formatting and comment-only checks passed; assertions and optional STL branch unchanged, not rerun. |
 | `tests/mixed_modeling_profiles.rs` | Entire file; documented numeric/contour fixtures, consumer dispatch, exact-member measures, mixed holes/spans and repeated thin-wall cuts. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/exact_path_failures.rs` | Entire file; documented control-net helpers, native causes, display-count invariance, reversal, exact area and empty-region witnesses. Clarified the limited diagnostic evidence in the historical symbolic-endpoint test. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/hilbert_trimming.rs` | Entire file; documented exact run helpers, axis-aligned simplification, source intervals/contact replay, policy transitions and algebraic trim reuse. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
@@ -43,7 +44,7 @@ repository rules for later sessions or authorize implementation edits.
 | `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
-| `src/curve/native.rs` | **Partial:** file start through `emit_section_walls`, inclusive, plus the complete `native_boundary_source_probe` test module; profile conversion, triangulation/extrusion, validators and cap/wall helpers documented. Resume at `revolve`; the main test module remains pending. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
+| `src/curve/native.rs` | **Partial:** file start through `split_at_revolution_axis`, inclusive, plus the complete `native_boundary_source_probe` test module; revolution dispatch, signed-radius composition and output validation documented. Resume at `sweep_scalar_error`; the main test module remains pending. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -1075,10 +1076,73 @@ remains about 499 MiB. No runtime build or additional target tree was created.
 Full workflow/runtime checks remain waived for this docs-only session. No
 executable behavior, assertion or performance claim changed.
 
+### Signed revolution and exact profile sweep witnesses, 26 November 2026
+
+Owner: CSGRS curve-to-mesh revolution, signed-region composition and output
+validation; P1/P4/P6/P8/P9/P12/P16/P17/P18/P19/P25/P30/P37. Baseline:
+`2b8e62e6b`. Read every line from `revolve` through
+`split_at_revolution_axis` in `src/curve/native.rs`, and every line of
+`tests/exact_profile_sweeps.rs`. Supporting reads inspected native closed-PWN,
+unique-face and geometric edge-pairing validation in Hypermesh; that file is
+not credited as a completed audit.
+
+Missing witnesses: revolution mode/dispatch/validation helpers lacked Rustdoc;
+public docs omitted segment minima, empty-input validation order and the
+limited rational turn-count recognizer. The test module summary understated
+its revolution oracles, and `exact_solid` claimed manifoldness beyond the
+predicates it calls. Updated these contracts and documented all 50 test
+function/constant/type declarations, including the function-local prism alias.
+
+Revolution docs distinguish legacy overlapping partial shells from regularized
+signed material, preserve odd-lattice phase and state the even full-turn fold
+precondition. Oversized turns use `exact_rational` for integer recognition;
+failure to recognize rationality is undecided, not exhaustion or a proved
+fractional turn. Angular-table addressability is not a global resource budget.
+Parameter validation precedes empty handling. Partial cap emission retains its
+strict nondegeneracy debug assertion. Explicit-start revolution transports the
+completed swept-boundary result and its qualifications through a transform.
+
+Private docs state caller obligations for matching sign arrays and angular
+samples, potential zip truncation/indexing on violated internal preconditions,
+axis-row sharing, quad diagonals, cap orientation and native filled-region
+authority for splitting/folding. Closed-PWN validation checks nondegenerate
+faces and balanced edge multiplicities without proving manifoldness or unit
+winding; the legacy check also lacks embedding/vertex-link validation. The
+regularized allowed-empty path checks both buffers, unlike the legacy
+triangle-only shortcut.
+
+The test audit separates exact volume/vertex witnesses, deterministic buffer
+comparisons, shared Boolean composition and independent sector/ray-winding
+oracles. The retained winding-two mutation demonstrates why edge closure alone
+does not establish regularized material. The 576-row matrix and finite query
+grids are scoped regression evidence, not universal closure proofs. Optional
+STL replay explicitly checks projection provenance and equality relative to the
+imported mesh. No fixture, predicate, assertion or executable behavior changed.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs
+  tests/exact_profile_sweeps.rs`: passed. `git diff --check`: passed.
+- All nonblank, non-comment source lines match baseline in both Rust files.
+  A declaration scan confirmed Rustdoc on all 50 function/constant/type items
+  in the test file; that file-local scan is not a repository coverage metric.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps
+  --offline`: passed without warnings.
+- Inspected ten generated public/private pages, including the output enum and
+  all revolution helpers. Integration tests and the local alias were reviewed
+  in source; ordinary library docs do not render those items.
+
+Log: `/tmp/csgrs-rustdoc-revolution-doc.log`. Reused temporary build storage
+remains about 499 MiB. No runtime build or additional target tree was created.
+Full workflow/runtime checks remain waived for this docs-only session. Test
+execution, optional STL replay and performance were not revalidated here.
+
 ## Next work
 
-Continue `src/curve/native.rs` at `revolve`, including signed-radius folding,
-revolution validation, sweep/twist construction and downstream witnesses, then
+Continue `src/curve/native.rs` at `sweep_scalar_error`, including sweep/twist
+construction and downstream witnesses, then
 review the remaining root modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every

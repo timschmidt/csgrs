@@ -3249,6 +3249,22 @@ fn emit_section_walls(
 /// integrality cannot be proved, the result is a typed undecided predicate.
 /// Use [`revolve_from`] to choose the authored starting angle explicitly, or
 /// [`revolve_solid`] for regularized partial material including axis crossings.
+///
+/// Requires at least two segments for a partial turn and three for full
+/// coverage. Angle and angular-table capacity checks precede empty-profile
+/// handling; an empty region with valid parameters returns canonical empty
+/// geometry. For oversized angles, integrality is recognized through
+/// [`Real::exact_rational`]; failure to expose a rational turn count is
+/// undecided, not proof of a noninteger value. Partial sample-count overflow
+/// returns `InvalidArguments`; an unaddressable angular table returns
+/// [`ValidationError::CapacityOverflow`]. This preflight does not bound total
+/// work or allocations during construction.
+///
+/// # Panics
+///
+/// In debug builds, partial-turn cap emission asserts strict nondegeneracy of
+/// each placed triangle. A degenerate or strictly undecided cap triangle can
+/// panic at that internal assertion; other validation failures are returned.
 pub fn revolve(
     region: &CurveRegion2,
     angle_degrees: Real,
@@ -3277,7 +3293,15 @@ pub fn revolve(
 /// Regularization can retain point/edge contacts with a nonmanifold boundary;
 /// the output satisfies the native closed PWN contract rather than requiring a
 /// manifold boundary. Legacy [`revolve`] retains its swept-boundary semantics.
+/// One-sided inputs use the same positions and triangles as `revolve`, with
+/// PWN validation; they do not incur a separate union. That validation checks
+/// nondegenerate faces and balanced geometric edge multiplicities, not a
+/// global proof that winding is everywhere zero or one. Mixed-side material
+/// is regularized by the arrangement (or the equivalent even full-turn fold).
 /// This operation adds no total-work, retained-byte or cancellation bound.
+///
+/// The segment minimum, validation-before-empty behavior and debug cap
+/// assertion described by [`revolve`] also apply here.
 pub fn revolve_solid(
     region: &CurveRegion2,
     angle_degrees: Real,
@@ -3293,12 +3317,32 @@ pub fn revolve_solid(
     )
 }
 
+/// Selects signed-radius composition and the final native validation contract.
+///
+/// Full turns regularize mixed signs in both modes; partial turns differ in
+/// whether axis crossings and overlapping opposite-side pieces are resolved.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum RevolutionOutput {
+    /// Preserve partial swept shells and require unique faces with paired edges.
     SweptBoundary,
+    /// Union signed material and admit balanced nonmanifold edge multiplicities.
     RegularizedSolid,
 }
 
+/// Validates the angle, constructs its lattice, and dispatches signed profiles.
+///
+/// Checks the base segment minimum before angle sign/magnitude, then the
+/// full-turn minimum and angular-table capacity before inspecting the region.
+/// Oversized rational integer turn counts normalize to one signed turn;
+/// unrecognized rationality is a typed undecided result, not resource exhaustion.
+///
+/// Mixed signs use a planar fold only for even full-turn lattices. Otherwise,
+/// full turns and regularized partial turns split at the axis and union two
+/// meshes through the native arrangement. Legacy partial turns go directly to
+/// the one-sided emitter, which rejects crossing loops. The shared decisions
+/// collect profile conversion, predicate and nested operation qualifications
+/// before publishing the mesh. Capacity preflight covers only addressability
+/// of the angular table, not a construction-wide resource budget.
 fn revolve_with_output(
     region: &CurveRegion2,
     angle_degrees: Real,
@@ -3420,6 +3464,10 @@ fn revolve_with_output(
 /// Rotating the completed mesh transports its exact geometry and construction
 /// qualifications, and combines both operations' certainty receipts. This API
 /// returns a segmented mesh, not a parameterized multi-turn surface.
+/// It inherits swept-boundary semantics, parameter validation and debug cap
+/// assertions from [`revolve`], including possible partial-sweep overlap.
+/// A structurally zero start skips the transform; other starts use the native
+/// transform path after revolution succeeds.
 pub fn revolve_from(
     region: &CurveRegion2,
     start_degrees: Real,
@@ -3438,6 +3486,20 @@ pub fn revolve_from(
 }
 
 /// Emits already classified, one-sided linear profiles on the authored lattice.
+///
+/// The caller supplies matching profile/ring/vertex sign arrays, `(sin, cos)`
+/// samples in traversal order, a nonzero turn sign, and the validated minimum
+/// sample count. These lengths are not revalidated: outer zips can truncate and
+/// vertex/sample indexing can panic on mismatches. Material precedes its holes,
+/// which must lie on the same radial side. A ring containing both radial signs
+/// is rejected even for a full turn; splitting/folding belongs to the caller.
+///
+/// Each input axis vertex owns one position shared across its angular row.
+/// Walls use the fixed first-to-third quad diagonal and omit the triangle
+/// collapsed by an axis endpoint. Loop orientation, radial side and sweep sign
+/// determine outward winding. Partial turns add triangulated start/end caps;
+/// full turns wrap the lattice without caps. Final validation and accumulated
+/// construction qualifications follow [`validate_revolution_mesh`].
 fn revolve_profiles(
     profiles: &[(Contour2, Vec<Contour2>)],
     radii: &[Vec<Vec<hyperreal::RealSign>>],
@@ -3573,6 +3635,15 @@ fn revolve_profiles(
     )
 }
 
+/// Applies the selected output contract and attaches accumulated qualifications.
+///
+/// Swept boundaries delegate to [`validate_closed_mesh`], including its
+/// triangle-only allowed-empty shortcut. Regularized output accepts empty
+/// geometry only when allowed and both buffers are empty, rejects other
+/// triangle-free meshes, and otherwise consumes native closed-PWN validation.
+/// That native check admits balanced edge multiplicities without demanding
+/// manifoldness or proving nonzero enclosed winding; it does not regularize
+/// geometry. Native errors retain their sources through the modeling boundary.
 fn validate_revolution_mesh(
     mesh: TriangleMesh,
     allow_empty: bool,
@@ -3596,6 +3667,11 @@ fn validate_revolution_mesh(
 
 /// Radial sign of every ring vertex, by profile and by ring in the order of
 /// [`oriented_profile_rings`]: material first, then holes.
+///
+/// Reads each segment's start X coordinate without reversing or changing the
+/// profiles. The consumer relies on linear segments, for which endpoint signs
+/// suffice to identify a crossing; this is not an interior-extrema test for
+/// general curves. All decisions use the supplied context and retain uncertainty.
 fn profile_radial_signs(
     profiles: &[(Contour2, Vec<Contour2>)],
     decisions: &GeometryDecisions,
@@ -3625,6 +3701,10 @@ fn profile_radial_signs(
 ///
 /// This preserves the sampled solid only for an even angular lattice, where
 /// changing radial sign permutes its vertices by half a turn.
+/// The caller establishes that precondition; this helper has no lattice input.
+/// Native region intersection, reflection and union own the fill/hole semantics,
+/// and the resulting region is converted back to modeling profiles with the
+/// shared decision and construction history.
 fn fold_across_revolution_axis(
     profiles: Vec<(Contour2, Vec<Contour2>)>,
     decisions: &GeometryDecisions,
@@ -3647,6 +3727,13 @@ fn fold_across_revolution_axis(
 /// Cuts sampled or exact linear profiles at the axis without changing their
 /// signed radial coordinates. Every new point is a rational expression in the
 /// input line coordinates, rather than a newly sampled point on a curve.
+///
+/// Returns the nonnegative-X half first, then the nonpositive-X half, using
+/// native regularized region intersections. The caller supplies a profile set
+/// spanning both radial signs, so the finite clipping rectangles bracket its
+/// bounds. One unit of padding makes their other edges exterior; it is not an
+/// offset of the input. A region without bounds returns two empty regions.
+/// Axis-only remnants follow the native filled-region regularization contract.
 fn split_at_revolution_axis(
     profiles: Vec<(Contour2, Vec<Contour2>)>,
     decisions: &GeometryDecisions,
