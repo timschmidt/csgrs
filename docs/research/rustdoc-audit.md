@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/session.rs` | Entire file; documented conversion implementations/macro, private state, policy exceptions and receipt scope. | Private docs passed with and without `curve`; generated conversion docs checked. |
+| `tests/session.rs` | Entire file; documented every test/helper according to actual assertions. | Comment-only comparison and formatting passed; tests source-reviewed, not rerun. |
+| `tests/support/uncertainty.rs` | Entire file; existing module/helper Rustdoc matches retained witness and independent unresolved-zero assertion. No edits needed. | Source review only; no current execution claim. |
 | `src/errors.rs` | Entire file and classification match arms; documented payload fields, categories and private classifiers. | Private docs passed with all error-gating features and no default features; formatting passed. |
 | `src/lib.rs` | Entire file; checked feature overview and policy uses, added private API build guidance and private constant docs. | Crate page and private policy page checked; broader gated API review remains in owning modules. |
 | `src/adapter/mesh.rs` | Entire file; documented scalar facade operations, graphics cache, exports and private helpers. | Private docs passed with and without `curve`, with broken links denied. |
@@ -215,9 +218,59 @@ Logs remain in `/tmp/csgrs-rustdoc-errors-doc.log` and
 error-source attributes are unchanged. Full workflow checks remain waived for
 this docs-only session; no runtime or performance claim is made.
 
+### Modeling session batch, 26 November 2026
+
+Owner: CSGRS input conversion and receipt orchestration, P1/P6/P8/P9/P19/P25/P37.
+Baseline: `8ca463916`. Domain: fixed-width integers, exact native scalars, finite
+float imports, rational/scientific text, both policies, successful and failed
+callbacks, native mesh/curve operations, and external receipts. Missing witness:
+conversion implementations and macro-generated methods, private fields, and
+regression helpers lacked Rustdoc. Existing session summaries claimed receipts
+for every operation and policy selection once without identifying strict solid
+constructor exceptions. Extrusion documentation described only +Z although signed
+nonzero heights are accepted.
+
+Read every line of `src/session.rs`, `tests/session.rs`, and
+`tests/support/uncertainty.rs`. Inspected native scalar conversion/parsing,
+strict primitive construction, reflection, extrusion, and expression lowering
+and evaluation. Those supporting partial reads do not earn whole-file credit.
+The uncertainty helper was already documented consistently with its assertions;
+no change was needed. Existing tests compare wrapper outputs, receipt transitions,
+input rational forms and typed errors; their source review is not independent
+geometric completion evidence or a claim of execution on this revision.
+
+Documented that `run` records only successful returned receipts; prior records
+survive a later error. `record` trusts external receipts without policy checking
+or value inspection. Native modeling paths carry mesh history separately, but
+generic callbacks are responsible for their values' evidence. The four solid
+constructors use strict grammar functions directly and do not update the session
+accumulator. The docs identify this current limitation without modifying policy
+behavior. Sampling fidelity, callback success, and accumulated numerical certainty
+remain separate claims. Expression evaluation docs distinguish a shared nonempty
+arrangement from the all-empty shortcut and transform-dependent subtree reuse.
+
+Validation after edits:
+
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps --offline`:
+  passed without warnings. The same command without `--features curve` passed.
+- Generated session module, `Csg`, `IntoReal`, private integer macro, and decimal
+  parser pages contain the new contracts; macro-generated implementation docs
+  appear on the trait page.
+- `cargo fmt --all -- --check`: passed. After the last module wording edit,
+  `rustfmt --check --edition 2024 src/session.rs tests/session.rs` also passed.
+- `git diff --check`: passed. Nonblank, non-comment Rust lines match the baseline
+  in both edited source files. Tests and example bodies remain unchanged.
+
+Logs: `/tmp/csgrs-rustdoc-session-doc.log` and
+`/tmp/csgrs-rustdoc-session-minimal-doc.log`. Reused build tree is about 124 MiB.
+Full workflow/runtime checks remain waived for this docs-only session. Test-only
+Rustdoc was reviewed in source, not claimed as rendered by the library doc build.
+
 ## Next work
 
-Continue through modeling sessions, expressions, native operations and the
+Continue through lazy expressions, native operations and the
 remaining root modules, then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file

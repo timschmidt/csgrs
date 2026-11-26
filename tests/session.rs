@@ -1,4 +1,4 @@
-//! A modeling session keeps the weakest certainty of its whole chain.
+//! Regression witnesses for recorded session receipts and exact numeric ingress.
 //!
 //! These are the U02/U03 acceptance chains of
 //! `docs/research/simplification-and-api-program.md`: a strict-only chain, a
@@ -11,12 +11,15 @@ use csgrs::errors::ValidationErrorKind;
 use csgrs::{Csg, Error, GeometryCertainty, GeometryContext, GeometryOutcome, Real, solid};
 use hypermesh::BooleanOp;
 
+/// Preserve the earlier trigonometric identity witness, then obtain the shared
+/// terminal-only zero fixture used to distinguish strict and approximate policies.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Compare a strict session subtraction with the corresponding eager wrapper chain.
 #[test]
 fn strict_chain_is_certified_and_matches_the_free_functions() {
     let m = Csg::strict();
@@ -53,6 +56,7 @@ fn touching_cubes(m: &Csg) -> (csgrs::TriangleMesh, csgrs::TriangleMesh) {
     (cube, touching)
 }
 
+/// Verify terminal consumption cannot be cleared by later certified receipts.
 #[test]
 fn an_approximate_step_makes_the_whole_chain_approximate() {
     let m = Csg::approximate_512();
@@ -71,6 +75,7 @@ fn an_approximate_step_makes_the_whole_chain_approximate() {
     assert_eq!(m.certainty(), GeometryCertainty::Approximate512Consumed);
 }
 
+/// Separate strict local receipts from a mesh's approximate construction ancestry.
 #[test]
 fn strict_steps_after_an_approximate_input_keep_both_claims() {
     // An approximate mesh made in one session...
@@ -90,6 +95,7 @@ fn strict_steps_after_an_approximate_input_keep_both_claims() {
     );
 }
 
+/// Verify a failed strict Boolean reports undecided without adding a receipt.
 #[test]
 fn a_strict_session_reports_the_undecided_step_without_recording_it() {
     let m = Csg::strict();
@@ -99,6 +105,7 @@ fn a_strict_session_reports_the_undecided_step_without_recording_it() {
     assert_eq!(m.certainty(), GeometryCertainty::Certified);
 }
 
+/// Check callback results and explicit receipts feed the same monotone accumulator.
 #[test]
 fn run_and_record_fold_external_receipts() {
     let m = Csg::new(GeometryContext::STRICT);
@@ -118,6 +125,7 @@ fn run_and_record_fold_external_receipts() {
     assert_eq!(m.certainty(), GeometryCertainty::Approximate512Consumed);
 }
 
+/// Compare exact rational normal forms and typed invalid-number failures at ingress.
 #[test]
 fn ordinary_numbers_enter_exactly() {
     use csgrs::{IntoReal, decimal, ratio};
@@ -166,6 +174,7 @@ fn ordinary_numbers_enter_exactly() {
     ));
 }
 
+/// Compare extension-method rotation, scaling, reflection and centering with free functions.
 #[test]
 fn solid_methods_cover_every_transform_and_match_the_free_functions() {
     use csgrs::solid::SolidExt;
