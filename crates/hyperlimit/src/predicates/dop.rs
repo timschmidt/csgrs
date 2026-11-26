@@ -1,11 +1,18 @@
-//! Exact support k-DOP carriers and slab-projection classifiers.
+//! Directional support slabs, indexed witnesses, and conservative projection classifiers.
 //!
-//! A k-DOP is represented here as a finite set of directional slabs
-//! `min <= axis . point <= max`. The module deliberately stores the retained
-//! support witnesses that produced each bound, preserving object-level structure
-//! instead of expanding every decision into unrelated scalar tests. The
-//! interval-overlap classifier is the support-function view used by k-DOP
-//! collision systems.
+//! Slabs encode `min <= axis . point <= max` using unnormalized functionals.
+//! General carriers retain bounds and optional indices; witnessed carriers also
+//! retain point copies and caller-declared projection margins. Bounds are exact
+//! scalar expressions, while selection/classification certainty depends on policy.
+//! General constructor/query outcomes carry receipts, but carriers and report
+//! records do not retain them. Witnessed Result APIs and validators discard
+//! consumed receipts and map some unknown comparisons to ordinary errors.
+//!
+//! Box queries test per-axis interval overlap; nonseparation need not imply a
+//! common spatial point. Plane queries use carrier and closed-side halfspace
+//! feasibility, inheriting its certificate limitations. Empty general carriers
+//! classify as Degenerate. No total-work budget or typed allocation-exhaustion
+//! contract is imposed here; refresh performs a full validation after updates.
 
 use crate::predicate::PredicatePolicy;
 use crate::predicates::decision::max_stage;
@@ -24,12 +31,11 @@ use crate::predicates::halfspace::{
 use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 
-/// Exact integer direction used by a witnessed support slab.
+/// Integer coefficients of an unnormalized support functional `axis . point`.
 ///
-/// The vector is intentionally not normalized. k-DOP comparisons only require
-/// a consistent linear functional, and keeping integer directions preserves a
-/// cheap shared-scale support representation for callers that build broad
-/// phase objects from indexed point sets.
+/// Scaling an axis scales its projection bounds and margins; these are not
+/// Euclidean distances unless the axis is unit length. Construction stores any
+/// coefficients, including zero; [`Self::validate`] checks nonzeroness separately.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SupportDopAxis3 {
     /// Integer coefficients of the support direction.
@@ -37,7 +43,7 @@ pub struct SupportDopAxis3 {
 }
 
 impl SupportDopAxis3 {
-    /// Construct a support axis from exact integer coefficients.
+    /// Store integer coefficients without checking nonzeroness or normalizing the direction.
     pub const fn new(direction: [i64; 3]) -> Self {
         Self { direction }
     }
@@ -56,8 +62,7 @@ impl SupportDopAxis3 {
         }
     }
 
-    /// Convert this integer axis to the point-vector carrier used by
-    /// [`SupportDop3`].
+    /// Convert coefficients exactly to the general point-vector carrier, without validation.
     pub fn to_point3(self) -> Point3 {
         Point3::new(
             Real::from(self.direction[0]),
@@ -96,34 +101,40 @@ impl SupportDopAxis3 {
     }
 }
 
-/// Why a witnessed support-DOP consumer must conservatively expand exact slabs.
+/// Caller-declared origin of a support projection margin.
+///
+/// These tags record a claimed loss model; they do not measure adapter error or
+/// prove that a supplied margin bounds it. Exact finite-float import alone does
+/// not require a lossy tag.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportDopExpansionKind {
-    /// No expansion is needed; every slab is an exact summary of exact source
-    /// coordinates.
+    /// Declares no source-loss expansion; the tag itself does not prove fidelity.
     None,
-    /// The source entered through a primitive-float or external adapter edge.
+    /// Declares loss through an adapter; no numeric error is inferred from the tag.
     LossyAdapter,
-    /// Coordinates were rounded to an integer grid before support extraction.
+    /// Declares integer-grid rounding; callers supply a margin in projection units.
     IntegerGridRounding,
 }
 
-/// Conservative-expansion metadata attached to witnessed support-DOP bounds.
+/// Caller-supplied expansion metadata in unnormalized projection units.
+///
+/// All slabs use the same scalar margin. Validation checks sign/count consistency,
+/// not whether the margin encloses source loss. Fields are mutable and carry no
+/// certainty receipt; revalidate after changes.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportDopExpansionReport {
     /// Expansion source category.
     pub kind: SupportDopExpansionKind,
     /// Number of axes covered by this report.
     pub axis_count: usize,
-    /// Number of slabs that must be treated as conservatively expanded.
+    /// Declared expanded count: zero for None-kind and axis_count for other kinds.
     pub expanded_slabs: usize,
-    /// Nonnegative distance expansion applied on both sides of each expanded
-    /// slab.
+    /// Scalar projection margin subtracted/added on each side; sign and adequacy are unchecked on storage.
     pub expansion: Real,
 }
 
 impl SupportDopExpansionReport {
-    /// Build an exact no-expansion report for `axis_count` slabs.
+    /// Build a zero-margin report with no expanded slabs; this records a claim, not a proof of source fidelity.
     pub fn exact(axis_count: usize) -> Self {
         Self {
             kind: SupportDopExpansionKind::None,
@@ -133,7 +144,7 @@ impl SupportDopExpansionReport {
         }
     }
 
-    /// Build an integer-grid rounding expansion report.
+    /// Store a grid-rounding margin for every axis without validating its sign or adequacy.
     pub fn integer_grid_rounding(axis_count: usize, expansion: Real) -> Self {
         Self {
             kind: SupportDopExpansionKind::IntegerGridRounding,
@@ -143,7 +154,7 @@ impl SupportDopExpansionReport {
         }
     }
 
-    /// Build a lossy-adapter expansion report for `axis_count` slabs.
+    /// Mark every axis as lossy with a zero numeric margin; no error bound is inferred.
     pub fn lossy_adapter(axis_count: usize) -> Self {
         Self {
             kind: SupportDopExpansionKind::LossyAdapter,
@@ -153,7 +164,12 @@ impl SupportDopExpansionReport {
         }
     }
 
-    /// Validate internal report consistency.
+    /// Check margin sign and kind/count consistency using the supplied policy.
+    ///
+    /// An unresolved nonnegativity comparison returns NegativeExpansion. None-kind
+    /// requires zero margin and zero expanded count; other kinds require all axes
+    /// counted as expanded. Decided approximate comparisons are accepted and their
+    /// receipts discarded. Success does not validate an external loss bound.
     pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SupportDopValidationError> {
         if !matches!(
             compare_real_with_policy(&self.expansion, &Real::from(0), policy),
@@ -183,18 +199,25 @@ impl SupportDopExpansionReport {
     }
 }
 
-/// Exact support witness for one side of one witnessed k-DOP slab.
+/// Retained source index, point copy, and unnormalized projection expression.
+///
+/// Public fields can be inconsistent. This record alone proves neither source
+/// identity nor extremality; witnessed-DOP validation checks those relationships
+/// under its supplied policy.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportWitness3 {
     /// Source point index that witnesses the retained support distance.
     pub vertex: usize,
     /// Exact point copied from the source point set at construction time.
     pub point: Point3,
-    /// Exact unnormalized support distance along the slab axis.
+    /// Retained axis dot-product expression, not a normalized Euclidean distance.
     pub distance: Real,
 }
 
-/// One min/max support slab with source-point witnesses.
+/// Integer-axis min/max records with source point copies.
+///
+/// No constructor invariant is enforced by this public record. The records carry
+/// no selection receipts; use the containing DOP's validation against source points.
 #[derive(Clone, Debug, PartialEq)]
 pub struct WitnessedSupportSlab3 {
     /// Integer direction used by this support functional.
@@ -206,20 +229,26 @@ pub struct WitnessedSupportSlab3 {
 }
 
 impl WitnessedSupportSlab3 {
-    /// Return the conservative minimum distance after applying the containing
-    /// expansion report.
+    /// Subtract the supplied scalar margin from the retained minimum projection.
+    ///
+    /// Does not validate the witness, report kind/counts, margin sign, or loss bound;
+    /// uses the margin even when the report declares no expanded slabs.
     pub fn conservative_min_distance(&self, expansion: &SupportDopExpansionReport) -> Real {
         self.min.distance.clone() - expansion.expansion.clone()
     }
 
-    /// Return the conservative maximum distance after applying the containing
-    /// expansion report.
+    /// Add the supplied scalar margin to the retained maximum projection.
+    ///
+    /// Does not validate the witness, report kind/counts, margin sign, or loss bound;
+    /// uses the margin even when the report declares no expanded slabs.
     pub fn conservative_max_distance(&self, expansion: &SupportDopExpansionReport) -> Real {
         self.max.distance.clone() + expansion.expansion.clone()
     }
 
-    /// Convert this witnessed slab to the classifier slab used by
-    /// [`SupportDop3`].
+    /// Copy the axis, raw bounds, and witness indices to a classifier slab.
+    ///
+    /// Point copies and expansion metadata are omitted, and no margin is applied.
+    /// The conversion performs no validation and does not establish source fidelity.
     pub fn to_support_slab3(&self) -> SupportSlab3 {
         SupportSlab3 {
             axis: self.axis.to_point3(),
@@ -231,7 +260,12 @@ impl WitnessedSupportSlab3 {
     }
 }
 
-/// Exact k-DOP bounds with support-vertex witnesses.
+/// Support bounds with indexed source-point copies and declared expansion metadata.
+///
+/// Construction and validation consume policy decisions but return ordinary
+/// Results without certainty receipts. Exact scalar storage alone does not prove
+/// exact extremum selection under an approximate policy. Public mutation can
+/// invalidate witness relationships; validation requires the source points.
 #[derive(Clone, Debug, PartialEq)]
 pub struct WitnessedSupportDop3 {
     /// Number of points summarized by this object.
@@ -243,7 +277,13 @@ pub struct WitnessedSupportDop3 {
 }
 
 impl WitnessedSupportDop3 {
-    /// Build a support-DOP from exact points and an explicit expansion report.
+    /// Build raw witnessed slabs, then validate them against all supplied source points.
+    ///
+    /// Requires nonempty points/axes, nonzero integer directions, matching expansion
+    /// axis count, and consistent expansion metadata. Slabs are scanned and then
+    /// rechecked for extremality. Unresolved comparisons become validation errors;
+    /// decided comparisons discard certainty. The report's margin is stored, not
+    /// applied to raw bounds, and its adequacy for any adapter loss is not proved.
     pub fn from_points_with_expansion(
         points: &[Point3],
         axes: &[SupportDopAxis3],
@@ -273,7 +313,10 @@ impl WitnessedSupportDop3 {
         Ok(support)
     }
 
-    /// Build an exact no-expansion support-DOP from points.
+    /// Build witnessed slabs with zero-margin metadata via [`Self::from_points_with_expansion`].
+    ///
+    /// Inherits its validation and receipt limitations; the no-expansion tag is a
+    /// caller-relative source claim, not an independent fidelity certificate.
     pub fn from_points(
         points: &[Point3],
         axes: &[SupportDopAxis3],
@@ -287,8 +330,11 @@ impl WitnessedSupportDop3 {
         )
     }
 
-    /// Return this witnessed carrier as the predicate-level support-DOP
-    /// classifier.
+    /// Convert raw slabs to a predicate carrier without applying expansion margins.
+    ///
+    /// Drops witness point copies and expansion metadata. The resulting carrier's
+    /// source point count is zero, as for any [`SupportDop3::from_slabs`] construction.
+    /// No validation or certainty transport is performed.
     pub fn to_support_dop3(&self) -> SupportDop3 {
         SupportDop3::from_slabs(
             self.slabs
@@ -298,7 +344,12 @@ impl WitnessedSupportDop3 {
         )
     }
 
-    /// Validate this k-DOP against exact source points.
+    /// Recheck counts, expansion consistency, witness identity/projections, and all extrema.
+    ///
+    /// Uses point PartialEq for retained copies and policy comparisons for projection
+    /// relations. Unknown comparisons map to specific validation errors; approximate
+    /// decisions can pass without a returned receipt. Every point is examined for
+    /// each slab. Expansion adequacy relative to external source loss is not checked.
     pub fn validate_against_points(
         &self,
         points: &[Point3],
@@ -323,7 +374,18 @@ impl WitnessedSupportDop3 {
         Ok(())
     }
 
-    /// Refresh slabs after a bounded set of point updates.
+    /// Update slabs for supplied changed indices, then validate against the full point set.
+    ///
+    /// A listed extremum witness triggers a full axis rebuild; other listed points
+    /// can extend bounds. Duplicate indices are counted and revisited. Unresolved
+    /// extension comparisons do not update an extremum, but the final full validation
+    /// can reject unresolved or missed bounds. Final validation still scans every
+    /// point for every slab, so work is not bounded only by the changed subset.
+    ///
+    /// Mutations are not transactional: an error can leave earlier slab updates in
+    /// place. Counts/indices are checked first; expansion consistency and retained
+    /// witness validity are rechecked after updates. Success returns counters without
+    /// certainty receipts or a proof that an expansion margin covers external loss.
     pub fn refresh_for_changed_vertices(
         &mut self,
         points: &[Point3],
@@ -393,11 +455,13 @@ impl WitnessedSupportDop3 {
     }
 }
 
-/// Refresh summary returned by
-/// [`WitnessedSupportDop3::refresh_for_changed_vertices`].
+/// Counts from a completed witnessed-DOP refresh, not a work or timing measurement.
+///
+/// Rebuilt, extended, and unchanged axes partition the visited slabs on success.
+/// Final full-source validation is additional work and is not counted here.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SupportDopRefreshReport {
-    /// Number of changed point indices supplied by the caller.
+    /// Length of the supplied index list, including duplicates.
     pub changed_vertices: usize,
     /// Number of support axes retained by the k-DOP.
     pub axis_count: usize,
@@ -412,7 +476,11 @@ pub struct SupportDopRefreshReport {
     pub invalidated_witness_axes: usize,
 }
 
-/// Error returned by witnessed support-DOP construction or replay.
+/// Witnessed-DOP construction, refresh, or validation failure.
+///
+/// Some variants also represent undecided comparisons, as documented below. This
+/// Result interface does not return the underlying predicate reason, stage, or
+/// certainty, and successful approximate decisions can lose their qualification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportDopValidationError {
     /// No source points were supplied.
@@ -427,17 +495,17 @@ pub enum SupportDopValidationError {
     ExpansionAxisCountMismatch,
     /// A support witness points outside the source point slice.
     WitnessOutOfRange,
-    /// A retained witness point no longer matches the source point.
+    /// The retained point copy differs under Point3 PartialEq from its indexed source.
     WitnessPointMismatch,
-    /// A retained witness distance no longer equals the axis dot product.
+    /// Recomputed projection is unequal or its equality is undecided under the policy.
     WitnessDistanceMismatch,
     /// A min witness is not minimal for its axis.
     WitnessNotMinimal,
     /// A max witness is not maximal for its axis.
     WitnessNotMaximal,
-    /// A min/max ordering could not be certified for a slab.
+    /// A bound or point-versus-extremum comparison did not decide.
     UnknownSlabOrder,
-    /// Expansion distance is negative or not certifiably nonnegative.
+    /// Margin comparison is negative or unresolved under the supplied policy.
     NegativeExpansion,
     /// Expansion kind, slab count, or zero-expansion state is contradictory.
     ExpansionKindMismatch,
@@ -445,7 +513,11 @@ pub enum SupportDopValidationError {
     ChangedVertexOutOfRange,
 }
 
-/// One retained support slab of a 3D k-DOP.
+/// One unnormalized directional interval `min <= axis . point <= max`.
+///
+/// Public bounds and optional source indices carry no source points or certainty
+/// receipts. General slab classification checks bound ordering, not axis
+/// nonzeroness, witness validity, or joint feasibility of all slabs.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportSlab3 {
     /// Projection direction used by this slab.
@@ -463,11 +535,11 @@ pub struct SupportSlab3 {
 }
 
 impl SupportSlab3 {
-    /// Construct a slab from explicit bounds.
+    /// Store an axis and explicit bounds with no witness indices or validation.
     ///
-    /// The bounds are accepted as data and validated by classification calls.
-    /// Use [`SupportDop3::from_points`] when support witnesses should be
-    /// derived from exact source points.
+    /// Classification checks bound ordering as visited, but does not reject a zero
+    /// axis. Use [`SupportDop3::from_points`] to select bounds and retain source indices;
+    /// keep that constructor's outcome receipt separately.
     pub fn new(axis: Point3, min: Real, max: Real) -> Self {
         Self {
             axis,
@@ -484,26 +556,26 @@ impl SupportSlab3 {
     }
 }
 
-/// Structural inconsistency in a retained support-DOP/AABB report.
+/// Retained AABB-report inconsistency or failed/undecided replay check.
 ///
-/// The report validates the exact support-interval broad-phase reduction
-/// instead of treating it as a lossy bounding-volume hint. Object evidence
-/// remains available for replay across the geometric system.
+/// Local validation checks interval relations, not that the intervals were produced
+/// by a particular source box. Source replay recomputes those relations. Both
+/// interfaces discard predicate receipts and can accept approximate decisions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportDopAabb3ValidationError {
     /// An empty retained DOP did not report the structural degenerate relation.
     EmptyDopRelationMismatch,
     /// A report item is not the next prefix slab tested by the classifier.
     SlabIndexMismatch,
-    /// A retained slab has `min > max` but is not reported as degenerate.
+    /// Bound validity is undecided, or invalid bounds lack a Degenerate relation.
     SlabBoundsInvalid,
     /// A valid retained slab is missing its exact query projection interval.
     MissingQueryInterval,
     /// A degenerate retained slab unexpectedly carries a query projection.
     DegenerateSlabHasQueryInterval,
-    /// A retained query interval has `query_min > query_max`.
+    /// Retained query order is inverted or undecided.
     QueryIntervalInvalid,
-    /// A retained per-slab relation does not replay from retained intervals.
+    /// Interval replay is undecided or yields a different per-slab relation.
     SlabRelationMismatch,
     /// The first separating or degenerate slab does not match the terminal id.
     TerminalSlabMismatch,
@@ -511,36 +583,35 @@ pub enum SupportDopAabb3ValidationError {
     MissingSlabEvidence,
     /// The retained slab relations derive a different coarse relation.
     RelationMismatch,
-    /// Recomputing from source geometry did not reproduce this report.
+    /// Source recomputation is undecided or its report value differs.
     SourceReplayMismatch,
 }
 
-/// Per-slab exact interval evidence for [`SupportDopAabb3Report`].
+/// Copied slab and selected query interval for one visited projection axis.
+///
+/// Fields contain no local certainty or source-box identity. They are mutable
+/// claims until checked; local validation cannot reconstruct a source box from
+/// this record.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportDopAabb3SlabReport {
     /// Index of the retained slab tested by this report item.
     pub slab_index: usize,
-    /// Exact retained slab copied into the report for standalone replay.
+    /// Copied retained slab used by local replay; its source relationship is not stored.
     pub slab: SupportSlab3,
-    /// Minimum exact AABB projection on [`Self::slab`]'s axis.
-    ///
-    /// Degenerate slabs omit the query interval because invalid retained
-    /// bounds decide the structural result before the query is needed.
+    /// Selected minimum AABB projection; absent when invalid bounds terminate before projection.
     pub query_min: Option<Real>,
-    /// Maximum exact AABB projection on [`Self::slab`]'s axis.
+    /// Selected maximum AABB projection; absent for an invalid terminal slab.
     pub query_max: Option<Real>,
     /// Relation derived from this slab alone.
     pub relation: SupportDopRelation,
 }
 
-/// Report-bearing exact support-DOP/AABB classification.
+/// Visited slab prefix and derived conservative AABB relation.
 ///
-/// The coarse [`SupportDopRelation`] is retained for existing callers. This
-/// report stores the visited slab prefix, each exact AABB support interval,
-/// and the first terminal slab when a separating axis or invalid retained slab
-/// is found. Non-separated reports contain every retained slab so downstream
-/// broad-phase, voxel, and packing code can replay the conservative
-/// support-interval predicate without reintroducing primitive-float tolerance.
+/// A separating or invalid slab terminates the prefix; otherwise every slab is
+/// included. The enclosing PredicateOutcome carries operation certainty, which
+/// this record does not store. Nonseparation and BoundaryTouch describe interval
+/// relations and need not establish a common spatial intersection point.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportDopAabb3Report {
     /// Coarse relation derived from the retained slab evidence.
@@ -555,7 +626,12 @@ pub struct SupportDopAabb3Report {
 }
 
 impl SupportDopAabb3Report {
-    /// Validate retained slab evidence and the derived coarse relation.
+    /// Check retained prefix structure, interval order, and the derived coarse relation.
+    ///
+    /// No source box is available here: internally consistent but invented projection
+    /// intervals can pass. The slab axis and witness indices are not validated.
+    /// Unknown comparisons map to validation errors; decided receipts are discarded,
+    /// so success under an approximate policy is not an exactness certificate.
     pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SupportDopAabb3ValidationError> {
         if self.slab_count == 0 {
             return if self.relation == SupportDopRelation::Degenerate
@@ -664,7 +740,11 @@ impl SupportDopAabb3Report {
         }
     }
 
-    /// Replay this report against a source DOP and AABB bounds.
+    /// Validate locally, recompute from the supplied DOP/box, and compare report values.
+    ///
+    /// A failed or unknown recomputation becomes SourceReplayMismatch. The fresh
+    /// outcome's certainty/stage are discarded, and report equality does not retain
+    /// construction provenance or bind an earlier source allocation.
     pub fn validate_against_sources(
         &self,
         dop: &SupportDop3,
@@ -680,44 +760,42 @@ impl SupportDopAabb3Report {
     }
 }
 
-/// Structural inconsistency in a retained support-DOP/plane report.
+/// Retained plane-report inconsistency or failed/undecided feasibility validation.
 ///
-/// The report validates a k-DOP/plane decision as two exact halfspace
-/// feasibility queries: retained-DOP points satisfying the query plane's
-/// `<= 0` side, and retained-DOP points satisfying the opposite closed side.
-/// This is the fixed-dimensional LP view retained at the object-evidence
-/// boundary. Individual slab carriers follow the k-DOP support-slab model.
+/// These errors describe structural and replay checks. They do not guarantee that
+/// every infeasible status contains an independently checkable certificate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportDopPlane3ValidationError {
     /// An empty retained DOP did not report the structural degenerate relation.
     EmptyDopRelationMismatch,
-    /// The retained slab halfspaces are not exactly two per source slab.
+    /// Halfspace count is not twice the slab count, or the empty sentinel form is inconsistent.
     SlabHalfspaceCountMismatch,
-    /// The retained carrier feasibility report did not replay.
+    /// Carrier evidence is absent, false on validation, or undecided.
     CarrierFeasibilityMismatch,
     /// A side feasibility report was missing for a feasible retained DOP.
     MissingSideFeasibility,
     /// A side feasibility report was present for an infeasible retained DOP.
     UnexpectedSideFeasibility,
-    /// The retained below-side feasibility report did not replay.
+    /// Below-side evidence validation is false or undecided.
     BelowFeasibilityMismatch,
-    /// The retained above-side feasibility report did not replay.
+    /// Above-side evidence validation is false or undecided.
     AboveFeasibilityMismatch,
     /// The retained feasibility statuses derive a different coarse relation.
     RelationMismatch,
-    /// Recomputing from source geometry did not reproduce this report.
+    /// Source recomputation is undecided or its report value differs.
     SourceReplayMismatch,
 }
 
-/// Report-bearing exact support-DOP/oriented-plane classification.
+/// Halfspace systems and feasibility reports used for a DOP/plane relation.
 ///
-/// Slabs are lowered to halfspaces with the convention `normal . point + offset
-/// <= 0`: each retained support interval `min <= axis . point <= max` becomes
-/// `axis . point - max <= 0` and `-axis . point + min <= 0`. The report stores
-/// those exact halfspaces plus feasibility reports for the carrier and both
-/// closed query-plane sides. A relation is therefore a replayable consequence
-/// of exact witnesses or exact infeasibility certificates, not a float
-/// broad-phase guess.
+/// Each slab yields `axis . point - max <= 0` and `-axis . point + min <= 0`.
+/// Carrier and both closed query sides are tested, so tangency counts as
+/// Intersecting. Empty/invalid/infeasible carriers use Degenerate.
+///
+/// The enclosing outcome carries certainty; this mutable record does not. A
+/// halfspace infeasibility report may have no certificate, so these fields alone
+/// are not a universal standalone proof of the relation. Local validation inherits
+/// that report validator's limitations and discards consumed receipts.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportDopPlane3Report {
     /// Coarse relation between the retained DOP and the oriented plane.
@@ -726,9 +804,9 @@ pub struct SupportDopPlane3Report {
     pub slab_count: usize,
     /// Query plane used to form the closed side feasibility systems.
     pub plane: Plane3,
-    /// Exact halfspaces produced from the retained support slabs.
+    /// Stored halfspaces; local validation checks count, not derivation from a source DOP.
     pub slab_halfspaces: Vec<Plane3>,
-    /// Feasibility of the retained DOP carrier itself.
+    /// Carrier feasibility claim; absent for empty or invalid-bound sentinels.
     pub carrier_feasibility: Option<HalfspaceFeasibilityReport>,
     /// Feasibility of `DOP ∩ {plane.normal . point + plane.offset <= 0}`.
     pub below_feasibility: Option<HalfspaceFeasibilityReport>,
@@ -737,7 +815,16 @@ pub struct SupportDopPlane3Report {
 }
 
 impl SupportDopPlane3Report {
-    /// Validate retained halfspace evidence and the derived coarse relation.
+    /// Check report shape, delegated feasibility records, and the side-derived relation.
+    ///
+    /// Accepts the designated empty-halfspace Degenerate form without proving an
+    /// invalid source slab. Nonempty systems require two halfspaces per recorded slab,
+    /// then delegate carrier/side validation. Infeasible reports without certificates
+    /// can pass that delegate. No source DOP is checked; unknown/false validations map
+    /// to mismatch errors and decided receipts are discarded.
+    ///
+    /// The count check computes `slab_count * 2` with ordinary usize arithmetic;
+    /// a forged overflowing count can panic in overflow-checking builds.
     pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SupportDopPlane3ValidationError> {
         if self.slab_count == 0 {
             return if self.relation == SupportDopPlaneRelation::Degenerate
@@ -821,7 +908,11 @@ impl SupportDopPlane3Report {
         }
     }
 
-    /// Replay this report against a source DOP and query plane.
+    /// Validate locally, recompute from the supplied DOP/plane, and compare report values.
+    ///
+    /// Unknown or unequal recomputation becomes SourceReplayMismatch. The fresh
+    /// certainty/stage are discarded; success does not restore the original query's
+    /// receipt or independently repair missing feasibility certificates.
     pub fn validate_against_sources(
         &self,
         dop: &SupportDop3,
@@ -836,21 +927,29 @@ impl SupportDopPlane3Report {
     }
 }
 
-/// Retained exact support k-DOP in 3D.
+/// Ordered support slabs with a source-count annotation.
+///
+/// Represents their closed intersection, which may be unbounded or infeasible.
+/// The empty list is handled as Degenerate by classifiers, not as a universal-set
+/// identity. Axes need not be normalized or nonzero. Bounds store exact scalar
+/// expressions, but no constructor certainty or source points are retained;
+/// classification receipts describe the current query, not source fidelity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SupportDop3 {
+    /// Ordered directional constraints, with no retained constructor receipt.
     slabs: Vec<SupportSlab3>,
+    /// Input count from from_points; zero for from_slabs regardless of witness indices.
     source_point_count: usize,
 }
 
 impl SupportDop3 {
-    /// Build exact support slabs from axes and source points.
+    /// Select extrema along each supplied axis, retaining first-attaining source indices.
     ///
-    /// Every bound is selected by exact Real ordering and records a source
-    /// witness index. Empty axis or point lists produce a structurally
-    /// degenerate empty carrier instead of guessing a topology result.
-    /// Build exact support slabs from axes and source points with an explicit
-    /// predicate policy.
+    /// Empty axes or points produce an empty carrier with Exact/Structural certainty
+    /// and the original point count. Nonempty scans aggregate comparison receipts and
+    /// propagate the first Unknown. Approximate ordering can select qualified bounds;
+    /// retain the returned receipt, since the carrier does not store it. Zero axes
+    /// are accepted and joint feasibility is not separately checked.
     pub fn from_points(
         axes: &[Point3],
         points: &[Point3],
@@ -897,7 +996,7 @@ impl SupportDop3 {
         )
     }
 
-    /// Construct a k-DOP from already retained slabs.
+    /// Store supplied slabs unchecked and set the source-point count to zero.
     pub fn from_slabs(slabs: Vec<SupportSlab3>) -> Self {
         Self {
             slabs,
@@ -915,12 +1014,17 @@ impl SupportDop3 {
         self.source_point_count
     }
 
-    /// Classify a point against every retained slab with an explicit policy.
+    /// Classify projections against slabs in order, retaining consumed comparison receipts.
     ///
-    /// The inside convention is inclusive: a point is inside when every exact
-    /// projection lies between the retained slab bounds. Boundary status is
-    /// reported separately so downstream topology can distinguish strict
-    /// interior from support contact.
+    /// A visited inverted slab gives Degenerate; the first outside projection gives
+    /// Outside. Later slabs are not checked after either terminal result. Otherwise
+    /// an equality to any bound gives Boundary and all strict inequalities give
+    /// Inside. Empty carriers give Exact/Structural Degenerate; an encountered Unknown
+    /// propagates without completing the scan.
+    ///
+    /// Only bound order is validated. With zero/redundant axes, Boundary is a constraint
+    /// contact label and need not be the topological boundary of the represented set.
+    /// The receipt does not recover qualification lost during carrier construction.
     pub fn classify_point(
         &self,
         point: &Point3,
@@ -999,13 +1103,12 @@ impl SupportDop3 {
         )
     }
 
-    /// Classify an AABB by exact projection intervals with an explicit policy.
+    /// Return the report classifier's coarse AABB relation with its receipt unchanged.
     ///
-    /// This is a conservative support-slab relation, not a full constructive
-    /// intersection witness. A separated result is exact because one slab axis
-    /// proves disjointness. A non-separated result certifies only that all
-    /// retained support intervals overlap, which is the reusable bounding-volume
-    /// predicate that downstream mesh, voxel, and packing crates can replay.
+    /// A certified separating interval proves disjointness. Nonseparation, including
+    /// BoundaryTouch, is only an axis-projection test, not a common intersection
+    /// witness. Approximate results retain their qualification. See
+    /// [`Self::classify_aabb3_report`] for traversal and input conventions.
     pub fn classify_aabb3(
         &self,
         min: &Point3,
@@ -1022,12 +1125,18 @@ impl SupportDop3 {
         }
     }
 
-    /// Classify an AABB with an explicit policy and retain replayable evidence.
+    /// Project a coordinatewise box onto visited axes and retain the slab-prefix report.
     ///
-    /// This is the report-bearing form of [`Self::classify_aabb3`].
-    /// It records the exact support interval of the query box on each visited
-    /// k-DOP axis and stops at the first terminal slab, matching the coarse
-    /// classifier's scheduling while preserving object-level evidence.
+    /// The two corner coordinates may be supplied in either order on each axis:
+    /// projection selects each coordinate product's minimum and maximum. Slab bounds
+    /// are checked before projection. The first inverted or separating slab returns
+    /// Degenerate or Separated; later slabs remain unchecked. Empty carriers return
+    /// Exact/Structural Degenerate without examining the box.
+    ///
+    /// Otherwise all slabs are visited: endpoint contact on any interval gives
+    /// BoundaryTouch, and remaining overlap gives ConservativeOverlap. Both are
+    /// conservative spatial relations. The outcome aggregates consumed receipts and
+    /// propagates Unknown; the report itself carries no certainty or source fidelity.
     pub fn classify_aabb3_report(
         &self,
         min: &Point3,
@@ -1157,7 +1266,7 @@ impl SupportDop3 {
         )
     }
 
-    /// Classify this retained DOP relative to an oriented plane with a policy.
+    /// Return the plane report's coarse relation while preserving its outcome receipt.
     pub fn classify_plane3(
         &self,
         plane: &Plane3,
@@ -1173,14 +1282,17 @@ impl SupportDop3 {
         }
     }
 
-    /// Classify this retained DOP relative to an oriented plane with an
-    /// explicit policy and retain exact feasibility evidence.
+    /// Lower slabs to closed halfspaces, then classify carrier and both plane-side systems.
     ///
-    /// This is a report-bearing k-DOP/plane broad-phase predicate. The retained
-    /// support slabs are first replayed as exact halfspaces, then the carrier
-    /// and both closed sides of the query plane are certified by the
-    /// halfspace-feasibility predicate. The result follows the same
-    /// report-first discipline as [`Self::classify_aabb3_report`].
+    /// Order is carrier, below side, above side. Both closed sides feasible gives
+    /// Intersecting, including tangency; only below/above feasible gives that strict
+    /// side. Empty carriers, inverted slab bounds, or infeasible carriers give
+    /// Degenerate, with no side queries for those early cases. The query plane and
+    /// slab axes are not separately required to have nonzero normals.
+    ///
+    /// Each consumed decided receipt is accumulated and Unknown propagates. The
+    /// returned report omits those receipts and inherits the halfspace solver's
+    /// certificate limitations; retain the enclosing outcome for operation certainty.
     pub fn classify_plane3_report(
         &self,
         plane: &Plane3,
@@ -1313,7 +1425,7 @@ impl SupportDop3 {
     }
 }
 
-/// Build an exact support k-DOP from axis directions and source points.
+/// Forward to [`SupportDop3::from_points`], preserving its policy outcome and construction limits.
 pub fn support_dop3_from_points_with_policy(
     axes: &[Point3],
     points: &[Point3],
@@ -1322,8 +1434,9 @@ pub fn support_dop3_from_points_with_policy(
     SupportDop3::from_points(axes, points, policy)
 }
 
-/// Build a witnessed exact support k-DOP from integer axis directions and
-/// source points.
+/// Forward to [`WitnessedSupportDop3::from_points`] with integer axes and zero-margin metadata.
+///
+/// The Result reports validation errors but carries no predicate certainty receipt.
 pub fn witnessed_support_dop3_from_points_with_policy(
     points: &[Point3],
     axes: &[SupportDopAxis3],
@@ -1332,6 +1445,12 @@ pub fn witnessed_support_dop3_from_points_with_policy(
     WitnessedSupportDop3::from_points(points, axes, policy)
 }
 
+/// Scan nonempty points for candidate extrema on a nonzero integer axis.
+///
+/// Only decided strict improvements replace witnesses; equal or unknown comparisons
+/// leave the current candidate. Ties therefore retain the first point. This helper
+/// must be followed by full witnessed-slab validation before publishing success;
+/// it discards receipts and does not itself reject unresolved ordering.
 fn compute_witnessed_slab(
     points: &[Point3],
     axis: SupportDopAxis3,
@@ -1362,6 +1481,10 @@ fn compute_witnessed_slab(
     Ok(WitnessedSupportSlab3 { axis, min, max })
 }
 
+/// Validate the axis, both source witnesses, bound order, and every point's projection.
+///
+/// Unknown order becomes UnknownSlabOrder; inverted bounds or an outlying point
+/// produce the corresponding extremum error. All comparison receipts are dropped.
 fn validate_witnessed_slab(
     slab: &WitnessedSupportSlab3,
     points: &[Point3],
@@ -1391,6 +1514,10 @@ fn validate_witnessed_slab(
     Ok(())
 }
 
+/// Check an indexed point copy with PartialEq, then compare its recomputed projection.
+///
+/// Unknown projection equality is WitnessDistanceMismatch just like decided
+/// inequality. No extremum check is made here and comparison receipts are dropped.
 fn validate_support_witness(
     retained: &SupportWitness3,
     axis: SupportDopAxis3,
@@ -1413,6 +1540,7 @@ fn validate_support_witness(
     Ok(())
 }
 
+/// Package an index, cloned source point, and supplied projection without checking their relation.
 fn support_witness(vertex: usize, point: &Point3, distance: Real) -> SupportWitness3 {
     SupportWitness3 {
         vertex,
@@ -1421,12 +1549,14 @@ fn support_witness(vertex: usize, point: &Point3, distance: Real) -> SupportWitn
     }
 }
 
+/// Form the exact dot-product expression with integer coefficients, without axis validation.
 fn support_distance_on_integer_axis(point: &Point3, axis: SupportDopAxis3) -> Real {
     point.x.clone() * Real::from(axis.direction[0])
         + point.y.clone() * Real::from(axis.direction[1])
         + point.z.clone() * Real::from(axis.direction[2])
 }
 
+/// Extract an optional policy ordering, discarding certainty, stage, and unresolved diagnostics.
 fn compare_real_with_policy(
     left: &Real,
     right: &Real,
@@ -1435,6 +1565,7 @@ fn compare_real_with_policy(
     compare_reals_with_policy(left, right, policy).value()
 }
 
+/// Check only `slab.min <= slab.max`, preserving the comparison outcome; axes and witnesses are unchecked.
 fn validate_slab_bounds(slab: &SupportSlab3, policy: PredicatePolicy) -> PredicateOutcome<bool> {
     match compare_reals_with_policy(&slab.min, &slab.max, policy) {
         PredicateOutcome::Decided {
@@ -1446,6 +1577,7 @@ fn validate_slab_bounds(slab: &SupportSlab3, policy: PredicatePolicy) -> Predica
     }
 }
 
+/// Extract an optional Boolean, discarding certainty, stage, and unresolved diagnostics.
 fn decided_bool(outcome: PredicateOutcome<bool>) -> Option<bool> {
     match outcome {
         PredicateOutcome::Decided { value, .. } => Some(value),
@@ -1453,6 +1585,11 @@ fn decided_bool(outcome: PredicateOutcome<bool>) -> Option<bool> {
     }
 }
 
+/// Validate slab orders and emit upper/lower closed halfspaces in source order.
+///
+/// An inverted slab returns an empty vector sentinel with consumed receipts;
+/// Unknown propagates. Empty input also gives an empty vector. Axes and witness
+/// indices are unchecked. Accepted slabs produce two planes each.
 fn support_dop_slab_halfspaces(
     slabs: &[SupportSlab3],
     policy: PredicatePolicy,
@@ -1488,12 +1625,16 @@ fn support_dop_slab_halfspaces(
     PredicateOutcome::decided(halfspaces, certainty, stage)
 }
 
+/// Which closed query-plane side to append to the retained slab system.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum PlaneQuerySide {
+    /// Closed side `normal . point + offset <= 0`.
     Below,
+    /// Opposite closed side `normal . point + offset >= 0`.
     Above,
 }
 
+/// Clone the slab system and append the plane for Below or its negation for Above.
 fn side_halfspaces(
     slab_halfspaces: &[Plane3],
     plane: &Plane3,
@@ -1508,6 +1649,7 @@ fn side_halfspaces(
     halfspaces
 }
 
+/// Map feasibility of both closed sides to Intersecting, strict Below/Above, or Degenerate.
 fn support_dop_plane_relation_from_side_feasibility(
     below_feasible: bool,
     above_feasible: bool,
@@ -1520,18 +1662,26 @@ fn support_dop_plane_relation_from_side_feasibility(
     }
 }
 
+/// Negate normal and offset together, reversing a closed halfspace inequality.
 fn negate_plane(plane: &Plane3) -> Plane3 {
     Plane3::new(negate_point(&plane.normal), negate(&plane.offset))
 }
 
+/// Negate each point-vector coordinate without interpreting it as a normalized direction.
 fn negate_point(point: &Point3) -> Point3 {
     Point3::new(negate(&point.x), negate(&point.y), negate(&point.z))
 }
 
+/// Form exact scalar negation as zero minus the supplied value.
 fn negate(value: &Real) -> Real {
     sub_ref(&Real::from(0), value)
 }
 
+/// Scan a nonempty point slice for first-attaining min/max projection indices.
+///
+/// Compare minimum before maximum at each point and accumulate consumed receipts;
+/// Unknown stops the scan. Panics for empty points, which callers exclude. The
+/// axis is accepted without a nonzero check.
 fn build_slab(
     axis: &Point3,
     points: &[Point3],
@@ -1593,15 +1743,25 @@ fn build_slab(
     )
 }
 
+/// Location of a scalar relative to an assumed ordered closed interval.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ProjectionIntervalLocation {
+    /// Strictly less than the lower bound.
     Below,
+    /// Equal to the lower bound, including a collapsed interval.
     OnMin,
+    /// Strictly between the ordered bounds.
     Inside,
+    /// Equal to the upper bound after excluding lower-bound equality.
     OnMax,
+    /// Strictly greater than the upper bound.
     Above,
 }
 
+/// Compare against the lower bound first, returning Below early, then the upper bound.
+///
+/// Assumes ordered bounds; equality at both endpoints prefers OnMin. Preserves
+/// consumed receipts and propagates Unknown without inferring a relation.
 fn classify_projection_interval(
     value: &Real,
     min: &Real,
@@ -1649,6 +1809,11 @@ fn classify_projection_interval(
     PredicateOutcome::decided(location, certainty, stage)
 }
 
+/// Test ordered closed intervals for separation, endpoint touch, or overlap.
+///
+/// Checks query-max versus slab-min before query-min versus slab-max, stopping
+/// at separation. Does not validate interval order. Consumed receipts accumulate;
+/// Unknown propagates and this helper never returns Degenerate.
 fn classify_interval_overlap(
     query_min: &Real,
     query_max: &Real,
@@ -1701,6 +1866,11 @@ fn classify_interval_overlap(
     PredicateOutcome::decided(relation, certainty, stage)
 }
 
+/// Select coordinatewise product extrema and form an axis-projection interval.
+///
+/// Corner coordinates may be unordered. Each axis coefficient times each corner
+/// coordinate is compared before the lower/upper dot products are formed.
+/// Consumes three comparisons, accumulates their receipts, and stops on Unknown.
 fn project_aabb3_on_axis(
     axis: &Point3,
     min: &Point3,
@@ -1742,10 +1912,12 @@ fn project_aabb3_on_axis(
     PredicateOutcome::decided((lower, upper), certainty, stage)
 }
 
+/// Project a point using the shared coordinate-dot-product expression builder.
 fn project_point_on_axis(axis: &Point3, point: &Point3) -> Real {
     project_coords_on_axis(axis, [&point.x, &point.y, &point.z])
 }
 
+/// Form the exact expression `(axis.x*x + axis.y*y) + axis.z*z` without deciding its sign.
 fn project_coords_on_axis(axis: &Point3, coords: [&Real; 3]) -> Real {
     let x = mul(&axis.x, coords[0]);
     let y = mul(&axis.y, coords[1]);
@@ -1753,14 +1925,17 @@ fn project_coords_on_axis(axis: &Point3, coords: [&Real; 3]) -> Real {
     add(&add(&x, &y), &z)
 }
 
+/// Delegate scalar multiplication to the owning Real arithmetic helper.
 fn mul(left: &Real, right: &Real) -> Real {
     mul_ref(left, right)
 }
 
+/// Delegate scalar addition to the owning Real arithmetic helper.
 fn add(left: &Real, right: &Real) -> Real {
     add_ref(left, right)
 }
 
+/// Accumulate the weakest consumed certainty and latest escalation stage in place.
 fn absorb_trace(
     certainty: &mut Certainty,
     stage: &mut Escalation,
@@ -1771,6 +1946,7 @@ fn absorb_trace(
     *stage = max_stage(*stage, value_stage);
 }
 
+/// Choose Approximate over Filtered over Exact, retaining the weaker of two receipts.
 fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     match (left, right) {
         (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
@@ -1779,17 +1955,24 @@ fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     }
 }
 
+/// Finite controls for projection relations, uncertainty propagation, and retained validation errors.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::predicates::decision::stage_rank;
 
+    /// Approximate-terminal policy for decided integer controls; strict uncertainty cases select STRICT explicitly.
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+    /// Build a point from three exactly converted integer coordinates.
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(x.into(), y.into(), z.into())
     }
 
+    /// Require normal-form proof of the unit-circle identity at e, then return a separate unresolved zero.
+    ///
+    /// The shared angle-addition fixture supplies terminal-policy coverage without
+    /// losing the original now-certified identity assertion.
     fn terminal_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -1803,10 +1986,15 @@ mod tests {
         crate::test_support::terminally_unresolved_zero()
     }
 
+    /// Build an unchecked x-axis slab from the supplied scalar bounds.
     fn x_slab(min: Real, max: Real) -> SupportSlab3 {
         SupportSlab3::new(p3(1, 0, 0), min, max)
     }
 
+    /// Check all five scalar locations, separation on both sides, and selected strict unknowns.
+    ///
+    /// Integer relation assertions extract values; uncertainty controls assert Unknown
+    /// without constraining its reason or stage.
     #[test]
     fn projection_and_overlap_helpers_cover_every_location_and_unknown_boundary() {
         for (value, expected) in [
@@ -1890,6 +2078,10 @@ mod tests {
         ));
     }
 
+    /// Require Unknown through point/box/plane wrappers for selected unresolved bounds and projections.
+    ///
+    /// Also checks unresolved extremum construction. These fixtures do not assert a
+    /// particular uncertainty reason or dispatch stage.
     #[test]
     fn strict_support_dop_classifiers_propagate_slab_and_projection_uncertainty() {
         let uncertain_bounds = SupportDop3::from_slabs(vec![x_slab(terminal_zero(), 0.into())]);
@@ -1966,6 +2158,7 @@ mod tests {
         ));
     }
 
+    /// Require Unknown for an unresolved carrier axis and two unresolved query-plane controls.
     #[test]
     fn plane_report_propagates_carrier_and_each_query_side_uncertainty() {
         let uncertain_axis = SupportDop3::from_slabs(vec![SupportSlab3::new(
@@ -1999,6 +2192,10 @@ mod tests {
         ));
     }
 
+    /// Require Unknown at selected min/max scan and box-projection comparisons.
+    ///
+    /// A negative-axis integer control must project the box to `[-2, 0]`; its receipt
+    /// is not independently asserted.
     #[test]
     fn slab_building_distinguishes_unknown_minimum_and_later_unknown_maximum() {
         assert!(matches!(
@@ -2040,6 +2237,7 @@ mod tests {
         ));
     }
 
+    /// Check validation errors for unresolved interval order/relation and a missing terminal index.
     #[test]
     fn aabb_report_validation_rejects_unknown_intervals_and_wrong_terminals() {
         let slab = x_slab(0.into(), 0.into());
@@ -2095,6 +2293,7 @@ mod tests {
         );
     }
 
+    /// Check inverted witnessed bounds and unresolved bound/point comparisons map to their expected errors.
     #[test]
     fn witnessed_slab_validation_preserves_unknown_and_inverted_bounds() {
         let points = [p3(0, 0, 0), p3(1, 0, 0)];
@@ -2146,6 +2345,7 @@ mod tests {
         );
     }
 
+    /// Check selected unknown helpers, all four side-feasibility labels, and certainty/stage rankings.
     #[test]
     fn support_dop_helpers_cover_unknowns_side_relations_and_trace_ranks() {
         let slab = x_slab(terminal_zero(), 0.into());

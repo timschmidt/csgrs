@@ -5965,6 +5965,106 @@ checked artifact metadata uses the same prefix and `artifacts.jsonl` suffix.
 Full workflow checks remain waived by the owner. The repository-wide semantic
 review and coverage mandate remain active and incomplete.
 
+## Hyperlimit directional support implementation
+
+Baseline: `f5a4d040a` on `rustdoc`. Read every line of
+`crates/hyperlimit/src/predicates/dop.rs` (2203 baseline lines), including all
+inline tests. Revisited the preceding batch's full support-DOP integration-test
+review and current halfspace validation delegation. Owning layer: Hyperlimit
+support projections, source witnesses, and report validation. Relevant
+properties: P1/P3/P4 and P8–P11/P19, especially exact stored expressions versus
+policy-selected extrema, inherited qualification, mutation, and receipt loss.
+Missing acceptance witnesses were private-item documentation and overbroad
+public statements about exactness, replay, and bounded refresh work.
+
+Reviewed/documented all 88 named declarations, 43 fields, and 44 enum variants.
+The source is unchanged apart from comments and blank lines. The 12 declarations
+inside the cfg(test) section include its module, policy constant, three helpers,
+and seven tests; their Rustdoc is present in source but ordinary library docs
+exclude that module. Existing assertion and predicate order are preserved.
+
+Expansion metadata is now described as caller-declared unnormalized projection
+margins. Integer axes are not normalized; changing axis scale changes the units
+of both bounds and margins. A LossyAdapter tag supplies zero numeric margin and
+does not itself prove a loss bound. Exact finite binary-float import alone does
+not imply geometric loss. Expansion validation checks sign and kind/counts,
+accepts decided approximate comparisons, drops receipts, and maps unresolved
+nonnegativity to NegativeExpansion. The direct conservative-bound accessors
+apply the scalar regardless of declared kind/count, without validation.
+
+Witnessed construction scans extrema then fully validates every point per axis.
+Its candidate helper ignores unknown comparisons during selection; final
+validation can reject them. Witness point identity uses Point3 PartialEq;
+projection equality is policy-driven, with unresolved equality mapped to
+WitnessDistanceMismatch. Result-returning APIs discard certainty/stage even
+when a comparison decided approximately. Raw conversions omit point copies and
+expansion metadata, apply no margin, and reset the general carrier's source count
+to zero. This is not certified transport of source fidelity or expansion bounds.
+
+Refresh checks counts/indices, mutates slabs in order, then validates the complete
+point set. An invalidated extremum rebuilds an axis; other listed points can
+extend it. Duplicate changed indices are counted/revisited. There is no rollback
+on later error and final validation still scans all points for every slab. This
+supplies source-based evidence for the documented work structure, not a runtime
+performance claim or a changed-subset work bound. Expansion consistency can fail
+after mutation because its full validation occurs at the end.
+
+General carriers accept zero axes, validate only visited slab bound orders, and
+short-circuit on Outside, separation, or inverted bounds before later slabs.
+Empty slabs classify as Degenerate rather than a universal-set identity.
+Projection handles reversed AABB corner coordinates by selecting coordinate
+product extrema. BoundaryTouch/nonseparation is an interval test, not a common
+spatial witness. General outcomes accumulate current-query receipts but the
+stored carrier/report does not preserve constructor qualification. A zero-axis
+slab with bounds zero/zero yields constraint contact everywhere; source inspection
+therefore does not support calling that label the intrinsic topological boundary.
+This consequence was traced through the current code, not run as a new test.
+
+Local AABB validation checks stored interval consistency and prefix scheduling,
+not projection derivation or source identity. Source replay first validates,
+then compares fresh report values while discarding fresh certainty/stage. Plane
+reports lower slabs to closed halfspaces and check carrier, below, above in
+that order; tangency can make both sides feasible. Empty/invalid/infeasible
+carriers use Degenerate. Neither axes nor plane normals are separately required
+to be nonzero at this layer.
+
+Plane validation inherits the current HalfspaceFeasibilityReport behavior:
+Infeasible with no witness/certificate is accepted as structurally valid. A
+hand-constructed nonempty plane report with two valid slab halfspaces, such an
+infeasible carrier, Degenerate relation, and no sides can therefore pass local
+validation without proving infeasibility. The previously audited halfspace
+implementation and current DOP delegate were inspected again; this is a
+source-derived limitation, not a newly executed regression. Source replay is a
+separate recomputation and does not turn a missing standalone certificate into
+one. Local validation also accepts the empty-halfspace Degenerate sentinel
+without proving an invalid source slab. The public slab-count multiplication
+uses ordinary usize arithmetic and can overflow for forged counts; documented
+that overflow-checking builds can panic. No implementation changes were made.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Non-comment/nonblank source is
+  identical to baseline. Scoped scans found Rustdoc on every named declaration,
+  field, and variant in this file.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed. This includes the inline controls and existing downstream integration
+  tests without executing them.
+- `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline -j2 --
+  --document-private-items -D warnings -D rustdoc::broken_intra_doc_links
+  -D rustdoc::private_intra_doc_links` passed. Verified 164 complete rendered doc
+  groups across 44 pages, including all 43 fields and 44 variants.
+- Downstream `cargo rustdoc --locked -p csgrs --lib --no-default-features
+  --features curve --offline -j2 -- --document-private-items
+  -D rustdoc::broken_intra_doc_links` passed.
+- No runtime, mutation/rollback, forgery, performance, or resource-exhaustion
+  tests ran. The source-derived limitations above remain implementation facts
+  to address in a separately authorized code change, not conformance successes.
+  Shared target storage remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-dop-{doc,check,downstream-doc}.log`.
+The owner's full-workflow waiver remains in effect. The complete repository
+semantic/coverage audit is still unfinished; existing global instructions remain.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
