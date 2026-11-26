@@ -1,7 +1,17 @@
 //! Generate lightweight PNG renders for README assets.
 //!
-//! Geometry is constructed with `hyperlattice::Real`; primitive floats are used
-//! only after projection into the image/raster boundary.
+//! Finite fixture literals enter native geometry as exact binary values.
+//! Curves/meshes are projected to binary64 for display; raster tolerances,
+//! shading and depth biases do not participate in native geometry decisions.
+//! Several fixtures permit approximate predicates and extract their outcomes
+//! without reporting receipts. PNGs are illustrations, not geometry certificates.
+//!
+//! Requires `curve,image-io,truetype-text,metaballs,sdf,offset,hershey-text`;
+//! the last feature is used by the text renderer even though the manifest's
+//! required-feature list omits it. Default features currently supply it.
+//! `README_RENDER_OUTPUT_DIR` overrides the working-directory-relative `docs`
+//! destination. Presence of `README_RENDER_TEXT_ONLY` selects only two text
+//! images. Files are replaced individually; failures panic and earlier writes remain.
 
 use csgrs::solid::MetaBall;
 use csgrs::{
@@ -16,19 +26,34 @@ use hyperlattice::{Point3, Real, Vector3};
 use image::{GrayImage, Luma, Rgba, RgbaImage};
 use std::{collections::BTreeSet, fs, path::PathBuf};
 
+/// Square raster side length and fixed depth-buffer stride in pixels.
 const SIZE: u32 = 768;
+/// Fractional margin reserved on each side of the longest mapped extent.
 const PADDING: f64 = 0.12;
+/// Model-space chord-error request for finite curve display projection, not a pixel bound.
 const CURVE_CHORD_ERROR: f64 = 1.0e-3;
+/// Transparent initial canvas, also saved for empty geometry.
 const BG: Rgba<u8> = Rgba([0, 0, 0, 0]);
+/// Flat fill color for projected planar material triangles.
 const FACE_2D: Rgba<u8> = Rgba([68, 150, 173, 255]);
+/// Dark endpoint of the face-shading ramp and degenerate-normal fallback.
 const FACE_SHADOW_3D: Rgba<u8> = Rgba([54, 108, 142, 255]);
+/// Light endpoint of the face-shading ramp.
 const FACE_LIGHT_3D: Rgba<u8> = Rgba([120, 201, 204, 255]);
+/// Stroke color for edges and vertex outlines.
 const EDGE: Rgba<u8> = Rgba([16, 34, 49, 255]);
+/// Interior color of represented-vertex markers.
 const VERTEX: Rgba<u8> = Rgba([255, 203, 79, 255]);
+/// Pixel width of planar region/path strokes.
 const EDGE_WIDTH_2D: f64 = 3.25;
+/// Unnormalized viewing direction, aligned with increasing projected depth.
 const VIEW_DIRECTION: [f64; 3] = [1.0, 1.0, 0.9];
+/// Unnormalized fixed light direction for two-sided face shading.
 const LIGHT_DIRECTION: [f64; 3] = [0.25, 0.55, 1.0];
 
+/// Creates the selected directory and renders text only or the full curve/mesh catalog.
+/// Any present text-only environment value selects text mode; no receipt summary,
+/// output-set verification or atomic batch publication is performed.
 fn main() {
     let output_dir = output_dir();
     fs::create_dir_all(&output_dir).expect("create README render output directory");
@@ -43,6 +68,9 @@ fn main() {
     println!("README renders written to {}/*.png", output_dir.display());
 }
 
+/// Constructs the fixed planar catalog, raster/text fixtures and open curve examples.
+/// Several Boolean fixtures use `APPROXIMATE_512`; extracted values are rendered
+/// without reporting those receipts. Any construction/projection/write error panics.
 fn render_readme_curves() {
     render_curve("square", &curve::square(2.0).expect("valid planar fixture"));
     render_curve(
@@ -243,6 +271,8 @@ fn render_readme_curves() {
     );
 }
 
+/// Renders `CSG` from the compile-time bundled TrueType font and ROWMANS Hershey strokes.
+/// Requires both font features even when only one output is of interest.
 fn render_readme_text() {
     render_curve(
         "truetype",
@@ -257,6 +287,8 @@ fn render_readme_text() {
     );
 }
 
+/// Traces a 10-by-10 white pixel block inside a 16-by-16 black grayscale fixture.
+/// The threshold is 128; the resulting geometry represents that raster selection.
 fn readme_raster_shape() -> CurveRegion2 {
     let mut image = GrayImage::from_pixel(16, 16, Luma([0]));
     for y in 3..13 {
@@ -267,6 +299,9 @@ fn readme_raster_shape() -> CurveRegion2 {
     curve::from_image(&image, 128).expect("trace README raster shape")
 }
 
+/// Renders fixed primitive, extrusion, sweep, Boolean, projection and implicit fixtures.
+/// Mixes strict wrappers and explicitly approximate-policy outcomes; no aggregate
+/// receipt or independent model oracle is produced for the catalog.
 fn render_readme_meshes() {
     render_mesh("cube", &solid::cube(2.0).expect("valid primitive fixture"));
     render_mesh(
@@ -451,12 +486,14 @@ fn render_readme_meshes() {
     render_implicit_meshes();
 }
 
+/// Runs metaball, quadratic-field and six TPMS illustration builders in that order.
 fn render_implicit_meshes() {
     render_metaballs_mesh();
     render_sdf_mesh();
     render_tpms_meshes();
 }
 
+/// Samples three fixed positive metaballs on an 8-cubed grid for a display mesh.
 fn render_metaballs_mesh() {
     let balls = [
         MetaBall::new(p3(-0.55, 0.0, 0.0), r(0.65)),
@@ -469,6 +506,8 @@ fn render_metaballs_mesh() {
     );
 }
 
+/// Samples `x² + y² + z² - 0.72` on a 16-cubed grid in `[-1,1]³` at isovalue zero.
+/// This implicit field is not a signed distance; the result is a sampled mesh.
 fn render_sdf_mesh() {
     render_mesh(
         "sdf",
@@ -488,6 +527,8 @@ fn render_sdf_mesh() {
     );
 }
 
+/// Renders band-solid and surface variants of three TPMS fields in a two-unit box.
+/// Fixed grid/threshold parameters produce finite illustrations, not analytic surfaces.
 fn render_tpms_meshes() {
     // Keep implicit thumbnail meshes legible once their vertices are visible.
     let tpms_box = solid::cube(2.0).expect("valid primitive fixture");
@@ -519,6 +560,7 @@ fn render_tpms_meshes() {
     );
 }
 
+/// Builds a square-base pyramid from five authored points and oriented polygon faces.
 fn readme_polyhedron() -> TriangleMesh {
     let points = [
         [r(-1.0), r(-1.0), r(0.0)],
@@ -537,6 +579,7 @@ fn readme_polyhedron() -> TriangleMesh {
     solid::polyhedron(&points, &faces).expect("README polyhedron")
 }
 
+/// Returns three four-corner rectangular sections at Z=-0.8, 0 and 1 with matching order.
 fn readme_loft_sections() -> Vec<Vec<Point3>> {
     vec![
         vec![
@@ -560,6 +603,9 @@ fn readme_loft_sections() -> Vec<Vec<Point3>> {
     ]
 }
 
+/// Evaluates one native cube-minus-sampled-sphere program with `APPROXIMATE_512`.
+/// Extracts the last materialized mesh without reporting the outcome receipt;
+/// operation/unbounded/materialization/empty-result failures panic.
 fn cube_minus_translated_sphere() -> TriangleMesh {
     let cube = solid::cube(2.0).expect("valid primitive fixture");
     let sphere = solid::sphere(1.25, 16, 8)
@@ -580,6 +626,10 @@ fn cube_minus_translated_sphere() -> TriangleMesh {
     .expect("one translated-sphere result")
 }
 
+/// Projects exact loop roles, fills finite profile triangles, strokes boundaries and marks endpoints.
+/// Uses represented source vertices rather than subdivision vertices. Empty bounds
+/// save a transparent image; projection, triangulation and write failures panic.
+/// Subsequent pixel coverage is approximate and supplies no native geometry evidence.
 fn render_curve(name: &str, region: &CurveRegion2) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
     let projection = FiniteProjectionOptions::try_new(CURVE_CHORD_ERROR)
@@ -622,6 +672,9 @@ fn render_curve(name: &str, region: &CurveRegion2) {
     save_image(name, &image);
 }
 
+/// Collects source segment starts from a native contour view, retaining duplicates.
+/// An absent or failed fast view falls back to represented boundary start coordinates;
+/// selected endpoints without coordinates are omitted, not approximated from isolators.
 fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
     if let Ok(Some(native)) = region.native_contours_fast_path() {
         return native
@@ -645,6 +698,10 @@ fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
         .collect()
 }
 
+/// Projects paths/strings to strokes and marks represented starts plus each final endpoint.
+/// Does not fill or force closure; missing selected coordinates remain unmarked.
+/// Repeated markers are retained. No projected points yields a transparent PNG;
+/// failed projection or writing panics.
 fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
     let projection = FiniteProjectionOptions::try_new(CURVE_CHORD_ERROR)
@@ -709,6 +766,11 @@ fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]
     save_image(name, &image);
 }
 
+/// Projects all stored positions, shades triangles and overlays used indexed edges/vertices.
+/// Bounds use referenced positions, but unused positions are still projected. Invalid
+/// indices can panic. Empty triangle lists save a transparent image before projection.
+/// Includes triangulation diagonals; edge identity is by indices, without welding.
+/// Positive depth bias is a display heuristic, not certified hidden-line geometry.
 fn render_mesh(name: &str, mesh: &TriangleMesh) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
     if mesh.triangles.is_empty() {
@@ -758,8 +820,8 @@ fn render_mesh(name: &str, mesh: &TriangleMesh) {
     let depth_bias = ((max_depth - min_depth).abs() * 0.006).max(1.0e-9);
     let mut depth_buffer = vec![f64::NEG_INFINITY; (SIZE * SIZE) as usize];
 
-    // Faces establish visibility; topology overlays are then depth-tested so
-    // rear edges and vertices cannot bleed through the solid.
+    // Faces establish raster depth; biased overlay tests keep edges/vertices
+    // visible near a surface without claiming exact occlusion.
     for triangle in mesh.triangles.iter() {
         let indices = triangle.indices();
         let points = indices.map(|index| raster[index]);
@@ -787,6 +849,8 @@ fn render_mesh(name: &str, mesh: &TriangleMesh) {
     save_image(name, &image);
 }
 
+/// Converts each retained display boundary path to a finite polyline at the requested chord error.
+/// Preserves path order and panics on any failed projection.
 fn project_edge_paths(
     paths: &[CurvePath2],
     projection: &FiniteProjectionOptions,
@@ -802,6 +866,8 @@ fn project_edge_paths(
         .collect()
 }
 
+/// Maps finite polyline points to pixels and strokes consecutive pairs only.
+/// Does not add closure; fewer than two points draws nothing.
 fn stroke_points(
     image: &mut RgbaImage,
     map: &Map2,
@@ -818,6 +884,7 @@ fn stroke_points(
     }
 }
 
+/// Accumulates finite coordinate bounds over material and hole vertices; no points yields `None`.
 fn curve_bounds(profiles: &[FiniteRegionProfile2]) -> Option<(f64, f64, f64, f64)> {
     let mut bounds = None;
     for profile in profiles {
@@ -829,12 +896,14 @@ fn curve_bounds(profiles: &[FiniteRegionProfile2]) -> Option<(f64, f64, f64, f64
     bounds
 }
 
+/// Extends display bounds with every supplied point, preserving `None` for an empty slice.
 fn include_points(bounds: &mut Option<(f64, f64, f64, f64)>, points: &[[f64; 2]]) {
     for point in points {
         include_point(bounds, (point[0], point[1]));
     }
 }
 
+/// Initializes or extends `(min_x,min_y,max_x,max_y)` using float min/max without finite checks.
 fn include_point(bounds: &mut Option<(f64, f64, f64, f64)>, point: (f64, f64)) {
     *bounds = Some(match *bounds {
         Some((min_x, min_y, max_x, max_y)) => (
@@ -848,24 +917,33 @@ fn include_point(bounds: &mut Option<(f64, f64, f64, f64)>, point: (f64, f64)) {
 }
 
 #[derive(Clone, Copy)]
+/// Floating display-plane position and unnormalized linear view depth.
 struct ProjectedPoint3 {
+    /// Coordinates before image fitting and vertical flip.
     plane: (f64, f64),
+    /// Larger values are nearer in the raster depth test.
     depth: f64,
 }
 
 #[derive(Clone, Copy)]
+/// Image-space point paired with the original projected view depth.
 struct RasterPoint3 {
+    /// Horizontal pixel coordinate.
     x: f64,
+    /// Vertically flipped pixel coordinate.
     y: f64,
+    /// View depth, not rescaled by the 2D image map.
     depth: f64,
 }
 
 impl RasterPoint3 {
+    /// Extracts the pixel position for coverage/bounds calculations.
     const fn plane(self) -> (f64, f64) {
         (self.x, self.y)
     }
 }
 
+/// Lossily projects native XYZ coordinates for display, panicking on unavailable conversion.
 fn point3_to_f64(point: &Point3) -> [f64; 3] {
     [
         real_to_f64(&point.x),
@@ -874,6 +952,8 @@ fn point3_to_f64(point: &Point3) -> [f64; 3] {
     ]
 }
 
+/// Uses plane `(x-y, 0.45(x+y)-z)` and depth `x+y+0.9z` without perspective division.
+/// The perpendicular plane axes have different scales; this is a fixed display map.
 fn project_point([x, y, z]: [f64; 3]) -> ProjectedPoint3 {
     ProjectedPoint3 {
         plane: (x - y, (x + y) * 0.45 - z),
@@ -881,6 +961,8 @@ fn project_point([x, y, z]: [f64; 3]) -> ProjectedPoint3 {
     }
 }
 
+/// Flips the float face normal toward the viewer and mixes ambient/diffuse/facing terms.
+/// Failed normalization uses the shadow color; winding does not cause backface culling.
 fn shaded_face_color([a, b, c]: [[f64; 3]; 3]) -> Rgba<u8> {
     let ab = subtract3(b, a);
     let ac = subtract3(c, a);
@@ -898,10 +980,12 @@ fn shaded_face_color([a, b, c]: [[f64; 3]; 3]) -> Rgba<u8> {
     mix_color(FACE_SHADOW_3D, FACE_LIGHT_3D, amount)
 }
 
+/// Subtracts display-space vectors componentwise.
 fn subtract3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
     [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
 }
 
+/// Computes the floating right-handed cross product for shading normals.
 fn cross3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
     [
         left[1] * right[2] - left[2] * right[1],
@@ -910,15 +994,20 @@ fn cross3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
     ]
 }
 
+/// Computes a floating dot product for shading and display normalization.
 fn dot3(left: [f64; 3], right: [f64; 3]) -> f64 {
     left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
 }
 
+/// Divides by the float norm only when it exceeds `f64::EPSILON`.
+/// NaN/too-small norms return `None`; overflow/infinite components are not separately checked.
 fn normalize3(vector: [f64; 3]) -> Option<[f64; 3]> {
     let length = dot3(vector, vector).sqrt();
     (length > f64::EPSILON).then(|| vector.map(|component| component / length))
 }
 
+/// Interpolates all four byte channels, rounding and clamping each result to 0..255.
+/// This is encoded-channel arithmetic, without linear-light color conversion.
 fn mix_color(shadow: Rgba<u8>, light: Rgba<u8>, amount: f64) -> Rgba<u8> {
     Rgba(std::array::from_fn(|channel| {
         let value =
@@ -927,6 +1016,8 @@ fn mix_color(shadow: Rgba<u8>, light: Rgba<u8>, amount: f64) -> Rgba<u8> {
     }))
 }
 
+/// Replaces pixel-center samples inside a float triangle using a `1e-9` barycentric slack.
+/// Skips near-zero signed area; assumes a `SIZE` square image and finite raster inputs.
 fn fill_triangle_2d(
     image: &mut RgbaImage,
     a: (f64, f64),
@@ -955,6 +1046,9 @@ fn fill_triangle_2d(
     }
 }
 
+/// Rasterizes barycentric pixel-center coverage and linearly interpolated view depth.
+/// Nearer/equal samples replace both color and depth, so later faces win exact ties.
+/// Uses float area/slack thresholds; assumes a `SIZE²` depth buffer and square image.
 fn fill_triangle_3d(
     image: &mut RgbaImage,
     depth_buffer: &mut [f64],
@@ -991,6 +1085,8 @@ fn fill_triangle_3d(
     }
 }
 
+/// Forms an inclusive floored/ceiled raster box and limits it to the fixed image extent.
+/// Returns `None` for inverted resulting ranges; float finiteness is not validated.
 fn triangle_pixel_bounds(
     a: (f64, f64),
     b: (f64, f64),
@@ -1003,10 +1099,14 @@ fn triangle_pixel_bounds(
     (min_x <= max_x && min_y <= max_y).then_some((min_x, min_y, max_x, max_y))
 }
 
+/// Returns `(c-a) × (b-a)`, the negative conventional oriented twice-area.
+/// Consistent use in numerator and denominator gives raster barycentric weights.
 fn edge(a: (f64, f64), b: (f64, f64), c: (f64, f64)) -> f64 {
     (c.0 - a.0) * (b.1 - a.1) - (c.1 - a.1) * (b.0 - a.0)
 }
 
+/// Blends a round-ended stroke using distance to the clamped segment and a one-pixel coverage ramp.
+/// Assumes nonnegative width and finite pixels; does not inspect geometry/depth.
 fn draw_line(
     image: &mut RgbaImage,
     a: (f64, f64),
@@ -1035,6 +1135,8 @@ fn draw_line(
     }
 }
 
+/// Blends a stroke only where interpolated depth plus bias reaches the face depth buffer.
+/// Reads but does not update depth, so overlays do not occlude later overlays.
 fn draw_depth_line(
     image: &mut RgbaImage,
     depth_buffer: &[f64],
@@ -1069,6 +1171,8 @@ fn draw_depth_line(
     }
 }
 
+/// Builds an inclusive line bounding box padded by half-width plus one pixel.
+/// Clips to the fixed image extent without validating width or finite coordinates.
 fn line_pixel_bounds(
     a: (f64, f64),
     b: (f64, f64),
@@ -1082,6 +1186,8 @@ fn line_pixel_bounds(
     (min_x <= max_x && min_y <= max_y).then_some((min_x, min_y, max_x, max_y))
 }
 
+/// Projects a pixel onto a segment and clamps to `[0,1]`; tiny squared length returns zero.
+/// `delta` and `length_squared` must describe the same segment; no consistency check is made.
 fn closest_line_parameter(
     point: (f64, f64),
     start: (f64, f64),
@@ -1096,6 +1202,7 @@ fn closest_line_parameter(
     }
 }
 
+/// Chooses a smaller fixed marker radius for denser vertex sets; counts include duplicate markers.
 fn vertex_radius(vertex_count: usize) -> f64 {
     match vertex_count {
         0..=48 => 4.75,
@@ -1106,6 +1213,7 @@ fn vertex_radius(vertex_count: usize) -> f64 {
     }
 }
 
+/// Chooses one of four pixel stroke widths from the number of distinct indexed mesh edges.
 fn edge_width(edge_count: usize) -> f64 {
     match edge_count {
         0..=100 => 2.5,
@@ -1115,11 +1223,13 @@ fn edge_width(edge_count: usize) -> f64 {
     }
 }
 
+/// Blends an edge-colored outline disc followed by the vertex-colored inner disc.
 fn draw_vertex_2d(image: &mut RgbaImage, center: (f64, f64), radius: f64) {
     draw_disc(image, center, vertex_outline_radius(radius), EDGE);
     draw_disc(image, center, radius, VERTEX);
 }
 
+/// Draws outlined vertex discs using their common center depth and the face-buffer bias test.
 fn draw_vertex_3d(
     image: &mut RgbaImage,
     depth_buffer: &[f64],
@@ -1138,10 +1248,12 @@ fn draw_vertex_3d(
     draw_depth_disc(image, depth_buffer, center, radius, depth_bias, VERTEX);
 }
 
+/// Adds an outline thickness capped at 1.35 pixels for the caller's positive marker radius.
 fn vertex_outline_radius(radius: f64) -> f64 {
     radius + (radius * 0.35 + 0.5).min(1.35)
 }
 
+/// Blends circular pixel-center coverage with a one-pixel edge ramp and no depth test.
 fn draw_disc(image: &mut RgbaImage, center: (f64, f64), radius: f64, color: Rgba<u8>) {
     let Some((min_x, min_y, max_x, max_y)) = disc_pixel_bounds(center, radius) else {
         return;
@@ -1157,6 +1269,8 @@ fn draw_disc(image: &mut RgbaImage, center: (f64, f64), radius: f64, color: Rgba
     }
 }
 
+/// Blends disc coverage where center depth plus bias reaches the face buffer.
+/// Uses one depth across the marker and never updates the buffer itself.
 fn draw_depth_disc(
     image: &mut RgbaImage,
     depth_buffer: &[f64],
@@ -1179,6 +1293,7 @@ fn draw_depth_disc(
     }
 }
 
+/// Bounds a disc with radius-plus-one padding, clipped to the fixed square canvas.
 fn disc_pixel_bounds(center: (f64, f64), radius: f64) -> Option<(u32, u32, u32, u32)> {
     let padding = radius + 1.0;
     let min_x = (center.0 - padding).floor().max(0.0) as u32;
@@ -1188,10 +1303,14 @@ fn disc_pixel_bounds(center: (f64, f64), radius: f64) -> Option<(u32, u32, u32, 
     (min_x <= max_x && min_y <= max_y).then_some((min_x, min_y, max_x, max_y))
 }
 
+/// Computes row-major depth-buffer indexing; callers must supply coordinates below `SIZE`.
 fn pixel_index(x: u32, y: u32) -> usize {
     (y * SIZE + x) as usize
 }
 
+/// Composites source-over in straight RGBA byte-channel space, scaled by coverage.
+/// Skips negligible output alpha, then rounds/clamps channels; no gamma correction.
+/// Assumes valid pixel coordinates and coverage in `[0,1]`.
 fn blend_pixel(image: &mut RgbaImage, x: u32, y: u32, color: Rgba<u8>, coverage: f64) {
     let destination = *image.get_pixel(x, y);
     let source_alpha = f64::from(color[3]) / 255.0 * coverage;
@@ -1214,15 +1333,23 @@ fn blend_pixel(image: &mut RgbaImage, x: u32, y: u32, color: Rgba<u8>, coverage:
     image.put_pixel(x, y, Rgba(output));
 }
 
+/// Uniform fit of finite display bounds to the fixed square image, followed by Y flip/clamping.
 struct Map2 {
+    /// Minimum authored display X before fitting.
     min_x: f64,
+    /// Minimum authored display Y before fitting.
     min_y: f64,
+    /// Shared pixels-per-display-unit scale.
     scale: f64,
+    /// Horizontal centering margin in pixels.
     offset_x: f64,
+    /// Vertical centering margin before flipping image Y.
     offset_y: f64,
 }
 
 impl Map2 {
+    /// Fits the longest extent inside fractional padding, flooring both extents at `1e-6`.
+    /// Assumes meaningful finite bounds; inverted/nonfinite data is not rejected.
     fn new((min_x, min_y, max_x, max_y): (f64, f64, f64, f64)) -> Self {
         let width = (max_x - min_x).max(1.0e-6);
         let height = (max_y - min_y).max(1.0e-6);
@@ -1236,6 +1363,8 @@ impl Map2 {
         }
     }
 
+    /// Translates/scales, flips Y and clamps both coordinates into the pixel extent.
+    /// Out-of-bounds points collapse to the border rather than receiving geometric clipping.
     fn point(&self, point: (f64, f64)) -> (f64, f64) {
         let px = (point.0 - self.min_x) * self.scale + self.offset_x;
         let py = SIZE as f64 - 1.0 - ((point.1 - self.min_y) * self.scale + self.offset_y);
@@ -1246,42 +1375,53 @@ impl Map2 {
     }
 }
 
+/// Replaces the named PNG in the currently selected directory and prints its path.
+/// Assumes directory creation already occurred; encoding/IO failure panics.
 fn save_image(name: &str, image: &RgbaImage) {
     let path = output_dir().join(name).with_extension("png");
     image.save(&path).expect("save README render");
     println!("wrote {}", path.display());
 }
 
+/// Reads the OS-string output override, otherwise returning working-directory-relative `docs`.
+/// Re-evaluated on each save; empty or relative override values are not normalized.
 fn output_dir() -> PathBuf {
     std::env::var_os("README_RENDER_OUTPUT_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("docs"))
 }
 
+/// Promotes finite binary64 fixture data exactly; nonfinite input panics.
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("README render constants are finite")
 }
 
+/// Extracts the lossy display conversion, panicking on `None` without an extra finite-value filter.
 fn real_to_f64(value: &Real) -> f64 {
     value
         .to_f64_lossy()
         .expect("README render coordinates are finitely projectable")
 }
 
+/// Constructs a native point from exactly promoted finite float fixture coordinates.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+/// Constructs a native vector from exactly promoted finite float fixture components.
 fn v3(x: f64, y: f64, z: f64) -> Vector3 {
     Vector3::from_xyz(r(x), r(y), r(z))
 }
 
 #[cfg(test)]
+/// Witness for retaining authored arc endpoints separately from display subdivision vertices.
 mod tests {
     use super::*;
     use hypercurve::{BulgeVertex2, Contour2};
 
     #[test]
+    /// Requires two semicircle endpoints despite more than two projected boundary fragments.
+    /// Checks native marker membership/count, not PNG bytes or raster visibility.
     fn exact_region_vertices_ignore_arc_projection_fragments() {
         let right = Point2::new(Real::one(), Real::zero());
         let left = Point2::new(-Real::one(), Real::zero());

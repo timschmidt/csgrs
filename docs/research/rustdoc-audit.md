@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `examples/readme_renders.rs` | Entire file; documented fixtures, exact ingress/finite display, all constants/helpers/fields, raster math, endpoint markers, receipts and output behavior. | Private docs and focused example check passed with actual required features; 69 pages inspected. Missing-Hershey configuration reproduced; renderer/geometry unit witness not executed. |
+| `tests/readme_render_regression.rs` | Entire file; documented lexical asset discovery, retained output directories, subprocess/environment behavior and byte-comparison scope. | Directly compiled existing tests and ran only the PNG-reference existence test: passed. Ignored renderer/byte-comparison test unchanged and not run. |
 | `tests/readme.rs` | Entire file; documented embedded snapshots, exact quickstart synchronization and selected metadata/layout assertions. | Both existing tests compiled directly and passed after restoring README synchronization; assertions unchanged. |
 | `examples/multi_format_export.rs` | Entire file; documented independently gated writers, output/truncation order, text statistics and all eight test intentions/limits. | Minimal and all-three-format private docs passed. Metadata-only test compilation reproduced eleven existing baseline/current errors; tests remain blocked and unchanged. |
 | `examples/basic.rs` | Entire file; documented strict-session receipt scope, through opening, terminal STL and working-directory output. | Private example docs/rendering passed; assertions unchanged, example not run. |
@@ -2446,6 +2448,78 @@ downstream synchronization check even when only comments change.
 
 Logs: `/tmp/csgrs-rustdoc-readme-before.log` and
 `/tmp/csgrs-rustdoc-readme-after.log`.
+
+### README renderer and image-regression consumers, 26 November 2026
+
+Baseline: `38346b4b4`. Owners: display-only example and asset-regression consumers,
+P3/P6/P8/P9/P19/P25/P26/P29/P30/P37. Domain: fixed primitive/profile/text/implicit
+fixtures, finite projection, PNG rasterization and filename/byte comparisons.
+Read the entire 1,313-line baseline example and the entire regression test file.
+Supporting reads of finite projection/triangulation, scalar conversion and feature
+declarations do not add whole-file kernel or manifest credit.
+
+Missing acceptance witnesses were undocumented private declarations and stronger
+display claims than the implementation establishes. Finite fixture floats enter
+exact native scalars; binary64 raster math follows explicit projection. Several
+builders permit approximate predicates and discard operation receipts. Projection
+retains material/hole decisions before rasterization, but pixels and depth-biased
+overlays are not native visibility certificates. Documented every raster threshold,
+marker/edge selection, camera map, color/coverage calculation and private record.
+The normalizer's finite-value limits and the display conversion's lack of an extra
+finite filter are explicit. Selected endpoints lacking coordinates remain unmarked;
+display subdivision vertices do not become authored marker identities.
+
+Output directory overrides are interpreted relative to the working directory;
+text-only selection depends on presence, not value. Saves replace files individually
+and can leave partial batches. The regression harness separately writes to a
+repository-root `target/readme-render-regression/PID-NANOS`, ignores
+`CARGO_TARGET_DIR`, retains its outputs and inherits environment/default features.
+Its existence/lexical-name/byte checks do not prove geometric fidelity or parse
+Markdown/PNG semantics. No renderer logic, fixture, threshold or assertion changed.
+
+Feature finding: the example's manifest lists six required features but omits
+`hershey-text`, used unconditionally by text rendering. With defaults disabled and
+only the listed six, a focused `cargo check --example readme_renders` reproduced
+E0433 for the gated Hershey module and E0425 for `hershey_strings`. The same check
+with `hershey-text` passed. This is an existing source/manifest mismatch; comment-only
+comparison confirms unchanged executable source. The manifest was not changed in
+this docs-only worktree. A Rustdoc build with the six features had succeeded,
+demonstrating why documentation generation alone must not be reported as a full
+type-check of example bodies.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check`: passed. Removing blank/comment-only lines
+  yields identical source to baseline for both files. Scans found all 73 renderer
+  declarations and all six regression declarations documented; fields were checked
+  separately. Test bodies and all numeric constants remain unchanged.
+- With the existing temporary target, incremental compilation disabled and broken
+  Rustdoc links denied, `cargo doc --locked -p csgrs --no-default-features
+  --features curve,image-io,truetype-text,metaballs,sdf,offset,hershey-text
+  --example readme_renders --document-private-items --no-deps --offline -j 2`
+  passed without warnings. Focused `cargo check` with the same feature/target
+  selection also passed. The six-feature check remains a reproduced existing gap.
+- Inspected 69 rendered pages, 71 non-test declaration summaries, private fields
+  and material contracts. The endpoint-marker unit witness remains source-reviewed;
+  no new native geometry or rendering execution is claimed.
+- Compiled `tests/readme_render_regression.rs` directly with `rustc --test`, the
+  file's six cfg features and `CARGO_MANIFEST_DIR` set to the repository root.
+  Ran only `readme_referenced_png_baselines_exist`: passed (one other test filtered).
+  This executes the unchanged existence assertions without invoking Cargo rendering.
+- The ignored byte-for-byte render test, example execution and full workflows were
+  not run under the owner's docs-only waiver. No PNGs or repository output directory
+  were created. Cached artifacts stayed in the single temporary build tree.
+
+Logs: `/tmp/csgrs-rustdoc-render-missing-hershey.log`,
+`/tmp/csgrs-rustdoc-render-missing-hershey-check.log`,
+`/tmp/csgrs-rustdoc-readme-renders-doc.log`,
+`/tmp/csgrs-rustdoc-readme-renders-check.log`, and
+`/tmp/csgrs-rustdoc-render-references.log`.
+
+All 13 tracked Rust files under the root `examples/` directory now have whole-file
+review rows, checked against `git ls-files examples`. This is directory review
+coverage, not proof of all example/test feature combinations or repository-wide
+Rustdoc completeness. The recorded multi-format test and renderer feature gaps remain.
 
 ## Next work
 

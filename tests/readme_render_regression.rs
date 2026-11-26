@@ -1,3 +1,7 @@
+//! README PNG-reference existence and an opt-in byte-for-byte rendering comparison.
+//! Filename/byte checks do not establish geometric fidelity. The expensive test
+//! invokes Cargo, writes under the repository's `target` and retains its outputs.
+
 #![cfg(all(
     feature = "curve",
     feature = "image-io",
@@ -14,6 +18,8 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+/// Requires at least one parsed README PNG reference and an existing docs path for each.
+/// Existence alone does not validate file type, PNG decoding or image contents.
 fn readme_referenced_png_baselines_exist() {
     let repo = repo_root();
     let referenced = readme_png_references(&repo);
@@ -37,6 +43,11 @@ fn readme_referenced_png_baselines_exist() {
 
 #[test]
 #[ignore = "expensive byte-for-byte README render regression; run with `cargo test --all-features --test readme_render_regression -- --ignored`"]
+/// Runs the renderer in a fresh output directory, then compares every generated PNG byte-for-byte.
+/// Requires all referenced names to be generated and every generated name to have a baseline;
+/// unrelated extra baseline files are allowed. Does not decode images or verify geometry.
+/// Uses inherited environment/default Cargo features, including any text-only override;
+/// output directories remain after success or failure, and no timeout is imposed.
 fn generated_readme_pngs_match_checked_in_baselines() {
     let repo = repo_root();
     let output_dir = fresh_output_dir(&repo);
@@ -108,10 +119,14 @@ fn generated_readme_pngs_match_checked_in_baselines() {
     );
 }
 
+/// Uses the compile-time package manifest directory as the repository root.
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
+/// Creates `target/readme-render-regression/PID-NANOS` below the supplied root.
+/// Ignores `CARGO_TARGET_DIR`; timestamp/PID naming does not enforce exclusive creation.
+/// Panics on pre-epoch time or directory errors and does not arrange cleanup.
 fn fresh_output_dir(repo: &Path) -> PathBuf {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -125,6 +140,9 @@ fn fresh_output_dir(repo: &Path) -> PathBuf {
     path
 }
 
+/// Collects immediate entry names with exactly lowercase `png` extensions in sorted order.
+/// Does not require regular files; lossy Unicode conversion can merge distinct names.
+/// Directory/entry errors panic.
 fn png_names_in(dir: &Path) -> BTreeSet<String> {
     fs::read_dir(dir)
         .unwrap_or_else(|err| panic!("read PNG directory {}: {err}", dir.display()))
@@ -139,6 +157,9 @@ fn png_names_in(dir: &Path) -> BTreeSet<String> {
         .collect()
 }
 
+/// Scans each README line for `docs/` tokens ending in `.png` before selected delimiters.
+/// Deduplicates lexically; this is not Markdown/HTML parsing, URL decoding or path validation.
+/// Reading/UTF-8 errors panic; references in prose or code are also considered.
 fn readme_png_references(repo: &Path) -> BTreeSet<String> {
     let readme = fs::read_to_string(repo.join("readme.md")).expect("read readme.md");
     let mut references = BTreeSet::new();
