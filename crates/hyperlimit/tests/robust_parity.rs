@@ -1,17 +1,34 @@
+//! Cross-library sign comparisons on finite binary floating-point coordinates.
+//!
+//! Hyperlimit converts each supplied f64 to its exact represented binary value;
+//! expected signs come from robust, with geometry-predicates and (for 2D) apfp
+//! comparisons. Agreement is comparative evidence on these fixtures, not a
+//! symbolic proof or a universal certificate. Outcome extraction checks signs
+//! but not Hyperlimit certainty, escalation, or terminal consumption.
+//!
+//! Fixed controls include boundaries, near boundaries, and a large-coordinate
+//! orientation. Four property tests are configured for 512 cases each, over their
+//! stated bounded ranges. Neither exhaustive floating-point coverage nor every
+//! underflow/overflow regime is claimed.
+
 use hyperlimit::{Point2, Point3, Sign, incircle2, insphere3, orient2, orient3};
 use proptest::prelude::*;
 use robust::{Coord, Coord3D};
 
+/// Approximation-permitted policy used for sign parity; receipts are not asserted.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Convert the first two f64 entries exactly to a Point2; short/nonfinite input panics.
 fn point2(values: &[f64]) -> Point2 {
     Point2::try_from_f64_array([values[0], values[1]]).unwrap()
 }
 
+/// Convert the first three f64 entries exactly to a Point3; short/nonfinite input panics.
 fn point3(values: &[f64]) -> Point3 {
     Point3::try_from_f64_array([values[0], values[1], values[2]]).unwrap()
 }
 
+/// Copy two entries into robust coordinates; the slice must contain at least two values.
 fn coord2(values: &[f64]) -> Coord<f64> {
     Coord {
         x: values[0],
@@ -19,6 +36,7 @@ fn coord2(values: &[f64]) -> Coord<f64> {
     }
 }
 
+/// Copy three entries into robust coordinates; the slice must contain at least three values.
 fn coord3(values: &[f64]) -> Coord3D<f64> {
     Coord3D {
         x: values[0],
@@ -27,18 +45,25 @@ fn coord3(values: &[f64]) -> Coord3D<f64> {
     }
 }
 
+/// Copy the first two coordinates for geometry-predicates, requiring a long enough slice.
 fn array2(values: &[f64]) -> [f64; 2] {
     [values[0], values[1]]
 }
 
+/// Copy the first three coordinates for geometry-predicates, requiring a long enough slice.
 fn array3(values: &[f64]) -> [f64; 3] {
     [values[0], values[1], values[2]]
 }
 
+/// Copy the first two entries into apfp coordinates without changing their f64 values.
 fn apfp_coord2(values: &[f64]) -> apfp::geometry::f64::Coord {
     apfp::geometry::f64::Coord::new(values[0], values[1])
 }
 
+/// Map a floating reference result by its comparisons with zero.
+///
+/// Positive/negative values map to their signs and both signed zeros map to Zero.
+/// NaN also falls through to Zero; this helper does not validate reference output.
 fn robust_sign(value: f64) -> Sign {
     if value > 0.0 {
         Sign::Positive
@@ -49,6 +74,7 @@ fn robust_sign(value: f64) -> Sign {
     }
 }
 
+/// Map clockwise/collinear/counterclockwise apfp labels to negative/zero/positive signs.
 fn apfp_sign(value: apfp::geometry::Orientation) -> Sign {
     match value {
         apfp::geometry::Orientation::Clockwise => Sign::Negative,
@@ -57,6 +83,12 @@ fn apfp_sign(value: apfp::geometry::Orientation) -> Sign {
     }
 }
 
+/// Compare fixed planar/spatial orientation and lifted-circle/sphere boundary controls.
+///
+/// Use robust's sign as the reference, geometry-predicates for all four families,
+/// and apfp for the two planar families. Decimal expressions first produce f64
+/// values; assertions concern those represented inputs rather than ideal decimals.
+/// The large-coordinate case belongs only to the orient2 table.
 #[test]
 fn adaptive_competitors_agree_on_boundaries_and_near_degeneracies() {
     let orient2_cases = [
@@ -187,6 +219,7 @@ fn adaptive_competitors_agree_on_boundaries_and_near_degeneracies() {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(512))]
 
+    /// Compare 2D orientation signs across all four libraries for six coordinates in `[-1e6,1e6)`.
     #[test]
     fn orient2d_matches_shewchuk_adaptive_predicate(
         coordinates in prop::collection::vec(-1.0e6_f64..1.0e6, 6)
@@ -218,6 +251,7 @@ proptest! {
         prop_assert_eq!(orient2(&a, &b, &c, APPROX).value(), Some(expected));
     }
 
+    /// Compare 3D orientation signs with robust and geometry-predicates for twelve coordinates in `[-1e4,1e4)`.
     #[test]
     fn orient3d_matches_shewchuk_adaptive_predicate(
         coordinates in prop::collection::vec(-1.0e4_f64..1.0e4, 12)
@@ -244,6 +278,7 @@ proptest! {
         prop_assert_eq!(orient3(&a, &b, &c, &d, APPROX).value(), Some(expected));
     }
 
+    /// Compare raw incircle signs across all four libraries for eight coordinates in `[-1e3,1e3)`.
     #[test]
     fn incircle2d_matches_shewchuk_adaptive_predicate(
         coordinates in prop::collection::vec(-1.0e3_f64..1.0e3, 8)
@@ -279,6 +314,7 @@ proptest! {
         prop_assert_eq!(incircle2(&a, &b, &c, &d, APPROX).value(), Some(expected));
     }
 
+    /// Compare raw insphere signs with robust and geometry-predicates for fifteen coordinates in `[-100,100)`.
     #[test]
     fn insphere3d_matches_shewchuk_adaptive_predicate(
         coordinates in prop::collection::vec(-100.0_f64..100.0, 15)

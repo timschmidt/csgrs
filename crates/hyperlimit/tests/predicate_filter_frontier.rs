@@ -1,8 +1,19 @@
-//! Independent orientation controls for admitting interval filter stages.
+//! Nine orientation controls with exact sign, receipt, and selected dispatch expectations.
+//!
+//! The table spans rational, radical, translated, and transcendental expressions
+//! whose signs have independent defining-relation expectations. Both policies
+//! must preserve Exact certainty on these controls. The dispatch-trace test checks
+//! specific path counts; it does not count every internal arithmetic event.
+//! A guarded child-process test reconstructs the same corpus in a new process,
+//! not through native geometry serialization.
 
 use hyperlimit::{Certainty, Escalation, Point2, PredicateOutcome, PredicatePolicy, Sign};
 use hyperreal::Real;
 
+/// Case name, expected sign, escalation stage, and selected orient2 dispatch path.
+///
+/// The path string is consumed only by the dispatch-trace fixture. Exact certainty
+/// is expected for every row, including rows whose resolution stage is Refined.
 const CASES: [(&str, Sign, Escalation, &str); 9] = [
     (
         "integer",
@@ -60,6 +71,12 @@ const CASES: [(&str, Sign, Escalation, &str); 9] = [
     ),
 ];
 
+/// Construct one of the nine orientation triples in CASES order.
+///
+/// Determinants are respectively `1`, `1/9`, `2^-100`, `sqrt(6)`, `-1`,
+/// `e^2-pi^2`, `-2`, `e*2^-100`, and zero. The negative transcendental case uses
+/// `e < 3 < pi`; common translations cancel in the translated case. Only indices
+/// zero through eight are valid; other indices reach unreachable and panic.
 fn points(index: usize) -> [Point2; 3] {
     let origin = Point2::new(0.into(), 0.into());
     match index {
@@ -130,6 +147,10 @@ fn points(index: usize) -> [Point2; 3] {
     }
 }
 
+/// Rebuild each triple for each policy and require its exact sign/stage receipt.
+///
+/// Fresh point construction does not itself assert that every shared scalar cache
+/// is cold. This helper checks no dispatch counters.
 fn check_frontier() {
     for (i, (name, sign, stage, _)) in CASES.iter().enumerate() {
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
@@ -143,11 +164,16 @@ fn check_frontier() {
     }
 }
 
+/// Run all nine sign/stage expectations under STRICT and APPROXIMATE_512.
 #[test]
 fn interval_filter_frontier_preserves_exact_results_and_receipts() {
     check_frontier();
 }
 
+/// Translate each triple by `(7,-5)`, then compare original and reversed traversal.
+///
+/// Require the expected/reversed sign and Exact certainty under both policies;
+/// stage labels are deliberately not asserted by this fixture.
 #[test]
 fn generated_translations_and_reversal_preserve_orientation() {
     for (i, (name, sign, _, _)) in CASES.iter().enumerate() {
@@ -167,6 +193,12 @@ fn generated_translations_and_reversal_preserve_orientation() {
     }
 }
 
+/// Check selected dispatch counts and the complete receipt for each reconstructed case.
+///
+/// Reset tracing after fixture construction and record only the orient2 query.
+/// Require one selected orientation path, structural/refinement path counts matching
+/// the expected stage, and zero terminal-approximation calls. Assertions do not
+/// constrain unlisted dispatch events or measure elapsed time.
 #[cfg(feature = "dispatch-trace")]
 #[test]
 fn admitted_stage_counts_preserve_structural_and_rational_shortcuts() {
@@ -209,8 +241,15 @@ fn admitted_stage_counts_preserve_structural_and_rational_shortcuts() {
     }
 }
 
+/// Reconstruct the corpus in a child running only this test, unless the guard is present.
+///
+/// Any existing guard value runs the checks in the current process and returns.
+/// Otherwise spawn the current test executable with an exact test-name filter,
+/// set the guard, inherit the remaining environment, and require successful exit.
+/// This is process isolation of the fixture run, not serialized-source replay.
 #[test]
 fn frontier_replays_in_a_fresh_process() {
+    /// Environment presence guard that prevents recursive child spawning for this test.
     const KEY: &str = "HYPERLIMIT_INTERVAL_FRONTIER_REPLAY";
     if std::env::var_os(KEY).is_some() {
         check_frontier();

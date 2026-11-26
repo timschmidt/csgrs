@@ -5621,6 +5621,102 @@ Full workflow/runtime/performance checks remain waived for this docs-only
 session. The documented limitations remain implementation work; the full
 repository audit remains active.
 
+## Hyperlimit determinant, reference-parity, and distance controls
+
+Baseline: `8776c78a7`. Whole-file reviews:
+`crates/hyperlimit/tests/nd_predicates.rs` (75 lines),
+`crates/hyperlimit/tests/robust_parity.rs` (310),
+`crates/hyperlimit/tests/exactcore_xinwei.rs` (51), and
+`crates/hyperlimit/tests/predicate_filter_frontier.rs` (229). Revisited the
+already reviewed dimension-generic owner and an excerpt of the point/triangle
+distance implementation; the latter does not earn whole-file distance-module
+credit. Ownership is Hyperlimit's determinant/reference/receipt acceptance
+consumers. Relevant properties are exact input meaning, typed invalid/undecided
+outcomes, certainty, dispatch order, and fresh-process evidence
+(P1/P3/P6/P8–P11/P19). Domains are small rational simplices, finite represented
+binary f64 coordinates, nine rational/radical/transcendental orientation triples,
+and two rational distance fixtures.
+
+The missing witnesses were module/helper/test Rustdoc, including functions
+inside proptest and a nested process-guard constant, plus precise limits on
+what the tests establish. All 36 named declarations now have documentation.
+No input, expression, assertion, range, case count, feature gate, dispatch-count
+expectation, environment guard, or subprocess argument changed.
+
+Dimension-generic docs distinguish raw determinant conventions from general
+geometric membership. The origin followed by the standard basis is positive in
+3D/4D for orient_d; its 3D convention differs from orient3. The collinear case
+asserts a complete false/Exact/Structural affine-independence outcome. The 2D
+sphere cases assert raw Positive and Zero for one fixed simplex, not arbitrary
+orientation-independent membership. Invalid arity is checked through imported
+and qualified spellings of the same function, not independent implementations.
+Most sign assertions discard the producing receipt.
+
+Reference-parity docs identify robust as the expected-sign source,
+geometry-predicates as the comparison across all four families, and apfp for
+the planar families. Hyperlimit consumes exact represented binary f64 values;
+decimal spellings and additions do not make ideal decimal coordinates. Fixed
+controls cover selected boundaries, near boundaries, and one large orient2
+case. Four property tests retain their 512-case configuration and bounded ranges
+(orientation2 ±1e6, orientation3 ±1e4, incircle ±1e3, insphere ±100). Comparative
+agreement is not a universal correctness certificate or exhaustive overflow/
+underflow coverage. The reference-result sign helper maps NaN to Zero through
+its fallback; it does not independently validate reference outputs. Coordinate
+adapters document slice-length and finite-input assumptions where checked.
+
+The rational distance fixture's vertices all satisfy `x+y+z=5/2`. Independent
+Python Fraction arithmetic confirmed their centroid `(5/6,5/6,5/6)` and squared
+norm `25/12`, strictly between two and three. The centroid lies in the triangle
+and is parallel to the plane normal from the origin, explaining the closest
+point. Actual Rust assertions compare against two and three rather than assert
+25/12 directly. The other fixture checks zero distance to one collinear closed
+segment hull. Replaced the unverified planner-history inline comment with the
+explicit squared corner-radius comparison for boxes of unit half-width. These
+are direct predicate tests, not planner execution or universal singular-case
+coverage. No runtime Rust tests were run for this batch.
+
+The frontier docs state the nine independent determinant expectations:
+1, 1/9, 2^-100, sqrt(6), -1, e^2-pi^2, -2, e*2^-100, and zero. The table carries
+case name, sign, stage, and dispatch path; every row expects Exact certainty,
+even Refined-stage rows. Reconstruction occurs for each policy, without claiming
+all shared scalar caches are cold. Translation/reversal checks signs and Exact
+certainty but intentionally leaves stage unconstrained. The dispatch fixture
+resets tracing after construction and checks selected path counts and absence
+of terminal calls, not every internal event or elapsed time.
+
+Fresh-process replay checks for presence of an environment guard, not a specific
+value. With any guard value already set, it checks the current process and does
+not spawn. Otherwise it starts the same test executable with the exact test-name
+filter and guard set, inherits the remaining environment, and requires successful
+exit. The corpus is reconstructed rather than serialized/reloaded. The nested
+guard constant and all macro-contained property functions now have Rustdoc.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Non-comment/nonblank source is
+  identical to baseline in all four files. Scoped counts are 8, 15, 5, and 8
+  documented declarations respectively, including the four macro-contained
+  property functions and the nested constant.
+- `cargo check --locked -p hyperlimit --test nd_predicates --test robust_parity
+  --test exactcore_xinwei --test predicate_filter_frontier --all-features
+  --offline -j2` passed. The same focused targets with `--no-default-features`
+  passed, covering compilation with and without the dispatch-trace fixture.
+- Private Rustdoc for all four targets passed with all features, locked offline
+  dependencies, checked own-library metadata and cached dependency paths,
+  `--document-private-items`, warnings denied, and broken/private links denied.
+  Inspected 24 complete rendered module/helper/constant doc groups. Fifteen test
+  functions and the nested guard constant remain source-reviewed/compiled;
+  ordinary Rustdoc does not expose them as standalone pages.
+- The exact Fraction calculation verifies fixture arithmetic only, not the Rust
+  predicate implementation. No random, subprocess, dispatch-count, or geometry
+  test was executed. These test targets are the affected downstream consumers;
+  no library API code changed. Shared target storage remains about 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-predicate-controls-{check,minimal-check,private}.log`;
+checked artifact metadata is in the corresponding `artifacts.jsonl`. Full
+workflow/runtime/performance checks remain waived by the owner. The complete
+repository audit remains active; this is scoped coverage evidence only.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
