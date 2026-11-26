@@ -4091,9 +4091,49 @@ library load/link smoke test, destructor allocation test or full workflow check
 ran under the docs-only waiver. Helper probes do not establish native binding
 safety, geometry completion or reliable finalization.
 
+### Native TypeScript facade and binding guides, 26 November 2026
+
+Baseline: `a680824bc`. Owner: native JS loader facade and binding documentation,
+P6/P19/P25/P28–P30/P37. Read all 328 original lines of `bindings/js/csgrs.ts`,
+all 134 lines of `bindings/README.md`, and all 96 lines of `bindings/js/WASM.md`.
+Added source documentation for all 83 TypeScript declaration/member/field
+candidates, including private dispatch, constructors, handle fields and aliases.
+
+The native TypeScript file supplies no loader implementation. Its logical calls
+omit C output pointers and array lengths and expect decoded outputs rather than
+statuses. Documented required loader responsibilities: scalar/struct marshalling,
+Real unwrapping, output slots, typed status handling, bounds absence and output
+ownership. In particular, real integer egress expects a decimal string whereas
+the C ABI writes two words. Generic/tuple types do not validate runtime families,
+counts or pointer provenance. Free leaves handles intact with no disposed guard;
+replacing the module-level loader does not migrate outstanding owners.
+
+Reconciled the native guide with the reviewed C++/Python/Go/TypeScript lifetimes,
+integer coercions, partial API surface, profile projection and diagnostic limits.
+Separated those current implementation limits from the generated WASM API and
+removed migration narration from the README. Rechecked the relevant already-reviewed
+WASM source excerpts and runner: local certainty differs from inherited mesh history,
+plain export records omit history/chord metadata, and each bounds endpoint getter
+returns a new owned point wrapper. Updated the guide's ownership and receipt scope
+while retaining its status table and code examples.
+
+Validation after final edits: TypeScript non-comment source lines are identical;
+all declaration/member/field candidates have adjacent documentation. Both guides'
+fenced commands/examples are byte-identical and relative Markdown targets exist.
+`git diff --check` passed. No Node/npm/TypeScript executables or local installed
+test TypeScript dependency were found, so compilation, rendered TypeScript docs,
+generated WASM declarations/runtime and loader integration were not run. No tools
+were installed under the docs-only waiver. Source checks do not certify a consumer
+loader, runtime outcomes or generated declaration support on this host.
+
+All twelve tracked files under `bindings/` now have whole-file review records.
+This is a scoped source/documentation milestone, not repository-wide Rustdoc
+coverage or a cross-language conformance claim. The runtime limitations recorded
+for individual wrappers remain unresolved implementation work.
+
 ## Next work
 
-Continue with remaining test/example/build sources and owning crates. Maintain review records with
+Continue with remaining non-Rust test clients, build/support files and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation

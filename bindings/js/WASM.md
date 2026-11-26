@@ -12,12 +12,15 @@ when a wrapper is no longer needed; consuming methods such as `intoMesh()`,
 wrapper and transfer ownership to the returned wrapper.
 The generated declarations also support `Symbol.dispose`; TypeScript clients
 should include `ESNext.Disposable` in their `lib` setting.
+Plain JavaScript records and typed arrays returned by export methods are not
+native class wrappers and do not acquire a `free()` method.
 
 ## Certainty and query status
 
-Completed operation results expose `certainty` as `GeometryCertaintyJs`:
+Completed receipt-bearing results expose `certainty` as `GeometryCertaintyJs`;
+methods returning only geometry do not automatically supply a separate receipt:
 
-- `Certified`: every consumed topology decision was certified.
+- `Certified`: every decision covered by this operation receipt was certified.
 - `Approximate512Consumed`: a decision used the explicitly authorized
   512-bit terminal. Merely requesting approximate policy does not set this.
 
@@ -27,13 +30,24 @@ returned by a consuming method is the native value; keep the receipt alongside
 it when passing the operation's evidence to another consumer. Certainty
 describes predicate decisions, not the fidelity of `f64` display buffers.
 Curve `toArrays` and `toRegionProfiles` also return the named `certainty` field.
+Their projected records omit source history; `toRegionProfiles` also omits the
+native chord-error metadata. A locally certified export is not a certificate of
+post-projection topology or exact replay of the source curves.
+
+Read mesh `constructionEvidence` separately for inherited history, projection,
+sampling and buffer-change flags. Missing history is not certified by a false
+`approximate512Consumed` flag. The evidence getter returns another owned wrapper
+to free; its summary is not a replayable proof or an analytic fidelity bound.
 
 `boundingBoxWithContext` returns a receipt with `isEmpty` and optional `min` and
 `max` points. Empty geometry has `isEmpty === true` and `undefined` endpoints;
 its query still carries certainty. A point at the origin has nonempty, zero-size
 bounds. `MeshJs.boundingBox()` returns `undefined` for empty geometry. Bounds
 and positioning failures throw a `GeometryError` whose `code` retains the native
-failure category. Free any endpoint wrappers returned by nonempty queries.
+failure category. Each `min`/`max` getter clones an endpoint into a new wrapper;
+retain and free each returned wrapper, including repeated getter results. Numeric
+point getters are lossy views, and approximate bounds selection is not a proved
+outward enclosure. The bounds receipt does not carry the source mesh's history.
 
 `containsXYWithContext` and `containsPointWithContext` return a
 `GeometryBoolResultJs`. Its `status` distinguishes:
@@ -89,8 +103,11 @@ bash scripts/test-wasm-bindings.sh
 cargo test --locked --no-default-features --features wasm --test wasm_certainty
 ```
 
-The script builds the locked WASM artifact, generates real Node.js bindings,
+The script builds the locked WASM artifact, generates Node.js bindings,
 exercises geometry/receipt/invalid-input behavior, and checks a client against
-the generated declarations. Native Rust tests additionally construct exact
+the generated declarations. It also compiles/runs format, error and construction
+history clients. Native Rust tests additionally construct exact
 undecidable scalar expressions, checking strict/approximate/strict query
 replay without inventing a float representation of those expressions.
+The script supports `WASM_BINDGEN` and `TSC` overrides, verifies the bindgen CLI
+version and stops at the first failed command; it installs no tools itself.
