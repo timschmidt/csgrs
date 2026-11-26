@@ -1,13 +1,25 @@
-//! Example: Multi-Format Export Demo  
+//! Feature-gated OBJ, PLY and AMF exports of seven primitive/Boolean mesh fixtures.
 //!
-//! This example demonstrates exporting native triangle meshes to multiple 3D file formats:
-//! OBJ (universal format), PLY (research/scanning), and AMF (3D printing format).
-//! These formats can be opened in most 3D modeling software, CAD programs, and 3D viewers.
+//! `obj-io`, `ply-io` and `amf-io` independently enable writers. Geometry is still
+//! constructed with none enabled; the final summary lists possible filenames
+//! and suggested applications regardless of features, not verified artifacts or
+//! compatibility results. Spheres/cylinders are sampled meshes. Formats contain
+//! projected numeric values rather than exact source definitions and receipts.
+//!
+//! Files are created or truncated in the current working directory before each
+//! writer runs, so export/write errors may leave empty or partial files. Earlier
+//! artifacts are not rolled back. Printed statistics are text-based counts, not
+//! independent geometry or round-trip validation. Millimeter descriptions and
+//! the AMF unit label do not rescale model coordinates.
 use csgrs::{
     TriangleMesh,
     solid::{self, SolidExt},
 };
 
+/// Constructs three primitives and four Boolean fixtures, exporting each enabled format.
+/// Most construction/transform/export/IO errors propagate, while Boolean failures
+/// panic through `expect`. The summary is printed only after all calls return,
+/// even if no format was enabled. No operation certainty or shape oracle is asserted.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Multi-Format Export Demo");
     println!("========================");
@@ -119,6 +131,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Writes every enabled format in OBJ/PLY/AMF order despite this helper's OBJ-only name.
+/// Creates/truncates each file before serialization, then serializes again in
+/// memory to count text records. OBJ counts prefix rows; PLY counts nonheader
+/// rows and `3 ` prefixes without parsing declared element ranges; AMF counts
+/// element-name occurrences. A statistics-generation error can follow a successful
+/// file write. Disabled formats print notices; with all disabled this only logs.
+/// Errors propagate without rollback, and native/export receipts are not retained.
 fn export_to_obj(
     csg: &TriangleMesh,
     name: &str,
@@ -240,10 +259,17 @@ fn export_to_obj(
 }
 
 #[cfg(test)]
+/// Feature-gated text-format witnesses, not independent geometric replay tests.
+/// Fixture construction remains outside each format gate; disabled gates omit
+/// the format assertions. Test source is separate from the example's file-writing path.
+/// Enabled tests currently include unavailable method-style export calls and an
+/// undefined `r` helper. These prevent the test module from compiling with the
+/// corresponding features; the example's ordinary documentation build excludes it.
 mod tests {
     use super::*;
 
     #[test]
+    /// Checks cube OBJ object/header and presence of position, normal and face tokens.
     fn test_obj_export() {
         // Test basic OBJ export functionality
         let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
@@ -265,6 +291,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks sampled-sphere OBJ row prefixes and the first three vertex/face row shapes.
+    /// Float parseability and `//` presence do not validate finiteness or index incidence.
     fn test_obj_content_format() {
         let sphere: TriangleMesh = solid::sphere(5.0, 8, 4).expect("valid primitive fixture"); // Low res for testing
 
@@ -320,8 +348,10 @@ mod tests {
     }
 
     #[test]
+    /// Exports three cube/sphere Boolean results and checks object/vertex/face tokens.
+    /// Does not independently check the represented sets, volumes or output topology.
     fn test_boolean_operations_obj_export() {
-        // Test that boolean operations export correctly
+        // Check selected textual records after Boolean operations.
         let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
         let sphere: TriangleMesh = solid::sphere(6.0, 8, 4).expect("valid primitive fixture");
 
@@ -351,6 +381,7 @@ mod tests {
     }
 
     #[test]
+    /// Checks cube PLY headers/properties, a nonempty body and a triangle-prefix row.
     fn test_ply_export() {
         // Test basic PLY export functionality
         let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
@@ -395,6 +426,8 @@ mod tests {
     }
 
     #[test]
+    /// Compares sampled-sphere PLY header counts with six-float and triangle-prefix row counts.
+    /// This textual heuristic is not an external PLY parser or geometric oracle.
     fn test_ply_format_structure() {
         let sphere: TriangleMesh = solid::sphere(5.0, 8, 4).expect("valid primitive fixture"); // Low res for testing
 
@@ -458,6 +491,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks cube AMF declaration, mesh/metadata and coordinate/index tag presence.
+    /// Does not parse XML or validate index relationships and geometry.
     fn test_amf_export() {
         // Test basic AMF export functionality
         let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
@@ -492,6 +527,8 @@ mod tests {
     }
 
     #[test]
+    /// Intended red-material witness for AMF color tokens and the volume's material reference.
+    /// Checks exact formatted strings and selected structure, not colorimetric fidelity.
     fn test_amf_with_color() {
         let sphere: TriangleMesh = solid::sphere(5.0, 8, 4).expect("valid primitive fixture"); // Low res for testing
 
@@ -524,6 +561,8 @@ mod tests {
     }
 
     #[test]
+    /// Checks the inch unit label, eight cube vertices, twelve triangles and closing-tag presence.
+    /// The unit is a label; the test does not assert rescaling or parse XML nesting.
     fn test_amf_xml_structure() {
         let cube: TriangleMesh = solid::cube(8.0).expect("valid primitive fixture");
 
@@ -531,7 +570,7 @@ mod tests {
         {
             let amf_content = cube.to_amf("test_structure", "inch").unwrap();
 
-            // Verify proper XML structure and hierarchy
+            // Check the requested unit label and selected XML records.
             assert!(amf_content.contains("<amf unit=\"inch\""));
 
             // Count vertices and triangles
@@ -545,7 +584,7 @@ mod tests {
             assert_eq!(vertex_count, 8);
             assert_eq!(triangle_count, 12);
 
-            // Verify XML closing tags match opening tags
+            // Check that expected closing tags occur; nesting is not parsed.
             assert!(amf_content.contains("</vertices>"));
             assert!(amf_content.contains("</volume>"));
             assert!(amf_content.contains("</mesh>"));

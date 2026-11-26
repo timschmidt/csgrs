@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `examples/multi_format_export.rs` | Entire file; documented independently gated writers, output/truncation order, text statistics and all eight test intentions/limits. | Minimal and all-three-format private docs passed. Metadata-only test compilation reproduced eleven existing baseline/current errors; tests remain blocked and unchanged. |
 | `examples/basic.rs` | Entire file; documented strict-session receipt scope, through opening, terminal STL and working-directory output. | Private example docs/rendering passed; assertions unchanged, example not run. |
 | `examples/scalar_adapter.rs` | Entire file; documented adapter alias, exact finite ingress, projected bounds and fixture-specific equality assertions. | Private example docs/rendering passed; assertions unchanged, example not run. |
 | `examples/basic_shapes.rs` | Entire file; documented sampled primitive scope, output constant, construction and writer failure behavior. | Private example docs/rendering passed; no STL files generated. |
@@ -2361,6 +2362,63 @@ Validation after source edits:
 
 Logs: `/tmp/csgrs-rustdoc-small-examples-doc.log` and
 `/tmp/csgrs-rustdoc-small-examples-no-offset-doc.log`.
+
+### Multi-format example and embedded format witnesses, 26 November 2026
+
+Baseline: `039069bc0`. Owner: root executable export example and its embedded
+test module, P6/P19/P25/P26/P29/P30/P37. Domain: sampled mesh/Boolean fixtures,
+independently enabled OBJ/PLY/AMF writers and selected textual-format assertions.
+Read the entire file, including all feature alternatives and eight tests; checked
+the existing AMF unit/export contracts for context. Missing witnesses were absent
+main/helper/test Rustdoc and overbroad claims about output and format correctness.
+
+Documentation now states that geometry runs even with every format disabled,
+the final summary is a list of possible artifacts/applications rather than
+verified files/compatibility, and each enabled path creates/truncates its file
+before invoking the writer. Subsequent statistics generation repeats serialization
+and may fail after the file has been written. Row/tag counts are not independent
+geometry/format parsing. The AMF unit is a label without coordinate rescaling.
+Test comments claiming parsed XML hierarchy or general Boolean export correctness
+were corrected to describe the actual selected-token assertions.
+
+The enabled test module has an existing compilation gap: eight method-style
+export calls (`to_obj`, `to_ply`, `to_amf`, `to_amf_with_color`) are unavailable on
+the current `TriangleMesh`, and the color test references undefined helper `r`
+three times. Reproduced on both baseline source and current comments using
+`rustc --edition 2024 --test --emit=metadata`, all three format cfgs, the exact
+cached csgrs metadata from the feature-enabled doc build, and cached dependency
+search paths. Both produced the same eleven diagnostics: eight E0599 and three
+E0425. No executable was linked or run. The first direct compiler attempt lacked
+dependency directories containing non-rmeta artifacts and stopped at E0463;
+adding all cached dependency output directories resolved that inspection setup
+issue and exposed the matching source errors. These test blockers are preserved
+and documented under the owner's docs-only constraint, not repaired or reported
+as passing witnesses.
+
+Validation:
+
+- Focused formatting and `git diff --check` passed after final edits. Removing
+  blank/comment-only lines gives identical source to baseline. All eleven
+  function/module declarations are documented; no expressions, assertions,
+  feature gates, format strings or sample values changed.
+- With the existing target and incremental compilation disabled, broken-link-denied
+  `cargo doc --locked -p csgrs --no-default-features --features obj-io,ply-io,amf-io
+  --example multi_format_export --document-private-items --no-deps --offline -j 2`
+  passed. The same command without the feature argument also passed. The enabled
+  build was repeated after the final test-module documentation edit; no warnings
+  were emitted. Normal Rustdoc excludes the blocked test module.
+- Inspected all three rendered example/main/helper pages and their feature,
+  output, unit and statistics contracts. Test documentation was inspected in
+  source, with its build blockers explicitly stated. Text inspection normalized
+  typographic apostrophes; no source wording was altered to satisfy presentation.
+- Runtime examples/tests and full workflows remain unexecuted under the owner's
+  waiver. No model files or additional build tree were created. Documentation
+  checks passed; feature-enabled test compilation remains a reproduced baseline
+  failure, not a new failure caused by these comments.
+
+Logs: `/tmp/csgrs-rustdoc-multi-format-doc.log`,
+`/tmp/csgrs-rustdoc-multi-format-minimal-doc.log`, and
+`/tmp/csgrs-rustdoc-multi-format-test-{baseline,current}.log`.
 
 ## Next work
 
