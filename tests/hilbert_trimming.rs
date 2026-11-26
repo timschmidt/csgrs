@@ -1,3 +1,8 @@
+//! Hilbert clipping witnesses for directed coverage, retained incidence and later reuse.
+//!
+//! Rational fixtures use independent interval lists; algebraic trims retain
+//! selected endpoints and native boundary contact records.
+
 #![cfg(feature = "curve")]
 
 #[path = "support/uncertainty.rs"]
@@ -8,14 +13,17 @@ use hypercurve::{
     BooleanOp, CurvePath2, CurvePathRegionTrim2, CurveRegion2, CurveRegionBoundaryKind2,
 };
 
+/// Converts an integer fixture coordinate exactly.
 fn r(n: i32) -> Real {
     n.into()
 }
 
+/// Forms an exact rational fixture value with a nonzero denominator.
 fn q(n: i32, d: i32) -> Real {
     (r(n) / r(d)).unwrap()
 }
 
+/// Admits the four supplied axis-aligned rectangle corners as an exact filled polygon.
 fn rect(x0: Real, y0: Real, x1: Real, y1: Real) -> CurveRegion2 {
     curve::polygon(&[
         [x0.clone(), y0.clone()],
@@ -26,6 +34,7 @@ fn rect(x0: Real, y0: Real, x1: Real, y1: Real) -> CurveRegion2 {
     .unwrap()
 }
 
+/// Cuts a rational rectangle across the first segment of the order-one grid in a side-four square.
 fn holed() -> CurveRegion2 {
     curve::square(r(4))
         .unwrap()
@@ -36,13 +45,19 @@ fn holed() -> CurveRegion2 {
         .unwrap()
 }
 
+/// Ordered exact XY vertices delimiting one connected directed fixture run.
 type Run = Vec<[Real; 2]>;
 
+/// Returns true only for a decided strict scalar equality; inequality or uncertainty returns false.
+///
+/// Used by test assertions and conservative run simplification, not as a
+/// geometry classification that treats uncertainty as proved inequality.
 fn equal(a: &Real, b: &Real) -> bool {
     hyperlimit::compare_reals(a, b, hyperlimit::PredicatePolicy::STRICT).value()
         == Some(std::cmp::Ordering::Equal)
 }
 
+/// Checks run count, vertex count, order and exact coordinates against independent directed lists.
 fn assert_runs(actual: &[Run], expected: &[Run]) {
     assert_eq!(actual.len(), expected.len(), "connected run count");
     for (actual, expected) in actual.iter().zip(expected) {
@@ -54,6 +69,7 @@ fn assert_runs(actual: &[Run], expected: &[Run]) {
     }
 }
 
+/// Returns the two directed order-one Hilbert runs remaining around the fixture hole.
 fn hole_runs() -> Vec<Run> {
     vec![
         vec![[r(1), r(1)], [r(1), q(5, 4)]],
@@ -61,9 +77,11 @@ fn hole_runs() -> Vec<Run> {
     ]
 }
 
-// Each expected run is an independently derived list of directed intervals.
-// Merge only adjacent collinear pieces in the same direction; contact splits
-// may change representation without changing positive-length path coverage.
+/// Removes intermediate vertices only from adjacent axis-aligned pieces continuing in the same direction.
+///
+/// Both equal-coordinate and positive-dot-product decisions must succeed under
+/// the strict policy. This normalizes optional contact splits for interval-list
+/// comparison without merging reversals or uncertain pieces.
 fn simplify(points: Run) -> Run {
     let mut result: Run = Vec::new();
     for point in points {
@@ -87,6 +105,11 @@ fn simplify(points: Run) -> Run {
     result
 }
 
+/// Extracts represented fixture endpoints from retained trims and verifies connectivity within each run.
+///
+/// The fixtures must expose scalar endpoint coordinates. Axis-aligned redundant
+/// vertices are simplified before comparison; source evidence remains in the
+/// original trim objects.
 fn runs(paths: &[CurvePathRegionTrim2]) -> Vec<Run> {
     paths
         .iter()
@@ -114,6 +137,11 @@ fn runs(paths: &[CurvePathRegionTrim2]) -> Vec<Run> {
         .collect()
 }
 
+/// Checks both Hilbert views against nonempty independent directed runs across policy reuse.
+///
+/// Requires certified strict/approximate/strict results and reassembles retained
+/// curves for a subsequent trim against empty geometry. Strict convenience APIs
+/// are also exercised; the string view is required to remain nonempty.
 fn check(boundary: &CurveRegion2, expected: &[Run]) {
     for context in [
         GeometryContext::STRICT,
@@ -166,6 +194,10 @@ fn check(boundary: &CurveRegion2, expected: &[Run]) {
 }
 
 #[test]
+/// Checks hole splitting against independent runs and exact source-segment parameter intervals.
+///
+/// Boundary contacts must name hole carriers whose recorded parameters replay
+/// to the retained fragment endpoints.
 fn holes_split_segments_and_retain_source_parameters_and_contacts() {
     let boundary = holed();
     check(&boundary, &hole_runs());
@@ -201,6 +233,7 @@ fn holes_split_segments_and_retain_source_parameters_and_contacts() {
 }
 
 #[test]
+/// Checks two material strips retain partial crossing intervals in two ordered runs.
 fn disconnected_material_retains_partial_crossing_segments() {
     let boundary = rect(r(0), r(0), q(5, 4), r(4))
         .boolean_region(&rect(q(11, 4), r(0), r(4), r(4)), BooleanOp::Union)
@@ -215,6 +248,7 @@ fn disconnected_material_retains_partial_crossing_segments() {
 }
 
 #[test]
+/// Checks a hole-edge overlap and an isolated hole tangency preserve closed-set path coverage.
 fn closed_set_boundary_overlap_and_isolated_tangency_preserve_runs() {
     let square = curve::square(r(4)).unwrap();
     let overlap = rect(r(1), r(1), r(2), r(3));
@@ -235,6 +269,10 @@ fn closed_set_boundary_overlap_and_isolated_tangency_preserve_runs() {
 }
 
 #[test]
+/// Checks empty results remain certified while invalid order/padding still fail beside empty geometry.
+///
+/// Excess padding on a nonempty square is invalid; restoring the square through
+/// union restores the independently expected Hilbert run.
 fn empty_results_invalid_parameters_and_subsequent_recovery_are_distinct() {
     let square = curve::square(r(4)).unwrap();
     let empty = square.boolean_region(&square, BooleanOp::Difference).unwrap();
@@ -286,6 +324,10 @@ fn empty_results_invalid_parameters_and_subsequent_recovery_are_distinct() {
 }
 
 #[test]
+/// Checks padding is decided before empty-region shortcuts and its qualification survives both views.
+///
+/// Repeated approximate requests must not certify later strict requests; a valid
+/// order-ten request on empty geometry still succeeds without a grid.
 fn unresolved_padding_keeps_its_policy_and_certainty_even_on_empty_regions() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -331,6 +373,7 @@ fn unresolved_padding_keeps_its_policy_and_certainty_even_on_empty_regions() {
 }
 
 #[test]
+/// Checks rational hole runs transport through scales two/three and translations by pi/e.
 fn symbolic_translation_and_nonuniform_scaling_preserve_exact_intervals() {
     let scaled = curve::scaled(&holed(), r(2), r(3)).unwrap();
     let boundary = curve::translated(&scaled, Real::pi(), Real::e()).unwrap();
@@ -346,6 +389,10 @@ fn symbolic_translation_and_nonuniform_scaling_preserve_exact_intervals() {
 }
 
 #[test]
+/// Checks original order-three/four square grids visit every exact cell center with unit grid steps.
+///
+/// Each source index and full parameter interval is retained in one certified
+/// run. This verifies geometric coverage, not benchmark timing.
 fn original_benchmark_and_render_grids_remain_complete() {
     for (size, order, padding) in [
         (r(8), 3, r(1)),
@@ -393,6 +440,11 @@ fn original_benchmark_and_render_grids_remain_complete() {
 }
 
 #[test]
+/// Checks a cubic boundary yields certified trims with retained range wrappers and replayable contacts.
+///
+/// Reassembled exact curves must remain trimmable against a containing square.
+/// The scalar line-string view must report unsupported endpoints rather than
+/// discarding the exact path, across strict/approximate/strict requests.
 fn algebraic_trim_endpoints_remain_authoritative_and_reusable() {
     let boundary =
         curve::bezier_region(&[[r(0), r(0)], [r(3), r(0)], [r(0), r(3)], [r(0), r(0)]], 16)

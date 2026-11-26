@@ -2365,10 +2365,18 @@ fn sampled_cycloidal_gear(
     ring_with(&points, decisions)
 }
 
-/// Exact arbitrary-degree Bezier path.
+/// Constructs a path containing one exact positive-degree polynomial Bezier curve.
 ///
-/// Closed controls should be passed to [`bezier_region`] instead.
-/// Invalid arguments and native construction failures retain typed diagnostics.
+/// At least two controls and a positive `display_segments` value are required.
+/// Two, three and four controls use native line, quadratic and cubic carriers;
+/// more controls use a rational Bezier carrier with all weights equal to one.
+/// The parameter domain is `[0, 1]`, traversed from the first to last control.
+/// The strict policy governs native construction; a two-control zero-length line
+/// fails with its native cause.
+///
+/// The display count is otherwise unused: it does not sample, subdivide or change
+/// the control net. A path may have coincident endpoints without acquiring fill
+/// semantics; use [`bezier_region`] to admit a closed boundary as a region.
 pub fn bezier_path(
     control: &[[Real; 2]],
     display_segments: usize,
@@ -2377,9 +2385,13 @@ pub fn bezier_path(
         .map(GeometryOutcome::into_value)
 }
 
-/// Constructs a native Bezier path with the selected policy and local certainty.
+/// Constructs the single-curve path of [`bezier_path`] with explicit policy and local certainty.
 ///
-/// The positive display count does not sample or replace the exact control net.
+/// Controls are cloned exactly into the chosen native carrier, then wrapped in
+/// a nonempty path. Only the minimum display count is checked, so even
+/// `usize::MAX` does not request a sampling buffer. Native line, curve and path
+/// construction failures preserve their typed causes. This constructor retains
+/// the source definition; it does not establish every subsequent operation's support.
 pub fn bezier_path_with_context(
     control: &[[Real; 2]],
     display_segments: usize,
@@ -2417,10 +2429,13 @@ pub fn bezier_path_with_context(
     Ok(decisions.finish(path))
 }
 
-/// Closed arbitrary-degree Bezier boundary as a filled region.
+/// Admits a closed exact Bezier boundary as an even-odd filled region.
 ///
-/// Construction failures are errors; a successfully regularized retraced
-/// boundary can still represent the empty set.
+/// Uses the control and display-count rules of [`bezier_path`] under the strict
+/// policy, then requires the curve's first and last endpoints to coincide.
+/// No closing line is added. Native boundary-path admission determines the
+/// regularized filled set; a successfully admitted retraced boundary can be empty.
+/// Unresolved closure or region admission remains an error, not empty success.
 pub fn bezier_region(
     control: &[[Real; 2]],
     display_segments: usize,
@@ -2429,7 +2444,13 @@ pub fn bezier_region(
         .map(GeometryOutcome::into_value)
 }
 
-/// Publishes a closed Bezier boundary with the selected policy and aggregate certainty.
+/// Admits [`bezier_region`] with explicit policy and aggregate local certainty.
+///
+/// Consumes the path-construction receipt, checks endpoint coincidence, and uses
+/// native `EvenOdd` boundary-path admission without sampling the curve. A decided
+/// nonclosure is `InvalidArguments`; native uncertainty or unsupported work keeps
+/// its typed diagnostic. The outcome combines construction, closure and region
+/// admission decisions.
 pub fn bezier_region_with_context(
     control: &[[Real; 2]],
     display_segments: usize,
@@ -2453,7 +2474,17 @@ pub fn bezier_region_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Exact open-uniform polynomial B-spline path.
+/// Constructs one retained polynomial B-spline with clamped uniform knots.
+///
+/// Requires positive degree `d`, at least `d + 1` controls and a positive
+/// `display_segments_per_span`. For `C` controls there are `C - d` unit knot spans.
+/// The knots start with `d + 1` zeros, have simple interior integers, and end with
+/// `d + 1` copies of `C - d`. Evaluation uses the knot domain `[0, C - d]`;
+/// traversal runs from the first to last control.
+///
+/// The path retains a native polynomial B-spline rather than a sampled or eagerly
+/// expanded Bezier chain. The display count is otherwise unused. Uses strict
+/// native admission; degree-zero and other invalid spline layouts retain typed errors.
 pub fn bspline_path(
     control: &[[Real; 2]],
     degree: usize,
@@ -2468,7 +2499,13 @@ pub fn bspline_path(
     .map(GeometryOutcome::into_value)
 }
 
-/// Constructs a B-spline with the selected policy and aggregate certainty.
+/// Constructs [`bspline_path`] with explicit policy and aggregate local certainty.
+///
+/// Checks control-count and knot-index arithmetic before generating integer knots
+/// and cloning exact controls. Overflow in these index calculations is reported as
+/// `InvalidArguments`; native spline validation rejects degree zero. A positive
+/// display count neither allocates samples nor controls knot spacing. Spline and
+/// path admission share the decision scope and preserve native diagnostic causes.
 pub fn bspline_path_with_context(
     control: &[[Real; 2]],
     degree: usize,
@@ -2509,9 +2546,10 @@ pub fn bspline_path_with_context(
     Ok(decisions.finish(path))
 }
 
-/// Returns the exact native line-string view of [`hilbert_paths`].
+/// Returns the exact native line-string view of [`hilbert_paths`] under the strict policy.
 ///
-/// This geometry-only convenience omits trim contact/parameter records. Use
+/// Shares its order, padding, bounds and closed-set clipping semantics. This
+/// geometry-only convenience omits trim contact/parameter records. Use
 /// [`hilbert_paths`] when those records or selected algebraic endpoints are
 /// needed. A fragment without represented `Real` endpoints returns a typed
 /// unsupported error; it is never replaced by a display chord or omitted.
@@ -2525,7 +2563,14 @@ pub fn hilbert_strings(
         .map(GeometryOutcome::into_value)
 }
 
-/// [`hilbert_strings`] with the selected policy and aggregate local certainty.
+/// Constructs [`hilbert_strings`] with explicit policy and aggregate local certainty.
+///
+/// Consumes the retained-path receipt, copies native lines where available, and
+/// rebuilds a line from exact represented endpoints for range-wrapped fragments.
+/// Selected endpoints without scalar coordinates produce `UnsupportedPrimitive`.
+/// Fragment and run order are preserved; each output string is checked for native
+/// connectivity. Failure returns no partial collection. The receipt includes
+/// trimming and conversion but does not restore discarded trim/contact records.
 pub fn hilbert_strings_with_context(
     boundary: &CurveRegion2,
     order: usize,
@@ -2569,11 +2614,20 @@ pub fn hilbert_strings_with_context(
 /// Positive-length boundary overlaps are included; isolated contacts add no
 /// piece. Holes and disconnected components use the native exact trim kernel.
 /// Undecided or unsupported operations return typed errors without partial output.
+/// The convenience function uses the strict policy.
 ///
-/// `order` must be in `1..=10`, and `padding` must be nonnegative. Padding
-/// insets the grid's bounding rectangle, not every boundary of the region.
-/// Valid empty regions return an empty collection. Nonempty padded bounds must
-/// have positive width and height. The order cap limits generated points to
+/// `order` must be in `1..=10`, and `padding` must be nonnegative. Both are
+/// validated before empty-region handling. Padding insets the rectangle returned
+/// by native bounds, not every boundary of the region; retained algebraic trims
+/// may give an enclosing rectangle larger than the tight bounds. Valid empty
+/// regions return an empty collection. Nonempty padded bounds must have positive
+/// width and height.
+///
+/// For `N = 2^order`, the grid has `N*N` cell centers and `N*N - 1` source lines.
+/// Each center is `(xmin + padding + width*(i+1/2)/N,
+/// ymin + padding + height*(j+1/2)/N)` in the usable rectangle. The traversal
+/// starts at its lower-left cell; at order one it visits lower-left, upper-left,
+/// upper-right, then lower-right. The order cap limits generated points to
 /// 1,048,576; it is not a total-work, coefficient-growth, heap-byte or
 /// cancellation budget for native trimming.
 pub fn hilbert_paths(
@@ -2586,7 +2640,12 @@ pub fn hilbert_paths(
         .map(GeometryOutcome::into_value)
 }
 
-/// [`hilbert_paths`] with policy-explicit trimming and local certainty.
+/// Constructs [`hilbert_paths`] with policy-explicit bounds, grid construction and trimming.
+///
+/// Rejects invalid order before testing padding. An empty bound returns no paths
+/// after padding validation; otherwise width is checked before height and each
+/// must be selected positive. The grid is constructed once as an ordered exact
+/// line path, then passed to native inside-region trimming.
 ///
 /// The receipt covers consumed bounds, construction and trim decisions; it
 /// does not certify the intent of an earlier approximate region construction.
@@ -2624,6 +2683,10 @@ pub fn hilbert_paths_with_context(
     ) {
         return Err(ValidationError::InvalidArguments);
     }
+    /// Reflects and swaps a Hilbert subquadrant according to its two orientation bits.
+    ///
+    /// The caller supplies `rx` and `ry` in `{0, 1}` and coordinates smaller
+    /// than `size`, so reflection about `size - 1` stays in the integer grid.
     const fn rotate_quadrant(size: u64, x: &mut u64, y: &mut u64, rx: u64, ry: u64) {
         if ry == 0 {
             if rx == 1 {
@@ -2633,6 +2696,11 @@ pub fn hilbert_paths_with_context(
             std::mem::swap(x, y);
         }
     }
+    /// Decodes a Hilbert distance into integer cell coordinates, least-significant quadrant first.
+    ///
+    /// The caller supplies a power-of-two `size` and `distance < size * size`.
+    /// Successive base-four digits choose reflections and quadrant offsets;
+    /// the public order cap bounds all arithmetic used here.
     const fn point(size: u64, mut distance: u64) -> (u64, u64) {
         let (mut x, mut y) = (0, 0);
         let mut scale = 1;

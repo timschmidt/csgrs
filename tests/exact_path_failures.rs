@@ -1,3 +1,7 @@
+//! Exact control nets, native diagnostic causes and closed-boundary composition.
+//!
+//! Display counts remain validation inputs rather than sampling resolutions.
+
 #![cfg(feature = "curve")]
 
 use csgrs::{
@@ -7,18 +11,22 @@ use csgrs::{
 use hypercurve::{BooleanOp, CurveError, CurveFamily2, CurvePath2, ExactCurveError};
 use std::error::Error;
 
+/// Converts an integer fixture coordinate exactly.
 fn r(value: i32) -> Real {
     Real::from(value)
 }
 
+/// Forms an exact rational fixture value; denominators must be nonzero.
 fn q(numerator: i32, denominator: i32) -> Real {
     (r(numerator) / r(denominator)).unwrap()
 }
 
+/// Returns the closed cubic with coordinates `x = 9t(1-t)^2`, `y = 9t^2(1-t)`.
 fn cubic_controls() -> [[Real; 2]; 4] {
     [[r(0), r(0)], [r(3), r(0)], [r(0), r(3)], [r(0), r(0)]]
 }
 
+/// Requires an invalid-input error and returns it for native-source inspection.
 fn invalid<T: std::fmt::Debug>(result: Result<T, ValidationError>) -> ValidationError {
     let error = result.expect_err("invalid construction must not publish geometry");
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
@@ -26,6 +34,9 @@ fn invalid<T: std::fmt::Debug>(result: Result<T, ValidationError>) -> Validation
 }
 
 #[test]
+/// Checks insufficient controls, zero display counts, open region endpoints and invalid spline degrees.
+///
+/// Strict convenience calls and both explicit policies must reject these inputs.
 fn malformed_controls_and_display_counts_are_typed_failures() {
     let closed = cubic_controls();
     let open = [[r(0), r(0)], [r(1), r(0)], [r(1), r(1)], [r(0), r(1)]];
@@ -55,6 +66,7 @@ fn malformed_controls_and_display_counts_are_typed_failures() {
 }
 
 #[test]
+/// Checks repeated line endpoints and degree-zero splines preserve native error variants and sources.
 fn native_line_and_spline_errors_retain_their_causes() {
     let repeated = [[r(0), r(0)], [r(0), r(0)]];
     let controls = cubic_controls();
@@ -86,6 +98,11 @@ fn native_line_and_spline_errors_retain_their_causes() {
 }
 
 #[test]
+/// Requires undecided native errors for the historical symbolic-endpoint cubic fixture.
+///
+/// The strict/approximate/strict sequence checks categories and downcastable
+/// causes. It does not independently assert endpoint-equality uncertainty or
+/// identify which native admission stage blocked.
 fn unresolved_closure_is_undecided_across_policy_reuse() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -114,6 +131,7 @@ fn unresolved_closure_is_undecided_across_policy_reuse() {
     );
 }
 
+/// Checks a single retained curve evaluates to represented exact coordinates at parameter one half.
 fn assert_midpoint(path: &CurvePath2, x: &Real, y: &Real) {
     assert_eq!(path.curves().len(), 1);
     let point = path.curves()[0].point_at(&q(1, 2).into()).unwrap();
@@ -125,6 +143,11 @@ fn assert_midpoint(path: &CurvePath2, x: &Real, y: &Real) {
 }
 
 #[test]
+/// Checks independent Bernstein midpoint values for control nets of sizes two through five.
+///
+/// Matching single-span splines retain the same values. Display counts up to
+/// `usize::MAX`, both policies, native family tags, reversal and endpoint
+/// correspondence are checked without replacing the control nets by samples.
 fn exact_control_nets_survive_display_counts_policies_and_reversal() {
     let controls = [
         [r(0), r(0)],
@@ -175,6 +198,10 @@ fn exact_control_nets_survive_display_counts_policies_and_reversal() {
 }
 
 #[test]
+/// Checks the closed cubic against its integral area 27/20 and selected membership probes.
+///
+/// Both policies must certify the fixture; empty union and nonuniform scaling
+/// retain expected signed areas and tested memberships.
 fn closed_cubic_preserves_exact_area_membership_and_composition() {
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         let outcome =
@@ -210,6 +237,7 @@ fn closed_cubic_preserves_exact_area_membership_and_composition() {
 }
 
 #[test]
+/// Checks a retraced quadratic is certified empty and composes with scaling and square union.
 fn certified_retraced_boundary_is_empty_and_remains_composable() {
     let controls = [[r(0), r(0)], [r(1), r(0)], [r(0), r(0)]];
     assert!(curve::bezier_region(&controls, 16).unwrap().is_empty());

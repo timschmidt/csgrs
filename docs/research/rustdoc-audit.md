@@ -34,13 +34,15 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/exact_path_failures.rs` | Entire file; documented control-net helpers, native causes, display-count invariance, reversal, exact area and empty-region witnesses. Clarified the limited diagnostic evidence in the historical symbolic-endpoint test. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
+| `tests/hilbert_trimming.rs` | Entire file; documented exact run helpers, axis-aligned simplification, source intervals/contact replay, policy transitions and algebraic trim reuse. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/gear_airfoil_failures.rs` | Entire file; documented numeric fixtures, profile/volume helpers and every mechanical-profile failure, certainty, composition and original-resolution witness. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/curve_constructor_failures.rs` | Entire file; documented adapter errors, degenerate/invalid companions, exact area/volume witnesses, policy transitions and byte-capacity failures. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/sampled_profile_failures.rs` | Entire file; documented compatibility trait, helpers, fixture macro and generated tests, error/area/composition witnesses and optional artifacts/interchange. | Source, formatting and comment-only checks passed; tests and optional serialization branches not executed. |
 | `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
-| `src/curve/native.rs` | **Partial:** file start through `sampled_cycloidal_gear`, inclusive; initial helpers, planar shapes, mechanical/airfoil constructors and private gear samplers documented. Resume at `bezier_path`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
+| `src/curve/native.rs` | **Partial:** file start through `hilbert_paths_with_context`, inclusive; initial helpers, planar/mechanical shapes, exact Bezier/spline construction and Hilbert trimming documented, including local grid functions. Resume at `try_triangulate`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -938,12 +940,77 @@ storage remains about 499 MiB. No runtime build or additional target tree was
 created. Full workflow/runtime checks remain waived for this docs-only session.
 No executable behavior, assertion, coefficient or performance claim changed.
 
+### Exact control nets and Hilbert clipping, 26 November 2026
+
+Owner: CSGRS exact path/region constructors and retained Hilbert trim adapters;
+P1/P4/P5/P6/P8/P9/P12/P15/P16/P17/P18/P19/P25/P30/P37. Baseline: `abccd1272`.
+Read every line of `src/curve/native.rs` from `bezier_path` through
+`hilbert_paths_with_context`, including both function-local grid helpers.
+Read every line of `tests/exact_path_failures.rs` and `tests/hilbert_trimming.rs`.
+Supporting reads covered native path admission, spline layout/endpoints and
+parameter domains, general rational Bezier construction, and retained region
+bounds. These supporting modules are not credited as whole-file reviews.
+
+Missing witnesses: exact-path docs omitted carrier selection, parameter domains,
+fill rules, unused display-count behavior and precise diagnostics. Hilbert docs
+needed bounds/placement and conversion details; local integer helpers and test
+helpers/declarations lacked Rustdoc. Documented all ten entry points in this
+section, both local functions and all named declarations in the integration files.
+
+Bezier docs specify line/quadratic/cubic specialization and unit-weight rational
+storage for higher degrees, while preserving the polynomial meaning. Closed paths
+do not imply filled regions; region construction checks closure and uses native
+even-odd admission without adding a closing line. Spline docs give clamped integer
+knots, retained source controls and evaluation on `[0, control_count - degree]`.
+Positive display counts are validation-only and do not request sampling buffers.
+Checked spline index overflow remains `InvalidArguments`; documentation does not
+relabel it as resource exhaustion or change validation.
+
+Hilbert docs give the cell-center formula, traversal orientation, pre-empty
+parameter validation, padded bounding rectangle and possibly conservative native
+envelope. The point-count cap does not bound native trim work. The exact path view
+retains source intervals and contact evidence; the string view preserves represented
+line geometry but drops those records and returns a typed unsupported result when
+selected endpoints lack scalar coordinates. Local quadrant rotation/distance
+helpers state their integer-domain preconditions.
+
+Test docs distinguish independent interval/area/midpoint expectations from wrapper
+agreement, conservative axis-aligned simplification from general curve simplification,
+and contact replay from display approximation. The historical test named
+`unresolved_closure_is_undecided_across_policy_reuse` constructs its endpoint with
+`sin(e)^2 + cos(e)^2 - 1` directly and checks only the resulting native error
+category/source. It does not separately test endpoint-equality uncertainty or
+localize the failing stage. Its Rustdoc now states those limits. Its current
+runtime outcome has not been reproduced in this docs-only batch; do not cite it
+as proof of a specifically localized closure blocker. The fixture and all its
+assertions remain unchanged.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs
+  tests/exact_path_failures.rs tests/hilbert_trimming.rs`: passed.
+  `git diff --check`: passed.
+- All nonblank, non-comment source lines match baseline in all three Rust files,
+  including local functions, validation order, fixture expressions and assertions.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps
+  --offline`: passed without warnings.
+- Inspected all ten generated entry-point pages for carrier/domain, fill,
+  validation, placement and evidence contracts. Function-local and integration-test
+  documentation was reviewed in source; ordinary library docs do not render it.
+
+Log: `/tmp/csgrs-rustdoc-exact-paths-doc.log`. Reused temporary build storage
+remains about 499 MiB. No runtime build or additional target tree was created.
+Full workflow/runtime checks remain waived for this docs-only session. No
+executable behavior, assertion or performance claim changed.
+
 ## Next work
 
-Continue `src/curve/native.rs` at `bezier_path`, including higher-order curves,
-Hilbert paths and their consumers, then review the remaining root modules and
-owning crates. Maintain review records with each batch. Establish automated
-public/private item coverage across manifests and features without confusing
-that metric with semantic review. Review every remaining tracked file before
-claiming completion. Commit and push documentation batches after focused checks
-under the owner's session-specific waiver.
+Continue `src/curve/native.rs` at `try_triangulate`, including modeling-profile
+conversion, extrusion and their downstream witnesses, then review the remaining
+root modules and owning crates. Maintain review records with each batch. Establish
+automated public/private item coverage across manifests and features without
+confusing that metric with semantic review. Review every remaining tracked file
+before claiming completion. Commit and push documentation batches after focused
+checks under the owner's session-specific waiver.
