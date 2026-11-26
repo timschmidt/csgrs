@@ -34,6 +34,12 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/implicit/sdf.rs` | Entire file; documented diagnostic fields, strict preview storage, indexed sampling and private grid helpers. | Private docs passed with `sdf`, `metaballs` and both; generated public/private contracts inspected. |
+| `src/implicit/metaballs.rs` | Entire file; documented report fields, bordered sampling, empty behavior and private transfer/bounds helpers. | Private docs passed with `metaballs` and `sdf,metaballs`; generated pages inspected. |
+| `src/implicit/tpms.rs` | Entire file including local extraction helpers/constants and tests; documented field formulas, band units, sampling and cache invariants. | Private docs passed with `sdf` and `sdf,metaballs`; local items/tests reviewed in source. |
+| `src/implicit/mod.rs` | Entire file; feature gates and existing module Rustdoc agree with the three owning implementations. No edit needed. | Individual and combined feature doc builds passed. |
+| `tests/metaballs_diagnostics.rs` | Entire file; documented all fixture helpers and diagnostic/influence/grid witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
+| `tests/sdf_tpms_diagnostics.rs` | Entire file; documented exact plane expectations, preview comparisons, downstream admission and diagnostic limitations. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/transform_failures.rs` | Entire file; documented every helper and transform failure/composition witness. | Source review, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/primitive_failures.rs` | Entire file; documented all primitive-failure and empty-composition helpers/witnesses. | Source review, formatting and comment-only checks passed; test bodies unchanged, not rerun. |
 | `src/solid/cache.rs` | Entire file; documented thread-local state, default implementation and local restoration guard; clarified receipt reuse. | Private docs passed with and without `curve`; local guard reviewed in source. |
@@ -544,9 +550,76 @@ Logs: `/tmp/csgrs-rustdoc-transforms-doc.log` and
 directory is reused. Full workflow/runtime checks remain waived for this docs-only
 session. No executable behavior, predicate order or performance claim changed.
 
+### Sampled fields and bounds, partial-solid/full-implicit batch, 26 November 2026
+
+Owner: CSGRS sampled implicit constructors and their Hypermesh/Hypersdf bridges,
+P1/P6/P8/P9/P17/P18/P19/P20/P25/P30/P37. Baseline: `6beb18849`.
+**Partial solid file:** reviewed `src/solid.rs` from `SampleOptions` through
+`float_with_context`, including feature gates and each wrapper body. Resume at
+`merge`; whole-file credit remains open. Read every line of `src/implicit/mod.rs`,
+`sdf.rs`, `metaballs.rs`, `tpms.rs`, `tests/metaballs_diagnostics.rs` and
+`tests/sdf_tpms_diagnostics.rs`. Supporting reads of Hypermesh bounds/Surface Nets,
+Hypersdf metaball fields and selected failure-test sections do not earn whole-file
+credit for those modules.
+
+Missing witnesses: diagnostic fields, sampler/grid/preview helpers, TPMS caches,
+local tetrahedral helpers/constants and test declarations lacked Rustdoc. Public
+summaries blurred policy-selected counts with strict preview proofs and omitted
+grid-border/empty rules. TPMS prose asserted mathematical surface properties not
+established by its trigonometric formulas or implementation. Replaced those claims
+with the modeled formulas and extraction behavior, without changing any algorithm
+or reducing the repository's target contract.
+
+Documented exact sample placement, callback order, unshifted extrema versus
+iso-shifted sign buckets, and the possibility that diagnostic comparisons fail
+or consume additional approximate certainty. Expression previews require strict
+signs independently of meshing policy, retain unavailable values explicitly,
+and use clamped F32 magnitudes stored as f64 without driving native geometry.
+Compatibility counters remain zero on successful native extraction; detected
+degeneracy and undecided samples return failures instead of partial output.
+
+Metaball docs specify requested/bordered count validation, conservative bounds,
+one-cell exterior samples, strict field evaluation and empty-source reports.
+TPMS docs specify positive wavelength, field-value band thickness (not Euclidean
+distance), bounding-box clipping, half-step exterior sampling, six-tetrahedron
+extraction, negative/zero ownership, shared edge crossings and orientation errors.
+Per-call trigonometric caches require a fixed coordinate/scale pair per index.
+Neither Surface Nets nor the tetrahedral path is documented as independently
+certifying continuous-field topology, exact minimality or embedded closed output.
+Primary count/reservation checks are not presented as total resource bounds.
+
+Bounds/placement docs cover unused position rows, index validation, certified
+cache reuse, local receipt scope and the absence of source construction history
+in a bounds value. Centering uses the box midpoint; floating uses minimum Z.
+Diagnostic test docs distinguish independently expected rational planes/counts
+from shared-path agreement, indexed closure and lossy volume-sign diagnostics.
+
+Validation after edits:
+
+- Targeted `rustfmt --check --edition 2024` on all six edited Rust files: passed.
+- `git diff --check`: passed; every nonblank, non-comment source line matches
+  baseline across all six files, including tests and local helper bodies.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features sdf,metaballs --document-private-items
+  --no-deps --offline`: passed without warnings. Separate `sdf`, `metaballs`,
+  and no-feature private-doc builds also passed.
+- Generated diagnostic structs/fields, preview/grid storage, sampler, border,
+  tetrahedral extraction, TPMS cache, public options/constructors and bounds
+  contracts were inspected. Function-local items and test docs were reviewed in
+  source; ordinary library Rustdoc does not render them as standalone items.
+
+Logs use the prefix `/tmp/csgrs-rustdoc-sampling-` and suffix `-doc.log`, with
+configuration names `sdf`, `metaballs`, `sdf,metaballs` and `minimal` between them.
+The shared temporary build directory is about 150 MiB. Full workflow/runtime checks
+remain waived for this docs-only session. No executable behavior, predicate order,
+test assertion or performance claim changed. A generated-text check was adjusted
+for Rustdoc's smart apostrophe; combined pages were regenerated after the minimal
+build removed feature-gated output from the shared directory.
+
 ## Next work
 
-Resume `src/solid.rs` at `SampleOptions`, then continue through native operations and the
+Resume `src/solid.rs` at `merge`, then continue through native operations and the
 remaining root modules, then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file

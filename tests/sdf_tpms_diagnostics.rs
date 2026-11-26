@@ -1,3 +1,7 @@
+//! Native sampled-field coordinates, diagnostic previews and downstream mesh fixtures.
+//! Independent rational plane expectations complement shared-path comparisons;
+//! indexed closure and lossy volume checks do not establish analytic fidelity.
+
 use csgrs::solid::{self, SolidExt};
 use hyperlattice::{Point3, Real};
 use hyperlimit::{Point3 as HPoint3, PredicatePolicy};
@@ -6,22 +10,27 @@ use hyperreal::Rational;
 use hypersdf::SdfExpr;
 use std::collections::HashMap;
 
+/// Promote a finite binary64 fixture value exactly, without decimal interpretation.
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("test values must be finite")
 }
 
+/// Native point with exactly promoted binary64 coordinates.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+/// Exact rational fixture with a nonzero denominator.
 fn q(numerator: i64, denominator: u64) -> Real {
     Real::from(Rational::fraction(numerator, denominator).expect("exact test rational"))
 }
 
+/// Hypersdf point with exactly promoted binary64 coordinates.
 fn hp3(x: f64, y: f64, z: f64) -> HPoint3 {
     HPoint3::new(r(x), r(y), r(z))
 }
 
+/// Exact `10^-400`, below the positive binary64 range.
 fn tiny_exact_real() -> Real {
     let denominator = format!("1{}", "0".repeat(400));
     Real::from(
@@ -31,6 +40,7 @@ fn tiny_exact_real() -> Real {
     )
 }
 
+/// Exact `10^400`, above the finite binary64 range.
 fn huge_exact_real() -> Real {
     Real::from(
         format!("1{}", "0".repeat(400))
@@ -39,6 +49,9 @@ fn huge_exact_real() -> Real {
     )
 }
 
+/// Report non-two edge valence, same-direction edge pairs, and outgoing/incoming
+/// degrees at vertices of non-two-valence edges. Uses indices, not exact geometry;
+/// the degree list follows unspecified hash iteration order and is diagnostic only.
 fn edge_defects(mesh: &hypermesh::TriangleMesh) -> (usize, usize, Vec<(usize, usize)>) {
     let mut edges = HashMap::<(usize, usize), (usize, isize)>::new();
     let mut directed = Vec::new();
@@ -74,6 +87,9 @@ fn edge_defects(mesh: &hypermesh::TriangleMesh) -> (usize, usize, Vec<(usize, us
     )
 }
 
+/// Lossy coordinate bounds of endpoints on non-two-valence indexed edges.
+/// Leaves positive/negative infinity sentinels when no such edge exists; requires
+/// all visited coordinates to have finite projections. Used in failure messages.
 fn boundary_bounds(mesh: &hypermesh::TriangleMesh) -> ([f64; 3], [f64; 3]) {
     let mut edges = HashMap::<(usize, usize), usize>::new();
     for triangle in mesh.triangles.iter() {
@@ -106,6 +122,8 @@ fn boundary_bounds(mesh: &hypermesh::TriangleMesh) -> ([f64; 3], [f64; 3]) {
     (mins, maxs)
 }
 
+/// Count extra occurrences of unordered index triples, ignoring winding and
+/// coordinate equality. Used only as a failure diagnostic.
 fn duplicate_triangles(mesh: &hypermesh::TriangleMesh) -> usize {
     let mut counts = HashMap::new();
     for triangle in mesh.triangles.iter() {
@@ -116,6 +134,8 @@ fn duplicate_triangles(mesh: &hypermesh::TriangleMesh) -> usize {
     counts.values().map(|count| count.saturating_sub(1)).sum()
 }
 
+/// Sum projected signed tetrahedral contributions divided by six, omitting terms
+/// without finite projections. Supplies a diagnostic sign, not an exact volume proof.
 fn signed_volume(mesh: &hypermesh::TriangleMesh) -> f64 {
     mesh.triangles
         .iter()
@@ -129,6 +149,7 @@ fn signed_volume(mesh: &hypermesh::TriangleMesh) -> f64 {
         / 6.0
 }
 
+/// The sampled norm-field fixture emits triangles with paired oriented index edges.
 #[test]
 fn sdf_native_real_surface_nets_produces_closed_mesh() {
     let mesh = solid::sdf(
@@ -144,6 +165,9 @@ fn sdf_native_real_surface_nets_produces_closed_mesh() {
     assert!(mesh.is_closed_manifold());
 }
 
+/// Sub-binary64 field magnitudes retain the independent plane X = 1/3, exact
+/// unshifted extrema and expected sign counts. Callback/expression rows and
+/// preview reports are also compared, without treating shared paths as independent.
 #[test]
 fn sdf_expr_preserves_exact_signs_below_float_range() {
     let tiny = tiny_exact_real();
@@ -204,6 +228,8 @@ fn sdf_expr_preserves_exact_signs_below_float_range() {
     assert_eq!(preview.triangle_count, diagnostics.emitted_triangle_count);
 }
 
+/// Magnitudes above binary64 range still produce four vertices and two triangles
+/// on the independently expected plane X = 1/3.
 #[test]
 fn sdf_native_real_surface_nets_handles_values_above_float_range() {
     let scale = huge_exact_real();
@@ -223,6 +249,9 @@ fn sdf_native_real_surface_nets_handles_values_above_float_range() {
     assert!(mesh.positions.iter().all(|position| position.x == surface_x));
 }
 
+/// A sampled quadratic field is admitted with a certified polygon-soup receipt
+/// and survives intersection with an enclosing cube. Checks nonempty edge closure
+/// and positive diagnostic volume, without asserting exact set equality.
 #[test]
 fn native_real_sdf_mesh_is_hypermesh_boolean_ready() {
     let radius_squared = q(2, 5);
@@ -260,6 +289,8 @@ fn native_real_sdf_mesh_is_hypermesh_boolean_ready() {
     assert!(signed_volume(&intersection) > 0.0);
 }
 
+/// A nonzero-iso expression fixture agrees across direct/diagnostic mesh paths
+/// and preview counts, with indexed closure and positive diagnostic volume.
 #[test]
 fn sdf_expr_preview_tracks_nonzero_iso_surface() {
     let expression = SdfExpr::sphere(hp3(0.0, 0.0, 0.0), r(1.0));
@@ -315,6 +346,8 @@ fn sdf_expr_preview_tracks_nonzero_iso_surface() {
     );
 }
 
+/// All three clipped TPMS band fixtures emit nonempty, edge-paired meshes with
+/// positive diagnostic volume at the retained period and field-value thickness.
 #[test]
 fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
     let volume = solid::cube(r(2.0)).expect("valid primitive fixture");
@@ -348,6 +381,7 @@ fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
     }
 }
 
+/// TPMS and callback sampling reject an unrepresentable axis as capacity overflow.
 #[test]
 fn implicit_shapes_reject_unrepresentable_grid_dimensions() {
     let volume = solid::cube(r(2.0)).expect("valid primitive fixture");

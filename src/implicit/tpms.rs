@@ -1,4 +1,11 @@
-//! Triply‑Periodic Minimal Surfaces generated from signed-distance fields.
+//! Sampled trigonometric level fields inspired by triply periodic minimal surfaces.
+//!
+//! The gyroid, Schwarz-P and Schwarz-D formulas below define the modeled fields;
+//! no exact minimal-surface or signed-distance property is asserted. Level
+//! surfaces use native Surface Nets. Solid variants sample a field-value band
+//! clipped to a box and extract it by tetrahedral interpolation. Both paths keep
+//! exact sample arithmetic and sampling provenance, without a continuous-field
+//! topology or geometric-error certificate. All predicates here are strict.
 
 use crate::hyper_math::tau;
 use crate::solid::{capacity, reserved};
@@ -11,10 +18,13 @@ use hyperreal::RealSign;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
+/// Classify under strict policy, retaining undecided failure and its stage label.
 fn sign(value: &Real, predicate: &'static str) -> Result<RealSign, ValidationError> {
     GeometryDecisions::new(GeometryContext::STRICT).sign(value, predicate)
 }
 
+/// Select a maximum by strict comparisons in slice order; reject an empty slice.
+/// Used for box half-space clipping and intersection with the field-value band.
 fn maximum(values: &[Real]) -> Result<Real, ValidationError> {
     let (first, rest) = values
         .split_first()
@@ -30,6 +40,8 @@ fn maximum(values: &[Real]) -> Result<Real, ValidationError> {
     })
 }
 
+/// Require resolution >= 2 and its cube to fit u32, returning equal axis counts.
+/// This checks count arithmetic, not the storage needed by bordered solid grids.
 fn cubic_resolution(resolution: usize) -> Result<(usize, usize, usize), ValidationError> {
     if resolution < 2 {
         return Err(ValidationError::InvalidResolution {
@@ -46,6 +58,9 @@ fn cubic_resolution(resolution: usize) -> Result<(usize, usize, usize), Validati
     Ok((resolution, resolution, resolution))
 }
 
+/// Forward an indexed field to strict Surface Nets without diagnostic collection.
+/// Discards the separate receipt after retaining mesh construction qualifications;
+/// grid boundaries remain uncapped and callback evaluations use exact coordinates.
 #[inline]
 fn tpms_from_indexed_sdf(
     bounds: &Aabb,
@@ -66,7 +81,18 @@ fn tpms_from_indexed_sdf(
     .map(|(mesh, _)| mesh)
 }
 
-/// Extracts the unchanged capped field max(abs(f-iso)-thickness/2, box_sdf).
+/// Sample `max(abs(f - iso) - thickness / 2, box_clip)` and extract its zero set.
+///
+/// `box_clip` is the maximum of the six signed axis-plane distances, so its
+/// nonpositive set is the supplied box. Thickness measures field-value width,
+/// not Euclidean distance. For axis count `n`, uses spacing `span / n` and `n + 2`
+/// samples starting half a step below the minimum; the last is half a step above
+/// the maximum. This exterior sampling supports caps from the clipping field.
+///
+/// Callers validate resolution first. Negative/undecided thickness fails before
+/// the absent-bounds shortcut; absent bounds or zero thickness yields canonical
+/// empty geometry. Checked primary sample buffers do not bound all extraction
+/// allocations, scalar work or memory. No whole-mesh closure check is performed.
 fn tpms_solid_from_sdf(
     bounds: Option<&Aabb>,
     sdf_fn: impl Fn(&Point3) -> Real,
@@ -144,11 +170,25 @@ fn tpms_solid_from_sdf(
     tetrahedral_isosurface(&samples, &values, sample_counts)
 }
 
+/// Extract a sampled zero set from six tetrahedra per regular-grid cell.
+///
+/// Validates dimensions and slice lengths, then strictly classifies all samples.
+/// Negative values are inside and zero is outside. Linear edge crossings share
+/// indices by undirected sample edge; distinct edges meeting at a zero sample
+/// are not welded by coordinate equality. Each emitted triangle is oriented
+/// toward the outside and a zero orientation returns a typed degeneracy error.
+///
+/// Successful output retains sampling provenance, without independent closure,
+/// embedding or analytic-fidelity validation. Output buffers grow without a
+/// declared work/byte budget; no partial mesh is returned on a reported error.
 fn tetrahedral_isosurface(
     samples: &[Point3],
     values: &[Real],
     dimensions: [usize; 3],
 ) -> Result<TriangleMesh, ValidationError> {
+    /// Reuse or construct the exact linear crossing at `t = va / (va - vb)`.
+    /// Callers supply valid endpoints on opposite sides of the inside rule;
+    /// interpolation failures propagate before a new vertex/cache entry is added.
     fn crossing_vertex(
         a: usize,
         b: usize,
@@ -174,6 +214,8 @@ fn tetrahedral_isosurface(
         Ok(index)
     }
 
+    /// Orient one triangle so its normal has positive dot product with the
+    /// supplied inside-to-outside direction. Reject zero or undecided orientation.
     fn emit_oriented(
         indices: [usize; 3],
         direction: &hyperlattice::Vector3,
@@ -199,6 +241,7 @@ fn tetrahedral_isosurface(
         Ok(())
     }
 
+    /// Six tetrahedra around the cube's 0-to-7 body diagonal, using XYZ bit corners.
     const TETRAHEDRA: [[usize; 4]; 6] = [
         [0, 1, 3, 7],
         [0, 3, 2, 7],
@@ -345,13 +388,16 @@ fn tetrahedral_isosurface(
 
 // ------------  Specific minimal‑surface flavours  --------------------
 
-/// Gyroid surface:  `sin x cos y + sin y cos z + sin z cos x = iso`
-/// after scaling coordinates by `2π / period`.
+/// Sample the gyroid level field `sin x cos y + sin y cos z + sin z cos x = iso`.
 ///
-/// `period` is a spatial wavelength in model units; larger values repeat
-/// more slowly.
-/// **Mathematical Foundation**: Gyroid is a triply periodic minimal surface with zero mean curvature.
-/// **Optimization**: Pre-compute trigonometric values for better performance.
+/// Coordinates are scaled by `2π / period`, where period is a positive wavelength
+/// in model units. Requires resolution >= 2 with a u32-representable cube, even
+/// when bounds are absent. Absent bounds then returns canonical empty geometry.
+/// A present box supplies `resolution` samples per axis including its endpoints.
+///
+/// Caches sine/cosine expressions per axis index for this call. Surface Nets
+/// leaves the grid boundary uncapped. This trigonometric level field and its
+/// sampled mesh carry no exact-minimality or analytic-fidelity guarantee.
 pub fn gyroid(
     bounds: Option<&Aabb>,
     resolution: usize,
@@ -379,8 +425,12 @@ pub fn gyroid(
     )
 }
 
-/// Generate a capped, finite-thickness gyroid solid inside `self`'s
-/// bounding box.
+/// Sample a gyroid field-value band clipped to the supplied box.
+///
+/// Uses [`gyroid`]'s field and positive-period/resolution validation, then
+/// [`tpms_solid_from_sdf`]'s bordered grid and tetrahedral extraction. Thickness
+/// is nonnegative field-value width, not Euclidean wall thickness. Missing bounds
+/// or zero thickness yields empty geometry after parameter validation.
 pub fn gyroid_solid(
     bounds: Option<&Aabb>,
     resolution: usize,
@@ -399,10 +449,12 @@ pub fn gyroid_solid(
     )
 }
 
-/// Schwarz‑P surface:  `cos x + cos y + cos z = iso`  (default iso = 0)
-/// after scaling coordinates by `2π / period`.
-/// **Mathematical Foundation**: Schwarz P-surface has constant mean curvature and cubic symmetry.
-/// **Optimization**: Use direct cosine computation for this simpler surface equation.
+/// Sample the Schwarz-P level field `cos x + cos y + cos z = iso`.
+///
+/// Coordinates are scaled by `2π / period`, with the same period, resolution,
+/// absent-bounds and uncapped Surface Nets rules as [`gyroid`]. The iso value is
+/// required explicitly. Cosine expressions are cached by axis index for this call;
+/// no constant-mean-curvature or exact-minimality certificate is supplied.
 pub fn schwarz_p(
     bounds: Option<&Aabb>,
     resolution: usize,
@@ -429,8 +481,11 @@ pub fn schwarz_p(
     )
 }
 
-/// Generate a capped, finite-thickness Schwarz-P solid inside `self`'s
-/// bounding box.
+/// Sample a Schwarz-P field-value band clipped to the supplied box.
+///
+/// Uses [`schwarz_p`]'s field and validation and [`tpms_solid_from_sdf`]'s
+/// bordered tetrahedral extraction. Thickness is a nonnegative field-value width;
+/// absent bounds or zero thickness returns empty after parameter validation.
 pub fn schwarz_p_solid(
     bounds: Option<&Aabb>,
     resolution: usize,
@@ -449,10 +504,13 @@ pub fn schwarz_p_solid(
     )
 }
 
-/// Schwarz‑D (Diamond) surface:  `sin x sin y sin z + sin x cos y cos z + ... = iso`
-/// after scaling coordinates by `2π / period`.
-/// **Mathematical Foundation**: Diamond surface exhibits tetrahedral symmetry and is self-intersecting.
-/// **Optimization**: Pre-compute all trigonometric values for maximum efficiency.
+/// Sample the Schwarz-D field `sin x sin y sin z + sin x cos y cos z
+/// + cos x sin y cos z + cos x cos y sin z = iso`.
+///
+/// Coordinates are scaled by `2π / period`, with the same period, resolution,
+/// absent-bounds and uncapped Surface Nets rules as [`gyroid`]. Sine/cosine
+/// expressions are cached by axis index for this call. No claim about exact
+/// minimality or absence/presence of self-intersection is inferred from the name.
 pub fn schwarz_d(
     bounds: Option<&Aabb>,
     resolution: usize,
@@ -483,8 +541,11 @@ pub fn schwarz_d(
     )
 }
 
-/// Generate a capped, finite-thickness Schwarz-D solid inside `self`'s
-/// bounding box.
+/// Sample a Schwarz-D field-value band clipped to the supplied box.
+///
+/// Uses [`schwarz_d`]'s field and validation and [`tpms_solid_from_sdf`]'s
+/// bordered tetrahedral extraction. Thickness is a nonnegative field-value width;
+/// absent bounds or zero thickness returns empty after parameter validation.
 pub fn schwarz_d_solid(
     bounds: Option<&Aabb>,
     resolution: usize,
@@ -505,13 +566,9 @@ pub fn schwarz_d_solid(
 
 /// Return the TPMS angular scale `2π / period` in hyperreal space.
 ///
-/// The integer/grid APIs still expose primitive periods, but the wavelength
-/// validation and reciprocal are promoted before any implicit-field samples are
-/// evaluated. This follows Yap's exact-geometric-computation split between
-/// primitive input boundaries and exact-aware predicates
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The TPMS families here
-/// follow Schoen, "Infinite Periodic Minimal Surfaces Without Self-
-/// Intersections," NASA Technical Note D-5541, 1970.
+/// Requires a strict positive sign before division. There is no minimum period
+/// tolerance and no projection to a primitive float; unresolved signs and scalar
+/// failures remain errors.
 fn tpms_scale(period: Real) -> Result<Real, ValidationError> {
     if sign(&period, "TPMS period")? != RealSign::Positive {
         return Err(ValidationError::NonPositiveParameter { name: "period" });
@@ -519,6 +576,7 @@ fn tpms_scale(period: Real) -> Result<Real, ValidationError> {
     Ok((tau() / period)?)
 }
 
+/// Multiply model coordinates by the common angular frequency for field evaluation.
 fn tpms_scaled_axes(point: &Point3, scale: Real) -> (Real, Real, Real) {
     (
         point.x.clone() * scale.clone(),
@@ -527,10 +585,15 @@ fn tpms_scaled_axes(point: &Point3, scale: Real) -> (Real, Real, Real) {
     )
 }
 
+/// Allocate one initially empty trigonometric cache cell per axis sample index.
+/// The cache belongs to one extraction; allocation is not covered by a byte budget.
 fn empty_axis_cache<T>(length: usize) -> Vec<OnceLock<T>> {
     std::iter::repeat_with(OnceLock::new).take(length).collect()
 }
 
+/// Initialize or reuse sine/cosine expressions for one axis sample.
+/// The caller must keep coordinate and scale fixed for each valid index; they
+/// are not part of a checked key and changing them would reuse stale expressions.
 fn cached_scaled_sin_cos(
     cache: &[OnceLock<(Real, Real)>],
     index: usize,
@@ -545,6 +608,9 @@ fn cached_scaled_sin_cos(
         .clone()
 }
 
+/// Initialize or reuse a cosine expression for one axis sample.
+/// Requires an in-range index permanently associated with this coordinate/scale
+/// pair during the extraction; no coordinate equality check is performed.
 fn cached_scaled_cos(
     cache: &[OnceLock<Real>],
     index: usize,
@@ -556,7 +622,7 @@ fn cached_scaled_cos(
         .clone()
 }
 
-/// Evaluate Schoen's gyroid approximation in hyperreal space.
+/// Evaluate `sin x cos y + sin y cos z + sin z cos x` at scaled coordinates.
 fn tpms_gyroid_value(point: &Point3, scale: Real) -> Real {
     let (x, y, z) = tpms_scaled_axes(point, scale);
     let sin_x = x.clone().sin();
@@ -568,13 +634,13 @@ fn tpms_gyroid_value(point: &Point3, scale: Real) -> Real {
     sin_x * cos_y + sin_y * cos_z + sin_z * cos_x
 }
 
-/// Evaluate Schwarz's primitive cubic surface approximation in hyperreal space.
+/// Evaluate the Schwarz-P field `cos x + cos y + cos z` at scaled coordinates.
 fn tpms_schwarz_p_value(point: &Point3, scale: Real) -> Real {
     let (x, y, z) = tpms_scaled_axes(point, scale);
     x.cos() + y.cos() + z.cos()
 }
 
-/// Evaluate Schwarz's diamond surface approximation in hyperreal space.
+/// Evaluate [`schwarz_d`]'s four-term trigonometric field at scaled coordinates.
 fn tpms_schwarz_d_value(point: &Point3, scale: Real) -> Real {
     let (x, y, z) = tpms_scaled_axes(point, scale);
     let sin_x = x.clone().sin();
@@ -591,9 +657,11 @@ fn tpms_schwarz_d_value(point: &Point3, scale: Real) -> Real {
 
 #[cfg(test)]
 mod tests {
+    //! Strict period-domain witnesses for the angular-frequency conversion.
     use super::*;
     use crate::hyper_math::tolerance;
 
+    /// Positive fixtures below, at and above the legacy tolerance are admitted.
     #[test]
     fn tpms_scale_accepts_any_exact_positive_period() {
         assert!(tpms_scale(tolerance() * 0.25).is_ok());
@@ -601,6 +669,7 @@ mod tests {
         assert!(tpms_scale(Real::one()).is_ok());
     }
 
+    /// Zero and a negative legacy-tolerance fixture fail period validation.
     #[test]
     fn tpms_scale_rejects_zero_and_negative_periods() {
         assert!(tpms_scale(Real::zero()).is_err());

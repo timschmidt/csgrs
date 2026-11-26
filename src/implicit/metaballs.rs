@@ -13,27 +13,50 @@ pub use hypersdf::Metaball as MetaBall;
 /// Diagnostics for the normalized field `(iso - I)/(iso + I)` and its native mesh.
 /// Negative samples are inside. Extrema describe this continuous normalized field,
 /// including its exact value -1 at centers, rather than singular inverse-square influence.
+/// Counts and extrema use the selected meshing policy. They do not certify the
+/// finite grid's fidelity to the continuous field; failed sampling returns no report.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct MetaballDiagnostics {
+    /// Actual bordered dimensions for nonempty sources; requested dimensions
+    /// when an empty source list bypasses sampling.
     pub resolution: (u32, u32, u32),
+    /// Number of retained inverse-square sources.
     pub ball_count: usize,
+    /// Actual bordered grid point count, or zero for no sources.
     pub sample_count: usize,
+    /// Samples successfully sign-classified for diagnostics; no binary64
+    /// representability test is performed. Zero when diagnostics are disabled.
     pub finite_sample_count: usize,
+    /// Compatibility counter left zero; undecided samples return an error.
     pub non_finite_sample_count: usize,
+    /// Normalized samples classified below zero when diagnostics are enabled.
     pub negative_sample_count: usize,
+    /// Normalized samples classified as zero when diagnostics are enabled.
     pub zero_sample_count: usize,
+    /// Normalized samples classified above zero when diagnostics are enabled.
     pub positive_sample_count: usize,
+    /// Selected normalized-field minimum; `None` without sampled diagnostics.
     pub min_finite_value: Option<Real>,
+    /// Selected normalized-field maximum; `None` without sampled diagnostics.
     pub max_finite_value: Option<Real>,
+    /// Grid cells with both negative and nonnegative sample corners.
     pub crossing_cell_count: usize,
+    /// Position rows returned by Surface Nets, including unused rows.
     pub surface_nets_vertex_count: usize,
+    /// Three times the number of emitted triangles.
     pub surface_nets_index_count: usize,
+    /// Triangle rows in the native sampled proposal.
     pub emitted_triangle_count: usize,
+    /// Always zero for successful native extraction, which never skips a
+    /// triangle because of failed floating-point projection.
     pub skipped_non_finite_triangle_count: usize,
+    /// Always zero for successful extraction; detected degeneracy returns an error.
     pub degenerate_triangle_count: usize,
 }
 
 impl MetaballDiagnostics {
+    /// Transfer shared sampler counts and extrema, attaching the source count.
+    /// Metaball sampling does not request the expression-only Hypersdf preview.
     fn from_sampling(ball_count: usize, samples: super::sdf::SdfDiagnostics) -> Self {
         Self {
             ball_count,
@@ -56,6 +79,17 @@ impl MetaballDiagnostics {
     }
 }
 
+/// Validate a normalized inverse-square field and sample its conservative bounds.
+///
+/// Checks requested and bordered grid counts before strict field/padding
+/// validation, even for no sources. Nonempty fields add one exterior sample on
+/// each side of every axis, preserving the requested grid spacing, and evaluate
+/// strictly before policy-selected diagnostics and Surface Nets extraction.
+/// Evaluation errors carry bordered grid indices and their Hypersdf cause.
+///
+/// No sources yields canonical empty geometry with requested resolution and
+/// zero diagnostic counts after validation. Successful meshes retain sampling
+/// provenance; the local receipt is not a continuous-field topology certificate.
 pub(crate) fn sample(
     balls: &[MetaBall],
     resolution: (usize, usize, usize),
@@ -106,6 +140,9 @@ pub(crate) fn sample(
     })
 }
 
+/// Expand each bound by one original grid step `(max - min) / (count - 1)`.
+/// Counts must already be >= 2. Sampling the new bounds with two extra samples
+/// per axis preserves the original locations and spacing exactly.
 fn add_sampling_border(bounds: Aabb, [nx, ny, nz]: [u32; 3]) -> Result<Aabb, ValidationError> {
     let step = |min: &Real, max: &Real, count: u32| (max - min) / Real::from(count - 1);
     let dx = step(&bounds.mins.x, &bounds.maxs.x, nx)?;

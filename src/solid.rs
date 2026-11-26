@@ -1673,16 +1673,18 @@ pub fn inverse(mesh: &TriangleMesh) -> TriangleMesh {
     mesh.reversed_winding()
 }
 
-/// Optional inputs of the sampled-field constructors ([`sdf_with_context`],
-/// [`sdf_expr_with_context`] and [`metaballs_with_context`]).
+/// Optional inputs of the feature-gated sampled-field constructors:
+/// `sdf_with_context`, `sdf_expr_with_context` and `metaballs_with_context`.
 ///
 /// The predicate policy is not an option: it is always passed explicitly.
 #[cfg(any(feature = "sdf", feature = "metaballs"))]
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub struct SampleOptions {
-    /// Collect sample statistics while sampling. This costs an exact sign and
-    /// extremum comparison per sample, so it is off by default.
+    /// Collect sample statistics, off by default. Adds a sign classification per
+    /// sample and minimum/maximum comparisons after the first, under the selected
+    /// policy. These can fail or consume additional approximate certainty.
+    /// Expression diagnostics also collect a separate strict-sign lossy preview.
     pub diagnostics: bool,
 }
 
@@ -1693,6 +1695,8 @@ impl SampleOptions {
         Self { diagnostics: true }
     }
 
+    /// Attach the supplied report only when requested, leaving the mesh unchanged.
+    /// Collection is controlled upstream; this helper only retains or drops data.
     fn retain<D>(self, (mesh, diagnostics): (TriangleMesh, D)) -> SampledMesh<D> {
         SampledMesh {
             mesh,
@@ -1702,12 +1706,16 @@ impl SampleOptions {
 }
 
 /// A sampled mesh with the diagnostics its [`SampleOptions`] requested.
+///
+/// Sampler constructors honor the requested presence of diagnostics. Public
+/// fields may be authored independently; this carrier does not validate a
+/// report against its mesh or certify fidelity to a continuous field.
 #[cfg(any(feature = "sdf", feature = "metaballs"))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct SampledMesh<D> {
-    /// The meshed sample grid.
+    /// Native-coordinate sampled proposal, retaining its construction qualifications.
     pub mesh: TriangleMesh,
-    /// `Some` exactly when diagnostics were requested.
+    /// Sampler-produced results use `Some` exactly when diagnostics were requested.
     pub diagnostics: Option<D>,
 }
 
@@ -1719,6 +1727,8 @@ pub struct SampledMesh<D> {
 /// field. Radii and iso must be positive, padding nonnegative, and each grid
 /// dimension at least two. Invalid or undecided input and sampling failures are
 /// typed errors; an empty source list succeeds only after parameter validation.
+/// Uses [`GeometryContext::STRICT`] without diagnostics or a separate receipt;
+/// mesh construction qualifications remain. See [`metaballs_with_context`].
 #[cfg(feature = "metaballs")]
 pub fn metaballs(
     balls: &[MetaBall],
@@ -1742,6 +1752,13 @@ pub fn metaballs(
 /// Samples metaballs with the selected meshing policy, retaining local certainty.
 /// Native field construction and its conservative bounds remain strict.
 /// Diagnostics are collected only when `options` requests them.
+///
+/// A nonempty field adds one sample beyond each side of its conservative bounds,
+/// so the actual resolution is the requested tuple plus two per axis. Both grid
+/// counts are checked before the empty-source shortcut. Empty-source diagnostics
+/// retain the requested dimensions with zero samples. Evaluation failures carry
+/// bordered grid indices and their native cause. The sampled mesh retains
+/// sampling provenance without a continuous-field topology certificate.
 #[cfg(feature = "metaballs")]
 pub fn metaballs_with_context(
     balls: &[MetaBall],
@@ -1769,6 +1786,12 @@ pub fn metaballs_with_context(
 /// topology certificate. Each grid dimension must be at least two. Invalid
 /// dimensions, undecided predicates, capacity failures and extraction errors
 /// return `Err`; successful empty geometry remains `Ok`.
+///
+/// Samples `field(point) - iso_value` on the inclusive axis-aligned grid from
+/// `min` to `max`, using strict predicates and no diagnostics. Values below zero
+/// are inside; zero follows the nonnegative ownership rule. The boundary is not
+/// capped, and field values need not be metric distances. Bounds are not reordered
+/// or prevalidated for positive extent. See [`sdf_with_context`] for a receipt.
 #[cfg(feature = "sdf")]
 pub fn sdf(
     field: impl Fn(&Point3) -> Real,
@@ -1797,6 +1820,9 @@ pub fn sdf(
 /// topology certificate. Each grid dimension must be at least two. Invalid
 /// dimensions, undecided predicates, capacity failures and extraction errors
 /// return `Err`; successful empty geometry remains `Ok`.
+/// Uses [`GeometryContext::STRICT`] without diagnostics. The inclusive grid,
+/// iso shift, uncapped boundary and bounds rules match [`sdf`]. Expression
+/// evaluation errors retain sample indices and their Hypersdf cause.
 #[cfg(feature = "sdf")]
 pub fn sdf_expr(
     expression: hypersdf::SdfExpr,
@@ -1819,8 +1845,16 @@ pub fn sdf_expr(
 }
 
 /// Samples and meshes a scalar field with the selected policy, retaining errors and certainty.
-/// As with [`sdf`], certification covers the sampled grid, not the continuous field.
+/// As with [`sdf`], numerical certainty covers decisions on the sampled proposal,
+/// without certifying its fidelity to the continuous field.
 /// Diagnostics are collected only when `options` requests them.
+///
+/// Validates dimensions before calling `field` once per point in X-fast, then Y,
+/// then Z order. The callback supplies native values; no metric property is
+/// assumed. The complete grid is sampled before extraction. Diagnostic signs
+/// refer to `field - iso_value`, while extrema refer to unshifted field values.
+/// Both use `context` and contribute to local certainty. No Hypersdf preview is
+/// generated for callbacks. Reported errors return no partial mesh or diagnostics.
 #[cfg(feature = "sdf")]
 pub fn sdf_with_context(
     field: impl Fn(&Point3) -> Real,
@@ -1846,8 +1880,11 @@ pub fn sdf_with_context(
 /// Samples a Hypersdf expression and meshes its scalar values with the selected policy.
 /// Expression domain and branch checks remain strict even when meshing permits
 /// approximate predicates. Evaluation errors retain their cause and sample index.
-/// Requested diagnostics keep lossy preview samples, and their sign counts
-/// include only strict proofs, even under an approximate policy.
+/// Requested diagnostics include a lossy expression preview whose sign counts
+/// require strict proofs even under an approximate meshing policy. The main
+/// diagnostic sign counts and unshifted extrema use `context`; they may consume
+/// approximate certainty. Unknown strict signs remain explicit in the preview.
+/// Grid placement, extraction and uncapped boundaries follow [`sdf_with_context`].
 #[cfg(feature = "sdf")]
 pub fn sdf_expr_with_context(
     expression: hypersdf::SdfExpr,
@@ -1870,7 +1907,20 @@ pub fn sdf_expr_with_context(
     .map(|outcome| outcome.map(|sampled| options.retain(sampled)))
 }
 
-/// Bounded gyroid solid sampled through the established SDF boundary.
+/// Samples a gyroid field-value band clipped to the axis-aligned bounds of `bounds`.
+///
+/// The field is `sin x cos y + sin y cos z + sin z cos x` after multiplying model
+/// coordinates by `2π / scale`. Thus `scale` is a positive spatial period.
+/// `wall_thickness` is the nonnegative width of the interval about `iso_value`
+/// in field-value units, not a Euclidean wall distance.
+///
+/// Uses strict bounds/predicates and tetrahedral interpolation of the band clipped
+/// to the box. For each axis, samples `resolution + 2` points at spacing
+/// `box_span / resolution`, starting half a step outside. Requires resolution >= 2
+/// and checked count arithmetic. Source triangles are not used as a clipping solid.
+/// Missing bounds or zero thickness returns empty after parameter validation.
+/// Sampling provenance remains; no continuous-field fidelity or closure certificate
+/// is established by this constructor.
 #[cfg(feature = "sdf")]
 pub fn gyroid_solid(
     bounds: &TriangleMesh,
@@ -1891,7 +1941,12 @@ pub fn gyroid_solid(
     )
 }
 
-/// Bounded Schwarz-P solid sampled through the established SDF boundary.
+/// Samples a Schwarz-P field-value band clipped to the source's axis-aligned box.
+///
+/// Uses `cos x + cos y + cos z` with coordinates scaled by `2π / scale`.
+/// Period, field-value thickness, strict validation, bordered grid, empty results
+/// and sampling qualifications follow [`gyroid_solid`]. The source mesh supplies
+/// bounds rather than a Boolean clipping operand.
 #[cfg(feature = "sdf")]
 pub fn schwarz_p_solid(
     bounds: &TriangleMesh,
@@ -1912,7 +1967,12 @@ pub fn schwarz_p_solid(
     )
 }
 
-/// Bounded Schwarz-D solid sampled through the established SDF boundary.
+/// Samples a Schwarz-D field-value band clipped to the source's axis-aligned box.
+///
+/// Uses `sin x sin y sin z + sin x cos y cos z + cos x sin y cos z
+/// + cos x cos y sin z` with coordinates scaled by `2π / scale`.
+/// Period, field-value thickness, strict validation, bordered grid, empty results
+/// and sampling qualifications follow [`gyroid_solid`].
 #[cfg(feature = "sdf")]
 pub fn schwarz_d_solid(
     bounds: &TriangleMesh,
@@ -1933,7 +1993,13 @@ pub fn schwarz_d_solid(
     )
 }
 
-/// Samples a bounded gyroid level surface.
+/// Samples the gyroid level surface at `iso_value` within the source's bounding box.
+///
+/// Uses [`gyroid_solid`]'s trigonometric field and positive spatial period `scale`.
+/// Strict Surface Nets samples `resolution` points per axis including box endpoints;
+/// requires resolution >= 2 and a u32-representable cube. Missing bounds returns
+/// empty after validation. The grid boundary is uncapped and no source-solid
+/// intersection, exact minimal-surface or continuous-field topology claim is made.
 #[cfg(feature = "sdf")]
 pub fn gyroid(
     bounds: &TriangleMesh,
@@ -1946,7 +2012,10 @@ pub fn gyroid(
     crate::implicit::tpms::gyroid(bounding_box(bounds)?.as_ref(), resolution, scale, iso_value)
 }
 
-/// Samples a bounded Schwarz-P level surface.
+/// Samples the Schwarz-P field `cos x + cos y + cos z = iso_value`.
+///
+/// Coordinates are scaled by `2π / scale`. Uses [`gyroid`]'s strict period/grid
+/// validation and uncapped Surface Nets sampling over the source's bounding box.
 #[cfg(feature = "sdf")]
 pub fn schwarz_p(
     bounds: &TriangleMesh,
@@ -1964,7 +2033,10 @@ pub fn schwarz_p(
     )
 }
 
-/// Samples a bounded Schwarz-D level surface.
+/// Samples the Schwarz-D four-term trigonometric level field at `iso_value`.
+///
+/// The field is given in [`schwarz_d_solid`]. Uses [`gyroid`]'s positive period,
+/// strict grid validation and uncapped Surface Nets over the source's bounding box.
 #[cfg(feature = "sdf")]
 pub fn schwarz_d(
     bounds: &TriangleMesh,
@@ -1982,12 +2054,22 @@ pub fn schwarz_d(
     )
 }
 
-/// Exact bounds of native triangle positions.
+/// Selects axis-aligned bounds of all position rows under [`GeometryContext::STRICT`].
+///
+/// Includes unused positions and validates triangle indices first. No positions
+/// yields `None` only after that validation. See [`bounding_box_with_context`] for
+/// the receipt-bearing form; no closure or continuous-source fidelity is inferred.
 pub fn bounding_box(mesh: &TriangleMesh) -> Result<Option<Aabb>, ValidationError> {
     bounding_box_with_context(mesh, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Returns bounds with the selected policy and aggregate certainty.
+///
+/// Hypermesh validates indices, then uses certified cached bounds or compares
+/// every position row, including unused rows. Returns `None` when there are no
+/// positions. Coordinates retain their exact values; an approximate selection
+/// remains qualified by the receipt rather than a proved outward enclosure.
+/// The bounds outcome does not carry the source mesh's construction history.
 pub fn bounding_box_with_context(
     mesh: &TriangleMesh,
     context: GeometryContext,
@@ -1997,12 +2079,20 @@ pub fn bounding_box_with_context(
     Ok(decisions.finish(bounds))
 }
 
-/// Translates the center of the exact bounds to the origin.
+/// Translates the midpoint of strict axis-aligned bounds to the origin.
+///
+/// Uses every position row, not a volume centroid. Delegates to
+/// [`center_with_context`] under strict policy and returns only the mesh.
 pub fn center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
     center_with_context(mesh, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Centers the selected-policy bounds, retaining certainty through the translation.
+///
+/// Subtracts `(mins + maxs) / 2` on each axis after bounds/index validation.
+/// No bounds returns a clone without translation. Existing construction history
+/// and any approximate bounds decision qualify the resulting mesh; the separate
+/// receipt records this operation's predicates.
 pub fn center_with_context(
     mesh: &TriangleMesh,
     context: GeometryContext,
@@ -2025,12 +2115,18 @@ pub fn center_with_context(
     Ok(decisions.finish_mesh(centered))
 }
 
-/// Translates the minimum Z bound to zero.
+/// Translates the strict minimum Z bound to zero, preserving X and Y.
+/// Delegates to [`float_with_context`] under strict policy and returns only the mesh.
 pub fn float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
     float_with_context(mesh, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Moves the selected-policy minimum Z bound to zero and retains certainty.
+///
+/// Bounds include unused positions and validate indices before any shortcut.
+/// No bounds returns a clone. Otherwise translation by `(0, 0, -min_z)` preserves
+/// construction history and records any approximate bounds decision in the mesh
+/// and local receipt; no additional closure or embedding check is performed.
 pub fn float_with_context(
     mesh: &TriangleMesh,
     context: GeometryContext,

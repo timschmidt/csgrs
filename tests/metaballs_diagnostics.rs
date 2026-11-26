@@ -1,16 +1,23 @@
+//! Metaball sampling/report fixtures and typed scalar/grid boundary checks.
+//! Indexed closure and lossy volume signs do not certify continuous-field fidelity.
+
 use csgrs::solid::{self, MetaBall};
 use hyperlattice::{Point3, Real};
 use hyperlimit::PredicatePolicy;
 use std::collections::HashMap;
 
+/// Promote the exact binary value of a finite test literal.
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("test values must be finite")
 }
 
+/// Build a native point from finite binary64 fixture coordinates.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+/// Count indexed edges with valence other than two, then paired edges traversed
+/// in the same direction. Used only to explain an edge-closure assertion failure.
 fn edge_defects(mesh: &hypermesh::TriangleMesh) -> (usize, usize) {
     let mut edges = HashMap::<(usize, usize), (usize, isize)>::new();
     for triangle in mesh.triangles.iter() {
@@ -34,6 +41,8 @@ fn edge_defects(mesh: &hypermesh::TriangleMesh) -> (usize, usize) {
     )
 }
 
+/// Sum lossy signed tetrahedral contributions divided by six, skipping terms
+/// without a finite projection. This is a diagnostic sign estimate, not exact volume.
 fn signed_volume(mesh: &hypermesh::TriangleMesh) -> f64 {
     mesh.triangles
         .iter()
@@ -47,6 +56,8 @@ fn signed_volume(mesh: &hypermesh::TriangleMesh) -> f64 {
         / 6.0
 }
 
+/// The retained two-source fixture produces active cells, indexed edge closure,
+/// positive diagnostic volume and a vertex count matching its report.
 #[test]
 fn metaballs_generate_mesh_from_hyperreal_centers() {
     let balls = [
@@ -81,6 +92,8 @@ fn metaballs_generate_mesh_from_hyperreal_centers() {
     assert_eq!(mesh.positions.len(), diagnostics.surface_nets_vertex_count);
 }
 
+/// Unit influence retains its center pole and the independently expected value
+/// 1/4 at distance two, using strict scalar comparison.
 #[test]
 fn metaball_influence_preserves_its_pole_and_positive_finite_values() {
     let ball = MetaBall::new(p3(0.0, 0.0, 0.0), r(1.0));
@@ -98,6 +111,7 @@ fn metaball_influence_preserves_its_pole_and_positive_finite_values() {
     );
 }
 
+/// An unrepresentable requested axis yields typed capacity overflow.
 #[test]
 fn metaballs_reject_unrepresentable_grid_dimensions() {
     let ball = MetaBall::new(p3(0.0, 0.0, 0.0), r(1.0));
@@ -114,6 +128,8 @@ fn metaballs_reject_unrepresentable_grid_dimensions() {
     ));
 }
 
+/// Both policies honor diagnostic presence and match mesh rows/local receipts
+/// with diagnostics toggled for this fixture; the strict convenience path agrees.
 #[test]
 fn metaball_diagnostics_are_returned_exactly_when_requested_and_change_nothing_else() {
     use csgrs::solid::SampleOptions;
