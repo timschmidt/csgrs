@@ -154,7 +154,7 @@ where
         )?))
     }
 
-    /// Construct a tessellated cylinder along +Z from imported radius and height.
+    /// Construct a tessellated cylinder from Z zero to the imported signed height.
     ///
     /// Delegates dimension and segment validation to [`solid::cylinder`]. The
     /// result is a polygonal approximation with native construction qualifications.

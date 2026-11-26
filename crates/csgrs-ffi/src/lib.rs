@@ -8,17 +8,49 @@
 
 //! C ABI for the scalar-adapted CSGRS surface.
 //!
-//! This standalone crate is the native binding boundary above `csgrs`.
+//! This workspace crate is the native binding boundary above `csgrs`. Four
+//! scalar families choose ingress/egress representation; all handles retain
+//! native Hyper geometry internally. Finite floats enter as their exact binary
+//! values (`0.1_f64` is not one tenth). Float exports are lossy projections;
+//! integer exports require a recognized in-range integer. Opaque real exports
+//! retain native scalars, except that region profiles first pass through a
+//! sampled binary64 display representation even in the real family.
+//!
+//! Geometry algorithms and validation remain in the adapters and owning kernels.
+//! The ABI exposes no policy selector or separate operation-local certainty
+//! receipt. Most decision-bearing paths select strict predicates; region
+//! Booleans use Hypercurve's active scope (strict outside a preview/provisional
+//! scope). Mesh construction history is queryable through
+//! [`csgrs_triangle_mesh_construction_evidence`]; it is not a topology or
+//! analytic-source fidelity certificate. Extrusion, revolution and profile
+//! extraction explicitly discard their separate outcome receipts.
+//!
+//! Status-returning calls translate adapter errors and catch unwinding panics.
+//! This does not catch aborts, allocation aborts, invalid-pointer access or
+//! panics in the error-reporting code itself. Free functions have no unwind
+//! wrapper. There is no ABI-wide work, memory or cancellation budget.
 //!
 //! # Safety
 //!
-//! Every exported function follows the contract in `include/csgrs.h` and the
-//! crate README: input pointers must be null or valid for the documented read,
-//! output pointers must be valid for one write, opaque handles must come from
-//! this library with the matching scalar family, and owned values must be
-//! released exactly once by their matching `*_free` function. Callers must not
-//! use borrowed thread-local error strings after the next ABI call on the same
-//! thread.
+//! Every exported function follows the declarations in `include/csgrs.h`.
+//! Non-null pointers must be aligned, live and valid for their documented reads
+//! or writes, without conflicting access during the call. Null pointers are
+//! diagnosed where checked; they are not a substitute for validating non-null
+//! addresses, lengths or lifetimes. Input arrays permit null at length zero;
+//! nonempty arrays must satisfy Rust slice allocation/size requirements. Raw
+//! real components embedded in vectors/matrices borrow live scalar handles.
+//! Opaque handles must originate from this library and match the selected
+//! family. Immutable input handles may be shared, including equal Boolean
+//! operands; freeing them requires exclusive ownership and no outstanding use.
+//!
+//! Output slots must be writable without aliasing borrowed inputs. Successful
+//! calls overwrite slots without freeing any prior ownership. Handle and buffer
+//! outputs transfer ownership only on `Ok`; ordinary error paths leave their
+//! slots untouched. Bounds return `NoBounds` without writing an empty record.
+//! Release each successful allocation once with its matching free function,
+//! preserving buffer pointers, lengths and nested real handles. Copying a
+//! `Copy` ABI record does not duplicate ownership. Callers must copy borrowed
+//! error text before the next ABI call on that thread or thread termination.
 
 use csgrs::adapter::{
     Aabb3, AdapterError, F32, F64, I128, RawReal, Real, ScalarAdapter, ScalarCurve, ScalarMesh,
@@ -31,36 +63,59 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::ptr;
 use std::slice;
 
+/// Native-backed mesh adapter selected by an ABI family; the scalar type is a boundary choice.
 type TriangleMeshOf<F> = ScalarMesh<<F as Family>::Adapter>;
+/// Native filled-region adapter selected by an ABI family, sharing Hypercurve authority.
 type CurveRegionOf<F> = ScalarCurve<<F as Family>::Adapter>;
+/// Host scalar used by the selected adapter before import or after export.
 type AdapterScalar<F> = <<F as Family>::Adapter as ScalarAdapter>::Scalar;
 
+/// Stable numeric result categories for C callers.
+///
+/// `NoBounds` is a completed empty query; only `Ok` writes an owned result.
+/// The last-error string supplies diagnostic text, not a serialized native error tree.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CsgrsStatus {
+    /// The operation completed and wrote any declared output.
     Ok = 0,
+    /// A required pointer was null; non-null address validity is the caller's obligation.
     NullPointer = 1,
+    /// A live geometry handle has another boundary-family tag.
     WrongScalarFamily = 2,
+    /// Scalar import/export failed outside native construction validation.
     ConversionFailed = 3,
+    /// An input or ABI encoding was rejected as invalid.
     ValidationFailed = 4,
+    /// A required native decision could not be certified by the selected policy.
     PredicateUndecided = 5,
+    /// A native operation reported exhaustion of a configured allowance.
     ResourceExhausted = 6,
+    /// The native path does not support the requested representation or operation.
     Unsupported = 7,
+    /// Other native construction failure not mapped to a more specific category.
     GeometryFailed = 8,
+    /// The requested image/result is unbounded and cannot be returned as finite geometry.
     Unbounded = 9,
     /// The bounds query completed on empty geometry; no AABB was written.
     NoBounds = 10,
     /// Storage was unavailable without reaching a configured work limit.
     ResourceUnavailable = 11,
+    /// The action unwound and was caught; aborts and memory unsafety are not caught.
     Panic = 255,
 }
 
+/// Boundary scalar strategy stored on a geometry handle; internal coordinates remain native.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CsgrsScalarFamily {
+    /// Binary32 ingress and lossy binary32 egress.
     F32 = 1,
+    /// Binary64 ingress and lossy binary64 egress.
     F64 = 2,
+    /// Exact signed 128-bit integer ingress and restricted integer egress.
     I128 = 3,
+    /// Borrowed/owned opaque native scalar handles at the boundary.
     Real = 4,
 }
 
@@ -69,13 +124,26 @@ pub enum CsgrsScalarFamily {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsConstructionEvidence {
+    /// Some source history is unavailable; zero in other flags cannot recover it.
     pub source_history_missing: u8,
+    /// Retained construction history records use of the approximate terminal.
     pub approximate_512_consumed: u8,
+    /// Retained history records a coordinate projection boundary.
     pub coordinates_projected: u8,
+    /// Retained history records sampling of an intended source.
     pub source_sampled: u8,
+    /// Native buffers changed in a way recorded by construction history.
     pub buffers_changed: u8,
 }
 
+/// Read retained mesh construction-history flags for any scalar family.
+///
+/// A false approximate flag cannot certify unknown history, topology or source
+/// fidelity. Failure leaves the output record untouched.
+///
+/// # Safety
+/// Borrow a live mesh and provide a nonaliasing writable output record, following
+/// the crate pointer contract. No ownership is transferred by this query.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_triangle_mesh_construction_evidence(
     mesh: *const CsgrsTriangleMesh,
@@ -100,189 +168,306 @@ pub unsafe extern "C" fn csgrs_triangle_mesh_construction_evidence(
     })
 }
 
+/// Portable two's-complement signed 128-bit value, represented as high and low words.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsI128 {
+    /// Signed high 64 bits; sign extension preserves negative values.
     pub hi: i64,
+    /// Unsigned low 64 bits.
     pub lo: u64,
 }
 
+/// 2-component binary32 coordinate record.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsVec2F32 {
+    /// X component.
     pub x: f32,
+    /// Y component.
     pub y: f32,
 }
 
+/// 3-component binary32 coordinate record.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsVec3F32 {
+    /// X component.
     pub x: f32,
+    /// Y component.
     pub y: f32,
+    /// Z component.
     pub z: f32,
 }
 
+/// 2-component binary64 coordinate record.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsVec2F64 {
+    /// X component.
     pub x: f64,
+    /// Y component.
     pub y: f64,
 }
 
+/// 3-component binary64 coordinate record.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsVec3F64 {
+    /// X component.
     pub x: f64,
+    /// Y component.
     pub y: f64,
+    /// Z component.
     pub z: f64,
 }
 
+/// 2-component split-word signed integer coordinate record.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsVec2I128 {
+    /// X component.
     pub x: CsgrsI128,
+    /// Y component.
     pub y: CsgrsI128,
 }
 
+/// 3-component split-word signed integer coordinate record.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsVec3I128 {
+    /// X component.
     pub x: CsgrsI128,
+    /// Y component.
     pub y: CsgrsI128,
+    /// Z component.
     pub z: CsgrsI128,
 }
 
+/// 2-component opaque native scalar coordinate record.
+///
+/// Inputs borrow each component; successful output records own separate handles.
+/// Copying the record does not clone those handles.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsVec2Real {
+    /// X component.
     pub x: *mut CsgrsReal,
+    /// Y component.
     pub y: *mut CsgrsReal,
 }
 
+/// 3-component opaque native scalar coordinate record.
+///
+/// Inputs borrow each component; successful output records own separate handles.
+/// Copying the record does not clone those handles.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsVec3Real {
+    /// X component.
     pub x: *mut CsgrsReal,
+    /// Y component.
     pub y: *mut CsgrsReal,
+    /// Z component.
     pub z: *mut CsgrsReal,
 }
 
+/// Ordered triangle indices into the corresponding exported vertex array.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsTriangleU32 {
+    /// First vertex index.
     pub a: u32,
+    /// Second vertex index.
     pub b: u32,
+    /// Third vertex index; order retains triangle winding.
     pub c: u32,
 }
 
+/// Axis-aligned bounds exported as binary32 endpoints.
+///
+/// Float endpoints are projections, not an outward-enclosure certificate.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsAabb3F32 {
+    /// Minimum XYZ coordinates in the exported representation.
     pub mins: CsgrsVec3F32,
+    /// Maximum XYZ coordinates in the exported representation.
     pub maxs: CsgrsVec3F32,
 }
 
+/// Axis-aligned bounds exported as binary64 endpoints.
+///
+/// Float endpoints are projections, not an outward-enclosure certificate.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsAabb3F64 {
+    /// Minimum XYZ coordinates in the exported representation.
     pub mins: CsgrsVec3F64,
+    /// Maximum XYZ coordinates in the exported representation.
     pub maxs: CsgrsVec3F64,
 }
 
+/// Axis-aligned bounds exported as split-word signed integer endpoints.
+///
+/// Export fails unless every endpoint is a recognized in-range integer.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsAabb3I128 {
+    /// Minimum XYZ coordinates in the exported representation.
     pub mins: CsgrsVec3I128,
+    /// Maximum XYZ coordinates in the exported representation.
     pub maxs: CsgrsVec3I128,
 }
 
+/// Axis-aligned bounds exported as opaque native scalar endpoints.
+///
+/// Owns six handles; release once with [`csgrs_aabb3_real_free_values`].
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsAabb3Real {
+    /// Minimum XYZ coordinates in the exported representation.
     pub mins: CsgrsVec3Real,
+    /// Maximum XYZ coordinates in the exported representation.
     pub maxs: CsgrsVec3Real,
 }
 
+/// Row-major 4×4 homogeneous transform with binary32 coefficients.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsMatrix4F32 {
+    /// Sixteen coefficients in row-major order.
     pub values: [f32; 16],
 }
 
+/// Row-major 4×4 homogeneous transform with binary64 coefficients.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsMatrix4F64 {
+    /// Sixteen coefficients in row-major order.
     pub values: [f64; 16],
 }
 
+/// Row-major 4×4 homogeneous transform with split-word signed integer coefficients.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsMatrix4I128 {
+    /// Sixteen coefficients in row-major order.
     pub values: [CsgrsI128; 16],
 }
 
+/// Row-major 4×4 homogeneous transform with opaque native scalar coefficients.
+///
+/// All sixteen scalar handles are borrowed for the duration of the call.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsMatrix4Real {
+    /// Sixteen coefficients in row-major order.
     pub values: [*const CsgrsReal; 16],
 }
 
+/// Exported position and native-certified unit normal in the binary32 family.
+///
+/// Scalar export can round or fail; this record is not a separate fidelity receipt.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsGraphicsVertexF32 {
+    /// Exported vertex position.
     pub position: CsgrsVec3F32,
+    /// Exported unit-normal coordinates; projection can change their norm.
     pub normal: CsgrsVec3F32,
 }
 
+/// Exported position and native-certified unit normal in the binary64 family.
+///
+/// Scalar export can round or fail; this record is not a separate fidelity receipt.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsGraphicsVertexF64 {
+    /// Exported vertex position.
     pub position: CsgrsVec3F64,
+    /// Exported unit-normal coordinates; projection can change their norm.
     pub normal: CsgrsVec3F64,
 }
 
+/// Exported position and native-certified unit normal in the split-word signed integer family.
+///
+/// Scalar export can round or fail; this record is not a separate fidelity receipt.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CsgrsGraphicsVertexI128 {
+    /// Exported vertex position.
     pub position: CsgrsVec3I128,
+    /// Exported unit-normal coordinates; projection can change their norm.
     pub normal: CsgrsVec3I128,
 }
 
+/// Exported position and native-certified unit normal in the opaque native scalar family.
+///
+/// Scalar export can round or fail; this record is not a separate fidelity receipt.
+/// Owns six scalar handles when returned inside a graphics mesh.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CsgrsGraphicsVertexReal {
+    /// Exported vertex position.
     pub position: CsgrsVec3Real,
+    /// Exported unit-normal coordinates; projection can change their norm.
     pub normal: CsgrsVec3Real,
 }
 
+/// Declare the family-specific owning buffer layouts shared with the C header.
+///
+/// Raw pointers carry no automatic destructor; generated free functions reclaim
+/// the boxed arrays and, for the real family, their nested scalar handles.
 macro_rules! define_buffers {
     ($mesh:ident, $graphics:ident, $region:ident, $vec2:ty, $vec3:ty, $gvertex:ty) => {
+        /// Owned indexed triangle buffers; `index_len` counts triangle records, not scalar indices.
         #[repr(C)]
         #[derive(Debug)]
         pub struct $mesh {
+            /// Owned array of vertices; release with this family's matching buffer free.
             pub vertices: *mut $vec3,
+            /// Number of vertex records, including zero for empty output.
             pub vertex_len: usize,
+            /// Owned index array; its element type determines the count unit.
             pub indices: *mut CsgrsTriangleU32,
+            /// Number of index-array elements, not bytes.
             pub index_len: usize,
         }
 
+        /// Owned graphics vertices and flat index stream; `index_len` counts individual indices.
         #[repr(C)]
         #[derive(Debug)]
         pub struct $graphics {
+            /// Owned array of vertices; release with this family's matching buffer free.
             pub vertices: *mut $gvertex,
+            /// Number of vertex records, including zero for empty output.
             pub vertex_len: usize,
+            /// Owned index array; its element type determines the count unit.
             pub indices: *mut u32,
+            /// Number of index-array elements, not bytes.
             pub index_len: usize,
         }
 
+        /// Owned display-profile rows with two levels of sentinel offsets.
+        ///
+        /// `ring_offsets` indexes points and `region_offsets` indexes rings. Each
+        /// region lists its exterior first, then holes. Even the real family stores
+        /// sampled/projected profiles rather than exact source curves.
         #[repr(C)]
         #[derive(Debug)]
         pub struct $region {
+            /// Owned flattened XY point array.
             pub points: *mut $vec2,
+            /// Number of points.
             pub point_len: usize,
+            /// Owned point offsets, starting at zero and ending at `point_len`.
             pub ring_offsets: *mut usize,
+            /// Number of ring offsets: one more than the ring count.
             pub ring_offset_len: usize,
+            /// Owned ring offsets, starting at zero and ending at the ring count.
             pub region_offsets: *mut usize,
+            /// Number of region offsets: one more than the region count.
             pub region_offset_len: usize,
         }
     };
@@ -321,41 +506,90 @@ define_buffers!(
     CsgrsGraphicsVertexReal
 );
 
+/// Opaque owned native scalar handle; created and released only by this library.
 pub struct CsgrsReal {
+    /// Native payload whose ownership is transferred by the opaque handle.
     inner: Real,
 }
 
+/// Opaque owned mesh plus boundary-family tag; operations borrow it and return new handles.
 pub struct CsgrsTriangleMesh {
+    /// Native payload whose ownership is transferred by the opaque handle.
     inner: TriangleMeshKind,
 }
 
+/// Opaque owned filled region plus boundary-family tag; never inspect its layout from C.
 pub struct CsgrsCurveRegion {
+    /// Native payload whose ownership is transferred by the opaque handle.
     inner: CurveRegionKind,
 }
 
+/// Runtime family discriminator for native-backed mesh storage.
 enum TriangleMeshKind {
-    F32(ScalarMesh<F32>),
-    F64(ScalarMesh<F64>),
-    I128(ScalarMesh<I128>),
-    Real(ScalarMesh<RawReal>),
+    /// Geometry exposed through the `F32` scalar family.
+    F32(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarMesh<F32>,
+    ),
+    /// Geometry exposed through the `F64` scalar family.
+    F64(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarMesh<F64>,
+    ),
+    /// Geometry exposed through the `I128` scalar family.
+    I128(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarMesh<I128>,
+    ),
+    /// Geometry exposed through the `Real` scalar family.
+    Real(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarMesh<RawReal>,
+    ),
 }
 
+/// Runtime family discriminator for native-backed region storage.
 enum CurveRegionKind {
-    F32(ScalarCurve<F32>),
-    F64(ScalarCurve<F64>),
-    I128(ScalarCurve<I128>),
-    Real(ScalarCurve<RawReal>),
+    /// Geometry exposed through the `F32` scalar family.
+    F32(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarCurve<F32>,
+    ),
+    /// Geometry exposed through the `F64` scalar family.
+    F64(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarCurve<F64>,
+    ),
+    /// Geometry exposed through the `I128` scalar family.
+    I128(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarCurve<I128>,
+    ),
+    /// Geometry exposed through the `Real` scalar family.
+    Real(
+        /// Authoritative native geometry wrapped by the selected boundary adapter.
+        ScalarCurve<RawReal>,
+    ),
 }
 
+/// Private error bridge preserving native construction categories until status mapping.
 #[derive(Debug)]
 enum FfiError {
+    /// A required pointer is null.
     NullPointer,
+    /// A geometry handle belongs to another ABI scalar family.
     WrongScalarFamily,
-    Adapter(AdapterError),
+    /// The adapter failure, including its typed native construction cause.
+    Adapter(
+        /// Error retained until diagnostic formatting and status selection.
+        AdapterError,
+    ),
+    /// A valid bounds query completed without an AABB.
     NoBounds,
 }
 
 impl fmt::Display for FfiError {
+    /// Format pointer/family/absence errors or delegate the native adapter diagnostic.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NullPointer => f.write_str("null pointer"),
@@ -367,53 +601,91 @@ impl fmt::Display for FfiError {
 }
 
 impl From<AdapterError> for FfiError {
+    /// Preserve the adapter error for typed status mapping and diagnostic display.
     fn from(value: AdapterError) -> Self {
         Self::Adapter(value)
     }
 }
 
+/// Internal adapter/pointer outcome before conversion to a C status and diagnostic.
 type FfiResult<T> = Result<T, FfiError>;
 
 thread_local! {
+    /// Thread-local owned diagnostic; replacing it invalidates previously returned C pointers.
     static LAST_ERROR: RefCell<CString> =
         RefCell::new(CString::new("").expect("empty string has no interior nul"));
 }
 
+/// Compile-time bridge from one C layout to its native-backed scalar adapter.
+///
+/// Implementations borrow raw real pointers under the exported caller contract.
+/// These safe private methods rely on that boundary; they do not validate non-null
+/// addresses. Export constructors transfer arrays without RAII for nested handles.
 trait Family {
+    /// Native scalar conversion strategy.
     type Adapter: ScalarAdapter;
+    /// C scalar input representation; real handles are borrowed.
     type CScalar: Copy;
+    /// XY coordinate layout.
     type CVec2: Copy;
+    /// XYZ coordinate layout.
     type CVec3: Copy;
+    /// Row-major homogeneous matrix layout.
     type CMatrix4: Copy;
+    /// Exported bound layout.
     type CAabb: Copy;
+    /// Exported position/normal layout.
     type CGraphicsVertex: Copy;
+    /// Owning indexed-mesh array descriptor.
     type CMeshBuffers;
+    /// Owning graphics array descriptor.
     type CGraphicsMesh;
+    /// Owning sampled-profile array descriptor.
     type CRegionProfiles;
 
+    /// Convert the C scalar representation to the adapter scalar.
+    ///
+    /// Primitive floats are only copied here; finite validation occurs at native
+    /// import. The real family clones the borrowed handle under the caller contract.
     fn scalar_to_adapter(value: Self::CScalar) -> FfiResult<AdapterScalar<Self>>;
+    /// Import X then Y through this family, stopping at the first conversion error.
     fn vec2_to_adapter(value: Self::CVec2) -> FfiResult<[AdapterScalar<Self>; 2]>;
+    /// Import X, Y then Z through this family, stopping at the first conversion error.
     fn vec3_to_adapter(value: Self::CVec3) -> FfiResult<[AdapterScalar<Self>; 3]>;
+    /// Pack two already-exported adapter scalars; the real family allocates two owned handles.
     fn vec2_from_adapter(value: [AdapterScalar<Self>; 2]) -> FfiResult<Self::CVec2>;
+    /// Pack three already-exported adapter scalars; the real family allocates three owned handles.
     fn vec3_from_adapter(value: [AdapterScalar<Self>; 3]) -> FfiResult<Self::CVec3>;
+    /// Import all sixteen row-major coefficients into a native homogeneous matrix.
+    ///
+    /// This conversion does not establish invertibility or geometric applicability.
     fn matrix4_to_core(value: Self::CMatrix4) -> FfiResult<Matrix4>;
+    /// Pack already-exported extrema; the real family allocates six owned handles.
     fn aabb_from_adapter(value: Aabb3<AdapterScalar<Self>>) -> FfiResult<Self::CAabb>;
+    /// Pack already-exported position/normal rows, allocating handles in the real family.
     fn graphics_vertex_from_adapter(
         position: [AdapterScalar<Self>; 3],
         normal: [AdapterScalar<Self>; 3],
     ) -> FfiResult<Self::CGraphicsVertex>;
+    /// Tag a native-backed mesh with this boundary family without converting its coordinates.
     fn triangle_mesh_kind(mesh: TriangleMeshOf<Self>) -> TriangleMeshKind;
+    /// Tag a native-backed region with this boundary family without converting its coordinates.
     fn curve_region_kind(region: CurveRegionOf<Self>) -> CurveRegionKind;
+    /// Borrow the mesh payload only when its stored family matches this implementation.
     fn triangle_mesh_ref(mesh: &CsgrsTriangleMesh) -> FfiResult<&TriangleMeshOf<Self>>;
+    /// Borrow the region payload only when its stored family matches this implementation.
     fn curve_region_ref(region: &CsgrsCurveRegion) -> FfiResult<&CurveRegionOf<Self>>;
+    /// Transfer vertex and triangle vectors into owned boxed-array ABI descriptors.
     fn mesh_buffers(
         vertices: Vec<Self::CVec3>,
         indices: Vec<CsgrsTriangleU32>,
     ) -> Self::CMeshBuffers;
+    /// Transfer graphics vertices and flat indices into owned boxed-array ABI descriptors.
     fn graphics_mesh(
         vertices: Vec<Self::CGraphicsVertex>,
         indices: Vec<u32>,
     ) -> Self::CGraphicsMesh;
+    /// Transfer flattened points and both sentinel-offset vectors into ABI ownership.
     fn region_profiles(
         points: Vec<Self::CVec2>,
         ring_offsets: Vec<usize>,
@@ -421,15 +693,21 @@ trait Family {
     ) -> Self::CRegionProfiles;
 }
 
+/// Zero-sized dispatch marker for the `F32` ABI family.
 struct F32Family;
+/// Zero-sized dispatch marker for the `F64` ABI family.
 struct F64Family;
+/// Zero-sized dispatch marker for the `I128` ABI family.
 struct I128Family;
+/// Zero-sized dispatch marker for the `Real` ABI family.
 struct RealFamily;
 
+/// Reassemble signed high and unsigned low words without losing two's-complement bits.
 fn i128_from_parts(value: CsgrsI128) -> i128 {
     (i128::from(value.hi) << 64) | i128::from(value.lo)
 }
 
+/// Split an integer into signed high and unsigned low words without numeric conversion.
 fn i128_to_parts(value: i128) -> CsgrsI128 {
     CsgrsI128 {
         hi: (value >> 64) as i64,
@@ -437,10 +715,15 @@ fn i128_to_parts(value: i128) -> CsgrsI128 {
     }
 }
 
+/// Allocate one opaque scalar owner; the caller must later free the returned handle.
 fn real_handle(value: Real) -> *mut CsgrsReal {
     Box::into_raw(Box::new(CsgrsReal { inner: value }))
 }
 
+/// Clone a borrowed native scalar, diagnosing null without taking ownership.
+///
+/// # Safety
+/// A non-null pointer must reference a live scalar readable for the call.
 unsafe fn real_from_ptr(ptr: *const CsgrsReal) -> FfiResult<Real> {
     if ptr.is_null() {
         return Err(FfiError::NullPointer);
@@ -448,6 +731,9 @@ unsafe fn real_from_ptr(ptr: *const CsgrsReal) -> FfiResult<Real> {
     Ok(unsafe { &*ptr }.inner.clone())
 }
 
+/// Require a directly recognized rational that converts to an in-range integer.
+///
+/// Does not refine an unrecognized expression to decide integrality.
 fn real_to_i128(value: &Real) -> FfiResult<i128> {
     let rational = value.exact_rational().ok_or(AdapterError::NotExactInteger)?;
     rational
@@ -456,6 +742,10 @@ fn real_to_i128(value: &Real) -> FfiResult<i128> {
         .map_err(Into::into)
 }
 
+/// Implement value-layout conversions and family checks for binary floats and split integers.
+///
+/// Scalar validation belongs to native ingress. The accepted `$family_tag` and
+/// `$scalar_from_real` arguments are not used by this expansion.
 macro_rules! impl_primitive_family {
     (
         $family:ty,
@@ -483,26 +773,42 @@ macro_rules! impl_primitive_family {
         $gvertex_from_parts:expr
     ) => {
         impl Family for $family {
+            /// Native scalar conversion strategy.
             type Adapter = $adapter;
+            /// C scalar input representation; real handles are borrowed.
             type CScalar = $scalar;
+            /// XY coordinate layout.
             type CVec2 = $vec2;
+            /// XYZ coordinate layout.
             type CVec3 = $vec3;
+            /// Row-major homogeneous matrix layout.
             type CMatrix4 = $matrix;
+            /// Exported bound layout.
             type CAabb = $aabb;
+            /// Exported position/normal layout.
             type CGraphicsVertex = $gvertex;
+            /// Owning indexed-mesh array descriptor.
             type CMeshBuffers = $mesh_buffers;
+            /// Owning graphics array descriptor.
             type CGraphicsMesh = $graphics_mesh;
+            /// Owning sampled-profile array descriptor.
             type CRegionProfiles = $region_profiles;
 
+            /// Convert the C scalar representation to the adapter scalar.
+            ///
+            /// Primitive floats are only copied here; finite validation occurs at native
+            /// import. The real family clones the borrowed handle under the caller contract.
             fn scalar_to_adapter(value: Self::CScalar) -> FfiResult<AdapterScalar<Self>> {
                 ($scalar_to_adapter)(value)
             }
 
+            /// Import X then Y through this family, stopping at the first conversion error.
             fn vec2_to_adapter(value: Self::CVec2) -> FfiResult<[AdapterScalar<Self>; 2]> {
                 let [x, y] = ($vec2_to_array)(value);
                 Ok([Self::scalar_to_adapter(x)?, Self::scalar_to_adapter(y)?])
             }
 
+            /// Import X, Y then Z through this family, stopping at the first conversion error.
             fn vec3_to_adapter(value: Self::CVec3) -> FfiResult<[AdapterScalar<Self>; 3]> {
                 let [x, y, z] = ($vec3_to_array)(value);
                 Ok([
@@ -512,16 +818,21 @@ macro_rules! impl_primitive_family {
                 ])
             }
 
+            /// Pack two already-exported adapter scalars; the real family allocates two owned handles.
             fn vec2_from_adapter(value: [AdapterScalar<Self>; 2]) -> FfiResult<Self::CVec2> {
                 let [x, y] = value;
                 ($vec2_from_array)([x, y])
             }
 
+            /// Pack three already-exported adapter scalars; the real family allocates three owned handles.
             fn vec3_from_adapter(value: [AdapterScalar<Self>; 3]) -> FfiResult<Self::CVec3> {
                 let [x, y, z] = value;
                 ($vec3_from_array)([x, y, z])
             }
 
+            /// Import all sixteen row-major coefficients into a native homogeneous matrix.
+            ///
+            /// This conversion does not establish invertibility or geometric applicability.
             fn matrix4_to_core(value: Self::CMatrix4) -> FfiResult<Matrix4> {
                 let values = ($matrix_values)(value);
                 let values = values
@@ -541,10 +852,12 @@ macro_rules! impl_primitive_family {
                 Ok(Matrix4::from_row_major(values))
             }
 
+            /// Pack already-exported extrema; the real family allocates six owned handles.
             fn aabb_from_adapter(value: Aabb3<AdapterScalar<Self>>) -> FfiResult<Self::CAabb> {
                 ($aabb_from_parts)(value)
             }
 
+            /// Pack already-exported position/normal rows, allocating handles in the real family.
             fn graphics_vertex_from_adapter(
                 position: [AdapterScalar<Self>; 3],
                 normal: [AdapterScalar<Self>; 3],
@@ -552,14 +865,17 @@ macro_rules! impl_primitive_family {
                 ($gvertex_from_parts)(position, normal)
             }
 
+            /// Tag a native-backed mesh with this boundary family without converting its coordinates.
             fn triangle_mesh_kind(mesh: TriangleMeshOf<Self>) -> TriangleMeshKind {
                 TriangleMeshKind::$mesh_variant(mesh)
             }
 
+            /// Tag a native-backed region with this boundary family without converting its coordinates.
             fn curve_region_kind(region: CurveRegionOf<Self>) -> CurveRegionKind {
                 CurveRegionKind::$region_variant(region)
             }
 
+            /// Borrow the mesh payload only when its stored family matches this implementation.
             fn triangle_mesh_ref(
                 mesh: &CsgrsTriangleMesh,
             ) -> FfiResult<&TriangleMeshOf<Self>> {
@@ -569,6 +885,7 @@ macro_rules! impl_primitive_family {
                 }
             }
 
+            /// Borrow the region payload only when its stored family matches this implementation.
             fn curve_region_ref(region: &CsgrsCurveRegion) -> FfiResult<&CurveRegionOf<Self>> {
                 match &region.inner {
                     CurveRegionKind::$region_variant(region) => Ok(region),
@@ -576,6 +893,7 @@ macro_rules! impl_primitive_family {
                 }
             }
 
+            /// Transfer vertex and triangle vectors into owned boxed-array ABI descriptors.
             fn mesh_buffers(
                 vertices: Vec<Self::CVec3>,
                 indices: Vec<CsgrsTriangleU32>,
@@ -585,6 +903,7 @@ macro_rules! impl_primitive_family {
                 <$mesh_buffers>::new(vertices, vertex_len, indices, index_len)
             }
 
+            /// Transfer graphics vertices and flat indices into owned boxed-array ABI descriptors.
             fn graphics_mesh(
                 vertices: Vec<Self::CGraphicsVertex>,
                 indices: Vec<u32>,
@@ -594,6 +913,7 @@ macro_rules! impl_primitive_family {
                 <$graphics_mesh>::new(vertices, vertex_len, indices, index_len)
             }
 
+            /// Transfer flattened points and both sentinel-offset vectors into ABI ownership.
             fn region_profiles(
                 points: Vec<Self::CVec2>,
                 ring_offsets: Vec<usize>,
@@ -615,9 +935,13 @@ macro_rules! impl_primitive_family {
     };
 }
 
+/// Provide private descriptor constructors; no allocation, pointer validation or destructor is added.
 macro_rules! impl_buffer_constructors {
     ($mesh:ty, $graphics:ty, $region:ty, $vec2:ty, $vec3:ty, $gvertex:ty) => {
         impl $mesh {
+            /// Assemble a descriptor from arrays whose ownership was already transferred.
+            ///
+            /// Lengths count the corresponding element type; this constructor performs no validation.
             fn new(
                 vertices: *mut $vec3,
                 vertex_len: usize,
@@ -634,6 +958,9 @@ macro_rules! impl_buffer_constructors {
         }
 
         impl $graphics {
+            /// Assemble a descriptor from arrays whose ownership was already transferred.
+            ///
+            /// Lengths count the corresponding element type; this constructor performs no validation.
             fn new(
                 vertices: *mut $gvertex,
                 vertex_len: usize,
@@ -650,6 +977,9 @@ macro_rules! impl_buffer_constructors {
         }
 
         impl $region {
+            /// Assemble a descriptor from arrays whose ownership was already transferred.
+            ///
+            /// Lengths count the corresponding element type; this constructor performs no validation.
             fn new(
                 points: *mut $vec2,
                 point_len: usize,
@@ -870,21 +1200,36 @@ impl_primitive_family!(
 );
 
 impl Family for RealFamily {
+    /// Native scalar conversion strategy.
     type Adapter = RawReal;
+    /// C scalar input representation; real handles are borrowed.
     type CScalar = *const CsgrsReal;
+    /// XY coordinate layout.
     type CVec2 = CsgrsVec2Real;
+    /// XYZ coordinate layout.
     type CVec3 = CsgrsVec3Real;
+    /// Row-major homogeneous matrix layout.
     type CMatrix4 = CsgrsMatrix4Real;
+    /// Exported bound layout.
     type CAabb = CsgrsAabb3Real;
+    /// Exported position/normal layout.
     type CGraphicsVertex = CsgrsGraphicsVertexReal;
+    /// Owning indexed-mesh array descriptor.
     type CMeshBuffers = CsgrsTriangleMeshBuffersReal;
+    /// Owning graphics array descriptor.
     type CGraphicsMesh = CsgrsGraphicsMeshReal;
+    /// Owning sampled-profile array descriptor.
     type CRegionProfiles = CsgrsRegionProfilesReal;
 
+    /// Convert the C scalar representation to the adapter scalar.
+    ///
+    /// Primitive floats are only copied here; finite validation occurs at native
+    /// import. The real family clones the borrowed handle under the caller contract.
     fn scalar_to_adapter(value: Self::CScalar) -> FfiResult<Real> {
         unsafe { real_from_ptr(value) }
     }
 
+    /// Import X then Y through this family, stopping at the first conversion error.
     fn vec2_to_adapter(value: Self::CVec2) -> FfiResult<[Real; 2]> {
         Ok([
             Self::scalar_to_adapter(value.x)?,
@@ -892,6 +1237,7 @@ impl Family for RealFamily {
         ])
     }
 
+    /// Import X, Y then Z through this family, stopping at the first conversion error.
     fn vec3_to_adapter(value: Self::CVec3) -> FfiResult<[Real; 3]> {
         Ok([
             Self::scalar_to_adapter(value.x)?,
@@ -900,6 +1246,7 @@ impl Family for RealFamily {
         ])
     }
 
+    /// Pack two already-exported adapter scalars; the real family allocates two owned handles.
     fn vec2_from_adapter(value: [Real; 2]) -> FfiResult<Self::CVec2> {
         let [x, y] = value;
         Ok(CsgrsVec2Real {
@@ -908,6 +1255,7 @@ impl Family for RealFamily {
         })
     }
 
+    /// Pack three already-exported adapter scalars; the real family allocates three owned handles.
     fn vec3_from_adapter(value: [Real; 3]) -> FfiResult<Self::CVec3> {
         let [x, y, z] = value;
         Ok(CsgrsVec3Real {
@@ -917,6 +1265,9 @@ impl Family for RealFamily {
         })
     }
 
+    /// Import all sixteen row-major coefficients into a native homogeneous matrix.
+    ///
+    /// This conversion does not establish invertibility or geometric applicability.
     fn matrix4_to_core(value: Self::CMatrix4) -> FfiResult<Matrix4> {
         let values = value
             .values
@@ -929,6 +1280,7 @@ impl Family for RealFamily {
         Ok(Matrix4::from_row_major(values))
     }
 
+    /// Pack already-exported extrema; the real family allocates six owned handles.
     fn aabb_from_adapter(value: Aabb3<Real>) -> FfiResult<Self::CAabb> {
         let [min_x, min_y, min_z] = value.mins;
         let [max_x, max_y, max_z] = value.maxs;
@@ -946,6 +1298,7 @@ impl Family for RealFamily {
         })
     }
 
+    /// Pack already-exported position/normal rows, allocating handles in the real family.
     fn graphics_vertex_from_adapter(
         position: [Real; 3],
         normal: [Real; 3],
@@ -956,14 +1309,17 @@ impl Family for RealFamily {
         })
     }
 
+    /// Tag a native-backed mesh with this boundary family without converting its coordinates.
     fn triangle_mesh_kind(mesh: TriangleMeshOf<Self>) -> TriangleMeshKind {
         TriangleMeshKind::Real(mesh)
     }
 
+    /// Tag a native-backed region with this boundary family without converting its coordinates.
     fn curve_region_kind(region: CurveRegionOf<Self>) -> CurveRegionKind {
         CurveRegionKind::Real(region)
     }
 
+    /// Borrow the mesh payload only when its stored family matches this implementation.
     fn triangle_mesh_ref(mesh: &CsgrsTriangleMesh) -> FfiResult<&TriangleMeshOf<Self>> {
         match &mesh.inner {
             TriangleMeshKind::Real(mesh) => Ok(mesh),
@@ -971,6 +1327,7 @@ impl Family for RealFamily {
         }
     }
 
+    /// Borrow the region payload only when its stored family matches this implementation.
     fn curve_region_ref(region: &CsgrsCurveRegion) -> FfiResult<&CurveRegionOf<Self>> {
         match &region.inner {
             CurveRegionKind::Real(region) => Ok(region),
@@ -978,6 +1335,7 @@ impl Family for RealFamily {
         }
     }
 
+    /// Transfer vertex and triangle vectors into owned boxed-array ABI descriptors.
     fn mesh_buffers(
         vertices: Vec<Self::CVec3>,
         indices: Vec<CsgrsTriangleU32>,
@@ -987,6 +1345,7 @@ impl Family for RealFamily {
         CsgrsTriangleMeshBuffersReal::new(vertices, vertex_len, indices, index_len)
     }
 
+    /// Transfer graphics vertices and flat indices into owned boxed-array ABI descriptors.
     fn graphics_mesh(
         vertices: Vec<Self::CGraphicsVertex>,
         indices: Vec<u32>,
@@ -996,6 +1355,7 @@ impl Family for RealFamily {
         CsgrsGraphicsMeshReal::new(vertices, vertex_len, indices, index_len)
     }
 
+    /// Transfer flattened points and both sentinel-offset vectors into ABI ownership.
     fn region_profiles(
         points: Vec<Self::CVec2>,
         ring_offsets: Vec<usize>,
@@ -1015,12 +1375,20 @@ impl Family for RealFamily {
     }
 }
 
+/// Transfer a vector into a boxed array and return its thin pointer and element count.
+///
+/// An empty array may have a non-null dangling pointer valid only for zero length.
 fn boxed_slice_parts<T>(values: Vec<T>) -> (*mut T, usize) {
     let boxed = values.into_boxed_slice();
     let len = boxed.len();
     (Box::into_raw(boxed) as *mut T, len)
 }
 
+/// Reclaim an array allocated by `boxed_slice_parts`; null is a no-op.
+///
+/// # Safety
+/// A non-null pointer/length must describe the original boxed slice, still owned
+/// exactly once and with no live references. Length is in elements, not bytes.
 unsafe fn free_boxed_slice<T>(ptr: *mut T, len: usize) {
     if !ptr.is_null() {
         let slice = ptr::slice_from_raw_parts_mut(ptr, len);
@@ -1030,6 +1398,9 @@ unsafe fn free_boxed_slice<T>(ptr: *mut T, len: usize) {
     }
 }
 
+/// Replace this thread's diagnostic, escaping interior NULs as printable `\0`.
+///
+/// Allocation/formatting here is outside the action's panic catcher.
 fn set_last_error(message: impl fmt::Display) {
     let sanitized = message.to_string().replace('\0', "\\0");
     let c_string = CString::new(sanitized).unwrap_or_else(|_| {
@@ -1040,6 +1411,9 @@ fn set_last_error(message: impl fmt::Display) {
     });
 }
 
+/// Map pointer, family and bounds outcomes directly; preserve typed construction failures.
+///
+/// Other adapter failures collapse to `ConversionFailed`; details remain in text.
 fn status_for_error(error: &FfiError) -> CsgrsStatus {
     match error {
         FfiError::NullPointer => CsgrsStatus::NullPointer,
@@ -1053,6 +1427,7 @@ fn status_for_error(error: &FfiError) -> CsgrsStatus {
     }
 }
 
+/// Map native validation categories to their stable ABI statuses, with a generic fallback.
 fn status_for_validation_kind(kind: csgrs::errors::ValidationErrorKind) -> CsgrsStatus {
     use csgrs::errors::ValidationErrorKind;
     match kind {
@@ -1066,6 +1441,10 @@ fn status_for_validation_kind(kind: csgrs::errors::ValidationErrorKind) -> Csgrs
     }
 }
 
+/// Run an action under an unwind catcher, then publish status and thread-local text.
+///
+/// Success clears prior text; errors format it, and caught panics get generic text.
+/// Does not undo side effects or reclaim raw allocations leaked by a failing action.
 fn ffi_status(action: impl FnOnce() -> FfiResult<()>) -> CsgrsStatus {
     match catch_unwind(AssertUnwindSafe(action)) {
         Ok(Ok(())) => {
@@ -1083,6 +1462,11 @@ fn ffi_status(action: impl FnOnce() -> FfiResult<()>) -> CsgrsStatus {
     }
 }
 
+/// Check null and borrow the output slot; no non-null pointer validity is checked.
+///
+/// # Safety
+/// The pointer must permit an exclusive aligned `T` reference for the chosen
+/// lifetime. The caller must not create an alias or outlive its storage.
 unsafe fn out_ptr<'a, T>(out: *mut T) -> FfiResult<&'a mut T> {
     if out.is_null() {
         Err(FfiError::NullPointer)
@@ -1091,12 +1475,21 @@ unsafe fn out_ptr<'a, T>(out: *mut T) -> FfiResult<&'a mut T> {
     }
 }
 
+/// Allocate and publish an opaque owner after checking the output slot for null.
+///
+/// # Safety
+/// The slot must satisfy `out_ptr` and hold no ownership that would be lost on overwrite.
 unsafe fn out_handle<T>(out: *mut *mut T, value: T) -> FfiResult<()> {
     let out = unsafe { out_ptr(out) }?;
     *out = Box::into_raw(Box::new(value));
     Ok(())
 }
 
+/// Check null and borrow a handle without validating its provenance.
+///
+/// # Safety
+/// A non-null pointer must reference a live aligned `T` for the chosen lifetime,
+/// with no conflicting mutation or destruction.
 unsafe fn ptr_ref<'a, T>(ptr: *const T) -> FfiResult<&'a T> {
     if ptr.is_null() {
         Err(FfiError::NullPointer)
@@ -1105,6 +1498,12 @@ unsafe fn ptr_ref<'a, T>(ptr: *const T) -> FfiResult<&'a T> {
     }
 }
 
+/// Borrow an input array; zero length returns an empty slice without inspecting the pointer.
+///
+/// # Safety
+/// For nonzero length, the non-null pointer must describe initialized aligned elements
+/// in one live allocation, with total size at most `isize::MAX`, readable for the
+/// chosen lifetime and without conflicting mutation.
 unsafe fn c_slice<'a, T>(ptr: *const T, len: usize) -> FfiResult<&'a [T]> {
     if len == 0 {
         Ok(&[])
@@ -1115,6 +1514,10 @@ unsafe fn c_slice<'a, T>(ptr: *const T, len: usize) -> FfiResult<&'a [T]> {
     }
 }
 
+/// Copy a NUL-terminated UTF-8 string; null and invalid UTF-8 become errors.
+///
+/// # Safety
+/// A non-null pointer must satisfy `CStr::from_ptr` for the entire read.
 unsafe fn c_str(ptr: *const c_char) -> FfiResult<String> {
     if ptr.is_null() {
         return Err(FfiError::NullPointer);
@@ -1125,23 +1528,32 @@ unsafe fn c_str(ptr: *const c_char) -> FfiResult<String> {
     Ok(text.to_owned())
 }
 
+/// Parse an entire signed decimal integer string using Rust's `i128` parser.
+///
+/// Whitespace, fractional syntax and overflow fail validation; no float parsing occurs.
 fn parse_i128(text: &str) -> FfiResult<i128> {
     text.parse::<i128>()
         .map_err(|err| AdapterError::Validation(err.to_string()).into())
 }
 
+/// Wrap a mesh in its ABI family discriminator before heap ownership is published.
 fn triangle_mesh_handle<F: Family>(mesh: TriangleMeshOf<F>) -> CsgrsTriangleMesh {
     CsgrsTriangleMesh {
         inner: F::triangle_mesh_kind(mesh),
     }
 }
 
+/// Wrap a region in its ABI family discriminator before heap ownership is published.
 fn curve_region_handle<F: Family>(region: CurveRegionOf<F>) -> CsgrsCurveRegion {
     CsgrsCurveRegion {
         inner: F::curve_region_kind(region),
     }
 }
 
+/// Partition a flat index buffer into borrowed face ranges after checking offset coverage.
+///
+/// Requires at least two offsets, first zero, last index count and monotone in-bounds
+/// ranges. Equal offsets are allowed here; native construction validates face contents.
 fn build_faces<'a>(offsets: &'a [usize], indices: &'a [usize]) -> FfiResult<Vec<&'a [usize]>> {
     if offsets.len() < 2 {
         return Err(AdapterError::Validation(
@@ -1169,6 +1581,10 @@ fn build_faces<'a>(offsets: &'a [usize], indices: &'a [usize]) -> FfiResult<Vec<
     Ok(faces)
 }
 
+/// Export vertices and ordered triangles through the family and transfer their arrays.
+///
+/// Float coordinates are projected; integer export may fail; real coordinates remain native.
+/// The descriptor has no destructor if a later output-pointer check fails.
 fn create_mesh_buffers<F: Family>(mesh: &TriangleMeshOf<F>) -> FfiResult<F::CMeshBuffers> {
     let (vertices, indices) = mesh.vertices_and_indices()?;
     let vertices = vertices
@@ -1182,6 +1598,10 @@ fn create_mesh_buffers<F: Family>(mesh: &TriangleMeshOf<F>) -> FfiResult<F::CMes
     Ok(F::mesh_buffers(vertices, indices))
 }
 
+/// Request native normals and adapter projections, then allocate graphics ABI arrays.
+///
+/// Normal certification/export can fail. No separate certainty receipt is returned,
+/// and raw arrays have no destructor if a later output-pointer check fails.
 fn create_graphics_mesh<F: Family>(mesh: &TriangleMeshOf<F>) -> FfiResult<F::CGraphicsMesh> {
     let graphics = mesh.graphics_mesh()?;
     let vertices = graphics
@@ -1193,6 +1613,11 @@ fn create_graphics_mesh<F: Family>(mesh: &TriangleMeshOf<F>) -> FfiResult<F::CGr
     Ok(F::graphics_mesh(vertices, graphics.indices.to_vec()))
 }
 
+/// Flatten strict sampled profiles as exterior-first rings with two sentinel-offset arrays.
+///
+/// The adapter projects through binary64 even for real handles. The separate receipt
+/// is discarded. Empty output has no points and one zero in each offset array; these
+/// raw arrays have no destructor if a later output-pointer check fails.
 fn create_region_profiles<F: Family>(
     region: &CurveRegionOf<F>,
 ) -> FfiResult<F::CRegionProfiles> {
@@ -1224,6 +1649,11 @@ fn create_region_profiles<F: Family>(
     Ok(F::region_profiles(points, ring_offsets, region_offsets))
 }
 
+/// Generate one family's C entry points while delegating geometry to the shared adapters.
+///
+/// Inputs are borrowed, new handles are published on success, and adapter errors
+/// flow through `ffi_status`. The expansion defines every generated function
+/// with its operation and pointer contract.
 macro_rules! export_family {
     (
         $family:ty,
@@ -1269,6 +1699,14 @@ macro_rules! export_family {
             region_profiles: $region_region_profiles:ident
         }
     ) => {
+        /// Construct `[0,width]^3` with strict nonnegative dimension validation.
+        ///
+        /// Zero width succeeds as canonical empty geometry; negative or undecided width fails.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_cube(
             width: <$family as Family>::CScalar,
@@ -1282,6 +1720,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Construct an origin-anchored box with XYZ dimensions `width`, `length`, `height`.
+        ///
+        /// All dimensions must be nonnegative under strict predicates. A zero dimension
+        /// gives canonical empty geometry only after validation of all dimensions.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_cuboid(
             width: <$family as Family>::CScalar,
@@ -1299,6 +1746,16 @@ macro_rules! export_family {
             })
         }
 
+        /// Construct the sampled triangle sphere centered at the origin, with Y-axis poles.
+        ///
+        /// Requires nonnegative radius, at least three segments and two stacks, even
+        /// for zero radius. Construction history records sampling; success is not an
+        /// analytic-sphere fidelity certificate.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_sphere(
             radius: <$family as Family>::CScalar,
@@ -1316,6 +1773,16 @@ macro_rules! export_family {
             })
         }
 
+        /// Construct a sampled capped cylinder from Z zero to `height`.
+        ///
+        /// Requires nonnegative radius and at least three segments; signed height
+        /// may be negative. Parameters are validated before zero-size empty success.
+        /// The boundary is polygonal.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_cylinder(
             radius: <$family as Family>::CScalar,
@@ -1333,6 +1800,17 @@ macro_rules! export_family {
             })
         }
 
+        /// Triangulate indexed planar polygon faces with authored winding under strict predicates.
+        ///
+        /// Offsets must partition the complete index buffer from zero to its length.
+        /// Native validation checks faces/indices; success need not be a closed solid.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
+        /// Input arrays must cover their declared element counts (null only at zero
+        /// length); real point components borrow live scalar handles.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_polyhedron(
             points: *const <$family as Family>::CVec3,
@@ -1357,6 +1835,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Return the strict regularized union of two same-family meshes.
+        ///
+        /// Native input validation and failure categories are preserved. No separate
+        /// operation receipt is returned; retained mesh history remains queryable.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_union(
             lhs: *const CsgrsTriangleMesh,
@@ -1370,6 +1857,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Return the strict regularized material of `lhs` outside `rhs`.
+        ///
+        /// Both operands use the same scalar family; native validation/failures remain
+        /// authoritative and no separate operation receipt is returned.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_difference(
             lhs: *const CsgrsTriangleMesh,
@@ -1385,6 +1881,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Return the strict regularized common material of two same-family meshes.
+        ///
+        /// Empty success remains a mesh handle; it is distinct from invalid or undecided
+        /// input. No separate operation receipt is returned.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_intersection(
             lhs: *const CsgrsTriangleMesh,
@@ -1400,6 +1905,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Return the strict regularized material belonging to exactly one mesh operand.
+        ///
+        /// Native validation/failure categories are preserved without a separate
+        /// operation receipt at this boundary.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_xor(
             lhs: *const CsgrsTriangleMesh,
@@ -1413,6 +1927,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Apply an imported row-major homogeneous matrix through the checked mesh transform.
+        ///
+        /// Strict validation rejects singular/undecided transforms and images reaching
+        /// infinity. Winding correction preserves oriented material where admitted.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_transform(
             mesh: *const CsgrsTriangleMesh,
@@ -1427,6 +1950,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Translate native mesh coordinates by the imported XYZ displacement.
+        ///
+        /// Uses the native adapter translation without a separate operation receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_translate(
             mesh: *const CsgrsTriangleMesh,
@@ -1446,6 +1977,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Scale XYZ independently under strict predicates and correct winding for reflections.
+        ///
+        /// Zero axes are invalid and unresolved signs fail; input scalar conversion
+        /// precedes native transform validation.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_scale(
             mesh: *const CsgrsTriangleMesh,
@@ -1465,6 +2005,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Rotate about X, then Y, then Z using imported angles in degrees.
+        ///
+        /// Uses strict checked transforms without a separate operation receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_rotate(
             mesh: *const CsgrsTriangleMesh,
@@ -1484,6 +2032,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Return a mesh with every triangle winding reversed and positions preserved.
+        ///
+        /// This operation does not construct the unbounded set complement.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_inverse(
             mesh: *const CsgrsTriangleMesh,
@@ -1495,6 +2051,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Move the native bounds center to the origin under strict predicates.
+        ///
+        /// Canonical empty geometry is preserved; bounds errors propagate. Placement
+        /// uses native coordinates without first exporting them to the scalar family.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_center(
             mesh: *const CsgrsTriangleMesh,
@@ -1507,6 +2072,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Move the native minimum Z bound to zero under strict predicates.
+        ///
+        /// This is geometric placement, not scalar conversion. Empty geometry is
+        /// preserved and unresolved bounds fail without a new handle.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_float(
             mesh: *const CsgrsTriangleMesh,
@@ -1519,6 +2093,17 @@ macro_rules! export_family {
             })
         }
 
+        /// Query strict native extrema, then export them through this scalar family.
+        ///
+        /// `NoBounds` leaves a valid output record untouched and allocates no real
+        /// endpoints. Float output is not an outward-enclosure certificate; integer
+        /// export can fail. Only `Ok` writes a record.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. The input handle must be live and
+        /// match this function's family; `out` must be a writable record slot. Preserve
+        /// all returned pointers/lengths and use the matching free function exactly once
+        /// for owned buffer outputs or real-valued bounds.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_bounding_box(
             mesh: *const CsgrsTriangleMesh,
@@ -1533,6 +2118,16 @@ macro_rules! export_family {
             })
         }
 
+        /// Export indexed positions and ordered triangle rows into owned arrays.
+        ///
+        /// Float coordinates are lossy; integer conversion can fail. The real family
+        /// clones native scalars. Counts describe rows, and zero rows are valid success.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. The input handle must be live and
+        /// match this function's family; `out` must be a writable record slot. Preserve
+        /// all returned pointers/lengths and use the matching free function exactly once
+        /// for owned buffer outputs or real-valued bounds.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_vertices_and_indices(
             mesh: *const CsgrsTriangleMesh,
@@ -1545,6 +2140,16 @@ macro_rules! export_family {
             })
         }
 
+        /// Export positions, certified native normals and flat indices into owned graphics arrays.
+        ///
+        /// Normal certification and scalar export can fail. Projection may change normal
+        /// lengths; the result has no separate fidelity or certainty receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. The input handle must be live and
+        /// match this function's family; `out` must be a writable record slot. Preserve
+        /// all returned pointers/lengths and use the matching free function exactly once
+        /// for owned buffer outputs or real-valued bounds.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_graphics_mesh(
             mesh: *const CsgrsTriangleMesh,
@@ -1557,6 +2162,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Construct an origin-anchored XY square with strict nonnegative width validation.
+        ///
+        /// Zero width returns canonical empty geometry; negative or undecided width fails.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_square(
             width: <$family as Family>::CScalar,
@@ -1570,6 +2183,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Construct an origin-anchored XY rectangle with nonnegative width and length.
+        ///
+        /// Both dimensions are validated under strict predicates before zero-size empty success.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_rectangle(
             width: <$family as Family>::CScalar,
@@ -1585,6 +2206,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Construct a regular sampled XY polygon centered at the origin.
+        ///
+        /// Requires nonnegative radius and at least three segments, including zero-radius
+        /// input. This is not an analytic circular boundary or a fidelity certificate.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_circle(
             radius: <$family as Family>::CScalar,
@@ -1600,6 +2230,17 @@ macro_rules! export_family {
             })
         }
 
+        /// Construct a filled XY polygon from a valid ring of at least three vertices.
+        ///
+        /// Native strict validation rejects empty/malformed rings. The input is copied
+        /// through the selected scalar adapter before region construction.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Real-family scalar components
+        /// must borrow live handles. `out` must be a writable handle slot; on success
+        /// its new owner must be freed once with the matching geometry free function.
+        /// The point array must cover `point_len` readable elements (null only at zero
+        /// length); real components must borrow live scalar handles.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_polygon(
             points: *const <$family as Family>::CVec2,
@@ -1617,6 +2258,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Return the regularized union of same-family filled regions.
+        ///
+        /// Delegates to Hypercurve's active policy scope, strict outside a preview or
+        /// provisional scope, and returns no separate operation receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_union(
             lhs: *const CsgrsCurveRegion,
@@ -1630,6 +2280,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Return the regularized part of `lhs` outside `rhs`.
+        ///
+        /// Uses Hypercurve's active policy scope (normally strict), with no separate receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_difference(
             lhs: *const CsgrsCurveRegion,
@@ -1645,6 +2303,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Return the regularized common material of two same-family filled regions.
+        ///
+        /// Uses Hypercurve's active policy scope (normally strict), with no separate receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_intersection(
             lhs: *const CsgrsCurveRegion,
@@ -1660,6 +2326,14 @@ macro_rules! export_family {
             })
         }
 
+        /// Return regularized material belonging to exactly one filled-region operand.
+        ///
+        /// Uses Hypercurve's active policy scope (normally strict), with no separate receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_xor(
             lhs: *const CsgrsCurveRegion,
@@ -1673,6 +2347,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Apply a row-major homogeneous transform with a nonsingular affine XY restriction.
+        ///
+        /// Strict planar admission rejects perspective/out-of-plane maps and diagnoses
+        /// invalid or unbounded weight cases. The separate outcome receipt is discarded.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_transform(
             region: *const CsgrsCurveRegion,
@@ -1688,6 +2371,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Translate the planar region under strict predicates.
+        ///
+        /// Nonzero Z displacement cannot remain in the XY carrier. The adapter discards
+        /// the separate local receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_translate(
             region: *const CsgrsCurveRegion,
@@ -1708,6 +2400,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Scale the planar XY image under strict predicates.
+        ///
+        /// Z scale is imported but has no planar effect; a singular XY image is rejected.
+        /// The adapter discards the separate local receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_scale(
             region: *const CsgrsCurveRegion,
@@ -1728,6 +2429,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Apply X, then Y, then Z rotations in degrees when the image remains in XY.
+        ///
+        /// Strict planar transform admission may reject the map; the adapter discards
+        /// the separate local receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_rotate(
             region: *const CsgrsCurveRegion,
@@ -1748,6 +2458,17 @@ macro_rules! export_family {
             })
         }
 
+        /// Query strict native region bounds and export the endpoints through this family.
+        ///
+        /// Trimmed fragments may use a looser certified source envelope. Float endpoints
+        /// are not an outward-enclosure certificate. `NoBounds` leaves a valid output
+        /// record untouched and allocates no real handles.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. The input handle must be live and
+        /// match this function's family; `out` must be a writable record slot. Preserve
+        /// all returned pointers/lengths and use the matching free function exactly once
+        /// for owned buffer outputs or real-valued bounds.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_bounding_box(
             region: *const CsgrsCurveRegion,
@@ -1763,6 +2484,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Extrude the region along Z by a nonzero signed height under strict predicates.
+        ///
+        /// Nonlinear profile interiors may be sampled with mesh construction history.
+        /// The separate outcome receipt is discarded; exact source fidelity is not implied.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_extrude(
             region: *const CsgrsCurveRegion,
@@ -1782,6 +2512,15 @@ macro_rules! export_family {
             })
         }
 
+        /// Extrude along the imported vector, requiring a nonzero Z component.
+        ///
+        /// Uses strict predicates and the native profile-lowering fidelity contract;
+        /// the separate outcome receipt is discarded.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_extrude_vector(
             region: *const CsgrsCurveRegion,
@@ -1801,6 +2540,18 @@ macro_rules! export_family {
             })
         }
 
+        /// Build a segmented swept boundary about Y, with profile X as signed radius.
+        ///
+        /// Angles are in degrees; at least two segments (three for a full turn) are
+        /// required. Zero and oversized noninteger-turn angles are invalid. Partial
+        /// sweeps reject axis-crossing loops and may retain overlapping winding.
+        /// Strict decisions do not certify analytic-surface fidelity; the separate
+        /// outcome receipt is discarded.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_revolve(
             region: *const CsgrsCurveRegion,
@@ -1822,6 +2573,16 @@ macro_rules! export_family {
             })
         }
 
+        /// Regularize the union of segmented revolution pieces about Y.
+        ///
+        /// Uses the revolution angle/resolution domain, admits axis-crossing partial
+        /// profiles and counts overlapping material once. Closed point/edge contacts
+        /// may remain nonmanifold. Uses strict predicates and discards the separate receipt.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. Input geometry must be live and
+        /// match this function's scalar family; real scalar components are borrowed.
+        /// `out` must be a writable handle slot; success transfers one new owner.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_revolve_solid(
             region: *const CsgrsCurveRegion,
@@ -1843,6 +2604,17 @@ macro_rules! export_family {
             })
         }
 
+        /// Export sampled exterior/hole rings with sentinel offsets under strict predicates.
+        ///
+        /// All families, including real, pass through binary64 display profiles. This
+        /// is not exact native replay. The separate receipt is discarded; empty output
+        /// has zero points and one zero in each offset array.
+        ///
+        /// # Safety
+        /// Follow the crate pointer/aliasing contract. The input handle must be live and
+        /// match this function's family; `out` must be a writable record slot. Preserve
+        /// all returned pointers/lengths and use the matching free function exactly once
+        /// for owned buffer outputs or real-valued bounds.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_region_profiles(
             region: *const CsgrsCurveRegion,
@@ -2038,11 +2810,20 @@ export_family!(
     }
 );
 
+/// Borrow the current thread's NUL-terminated diagnostic without clearing it.
+///
+/// Copy the text before the next ABI call or thread exit. Status-returning calls
+/// replace it on both success and failure; free functions leave it unchanged.
 #[unsafe(no_mangle)]
 pub extern "C" fn csgrs_last_error_message() -> *const c_char {
     LAST_ERROR.with(|slot| slot.borrow().as_ptr())
 }
 
+/// Allocate a native exact zero scalar.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `out` must be a writable handle
+/// slot; success transfers one scalar owner to free with `csgrs_real_free`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_zero(out: *mut *mut CsgrsReal) -> CsgrsStatus {
     ffi_status(|| unsafe {
@@ -2055,11 +2836,23 @@ pub unsafe extern "C" fn csgrs_real_zero(out: *mut *mut CsgrsReal) -> CsgrsStatu
     })
 }
 
+/// Allocate a native exact one scalar.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `out` must be a writable handle
+/// slot; success transfers one scalar owner to free with `csgrs_real_free`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_one(out: *mut *mut CsgrsReal) -> CsgrsStatus {
     ffi_status(|| unsafe { out_handle(out, CsgrsReal { inner: Real::one() }) })
 }
 
+/// Import the exact finite binary64 value, rejecting NaN and infinity.
+///
+/// For example, `0.1_f64` is not the rational one tenth.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `out` must be a writable handle
+/// slot; success transfers one scalar owner to free with `csgrs_real_free`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_from_f64(
     value: f64,
@@ -2071,6 +2864,11 @@ pub unsafe extern "C" fn csgrs_real_from_f64(
     })
 }
 
+/// Import a split-word signed integer exactly.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `out` must be a writable handle
+/// slot; success transfers one scalar owner to free with `csgrs_real_free`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_from_i128(
     value: CsgrsI128,
@@ -2086,6 +2884,15 @@ pub unsafe extern "C" fn csgrs_real_from_i128(
     })
 }
 
+/// Parse a NUL-terminated UTF-8 decimal integer in the signed 128-bit range.
+///
+/// This accepts integer syntax only, not fractional decimal reals. Whitespace,
+/// invalid UTF-8 and overflow are validation failures.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `out` must be a writable handle
+/// slot; success transfers one scalar owner to free with `csgrs_real_free`.
+/// The non-null string must remain readable through its terminating NUL.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_from_i128_decimal(
     value: *const c_char,
@@ -2105,6 +2912,14 @@ pub unsafe extern "C" fn csgrs_real_from_i128_decimal(
     })
 }
 
+/// Create another owned handle sharing the native scalar's exact meaning.
+///
+/// The original remains borrowed and must retain its own lifetime/ownership.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `out` must be a writable handle
+/// slot; success transfers one scalar owner to free with `csgrs_real_free`.
+/// `value` must borrow a live scalar handle.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_clone(
     value: *const CsgrsReal,
@@ -2123,6 +2938,13 @@ pub unsafe extern "C" fn csgrs_real_clone(
     })
 }
 
+/// Return a finite lossy binary64 projection, or a conversion failure.
+///
+/// The output is not an exactness or directed-rounding certificate.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `value` must borrow a live scalar
+/// handle and `out` must be a writable, nonaliasing output slot.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_to_f64(
     value: *const CsgrsReal,
@@ -2135,6 +2957,14 @@ pub unsafe extern "C" fn csgrs_real_to_f64(
     })
 }
 
+/// Extract a recognized rational integer into signed high and unsigned low words.
+///
+/// Unrecognized expressions, nonintegers and range overflow fail; there is no
+/// refinement search to decide whether an unrecognized expression is integral.
+///
+/// # Safety
+/// Follow the crate pointer/aliasing contract. `value` must borrow a live scalar
+/// handle and `out` must be a writable, nonaliasing output slot.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_to_i128(
     value: *const CsgrsReal,
@@ -2147,6 +2977,14 @@ pub unsafe extern "C" fn csgrs_real_to_i128(
     })
 }
 
+/// Release one opaque scalar owner; null is a no-op.
+///
+/// Does not clear the last-error string and has no unwind catcher.
+///
+/// # Safety
+/// A non-null pointer must be a still-owned scalar allocation returned by this
+/// library, with no outstanding use. Free it exactly once; do not pass stack
+/// values, borrowed pointers or a handle already freed elsewhere.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_real_free(value: *mut CsgrsReal) {
     if !value.is_null() {
@@ -2156,6 +2994,14 @@ pub unsafe extern "C" fn csgrs_real_free(value: *mut CsgrsReal) {
     }
 }
 
+/// Release one opaque mesh owner; null is a no-op.
+///
+/// Does not clear the last-error string and has no unwind catcher.
+///
+/// # Safety
+/// A non-null pointer must be a still-owned mesh allocation returned by this
+/// library, with no outstanding use. Free it exactly once; do not pass stack
+/// values, borrowed pointers or a handle already freed elsewhere.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_triangle_mesh_free(value: *mut CsgrsTriangleMesh) {
     if !value.is_null() {
@@ -2165,6 +3011,14 @@ pub unsafe extern "C" fn csgrs_triangle_mesh_free(value: *mut CsgrsTriangleMesh)
     }
 }
 
+/// Release one opaque region owner; null is a no-op.
+///
+/// Does not clear the last-error string and has no unwind catcher.
+///
+/// # Safety
+/// A non-null pointer must be a still-owned region allocation returned by this
+/// library, with no outstanding use. Free it exactly once; do not pass stack
+/// values, borrowed pointers or a handle already freed elsewhere.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_curve_region_free(value: *mut CsgrsCurveRegion) {
     if !value.is_null() {
@@ -2174,6 +3028,13 @@ pub unsafe extern "C" fn csgrs_curve_region_free(value: *mut CsgrsCurveRegion) {
     }
 }
 
+/// Read a live mesh handle's boundary-family tag without converting geometry.
+///
+/// The tag describes ingress/egress, not the internal coordinate representation.
+///
+/// # Safety
+/// Borrow a live mesh handle and provide a nonaliasing writable family slot,
+/// following the crate pointer contract.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_triangle_mesh_family(
     value: *const CsgrsTriangleMesh,
@@ -2191,6 +3052,13 @@ pub unsafe extern "C" fn csgrs_triangle_mesh_family(
     })
 }
 
+/// Read a live region handle's boundary-family tag without converting geometry.
+///
+/// The tag describes ingress/egress, not the internal coordinate representation.
+///
+/// # Safety
+/// Borrow a live region handle and provide a nonaliasing writable family slot,
+/// following the crate pointer contract.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_curve_region_family(
     value: *const CsgrsCurveRegion,
@@ -2208,8 +3076,17 @@ pub unsafe extern "C" fn csgrs_curve_region_family(
     })
 }
 
+/// Generate primitive-family array destructors; real-valued arrays need nested-handle cleanup.
 macro_rules! export_free_buffers {
     ($mesh_free:ident, $graphics_free:ident, $region_free:ident, $mesh:ty, $graphics:ty, $region:ty, $vec2:ty, $vec3:ty, $gvertex:ty) => {
+        /// Release the primitive-family vertex and triangle arrays.
+        ///
+        /// No diagnostic is written and no unwind catcher is installed.
+        ///
+        /// # Safety
+        /// The descriptor must retain the exact pointers and lengths returned by the
+        /// matching successful export, still owned once with no outstanding references.
+        /// Do not free a copied descriptor twice or substitute foreign allocations.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_free(value: $mesh) {
             unsafe {
@@ -2218,6 +3095,14 @@ macro_rules! export_free_buffers {
             }
         }
 
+        /// Release the primitive-family graphics vertex and flat index arrays.
+        ///
+        /// No diagnostic is written and no unwind catcher is installed.
+        ///
+        /// # Safety
+        /// The descriptor must retain the exact pointers and lengths returned by the
+        /// matching successful export, still owned once with no outstanding references.
+        /// Do not free a copied descriptor twice or substitute foreign allocations.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $graphics_free(value: $graphics) {
             unsafe {
@@ -2226,6 +3111,14 @@ macro_rules! export_free_buffers {
             }
         }
 
+        /// Release primitive-family points and both profile offset arrays.
+        ///
+        /// No diagnostic is written and no unwind catcher is installed.
+        ///
+        /// # Safety
+        /// The descriptor must retain the exact pointers and lengths returned by the
+        /// matching successful export, still owned once with no outstanding references.
+        /// Do not free a copied descriptor twice or substitute foreign allocations.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_free(value: $region) {
             unsafe {
@@ -2273,6 +3166,11 @@ export_free_buffers!(
     CsgrsGraphicsVertexI128
 );
 
+/// Release both owned scalar components; null components are no-ops.
+///
+/// # Safety
+/// Each non-null component must be a distinct live allocation owned by this record,
+/// with no outstanding use. A copied record does not grant another ownership.
 unsafe fn free_real_vec2(value: CsgrsVec2Real) {
     unsafe {
         csgrs_real_free(value.x);
@@ -2280,6 +3178,11 @@ unsafe fn free_real_vec2(value: CsgrsVec2Real) {
     }
 }
 
+/// Release all three owned scalar components; null components are no-ops.
+///
+/// # Safety
+/// Each non-null component must be a distinct live allocation owned by this record,
+/// with no outstanding use. A copied record does not grant another ownership.
 unsafe fn free_real_vec3(value: CsgrsVec3Real) {
     unsafe {
         csgrs_real_free(value.x);
@@ -2288,6 +3191,14 @@ unsafe fn free_real_vec3(value: CsgrsVec3Real) {
     }
 }
 
+/// Release all six owned endpoint handles in an exported real-valued AABB.
+///
+/// The by-value record is not reset; copies of it retain dangling pointers.
+///
+/// # Safety
+/// Each non-null component must be a distinct live scalar owner returned by this
+/// library, unused elsewhere. Call exactly once for a successful bounds export.
+/// Never pass borrowed vector components or free individual components first.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_aabb3_real_free_values(value: CsgrsAabb3Real) {
     unsafe {
@@ -2296,6 +3207,16 @@ pub unsafe extern "C" fn csgrs_aabb3_real_free_values(value: CsgrsAabb3Real) {
     }
 }
 
+/// Release every vertex scalar handle, then the vertex and triangle arrays.
+///
+/// The descriptor is consumed by value without resetting copies or changing the diagnostic.
+///
+/// # Safety
+/// The descriptor must retain the exact pointers and lengths returned by the
+/// matching successful export, still owned once with no outstanding references.
+/// Do not free a copied descriptor twice or substitute foreign allocations.
+/// Nested scalar handles must remain distinct, live and owned by this descriptor;
+/// do not free them separately before this call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_triangle_mesh_buffers_real_free(
     value: CsgrsTriangleMeshBuffersReal,
@@ -2311,6 +3232,16 @@ pub unsafe extern "C" fn csgrs_triangle_mesh_buffers_real_free(
     }
 }
 
+/// Release position/normal scalar handles, then the graphics vertex and index arrays.
+///
+/// The descriptor is consumed by value without resetting copies or changing the diagnostic.
+///
+/// # Safety
+/// The descriptor must retain the exact pointers and lengths returned by the
+/// matching successful export, still owned once with no outstanding references.
+/// Do not free a copied descriptor twice or substitute foreign allocations.
+/// Nested scalar handles must remain distinct, live and owned by this descriptor;
+/// do not free them separately before this call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_graphics_mesh_real_free(value: CsgrsGraphicsMeshReal) {
     unsafe {
@@ -2325,6 +3256,16 @@ pub unsafe extern "C" fn csgrs_graphics_mesh_real_free(value: CsgrsGraphicsMeshR
     }
 }
 
+/// Release each projected point's scalar handles, then point and offset arrays.
+///
+/// The descriptor is consumed by value without resetting copies or changing the diagnostic.
+///
+/// # Safety
+/// The descriptor must retain the exact pointers and lengths returned by the
+/// matching successful export, still owned once with no outstanding references.
+/// Do not free a copied descriptor twice or substitute foreign allocations.
+/// Nested scalar handles must remain distinct, live and owned by this descriptor;
+/// do not free them separately before this call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfilesReal) {
     unsafe {
@@ -2339,8 +3280,10 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
     }
 }
 
+/// ABI status, pointer and output-ownership regression witnesses; these do not certify all geometry.
 #[cfg(test)]
 mod tests {
+    /// Keep unavailable storage distinct from configured exhaustion, including numeric ABI values.
     #[test]
     fn unavailable_storage_has_a_distinct_stable_status() {
         assert_eq!(
@@ -2364,6 +3307,10 @@ mod tests {
     // Preserve the original exact proof and keep the ABI's undecided controls
     // outside the admitted scalar normal form. The assertions below check the
     // public strict error status and unchanged output handles.
+    /// Verify the original trigonometric zero proof, then return an unrecognized addition-form zero.
+    ///
+    /// The equivalent expression keeps strict-undecided controls outside the admitted
+    /// normal form; its lack of recognition is asserted rather than assumed.
     fn terminal_zero(proved_zero: Real) -> Real {
         assert_eq!(
             proved_zero.exact_rational_normal_form(),
@@ -2376,6 +3323,7 @@ mod tests {
         zero
     }
 
+    /// Distinguish degenerate from undecided normals, preserve buffer sentinels/text, then export empty buffers.
     #[test]
     fn undecided_native_normals_leave_abi_buffers_untouched_and_recover() {
         let sine = Real::e().sin();
@@ -2430,6 +3378,7 @@ mod tests {
         }
     }
 
+    /// Require an undecided symbolic degeneracy to preserve its status, diagnostic and null output.
     #[test]
     fn undecided_polyhedron_does_not_publish_a_model_handle() {
         let sine = Real::e().sin();
@@ -2479,6 +3428,7 @@ mod tests {
         }
     }
 
+    /// Check both revolution paths reject undecided angles without ownership transfer, plus invalid resolution.
     #[test]
     fn undecided_revolve_preserves_status_and_output_ownership() {
         let sine = Real::e().sin();
@@ -2516,6 +3466,7 @@ mod tests {
         }
     }
 
+    /// Separate empty bounds, null output and undecided extrema; check positioning failures and empty reuse.
     #[test]
     fn bounds_absence_and_uncertainty_do_not_publish_real_values() {
         let null_point = CsgrsVec3Real {
@@ -2582,6 +3533,7 @@ mod tests {
         }
     }
 
+    /// Require an unrecognized zero scale to fail undecided without publishing transformed geometry.
     #[test]
     fn undecided_transform_does_not_publish_an_ffi_handle() {
         let sine = Real::e().sin();
@@ -2612,6 +3564,7 @@ mod tests {
         }
     }
 
+    /// Keep undecided width distinct from zero-sized success and retain its diagnostic.
     #[test]
     fn undecided_native_constructor_does_not_publish_an_ffi_handle() {
         let sine = Real::e().sin();
@@ -2629,16 +3582,19 @@ mod tests {
         assert!(message.contains("width is undecided"));
     }
 
+    /// Provide the all-zero homogeneous matrix as a singular-transform control.
     fn zero_matrix_f64() -> CsgrsMatrix4F64 {
         CsgrsMatrix4F64 { values: [0.0; 16] }
     }
 
+    /// Accept a null input array only in the zero-length branch.
     #[test]
     fn null_pointer_is_a_valid_empty_input_slice() {
         let values = unsafe { c_slice::<u8>(ptr::null(), 0) }.expect("empty slice");
         assert!(values.is_empty());
     }
 
+    /// Diagnose a null nonempty array before forming a Rust slice.
     #[test]
     fn nonempty_input_slice_requires_a_pointer() {
         assert!(matches!(
@@ -2647,6 +3603,7 @@ mod tests {
         ));
     }
 
+    /// Exercise a valid partition plus missing endpoints, overflow and decreasing offset controls.
     #[test]
     fn face_offsets_must_cover_the_entire_index_buffer() {
         let indices = [0, 1, 2, 0, 2, 3];
@@ -2657,6 +3614,7 @@ mod tests {
         assert!(build_faces(&[0, 4, 3, 6], &indices).is_err());
     }
 
+    /// Reject NaN as scalar conversion failure and preserve the null mesh output.
     #[test]
     fn nonfinite_float_ingress_fails_without_producing_a_handle() {
         let mut mesh = ptr::null_mut();
@@ -2665,6 +3623,7 @@ mod tests {
         assert!(mesh.is_null());
     }
 
+    /// Reject uncovered trailing indices through the public polyhedron ABI without a partial handle.
     #[test]
     fn malformed_face_offsets_fail_without_producing_a_partial_mesh() {
         let points = [
@@ -2702,6 +3661,7 @@ mod tests {
         assert!(mesh.is_null());
     }
 
+    /// Reject the zero homogeneous mesh map and free the unchanged source owner.
     #[test]
     fn singular_mesh_transform_is_reported_instead_of_returning_geometry() {
         let mut source = ptr::null_mut();
@@ -2721,6 +3681,7 @@ mod tests {
         unsafe { csgrs_triangle_mesh_free(source) };
     }
 
+    /// Reject the zero homogeneous region map and free the unchanged source owner.
     #[test]
     fn singular_region_transform_is_reported_instead_of_returning_geometry() {
         let mut source = ptr::null_mut();

@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/csgrs-ffi/src/lib.rs` | Entire file; documented all direct/generated ABI operations, records/fields, family dispatch, private conversion/ownership helpers and regression tests. | All-target compilation and private docs with missing public docs/broken links denied passed; 176 C function pages inspected. Tests were compiled, not executed. |
 | `benchmarks/size-harness/src/bin/primitive.rs` | Entire file; documented argument/default handling, timing/drop boundaries and count-only result. | Standalone all-feature check/private docs passed; workload not executed. |
 | `benchmarks/size-harness/src/bin/composed.rs` | Entire file; corrected extrusion-only receipt description and documented fixed tool, bounds assertion, exports and timing. | Standalone all-feature check/private docs passed; workflow not executed. |
 | `benchmarks/size-harness/src/bin/raster.rs` | Entire file; documented thresholded-cell model, pixel pattern, lifetime, defaults and native/WASM timer split. | Standalone all-feature check/private docs passed; raster not generated/executed. |
@@ -3878,6 +3879,66 @@ Historical pass statements were not rerun and are not current validation claims.
 All 36 tracked files below `benchmarks/` now have explicit whole-file review records
 across these batches; this scoped milestone does not establish repository-wide
 coverage, native compilation, geometric correctness or performance equivalence.
+
+### Native C ABI implementation, 26 November 2026
+
+Baseline: `98855ed0f`. Owner: C ABI above the scalar adapters, P6/P8/P9/P19/P25/P28–P30/P37.
+Read all 2742 original lines of `crates/csgrs-ffi/src/lib.rs`, including all macro
+expansions' source definitions/invocations and sixteen test/helper functions.
+The missing acceptance witness was per-item public/private Rustdoc agreeing with
+the pointer, scalar, geometry and failure behavior. Added docs for records and
+fields, enum variants/payloads, associated types/methods, private aliases/helpers,
+thread-local diagnostics, macros and every generated/direct C entry point.
+
+The domain is live, correctly owned ABI handles and valid C memory, with family
+checks and adapter/native validation of geometric values. Non-null pointer validity
+is a caller obligation, not established by the null checks or panic catcher.
+Documented borrowed input versus owned output, row-major matrices, split-word
+integers, buffer count units, two-level profile offsets, empty-query ownership,
+diagnostic lifetime and destructor behavior. Catching unwinds is not an abort or
+memory-safety recovery mechanism, and error formatting occurs outside the catcher.
+
+Documented finite binary-value ingress, lossy float egress, restricted integer
+recognition and native scalar cloning. Region profiles first sample/project through
+binary64 even in the real family; they cannot replay the exact source curve.
+The ABI has no policy selector or separate local receipt. Region Booleans use the
+active Hypercurve scope (normally strict); extrusion/revolution/profile extraction
+discard separate outcomes, while mesh construction history remains queryable.
+Sampling history is not analytic fidelity or a topology certificate.
+
+Source tracing also corrected `src/adapter/mesh.rs`'s cylinder summary: height is
+signed, with endpoints at Z zero and the imported height, not necessarily along +Z.
+The existing `solid::cylinder` → `frustum` → `frustum_between` path establishes this
+domain without an implementation change. This was a narrow follow-up to the earlier
+whole-file adapter review, not a new whole-file kernel review.
+
+Known implementation limits remain unchanged: generated buffer/profile exports
+construct raw owning descriptors on the assignment's right-hand side before the
+output-pointer check on the left. A null output can therefore leave internal raw
+allocations unreclaimed even though no output record is published. This source-level
+ownership observation is not an allocation measurement or a repaired failure path.
+No ABI-wide work/memory/cancellation budget is implemented by these wrappers.
+
+Validation after final edits:
+
+- `cargo check --locked -p csgrs-ffi --all-targets --offline -j2` passed.
+- `cargo rustdoc --locked -p csgrs-ffi --lib --offline -j2 -- --document-private-items -D rustdoc::broken_intra_doc_links -D missing_docs` passed.
+- `cargo rustdoc --locked -p csgrs --lib --no-default-features --features curve --offline -j2 -- --document-private-items -D rustdoc::broken_intra_doc_links` passed for the adapter wording change.
+- Focused Rustfmt and `git diff --check` passed. Executable tokens are identical
+  after normalizing only whitespace/trailing commas introduced by nine documented
+  tuple payloads; the adapter's non-comment lines are identical.
+- Inspected 318 source documentation-group summaries across 259 rendered pages,
+  including forty generated function templates and all 176 C function pages.
+  Every unsafe exported function has a rendered Safety section. Private fields,
+  variants, methods and aliases render; the sixteen test/helper functions and
+  their cfg-test module were source-reviewed, not claimed as normal Rustdoc pages.
+  The corrected adapter cylinder summary also renders.
+
+Logs: `/tmp/csgrs-rustdoc-ffi-{check,private,adapter-private}.log`; shared target
+directory `/tmp/csgrs-rustdoc-target` remains about 1.5 GiB with incremental builds
+disabled. No tests, geometry operations, shared-library link smoke tests or full
+workflow checks were executed under the documentation-only waiver. Successful
+compilation/rendering is not a claim of complete ABI safety or runtime conformance.
 
 ## Next work
 
