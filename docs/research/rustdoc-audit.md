@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hypermesh/src/construction.rs` | Entire file; documented private bit storage/flags, default/mutation semantics and missing-history precedence. | Owning private docs and downstream compilation passed; tuple-field formatting adds only a trailing comma. No geometry behavior changed. |
+| `tests/empty_composition.rs` | Entire file; documented box/empty witnesses, typed-invalid matrices, qualified validation, batch roots and continued empty operations. | Minimal and curve-enabled compilation/private docs passed; assertions unchanged, not executed. |
+| `tests/receipt_composition.rs` | Entire file; documented retained versus adopted controls, missing history, inherited blockers and map/and_then scope. | Minimal and curve-enabled compilation/private docs passed; assertions and proof-query order unchanged, not executed. |
+| `tests/construction_evidence.rs` | Entire file; documented approximate hull fixture, derived paths, mutation/views, cache policies, workers and pipeline gate. | Minimal and curve/STL compilation/private docs passed, including the existing downstream pipeline. Runtime witnesses not executed. |
 | `tests/containment_bounds.rs` | Entire file; documented rational near-plane queries, symbolic translation, unused bounds, mutation and qualification witnesses. | Focused compilation/private docs passed; geometry assertions unchanged, not run. |
 | `tests/containment_inputs.rs` | Entire file; documented typed pre-shortcut validation, empty carriers, mutation, winding reversal, workers and qualified source facts. | Focused compilation/private docs passed; concurrency/geometry tests unchanged, not run. |
 | `tests/containment_winding.rs` | Entire file; documented box descriptor/fields, independent octant oracle, all query/regularization matrices and local helpers. | Focused compilation/private docs passed; fields and 18 rendered declarations across containment files inspected. Test/local functions source-reviewed. |
@@ -2751,6 +2755,71 @@ Logs: `/tmp/csgrs-rustdoc-containment-check.log`,
 `/tmp/csgrs-rustdoc-containment-private.log`,
 `/tmp/csgrs-rustdoc-query-receipts-check.log`, and
 `/tmp/csgrs-rustdoc-query-receipts-private.log`.
+
+### Empty composition and construction qualification, 26 November 2026
+
+Baseline: `16fab2681`. Owners: Hypermesh's construction-qualification bitset and
+root modeling acceptance consumers, P3/P4/P6/P8/P9/P17–P19/P22/P25/P30/P37.
+Domain: monotone qualification flags, available/missing source history, buffer
+identity changes, exact/qualified Boolean outputs including canonical empty,
+curve conversion, explicit retained-geometry adoption and chained outcomes.
+Read the complete owning 101-line module and all three test files, including
+curve-gated nested tests. Supporting reads of mesh construction/equality,
+modeling empty bridges, outcome combinators and the previously reviewed STL
+pipeline add no whole-file credit elsewhere.
+
+Missing witnesses were undocumented test helpers/cases and private bitset items.
+Documented every flag and the private tuple field: missing history suppresses
+aggregate predicate-certainty claims without clearing known approximation;
+projection/sampling are separate qualifications. Mutation adds flags but does not
+itself detect buffer changes. The default claim is untracked. These are bounded
+qualifications rather than source relations or replayable proofs.
+
+The empty tests distinguish both-empty-buffer success from malformed carriers,
+preserve original error indices, regularize shell multiplicity and consume results
+again. Volume/support-plane/edge checks, finite probes and adapter error strings
+are documented at their actual strength. Receipt tests distinguish certified
+local work from approximate ancestry, qualified curve topology and missing
+curve-to-mesh history. Rebuilt controls explicitly adopt coordinates/boundaries;
+matching their geometry does not alone prove cache admissibility or source
+fidelity. Documented the difference between receipt-combining `and_then` and `map`
+whose value may itself contain an error or another qualified outcome.
+
+Also read this local rule file in full:
+
+| File | Whole-file review | Application |
+| --- | --- | --- |
+| `crates/hypermesh/AGENTS.md` | Contains the standard full pre-push verification list; unchanged. | The owner's explicit session-wide docs-only waiver applies here as at the root. Focused checks below replace full workflows for this session only. |
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. All three test files have identical
+  non-comment/nonblank lines to baseline. In the owning module, removing comments
+  and formatting leaves identical tokens except the optional trailing comma added
+  when documenting the tuple field. Its `u8` type, constants, bit operations,
+  dispatch and decision order remain unchanged.
+- All 59 declarations across these files have Rustdoc; the tuple field was checked
+  separately. Earlier focused checks of the two composition targets passed; after
+  the owning-module edit, all three targets were compiled again with defaults
+  disabled, both without features and with `curve,stl-io`, including the pipeline.
+  `cargo check --locked -p csgrs ... --offline -j 2` passed without warnings.
+- `cargo doc --locked -p hypermesh --no-default-features --document-private-items
+  --no-deps --offline -j 2` passed with broken links denied. Inspected the owning
+  type page's full descriptions, all private flags, tuple field, mutation helper,
+  default implementation and aggregate-certainty precedence.
+- Private Rustdoc for all three root test targets passed in minimal and curve/STL
+  configurations, supplying checked own-library metadata and cached dependency
+  paths. Inspected 17 direct/helper pages, all 13 rendered declaration descriptions
+  and linked module descriptions. Test functions remain source-reviewed rather
+  than claimed as rendered standalone API pages.
+- Geometry, concurrency, STL execution and full workflows were not run under the
+  docs-only waiver. No model files were created. The reused temporary target remains
+  approximately 1.3 GiB with incremental compilation disabled.
+
+Final-edit logs: `/tmp/csgrs-rustdoc-evidence-downstream-check.log`,
+`/tmp/csgrs-rustdoc-evidence-minimal-check.log`,
+`/tmp/csgrs-rustdoc-construction-owner-doc.log`, and
+`/tmp/csgrs-rustdoc-evidence-private.log`.
 
 ## Next work
 

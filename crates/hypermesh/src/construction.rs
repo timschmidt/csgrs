@@ -10,19 +10,30 @@ use crate::MeshCertainty;
 /// concerns decisions since the declared coordinate source only. Sampling and
 /// coordinate projection remain separate fidelity boundaries even in that case.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct ConstructionEvidence(u8);
+pub struct ConstructionEvidence(
+    /// Bitwise union of missing-history, approximate-decision, projection, sampling and mutation flags.
+    /// Private storage prevents callers from inventing flag layouts; flags summarize qualifications,
+    /// not source relations, selectors or replayable proofs.
+    u8,
+);
 
 impl Default for ConstructionEvidence {
+    /// Defaults to missing source history; an absent claim is not declared-coordinate certification.
     fn default() -> Self {
         Self::UNTRACKED
     }
 }
 
 impl ConstructionEvidence {
+    /// Preceding source history is unavailable, suppressing aggregate predicate-certainty claims.
     const MISSING: u8 = 1;
+    /// Some dependency consumed the authorized approximate predicate terminal.
     const APPROXIMATE: u8 = 2;
+    /// Some dependency projected coordinates at an explicit finite boundary.
     const PROJECTED: u8 = 4;
+    /// Some dependency was constructed from samples of its intended source.
     const SAMPLED: u8 = 8;
+    /// Current buffers no longer match the identity attached to retained construction evidence.
     const MUTATED: u8 = 16;
 
     /// Start a new claim at explicitly declared coordinates. This does not prove
@@ -57,6 +68,8 @@ impl ConstructionEvidence {
         Self(self.0 | Self::SAMPLED)
     }
 
+    /// Adds missing-history and mutation flags without discarding any known qualification.
+    /// Callers detect identity changes; this method neither compares buffers nor reconstructs history.
     pub(crate) const fn after_buffer_mutation(self) -> Self {
         Self(self.0 | Self::MISSING | Self::MUTATED)
     }
@@ -89,6 +102,8 @@ impl ConstructionEvidence {
 
     /// Aggregate predicate certainty when source history is available. This
     /// never certifies topology, geometric fidelity or preceding source intent.
+    /// Missing history takes precedence over a known approximate flag, which remains
+    /// separately observable. Sampling and projection do not by themselves qualify predicate decisions.
     pub const fn predicate_certainty(self) -> Option<MeshCertainty> {
         if self.source_history_missing() {
             None

@@ -1,5 +1,8 @@
 //! Construction qualifications are independent of geometry equality and local proofs.
+//! These witnesses check retained flags and receipts through derived meshes, mutation,
+//! caching and workers; flags alone are not replayable proofs of analytic-source fidelity.
 #[path = "support/uncertainty.rs"]
+/// Proved scalar control and independently unresolved zero for the hull fixture.
 mod uncertainty;
 
 use csgrs::{
@@ -10,12 +13,15 @@ use hyperlattice::{Matrix4, Point3, Vector3};
 use hypermesh::{BooleanOp, BooleanProgram, MeshCertainty};
 use std::{num::NonZeroU32, sync::Arc};
 
+/// Checks the retained Pythagorean control, then returns the shared strictly unresolved exact zero.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Adds an unresolved duplicate origin to cube positions and requires a qualified approximate hull.
+/// Returns the native hull mesh for ancestry tests; the local receipt is asserted before extraction.
 fn approximate_mesh() -> TriangleMesh {
     let cube = solid::cube(Real::one()).unwrap();
     let mut points = cube.positions.to_vec();
@@ -27,6 +33,8 @@ fn approximate_mesh() -> TriangleMesh {
     outcome.into_value()
 }
 
+/// Requires available construction history with aggregate approximate predicate consumption.
+/// This reads ancestry rather than executing or validating a new geometric decision.
 fn assert_approximate(mesh: &TriangleMesh) {
     assert_eq!(
         mesh.construction_evidence().predicate_certainty(),
@@ -35,6 +43,9 @@ fn assert_approximate(mesh: &TriangleMesh) {
 }
 
 #[test]
+/// Requires strict local validation and eleven derived mesh paths to preserve approximate ancestry.
+/// Also checks one-byte evidence storage, monotone addition of certified certainty, and projection
+/// qualification on a finite materialization without modifying the source's projection flag.
 fn local_validation_and_parent_composition_preserve_approximation() {
     let mesh = approximate_mesh();
     let context = GeometryContext::STRICT.mesh_context();
@@ -79,6 +90,9 @@ fn local_validation_and_parent_composition_preserve_approximation() {
 }
 
 #[test]
+/// Checks buffer replacement, index reordering and changed borrowed views expose missing history.
+/// Known approximation survives mutation and strict validation cannot restore lost history;
+/// an equal raw reconstruction remains untracked while the original retains its evidence.
 fn mutation_and_borrowed_views_expose_missing_history_without_erasing_known_facts() {
     let mesh = approximate_mesh();
     let mut changed = mesh.clone();
@@ -119,6 +133,9 @@ fn mutation_and_borrowed_views_expose_missing_history_without_erasing_known_fact
 }
 
 #[test]
+/// Requires certified Boolean work to preserve both parents' construction qualifications in batches and meshes.
+/// Mutated batch rows/vertices expose missing history; canonical empty self-difference and subsequent
+/// union/intersection/difference with cube or empty operands retain the approximate dependency.
 fn boolean_batch_and_empty_bridges_keep_both_parents() {
     let mesh = approximate_mesh();
     let cube = solid::cube(1).unwrap();
@@ -178,6 +195,9 @@ fn boolean_batch_and_empty_bridges_keep_both_parents() {
 }
 
 #[test]
+/// Alternates geometrically shared cube buffers with different ancestry through distributions and merges.
+/// Covers default, disabled and one-entry distribution/merge caches, three policy passes and zero/one/two
+/// copies, requiring certified local receipts and the appropriate source qualification each time.
 fn modeling_cache_keys_include_construction_qualifications() {
     use solid::cache::{CachePolicy, with_policy};
     let cube = solid::cube(1).unwrap();
@@ -226,6 +246,8 @@ fn modeling_cache_keys_include_construction_qualifications() {
 }
 
 #[test]
+/// Spawns four scoped workers making eight strict validations each while asserting approximate ancestry.
+/// Scope exit joins workers; no barrier enforces a particular cache schedule or overlap.
 fn concurrent_local_proofs_do_not_upgrade_construction() {
     let mesh = approximate_mesh();
     std::thread::scope(|scope| {
@@ -247,6 +269,8 @@ fn concurrent_local_proofs_do_not_upgrade_construction() {
 
 #[cfg(feature = "curve")]
 #[test]
+/// Distinguishes missing curve-to-mesh history from a sampled sphere with certified predicate ancestry.
+/// Certified local extrusion and sphere predicates do not establish analytic-source fidelity.
 fn bare_curve_history_is_untracked_and_sampling_is_separate() {
     let square = csgrs::curve::square(1).unwrap();
     let mesh = csgrs::curve::try_extrude(&square, 1.into(), GeometryContext::STRICT).unwrap();
@@ -260,4 +284,5 @@ fn bare_curve_history_is_untracked_and_sampling_is_separate() {
 
 #[cfg(feature = "stl-io")]
 #[path = "support/construction_evidence_pipeline.rs"]
+/// Shared downstream hull/transform/Boolean/STL cases, enabled only with STL interchange.
 mod pipeline;

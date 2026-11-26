@@ -2,8 +2,11 @@
 //!
 //! Box expectations are derived from their exact boundary planes and volume,
 //! independently of the Boolean implementation and its triangle ordering.
+//! Error/receipt checks and finite membership probes retain their separate scope;
+//! no test equates missing geometry buffers with a valid empty set.
 
 #[path = "support/uncertainty.rs"]
+/// Shared proved-zero control and unresolved identity used to challenge source validation.
 mod uncertainty;
 
 use csgrs::{
@@ -14,6 +17,7 @@ use csgrs::{
 use hyperlattice::Point3;
 use hypermesh::{BooleanExpression, BooleanOp, BooleanProgram, HypermeshError, Triangle};
 
+/// Fixed four-operation matrix for empty identities and malformed-source validation.
 const OPERATIONS: [BooleanOp; 4] = [
     BooleanOp::Union,
     BooleanOp::Intersection,
@@ -21,12 +25,16 @@ const OPERATIONS: [BooleanOp; 4] = [
     BooleanOp::SymmetricDifference,
 ];
 
+/// Requires both buffers empty and verifies the result remains a valid false containment operand.
 fn assert_empty(mesh: &TriangleMesh) {
     assert!(mesh.positions.is_empty());
     assert!(mesh.triangles.is_empty());
     assert!(!solid::contains_point(mesh, &Point3::origin()).unwrap());
 }
 
+/// Checks nonempty geometry against exact box bounds, triangle support planes and signed volume.
+/// Also requires certified geometric edge pairing. Extents and volume arithmetic use small fixture
+/// integers; this helper does not independently check each face's outward normal or vertex links.
 fn assert_box(mesh: &TriangleMesh, min: [i32; 3], max: [i32; 3]) {
     assert!(!mesh.triangles.is_empty());
     let lower = min.map(Real::from);
@@ -57,6 +65,8 @@ fn assert_box(mesh: &TriangleMesh, min: [i32; 3], max: [i32; 3]) {
 }
 
 #[test]
+/// Covers all four empty/empty and empty/cube identities in both operand orders under both policies.
+/// Requires certified outcomes and immediately consumes each result through further union or difference.
 fn empty_identities_remain_composable_under_both_policies() {
     let empty = solid::empty();
     let cube = solid::cube(Real::from(2)).expect("valid primitive fixture");
@@ -92,6 +102,8 @@ fn empty_identities_remain_composable_under_both_policies() {
 }
 
 #[test]
+/// Accumulates adjacent cubes from empty, removes them successively and reuses the resulting emptiness.
+/// Also scales a self-difference result before restoring translated box material.
 fn accumulation_and_complete_subtraction_can_continue() {
     let a = solid::cube(Real::from(2)).expect("valid primitive fixture");
     let b = a
@@ -118,6 +130,9 @@ fn accumulation_and_complete_subtraction_can_continue() {
 }
 
 #[test]
+/// Pairs six malformed carriers with empty under every operation, policy and operand order.
+/// Requires exact empty-buffer, index, degeneracy, open-edge or winding diagnostics,
+/// including original operand indices wherever the error carries them.
 fn empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let mut reversed_face = cube.triangles.to_vec();
@@ -187,6 +202,8 @@ fn empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices() {
 }
 
 #[test]
+/// Requires union with empty to regularize doubled/reversed cube shells and cancel opposite shells.
+/// Checks box invariants and complete subtraction for the retained material cases.
 fn identity_regularizes_winding_multiplicity_and_cancellation() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let doubled = TriangleMesh::new(
@@ -214,6 +231,7 @@ fn identity_regularizes_winding_multiplicity_and_cancellation() {
 }
 
 #[test]
+/// Checks empty union retains only the two authored symbolic Pi-based X columns, then subtracts the source.
 fn empty_identity_keeps_symbolic_coordinates() {
     let source = solid::cube(Real::one())
         .expect("valid primitive fixture")
@@ -228,6 +246,9 @@ fn empty_identity_keeps_symbolic_coordinates() {
 }
 
 #[test]
+/// Perturbs one cube coordinate by an unresolved exact zero and pairs it with empty in both orders.
+/// Strict passes must stay undecided/unknown; approximate passes must retain terminal consumption.
+/// The approximate branch checks receipts rather than independently asserting the resulting set.
 fn empty_operand_does_not_erase_uncertainty_in_input_validation() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let sine = Real::e().sin();
@@ -267,6 +288,8 @@ fn empty_operand_does_not_erase_uncertainty_in_input_validation() {
 }
 
 #[test]
+/// Reuses self-difference emptiness through the raw scalar adapter, then checks a bad-index error string.
+/// This error assertion does not inspect or downcast the adapter's typed source chain.
 fn scalar_adapter_reuses_empty_composition_and_visible_errors() {
     let cube = RawTriangleMesh::cube(Real::one()).unwrap();
     let removed = cube.difference(&cube).unwrap();
@@ -285,6 +308,8 @@ fn scalar_adapter_reuses_empty_composition_and_visible_errors() {
 }
 
 #[test]
+/// Materializes operand and false expression roots from one native arrangement sharing vertices.
+/// Requires the false root to become canonical empty and remain consumable by modeling union.
 fn empty_rows_from_a_shared_boolean_batch_can_be_composed() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let batch = hypermesh::boolean(
@@ -305,6 +330,9 @@ fn empty_rows_from_a_shared_boolean_batch_can_be_composed() {
 }
 
 #[test]
+/// Applies empty XOR to a hollow box and two disconnected boxes, checking signed volume,
+/// geometric edge pairing and three independent membership probes for each fixture.
+/// Subtracting the original must yield canonical empty; no explicit component-count test is made.
 fn holes_and_disconnected_components_survive_empty_composition() {
     let outer = solid::cube(Real::from(4)).expect("valid primitive fixture");
     let inner = solid::cube(Real::from(2))
@@ -356,6 +384,8 @@ fn holes_and_disconnected_components_survive_empty_composition() {
 }
 
 #[test]
+/// Warms an empty identity, replaces its source's faces by one open triangle and requires fresh errors.
+/// All four operations and both policies must preserve operand index one and three boundary edges.
 fn warming_then_mutating_an_operand_cannot_hide_invalid_topology() {
     let mut source = solid::cube(Real::one()).expect("valid primitive fixture");
     let empty = solid::empty();

@@ -1,14 +1,13 @@
 //! Operation receipts compose without promoting an approximate dependency.
 //!
-//! Each fixture is built by an operation that consumed the 512-bit terminal:
-//! two unit boxes whose shared face is offset by an exact zero that strict
-//! predicates cannot decide. Later operations run under both policies. A
-//! receipt reports the decisions of its own operation; a mesh keeps the
-//! approximate ancestry in its construction evidence; an approximate
-//! operation that reuses a retained approximate fact reports the terminal;
-//! and a strict operation must reach the same answer as on a rebuilt copy
-//! without retained facts, so it cannot have used one as proof.
+//! Unresolved contacts and curve closure produce fixtures that consume the
+//! approximate terminal. Later calls distinguish local decision receipts from
+//! inherited construction/topology qualification and missing history. Rebuilt
+//! controls explicitly adopt retained coordinates/boundaries as new models;
+//! agreement with those controls does not alone prove internal cache admissibility
+//! or fidelity to the original source. Chained outcomes preserve the weakest receipt.
 #[path = "support/uncertainty.rs"]
+/// Proved scalar control and independent unresolved zero for contact fixtures.
 mod uncertainty;
 
 use csgrs::{
@@ -17,21 +16,26 @@ use csgrs::{
 use hyperlattice::Matrix4;
 use hypermesh::{BooleanOp, HypermeshError, MeshCertainty};
 
+/// Checks the retained Pythagorean zero and returns the shared strictly unresolved sine-addition zero.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Exact one-half for overlap placement and interior query coordinates.
 fn half() -> Real {
     (Real::one() / Real::from(2)).unwrap()
 }
 
+/// Builds an exact X-only affine translation without modifying the scalar expression.
 fn translation(x: Real) -> Matrix4 {
     Matrix4::affine_translation([x, Real::zero(), Real::zero()])
 }
 
 /// The union of the unit cube with its copy translated by `1 + zero`.
+/// Requires strict failure followed by an approximate-terminal receipt, then returns the mesh
+/// for tests of its retained construction evidence and reusable geometry facts.
 fn approximate_union() -> TriangleMesh {
     let cube = solid::cube(Real::one()).unwrap();
     let touching =
@@ -57,11 +61,16 @@ fn approximate_union() -> TriangleMesh {
     union.value
 }
 
+/// Reads aggregate predicate ancestry from construction evidence, independently of local outcomes.
 fn predicate_certainty(mesh: &TriangleMesh) -> Option<MeshCertainty> {
     mesh.construction_evidence().predicate_certainty()
 }
 
 #[test]
+/// Compares strict Booleans on a qualified union and a newly adopted coordinate copy against two boxes.
+/// Requires matching geometry and certified local receipts while ancestry remains different.
+/// Also checks qualified approximate fact reuse versus the adopted control and a certified translation
+/// whose output still retains approximate ancestry. Rebuilding is not source-fidelity replay.
 fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
     let union = approximate_union();
     assert_eq!(
@@ -140,6 +149,9 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
 
 #[cfg(feature = "curve")]
 #[test]
+/// Flattens a qualified mesh and extrudes the region under strict policy, requiring certified local receipts.
+/// The resulting mesh must report missing source history and no aggregate predicate certainty,
+/// rather than certifying ancestry that this region conversion did not carry.
 fn a_curve_conversion_never_reports_certified_mesh_history() {
     let union = approximate_union();
     let section = solid::flatten_with_context(&union, GeometryContext::STRICT).unwrap();
@@ -156,12 +168,16 @@ fn a_curve_conversion_never_reports_certified_mesh_history() {
 }
 
 #[cfg(feature = "curve")]
+/// Curve topology qualification, explicit retained-boundary adoption and outcome chaining witnesses.
 mod curve_receipts {
     use super::*;
     use csgrs::curve;
     use hypercurve::{BooleanOp as RegionOp, CurveRegion2, ExactCurveError, FillRule};
 
     #[test]
+    /// Admits an unresolved closing seam provisionally, then rejects strict translation as undecided.
+    /// Approximate translation and dependent membership retain qualification even after dropping
+    /// the original region; this exercises a policy retry, not a larger-resource-budget retry.
     fn qualified_closure_translation_preserves_receipts_and_retryable_failure() {
         use csgrs::errors::{ValidationError, ValidationErrorKind};
         use hypercurve::{CurvePath2, LineSeg2, Point2};
@@ -230,6 +246,8 @@ mod curve_receipts {
     /// The union of the unit square with its copy translated by `1 + zero`,
     /// and an explicitly adopted model of its retained boundary. Strict proofs
     /// about the adopted model do not certify fidelity to the original union.
+    /// Checks strict union/path-extraction blockers and qualification of authorized path extraction
+    /// before constructing the independent retained-boundary control.
     fn approximate_region() -> (CurveRegion2, CurveRegion2) {
         let square = curve::square(Real::one()).unwrap();
         let touching =
@@ -264,6 +282,7 @@ mod curve_receipts {
         (union, rebuilt)
     }
 
+    /// Requires both the modeling undecided category and the nested exact-curve predicate blocker.
     fn assert_inherited_topology_blocker(error: csgrs::errors::ValidationError) {
         assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::Undecided);
         assert!(matches!(error,
@@ -273,6 +292,9 @@ mod curve_receipts {
     }
 
     #[test]
+    /// Checks membership, translation and extrusion of the qualified region across three policy passes.
+    /// Strict calls must retain inherited blockers; approximate calls keep local qualification, and
+    /// extrusion reports missing history. The adopted-boundary control permits certified local queries.
     fn region_receipts_are_local_and_reuse_reports_the_terminal() {
         let (union, rebuilt) = approximate_region();
         for context in [
@@ -343,6 +365,10 @@ mod curve_receipts {
     }
 
     #[test]
+    /// Contrasts fallible receipt-combining chains with maps that only retain their incoming receipt.
+    /// Covers strict blockers, approximate extrusion, an error nested inside a mapped value, explicitly
+    /// authorized area readback with an approximate equality decision, a certified adopted control,
+    /// and zero-height failure. The mapped area comparison is not an exact area proof.
     fn and_then_keeps_an_approximate_dependency_and_map_cannot_record_work() {
         let (union, rebuilt) = approximate_region();
         let moved = curve::translated_with_context(
