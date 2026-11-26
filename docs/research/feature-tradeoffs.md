@@ -107,3 +107,20 @@ retention. "Shipped" sizes are linked release or deployed images.
 - **Evidence:** `docs/evidence/2026-11-26-interval-taylor-exact-recurrence`.
 - **Reconsider:** if hyperreal gains cheaper exact series arithmetic, or if the
   formula fallback is proved unreachable and can be removed.
+
+### Opt-in Taylor-mode ODE step coefficients (26 November 2026)
+
+- **Capability:** `ExpressionProgram::ode_taylor_coefficients` in Hypersolve;
+  `FlowTaylorCoefficients::Recurrence` in Hyperdynamics (opt-in).
+- **Performance:** validated-dynamics corpus 11–37% faster on nontrivial
+  fields; constant and turnaround fields 3–6% slower; widths equal to
+  2.3e-11 relative, or narrower (5% on a transcendental quotient field).
+- **Memory:** per-step dense univariate series per reached node, up to the
+  remainder degree; no retained formula change.
+- **Code size:** not measured separately; no shipped image enables Taylor
+  features.
+- **Evidence:** `docs/evidence/2026-11-26-interval-ode-taylor-recurrence`.
+- **Reconsider:** as the default once owners accept changed exact outputs;
+  then for the adaptive controller and QR programs; drop the formula
+  evaluation path if the recurrence is never unavailable in practice.
+

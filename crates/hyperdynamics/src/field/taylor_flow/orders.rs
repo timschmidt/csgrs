@@ -81,6 +81,7 @@ impl<const N: usize> FlowTaylorProgram<N> {
             field: self.field.clone(),
             order,
             stages: stages.into(),
+            coefficients: self.coefficients,
         };
         budget.graph.charge(0)?;
         Ok(result)

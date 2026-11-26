@@ -2,6 +2,18 @@
 
 ## 0.1.0 (unreleased)
 
+- `FlowTaylorProgram::with_coefficients(FlowTaylorCoefficients::Recurrence)`
+  encloses each step's trajectory Taylor coefficients with Hypersolve's
+  Taylor-mode ODE recurrence instead of natural evaluation of the prepared
+  Lie-derivative stage formulas, falling back to those formulas whenever a
+  recurrence is unavailable on the step's boxes. `restrict_order` keeps the
+  method. The default `Formulas` is unchanged. On the validated-dynamics
+  corpus, nontrivial fields run 11–37% faster with endpoint and tube widths
+  equal to about 1e-11 relative; trivial fields (constant, turnaround) run
+  3–6% slower. A transcendental quotient field gave a 5% narrower endpoint.
+  Programs prepared inside the adaptive controller and QR evolution still use
+  the formulas.
+
 - `QrEvolutionOptions::proposals` selects a frame-proposal schedule. The
   opt-in `QrProposalPolicy::Backoff { maximum_interval }` runs only the
   incoming chart for doubling runs of windows after it wins, and compares every

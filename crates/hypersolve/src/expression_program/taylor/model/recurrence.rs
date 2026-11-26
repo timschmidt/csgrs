@@ -336,7 +336,7 @@ fn solve<F: Field>(
         indices: &indices,
         field,
     };
-    let outputs = match recurrence.run(program, variables, points) {
+    let outputs = match recurrence.run(program, Inputs::Centered { variables, points }) {
         Ok(outputs) => outputs,
         Err(Stop::Unavailable) => return Ok(None),
         Err(Stop::Error(error)) => return Err(error),
@@ -346,6 +346,95 @@ fn solve<F: Field>(
         outputs,
         variables: variables.to_vec(),
     }))
+}
+
+/// Variable series: centered coordinates X + h, or caller-supplied series.
+#[derive(Clone, Copy)]
+enum Inputs<'a, V> {
+    Centered {
+        variables: &'a [SymbolId],
+        points: &'a [V],
+    },
+    // One complete series per binding slot, of the indices' length.
+    Series(&'a [Vec<V>]),
+}
+
+/// Taylor-mode ODE coefficients x_0, ..., x_degree of x' = f(t, x) over boxes.
+///
+/// `slots[i]` names binding slot i as time (`None`) or state lane `Some(j)`.
+/// Output j of the program is f_j. With t = start + s and x(s) = sum x_k s^k,
+/// x_(k+1) = [f(t, x)]_k / (k + 1), where [.]_k is the univariate Taylor-mode
+/// coefficient. Each enclosure contains x^(k)(tau)/k! for every solution with
+/// x(tau) in `initial` and tau in `start`. `None` when a recurrence is unavailable.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn ode(
+    program: &ExpressionProgram,
+    slots: &[Option<usize>],
+    start: &DyadicInterval,
+    initial: &[DyadicInterval],
+    degree: usize,
+    precision: i32,
+    graph: &mut ExpressionBudget,
+    arithmetic: &mut DyadicBudget,
+) -> Result<Option<Vec<Vec<DyadicInterval>>>, TaylorError> {
+    let mut field = Interval {
+        precision,
+        graph,
+        arithmetic,
+    };
+    let lanes = initial.len();
+    let mut x: Vec<Vec<DyadicInterval>> = initial.iter().map(|v| vec![v.clone()]).collect();
+    for k in 1..=degree {
+        // Series of degree k - 1 determine the degree-(k - 1) coefficient of f.
+        let indices = match Indices::new(1, k - 1, field.graph()) {
+            Ok(indices) => indices,
+            Err(Stop::Unavailable) => return Ok(None),
+            Err(Stop::Error(error)) => return Err(error),
+        };
+        let step = (|| -> Result<Vec<DyadicInterval>, Stop> {
+            field.graph().check_entries(&[slots.len(), k, lanes])?;
+            let mut series = Vec::new();
+            for slot in slots {
+                field.graph().charge(k)?;
+                series.push(match slot {
+                    None => {
+                        let mut time = vec![field.integer(0.into())?; k];
+                        time[0] = start.clone();
+                        if k > 1 {
+                            time[1] = field.integer(1.into())?;
+                        }
+                        time
+                    }
+                    Some(lane) => x[*lane].clone(),
+                });
+            }
+            let mut recurrence = Recurrence {
+                indices: &indices,
+                field: Interval {
+                    precision: field.precision,
+                    graph: &mut *field.graph,
+                    arithmetic: &mut *field.arithmetic,
+                },
+            };
+            let outputs = recurrence.run(program, Inputs::Series(&series))?;
+            let order = recurrence.field.integer(k.into())?;
+            let mut next = Vec::new();
+            for output in &outputs {
+                next.push(recurrence.field.div(&output[k - 1], &order)?);
+            }
+            Ok(next)
+        })();
+        match step {
+            Ok(next) => {
+                for (lane, value) in next.into_iter().enumerate() {
+                    x[lane].push(value);
+                }
+            }
+            Err(Stop::Unavailable) => return Ok(None),
+            Err(Stop::Error(error)) => return Err(error),
+        }
+    }
+    Ok(Some(x))
 }
 
 struct Recurrence<'a, F> {
@@ -366,8 +455,7 @@ impl<F: Field> Recurrence<'_, F> {
     fn run(
         &mut self,
         program: &ExpressionProgram,
-        variables: &[SymbolId],
-        points: &[F::Value],
+        inputs: Inputs<'_, F::Value>,
     ) -> Result<Vec<Arc<Vec<F::Value>>>, Stop> {
         let source = program.definition();
         let count = source.nodes.len();
@@ -400,18 +488,26 @@ impl<F: Field> Recurrence<'_, F> {
                 }
                 ExpressionNode::Variable(reference) => {
                     let slot = program.slots[index].expect("validated binding");
-                    let mut value = self.constant(points[slot].clone())?;
-                    let dimension = variables
-                        .iter()
-                        .position(|&v| v == reference.id)
-                        .expect("reached variable is used");
-                    let mut exponent = vec![0; variables.len()];
-                    exponent[dimension] = 1;
-                    // Degree-zero series (order-zero coefficients) have no unit slot.
-                    if let Some(&slot) = self.indices.lookup.get(&exponent) {
-                        value[slot] = self.one()?;
+                    match inputs {
+                        Inputs::Centered { variables, points } => {
+                            let mut value = self.constant(points[slot].clone())?;
+                            let dimension = variables
+                                .iter()
+                                .position(|&v| v == reference.id)
+                                .expect("reached variable is used");
+                            let mut exponent = vec![0; variables.len()];
+                            exponent[dimension] = 1;
+                            // Degree-zero series (order-zero coefficients) have no unit slot.
+                            if let Some(&slot) = self.indices.lookup.get(&exponent) {
+                                value[slot] = self.one()?;
+                            }
+                            value
+                        }
+                        Inputs::Series(series) => {
+                            self.charge(self.indices.len())?;
+                            series[slot].clone()
+                        }
                     }
-                    value
                 }
                 ExpressionNode::Unary { operation, input } => {
                     let input = series[*input].as_ref().expect("dependency order");

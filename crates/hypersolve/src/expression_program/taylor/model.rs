@@ -460,6 +460,74 @@ impl ExpressionProgram {
         Ok(model)
     }
 }
+/// How one binding slot of an ODE right-hand side is fed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OdeBinding {
+    /// The independent time variable.
+    Time,
+    /// State lane `j` of `x' = f(t, x)`.
+    State(usize),
+}
+impl ExpressionProgram {
+    /// Taylor-mode coefficients of solutions of `x' = f(t, x)` over boxes.
+    ///
+    /// Output `j` of this program is `f_j`; `bindings[i]` feeds binding slot `i`.
+    /// The result `x[j][k]`, for `k` in `0..=degree`, encloses `x_j^(k)(tau)/k!`
+    /// for every solution with `tau` in `start` and `x(tau)` in `initial`
+    /// (`x[j][0]` is `initial[j]`). Each degree comes from the univariate
+    /// Taylor-mode recurrence `x_(k+1) = [f(t, x)]_k / (k + 1)` of the same
+    /// per-primitive recurrences as `taylor_model`, so no Lie-derivative formulas
+    /// are generated. Degree zero of every primitive is its certified image,
+    /// which enforces its guard over the boxes. This bounds derivative values;
+    /// it does not prove that a solution exists or that `f` is analytic there.
+    /// `None` when a recurrence is unavailable (a guard or zero divisor met on
+    /// the boxes, or an empty box); resource limits are reported as errors.
+    #[allow(clippy::too_many_arguments)]
+    pub fn ode_taylor_coefficients(
+        &self,
+        bindings: &[OdeBinding],
+        start: &DyadicInterval,
+        initial: &[DyadicInterval],
+        degree: usize,
+        precision: i32,
+        graph: &mut ExpressionBudget,
+        arithmetic: &mut DyadicBudget,
+    ) -> Result<Option<Vec<Vec<DyadicInterval>>>, TaylorError> {
+        graph.charge(0)?;
+        let source = self.definition();
+        if bindings.len() != source.variables.len() {
+            return Err(ExpressionError::BindingCount {
+                expected: source.variables.len(),
+                actual: bindings.len(),
+            }
+            .into());
+        }
+        let shape = |lane| TaylorError::OdeShape {
+            outputs: source.outputs.len(),
+            state: initial.len(),
+            lane,
+        };
+        if source.outputs.len() != initial.len() {
+            return Err(shape(None));
+        }
+        graph.check_entries(&[bindings.len(), initial.len()])?;
+        let mut slots = Vec::new();
+        for binding in bindings {
+            graph.charge(1)?;
+            slots.push(match *binding {
+                OdeBinding::Time => None,
+                OdeBinding::State(lane) if lane < initial.len() => Some(lane),
+                OdeBinding::State(lane) => return Err(shape(Some(lane))),
+            });
+        }
+        if start.is_empty() || initial.iter().any(DyadicInterval::is_empty) {
+            return Ok(None);
+        }
+        recurrence::ode(
+            self, &slots, start, initial, degree, precision, graph, arithmetic,
+        )
+    }
+}
 // Generate the requested partial formulas once, on first use.
 fn formulas_for<'a>(
     program: &'a mut Option<CoefficientProgram>,

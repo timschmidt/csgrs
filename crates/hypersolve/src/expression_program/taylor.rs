@@ -6,7 +6,7 @@ use super::{
 };
 use crate::SymbolId;
 use hyperreal::{Rational, Real};
-pub use model::{TaylorModel, TaylorRemainderTerm, TaylorRequest, TaylorTerm};
+pub use model::{OdeBinding, TaylorModel, TaylorRemainderTerm, TaylorRequest, TaylorTerm};
 use num::BigInt;
 use std::{collections::BTreeMap, fmt, sync::Arc};
 
@@ -43,6 +43,13 @@ pub enum TaylorError {
     MonomialDomain { variable: SymbolId, exponent: usize },
     /// Two independently valid enclosures unexpectedly have empty intersection.
     InconsistentEnclosure { output: usize },
+    /// ODE outputs, state lanes and bindings disagree (`lane` is out of range,
+    /// or the output count differs from the state dimension).
+    OdeShape {
+        outputs: usize,
+        state: usize,
+        lane: Option<usize>,
+    },
     /// Native interval resource, domain or representation failure.
     Interval(hyperinterval::IntervalError),
     /// Original validation, resource, cancellation or scalar diagnostic.

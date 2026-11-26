@@ -65,7 +65,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | direct joins require certified evidence through lookahead replay; all 449 Hyperpath checks pass on native and WASI; zero-tangent G1 joins are refused through strict half-line constraints (`b74ad2851`) and variable affine-box verdicts are repaired (`afbfd52c9` … `b22df7250`, `a3c220ccf`); the domain-neutral extraction stacks remain archived on their measured stack excess | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime; coordinated consumer releases for the new strict half-line constraint |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters, with division and transcendental maps over certified ranges and interval Taylor-mode remainder recurrences (25 November), with exact centered coefficients from the same recurrences (26 November); Taylor curve ranges measured against exact Bernstein hulls and not adopted (26 November) | further automatic frame strategies (making backoff the default awaits owner review), wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on twenty validated point/box IVPs, including a long-horizon correlated tier (23 November) and manually composed affine-noise flow with continuous two-rate qualification, plus adaptive-controller continuation of the previous prepared order, plus policy-grid rounding of correlated endpoints and a relative noise-column cutoff (23 November), plus certified whole-horizon initial-state sensitivity of native Picard evolutions (24 November), extended to Taylor, adaptive Taylor, fixed-chart, QR-frame and affine-noise evolutions (25 November), with sensitivity-driven noise-column ranking measured and not pursued (25 November), plus an opt-in backoff schedule for QR frame proposals (25 November), plus arithmetic across independently built nonlinear remainder models over shared parameters, with division and transcendental maps over certified ranges and interval Taylor-mode remainder recurrences (25 November), with exact centered coefficients from the same recurrences (26 November); Taylor curve ranges measured against exact Bernstein hulls and not adopted (26 November), opt-in Taylor-mode ODE step coefficients (26 November) | further automatic frame strategies (making backoff, or recurrence ODE coefficients, the default awaits owner review), wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packages reproduce byte-for-byte across clean checkouts with each of Rust 1.95 and 1.99, and all 34 required checks pass on both, including seven worked interval examples from the release archives, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, Hypersolve and Hyperdynamics numerical and fresh-process replay cases, and Hyperpath and Interface schedules locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -16433,3 +16433,78 @@ completed-workload comparisons, and would not replace it in place. The
 analytic check, the Picard search and the rest still cost about 43%, which
 bounds the achievable speedup near 2.3× on this case. Nothing is changed by
 this profile.
+
+## 2026-11-26: opt-in Taylor-mode ODE coefficients for trajectory Taylor steps
+
+This follows the cost-gap profile above, where natural evaluation of the
+Lie-derivative stage programs was 57% of an oscillator integration.
+
+**Hypersolve.** `ExpressionProgram::ode_taylor_coefficients` (`taylor-model`)
+encloses `x^(k)(tau)/k!` for solutions of `x' = f(t, x)` over a time interval
+and a state box:
+- it uses x_(k+1) = [f(t, x)]_k / (k+1), with the univariate Taylor-mode
+  coefficient computed by the same per-primitive recurrences as
+  `taylor_model`;
+- the recurrence engine now also accepts caller-supplied variable series;
+- `OdeBinding` maps binding slots to time or state lanes;
+- the result is `None` when a recurrence is unavailable, and the new
+  `TaylorError::OdeShape` rejects mismatched shapes.
+
+The new `program_taylor_ode` tests check point series exactly (to 2^-60)
+against closed forms: cos/−sin rotation, 1/(1−t), exp(t²/2) from t = 0 and
+t = 1, and a sin + ln field to degree 4. They also check corner containment
+over boxes and interval starts, the unavailable square root at zero, empty
+boxes, degree zero and the shape errors.
+
+**Hyperdynamics.** `FlowTaylorProgram::with_coefficients(FlowTaylorCoefficients::Recurrence)`
+makes `verify` take the step coefficients and the remainder coefficient from
+the recurrence, over (start, initial) and (Picard time, tube). It falls back
+to the stage formulas for whichever is unavailable. The default stays
+`Formulas`, so every existing output, fixture and QR or noise choice is
+unchanged. `restrict_order` keeps the method. Programs prepared inside the
+adaptive controller and QR evolution still use the formulas.
+
+`field_taylor_recurrence` checks rotation from a box, Riccati, time-dependent
+growth and a sin + ln/x field. Both methods must complete the same pieces,
+and every recurrence coefficient must meet the formula coefficient of the
+same step. Polynomial fields must agree to grid rounding. The transcendental
+quotient field is pinned as strictly narrower (about 5%).
+
+**Validated-dynamics corpus.** The harness used a temporary method switch,
+release builds, CPU 0 and ASLR off, at 100 iterations × 3 samples. Medians:
+
+| Case | Reuse, formulas → recurrence | Fresh |
+| --- | --- | --- |
+| oscillator point / box | 933 → 636 µs (−31.8%) / 940 → 636 µs (−32.3%) | −27.6% / −28.7% |
+| noncommuting point / box | 1283 → 817 µs (−36.3%) / 1220 → 764 µs (−37.4%) | −28.0% / −29.1% |
+| two_rate point / box | 3950 → 2968 µs (−24.9%) / 3945 → 2953 µs (−25.1%) | −23.6% / −24.0% |
+| riccati point / box | −20.5% / −20.5% | −19.3% / −18.4% |
+| exponential point / box | −16.9% / −16.0% | −14.6% / −15.3% |
+| time_growth point / box | −13.4% / −13.9% | −11.3% / −11.9% |
+| constant point / box | +5.0% / +6.0% | +4.4% / +6.1% |
+| turnaround point / box | +3.5% / +3.8% | +3.2% / +2.9% |
+
+The long tier uses noise evolution and was run only at 2 iterations × 3
+samples. It moved −0.7% to −1.3%, with one +9.9% outlier (oscillator_long
+point reuse). Its cost lies outside the coefficients.
+
+`validate.py` accepted all twenty cases for both methods (independent
+rational analytic containment and width limits). Ten of the sixteen short
+records differ in low-order bits: the recurrence was wider in 28 lane
+widths, by at most 2.27e-11 relative. Point oscillator reuse now costs
+636 µs, against CAPD's 55.7 µs on 15 November.
+
+**Default.** `Formulas` stays the default. Switching changes exact outputs
+across the pinned qualification, so like the QR backoff schedule it is
+recorded as a tracked candidate for owner review.
+
+Checks: `cargo fmt`; Clippy with `-D warnings` for Hyperdynamics with no
+features and all features, and Hypersolve all-target/all-feature; a
+per-feature `cargo check --all-targets` of all 20 Hyperdynamics features
+(emulating `cargo hack --each-feature`, which is not installed locally);
+Hypersolve 1,610 all-target/all-feature tests; Hyperdynamics no-default,
+all-target/all-feature (192), release (192) and doc tests; rustdoc with
+`-D warnings` for both crates.
+
+Evidence: csgrs-evidence e5df9af38,
+`docs/evidence/2026-11-26-interval-ode-taylor-recurrence`.

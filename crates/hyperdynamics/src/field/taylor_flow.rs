@@ -103,6 +103,23 @@ pub struct FlowTaylorProgram<const N: usize> {
     field: ExpressionField<N>,
     order: usize,
     stages: Arc<[FlowTaylorStage<N>]>,
+    coefficients: FlowTaylorCoefficients,
+}
+
+/// How each step encloses its trajectory Taylor coefficients.
+///
+/// Both methods enclose the same normalized derivatives a(k) on the same boxes,
+/// so either supplies a sound step; their enclosures, and hence widths and
+/// later step choices, can differ.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FlowTaylorCoefficients {
+    /// Natural interval evaluation of each prepared stage formula (default).
+    #[default]
+    Formulas,
+    /// Hypersolve's Taylor-mode ODE recurrence `x_(k+1) = [F(t, x)]_k / (k+1)`
+    /// on the original field, falling back to the stage formulas whenever a
+    /// recurrence is unavailable on the step's boxes.
+    Recurrence,
 }
 impl<const N: usize> ExpressionField<N> {
     /// Prepare a finite trajectory Taylor formula including its next-order remainder.
@@ -267,6 +284,7 @@ impl<const N: usize> ExpressionField<N> {
             field: self.clone(),
             order,
             stages: stages.into(),
+            coefficients: FlowTaylorCoefficients::Formulas,
         };
         budget.graph.charge(0)?;
         Ok(result)
@@ -370,6 +388,15 @@ impl<const N: usize> FlowTaylorProgram<N> {
     pub fn stages(&self) -> &[FlowTaylorStage<N>] {
         &self.stages
     }
+    /// Coefficient method used by every step of this program.
+    pub fn coefficients(&self) -> FlowTaylorCoefficients {
+        self.coefficients
+    }
+    /// The same prepared stages with another coefficient method.
+    pub fn with_coefficients(mut self, coefficients: FlowTaylorCoefficients) -> Self {
+        self.coefficients = coefficients;
+        self
+    }
     /// Verify Picard existence/uniqueness, then the full trajectory Taylor formula.
     /// One shared budget covers both attempts. A failed Taylor stage never publishes
     /// the earlier Picard result as Taylor success; it remains separately inspectable.
@@ -440,27 +467,39 @@ impl<const N: usize> FlowTaylorProgram<N> {
             .charge(N.checked_mul(2).ok_or(ExpressionError::SizeExhausted)?)?;
         let mut end = initial.clone();
         let mut tube = initial.clone();
+        let (series, remainder) = match self.coefficients {
+            FlowTaylorCoefficients::Formulas => (None, None),
+            FlowTaylorCoefficients::Recurrence => (
+                self.recurrence(start, initial, count - 1, budget)?,
+                self.recurrence(time, domain, count, budget)?,
+            ),
+        };
         for stage in self.stages.iter() {
             budget.graph.charge(1)?;
             let last = stage.degree == count;
-            let arguments = self
-                .field
-                .arguments(
-                    &stage.program,
-                    if last { time } else { start },
-                    if last { domain } else { initial },
-                    budget,
-                )?
-                .expect("nonempty certified domains");
-            let values = stage.program.eval_dyadic(
-                &arguments,
-                budget.policy.precision,
-                &mut budget.graph,
-                &mut budget.arithmetic,
-            )?;
-            budget.graph.charge(N)?;
-            let coefficient =
-                IntervalVector::new(std::array::from_fn(|i| values[stage.outputs[i]].clone()))?;
+            let recurred = if last { &remainder } else { &series };
+            let coefficient = if let Some(series) = recurred {
+                budget.graph.charge(N)?;
+                IntervalVector::new(std::array::from_fn(|i| series[i][stage.degree].clone()))?
+            } else {
+                let arguments = self
+                    .field
+                    .arguments(
+                        &stage.program,
+                        if last { time } else { start },
+                        if last { domain } else { initial },
+                        budget,
+                    )?
+                    .expect("nonempty certified domains");
+                let values = stage.program.eval_dyadic(
+                    &arguments,
+                    budget.policy.precision,
+                    &mut budget.graph,
+                    &mut budget.arithmetic,
+                )?;
+                budget.graph.charge(N)?;
+                IntervalVector::new(std::array::from_fn(|i| values[stage.outputs[i]].clone()))?
+            };
             if last {
                 evidence.remainder = Some(coefficient.clone());
             } else {
@@ -493,6 +532,35 @@ impl<const N: usize> FlowTaylorProgram<N> {
         evidence.end = Some(end);
         evidence.tube = Some(tube);
         Ok(FlowTaylorStatus::Certified)
+    }
+}
+
+impl<const N: usize> FlowTaylorProgram<N> {
+    // Taylor-mode coefficients 0..=degree on (time, state), or None when a
+    // recurrence is unavailable there and the stage formulas must be used.
+    fn recurrence(
+        &self,
+        time: &DyadicInterval,
+        state: &BoxN<DyadicInterval, N>,
+        degree: usize,
+        budget: &mut EnclosureBudget,
+    ) -> Result<Option<Vec<Vec<DyadicInterval>>>, FlowTaylorError> {
+        let lanes = state.lanes().expect("nonempty certified state");
+        let bindings = self.field.ode_bindings(budget)?;
+        self.field
+            .data
+            .jacobian
+            .source()
+            .ode_taylor_coefficients(
+                &bindings,
+                time,
+                lanes,
+                degree,
+                budget.policy.precision,
+                &mut budget.graph,
+                &mut budget.arithmetic,
+            )
+            .map_err(FlowTaylorError::Coefficient)
     }
 }
 

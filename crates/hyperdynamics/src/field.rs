@@ -356,6 +356,25 @@ impl<const N: usize> ExpressionField<N> {
         Ok(field)
     }
 
+    /// Each binding slot as time or a state lane, for ODE series.
+    #[cfg(feature = "taylor-flow")]
+    pub(crate) fn ode_bindings(
+        &self,
+        budget: &mut EnclosureBudget,
+    ) -> Result<Vec<hypersolve::expression_program::OdeBinding>, ExpressionError> {
+        use hypersolve::expression_program::OdeBinding;
+        budget.graph.check_entries(&[self.data.inputs.len()])?;
+        budget.graph.charge(self.data.inputs.len())?;
+        Ok(self
+            .data
+            .inputs
+            .iter()
+            .map(|input| match input {
+                Input::Time => OdeBinding::Time,
+                Input::State(i) => OdeBinding::State(*i),
+            })
+            .collect())
+    }
     fn arguments(
         &self,
         program: &ExpressionProgram,

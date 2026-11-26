@@ -2,6 +2,15 @@
 
 ## [0.4.0] - Unreleased
 
+- `ExpressionProgram::ode_taylor_coefficients` (`taylor-model`) encloses the
+  normalized Taylor coefficients `x^(k)(tau)/k!` of solutions of
+  `x' = f(t, x)` over a time interval and a state box with the univariate
+  Taylor-mode recurrence `x_(k+1) = [f(t, x)]_k / (k + 1)`. It reuses the same
+  per-primitive recurrences as `taylor_model`, and `OdeBinding` maps binding
+  slots to time or state lanes. It returns `None` when a recurrence is
+  unavailable on the boxes. New `TaylorError::OdeShape` reports mismatched
+  shapes.
+
 - `taylor-model` computes the exact centered coefficients with the same
   Taylor-mode recurrences in exact `Real` arithmetic, instead of generating
   repeatedly differentiated partial formulas and evaluating them at the center.

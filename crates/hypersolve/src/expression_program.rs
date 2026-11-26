@@ -610,8 +610,8 @@ pub use proposal::{FloatProposalError, FloatProposalProgram};
 mod taylor;
 #[cfg(feature = "taylor-model")]
 pub use taylor::{
-    CoefficientProgram, CoefficientRequest, TaylorError, TaylorModel, TaylorRemainderTerm,
-    TaylorRequest, TaylorTerm,
+    CoefficientProgram, CoefficientRequest, OdeBinding, TaylorError, TaylorModel,
+    TaylorRemainderTerm, TaylorRequest, TaylorTerm,
 };
 
 #[cfg(feature = "taylor-affine")]
