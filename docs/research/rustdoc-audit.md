@@ -6364,6 +6364,68 @@ Rustdoc review. This is not a crate-wide or repository-wide completion claim:
 Hyperlimit's remaining examples, benches, fuzz programs, and support/documentation
 files still require review, as does the much larger remaining repository.
 
+## Hyperlimit allocation-profile example
+
+Audited all 317 baseline lines of
+`crates/hyperlimit/examples/allocation_profile.rs` at `17c6b1fe8`. Ownership is
+development measurement instrumentation, not a predicate or allocator replacement
+for library consumers. Relevant contracts are P5 and the admission protocol's
+requirement to distinguish requested allocation traffic, retained/temporary
+memory, complete lifetime, and completed workload. The missing witness was
+accurate documentation of every private counter, allocator hook, snapshot,
+guard, fixture, and entrypoint, with private example Rustdoc rendering.
+
+Documented all 29 declarations and seven fields, including the three unsafe
+GlobalAlloc methods and their caller safety requirements. Corrected the module's
+workspace-root command to select `-p hyperlimit` explicitly. Preserved every
+executable line, operation, output string, fixture, and feature branch.
+
+The profiler forwards to System and observes process-wide allocator calls,
+including worker activity. It counts successful allocations/reallocations, but
+all observed frees regardless of allocation origin. Resizing counts full old/new
+sizes as byte traffic and changes live balance only by the size difference.
+This does not observe any simultaneous old/new storage internal to System.
+Counters begin at zero after fixture construction and one warm-up per row;
+pre-window allocations are not inventoried. Saturating subtraction can therefore
+lose exact balance information when older allocations are released. Peak and
+retained columns are estimates for the observation window, not complete-lifetime
+or resident memory, allocator overhead, or per-predicate ownership accounting.
+
+Documented relaxed independent snapshots, non-overlapping/non-nested measurement
+preconditions, reset/in-flight-event limitations, unchecked count growth, and
+guard behavior during ordinary unwinding. Returned report/vector destruction is
+inside the measured loop; fixtures and warm-up are outside it. The optional
+positive iteration argument defaults to 256, and each batch invocation counts
+as one operation. Parallel builds add an eleventh row to ten ordinary rows.
+Results are black-boxed and dropped, with no geometry-success or certainty
+assertion. Thus printed totals alone do not prove exact workload completion or
+resource-contract compliance; this audit makes no new performance claim.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. A scoped scan confirms docs on
+  all declarations/fields; comment-only/blank-line removal gives source identical
+  to baseline without other normalization.
+- `cargo check --locked -p hyperlimit --example allocation_profile --all-features
+  --offline -j2` and the same command with `--no-default-features` passed.
+- `cargo rustdoc --locked -p hyperlimit --example allocation_profile
+  --all-features --offline -j2 -- --document-private-items -D warnings
+  -D rustdoc::broken_intra_doc_links -D rustdoc::private_intra_doc_links` passed,
+  as did the corresponding no-default-features command. Verified all 37 complete
+  doc groups across 24 pages in each build, including seven fields and all
+  allocator/Drop implementation methods. The render checker excludes Markdown
+  code-fence delimiters when comparing the module command with HTML text.
+- No profiler invocation or runtime test ran; no allocation figures were
+  collected. No library implementation changed, so the affected consumers are
+  the two compiled example configurations rather than downstream geometry.
+  Shared target storage remains about 1.6 GiB with incremental compilation off.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-allocation-{check,minimal-check,doc,minimal-doc}.log`.
+The owner has waived full workflow validation for this docs-only session.
+Remaining Hyperlimit examples include `perf_atlas.rs` and
+`write_benchmarks_md.rs`; their surrounding benchmark/report modules also need
+whole-file review. The broader repository goal remains active and incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
