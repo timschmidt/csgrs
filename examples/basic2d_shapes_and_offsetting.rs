@@ -1,12 +1,21 @@
 //! Basic 2D curves, including offset variants, exported as flat STL files.
+//! Requires `curve,stl-io`; `offset` enables two additional outputs. Circular
+//! profiles are sampled polygons. Ring/keyhole Booleans permit `APPROXIMATE_512`
+//! and immediately extract values, so their operation receipts are not reported.
+//! Subsequent strict triangulation is not a certification of earlier decisions
+//! or analytic-circle fidelity. Writes/replaces files beneath the working directory.
 
 use csgrs::{GeometryContext, curve, io::stl::to_stl_binary};
 use hypercurve::CurveRegion2;
 use hyperlattice::Real;
 use std::{fs, path::Path};
 
+/// Relative output directory for planar triangulations serialized as binary STL.
 const PATH: &str = "stl/examples/basic2d_shapes";
 
+/// Exports a square, sampled disk, polygonal annulus and sampled keyhole.
+/// With `offset`, also expands the square using bounded miter joins and contracts
+/// the sampled disk using round joins. Errors panic; earlier files are not rolled back.
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
@@ -44,10 +53,14 @@ fn main() {
     }
 }
 
+/// Promotes each finite binary64 fixture value exactly; nonfinite values panic.
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("example values must be finite")
 }
 
+/// Strictly triangulates a planar region, extracts the outcome and writes binary STL.
+/// This is a flat triangle mesh rather than a closed solid. Triangulation/export/
+/// write errors panic; operation and export evidence are not reported or saved.
 fn write_curve(region: &CurveRegion2, name: &str) {
     fs::write(
         Path::new(PATH).join(name).with_extension("stl"),

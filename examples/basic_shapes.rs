@@ -1,10 +1,17 @@
 //! Basic 3D primitives exported as STL files.
+//! Requires the manifest's `curve,stl-io` features. Sphere, cylinder, ellipsoid
+//! and torus outputs are finite meshes, not analytic surfaces. Finite float
+//! arguments enter as their exact binary values; STL is a lossy terminal export.
+//! Existing files are replaced, and a later failure leaves earlier files in place.
 
 use csgrs::{TriangleMesh, io::stl::to_stl_binary, solid};
 use std::{fs, path::Path};
 
+/// Output directory relative to the process working directory, created by `main`.
 const PATH: &str = "stl/examples/basic_shapes";
 
+/// Constructs five primitive meshes with fixed sample counts and exports each.
+/// Panics on construction, directory, export or write failure; no shape oracle is asserted.
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
@@ -27,6 +34,8 @@ fn main() {
     );
 }
 
+/// Replaces one named binary STL file under `PATH`, panicking on export or IO failure.
+/// Does not retain export evidence or reimport/validate the written artifact.
 fn write_mesh(mesh: &TriangleMesh, name: &str) {
     fs::write(
         Path::new(PATH).join(name).with_extension("stl"),

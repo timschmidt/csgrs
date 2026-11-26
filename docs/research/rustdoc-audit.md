@@ -34,6 +34,16 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `examples/basic.rs` | Entire file; documented strict-session receipt scope, through opening, terminal STL and working-directory output. | Private example docs/rendering passed; assertions unchanged, example not run. |
+| `examples/scalar_adapter.rs` | Entire file; documented adapter alias, exact finite ingress, projected bounds and fixture-specific equality assertions. | Private example docs/rendering passed; assertions unchanged, example not run. |
+| `examples/basic_shapes.rs` | Entire file; documented sampled primitive scope, output constant, construction and writer failure behavior. | Private example docs/rendering passed; no STL files generated. |
+| `examples/boolean_operations.rs` | Entire file; documented separate strict operations, sampled sphere, output files and absence of an independent set oracle. | Private example docs/rendering passed; operations not executed. |
+| `examples/transformations.rs` | Entire file; documented independent transform demonstrations, degree angles, matrix order, exact numeric ingress and file replacement. | Private example docs/rendering passed; operations not executed. |
+| `examples/adjacency_demo.rs` | Entire file; documented directed adjacency count, original-mesh smoothing runs and vertex-zero displacement assertion scope. | Private example docs/rendering passed; assertion unchanged, not rerun. |
+| `examples/convex_hull.rs` | Entire file; documented union-position hull, sampled operand, sequential exports and failure behavior. | Private example docs/rendering passed; geometry not executed. |
+| `examples/minkowski_sum.rs` | Entire file; documented represented-set sum versus analytic-ball offset and terminal export. | Private example docs/rendering passed; geometry not executed. |
+| `examples/basic2d_shapes_and_offsetting.rs` | Entire file; documented policy/receipt extraction, sampled profiles, optional join conventions and flat triangulated exports. | Private example docs passed with and without `offset`; no modeling or exports run. |
+| `examples/extrude.rs` | Entire file; documented sampled profiles/revolution/path, binary64 helix ingress, helpers and output behavior; corrected overbroad axis-side comment. | Private example docs/rendering passed; no modeling or exports run. |
 | `benchmarks/rust/part_blueprint.rs` | Entire file; documented fixture construction, authored metadata, fixed timing boundary and edge-count limitations. | Formatting/comment-only comparison passed; benchmark source-reviewed, not executed or newly compiled. |
 | `benchmarks/support/harness.rs` | Entire file; documented every setting, timing/selection method, field, measurement helper, CSV formatter and trace helper. | Standalone private Rustdoc passed with and without dispatch tracing; 13 rendered pages inspected. Benchmark workloads not run. |
 | `fuzz/fuzz_targets/fuzz_part_blueprint.rs` | Entire file; documented exact fixture ingress, byte grammar, witness scope and existing short-record indexing gap. | Formatting/comment-only comparison passed; independent byte-chunk domain check executed. No fuzz runtime/compile result claimed. |
@@ -2300,6 +2310,57 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-bench-harness-doc.log` and
 `/tmp/csgrs-rustdoc-bench-harness-trace-doc.log`.
+
+### Primitive, transform and profile examples, 26 November 2026
+
+Baseline: `284f4ada4`. Owners: root-package executable API examples,
+P3/P6/P8/P9/P19/P25/P26/P29/P30/P37. Domain: strict-session construction,
+scalar-adapter bounds, sampled primitives/profiles, native transforms and
+Boolean/hull/Minkowski composition, followed by terminal binary STL. Read all ten
+files above in full, including every constant, alias and helper. Supporting reads
+of manifest feature requirements, already-reviewed native wrappers and kernel
+adjacency/offset contracts do not add whole-file review credit elsewhere.
+
+Missing acceptance witnesses were absent main/helper/module docs and incomplete
+claims about mathematical source and output behavior. Documentation now separates
+sampled circles/spheres/revolutions from analytic geometry, exact binary64 ingress
+from decimal interpretation, local/session receipts from terminal export, and
+fixture-specific assertions from general shape correctness. Ring/keyhole examples
+permit `APPROXIMATE_512` and extract values without reporting receipts; later strict
+triangulation does not independently certify earlier decisions. The sweep path is
+computed in binary64 before native promotion. The prior revolution comment asserted
+a universal one-sided-axis prerequisite inconsistent with the current full-turn
+implementation; it now explains the actual torus fixture's placement.
+
+Output paths are relative to the process working directory. Writers replace files,
+do not atomically publish a whole example's outputs and leave earlier artifacts
+after a later panic. The strict-session example propagates modeling/export/IO
+errors, while most other examples unwrap them. No executable behavior changed.
+
+Validation after source edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on all ten
+  files and `git diff --check`: passed after the final edit.
+- Removing only blank/comment lines gives identical source to baseline in all
+  ten files. All 31 constants/aliases/functions have Rustdoc; no expressions,
+  assertions, fixture values, policies or feature gates changed.
+- Reused `/tmp/csgrs-rustdoc-target` with incremental compilation disabled and
+  broken Rustdoc links denied. `cargo doc --locked -p csgrs --no-default-features
+  --features curve,stl-io,offset --document-private-items --no-deps --offline -j 2`,
+  selecting all ten files by repeated `--example NAME`, passed. The same selection
+  with `--features curve,stl-io` passed after the last comment edit. Both logs were
+  checked and contain no warnings. The rendered source includes the corrected
+  revolution comment.
+- Inspected 41 rendered pages (ten example roots and 31 declarations), including
+  feature, sampling, output, matrix-order and receipt contracts. This verifies
+  documentation generation, not execution of modeling operations or assertions.
+- No examples, runtime tests or full workflows were run under the owner's
+  docs-only waiver. No STL output was generated. Cached development dependencies
+  increased the single temporary build tree to approximately 1.3 GiB; no duplicate
+  tree or repository build artifacts were added.
+
+Logs: `/tmp/csgrs-rustdoc-small-examples-doc.log` and
+`/tmp/csgrs-rustdoc-small-examples-no-offset-doc.log`.
 
 ## Next work
 

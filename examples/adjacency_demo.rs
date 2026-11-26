@@ -1,8 +1,15 @@
 //! Demonstrates native Hypermesh connectivity and Laplacian smoothing.
+//! The sphere is a finite indexed mesh. Printed edge uses count directed vertex
+//! adjacency entries, not triangle-edge multiplicity. The displacement assertion
+//! concerns vertex zero after one iteration; it does not establish global shape
+//! quality, volume preservation or a general smoothing convergence result.
 
 use csgrs::solid;
 use hyperlattice::Real;
 
+/// Prints adjacency statistics and compares one-step smoothing at two positive weights.
+/// Both runs start from the original mesh. Native failures, missing vertex zero
+/// or a failed displacement-order assertion panic; no files are written.
 fn main() {
     let sphere = solid::sphere(1.0, 16, 8).expect("valid primitive fixture");
     let adjacency = sphere.adjacency().expect("sphere connectivity");
@@ -33,6 +40,8 @@ fn main() {
     println!("weak_change={weak_change} strong_change={strong_change}");
 }
 
+/// Promotes finite binary64 exactly, so `0.1` here is not the rational one tenth.
+/// Panics if supplied a nonfinite value.
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("example values must be finite")
 }
