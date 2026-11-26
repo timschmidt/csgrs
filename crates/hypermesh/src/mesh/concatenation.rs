@@ -2,6 +2,11 @@
 
 use super::*;
 
+/// Add an element count and require its inline bytes to fit the Vec isize bound.
+///
+/// Checked addition and multiplication distinguish overflow from a valid length;
+/// failures retain the caller's operation label. This neither reserves memory
+/// nor accounts for allocations owned by individual elements or later buffers.
 fn add_capacity<T>(
     total: usize,
     additional: usize,
@@ -97,8 +102,10 @@ impl TriangleMesh {
 
 #[cfg(test)]
 mod tests {
+    //! Structural composition, checked capacities and retained-proof identity witnesses.
     use super::*;
 
+    /// One open triangle with valid unit-coordinate index rows.
     fn open() -> TriangleMesh {
         TriangleMesh::new(
             vec![
@@ -110,6 +117,7 @@ mod tests {
         )
     }
 
+    /// Outward-wound unit-axis tetrahedron, initially without a retained PWN proof.
     fn tetrahedron() -> TriangleMesh {
         TriangleMesh::new(
             vec![
@@ -127,6 +135,8 @@ mod tests {
         )
     }
 
+    /// Open triangles and unused positions keep exact source order and rebased
+    /// indices without a PWN fact; no inputs produces two empty buffers.
     #[test]
     fn open_buffers_and_unused_points_preserve_exact_order_and_multiplicity() {
         let source = open();
@@ -152,6 +162,8 @@ mod tests {
         assert!(empty.positions.is_empty() && empty.triangles.is_empty());
     }
 
+    /// Missing and maximal indices fail before rebasing in either source order,
+    /// retaining the source-local index and position count.
     #[test]
     fn invalid_source_indices_cannot_alias_another_input_or_wrap() {
         for index in [1, usize::MAX] {
@@ -169,6 +181,8 @@ mod tests {
         }
     }
 
+    /// Addition, inline-byte multiplication and the isize bound yield the same
+    /// typed capacity error before any reservation is attempted.
     #[test]
     fn count_and_byte_overflow_are_typed_before_reservation() {
         for (total, additional) in [
@@ -185,6 +199,8 @@ mod tests {
         }
     }
 
+    /// Mixed proof certainty stays approximate until a fresh strict polygon-soup
+    /// proof succeeds; strict consumption never treats the weaker fact as a proof.
     #[test]
     fn concatenation_preserves_weakest_pwn_fact_and_allows_new_strict_proof() {
         let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
@@ -208,6 +224,8 @@ mod tests {
         );
     }
 
+    /// Position/index mutation invalidates retained proof reuse or fails index
+    /// checks, while a canonical empty prefix preserves an unchanged source proof.
     #[test]
     fn edited_sources_do_not_transfer_stale_pwn_facts() {
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);

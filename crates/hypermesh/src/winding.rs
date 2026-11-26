@@ -36,7 +36,7 @@ pub enum BooleanOp {
 /// One node in a topologically ordered Boolean truth DAG.
 ///
 /// Node references must name an earlier node. Operand indices address the
-/// ordered mesh slice passed to [`crate::boolean`]. An [`Self::Operation`]
+/// ordered mesh slice passed to [`crate::boolean()`]. An [`Self::Operation`]
 /// node applies a built-in variadic operation to every input operand.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BooleanExpression {

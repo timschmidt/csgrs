@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
+| `tests/distribution_contracts.rs` | Entire file; documented every helper and admission, placement, certainty, capacity, multiplicity and cache witness. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
+| `tests/native_queries.rs` | Entire file; documented ray parameter, copy-count and hull-count expectations with their scope. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/implicit/sdf.rs` | Entire file; documented diagnostic fields, strict preview storage, indexed sampling and private grid helpers. | Private docs passed with `sdf`, `metaballs` and both; generated public/private contracts inspected. |
 | `src/implicit/metaballs.rs` | Entire file; documented report fields, bordered sampling, empty behavior and private transfer/bounds helpers. | Private docs passed with `metaballs` and `sdf,metaballs`; generated pages inspected. |
 | `src/implicit/tpms.rs` | Entire file including local extraction helpers/constants and tests; documented field formulas, band units, sampling and cache invariants. | Private docs passed with `sdf` and `sdf,metaballs`; local items/tests reviewed in source. |
@@ -617,9 +620,79 @@ test assertion or performance claim changed. A generated-text check was adjusted
 for Rustdoc's smart apostrophe; combined pages were regenerated after the minimal
 build removed feature-gated output from the shared directory.
 
+### Distribution, queries and concatenation batch, 26 November 2026
+
+Owners: CSGRS distribution/query grammar, Hypermesh structural concatenation, and
+the Hyperphysics mass-report boundary; P1/P4/P6/P8/P9/P17/P18/P19/P20/P25/P30/P37.
+Baseline: `55a0f4abb`. **Partial solid file:** reviewed `src/solid.rs` from `merge`
+through `exact_mass_properties`, including every body and fallback/receipt path.
+Resume at `flatten`; later sections were encountered but have not earned audit
+credit. Read every line of `crates/hypermesh/src/mesh/concatenation.rs`, including
+unit tests, and `tests/distribution_contracts.rs` and `tests/native_queries.rs`.
+Supporting reads covered native mesh queries, ray/triangle classification, vector
+normalization/angles, Hyperphysics integration/admission and distribution caches;
+those owning files remain outside whole-file credit.
+
+Missing witnesses: the distribution admission, buffer and union helpers lacked
+Rustdoc, as did the native concatenation capacity helper and test declarations.
+Public summaries omitted important placement, fallback and query/error semantics.
+Documented row/column order, signed normalized linear spacing, global-Z arc
+rotation, angular midpoint for one copy and unreduced sweeps. Canonical-empty and
+zero-copy paths still validate their applicable source/direction requirements;
+copy-capacity checks happen only after those shortcuts. Cache keys/receipts and
+inherited mesh qualifications are described without asserting a total resource
+bound.
+
+Disjoint bounds permit structural concatenation, retaining source winding
+multiplicity instead of normalizing each boundary. Failed/missing bounds and
+undecided overlap hints trigger ordered Boolean fallback; successful hint receipts
+already consumed remain in aggregate certainty. Concatenation preserves all rows,
+validates indices before rebasing and transfers current closed-PWN facts only when
+all nonempty operands supply one. The helper's inline-byte/count checks do not
+bound nested scalar or later allocation costs.
+
+Query docs specify ray parameterization, coplanar omission, sorted/deduplicated
+contacts, per-segment polyline order and the short-polyline validation shortcut.
+Dihedral measurement uses supplied indexed normals without adjacency validation;
+its convenience form erases native failures into `None`. Mass-property docs now
+state the caller's closed/oriented-geometry obligation, signed integration and
+orientation normalization, absent source qualifications and conversion of physics
+errors into debug-text `ValidationError::Geometry`. Exact scalar arithmetic alone
+does not establish physical validity or preserve typed native error sources.
+
+The first Hypermesh private-doc build reproduced two ambiguous `boolean` links
+at this revision, in `src/lib.rs` and `src/winding.rs`. Inspected their surrounding
+API context and disambiguated both as function links with `()`. Those targeted
+repairs do not establish full-file semantic review of either file. Read the whole
+`crates/hypermesh/AGENTS.md`; its full pre-push checks are covered by the owner's
+session-specific docs-only waiver, with focused checks used here.
+
+Validation after edits:
+
+- `rustfmt --check --edition 2024 --config skip_children=true` on all six edited
+  Rust files: passed. `git diff --check`: passed.
+- Every nonblank, non-comment source line matches baseline in all six Rust files,
+  including test assertions, predicate order, fallback branches and cache behavior.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p hypermesh
+  --document-private-items --no-deps --offline`: passed without warnings after the
+  two function-link repairs.
+- Equivalent private-doc builds for `-p csgrs --no-default-features`, with and
+  without `--features curve`: passed without warnings.
+- Inspected twelve generated public/private contracts for merge, distribution
+  helpers/layouts, queries, mass properties and native capacity checking. Both
+  repaired links resolve to function pages. Unit/integration-test Rustdoc was
+  reviewed in source, not claimed as rendered by ordinary library builds.
+
+Logs: `/tmp/csgrs-rustdoc-concatenation-doc.log`,
+`/tmp/csgrs-rustdoc-distribution-minimal-doc.log` and
+`/tmp/csgrs-rustdoc-distribution-curve-doc.log`. Shared temporary build storage
+is about 160 MiB. Full workflow/runtime checks remain waived for this docs-only
+session. No implementation, assertion or performance claim changed.
+
 ## Next work
 
-Resume `src/solid.rs` at `merge`, then continue through native operations and the
+Resume `src/solid.rs` at `flatten`, then continue through native operations and the
 remaining root modules, then the owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file

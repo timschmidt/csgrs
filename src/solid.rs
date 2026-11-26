@@ -2150,6 +2150,13 @@ pub fn float_with_context(
 /// Open surfaces and winding multiplicity are preserved. This is structural
 /// composition, not a Boolean union or a topology validation. Native index and
 /// capacity checks run before rebasing; only successful results are cached.
+/// Unused positions and duplicate triangles are retained. An empty input list
+/// yields canonical empty geometry; input construction qualifications combine
+/// even for empty operands. Retained closed-PWN facts transfer only when every
+/// nonempty source has a current fact, preserving its weakest certainty.
+///
+/// The thread-local cache keys ordered source buffers and construction evidence.
+/// Its entry limit and native buffer checks are not total-work or heap-byte bounds.
 pub fn merge(meshes: &[TriangleMesh]) -> Result<TriangleMesh, ValidationError> {
     if let Some(result) = retained_merge(meshes) {
         return Ok(result);
@@ -2159,6 +2166,10 @@ pub fn merge(meshes: &[TriangleMesh]) -> Result<TriangleMesh, ValidationError> {
     Ok(result)
 }
 
+/// Return whether the source is canonical empty, validating every other source
+/// as closed PWN geometry under the selected policy and consuming its receipt.
+/// Position-only and triangle-only buffers are not accepted as empty. Callers
+/// invoke this before zero/one-copy or disjoint-bounds shortcuts on a cache miss.
 fn validate_distribution_source(
     mesh: &TriangleMesh,
     decisions: &GeometryDecisions,
@@ -2172,6 +2183,11 @@ fn validate_distribution_source(
     Ok(is_empty)
 }
 
+/// Check aggregate inline position/triangle bytes and reserve the copy carriers.
+///
+/// Also requires `count` to fit u64, making later index-to-scalar casts exact.
+/// Does not allocate the copied geometry yet or bound scalar, Boolean, cache or
+/// temporary storage. Arithmetic/reservation failures retain typed diagnostics.
 fn distribution_buffer(
     mesh: &TriangleMesh,
     count: usize,
@@ -2183,6 +2199,18 @@ fn distribution_buffer(
     reserved(count)
 }
 
+/// Combine caller-validated copies, concatenating when their bounds are disjoint.
+///
+/// Successful bounds receipts and overlap classifications feed `decisions`.
+/// Missing bounds, a bounds error, touching/overlapping boxes or an undecided
+/// overlap test disables concatenation and falls back to left-to-right Boolean
+/// union. Bounds are an optional shortcut; their failure alone is not returned.
+/// Approximate classifications already consumed remain in aggregate certainty.
+///
+/// Concatenation preserves each copy's winding multiplicity and source faces;
+/// the represented union need not have a normalized boundary. With zero copies
+/// returns canonical empty geometry; a single copy can avoid Boolean work.
+/// Callers must have validated the sources and supported transforms first.
 fn union_copies(
     copies: Vec<TriangleMesh>,
     decisions: &GeometryDecisions,
@@ -2236,6 +2264,9 @@ fn union_copies(
 
 /// Unions `count` copies along a direction at exact spacing under strict policy.
 /// Invalid sources, zero direction and undecided predicates remain typed errors.
+/// See [`distribute_linear_with_context`] for placement and cache semantics.
+/// Exact [`IntoReal`] spacing conversion occurs before source validation; the
+/// convenience result retains construction evidence without a separate receipt.
 pub fn distribute_linear(
     mesh: &TriangleMesh,
     count: usize,
@@ -2252,6 +2283,17 @@ pub fn distribute_linear(
 /// The source must be canonical empty or valid closed PWN input. Validation and
 /// the nonzero-direction requirement also apply to zero-copy layouts. Spacing
 /// may be zero or negative. Checked copy buffers are not a total-work budget.
+///
+/// Copy `i` is translated by `i * spacing * normalize(direction)`, starting at
+/// the source placement for `i = 0`. After the policy-selected squared-norm check,
+/// nonempty layouts use native checked normalization, whose scalar guards can
+/// still fail independently of the selected predicate policy. Empty sources or
+/// zero count return before normalization and copy-capacity checks.
+///
+/// Disjoint bounds permit concatenation with source multiplicity retained;
+/// otherwise copies are unioned in order. Construction history and consumed
+/// certainty survive both paths. Completed non-shortcut results are cached by
+/// source buffers/evidence, layout and context; cache hits return the stored receipt.
 pub fn distribute_linear_with_context(
     mesh: &TriangleMesh,
     count: usize,
@@ -2299,6 +2341,8 @@ pub fn distribute_linear_with_context(
 }
 
 /// Unions copies in an XY grid under strict policy, preserving typed failures.
+/// Exact spacing conversion precedes source validation. See
+/// [`distribute_grid_with_context`] for placement and receipt-bearing results.
 pub fn distribute_grid(
     mesh: &TriangleMesh,
     rows: usize,
@@ -2315,6 +2359,13 @@ pub fn distribute_grid(
 /// Distributes and unions a grid with the selected policy and aggregate certainty.
 /// Source validation also applies when a row/column count is zero. Signed and
 /// zero spacing are supported; count/byte/reservation failures are typed.
+///
+/// Visits rows then columns, translating by `(column * dx, row * dy, 0)` without
+/// rotating the source. Canonical empty sources or a zero dimension return empty
+/// before multiplying counts or allocating copies. Disjoint copies concatenate
+/// with multiplicity preserved; overlapping bounds use ordered Boolean unions.
+/// Source history and local certainty remain, with completed non-shortcut results
+/// cached by source buffers/evidence, layout and context.
 pub fn distribute_grid_with_context(
     mesh: &TriangleMesh,
     rows: usize,
@@ -2361,6 +2412,8 @@ pub fn distribute_grid_with_context(
 }
 
 /// Unions copies along an XY arc under strict policy, preserving typed failures.
+/// Exact scalar conversions run before source validation. See
+/// [`distribute_arc_with_context`] for the rotation and angular sampling rules.
 pub fn distribute_arc(
     mesh: &TriangleMesh,
     count: usize,
@@ -2385,6 +2438,17 @@ pub fn distribute_arc(
 /// Distributes and unions an arc with the selected policy and aggregate certainty.
 /// The source is validated even with zero copies. Radius and sweep are directed;
 /// one copy uses the angular midpoint, while multiple copies include both ends.
+///
+/// First translates the whole source by `(radius, 0, 0)`, then rotates each copy
+/// about the global Z axis. Thus the source's orientation rotates too. Copy `i`
+/// uses `start + (end - start) * i / (count - 1)` for count > 1. Angles are in
+/// degrees and are not reduced to a shortest sweep; a full turn repeats endpoints.
+/// Zero or negative radius is accepted. Empty sources/zero count return before
+/// evaluating angular placement or allocating copies.
+///
+/// Uses the same disjoint-concatenation/ordered-union strategy and source/layout/
+/// context cache as [`distribute_linear_with_context`], retaining construction
+/// history and local certainty. Checked copy storage is not a total-work budget.
 pub fn distribute_arc_with_context(
     mesh: &TriangleMesh,
     count: usize,
@@ -2456,6 +2520,9 @@ pub fn contains_point(
 ///
 /// Source validation and query decisions share the returned certainty receipt.
 /// A cached approximate validation fact cannot certify a strict query.
+/// Filled-set and canonical-empty semantics match [`contains_point`]. The returned
+/// Boolean and local receipt do not carry the source's construction qualifications
+/// or certify its fidelity to an earlier analytic model.
 pub fn contains_point_with_context(
     mesh: &TriangleMesh,
     point: &Point3,
@@ -2466,7 +2533,19 @@ pub fn contains_point_with_context(
     Ok(decisions.finish(inside))
 }
 
-/// Exact ray intersections sorted by ray parameter.
+/// Reports isolated ray/triangle contacts in increasing ray parameter order.
+///
+/// A hit is `(point, t)` on `origin + t * direction` with nonnegative `t`;
+/// direction is not normalized, so `t` need not be distance. Proper crossings and
+/// boundary touches are included, while coplanar overlap is omitted. Consecutive
+/// equal hit points are deduplicated under `context`, including shared-edge and
+/// shared-vertex contacts. The receipt covers intersection, ordering and equality.
+///
+/// Native queries validate referenced indices as triangles are visited, without
+/// requiring a closed solid or separately rejecting zero direction/degenerate
+/// triangles. No triangles yields no hits without point/direction validation.
+/// Source construction qualifications are not part of the query outcome, and
+/// no total-work, heap-byte or cancellation bound is imposed here.
 pub fn ray_intersections(
     mesh: &TriangleMesh,
     origin: &Point3,
@@ -2482,7 +2561,10 @@ pub fn ray_intersections(
     Ok(decisions.finish(hits))
 }
 
-/// Exact intersections between native triangle geometry and a polyline.
+/// Reports isolated triangle contacts along consecutive polyline segments, strictly.
+///
+/// Uses [`polyline_intersections_with_context`]'s ordering and overlap rules
+/// under strict policy, returning points without a separate predicate receipt.
 pub fn polyline_intersections(
     mesh: &TriangleMesh,
     polyline: &[Point3],
@@ -2492,6 +2574,15 @@ pub fn polyline_intersections(
 }
 
 /// Intersects a polyline with the selected policy and reports aggregate certainty.
+///
+/// Visits `polyline.windows(2)` in order, treating each segment as a ray and
+/// retaining hits with parameter in `[0, 1]`. Applies [`ray_intersections`]'s
+/// coplanar-omission and per-segment sorting rules, suppressing only consecutive
+/// equal output points; revisiting a point later in the path can emit it again.
+///
+/// Fewer than two points returns no hits without inspecting mesh indices. No
+/// closed-solid or polyline-simplicity validation is performed. The outcome keeps
+/// local predicate certainty, without inherited source construction history.
 pub fn polyline_intersections_with_context(
     mesh: &TriangleMesh,
     polyline: &[Point3],
@@ -2503,9 +2594,13 @@ pub fn polyline_intersections_with_context(
     Ok(decisions.finish(hits))
 }
 
-/// Exact dihedral angle between two indexed triangles.
+/// Angle in radians between two indexed triangles' oriented normals, under strict policy.
 ///
-/// The angle is measured between the triangles' oriented plane normals.
+/// Triangles need not share an edge or occur in the mesh's triangle buffer; their
+/// indices select position rows. This is the unsigned normal angle, not an
+/// oriented interior/exterior solid angle. Every native failure becomes `None`,
+/// discarding its diagnostic; [`dihedral_angle_with_context`] retains errors and
+/// the local predicate receipt.
 pub fn dihedral_angle(
     mesh: &TriangleMesh,
     first: hypermesh::Triangle,
@@ -2517,6 +2612,12 @@ pub fn dihedral_angle(
 }
 
 /// Measures a dihedral angle with the selected policy, preserving errors and certainty.
+///
+/// Uses the supplied triangles' positions to form and normalize their cross-product
+/// normals, then computes their angle in radians. Checks indices and policy-selected
+/// nondegeneracy; native normalization and angle arithmetic may still fail. Does
+/// not validate adjacency, membership in the stored triangle buffer or mesh closure.
+/// The receipt records consumed predicates, without source construction history.
 pub fn dihedral_angle_with_context(
     mesh: &TriangleMesh,
     first: Triangle,
@@ -2532,7 +2633,19 @@ pub fn dihedral_angle_with_context(
     Ok(decisions.finish(angle))
 }
 
-/// Exact uniform-density mass properties through Hyperphysics.
+/// Integrates oriented triangle mass properties through Hyperphysics using exact scalars.
+///
+/// Requires density that Hyperphysics can prove positive and nonzero accumulated
+/// signed volume with a decidable sign. Reports volume, mass, center and inertia,
+/// retaining the signed volume and whether inward orientation was flipped.
+/// The caller must establish appropriate closed oriented geometry: this path
+/// checks referenced indices and nonempty facets, but does not validate closure,
+/// embedding or regularize winding multiplicity before integration.
+///
+/// Source construction qualifications are not incorporated in the physics report.
+/// Hyperphysics caches successful reports by immutable buffers and density.
+/// Density conversion errors remain typed; physics failures are currently mapped
+/// to [`ValidationError::Geometry`] with debug text, losing their typed source.
 pub fn exact_mass_properties(
     mesh: &TriangleMesh,
     density: impl IntoReal,

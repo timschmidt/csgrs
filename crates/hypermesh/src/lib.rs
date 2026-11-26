@@ -3,7 +3,7 @@
 
 //! Exact `hyperreal::Real` triangle-mesh geometry and Boolean operations.
 //!
-//! [`boolean`] validates a non-empty slice of finite closed
+//! [`boolean()`] validates a non-empty slice of finite closed
 //! piecewise-winding-number mesh views, constructs one exact source-face and
 //! radial-cell arrangement, evaluates a [`BooleanProgram`], and returns a
 //! closure-certified [`BooleanMeshBatch`]. All requested roots share the same

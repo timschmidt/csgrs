@@ -1,3 +1,7 @@
+//! Distribution placement, source admission, certainty, capacity and cache contracts.
+//! Independent volume and membership expectations accompany downstream Boolean reuse;
+//! preserved oriented multiplicity is distinguished from regularized-set volume.
+
 use csgrs::{
     GeometryCertainty, GeometryContext, GeometryOutcome, Real, TriangleMesh,
     errors::{ValidationError, ValidationErrorKind},
@@ -9,18 +13,23 @@ use csgrs::{
 use hypermesh::{BooleanOp, HypermeshError, Point3, Triangle, Vector3};
 use std::{error::Error, sync::Arc};
 
+/// Promote an integer fixture exactly.
 fn r(n: i32) -> Real {
     n.into()
 }
+/// Construct an exact rational fixture with a nonzero denominator.
 fn q(n: i32, d: i32) -> Real {
     (r(n) / r(d)).unwrap()
 }
+/// Require certified scalar equality through precision -1024; undecided fails.
 fn exact(a: &Real, b: &Real) {
     assert_eq!(a.certified_eq_until(b, -1024).as_bool(), Some(true));
 }
+/// Recognize canonical empty geometry by both native buffers being empty.
 fn canonical_empty(mesh: &TriangleMesh) -> bool {
     mesh.positions.is_empty() && mesh.triangles.is_empty()
 }
+/// Exercise linear, one-row grid and quarter-turn arc layouts under one context.
 fn families(
     mesh: &TriangleMesh,
     count: usize,
@@ -32,6 +41,9 @@ fn families(
         solid::distribute_arc_with_context(mesh, count, r(3), r(0), r(90), context),
     ]
 }
+/// Assert an exact divergence-theorem volume against an independent fixture value.
+/// Requires each face flux to have a proved rational normal form before summing;
+/// oriented source multiplicity contributes unless the mesh was regularized.
 fn volume(mesh: &TriangleMesh, expected: Real) {
     // Divergence theorem with F=(0,0,z). Each fixture's exact face flux is
     // rational. Prove every term before summing, avoiding a large unreduced
@@ -46,12 +58,15 @@ fn volume(mesh: &TriangleMesh, expected: Real) {
     });
     exact(&six, &(r(6) * expected));
 }
+/// Compare strict filled-set containment with a supplied fixture expectation.
 fn contains(mesh: &TriangleMesh, x: Real, y: Real, z: Real, expected: bool) {
     assert_eq!(
         solid::contains_point(mesh, &Point3::new(x, y, z)).unwrap(),
         expected
     );
 }
+/// Require the native strict geometric edge-closure/triangle-validity check.
+/// This assertion alone is not a general embedded-manifold certificate.
 fn topology(mesh: &TriangleMesh) {
     assert!(
         mesh.is_closed_manifold_geometry(&GeometryContext::STRICT.mesh_context())
@@ -60,6 +75,8 @@ fn topology(mesh: &TriangleMesh) {
     );
 }
 
+/// Malformed, partial-empty, open, degenerate and unbalanced sources fail before
+/// zero/one/disjoint-copy shortcuts, preserving native causes without cache entries.
 #[test]
 fn source_validation_precedes_zero_one_and_disjoint_copy_shortcuts() {
     let cube = solid::cube(r(1)).unwrap();
@@ -116,6 +133,8 @@ fn source_validation_precedes_zero_one_and_disjoint_copy_shortcuts() {
     assert_eq!(cache::usage().distributions, 0);
 }
 
+/// Empty and zero-copy results compose with later Booleans/distributions under
+/// both policies, while zero direction remains invalid even for empty layouts.
 #[test]
 fn canonical_empty_and_zero_copy_outputs_remain_composable() {
     let cube = solid::cube(r(1)).unwrap();
@@ -152,6 +171,8 @@ fn canonical_empty_and_zero_copy_outputs_remain_composable() {
     }
 }
 
+/// Count/byte overflow is typed, leaves no distribution cache entry and permits
+/// a later ordinary layout with independently expected volume and edge closure.
 #[test]
 fn capacity_exhaustion_is_typed_and_leaves_subsequent_work_available() {
     let cube = solid::cube(r(1)).unwrap();
@@ -172,6 +193,9 @@ fn capacity_exhaustion_is_typed_and_leaves_subsequent_work_available() {
     topology(&recovered);
 }
 
+/// A retained Pythagorean relation completes strictly; an unresolved double-angle
+/// contact keeps native causes and approximate receipts across policy retries,
+/// both with caching enabled and disabled.
 #[test]
 fn native_causes_and_consumed_certainty_survive_strict_approximate_strict() {
     let cube = solid::cube(r(1)).unwrap();
@@ -225,6 +249,9 @@ fn native_causes_and_consumed_certainty_survive_strict_approximate_strict() {
     }
 }
 
+/// Original 8-copy line, 4x4 grid and 12-copy arc fixtures meet independent volume
+/// and membership expectations, retain geometric edge closure and compose with
+/// union and self-removal. Selected membership samples alone are not set equality.
 #[test]
 fn original_full_distributions_satisfy_independent_volume_membership_and_composition() {
     let cube = solid::cube(r(1)).unwrap();
@@ -272,6 +299,9 @@ fn original_full_distributions_satisfy_independent_volume_membership_and_composi
     }
 }
 
+/// Touching, overlapping and coincident copies meet exact volume/closure checks;
+/// negative linear spacing and a single negative-radius arc use the expected
+/// placements, including independent midpoint bounds.
 #[test]
 fn touching_overlapping_signed_and_single_arc_layouts_have_the_expected_sets() {
     let cube = solid::cube(r(1)).unwrap();
@@ -295,6 +325,8 @@ fn touching_overlapping_signed_and_single_arc_layouts_have_the_expected_sets() {
     topology(&midpoint);
 }
 
+/// Concatenation retains doubled source multiplicity; a later Boolean regularizes
+/// disjoint distributed copies, and a point-touching balanced source remains admitted.
 #[test]
 fn concatenation_preserves_multiplicity_and_pwn_distributions_accept_it() {
     let cube = solid::cube(r(1)).unwrap();
@@ -320,6 +352,8 @@ fn concatenation_preserves_multiplicity_and_pwn_distributions_accept_it() {
     volume(&outcome.value, r(2));
 }
 
+/// Cached outputs share storage safely under copy-on-write; eviction/disable
+/// reproduce rows, edited source indices fail, and valid source results survive.
 #[test]
 fn cache_reuse_eviction_disable_and_mutation_preserve_validity() {
     let cube = solid::cube(r(1)).unwrap();

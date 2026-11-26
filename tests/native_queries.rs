@@ -1,7 +1,11 @@
+//! Native query and distribution fixtures with exact parameter and count expectations.
+
 use csgrs::{GeometryCertainty, GeometryContext, Real, solid};
 use hyperlattice::{Point3, Vector3};
 use hyperlimit::PredicatePolicy;
 
+/// A sampled-sphere diameter yields two certified, deduplicated contacts at the
+/// independent ray parameters 10 and 30, with identical results on a repeated call.
 #[test]
 fn sphere_diameter_ray_reports_only_surface_hits() {
     // The diameter passes exactly through two sampled-sphere vertices. Each
@@ -32,6 +36,8 @@ fn sphere_diameter_ray_reports_only_surface_hits() {
     );
 }
 
+/// Disjoint line/grid/arc layouts retain every source triangle and paired indexed
+/// edges; these count checks do not independently establish placement or set equality.
 #[test]
 fn disjoint_distributions_preserve_every_native_copy() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
@@ -56,6 +62,8 @@ fn disjoint_distributions_preserve_every_native_copy() {
     assert!(arc.is_closed_manifold());
 }
 
+/// The retained 15-degree sphere fixture admits a strict convex hull with the
+/// independently expected `2V - 4` triangles; no general sphere-family claim follows.
 #[test]
 fn sampled_sphere_at_fifteen_degree_steps_has_a_certified_convex_hull() {
     // Each latitude-band quad is an exactly planar trapezoid. With exact
