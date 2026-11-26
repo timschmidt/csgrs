@@ -1,3 +1,4 @@
+//! OBJ diagnostic preservation, serialization and downstream empty/solid witnesses.
 #![cfg(feature = "obj-io")]
 
 use csgrs::{
@@ -10,10 +11,12 @@ use hyperlattice::Point3;
 use hypermesh::{HypermeshError, MeshCertainty, Triangle};
 use std::error::Error;
 
+/// Constructs a single-position mesh with the requested triangle reference.
 fn malformed(index: usize) -> TriangleMesh {
     TriangleMesh::new(vec![Point3::origin()], vec![Triangle::new(0, index, 0)])
 }
 
+/// Checks the OBJ label, native index error, invalid-input category and typed source.
 fn assert_missing_position(error: IoError, index: usize) {
     let IoError::Construction { format, source } = error else {
         panic!("expected an OBJ construction error, got {error:?}");
@@ -34,11 +37,13 @@ fn assert_missing_position(error: IoError, index: usize) {
 }
 
 #[test]
+/// Requires an out-of-bounds position to remain an explicit construction error.
 fn missing_position_is_an_export_error() {
     assert_missing_position(obj::to_obj(&malformed(1), "invalid").unwrap_err(), 1);
 }
 
 #[test]
+/// Rejects `usize::MAX` before conversion to OBJ's one-based index can overflow.
 fn largest_index_is_rejected_before_obj_index_conversion() {
     assert_missing_position(
         obj::to_obj(&malformed(usize::MAX), "invalid").unwrap_err(),
@@ -47,6 +52,7 @@ fn largest_index_is_rejected_before_obj_index_conversion() {
 }
 
 #[test]
+/// Preserves native index diagnostics and existing sink bytes on conversion failure.
 fn stream_writer_preserves_the_index_diagnostic_and_existing_bytes() {
     for index in [1, usize::MAX] {
         let mut output = b"existing bytes".to_vec();
@@ -57,6 +63,7 @@ fn stream_writer_preserves_the_index_diagnostic_and_existing_bytes() {
 }
 
 #[test]
+/// Requires metadata rejection to precede malformed triangle-reference validation.
 fn metadata_failure_keeps_its_existing_priority() {
     assert!(matches!(
         obj::to_obj(&malformed(1), "invalid\nname"),
@@ -68,6 +75,7 @@ fn metadata_failure_keeps_its_existing_priority() {
 }
 
 #[test]
+/// Preserves the binary64 projection error and writes no partial serialized text.
 fn coordinate_projection_failure_remains_typed_and_unwritten() {
     let mesh = TriangleMesh::new(
         vec![
@@ -90,6 +98,7 @@ fn coordinate_projection_failure_remains_typed_and_unwritten() {
 }
 
 #[test]
+/// Checks fixed OBJ bytes, exact replay and writer agreement for an open triangle.
 fn open_triangle_keeps_its_documented_geometry_and_serialization() {
     let mesh = TriangleMesh::new(
         vec![
@@ -115,6 +124,7 @@ fn open_triangle_keeps_its_documented_geometry_and_serialization() {
     assert_eq!(stream, expected.as_bytes());
 }
 
+/// Checks strict closure, unit-box corners/support planes and independent signed volume.
 fn assert_unit_cube(mesh: &TriangleMesh) {
     let context = GeometryContext::STRICT.mesh_context();
     assert_eq!(
@@ -144,6 +154,7 @@ fn assert_unit_cube(mesh: &TriangleMesh) {
 }
 
 #[test]
+/// Reimports empty/cube output and checks strict local certainty and empty-union reuse.
 fn empty_and_solid_outputs_reimport_and_compose() {
     let empty = solid::empty();
     let cube = solid::cube(Real::one()).unwrap();

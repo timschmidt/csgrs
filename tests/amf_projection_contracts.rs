@@ -9,11 +9,13 @@ use csgrs::{
 use hyperlattice::Point3;
 use hypermesh::{MeshCertainty, Triangle};
 
+/// Promotes a finite fixture's exact binary64 value, failing on invalid fixtures.
 fn real(value: f64) -> Real {
     Real::try_from(value).unwrap()
 }
 
 /// Text between each `<tag>` and `</tag>`, in document order.
+/// Assumes these generated fixtures' unqualified tags; this is not an XML parser.
 fn elements<'a>(text: &'a str, tag: &str) -> Vec<&'a str> {
     let open = format!("<{tag}>");
     let close = format!("</{tag}>");
@@ -23,7 +25,8 @@ fn elements<'a>(text: &'a str, tag: &str) -> Vec<&'a str> {
         .collect()
 }
 
-/// Reads vertices and triangles back as a consumer would, without CSGRS.
+/// Reads fixture coordinate text and indices independently of the exporter.
+/// Assumes matching counts for each coordinate and index tag.
 fn parsed(text: &str) -> (Vec<[&str; 3]>, Vec<[usize; 3]>) {
     let [x, y, z] = ["x", "y", "z"].map(|tag| elements(text, tag));
     let vertices = (0..x.len()).map(|index| [x[index], y[index], z[index]]);
@@ -35,6 +38,7 @@ fn parsed(text: &str) -> (Vec<[&str; 3]>, Vec<[usize; 3]>) {
 }
 
 /// Requires every field to spell its binary64 value exactly.
+/// Checks both binary64 bits and exact scalar parsing, plus a decimal length bound.
 fn assert_fields(text: &str, expected: &[[f64; 3]]) {
     let (vertices, _) = parsed(text);
     assert_eq!(vertices.len(), expected.len());
@@ -50,6 +54,8 @@ fn assert_fields(text: &str, expected: &[[f64; 3]]) {
     }
 }
 
+/// Constructs a unit right triangle in the selected coordinate plane and its rows.
+/// Normalizes signed zero to match `Real`; `axis` must be in `0..3`.
 fn triangle(value: f64, axis: usize) -> (TriangleMesh, [[f64; 3]; 3]) {
     let value = if value == 0.0 { 0.0 } else { value }; // Real has unsigned zero.
     let mut rows = [[0.0; 3]; 3];
@@ -67,6 +73,8 @@ fn triangle(value: f64, axis: usize) -> (TriangleMesh, [[f64; 3]; 3]) {
 }
 
 #[test]
+/// Samples one significand per finite exponent/sign pair and selected boundaries.
+/// This covers exponent families, not every binary64 value.
 fn every_finite_exponent_family_and_boundary_values_preserve_exact_fields() {
     let mut state = 0x2718_2818_2845_9045_u64;
     let mut sample = || {
@@ -100,6 +108,7 @@ fn every_finite_exponent_family_and_boundary_values_preserve_exact_fields() {
 }
 
 #[test]
+/// Preserves legacy 17-place bytes for coordinates and colors exactly spelled that way.
 fn already_exact_decimal_artifacts_stay_byte_identical() {
     for value in [0.0, -1.5, 2_f64.powi(-17), 2_f64.powi(60), f64::MAX] {
         let (mesh, rows) = triangle(value, 0);
@@ -121,6 +130,7 @@ fn already_exact_decimal_artifacts_stay_byte_identical() {
 }
 
 #[test]
+/// Checks the selected binary64 tenth and exact tiny dyadic color spelling.
 fn color_components_spell_their_projection() {
     let (mesh, _) = triangle(1.0, 0);
     let tenth = (Real::one() / Real::from(10)).unwrap();
@@ -133,6 +143,7 @@ fn color_components_spell_their_projection() {
 }
 
 #[test]
+/// Reconstructs a tiny cube from tag text and checks positions, closure and exact volume.
 fn tiny_closed_body_stays_closed_after_an_external_read() {
     // With 17 fixed fractional digits every coordinate of this cube was
     // written as zero, and the reread surface had no nondegenerate face.
@@ -164,6 +175,7 @@ fn tiny_closed_body_stays_closed_after_an_external_read() {
 }
 
 #[test]
+/// Checks typed projection/unit failures and preservation of preexisting writer bytes.
 fn failures_remain_explicit_before_any_bytes_are_written() {
     let (mut source, _) = triangle(1.0, 0);
     let huge = format!("1{}", "0".repeat(1000)).parse::<Real>().unwrap();

@@ -15,14 +15,17 @@ use ply_rs::{
 };
 use std::{io::Cursor, sync::Arc};
 
+/// Declared binary64 PLY properties in the serializer's vertex-row order.
 const FIELDS: [&str; 6] = ["x", "y", "z", "nx", "ny", "nz"];
 
+/// Promotes the exact binary64 fixture value, panicking if it is nonfinite.
 fn real(value: f64) -> Real {
     Real::try_from(value).unwrap()
 }
 
-// The plane x_axis=value has a known positive unit normal along that axis.
-// No normal evaluation or exporter machinery supplies this expected geometry.
+/// The plane x_axis=value has a known positive unit normal along that axis.
+/// No normal evaluation or exporter machinery supplies this expected geometry.
+/// `axis` must be in `0..3`; signed zero is normalized to match `Real`.
 fn plane(value: f64, axis: usize) -> (TriangleMesh, [[f64; 6]; 3]) {
     let value = if value == 0.0 { 0.0 } else { value }; // Real has unsigned zero.
     let mut rows = [[0.0; 6]; 3];
@@ -40,6 +43,8 @@ fn plane(value: f64, axis: usize) -> (TriangleMesh, [[f64; 6]; 3]) {
     (mesh, rows)
 }
 
+/// Reads six declared double properties and triangle index lists with `ply_rs`.
+/// Panics on a schema mismatch or a negative/non-triangle fixture index list.
 fn parsed_rows(text: &str) -> (Vec<[f64; 6]>, Vec<[usize; 3]>) {
     let parsed = Parser::<DefaultElement>::new()
         .read_ply(&mut Cursor::new(text.as_bytes()))
@@ -68,6 +73,7 @@ fn parsed_rows(text: &str) -> (Vec<[f64; 6]>, Vec<[usize; 3]>) {
     (rows, faces)
 }
 
+/// Checks external-reader bits, exact decimal values and per-field length bounds.
 fn assert_fields(text: &str, expected: &[[f64; 6]]) {
     let (parsed, _) = parsed_rows(text);
     assert_eq!(parsed.len(), expected.len());
@@ -101,6 +107,8 @@ fn assert_fields(text: &str, expected: &[[f64; 6]]) {
 }
 
 #[test]
+/// Samples every finite exponent/sign family plus boundary and seeded finite values.
+/// The finite corpus does not exhaust all binary64 significands.
 fn every_finite_exponent_family_and_boundary_values_preserve_exact_fields() {
     let mut state = 0x3141_5926_5358_9793_u64;
     let mut sample = || {
@@ -152,6 +160,7 @@ fn every_finite_exponent_family_and_boundary_values_preserve_exact_fields() {
 }
 
 #[test]
+/// Checks tiny-normal and 3-4-5 fixtures against independently specified projections.
 fn small_and_rounded_normal_components_preserve_selected_values() {
     for (y, z, normal) in [
         (1.0, 2_f64.powi(-70), [0.0, -2_f64.powi(-70), 1.0]),
@@ -172,6 +181,7 @@ fn small_and_rounded_normal_components_preserve_selected_values() {
 }
 
 #[test]
+/// Preserves legacy 17-place bytes where those decimals already represent exact values.
 fn already_exact_decimal_artifacts_stay_byte_identical() {
     for value in [0.0, -1.5, 2_f64.powi(-17), 2_f64.powi(60), f64::MAX] {
         let (mesh, rows) = plane(value, 0);
@@ -190,6 +200,8 @@ fn already_exact_decimal_artifacts_stay_byte_identical() {
     }
 }
 
+/// Adopts external-reader positions as a new mesh with explicit projection provenance.
+/// Discards normals and records missing source history instead of certifying exact replay.
 fn reconstruct(text: &str) -> TriangleMesh {
     let (rows, faces) = parsed_rows(text);
     TriangleMesh::new(
@@ -204,6 +216,7 @@ fn reconstruct(text: &str) -> TriangleMesh {
     .with_inherited_construction(ConstructionEvidence::UNTRACKED.with_coordinate_projection())
 }
 
+/// Checks box corners, supporting planes, independent signed volume and strict closure.
 fn assert_cube(mesh: &TriangleMesh, side: &Real) {
     let zero = Real::zero();
     let mut six_volume = Real::zero();
@@ -232,6 +245,8 @@ fn assert_cube(mesh: &TriangleMesh, side: &Real) {
 }
 
 #[test]
+/// Exercises tiny-cube replay, scaling, Boolean identities and empty replay/reuse.
+/// Separately checks retained qualification and unchanged authoritative source geometry.
 fn tiny_closed_body_remains_usable_after_external_read_and_strict_composition() {
     let side = real(2_f64.powi(-70));
     let source = solid::cube(side.clone()).unwrap();
@@ -278,6 +293,7 @@ fn tiny_closed_body_remains_usable_after_external_read_and_strict_composition() 
 }
 
 #[test]
+/// Checks output ownership, FIFO eviction, copy-on-write invalidation and thread isolation.
 fn projected_values_survive_cache_eviction_mutation_and_concurrent_use() {
     let tiny = 2_f64.powi(-70);
     let (source, rows) = plane(tiny, 0);
@@ -313,6 +329,7 @@ fn projected_values_survive_cache_eviction_mutation_and_concurrent_use() {
 }
 
 #[test]
+/// Checks projection/metadata/index failures before writing, empty output and writer bytes.
 fn failures_remain_explicit_and_conversion_leaves_writers_untouched() {
     let (mut source, _) = plane(1.0, 0);
     let huge = format!("1{}", "0".repeat(1000)).parse::<Real>().unwrap();

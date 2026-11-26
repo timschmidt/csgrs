@@ -9,14 +9,20 @@ use hypermesh::{Triangle, TriangleMesh};
 use std::collections::HashMap;
 use std::io::{BufRead, Write};
 
+/// Adds a one-based source line to a text-only parse or triangulation diagnostic.
 fn malformed(line: usize, message: impl std::fmt::Display) -> IoError {
     IoError::MalformedInput(format!("OBJ line {line}: {message}"))
 }
 
+/// Parses a scalar exactly, including decimal exponents, retaining errors as text.
 fn parse_real(text: &str, line: usize) -> Result<Real, IoError> {
     text.parse().map_err(|error| malformed(line, error))
 }
 
+/// Resolves the position part of a face token against vertices already read.
+///
+/// Positive indices are one-based and negative indices count backward. Zero,
+/// forward references and values outside `isize` fail. Slash suffixes are ignored.
 fn parse_index(text: &str, position_count: usize, line: usize) -> Result<usize, IoError> {
     let head = text.split('/').next().unwrap_or_default();
     let raw = head
@@ -35,6 +41,10 @@ fn parse_index(text: &str, position_count: usize, line: usize) -> Result<usize, 
 }
 
 #[cfg(feature = "attributed")]
+/// Resolves an optional third slash field against normals already read.
+///
+/// Uses OBJ's positive/negative indexing and rejects a fourth field. The texture
+/// field is ignored; an absent or empty normal field yields `None`.
 fn parse_optional_normal_index(
     text: &str,
     normal_count: usize,
@@ -66,6 +76,9 @@ fn parse_optional_normal_index(
         .ok_or_else(|| malformed(line, "normal index is outside the normal array"))
 }
 
+/// Applies shared face triangulation, converting its errors to OBJ line text.
+///
+/// Native categories and error sources do not survive this diagnostic conversion.
 fn triangulate_face(
     positions: &[Point3],
     face: &[usize],
@@ -77,11 +90,25 @@ fn triangulate_face(
 }
 
 /// Import OBJ vertex and face records into native triangle geometry.
+///
+/// Uses strict decisions via [`from_obj_with_context`] and returns only geometry;
+/// its embedded qualification remains, but the separate outcome is consumed.
 pub fn from_obj<R: BufRead>(reader: R) -> Result<TriangleMesh, IoError> {
     from_obj_with_context(reader, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Import OBJ geometry with the selected triangulation policy and aggregate certainty.
+///
+/// Reads exact scalar text from the first three `v` fields and retains all such
+/// positions. Extra vertex fields, all records other than `v`/`f`, and texture or
+/// normal index suffixes are ignored. Comments begin at `#`. Face indices refer
+/// only to positions already read, using positive one-based or negative indexing.
+///
+/// Three-corner faces pass through after index checks. Larger faces use the
+/// shared support/projection triangulator, including fan triangulation for
+/// nonplanar faces. This does not validate a closed or nondegenerate solid.
+/// Empty input is accepted. The outcome records local predicate certainty;
+/// imported geometry still has missing source-history qualification.
 pub fn from_obj_with_context<R: BufRead>(
     reader: R,
     context: GeometryContext,
@@ -128,6 +155,8 @@ pub fn from_obj_with_context<R: BufRead>(
 /// Position/normal pairs are indexed independently at the file boundary and
 /// collapsed into the thin [`crate::AttributedMesh`] carrier. Core modeling
 /// continues to consume only the returned native geometry.
+/// Uses strict decisions through [`from_obj_attributed_with_context`] and consumes
+/// the separate outcome while retaining geometry qualification.
 #[cfg(feature = "attributed")]
 pub fn from_obj_attributed<R: BufRead>(
     reader: R,
@@ -137,6 +166,19 @@ pub fn from_obj_attributed<R: BufRead>(
 }
 
 /// Import OBJ geometry and authored normals using the selected triangulation policy.
+///
+/// Shares the geometry parsing and triangulation rules of [`from_obj_with_context`],
+/// adding three-component `vn` records and optional third-field normal indices.
+/// Emitted position/normal pairs share slots; different normal indices split
+/// positions, and unused source vertices are omitted. If a position appears
+/// repeatedly in one face, its first corner's normal selection is used.
+///
+/// If any face corner lacks a normal, the entire normal sidecar is omitted,
+/// although the position splits remain. Supplied normals are copied without
+/// checking unit length or agreement with the surface. An eager graphics-buffer
+/// attempt caches success but ignores failure, so successful import is not proof
+/// that graphics conversion will succeed. Geometry retains missing source history
+/// and local predicate qualification; per-triangle metadata is `()`.
 #[cfg(feature = "attributed")]
 pub fn from_obj_attributed_with_context<R: BufRead>(
     reader: R,
@@ -252,6 +294,11 @@ pub fn from_obj_attributed_with_context<R: BufRead>(
 /// to finite binary64 values and written as exact terminating decimals, so
 /// reimport preserves that projection. Topology validation is a separate operation.
 /// Invalid vertex references retain their native cause in [`IoError::Construction`].
+///
+/// Object names must contain neither control characters nor `#`. Metadata is
+/// checked before all index references, then every stored position is projected,
+/// including unused ones. Empty and open meshes are accepted. Normals, texture
+/// coordinates, materials and source evidence are not serialized.
 pub fn to_obj(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError> {
     let object_name = single_line_metadata(object_name, "OBJ", "object name")?;
     if object_name.contains('#') {
@@ -287,6 +334,8 @@ pub fn to_obj(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError>
 ///
 /// Metadata, vertex references and finite-coordinate conversion are checked
 /// before writing the serialized text.
+/// Conversion errors leave the writer untouched. An I/O error may leave partial
+/// output; this function does not flush or roll back the stream.
 pub fn write_obj<W: Write>(
     mesh: &TriangleMesh,
     writer: &mut W,
@@ -297,9 +346,11 @@ pub fn write_obj<W: Write>(
 }
 
 #[cfg(test)]
+/// OBJ scalar, polygon and optional authored-normal regression witnesses.
 mod tests {
     use super::*;
 
+    /// Six outward quads with eight positions and eight non-unit corner normals.
     const QUAD_CUBE: &[u8] = br#"v -1 -1 -1
 v 1 -1 -1
 v 1 1 -1
@@ -325,6 +376,7 @@ f 4//4 1//1 5//5 8//8
 "#;
 
     #[test]
+    /// Checks triangle-count preservation through a cube export/import.
     fn cube_round_trips() {
         let cube = crate::solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let text = to_obj(&cube, "cube").unwrap();
@@ -333,6 +385,7 @@ f 4//4 1//1 5//5 8//8
     }
 
     #[test]
+    /// Checks exact decimal-exponent promotion and one resulting triangle.
     fn scientific_notation_is_promoted_exactly() {
         let imported =
             from_obj(b"v 7.78437e-005 0 0\nv 0 1e+0 0\nv 0 0 1E0\nf 1 2 3\n".as_slice())
@@ -345,6 +398,7 @@ f 4//4 1//1 5//5 8//8
     }
 
     #[test]
+    /// Checks the quad cube's counts and indexed edge closure after triangulation.
     fn arbitrary_polygon_fixture_triangulates_closed() {
         let imported = from_obj(QUAD_CUBE).expect("quad cube OBJ");
         assert_eq!(imported.positions.len(), 8);
@@ -354,6 +408,7 @@ f 4//4 1//1 5//5 8//8
 
     #[test]
     #[cfg(feature = "attributed")]
+    /// Checks sidecar and graphics row counts, without asserting normal unit length.
     fn authored_normals_stay_in_the_optional_sidecar() {
         let imported = from_obj_attributed(QUAD_CUBE).expect("attributed quad cube OBJ");
         assert_eq!(imported.geometry().positions.len(), 8);

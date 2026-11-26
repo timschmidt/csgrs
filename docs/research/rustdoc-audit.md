@@ -34,6 +34,13 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/io/mod.rs` | Entire file; documented every error payload, shared triangulation/projection/metadata helper, local formatter and test. | Gated and minimal private docs passed; error and seven helper pages inspected. No implementation change. |
+| `src/io/amf.rs` | Entire file; documented unit labels, projected color bounds, serialization order, validation scope and writer behavior. | Gated private docs passed; all six function pages inspected. |
+| `src/io/obj.rs` | Entire file; documented parsers, policy qualification, attributed corner selection, validation order and all unit witnesses. | Gated private docs passed including attributed readers; all eleven function pages inspected. Tests unchanged, not rerun. |
+| `src/io/ply.rs` | Entire file; documented cache fields/lifetime/order, generated flat-normal rows, writer behavior and external-parser witness. | Gated private docs passed; cache type/state and both function pages inspected. Tests unchanged, not rerun. |
+| `tests/amf_projection_contracts.rs` | Entire file; documented independent tag reader, exponent-family corpus, exact projection, tiny-cube and failure witnesses. | Source, formatting and documentation-only comparison passed; assertions unchanged, not rerun. |
+| `tests/obj_export_failures.rs` | Entire file; documented native diagnostic checks, priority, writer preservation, exact fixtures and empty/solid reuse. | Source, formatting and documentation-only comparison passed; assertions unchanged, not rerun. |
+| `tests/ply_projection_contracts.rs` | Entire file; documented external reader, independent normal/volume expectations, qualified replay and cache/error/composition witnesses. | Source, formatting and documentation-only comparison passed; assertions unchanged, not rerun. |
 | `src/curve/image.rs` | Entire file; documented report/error payloads, exact grid identity, directed-edge traversal, turn selection, simplifier assumptions and all tests. Corrected the documented scope of the rectangle witness. | Private docs with image/text features passed; all eleven public/private pages inspected. Runtime tests unchanged, not rerun. |
 | `src/curve/truetype.rs` | Entire file; documented table checks, blank-glyph proof cases, limited layout/kerning, every collector field/helper/callback and both unit witnesses. | Private docs with image/text features passed; all eight helper/type pages inspected, including private fields and trait overrides. Runtime tests unchanged, not rerun. |
 | `tests/text_contracts.rs` | Entire file; documented helpers, gated modules, independent outline/placement expectations, errors, policy/scale/composition and qualified STL replay. | Source, formatting and documentation-only comparison passed; assertions and optional STL branch not rerun. |
@@ -1398,9 +1405,80 @@ about 543 MiB. No runtime build or separate target tree was created. Full
 workflow/runtime checks remain waived for this docs-only session; no runtime
 completion or performance claim is made.
 
+### Shared interchange, AMF, OBJ and PLY batch, 26 November 2026
+
+Baseline: `b5da7bf6e`. Owner: CSGRS interchange boundary, with native scalar,
+triangulation and mesh authority retained. Relevant properties: P6/P8/P9,
+P18–P20, P25–P27, P29/P30 and P37. Domain: shared format diagnostics and finite
+projections; AMF unit/color/metadata serialization; OBJ exact scalar parsing and
+face triangulation, with optional authored normals; ASCII PLY generated normals
+and successful-output caching. Read all seven files listed above in full.
+Supporting reads of native graphics row assembly, geometry qualification and
+projection-axis selection do not count as additional whole-file kernel audits.
+
+Missing documentation witnesses included shared error payloads/helpers, private
+format parsers/cache fields and integration-test declarations. The shared face
+helper's old summary described only planar earcut, omitting triangle pass-through,
+nonplanar fans and the locally convex fan path. AMF color documentation needed
+to distinguish projected range checks from exact source comparisons.
+
+The shared face docs now describe support-search error order, every-point
+planarity decisions, strict dominant-axis preference with policy fallback,
+collinear retention and earcut winding restoration. A three-corner face is not
+geometrically validated here; local turn agreement is not a general simplicity
+proof. Textual conversion diagnostics are distinguished from typed native
+construction sources. Finite projection does not establish source equality or
+topology; binary32 uses the cached binary64 view, and the decimal formatter
+preserves that selected finite value rather than an arbitrary exact source.
+
+OBJ docs describe ignored records/fields, already-read index domains and exact
+decimal parsing. Attributed import chooses the first normal for a repeated
+position within a face, omits the entire sidecar if any corner lacks a normal,
+and ignores an eager graphics-conversion failure. Its success is not a graphics
+validity certificate. AMF emits all stored vertices and checks projected color
+bounds; PLY emits separate triangle-corner rows with generated flat normals.
+PLY cache identity is allocation-based reuse, not geometric equality; four
+entries per thread do not bound retained bytes. All three writers finish
+conversion before writing but cannot promise rollback after an I/O failure.
+
+Test docs describe finite exponent-family coverage without claiming exhaustive
+binary64 coverage. Independent decimal/bit checks, box support planes and signed
+volume remain separate from local topology and inherited provenance. Existing
+fixtures and assertions, including cache mutation/eviction/concurrent use and
+empty-result composition, were preserved rather than rerun in this docs session.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 --config skip_children=true` on the seven
+  edited Rust files: passed. `git diff --check`: passed.
+- Nonblank, non-comment source matches baseline after explicit normalization
+  of six error-payload tuple layouts and the local formatter's tuple layout.
+  No expressions, control flow, ordering, fixtures or assertions changed.
+- File-local declaration scans covered 12 shared-I/O declarations, six AMF,
+  seventeen OBJ, seven PLY, and 10/10/13 declarations in the corresponding
+  integration files. Two multiline feature attributes required manual scan
+  follow-up; both helpers have attached Rustdoc. Fields and variant payloads
+  were separately checked. These counts are not repository coverage metrics.
+- With `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target`, `CARGO_INCREMENTAL=0`
+  and `RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links'`, ran
+  `cargo doc --locked -p csgrs --no-default-features --features
+  obj-io,ply-io,amf-io,stl-io,dxf-io,gerber-io,attributed
+  --document-private-items --no-deps --offline`: passed without warnings.
+- The same private-doc command without features passed. Inspected 29 rendered
+  pages in the gated build, including error payloads and cache fields. Local
+  formatter items and tests remain source-reviewed because ordinary library
+  docs do not render them.
+
+Logs: `/tmp/csgrs-rustdoc-io-common-doc.log` and
+`/tmp/csgrs-rustdoc-io-minimal-doc.log`. Temporary shared build storage is about
+693 MiB. No second build tree or runtime build was created. Full workflow and
+runtime checks remain waived by the owner for this docs-only session; no
+runtime correctness or performance claim is made.
+
 ## Next work
 
-Continue with the root `src/io` interchange modules and downstream witnesses,
+Continue with the remaining root `src/io` interchange modules (STL, DXF, SVG,
+glTF, VRML and Gerber) and downstream witnesses,
 then the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every

@@ -1,4 +1,10 @@
 //! Optional import and export modules for mesh and curve file formats.
+//!
+//! Adapters define their own represented input/output models. Finite projection,
+//! mesh validity, predicate certainty and source provenance are separate claims;
+//! a successful parse or serialization does not establish exact native replay.
+//! Shared helpers provide boundary conversion and diagnostics, not a second
+//! geometry kernel.
 
 #[cfg(feature = "svg-io")]
 pub mod svg;
@@ -42,37 +48,69 @@ use hyperlattice::Real;
 /// Error produced while parsing or serializing a geometry interchange format.
 #[derive(Debug, thiserror::Error)]
 pub enum IoError {
+    /// Underlying stream/read/write failure; a writer may already have accepted bytes.
     #[error(transparent)]
-    StdIo(#[from] std::io::Error),
+    StdIo(
+        /// Original standard I/O cause.
+        #[from]
+        std::io::Error,
+    ),
+    /// A textual floating-point field could not be parsed; finite range checks are separate.
     #[error("could not parse a finite number: {0}")]
-    ParseFloat(#[from] std::num::ParseFloatError),
+    ParseFloat(
+        /// Original numeric-parser cause.
+        #[from]
+        std::num::ParseFloatError,
+    ),
 
+    /// Format syntax or a parser-side conversion was rejected with textual context.
     #[error("input is malformed: {0}")]
-    MalformedInput(String),
+    MalformedInput(
+        /// Diagnostic text, possibly containing a line number; no typed nested source.
+        String,
+    ),
+    /// A selected finite coordinate view is unavailable or overflows its target type.
     #[error("{format} cannot represent {field} as a finite {target}")]
     UnrepresentableCoordinate {
+        /// Adapter format label.
         format: &'static str,
+        /// Coordinate, normal or color component being projected.
         field: &'static str,
+        /// Requested finite scalar type, such as f32 or f64.
         target: &'static str,
     },
+    /// Metadata violates the adapter's character rules, including format delimiters where checked.
     #[error("{format} metadata field {field} contains forbidden control characters")]
     InvalidMetadata {
+        /// Adapter format label.
         format: &'static str,
+        /// Rejected metadata field's descriptive name.
         field: &'static str,
     },
+    /// A checked format size/count limit cannot represent the requested output.
     #[error("{format} output exceeds the supported {limit} limit")]
     SizeOverflow {
+        /// Adapter format label.
         format: &'static str,
+        /// Name of the exceeded encoding limit, not a universal work budget.
         limit: &'static str,
     },
+    /// Well-identified input or an option lies outside the adapter's implemented subset.
     #[error("unsupported {format} input: {detail}")]
     Unsupported {
+        /// Adapter format label.
         format: &'static str,
+        /// Unsupported construct or option, retained as text.
         detail: String,
     },
+    /// Geometry conversion failed, with a textual rather than typed nested cause.
+    /// May describe invalid geometry or an indeterminate predicate; inspect the
+    /// adapter's contract rather than treating every instance as proved invalid input.
     #[error("{format} geometry conversion failed: {detail}")]
     Geometry {
+        /// Adapter format label.
         format: &'static str,
+        /// Conversion diagnostic; unlike `Construction`, this has no error source.
         detail: String,
     },
     /// A native modeling operation or validation failed at a format boundary.
@@ -81,29 +119,60 @@ pub enum IoError {
     /// validation during OBJ export; no serialized geometry is returned on failure.
     #[error("{format} construction failed: {source}")]
     Construction {
+        /// Adapter at which the native failure was encountered.
         format: &'static str,
+        /// Typed modeling error retaining its native category and nested source.
         #[source]
         source: crate::errors::ValidationError,
     },
 
+    /// Native DXF parser/writer failure.
     #[cfg(feature = "dxf-io")]
     #[error("DXF processing failed: {0}")]
-    Dxf(#[from] ::dxf::DxfError),
+    Dxf(
+        /// Original DXF library cause.
+        #[from]
+        ::dxf::DxfError,
+    ),
 
     #[cfg(feature = "gerber-io")]
     /// Error during Gerber file processing.
     #[error("Gerber parsing failed: {0}")]
-    GerberParsing(String),
+    GerberParsing(
+        /// Parser diagnostic retained as text, without a typed nested source.
+        String,
+    ),
 
     #[cfg(feature = "gerber-io")]
     /// Error during Gerber code generation.
     #[error("Gerber generation failed: {0}")]
-    GerberCodegen(#[from] ::gerber_types::GerberError),
+    GerberCodegen(
+        /// Original Gerber generation cause.
+        #[from]
+        ::gerber_types::GerberError,
+    ),
 }
 
-/// Triangulate one planar 3D index ring through Hypertri after dominant-axis
-/// projection. This is an interchange-boundary conversion, not a second mesh
-/// or polygon carrier.
+/// Converts one interchange face into triangles, using native planar earcut when needed.
+///
+/// Rejects fewer than three entries or out-of-range indices. Three-entry faces
+/// pass through without a geometric degeneracy check. Larger faces search
+/// first-vertex/consecutive pairs for a nondegenerate support, stopping on any
+/// native error. Planarity visits every point even after a nonzero result; an
+/// undecided later point still fails. A decided nonplanar face uses a first-vertex
+/// fan rather than rejecting or fitting the polygon to a plane.
+///
+/// Planar faces use a Newell normal and cyclic coordinate projection. Strict
+/// dominant-axis ordering is a preference; if unresolved, the shared projection
+/// helper chooses a component classified nonzero under the supplied policy.
+/// Matching nonzero projected turns select a fan that retains collinear boundary
+/// vertices and may include zero-area triangles. This local turn test does not
+/// prove an arbitrary ring simple. Remaining faces use native earcut with no
+/// holes, restoring negative input winding when mapping indices back.
+///
+/// The caller owns whole-mesh validity and resource bounds. Native mesh and
+/// triangulation certainty is accumulated in `decisions`, while failures here
+/// become string-valued `IoError::Geometry`, not retained native error sources.
 #[cfg(any(feature = "obj-io", feature = "dxf-io", feature = "vrml-io"))]
 pub(crate) fn triangulate_planar_face(
     positions: &[hyperlattice::Point3],
@@ -305,6 +374,9 @@ pub(crate) fn triangulate_planar_face(
         })
 }
 
+/// Selects the scalar's lossy binary64 view and rejects unavailable/nonfinite results.
+/// Underflow to finite zero is allowed; success is not an exact-value equality,
+/// topology, error-bound or provenance certificate. No source scalar is mutated.
 #[cfg(any(
     feature = "obj-io",
     feature = "ply-io",
@@ -331,6 +403,9 @@ pub(crate) fn finite_f64(
 /// Retain the legacy 17 fractional digits whenever sufficient. A dyadic
 /// significand times 2^e needs at most -e fractional decimal digits after its
 /// trailing binary zeros are removed; binary64 bounds this precision at 1074.
+/// The caller must already have checked finiteness. This formats the selected
+/// binary64 value exactly, not the original arbitrary-precision scalar; it does
+/// not choose the shortest decimal spelling or perform projection validation.
 #[cfg(any(
     feature = "obj-io",
     feature = "ply-io",
@@ -338,9 +413,15 @@ pub(crate) fn finite_f64(
     feature = "amf-io"
 ))]
 pub(crate) fn decimal_f64(value: f64) -> impl std::fmt::Display {
-    struct Decimal(f64);
+    /// Local fixed-decimal display wrapper for the selected finite value.
+    struct Decimal(
+        /// Caller-validated binary64 scalar whose exact decimal value is emitted.
+        f64,
+    );
 
     impl std::fmt::Display for Decimal {
+        /// Derives required decimal places from the exponent and trailing significand zeros.
+        /// Uses at least 17 places and preserves standard formatting failure propagation.
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let bits = self.0.to_bits();
             let exponent = ((bits >> 52) & 0x7ff) as i32;
@@ -359,6 +440,10 @@ pub(crate) fn decimal_f64(value: f64) -> impl std::fmt::Display {
     Decimal(value)
 }
 
+/// Computes a unit normal from binary64-projected points using finite cross-product arithmetic.
+/// Coordinates are projected in point/X/Y/Z order. A zero or nonfinite computed
+/// length is a geometry error, including arithmetic underflow/overflow; this does
+/// not establish degeneracy of the original exact triangle or a certified normal.
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]
 pub(crate) fn finite_triangle_normal(
     points: [&Point3; 3],
@@ -401,6 +486,9 @@ pub(crate) fn finite_triangle_normal(
     Ok(cross.map(|value| value / length))
 }
 
+/// Rounds the shared lossy binary64 view to binary32 and rejects unavailable/nonfinite output.
+/// This is a two-stage conversion, not a direct correctly-rounded exact-to-f32
+/// guarantee. Finite underflow to zero is admitted without a fidelity receipt.
 #[cfg(any(feature = "stl-io", feature = "gltf-io"))]
 pub(crate) fn finite_f32(
     value: &Real,
@@ -408,9 +496,9 @@ pub(crate) fn finite_f32(
     field: &'static str,
 ) -> Result<f32, IoError> {
     // Reuse hyperreal's cached f64 boundary view, which is shared by render,
-    // bounds, and checksum paths. Computing a separate f32 refinement for the
-    // same exact scalar is substantially more expensive and provides no extra
-    // topology information at this explicitly lossy IO boundary.
+    // bounds, and checksum paths. This intentionally casts that view rather
+    // than requesting separate f32 refinement; neither choice supplies a
+    // topology certificate at this explicitly lossy IO boundary.
     value
         .to_f64_lossy()
         .map(|value| value as f32)
@@ -422,6 +510,9 @@ pub(crate) fn finite_f32(
         })
 }
 
+/// Returns metadata unchanged only when it contains no Unicode control character.
+/// Empty strings and ordinary Unicode are allowed; format-specific delimiters
+/// still require caller checks. No escaping or line normalization is performed.
 #[cfg(any(feature = "obj-io", feature = "ply-io", feature = "stl-io"))]
 pub(crate) fn single_line_metadata<'a>(
     value: &'a str,
@@ -434,6 +525,10 @@ pub(crate) fn single_line_metadata<'a>(
     Ok(value)
 }
 
+/// Rejects forbidden XML scalar characters and escapes the five markup delimiters.
+/// Permits tab, newline and carriage return; rejects other characters below
+/// U+0020 and U+FFFE/U+FFFF. Escapes ampersands first so newly inserted entities
+/// are not escaped again. This is text encoding, not XML document validation.
 #[cfg(feature = "amf-io")]
 pub(crate) fn xml_metadata(
     value: &str,
@@ -454,11 +549,13 @@ pub(crate) fn xml_metadata(
         .replace('\'', "&apos;"))
 }
 
+/// Finite-boundary rejection witness shared by interchange exporters.
 #[cfg(all(test, feature = "stl-io"))]
 mod tests {
     use super::{finite_f32, finite_f64};
     use hyperlattice::Real;
 
+    /// An exact 10^1000 scalar fails both finite target conversions explicitly.
     #[test]
     fn finite_boundary_helpers_reject_unrepresentable_exact_values() {
         let huge = format!("1{}", "0".repeat(1000)).parse::<Real>().unwrap();

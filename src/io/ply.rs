@@ -7,15 +7,26 @@ use std::cell::RefCell;
 use std::io::Write;
 use std::sync::Arc;
 
+/// Successful text retained with the exact buffer allocations used to produce it.
+///
+/// Owning both arrays prevents allocation reuse while an entry remains cached.
 #[derive(Clone)]
 struct CachedPly {
+    /// Position allocation forming the first identity component of the cache key.
     positions: Arc<[Point3]>,
+    /// Triangle allocation forming the second identity component of the cache key.
     triangles: Arc<[Triangle]>,
+    /// Validated comment, compared by text as the final cache key component.
     comment: String,
+    /// Complete serialization, cloned for each caller so edits cannot alter the cache.
     output: String,
 }
 
 thread_local! {
+    /// Four successful serializations per thread, evicted in insertion order.
+    ///
+    /// Hits do not refresh order. Allocation identity enables reuse; it does not
+    /// define geometric equality. The entry limit is not a retained-byte budget.
     static PLY_CACHE: RefCell<Vec<CachedPly>> = const { RefCell::new(Vec::new()) };
 }
 
@@ -29,6 +40,11 @@ thread_local! {
 /// exactly in decimal. The existing 17 fractional digits are retained when
 /// sufficient; other values need up to 1074 fractional digits. This preserves
 /// the selected projection, not arbitrary exact source coordinates or topology.
+///
+/// Each triangle contributes three separate rows with its generated flat unit
+/// normal; unused source positions are omitted. Authored attributes and source
+/// evidence are not serialized. Empty meshes produce no rows or faces. Control
+/// characters in the comment are rejected before consulting the per-thread cache.
 pub fn to_ply(mesh: &TriangleMesh, comment: &str) -> Result<String, IoError> {
     let comment = single_line_metadata(comment, "PLY", "comment")?;
     if let Some(output) = PLY_CACHE.with_borrow(|entries| {
@@ -72,6 +88,7 @@ pub fn to_ply(mesh: &TriangleMesh, comment: &str) -> Result<String, IoError> {
         output.push_str(&format!("3 {} {} {}\n", face[0], face[1], face[2]));
     }
     PLY_CACHE.with_borrow_mut(|entries| {
+        /// Maximum retained successful texts per thread, independent of text size.
         const CAPACITY: usize = 4;
         if entries.len() == CAPACITY {
             entries.remove(0);
@@ -86,7 +103,10 @@ pub fn to_ply(mesh: &TriangleMesh, comment: &str) -> Result<String, IoError> {
     Ok(output)
 }
 
-/// Write ASCII PLY to a stream.
+/// Writes complete [`to_ply`] text after conversion succeeds.
+///
+/// Conversion errors leave the writer untouched; I/O errors may leave partial
+/// bytes. The stream is neither flushed nor rolled back.
 pub fn write_ply<W: Write>(
     mesh: &TriangleMesh,
     writer: &mut W,
@@ -97,6 +117,7 @@ pub fn write_ply<W: Write>(
 }
 
 #[cfg(test)]
+/// External-parser smoke coverage for the emitted PLY schema.
 mod tests {
     use super::*;
     use hyperlattice::Real;
@@ -104,6 +125,7 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
+    /// Confirms the independent PLY reader accepts the cube and finds twelve faces.
     fn cube_output_parses() {
         let mesh = crate::solid::cube(Real::one()).expect("valid primitive fixture");
         let output = to_ply(&mesh, "cube").unwrap();

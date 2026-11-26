@@ -5,6 +5,7 @@ use hyperlattice::Real;
 use hypermesh::TriangleMesh;
 use std::io::Write;
 
+/// Accepts the five case-sensitive AMF unit labels without rescaling coordinates.
 fn validate_units(units: &str) -> Result<&str, IoError> {
     match units {
         "meter" | "millimeter" | "micrometer" | "feet" | "inch" => Ok(units),
@@ -15,6 +16,9 @@ fn validate_units(units: &str) -> Result<&str, IoError> {
     }
 }
 
+/// Projects RGB to finite binary64, then checks the projected range `0..=1`.
+///
+/// This is not an exact comparison of the source components against the bounds.
 fn finite_color(color: &(Real, Real, Real)) -> Result<[f64; 3], IoError> {
     let values = [
         finite_f64(&color.0, "AMF", "color red")?,
@@ -28,6 +32,12 @@ fn finite_color(color: &(Real, Real, Real)) -> Result<[f64; 3], IoError> {
         .ok_or_else(|| IoError::MalformedInput("AMF colors must be in 0..=1".into()))
 }
 
+/// Builds one AMF object and volume, optionally referencing one opaque material.
+///
+/// Validates units, XML metadata and color before projecting every stored vertex,
+/// including unused ones. Triangle references are checked afterward; their
+/// failures carry text diagnostics. Empty meshes are permitted. Neither closed
+/// topology nor nondegeneracy is checked, and source evidence is not serialized.
 fn serialize(
     mesh: &TriangleMesh,
     object_name: &str,
@@ -94,13 +104,19 @@ fn serialize(
 /// arbitrary exact source coordinates. `units` must be an AMF unit name; it
 /// labels the coordinates and does not scale them. Topology validation and
 /// fidelity to the source are separate claims.
+///
+/// Accepted units are `meter`, `millimeter`, `micrometer`, `feet` and `inch`.
+/// The object description is XML-escaped. All stored vertices and triangle
+/// indices are emitted in one volume, including empty geometry; index bounds
+/// are checked, but closedness and nondegeneracy are not.
 pub fn to_amf(mesh: &TriangleMesh, object_name: &str, units: &str) -> Result<String, IoError> {
     serialize(mesh, object_name, units, None)
 }
 
-/// [`to_amf`] with one material whose color components lie in `0..=1`.
+/// [`to_amf`] with one opaque material whose projected RGB lies in `0..=1`.
 ///
-/// Color components are projected and spelled like coordinates.
+/// Color components are projected and spelled like coordinates. The range check
+/// applies to those binary64 values, not to exact source components before rounding.
 pub fn to_amf_with_color(
     mesh: &TriangleMesh,
     object_name: &str,
@@ -111,6 +127,9 @@ pub fn to_amf_with_color(
 }
 
 /// Write [`to_amf`] output to a stream after the complete text is formed.
+///
+/// Conversion failures leave the writer untouched. An I/O failure can leave a
+/// partial write; this function does not flush or roll back the stream.
 pub fn write_amf<W: Write>(
     mesh: &TriangleMesh,
     writer: &mut W,
