@@ -1,3 +1,10 @@
+//! Truth-table regressions for classification labels and predicate error text.
+//!
+//! These fixtures construct labels and report metadata directly. They verify
+//! helper mappings rather than the geometric predicates that produce those labels.
+//! Candidate-retention booleans, such as Coplanar segment/ray retention and support
+//! DOP overlap, must not be read as newly proved geometric intersections.
+
 use hyperlimit::error::PredicateError;
 use hyperlimit::{
     Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, Aabb3PointLocation,
@@ -8,6 +15,7 @@ use hyperlimit::{
     SupportDopRelation, TriangleTriangleIntersection,
 };
 
+/// Check all three sign-to-line/plane-side mappings and sign reversal.
 #[test]
 fn sign_side_conversions_cover_every_sign() {
     assert_eq!(LineSide::from(Sign::Negative), LineSide::Right);
@@ -23,6 +31,9 @@ fn sign_side_conversions_cover_every_sign() {
     assert_eq!(Sign::Positive.reversed(), Sign::Negative);
 }
 
+/// Check exact/filtered sign extraction and absence for NonZero/Unknown knowledge.
+///
+/// Also verify that constructing a filtered zero retains Filtered certainty.
 #[test]
 fn sign_knowledge_exposes_only_concrete_known_signs() {
     assert_eq!(
@@ -44,6 +55,12 @@ fn sign_knowledge_exposes_only_concrete_known_signs() {
     );
 }
 
+/// Check explicit boolean tables for the listed location and intersection enums.
+///
+/// The tables include conservative support-DOP candidates, interval/box/sphere
+/// labels, and Coplanar segment/ray retention. AABB3 overlap and narrow-phase
+/// selection share the same table. No source geometry or predicate receipt is
+/// constructed, so true does not independently establish intersection.
 #[test]
 fn inclusive_classification_helpers_cover_every_variant() {
     for (value, expected) in [
@@ -176,6 +193,10 @@ fn inclusive_classification_helpers_cover_every_variant() {
     }
 }
 
+/// Check five segment-label helper tables, including Identical as overlap.
+///
+/// The positive-length helper also returns true for Identical; these enum-only
+/// assertions do not distinguish identical point-segments from nonzero segments.
 #[test]
 fn segment_classification_helpers_cover_every_variant() {
     for value in [
@@ -205,6 +226,9 @@ fn segment_classification_helpers_cover_every_variant() {
     }
 }
 
+/// Check intersection and construction booleans for all seven triangle-pair labels.
+///
+/// This tests label dispatch without constructing geometry or retained reports.
 #[test]
 fn triangle_triangle_helpers_cover_every_variant() {
     for (value, intersects, needs_construction) in [
@@ -229,6 +253,10 @@ fn triangle_triangle_helpers_cover_every_variant() {
     }
 }
 
+/// Check four coplanar graph-retention labels and three synthetic ring-edge records.
+///
+/// Unknown remains a graph candidate. Boundary, straddling, and nonstraddling ring
+/// controls exercise helper booleans, not every metadata state or validation rule.
 #[test]
 fn coplanar_and_ring_evidence_helpers_cover_all_states() {
     for (relation, expected) in [
@@ -275,6 +303,9 @@ fn coplanar_and_ring_evidence_helpers_cover_all_states() {
     assert!(!non_straddling.is_y_straddling());
 }
 
+/// Check both predicate-error display prefixes with sample payloads.
+///
+/// With `std`, also require neither string-backed variant to expose a source error.
 #[test]
 fn predicate_errors_have_stable_human_readable_messages() {
     let capability = PredicateError::CapabilityUnavailable("exact sign");

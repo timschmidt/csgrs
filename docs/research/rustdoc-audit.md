@@ -5313,6 +5313,102 @@ Full workflow/runtime/performance checks remain waived by the owner for this
 session. These source-level findings are not measured performance claims or
 proof of completed geometry support. The repository-wide audit remains active.
 
+## Hyperlimit retained-report and helper contract consumers
+
+Baseline: `bba4fcc56`. Read all lines of three integration-test files:
+`crates/hyperlimit/tests/retained_report_contracts.rs` (397),
+`crates/hyperlimit/tests/classification_contracts.rs` (293), and
+`crates/hyperlimit/tests/promoted_mesh_helpers.rs` (145). Earlier retained-report
+excerpts are now superseded by whole-file review. Revisited ring and triangle/
+plane validator implementations, public aliases, and the already reviewed
+triangle-pair/coplanar report contracts for context; this does not add fresh
+whole-file credit for those supporting reads.
+
+Ownership is Hyperlimit's public classification/report consumer fixtures.
+Relevant properties are exact input meaning, typed failures, policy/receipt
+preservation, predicate truth tables, and source replay (P1/P3/P6/P8–P11/P19).
+Domain: directly authored classification labels/report metadata, finite integer
+and rational geometry, changed source data, and the optional std error-source
+branch. Missing acceptance witnesses were module/declaration Rustdoc and precise
+statements of what these tests actually assert. Several test names suggest
+exhaustive validation or coverage, but their current finite tables and mutations
+do not establish those broader claims. Only documentation changed; no assertion,
+fixture, policy, feature gate, helper implementation, or predicate order changed.
+
+The retained-report fixture docs distinguish accepted synthetic shapes from
+geometric evidence. Ring cases cover a short Outside report, complete
+nonstraddling metadata, partial boundary metadata, selected malformed counts,
+indices, straddle facts and parity, and changed-query replay failure. They do
+not establish index uniqueness/order or source truth for the synthetic labels.
+Coplanar cases cover projectionless Unknown, one partial projected Unknown,
+a complete synthetic Disjoint report, selected missing/inconsistent fields,
+and an out-of-range replay index. They do not test every accepted Unknown shape
+or successful coplanar source replay.
+
+Triangle/plane controls assert five side-array reductions, successful borrowed
+source replay, a changed-relation failure, then indexed failures before and
+after an out-of-range index becomes a real point on the opposite side. This
+fixture does not assert successful indexed replay; the promoted-helper fixture
+does, for its uniform-side control. Triangle-pair controls start with crossing,
+coplanar and degenerate reports, assert six crossing edge labels and selected
+input-degeneracy labels, then reject specific mutations and replay against a
+separated pair. They do not exhaust all publicly forgeable report fields. The
+shared `decided` test helper extracts values and discards receipts; choosing
+APPROXIMATE_512 alone does not establish terminal consumption.
+
+Classification-helper docs distinguish enum truth tables from geometric
+predicate tests. Coplanar segment/ray labels and conservative support-DOP overlap
+are retained candidates, not newly proved intersections. Identical segment
+labels satisfy the positive-length helper even though these label-only tests
+cannot distinguish point-segments. The seven triangle-pair labels receive
+explicit intersection/construction expectations. Four coplanar labels and three
+synthetic ring-edge records exercise selected helper states, not every possible
+metadata combination. Sign conversion/reversal, known-sign extraction, filtered
+zero qualification, both error display prefixes, and the std-only absence of
+nested source errors are documented separately.
+
+Promoted mesh-helper docs state exact finite expectations: orthogonal x/y
+support witnesses, converted x witness indices, one changed vertex and refreshed
+x maximum six, source validation, and zero-axis rejection. Refresh scan counts,
+complexity, all z ties, and certainty are not asserted. The authored XY plane's
+positive-z queries yield Below under the repository's orientation convention;
+its mixed-side control preserves On/Below/Above. Projected helpers check doubled
+area 24, midpoint `(2,3/2,0)`, vector `(4,3)`, one inside-point label, a line
+crossing at `(2,0,0)`, and an upper-before-lower counterclockwise turn. These
+value assertions do not cover skew 3D sources or unresolved predicates.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves all three files byte-identical to the baseline. A scoped scan
+  found all 24 declarations documented: nine retained-report names, seven
+  classification tests, and eight promoted-helper names.
+- `cargo check --locked -p hyperlimit --test retained_report_contracts --test
+  classification_contracts --test promoted_mesh_helpers --all-features
+  --offline -j2` passed. The same focused targets with `--no-default-features`
+  passed, including compilation both with and without the std-only error-source
+  assertions. Runtime tests were not executed.
+- The initial direct `cargo rustdoc --test retained_report_contracts` lacked the
+  owning hyperlimit import and failed with E0432. Supplying the exact checked
+  all-feature hyperlimit rmeta via `--extern hyperlimit=...` and cached dependency
+  directories fixed the inspection setup without repository configuration edits.
+- Private Rustdoc for all three targets passed with all features, locked offline
+  dependencies, `--document-private-items`, `-D warnings`, and both broken/private
+  intra-doc-link lints denied. Render inspection initially caught an old module
+  description retained by a fresh-cache Cargo result after a comment edit.
+  Changing Rustdoc arguments to deny warnings forced new rendering; all final
+  rendered prose matches the current source.
+- Inspected thirteen complete rendered documentation groups: three crate
+  introductions plus ten private helper/constant pages. The fourteen #[test]
+  functions remain source-reviewed and compiled, not claimed as rendered pages.
+  No library API implementation changed; these three test targets are the
+  affected downstream consumers. Shared temporary build storage remains ~1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-report-tests-{doc,check,minimal-check,private}.log`;
+checked artifact metadata is in the corresponding `artifacts.jsonl`. Full
+workflow/runtime/performance checks remain waived by the owner for this docs-only
+session. Coverage here is scoped evidence; the repository-wide audit is ongoing.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

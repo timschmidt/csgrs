@@ -1,3 +1,11 @@
+//! Selected structural-validation and source-replay regressions for retained reports.
+//!
+//! Synthetic ring and coplanar records exercise accepted field shapes and specific
+//! error branches; integer triangle fixtures exercise source replay. These tests
+//! do not prove that every public-field forgery is rejected, that accepted labels
+//! are geometrically true, or that receipts survive report extraction. Each
+//! fixture covers a finite set of accepted reports and rejected mutations.
+
 use hyperlimit::{
     CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
     CoplanarTriangleValidationError, PlaneSide, Point2, Point3, PointSegmentLocation,
@@ -10,20 +18,31 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
+/// Approximation-permitted policy used by the integer replay fixtures.
+///
+/// Choosing this policy alone does not establish whether a terminal was consumed;
+/// these tests generally assert labels and errors rather than certainty receipts.
 const POLICY: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+/// Construct an exact integer-coordinate planar point for ring fixtures.
 fn p2(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
+/// Construct an exact integer-coordinate spatial point for replay fixtures.
 fn p3(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
+/// Extract a fixture's decided value, panicking on Unknown and dropping its receipt.
 fn decided<T>(outcome: PredicateOutcome<T>) -> T {
     outcome.value().expect("integer predicate should decide")
 }
 
+/// Build synthetic off-line metadata with both endpoints at or below query height.
+///
+/// The index is caller supplied. No source geometry establishes the labels; the
+/// record exists to isolate local report-shape and crossing checks.
 fn nonstraddling_edge(edge_index: usize) -> RingEvenOddEdgeReport {
     RingEvenOddEdgeReport {
         edge_index,
@@ -36,6 +55,13 @@ fn nonstraddling_edge(edge_index: usize) -> RingEvenOddEdgeReport {
     }
 }
 
+/// Check selected short-ring, complete nonstraddling, and partial boundary reports.
+///
+/// Mutations exercise edge count/index bounds, missing or unexpected straddle
+/// metadata, boundary metadata, crossing counts, and coarse-location mismatch.
+/// A real square report is replayed against a changed query to require mismatch.
+/// This is not exhaustive validation of source geometry, index uniqueness/order,
+/// or every accepted edge-field combination; no receipt assertions are made.
 #[test]
 fn ring_reports_validate_boundary_parity_and_each_edge_shape() {
     let short = RingEvenOddReport {
@@ -164,6 +190,12 @@ fn ring_reports_validate_boundary_parity_and_each_edge_shape() {
     );
 }
 
+/// Check fact-free Unknown, partial projected Unknown, and complete Disjoint shapes.
+///
+/// Selected mutations require projection/fact completeness and relation errors.
+/// Indexed replay also rejects an out-of-range vertex. Synthetic accepted labels
+/// have no geometric sources here; this does not check projection validity, all
+/// Unknown field shapes, or successful coplanar source replay.
 #[test]
 fn coplanar_reports_validate_projection_completeness_and_derived_relation() {
     let projectionless = CoplanarTriangleClassification {
@@ -232,6 +264,13 @@ fn coplanar_reports_validate_projection_completeness_and_derived_relation() {
     );
 }
 
+/// Check five side-array reductions, borrowed-source replay, and selected failures.
+///
+/// The reductions cover uniform Above/Below/On, a mixed-side triple, and a missing
+/// side. A changed coarse relation fails local validation. Indexed replay rejects
+/// an out-of-range query, then the same index after it is filled with a point on
+/// the opposite side. Successful indexed replay and exhaustive side combinations
+/// are not asserted by this fixture.
 #[test]
 fn triangle_plane_reports_replay_borrowed_and_indexed_sources() {
     assert_eq!(
@@ -295,6 +334,14 @@ fn triangle_plane_reports_replay_borrowed_and_indexed_sources() {
     );
 }
 
+/// Check selected forged triangle-pair reports against valid integer controls.
+///
+/// Crossing, coplanar, and degenerate reports first pass local validation; crossing
+/// retains six edges and the degenerate pair retains the expected input labels.
+/// Mutations exercise degeneracy mismatch, missing edges, inconsistent final
+/// relation, and missing/unexpected/mismatched coplanar data. Replay against a
+/// separated pair must fail. This does not enumerate all publicly forgeable
+/// shapes or certify the validators' completeness.
 #[test]
 fn triangle_triangle_reports_reject_each_publicly_forgeable_shape() {
     let left = [p3(0, 0, 0), p3(4, 0, 0), p3(0, 4, 0)];

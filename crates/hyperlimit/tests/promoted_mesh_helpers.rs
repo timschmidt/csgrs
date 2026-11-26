@@ -1,3 +1,10 @@
+//! Consumer controls for retained support bounds and promoted planar mesh helpers.
+//!
+//! Small integer/rational fixtures exercise witness indices, a changed-vertex
+//! refresh, source replay, projected constructions, and selected contact labels.
+//! The tests do not measure refresh work or assert child/aggregate certainty;
+//! policy permission alone is not evidence of terminal approximation.
+
 use hyperlimit::{
     CoplanarProjection, PlaneSide, Point2, Point3, SupportDopAxis3, SupportDopValidationError,
     TriangleLocation, TrianglePlaneRelation, WitnessedSupportDop3, ccw_projected_turn_less,
@@ -7,24 +14,35 @@ use hyperlimit::{
 };
 use hyperreal::{Rational, Real};
 
+/// Approximation-permitted policy shared by the finite helper fixtures.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Convert an integer fixture coordinate exactly to Real.
 fn r(value: i64) -> Real {
     Real::from(value)
 }
 
+/// Construct an exact rational fixture value, requiring a nonzero denominator.
 fn q(num: i64, den: u64) -> Real {
     Real::from(Rational::fraction(num, den).expect("test rational denominator is nonzero"))
 }
 
+/// Build a spatial fixture point from exact integer coordinates.
 fn p3(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+/// Build a planar fixture point from exact integer coordinates.
 fn p2(x: i64, y: i64) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
+/// Check orthogonal support witnesses, conversion, one vertex refresh, and zero-axis rejection.
+///
+/// The three-point fixture asserts x/y witness indices, converted x witnesses,
+/// changed-vertex/axis counts, and the refreshed x maximum at six, with source
+/// validation before and after mutation. It does not assert all z ties, the
+/// number of scanned vertices, refresh complexity, or certainty receipts.
 #[test]
 fn witnessed_support_dop_builds_replays_and_refreshes() {
     let mut points = vec![p3(0, 0, 0), p3(4, 1, 0), p3(-2, 3, 0)];
@@ -61,6 +79,11 @@ fn witnessed_support_dop_builds_replays_and_refreshes() {
     );
 }
 
+/// Check oriented-plane side labels, indexed replay, and a mixed-side query.
+///
+/// For the authored XY plane order, positive z is Below under the orientation
+/// convention. The second query retains On/Below/Above and reduces to Straddling;
+/// only the first query receives indexed source replay.
 #[test]
 fn triangle_plane_classifier_retains_sides_and_replays_sources() {
     let points = [
@@ -102,6 +125,12 @@ fn triangle_plane_classifier_retains_sides_and_replays_sources() {
     straddling.validate().unwrap();
 }
 
+/// Check exact rational expectations for a rectangle and selected projected queries.
+///
+/// Assert doubled XY area 24, diagonal midpoint `(2, 3/2, 0)`, vector `(4, 3)`,
+/// an inside point label, a crossing at `(2, 0, 0)`, and upper-before-lower CCW turn
+/// order. These value assertions do not inspect the point-location receipt or
+/// cover skew 3D geometry and unresolved decisions.
 #[test]
 fn projected_planar_helpers_cover_area_turns_and_intersections() {
     let square = vec![p3(0, 0, 0), p3(4, 0, 0), p3(4, 3, 0), p3(0, 3, 0)];
