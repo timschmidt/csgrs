@@ -16430,6 +16430,6 @@ the per-primitive recurrences now in Hypersolve and would need far fewer
 operations than evaluating every stage program. It changes enclosure values,
 so it would have to sit beside the current method, with width and
 completed-workload comparisons, and would not replace it in place. The
-analytic check and the Picard search together still cost about 37%, which
-bounds the achievable speedup near 2.5× on this case. Nothing is changed by
+analytic check, the Picard search and the rest still cost about 43%, which
+bounds the achievable speedup near 2.3× on this case. Nothing is changed by
 this profile.
