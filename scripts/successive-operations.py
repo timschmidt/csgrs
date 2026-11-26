@@ -9,6 +9,9 @@ The build embeds its source snapshot and the actual rustc invocation. Run can
 use a copied binary from any working directory; it never attributes that binary
 to the current checkout. Evidence directories must be new and outside the repo.
 This native Unix driver uses Python 3.11+ and Cargo/rustc, without extra packages.
+A completed process may still report failed geometry outcomes; inspect the counts.
+Hashes identify the selected bytes and metadata, not a signed attestation or a
+hermetic build. Unexpected driver errors can leave an incomplete evidence folder.
 """
 
 import argparse
@@ -26,17 +29,27 @@ import time
 import uuid
 
 
+# Repository root inferred from this script location, not the run working directory.
 ROOT = Path(__file__).resolve().parents[1]
+# Environment key pointing the compiler wrapper to its retained build-input JSON.
 BUILD_INPUT = "CSGRS_SUCCESSIVE_BUILD_INPUT"
+# Environment key whose value the Rust benchmark embeds as attribution text.
 BUILD_INFO = "CSGRS_SUCCESSIVE_BUILD_INFO"
 
 
 def digest_file(path):
+    """Return a streaming SHA-256 of file bytes; open/read errors propagate."""
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def save_json(path, value):
+    """Replace a JSON record after flushing/fsyncing its staging file and parent directory.
+
+    Keys are sorted for stable output. The fixed .tmp sibling is not isolated
+    against concurrent writers; failures propagate and may retain staging data.
+    Requires an existing parent directory and native Unix directory descriptors.
+    """
     temporary = path.with_suffix(path.suffix + ".tmp")
     with temporary.open("w") as stream:
         json.dump(value, stream, indent=2, sort_keys=True)
@@ -52,10 +65,19 @@ def save_json(path, value):
 
 
 def git(*args):
+    """Run Git against the script's repository root and return bytes, failing on nonzero exit."""
     return subprocess.check_output(["git", "-C", str(ROOT), *args])
 
 
 def source_snapshot():
+    """Hash tracked paths plus selected untracked build-input paths and capture the HEAD diff.
+
+    File rows record path, executable/file/symlink/deleted kind and digest; symlink
+    targets are hashed as link text, not followed content. The tree digest hashes
+    those rows. Returns snapshot metadata, rows and binary dirty-patch bytes.
+    This is not a hermetic dependency/environment snapshot or a synchronized
+    filesystem transaction; unsupported entry kinds and read/Git errors fail.
+    """
     tracked = git("ls-files", "-z").split(b"\0")
     # Include new build inputs without reading unrelated personal files.
     untracked = git(
@@ -90,6 +112,11 @@ def source_snapshot():
 
 
 def new_output(path):
+    """Resolve and create a new evidence directory outside ROOT; existing paths fail.
+
+    Resolving symlinks precedes the repository containment check. Parents may be
+    created; subsequent task failure does not remove this retained directory.
+    """
     path = path.resolve()
     if path.is_relative_to(ROOT):
         raise ValueError("evidence output must be outside the source repository")
@@ -98,7 +125,13 @@ def new_output(path):
 
 
 def rustc_wrapper(arguments):
-    """Cargo invokes this executable as RUSTC_WRAPPER rustc [arguments]."""
+    """Embed compiler attribution only for the successive_operations crate, then exec rustc.
+
+    Records the actual command/version/cwd and supplies the benchmark's BUILD_INFO.
+    Other Cargo compiler probes pass through unchanged. Nested compiler wrappers
+    are rejected for the target crate. Malformed argv, missing metadata or failed
+    writes/exec propagate; this helper does not invoke a second Cargo process.
+    """
     environment = os.environ.copy()
     if "--crate-name" in arguments:
         index = arguments.index("--crate-name")
@@ -118,6 +151,16 @@ def rustc_wrapper(arguments):
 
 
 def build(args):
+    """Build and copy an attributed benchmark, retaining source/compiler/artifact records.
+
+    Creates a fresh external directory, snapshots selected sources, preserves the
+    dirty patch/untracked inputs, and invokes Cargo without executing the bench.
+    Replaces RUSTC_WRAPPER and rejects a workspace wrapper. A unique build stamp
+    requests recompilation; the wrapper embeds the observed compiler invocation.
+    Requires the selected snapshot metadata to match again after compilation,
+    then hashes the copied executable. Errors leave partial evidence for review.
+    This does not archive every external dependency or guarantee a hermetic build.
+    """
     output = new_output(args.output)
     snapshot, rows, patch = source_snapshot()
     save_json(output / "source-files.json", rows)
@@ -180,6 +223,12 @@ def build(args):
 
 
 def journal_summary(path):
+    """Count newline-terminated 18-column data rows and detect the completion marker.
+
+    Counts the third column verbatim as an outcome label. A partial final line is
+    ignored; row types, numeric values, build identity and outcome grammar are not
+    validated. Missing files yield zero rows/no marker; read errors propagate.
+    """
     counts = collections.Counter()
     rows = 0
     completed = False
@@ -199,6 +248,10 @@ def journal_summary(path):
 
 
 def stop_process(process, signum):
+    """Signal the child's process group, ignoring an already absent process.
+
+    Other permission/system errors propagate; this function does not wait for exit.
+    """
     try:
         os.killpg(process.pid, signum)
     except ProcessLookupError:
@@ -206,6 +259,20 @@ def stop_process(process, signum):
 
 
 def run(args):
+    """Run a copied attributed binary, retain raw evidence and report process termination.
+
+    Queries --build-info with a 30-second limit, requiring a compiler field but
+    not authenticating its contents. Writes an initial incomplete manifest, then
+    starts the probe in a new process session. Timeout/KeyboardInterrupt sends
+    SIGTERM and escalates to SIGKILL after five seconds. Ordinary child failure
+    retains its process status and complete journal rows.
+
+    Exit zero additionally needs a completion marker and at least one row; it does
+    not require every outcome to be certified. Rehashes the executable after the
+    run and marks changes. Unexpected errors can leave the initial manifest; this
+    function has no general finally-based cleanup around every possible failure.
+    Returns the driver exit code separately from the retained child return code.
+    """
     output = new_output(args.output)
     binary = args.binary.resolve()
     binary_hash = digest_file(binary)
@@ -266,6 +333,13 @@ def run(args):
 
 
 def main():
+    """Dispatch compiler-wrapper calls or parse the native-Unix build/run CLI.
+
+    Wrapper dispatch is selected by BUILD_INPUT unless argv begins with build/run.
+    Run mode converts SIGTERM to KeyboardInterrupt for the controlled stop path;
+    a missing timeout leaves the child wait unbounded. Geometry is never run by
+    the build subcommand. Returns the selected subcommand's exit value.
+    """
     # Cargo's compiler probes and compilations use this file as an executable,
     # while the user's CLI always starts with build or run.
     if os.environ.get(BUILD_INPUT) and sys.argv[1:2] not in (["build"], ["run"]):
@@ -288,6 +362,7 @@ def main():
         parser.error("this driver requires a native Unix host")
     if args.command == "run":
         def interrupted(_signum, _frame):
+            """Route driver SIGTERM into the run loop's interruption cleanup."""
             raise KeyboardInterrupt
         signal.signal(signal.SIGTERM, interrupted)
     return build(args) if args.command == "build" else run(args)

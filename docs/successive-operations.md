@@ -8,18 +8,29 @@ from growing faster than its output. This record measures that through the
 public `csgrs` API. It is an admission record under
 [`admission.md`](admission.md), not a proof of the requirement.
 
+The measurements and implementation narratives below are historical observations
+at their named revisions. The 26 November 2026 documentation audit reviewed the
+current harness and tests without rerunning geometry or timing. Unarchived raw
+records have not been reconstructed by that audit; historical counts and costs
+must not be read as new measurements or universal closure/resource guarantees.
+
 ## Corpus and commands
 
 [`tests/successive_operations.rs`](../tests/successive_operations.rs) runs the
 chains in [`tests/support/successive_operations.rs`](../tests/support/successive_operations.rs).
 Each step feeds the previous result to the next operation under `STRICT` and
-records the P39 outcome, certified closed-manifold validation, sizes, and the
-stored size of every coordinate. The coordinate size uses
+records the local outcome, optional certified geometric edge-pairing answer,
+mesh counts, and stored coordinate-size metrics. Returned errors become failure
+rows; validation, graph-limit and callback panics do not. Edge checks alone do
+not establish vertex-link validity, embedding or fidelity to an analytic source.
+The coordinate size uses
 `hyperreal::Real::representation_size`. Box chains are compared with an
 independent exact volume oracle on the grid of all box coordinates. Drill
 chains whose set fixes the fewest triangles and vertices a triangulation needs
 assert exactly that size; the other chains pin their measured sizes, so a
-change to the growth below must update them.
+change to the growth below requires admission and appropriate evidence, not an
+automatic relaxation of the retained assertions. Volume equality alone does not
+establish equality of represented sets.
 
 ```sh
 cargo test --test successive_operations              # default chains, 10 s in debug
@@ -33,21 +44,27 @@ python3 scripts/successive-operations.py run --binary /tmp/successive-build/succ
 python3 scripts/test-successive-evidence.py --binary /tmp/successive-build/successive_operations --output /tmp/successive-check
 ```
 
-The harness times `chain.step`, the closed-manifold validation after it, and
+The harness times `chain.step`, the native geometric edge check after it, and
 the drop of the previous result once the new one replaces it, separately.
 Values the two results share stay alive, so the drop is the teardown of what
 the step did not reuse; the last result's drop is not timed. The bench's
-counting allocator reports, per step, the bytes allocated (every `alloc` and
+counting allocator reports, per step, requested allocation bytes (every `alloc` and
 `alloc_zeroed` request plus the growth of every `realloc` that grows; a
-shrinking `realloc` adds nothing), the peak live-heap growth, the live heap
-when the step starts (the previous result plus everything the process
-retains) and the allocator calls (`alloc`, `alloc_zeroed` and `realloc`).
-Allocated bytes are traffic, not memory in use, and say nothing about peak
-or resident memory. `--untouched` feeds each result to the next step without
+shrinking `realloc` adds nothing), peak tracked live-byte growth, tracked live
+bytes when the step starts, and allocator calls (`alloc`, `alloc_zeroed` and `realloc`).
+Allocated bytes are traffic, not memory in use. Counters update before System
+calls without rolling back failures, so successful allocations and nonoverflowing
+counters are assumptions. They omit allocator overhead, allocations through other
+APIs, resident memory, and complete-lifetime peaks. Global relaxed snapshots may
+include other threads. Step deltas exclude later measurement-vector growth,
+validation, journaling and replacement; the step timer includes wrapper overhead.
+Coordinate inspection and the caller's check are outside the validation timer.
+`--untouched` feeds each result to the next step without
 validating it or measuring its sizes, so no later step can reuse what
 validation cached; the corpus test checks that this changes no result
-(`validation_between_steps_does_not_change_results`). The raw rows give
-every number in bytes and nanoseconds. Each complete row is written and synced
+(`validation_between_steps_does_not_change_results`). The raw rows use bytes and
+nanoseconds for allocation and time fields. Untouched coordinate fields contain
+zero defaults, not measured zero sizes. Each complete row is written and synced
 after its operation, validation, inspection and predecessor drop, before the
 next step starts. Journal IO is outside those measured intervals. Raw output
 paths must be new; existing evidence is never overwritten.
@@ -56,7 +73,10 @@ The research driver embeds a build record in the executable: source revision,
 content hashes of tracked and new build inputs, the dirty patch and lock digest,
 Cargo command, and the actual compiler invocation and `rustc -Vv`. The build
 directory retains the patch, new input files, file manifest and Cargo artifact
-records, and verifies that source inputs stayed unchanged during compilation.
+records, and compares the selected source snapshot metadata before and after
+compilation. Symlinks contribute their link text; selected untracked build paths
+are included, but this is not a hermetic dependency/environment snapshot or a
+signed build attestation.
 `--features`, `--default-features`, `--profile` and `--target` select the build;
 defaults are release with only `curve,stl-io,obj-io`. Each attributed build
 recompiles the benchmark to embed its own record. Reuse its copied executable
@@ -68,11 +88,18 @@ The run directory retains the actual executable's SHA-256, embedded build
 record, arguments, host/CPU affinity, timeout, stdout/stderr and raw rows. It
 does not query the current checkout or the runtime compiler to identify the
 build. `run.json` starts as `incomplete`; normal completion, a signal and a
-timeout are distinct. A missing completion marker is never a completed run.
+timeout are distinct. A missing completion marker or zero counted rows prevents
+a completed run. The
+journal summary accepts newline-terminated 18-column rows and counts the outcome
+column verbatim; it does not fully validate numeric fields or outcome grammar.
 Killing the driver itself can leave that initial incomplete state. The
 interruption tests cover process termination, not storage-device failure.
 Completed harness execution is distinct from certified geometry completion:
-the manifest counts every outcome category, including typed failures.
+the manifest counts reported outcome labels, including typed failures. A returned
+failure stops its chain, but other chains can continue and the Rust harness can
+still write `# completed`. The driver keeps its exit code separate from the child
+return code and rejects an executable whose final digest differs from its initial
+one. Unexpected driver errors can leave partial evidence without a finalized status.
 
 The 25 October R25 check reproduced both old failures (a moved executable
 reported an unrelated revision; SIGKILL after completed steps lost the raw
@@ -214,10 +241,15 @@ would be a benchmarking framework rather than a record of this corpus. A/B
 comparisons should keep using allocated bytes, which are deterministic, and
 treat time as noisy.
 
-## Conclusions
+## Historical conclusions
 
-- **Exactness holds.** Every completed step is certified, closed and manifold,
-  and every box chain matches the oracle exactly. Rational coordinates stay
+These observations describe the recorded finite runs. Local receipts, native edge
+checks, scalar volume oracles, representation rows and source fidelity are separate
+claims; none alone proves universal exactness or a total resource bound.
+
+- **Recorded local decisions and volume checks passed.** The reported completed
+  steps were locally certified and passed native edge checks; box-chain signed
+  volumes matched the independent box oracle. Rational coordinates stay
   rational, and their denominators no longer grow: square drills keep the
   inputs' 3-bit denominators after 32 holes (14 bits before outputs were
   reduced), and crossing bars from integer inputs keep only integer vertices

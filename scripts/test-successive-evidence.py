@@ -3,6 +3,10 @@
 
 Usage: test-successive-evidence.py --binary /tmp/build/successive_operations \
            --output /tmp/evidence-check [--baseline /tmp/old-rows.tsv]
+
+Creates retained directories, an unrelated Git checkout and executable runtime-tool
+stubs, then runs real geometry probes and sends termination signals. This is an
+integration test, not a syntax-only or storage-device durability check.
 """
 
 import argparse
@@ -17,10 +21,17 @@ import sys
 import time
 
 
+# Driver under test, resolved relative to this integration test script.
 DRIVER = Path(__file__).with_name("successive-operations.py").resolve()
 
 
 def rows(path):
+    """Split non-comment/header lines into columns without schema or trailing-newline checks.
+
+    Unlike the production journal summary, this helper may include a partial final
+    line. Callers rely on the live journal's write/sync behavior; this is not a
+    general validator of arbitrary damaged journals.
+    """
     return [
         line.split("\t") for line in path.read_text().splitlines()
         if line and not line.startswith(("#", "chain\t"))
@@ -28,6 +39,15 @@ def rows(path):
 
 
 def main():
+    """Exercise moved-binary identity, validation modes, interruption and timeout evidence.
+
+    Requires an attributed executable and creates a new retained output directory.
+    Validated/untouched four-gon runs must report sixteen certified steps; optional
+    baseline checks compare receipt/representation columns and operation allocation
+    traffic/calls, excluding timing and live memory. Interruptions wait for a row,
+    then kill the child group or terminate the driver; a separate short timeout
+    must return 124. Assertions/subprocess errors propagate and artifacts remain.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -59,6 +79,7 @@ def main():
     environment["PATH"] = str(replacement_tools) + os.pathsep + environment["PATH"]
 
     def command(destination, *arguments):
+        """Build a driver-run argv for the moved executable with a 120-second timeout."""
         return [sys.executable, str(DRIVER), "run", "--binary", str(moved), "--output",
                 str(destination), "--timeout", "120", "--", *arguments]
 

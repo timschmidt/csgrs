@@ -3402,6 +3402,53 @@ Logs: `/tmp/csgrs-rustdoc-successive-consumers-check.log`,
 `/tmp/csgrs-rustdoc-successive-consumers-bench.log` and
 `/tmp/csgrs-rustdoc-successive-consumers-bench-private.log`.
 
+### Probe driver, integration-test documentation and measurement narrative, 26 November 2026
+
+Baseline: `32426592a`. Owners: research evidence tooling and its documentation,
+P6/P20/P35–P37/P39. Read all three files completely and reconciled current harness
+semantics with the scripts and historical record. This non-Rust batch uses Python
+docstrings/comments and Markdown rather than claiming Rustdoc coverage for Python.
+
+| File | Review and change | Validation |
+| --- | --- | --- |
+| `scripts/successive-operations.py` | Entire 300-line baseline; documented all functions including the nested signal handler, snapshots, attribution, journal parsing and exit/cleanup limits. | AST-identical excluding docstrings; help and Pydoc inspected; build/run not executed. |
+| `scripts/test-successive-evidence.py` | Entire file; documented all three functions, retained setup, real geometry/termination behavior and row-parser limits. | AST-identical excluding docstrings; help and Pydoc inspected; integration test not executed. |
+| `docs/successive-operations.md` | Entire 325-line baseline; corrected current validation/allocator terminology and separated historical finite measurements from fresh or universal claims. | Local link target files exist; historical measurement table and command blocks preserved; no performance replay. |
+
+Missing witnesses were undocumented script helpers and prose stronger than the
+current evidence. Snapshot hashes identify selected files/link text and metadata,
+not a hermetic or signed build. The production journal summary accepts complete
+18-column lines without validating each numeric field/outcome label; the integration
+test's simpler parser can include a partial line. Run completion and certified
+geometry completion remain separate, as do driver and child exit codes. Generic
+errors may leave incomplete retained directories; cleanup is not universal.
+
+The measurement narrative now names local receipts, native edge pairing, signed
+volume checks, per-coordinate metrics and requested-byte counters separately.
+Historical rows, commands and numerical expectations were preserved; no source
+claim was replaced by a lower-resolution or failing acceptance fixture. Unarchived
+raw samples were not recreated, and historical speed/heap conclusions were not
+revalidated by this documentation audit. The standing release target is unchanged.
+
+Validation after final edits:
+
+- Parsed both scripts with Python's AST and compared them with baseline after
+  removing only module/function docstrings: identical. All twelve driver functions
+  and three integration-test functions, including nested functions, have docstrings.
+- Imported modules under non-main names and inspected plaintext Pydoc for every
+  top-level function. Nested functions were source-reviewed. Both `--help` commands
+  succeeded without invoking build/run or the integration workload.
+- `git diff --check` passed. All nine local Markdown link target files exist;
+  fragment anchors were not revalidated. Historical measurement table rows are
+  byte-identical, and command blocks were left unchanged.
+- No geometry, Cargo build, process-termination test, acquisition or evidence-run
+  directory was generated. Focused checks follow the session's docs-only waiver.
+
+Temporary documentation outputs: `/tmp/csgrs-rustdoc-successive-operations-pydoc.txt`,
+`/tmp/csgrs-rustdoc-test-successive-evidence-pydoc.txt`,
+`/tmp/csgrs-rustdoc-successive-driver-help.txt` and
+`/tmp/csgrs-rustdoc-successive-evidence-help.txt`.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with
