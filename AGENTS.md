@@ -457,6 +457,24 @@ move only through deprecation for one release, recorded in
   `docs/`, `PERFORMANCE.md`, `FUTURE_WORK.md`, `CHANGELOG.md`, or the evidence
   archive. They do not belong in the README.
 
+## Rustdoc coverage
+
+Maintain 100% Rustdoc coverage across the codebase, including private and
+crate-visible modules, types, fields, variants, constants, traits, methods,
+functions, and supporting test/example/benchmark code. Explain each item's
+practical or mathematical role and actual behavior, including applicable input
+domains, failures, certainty, provenance, and resource limitations. Read the
+implementation and its consumers; a name restatement is not an API audit.
+
+Keep private API documentation buildable with `cargo doc --document-private-items`
+under the relevant features and manifests. Public `missing_docs` checks alone
+cannot establish private coverage. Review generated and macro-expanded APIs as
+well as authored items, and do not suppress gaps with `doc(hidden)` or blanket
+lint allowances. Track line-by-line review separately from automated inventories
+in [`docs/research/rustdoc-audit.md`](docs/research/rustdoc-audit.md); claim full
+coverage only after the complete repository and applicable configurations have
+been reviewed and checked.
+
 ## Pre-Push Verification
 
 Before every `git push`, agents must:
