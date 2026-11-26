@@ -2,6 +2,7 @@
 #![cfg(feature = "gltf-io")]
 
 #[path = "support/uncertainty.rs"]
+/// Shared fixture that keeps a known zero unresolved at the finite decision terminal.
 mod uncertainty;
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
@@ -14,17 +15,20 @@ use hyperlattice::Point3;
 use hypermesh::{BooleanOp, MeshCertainty, Triangle};
 use serde_json::{Value, json};
 
+/// Serializes a JSON fixture and sends it through the public glTF importer.
 fn import(value: &Value) -> Result<GltfMeshImport, IoError> {
     from_gltf(&serde_json::to_vec(value).unwrap())
 }
 
+/// Checks canonical empty storage and an outside classification at the origin.
 fn assert_empty(mesh: &TriangleMesh) {
     assert!(mesh.positions.is_empty() && mesh.triangles.is_empty());
     assert!(!solid::contains_point(mesh, &Point3::origin()).unwrap());
 }
 
-// Exact boundary planes and signed volume, independent of importer/exporter
-// agreement. Closed-manifold and PWN validation establish separate claims.
+/// Checks exact boundary planes and signed volume independently of serialization agreement.
+/// Closed-manifold and PWN validation establish separate claims. Integer fixture
+/// bounds must keep the expected-volume expression within i32 arithmetic range.
 fn assert_box(mesh: &TriangleMesh, min: [i32; 3], max: [i32; 3]) {
     let lower = min.map(Real::from);
     let upper = max.map(Real::from);
@@ -58,6 +62,9 @@ fn assert_box(mesh: &TriangleMesh, min: [i32; 3], max: [i32; 3]) {
     );
 }
 
+/// Independently assembles a version-2 GLB header and four-byte-padded chunks.
+/// If `binary`, moves the fixture's first embedded buffer into BIN and removes
+/// its URI. Fixture lengths must fit u32; this is not a general glTF packager.
 fn glb(mut value: Value, binary: bool) -> Vec<u8> {
     let bin = binary.then(|| {
         let uri = value["buffers"][0]
@@ -93,6 +100,8 @@ fn glb(mut value: Value, binary: bool) -> Vec<u8> {
 }
 
 #[test]
+/// Imports schema-valid empty JSON/JSON-only GLB with exact counts and missing-history evidence.
+/// Empty scenes do not falsely claim coordinate projection or predicate certainty.
 fn schema_valid_empty_json_and_json_only_glb_import_as_canonical_empty() {
     for value in [
         json!({"asset":{"version":"2.0"},"scenes":[{}],"scene":0}),
@@ -122,6 +131,7 @@ fn schema_valid_empty_json_and_json_only_glb_import_as_canonical_empty() {
 }
 
 #[test]
+/// Checks omission of absent geometry arrays while retaining empty node/scene names and replay.
 fn empty_scene_and_named_empty_objects_omit_geometry_without_losing_names() {
     let empty = solid::empty();
     let scene: Value = serde_json::from_str(&to_gltf_scene("nothing", &[]).unwrap()).unwrap();
@@ -158,6 +168,8 @@ fn empty_scene_and_named_empty_objects_omit_geometry_without_losing_names() {
 }
 
 #[test]
+/// Checks independent node/mesh indices in mixed empty/two-box scenes across JSON and GLB.
+/// Verifies each box geometrically, then subtracts to empty and reuses that result.
 fn mixed_scene_preserves_node_and_mesh_indices_and_continues_modeling() {
     let cube = solid::cube(1).unwrap();
     let moved = cube.translated(3, 2, 1).unwrap();
@@ -225,6 +237,9 @@ fn mixed_scene_preserves_node_and_mesh_indices_and_continues_modeling() {
 }
 
 #[test]
+/// Reimports a terminal-qualified empty result as explicitly missing history.
+/// Strict transform/Boolean identities and repeated replay must retain that
+/// qualification; the original approximation receipt is not serialized by glTF.
 fn empty_roundtrip_preserves_qualified_history_through_strict_identities() {
     let cube = solid::cube(1).unwrap();
     let sine = Real::e().sin();
@@ -278,6 +293,10 @@ fn empty_roundtrip_preserves_qualified_history_through_strict_identities() {
     }
 }
 
+/// Assembles a unit right-triangle document with independent attribute/index bytes.
+/// `component` selects implicit indices or unsigned 5121/5123/5125 encoding.
+/// Sparse positions override two zero-base rows; otherwise `interleaved` adds
+/// a sentinel fourth float. Other component codes are invalid fixture requests.
 fn triangle_document(component: Option<u32>, interleaved: bool, sparse: bool) -> Value {
     let positions = [[0f32, 0., 0.], [1., 0., 0.], [0., 1., 0.]];
     let mut bytes = Vec::new();
@@ -334,6 +353,8 @@ fn triangle_document(component: Option<u32>, interleaved: bool, sparse: bool) ->
 }
 
 #[test]
+/// Checks exact position/index rows for implicit/u8/u16/u32 and packed/interleaved/sparse layouts.
+/// Exercises JSON and GLB, instance counts and explicit projection qualification.
 fn valid_unsigned_implicit_interleaved_and_sparse_accessors_keep_exact_rows() {
     for component in [None, Some(5121), Some(5123), Some(5125)] {
         for (interleaved, sparse) in [(false, false), (true, false), (false, true)] {
@@ -362,6 +383,8 @@ fn valid_unsigned_implicit_interleaved_and_sparse_accessors_keep_exact_rows() {
 }
 
 #[test]
+/// Rejects malformed accessor shape/count/reference/alignment/range and checked size overflow.
+/// A later valid import must still succeed after the failed attempts.
 fn malformed_accessor_counts_types_references_and_ranges_return_errors() {
     let fixture = triangle_document(Some(5125), false, false);
     for (pointer, replacement) in [
@@ -406,6 +429,7 @@ fn malformed_accessor_counts_types_references_and_ranges_return_errors() {
 }
 
 #[test]
+/// Rejects invalid sparse counts/ranges and decreasing, duplicate or out-of-range indices.
 fn sparse_counts_order_and_ranges_are_checked_before_reading() {
     let fixture = triangle_document(None, false, true);
     for (pointer, value) in [
@@ -432,6 +456,8 @@ fn sparse_counts_order_and_ranges_are_checked_before_reading() {
 }
 
 #[test]
+/// Distinguishes malformed graphs/empty arrays from valid empty geometry and missing-scene support.
+/// Includes cycles, shared children, bad roots, non-affine transforms and truncated GLB.
 fn malformed_graphs_and_present_empty_arrays_cannot_masquerade_as_empty() {
     for (nodes, roots) in [
         (json!([{"children":[0]}]), json!([0])),
@@ -476,6 +502,8 @@ fn malformed_graphs_and_present_empty_arrays_cannot_masquerade_as_empty() {
 }
 
 #[test]
+/// Exercises a full 10,000-node meshless chain through the iterative importer.
+/// Checks completed canonical emptiness, without asserting a time or memory bound.
 fn full_ten_thousand_node_chain_completes_without_recursive_traversal() {
     let count = 10_000;
     let nodes: Vec<_> = (0..count)
@@ -492,6 +520,7 @@ fn full_ten_thousand_node_chain_completes_without_recursive_traversal() {
 }
 
 #[test]
+/// Checks first/default scene selection and parent-scale-after-child-translation coordinates.
 fn default_scene_and_nested_transform_order_remain_explicit() {
     let mut value = triangle_document(None, false, false);
     value["nodes"] = json!([
@@ -514,6 +543,7 @@ fn default_scene_and_nested_transform_order_remain_explicit() {
 }
 
 #[test]
+/// Checks independent returned text, eviction, invalid source mutation and concurrent empty replay.
 fn empty_cache_eviction_mutation_and_concurrent_exports_agree() {
     let empty = solid::empty();
     let expected = to_gltf(&empty, "empty").unwrap();
@@ -547,6 +577,8 @@ fn empty_cache_eviction_mutation_and_concurrent_exports_agree() {
 }
 
 #[test]
+/// Rejects duplicate empty names and malformed geometry before touching existing writer bytes.
+/// Also checks successful empty output from the stream API.
 fn invalid_geometry_and_duplicate_empty_names_leave_writers_untouched() {
     let empty = solid::empty();
     let duplicate = [

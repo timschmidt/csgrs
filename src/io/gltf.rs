@@ -12,27 +12,47 @@ use std::cell::RefCell;
 use std::io::Write;
 use std::sync::Arc;
 
+/// Column-major finite-boundary transform storage, indexed `[column][row]`.
+/// Arithmetic on this import-only representation precedes exact scalar promotion.
 type Matrix4 = [[f64; 4]; 4];
 
+/// Successful single-object JSON retained with its source allocations and name.
 #[derive(Clone)]
 struct CachedGltf {
+    /// Owned position allocation used as an identity key, preventing allocation reuse.
     positions: Arc<[Point3]>,
+    /// Owned triangle allocation completing the geometry identity key.
     triangles: Arc<[Triangle]>,
+    /// Exact name text, also part of the serialization cache key.
     object_name: String,
+    /// Complete JSON copied on return so callers cannot mutate the retained output.
     output: String,
 }
 
 thread_local! {
+    /// Four successful single-object exports per thread, evicted in insertion order.
+    /// Hits do not refresh order. Allocation identity is a reuse key, not geometric
+    /// equality; the entry limit does not bound retained bytes or conversion work.
     static GLTF_CACHE: RefCell<Vec<CachedGltf>> = const { RefCell::new(Vec::new()) };
 }
 
+/// Owned export staging rows, without an independent topology or modeling authority.
 #[derive(Clone)]
 struct IndexedTriangleMesh3D {
+    /// Exact positions copied from native graphics rows, one per triangle corner.
     positions: Vec<Point3>,
+    /// Corresponding native generated flat normals, before finite projection.
     normals: Vec<Vector3>,
+    /// Three `(position, normal)` index pairs for each triangle.
     faces: Vec<[(usize, usize); 3]>,
 }
 
+/// Captures native flat-normal graphics rows for later glTF projection.
+///
+/// Rejects positions without triangles, accepts canonical empty geometry and
+/// preserves typed native index/normal failures. Only referenced positions enter
+/// the staging arrays. This checks neither closed topology nor binary32 fidelity;
+/// projection is deferred until scene serialization.
 fn indexed_geometry(mesh: &TriangleMesh) -> Result<IndexedTriangleMesh3D, IoError> {
     if mesh.triangles.is_empty() && !mesh.positions.is_empty() {
         return Err(IoError::Geometry {
@@ -80,6 +100,7 @@ fn indexed_geometry(mesh: &TriangleMesh) -> Result<IndexedTriangleMesh3D, IoErro
     })
 }
 
+/// Checks an exporter index/count/byte field against its chosen u32 encoding bound.
 fn checked_u32(value: usize, limit: &'static str) -> Result<u32, IoError> {
     u32::try_from(value).map_err(|_| IoError::SizeOverflow {
         format: "glTF",
@@ -88,13 +109,16 @@ fn checked_u32(value: usize, limit: &'static str) -> Result<u32, IoError> {
 }
 
 /// Geometry-only evidence produced while flattening one glTF scene.
+/// Counts describe consumed instances, not source fidelity, manifoldness or a
+/// separate certainty receipt; the mesh retains its construction qualification.
 #[derive(Clone, Debug)]
 pub struct GltfMeshImport {
-    /// Flattened native triangle mesh.
+    /// Flattened native triangle mesh with missing source history and, when nonempty,
+    /// explicit coordinate-projection qualification.
     pub mesh: hypermesh::TriangleMesh,
     /// Selected default scene, or the first scene when no default is declared.
     pub scene_index: usize,
-    /// Number of scene nodes that instantiated a mesh.
+    /// Number of selected-scene nodes that instantiated a mesh, counting repeated mesh uses.
     pub mesh_node_count: usize,
     /// Number of triangle primitives consumed across those nodes.
     pub primitive_count: usize,
@@ -109,6 +133,22 @@ pub struct GltfMeshImport {
 /// of being silently ignored.
 /// Scenes without mesh instances import as canonical empty geometry. Missing
 /// source history remains explicit, including after subsequent certified work.
+///
+/// The document-wide node forest and every declared buffer are checked before
+/// selecting a scene. Selected nodes are traversed in root/child order without
+/// recursion; repeated mesh instances get separate position rows. POSITION must
+/// be non-normalized FLOAT/VEC3; triangle indices may be unsigned u8/u16/u32 or
+/// implicit. Aligned interleaved positions and validated sparse accessors are
+/// supported. Referenced byte ranges and sparse ordering are checked before reads.
+///
+/// Node matrices/TRS are obtained from the parser as binary32, widened and
+/// composed in binary64. Transformed finite positions are then promoted exactly.
+/// This does not preserve exact authored transform arithmetic. Reflections retain
+/// index order, and singular affine maps are not rejected solely for singularity;
+/// every resulting triangle must still have a certifiable nondegenerate normal.
+/// This local check does not establish closed topology. Normals, materials,
+/// textures and animations are not imported; static node transforms are used.
+/// Skin/morph/topology restrictions apply to the nodes/primitives actually visited.
 pub fn from_gltf(bytes: &[u8]) -> Result<GltfMeshImport, IoError> {
     let asset = parse_gltf(bytes)?;
     validate_node_forest(&asset)?;
@@ -175,6 +215,7 @@ pub fn from_gltf(bytes: &[u8]) -> Result<GltfMeshImport, IoError> {
     })
 }
 
+/// Wraps parser/schema/layout diagnostics as malformed-input text, without a typed cause.
 fn gltf_document_error(error: impl std::fmt::Display) -> IoError {
     IoError::MalformedInput(format!("glTF document validation failed: {error}"))
 }
@@ -182,6 +223,12 @@ fn gltf_document_error(error: impl std::fmt::Display) -> IoError {
 /// Bridge the parser's required Scene.nodes field to glTF's optional property,
 /// then retain its native document validation. Never serialize the internal
 /// empty array: a present scene.nodes array must contain at least one entry.
+///
+/// Parses JSON or GLB, rejects present empty core arrays, prechecks attribute
+/// references before the dependency's validation hooks can dereference them,
+/// and checks positive counts and platform-representable sizes. Then invokes
+/// native document validation. Buffer contents and graph structure are checked
+/// separately; normalization here is internal and does not rewrite output bytes.
 fn parse_gltf(bytes: &[u8]) -> Result<gltf::Gltf, IoError> {
     let (json_bytes, blob) = if bytes.starts_with(b"glTF") {
         let glb = gltf::binary::Glb::from_slice(bytes).map_err(gltf_document_error)?;
@@ -284,6 +331,7 @@ fn parse_gltf(bytes: &[u8]) -> Result<gltf::Gltf, IoError> {
     })
 }
 
+/// Checks whether a parsed u64 count/offset fits this platform's indexing type.
 fn platform_size(value: u64) -> Result<usize, IoError> {
     usize::try_from(value).map_err(|_| IoError::SizeOverflow {
         format: "glTF",
@@ -293,6 +341,10 @@ fn platform_size(value: u64) -> Result<usize, IoError> {
 
 /// Validate the document's forest without recursive calls or repeated traversal
 /// of shared subtrees. The same root may appear in different scenes.
+/// Rejects multiple parent references (including a repeated child), cycles and
+/// duplicate/non-root scene entries across the entire document, not only the
+/// selected scene. Requires parser-validated node indices. The explicit stack
+/// avoids recursive depth growth; this is not a total-work or allocation budget.
 fn validate_node_forest(asset: &gltf::Gltf) -> Result<(), IoError> {
     let mut parents = vec![None; asset.nodes().len()];
     for node in asset.nodes() {
@@ -340,6 +392,10 @@ fn validate_node_forest(asset: &gltf::Gltf) -> Result<(), IoError> {
     Ok(())
 }
 
+/// Loads every declared buffer from embedded base64 or the owned GLB BIN chunk.
+/// Requires at least each declared byte length; padding/extra bytes are retained.
+/// External URIs are rejected, and a BIN source clones the chunk rather than
+/// borrowing it. No filesystem/network resolver or total decoded-byte cap is used.
 fn gltf_buffers(asset: &gltf::Gltf) -> Result<Vec<Vec<u8>>, IoError> {
     asset
         .buffers()
@@ -366,6 +422,9 @@ fn gltf_buffers(asset: &gltf::Gltf) -> Result<Vec<Vec<u8>>, IoError> {
         .collect()
 }
 
+/// Decodes a `data:` URI with an exact `base64` metadata token and comma separator.
+/// Media type is not otherwise constrained. External/non-base64 sources are
+/// unsupported; missing separators or invalid base64 are malformed input.
 fn decode_gltf_data_uri(uri: &str) -> Result<Vec<u8>, IoError> {
     let Some(payload) = uri.strip_prefix("data:") else {
         return Err(IoError::Unsupported {
@@ -387,6 +446,12 @@ fn decode_gltf_data_uri(uri: &str) -> Result<Vec<u8>, IoError> {
     })
 }
 
+/// Checks base/sparse byte layouts and strictly increasing in-range sparse indices.
+///
+/// The document and buffers must already be validated/loaded, with buffer entries
+/// matching declared indices and minimum lengths. The caller supplies the actual
+/// item width and nonzero alignment. Sparse views cannot declare a stride; values
+/// are range-checked here but decoded later by the dependency's accessor reader.
 fn validate_accessor_layout(
     accessor: &gltf::Accessor<'_>,
     buffers: &[Vec<u8>],
@@ -456,6 +521,12 @@ fn validate_accessor_layout(
     Ok(())
 }
 
+/// Checks a nonempty strided accessor range within its view and declared buffer.
+///
+/// Requires nonzero alignment and the correct item width. Checked arithmetic
+/// covers offsets and the final row; zero count follows the size-overflow path.
+/// Stride, relative offset and absolute offset must satisfy component alignment.
+/// This checks declared ranges, relying on buffer loading for actual byte lengths.
 fn validate_view_layout(
     view: &gltf::buffer::View<'_>,
     offset: usize,
@@ -495,6 +566,14 @@ fn validate_view_layout(
 }
 
 #[allow(clippy::too_many_arguments)]
+/// Appends one selected node's transformed triangle primitives and returns its world matrix.
+///
+/// Does not recurse. Requires a validated document/forest and loaded buffers;
+/// verifies affine finite composition, supported primitive/accessor forms, sparse
+/// layout and index bounds before publishing a final mesh. Counts advance per
+/// consumed mesh node/primitive with checked additions. Scratch arrays/counters
+/// may be partially changed on error; the outer importer discards them then.
+/// Triangle-normal validation occurs after all selected nodes have been flattened.
 fn import_gltf_node(
     node: gltf::Node<'_>,
     parent: &Matrix4,
@@ -668,6 +747,7 @@ fn import_gltf_node(
     Ok(transform)
 }
 
+/// Supplies the parent transform for each selected-scene root.
 const fn identity_matrix() -> Matrix4 {
     [
         [1.0, 0.0, 0.0, 0.0],
@@ -677,6 +757,8 @@ const fn identity_matrix() -> Matrix4 {
     ]
 }
 
+/// Widens parser matrix components exactly while rejecting any nonfinite entry.
+/// Does not validate affine form; composed transforms are checked by the node importer.
 fn f32_matrix_to_f64(matrix: [[f32; 4]; 4]) -> Result<Matrix4, IoError> {
     let mut result = [[0.0; 4]; 4];
     for column in 0..4 {
@@ -693,6 +775,8 @@ fn f32_matrix_to_f64(matrix: [[f32; 4]; 4]) -> Result<Matrix4, IoError> {
     Ok(result)
 }
 
+/// Computes column-major `left * right` in binary64, applying the right transform first.
+/// Rounding and overflow remain possible; callers validate the composed result.
 fn multiply_matrix(left: &Matrix4, right: &Matrix4) -> Matrix4 {
     let mut result = [[0.0; 4]; 4];
     for column in 0..4 {
@@ -704,6 +788,9 @@ fn multiply_matrix(left: &Matrix4, right: &Matrix4) -> Matrix4 {
     result
 }
 
+/// Applies a binary64 homogeneous transform, then promotes the resulting coordinates.
+/// Rejects nonfinite output and `w != 1` without perspective division. Exact
+/// promotion preserves the computed binary64 values, not pre-rounding composition.
 fn transform_gltf_position(matrix: &Matrix4, position: [f32; 3]) -> Result<Point3, IoError> {
     let [x, y, z] = position.map(f64::from);
     let transformed = [
@@ -725,6 +812,7 @@ fn transform_gltf_position(matrix: &Matrix4, position: [f32; 3]) -> Result<Point
     ))
 }
 
+/// Promotes a finite binary64 boundary value exactly, retaining failures as labeled text.
 fn exact_gltf_real(value: f64, field: &'static str) -> Result<Real, IoError> {
     Real::try_from(value).map_err(|error| IoError::Geometry {
         format: "glTF",
@@ -739,6 +827,13 @@ fn exact_gltf_real(value: f64, field: &'static str) -> Result<Real, IoError> {
 /// after an undecided normal gains stronger scalar evidence.
 /// Canonical empty geometry exports as a named node without a mesh. Positions
 /// without triangles remain invalid input, rather than becoming an empty node.
+///
+/// Emits one named node with generated flat normals and an embedded buffer,
+/// using [`to_gltf_scene`]. Projection goes through the shared binary64 view to
+/// binary32; no post-projection nondegeneracy or topology check is performed.
+/// Names are JSON-escaped. Material attributes and construction evidence are not
+/// serialized. Cache hits match both source array allocations and the exact name
+/// and return independent text; only four successes per thread are retained.
 pub fn to_gltf(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError> {
     if let Some(output) = GLTF_CACHE.with_borrow(|entries| {
         entries
@@ -754,6 +849,7 @@ pub fn to_gltf(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError
     }
     let output = to_gltf_scene(object_name, &[GltfSceneObject::new(object_name, mesh)?])?;
     GLTF_CACHE.with_borrow_mut(|entries| {
+        /// Per-thread successful-entry limit, independent of serialized byte size.
         const CAPACITY: usize = 4;
         if entries.len() == CAPACITY {
             entries.remove(0);
@@ -770,17 +866,23 @@ pub fn to_gltf(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError
 
 /// One named geometry object in a glTF scene.
 ///
-/// The object carries no application semantics: callers retain those in their
-/// own scene manifest and provide only render-safe names plus triangulated
-/// geometry at this format boundary.
+/// Owns exact export rows and generated normals captured from a native mesh;
+/// later source mutation does not update this snapshot. It carries neither
+/// application metadata nor a source construction receipt. Names are serialized
+/// using JSON escaping, without a separate character-restriction policy.
 pub struct GltfSceneObject {
+    /// Node/mesh name; scene serialization rejects duplicate names by exact text.
     name: String,
+    /// Captured exact rows and index pairs awaiting finite serialization.
     indexed: IndexedTriangleMesh3D,
 }
 
 impl GltfSceneObject {
     /// Captures one named indexed-triangle source for scene serialization.
     /// Native failures use the same typed construction cause as [`to_gltf`].
+    /// Computes generated flat normals and accepts canonical empty geometry.
+    /// Successful capture does not establish finite binary32 representability;
+    /// that check is deferred to serialization, as is scene-wide name uniqueness.
     pub fn new(name: impl Into<String>, mesh: &TriangleMesh) -> Result<Self, IoError> {
         Ok(Self {
             name: name.into(),
@@ -792,6 +894,18 @@ impl GltfSceneObject {
 /// Serializes multiple independently named geometry objects into one glTF 2.0
 /// scene with an embedded binary buffer when geometry is present. Empty objects
 /// retain their names as meshless nodes; a scene with no objects omits its nodes.
+///
+/// Objects keep input order and require distinct names, including empty objects.
+/// Each nonempty object contributes one triangle primitive, separate little-endian
+/// FLOAT/VEC3 position/normal streams and u32 indices to one base64 data buffer.
+/// Position/normal index pairs share rows within that object; equal coordinate
+/// values alone do not merge rows. Bounds are taken from projected positions.
+///
+/// Projection can collapse a previously valid triangle; the output is not checked
+/// for geometric nondegeneracy, closedness or source fidelity afterward. Generated
+/// normals are projected independently and not recomputed from encoded vertices.
+/// Materials, textures, transforms and construction evidence are not emitted.
+/// Checked format field sizes do not provide a total allocation/work budget.
 pub fn to_gltf_scene(
     scene_name: &str,
     objects: &[GltfSceneObject],
@@ -995,6 +1109,9 @@ pub fn to_gltf_scene(
     })
 }
 
+/// Writes complete [`to_gltf`] JSON after successful conversion.
+/// Conversion errors leave the sink untouched; I/O errors may leave partial bytes.
+/// This does not flush or roll back the stream.
 pub fn write_gltf<W: Write>(
     mesh: &TriangleMesh,
     writer: &mut W,
@@ -1005,6 +1122,9 @@ pub fn write_gltf<W: Write>(
 }
 
 /// Writes a named multi-object glTF scene to an arbitrary byte sink.
+/// Forms all [`to_gltf_scene`] text before writing, so conversion errors leave
+/// the sink untouched. I/O failures can leave partial bytes; no flush or rollback
+/// is performed.
 pub fn write_gltf_scene<W: Write>(
     writer: &mut W,
     scene_name: &str,

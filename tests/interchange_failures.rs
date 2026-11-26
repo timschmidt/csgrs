@@ -1,6 +1,8 @@
+//! Native diagnostic retention, finite graphics projections and downstream interchange reuse.
 #![cfg(all(feature = "obj-io", feature = "ply-io", feature = "gltf-io"))]
 
 #[path = "support/uncertainty.rs"]
+/// Shared fixture for a known zero unresolved at the finite predicate terminal.
 mod uncertainty;
 
 use base64::Engine;
@@ -14,6 +16,7 @@ use std::error::Error;
 use std::io::{self, Write};
 use std::sync::Arc;
 
+/// Constructs an XY triangle whose degeneracy/normal decision depends on `height`.
 fn triangle(height: Real) -> TriangleMesh {
     TriangleMesh::new(
         vec![
@@ -25,6 +28,7 @@ fn triangle(height: Real) -> TriangleMesh {
     )
 }
 
+/// Constructs a 3-4-5 triangle with independent unit-normal expectation `(0, -4/5, 3/5)`.
 fn normal_fixture() -> TriangleMesh {
     TriangleMesh::new(
         [[0, 0, 0], [1, 0, 0], [0, 3, 4]]
@@ -34,12 +38,14 @@ fn normal_fixture() -> TriangleMesh {
     )
 }
 
+/// Keeps the trigonometric zero identity unresolved using the shared terminal fixture.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Supplies missing-index, degenerate and undecided-normal cases with expected categories.
 fn failures() -> [(TriangleMesh, ValidationErrorKind); 3] {
     [
         (
@@ -51,6 +57,7 @@ fn failures() -> [(TriangleMesh, ValidationErrorKind); 3] {
     ]
 }
 
+/// Checks format context, exact native GPU cause, public category and the nested error chain.
 fn assert_gpu(
     error: IoError,
     format: &str,
@@ -75,6 +82,7 @@ fn assert_gpu(
 }
 
 #[test]
+/// Preserves PLY native error causes across repeated text/writer attempts and keeps sinks untouched.
 fn ply_retains_invalid_degenerate_and_undecided_causes() {
     for (mesh, kind) in failures() {
         let native = mesh.to_exact_gpu_mesh_buffers().unwrap_err();
@@ -98,6 +106,7 @@ fn ply_retains_invalid_degenerate_and_undecided_causes() {
 }
 
 #[test]
+/// Preserves glTF native causes through export, scene capture and writer retries without partial text.
 fn gltf_exports_and_scene_objects_retain_native_causes() {
     for (mesh, kind) in failures() {
         let native = mesh.to_exact_gpu_mesh_buffers().unwrap_err();
@@ -127,6 +136,7 @@ fn gltf_exports_and_scene_objects_retain_native_causes() {
 }
 
 #[test]
+/// Keeps ordinary and maximum invalid OBJ indices in the typed native source chain before writing.
 fn obj_invalid_index_cause_and_context_survive_export() {
     for index in [3, usize::MAX] {
         let mut mesh = normal_fixture();
@@ -159,8 +169,9 @@ fn obj_invalid_index_cause_and_context_survive_export() {
     }
 }
 
-// Independent format decoding and exact rational geometry, not another call
-// through the graphics exporter, supply the success oracle.
+/// Independently decodes the fixture's six-column PLY vertex rows.
+/// Assumes face lines begin `3 ` and no vertex row has that prefix; this small
+/// schema-specific reader is not a general PLY parser or a graphics-exporter wrapper.
 fn ply_rows(text: &str) -> Vec<[f64; 6]> {
     text.split_once("end_header\n")
         .unwrap()
@@ -177,6 +188,8 @@ fn ply_rows(text: &str) -> Vec<[f64; 6]> {
         .collect()
 }
 
+/// Independently decodes tightly packed VEC3 floats from an embedded glTF buffer view.
+/// Assumes the fixture's first base64 buffer, explicit offsets and twelve-byte rows.
 fn gltf_rows(text: &str, view: usize) -> Vec<[f32; 3]> {
     let document: serde_json::Value = serde_json::from_str(text).unwrap();
     let uri = document["buffers"][0]["uri"].as_str().unwrap();
@@ -198,6 +211,7 @@ fn gltf_rows(text: &str, view: usize) -> Vec<[f32; 3]> {
 }
 
 #[test]
+/// Checks independent 3-4-5 position/normal expectations in PLY/glTF and exact OBJ replay.
 fn exact_normal_and_position_projection_remain_correct() {
     let mesh = normal_fixture();
     let ply = ply::to_ply(&mesh, "normal").unwrap();
@@ -224,6 +238,7 @@ fn exact_normal_and_position_projection_remain_correct() {
     assert!(obj.ends_with("f 1 2 3\n"));
 }
 
+/// Serializes the same fixture through PLY, glTF and OBJ in that fixed order.
 fn outputs(mesh: &TriangleMesh, name: &str) -> [String; 3] {
     [
         ply::to_ply(mesh, name).unwrap(),
@@ -233,6 +248,8 @@ fn outputs(mesh: &TriangleMesh, name: &str) -> [String; 3] {
 }
 
 #[test]
+/// Checks returned-text independence, copy-on-write mutation, invalidation, eviction and threads.
+/// Mutated normals are compared with independent planar expectations.
 fn success_caches_keep_owned_geometry_and_returned_text_independent() {
     let source = normal_fixture();
     let expected = outputs(&source, "cache");
@@ -263,6 +280,8 @@ fn success_caches_keep_owned_geometry_and_returned_text_independent() {
 }
 
 #[test]
+/// Retries an undecided native normal after a stronger sign proof and checks repeatable output.
+/// This does not certify the tiny height survives finite coordinate projection.
 fn failed_exports_retry_after_a_stronger_proof() {
     let pi = Real::pi();
     let height = &pi - Real::from(pi.certified_rational_interval(-1024).unwrap()[0].clone());
@@ -291,6 +310,7 @@ fn failed_exports_retry_after_a_stronger_proof() {
     assert_eq!(outputs(&mesh, "retry"), expected);
 }
 
+/// Checks unit-box corner coordinates, independent signed volume and strict closure.
 fn assert_unit_cube(mesh: &TriangleMesh) {
     let context = GeometryContext::STRICT.mesh_context();
     assert_eq!(
@@ -312,6 +332,7 @@ fn assert_unit_cube(mesh: &TriangleMesh) {
 }
 
 #[test]
+/// Reimports representable OBJ/glTF cubes, checks geometry and composes through empty results.
 fn representable_closed_exports_reimport_validate_and_compose() {
     let source = solid::cube(Real::one()).unwrap();
     let obj = obj::to_obj(&source, "cube").unwrap();
@@ -329,6 +350,7 @@ fn representable_closed_exports_reimport_validate_and_compose() {
 }
 
 #[test]
+/// Checks PLY's zero-row schema and consumable canonical empty OBJ replay.
 fn supported_empty_formats_remain_successful_and_consumable() {
     let empty = solid::empty();
     let text = ply::to_ply(&empty, "empty").unwrap();
@@ -345,17 +367,21 @@ fn supported_empty_formats_remain_successful_and_consumable() {
     );
 }
 
+/// Writer fixture that rejects every write with `BrokenPipe`.
 struct BrokenSink;
 impl Write for BrokenSink {
+    /// Fails before accepting bytes, independent of the supplied serialized data.
     fn write(&mut self, _: &[u8]) -> io::Result<usize> {
         Err(io::Error::from(io::ErrorKind::BrokenPipe))
     }
+    /// Accepts flushing so only write failures determine the fixture's diagnostic.
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
 
 #[test]
+/// Keeps sink `BrokenPipe` failures as standard I/O causes across all four writer entry points.
 fn writer_failures_stay_distinct_from_geometry_failures() {
     let source = normal_fixture();
     let scene = gltf::GltfSceneObject::new("normal", &source).unwrap();

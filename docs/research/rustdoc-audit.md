@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/io/gltf.rs` | Entire file; documented all private staging/cache fields, parse/layout/forest checks, transform arithmetic, scene capture, finite output limits and writer behavior. | Private docs with `gltf-io,obj-io,ply-io` passed; all 27 type/helper/public API pages inspected, including fields and constructor. |
+| `tests/gltf_empty_composition.rs` | Entire file; documented independent GLB/accessor bytes, box expectations, empty/qualified reuse, malformed graphs/layouts, cache behavior and full-depth witness. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `tests/interchange_failures.rs` | Entire file; documented native cause chains, independent projected rows, cache/retry/error witnesses and downstream empty/solid reuse. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
 | `src/io/dxf.rs` | Entire file; documented timestamp scope, exact finite promotion, OCS basis, polygon preconditions, supported entity interpretation, projection/qualification and export index panics. | Private docs with `dxf-io,svg-io` passed; all ten constant/helper/public-function pages inspected. Unit witness unchanged, not rerun. |
 | `src/io/svg.rs` | Entire file; documented error mapping, native options re-export, carrier tuple, strict replay, sampled standard primitives and exact-extension/display distinction. | Private docs with `dxf-io,svg-io` passed; three function pages and the options re-export page inspected. |
 | `tests/svg_hidden_path_admission.rs` | Entire file; documented hidden grammar/extension failures, certified empty replay and downstream reuse. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
@@ -1622,10 +1625,79 @@ Log: `/tmp/csgrs-rustdoc-dxf-svg-doc.log`. Shared temporary build storage is abo
 789 MiB. Full workflow/runtime checks remain waived for this documentation-only
 session; no new runtime completion or performance claim is made.
 
+### glTF import/export and downstream witnesses, 26 November 2026
+
+Baseline: `5d8e6a2af`. Owner: CSGRS glTF interchange boundary, preserving native
+mesh/scalar authority. Relevant properties: P6/P8/P9/P18–P20/P25–P27/P29/P30/P37.
+Domain: selected self-contained JSON/GLB scenes, validated triangle accessors,
+flattened finite node transforms, exact graphics-row staging, projected named
+scene export and canonical empty geometry. Read all three files above in full.
+The installed glTF dependency's binary32 matrix/TRS conversion was inspected as
+supporting evidence; no additional kernel or dependency whole-file credit is
+claimed.
+
+Missing witnesses: the matrix alias, cache/staging fields, private conversion and
+validation helpers, single-object writer and test declarations lacked Rustdoc.
+Existing public descriptions omitted projection/normal checks' timing and
+described render-safe names without an implemented character-restriction policy.
+
+Import docs now distinguish document-wide graph/buffer validation from selected
+scene traversal. Graph checks reject multiple parents, cycles and duplicate or
+non-root scene entries; an explicit stack avoids recursion but is not a total
+resource budget. Accessor docs state the prior document/buffer invariants,
+component alignment, range arithmetic and strictly increasing sparse indices.
+Only consumed geometry receives layout/triangle checks beyond schema validation.
+All declared buffers must still be self-contained and sufficiently long.
+
+The parser forms matrices/TRS in binary32; the adapter widens and composes in
+binary64 before exact promotion. That promotion does not restore exact authored
+transform arithmetic. Reflections keep index order; singular maps must satisfy
+the final triangle normal check rather than a separate determinant rejection.
+Import discards normals/materials/textures/animations, flattens static node
+transforms and carries missing-history/projection qualification. Closed topology
+and an aggregate certainty receipt are not established by the import report.
+
+Export staging is an owned snapshot of native generated flat-normal rows, not a
+second modeling authority. Scene capture defers finite conversion and duplicate
+name checks. JSON escaping handles names without a separate metadata filter.
+Projection can collapse a triangle; unlike STL's encoded-face check, this path
+does not revalidate projected nondegeneracy. Normals are projected independently,
+not recomputed from encoded vertices. Empty objects retain named meshless nodes,
+and no-object scenes omit node arrays. Exact array identity/name keys drive the
+four-entry success cache without defining geometric equality or a byte budget.
+Writers complete conversion before writing but cannot roll back I/O failure.
+
+Test docs describe independently assembled GLB/accessor/binary rows and exact
+3-4-5 normals/box volumes, separately from error comparison with the native GPU
+path. The tiny-height retry proves normal certification and retry, not coordinate
+survival after projection. Reimported empty geometry has explicit missing
+history, not preservation of the original source's approximation receipt. The
+10,000-node chain witness checks completion without a timing/memory claim.
+
+Validation after final edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on the
+  three edited Rust files and `git diff --check`: passed.
+- Nonblank, non-comment source matches baseline exactly. File-local scans found
+  Rustdoc on 29 glTF declarations, 18 empty-composition declarations and 22
+  interchange-failure declarations; private/public fields were checked separately.
+  No implementation, assertion, fixture or decision-order changes occurred.
+- With the shared temporary target, `CARGO_INCREMENTAL=0` and broken Rustdoc
+  links denied, ran `cargo doc --locked -p csgrs --no-default-features
+  --features gltf-io,obj-io,ply-io --document-private-items --no-deps --offline`:
+  passed without warnings. Inspected 27 rendered pages. One text-check expectation
+  initially used “correct item width” instead of the documented “actual item width”;
+  correcting that check confirmed the existing rendered contract. Local constants
+  and test items remain source-reviewed.
+
+Log: `/tmp/csgrs-rustdoc-gltf-doc.log`. Shared temporary build storage is about
+815 MiB. Full workflow/runtime checks remain waived for this docs-only session;
+no new runtime completion or performance claim is made.
+
 ## Next work
 
-Continue with the remaining root `src/io` interchange modules (glTF, VRML and
-Gerber) and downstream witnesses,
+Continue with the remaining root `src/io` interchange modules (VRML and Gerber)
+and downstream witnesses,
 then the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
