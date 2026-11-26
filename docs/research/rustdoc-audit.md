@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/support/successive_operations.rs` | Entire file; documented step lifecycle, receipts/errors, timings, coordinate metrics, rational-box oracle and every chain factory. | Test/benchmark compilation and private docs passed; failure tuple layout adds only a trailing comma; runtime chains unchanged and unrun. |
 | `tests/competitive.rs` | Entire file; documented tolerant three-engine comparison, quantized half-edge validation and input-only large-fixture gate. | Focused compilation/private docs passed; tests unchanged and unrun. |
 | `benchmarks/support/competitive.rs` | Entire file; documented all adapters, records, fields, variants, projected measures, hull fallback and tolerance limits. | Test and benchmark consumers compile; private descriptions/fields render; no measurements executed. |
 | `benchmarks/support/yeahright.rs` | Entire file; documented opt-in parsing, pinned archive/control checks, existence-only derived hull reuse and staging lifecycle. | Both benchmark consumers compile; private docs passed; no download/cache mutation executed. |
@@ -3288,6 +3289,57 @@ Logs: `/tmp/csgrs-rustdoc-competitive-check.log`,
 `/tmp/csgrs-rustdoc-competitive-private.log`,
 `/tmp/csgrs-rustdoc-competitive-benches.log` and
 `/tmp/csgrs-rustdoc-competitive-bench-private.log`.
+
+### Successive-operation shared harness and oracle, 26 November 2026
+
+Baseline: `4fbd02563`. Owner: shared root test/benchmark chain harness,
+P1/P4/P6/P8/P17–P20/P25/P26/P35/P37/P39. Domain: the finite rational/symbolic drill,
+bar, rotation, union, feedback, interchange and profile chains. Read all 783
+baseline lines and both consuming test/benchmark files in full for context; their
+own declaration documentation remains a subsequent batch and is not yet credited
+as completed review in the whole-file table.
+
+Missing witnesses were undocumented private functions, record fields, payloads,
+factory preconditions and an incorrect units claim. Corrected `exact_volume`:
+it divides the signed determinant sum by six and returns volume, not six-volume.
+Its rational recognition applies to the sum; rational input coordinates suffice
+but are not individually required by the code. Box-grid volume is independently
+computed but one volume scalar does not identify a regularized set.
+
+Documented one-based step ordering, local receipts versus inherited source facts,
+returned-error records versus uncaught validation/graph-limit/callback panics,
+empty/untouched handling and the observer's persistence responsibility. False
+edge-validation values are recorded rather than rejected by the runner. Operation,
+validation and replacement/drop timers exclude initial construction, coordinate
+measurement/check callbacks, observer work and final/failure teardown. Coordinate
+maxima are per component, not total retained graph/heap size or resource bounds.
+
+Factories retain their finite dimensions, unchecked large-count arithmetic and
+receipt-extracting convenience paths. Interchange adopts projected binary32/binary64
+models and preserves the cut receipt while OBJ import's local receipt is discarded.
+Construction errors retain their source category; other I/O errors flatten to a
+Geometry message. None of these behaviors, orders, formulas or expected outcomes
+was changed by the documentation work.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Source comparison removing
+  comments/blanks and normalizing only the documented Outcome tuple layout shows
+  identical tokens except its added trailing comma.
+- All 45 declarations/members, 23 fields, five variants and two tuple payloads
+  have Rustdoc. Matched all 75 descriptions in 40 generated private helper pages.
+- `cargo check --locked -p csgrs --no-default-features --features
+  attributed,curve,obj-io,stl-io --test successive_operations --offline -j 2`
+  passed; the same configuration with `--bench successive_operations` passed.
+  Private test Rustdoc passed with broken links denied and checked own-library
+  metadata/dependency paths supplied. No warnings were emitted.
+- Runtime chains, observer tests, allocation/timing probes and full workflows
+  were not executed under the docs-only waiver. Existing target artifacts were
+  reused with incremental compilation disabled; no raw journals/models were emitted.
+
+Logs: `/tmp/csgrs-rustdoc-successive-support-check.log`,
+`/tmp/csgrs-rustdoc-successive-support-private.log` and
+`/tmp/csgrs-rustdoc-successive-support-bench.log`.
 
 ## Next work
 
