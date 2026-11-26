@@ -34,6 +34,15 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/wasm/mod.rs` | Entire file; documented modules, exact numeric ingress, lossy/NaN egress, policy selection and unvalidated native matrix wrapping. | Private WASM-feature docs passed; shared helper pages inspected. Test-only threshold remains source-reviewed. |
+| `src/wasm/point_js.rs` | Entire file; documented storage, getters, display, Rust conversions and scope of the host test. | Private docs passed; type, fields and methods inspected. Test unchanged, not rerun. |
+| `src/wasm/matrix_js.rs` | Entire file; documented positional row layout despite irregular argument labels, finite ingress, projection limits and native-copy witnesses. | Private docs passed; helper/type pages and methods inspected. Tests unchanged, not rerun. |
+| `src/wasm/vector_js.rs` | Entire file; documented native arithmetic, normalization/rotation domains, strict decision order, flattened errors, finite egress and all tests/helpers. | Private docs passed; helper/type pages and methods inspected. Tests unchanged, not rerun. |
+| `src/wasm/plane_js.rs` | Entire file; documented additive-offset convention, native orientation, validation order, local receipts, extraction loss and reflection. | Private docs passed; helper/type pages and methods inspected. No implementation changes. |
+| `src/wasm/context_js.rs` | Entire file; documented all receipt conversions, fields/accessors, unresolved status preconditions, construction-summary scope and consuming extraction. | Private docs passed; all seven type/enum pages inspected, including private fields/methods. |
+| `src/wasm/io_error_js.rs` | Entire file; documented TS union scope, property assignment assumptions, message-only causes and retained construction categories. | Private docs passed including optional DXF/Gerber arms; helper pages inspected. Macro-consumed TS constant source-reviewed. |
+| `tests/wasm_certainty.rs` | Entire file; documented host-only receipt/evidence, successful boundary/empty and strict–approximate–strict query witnesses. | Source, formatting and comment-only comparison passed; assertions unchanged, not rerun. |
+| `src/voxels/mod.rs` | Entire one-line file; existing module description accurately identifies an empty placeholder for future experiments/hooks. No edit needed. | Module docs render; no implemented voxel API is claimed. |
 | `src/io/gerber.rs` | Entire file; documented modal state, all fields/helpers, sampled construction, strict finite predicates, exposure ordering, unsupported/ignored commands and quantized export limits. | Private docs with `gerber-io` passed; 53 rendered pages inspected, including private methods/fields. No implementation changes. |
 | `tests/rounded_rectangle_fidelity.rs` | Entire file; documented exact polygon areas/tangent vertices, clamp/control cases, composition/volume, policy retry, capacity and optional OBJ/Gerber witnesses. | Source, formatting and comment-only comparison passed; all assertions unchanged, not rerun. |
 | `src/io/vrml.rs` | Entire file; documented public omission/nonempty contracts, every parser/helper/state/variant field, exact transform order, recursive ownership and all unit witnesses. Corrected aggregate-area evidence claims. | Private docs with `vrml-io` passed; all seventeen API/type/helper pages inspected, including private methods, fields and payloads. Tests unchanged, not rerun. |
@@ -1831,9 +1840,82 @@ no new runtime completion or performance claim is made. All root `src/io/*.rs`
 files now have recorded full-file reviews; this does not cover every downstream
 consumer, dependency or kernel interchange implementation.
 
+### WASM values, query receipts and interchange diagnostics, 26 November 2026
+
+Baseline: `38b5982d1`. Owners: CSGRS JS value/receipt/interchange boundaries,
+P1/P6/P8/P9/P19/P26/P28/P30/P37. Domain: finite JS numeric ingress, native
+symbolic values entering through Rust conversions, point/vector/matrix/plane
+operations, completed/unresolved queries and format errors. Read the seven
+edited WASM files and the Rust certainty test in full, plus the entire empty
+voxel module. Supporting reads of native vector normalization/angle, native
+plane construction/reflection, construction evidence, mesh/curve query callers
+and the TypeScript certainty consumer do not add whole-file kernel, mesh/curve
+wrapper or TypeScript audit credit.
+
+Missing witnesses: value types/fields, most exported operations, private scalar
+and quaternion helpers, receipt conversions/accessors and tests lacked Rustdoc.
+Existing certainty wording conflated predicate decisions with topology proof;
+a vector comment said native arithmetic returned finite components. Both now
+describe the implemented boundary precisely.
+
+The docs distinguish exact binary64 ingress from lossy getters, including NaN
+fallback when no finite view is available. Native Rust conversions bypass finite
+projection and do not validate arbitrary native carriers. Matrix construction
+documents the actual positional row order despite irregular historical parameter
+names; it imposes no affine/invertibility constraint. Vector equality continues
+after an unequal component until all comparisons finish or one is undecided.
+Rotation docs state radians, scalar-first quaternion normalization, the exact
+antipodal branch, and finite quaternion export without re-normalization.
+
+Plane docs specify `n·p + offset = 0`, non-unit normals, point-order orientation,
+normal validation before offset ingress and native reflection. Local receipts
+are exposed by context results but discarded by bare plane/matrix extraction;
+those value wrappers store no inherited evidence. Query docs distinguish
+boundary, outside/empty, curve uncertainty and mesh Unknown. Construction flags
+remain a dependency summary rather than a replayable proof or source-error bound.
+
+Interchange docs describe category/field preservation and the narrower named
+message causes; nested native kernel payloads are not all exported. TypeScript
+readonly declarations do not freeze host Error properties. Reflection exceptions
+panic in the property helper, while a false assignment result is unchecked.
+These flattened-error, NaN and receipt-loss behaviors remain implementation gaps
+against the broader targets; documenting them does not make them compliant.
+
+Unit/integration witness docs separate host Rust calls from generated JavaScript
+execution. Historical test names mentioning hostile axes or cross products now
+state which promotion checks they actually perform. Manually supplied receipt
+tests are distinguished from the hull witness that actually consumes a terminal.
+No runtime implementation, assertions, signatures or TypeScript declarations changed.
+
+Validation after final edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on all
+  eight edited Rust files and `git diff --check`: passed.
+- Removing only blank/comment lines gives identical source to baseline for each
+  Rust file. Declaration scans found documented counts of 16/10/9/35/16/36/5 in
+  module/point/matrix/vector/plane/context/IO files and seven in the Rust test.
+  Private fields and enum variants were checked separately.
+- With the shared temporary target, incremental compilation disabled and broken
+  Rustdoc links denied, ran `cargo doc --locked -p csgrs --no-default-features
+  --features wasm,dxf-io,gerber-io --document-private-items --no-deps --offline`
+  and the same command with `--features wasm`: both passed without warnings.
+- Inspected 34 rendered module/type/helper pages, including private fields,
+  methods, exported contracts and ordinary-feature output. The voxel placeholder
+  module renders as supplied. An initial attempt to read that page occurred while
+  Rustdoc was regenerating output; the read passed after the build completed.
+  The macro-consumed TypeScript-section constant and test-only items remain
+  source-reviewed rather than ordinary rendered Rustdoc items.
+
+Logs: `/tmp/csgrs-rustdoc-wasm-values-doc.log` and
+`/tmp/csgrs-rustdoc-wasm-values-minimal-doc.log`. Shared temporary build storage
+is about 1016 MiB. Full workflow/runtime checks remain waived for this docs-only
+session. These host documentation builds do not establish wasm32 execution,
+generated-package TypeScript validation, browser behavior or a new performance claim.
+
 ## Next work
 
-Continue with the remaining parts, voxels, WASM modules and owning crates. Maintain review records with
+Continue with WASM mesh/curve bindings and downstream JS witnesses, then the
+remaining parts and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation

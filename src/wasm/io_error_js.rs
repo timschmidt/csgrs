@@ -4,6 +4,9 @@ use crate::io::IoError;
 use js_sys::{Error, Reflect};
 use wasm_bindgen::prelude::*;
 
+/// TypeScript unions for host-owned modeling/interchange Error objects.
+/// Declares all format variants even when their feature-gated Rust branches are
+/// absent. Readonly annotations describe the TS surface, not frozen JS properties.
 #[wasm_bindgen(typescript_custom_section)]
 const IO_ERROR_TYPES: &str = r#"
 /** A native validation category carried by an ordinary JavaScript Error. */
@@ -37,15 +40,19 @@ export type GeometryIoError = Error & {
 );
 "#;
 
+/// Assigns a diagnostic property, expecting a freshly created ordinary Error object.
+/// Panics on a thrown reflection exception; a returned false assignment result is not checked.
 fn property(exception: &Error, name: &str, value: &JsValue) {
     Reflect::set(exception, &JsValue::from_str(name), value)
         .expect("new Error object accepts diagnostic properties");
 }
 
+/// Copies text to a JS diagnostic property through the shared reflection helper.
 fn text_property(exception: &Error, name: &str, value: &str) {
     property(exception, name, &JsValue::from_str(value));
 }
 
+/// Creates a named host Error from native display text, without retaining typed payload/source chains.
 fn native_cause(error: impl std::fmt::Display, name: &str) -> JsValue {
     let cause = Error::new(&error.to_string());
     cause.set_name(name);
@@ -55,6 +62,9 @@ fn native_cause(error: impl std::fmt::Display, name: &str) -> JsValue {
 /// Preserve the native variant and its fields, supplying boundary context for
 /// variants (such as parser IO) that do not store a format name themselves.
 /// Error strings and causes are owned by JavaScript and outlive mesh handles.
+/// Variant-owned format names override the fallback. Construction causes retain
+/// the modeling category and message, but not every nested kernel payload;
+/// other native causes retain their name/message rather than native source objects.
 pub(super) fn io_error(error: IoError, format: &'static str) -> JsValue {
     let exception = Error::new(&error.to_string());
     exception.set_name("GeometryIoError");

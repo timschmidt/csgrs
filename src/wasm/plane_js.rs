@@ -1,4 +1,8 @@
 //! JavaScript wrapper for native Hypermesh planes.
+//! A plane stores `normal · point + offset = 0` without unit normalization.
+//! Context constructors/reflection expose operation-local certainty; extracting
+//! the bare plane or matrix discards that separate receipt. These value wrappers
+//! do not retain an inherited construction history. Failure paths here use JS strings.
 
 use crate::context::GeometryDecisions;
 use crate::wasm::{
@@ -12,13 +16,18 @@ use hyperlattice::Vector3;
 use hypermesh::Plane;
 use wasm_bindgen::prelude::*;
 
+/// Owned native oriented plane with exact coefficients and optional construction receipts.
+/// Rust conversion can wrap an unchecked native plane; query/construction methods
+/// establish only their documented local preconditions.
 #[wasm_bindgen]
 pub struct PlaneJs {
+    /// Native normal and additive offset; neither is normalized for display.
     pub(crate) inner: Plane,
 }
 
 #[wasm_bindgen]
 impl PlaneJs {
+    /// Constructs from three finite numeric points under strict decisions, consuming the receipt.
     #[wasm_bindgen(js_name = FromComponents)]
     pub fn from_components(
         ax: f64,
@@ -35,6 +44,8 @@ impl PlaneJs {
             .map(GeometryPlaneResultJs::into_plane)
     }
 
+    /// Promotes three finite points exactly, then validates non-collinearity under the selected policy.
+    /// Returns the native plane with local certainty; invalid numbers/geometry return strings.
     #[wasm_bindgen(js_name = FromComponentsWithContext)]
     pub fn from_components_with_context(
         ax: f64,
@@ -56,11 +67,16 @@ impl PlaneJs {
         )
     }
 
+    /// Constructs the oriented plane through three native points strictly, consuming its receipt.
     #[wasm_bindgen(js_name = FromPoints)]
     pub fn from_points(a: &Point3Js, b: &Point3Js, c: &Point3Js) -> Result<Self, JsValue> {
         Self::from_points_with_context(a, b, c, false).map(GeometryPlaneResultJs::into_plane)
     }
 
+    /// Validates non-collinearity, then constructs the plane oriented by `(b-a) × (c-a)`.
+    /// Native coefficients may remove a common projective scale; the normal is
+    /// not required to have unit length. Preserves local decision certainty and
+    /// rejects a decided degeneracy or undecided predicate with a JS string.
     #[wasm_bindgen(js_name = FromPointsWithContext)]
     pub fn from_points_with_context(
         a: &Point3Js,
@@ -86,6 +102,7 @@ impl PlaneJs {
             .into())
     }
 
+    /// Imports finite normal/offset coefficients strictly, consuming the separate construction receipt.
     #[wasm_bindgen(js_name = FromNormalComponents)]
     pub fn from_normal_components(
         nx: f64,
@@ -97,6 +114,8 @@ impl PlaneJs {
             .map(GeometryPlaneResultJs::into_plane)
     }
 
+    /// Imports finite normal components, then validates the normal and imports the additive offset.
+    /// Returns local certainty under the selected policy; does not normalize coefficients.
     #[wasm_bindgen(js_name = FromNormalComponentsWithContext)]
     pub fn from_normal_components_with_context(
         nx: f64,
@@ -113,12 +132,17 @@ impl PlaneJs {
         Self::from_normal_with_context(&normal.into(), offset, approximate_512)
     }
 
+    /// Combines a native nonzero normal and finite additive offset strictly, consuming the receipt.
     #[wasm_bindgen(js_name = FromNormal)]
     pub fn from_normal(normal: &Vector3Js, offset: f64) -> Result<Self, JsValue> {
         Self::from_normal_with_context(normal, offset, false)
             .map(GeometryPlaneResultJs::into_plane)
     }
 
+    /// Requires positive squared normal magnitude before promoting the finite additive offset.
+    /// The equation is `n · p + offset = 0`; offset is a signed-distance coefficient
+    /// only when the normal is unit length. Retains local predicate certainty,
+    /// with validation/uncertainty failures converted to JS strings.
     #[wasm_bindgen(js_name = FromNormalWithContext)]
     pub fn from_normal_with_context(
         normal: &Vector3Js,
@@ -138,6 +162,7 @@ impl PlaneJs {
             .into())
     }
 
+    /// Clones the native normal without normalization or finite projection.
     pub fn normal(&self) -> Vector3Js {
         Vector3Js::from(Vector3::from_xyz(
             self.inner.normal.x.clone(),
@@ -146,20 +171,26 @@ impl PlaneJs {
         ))
     }
 
+    /// Returns a lossy additive-offset view, or NaN if no finite view is available.
     pub fn offset(&self) -> f64 {
         real_to_js(&self.inner.offset)
     }
 
+    /// Negates normal and offset in place, preserving the plane image and reversing its orientation.
     pub fn flip(&mut self) {
         self.inner = self.inner.inverted();
     }
 
+    /// Builds the native reflection matrix with strict decisions, consuming the separate receipt.
     #[wasm_bindgen(js_name = reflectionMatrix)]
     pub fn reflection_matrix(&self) -> Result<crate::wasm::matrix_js::Matrix4Js, JsValue> {
         self.reflection_matrix_with_context(false)
             .map(GeometryMatrixResultJs::into_matrix)
     }
 
+    /// Builds the homogeneous reflection `p - 2(n·p + d)n/(n·n)` with local certainty.
+    /// Delegates reciprocal/nonzero decisions to Hypermesh under the selected
+    /// policy; failures become JS strings. Does not recover discarded construction history.
     #[wasm_bindgen(js_name = reflectionMatrixWithContext)]
     pub fn reflection_matrix_with_context(
         &self,
@@ -174,11 +205,15 @@ impl PlaneJs {
 }
 
 impl From<Plane> for PlaneJs {
+    /// Moves a native plane into the wrapper without validation or an attached receipt.
     fn from(inner: Plane) -> Self {
         Self { inner }
     }
 }
 
+/// Requires a positive squared norm through the shared selected-policy decision accumulator.
+/// Zero/negative decisions and unresolved predicates become JS strings; successful
+/// decisions contribute to the caller's receipt without normalizing the vector.
 fn validate_normal(
     normal: &[hyperlattice::Real; 3],
     decisions: &GeometryDecisions,

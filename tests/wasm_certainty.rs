@@ -1,5 +1,8 @@
 #![cfg(feature = "wasm")]
+//! Host Rust witnesses for JS-facing receipt and query-state wrappers.
+//! These exercise native wrapper methods, not generated JavaScript or a browser runtime.
 
+/// Shared unresolved-expression fixtures for strict/terminal-policy transitions.
 #[path = "support/uncertainty.rs"]
 mod uncertainty;
 
@@ -12,12 +15,14 @@ use csgrs::wasm::{
 use csgrs::{GeometryCertainty, GeometryOutcome, Real, curve, solid};
 use hyperlattice::Point3;
 
+/// Hides the sine/cosine identity behind the shared terminal-zero fixture.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Requires an actually consumed hull terminal to remain in mesh evidence after outcome extraction.
 #[test]
 fn actual_approximate_mesh_evidence_survives_js_outcome_extraction() {
     let cube = solid::cube(Real::one()).unwrap();
@@ -45,6 +50,8 @@ fn actual_approximate_mesh_evidence_survives_js_outcome_extraction() {
     );
 }
 
+/// Checks both manually supplied receipt variants and value/status transport through named wrappers.
+/// The supplied mesh receipt alone is not evidence that this cube consumed an approximate decision.
 #[test]
 fn named_receipts_preserve_both_certainty_values() {
     for certainty in [
@@ -73,6 +80,7 @@ fn named_receipts_preserve_both_certainty_values() {
     }
 }
 
+/// Distinguishes certified curve boundary absence from decided outside/empty false under both policies.
 #[test]
 fn curve_boundary_is_distinct_from_empty_and_outside() {
     let square =
@@ -104,6 +112,7 @@ fn curve_boundary_is_distinct_from_empty_and_outside() {
     );
 }
 
+/// Requires strict uncertainty, qualified approximate boundary, then strict uncertainty on the same source.
 #[test]
 fn curve_uncertainty_survives_a_warm_approximate_boundary_query() {
     let square = curve::translated(
@@ -134,6 +143,7 @@ fn curve_uncertainty_survives_a_warm_approximate_boundary_query() {
     }
 }
 
+/// Keeps strict mesh Unknown receipt-free before and after qualified approximate noncontainment.
 #[test]
 fn unknown_mesh_query_does_not_claim_a_certified_value() {
     let cube = MeshJs::from(solid::cube(Real::one()).expect("valid primitive fixture"));
