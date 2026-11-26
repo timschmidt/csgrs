@@ -1,3 +1,9 @@
+/// CGAL comparison workload implementation using EPECK Surface_mesh carriers.
+/// Exact constructions apply to the admitted coordinates: sampled primitives, OBJ
+/// inputs, XYZ rotation and selected analysis/export paths use binary64 boundaries.
+/// Matching case names with other engines does not establish identical sets, timing
+/// work or output materialization. Most measurements count faces/corners or hash
+/// projected coordinates; failures throw rather than emitting typed CSV outcomes.
 #include "common.hpp"
 
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
@@ -26,16 +32,28 @@
 #include <type_traits>
 #include <vector>
 
+/// Polygon mesh processing algorithms used for orientation, corefinement and measures.
 namespace PMP = CGAL::Polygon_mesh_processing;
+/// EPECK kernel selected for exact constructions after input-coordinate admission.
 using Kernel = CGAL::Exact_predicates_exact_constructions_kernel;
+/// Three-dimensional point over the selected kernel's field type.
 using Point = Kernel::Point_3;
+/// Indexed polygon mesh; authored benchmark constructors emit triangular faces.
 using ModelMesh = CGAL::Surface_mesh<Point>;
+/// Three zero-based point indices for soup construction.
 using Triangle = std::array<std::size_t, 3>;
+/// Shared nominal work/output/fingerprint counters with wrapping aggregation.
 using csgrs_bench::Measurement;
 
+// Reject a built-in floating field substitution; this trait check alone does not
+// prove exactness of every operation or fidelity across explicit double boundaries.
 static_assert(!std::is_floating_point_v<Kernel::FT>,
               "the high-precision runner requires CGAL exact constructions");
 
+/// Orients mutable soup copies and converts them to a Surface_mesh.
+/// Discards orient_polygon_soup's return value; no independent closedness, source
+/// identity or topology assertion follows conversion. Callers supply fixture-valid
+/// indices/faces; exceptions and library precondition failures are not translated.
 static ModelMesh mesh_from_soup(std::vector<Point> points,
                            std::vector<Triangle> triangles) {
   PMP::orient_polygon_soup(points, triangles);
@@ -44,6 +62,8 @@ static ModelMesh mesh_from_soup(std::vector<Point> points,
   return mesh;
 }
 
+/// Builds a centered twelve-triangle cube with exact half-width and center arithmetic.
+/// Fixture callers supply positive width; this helper does not validate dimensions.
 static ModelMesh exact_box(const Kernel::FT &width, const Kernel::FT &cx,
                       const Kernel::FT &cy, const Kernel::FT &cz) {
   const Kernel::FT h = width / Kernel::FT(2);
@@ -62,6 +82,8 @@ static ModelMesh exact_box(const Kernel::FT &width, const Kernel::FT &cx,
        {1, 3, 7}, {1, 7, 5}});
 }
 
+/// Builds a twelve-triangle origin-centered cuboid using exact half-dimensions.
+/// Positive nonzero dimensions are fixture preconditions, not checked here.
 static ModelMesh exact_cuboid(const Kernel::FT &width, const Kernel::FT &length,
                          const Kernel::FT &height) {
   const Kernel::FT hx = width / Kernel::FT(2);
@@ -82,12 +104,18 @@ static ModelMesh exact_cuboid(const Kernel::FT &width, const Kernel::FT &length,
        {1, 3, 7}, {1, 7, 5}});
 }
 
+/// Promotes binary64 width/center values into the kernel field, then builds exact_box.
+/// Exactness is relative to those supplied binary64 values, not prior decimal intent.
 static ModelMesh box(double width, double cx = 0.0, double cy = 0.0,
                 double cz = 0.0) {
   return exact_box(Kernel::FT(width), Kernel::FT(cx), Kernel::FT(cy),
                    Kernel::FT(cz));
 }
 
+/// Samples latitude rings/poles in double and promotes them to a triangular sphere mesh.
+/// This is a polygonal surface, not the analytic sphere. Requires finite positive
+/// radius, at least three segments/two stacks and manageable counts; no validation
+/// or overflow/resource budget is implemented for inputs outside the fixed fixtures.
 static ModelMesh sphere(double radius, std::size_t segments, std::size_t stacks) {
   std::vector<Point> points;
   points.emplace_back(0.0, 0.0, radius);
@@ -131,6 +159,10 @@ static ModelMesh sphere(double radius, std::size_t segments, std::size_t stacks)
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
+/// Builds a sampled polygonal prism from z=0 to height, with fan caps and split walls.
+/// Requires finite positive radius/height and at least three segments. Trigonometric
+/// coordinates are computed in double; neither the analytic disk nor an exact circle
+/// extrusion is represented. Count arithmetic and dimensions are not validated here.
 static ModelMesh extruded_circle(double radius, double height,
                             std::size_t segments) {
   std::vector<Point> points;
@@ -158,6 +190,9 @@ static ModelMesh extruded_circle(double radius, double height,
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
+/// Builds two double-sampled circular rings, center-fan caps and triangulated side quads.
+/// Fixed fixtures use positive finite radii/height and at least three segments.
+/// No cone-apex specialization, degeneracy handling or general argument checks occur.
 static ModelMesh frustum(double lower_radius, double upper_radius, double height,
                     std::size_t segments) {
   std::vector<Point> points;
@@ -192,6 +227,9 @@ static ModelMesh frustum(double lower_radius, double upper_radius, double height
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
+/// Samples a periodic double trigonometric grid and triangulates each torus cell.
+/// Fixture domain is major radius greater than positive minor radius, finite values
+/// and at least three samples per direction. No general validation/overflow checks.
 static ModelMesh torus(double major_radius, double minor_radius,
                   std::size_t major_segments, std::size_t minor_segments) {
   std::vector<Point> points;
@@ -209,6 +247,7 @@ static ModelMesh torus(double major_radius, double minor_radius,
   }
   std::vector<Triangle> triangles;
   triangles.reserve(2 * major_segments * minor_segments);
+  /// Flattens the authored major/minor grid without wrapping or overflow checks.
   const auto index = [minor_segments](std::size_t major, std::size_t minor) {
     return major * minor_segments + minor;
   };
@@ -225,6 +264,8 @@ static ModelMesh torus(double major_radius, double minor_radius,
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
+/// Builds the eight-face octahedron at axis vertices using the supplied double radius.
+/// Fixture callers supply a finite positive radius; no dimension checks are performed.
 static ModelMesh octahedron(double radius) {
   return mesh_from_soup(
       {{radius, 0, 0}, {-radius, 0, 0}, {0, radius, 0}, {0, -radius, 0},
@@ -233,6 +274,9 @@ static ModelMesh octahedron(double radius) {
        {5, 2, 0}, {5, 1, 2}, {5, 3, 1}, {5, 0, 3}});
 }
 
+/// Builds twenty faces from double golden-ratio/normalization coordinates.
+/// The kernel exactly admits those rounded values, not an exact algebraic icosahedron.
+/// Assumes a finite positive fixture radius without validating it here.
 static ModelMesh icosahedron(double radius) {
   const double phi = (1.0 + std::sqrt(5.0)) / 2.0;
   const double scale = radius / std::sqrt(1.0 + phi * phi);
@@ -248,6 +292,9 @@ static ModelMesh icosahedron(double radius) {
        {4, 9, 5}, {2, 4, 11}, {6, 2, 10}, {8, 6, 7}, {9, 8, 1}});
 }
 
+/// Traverses all face corners and fingerprints counts, with nominal input facets.
+/// Unlike the Rust count helper, this performs a corner traversal; no geometric
+/// equivalence, winding, certainty or closedness assertion is made.
 static Measurement measured(const ModelMesh &mesh, std::size_t input_facets) {
   const std::size_t facets = mesh.number_of_faces();
   std::size_t corners = 0;
@@ -260,6 +307,9 @@ static Measurement measured(const ModelMesh &mesh, std::size_t input_facets) {
   return {input_facets, facets, csgrs_bench::checksum(facets, corners)};
 }
 
+/// Hashes face/corner order and raw projected double coordinate bits.
+/// Uses CGAL::to_double without an error receipt or extra quantization. Thus this
+/// fingerprint differs from the Rust runner's 1e-9 grid and is not an exact hash.
 static Measurement geometry_measured(const ModelMesh &mesh,
                                      std::size_t input_facets) {
   const std::size_t facets = mesh.number_of_faces();
@@ -280,6 +330,9 @@ static Measurement geometry_measured(const ModelMesh &mesh,
   return {input_facets, facets, fingerprint ^ corners};
 }
 
+/// Copies a mesh and replaces each point with the callback result, preserving faces.
+/// Does not validate the map, correct reflected winding or preserve exactness when
+/// the callback projects coordinates. The callback and mesh copy are part of the call.
 template <typename PointTransform>
 static ModelMesh transformed(const ModelMesh &source, PointTransform transform) {
   ModelMesh output = source;
@@ -289,6 +342,8 @@ static ModelMesh transformed(const ModelMesh &source, PointTransform transform) 
   return output;
 }
 
+/// Appends translated mesh copies using exactly promoted double offsets.
+/// Concatenates face graphs without regularized union, welding or overlap checks.
 static ModelMesh distributed(
     const ModelMesh &source,
     const std::vector<std::array<double, 3>> &offsets) {
@@ -304,6 +359,10 @@ static ModelMesh distributed(
   return output;
 }
 
+/// Splits each fixture triangle into four with shared exact edge midpoints.
+/// Assumes a compact triangular mesh. Faces with fewer than three encountered
+/// vertices are skipped; larger polygons silently use only their first three.
+/// It is not a general polygon subdivision algorithm. Rebuilds through soup orientation.
 static ModelMesh subdivide_once(const ModelMesh &source) {
   std::vector<Point> points;
   points.reserve(source.number_of_vertices() + source.number_of_edges());
@@ -313,6 +372,7 @@ static ModelMesh subdivide_once(const ModelMesh &source) {
     points.push_back(source.point(vertex));
   }
   std::map<std::pair<std::size_t, std::size_t>, std::size_t> midpoints;
+  /// Reuses one exact arithmetic midpoint per unordered pair of copied vertex indices.
   const auto midpoint = [&](std::size_t a, std::size_t b) {
     if (a > b) {
       std::swap(a, b);
@@ -355,6 +415,8 @@ static ModelMesh subdivide_once(const ModelMesh &source) {
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
+/// Promotes parsed double points and rebuilds the soup through CGAL orientation.
+/// Original OBJ decimal meaning and prior floating winding decisions are not recovered.
 static ModelMesh mesh_from_obj_soup(const csgrs_bench::ObjTriangleSoup &soup) {
   std::vector<Point> points;
   points.reserve(soup.points.size());
@@ -364,6 +426,8 @@ static ModelMesh mesh_from_obj_soup(const csgrs_bench::ObjTriangleSoup &soup) {
   return mesh_from_soup(std::move(points), soup.triangles);
 }
 
+/// Applies exact `(x,y,z) -> (z+1,y+12,-x+1)` for the selected control or hull fixture.
+/// This quarter-turn/translation does not itself prove overlap with the source.
 static ModelMesh yeahright_boolean_operand(const ModelMesh &source) {
   return transformed(source, [](const Point &point) {
     return Point(point.z() + Kernel::FT(1), point.y() + Kernel::FT(12),
@@ -371,6 +435,15 @@ static ModelMesh yeahright_boolean_operand(const ModelMesh &source) {
   });
 }
 
+/// Runs the fixed CGAL comparison catalog with shared setup and optional corpus gates.
+/// The harness times closure work, copies, output materialization/destruction and
+/// fingerprints. Several labels abbreviate the actual work: graphics rows only count
+/// corners, mass properties compute volume alone, and identical-box intersection only
+/// measures the existing mesh. XYZ rotation projects points and computes in double.
+/// Generated fixture imports occur outside selection gates; optional control/hull
+/// setup occurs after its opt-in even if individual cases are filtered out.
+/// Exceptions/precondition failures abort; receipts and independent set proofs are
+/// not emitted. Exact sliver volume is one explicit invariant, not corpus completeness.
 int main() {
   csgrs_bench::Harness harness("cgal-epeck");
   harness.run("kernel", "construct_box", "unit", 64,
@@ -417,6 +490,7 @@ int main() {
                     transform_input);
   });
   harness.run("kernel", "rotate_xyz", "sphere_medium", 8, [&] {
+    // Both input coordinates and rotation arithmetic cross a double boundary here.
     const double ax = 17.0 * std::numbers::pi / 180.0;
     const double ay = 29.0 * std::numbers::pi / 180.0;
     const double az = 43.0 * std::numbers::pi / 180.0;
@@ -493,6 +567,7 @@ int main() {
   const ModelMesh boolean_right = box(14.0, 3.0, 2.0, 1.0);
   const std::size_t boolean_input = boolean_left.number_of_faces() +
                                     boolean_right.number_of_faces();
+  /// Copies original sphere/box operands, requires Boolean success, then counts output.
   const auto boolean_case = [&](auto operation) {
     ModelMesh left = boolean_left;
     ModelMesh right = boolean_right;
@@ -566,6 +641,7 @@ int main() {
     return measured(output, 24);
   });
   harness.run("kernel", "boolean_intersection", "identical_boxes", 8, [&] {
+    // Fixture identity shortcut: no Boolean call or output mesh copy is performed.
     return measured(topology_left, 24);
   });
 
@@ -673,6 +749,7 @@ int main() {
                        std::bit_cast<std::uint64_t>(bounds.xmax())};
   });
   harness.run("kernel", "mass_properties", "sphere_medium", 4, [&] {
+    // Historical output-size label 10; only volume is computed, without inertia/center.
     const double volume = CGAL::to_double(PMP::volume(analysis_source));
     return Measurement{analysis_source.number_of_faces(), 10,
                        std::bit_cast<std::uint64_t>(volume)};
@@ -688,6 +765,7 @@ int main() {
     return Measurement{analysis_source.number_of_faces(), corners, corners};
   });
   harness.run("kernel", "graphics_buffers", "sphere_medium", 16, [&] {
+    // Traversal/count only: no position, normal or index buffer is materialized.
     std::size_t corners = 0;
     for (const auto face : analysis_source.faces()) {
       for ([[maybe_unused]] const auto vertex : CGAL::vertices_around_face(
@@ -735,8 +813,11 @@ int main() {
                            (static_cast<std::uint64_t>(outside) << 1U)};
   });
   harness.run("kernel", "ray_intersections", "sphere_diameter", 8, [&] {
+    /// Face-graph triangle primitive counted by this ray query.
     using Primitive = CGAL::AABB_face_graph_triangle_primitive<ModelMesh>;
+    /// AABB traits using the exact kernel over those triangle primitives.
     using Traits = CGAL::AABB_traits_3<Kernel, Primitive>;
+    // Tree construction is timed; hit count is primitives, not unique intersection points.
     CGAL::AABB_tree<Traits> tree(faces(analysis_source).first,
                                  faces(analysis_source).second,
                                  analysis_source);
@@ -745,8 +826,11 @@ int main() {
     return Measurement{analysis_source.number_of_faces(), hits, hits};
   });
   harness.run("kernel", "polyline_intersections", "sphere_diameter", 8, [&] {
+    /// Face-graph triangle primitive counted by this single-segment query.
     using Primitive = CGAL::AABB_face_graph_triangle_primitive<ModelMesh>;
+    /// AABB traits using the exact kernel over those triangle primitives.
     using Traits = CGAL::AABB_traits_3<Kernel, Primitive>;
+    // Counts intersected triangles, without deduplicating shared-edge/vertex contacts.
     CGAL::AABB_tree<Traits> tree(faces(analysis_source).first,
                                  faces(analysis_source).second,
                                  analysis_source);
@@ -755,6 +839,7 @@ int main() {
     return Measurement{analysis_source.number_of_faces(), hits, hits};
   });
   harness.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, [&] {
+    // Selects orthogonal normals, not shared indexed edges, then approximates their angle.
     const ModelMesh shape = box(2.0);
     std::vector<Kernel::Vector_3> normals;
     for (const auto face : shape.faces()) {
@@ -779,6 +864,8 @@ int main() {
     return Measurement{12, 1, std::bit_cast<std::uint64_t>(angle)};
   });
 
+  /// Runs import plus five shared-source cases; setup loads even when all rows are skipped.
+  /// Graphics only counts corners and connectivity only reads vertex/edge counts here.
   const auto run_generated_corpus =
       [&](std::string_view benchmark_case,
           const std::filesystem::path &path) {
@@ -903,6 +990,7 @@ int main() {
   const std::size_t yeahright_box_input =
       yeahright_boolean_source.number_of_faces() +
       yeahright_box.number_of_faces();
+  /// Copies hull/box operands, requires the selected Boolean to succeed, then counts.
   const auto yeahright_box_case = [&](auto operation) {
     ModelMesh left = yeahright_boolean_source;
     ModelMesh right = yeahright_box;
@@ -959,6 +1047,7 @@ int main() {
   const std::size_t yeahright_boolean_input =
       yeahright_stress_source.number_of_faces() +
       yeahright_copy.number_of_faces();
+  /// Copies hull/rotated-hull operands per stress call; no independent geometry oracle.
   const auto yeahright_boolean_case = [&](auto operation) {
     ModelMesh left = yeahright_stress_source;
     ModelMesh right = yeahright_copy;

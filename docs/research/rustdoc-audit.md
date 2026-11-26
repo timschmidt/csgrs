@@ -3770,6 +3770,41 @@ documentation is claimed. No CMake configure, native kernel build, fixture load 
 benchmark execution ran under the docs-only waiver; this is not a geometry or
 cross-engine performance qualification.
 
+### CGAL native comparison implementation, 26 November 2026
+
+Baseline: `a8c09557b`. Owner: CGAL benchmark consumer, P19/P25/P36/P37/P39.
+Read all 1044 original lines of `benchmarks/native/cgal.cpp`; this is a whole-file
+non-Rust review. Added 35 documentation groups covering file purpose, aliases, all
+functions and named local helpers/types, plus call-site timing/representation notes.
+Fixed fixtures and all library calls, success gates and assertions remain unchanged.
+
+EPECK operates on admitted coordinates, while round primitive samples, OBJ ingress,
+icosahedron normalization, projected fingerprints and XYZ rotation have explicit
+binary64 boundaries. Rotation projects existing points before double arithmetic;
+it is not merely exact arithmetic with pre-rounded trigonometric coefficients.
+The geometry fingerprint hashes projected bits without the Rust runner's extra grid
+quantization. Soup orientation return values are ignored; this adapter does not
+independently certify topology or source identity after conversion.
+
+Recorded measurement limits: graphics rows count corners without output buffers;
+mass-properties measures volume alone despite a nominal output count of ten;
+identical-box intersection only measures existing geometry; disjoint union copies
+face graphs. Ray/segment rows construct trees and count intersected primitives,
+not deduplicated intersection points. Normal recalculation and approximate-angle
+selection have their actual work described. The subdivision helper assumes triangle
+fixtures, skips shorter faces and uses only the first three vertices of larger ones.
+These are implementation observations, not repaired behavior or evidence of matched
+cross-engine completed contracts. Exact sliver volume remains a specific assertion.
+
+Validation after final edits: all nonblank/non-comment source is identical to the
+baseline; `git diff --check` passed. Declaration/call-site documentation was reviewed
+against the complete source. Direct C++20 syntax checking stops at missing
+`CGAL/Exact_predicates_exact_constructions_kernel.h` on this compiler's include path
+(`/tmp/csgrs-rustdoc-cgal-syntax.log`). This is a blocked compilation check, not a
+passing native build. Doxygen is unavailable, so no rendered C++ coverage is claimed.
+No libraries were installed, fixtures loaded, CMake build performed or geometry
+benchmark executed under the docs-only waiver.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with
