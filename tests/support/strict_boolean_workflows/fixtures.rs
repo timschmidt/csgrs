@@ -1,19 +1,31 @@
 // Exact source boxes and explicitly invertible affine coordinate charts.
+/// Rational source box supplying independent inequalities and coordinate planes.
+///
+/// The named fixtures have strictly positive extents; field construction itself
+/// does not validate that invariant. Mesh generation is the production path.
 #[derive(Clone)]
 struct Box3 {
+    /// Lower axis bounds, excluded by the interior-membership oracle.
     lo: [Q; 3],
+    /// Upper axis bounds, excluded by the interior-membership oracle.
     hi: [Q; 3],
 }
 impl Box3 {
+    /// Converts integer bounds exactly, without checking their order.
     fn new(lo: [i64; 3], hi: [i64; 3]) -> Self {
         Self {
             lo: lo.map(q),
             hi: hi.map(q),
         }
     }
+    /// Tests open-box membership using exact rational inequalities.
+    ///
+    /// The cell oracle queries points off every source plane; boundary ownership
+    /// follows regularization rather than this strict inequality test alone.
     fn contains(&self, p: &[Q; 3]) -> bool {
         (0..3).all(|i| self.lo[i] < p[i] && p[i] < self.hi[i])
     }
+    /// Constructs the corresponding translated exact cuboid; panics on failure.
     fn mesh(&self) -> TriangleMesh {
         let size = sub(&self.hi, &self.lo).map(Real::from);
         let mesh = solid::cuboid(size[0].clone(), size[1].clone(), size[2].clone()).unwrap();
@@ -26,6 +38,11 @@ impl Box3 {
     }
 }
 
+/// Returns the fixed `[0,2]^3` box and one of nine named rational companions.
+///
+/// Cases distinguish overlap, shared planes, face/edge/point contact, separation,
+/// coincidence, strict nesting and a `10^-12` overlap adjacent to a source face.
+/// Unknown names panic. These finite fixtures do not enumerate arbitrary meshes.
 fn fixture(name: &str) -> (Box3, Box3) {
     let a = Box3::new([0, 0, 0], [2, 2, 2]);
     let b = match name {
@@ -60,12 +77,20 @@ fn fixture(name: &str) -> (Box3, Box3) {
     (a, b)
 }
 
+/// A named invertible affine map paired with an explicitly authored inverse chart.
+///
+/// Rational, quadratic-algebraic and symbolic coefficients exercise exact
+/// transformations while the oracle recovers rational source coordinates.
 struct Frame {
+    /// Selects one of the five hard-coded forward and inverse maps.
     name: String,
+    /// Shared `sqrt(2)/2` coefficient for the 45-degree XY rotation; zero otherwise.
     c: Real,
+    /// Symbolic translation `(pi, sqrt(2), ln(2))`; zero for the other maps.
     shift: [Real; 3],
 }
 impl Frame {
+    /// Builds coefficients for the named frame; name validation is deferred to use.
     fn new(name: &str) -> Self {
         let shift = if name == "symbolic-translation" {
             [
@@ -87,6 +112,10 @@ impl Frame {
             shift,
         }
     }
+    /// Returns the forward homogeneous matrix, panicking for an unknown name.
+    ///
+    /// Identity, shear, XY rotation and symbolic translation have determinant one;
+    /// reflection also scales by `(-2,3,1)` and has determinant minus six.
     fn matrix(&self) -> Matrix4 {
         let rows = match self.name.as_str() {
             "identity" => return Matrix4::identity(),
@@ -115,6 +144,11 @@ impl Frame {
         };
         Matrix4::from_row_major(rows)
     }
+    /// Applies the authored inverse map and requires proved rational coordinates.
+    ///
+    /// Failure of exact rational normalization is an oracle limitation, reported
+    /// as `oracle-undecided`, without rounding or declaring the mesh incorrect.
+    /// The supplied point must use this known frame; an unknown frame panics.
     fn chart(&self, p: &Point3) -> Result<[Q; 3], String> {
         let [x, y, z] = [p.x.clone(), p.y.clone(), p.z.clone()];
         let row = match self.name.as_str() {
@@ -146,6 +180,9 @@ impl Frame {
         }
         Ok(out.try_into().unwrap())
     }
+    /// Transforms under STRICT, retaining the outcome and formatting errors for tests.
+    ///
+    /// This helper does not itself assert certification; the workflow checks it.
     fn apply(&self, mesh: &TriangleMesh) -> Result<GeometryOutcome<TriangleMesh>, String> {
         solid::transform_with_context(mesh, &self.matrix(), GeometryContext::STRICT)
             .map_err(|e| format!("transform-error {:?}: {e}", e.kind()))

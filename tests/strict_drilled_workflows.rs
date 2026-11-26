@@ -12,6 +12,11 @@ use csgrs::{
 use hypermesh::{MeshCertainty, Point3};
 use hyperreal::RealSign;
 
+/// Cuts a radius-two regular polygonal prism through a 12-by-12-by-4 box.
+///
+/// Returns the original body and the certified strict difference. The drill's
+/// height six extends one unit beyond either box face; `segments` selects the
+/// inscribed polygon, not an analytic circular cylinder. Panics on failure.
 fn fixture(segments: usize) -> (TriangleMesh, TriangleMesh) {
     let body = solid::cuboid(12, 12, 4).unwrap();
     let drill = solid::cylinder(2, 6, segments)
@@ -25,6 +30,7 @@ fn fixture(segments: usize) -> (TriangleMesh, TriangleMesh) {
     (body, result.value)
 }
 
+/// Requires a certified strict-membership answer equal to the supplied expectation.
 fn assert_contains(mesh: &TriangleMesh, point: Point3, expected: bool) {
     let outcome =
         solid::contains_point_with_context(mesh, &point, GeometryContext::STRICT).unwrap();
@@ -32,6 +38,10 @@ fn assert_contains(mesh: &TriangleMesh, point: Point3, expected: bool) {
     assert_eq!(outcome.value, expected);
 }
 
+/// Sums oriented tetrahedral determinants, six times signed winding volume.
+///
+/// Uses stored triangle orientation and indices without validating the mesh;
+/// this quantity alone does not establish the represented regularized set.
 fn six_volume(mesh: &TriangleMesh) -> Real {
     mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
         let [a, b, c] = triangle.indices().map(|i| mesh.positions[i].to_vector());
@@ -39,6 +49,13 @@ fn six_volume(mesh: &TriangleMesh) -> Real {
     })
 }
 
+/// Checks four polygon resolutions with edge pairing, membership and a volume bound.
+///
+/// Native certified closed-manifold geometry checks are separate from the finite
+/// interior, exterior and hole-boundary probes. The signed six-volume must be
+/// within `10^-24` of `3456 - 48*n*sin(2*pi/n)`, certified by strict positive
+/// signs at precision limit -512. This is an enclosure, not exact equality or
+/// a proof of fidelity to an analytic cylindrical hole.
 #[test]
 fn strict_drills_preserve_polygonal_semantics_and_manifoldness() {
     for segments in [8, 16, 24, 32] {
@@ -69,7 +86,7 @@ fn strict_drills_preserve_polygonal_semantics_and_manifoldness() {
         let angle = (Real::from(2) * Real::pi() / Real::from(count)).unwrap();
         let expected = Real::from(3456) - Real::from(48 * count) * angle.sin();
         let error = six_volume(&drilled) - expected;
-        // This separately certifies a volume enclosure of width 2/10^24.
+        // This separately certifies a signed six-volume enclosure of width 2/10^24.
         // It does not claim that an undecided exact equality was proved.
         let radius = &epsilon * &epsilon;
         for positive in [&error + &radius, &radius - &error] {
@@ -82,6 +99,11 @@ fn strict_drills_preserve_polygonal_semantics_and_manifoldness() {
     }
 }
 
+/// Feeds a drilled result through empty union, full removal and rebuilding.
+///
+/// Requires local certified receipts, canonical empty buffers after subtraction,
+/// selected membership probes, and exact rebuilt signed six-volume 3456. These
+/// checks exercise reuse; volume and probes alone are not general set equality.
 fn assert_complete_composition(segments: usize) {
     let (body, drilled) = fixture(segments);
     let accumulated = solid::empty()
@@ -116,21 +138,25 @@ fn assert_complete_composition(segments: usize) {
     );
 }
 
+/// Exercises canonical empty and subsequent reuse with the 8-sided drill.
 #[test]
 fn strict_drill_8_composes_through_empty_and_complete_subtraction() {
     assert_complete_composition(8);
 }
 
+/// Exercises canonical empty and subsequent reuse with the 16-sided drill.
 #[test]
 fn strict_drill_16_composes_through_empty_and_complete_subtraction() {
     assert_complete_composition(16);
 }
 
+/// Exercises canonical empty and subsequent reuse with the 24-sided drill.
 #[test]
 fn strict_drill_24_composes_through_empty_and_complete_subtraction() {
     assert_complete_composition(24);
 }
 
+/// Exercises canonical empty and subsequent reuse with the 32-sided drill.
 #[test]
 fn strict_drill_32_composes_through_empty_and_complete_subtraction() {
     assert_complete_composition(32);

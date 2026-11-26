@@ -1,4 +1,9 @@
-//! Fixtures, independent oracle and workflow execution share one test module.
+//! Strict transformed-box workflows with an independent rational cell oracle.
+//!
+//! Included fixtures and oracle helpers share this private module. Native PWN
+//! validation and local certainty checks supplement the independent set check.
+//! The finite domain and equality argument are recorded in `docs/workflow-corpus.md`;
+//! this harness neither benchmarks execution nor establishes total resource bounds.
 use csgrs::solid::SolidExt;
 use csgrs::{GeometryCertainty, GeometryContext, GeometryOutcome, Real, TriangleMesh, solid};
 use hyperlattice::{Matrix4, Point3};
@@ -8,27 +13,37 @@ use hyperreal::Rational as Q;
 include!("fixtures.rs");
 include!("oracle.rs");
 
+/// Boolean truth table for union of source-box interiors.
 fn union(a: bool, b: bool) -> bool {
     a || b
 }
+/// Boolean truth table for intersection of source-box interiors.
 fn intersection(a: bool, b: bool) -> bool {
     a && b
 }
+/// Boolean truth table for membership in the left box outside the right.
 fn difference(a: bool, b: bool) -> bool {
     a && !b
 }
+/// Boolean truth table for membership in exactly one source box.
 fn xor(a: bool, b: bool) -> bool {
     a != b
 }
+/// Selects the original left-box set for partition and idempotence checks.
 fn left(a: bool, _: bool) -> bool {
     a
 }
+/// Selects the original right-box set for transformed input and rebuilding checks.
 fn right(_: bool, b: bool) -> bool {
     b
 }
+/// Expects no occupied cell after complete subtraction.
 fn empty(_: bool, _: bool) -> bool {
     false
 }
+/// Runs one strict native mesh Boolean and retains its outcome for validation.
+///
+/// Converts typed failures to diagnostic strings only within this test harness.
 fn operation(
     a: &TriangleMesh,
     b: &TriangleMesh,
@@ -37,6 +52,12 @@ fn operation(
     solid::boolean_with_context(a, b, op, GeometryContext::STRICT)
         .map_err(|e| format!("boolean-error {e:?}"))
 }
+/// Requires local certification, independent cell equality and certified closed PWN.
+///
+/// Canonical empty is checked by the oracle and bypasses the nonempty native PWN
+/// validator. This does not require manifold output: edge/point contacts and XOR
+/// remain admitted. On success, accumulates oracle counts, prints a diagnostic
+/// row and returns the mesh for subsequent operations. Errors retain the label.
 fn check(
     label: &str,
     outcome: GeometryOutcome<TriangleMesh>,
@@ -74,6 +95,13 @@ fn check(
     Ok(outcome.value)
 }
 
+/// Checks 21 outputs for one named box relation and affine frame.
+///
+/// Covers transformed inputs, four Booleans on each side of transformation,
+/// commuted union/intersection, reunion of the difference/intersection partition,
+/// idempotence, complete subtraction and rebuilding from canonical empty. Every
+/// output passes the same independent source-box oracle. Unknown fixture/frame
+/// names panic; operation or validation failures return diagnostic strings.
 fn run(name: &str, frame_name: &str) -> Result<Counts, String> {
     let (a, b) = fixture(name);
     let ma = a.mesh();
@@ -197,12 +225,21 @@ fn run(name: &str, frame_name: &str) -> Result<Counts, String> {
     Ok(count)
 }
 
+/// Requires the named workflow to complete with 21 checked outputs and nonzero cells.
+///
+/// A failure panics with the fixture/frame names and the harness diagnostic.
 pub(super) fn assert_workflow(name: &str, frame: &str) {
     let counts = run(name, frame).unwrap_or_else(|reason| panic!("{name}/{frame}: {reason}"));
     assert_eq!(counts.outputs, 21);
     assert!(counts.cells > 0);
 }
 
+/// Checks rejection of a wrong equal-volume box and retry on a degenerate ray.
+///
+/// A disjoint translated box must fail the cell-winding expectation despite
+/// having the same volume. Retriangulating the correct box face through
+/// `(x,y,z) = (2,1,2/3)` preserves its set and certified PWN validity while forcing
+/// a first-ray retry. Runs both controls in the supplied affine frame.
 pub(super) fn assert_oracle_controls(frame_name: &str) {
     let (a, b) = fixture("disconnected");
     let frame = Frame::new(frame_name);

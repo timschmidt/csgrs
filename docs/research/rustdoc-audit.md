@@ -34,6 +34,11 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/strict_boolean_workflows.rs` | Entire file; documented corpus module, nested generator macros, generated modules and all test definitions. | Focused compilation/private docs passed; 45 workflows and five controls remain unchanged and unrun. |
+| `tests/strict_drilled_workflows.rs` | Entire file; documented polygonal drill construction, signed six-volume enclosure, membership and empty reuse assertions. | Focused compilation/private docs passed; corrected enclosure units in comments only; runtime assertions not run. |
+| `tests/support/strict_boolean_workflows/mod.rs` | Entire file; documented truth tables, strict operations, check sequencing, 21-output chains and oracle controls. | Consumer compilation/private docs passed; call order, counters and assertions unchanged. |
+| `tests/support/strict_boolean_workflows/fixtures.rs` | Entire file; documented rational box fields, nine relations, five forward/inverse maps and rational-normalization limits. | Consumer compilation/private docs passed; all private fields/methods rendered. |
+| `tests/support/strict_boolean_workflows/oracle.rs` | Entire file; documented rational kernels, counters, source-plane domain, winding proof, retry bound and separate topology obligation. | Consumer compilation/private docs passed; exact arithmetic and ray ordering unchanged. |
 | `tests/stl_import_contracts.rs` | Entire file; documented independent encoders, binary32 scale/row expectations, winding integrals, typed topology errors and continuation. | Focused compilation/private docs passed; assertions and encoded fixtures unchanged, not run. |
 | `tests/sampled_sphere_strict.rs` | Entire file; documented private ball fields/helpers, finite oracle limits, exact local receipts, projected checks and timing scope. | Focused compilation/private docs passed; test thresholds and ignored workload unchanged, not run. |
 | `tests/curve_metaball_failures.rs` | Entire file; documented result traits, validation categories, sampled diamond/ring witnesses and Boolean/extrusion continuation. | Focused compilation/private docs passed; assertions and source/grid fixtures unchanged, not run. |
@@ -2975,6 +2980,53 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-stl-sphere-check.log` and
 `/tmp/csgrs-rustdoc-stl-sphere-private.log`.
+
+### Strict Boolean and polygonal-drill workflow witnesses, 26 November 2026
+
+Baseline: `cd84a54ce`. Owners: root modeling acceptance harness and its independent
+rational oracle, P1/P3/P4/P8/P17–P21/P23/P37. Domain: nine rational box relations
+under five invertible affine maps, plus inscribed 8/16/24/32-sided through-drills
+and subsequent empty-set composition. Read all five Rust files completely,
+including nested macro bodies, included helpers and all controls. Also read all
+107 lines of `docs/workflow-corpus.md`; cross-checked its transformed-box and drill
+entries against these implementations. The remaining catalog entries retain
+their separate source-review obligations.
+
+Missing witnesses were undocumented private declarations/fields, generated test
+items and the distinction between assertion scopes. Documented the box oracle's
+source-plane and bound restrictions, exact inverse charts, reflection orientation,
+cell truth tables, rational ray retry argument and separately required closed PWN
+validation. The 21-output chains compare sets independently of triangulation and
+include reuse after complete removal. Equal-volume wrong-set and forced-retry
+controls remain unchanged. Counts do not establish total resource bounds.
+
+Corrected a drill comment: the certified width `2/10^24` bounds the error in signed
+six-volume, not directly the volume. The formula describes the inscribed polygonal
+hole. Finite membership probes and a volume enclosure do not by themselves prove
+general set equality or analytic-cylinder fidelity. This is a documentation
+correction, not a newly observed geometry failure or a changed acceptance gate.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline for all five Rust files, including macro
+  bodies. No test, predicate order, geometry or assertion changed.
+- `cargo check --locked -p csgrs --no-default-features --features curve,stl-io
+  --test strict_boolean_workflows --test strict_drilled_workflows --offline -j 2`
+  passed without warnings; features reuse the existing checked dependency set.
+- Private Rustdoc for both targets passed with broken links denied, using checked
+  own-library metadata and dependency search paths. Inspected 48 HTML pages
+  (including indexes and macro redirects); matched 45 rendered declaration,
+  method and field descriptions. Generated frame modules/macros render privately;
+  seven test definitions, including the two macro templates, are source-reviewed
+  rather than credited as rendered test-function pages. An initial text-match
+  check needed whitespace normalization across inline-code markup, then passed.
+- Geometry workflows, runtime controls, benchmarks and full CI were not run under
+  the docs-only waiver. The existing temporary target was reused with incremental
+  compilation disabled; no models or images were emitted.
+
+Logs: `/tmp/csgrs-rustdoc-strict-workflows-check.log` and
+`/tmp/csgrs-rustdoc-strict-workflows-private.log`.
 
 ## Next work
 

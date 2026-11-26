@@ -1,10 +1,13 @@
 // Independent exact set oracle; no mesh Boolean or containment calls.
+/// Converts an integer exactly into the independent rational oracle arithmetic.
 fn q(n: i64) -> Q {
     Q::new(n)
 }
+/// Subtracts rational coordinates componentwise.
 fn sub(a: &[Q; 3], b: &[Q; 3]) -> [Q; 3] {
     std::array::from_fn(|i| &a[i] - &b[i])
 }
+/// Computes the exact three-dimensional cross product for degeneracy and volume.
 fn cross(a: &[Q; 3], b: &[Q; 3]) -> [Q; 3] {
     [
         &a[1] * &b[2] - &a[2] * &b[1],
@@ -12,25 +15,48 @@ fn cross(a: &[Q; 3], b: &[Q; 3]) -> [Q; 3] {
         &a[0] * &b[1] - &a[1] * &b[0],
     ]
 }
+/// Computes the exact rational dot product used by tetrahedral determinants.
 fn dot(a: &[Q; 3], b: &[Q; 3]) -> Q {
     (0..3).fold(q(0), |s, i| s + &a[i] * &b[i])
 }
+/// Computes the signed YZ determinant for projected triangle and edge-ray tests.
 fn orient(a: &[Q; 3], b: &[Q; 3], p: &[Q; 3]) -> Q {
     (&b[1] - &a[1]) * (&p[2] - &a[2]) - (&b[2] - &a[2]) * (&p[1] - &a[1])
 }
 
+/// Counts completed outputs, checked open cells and attempted ray samples.
+///
+/// Counts describe oracle work, not elapsed time or a bound on total kernel work.
 #[derive(Default, Debug)]
 struct Counts {
+    /// One per successful audit, summed by the workflow after all its checks.
     outputs: usize,
+    /// Number of open grid cells with a nondegenerate winding sample.
     cells: usize,
+    /// Ray candidates attempted, including discarded edge-line coincidences.
     ray_trials: usize,
 }
 
-// All triangles must stay on the source coordinate planes in the inverse
-// affine chart. The open grid cells therefore contain no output boundary.
-// Exact signed ray crossings at one nondegenerate point per cell establish
-// its winding, and hence the entire regularized set. This oracle uses rational
-// arithmetic directly; it never calls Hypermesh containment or Boolean code.
+/// Compares a transformed box result with an independent rational cell truth table.
+///
+/// Requires rational inverse-chart coordinates, valid indices, nondegenerate
+/// triangles on source coordinate planes, and all positions within source bounds.
+/// Corrects orientation when undoing the reflection. Those planes partition space
+/// into boundary-free open cells; exact positive-X ray winding in each cell is
+/// compared with `expected` applied to the two open-box inequalities. Bounds and
+/// exterior cells cover the remaining space. With the separately checked closed
+/// PWN contract, equality of occupied cells establishes regularized-set equality.
+/// This helper does not itself validate closed PWN topology.
+///
+/// Candidate YZ points follow a rational curve meeting any projected edge line
+/// at most twice. At most `3*T` such lines therefore require at most `6*T+1`
+/// candidates per cell. Edge-line coincidences cause retries, not tolerance-based
+/// decisions. This finite-fixture bound is not a total arithmetic/resource budget.
+///
+/// Also compares oriented tetrahedral six-volume with six times independently
+/// summed occupied-cell volume, and requires both buffers empty for an empty set.
+/// Returns diagnostic errors for failed checks or undecided chart normalization.
+/// Uses direct rational arithmetic, never native Boolean or containment queries.
 fn audit(
     mesh: &TriangleMesh,
     frame: &Frame,

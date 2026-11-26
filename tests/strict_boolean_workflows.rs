@@ -4,14 +4,19 @@
 //! The independent oracle checks each boundary-free open grid cell with exact
 //! rational winding; native PWN validation is a separate topology requirement.
 
+/// Shared exact fixtures, inverse charts, independent oracle and workflow assertions.
 #[path = "support/strict_boolean_workflows/mod.rs"]
 mod corpus;
 
+/// Instantiates nine box workflows and both oracle controls for one affine frame.
 macro_rules! frame_cases {
     ($module:ident, $frame:literal) => {
+        /// Runs the same finite set contract in this named affine coordinate frame.
         mod $module {
+            /// Binds a named box relation to the enclosing frame and 21-output workflow.
             macro_rules! fixture_case {
                 ($name:ident, $fixture:literal) => {
+                    /// Requires certified completion and independent set checks for this pair.
                     #[test]
                     fn $name() {
                         crate::corpus::assert_workflow($fixture, $frame);
@@ -28,6 +33,7 @@ macro_rules! frame_cases {
             fixture_case!(nested, "nested");
             fixture_case!(near_coplanar, "near-coplanar");
 
+            /// Rejects an equal-volume wrong set and forces a nondegenerate-ray retry.
             #[test]
             fn oracle_rejects_wrong_sets_and_retries_degenerate_rays() {
                 crate::corpus::assert_oracle_controls($frame);
