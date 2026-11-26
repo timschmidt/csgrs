@@ -4048,6 +4048,49 @@ remain unverified. No toolchain was installed and no tests/link smoke checks ran
 under the docs-only waiver. Documentation and source equivalence do not establish
 the runtime outcomes asserted by the retained regression tests.
 
+### Python ctypes binding, 26 November 2026
+
+Baseline: `c7fb1d814`. Owner: Python native binding, P1/P6/P19/P25/P28–P30/P37.
+Read all 655 original lines of `bindings/python/csgrs.py`. Added docstrings for
+all 118 authored classes/functions and module documentation, plus `__doc__`
+metadata in four dynamic record factories (sixteen concrete ctypes types).
+Documented aliases, strategy attributes, native field layouts/count units,
+private dispatch/load helpers and ownership fields. Single-line suites were
+expanded only to attach their docstrings; no call or conversion changed.
+
+Reproduced existing pure Python conversion behavior without loading a native
+library: I128 wraps modulo 2^128 (`2^127` → `-2^127`, `2^128+7` → `7`), integer
+family scalar coercion maps `1.9` through `int` to `1`, and negative size_t counts
+wrap on this host. Matrix packing bypasses scalar(): integer records or `(hi,lo)`
+initializers work while ordinary integers fail; raw scalar pointers/None work
+while Real wrappers fail. Null pointer acceptance by ctypes packing does not
+establish valid native scalar coefficients. Original Real owners must remain live
+while point/matrix records borrow their pointers.
+
+Documented unchecked raw adoption, finalizer-based ownership without explicit
+close/context managers, and real-valued bounds returned as raw records without
+a cleanup wrapper. Buffer owners free nested real handles, but borrowed array
+views cannot outlive them. Source inspection shows the loader caches its first
+selection, searches legacy `ffi/target/release` paths rather than the workspace
+target directory, and assigns the cache before diagnostic-symbol configuration.
+No argument prototypes are installed; polygon/polyhedron lengths remain plain
+Python integers rather than explicit size_t arguments. These are existing gaps,
+not repaired behavior. The [ctypes calling contract](https://docs.python.org/3/library/ctypes.html#calling-functions)
+and [Python finalization contract](https://docs.python.org/3/reference/datamodel.html#object.__del__)
+support the documentation's limits on signature checking and cleanup guarantees.
+
+Validation after final edits: Python parsing and in-memory compile passed.
+Baseline/current ASTs are identical after removing only docstrings and the four
+literal dynamic `__doc__` entries. Baseline/current pure conversion probes agree,
+including wrapping, coercion and accepted/rejected matrix initializer forms.
+Inspected Pydoc summaries for 135 objects (module, 118 authored definitions and
+sixteen dynamic types), including private methods/helpers; output is in
+`/tmp/csgrs-rustdoc-python-pydoc.txt`. Import, rendering and probes leave `_lib`
+unset and write no bytecode caches. `git diff --check` passed. No native geometry,
+library load/link smoke test, destructor allocation test or full workflow check
+ran under the docs-only waiver. Helper probes do not establish native binding
+safety, geometry completion or reliable finalization.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with
