@@ -12,18 +12,25 @@ use hypercurve::{CircularArc2, Contour2, CurveRegion2, LineSeg2, Point2, Segment
 use hyperlattice::Point3;
 use hyperlimit::{PredicateOutcome, PredicatePolicy};
 
+/// Promotes an integer fixture coordinate exactly.
 fn r(value: i64) -> Real {
     Real::from(value)
 }
 
+/// Forms an exact integer ratio; fixture denominators must be nonzero.
 fn q(n: i64, d: i64) -> Real {
     (r(n) / r(d)).unwrap()
 }
 
+/// Returns the exact width `2^-80`, below binary64 spacing near one.
 fn tiny() -> Real {
     (r(1) / r(2).powi(80.into()).unwrap()).unwrap()
 }
 
+/// Returns true only when a strict scalar comparison decides equality.
+///
+/// Uncertainty fails these fixture comparisons rather than becoming a proof of
+/// geometric inequality.
 fn equal(a: &Real, b: &Real) -> bool {
     matches!(
         hyperlimit::compare_reals(a, b, PredicatePolicy::STRICT),
@@ -34,10 +41,12 @@ fn equal(a: &Real, b: &Real) -> bool {
     )
 }
 
+/// Returns a unit circular contour centered at `(10, 0)` as the sampled sibling.
 fn circular_sibling() -> Contour2 {
     circle(r(10), r(0), r(1))
 }
 
+/// Builds an exact circular contour from two native semicircular arcs sharing their center.
 fn circle(x: Real, y: Real, radius: Real) -> Contour2 {
     let center = Point2::new(x.clone(), y.clone());
     let a = Point2::new(&x + &radius, y.clone());
@@ -52,6 +61,7 @@ fn circle(x: Real, y: Real, radius: Real) -> Contour2 {
     .unwrap()
 }
 
+/// Builds a native line rectangle with an explicitly repeated closing vertex.
 fn rectangle(x0: Real, y0: Real, x1: Real, y1: Real) -> Contour2 {
     Contour2::from_real_ring(&[
         [x0.clone(), y0.clone()],
@@ -63,6 +73,7 @@ fn rectangle(x0: Real, y0: Real, x1: Real, y1: Real) -> Contour2 {
     .unwrap()
 }
 
+/// Reverses contour traversal by reversing both segment order and each segment direction.
 fn reverse(contour: &Contour2) -> Contour2 {
     Contour2::try_new(
         contour
@@ -75,8 +86,13 @@ fn reverse(contour: &Contour2) -> Contour2 {
     .unwrap()
 }
 
+/// Modeling consumers that must preserve exact members beside sampled curve geometry.
 const OPERATIONS: [&str; 5] = ["triangulate", "extrude", "twist-zero", "sweep", "revolve"];
 
+/// Dispatches a fixture through triangulation, height-two extrusion, zero twist, straight sweep or four-section revolution.
+///
+/// The operation name must belong to `OPERATIONS`; unknown names panic as an
+/// unreachable fixture error. Each path uses the supplied modeling context.
 fn model(
     profile: &CurveRegion2,
     operation: &str,
@@ -96,12 +112,16 @@ fn model(
     }
 }
 
+/// Searches for an exactly equal XY fixture vertex on `z = 0` using strict comparisons.
 fn has_vertex(mesh: &TriangleMesh, x: &Real, y: &Real) -> bool {
     mesh.positions
         .iter()
         .any(|p| equal(&p.x, x) && equal(&p.y, y) && equal(&p.z, &r(0)))
 }
 
+/// Sums exact oriented face determinants, equal to six times signed mesh volume.
+///
+/// The sum is used with separate topology checks and does not alone prove the set.
 fn six_volume(mesh: &TriangleMesh) -> Real {
     mesh.triangles.iter().fold(r(0), |sum, triangle| {
         let [a, b, c] = triangle.indices().map(|i| mesh.positions[i].to_vector());
@@ -109,6 +129,7 @@ fn six_volume(mesh: &TriangleMesh) -> Real {
     })
 }
 
+/// Requires the native geometric edge-pairing query to decide true with certified certainty.
 fn assert_closed(mesh: &TriangleMesh) {
     let outcome = mesh
         .is_closed_manifold_geometry(&GeometryContext::STRICT.mesh_context())
@@ -117,6 +138,12 @@ fn assert_closed(mesh: &TriangleMesh) {
     assert!(outcome.value);
 }
 
+/// Checks an exact rectangle alone and beside a curved sibling across orientation and policy changes.
+///
+/// All five modeling operations must retain its chosen vertex and independent
+/// area/volume expectation. Mixed inputs must record sampling; pure line inputs
+/// must not record coordinate projection. Solid outputs also pass certified
+/// geometric edge pairing. Measures isolate the rectangle by its disjoint Y range.
 fn check_exact_member(origin: Real, width: Real) {
     let right = &origin + &width;
     let line_loop = Contour2::from_real_ring(&[
@@ -203,26 +230,34 @@ fn check_exact_member(origin: Real, width: Real) {
 }
 
 #[test]
+/// Exercises the mixed-profile matrix with width one third at X origin one.
 fn rational_member_survives_a_curved_sibling() {
     check_exact_member(r(1), (r(1) / r(3)).unwrap());
 }
 
 #[test]
+/// Exercises the mixed-profile matrix with exact width square root of two.
 fn irrational_member_survives_a_curved_sibling() {
     check_exact_member(r(1), r(2).sqrt().unwrap());
 }
 
 #[test]
+/// Exercises the mixed-profile matrix with exact width `2^-80` near one.
 fn tiny_member_survives_a_curved_sibling() {
     check_exact_member(r(1), (r(1) / r(2).powi(80.into()).unwrap()).unwrap());
 }
 
 #[test]
+/// Exercises width one third after translation to X origin `2^70`, where binary64 loses the width.
 fn translated_member_survives_a_curved_sibling() {
     check_exact_member(r(2).powi(70.into()).unwrap(), (r(1) / r(3)).unwrap());
 }
 
 #[test]
+/// Checks rational, irrational and tiny line-hole vertices survive five operations inside sampled circular material.
+///
+/// Both loop orientations must retain certification and sampling qualification;
+/// solid outputs must also pass geometric edge pairing.
 fn exact_holes_survive_inside_a_curved_material_loop() {
     for width in [q(1, 3), r(2).sqrt().unwrap(), tiny()] {
         for reversed in [false, true] {
@@ -250,6 +285,7 @@ fn exact_holes_survive_inside_a_curved_material_loop() {
 }
 
 #[test]
+/// Checks a circular hole cannot quantize the exact outer rectangle vertex in either traversal direction.
 fn a_curved_hole_does_not_round_the_material_boundary() {
     let right = r(12) + q(1, 3);
     for reversed in [false, true] {
@@ -275,8 +311,10 @@ fn a_curved_hole_does_not_round_the_material_boundary() {
     }
 }
 
-// A rectangular base topped by a native semicircle. The small step on the
-// lower-left edge is an exact line span belonging to this same curved loop.
+/// Builds a rectangular base with a semicircular top and an exact small step in the same loop.
+///
+/// The step lies on the lower-left boundary, so sampling the adjacent curved
+/// span must preserve both its native joins and its short line segment.
 fn stepped_cap(origin: Real, step: Real) -> Contour2 {
     let a = Point2::new(origin.clone(), r(0));
     let b = Point2::new(&origin + step, r(0));
@@ -297,6 +335,10 @@ fn stepped_cap(origin: Real, step: Real) -> Contour2 {
 }
 
 #[test]
+/// Checks four exact joins around a `2^-80` line survive sampling in the same curved loop.
+///
+/// Rational and irrational translations, both traversal directions and all five
+/// modeling operations are exercised; solid results also require edge pairing.
 fn mixed_spans_share_exact_curve_endpoints_and_keep_a_tiny_line() {
     for origin in [q(1, 3), r(2).sqrt().unwrap()] {
         for reversed in [false, true] {
@@ -327,6 +369,11 @@ fn mixed_spans_share_exact_curve_endpoints_and_keep_a_tiny_line() {
 }
 
 #[test]
+/// Checks a sampled enclosure retains a `2^-80` wall through repeated exact mesh Booleans.
+///
+/// After dropping the source region, an independently expected wall-piece volume
+/// is removed and restored four times. Closure, total volume and sampling
+/// qualification are checked, including self-difference and empty-union recovery.
 fn mixed_enclosure_retains_a_thin_wall_through_repeated_cuts() {
     use csgrs::solid::SolidExt;
     let wall = tiny();

@@ -2745,11 +2745,19 @@ pub fn hilbert_paths_with_context(
     Ok(decisions.finish(paths))
 }
 
-/// Triangulates a filled region as a flat native triangle surface.
+/// Triangulates a filled region into a triangle surface in the `z = 0` plane.
 ///
-/// Exact line members and native curve endpoints retain their coordinates and
-/// classified hole ownership, including in mixed profiles. Nonlinear interiors
-/// are sampled; predicate certainty does not certify fidelity to the source curves.
+/// Native material/hole classification supplies each component to Hypertri.
+/// Exact line members and represented native curve endpoints keep their coordinates,
+/// including in mixed profiles; nonlinear interiors and endpoints lacking native
+/// coordinates use the sampled modeling boundary described by
+/// [`SAMPLED_PROFILE_CHORD_ERROR`]. An empty region produces an empty mesh.
+///
+/// The result retains local predicate certainty and accumulated mesh construction
+/// qualifications. Validation checks valid, unique, nondegenerate triangle geometry;
+/// it does not require a closed solid or certify fidelity to the original curves.
+/// Debug builds can panic if emission cannot certify a triangle's nondegeneracy
+/// under the strict policy before final validation.
 pub fn try_triangulate(
     input: &CurveRegion2,
     context: GeometryContext,
@@ -2759,6 +2767,12 @@ pub fn try_triangulate(
     Ok(decisions.finish_mesh(mesh))
 }
 
+/// Triangulates each modeling profile while accumulating native certainty and sampling history.
+///
+/// Converts each exact planar triangle to `z = 0`, reuses structurally equal
+/// positions through the shared emitter, and applies surface validation once to
+/// the completed mesh. Material/hole grouping remains the curve kernel's decision;
+/// Hypertri owns cap triangulation. Empty profile lists leave both buffers empty.
 fn try_triangulate_with(
     input: &CurveRegion2,
     decisions: &GeometryDecisions,
@@ -2788,13 +2802,25 @@ fn try_triangulate_with(
 /// coordinates, even beside curved components or holes. Curved boundaries use
 /// [`hypercurve::CurveRegionProfile2::sample_to_linear_contours`], retaining
 /// native endpoints and line spans while sampling nonlinear interiors. The
-/// result records sampling and coordinate projection in its construction
-/// evidence; this is not a certified topology or source-fidelity error bound.
+/// mesh result records sampling and coordinate projection in its construction
+/// evidence. Endpoints without native scalar coordinates may also cross the
+/// finite boundary. This value is a request in model-coordinate units, not a
+/// certified topology or source-fidelity error bound.
 /// [`try_finite_profiles`] remains the explicit all-coordinate `f64` export.
 pub const SAMPLED_PROFILE_CHORD_ERROR: f64 = 1.0e-3;
 
-/// Choose exact or sampled boundaries per already classified profile, retaining
-/// native members inside a sampled profile. Sampling remains a fidelity boundary.
+/// Chooses exact or sampled line contours independently for each classified material profile.
+///
+/// First requests native linear contours, including their owned holes. A successful
+/// view is returned unchanged; a typed failure propagates. Only absence of that
+/// view selects sampling, recording both sampling and coordinate-projection
+/// qualification before calling the native mixed-boundary adapter.
+///
+/// The sampled adapter still preserves exact line members and represented native
+/// endpoints, even when other components or holes are curved. Other coordinates
+/// come from finite projection and are promoted back to exact binary values.
+/// Material/hole ownership is retained, but sampling is a source-fidelity boundary.
+/// The caller attaches accumulated qualifications when publishing a mesh.
 fn try_modeling_profiles_with(
     input: &CurveRegion2,
     decisions: &GeometryDecisions,
@@ -2818,10 +2844,17 @@ fn try_modeling_profiles_with(
         .collect()
 }
 
-/// Finite polygon-with-holes boundary view for rendering and interchange.
+/// Exports finite polygon-with-holes profiles for rendering and interchange.
 ///
-/// Every boundary, including an exact line, is projected to `f64` at
-/// [`SAMPLED_PROFILE_CHORD_ERROR`].
+/// Every coordinate, including exact line vertices, crosses the `f64` boundary;
+/// curves are sampled with the request [`SAMPLED_PROFILE_CHORD_ERROR`]. Native
+/// regularized topology supplies material/hole ownership instead of recovering it
+/// from finite containment. Empty geometry returns no profiles; unsupported or
+/// undecided native work and nonfinite projection failures remain errors.
+///
+/// The outcome carries local predicate certainty. The finite profiles carry their
+/// rings and requested chord error, not a mesh construction-history receipt or a
+/// certificate of exact source fidelity.
 pub fn try_finite_profiles(
     input: &CurveRegion2,
     context: GeometryContext,
@@ -2831,6 +2864,12 @@ pub fn try_finite_profiles(
     Ok(decisions.finish(profiles))
 }
 
+/// Projects every boundary coordinate using native exact profile ownership and shared decisions.
+///
+/// Records sampling/projection in the construction accumulator and calls the
+/// finite adapter at [`SAMPLED_PROFILE_CHORD_ERROR`]. The public finite-profile
+/// wrapper publishes a generic outcome, so it does not attach that accumulator
+/// as mesh history. The returned primitive coordinates remain an export product.
 fn try_finite_profiles_with(
     input: &CurveRegion2,
     decisions: &GeometryDecisions,
@@ -2847,11 +2886,17 @@ fn try_finite_profiles_with(
     Ok(profiles)
 }
 
-/// Linear extrusion that reports invalid or uncertain geometry.
+/// Extrudes a filled XY region from `z = 0` to the signed `height`.
 ///
-/// Exact line members and native curve endpoints keep their coordinates in
-/// mixed profiles. Nonlinear interiors are sampled with explicit construction
-/// evidence, with no claim that predicate certainty certifies source fidelity.
+/// Height must have a nonzero selected sign, even for an empty region; negative
+/// height is supported with outward cap and wall orientation reversed as needed.
+/// A valid nonzero extrusion of an empty region returns an empty mesh. Delegates
+/// to [`try_extrude_vector`] with zero X and Y displacement.
+///
+/// Exact line members and represented native curve endpoints keep their coordinates
+/// in mixed profiles. Other boundary portions use the sampled modeling contract
+/// of [`SAMPLED_PROFILE_CHORD_ERROR`]. The mesh retains construction qualifications
+/// and local certainty; these do not certify source-curve fidelity.
 pub fn try_extrude(
     region: &CurveRegion2,
     height: Real,
@@ -2864,10 +2909,19 @@ pub fn try_extrude(
     )
 }
 
-/// Vector extrusion of a native filled region.
+/// Extrudes a filled XY region between its original plane and a translated copy.
 ///
-/// The direction must have a nonzero Z component. Profile fidelity has the
-/// same contract as [`try_extrude`].
+/// `direction` is the complete displacement, without normalization. Its Z component
+/// must have a nonzero selected sign before profile admission, including for empty
+/// input; X and Y may produce an oblique extrusion. Each cap uses the native
+/// material/hole triangulation and each side quadrilateral becomes two triangles.
+///
+/// The output is checked for unique nondegenerate faces and paired geometric edges,
+/// with canonical empty output allowed for an empty source. These checks do not
+/// establish vertex-link manifoldness or absence of geometric self-intersections.
+/// Fidelity and construction qualifications follow [`try_extrude`].
+/// Debug builds can panic if emission cannot certify a triangle's nondegeneracy
+/// under the strict policy before final validation.
 pub fn try_extrude_vector(
     region: &CurveRegion2,
     direction: Vector3,
@@ -2878,6 +2932,13 @@ pub fn try_extrude_vector(
     Ok(decisions.finish_mesh(mesh))
 }
 
+/// Builds oriented caps and side walls after deciding the extrusion's Z direction.
+///
+/// A selected zero Z component is `ZeroParameter`; unresolved classification
+/// propagates. Negative Z reverses cap and wall orientation. Each ring's material
+/// side is selected from its role and signed polygon area; holes face oppositely
+/// to the outer material wall. After structural vertex reuse, closed-mesh validation
+/// allows empty output only when the source region itself is empty.
 fn try_extrude_vector_with(
     region: &CurveRegion2,
     direction: Vector3,
@@ -2959,6 +3020,13 @@ fn try_extrude_vector_with(
     )
 }
 
+/// Checks unique nondegenerate face geometry and attaches accumulated construction evidence.
+///
+/// The native query checks indices, coordinate equality under the selected policy,
+/// triangle degeneracy and duplicate unoriented triangle keys. A decided false
+/// becomes a `Geometry` error; native undecided or other failures retain their
+/// mesh cause. An empty triangle list can pass. This is not a closure, intersection
+/// or vertex-link test.
 fn validate_surface_mesh(
     mesh: TriangleMesh,
     decisions: &GeometryDecisions,
@@ -2976,6 +3044,14 @@ fn validate_surface_mesh(
     }
 }
 
+/// Checks geometric edge pairing and unique nondegenerate faces before qualifying a mesh.
+///
+/// When `allow_empty` is true, an empty triangle list bypasses validation; this
+/// shortcut does not inspect positions. Otherwise the native geometric closure
+/// query requires nonempty faces and one use of each edge in each direction after
+/// coordinate canonicalization. A decided false becomes a `Geometry` error;
+/// native failures retain their mesh causes. Neither branch establishes an
+/// embedded surface or checks vertex links.
 fn validate_closed_mesh(
     mesh: TriangleMesh,
     allow_empty: bool,
@@ -2997,8 +3073,18 @@ fn validate_closed_mesh(
     }
 }
 
-/// Emits geometry whose nondegeneracy follows from an exact source contract,
-/// or whose caller performs one exact whole-mesh validation before returning.
+/// Appends a triangle using existing structurally equal position rows where possible.
+///
+/// For each point, searches existing positions from the end using `Point3`
+/// equality and appends only when no equal row exists. This does not perform a
+/// policy-directed coordinate-equivalence search or tolerance welding. `reverse`
+/// reverses the three emitted indices.
+///
+/// Nondegeneracy is the caller's construction obligation or is checked by later
+/// whole-mesh validation. With debug assertions enabled, an unproved strict
+/// nondegeneracy query panics. Otherwise repeated resolved indices suppress the
+/// face. Every normal return is `true`, including that skipped-face case; the
+/// Boolean result does not prove that a triangle was emitted.
 fn emit_certified_triangle(
     positions: &mut Vec<Point3>,
     triangles: &mut Vec<hypermesh::Triangle>,
@@ -3030,12 +3116,20 @@ fn emit_certified_triangle(
     true
 }
 
-/// Places a profile point in one section of a swept solid. Each operation
-/// keeps its own frame, scale or rotation construction behind this.
+/// Fallible placement of an exact profile point at a caller-selected section index.
+///
+/// Sweep, twist and extrusion callers own the frame, scale, rotation and index
+/// interpretation. Cap/wall emitters consume the resulting exact coordinates;
+/// the callback itself does not certify nondegeneracy or final mesh topology.
 type SectionPlacement<'a> = dyn Fn(&Point2, usize) -> Result<Point3, ValidationError> + 'a;
 
-/// Emits the profile's cap triangulation in each `(section, reverse)` of
-/// `caps`, in that order for every face.
+/// Triangulates one material profile with holes and places each face into the requested caps.
+///
+/// The cap list contains `(section, reverse)` pairs. Processing is face-major,
+/// then cap-list order; each placement runs in vertex order and may fail. Native
+/// triangulation certainty is consumed before emitting faces. This appends to the
+/// caller's buffers and can leave partial local state on error; the caller owns
+/// final validation and publication.
 fn emit_section_caps(
     positions: &mut Vec<Point3>,
     triangles: &mut Vec<hypermesh::Triangle>,
@@ -3060,22 +3154,29 @@ fn emit_section_caps(
     Ok(())
 }
 
-/// How the side walls of consecutive sections end.
+/// Selects whether the final side-wall band stops, wraps or collapses to a caller-supplied apex.
 #[derive(Clone, Copy, PartialEq)]
 enum SectionWallEnd {
     /// The last section is not joined to the first.
     Open,
     /// The last section is also joined to the first.
     Closed,
-    /// The last section is one point, so the last band is triangles.
+    /// The caller collapses the last section to one point; emit one triangle per final edge band.
     Apex,
 }
 
-/// Emits the side walls joining consecutive placed sections of every
-/// oriented profile edge. The quadrilateral of edge `(start, end)` between
-/// sections `i` and `i + 1` splits along the diagonal from `start` in section
-/// `i` to `end` in section `i + 1`; at an apex the last one is the triangle on
-/// that diagonal's `start` side. `reverse` flips every triangle.
+/// Connects each oriented profile edge across consecutive placed sections with triangles.
+///
+/// The quadrilateral of edge `(start, end)` between sections `i` and `i + 1`
+/// splits along the diagonal from `start` at `i` to `end` at `i + 1`. `Closed`
+/// wraps the last section to the first. `Apex` omits the second triangle of the
+/// last band; the caller must make that final section a common point. All four
+/// corner placements still run, including the unused fourth apex corner.
+///
+/// Processing is ring-major, edge-major, then section order. `reverse` flips every
+/// triangle. Zero sections emits no walls; open/apex forms with one section emit
+/// none. Placement errors may leave partial local buffers; this helper does not
+/// validate closure, certify an apex or publish the completed mesh.
 fn emit_section_walls(
     positions: &mut Vec<Point3>,
     triangles: &mut Vec<hypermesh::Triangle>,
@@ -5359,6 +5460,7 @@ mod tests {
     }
 }
 
+/// Source-diagnostic witnesses for the modeling surface and closure validators.
 #[cfg(test)]
 mod native_boundary_source_probe {
     use super::*;
@@ -5366,6 +5468,7 @@ mod native_boundary_source_probe {
     use hypermesh::Triangle;
     use std::error::Error;
 
+    /// Compares both native validation errors with modeled errors and requires retained sources.
     fn check(mesh: TriangleMesh, kind: ValidationErrorKind) {
         let context = GeometryContext::STRICT;
         let native = [
@@ -5397,6 +5500,7 @@ mod native_boundary_source_probe {
     }
 
     #[test]
+    /// Checks native false results for invalid indices become explicit modeling geometry errors.
     fn invalid_indices_remain_a_definite_failed_output_validation() {
         let mesh = TriangleMesh::new(Vec::new(), vec![Triangle::new(0, 1, 2)]);
         let context = GeometryContext::STRICT;
@@ -5422,6 +5526,7 @@ mod native_boundary_source_probe {
     }
 
     #[test]
+    /// Checks a proved-flat tetrahedron and requires undecided native causes for a double-angle zero.
     fn undecided_geometry_keeps_the_native_mesh_cause() {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();

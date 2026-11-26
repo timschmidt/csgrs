@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/mixed_modeling_profiles.rs` | Entire file; documented numeric/contour fixtures, consumer dispatch, exact-member measures, mixed holes/spans and repeated thin-wall cuts. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/exact_path_failures.rs` | Entire file; documented control-net helpers, native causes, display-count invariance, reversal, exact area and empty-region witnesses. Clarified the limited diagnostic evidence in the historical symbolic-endpoint test. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/hilbert_trimming.rs` | Entire file; documented exact run helpers, axis-aligned simplification, source intervals/contact replay, policy transitions and algebraic trim reuse. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/gear_airfoil_failures.rs` | Entire file; documented numeric fixtures, profile/volume helpers and every mechanical-profile failure, certainty, composition and original-resolution witness. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
@@ -42,7 +43,7 @@ repository rules for later sessions or authorize implementation edits.
 | `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
-| `src/curve/native.rs` | **Partial:** file start through `hilbert_paths_with_context`, inclusive; initial helpers, planar/mechanical shapes, exact Bezier/spline construction and Hilbert trimming documented, including local grid functions. Resume at `try_triangulate`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
+| `src/curve/native.rs` | **Partial:** file start through `emit_section_walls`, inclusive, plus the complete `native_boundary_source_probe` test module; profile conversion, triangulation/extrusion, validators and cap/wall helpers documented. Resume at `revolve`; the main test module remains pending. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -1005,12 +1006,81 @@ remains about 499 MiB. No runtime build or additional target tree was created.
 Full workflow/runtime checks remain waived for this docs-only session. No
 executable behavior, assertion or performance claim changed.
 
+### Profile conversion, meshing and extrusion, 26 November 2026
+
+Owner: CSGRS curve-to-mesh modeling boundary, native triangulation adapters and
+output validation; P1/P4/P6/P8/P9/P12/P16/P17/P18/P19/P25/P30/P37. Baseline:
+`830b957e5`. Read every line of `src/curve/native.rs` from `try_triangulate`
+through `emit_section_walls`, inclusive, and the complete separate
+`native_boundary_source_probe` test module at the end of that file. Read every
+line of `tests/mixed_modeling_profiles.rs`. Supporting reads covered native
+linear-profile retention, mixed sampling/join selection, finite export ownership,
+triangulation, geometric validation, scalar debug checks and construction-receipt
+publication. Those kernel modules are not credited as completed Rustdoc audits.
+
+Missing witnesses: private meshing helpers lacked Rustdoc, and public summaries
+did not expose extrusion validation order, finite-history limitations or the
+actual strength of output validation. Documented the public boundary, private
+helpers, callback/ending types and relevant test declarations without changing
+construction, predicate order or assertions.
+
+Modeling profiles choose exact linear views independently; only absence of that
+view selects mixed sampling, while native failures propagate. Sampling preserves
+represented line members and native endpoints, including tiny members beside
+curved components, and records sampling/projection qualifications on mesh output.
+Endpoints without native coordinates may also be projected. The chord-error value
+is a request, not a blanket topology/fidelity certificate. Finite export projects
+all coordinates and retains native ownership with a local certainty receipt; its
+generic outcome does not attach the internal mesh construction accumulator.
+
+Extrusion docs specify signed height, full displacement vectors, nonzero-Z
+validation before empty handling, cap/wall orientation and canonical empty-source
+results. Validation checks unique nondegenerate face geometry and directed
+geometric edge pairing; neither validator checks embedding or vertex links.
+A native false result becomes a modeling `Geometry` error, while native failures
+retain their causes. The allowed-empty closure shortcut inspects triangle count,
+not positions. The separate source-probe tests document these distinctions.
+
+The triangle emitter uses reverse structural position lookup, has a strict
+nondegeneracy debug assertion, and returns `true` on every normal path, including
+suppression of repeated-index faces when the assertion is disabled. Its Boolean
+return is not an emission certificate. Public triangulation/extrusion docs expose
+the debug panic condition. Cap/wall docs specify traversal order, the chosen quad
+diagonal, caller-owned apex collapse, all-four-corner placement even for an apex,
+and partial local buffers on placement errors; final publication remains a caller
+responsibility.
+
+Mixed-profile tests document independent exact component measures and retained
+vertices for rational, irrational, tiny and far-translated inputs, plus native
+closure checks and sampling qualifications across five consumers. Repeated thin-wall
+Booleans are checked after dropping the source region. These witnesses remain
+source-reviewed, not runtime completion or performance claims.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs
+  tests/mixed_modeling_profiles.rs`: passed. `git diff --check`: passed.
+- All nonblank, non-comment source lines match baseline in both edited Rust files,
+  including debug assertions, emission returns, all tests and validation order.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps
+  --offline`: passed without warnings.
+- Inspected sixteen generated public/private pages, including the sampling
+  constant, placement alias, wall-ending enum, validators and emitters. Test
+  declarations were inspected in source; the library build does not render them.
+
+Log: `/tmp/csgrs-rustdoc-profile-meshing-doc.log`. Reused temporary build storage
+remains about 499 MiB. No runtime build or additional target tree was created.
+Full workflow/runtime checks remain waived for this docs-only session. No
+executable behavior, assertion or performance claim changed.
+
 ## Next work
 
-Continue `src/curve/native.rs` at `try_triangulate`, including modeling-profile
-conversion, extrusion and their downstream witnesses, then review the remaining
-root modules and owning crates. Maintain review records with each batch. Establish
-automated public/private item coverage across manifests and features without
-confusing that metric with semantic review. Review every remaining tracked file
-before claiming completion. Commit and push documentation batches after focused
-checks under the owner's session-specific waiver.
+Continue `src/curve/native.rs` at `revolve`, including signed-radius folding,
+revolution validation, sweep/twist construction and downstream witnesses, then
+review the remaining root modules and owning crates. Maintain review records with
+each batch. Establish automated public/private item coverage across manifests
+and features without confusing that metric with semantic review. Review every
+remaining tracked file before claiming completion. Commit and push documentation
+batches after focused checks under the owner's session-specific waiver.
