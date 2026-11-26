@@ -16400,3 +16400,36 @@ directories, on CPU 0 with ASLR off. QR rows moved −0.7% to +0.8%; the
 unchanged fixed path moved +1.4% to +2.7%, so all of this is noise. Endpoint
 widths were identical. At order 3 preparation is a small part of a window.
 The trial was reverted.
+
+## 2026-11-26: profile of the Hyperdynamics side of the CAPD cost gap
+
+The 15 November comparison left this cost gap unprofiled. In it, point
+oscillator prepared reuse took 1191.7 µs in Hyperdynamics and 55.7 µs in
+CAPD. Temporary cumulative timers (since reverted) were placed in
+`FlowTaylorProgram::verify` and the Taylor-evolution step loop. The
+`scripts/validated-dynamics` adapter then ran its `oscillator` case 200 times
+in reuse mode, in release on one host at main c4bcbf56c. One integration
+averaged about 945 µs over 4 steps, with one `verify` per step:
+
+| Part | Point | Box | Share |
+| --- | --- | --- | --- |
+| Picard existence search (`integrate`, one-step) | 181 µs | 179 µs | 19% |
+| Natural evaluation of the four Lie-derivative stage programs | 535 µs | 546 µs | 57% |
+| Order-0 analytic `taylor_model` check per step | 172 µs | 172 µs | 18% |
+| Everything else (evidence, projection) | about 57 µs | about 62 µs | 6% |
+
+The stage programs are small: 3, 17, 45 and 73 nodes. That is about 1 µs per
+node evaluation in BigInt-backed dyadic interval arithmetic, so the cost is
+arithmetic representation and the number of node evaluations, not formula
+swell at order 3. CAPD's order-12 hardware-float Taylor method costs
+nanoseconds per operation.
+
+The next candidate is an opt-in Taylor-mode ODE recurrence for the stage
+coefficients, x_(k+1) = [f(x)]_k / (k+1), over the same boxes. It would reuse
+the per-primitive recurrences now in Hypersolve and would need far fewer
+operations than evaluating every stage program. It changes enclosure values,
+so it would have to sit beside the current method, with width and
+completed-workload comparisons, and would not replace it in place. The
+analytic check and the Picard search together still cost about 37%, which
+bounds the achievable speedup near 2.5× on this case. Nothing is changed by
+this profile.
