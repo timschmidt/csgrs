@@ -3974,6 +3974,38 @@ Together with the preceding Rust implementation batch, all eight tracked files
 in `crates/csgrs-ffi/` now have whole-file review records. Language wrappers remain
 separate pending work; this milestone does not establish full repository coverage.
 
+### C++ ownership wrapper, 26 November 2026
+
+Baseline: `6250c231f`. Owner: C++ native binding, P6/P19/P25/P28–P30/P37.
+Read all 279 original lines of `bindings/cpp/csgrs.hpp`, including the trait macro's
+forty forwarding methods and four invocations, both geometry templates, all
+scalar/error methods, private fields/helpers and public aliases. Added source
+documentation throughout without changing any declaration or executable token.
+
+Documented Real's cloning copies and transferring moves, move-only geometry,
+unchecked raw-handle adoption, borrowed get() pointers and Real::release ownership.
+Default/moved-from wrappers are null owners rather than canonical empty models.
+The assignment body for Real is noexcept, but cloning its by-value argument can
+throw before entry. Geometry operations borrow their inputs, throw typed errors
+on failure and adopt new handles on success; raw trait forwarders return statuses.
+The exception copies the same-thread diagnostic and retains its numeric category.
+
+Bounds map NO_BOUNDS to std::nullopt, but a present RawReal bounds record still
+owns six manually freed scalar handles. Raw mesh/graphics/profile descriptors
+likewise have no C++ destructor: the corresponding trait free is required.
+Copying an optional or descriptor does not clone ownership. Documented projected
+profiles even for RawReal, float/integer export limits, and inherited C operation
+domains without adding policy, receipt or resource guarantees.
+
+Validation after final edits: a C++17 translation unit including the actual header
+and explicitly instantiating all eight mesh/region family templates passed
+`-Wall -Wextra -Werror -fsyntax-only`. Source tokens and complete preprocessed C++
+output match the baseline after comment/whitespace normalization. Declaration
+inspection found no undocumented method/alias candidates; `git diff --check`
+passed. No linked execution, allocation test, Doxygen rendering or full workflow
+check ran under the docs-only waiver. Source review and compilation establish the
+documentation-only scope, not exception-safe cleanup for manually owned outputs.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with
