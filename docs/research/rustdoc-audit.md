@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/parts/manual.rs` | Entire file; documented verbatim Markdown, callback/section order, table aggregation, anchor rules, private helpers and the unit witness. | Minimal and Hershey private docs passed; all rendered items/fields inspected. Test assertions unchanged, not rerun. |
+| `src/parts/dimension.rs` | Entire file; documented component admission, public-field consistency, optional lossy labels, glyph placement, error atomicity and all helpers/tests. | Minimal label stub and Hershey private pages inspected; formatting and comment-only comparisons passed. Tests unchanged, not rerun. |
 | `src/parts/mod.rs` | Entire file; documented module roles and authored metadata versus geometric evidence. | Minimal and attributed private docs passed; module page inspected. |
 | `src/parts/scalar.rs` | Entire file; documented strict predicates, diagnostic-erasing comparisons, translation and unconstrained interpolation. | Private helper pages inspected; implementation unchanged. |
 | `src/parts/metadata.rs` | Entire file; documented every record/payload, unchecked identity/geometry labels, installation admission and presence-only queries. | Private docs and payload rendering passed; no validation behavior changed. |
@@ -2114,9 +2116,62 @@ Validation after edits:
 Logs: `/tmp/csgrs-rustdoc-parts-assembly-doc.log` and
 `/tmp/csgrs-rustdoc-parts-attributed-doc.log`.
 
+### Dimension annotations and Markdown manual, 26 November 2026
+
+Baseline: `681b832fe`. Owners: parts drawing annotations and manual formatting,
+P3/P6/P8/P9/P19/P25/P29/P30/P37. Domain: native measured segments, orthographic
+projection, optional display glyphs and authored step/BOM Markdown. Read both
+files above in full, including all feature branches and tests. Supporting reads
+of projection/edge helpers, reserve logic, Hershey entry points and release
+overflow configuration do not count as whole-file audits of those dependencies.
+
+Missing acceptance witnesses were undocumented private helpers and incomplete
+public contracts. Dimension admission checks each component sign, rather than
+only the resulting length. Public fields can violate the constructor's distance
+relation. Annotation does not revalidate it; returned errors precede appending
+edges. Optional labels use lossy finite binary64 text, then exact display-stroke
+placement. A missing glyph center silently omits the label; undecided extrema
+comparisons retain earlier candidates. These paths are documented without
+claiming a general certified bounds result or altering their implementation.
+
+Manual output embeds text and callback paths verbatim without filesystem access,
+escaping or anchor collision resolution. Blank step names remain in the contents
+but receive no section. Merged steps still receive sections. The global table
+uses retained columns, not the flattened BOM: duplicate sums within a column use
+ordinary integer arithmetic, while totals across columns saturate. Neither the
+blocker list nor generated text validates counts, geometry, pictures or Markdown.
+Existing tests cover selected strings/edges and one label-failure atomicity case;
+they do not establish all these domains or a complete independent output oracle.
+
+Validation after final source edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` and
+  `git diff --check`: passed.
+- Removing only blank/comment lines yields identical Rust source to baseline
+  for both files. No expressions, assertions, fixtures, signatures or predicate
+  ordering changed. Local scans found 9 documented manual declarations and 22
+  dimension declarations, including feature alternatives/tests; fields were
+  separately inspected.
+- With the shared temporary target, incremental compilation disabled and broken
+  Rustdoc links denied, `cargo doc --locked -p csgrs --no-default-features
+  --document-private-items --no-deps --offline` passed, as did the same command
+  with `--features hershey-text`. Neither emitted warnings. Builds were repeated
+  only to inspect both feature-dependent versions in the reused output tree.
+- Inspected 23 rendered module/type/function pages, 21 enabled declaration
+  summaries, all record fields and material contract text, plus the minimal
+  no-text label stub. The text inspector initially introduced whitespace around
+  inline code punctuation; normalizing that presentation difference fixed the
+  check without changing source documentation.
+- Unit tests and full workflows remain unexecuted under the owner's docs-only
+  waiver. No runtime, performance or mathematical completion claim is made.
+
+Logs: `/tmp/csgrs-rustdoc-dimension-manual-minimal-doc.log` and
+`/tmp/csgrs-rustdoc-dimension-manual-hershey-doc.log`. No generated artifacts were
+added to the repository; the same temporary build tree remains in use.
+
 ## Next work
 
-Continue with the remaining parts modules and owning crates. Maintain review records with
+Continue with `src/parts/blueprint.rs`, `src/parts/occlude.rs` and owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation

@@ -4,6 +4,9 @@
 //! global parts table, then one section per step with its parts, the exploded
 //! drawing, the instructions, and the assembled drawing. Drawing paths are
 //! supplied by the caller. This function does not render pixels.
+//! Text and paths are inserted verbatim as Markdown, without escaping, file
+//! validation or renderer-specific anchor resolution. BOM quantities retain the
+//! counting limitations of [`bill_of_materials`].
 
 use super::assembly::AssemblyDocument;
 use super::bom::{BomCategory, BomLine, BomReport, bill_of_materials};
@@ -12,13 +15,26 @@ use super::metadata::NodeId;
 /// Markdown manual and the steps that still need instruction text.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Manual {
-    /// Complete markdown document.
+    /// Generated Markdown, including placeholders for missing instructions.
     pub markdown: String,
-    /// Steps whose instruction text is empty.
+    /// Messages for emitted, nonblank-named steps whose trimmed instructions are empty.
+    /// Does not report drawing, geometry, count or Markdown validity.
     pub blockers: Vec<String>,
 }
 
-/// Writes the assembly manual.
+/// Builds Markdown in memory from the hierarchical BOM's step order.
+///
+/// Every step receives a table-of-contents entry, including blank names; only
+/// nonblank-named steps receive sections. Merged steps still receive sections.
+/// For each emitted section, calls `exploded_path` then `assembled_path` once,
+/// even when instructions are missing. Paths are embedded without opening files.
+/// Names, descriptions, instructions and paths are not escaped. Anchor collisions
+/// are not resolved. No geometry, pose or instruction completeness is certified.
+///
+/// Requires the consistent acyclic hierarchy expected by [`bill_of_materials`].
+/// Per-column duplicate quantities use ordinary `u64` addition (overflow can
+/// panic when checks are enabled or wrap otherwise); cross-column totals saturate.
+/// Allocation and callback failures have no typed diagnostic channel here.
 pub fn assembly_manual(
     document: &AssemblyDocument,
     exploded_path: impl Fn(NodeId) -> String,
@@ -110,6 +126,11 @@ pub fn assembly_manual(
     Manual { markdown, blockers }
 }
 
+/// Appends one row per category/key first encountered in the retained BOM columns.
+/// Uses the first line's description, sorted by category then that full description;
+/// the report's flat lines are not used. Duplicate quantities within each column
+/// use ordinary `u64` sums, while the total across columns saturates. Even an empty
+/// column list emits the Description/Total header, with no data rows.
 fn write_global_table(markdown: &mut String, report: &BomReport) {
     markdown.push_str("| Description |");
     for column in &report.columns {
@@ -155,6 +176,8 @@ fn write_global_table(markdown: &mut String, report: &BomReport) {
     markdown.push('\n');
 }
 
+/// Removes a vitamin's first colon-delimited prefix and trims its suffix;
+/// returns every other description verbatim, including a colon-free vitamin.
 fn display_description(line: &BomLine) -> String {
     if line.category == BomCategory::Vitamin
         && let Some((_, description)) = line.description.split_once(':')
@@ -164,6 +187,8 @@ fn display_description(line: &BomLine) -> String {
     line.description.clone()
 }
 
+/// Appends a quantity/description table in input order for one category;
+/// emits no heading when there are no matching rows and does not aggregate them.
 fn write_category(
     markdown: &mut String,
     title: &str,
@@ -189,6 +214,8 @@ fn write_category(
     markdown.push('\n');
 }
 
+/// Appends quantity/key bullets in input order for one nonempty category.
+/// Keys are inserted verbatim; no file link, existence check or export is created.
 fn write_files(markdown: &mut String, title: &str, lines: &[BomLine], category: BomCategory) {
     let rows: Vec<_> = lines
         .iter()
@@ -204,6 +231,9 @@ fn write_files(markdown: &mut String, title: &str, lines: &[BomLine], category: 
     markdown.push('\n');
 }
 
+/// Lowercases ASCII alphanumerics and replaces each other character with one `-`.
+/// Does not trim/collapse separators, preserve non-ASCII letters or uniquify names;
+/// the resulting fragment need not match a particular Markdown renderer's anchor.
 fn anchor(name: &str) -> String {
     name.chars()
         .map(|character| {
@@ -217,6 +247,7 @@ fn anchor(name: &str) -> String {
 }
 
 #[cfg(test)]
+/// Source-level witnesses for instruction text, drawing paths and missing-step reports.
 mod tests {
     use super::*;
     use crate::parts::assembly::{AssemblyDocument, AssemblyNode};
@@ -224,6 +255,8 @@ mod tests {
     use hyperlattice::Real;
 
     #[test]
+    /// Checks root instructions/paths and a merged child step's placeholder/blocker;
+    /// permits either printed description or filename rather than fixing full output.
     fn manual_contains_instructions_and_reports_gaps() {
         let mut document = AssemblyDocument::new("Handle project", "main");
         document.description.push("A small handle.".into());
