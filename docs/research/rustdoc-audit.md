@@ -3736,6 +3736,40 @@ the owner's docs-only waiver. Outputs: `/tmp/csgrs-rustdoc-summary-help.txt`,
 The complete benchmark README was read, but its cross-native claims still require
 the native consumer review; reading alone is not recorded as completed qualification.
 
+### Shared native benchmark harness and CMake setup, 26 November 2026
+
+Baseline: `5604ae64b`. Owners: native benchmark support/build configuration,
+P6/P19/P25/P36/P37. Read every line of `benchmarks/native/common.hpp` (376 baseline
+lines) and `benchmarks/native/CMakeLists.txt` (94). Both are whole-file non-Rust
+reviews. Added documentation to every header type, field, method, free helper and
+local incidence alias, and explained build/fixture assumptions in CMake comments.
+
+The OBJ reader rejects zero/forward indices, parses binary64 coordinates, fans
+faces and normalizes component winding. It does not establish source fidelity,
+polygon convexity/planarity, vertex-link topology or embeddedness. Positive shell
+orientation can change cavity semantics. Its signed six-volume sign uses ordinary
+double comparison and does not reject zero/NaN, unlike the strict Rust counterpart.
+
+The native harness's unsigned stream parser accepts prefixes; filters do not trim
+and an empty filter selects all. Counters, iteration products and sample offsets
+wrap rather than saturate. These differences from the Rust harness remain explicit;
+matching CSV column names do not imply identical selection/resource semantics.
+Output destruction and counter accumulation are timed; printing/sink updates are
+outside timing. No callback correctness or receipt validation is added by the harness.
+
+CMake installs fixture paths as strings, without acquisition or hash verification.
+Missing kernels may be skipped only when REQUIRE_ALL is off, but missing STL support
+for a found OCCT remains fatal. Compiler-specific flags and NDEBUG behavior are
+documented. No option, flag, path or build condition changed.
+
+Validation after final edits: nonblank/non-comment source comparison is identical
+for both files; `git diff --check` passed. A C++20 syntax-only translation unit
+including the real header and instantiating `Harness::run` compiled without warnings.
+All declarations were source-reviewed. Doxygen is unavailable, so no rendered C++
+documentation is claimed. No CMake configure, native kernel build, fixture load or
+benchmark execution ran under the docs-only waiver; this is not a geometry or
+cross-engine performance qualification.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with

@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Configure C++20 runners against installed kernels. Fixture paths become compiled
+# strings; configuration neither acquires assets nor verifies their hashes. The
+# Rust runner normally populates generated/optional fixture caches before execution.
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
   set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
@@ -11,6 +14,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Turning this off permits a missing kernel, but an installed OCCT without its STL
+# writer library remains a fatal configuration error below.
 option(CSGRS_BENCH_REQUIRE_ALL "Fail unless both comparison kernels are found" ON)
 set(CSGRS_YEAHRIGHT_FIXTURE_DIR
   "${CMAKE_CURRENT_SOURCE_DIR}/../../target/benchmark-fixtures/yeahright"
@@ -40,6 +45,8 @@ find_package(CGAL QUIET)
 if(CGAL_FOUND)
   add_executable(csgrs_bench_cgal cgal.cpp)
   target_link_libraries(csgrs_bench_cgal PRIVATE CGAL::CGAL)
+  # These compiler flags assume GCC/Clang-compatible option spelling; NDEBUG removes
+  # standard assert checks, not the runner's explicit exception-based validation.
   target_compile_options(csgrs_bench_cgal PRIVATE
     -O3
     -DNDEBUG
@@ -64,6 +71,7 @@ find_package(OpenCASCADE QUIET COMPONENTS
   ModelingAlgorithms
 )
 if(OpenCASCADE_FOUND)
+  # Support installations using either current or legacy STL writer library naming.
   find_library(CSGRS_OCCT_STL_LIBRARY
     NAMES TKDESTL TKSTL
     HINTS ${OpenCASCADE_LIBRARY_DIR}

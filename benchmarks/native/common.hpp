@@ -1,5 +1,10 @@
 #pragma once
 
+/// Shared native benchmark fixture parsing, winding normalization and CSV timing.
+/// This header defines a binary64 input boundary and diagnostic measurements, not
+/// a geometry kernel or exact certification layer. Callers own semantic validation.
+/// Environment parsing and counter overflow differ from the Rust benchmark harness.
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -18,14 +23,21 @@
 #include <string_view>
 #include <vector>
 
+/// Helpers shared by the CGAL and OpenCascade benchmark executables.
 namespace csgrs_bench {
 
+/// Indexed binary64 OBJ geometry after polygon fans and optional winding changes.
 struct ObjTriangleSoup {
+  /// Parsed positions; no exact decimal source or coordinate-error receipt survives.
   std::vector<std::array<double, 3>> points;
+  /// Zero-based fan triangles, potentially flipped by component normalization.
   std::vector<std::array<std::size_t, 3>> triangles;
+  /// Number of authored face records, before fan triangulation; defaults to zero.
   std::size_t source_faces{};
 };
 
+/// Recognizes case-folded 1/true/yes/on for YEAHRIGHT_BENCH, without trimming.
+/// Missing/other values disable the optional fixture; conversion uses the C locale.
 inline bool yeahright_enabled() {
   const char *raw = std::getenv("YEAHRIGHT_BENCH");
   if (raw == nullptr) {
@@ -39,6 +51,7 @@ inline bool yeahright_enabled() {
   return value == "1" || value == "true" || value == "yes" || value == "on";
 }
 
+/// Returns the compiled control path or a cwd-relative default; performs no acquisition.
 inline std::filesystem::path yeahright_control_path() {
 #ifdef CSGRS_YEAHRIGHT_CONTROL_OBJ
   return CSGRS_YEAHRIGHT_CONTROL_OBJ;
@@ -47,6 +60,7 @@ inline std::filesystem::path yeahright_control_path() {
 #endif
 }
 
+/// Returns the compiled proxy path or hull default without checking content/source.
 inline std::filesystem::path yeahright_boolean_proxy_path() {
 #ifdef CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ
   return CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ;
@@ -55,6 +69,7 @@ inline std::filesystem::path yeahright_boolean_proxy_path() {
 #endif
 }
 
+/// Returns the compiled hull path or cwd-relative default without generation/validation.
 inline std::filesystem::path yeahright_boolean_hull_path() {
 #ifdef CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ
   return CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ;
@@ -63,6 +78,7 @@ inline std::filesystem::path yeahright_boolean_hull_path() {
 #endif
 }
 
+/// Names the generated labyrinth OBJ; the Rust generator must have created it first.
 inline std::filesystem::path generated_concave_path() {
 #ifdef CSGRS_GENERATED_CONCAVE_OBJ
   return CSGRS_GENERATED_CONCAVE_OBJ;
@@ -72,6 +88,7 @@ inline std::filesystem::path generated_concave_path() {
 #endif
 }
 
+/// Names the generated foam OBJ; this helper neither creates nor hashes the asset.
 inline std::filesystem::path generated_sierpinski_foam_path() {
 #ifdef CSGRS_GENERATED_SIERPINSKI_FOAM_OBJ
   return CSGRS_GENERATED_SIERPINSKI_FOAM_OBJ;
@@ -80,6 +97,10 @@ inline std::filesystem::path generated_sierpinski_foam_path() {
 #endif
 }
 
+/// Parses the integer before the first slash, rejecting zero, trailing junk and bounds.
+/// Positive indices are one-based; negatives are relative to vertices already seen.
+/// Forward references are rejected. Other slash fields are ignored. Throws on parse
+/// or bounds failure; assumes the fixture's vertex count fits in signed long long.
 inline std::size_t obj_vertex_index(std::string_view token,
                                     std::size_t vertex_count) {
   const auto slash = token.find('/');
@@ -97,7 +118,15 @@ inline std::size_t obj_vertex_index(std::string_view token,
   return static_cast<std::size_t>(resolved);
 }
 
+/// Makes indexed face components consistently oriented, then flips negative volume sums.
+/// Requires paired undirected edges and consistent BFS parity, throwing otherwise.
+/// The final signed six-volume is ordinary double arithmetic: zero, NaN and uncertain
+/// signs are not rejected. Unlike the Rust helper, this is not a certified sign test.
+/// It assumes valid indices, does not prove embeddedness/vertex-link manifoldness,
+/// and positive orientation for every shell does not preserve nested cavity semantics.
+/// Mutates per-triangle vertex order in place; points/source-face count remain unchanged.
 inline void orient_closed_boolean_mesh(ObjTriangleSoup &soup) {
+  /// Face index and whether an edge traverses from smaller to larger vertex index.
   using Incidence = std::pair<std::size_t, bool>;
   std::map<std::pair<std::size_t, std::size_t>, std::vector<Incidence>> edges;
   std::vector<std::vector<std::pair<std::size_t, bool>>> adjacent(
@@ -176,6 +205,11 @@ inline void orient_closed_boolean_mesh(ObjTriangleSoup &soup) {
   }
 }
 
+/// Reads v/f records into doubles and fans, then applies component winding normalization.
+/// Uses only the first three vertex fields and position part of face tokens; ignores
+/// other directives. Does not test polygon planarity/convexity, coordinate finiteness
+/// or source fidelity. Open/record/index/orientation errors throw; post-open stream
+/// failures are not distinguished from end of input. Empty input yields an empty soup.
 inline ObjTriangleSoup read_obj_boolean_mesh(
     const std::filesystem::path &path) {
   std::ifstream file(path);
@@ -213,11 +247,17 @@ inline ObjTriangleSoup read_obj_boolean_mesh(
   return soup;
 }
 
+/// Per-iteration counters whose meanings are supplied by each benchmark closure.
+/// All counters start at zero; none independently establishes completed geometry.
 struct Measurement {
+  /// Nominal work count, often input facets; arithmetic wraps modulo 2^64.
   std::uint64_t work_units{};
+  /// Nominal output size/count; arithmetic wraps modulo 2^64.
   std::uint64_t output_size{};
+  /// Caller-defined fingerprint, accumulated with wrapping addition.
   std::uint64_t checksum{};
 
+  /// Adds all three counters with unsigned wraparound, returning this aggregate.
   Measurement &operator+=(const Measurement &other) {
     work_units += other.work_units;
     output_size += other.output_size;
@@ -226,6 +266,9 @@ struct Measurement {
   }
 };
 
+/// Extracts an unsigned integer prefix with stream rules, or returns the fallback.
+/// Does not require whole-string consumption or reject a minus sign explicitly;
+/// this is not the Rust harness's whole-string usize parser. No budget is enforced.
 inline std::size_t env_size(const char *name, std::size_t fallback) {
   const char *raw = std::getenv(name);
   if (raw == nullptr) {
@@ -236,6 +279,8 @@ inline std::size_t env_size(const char *name, std::size_t fallback) {
   return input >> value ? value : fallback;
 }
 
+/// Accepts exact cold/warm labels, defaults an absent value to warm, otherwise throws.
+/// The label does not flush geometry caches or establish process temperature.
 inline std::string env_temperature() {
   const char *raw = std::getenv("CSGRS_BENCH_TEMPERATURE");
   if (raw == nullptr || std::string_view(raw) == "warm") {
@@ -248,6 +293,10 @@ inline std::string env_temperature() {
       "CSGRS_BENCH_TEMPERATURE must be 'cold' or 'warm'");
 }
 
+/// Applies corpus-Boolean skip, dangerous opt-in and stress opt-in/skip gates in order.
+/// Opt-in requires exactly 1; a present skip value other than 0 enables skipping.
+/// Remaining comma-separated substrings match suite/benchmark/case without trimming.
+/// Missing or empty filter selects all gated cases, unlike the Rust empty-filter rule.
 inline bool selected(std::string_view suite, std::string_view benchmark,
                      std::string_view benchmark_case) {
   if (suite == "corpus" && benchmark == "boolean_all") {
@@ -289,8 +338,13 @@ inline bool selected(std::string_view suite, std::string_view benchmark,
   return false;
 }
 
+/// Captured repetitions/labels with live environment filtering and per-sample CSV output.
+/// Warmups, earlier cases and shared sources can warm caches. Labels are not escaped.
 class Harness {
 public:
+  /// Captures environment counts, emits opt-in warnings and prints the CSV header.
+  /// Samples/scale clamp to one; warmups may be zero. A zero iteration override means
+  /// use scaling. Invalid temperature throws. Counts impose no total resource bound.
   explicit Harness(std::string engine)
       : engine_(std::move(engine)),
         samples_(std::max<std::size_t>(1, env_size("CSGRS_BENCH_SAMPLES", 10))),
@@ -316,6 +370,12 @@ public:
                  "work_units,output_size,checksum\n";
   }
 
+  /// Runs selected warmups and measured repetitions of a callback returning Measurement.
+  /// Corpus/stress/dangerous use stress counts. Scaling and sample offsets use size_t
+  /// arithmetic and may wrap; aggregate counters also wrap. The timed interval includes
+  /// callback work/destruction and accumulation, excluding CSV output and sink updates.
+  /// Exceptions propagate, leaving any prior rows intact; there is no typed failure row
+  /// or independent correctness check. Callback is copied into this invocation.
   template <typename Operation>
   void run(std::string_view suite, std::string_view benchmark,
            std::string_view benchmark_case, std::size_t base_iterations,
@@ -357,17 +417,27 @@ public:
   }
 
 private:
+  /// Engine label emitted verbatim, without CSV escaping.
   std::string engine_;
+  /// Ordinary timed sample count, at least one.
   std::size_t samples_;
+  /// Ordinary untimed repetition batches, permitting zero.
   std::size_t warmup_;
+  /// Timed samples for corpus/stress/dangerous suites, at least one.
   std::size_t stress_samples_;
+  /// Untimed batches for corpus/stress/dangerous suites, permitting zero.
   std::size_t stress_warmup_;
+  /// Multiplier for caller base iterations when no override is selected.
   std::size_t scale_;
+  /// Explicit iterations per sample, with zero meaning no override.
   std::size_t iterations_override_;
+  /// Added to each emitted zero-based sample index using ordinary unsigned arithmetic.
   std::size_t sample_offset_;
+  /// Validated display label only; no cache-reset behavior.
   std::string temperature_;
 };
 
+/// Combines facet/corner counts with a 17-bit shift and XOR; not a geometric hash.
 inline std::uint64_t checksum(std::size_t facets, std::size_t corners) {
   return (static_cast<std::uint64_t>(facets) << 17U) ^
          static_cast<std::uint64_t>(corners);
