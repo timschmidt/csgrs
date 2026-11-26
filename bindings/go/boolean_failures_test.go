@@ -1,3 +1,4 @@
+// Mesh Boolean receipt-category and empty-recovery regression through the Go wrapper.
 package csgrs
 
 import (
@@ -6,6 +7,9 @@ import (
 	"testing"
 )
 
+// TestBooleanFailureCategoryAndRecovery separates inverse-rotation recovery from the retained
+// strict-undecided composed-angle control across four Booleans, then checks empty reuse.
+// Bounds and diagnostic/status checks are the asserted oracles; this is not a full-set proof.
 func TestBooleanFailureCategoryAndRecovery(t *testing.T) {
 	cube, err := TriangleMeshF64Cube(1)
 	if err != nil {

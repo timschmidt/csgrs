@@ -1,3 +1,4 @@
+// Crossed-ring rejection and concave-face recovery through binary64 polyhedron ingress.
 package csgrs
 
 import (
@@ -6,6 +7,8 @@ import (
 	"testing"
 )
 
+// TestPolyhedronRejectsCrossedFaceAndRecovers requires invalid status/text for a crossed
+// ring and checks the recovered concave face's bounds, not closed-solid topology.
 func TestPolyhedronRejectsCrossedFaceAndRecovers(t *testing.T) {
 	mesh, err := TriangleMeshF64Polyhedron([]Vec3F64{{0, 0, 0}, {3, 3, 0}, {0, 2, 0}, {2, 0, 0}}, []uint{0, 1, 2, 3}, []uint{0, 4})
 	var status *StatusError

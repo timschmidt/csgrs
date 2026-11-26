@@ -1,3 +1,4 @@
+// Planar translation admission for both empty and nonempty inputs.
 package csgrs
 
 import (
@@ -7,6 +8,8 @@ import (
 	"testing"
 )
 
+// TestPlanarTranslationAdmissionAndRecovery distinguishes unsupported nonzero Z from NaN
+// conversion failure, then checks translated bounds or continued empty absence.
 func TestPlanarTranslationAdmissionAndRecovery(t *testing.T) {
 	for _, width := range []float64{0, 1} {
 		source, err := CurveRegionF64Square(width)
@@ -15,7 +18,9 @@ func TestPlanarTranslationAdmissionAndRecovery(t *testing.T) {
 		}
 		defer source.Free()
 		for _, rejected := range []struct {
+			// z is the deliberately inapplicable or nonfinite displacement.
 			z      float64
+			// status is the expected stable C error category.
 			status int
 		}{{1, 7}, {math.NaN(), 3}} {
 			result, err := source.TranslateF64(0, 0, rejected.z)

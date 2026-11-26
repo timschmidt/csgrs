@@ -1,3 +1,4 @@
+// Planar constructor validation-before-empty and recovery regression.
 package csgrs
 
 import (
@@ -6,6 +7,8 @@ import (
 	"testing"
 )
 
+// TestCurveConstructorFailuresAndRecovery rejects a negative companion dimension and bad
+// zero-radius resolution, then checks zero-square bounds absence and valid-square recovery.
 func TestCurveConstructorFailuresAndRecovery(t *testing.T) {
 	region, err := CurveRegionF64Rectangle(0, -1)
 	var status *StatusError

@@ -1,3 +1,4 @@
+// Exact integer extrusion and typed-failure regression across the Go/C boundary.
 package csgrs
 
 import (
@@ -6,6 +7,8 @@ import (
 	"testing"
 )
 
+// TestExactLinearExtrusionAndFailureRecovery uses width 2^53+1, rejects zero extrusion,
+// then compares successful integer bounds without routing coordinates through binary64.
 func TestExactLinearExtrusionAndFailureRecovery(t *testing.T) {
 	width := I128FromInt64(9007199254740993)
 	region, err := CurveRegionI128Rectangle(width, I128FromInt64(1))

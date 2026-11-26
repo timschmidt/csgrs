@@ -4006,6 +4006,48 @@ passed. No linked execution, allocation test, Doxygen rendering or full workflow
 check ran under the docs-only waiver. Source review and compilation establish the
 documentation-only scope, not exception-safe cleanup for manually owned outputs.
 
+### Go binding and regression sources, 26 November 2026
+
+Baseline: `df8194b82`. Owner: Go/cgo binding, P6/P19/P25/P28–P30/P37.
+Completed whole-file reviews of all seven tracked files under `bindings/go/`:
+
+| File | Original lines | Review/change |
+| --- | ---: | --- |
+| `bindings/go/csgrs.go` | 451 | Documented package constraints, 132 function/type declarations, constants, private fields/helpers, family dispatch and all exported ownership/conversion paths. |
+| `bindings/go/boolean_failures_test.go` | 82 | Documented inverse-rotation recovery, composed-angle undecided expectations across four Booleans, and empty reuse. |
+| `bindings/go/bounds_test.go` | 81 | Documented absence/placement, empty continuation, wrong-family and invalid constructor checks. |
+| `bindings/go/curve_constructor_failures_test.go` | 37 | Documented invalid companion dimension/resolution, zero-square absence and recovery. |
+| `bindings/go/exact_linear_modeling_test.go` | 33 | Documented 2^53+1 integer ingress, rejected zero extrusion and exact exported bounds. |
+| `bindings/go/planar_operation_failures_test.go` | 47 | Documented unsupported/NaN Z controls and empty/nonempty planar continuation, including local case fields. |
+| `bindings/go/polyhedral_construction_test.go` | 24 | Documented crossed-face failure and concave-face bounds recovery; no closed-solid proof is asserted. |
+
+Documented explicit Free without finalizers, unsafe ownership copies, null/freed
+versus nil Go receiver behavior, unchecked signed-count casts to size_t, and
+mutable family tags that do not convert geometry. Unknown dispatch tags route
+to the real ABI, where actual native families remain checked. Family-suffixed
+methods select that ABI directly rather than converting the receiver. Buffer
+exports transfer ownership only without error; real bounds lack a Go free wrapper.
+Graphics/profile layout aliases have no corresponding exporter/free wrappers here.
+
+The source fetches the C thread-local diagnostic in a later cgo call without
+pinning the goroutine. This does not guarantee diagnostic identity/lifetime across
+those calls, even though the numeric status is retained. This is a source-level
+finding informed by Go's [LockOSThread contract](https://pkg.go.dev/runtime#LockOSThread),
+not a reproduced scheduling failure. Lowercase aliased C fields are not external
+Go accessors under the [exported-identifier rule](https://go.dev/ref/spec#Exported_identifiers);
+the existing tests are in the same package and do not establish external-package
+usability. No implementation fix or synchronization change was made.
+
+Validation after final edits: `git diff --check` and source-identity checks passed.
+All non-comment lines match, with only the Real struct's single field expanded to
+attach its comment; the complete cgo preamble is byte-identical. Declaration
+inspection finds docs on all 132 binding functions/types and six test functions.
+No go/gofmt executable was found on PATH or in the checked conventional installation
+directories, so Go parsing/type compilation, gofmt and rendered Go documentation
+remain unverified. No toolchain was installed and no tests/link smoke checks ran
+under the docs-only waiver. Documentation and source equivalence do not establish
+the runtime outcomes asserted by the retained regression tests.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with

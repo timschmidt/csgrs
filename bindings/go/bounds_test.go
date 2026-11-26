@@ -1,3 +1,4 @@
+// Bounds absence, placement and error-category regression through the Go wrapper.
 package csgrs
 
 import (
@@ -5,6 +6,8 @@ import (
 	"testing"
 )
 
+// TestBoundsAbsenceAndPlacement checks mesh/region empty bounds, empty reuse, cube placement,
+// wrong-family rejection even on empty geometry, and invalid constructor status.
 func TestBoundsAbsenceAndPlacement(t *testing.T) {
 	cube, err := TriangleMeshF64Cube(1)
 	if err != nil {
