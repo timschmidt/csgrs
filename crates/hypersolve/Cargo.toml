@@ -120,6 +120,11 @@ harness = false
 required-features = ["expression-program"]
 
 [[bench]]
+name = "taylor_model_orders"
+harness = false
+required-features = ["taylor-model"]
+
+[[bench]]
 name = "taylor_polynomial"
 harness = false
 required-features = ["taylor-polynomial"]

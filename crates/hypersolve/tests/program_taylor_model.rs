@@ -113,11 +113,10 @@ fn mixed_sparse_terms_ignore_unused_bindings_and_reuse_on_points() {
             &mut scalar(),
         )
         .unwrap();
-    assert_eq!(model.coefficient_program().requests().len(), 10);
+    assert_eq!(model.coefficient_requests().len(), 10);
     assert!(
         model
-            .coefficient_program()
-            .requests()
+            .coefficient_requests()
             .iter()
             .flat_map(|r| &r.powers)
             .all(|(s, _)| *s != unused)
@@ -132,7 +131,7 @@ fn mixed_sparse_terms_ignore_unused_bindings_and_reuse_on_points() {
     ];
     for (term, (powers, value)) in model.terms().iter().zip(expected) {
         assert_eq!(
-            model.coefficient_program().requests()[term.request_index()].powers,
+            model.coefficient_requests()[term.request_index()].powers,
             powers
         );
         assert_eq!(term.coefficient(), &Real::from(value));
@@ -190,7 +189,7 @@ fn rational_function_retains_the_entire_nonzero_tail() {
     assert_eq!(model.remainder_terms().len(), 1);
     let term = &model.remainder_terms()[0];
     assert_eq!(
-        model.coefficient_program().requests()[term.request_index()].powers,
+        model.coefficient_requests()[term.request_index()].powers,
         vec![(x, 4)]
     );
     assert_eq!(term.monomial(), Some(&d(0, 1, -8)));

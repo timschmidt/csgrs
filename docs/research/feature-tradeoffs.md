@@ -75,3 +75,35 @@ retention. "Shipped" sizes are linked release or deployed images.
 - **Evidence:** `docs/evidence/2026-11-24-interval-positive-power`.
 - **Reconsider:** if Hyperinterval's general rational power gains its own
   integer fast path, which would make this one redundant.
+
+### Interval Taylor-mode remainder recurrences (25 November 2026)
+
+- **Capability:** tighter high-order Taylor remainders (1/(1+x) on
+  [-1/4, 1/4] at order 6: 2e26 → 1.2e-3); models whose generated partials
+  failed with a zero-containing enclosure now build.
+- **Performance:** transcendental and rational model builds 4.7–34% faster;
+  tiny polynomial builds paid a fixed 1–3 µs (+3% to +8%), removed by the
+  next entry.
+- **Memory:** dense series per reached node, up to the remainder degree.
+- **Code size:** development artifacts only; no shipped image enables Taylor
+  features.
+- **Evidence:** `docs/evidence/2026-11-25-interval-taylor-recurrence`.
+- **Reconsider:** if centered or mean-value forms are added for the degree-zero
+  images, or if sparse series would pay off on many variables.
+
+### Exact Taylor coefficients from the same recurrences (26 November 2026)
+
+- **Capability:** none new; identical coefficients, remainders and images.
+  The generated partial formulas remain available on request and as the
+  fallback.
+- **Performance:** model construction 3–49% faster at order 2 and 66–99.8%
+  faster at order 8 (rational conic coordinate 170 ms → 0.32 ms); polynomial
+  re-differentiation −23% to −45%.
+- **Memory:** models no longer retain the generated formula program, about
+  42,000 nodes at order 8 for that conic; they keep the request list.
+- **Code size:** development Taylor benches and the `flow_noise` example
+  +32–42 KB `.text` (a second monomorphization over exact `Real`); no
+  shipped image enables Taylor features.
+- **Evidence:** `docs/evidence/2026-11-26-interval-taylor-exact-recurrence`.
+- **Reconsider:** if hyperreal gains cheaper exact series arithmetic, or if the
+  formula fallback is proved unreachable and can be removed.

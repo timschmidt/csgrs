@@ -266,7 +266,7 @@ pub(super) fn expansion(
     match rows {
         None => {
             for t in model.terms() {
-                let request = &model.program.requests()[t.request];
+                let request = &model.requests[t.request];
                 term(request.output, &request.powers, &t.coefficient)?;
             }
         }

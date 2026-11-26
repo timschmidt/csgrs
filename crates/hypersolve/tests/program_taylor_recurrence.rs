@@ -1,9 +1,12 @@
 #![cfg(feature = "taylor-model")]
 //! Integral remainders bounded by interval Taylor-mode recurrences.
 use hyperinterval::{DyadicBudget, DyadicInterval};
+use hyperreal::Real;
 use hypersolve::{
     Expr, SymbolId,
-    expression_program::{ExpressionBudget, ExpressionProgram, TaylorModel, TaylorRequest},
+    expression_program::{
+        CoefficientProgram, ExpressionBudget, ExpressionProgram, TaylorModel, TaylorRequest,
+    },
 };
 fn g() -> ExpressionBudget {
     ExpressionBudget::new(1_000_000, 100_000_000)
@@ -62,8 +65,7 @@ fn sound_at(model: &TaylorModel, points: &[Vec<DyadicInterval>]) {
             );
         }
         // Each degree-(n+1) bound contains the exact normalized partial at xi.
-        let partials = model
-            .coefficient_program()
+        let partials = formulas(model)
             .program()
             .eval_dyadic(point, -80, &mut g(), &mut a())
             .unwrap();
@@ -75,6 +77,37 @@ fn sound_at(model: &TaylorModel, points: &[Vec<DyadicInterval>]) {
                 !bound.intersection(exact, &mut a()).unwrap().is_empty(),
                 "{point:?}: {bound:?} misses {exact:?}"
             );
+        }
+    }
+}
+fn formulas(model: &TaylorModel) -> CoefficientProgram {
+    let program = model.coefficient_program(&mut g()).unwrap();
+    assert_eq!(program.requests(), model.coefficient_requests());
+    program
+}
+// The exact center recurrence agrees with the repeatedly differentiated
+// formulas: identical rationals, and 2^-80 enclosures otherwise.
+fn exact_at_center(model: &TaylorModel) {
+    let program = formulas(model);
+    let center: Vec<_> = model
+        .request()
+        .center
+        .iter()
+        .map(|c| Real::new(c.to_rational(&mut a()).unwrap().lower().unwrap().clone()))
+        .collect();
+    let values = program.program().eval_real(&center, &mut g()).unwrap();
+    let outputs = model.source().definition().outputs.len();
+    for term in model.terms() {
+        let formula = &values[outputs + term.request_index()];
+        let got = term.coefficient();
+        match (got.exact_rational(), formula.exact_rational()) {
+            (Some(got), Some(formula)) => assert_eq!(got, formula),
+            _ => {
+                let enclose = |v: &Real| DyadicInterval::from_real(v, -80, &mut a()).unwrap();
+                let (got, formula) = (enclose(got), enclose(formula));
+                let difference = got.sub(&formula, &mut a()).unwrap();
+                assert!(within(&difference, -70), "{got:?} vs {formula:?}");
+            }
         }
     }
 }
@@ -119,7 +152,59 @@ fn every_primitive_has_a_tight_and_sound_high_order_remainder() {
             model.remainder()
         );
         sound_at(&model, &samples());
+        exact_at_center(&model);
     }
+}
+
+#[test]
+fn exact_center_coefficients_match_generated_formulas_off_zero() {
+    // At center 1/8 most coefficients are irrational (ln(17/8), sin(1/8),...).
+    let x = || s(7);
+    let one = || Expr::int(1);
+    let two = || Expr::int(2);
+    let cases = [
+        one() / (one() + x()),
+        (two() + x()).ln(),
+        (two() + x()).log10(),
+        (one() + x()).sqrt(),
+        x().asin(),
+        x().acos(),
+        x().atanh(),
+        (x() + two()).acosh(),
+        x().sin() * x().cos(),
+        (x() * x() + x()).sin(),
+        (one() + x()).powi(-3),
+        (one() + x()).powi(5) - x().cos() / (two() + x().sin()),
+    ];
+    for expr in cases {
+        // Order zero keeps only the center value; its series has no unit slot.
+        let constant = build(
+            expr.clone(),
+            &[7],
+            vec![d(1, 1, -3)],
+            vec![d(0, 1, -2)],
+            0,
+            -64,
+        );
+        exact_at_center(&constant);
+        assert_eq!(constant.terms().len(), 1);
+        let model = build(expr, &[7], vec![d(1, 1, -3)], vec![d(0, 1, -2)], 5, -64);
+        exact_at_center(&model);
+        sound_at(
+            &model,
+            &[vec![d(0, 0, 0)], vec![d(1, 1, -3)], vec![d(1, 1, -2)]],
+        );
+    }
+    let expr = s(7) / (s(8) + Expr::int(2)) + (s(7) * s(8)).sin() + (s(8) + Expr::int(3)).ln();
+    let model = build(
+        expr,
+        &[7, 8],
+        vec![d(1, 1, -3), d(-1, 1, -3).midpoint(&mut a()).unwrap()],
+        vec![d(0, 1, -2), d(-1, 1, -2)],
+        4,
+        -64,
+    );
+    exact_at_center(&model);
 }
 
 fn points() -> Vec<Vec<DyadicInterval>> {
@@ -142,6 +227,7 @@ fn bivariate_partials_that_natural_evaluation_could_not_bound_are_enclosed() {
             assert!(remainder.subset_of(&previous, &mut a()).unwrap());
         }
         sound_at(&model, &points());
+        exact_at_center(&model);
         previous = Some(remainder);
     }
     let model = build(expr(), &[7, 8], vec![d(0, 0, 0); 2], square(), 6, -64);

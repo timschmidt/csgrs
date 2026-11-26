@@ -78,7 +78,7 @@ impl TaylorRemainderTerm {
 pub struct TaylorModel {
     source: ExpressionProgram,
     request: TaylorRequest,
-    program: CoefficientProgram,
+    requests: Arc<[CoefficientRequest]>,
     regularity: Option<RegularJacobianEnclosure>,
     terms: Vec<TaylorTerm>,
     remainder_terms: Vec<TaylorRemainderTerm>,
@@ -96,9 +96,20 @@ impl TaylorModel {
     pub fn request(&self) -> &TaylorRequest {
         &self.request
     }
-    /// Generated source-bound normalized partials; regenerate this association for replay.
-    pub fn coefficient_program(&self) -> &CoefficientProgram {
-        &self.program
+    /// Requested normalized partials (output and sparse powers), in term order.
+    pub fn coefficient_requests(&self) -> &[CoefficientRequest] {
+        &self.requests
+    }
+    /// Generate the source-bound partial formulas of these requests.
+    ///
+    /// Construction uses Taylor-mode recurrences and generates these formulas
+    /// only when a recurrence is unavailable, so they are not retained. This
+    /// replays `ExpressionProgram::coefficients` on the original source.
+    pub fn coefficient_program(
+        &self,
+        graph: &mut ExpressionBudget,
+    ) -> Result<CoefficientProgram, TaylorError> {
+        self.source.coefficients(&self.requests, graph)
     }
     /// Original regularity/derivative evidence; the exhaustive grammar check supplies analyticity.
     pub fn regularity(&self) -> Option<&RegularJacobianEnclosure> {
@@ -182,7 +193,7 @@ impl TaylorModel {
             graph.charge(1)?;
             let coefficient =
                 DyadicInterval::from_real(&term.coefficient, self.request.precision, arithmetic)?;
-            let request = &self.program.requests()[term.request];
+            let request = &self.requests[term.request];
             let (_, contribution) = contribution(
                 request,
                 &coefficient,
@@ -263,7 +274,7 @@ impl ExpressionProgram {
             )?;
             let model = TaylorModel {
                 source: self.clone(),
-                program: self.coefficients(&[], graph)?,
+                requests: Arc::from([]),
                 request,
                 regularity: None,
                 terms: Vec::new(),
@@ -338,7 +349,8 @@ impl ExpressionProgram {
             graph,
             arithmetic,
         )?;
-        let program = self.coefficients(&requests, graph)?;
+        // The generated formulas are built only if a recurrence is unavailable.
+        let mut program = None;
         let mut center = Vec::new();
         for value in &request.center {
             graph.charge(1)?;
@@ -347,7 +359,26 @@ impl ExpressionProgram {
                 rational.lower().expect("singleton center").clone(),
             ));
         }
-        let exact = program.program().eval_real(&center, graph)?;
+        // Exact Taylor-mode recurrences at the center avoid evaluating the
+        // swollen generated formulas; those formulas remain the authority
+        // whenever an exact scalar operation is refused.
+        let exact_degree = if variables.is_empty() {
+            0
+        } else {
+            request.order
+        };
+        let (exact, mut formulas) =
+            match recurrence::exact(self, &variables, &center, exact_degree, graph)? {
+                Some(exact) => (Some(exact), Vec::new().into_iter()),
+                None => {
+                    let mut values = formulas_for(&mut program, self, &requests, graph)?
+                        .program()
+                        .eval_real(&center, graph)?;
+                    // Original outputs precede the requested coefficients.
+                    values.drain(..outputs);
+                    (None, values.into_iter())
+                }
+            };
         // Without variables the order is irrelevant and may be usize::MAX.
         let last = if variables.is_empty() {
             0
@@ -363,12 +394,11 @@ impl ExpressionProgram {
         let partials =
             match recurrence::bounds(self, &variables, &request, last, graph, arithmetic)? {
                 Some(recurrence) => Partials::Recurrence(recurrence),
-                None => Partials::Natural(program.program().eval_dyadic(
-                    &request.domain,
-                    request.precision,
-                    graph,
-                    arithmetic,
-                )?),
+                None => Partials::Natural(
+                    formulas_for(&mut program, self, &requests, graph)?
+                        .program()
+                        .eval_dyadic(&request.domain, request.precision, graph, arithmetic)?,
+                ),
             };
         let shifts = shifts(&request.domain, &request.center, graph, arithmetic)?;
         graph.check_entries(&[requests.len(), powers, outputs])?;
@@ -376,11 +406,14 @@ impl ExpressionProgram {
         let mut remainder = vec![zero()?; outputs];
         let mut terms = Vec::new();
         let mut remainder_terms = Vec::new();
-        for (index, (coefficient, degree)) in
-            exact.into_iter().skip(outputs).zip(degrees).enumerate()
-        {
+        for (index, degree) in degrees.into_iter().enumerate() {
             graph.charge(1)?;
+            let formula = formulas.next();
             if degree <= request.order {
+                let coefficient = match &exact {
+                    Some(exact) => exact.coefficient(&requests[index]).clone(),
+                    None => formula.expect("one generated value per request"),
+                };
                 terms.push(TaylorTerm {
                     request: index,
                     coefficient,
@@ -412,7 +445,7 @@ impl ExpressionProgram {
         let mut model = TaylorModel {
             source: self.clone(),
             request,
-            program,
+            requests: requests.into(),
             regularity: Some(regularity),
             terms,
             remainder_terms,
@@ -427,9 +460,21 @@ impl ExpressionProgram {
         Ok(model)
     }
 }
+// Generate the requested partial formulas once, on first use.
+fn formulas_for<'a>(
+    program: &'a mut Option<CoefficientProgram>,
+    source: &ExpressionProgram,
+    requests: &[CoefficientRequest],
+    graph: &mut ExpressionBudget,
+) -> Result<&'a CoefficientProgram, TaylorError> {
+    if program.is_none() {
+        *program = Some(source.coefficients(requests, graph)?);
+    }
+    Ok(program.as_ref().expect("generated above"))
+}
 // Enclosures of the degree-(n+1) normalized partials on the whole domain.
 enum Partials {
-    Recurrence(recurrence::Bounds),
+    Recurrence(recurrence::Bounds<DyadicInterval>),
     // Natural evaluation of every coefficient-program output, originals first.
     Natural(Vec<DyadicInterval>),
 }

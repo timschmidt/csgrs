@@ -2,6 +2,20 @@
 
 ## [0.4.0] - Unreleased
 
+- `taylor-model` computes the exact centered coefficients with the same
+  Taylor-mode recurrences in exact `Real` arithmetic, instead of generating
+  repeatedly differentiated partial formulas and evaluating them at the center.
+  The formulas are generated only when a recurrence is unavailable or when
+  requested. **Breaking:** `TaylorModel::coefficient_program` now takes a graph
+  budget and returns a freshly generated `CoefficientProgram`; use
+  `TaylorModel::coefficient_requests` for the request list. Coefficients,
+  remainders and images are unchanged (generated formulas agree exactly with
+  rational coefficients and to 2^-70 otherwise in the tests). Model
+  construction is 3–49% faster at order 2 and 66–99.8% faster at order 8 (a
+  rational conic coordinate at order 8: 170 ms to 0.32 ms); polynomial and
+  composition re-differentiation is 23–45% faster. This removes the fixed
+  small-model overhead of the interval recurrence entry below.
+
 - `taylor-model` bounds each degree-(n+1) remainder partial with interval
   Taylor-mode recurrences over the domain box instead of natural evaluation of
   repeatedly differentiated partials. Integer powers compose certified power

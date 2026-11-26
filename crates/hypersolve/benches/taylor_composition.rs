@@ -176,9 +176,7 @@ fn validate(case: &Case) {
         let native_term = native
             .terms()
             .iter()
-            .find(|term| {
-                native.coefficient_program().requests()[term.request_index()].powers == powers
-            })
+            .find(|term| native.coefficient_requests()[term.request_index()].powers == powers)
             .unwrap();
         for policy in [
             hyperlimit::PredicatePolicy::STRICT,

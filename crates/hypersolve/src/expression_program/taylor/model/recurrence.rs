@@ -1,29 +1,38 @@
-//! Interval Taylor-mode recurrences for the integral-remainder coefficients.
+//! Taylor-mode recurrences for centered coefficients and remainder bounds.
 //!
-//! Every node becomes a dense truncated series whose coefficients enclose the
-//! normalized partials D^alpha g(xi) / alpha! of that node for every xi in the
-//! domain box. Variables are X_i + h_i. Each coefficient is the interval
-//! evaluation of the exact Taylor-arithmetic recurrence of the analytic
-//! primitive, and degree zero is the primitive's certified interval image of
-//! the operand's degree-zero enclosure, so inclusion monotonicity keeps every
-//! coefficient sound for each xi separately. The recurrences only reuse lower
-//! degrees, so repeated symbolic differentiation and its expression swell do
-//! not occur. An operand outside a primitive's certified domain, or a divisor
-//! or square root enclosure meeting zero, makes the whole bound unavailable
-//! instead of failing the model; resource limits are still reported.
+//! Every node becomes a dense truncated series whose coefficients are the
+//! normalized partials D^alpha g(xi) / alpha! of that node. Variables are
+//! X_i + h_i. The same exact Taylor-arithmetic recurrence of each analytic
+//! primitive runs over two arithmetics:
+//!
+//! - outward dyadic intervals over the domain box, where degree zero is the
+//!   primitive's certified interval image of the operand's degree-zero
+//!   enclosure, so inclusion monotonicity keeps every coefficient sound for
+//!   each xi in the box separately;
+//! - exact Hyperreal values at the center, where every coefficient is the
+//!   exact normalized partial itself.
+//!
+//! The recurrences only reuse lower degrees, so repeated symbolic
+//! differentiation and its expression swell do not occur. An operand outside
+//! a primitive's certified domain, a divisor or square-root enclosure meeting
+//! zero, or a refused exact scalar operation makes that recurrence
+//! unavailable instead of failing the model; the caller then uses the
+//! generated partial formulas. Resource limits are still reported.
 use super::*;
 use crate::expression_program::dyadic::unary_image;
 use hyperinterval::IntervalError;
+use hyperreal::Problem;
 
-/// Enclosures of every normalized partial up to one total degree, per output.
-pub(super) struct Bounds {
+/// Every normalized partial up to one total degree, per output.
+pub(super) struct Bounds<V> {
     indices: Indices,
-    outputs: Vec<Arc<Vec<DyadicInterval>>>,
+    outputs: Vec<Arc<Vec<V>>>,
     variables: Vec<SymbolId>,
 }
-impl Bounds {
-    /// Enclosure of the requested normalized partial on the whole domain box.
-    pub(super) fn coefficient(&self, request: &CoefficientRequest) -> &DyadicInterval {
+impl<V> Bounds<V> {
+    /// The requested normalized partial (an enclosure on the whole domain box,
+    /// or the exact value at the center).
+    pub(super) fn coefficient(&self, request: &CoefficientRequest) -> &V {
         let mut exponents = vec![0; self.variables.len()];
         for &(variable, power) in &request.powers {
             let slot = self
@@ -107,7 +116,7 @@ impl Indices {
 }
 
 enum Stop {
-    // Domain or zero-divisor obstruction: fall back to the symbolic bound alone.
+    // Domain, zero-divisor or exact scalar obstruction: use generated formulas.
     Unavailable,
     Error(TaylorError),
 }
@@ -127,14 +136,158 @@ impl From<ExpressionError> for Stop {
         Self::Error(error.into())
     }
 }
+impl From<Problem> for Stop {
+    // The generated formulas replay the same scalar operation and report it.
+    fn from(_: Problem) -> Self {
+        Self::Unavailable
+    }
+}
 
-type Series = Vec<DyadicInterval>;
+type Series<F> = Vec<<F as Field>::Value>;
+type Operation<F> =
+    fn(&mut F, &<F as Field>::Value, &<F as Field>::Value) -> Result<<F as Field>::Value, Stop>;
 
-struct Recurrence<'a> {
-    indices: &'a Indices,
+/// Coefficient arithmetic of one recurrence instance.
+trait Field {
+    type Value: Clone;
+    fn graph(&mut self) -> &mut ExpressionBudget;
+    fn integer(&mut self, value: BigInt) -> Result<Self::Value, Stop>;
+    fn real(&mut self, value: &Real) -> Result<Self::Value, Stop>;
+    fn is_zero(value: &Self::Value) -> bool;
+    fn add(&mut self, left: &Self::Value, right: &Self::Value) -> Result<Self::Value, Stop>;
+    fn sub(&mut self, left: &Self::Value, right: &Self::Value) -> Result<Self::Value, Stop>;
+    fn mul(&mut self, left: &Self::Value, right: &Self::Value) -> Result<Self::Value, Stop>;
+    fn div(&mut self, left: &Self::Value, right: &Self::Value) -> Result<Self::Value, Stop>;
+    fn neg(&mut self, value: &Self::Value) -> Result<Self::Value, Stop>;
+    // Rounding after an accumulated sum; exact arithmetic keeps the value.
+    fn tidy(&mut self, value: Self::Value) -> Result<Self::Value, Stop>;
+    // The primitive's own image, which also enforces its domain guard.
+    fn image(
+        &mut self,
+        operation: UnaryOperation,
+        value: &Self::Value,
+    ) -> Result<Self::Value, Stop>;
+    fn ln10(&mut self) -> Result<Self::Value, Stop>;
+}
+
+struct Interval<'a> {
     precision: i32,
     graph: &'a mut ExpressionBudget,
     arithmetic: &'a mut DyadicBudget,
+}
+impl Field for Interval<'_> {
+    type Value = DyadicInterval;
+    fn graph(&mut self) -> &mut ExpressionBudget {
+        self.graph
+    }
+    fn integer(&mut self, value: BigInt) -> Result<DyadicInterval, Stop> {
+        Ok(DyadicInterval::point(value, 0)?)
+    }
+    fn real(&mut self, value: &Real) -> Result<DyadicInterval, Stop> {
+        Ok(DyadicInterval::from_real(
+            value,
+            self.precision,
+            self.arithmetic,
+        )?)
+    }
+    fn is_zero(value: &DyadicInterval) -> bool {
+        value.signs() == SignSet::Zero
+    }
+    fn add(
+        &mut self,
+        left: &DyadicInterval,
+        right: &DyadicInterval,
+    ) -> Result<DyadicInterval, Stop> {
+        Ok(left.add(right, self.arithmetic)?)
+    }
+    fn sub(
+        &mut self,
+        left: &DyadicInterval,
+        right: &DyadicInterval,
+    ) -> Result<DyadicInterval, Stop> {
+        Ok(left.sub(right, self.arithmetic)?)
+    }
+    fn mul(
+        &mut self,
+        left: &DyadicInterval,
+        right: &DyadicInterval,
+    ) -> Result<DyadicInterval, Stop> {
+        Ok(left.mul(right, self.arithmetic)?)
+    }
+    fn div(
+        &mut self,
+        left: &DyadicInterval,
+        right: &DyadicInterval,
+    ) -> Result<DyadicInterval, Stop> {
+        Ok(left.div(right, self.precision, self.arithmetic)?)
+    }
+    fn neg(&mut self, value: &DyadicInterval) -> Result<DyadicInterval, Stop> {
+        Ok(value.neg(self.arithmetic)?)
+    }
+    fn tidy(&mut self, value: DyadicInterval) -> Result<DyadicInterval, Stop> {
+        Ok(value.regrid(self.precision, self.arithmetic)?)
+    }
+    fn image(
+        &mut self,
+        operation: UnaryOperation,
+        value: &DyadicInterval,
+    ) -> Result<DyadicInterval, Stop> {
+        unary_image(operation, value.clone(), self.precision, self.arithmetic)?
+            .ok_or(Stop::Unavailable)
+    }
+    fn ln10(&mut self) -> Result<DyadicInterval, Stop> {
+        let ten = DyadicInterval::point(10.into(), 0)?;
+        unary_image(
+            UnaryOperation::Ln,
+            ten,
+            self.precision.min(0),
+            self.arithmetic,
+        )?
+        .ok_or(Stop::Unavailable)
+    }
+}
+
+struct Exact<'a> {
+    graph: &'a mut ExpressionBudget,
+}
+impl Field for Exact<'_> {
+    type Value = Real;
+    fn graph(&mut self) -> &mut ExpressionBudget {
+        self.graph
+    }
+    fn integer(&mut self, value: BigInt) -> Result<Real, Stop> {
+        Ok(Real::new(Rational::from_bigint(value)))
+    }
+    fn real(&mut self, value: &Real) -> Result<Real, Stop> {
+        Ok(value.clone())
+    }
+    fn is_zero(value: &Real) -> bool {
+        value.definitely_zero()
+    }
+    fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Stop> {
+        Ok(left.clone() + right.clone())
+    }
+    fn sub(&mut self, left: &Real, right: &Real) -> Result<Real, Stop> {
+        Ok(left.clone() - right.clone())
+    }
+    fn mul(&mut self, left: &Real, right: &Real) -> Result<Real, Stop> {
+        Ok(left.clone() * right.clone())
+    }
+    fn div(&mut self, left: &Real, right: &Real) -> Result<Real, Stop> {
+        Ok((left.clone() / right.clone())?)
+    }
+    fn neg(&mut self, value: &Real) -> Result<Real, Stop> {
+        Ok(-value.clone())
+    }
+    fn tidy(&mut self, value: Real) -> Result<Real, Stop> {
+        Ok(value)
+    }
+    fn image(&mut self, operation: UnaryOperation, value: &Real) -> Result<Real, Stop> {
+        Ok(operation.eval(value.clone())?)
+    }
+    fn ln10(&mut self) -> Result<Real, Stop> {
+        Ok(Real::from(10).ln()?)
+    }
 }
 
 /// Enclose all normalized partials of total degree at most `degree` over the
@@ -146,19 +299,44 @@ pub(super) fn bounds(
     degree: usize,
     graph: &mut ExpressionBudget,
     arithmetic: &mut DyadicBudget,
-) -> Result<Option<Bounds>, TaylorError> {
-    let indices = match Indices::new(variables.len(), degree, graph) {
+) -> Result<Option<Bounds<DyadicInterval>>, TaylorError> {
+    let field = Interval {
+        precision: request.precision,
+        graph,
+        arithmetic,
+    };
+    solve(field, program, variables, &request.domain, degree)
+}
+
+/// Exact normalized partials of total degree at most `degree` at the center,
+/// or `None` when an exact scalar operation is refused.
+pub(super) fn exact(
+    program: &ExpressionProgram,
+    variables: &[SymbolId],
+    center: &[Real],
+    degree: usize,
+    graph: &mut ExpressionBudget,
+) -> Result<Option<Bounds<Real>>, TaylorError> {
+    solve(Exact { graph }, program, variables, center, degree)
+}
+
+fn solve<F: Field>(
+    mut field: F,
+    program: &ExpressionProgram,
+    variables: &[SymbolId],
+    points: &[F::Value],
+    degree: usize,
+) -> Result<Option<Bounds<F::Value>>, TaylorError> {
+    let indices = match Indices::new(variables.len(), degree, field.graph()) {
         Ok(indices) => indices,
         Err(Stop::Unavailable) => return Ok(None),
         Err(Stop::Error(error)) => return Err(error),
     };
     let mut recurrence = Recurrence {
         indices: &indices,
-        precision: request.precision,
-        graph,
-        arithmetic,
+        field,
     };
-    let outputs = match recurrence.run(program, variables, &request.domain) {
+    let outputs = match recurrence.run(program, variables, points) {
         Ok(outputs) => outputs,
         Err(Stop::Unavailable) => return Ok(None),
         Err(Stop::Error(error)) => return Err(error),
@@ -170,50 +348,69 @@ pub(super) fn bounds(
     }))
 }
 
-impl Recurrence<'_> {
+struct Recurrence<'a, F> {
+    indices: &'a Indices,
+    field: F,
+}
+
+impl<F: Field> Recurrence<'_, F> {
+    fn charge(&mut self, work: usize) -> Result<(), Stop> {
+        Ok(self.field.graph().charge(work)?)
+    }
+    fn one(&mut self) -> Result<F::Value, Stop> {
+        self.field.integer(1.into())
+    }
+    fn zero(&mut self) -> Result<F::Value, Stop> {
+        self.field.integer(0.into())
+    }
     fn run(
         &mut self,
         program: &ExpressionProgram,
         variables: &[SymbolId],
-        domain: &[DyadicInterval],
-    ) -> Result<Vec<Arc<Series>>, Stop> {
+        points: &[F::Value],
+    ) -> Result<Vec<Arc<Vec<F::Value>>>, Stop> {
         let source = program.definition();
         let count = source.nodes.len();
-        self.graph.check_entries(&[count, self.indices.len()])?;
-        self.graph.charge(count)?;
+        self.field
+            .graph()
+            .check_entries(&[count, self.indices.len()])?;
+        self.charge(count)?;
         let mut reached = vec![false; count];
         for &root in &source.outputs {
             reached[root] = true;
         }
         for index in (0..count).rev() {
-            self.graph.charge(1)?;
+            self.charge(1)?;
             if reached[index] {
                 for input in source.nodes[index].inputs().into_iter().flatten() {
                     reached[input] = true;
                 }
             }
         }
-        let mut series: Vec<Option<Arc<Series>>> = vec![None; count];
+        let mut series: Vec<Option<Arc<Vec<F::Value>>>> = vec![None; count];
         for index in 0..count {
-            self.graph.charge(1)?;
+            self.charge(1)?;
             if !reached[index] {
                 continue;
             }
             let value = match &source.nodes[index] {
                 ExpressionNode::Constant(value) => {
-                    let value = DyadicInterval::from_real(value, self.precision, self.arithmetic)?;
+                    let value = self.field.real(value)?;
                     self.constant(value)?
                 }
                 ExpressionNode::Variable(reference) => {
                     let slot = program.slots[index].expect("validated binding");
-                    let mut value = self.constant(domain[slot].clone())?;
+                    let mut value = self.constant(points[slot].clone())?;
                     let dimension = variables
                         .iter()
                         .position(|&v| v == reference.id)
                         .expect("reached variable is used");
                     let mut exponent = vec![0; variables.len()];
                     exponent[dimension] = 1;
-                    value[self.indices.lookup[&exponent]] = one()?;
+                    // Degree-zero series (order-zero coefficients) have no unit slot.
+                    if let Some(&slot) = self.indices.lookup.get(&exponent) {
+                        value[slot] = self.one()?;
+                    }
                     value
                 }
                 ExpressionNode::Unary { operation, input } => {
@@ -228,8 +425,8 @@ impl Recurrence<'_> {
                     let left = series[*left].as_ref().expect("dependency order");
                     let right = series[*right].as_ref().expect("dependency order");
                     match operation {
-                        BinaryOperation::Add => self.zip(left, right, DyadicInterval::add)?,
-                        BinaryOperation::Sub => self.zip(left, right, DyadicInterval::sub)?,
+                        BinaryOperation::Add => self.zip(left, right, F::add)?,
+                        BinaryOperation::Sub => self.zip(left, right, F::sub)?,
                         BinaryOperation::Mul => self.mul(left, right)?,
                         BinaryOperation::Div => self.div(left, right)?,
                     }
@@ -243,38 +440,28 @@ impl Recurrence<'_> {
             .map(|&root| series[root].clone().expect("reached output"))
             .collect())
     }
-    fn unary(&mut self, operation: UnaryOperation, u: &Series) -> Result<Series, Stop> {
-        let base = unary_image(operation, u[0].clone(), self.precision, self.arithmetic)?
-            .ok_or(Stop::Unavailable)?;
+    fn unary(&mut self, operation: UnaryOperation, u: &[F::Value]) -> Result<Vec<F::Value>, Stop> {
+        let base = self.field.image(operation, &u[0])?;
         // Every branch keeps the primitive's own image, which also enforces
-        // its domain guard, as the degree-zero enclosure.
+        // its domain guard, as the degree-zero coefficient.
         let w = match operation {
             UnaryOperation::Neg => {
                 let mut w = Vec::new();
                 for value in u {
-                    self.graph.charge(1)?;
-                    w.push(value.neg(self.arithmetic)?);
+                    self.charge(1)?;
+                    w.push(self.field.neg(value)?);
                 }
                 w
             }
-            UnaryOperation::PowI(0) => self.constant(one()?)?,
+            UnaryOperation::PowI(0) => {
+                let one = self.one()?;
+                self.constant(one)?
+            }
             UnaryOperation::PowI(exponent) => self.compose_power(u, exponent)?,
-            UnaryOperation::Sqrt => self.sqrt(u, base.clone())?,
+            UnaryOperation::Sqrt => self.sqrt(u, base)?,
             UnaryOperation::Sin | UnaryOperation::Cos => {
-                let cos = unary_image(
-                    UnaryOperation::Cos,
-                    u[0].clone(),
-                    self.precision,
-                    self.arithmetic,
-                )?
-                .ok_or(Stop::Unavailable)?;
-                let sin = unary_image(
-                    UnaryOperation::Sin,
-                    u[0].clone(),
-                    self.precision,
-                    self.arithmetic,
-                )?
-                .ok_or(Stop::Unavailable)?;
+                let cos = self.field.image(UnaryOperation::Cos, &u[0])?;
+                let sin = self.field.image(UnaryOperation::Sin, &u[0])?;
                 let (sin, cos) = self.sine_cosine(u, sin, cos)?;
                 if operation == UnaryOperation::Sin {
                     sin
@@ -283,87 +470,70 @@ impl Recurrence<'_> {
                 }
             }
             UnaryOperation::Ln | UnaryOperation::Log10 => {
-                let one = self.constant(one()?)?;
+                let one = self.one()?;
+                let one = self.constant(one)?;
                 let mut h = self.div(&one, u)?;
                 if operation == UnaryOperation::Log10 {
-                    let ten = DyadicInterval::point(10.into(), 0)?;
-                    let ln10 = unary_image(
-                        UnaryOperation::Ln,
-                        ten,
-                        self.precision.min(0),
-                        self.arithmetic,
-                    )?
-                    .ok_or(Stop::Unavailable)?;
+                    let ln10 = self.field.ln10()?;
                     let mut scaled = Vec::new();
                     for value in &h {
-                        self.graph.charge(1)?;
-                        scaled.push(value.div(&ln10, self.precision, self.arithmetic)?);
+                        self.charge(1)?;
+                        scaled.push(self.field.div(value, &ln10)?);
                     }
                     h = scaled;
                 }
-                self.integrate(u, &h, base.clone())?
+                self.integrate(u, &h, base)?
             }
             UnaryOperation::Asin | UnaryOperation::Acos | UnaryOperation::Acosh => {
                 // d/du = +-1/sqrt(+-(1 - u^2)).
                 let square = self.mul(u, u)?;
-                let one = self.constant(one()?)?;
+                let one = self.one()?;
+                let one = self.constant(one)?;
                 let radicand = if operation == UnaryOperation::Acosh {
-                    self.zip(&square, &one, DyadicInterval::sub)?
+                    self.zip(&square, &one, F::sub)?
                 } else {
-                    self.zip(&one, &square, DyadicInterval::sub)?
+                    self.zip(&one, &square, F::sub)?
                 };
-                let root = unary_image(
-                    UnaryOperation::Sqrt,
-                    radicand[0].clone(),
-                    self.precision,
-                    self.arithmetic,
-                )?
-                .ok_or(Stop::Unavailable)?;
+                let root = self.field.image(UnaryOperation::Sqrt, &radicand[0])?;
                 let root = self.sqrt(&radicand, root)?;
                 let mut h = self.div(&one, &root)?;
                 if operation == UnaryOperation::Acos {
                     for value in &mut h {
-                        self.graph.charge(1)?;
-                        *value = value.neg(self.arithmetic)?;
+                        self.charge(1)?;
+                        *value = self.field.neg(value)?;
                     }
                 }
-                self.integrate(u, &h, base.clone())?
+                self.integrate(u, &h, base)?
             }
             UnaryOperation::Atanh => {
                 // d/du = 1/(1 - u^2).
                 let square = self.mul(u, u)?;
-                let one = self.constant(one()?)?;
-                let denominator = self.zip(&one, &square, DyadicInterval::sub)?;
+                let one = self.one()?;
+                let one = self.constant(one)?;
+                let denominator = self.zip(&one, &square, F::sub)?;
                 let h = self.div(&one, &denominator)?;
-                self.integrate(u, &h, base.clone())?
+                self.integrate(u, &h, base)?
             }
         };
         Ok(w)
     }
-    fn constant(&mut self, value: DyadicInterval) -> Result<Series, Stop> {
+    fn constant(&mut self, value: F::Value) -> Result<Vec<F::Value>, Stop> {
         let count = self.indices.len();
-        self.graph.charge(count)?;
-        let mut series = vec![zero()?; count];
+        self.charge(count)?;
+        let mut series = vec![self.zero()?; count];
         series[0] = value;
         Ok(series)
     }
-    fn tidy(&mut self, value: &DyadicInterval) -> Result<DyadicInterval, Stop> {
-        Ok(value.regrid(self.precision, self.arithmetic)?)
-    }
     fn zip(
         &mut self,
-        left: &Series,
-        right: &Series,
-        operation: fn(
-            &DyadicInterval,
-            &DyadicInterval,
-            &mut DyadicBudget,
-        ) -> Result<DyadicInterval, IntervalError>,
-    ) -> Result<Series, Stop> {
+        left: &[F::Value],
+        right: &[F::Value],
+        operation: Operation<F>,
+    ) -> Result<Vec<F::Value>, Stop> {
         let mut series = Vec::new();
         for (left, right) in left.iter().zip(right) {
-            self.graph.charge(1)?;
-            series.push(operation(left, right, self.arithmetic)?);
+            self.charge(1)?;
+            series.push(operation(&mut self.field, left, right)?);
         }
         Ok(series)
     }
@@ -371,79 +541,67 @@ impl Recurrence<'_> {
     fn convolve(
         &mut self,
         alpha: usize,
-        left: &[DyadicInterval],
-        right: &[DyadicInterval],
+        left: &[F::Value],
+        right: &[F::Value],
         keep: impl Fn(usize, usize) -> bool,
-    ) -> Result<DyadicInterval, Stop> {
-        let mut sum = zero()?;
+    ) -> Result<F::Value, Stop> {
+        let mut sum = self.zero()?;
         let mut exact = true;
-        for &(beta, gamma) in &self.indices.pairs[alpha] {
-            self.graph.charge(1)?;
+        let indices = self.indices;
+        for &(beta, gamma) in &indices.pairs[alpha] {
+            self.charge(1)?;
             // Polynomial-like series are mostly exact zeros; skip them.
-            if keep(beta, gamma) && !is_zero(&left[beta]) && !is_zero(&right[gamma]) {
-                let product = left[beta].mul(&right[gamma], self.arithmetic)?;
-                sum = sum.add(&product, self.arithmetic)?;
+            if keep(beta, gamma) && !F::is_zero(&left[beta]) && !F::is_zero(&right[gamma]) {
+                let product = self.field.mul(&left[beta], &right[gamma])?;
+                sum = self.field.add(&sum, &product)?;
                 exact = false;
             }
         }
-        if exact { Ok(sum) } else { self.tidy(&sum) }
+        if exact { Ok(sum) } else { self.field.tidy(sum) }
     }
-    fn mul(&mut self, left: &Series, right: &Series) -> Result<Series, Stop> {
+    fn mul(&mut self, left: &[F::Value], right: &[F::Value]) -> Result<Vec<F::Value>, Stop> {
         let mut series = Vec::new();
         for alpha in 0..self.indices.len() {
             series.push(self.convolve(alpha, left, right, |_, _| true)?);
         }
         Ok(series)
     }
-    // u^k = sum_m binom(k, m) u_0^(k-m) (u - u_0)^m, with each u_0^(k-m)
-    // the certified interval power image of the whole degree-zero enclosure.
-    // Dividing by a wide u_0 repeatedly, as a quotient recurrence would,
-    // compounds the dependency between numerator and denominator instead.
-    fn compose_power(&mut self, u: &Series, exponent: i64) -> Result<Series, Stop> {
+    // u^k = sum_m binom(k, m) u_0^(k-m) (u - u_0)^m. Over intervals each
+    // u_0^(k-m) is the certified power image of the whole degree-zero
+    // enclosure. Dividing by a wide u_0 repeatedly, as a quotient recurrence
+    // would, compounds the dependency between numerator and denominator.
+    fn compose_power(&mut self, u: &[F::Value], exponent: i64) -> Result<Vec<F::Value>, Stop> {
         let count = self.indices.len();
-        let mut shifted = u.clone();
-        shifted[0] = zero()?;
-        let base = unary_image(
-            UnaryOperation::PowI(exponent),
-            u[0].clone(),
-            self.precision,
-            self.arithmetic,
-        )?
-        .ok_or(Stop::Unavailable)?;
+        let mut shifted = u.to_vec();
+        shifted[0] = self.zero()?;
+        let base = self.field.image(UnaryOperation::PowI(exponent), &u[0])?;
         let mut sum = self.constant(base)?;
         let degree: usize = self.indices.exponents[count - 1].iter().sum();
         let mut term = shifted.clone();
-        let mut binomial = num::BigInt::from(1);
+        let mut binomial = BigInt::from(1);
         let mut m: i64 = 1;
         while usize::try_from(m).is_ok_and(|m| m <= degree) {
-            self.graph.charge(1)?;
+            self.charge(1)?;
             binomial = binomial * (exponent - m + 1) / m;
-            if binomial == num::BigInt::from(0) {
+            if binomial == BigInt::from(0) {
                 break;
             }
             let base = if exponent == m {
-                one()?
+                self.one()?
             } else {
-                unary_image(
-                    UnaryOperation::PowI(exponent - m),
-                    u[0].clone(),
-                    self.precision,
-                    self.arithmetic,
-                )?
-                .ok_or(Stop::Unavailable)?
+                self.field
+                    .image(UnaryOperation::PowI(exponent - m), &u[0])?
             };
-            let coefficient = base.mul(
-                &DyadicInterval::point(binomial.clone(), 0)?,
-                self.arithmetic,
-            )?;
+            let scale = self.field.integer(binomial.clone())?;
+            let coefficient = self.field.mul(&base, &scale)?;
             for alpha in 1..count {
-                self.graph.charge(1)?;
-                if is_zero(&term[alpha]) {
+                self.charge(1)?;
+                if F::is_zero(&term[alpha]) {
                     continue;
                 }
-                let product = term[alpha].mul(&coefficient, self.arithmetic)?;
-                let total = sum[alpha].add(&product, self.arithmetic)?;
-                sum[alpha] = self.tidy(&total)?;
+                let product = self.field.mul(&term[alpha], &coefficient)?;
+                let total = self.field.add(&sum[alpha], &product)?;
+                sum[alpha] = self.field.tidy(total)?;
             }
             m += 1;
             term = self.mul(&term, &shifted)?;
@@ -451,23 +609,23 @@ impl Recurrence<'_> {
         Ok(sum)
     }
     // w = u / v: v_0 w_alpha = u_alpha - sum_{beta != 0} v_beta w_{alpha-beta}.
-    fn div(&mut self, u: &Series, v: &Series) -> Result<Series, Stop> {
-        let mut w: Series = Vec::new();
+    fn div(&mut self, u: &[F::Value], v: &[F::Value]) -> Result<Vec<F::Value>, Stop> {
+        let mut w = Vec::new();
         for (alpha, value) in u.iter().enumerate() {
             let tail = self.convolve(alpha, v, &w, |beta, _| beta != 0)?;
-            let numerator = value.sub(&tail, self.arithmetic)?;
-            w.push(numerator.div(&v[0], self.precision, self.arithmetic)?);
+            let numerator = self.field.sub(value, &tail)?;
+            w.push(self.field.div(&numerator, &v[0])?);
         }
         Ok(w)
     }
     // w = sqrt(u): 2 w_0 w_alpha = u_alpha - sum_{beta, gamma != 0} w_beta w_gamma.
-    fn sqrt(&mut self, u: &Series, base: DyadicInterval) -> Result<Series, Stop> {
-        let two = base.add(&base, self.arithmetic)?;
-        let mut w: Series = vec![base];
+    fn sqrt(&mut self, u: &[F::Value], base: F::Value) -> Result<Vec<F::Value>, Stop> {
+        let two = self.field.add(&base, &base)?;
+        let mut w = vec![base];
         for (alpha, value) in u.iter().enumerate().skip(1) {
             let inner = self.convolve(alpha, &w, &w, |beta, gamma| beta != 0 && gamma != 0)?;
-            let numerator = value.sub(&inner, self.arithmetic)?;
-            w.push(numerator.div(&two, self.precision, self.arithmetic)?);
+            let numerator = self.field.sub(value, &inner)?;
+            w.push(self.field.div(&numerator, &two)?);
         }
         Ok(w)
     }
@@ -477,26 +635,32 @@ impl Recurrence<'_> {
         &mut self,
         alpha: usize,
         axis: usize,
-        u: &Series,
-        h: &[DyadicInterval],
-    ) -> Result<DyadicInterval, Stop> {
-        let mut sum = zero()?;
-        for &(beta, gamma) in &self.indices.pairs[alpha] {
-            self.graph.charge(1)?;
-            let weight = self.indices.exponents[beta][axis];
-            if weight > 0 && !is_zero(&u[beta]) {
-                let mut product = u[beta].mul(&h[gamma], self.arithmetic)?;
+        u: &[F::Value],
+        h: &[F::Value],
+    ) -> Result<F::Value, Stop> {
+        let mut sum = self.zero()?;
+        let indices = self.indices;
+        for &(beta, gamma) in &indices.pairs[alpha] {
+            self.charge(1)?;
+            let weight = indices.exponents[beta][axis];
+            if weight > 0 && !F::is_zero(&u[beta]) {
+                let mut product = self.field.mul(&u[beta], &h[gamma])?;
                 if weight > 1 {
-                    let weight = DyadicInterval::point(weight.into(), 0)?;
-                    product = product.mul(&weight, self.arithmetic)?;
+                    let weight = self.field.integer(weight.into())?;
+                    product = self.field.mul(&product, &weight)?;
                 }
-                sum = sum.add(&product, self.arithmetic)?;
+                sum = self.field.add(&sum, &product)?;
             }
         }
-        let order = DyadicInterval::point(self.indices.exponents[alpha][axis].into(), 0)?;
-        Ok(sum.div(&order, self.precision, self.arithmetic)?)
+        let order = self.field.integer(indices.exponents[alpha][axis].into())?;
+        self.field.div(&sum, &order)
     }
-    fn integrate(&mut self, u: &Series, h: &Series, base: DyadicInterval) -> Result<Series, Stop> {
+    fn integrate(
+        &mut self,
+        u: &[F::Value],
+        h: &[F::Value],
+        base: F::Value,
+    ) -> Result<Vec<F::Value>, Stop> {
         let mut w = vec![base];
         for alpha in 1..self.indices.len() {
             let axis = self.indices.axis(alpha);
@@ -506,27 +670,20 @@ impl Recurrence<'_> {
     }
     fn sine_cosine(
         &mut self,
-        u: &Series,
-        sin: DyadicInterval,
-        cos: DyadicInterval,
-    ) -> Result<(Series, Series), Stop> {
+        u: &[F::Value],
+        sin: F::Value,
+        cos: F::Value,
+    ) -> Result<(Series<F>, Series<F>), Stop> {
         let mut s = vec![sin];
         let mut c = vec![cos];
         for alpha in 1..self.indices.len() {
             let axis = self.indices.axis(alpha);
             let next = self.derivative_sum(alpha, axis, u, &c)?;
-            let other = self
-                .derivative_sum(alpha, axis, u, &s)?
-                .neg(self.arithmetic)?;
+            let other = self.derivative_sum(alpha, axis, u, &s)?;
+            let other = self.field.neg(&other)?;
             s.push(next);
             c.push(other);
         }
         Ok((s, c))
     }
-}
-fn is_zero(value: &DyadicInterval) -> bool {
-    value.signs() == SignSet::Zero
-}
-fn one() -> Result<DyadicInterval, IntervalError> {
-    DyadicInterval::point(1.into(), 0)
 }

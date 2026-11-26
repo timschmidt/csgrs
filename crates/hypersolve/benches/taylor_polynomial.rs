@@ -131,7 +131,7 @@ fn validate(case: &Case) {
         let term = rebuilt
             .terms()
             .iter()
-            .find(|t| rebuilt.coefficient_program().requests()[t.request_index()].powers == powers)
+            .find(|t| rebuilt.coefficient_requests()[t.request_index()].powers == powers)
             .unwrap();
         assert_eq!(term.coefficient(), expected);
     }

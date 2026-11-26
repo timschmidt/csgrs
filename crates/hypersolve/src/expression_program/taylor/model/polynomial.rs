@@ -458,7 +458,7 @@ impl Context<'_> {
         }
         for term in model.terms() {
             self.graph.charge(1)?;
-            let request = &model.program.requests()[term.request];
+            let request = &model.requests[term.request];
             // No map node has shared these newly constructed rows yet.
             let input =
                 Arc::get_mut(&mut inputs[request.output]).expect("new input row has one owner");

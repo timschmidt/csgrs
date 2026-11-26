@@ -183,7 +183,7 @@ impl TaylorAffineModel {
             let mut groups = BTreeMap::from([(Vec::new(), vec![Real::zero(); inputs])]);
             let mut group_entries = inputs + 1;
             for term in result.source.terms() {
-                let request = &result.source.coefficient_program().requests()[term.request_index()];
+                let request = &result.source.coefficient_requests()[term.request_index()];
                 graph.charge(request.powers.len())?;
                 graph.charge(1)?;
                 if !groups.contains_key(&request.powers) {
