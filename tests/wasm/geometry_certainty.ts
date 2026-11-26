@@ -1,13 +1,17 @@
 // The runner copies this beside the generated csgrs.d.ts before type-checking.
+// Exercises declared query/status/receipt types and consuming ownership methods.
+// The runtime checks are selected fixture observations, not a complete geometry proof.
 import {
   CurveRegionJs, GeometryBoolResultJs, GeometryCertaintyJs,
   GeometryQueryStatusJs, Matrix4Js, MeshJs, Point3Js,
 } from "./csgrs";
 
+/** Enforce exhaustive status handling at compile time and fail on an unexpected runtime value. */
 function assertNever(value: never): never {
   throw new Error(`Unexpected query status: ${value}`);
 }
 
+/** Format each query state while preserving the optional value/receipt/reason types. */
 function describe(query: GeometryBoolResultJs): string {
   const certainty: GeometryCertaintyJs | undefined = query.certainty;
   const reason: string | undefined = query.reason;

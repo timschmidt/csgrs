@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/wasm/curve_js.rs` | Entire file; documented profile records, all modeling/query/constructor methods, outcome fields/conversions, finite arrays and legacy string-error boundaries. | Private docs with `wasm` passed; all eight module/type/helper pages and method summaries inspected. No executable changes. |
+| `src/wasm/mesh_js.rs` | Entire file; documented raw-buffer admission, display normal/coordinate behavior, every modeling/constructor method, categorized errors, count limits and STL artifact ownership. | Private docs with `wasm` passed; all nine module/type/helper pages and method summaries inspected. No executable changes. |
 | `src/wasm/mod.rs` | Entire file; documented modules, exact numeric ingress, lossy/NaN egress, policy selection and unvalidated native matrix wrapping. | Private WASM-feature docs passed; shared helper pages inspected. Test-only threshold remains source-reviewed. |
 | `src/wasm/point_js.rs` | Entire file; documented storage, getters, display, Rust conversions and scope of the host test. | Private docs passed; type, fields and methods inspected. Test unchanged, not rerun. |
 | `src/wasm/matrix_js.rs` | Entire file; documented positional row layout despite irregular argument labels, finite ingress, projection limits and native-copy witnesses. | Private docs passed; helper/type pages and methods inspected. Tests unchanged, not rerun. |
@@ -1912,10 +1914,88 @@ is about 1016 MiB. Full workflow/runtime checks remain waived for this docs-only
 session. These host documentation builds do not establish wasm32 execution,
 generated-package TypeScript validation, browser behavior or a new performance claim.
 
+### WASM mesh/curve modeling and generated-binding consumers, 26 November 2026
+
+Baseline: `3826b2051`. Owners: CSGRS JS modeling, finite display/interchange and
+receipt boundaries, P1/P6/P8/P9/P19/P20/P26/P28/P30/P37. Domain: native filled
+regions and triangle meshes, exact finite ingress, sampled constructors,
+Boolean/transform/meshing chains, finite arrays/profiles, bounded closed-PWN
+sums and immutable STL artifacts. Read both edited Rust files completely.
+Supporting reads of already audited modeling APIs and native contour admission,
+mesh construction history and Minkowski options do not add whole-file kernel
+credit.
+
+Missing witnesses: most exported methods and all private helper/record fields
+lacked Rustdoc. The region closure description named the wrong evaluation
+entry point; it now describes the actual selected-policy `evaluate_under` path.
+The STL binding description now states exactly which category/message survives
+in its cause, rather than implying every native typed payload crosses JS.
+
+Curve docs state native region authority, exact finite coordinate promotion,
+flattened material/hole roles, contour validation before the selected-policy
+region closure, empty results and string-only errors in legacy paths. Display
+profile conversion drops chord-error metadata/history. Triangle arrays expose
+local certainty but not the native mesh's construction summary; finite position
+views can round or become NaN, and index casts are unchecked on wider hosts.
+No post-projection topology/fidelity proof is supplied. Constructors document
+actual polygon families, sample minima, dimension validation and origin/phase.
+Extrusion, sweep, revolution and twisted extrusion link their native domains,
+including signed radii, axis crossings, frame seams, non-embedding possibilities
+and resource limits. Outcome extraction consumes its handle and drops the
+separate local receipt while moving existing native evidence unchanged.
+
+Mesh docs distinguish raw-array admission from closed-solid validation and
+triangle-buffer emptiness from canonical empty geometry. Bounds include unused
+positions. Display normals are finite normalized sums of unit face normals;
+failed face normalization is skipped, and display arrays perform no topology
+admission. Count getters saturate on wider hosts while index export casts do
+not. Transform docs explain singular/infinity rejection and reflected winding;
+inverse reverses orientation without constructing an unbounded complement.
+Minkowski represented-set sums remain distinct from stored-position hulls, with
+count units and the absence of total work/byte bounds or exposed cancellation.
+STL artifact docs distinguish immutable bound receipts from copied raw bytes.
+
+Additional complete consumer reviews (non-Rust files):
+
+| File | Review and change | Validation scope |
+| --- | --- | --- |
+| `tests/wasm/geometry_certainty.cjs` | Entire file; documented handle helpers and witness limits; replaced assertions about internal proof dispatch/resource behavior with the actual observed rotation/query contracts. | Comment-only comparison passed; fixtures/assertions unchanged. Node syntax/runtime execution unavailable in this session's PATH. |
+| `tests/wasm/geometry_certainty.ts` | Entire file; documented exhaustive query formatter and generated declaration/ownership consumer scope. | Comment-only comparison passed; generated-package type checking not rerun. |
+| `tests/wasm/mesh_errors.cjs` | Entire file; documented failure capture, host error assertions and raw open/collinear fixtures. Reviewed every invalid/empty, membership, lifetime and STL continuation witness. | Comment-only comparison passed; Node syntax/runtime execution unavailable in PATH. |
+| `tests/wasm/mesh_errors.ts` | Entire file; documented assertion narrowing and typed error capture; reviewed lifetime and empty STL continuation. | Comment-only comparison passed; generated-package type checking not rerun. |
+
+Validation after final edits:
+
+- Focused `rustfmt --check --edition 2024 --config skip_children=true` on both
+  Rust files and `git diff --check`: passed.
+- Removing only blank/comment lines gives identical source to baseline for all
+  six edited source/consumer files. No assertion, fixture, signature, expression
+  or decision ordering changed. Local scans found 54 documented curve-binding
+  declarations and 69 mesh-binding declarations; private fields were checked
+  separately.
+- With the shared temporary target, incremental compilation disabled and broken
+  Rustdoc links denied, ran `cargo doc --locked -p csgrs --no-default-features
+  --features wasm --document-private-items --no-deps --offline`: passed without
+  warnings. Inspected seventeen rendered pages and all 123 declaration summaries
+  plus field/method contract text. The text checker was adjusted for bracketed
+  external-link rendering; source contracts did not change to satisfy it.
+- Exact rational conversion of the binary64 literals confirms the documented
+  `13.1 + 0.5` fixture sum equals the exact sum of those two finite input values.
+  This arithmetic check does not establish native angle-addition completion.
+- Attempted `node --check` on both edited CJS files: unavailable because `node`
+  was not found; `nodejs` was also absent from PATH. No JS runtime, TypeScript
+  package, wasm32 or browser result is claimed. Runtime/full workflow checks
+  remain waived for this docs-only session.
+
+Log: `/tmp/csgrs-rustdoc-wasm-modeling-doc.log`. The same approximately 1 GiB
+temporary build directory was reused. All root `src/wasm/*.rs` files now have
+recorded whole-file reviews; remaining JS consumers and lower-layer binding
+implementations are still in scope. No new performance claim is made.
+
 ## Next work
 
-Continue with WASM mesh/curve bindings and downstream JS witnesses, then the
-remaining parts and owning crates. Maintain review records with
+Continue with remaining downstream JS witnesses, then the remaining parts and
+owning crates. Maintain review records with
 each batch. Establish automated public/private item coverage across manifests
 and features without confusing that metric with semantic review. Review every
 remaining tracked file before claiming completion. Commit and push documentation

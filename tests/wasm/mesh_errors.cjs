@@ -1,8 +1,11 @@
+// Generated Node.js binding witnesses for typed failures, native-handle lifetime,
+// canonical empty composition/STL replay and selected membership observations.
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const path = require("node:path");
 const { MeshJs, Point3Js, GeometryCertaintyJs, GeometryQueryStatusJs } = require(path.resolve(process.argv[2]));
 
+/** Require a thrown failure with no returned value, freeing an unexpected successful handle. */
 function capture(operation) {
   let value;
   try { value = operation(); }
@@ -10,6 +13,7 @@ function capture(operation) {
   if (value && typeof value.free === "function") value.free();
   assert.fail("failed operation returned a successful value");
 }
+/** Require a host-owned invalid_input GeometryError with text and no native free method. */
 function invalid(error) {
   assert.ok(error instanceof Error);
   assert.equal(error.name, "GeometryError");
@@ -17,6 +21,7 @@ function invalid(error) {
   assert.ok(error.message.length > 0);
   assert.equal(typeof error.free, "undefined");
 }
+/** Construct an admitted raw buffer containing one open or collinear triangle for downstream rejection. */
 function malformed(degenerate = false) {
   return MeshJs.fromArrays(Float64Array.from(degenerate
     ? [0,0,0, 1,0,0, 2,0,0] : [0,0,0, 1,0,0, 0,1,0]), Uint32Array.from([0,1,2]));

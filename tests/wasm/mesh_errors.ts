@@ -1,9 +1,13 @@
+// TypeScript consumer of categorized modeling errors and consuming empty-mesh
+// outcomes. Diagnostics must remain readable after native inputs are freed.
 import { MeshJs, GeometryCertaintyJs } from "./csgrs";
 import type { GeometryValidationError } from "./csgrs";
 
+/** Throw on a failed witness and narrow the checked condition for TypeScript. */
 function check(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
+/** Require an invalid_input host Error, retaining its typed view after native input cleanup. */
 function capture(operation: () => unknown): GeometryValidationError {
   let value: unknown;
   try { value = operation(); }

@@ -1,5 +1,9 @@
 // Run against wasm-bindgen's actual Node.js output, not a mocked native loader.
 // Usage: node tests/wasm/geometry_certainty.cjs target/properties-wasm/csgrs.js
+// Covers named receipts, invalid/empty distinctions, transformations, sampled
+// modeling, count limits and subsequent operations through generated bindings.
+// Membership probes, bounds and triangle counts are fixture witnesses, not a
+// complete set-equality, embedding or analytic-source-fidelity proof.
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const wasm = require(path.resolve(process.argv[2] || "target/properties-wasm/csgrs.js"));
@@ -10,6 +14,7 @@ const {
 
 // Keep ownership explicit, including exception paths in these checks.
 const owned = [];
+/** Register an owned native handle for final cleanup; remove it before consuming it. */
 const keep = (value) => { owned.push(value); return value; };
 try {
   const empty = keep(new CurveRegionJs());
@@ -153,8 +158,8 @@ try {
   assert.equal(square.containsXY(0, 0.5), undefined);
   assert.throws(() => square.containsXYWithContext(NaN, 0, false));
 
-  // Opposite rotations now certify the origin-axis boundary by cancellation.
-  // Preserve that original query and independently known inside/outside points.
+  // Preserve the inverse-rotation boundary witness and independent inside/outside
+  // points; the assertions observe the result, not the internal proof dispatch.
   const rotatedSquare = keep(square.rotate(13));
   const restoredSquare = keep(rotatedSquare.rotate(-13));
   assert.equal(restoredSquare.containsXY(0.5, 0), undefined);
@@ -172,19 +177,17 @@ try {
       assert.equal(result.reason, undefined);
     }
   }
-  // The exact cyclotomic zero proof certifies the nonzero-coordinate boundary
-  // of a whole-degree rotation and its inverse.
+  // Check the nonzero-coordinate boundary of a whole-degree rotation/inverse.
   const exactBoundary = keep(restoredSquare.containsXYWithContext(1, 0.5, false));
   assert.equal(exactBoundary.status, Status.Boundary);
   assert.equal(exactBoundary.certainty, Certainty.Certified);
-  // A 13.1-degree angle is a binary64 value whose cyclotomic field is far
-  // beyond the proof's budget. Its unit-circle relation is still proved, so
-  // a rotation and its inverse certify the boundary.
+  // Keep the binary64 13.1-degree rotation/inverse boundary witness too.
+  // These assertions do not measure field degree, resource use or proof dispatch.
   const turnedSquare = keep(square.rotate(13.1));
   assert.equal(keep(turnedSquare.rotate(-13.1)).containsXY(1, 0.5), undefined);
-  // Undoing 13.1 and then 0.5 degrees with one rotation by their exact sum
-  // needs the angle-addition identity in that field, which stays unproved.
-  // The approximate terminal must not satisfy a subsequent strict request.
+  // For the composite-angle fixture, require strict uncertainty before and after
+  // a qualified terminal result. The binary64 sum here preserves the exact sum
+  // of these two finite angle values; no toleranced geometric equality is asserted.
   const opaqueSquare = keep(keep(turnedSquare.rotate(0.5)).rotate(-(13.1 + 0.5)));
   assert.throws(() => opaqueSquare.containsXY(1, 0.5), (error) =>
     error instanceof Error && error.name === "GeometryError" && error.code === "undecided");
@@ -216,6 +219,7 @@ try {
 
   // Revolution, sweep and twisted extrusion keep the native outcome category.
   // Sweep consumes its path points, so they are not registered in `owned`.
+  /** Allocate point handles for immediate ownership transfer into a sweep call. */
   const sweepPath = (points) => points.map((xyz) => new Point3Js(...xyz));
   const ring = keep(CurveRegionJs.circle(0.08, 12));
   // R01: an unrelated component cannot change a signed authored meridian.
@@ -264,8 +268,8 @@ try {
       assert.throws(operation, (error) => error instanceof Error
         && error.name === "GeometryError" && error.code === code && error.message.length > 0);
     }
-    // A non-planar sampled helix: its frame transport axes have no structural
-    // nonzero certificate, and the strict sweep still completes.
+    // A non-planar sampled helix exercises frame transport and finite count
+    // expectations. These assertions do not prove an embedded analytic tube.
     const helix = [];
     for (let index = 0; index < 8; index++) {
       const t = index * 0.15;
@@ -458,24 +462,22 @@ try {
     assert.equal(result.certainty, Certainty.Certified);
     assert.equal(result.reason, undefined);
   }
-  // Its upper coordinate needs the rotation's trigonometric identity, which the
-  // cyclotomic zero proof certifies for whole degrees.
+  // Retain the upper-coordinate surface witness as a separate strict query.
   const unresolvedSurfacePoint = keep(new Point3Js(1, 0.5, 0.5));
   const exactSurface = keep(restoredCube.containsPointWithContext(unresolvedSurfacePoint, false));
   assert.equal(exactSurface.status, Status.Decided);
   assert.equal(exactSurface.value, false);
   assert.equal(exactSurface.certainty, Certainty.Certified);
-  // A 13.1-degree binary64 angle is beyond the cyclotomic proof's budget, but
-  // its unit-circle relation still certifies a rotation and its inverse.
+  // Check the binary64 13.1-degree inverse pair without asserting which proof
+  // method the native predicate uses or what algebraic resources it consumes.
   const turnedCube = keep(cube.rotate(0, 0, 13.1));
   const inverseCube = keep(turnedCube.rotate(0, 0, -13.1));
   const inverseSurface = keep(inverseCube.containsPointWithContext(unresolvedSurfacePoint, false));
   assert.equal(inverseSurface.status, Status.Decided);
   assert.equal(inverseSurface.value, false);
   assert.equal(inverseSurface.certainty, Certainty.Certified);
-  // Undoing 13.1 and then 0.5 degrees by their exact sum needs the
-  // angle-addition identity in that field. Keep strict uncertainty and
-  // qualified approximate evidence observable.
+  // The composite-angle fixture must retain strict Unknown and expose qualified
+  // approximate noncontainment; warming must not create a strict certificate.
   const opaqueCube = keep(keep(turnedCube.rotate(0, 0, 0.5)).rotate(0, 0, -(13.1 + 0.5)));
   for (const approximate of [false, true, false]) {
     const result = keep(opaqueCube.containsPointWithContext(unresolvedSurfacePoint, approximate));
