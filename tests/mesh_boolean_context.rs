@@ -1,4 +1,9 @@
+//! Boolean context/receipt transport for rational, unresolved-contact and sampled-drill fixtures.
+//! Structural result agreement, local certainty, edge validation and projected-volume checks
+//! are distinct witnesses; binary64 volume tolerances are not exact set-equivalence proofs.
+
 #[path = "support/uncertainty.rs"]
+/// Proved Pythagorean control and independent unresolved sine-addition zero.
 mod uncertainty;
 
 use csgrs::{
@@ -7,6 +12,7 @@ use csgrs::{
 };
 use hypermesh::{BooleanOp, HypermeshError, HypermeshResult};
 
+/// Dispatches all four mesh Booleans through explicit-context extension methods, retaining outcomes.
 fn with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -21,6 +27,7 @@ fn with_context(
     }
 }
 
+/// Dispatches the corresponding ordinary strict methods, which return geometry without a local receipt.
 fn strict(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -34,6 +41,8 @@ fn strict(
     }
 }
 
+/// Converts each exact triangle triple product to binary64, divides by six and sums signed volumes.
+/// Assumes valid indices; no closure validation, certified rounding bound or exact-volume claim is made.
 fn signed_volume(mesh: &TriangleMesh) -> f64 {
     mesh.triangles
         .iter()
@@ -47,6 +56,9 @@ fn signed_volume(mesh: &TriangleMesh) -> f64 {
 }
 
 #[test]
+/// Checks four overlapping-box Booleans against strict wrapper results and independent projected volumes.
+/// Both policies must report certified outcomes, pass geometric edge validation and agree with the
+/// free-function dispatcher. Volume errors are compared to `1e-10` rather than exact equality.
 fn rational_booleans_stay_certified_with_either_context() {
     let left = solid::cube(Real::from(2)).expect("valid primitive fixture");
     let right = left
@@ -81,6 +93,9 @@ fn rational_booleans_stay_certified_with_either_context() {
 }
 
 #[test]
+/// Places adjacent boxes using an unresolved exact-zero contact and exercises every Boolean.
+/// Requires strict failure, a qualified approximate outcome with the expected projected volume,
+/// then strict failures through both wrappers; intersection must have no triangles.
 fn every_boolean_reports_approximation_without_affecting_later_strict_calls() {
     // The two boxes share a face, but the trigonometric identity at that face
     // needs the terminal policy to decide equality.
@@ -126,6 +141,8 @@ fn every_boolean_reports_approximation_without_affecting_later_strict_calls() {
 }
 
 #[test]
+/// Requires the exact bad-index diagnostic from each explicit-context Boolean under both policies.
+/// The malformed carrier is the left operand; operand reversal is not exercised here.
 fn context_booleans_preserve_input_errors() {
     let invalid = TriangleMesh::new(
         vec![hyperlattice::Point3::origin()],
@@ -151,6 +168,9 @@ fn context_booleans_preserve_input_errors() {
 }
 
 #[test]
+/// Drills a box with a 16-sided sampled cylinder and compares projected volume to the polygonal formula.
+/// Checks certified approximate-policy execution, edge pairing and repeated strict result equality;
+/// the `1e-9` volume bound does not assert fidelity to an analytic circular cylinder.
 fn drill_cylinder_completes_certifiably_with_either_context() {
     let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4))
         .expect("valid primitive fixture");

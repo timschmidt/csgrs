@@ -1,3 +1,7 @@
+//! Query wrappers must retain topology qualification even for empty or otherwise exact-looking regions.
+//! A positive quadratic cap collapsed by approximate admission supplies an independent nonempty source;
+//! strict queries must not certify its qualified replacement or a union inheriting that qualification.
+
 #![cfg(feature = "curve")]
 
 use hypercurve::{
@@ -5,10 +9,15 @@ use hypercurve::{
     QuadraticBezier2, Real,
 };
 
+/// Creates an exact integer planar point for the native path fixtures.
 fn point(x: i32, y: i32) -> Point2 {
     Point2::new(x.into(), y.into())
 }
 
+/// Builds a quadratic cap with height control `2^-1024` plus an unresolved sine-addition zero.
+/// Approximate admission must report qualification and return an empty region. Only afterward,
+/// certifies the height positive with precision limit -2048, avoiding an extra preconstruction proof.
+/// The original cap has area `2*height/3`; the returned region retains its inherited qualification.
 fn positive_height_qualified_empty_region() -> (Real, CurveRegion2) {
     let height = (Real::e() + Real::one()).sin()
         - Real::e().sin() * Real::one().cos()
@@ -47,6 +56,7 @@ fn positive_height_qualified_empty_region() -> (Real, CurveRegion2) {
     (height, region)
 }
 
+/// Builds the exact line-bounded square `[4,6]^2` with nonzero fill as a certified control.
 fn exact_square_region() -> CurveRegion2 {
     let points = [point(4, 4), point(6, 4), point(6, 6), point(4, 6)];
     let boundary = CurvePath2::try_new(
@@ -62,6 +72,9 @@ fn exact_square_region() -> CurveRegion2 {
 }
 
 #[test]
+/// Queries `(1,height/4)`, strictly inside the original cap, through three policy passes.
+/// Requires strict undecided errors (including the predicate blocker) and qualified approximate
+/// outside results; the ordinary strict wrapper must also retain the undecided category.
 fn csgrs_empty_membership_preserves_inherited_topology_receipt() {
     let (height, region) = positive_height_qualified_empty_region();
     let y = (height / Real::from(4)).unwrap();
@@ -92,6 +105,8 @@ fn csgrs_empty_membership_preserves_inherited_topology_receipt() {
 }
 
 #[test]
+/// Requires qualified absent bounds under approximate policy and undecided errors under strict policy.
+/// Repeats strict/approximate/strict against the same collapsed region to check receipt reuse.
 fn csgrs_empty_bounds_preserve_inherited_topology_receipt() {
     let (_, region) = positive_height_qualified_empty_region();
     for context in [
@@ -117,6 +132,9 @@ fn csgrs_empty_bounds_preserve_inherited_topology_receipt() {
 }
 
 #[test]
+/// Checks certified empty/square controls, then unions the qualified empty cap with the square.
+/// The union's approximate membership/bounds retain qualification and exact square extrema;
+/// strict queries remain undecided while the independent original square stays queryable.
 fn csgrs_region_query_controls_preserve_exact_and_inherited_certainty() {
     let square = exact_square_region();
     for region in [CurveRegion2::empty(), square.clone()] {

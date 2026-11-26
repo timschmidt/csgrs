@@ -1,5 +1,6 @@
 //! Certified strict containment near all supporting planes, without tolerances.
 #[path = "support/uncertainty.rs"]
+/// Shared proved-zero control and independent unresolved sine-addition identity.
 mod uncertainty;
 
 use csgrs::solid::SolidExt;
@@ -7,13 +8,16 @@ use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
 use hypermesh::{HypermeshError, MeshCertainty, Point3, Triangle};
 use std::sync::Arc;
 
+/// Constructs an exact integer point for the small containment fixtures.
 fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(x.into(), y.into(), z.into())
 }
+/// Moves exact XYZ query coordinates into a native point without finite projection.
 fn query(values: [Real; 3]) -> Point3 {
     let [x, y, z] = values;
     Point3::new(x, y, z)
 }
+/// Builds an outward-oriented coordinate tetrahedron with interior `x,y,z > 0`, `x+y+z < 1`.
 fn tetrahedron() -> TriangleMesh {
     TriangleMesh::new(
         vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(0, 0, 1)],
@@ -25,6 +29,8 @@ fn tetrahedron() -> TriangleMesh {
         ],
     )
 }
+/// Requires native and modeling queries to match an independent expectation with certified receipts.
+/// Repeats strict/approximate/strict policy on the same source to exercise reusable facts.
 fn check(mesh: &TriangleMesh, point: &Point3, expected: bool) {
     for context in [
         GeometryContext::STRICT,
@@ -41,6 +47,8 @@ fn check(mesh: &TriangleMesh, point: &Point3, expected: bool) {
 }
 
 #[test]
+/// Checks inward, boundary and outward points at each face of a side-two cube,
+/// using exact rational `10^-12` offsets before and after a symbolic Pi translation.
 fn all_six_supporting_planes_preserve_exact_near_boundary_membership() {
     let epsilon = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
     let cube = solid::cube(Real::from(2)).unwrap();
@@ -67,6 +75,8 @@ fn all_six_supporting_planes_preserve_exact_near_boundary_membership() {
 }
 
 #[test]
+/// Adds an unused position to enlarge tetrahedron bounds without enlarging its material.
+/// Checks interior, exterior-inside-bounds, source-boundary and enlarged-boundary queries.
 fn bounding_box_interior_does_not_imply_solid_interior() {
     let mut positions = tetrahedron().positions.to_vec();
     positions.push(p(2, 2, 2)); // Unused positions enlarge the bound, not the set.
@@ -92,6 +102,8 @@ fn bounding_box_interior_does_not_imply_solid_interior() {
 }
 
 #[test]
+/// Warms cube containment, degenerates a cloned triangle and requires its exact typed error
+/// at all six supporting planes under three policy passes; the original remains queryable.
 fn warmed_bounds_never_hide_mutated_invalid_triangles() {
     let mesh = solid::cube(Real::from(2)).unwrap();
     check(&mesh, &p(0, 1, 1), false);
@@ -120,6 +132,8 @@ fn warmed_bounds_never_hide_mutated_invalid_triangles() {
 }
 
 #[test]
+/// Repeats strict failure and qualified approximate exclusion for unresolved-zero face coordinates.
+/// Both lower and upper faces must retain `Approximate512Consumed` after policy/cache reuse.
 fn approximate_boundary_equalities_keep_their_receipt() {
     let mesh = solid::cube(Real::from(2)).unwrap();
     let sine = Real::e().sin();

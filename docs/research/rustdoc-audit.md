@@ -34,6 +34,11 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/containment_bounds.rs` | Entire file; documented rational near-plane queries, symbolic translation, unused bounds, mutation and qualification witnesses. | Focused compilation/private docs passed; geometry assertions unchanged, not run. |
+| `tests/containment_inputs.rs` | Entire file; documented typed pre-shortcut validation, empty carriers, mutation, winding reversal, workers and qualified source facts. | Focused compilation/private docs passed; concurrency/geometry tests unchanged, not run. |
+| `tests/containment_winding.rs` | Entire file; documented box descriptor/fields, independent octant oracle, all query/regularization matrices and local helpers. | Focused compilation/private docs passed; fields and 18 rendered declarations across containment files inspected. Test/local functions source-reviewed. |
+| `tests/mesh_boolean_context.rs` | Entire file; documented dispatch helpers, projected-volume tolerances and strict/approximate receipt witnesses. | Focused compilation/private docs passed; all assertions unchanged, not run. |
+| `tests/qualified_region_queries.rs` | Entire file; documented positive-cap collapse, delayed sign proof, inherited qualification and exact controls. | Focused compilation/private docs passed; all assertions and proof-query order unchanged, not run. |
 | `tests/exact_linear_modeling.rs` | Entire file; documented rational hole/area/volume/coordinate witnesses, huge exact shift and adapter failure distinctions. | Focused compilation and private helper docs passed; geometry assertions unchanged, not run. |
 | `tests/batch_common_cells.rs` | Entire file; documented 26-box construction, cavity invariants, shell concatenation/regularization and empty continuation. | Focused compilation and private helper docs passed; geometry assertions unchanged, not run. |
 | `tests/hull_determinism.rs` | Entire file; documented ordered rows/evidence, source matching, cache warmups and temporary-file child protocol. | Focused compilation and private helper docs passed; hull and child-process geometry tests not run. |
@@ -2693,6 +2698,59 @@ Validation after final edits:
 Logs: `/tmp/csgrs-rustdoc-exact-consumers-check.log`,
 `/tmp/csgrs-rustdoc-exact-consumers-obj-check.log`, and
 `/tmp/csgrs-rustdoc-exact-consumers-private.log`.
+
+### Containment, winding and inherited query receipts, 26 November 2026
+
+Baseline: `2791f35ee`. Owners: root containment/Boolean/curve-query acceptance
+consumers, P3/P4/P6/P8/P9/P17–P19/P22/P24/P25/P37. Domain: exact integer/rational
+and symbolically translated polyhedra, malformed topology, nonzero winding,
+cancelled sheets, qualified seams/contacts, sampled cylinder subtraction and
+qualified empty/nonempty curve queries. Read all five files in full, including
+all helper bodies and local functions. Supporting reads of native containment,
+modeling query wrappers, the uncertainty fixture, properties and admission rules
+do not add new whole-file owning-layer credit.
+
+Missing witnesses: undocumented private items, fields and tests, with names that
+could overstate the scope of finite probes or native validators. The independent
+box oracle uses half-grid queries and eight ±1/8 octant samples, with integer
+support planes; documented its small-i32 domain assumptions. Source-face/edge/
+vertex membership is distinct from boundary membership of the regularized set.
+The side-two box helper checks support planes and signed volume but does not
+assert each face normal. One cancelled-sheet continuation checks the receipt
+without independently asserting its final geometry empty. Four spawned workers
+do not force a particular simultaneous interleaving.
+
+Documented validation before bounds shortcuts, strict/approximate/strict fact
+reuse, and mutated-source rejection. Boolean projected volumes use explicit
+binary64 tolerances, independently of local certainty and native edge checks.
+The qualified cap has positive source area despite approximate collapse; its
+stronger height-sign query remains after construction. Qualified query failures
+and exact-square controls retain their existing order and assertions. No fixture,
+policy, predicate, implementation or test assertion changed.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  yields identical executable source to baseline for all five files. All 65
+  declarations, including two local functions, have Rustdoc; all three descriptor
+  fields were separately reviewed.
+- Focused `cargo check --locked -p csgrs --no-default-features --features
+  curve,sdf,svg-io` passed for the three containment test targets, then the two
+  receipt/query targets after their edits. Used `--offline -j 2`; no warnings.
+  Extra features reuse existing metadata, not an expanded behavioral claim.
+- Private Rustdoc passed for all five targets, with broken links denied and the
+  checked own-library metadata plus dependency paths supplied explicitly. Inspected
+  29 top-level pages, all 24 rendered declaration descriptions, five module
+  descriptions and three private fields. `#[test]` and function-local declarations
+  remain source-reviewed rather than credited as standalone rendered API pages.
+- Geometry, worker execution and full workflows were not run under the docs-only
+  waiver. Builds reused the existing temporary target with incremental compilation
+  disabled; no new fixture or model outputs were created.
+
+Logs: `/tmp/csgrs-rustdoc-containment-check.log`,
+`/tmp/csgrs-rustdoc-containment-private.log`,
+`/tmp/csgrs-rustdoc-query-receipts-check.log`, and
+`/tmp/csgrs-rustdoc-query-receipts-private.log`.
 
 ## Next work
 

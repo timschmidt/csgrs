@@ -1,16 +1,24 @@
 //! Strict interior of the regularized nonzero-winding set, with an independent
-//! rectilinear oracle. Query coordinates are half-integers; box faces integers.
+//! rectilinear oracle. Query coordinates are integer multiples of one half; box faces are integers.
+//! Selected query matrices, boundary/volume checks and canonical-empty assertions have distinct scope.
 use csgrs::solid::SolidExt;
 use csgrs::{GeometryCertainty, GeometryContext, Real, TriangleMesh, solid};
 use hypermesh::{BooleanOp, BooleanProgram, MeshCertainty, Point3, Triangle};
 
 #[derive(Clone, Copy)]
+/// One oriented integer box contributing signed winding to the independent oracle.
+/// Fixture callers supply positive extents and small values safe for scaled i32 arithmetic.
 struct BoxInput {
+    /// Lower XYZ support planes, inclusive in the closed box.
     min: [i32; 3],
+    /// Upper XYZ support planes, strictly above the corresponding lower planes in these fixtures.
     max: [i32; 3],
+    /// Winding contribution: +1 for outward faces, -1 for inward faces.
     orientation: i32,
 }
 
+/// Constructs a fixture descriptor, checking only that orientation is +1 or -1.
+/// Extent ordering and integer-arithmetic headroom remain caller assumptions.
 fn box_input(min: [i32; 3], max: [i32; 3], orientation: i32) -> BoxInput {
     assert!(orientation == 1 || orientation == -1);
     BoxInput {
@@ -20,6 +28,8 @@ fn box_input(min: [i32; 3], max: [i32; 3], orientation: i32) -> BoxInput {
     }
 }
 
+/// Concatenates independently indexed eight-vertex/twelve-triangle oriented box shells.
+/// Reverses inward faces but performs no Boolean regularization, coordinate welding or validation.
 fn mesh(boxes: &[BoxInput]) -> TriangleMesh {
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
@@ -63,11 +73,18 @@ fn mesh(boxes: &[BoxInput]) -> TriangleMesh {
     TriangleMesh::new(positions, triangles)
 }
 
+/// Converts doubled integer coordinates to exact half-grid coordinates.
 fn point(twice: [i32; 3]) -> Point3 {
     let [x, y, z] = twice.map(|value| (Real::from(value) / Real::from(2)).unwrap());
     Point3::new(x, y, z)
 }
 
+/// Decides local nonzero-winding interior independently of the geometry kernel for integer boxes.
+/// Checks all eight samples displaced by ±1/8 in each axis from the half-grid query. No other
+/// integer support plane lies between each sample and its local open octant; interior requires
+/// nonzero signed box coverage in every octant, including at internal source faces/edges/vertices.
+/// Scaled coordinates and winding sums use i32 arithmetic without explicit overflow guards,
+/// intended for these small fixtures.
 fn interior(boxes: &[BoxInput], twice: [i32; 3]) -> bool {
     // A radius < 1/2 cannot cross another integer support plane from this
     // half-integer query. Nonzero winding in all eight adjacent open octants
@@ -92,6 +109,9 @@ fn interior(boxes: &[BoxInput], twice: [i32; 3]) -> bool {
     })
 }
 
+/// Checks certified validation and native/modeling answers against the independent box oracle.
+/// The supplied map must correspond to the source's transformation. Strict/approximate/strict
+/// passes reuse the same geometry, whose stored position and triangle values must remain unchanged.
 fn check_queries(
     source: &TriangleMesh,
     boxes: &[BoxInput],
@@ -132,11 +152,13 @@ fn check_queries(
     assert_eq!(source.triangles, original_triangles);
 }
 
+/// Builds unregularized box shells and checks the selected half-grid queries without transformation.
 fn check(boxes: &[BoxInput], points: &[[i32; 3]]) {
     check_queries(&mesh(boxes), boxes, points, |p| p);
 }
 
 #[test]
+/// Checks nested outward shells retain winding-two material instead of introducing a parity cavity.
 fn nested_outward_shells_have_nonzero_interior_winding() {
     let boxes = [
         box_input([0, 0, 0], [3, 3, 3], 1),
@@ -146,6 +168,8 @@ fn nested_outward_shells_have_nonzero_interior_winding() {
 }
 
 #[test]
+/// Checks selected interior, face, edge, vertex and exterior points of cancelling coincident shells.
+/// All expected answers are false; the test does not enumerate every point of space.
 fn opposite_coincident_shells_cancel_everywhere() {
     let boxes = [
         box_input([0, 0, 0], [2, 2, 2], 1),
@@ -158,6 +182,7 @@ fn opposite_coincident_shells_cancel_everywhere() {
 }
 
 #[test]
+/// Checks overlap material and internal source-face queries for two outward boxes.
 fn overlapping_outward_shells_do_not_create_a_parity_hole() {
     let boxes = [
         box_input([0, 0, 0], [2, 2, 2], 1),
@@ -177,6 +202,7 @@ fn overlapping_outward_shells_do_not_create_a_parity_hole() {
 }
 
 #[test]
+/// Checks reversed overlap cancels the shared volume while leaving either singly covered side.
 fn opposite_overlap_cancels_only_the_shared_volume() {
     let boxes = [
         box_input([0, 0, 0], [2, 2, 2], 1),
@@ -189,6 +215,7 @@ fn opposite_overlap_cancels_only_the_shared_volume() {
 }
 
 #[test]
+/// Checks six inner-shell face/edge/vertex locations lie inside the enclosing nonzero-winding set.
 fn nested_source_faces_edges_and_vertices_can_be_strictly_inside() {
     let boxes = [
         box_input([0, 0, 0], [3, 3, 3], 1),
@@ -208,6 +235,7 @@ fn nested_source_faces_edges_and_vertices_can_be_strictly_inside() {
 }
 
 #[test]
+/// Distinguishes interior points on two boxes' shared face from its exterior rim and neighboring material.
 fn touching_shells_remove_their_internal_shared_face() {
     let boxes = [
         box_input([0, 0, 0], [1, 2, 2], 1),
@@ -227,6 +255,7 @@ fn touching_shells_remove_their_internal_shared_face() {
 }
 
 #[test]
+/// Checks a reversed nested shell creates a cavity whose face, edge and vertex are excluded.
 fn reversed_inner_shell_retains_a_cavity_and_its_boundary() {
     let boxes = [
         box_input([0, 0, 0], [3, 3, 3], 1),
@@ -246,6 +275,8 @@ fn reversed_inner_shell_retains_a_cavity_and_its_boundary() {
 }
 
 #[test]
+/// Preserves a legacy tangent-ray hard case: the origin is inside combined bounds but outside both boxes.
+/// Also checks selected box interiors and another exterior point against the independent oracle.
 fn a_tangent_vertex_contact_does_not_create_interior() {
     // The legacy ray (1,3/8,5/16) touches [16,6,5] without crossing the
     // positive box. The negative box makes the origin lie inside combined
@@ -258,6 +289,7 @@ fn a_tangent_vertex_contact_does_not_create_interior() {
 }
 
 #[test]
+/// Checks doubled coincident winding and a separate oppositely oriented component under global reversal.
 fn winding_multiplicity_and_global_reversal_preserve_the_represented_set() {
     for sign in [1, -1] {
         let boxes = [
@@ -272,6 +304,7 @@ fn winding_multiplicity_and_global_reversal_preserve_the_represented_set() {
     }
 }
 
+/// Applies `(x+y+1/3, 2y-z, 3z+2)`, an exact affine map with positive determinant six.
 fn affine(p: Point3) -> Point3 {
     // Determinant 6: an invertible rational affine map.
     Point3::new(
@@ -282,6 +315,8 @@ fn affine(p: Point3) -> Point3 {
 }
 
 #[test]
+/// Maps nested-shell positions and selected queries by the same invertible affine map.
+/// Compares transformed answers to the original rectilinear oracle without transforming its boxes.
 fn nonzero_membership_commutes_with_an_invertible_affine_map() {
     let boxes = [
         box_input([0, 0, 0], [3, 3, 3], 1),
@@ -308,6 +343,8 @@ fn nonzero_membership_commutes_with_an_invertible_affine_map() {
 }
 
 #[test]
+/// Compares four query answers before/after certified native unary union for nested and cancelling shells.
+/// Canonical empty is consumed through the modeling query bridge when regularization cancels the source.
 fn unary_regularization_and_containment_share_nonzero_set_meaning() {
     for boxes in [
         vec![
@@ -342,6 +379,8 @@ fn unary_regularization_and_containment_share_nonzero_set_meaning() {
 }
 
 #[test]
+/// Validates an oppositely doubled planar triangle as closed PWN and excludes four on/off-sheet queries.
+/// Balanced source edges alone do not imply nonempty three-dimensional material.
 fn a_cancelled_flat_source_has_empty_regularized_interior() {
     let source = TriangleMesh::new(
         vec![point([0, 0, 0]), point([2, 0, 0]), point([0, 2, 0])],
@@ -373,6 +412,8 @@ fn a_cancelled_flat_source_has_empty_regularized_interior() {
     }
 }
 
+/// Repeats an opposite-oriented triangle pair at integer Z; each pair has zero net winding.
+/// XY vertices are `(-2,-2)`, `(2,-2)`, `(0,2)`; positive copy counts are supplied by callers.
 fn flat_source(copies: usize, z: i32) -> TriangleMesh {
     let positions = vec![
         point([-4, -4, 2 * z]),
@@ -386,6 +427,8 @@ fn flat_source(copies: usize, z: i32) -> TriangleMesh {
     TriangleMesh::new(positions, triangles)
 }
 
+/// Runs one native Boolean program and requires a certified, bounded, single mesh result.
+/// Materialization and cardinality failures panic; successful empty geometry remains a result.
 fn regularize(
     context: GeometryContext,
     sources: &[&TriangleMesh],
@@ -402,6 +445,9 @@ fn regularize(
 }
 
 #[test]
+/// Requires one to three cancelling sheet pairs to regularize to both-empty-buffer geometry.
+/// Checks false membership and a certified follow-on union with the sheet; that final union's
+/// geometry is not independently asserted empty in this test.
 fn cancelled_flat_sheets_regularize_to_canonical_empty() {
     for copies in [1, 2, 3] {
         let source = flat_source(copies, 0);
@@ -431,6 +477,8 @@ fn cancelled_flat_sheets_regularize_to_canonical_empty() {
     }
 }
 
+/// Checks certified closed PWN, triangle vertices/support planes of `[-1,1]^3` and signed six-volume 48.
+/// Despite the helper name this is a side-two box; no per-face outward-normal assertion is made.
 fn assert_unit_box_boundary(output: &TriangleMesh) {
     assert_eq!(
         output
@@ -442,6 +490,7 @@ fn assert_unit_box_boundary(output: &TriangleMesh) {
     let mut six_volume = Real::zero();
     for triangle in output.triangles.iter() {
         let [a, b, c] = triangle.indices().map(|i| &output.positions[i]);
+        /// Borrows XYZ components for the independent coordinate/support-plane assertions.
         fn coords(p: &Point3) -> [&Real; 3] {
             [&p.x, &p.y, &p.z]
         }
@@ -464,6 +513,9 @@ fn assert_unit_box_boundary(output: &TriangleMesh) {
 }
 
 #[test]
+/// Combines a side-two box with one/two cancelling sheet pairs at interior, boundary and exterior Z.
+/// Covers all four Booleans, both operand orders and both policies. Nonempty results undergo
+/// box-boundary/volume checks and 343 half-grid queries; empty cases require both buffers empty.
 fn cancelled_flat_sheets_compose_with_a_closed_volume() {
     let boxes = [box_input([-1, -1, -1], [1, 1, 1], 1)];
     let cube = mesh(&boxes);
@@ -504,7 +556,10 @@ fn cancelled_flat_sheets_compose_with_a_closed_volume() {
 }
 
 #[test]
+/// Translates a box and five interior/boundary/exterior queries by symbolic Pi in X.
+/// Requires certified native/modeling answers through all three policy passes.
 fn symbolic_translation_retains_certified_boundary_and_interior_queries() {
+    /// Applies the same exact symbolic X translation to source positions and queries.
     fn translate(p: Point3) -> Point3 {
         Point3::new(p.x + Real::pi(), p.y, p.z)
     }
