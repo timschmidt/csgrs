@@ -1511,12 +1511,23 @@ pub fn circle_with_two_flats(
     Ok(decisions.finish(region))
 }
 
-/// Sampled involute gear region with typed validation and construction failures.
+/// Origin-centered sampled involute gear with a tooth bisector on positive X.
 ///
-/// Requires a positive module, at least four teeth, at least two flank segments,
+/// For module `m` and tooth count `z`, the pitch, base, tip and root radii are
+/// `R = m*z/2`, `R*cos(alpha)`, `R + m` and `R - 5*m/4 - clearance`, where
+/// `alpha` is the pressure angle in radians. Clearance and backlash are lengths;
+/// backlash reduces pitch-circle tooth thickness from `pi*m/2`.
+///
+/// Requires positive module, at least four teeth, at least two flank intervals,
 /// pressure angle in `(0, 90)` degrees and nonnegative clearance/backlash.
-/// Derived root radius and tooth widths must remain positive. The result is
-/// the finite sampled polygon, without an analytic-fidelity error bound.
+/// Derived base/root radii and half-tooth angle must be positive, and paired
+/// flanks must retain positive angular separation at their start and tip.
+/// Uses strict validation and native ring admission.
+///
+/// `segments_per_flank` divides each involute flank uniformly in radius and each
+/// tip/root circular span uniformly in angle. Roots below the base circle connect
+/// radially to the flank. All samples become straight polygon edges; no bound on
+/// error relative to the continuous involute outline is supplied.
 pub fn involute_gear(
     module: impl IntoReal,
     teeth: usize,
@@ -1541,7 +1552,13 @@ pub fn involute_gear(
     .map(GeometryOutcome::into_value)
 }
 
-/// [`involute_gear`] with explicit predicate policy and local certainty.
+/// Constructs [`involute_gear`] with explicit predicate policy and local certainty.
+///
+/// Validates tooth/flank counts, module, clearance, backlash and pressure angle
+/// before the private sampler checks capacities and derived geometry. Decisions
+/// selecting the root transition and separating the flanks contribute to the
+/// receipt along with native admission. Scalar domain errors, invalid derived
+/// dimensions, undecided predicates and capacity failures remain errors.
 pub fn involute_gear_with_context(
     module: Real,
     teeth: usize,
@@ -1574,12 +1591,23 @@ pub fn involute_gear_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Sampled cycloidal gear region with typed validation and construction failures.
+/// Origin-centered polygon sampling epicycloidal tooth faces and hypocycloidal roots.
+///
+/// For module `m` and tooth count `z`, pitch radius is `R = m*z/2`, tip radius
+/// is `R + m`, and root radius is `R - 5*m/4 - clearance`. Generating radius
+/// `g` and clearance have the same length units as module. A tooth bisector lies
+/// on positive X; angular tooth thickness at the pitch circle is half the angular pitch.
 ///
 /// Requires positive module/generating radius, at least three teeth, at least
-/// two flank segments and nonnegative clearance. Rejects first-lobe flanks
-/// that meet or cross before the addendum circle or neighboring root gap.
-/// The finite sampled polygon has no analytic-fidelity error bound.
+/// two flank intervals, nonnegative clearance and positive root radius. The
+/// sampler requires `2*g < R` and `m <= 2*g`, selects first-lobe endpoints, and
+/// rejects tip or root endpoints that reach the relevant tooth bisector. A root
+/// below the hypocycloid's minimum radius uses radial connecting segments.
+///
+/// Each epicycloidal and hypocycloidal part has `segments_per_flank` intervals
+/// uniform in rolling parameter. Tip/root circle samples use that many angular
+/// intervals. Strict native admission assembles the straight-edged polygon;
+/// there is no analytic-fidelity error bound.
 pub fn cycloidal_gear(
     module: impl IntoReal,
     teeth: usize,
@@ -1601,7 +1629,12 @@ pub fn cycloidal_gear(
     .map(GeometryOutcome::into_value)
 }
 
-/// [`cycloidal_gear`] with explicit predicate policy and local certainty.
+/// Constructs [`cycloidal_gear`] with explicit predicate policy and local certainty.
+///
+/// Checks tooth/flank counts, generating radius, module and clearance before the
+/// private sampler checks capacity and derived radii. The selected root cutoff,
+/// endpoint separation and radial transition decisions remain in the receipt;
+/// failed scalar constructions and unresolved predicates propagate as errors.
 pub fn cycloidal_gear_with_context(
     module: Real,
     teeth: usize,
@@ -1627,10 +1660,18 @@ pub fn cycloidal_gear_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Linear involute rack region, with at least one tooth and positive module.
+/// Straight-sided rack with its pitch line on `y = 0` and first tooth centered at `x = 0`.
 ///
-/// Pressure angle must be in `(0, 90)` degrees, clearance and backlash
-/// nonnegative, and the resulting tooth widths and root gaps positive.
+/// For module `m`, pitch is `pi*m`, tip height is `m`, root height is
+/// `-(5*m/4 + clearance)`, and a backing strip extends one module below the root.
+/// Teeth advance along positive X. Backlash is a length subtracted from the
+/// pitch-line tooth thickness `pi*m/2`; flank slope is set by the pressure angle.
+/// The end walls lie at the first and last outer root-flank endpoints.
+///
+/// Requires at least one tooth, positive module, pressure angle in `(0, 90)`
+/// degrees, nonnegative clearance/backlash, and positive derived pitch thickness,
+/// tip width and root gap. Uses strict decisions and native polygon admission;
+/// the rack flanks themselves are straight segments, with no curved-flank sampling.
 pub fn involute_rack(
     module: impl IntoReal,
     teeth: usize,
@@ -1653,7 +1694,14 @@ pub fn involute_rack(
     .map(GeometryOutcome::into_value)
 }
 
-/// [`involute_rack`] with explicit predicate policy and local certainty.
+/// Constructs [`involute_rack`] with explicit predicate policy and local certainty.
+///
+/// After primary parameter validation, checks capacity for `6*teeth + 2` vertices.
+/// Let `h = 5*module/4 + clearance`, `w = pi*module/2 - backlash` and
+/// `u = tan(alpha)` for pressure angle `alpha` in radians.
+/// Requires `w > 0`, `w - 2*module*u > 0` and
+/// `pi*module - w - 2*h*u > 0` before constructing any tooth ring. The final
+/// receipt includes these decisions and native admission.
 pub fn involute_rack_with_context(
     module: Real,
     teeth: usize,
@@ -1722,16 +1770,22 @@ pub fn involute_rack_with_context(
     Ok(decisions.finish(ring_with(&points, &decisions)?))
 }
 
-/// Linear cycloidal rack region.
+/// Sampled cycloidal rack with a horizontal backing strip below its tooth roots.
 ///
-/// Each tooth joins an addendum cycloid above the pitch line to a dedendum
-/// cycloid below it on both sides. Each rolling radius is twice its
-/// corresponding standard height, so every sampled flank spans one sixth turn
-/// and meets a horizontal tip or root land.
+/// Pitch is `pi*module`, the first tooth is centered at `x = 0`, and the pitch
+/// line is `y = 0`. Teeth extend along positive X. Addendum height is `module`;
+/// dedendum depth is `5*module/4 + clearance`. The backing extends one module
+/// below the root, from `x = -pitch/2` to `(teeth - 1/2)*pitch`.
 ///
-/// Requires a positive module, at least one tooth, at least four flank
-/// segments and nonnegative clearance. A closed root land is a typed error.
-/// The finite sampled polygon has no analytic-fidelity error bound.
+/// Each side joins an addendum cycloid above the pitch line to a dedendum cycloid
+/// below it. Each rolling radius is twice its corresponding height; uniform
+/// rolling-parameter samples span one sixth turn. Horizontal lands join tips
+/// and neighboring roots, and all intervening samples are connected by chords.
+///
+/// Requires positive module, at least one tooth, at least four intervals per
+/// cycloidal part and nonnegative clearance. Each flank's horizontal run must be
+/// less than a quarter pitch, leaving positive tip and root lands. Uses strict
+/// admission; no analytic-fidelity error bound is supplied.
 pub fn cycloidal_rack(
     module: impl IntoReal,
     teeth: usize,
@@ -1750,7 +1804,14 @@ pub fn cycloidal_rack(
     .map(GeometryOutcome::into_value)
 }
 
-/// [`cycloidal_rack`] with explicit predicate policy and local certainty.
+/// Constructs [`cycloidal_rack`] with explicit predicate policy and local certainty.
+///
+/// Checks capacities for the reusable flank, complete tooth, repeated top and
+/// backed polygon. The normalized flank is
+/// `(2*(theta - sin(theta)), 2*(1 - cos(theta)))` for `0 <= theta <= pi/3`;
+/// addendum and dedendum scale it by their respective heights. Policy comparisons
+/// require both terminal runs to fit within a quarter pitch. Repetition skips
+/// shared root-land endpoints, and native ring admission finishes the receipt.
 pub fn cycloidal_rack_with_context(
     module: Real,
     teeth: usize,
@@ -1859,13 +1920,26 @@ pub fn cycloidal_rack_with_context(
     Ok(decisions.finish(ring_with(&points, &decisions)?))
 }
 
-/// Sampled NACA four-digit airfoil region with typed failures.
+/// Polygon sampling a NACA four-digit airfoil along a positive-X chord from the origin.
 ///
-/// Camber and camber-position digits are in `[0, 10)`, thickness in `(0, 100)`,
-/// chord positive, and `samples >= 10`. Positive camber requires a positive
-/// camber position. This preserves the existing sampled ring, including its
-/// represented binary64 coefficient values and trailing-edge closure; it does
-/// not certify an analytic-fidelity error bound.
+/// Inputs are digit values: `max_camber / 100` is maximum camber as a chord
+/// fraction, `camber_position / 10` locates it, and `thickness / 100` is the
+/// thickness fraction. Inputs need not be integers. Camber and position must be
+/// in `[0, 10)`, thickness in `(0, 100)`, chord positive, and `samples >= 10`.
+/// Positive camber requires positive camber position; zero camber selects the
+/// symmetric mean line. Validation uses the strict policy.
+///
+/// Stations are uniform in normalized chord coordinate, `x = i / samples`,
+/// including both ends. Thickness offsets follow the normal to the piecewise
+/// parabolic mean line. The thickness coefficients are the exact represented
+/// binary64 literals `0.2969`, `0.1260`, `0.3516`, `0.2843`, `0.1015`, not their
+/// exact decimal fractions.
+///
+/// The ring keeps all upper stations and reversed lower interior stations,
+/// for `2*samples` authored vertices. It omits the lower trailing-edge endpoint:
+/// a straight edge joins the upper trailing edge to the last lower interior
+/// station. The leading-edge endpoint is shared. No analytic-fidelity or exact
+/// chordwise-bounds guarantee follows from this sampled construction.
 pub fn airfoil_naca4(
     max_camber: impl IntoReal,
     camber_position: impl IntoReal,
@@ -1888,7 +1962,19 @@ pub fn airfoil_naca4(
     .map(GeometryOutcome::into_value)
 }
 
-/// [`airfoil_naca4`] with explicit predicate policy and local certainty.
+/// Constructs [`airfoil_naca4`] with explicit predicate policy and local certainty.
+///
+/// Parameter validation selects cambered versus symmetric mean lines before
+/// checking storage capacities. For normalized fractions `m`, `p`, `t`, the
+/// mean line is `m*(2*p*x - x^2)/p^2` when `x < p`, otherwise
+/// `m*(1 - 2*p + 2*p*x - x^2)/(1-p)^2`; its derivative gives the normal angle
+/// `atan(dy/dx)`. A selected zero camber uses zero height and slope throughout.
+///
+/// The half-thickness is `5*t*(a0*sqrt(x) - a1*x - a2*x^2 + a3*x^3 - a4*x^4)`
+/// with the binary64 coefficients listed in [`airfoil_naca4`]. Upper/lower points
+/// are `(x -/+ yt*sin(theta), yc +/- yt*cos(theta))`, scaled by chord. Camber
+/// selection and per-station comparisons retain their qualification, including
+/// when the resulting ring reuses a strict cache entry. Scalar failures remain typed.
 pub fn airfoil_naca4_with_context(
     max_camber: Real,
     camber_position: Real,
@@ -1976,6 +2062,20 @@ pub fn airfoil_naca4_with_context(
     Ok(decisions.finish(ring_with(&upper, &decisions)?))
 }
 
+/// Builds one sampled involute tooth, rotates it exactly, and admits the resulting ring.
+///
+/// The caller validates primary counts and dimensions. This helper checks
+/// per-tooth and total point capacity, derived positive radii and half-thickness,
+/// then compares root radius with base radius to select an optional radial foot.
+/// For base radius `b`, the polar involute deflection at radius `r >= b` is
+/// `u - atan(u)` with `u = sqrt((r/b)^2 - 1)`. Adding the pitch deflection to
+/// half the pitch-circle tooth angle fixes both flank rotations.
+///
+/// Flanks use uniform radius samples from `max(root, base)` to tip. Tip and root
+/// lands use uniform angle samples; the next rotated tooth supplies the root
+/// land's final endpoint. Optional radial segments bridge a root below the base
+/// circle. The shared decision scope retains all comparisons and ring admission;
+/// this sampling does not establish a continuous-outline error bound.
 fn sampled_involute_gear(
     module: &Real,
     teeth: usize,
@@ -2077,6 +2177,25 @@ fn sampled_involute_gear(
     ring_with(&points, decisions)
 }
 
+/// Builds and rotates a tooth from first-lobe epicycloid and hypocycloid samples.
+///
+/// The caller validates primary counts and dimensions. This helper checks point
+/// capacities, positive root radius, `2*g < R`, and tip reach `R + module <= R + 2*g`,
+/// where `R` is pitch radius and `g` generating radius. Principal `acos` phases
+/// select the tip radius and `max(root, R - 2*g)` on the first lobes.
+///
+/// For parameter `u`, the epicycloid is
+/// `((R+g)*cos(u)-g*cos((R+g)*u/g), (R+g)*sin(u)-g*sin((R+g)*u/g))`;
+/// the hypocycloid is
+/// `((R-g)*cos(u)+g*cos((R-g)*u/g), (R-g)*sin(u)-g*sin((R-g)*u/g))`.
+/// The latter is sampled at negative parameters for the right root flank. Endpoint
+/// cross-product comparisons against the quarter-pitch ray require positive tip
+/// and neighboring-root gaps before rotation by minus a quarter pitch.
+///
+/// Mirroring assembles the left flank. Uniform angular tip/root lands and optional
+/// radial feet complete each tooth's boundary sequence. Exact rotational repetition
+/// and native ring admission then form the region. All policy-selected comparisons
+/// share the caller's receipt; scalar-domain failures and capacity errors propagate.
 fn sampled_cycloidal_gear(
     module: &Real,
     teeth: usize,

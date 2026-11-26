@@ -34,12 +34,13 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/gear_airfoil_failures.rs` | Entire file; documented numeric fixtures, profile/volume helpers and every mechanical-profile failure, certainty, composition and original-resolution witness. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/curve_constructor_failures.rs` | Entire file; documented adapter errors, degenerate/invalid companions, exact area/volume witnesses, policy transitions and byte-capacity failures. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/sampled_profile_failures.rs` | Entire file; documented compatibility trait, helpers, fixture macro and generated tests, error/area/composition witnesses and optional artifacts/interchange. | Source, formatting and comment-only checks passed; tests and optional serialization branches not executed. |
 | `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
-| `src/curve/native.rs` | **Partial:** file start through `circle_with_two_flats`, inclusive; cache, predicates, orientation helpers, primitives and sampled/compound planar shapes documented. Resume at `involute_gear`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
+| `src/curve/native.rs` | **Partial:** file start through `sampled_cycloidal_gear`, inclusive; initial helpers, planar shapes, mechanical/airfoil constructors and private gear samplers documented. Resume at `bezier_path`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -878,10 +879,69 @@ is about 499 MiB. No additional target tree or runtime build was created. Full
 workflow/runtime checks remain waived for this docs-only session. No executable
 behavior, assertion or performance claim changed.
 
+### Mechanical profiles and private gear samplers, 26 November 2026
+
+Owner: CSGRS mechanical-profile grammar and native planar admission adapters;
+P1/P4/P5/P6/P8/P9/P17/P18/P19/P25/P37. Baseline: `f39e10019`. Read every line
+of `src/curve/native.rs` from `involute_gear` through `sampled_cycloidal_gear`,
+inclusive, and every line of `tests/gear_airfoil_failures.rs`. Supporting reads
+covered the later parameter-sensitivity, cycloidal-rack contact and mechanical
+single-component unit witnesses; the later test module still awaits full review.
+
+Missing witnesses: public mechanical summaries omitted dimension conventions,
+derived restrictions, placement, sample parameterization and airfoil closure.
+Private gear samplers and integration-test helpers/witnesses lacked Rustdoc.
+Documented all ten public entry points, both private samplers and every named
+helper/test declaration in the integration file. The scalar, predicate and
+native-region implementations retain authority; no algorithm was changed.
+
+Gear docs now give pitch/base/tip/root formulas, clearance and backlash units,
+positive-X tooth placement, radial feet and shared rotational construction.
+Involute flanks sample radius; cycloidal flanks sample rolling parameter, with
+principal inverse-cosine selection of first-lobe endpoints and explicit reach
+and separation checks. Both tip and root circular lands are polygonally sampled.
+Private docs give the involute deflection and epicycloid/hypocycloid formulas,
+root cutoff, endpoint tests, mirroring and final native admission.
+
+Rack docs distinguish straight involute flanks from sampled cycloidal parts and
+give pitch, root/tip levels, backing depth, end-wall placement, positive land
+requirements and checked storage. The airfoil contract states normalized digit
+meanings without an integrality restriction, uniform chord stations, piecewise
+camber and normal offsets. Thickness coefficients preserve their binary64 literal
+values. The authored ring keeps all upper stations and only lower interior
+stations: the upper trailing edge connects directly to the last lower interior
+sample, and the lower trailing-edge endpoint is omitted. Documentation does not
+promise analytic fidelity or exact chordwise bounds for this polygon.
+
+Test docs preserve the original resolutions and identify independent rack area
+and airfoil rational-ordinate expectations, selected membership contacts, manifold
+and volume checks, downstream empty consumption, typed capacity/invalid/undecided
+failures and qualified cache/solid composition. Admission counts and scalar totals
+are not presented as universal set equality or performance measurements.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs
+  tests/gear_airfoil_failures.rs`: passed. `git diff --check`: passed.
+- All nonblank, non-comment source lines match baseline in both edited Rust files,
+  including tests, validation order, sample loops and scalar coefficient literals.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps
+  --offline`: passed without warnings.
+- Inspected twelve generated public/private contracts for formulas, placement,
+  capacity, branch selection and closure. Integration tests remain source-reviewed;
+  ordinary library documentation does not render their declarations.
+
+Log: `/tmp/csgrs-rustdoc-mechanical-profiles-doc.log`. Reused temporary build
+storage remains about 499 MiB. No runtime build or additional target tree was
+created. Full workflow/runtime checks remain waived for this docs-only session.
+No executable behavior, assertion, coefficient or performance claim changed.
+
 ## Next work
 
-Continue `src/curve/native.rs` at `involute_gear`, including the mechanical-profile
-helpers and their acceptance tests, then review the remaining root modules and
+Continue `src/curve/native.rs` at `bezier_path`, including higher-order curves,
+Hilbert paths and their consumers, then review the remaining root modules and
 owning crates. Maintain review records with each batch. Establish automated
 public/private item coverage across manifests and features without confusing
 that metric with semantic review. Review every remaining tracked file before

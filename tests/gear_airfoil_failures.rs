@@ -1,3 +1,8 @@
+//! Mechanical profile admission, exact sampled expectations and downstream composition.
+//!
+//! Tests retain full original example resolutions and distinguish invalid,
+//! undecided, exhausted and qualified outcomes from successful geometry.
+
 #![cfg(feature = "curve")]
 
 #[path = "support/uncertainty.rs"]
@@ -10,20 +15,25 @@ use csgrs::{
 };
 use hypercurve::{BooleanOp, CurveRegion2};
 
+/// Promotes an integer fixture value exactly.
 fn r(n: i32) -> Real {
     n.into()
 }
+/// Promotes a finite binary64 fixture literal exactly, preserving its binary value.
 fn f(n: f64) -> Real {
     Real::try_from(n).unwrap()
 }
+/// Forms an exact integer ratio; fixture denominators must be nonzero.
 fn q(n: i32, d: i32) -> Real {
     (r(n) / r(d)).unwrap()
 }
+/// Checks the legacy trigonometric zero before returning an independent strict-undecided zero.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - r(1))
 }
+/// Requires construction failure with the specified public category, never successful empty geometry.
 fn failure<T: std::fmt::Debug>(result: Result<T, ValidationError>, kind: ValidationErrorKind) {
     assert_eq!(
         result
@@ -32,6 +42,10 @@ fn failure<T: std::fmt::Debug>(result: Result<T, ValidationError>, kind: Validat
         kind
     );
 }
+/// Requires certification and one nonempty, hole-free linear profile, then returns the region.
+///
+/// These admission assertions do not alone establish equality with an intended
+/// analytic gear, rack or airfoil.
 fn profile(outcome: GeometryOutcome<CurveRegion2>) -> CurveRegion2 {
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     assert!(!outcome.value.is_empty());
@@ -44,6 +58,10 @@ fn profile(outcome: GeometryOutcome<CurveRegion2>) -> CurveRegion2 {
 }
 
 #[test]
+/// Checks primary and derived invalid inputs across all five planar families.
+///
+/// Also checks both policies and three solid gear constructors, where zero
+/// extrusion height must not conceal an invalid profile.
 fn invalid_inputs_and_derived_geometry_fail_through_every_primary_family() {
     use ValidationErrorKind::InvalidInput;
     for result in [
@@ -106,6 +124,10 @@ fn invalid_inputs_and_derived_geometry_fail_through_every_primary_family() {
 }
 
 #[test]
+/// Checks extreme counts retain capacity failures through planar and solid constructors.
+///
+/// Both policies are exercised, followed by a normal rack construction to
+/// confirm the failure attempts do not prevent subsequent completion.
 fn every_sampling_family_rejects_capacity_overflow_before_allocation() {
     for count in [usize::MAX, usize::MAX / 2] {
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
@@ -149,6 +171,9 @@ fn every_sampling_family_rejects_capacity_overflow_before_allocation() {
 }
 
 #[test]
+/// Repeats strict unresolved-parameter requests across all planar families and solid gear wrappers.
+///
+/// Every result must remain explicitly undecided rather than successful empty geometry.
 fn undecided_parameters_do_not_become_empty_profiles_or_solids() {
     for _ in 0..2 {
         for result in [
@@ -198,9 +223,14 @@ fn undecided_parameters_do_not_become_empty_profiles_or_solids() {
     }
 }
 
+/// Requires certified scalar equality down to precision exponent -1024; undecided is failure.
 fn exact(a: &Real, b: &Real) {
     assert_eq!(a.certified_eq_until(b, -1024).as_bool(), Some(true));
 }
+/// Checks native geometric manifold admission and six times the expected signed volume.
+///
+/// Exact face determinants provide the volume sum; this is not by itself a
+/// complete geometric set-equality witness.
 fn volume_and_topology(mesh: &TriangleMesh, expected_volume: &Real) {
     assert!(
         mesh.is_closed_manifold_geometry(&GeometryContext::STRICT.mesh_context())
@@ -215,6 +245,10 @@ fn volume_and_topology(mesh: &TriangleMesh, expected_volume: &Real) {
 }
 
 #[test]
+/// Checks a two-tooth rack against an independent backing-plus-trapezoids area formula.
+///
+/// Both policies must certify interior, exterior and boundary probes; translation,
+/// empty union, extrusion and self-difference exercise subsequent consumption.
 fn independent_rack_area_membership_and_extrusion_compose() {
     // Two 30-degree teeth: backing width 3*pi/2+5/(2*sqrt(3));
     // two trapezoids of height 9/4 and average width pi/2+1/(4*sqrt(3)).
@@ -258,6 +292,11 @@ fn independent_rack_area_membership_and_extrusion_compose() {
 }
 
 #[test]
+/// Checks gear origin/exterior probes and exact symmetric-airfoil sample contacts.
+///
+/// The airfoil ordinate at one-quarter chord is independently reduced from the
+/// represented binary64 coefficients to a rational; boundary, interior and
+/// exterior probes distinguish that polygonal contract from analytic expectations.
 fn independent_gear_and_airfoil_membership_matches_the_sampled_contract() {
     for region in [
         curve::involute_gear(r(1), 16, r(20), r(0), r(0), 4).unwrap(),
@@ -288,6 +327,10 @@ fn independent_gear_and_airfoil_membership_matches_the_sampled_contract() {
 }
 
 #[test]
+/// Checks approximate camber selection remains qualified after warming the strict symmetric ring.
+///
+/// Later strict calls must remain undecided. Approximate clearance evidence also
+/// survives each solid gear wrapper in a strict/approximate/strict sequence.
 fn approximate_validation_receipts_survive_cache_reuse_and_solid_composition() {
     // Warm the exact symmetric ring before consuming approximate camber-zero evidence.
     curve::airfoil_naca4(r(0), r(0), r(12), r(1), 20).unwrap();
@@ -354,6 +397,10 @@ fn approximate_validation_receipts_survive_cache_reuse_and_solid_composition() {
 }
 
 #[test]
+/// Checks all ten original example/benchmark profiles under both policies at unchanged resolutions.
+///
+/// Each must be certified with one nonempty hole-free linear profile; this test
+/// does not measure runtime or compare against an independent full-set oracle.
 fn original_full_resolution_readme_and_benchmark_profiles_remain_certified() {
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for outcome in [
