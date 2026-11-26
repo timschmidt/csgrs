@@ -541,10 +541,13 @@ pub fn regular_ngon(
         .map(GeometryOutcome::into_value)
 }
 
-/// Filled arrow.
+/// Filled polygonal arrow pointing along positive X, symmetric about the X axis.
 ///
-/// All four dimensions must be positive. Equal shaft and head widths share
-/// their shoulder endpoints; only those proven duplicates are omitted.
+/// The shaft runs from `x = 0` to `shaft_length`; the tip is at
+/// `(shaft_length + head_length, 0)`. Widths are full widths. All four dimensions
+/// must be positive under the strict policy. Equal shaft and head widths share
+/// their shoulder endpoints; only those proven duplicates are omitted. The head
+/// may be narrower than the shaft.
 pub fn arrow(
     shaft_length: impl IntoReal,
     shaft_width: impl IntoReal,
@@ -565,7 +568,12 @@ pub fn arrow(
     .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the polygonal arrow of [`arrow`] with explicit policy and certainty.
+///
+/// Checks shaft length, shaft width, head length and head width in that order,
+/// then compares the widths. A selected equality omits the two head-shoulder
+/// vertices; any approximate equality remains qualified even on a strict ring
+/// cache hit. Nonpositive dimensions and unresolved decisions remain errors.
 pub fn arrow_with_context(
     shaft_length: Real,
     shaft_width: Real,
@@ -603,9 +611,11 @@ pub fn arrow_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Filled trapezoid.
+/// Filled trapezoid with bottom edge from `(0, 0)` to `(bottom_width, 0)`.
 ///
-/// Widths and height must be positive. The horizontal top offset is unrestricted.
+/// The top edge runs from `(top_offset, height)` to
+/// `(top_offset + top_width, height)`. Widths and height must be strictly positive;
+/// the horizontal top offset is unrestricted. Uses strict polygon admission.
 pub fn trapezoid(
     top_width: impl IntoReal,
     bottom_width: impl IntoReal,
@@ -626,7 +636,10 @@ pub fn trapezoid(
     .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the four-vertex trapezoid of [`trapezoid`] with explicit policy and certainty.
+///
+/// Checks top width, bottom width and height as positive before ring admission.
+/// The top offset is a displacement, not a dimension subject to a sign constraint.
 pub fn trapezoid_with_context(
     top_width: Real,
     bottom_width: Real,
@@ -650,9 +663,12 @@ pub fn trapezoid_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Alternating-radius star polygon.
+/// Origin-centered polygon alternating outer and inner radii at equal angular steps.
 ///
-/// Requires at least three points and `outer_radius > inner_radius > 0`.
+/// Requires at least three points and `outer_radius > inner_radius > 0` under
+/// the strict policy. `num_points` counts outer tips; the ring has twice that
+/// many vertices, starts at `(outer_radius, 0)` and proceeds counterclockwise.
+/// Straight edges connect alternating samples; this is not a crossing star path.
 pub fn star(
     num_points: usize,
     outer_radius: impl IntoReal,
@@ -669,7 +685,11 @@ pub fn star(
     .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the alternating-radius polygon of [`star`] with explicit policy and certainty.
+///
+/// Checks the minimum tip count and doubled vertex capacity before requiring a
+/// positive inner radius and a strictly larger outer radius. A failed ordering
+/// returns `InvalidArguments`; unresolved decisions propagate their typed errors.
 pub fn star_with_context(
     num_points: usize,
     outer_radius: Real,
@@ -701,10 +721,14 @@ pub fn star_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Teardrop region.
+/// Polygon joining the origin tip to samples of an upper semicircle.
 ///
 /// Requires positive dimensions, `length > width / 2`, and at least two
-/// semicircle chords. The sampled boundary and its tip retain exact coordinates.
+/// semicircle chords under the strict policy. The semicircle has radius
+/// `width / 2` and center `(0, length - width / 2)`. Its endpoints and
+/// `segments - 1` interior samples are joined by chords, then connected to the
+/// tip by straight sides. The top reaches `length` only when the top angular
+/// sample is included (an even segment count); no analytic fidelity bound is given.
 pub fn teardrop(
     width: impl IntoReal,
     length: impl IntoReal,
@@ -716,7 +740,12 @@ pub fn teardrop(
         .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the sampled teardrop of [`teardrop`] with explicit policy and certainty.
+///
+/// Checks at least two semicircle intervals and capacity for `segments + 2`
+/// vertices before positive width/length and `length > width / 2`. The tip is
+/// at the origin; the sampled semicircle lies above it. Certainty concerns the
+/// polygon and consumed decisions, not its error relative to a curved teardrop.
 pub fn teardrop_with_context(
     width: Real,
     length: Real,
@@ -747,10 +776,13 @@ pub fn teardrop_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Egg region.
+/// Sampled egg polygon with its bounding-box center at the origin.
 ///
-/// Requires positive dimensions and at least three samples. Sample extrema are
-/// normalized to the requested width and length; this does not certify an analytic surface.
+/// Requires positive dimensions and at least three samples under the strict
+/// policy. Samples of `(-sin(t), cos(t) + cos(t)^2 / 5)` over one turn are scaled
+/// and centered so their extrema are exactly `+/- width / 2` and `+/- length / 2`.
+/// The represented boundary has straight chords; no analytic-curve error bound
+/// is established.
 pub fn egg(
     width: impl IntoReal,
     length: impl IntoReal,
@@ -762,7 +794,12 @@ pub fn egg(
         .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the normalized sampled egg of [`egg`] with explicit policy and certainty.
+///
+/// Checks sample count/capacity before positive width and length. Known angular
+/// extremum indices supply the sample bounds; tied extrema receive the same exact
+/// half-dimension coordinate. The first sample is the top at `(0, length / 2)`;
+/// normalization depends on the sampling count rather than continuous curve extrema.
 pub fn egg_with_context(
     width: Real,
     length: Real,
@@ -817,13 +854,16 @@ pub fn egg_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Rounded rectangle represented by exact samples and straight chords.
+/// Rounded rectangle represented by exact angular samples and straight chords.
 ///
-/// The radius is clamped to half the smaller dimension. For a positive radius
-/// and `corner_segments = n > 0`, each quarter-circle has `n` uniform angular
-/// intervals, and every nonzero straight side joins its tangent endpoints.
-/// Only coincident endpoints are omitted. Zero radius or zero corner segments
-/// selects the sharp rectangle. Dimensions and radius must be nonnegative.
+/// The bounding rectangle is `[0, width]` by `[0, height]`. The radius is clamped
+/// to half the smaller dimension. For positive radius and `corner_segments = n > 0`,
+/// each quarter-circle has `n` uniform angular intervals, and every nonzero
+/// straight side joins its tangent endpoints. Only coincident endpoints are
+/// omitted. Zero radius or zero corner segments selects the sharp rectangle.
+/// Dimensions and radius must be nonnegative under the strict policy; a zero
+/// dimension returns empty only after all three are checked. Certification does
+/// not supply a chord-error bound for the rounded outline.
 pub fn rounded_rectangle(
     width: impl IntoReal,
     height: impl IntoReal,
@@ -843,7 +883,14 @@ pub fn rounded_rectangle(
     .map(GeometryOutcome::into_value)
 }
 
-/// Constructs a rounded rectangle with the selected policy and aggregate certainty.
+/// Constructs the sampled rounded rectangle with explicit policy and aggregate certainty.
+///
+/// Uses the placement and sampling of [`rounded_rectangle`]. Capacity for
+/// `4 * (corner_segments + 1)` vertices is checked first, even for a sharp or
+/// empty result. Width, height and radius are then checked as nonnegative before
+/// collapse. Clamp comparisons select the radius and shared tangent endpoints;
+/// any approximate comparison remains qualified. Zero intervals selects the
+/// sharp rectangle after validation and clamping.
 pub fn rounded_rectangle_with_context(
     width: Real,
     height: Real,
@@ -925,10 +972,15 @@ pub fn rounded_rectangle_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Squircle region.
+/// Origin-centered polygon sampled from a fourth-power superellipse.
 ///
-/// Requires positive dimensions and at least three samples. The signed square
-/// roots of sampled sine and cosine define the represented polygon.
+/// Requires positive dimensions and at least three samples under the strict
+/// policy. With `rx = width / 2`, `ry = height / 2`, samples are
+/// `(rx * sign(cos(t)) * sqrt(abs(cos(t))),
+/// ry * sign(sin(t)) * sqrt(abs(sin(t))))` at uniform angles from zero.
+/// They lie on `(x / rx)^4 + (y / ry)^4 = 1`; straight chords define the result.
+/// Width and height describe the analytic axes, so sampled bounds may be smaller
+/// when extrema are absent. No analytic fidelity bound is supplied.
 pub fn squircle(
     width: impl IntoReal,
     height: impl IntoReal,
@@ -940,7 +992,12 @@ pub fn squircle(
         .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the sampled squircle of [`squircle`] with explicit policy and certainty.
+///
+/// Checks sample count/capacity and positive dimensions, then decides each
+/// sine/cosine sign before attaching it to the square root of the absolute value.
+/// Those sign decisions and native ring admission contribute to the outcome;
+/// scalar failures remain errors.
 pub fn squircle_with_context(
     width: Real,
     height: Real,
@@ -973,7 +1030,13 @@ pub fn squircle_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Keyhole region.
+/// Unions an origin-centered sampled circle with a rectangular handle extending along positive Y.
+///
+/// The handle occupies `[-handle_width / 2, handle_width / 2]` by
+/// `[0, handle_height]`. All three dimensions must be positive and at least three
+/// circle segments are required. The handle need not be narrower than the circle.
+/// Native regularized union determines the boundary; the outcome retains predicate
+/// certainty. The circular part is polygonal, with no analytic-circle error bound.
 pub fn keyhole(
     circle_radius: Real,
     handle_width: Real,
@@ -1000,7 +1063,18 @@ pub fn keyhole(
     Ok(decisions.finish(region))
 }
 
-/// Reuleaux polygon.
+/// Intersects sampled disks arranged at the vertices of an odd regular polygon.
+///
+/// Requires odd `sides >= 3`, positive `diameter` and `circle_segments >= 6`.
+/// The centers have circumradius `diameter / (2 * cos(pi / (2 * sides)))`,
+/// starting on positive X. Each operand is a regular `circle_segments`-gon of
+/// radius `diameter`, with the same angular orientation, translated to a center.
+///
+/// `diameter` is the intended Reuleaux width and the operand disk radius, not its
+/// diameter. Native intersections act on sampled polygons; the result is not an
+/// analytic constant-width curve and has no approximation error bound. Sample
+/// capacity and doubled-side arithmetic are checked, but these checks do not
+/// bound total Boolean work. The outcome retains aggregate predicate certainty.
 pub fn reuleaux(
     sides: usize,
     diameter: Real,
@@ -1041,7 +1115,15 @@ pub fn reuleaux(
     Ok(decisions.finish(result.unwrap_or_else(empty)))
 }
 
-/// Annular region.
+/// Subtracts concentric sampled circles to form a polygonal annulus.
+///
+/// Requires positive `inner_diameter` and radial `thickness`, plus at least three
+/// segments. The inner circumradius is `inner_diameter / 2`; the outer is that
+/// radius plus `thickness`. Both polygons start on positive X with identical
+/// angular samples. Corresponding edge support lines are separated by
+/// `thickness * cos(pi / segments)`, rather than by `thickness` itself.
+/// Native difference supplies the hole and
+/// aggregate certainty; no analytic-annulus approximation bound is supplied.
 pub fn ring(
     inner_diameter: Real,
     thickness: Real,
@@ -1061,12 +1143,17 @@ pub fn ring(
     Ok(decisions.finish(region))
 }
 
-/// Circular sector.
+/// Origin-centered circular sector represented by two radial edges and sampled chords.
 ///
-/// Requires positive radius, at least one chord, and a nonzero sweep of at most
-/// 360 degrees in either direction. Native failures remain typed; a successfully
+/// Requires positive radius, at least one chord, and a nonzero signed sweep
+/// `end_angle_deg - start_angle_deg` of at most 360 degrees in magnitude under
+/// the strict policy. Partial sectors include both angular endpoints; negative
+/// sweeps run clockwise. Native failures remain typed, while a successfully
 /// regularized zero-area sample represents the empty set.
-/// A full turn preserves the existing full-circle sampling with at least three vertices.
+///
+/// A full turn uses `max(segments, 3)` regular-polygon vertices starting on positive
+/// X, regardless of starting angle or sweep direction. No analytic-sector fidelity
+/// bound is implied.
 pub fn pie_slice(
     radius: impl IntoReal,
     start_angle_deg: impl IntoReal,
@@ -1086,7 +1173,13 @@ pub fn pie_slice(
     .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the sampled sector of [`pie_slice`] with explicit policy and certainty.
+///
+/// Checks at least one interval and capacity for `segments + 2` vertices before
+/// radius and sweep validation. A policy-selected full turn takes the regular
+/// polygon path; all other admitted sweeps include the origin and `segments + 1`
+/// angular samples. Approximate decisions remain qualified, including selection
+/// of the full-turn path.
 pub fn pie_slice_with_context(
     radius: Real,
     start_angle_deg: Real,
@@ -1126,10 +1219,13 @@ pub fn pie_slice_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Heart region.
+/// Sampled heart polygon normalized into `[0, width]` by `[0, height]`.
 ///
-/// Requires positive dimensions and at least eight samples. Sample extrema are
-/// normalized to the requested dimensions; topology and analytic fidelity are distinct.
+/// Requires positive dimensions and at least eight samples under the strict
+/// policy. Uniform angular samples use `x = 16 * sin(t)^3` and
+/// `y = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t)`, then rescale their
+/// sample extrema to the requested dimensions. These are polygon bounds, not
+/// normalization by continuous extrema; no analytic-curve fidelity bound is given.
 pub fn heart(
     width: impl IntoReal,
     height: impl IntoReal,
@@ -1141,7 +1237,12 @@ pub fn heart(
         .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the normalized sampled heart of [`heart`] with explicit policy and certainty.
+///
+/// Checks sample capacity and index arithmetic before positive dimensions. The
+/// horizontal extrema use angular symmetry; comparisons between adjacent samples
+/// locate the upper vertical extremum. Those comparisons contribute to the
+/// certainty receipt. Samples are joined by straight edges after rescaling.
 pub fn heart_with_context(
     width: Real,
     height: Real,
@@ -1196,7 +1297,14 @@ pub fn heart_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Crescent region.
+/// Subtracts a horizontally shifted sampled circle from an origin-centered larger one.
+///
+/// Requires `outer_radius > inner_radius > 0` and at least six segments. The
+/// inner center is `(offset, 0)`; offset has no sign or overlap restriction.
+/// Thus zero offset yields a polygonal annulus, and a sufficiently distant cutter
+/// leaves the outer polygon. Both circles use the same angular sampling orientation.
+/// Native difference supplies region semantics and aggregate certainty, with no
+/// analytic-crescent fidelity bound.
 pub fn crescent(
     outer_radius: Real,
     inner_radius: Real,
@@ -1223,10 +1331,17 @@ pub fn crescent(
     Ok(decisions.finish(region))
 }
 
-/// Superformula-derived filled region.
+/// Polygon sampled from the polar superformula over one turn.
 ///
 /// Requires positive `a` and `b`, nonzero `n1`, at least three samples, and
-/// defined scalar powers at every sample. Native scalar and topology failures remain typed.
+/// defined scalar powers at every sample. At uniform `theta` from zero, the radius
+/// is `(|cos(m*theta/4)/a|^n2 + |sin(m*theta/4)/b|^n3)^(-1/n1)`.
+/// No separate sign or integrality constraint is imposed on `m`, `n2` or `n3`.
+///
+/// Uses strict native polygon admission. The final sample connects directly to
+/// the first; a periodic or smooth analytic seam is not required or certified.
+/// Native scalar and topology failures remain typed, and no analytic fidelity
+/// bound is implied.
 #[allow(clippy::too_many_arguments)]
 pub fn supershape(
     a: impl IntoReal,
@@ -1247,7 +1362,12 @@ pub fn supershape(
         .map(GeometryOutcome::into_value)
 }
 
-/// Constructs the same sampled profile with explicit predicate policy and certainty.
+/// Constructs the polar polygon of [`supershape`] with explicit policy and certainty.
+///
+/// Checks sample count/capacity and positive axes before computing `-1 / n1`.
+/// A zero `n1` therefore propagates a scalar division error. Scalar powers must
+/// be supported and defined at every sample; their failures are not empty results.
+/// The outcome records policy decisions consumed by validation and ring admission.
 #[allow(clippy::too_many_arguments)]
 pub fn supershape_with_context(
     a: Real,
@@ -1279,7 +1399,13 @@ pub fn supershape_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Circular region with a rectangular keyway.
+/// Cuts a positive-X rectangular notch from an origin-centered sampled circle.
+///
+/// Radius, key width and key depth must be positive; both key dimensions must be
+/// strictly less than `2 * radius`, and at least three circle segments are required.
+/// The cutter occupies `[radius - key_depth, radius]` by
+/// `[-key_width / 2, key_width / 2]`. Native difference acts on the sampled polygon
+/// and retains aggregate certainty; no analytic-circle fidelity bound is supplied.
 pub fn circle_with_keyway(
     radius: Real,
     segments: usize,
@@ -1312,7 +1438,14 @@ pub fn circle_with_keyway(
     Ok(decisions.finish(region))
 }
 
-/// Circular region with one flat chord.
+/// Clips an origin-centered sampled circle to the half-plane `y >= -flat_distance`.
+///
+/// Requires positive radius, at least three segments and
+/// `0 <= flat_distance < radius`. The rectangular clip extends to the circle's
+/// other bounds, so the retained material is above the lower horizontal cut.
+/// For zero distance this retains the nonnegative-Y portion. The source boundary
+/// already consists of chords; native intersection determines whether the cut
+/// adds a new edge. The outcome retains aggregate predicate certainty.
 pub fn circle_with_flat(
     radius: Real,
     segments: usize,
@@ -1340,7 +1473,14 @@ pub fn circle_with_flat(
     Ok(decisions.finish(region))
 }
 
-/// Circular region with two opposing flat chords.
+/// Clips an origin-centered sampled circle to `-flat_distance <= y <= flat_distance`.
+///
+/// Requires positive radius, at least three segments and
+/// `0 <= flat_distance < radius`. Zero distance makes the rectangular clip empty
+/// and yields the regularized empty region after input validation. For positive
+/// distance, native intersection determines the retained strip of the sampled
+/// polygon; its boundary need not meet both cut lines at very coarse resolution.
+/// The outcome retains aggregate predicate certainty.
 pub fn circle_with_two_flats(
     radius: Real,
     segments: usize,

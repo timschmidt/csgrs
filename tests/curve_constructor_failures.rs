@@ -7,6 +7,7 @@ mod uncertainty;
 use csgrs::{GeometryContext, Real, adapter::RawCurveRegion, curve};
 use std::error::Error;
 
+/// Checks the legacy zero identity, then returns an independent strict-undecided zero witness.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -14,6 +15,7 @@ fn unresolved_zero() -> Real {
 }
 
 #[test]
+/// Checks negative square, rectangle and circle dimensions remain adapter failures.
 fn negative_dimensions_fail_through_the_public_adapter() {
     assert!(RawCurveRegion::square(-Real::one()).is_err());
     assert!(RawCurveRegion::rectangle(Real::one(), -Real::one()).is_err());
@@ -21,11 +23,13 @@ fn negative_dimensions_fail_through_the_public_adapter() {
 }
 
 #[test]
+/// Checks the scalar adapter rejects an unresolved square dimension instead of returning empty.
 fn undecided_dimensions_do_not_become_empty_regions() {
     assert!(RawCurveRegion::square(unresolved_zero()).is_err());
 }
 
 #[test]
+/// Checks a zero width does not mask a negative or undecided rectangle height.
 fn degenerate_dimensions_do_not_conceal_invalid_companions() {
     assert!(
         curve::rectangle_with_context(Real::zero(), -Real::one(), GeometryContext::STRICT)
@@ -42,6 +46,7 @@ fn degenerate_dimensions_do_not_conceal_invalid_companions() {
 }
 
 #[test]
+/// Checks two-segment circles fail for both positive and zero radius.
 fn invalid_resolution_fails_even_for_a_zero_radius() {
     for radius in [Real::one(), Real::zero()] {
         assert!(RawCurveRegion::circle(radius, 2).is_err());
@@ -49,6 +54,7 @@ fn invalid_resolution_fails_even_for_a_zero_radius() {
 }
 
 #[test]
+/// Checks empty and two-point rings fail at adapter construction.
 fn malformed_polygon_cannot_enter_a_downstream_pipeline() {
     let points = [[Real::zero(), Real::zero()], [Real::one(), Real::zero()]];
     assert!(RawCurveRegion::polygon(&points).is_err());
@@ -56,6 +62,7 @@ fn malformed_polygon_cannot_enter_a_downstream_pipeline() {
 }
 
 #[test]
+/// Requires an empty-ring failure to retain an underlying native error source.
 fn native_polygon_cause_survives_the_modeling_wrapper() {
     let error = curve::polygon_with_context(&[], GeometryContext::STRICT).unwrap_err();
     assert!(
@@ -65,6 +72,7 @@ fn native_polygon_cause_survives_the_modeling_wrapper() {
 }
 
 #[test]
+/// Checks representative invalid keyhole, ring, Reuleaux, crescent and clipped-circle inputs under both policies.
 fn compound_constructors_reject_invalid_parameters() {
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         assert!(curve::keyhole(Real::one(), -Real::one(), Real::one(), 4, context).is_err());
@@ -83,6 +91,7 @@ fn compound_constructors_reject_invalid_parameters() {
 }
 
 #[test]
+/// Checks overflowing rounded-rectangle sampling capacity is an error.
 fn checked_compound_capacity_failure_is_not_successful_empty_geometry() {
     assert!(
         curve::rounded_rectangle_with_context(
@@ -97,6 +106,7 @@ fn checked_compound_capacity_failure_is_not_successful_empty_geometry() {
 }
 
 #[test]
+/// Requires an unresolved keyhole radius to retain the `PredicateUndecided` variant.
 fn undecided_compound_parameter_retains_a_typed_cause() {
     let error = curve::keyhole(
         unresolved_zero(),
@@ -116,6 +126,9 @@ fn undecided_compound_parameter_retains_a_typed_cause() {
 }
 
 #[test]
+/// Checks invalid, undecided and capacity failures retain their adapter cause, category and source.
+///
+/// Also checks an empty polygon directly reports native insufficient vertices.
 fn failures_remain_structured_through_scalar_adapters() {
     use csgrs::{
         adapter::AdapterError,
@@ -155,6 +168,9 @@ fn failures_remain_structured_through_scalar_adapters() {
 }
 
 #[test]
+/// Checks admitted collapses remain consumable through union, difference and extrusion.
+///
+/// Zero dimensions must not conceal invalid companions or overflowing resolution.
 fn canonical_degeneracies_compose_and_invalid_companions_still_fail() {
     use hypercurve::BooleanOp;
     let unit = curve::square(Real::one()).unwrap();
@@ -185,6 +201,10 @@ fn canonical_degeneracies_compose_and_invalid_companions_still_fail() {
 }
 
 #[test]
+/// Checks independent rational areas through triangulation and height-three extrusion.
+///
+/// Triangle determinant sums must retain area and signed volume, and extrusion
+/// must pass indexed manifold closure. These scalar totals alone are not set equality.
 fn exact_constructor_sets_survive_triangulation_and_extrusion() {
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     for (region, area) in [
@@ -225,6 +245,9 @@ fn exact_constructor_sets_survive_triangulation_and_extrusion() {
 }
 
 #[test]
+/// Checks unresolved-zero collapse remains qualified and cannot certify later strict requests.
+///
+/// An exact unit square remains certified even when approximation is permitted.
 fn approximate_selection_and_consumption_are_distinct_and_do_not_poison_strict_calls() {
     use csgrs::GeometryCertainty;
     for _ in 0..2 {
@@ -247,6 +270,7 @@ fn approximate_selection_and_consumption_are_distinct_and_do_not_poison_strict_c
 }
 
 #[test]
+/// Requires circle and ellipse sample buffers larger than the byte limit to report capacity overflow.
 fn representable_sample_count_with_unrepresentable_bytes_fails_before_allocation() {
     let count = isize::MAX as usize / std::mem::size_of::<[Real; 2]>() + 1;
     for result in [

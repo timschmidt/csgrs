@@ -6,28 +6,36 @@ mod uncertainty;
 use csgrs::{GeometryContext, Real, curve, errors::ValidationError, solid};
 use hypercurve::CurveRegion2;
 
-// This acceptance fixture also compiles on the pre-migration revision. The
-// old infallible carrier is deliberately treated as success, including empty.
+/// Unifies historical infallible and current fallible constructor results for assertions.
+///
+/// An infallible empty carrier remains successful, so it cannot satisfy a
+/// regression assertion requiring an explicit construction failure.
 trait Attempt {
+    /// Preserves the original success or failure without interpreting empty geometry.
     fn attempt(self) -> Result<CurveRegion2, ValidationError>;
 }
 impl Attempt for CurveRegion2 {
+    /// Wraps even empty infallible geometry as success.
     fn attempt(self) -> Result<CurveRegion2, ValidationError> {
         Ok(self)
     }
 }
 impl Attempt for Result<CurveRegion2, ValidationError> {
+    /// Passes through the fallible result unchanged.
     fn attempt(self) -> Result<CurveRegion2, ValidationError> {
         self
     }
 }
+/// Promotes a finite binary64 fixture value exactly; decimal spelling is not rational decimal input.
 fn r(x: f64) -> Real {
     Real::try_from(x).unwrap()
 }
+/// Requires an explicit invalid-input error, treating infallible empty carriers as success.
 fn invalid(result: impl Attempt) {
     let error = result.attempt().expect_err("invalid input became geometry");
     assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::InvalidInput);
 }
+/// Checks the legacy trigonometric zero before returning an independent strict-undecided zero.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -35,42 +43,52 @@ fn unresolved_zero() -> Real {
 }
 
 #[test]
+/// Checks a negative shaft length reports invalid input.
 fn arrow_rejects_nonpositive_dimensions() {
     invalid(curve::arrow(-1, 1, 1, 2));
 }
 #[test]
+/// Checks a negative bottom width reports invalid input.
 fn trapezoid_rejects_nonpositive_dimensions() {
     invalid(curve::trapezoid(1, -1, 1, 0));
 }
 #[test]
+/// Checks a two-tip star reports invalid input.
 fn star_rejects_invalid_resolution() {
     invalid(curve::star(2, 2, 1));
 }
 #[test]
+/// Checks a negative teardrop width reports invalid input.
 fn teardrop_rejects_invalid_dimensions() {
     invalid(curve::teardrop(-1, 2, 4));
 }
 #[test]
+/// Checks a negative egg length reports invalid input.
 fn egg_rejects_invalid_dimensions() {
     invalid(curve::egg(2, -1, 4));
 }
 #[test]
+/// Checks a two-sample squircle reports invalid input.
 fn squircle_rejects_invalid_resolution() {
     invalid(curve::squircle(2, 2, 2));
 }
 #[test]
+/// Checks a 361-degree sweep reports invalid input.
 fn sector_rejects_excessive_sweep() {
     invalid(curve::pie_slice(1, 0, 361, 4));
 }
 #[test]
+/// Checks a seven-sample heart reports invalid input.
 fn heart_rejects_invalid_resolution() {
     invalid(curve::heart(2, 2, 7));
 }
 #[test]
+/// Checks a zero superformula axis parameter reports invalid input.
 fn supershape_rejects_nonpositive_axes() {
     invalid(curve::supershape(0, 1, 4, 2, 2, 2, 8));
 }
 #[test]
+/// Checks zero `n1` retains a scalar-domain error instead of successful empty geometry.
 fn scalar_domain_failure_does_not_become_empty_geometry() {
     let error = curve::supershape(1, 1, 4, 0, 2, 2, 8)
         .attempt()
@@ -78,6 +96,7 @@ fn scalar_domain_failure_does_not_become_empty_geometry() {
     assert!(matches!(error, ValidationError::Scalar(_)));
 }
 #[test]
+/// Checks an unresolved arrow dimension retains its typed predicate failure.
 fn undecided_dimensions_do_not_become_empty_geometry() {
     let error = curve::arrow(unresolved_zero(), 1, 1, 2)
         .attempt()
@@ -85,6 +104,7 @@ fn undecided_dimensions_do_not_become_empty_geometry() {
     assert!(matches!(error, ValidationError::PredicateUndecided { .. }));
 }
 #[test]
+/// Checks doubled star counts and incremented teardrop counts report capacity overflow.
 fn checked_count_overflows_do_not_become_empty_geometry() {
     for result in [
         curve::star(usize::MAX, 2, 1).attempt(),
@@ -94,6 +114,7 @@ fn checked_count_overflows_do_not_become_empty_geometry() {
     }
 }
 #[test]
+/// Checks a one-chord half-turn sector is certified empty and composes with union and extrusion.
 fn zero_area_sampled_sector_is_a_completed_empty_set() {
     // The exact sampled vertices (0,0), (2,0), (-2,0) are collinear.
     // Regularization of that valid zero-area set is canonical empty geometry.
@@ -122,6 +143,7 @@ fn zero_area_sampled_sector_is_a_completed_empty_set() {
     );
 }
 #[test]
+/// Checks invalid planar teardrop dimensions propagate through the solid constructor.
 fn extruded_teardrop_does_not_certify_a_failed_profile() {
     assert!(
         solid::teardrop_cylinder((-1).into(), 2.into(), 3.into(), 4, GeometryContext::STRICT)
@@ -129,6 +151,7 @@ fn extruded_teardrop_does_not_certify_a_failed_profile() {
     );
 }
 #[test]
+/// Checks omitting equal-width shoulder duplicates retains exact arrow area 5/2.
 fn equal_arrow_widths_preserve_the_shaft_and_head() {
     let region = curve::arrow(2, 1, 1, 1).attempt().unwrap();
     assert_eq!(
@@ -137,6 +160,11 @@ fn equal_arrow_widths_preserve_the_shaft_and_head() {
     );
 }
 
+/// Requires one nonempty hole-free linear boundary profile for an original example.
+///
+/// With `svg-io` and `CSGRS_SAMPLED_PROFILE_ARTIFACTS` set, writes exact segment-start
+/// expression rows to a named JSON file. Those rows supplement semantic witnesses;
+/// serialization equality alone does not prove the intended set.
 fn complete_fixture(label: &str, result: impl Attempt) {
     let region = result.attempt().unwrap();
     assert!(!region.is_empty(), "{label} did not complete");
@@ -169,8 +197,10 @@ fn complete_fixture(label: &str, result: impl Attempt) {
         .unwrap();
     }
 }
+/// Generates a named original-example regression using the shared profile assertions.
 macro_rules! fixture {
     ($name:ident, $value:expr) => {
+        /// Checks this named original-example input with [`complete_fixture`].
         #[test]
         fn $name() {
             complete_fixture(stringify!($name), $value);
@@ -199,11 +229,16 @@ fixture!(
     curve::supershape(r(1.0), r(1.0), r(5.0), r(2.0), r(7.0), r(7.0), 160)
 );
 
+/// Returns an exact integer ratio; fixture denominators must be nonzero.
 fn q(n: i32, d: i32) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()
 }
 
 #[test]
+/// Checks nine independent sampled-area expectations and certified receipts under both policies.
+///
+/// Each result also passes through empty union, self-difference and empty extrusion.
+/// Area agreement supplements these checks without proving universal set equality.
 fn independent_sampled_areas_and_context_receipts_agree() {
     use csgrs::GeometryCertainty;
     let sqrt2 = Real::from(2).sqrt().unwrap();
@@ -297,6 +332,7 @@ fn independent_sampled_areas_and_context_receipts_agree() {
 }
 
 #[test]
+/// Checks zero dimensions, equal star radii, teardrop collapse and zero sweep remain invalid inputs.
 fn positive_shape_ranges_and_zero_dimensions_are_explicit_errors() {
     for result in [
         curve::arrow(0, 1, 1, 2),
@@ -316,6 +352,7 @@ fn positive_shape_ranges_and_zero_dimensions_are_explicit_errors() {
 }
 
 #[test]
+/// Checks maximal sample counts fail across seven constructors, then a normal egg still succeeds.
 fn every_input_controlled_sampling_buffer_checks_capacity() {
     for result in [
         curve::star(usize::MAX, 2, 1),
@@ -332,6 +369,9 @@ fn every_input_controlled_sampling_buffer_checks_capacity() {
 }
 
 #[test]
+/// Checks approximate shoulder coalescing stays qualified when it reuses a strict ring cache entry.
+///
+/// Strict requests fail before and after the approximate request; area remains 5/2.
 fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
     let head_width = Real::one() + unresolved_zero();
     assert!(
@@ -373,6 +413,11 @@ fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
 }
 
 #[test]
+/// Checks a perforated arrow and sampled teardrop extrude to certified solids of volume nine.
+///
+/// Geometric manifold admission and exact determinant sums check both outputs.
+/// With `obj-io`, the dyadic arrow fixture also retains positions and volume through
+/// OBJ interchange; this does not establish exact replay for general OBJ geometry.
 fn profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume() {
     let arrow = curve::arrow(2, 1, 1, 1).unwrap();
     let cutter =
@@ -414,6 +459,7 @@ fn profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume() {
 }
 
 #[test]
+/// Checks signed quarter-turn areas and the minimum three-vertex full-turn sampling area.
 fn clockwise_and_full_turn_sectors_retain_their_sampling_contract() {
     for end in [-90, 90] {
         assert_eq!(

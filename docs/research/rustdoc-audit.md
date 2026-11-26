@@ -34,10 +34,12 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/curve_constructor_failures.rs` | Entire file; documented adapter errors, degenerate/invalid companions, exact area/volume witnesses, policy transitions and byte-capacity failures. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
+| `tests/sampled_profile_failures.rs` | Entire file; documented compatibility trait, helpers, fixture macro and generated tests, error/area/composition witnesses and optional artifacts/interchange. | Source, formatting and comment-only checks passed; tests and optional serialization branches not executed. |
 | `tests/slice_projection_contract.rs` | Entire file; documented the compatibility trait, helpers and all section/projection witnesses. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/minkowski_contracts.rs` | Entire file; documented helpers, topology/composition/policy/resource witnesses and limits of volume/probe evidence. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `src/curve/mod.rs` | Entire file; native and optional module exports reviewed; existing module Rustdoc is accurate. No edit needed. | Curve private-doc build passed; optional implementations remain separately in scope. |
-| `src/curve/native.rs` | **Partial:** file start through `regular_ngon`, inclusive; cache, predicates, orientation helpers and initial primitives documented. Resume at `arrow`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
+| `src/curve/native.rs` | **Partial:** file start through `circle_with_two_flats`, inclusive; cache, predicates, orientation helpers, primitives and sampled/compound planar shapes documented. Resume at `involute_gear`. | Curve private-doc build passed; public/private pages inspected. The remainder is not credited as reviewed. |
 | `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
 | `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
@@ -815,10 +817,72 @@ is about 498 MiB, with over 125 GiB available on `/tmp`. No runtime builds or
 additional target trees were created. Full workflow/runtime checks remain waived
 for this docs-only session. No executable behavior or performance claim changed.
 
+### Sampled and compound planar shapes, 26 November 2026
+
+Owner: CSGRS native planar construction grammar and its adapter/downstream
+acceptance witnesses; P1/P4/P5/P6/P8/P9/P17/P18/P19/P25/P30/P37. Baseline:
+`3412d69d1`. Read every line of `src/curve/native.rs` from `arrow` through
+`circle_with_two_flats`, inclusive. Read every line of
+`tests/curve_constructor_failures.rs` and `tests/sampled_profile_failures.rs`,
+including generated fixtures, optional expression artifacts and OBJ branches.
+Supporting reads covered the existing unit invalid-parameter and egg/heart-bound
+witnesses; the later native test module is still awaiting its full audit.
+
+Missing witnesses: planar summaries did not specify placement, sample formulas,
+normalization, clipping sides, capacity/validation order or qualified branch
+selection. Integration-test declarations, helpers and generated test items lacked
+Rustdoc. Documented all 27 constructor entry points in this section and every
+named helper/test declaration in both integration files without changing logic.
+
+The docs distinguish exact polygon definitions from analytic curve fidelity.
+Arrow shoulders can coalesce under an approximate comparison while retaining
+qualification across a strict ring-cache hit. Teardrop length is attained by its
+samples only with an even semicircle interval count; squircle axis extrema may
+also be absent at coarse resolution. Egg bounds are centered, while heart bounds
+start at the origin; both normalize sample extrema. Superformula docs give the
+radial expression, scalar failure paths and direct closing edge without promising
+a smooth periodic seam.
+
+Compound docs specify positive-Y keyhole handles, positive-X keyway cuts,
+Y-directed flat clipping and zero-width-strip regularization. Reuleaux construction
+intersects equally oriented sampled disks with the documented center radius;
+`diameter` supplies each disk radius, and the polygonal result is not certified
+constant-width geometry. Annular thickness is a difference of circumradii, with
+edge-line separation `thickness * cos(pi / segments)`. Full-turn sectors use a
+regular polygon starting on positive X regardless of authored start or sweep sign.
+Capacity checks are distinguished from a total Boolean-work bound.
+
+Test docs state actual error, certainty, area, topology and composition assertions.
+They preserve the original high-resolution example fixtures and distinguish
+expression artifacts from semantic proof. OBJ replay coverage concerns a dyadic
+fixture's positions and volume; it is not generalized to lossless OBJ interchange.
+Macro-generated tests now carry Rustdoc in their expansion.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/curve/native.rs
+  tests/curve_constructor_failures.rs tests/sampled_profile_failures.rs`: passed.
+  `git diff --check`: passed.
+- All nonblank, non-comment source lines match baseline in the three edited Rust
+  files, including macro bodies apart from Rustdoc, assertions and feature gates.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps
+  --offline`: passed without warnings.
+- Checked all 27 affected generated constructor pages for the documented formulas,
+  placement, policy and failure details. Integration tests and generated test
+  declarations remain source-reviewed; the library doc build does not render them.
+
+Log: `/tmp/csgrs-rustdoc-planar-shapes-doc.log`. Reused temporary build storage
+is about 499 MiB. No additional target tree or runtime build was created. Full
+workflow/runtime checks remain waived for this docs-only session. No executable
+behavior, assertion or performance claim changed.
+
 ## Next work
 
-Continue `src/curve/native.rs` at `arrow`, then review the remaining root modules
-and owning crates. Maintain review records with each batch. Establish automated
+Continue `src/curve/native.rs` at `involute_gear`, including the mechanical-profile
+helpers and their acceptance tests, then review the remaining root modules and
+owning crates. Maintain review records with each batch. Establish automated
 public/private item coverage across manifests and features without confusing
 that metric with semantic review. Review every remaining tracked file before
 claiming completion. Commit and push documentation batches after focused checks
