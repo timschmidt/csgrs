@@ -6426,6 +6426,96 @@ Remaining Hyperlimit examples include `perf_atlas.rs` and
 `write_benchmarks_md.rs`; their surrounding benchmark/report modules also need
 whole-file review. The broader repository goal remains active and incomplete.
 
+## Hyperlimit stored benchmark-report writer
+
+Audited all 472 baseline lines of
+`crates/hyperlimit/benches/benchmark_report.rs` and all 15 baseline lines of
+`crates/hyperlimit/examples/write_benchmarks_md.rs` at `eab87de1e`. Ownership is
+development evidence/reporting rather than geometric computation. Relevant
+contracts are the admission protocol's completed-workload and evidence-matrix
+requirements, and P5's distinction between actual resource bounds and unbounded
+input-driven work. Input is stored Criterion JSON, selected filesystem trees,
+the crate manifest/source text, environment/argv, and existing Markdown. The
+missing witness was accurate documentation of private parsing, grouping, and
+replacement behavior, plus rendered coverage. No report-generation execution
+or benchmark measurement was needed for this documentation-only edit.
+
+Documented all 33 writer declarations and 17 fields, plus the example's two
+declarations and module introduction. Three writer declarations are test-only
+(the module and two tests); 30 render in private docs. Executable source is
+identical after removing comment-only/blank lines. Existing lint attributes,
+output strings, tests, manifest entries, and all file-writing behavior remain
+unchanged. The example docs give an explicit workspace-root package selection.
+
+The writer is an inventory of stored results, not a certificate of completed
+equivalent workloads. It selects CRITERION_HOME verbatim before CARGO_TARGET_DIR
+and executable ancestry/fallback logic. Relative paths have different bases in
+those branches. Collection traverses directories without crate/revision/feature
+filters or cycle/depth limits. A full-ID duplicate is replaced in filesystem
+visit order; sorting the final IDs does not make that winner selection stable.
+Missing required files/fields skip rows, required read/JSON errors propagate,
+and optional change-estimate errors are suppressed. Missing confidence bounds
+and median are replaced with the mean. No source confidence level is read even
+though the table heading is always 95% CI. Throughput text is a workload count,
+not a computed per-second rate; invalid count conversion yields zero.
+
+The manifest inventory is deliberately described as the implemented line scan,
+not a complete TOML parser: explicit bench blocks only, name before required
+features, same-line quote extraction, unconditional # stripping, conventional
+source paths, and substring-based Criterion detection. This crate currently has
+two explicit benches with autobenches disabled. Comparison groups use exact
+group/input strings, multiple function IDs, and input/name eligibility rules.
+Their count is participating rows, not groups or pairwise comparisons. Ratios
+use the fastest stored mean without positivity or semantic-equivalence checks;
+linked reports are not validated. None of those limitations was repaired or
+presented as proof that the performance admission contract is satisfied.
+
+Automatic callers use the environment/argv skip gate; the direct example does
+not. Callback errors print without failing the benchmark, whereas the example
+propagates I/O errors. Failure to read existing benchmarks.md substitutes a new
+header. Replacement edits the first marker pair; a missing END drops the old
+tail, while multiple/nested sections are not validated. The write is direct,
+without an atomic replacement or concurrent-writer protocol. Documented these
+actual behaviors without running the writer or modifying any stored report.
+
+Revisited the current manifest and the two callers at predicates.rs lines
+3570–3599 and retained_fuzz.rs lines 1–32/108–126. These excerpts do not establish
+whole-file review of either benchmark workload. Read all 162 lines of
+dispatch_trace.rs as next-batch context; its Rustdoc/consumer audit remains
+pending. The existing replacement test checks changed payload and one opening
+marker, not repeated identical replacement or malformed-section behavior. The
+manifest test checks two entries and only the first entry's name/heuristic.
+
+Validation after final edits:
+
+- Focused Rustfmt, `git diff --check`, scoped declaration/field scans, and exact
+  comment-stripped source identity checks passed for both edited files.
+- `cargo check --locked -p hyperlimit --bench predicates --bench retained_fuzz
+  --example write_benchmarks_md --all-features --offline -j2 -v` passed, as did
+  the corresponding `--no-default-features` command. These are the direct
+  consumers of the shared module; no geometry library changed.
+- Verbose commands showed the harness=false benches use `--cfg test` without
+  `--test`. To check the actual test bodies explicitly, replayed each checked
+  example rustc invocation with `--test`, the same dependency metadata/features,
+  compile-time manifest root, and a separate temporary output directory. Both
+  metadata-only test-harness compilations passed; neither harness executed.
+- `cargo rustdoc --locked -p hyperlimit --example write_benchmarks_md
+  --all-features --offline -j2 -- --document-private-items -D warnings
+  -D rustdoc::broken_intra_doc_links -D rustdoc::private_intra_doc_links` passed,
+  as did the no-default-features version. Verified 51 complete rendered doc
+  groups across 33 pages in each configuration: 48 from the shared module,
+  including all 17 fields, and three from the example. Test-only docs were
+  source-reviewed and test-harness compiled, not rendered in ordinary docs.
+- No runtime tests, benchmark workloads, or report writers ran. Shared target
+  storage remains about 1.6 GiB; metadata harness outputs use separate temporary
+  directories. Incremental compilation remains disabled. Full workflow checks
+  remain waived by the owner for this docs-only session.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-report-{check,minimal-check,doc,minimal-doc}.log`
+and `/tmp/csgrs-rustdoc-hyperlimit-report-harness-{check,minimal-check}.log`.
+This advances the complete-repository audit without closing the remaining
+benchmark, trace, fuzz, example, support-file, or wider kernel work.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

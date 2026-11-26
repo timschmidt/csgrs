@@ -1,3 +1,13 @@
+//! Shared Criterion JSON-to-Markdown report writer for Hyperlimit benchmark binaries.
+//!
+//! Catalogs explicit manifest suites and stored new-result rows, including data
+//! from older or unrelated runs in a shared result tree. Timing ratios do not
+//! establish equivalent completed contracts. Direct writes replace the marked
+//! section in the crate's benchmarks.md; no benchmarks execute in this module.
+//! Automatic callers apply an environment/argv gate, while the writer example
+//! deliberately calls the file writer directly. Traversal and rendering have no
+//! explicit work, depth, or memory budget.
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io;
@@ -5,41 +15,80 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
+/// Title used only when a readable existing benchmarks.md cannot be loaded.
 const CRATE_TITLE: &str = "Hyperlimit";
+/// Presence-based environment switch suppressing automatic benchmark report callbacks.
 const SKIP_ENV: &str = "HYPERLIMIT_SKIP_BENCHMARK_REPORTS";
+/// Command printed in the report, assuming execution in this crate context.
 const TIMING_COMMAND: &str = "cargo bench --features parallel";
+/// Literal opening marker locating the first replaceable generated section.
 const BEGIN: &str = "<!-- BEGIN COMPLETE BENCHMARK REPORT -->";
+/// Literal closing marker searched for after the first opening marker.
 const END: &str = "<!-- END COMPLETE BENCHMARK REPORT -->";
 
+/// Counts and destination from a completed report-file write.
+///
+/// Reports stored data and manifest inventory, not newly executed or certified
+/// workloads. Comparisons counts participating rows, not groups or pairwise ratios.
 #[derive(Debug)]
 pub struct ReportSummary {
+    /// Destination benchmarks.md path written by this invocation.
     pub path: PathBuf,
+    /// Number of collected rows after duplicate full-ID replacement.
     pub rows: usize,
+    /// Total rows in retained comparison groups, not pair count or group count.
     pub comparisons: usize,
+    /// Number of named explicit bench entries found by the lightweight manifest scan.
     pub suites: usize,
 }
 
+/// One stored Criterion result normalized for table rendering.
+///
+/// Timing values use the JSON nanosecond convention. Missing bounds/median may be
+/// filled with the mean; optional change may be absent after a read/parse failure.
+/// Carries no revision, feature, policy, confidence-level, or completion certificate.
 #[derive(Debug)]
 struct Row {
+    /// Required stored benchmark identifier and deduplication key.
     full_id: String,
+    /// Stored group label, or empty when missing/non-string.
     group_id: String,
+    /// Stored implementation label, or empty when missing/non-string.
     function_id: String,
+    /// Stored input label, or empty when missing/non-string.
     value_str: String,
+    /// Formatted workload count/unit text, not a per-second rate.
     throughput: String,
+    /// Required numeric mean estimate interpreted as nanoseconds.
     mean_ns: f64,
+    /// Stored lower mean confidence bound, defaulting to mean when absent/non-numeric.
     mean_low_ns: f64,
+    /// Stored upper mean confidence bound, defaulting to mean when absent/non-numeric.
     mean_high_ns: f64,
+    /// Stored median estimate, defaulting to mean when absent/non-numeric.
     median_ns: f64,
+    /// Optional fractional mean change from sibling change estimates, with errors suppressed.
     change_mean: Option<f64>,
 }
 
+/// Lightweight manifest benchmark entry with a source-text Criterion heuristic.
+///
+/// Does not prove that the target was built, executed, or generated its linked report.
 #[derive(Debug)]
 struct BenchSuite {
+    /// Manifest name used for conventional source paths, commands, and sorting.
     name: String,
+    /// Quoted feature strings found after the name on a same-line assignment.
     required_features: Vec<String>,
+    /// Whether conventional source text contains a recognized Criterion substring.
     criterion: bool,
 }
 
+/// Criterion-compatible callback that conditionally rewrites benchmarks.md and logs the outcome.
+///
+/// Ignores the supplied Criterion instance and reads stored files instead. Uses
+/// [`reports_disabled`] to avoid writes in skipped/test/list/help modes. I/O failures
+/// are printed to stderr without failing the benchmark process or returning an error.
 pub fn finish_benchmark_report(_: &mut criterion::Criterion) {
     if reports_disabled() {
         return;
@@ -56,6 +105,11 @@ pub fn finish_benchmark_report(_: &mut criterion::Criterion) {
     }
 }
 
+/// Decide whether automatic reporting is disabled from environment presence and argv.
+///
+/// Returns true if the skip variable exists (even empty), no exact --bench argument
+/// exists, or any exact --test/--list/--help argument exists. Does not parse option
+/// values, short flags, or invocation context beyond these string tests.
 pub fn reports_disabled() -> bool {
     let args: Vec<_> = std::env::args().collect();
     std::env::var_os(SKIP_ENV).is_some()
@@ -65,6 +119,18 @@ pub fn reports_disabled() -> bool {
             .any(|arg| arg == "--test" || arg == "--list" || arg == "--help")
 }
 
+/// Rewrite the crate's generated benchmark section from stored estimates and manifest entries.
+///
+/// Uses compile-time CARGO_MANIFEST_DIR as the crate root, loads/sorts rows by full
+/// ID, and catalogs explicit bench entries. Does not run benchmarks or honor the
+/// automatic-report skip gate; direct callers always attempt the write.
+///
+/// Any failure to read the existing benchmarks.md substitutes a fresh title/header.
+/// The first marked section is replaced; a missing closing marker drops the old
+/// tail from the opening marker onward. Writes directly with fs::write, without a
+/// temporary file, atomic replacement, or concurrent-writer coordination. Earlier
+/// collection/catalog errors propagate; write failure may leave a partial file.
+/// Success describes the stored data written, not workload coverage or correctness.
 pub fn write_benchmarks_md() -> io::Result<ReportSummary> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let mut rows = collect_rows(&criterion_dir(&root))?;
@@ -87,6 +153,14 @@ pub fn write_benchmarks_md() -> io::Result<ReportSummary> {
     })
 }
 
+/// Choose the stored-result root from environment, executable ancestry, or a crate fallback.
+///
+/// CRITERION_HOME wins verbatim, including relative paths resolved by later I/O
+/// against the process working directory. Otherwise an absolute CARGO_TARGET_DIR
+/// gets /criterion appended; a relative target directory is joined to crate root.
+/// With neither variable, finds the first executable ancestor containing a criterion
+/// directory, or uses root/target, then appends criterion. Does not verify that the
+/// selected tree belongs to this crate or the current run.
 fn criterion_dir(root: &Path) -> PathBuf {
     // CRITERION_HOME is where Criterion itself writes when it is set; the
     // repository bench-report script gives each crate its own.
@@ -111,6 +185,11 @@ fn criterion_dir(root: &Path) -> PathBuf {
     }
 }
 
+/// Collect available result rows into full-ID order, returning empty for a missing root.
+///
+/// Duplicate IDs overwrite earlier visited rows; traversal order, not timestamp,
+/// selects the winner. Directory/read/required-JSON errors propagate. An empty
+/// result does not establish that no benchmarks exist or have been executed.
 fn collect_rows(criterion_dir: &Path) -> io::Result<Vec<Row>> {
     let mut rows = BTreeMap::new();
     if criterion_dir.exists() {
@@ -119,6 +198,13 @@ fn collect_rows(criterion_dir: &Path) -> io::Result<Vec<Row>> {
     Ok(rows.into_values().collect())
 }
 
+/// Recursively visit directories, reading each child named new as a Criterion result.
+///
+/// Other directories recurse; ordinary files are ignored. A new directory is not
+/// recursed into even if its row is absent. Inserts by full ID, overwriting earlier
+/// duplicates in filesystem enumeration order. Directory tests follow symlinks;
+/// there is no cycle/depth guard or crate/run filter. Errors from visited directory
+/// reads and required row files propagate.
 fn collect_rows_from(dir: &Path, rows: &mut BTreeMap<String, Row>) -> io::Result<()> {
     for entry in fs::read_dir(dir)? {
         let path = entry?.path();
@@ -136,6 +222,13 @@ fn collect_rows_from(dir: &Path, rows: &mut BTreeMap<String, Row>) -> io::Result
     Ok(())
 }
 
+/// Read a new-result directory, skipping missing required files/fields and mean estimates.
+///
+/// Required estimates.json and benchmark.json I/O/parse errors propagate. Missing
+/// full_id or numeric mean gives None. Bounds and median default to mean; absent
+/// group/function/input strings become empty. Optional sibling change estimates
+/// silently ignore I/O/parse errors. Does not validate positivity, interval ordering,
+/// confidence level, or whether the row completed the intended contract.
 fn read_row(new_dir: &Path) -> io::Result<Option<Row>> {
     let Some(estimates) = read_json(&new_dir.join("estimates.json"))? else {
         return Ok(None);
@@ -171,6 +264,10 @@ fn read_row(new_dir: &Path) -> io::Result<Option<Row>> {
     }))
 }
 
+/// Return parsed JSON for an existing readable path, None when exists reports false.
+///
+/// Read errors propagate; parse errors become InvalidData with the displayed path.
+/// The existence probe and read are separate, so a disappearing file can still fail.
 fn read_json(path: &Path) -> io::Result<Option<Value>> {
     if !path.exists() {
         return Ok(None);
@@ -184,14 +281,17 @@ fn read_json(path: &Path) -> io::Result<Option<Value>> {
     })
 }
 
+/// Clone an object field only when it is a JSON string; missing or other types yield None.
 fn string_field(value: &Value, field: &str) -> Option<String> {
     value.get(field)?.as_str().map(ToOwned::to_owned)
 }
 
+/// Extract section.point_estimate as f64 without validating its statistical meaning or sign.
 fn point_estimate(value: &Value, section: &str) -> Option<f64> {
     value.get(section)?.get("point_estimate")?.as_f64()
 }
 
+/// Extract a named numeric confidence bound without checking confidence level or interval order.
 fn confidence_bound(value: &Value, section: &str, bound: &str) -> Option<f64> {
     value
         .get(section)?
@@ -200,6 +300,11 @@ fn confidence_bound(value: &Value, section: &str, bound: &str) -> Option<f64> {
         .as_f64()
 }
 
+/// Format the first entry of a throughput object as a count and unit, or a dash if absent.
+///
+/// Maps Elements/Bytes/BytesDecimal to display labels; unknown units are used
+/// verbatim. A count not representable as u64 becomes zero. This is workload size
+/// per sample, not an elapsed-time throughput rate, and unit text is not escaped.
 fn format_throughput(value: Option<&Value>) -> String {
     let Some(object) = value.and_then(Value::as_object) else {
         return "-".to_owned();
@@ -216,6 +321,14 @@ fn format_throughput(value: Option<&Value>) -> String {
     format!("{} {unit}", count.as_u64().unwrap_or(0))
 }
 
+/// Scan explicit `[[bench]]` blocks in Cargo.toml with a line-oriented parser.
+///
+/// Recognizes a quoted name first, then same-line quoted required-features values.
+/// Strips text after # even inside strings; does not support general TOML escaping,
+/// multiline arrays, features before name, automatic target discovery, or custom
+/// source paths. Flushes at table boundaries and sorts by name. Manifest read
+/// errors propagate; missing/unreadable conventional source files only affect the
+/// Criterion heuristic. This inventory is not an execution record.
 fn read_bench_suites(root: &Path) -> io::Result<Vec<BenchSuite>> {
     let manifest = fs::read_to_string(root.join("Cargo.toml"))?;
     let mut suites = Vec::new();
@@ -242,6 +355,11 @@ fn read_bench_suites(root: &Path) -> io::Result<Vec<BenchSuite>> {
     Ok(suites)
 }
 
+/// Append a named manifest suite and consume its pending features, or clear features without a name.
+///
+/// Checks benches/name.rs for criterion:: or criterion_group! substrings. Read
+/// failure means non-Criterion; comments can trigger the heuristic and other source
+/// layouts can be missed. No parser or manifest path override is consulted.
 fn push_suite(
     root: &Path,
     suites: &mut Vec<BenchSuite>,
@@ -263,6 +381,10 @@ fn push_suite(
     });
 }
 
+/// Read key = double-quoted-text from one already-trimmed manifest line.
+///
+/// Requires the entire trimmed right side to begin/end with quotes. Returns the
+/// interior literally, without TOML escape decoding or quote-content validation.
 fn assignment_string(line: &str, key: &str) -> Option<String> {
     let (left, right) = line.split_once('=')?;
     if left.trim() != key {
@@ -275,6 +397,7 @@ fn assignment_string(line: &str, key: &str) -> Option<String> {
         .map(ToOwned::to_owned)
 }
 
+/// Collect alternating double-quote-delimited substrings without parsing arrays or escapes.
 fn quoted_values(line: &str) -> Vec<String> {
     line.split('"')
         .skip(1)
@@ -283,6 +406,18 @@ fn quoted_values(line: &str) -> Vec<String> {
         .collect()
 }
 
+/// Render catalog, paired timing rows, and all supplied rows between generated-section markers.
+///
+/// Returns the Markdown and number of participating comparison rows. Relative time
+/// is mean divided by the group's fastest stored mean, without positivity checks
+/// or proof of equivalent workloads. Labels intervals 95% regardless of source
+/// confidence level, and trusts fallback-filled row values. Commands assume crate
+/// context; linked reports are not checked for existence. Inserts a fixed predicates
+/// trace-mode row in addition to the supplied catalog.
+///
+/// No timestamp/revision/feature/certainty filtering occurs. The report's completeness
+/// language refers to this stored-row and manifest scan, not independently verified
+/// coverage of registered targets or successful exact workloads.
 fn render_section(rows: &[Row], suites: &[BenchSuite]) -> (String, usize) {
     let comparisons = comparison_groups(rows);
     let mut out = String::from(BEGIN);
@@ -377,6 +512,12 @@ fn render_section(rows: &[Row], suites: &[BenchSuite]) -> (String, usize) {
     (out, comparisons.values().map(Vec::len).sum())
 }
 
+/// Group rows by exact group/input strings when multiple distinct function IDs exist.
+///
+/// Ignores empty function IDs. Keeps a group only with a nonempty input or a group
+/// name containing lowercase competitive or comparison. Sorts each retained group
+/// by total f64 mean order, then function ID; duplicate implementations are not
+/// deduplicated. Does not establish equivalent semantics, guarantees, or revisions.
 fn comparison_groups(rows: &[Row]) -> BTreeMap<(String, String), Vec<&Row>> {
     let mut candidates: BTreeMap<(String, String), Vec<&Row>> = BTreeMap::new();
     for row in rows.iter().filter(|row| !row.function_id.is_empty()) {
@@ -403,6 +544,9 @@ fn comparison_groups(rows: &[Row]) -> BTreeMap<(String, String), Vec<&Row>> {
     candidates
 }
 
+/// Display nanoseconds in ns/us/ms/s using powers-of-1000 cutoffs and two decimals.
+///
+/// Does not reject negative or nonfinite input; this is formatting, not validation.
 fn format_duration(ns: f64) -> String {
     if ns < 1_000.0 {
         format!("{ns:.2} ns")
@@ -415,16 +559,26 @@ fn format_duration(ns: f64) -> String {
     }
 }
 
+/// Display an optional fractional mean change as a signed percentage, or a dash if absent.
 fn format_change(change: Option<f64>) -> String {
     change
         .map(|value| format!("{:+.2}%", value * 100.0))
         .unwrap_or_else(|| "-".to_owned())
 }
 
+/// Prefix pipes and backticks with backslashes for table text.
+///
+/// Does not normalize newlines, escape arbitrary Markdown/HTML, or guarantee valid
+/// content when the caller wraps the result in an inline code span.
 fn markdown(value: &str) -> String {
     value.replace('|', "\\|").replace('`', "\\`")
 }
 
+/// Replace the first marked report, append if absent, or truncate an unterminated marked tail.
+///
+/// With both markers, preserves surrounding text while normalizing boundary
+/// whitespace and a final newline. With only BEGIN, drops everything from it onward.
+/// Does not validate marker nesting or repair multiple generated sections.
 fn replace_section(current: &str, section: &str) -> String {
     let Some(start) = current.find(BEGIN) else {
         return format!("{}\n\n{}", current.trim_end(), section);
@@ -444,8 +598,13 @@ fn replace_section(current: &str, section: &str) -> String {
         + "\n"
 }
 
+/// Finite checks for section replacement and this crate's explicit benchmark inventory.
 #[cfg(test)]
 mod tests {
+    /// Check replacing one generated payload keeps one opening marker and removes the old payload.
+    ///
+    /// Despite the name, does not compare repeated identical replacements or exercise
+    /// missing END, multiple markers, suffix preservation, or filesystem writes.
     #[test]
     fn replacement_is_idempotent() {
         let first = super::replace_section(
@@ -461,6 +620,10 @@ mod tests {
         assert!(!second.contains("one"));
     }
 
+    /// Check the manifest produces two suites with predicates first and detected as Criterion.
+    ///
+    /// Does not assert the second suite's name/features, inspect execution results, or
+    /// validate general TOML parsing.
     #[test]
     fn manifest_catalog_matches_registered_targets() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
