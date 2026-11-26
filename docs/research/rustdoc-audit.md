@@ -3805,6 +3805,37 @@ passing native build. Doxygen is unavailable, so no rendered C++ coverage is cla
 No libraries were installed, fixtures loaded, CMake build performed or geometry
 benchmark executed under the docs-only waiver.
 
+### OpenCascade native comparison implementation, 26 November 2026
+
+Baseline: `63e31c759`. Owner: OCCT benchmark consumer, P19/P25/P36/P37/P39.
+Read all 957 original lines of `benchmarks/native/opencascade.cpp`, a whole-file
+non-Rust review. Added 32 documentation groups for the file, alias, policies/fields,
+all helpers and named corpus callback. No executable source or validation gate changed.
+
+The runner mixes analytic B-reps, polygon prisms, unsewn polyhedral face compounds
+and tolerance-sewn OBJ solids. Zero added Boolean fuzz does not remove stored shape
+tolerances. Boolean constructors precede explicit configuration/build, and meshing
+requests parallel execution even though explicit Boolean Build requests serial work.
+Geometry fingerprints use bounds bits/orientation flags rather than every coordinate.
+No exact source-fidelity or inherited certainty receipt is produced by these paths.
+
+Documented case limits include finer remeshing under the subdivide label, remesh/count
+graphics cases without exported buffers, and an identical-intersection shortcut with
+no Boolean call. Connectivity does not weld nodes across faces. Materialized normals
+apply locations but not face orientation flags. Ray and polyline cases both use the
+same finite line interval; containment maps every non-OUT classifier state to true.
+The sliver's tolerant mass comparisons do not explicitly reject NaN. Fixed-file STL
+writing includes filesystem work without concurrency isolation or error cleanup.
+These are source observations, not new geometry tests or benchmark measurements.
+
+Validation after final edits: `git diff --check` and full-file comparison after
+removing comments/blank lines passed. Every declaration and case was source-reviewed.
+Direct C++20 syntax checking, including the conventional `/usr/include/opencascade`
+path, is blocked by missing `BRepAlgoAPI_Common.hxx`; see
+`/tmp/csgrs-rustdoc-occt-syntax.log`. No successful native compile is claimed, and
+Doxygen remains unavailable. No dependencies were installed, no fixtures acquired,
+and no CMake build, meshing, Boolean or export ran under the docs-only waiver.
+
 ## Next work
 
 Continue with remaining test/example/build sources and owning crates. Maintain review records with

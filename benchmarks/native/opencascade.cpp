@@ -1,3 +1,8 @@
+/// OpenCascade comparison workloads over double-valued analytic/tolerance B-reps.
+/// Most construction/transform/Boolean rows include result meshing. Named cases
+/// need not represent the same set as polygonal engines, and counts/fingerprints
+/// are diagnostic rather than exact geometry or certainty certificates. Exceptions
+/// abort the runner; no typed failure rows or inherited source receipts are emitted.
 #include "common.hpp"
 
 #include <BRepAlgoAPI_Common.hxx>
@@ -63,21 +68,33 @@
 #include <stdexcept>
 #include <vector>
 
+/// Shared nominal counters and wrapping checksum accumulation.
 using csgrs_bench::Measurement;
 
+// Checks significand precision, not complete IEEE layout/behavior equivalence.
 static_assert(std::numeric_limits<Standard_Real>::digits ==
                   std::numeric_limits<double>::digits,
               "OCCT precision policy assumes Standard_Real is double");
 
+/// Deflection inputs passed to OCCT tessellation; not a source-fidelity receipt.
 struct MeshingPolicy {
+  /// Absolute linear deflection in model units; relative mode is disabled by the caller.
   Standard_Real linear_deflection;
+  /// Angular deflection in radians for the tessellator.
   Standard_Real angular_deflection;
 };
 
+/// Ordinary comparison tessellation settings, independent of polygon-engine segment counts.
 static constexpr MeshingPolicy kComparisonMesh{0.25, 0.2};
+/// Finer sphere-construction settings for the large case.
 static constexpr MeshingPolicy kLargeMesh{0.125, 0.1};
+/// Fine settings used by high-resolution construction, sliver output and remeshing.
 static constexpr MeshingPolicy kHighResolutionMesh{0.005, 0.07};
 
+/// Cleans cached triangulations and meshes the shape with absolute deflection settings.
+/// Requests parallel meshing, then calls Perform and throws unless IsDone. This
+/// mutates meshing state through the supplied shape handle; no deep copy is made
+/// here and no independent topology/error-bound validation follows tessellation.
 static void triangulate(TopoDS_Shape &shape,
                         const MeshingPolicy &policy = kComparisonMesh) {
   BRepTools::Clean(shape);
@@ -90,6 +107,8 @@ static void triangulate(TopoDS_Shape &shape,
   }
 }
 
+/// Sums existing face triangulations, ignoring faces with null triangulation handles.
+/// Does not trigger meshing, deduplicate shared representations or inspect geometry.
 static std::size_t triangle_count(const TopoDS_Shape &shape) {
   std::size_t triangles = 0;
   for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More();
@@ -104,6 +123,8 @@ static std::size_t triangle_count(const TopoDS_Shape &shape) {
   return triangles;
 }
 
+/// Takes the maximum stored vertex/edge/face tolerance, starting from zero.
+/// Empty shapes return zero. No explicit finiteness or source-error proof is checked.
 static Standard_Real max_shape_tolerance(const TopoDS_Shape &shape) {
   Standard_Real tolerance = 0.0;
   for (TopExp_Explorer explorer(shape, TopAbs_VERTEX); explorer.More();
@@ -124,6 +145,9 @@ static Standard_Real max_shape_tolerance(const TopoDS_Shape &shape) {
   return tolerance;
 }
 
+/// Optionally remeshes a shape handle, then fingerprints triangle/three-corner counts.
+/// Input facets are caller-defined nominal work. Passing the handle by value is not
+/// an explicit deep-copy request; needs_meshing=false uses existing triangulations.
 static Measurement measured(TopoDS_Shape shape, std::size_t input_facets,
                             bool needs_meshing = true,
                             const MeshingPolicy &policy = kComparisonMesh) {
@@ -134,6 +158,9 @@ static Measurement measured(TopoDS_Shape shape, std::size_t input_facets,
   return {input_facets, facets, csgrs_bench::checksum(facets, facets * 3)};
 }
 
+/// Remeshes, then hashes six bounding-box doubles and face orientation flags.
+/// Does not traverse/hash every output coordinate or establish exact equality. Bounds
+/// use BRepBndLib with triangulation enabled; empty/invalid bounds may fail at Get.
 static Measurement geometry_measured(
     TopoDS_Shape shape, std::size_t input_facets,
     const MeshingPolicy &policy = kComparisonMesh) {
@@ -154,6 +181,8 @@ static Measurement geometry_measured(
   return result;
 }
 
+/// Constructs a cube around a double-valued center using a lower-corner box builder.
+/// Fixture width is finite/positive; domain validation/failures are delegated to OCCT.
 static TopoDS_Shape centered_box(double width, double cx = 0.0, double cy = 0.0,
                                  double cz = 0.0) {
   const double half = width / 2.0;
@@ -162,6 +191,8 @@ static TopoDS_Shape centered_box(double width, double cx = 0.0, double cy = 0.0,
       .Shape();
 }
 
+/// Constructs an origin-centered analytic box with double half-dimensions.
+/// Assumes positive finite fixture dimensions and delegates builder failures to OCCT.
 static TopoDS_Shape centered_cuboid(double width, double length,
                                     double height) {
   return BRepPrimAPI_MakeBox(gp_Pnt(-width / 2.0, -length / 2.0,
@@ -170,6 +201,9 @@ static TopoDS_Shape centered_cuboid(double width, double length,
       .Shape();
 }
 
+/// Builds an unsewn compound of triangular planar faces from indexed points.
+/// Does not create or validate a closed solid. Point indices use checked access;
+/// face/wire construction otherwise follows OCCT preconditions and failures.
 static TopoDS_Shape polyhedron_surface(
     const std::vector<gp_Pnt> &points,
     const std::vector<std::array<std::size_t, 3>> &triangles) {
@@ -187,6 +221,10 @@ static TopoDS_Shape polyhedron_surface(
   return compound;
 }
 
+/// Builds triangle faces, sews at Precision::Confusion and collects shells into one solid.
+/// Requires at least one shell, a completed builder and BRepCheck validity. These
+/// tolerance-based checks do not prove exact preservation of parsed OBJ geometry or
+/// the intended material semantics of multiple/nested shells. Index errors throw.
 static TopoDS_Shape solid_from_obj_soup(
     const csgrs_bench::ObjTriangleSoup &soup) {
   BRepBuilderAPI_Sewing sewing(Precision::Confusion(), Standard_True,
@@ -219,6 +257,9 @@ static TopoDS_Shape solid_from_obj_soup(
   return solid;
 }
 
+/// Applies a double-angle +Y quarter turn, then translation by (1,12,1), requesting copies.
+/// Unlike the rational-coordinate formula in other runners, this uses gp_Trsf rotation.
+/// Does not itself verify overlap, topology or exact source correspondence.
 static TopoDS_Shape yeahright_boolean_operand(const TopoDS_Shape &source) {
   gp_Trsf rotation;
   rotation.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0)),
@@ -230,6 +271,7 @@ static TopoDS_Shape yeahright_boolean_operand(const TopoDS_Shape &source) {
   return BRepBuilderAPI_Transform(rotated, translation, Standard_True).Shape();
 }
 
+/// Returns eight unsewn triangular faces at axis vertices for the positive-radius fixture.
 static TopoDS_Shape octahedron(double radius) {
   return polyhedron_surface(
       {{radius, 0, 0}, {-radius, 0, 0}, {0, radius, 0}, {0, -radius, 0},
@@ -238,6 +280,8 @@ static TopoDS_Shape octahedron(double radius) {
        {5, 2, 0}, {5, 1, 2}, {5, 3, 1}, {5, 0, 3}});
 }
 
+/// Returns twenty unsewn faces using double golden-ratio/normalization coordinates.
+/// It is not an exact algebraic regular-solid construction or a sewn solid certificate.
 static TopoDS_Shape icosahedron(double radius) {
   const double phi = (1.0 + std::sqrt(5.0)) / 2.0;
   const double scale = radius / std::sqrt(1.0 + phi * phi);
@@ -253,6 +297,8 @@ static TopoDS_Shape icosahedron(double radius) {
        {4, 9, 5}, {2, 4, 11}, {6, 2, 10}, {8, 6, 7}, {9, 8, 1}});
 }
 
+/// Collects translated copied shapes into a compound without Boolean union or welding.
+/// Overlap and material semantics are not validated by this fixture distribution helper.
 static TopoDS_Shape distributed(
     const TopoDS_Shape &source,
     const std::vector<std::array<double, 3>> &offsets) {
@@ -269,6 +315,8 @@ static TopoDS_Shape distributed(
   return compound;
 }
 
+/// Counts distinct subshapes of the selected kind using an indexed OCCT shape map.
+/// Retained analysis helper; current benchmark cases do not call it.
 static std::size_t shape_count(const TopoDS_Shape &shape,
                                TopAbs_ShapeEnum kind) {
   TopTools_IndexedMapOfShape shapes;
@@ -276,6 +324,9 @@ static std::size_t shape_count(const TopoDS_Shape &shape,
   return static_cast<std::size_t>(shapes.Extent());
 }
 
+/// Counts nonzero parametric derivative cross products at each face's UV midpoint.
+/// Does not account for face orientation or prove regularity across the whole face.
+/// Current cases do not call this retained helper; invalid parameter domains can fail.
 static std::size_t face_normal_count(const TopoDS_Shape &shape) {
   std::size_t count = 0;
   for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More();
@@ -297,11 +348,17 @@ static std::size_t face_normal_count(const TopoDS_Shape &shape) {
   return count;
 }
 
+/// Counts from per-face triangulation adjacency, without welding nodes between faces.
 struct TriangulatedConnectivity {
+  /// Total allocated per-face nodes, including duplicate positions across face boundaries.
   std::size_t vertices = 0;
+  /// Nodes with at least one deduplicated neighbor, not the number of edges or components.
   std::size_t adjacency_vertices = 0;
 };
 
+/// Builds/deduplicates neighbor lists independently for every existing face triangulation.
+/// Null triangulations are skipped; no meshing or cross-face node identification occurs.
+/// Assumes OCCT triangle indices are valid and returns counts after dropping the lists.
 static TriangulatedConnectivity build_triangulated_connectivity(
     const TopoDS_Shape &shape) {
   std::vector<std::vector<std::size_t>> adjacency;
@@ -343,6 +400,9 @@ static TriangulatedConnectivity build_triangulated_connectivity(
   return {adjacency.size(), populated};
 }
 
+/// Allocates normalized world-position triangle cross products and returns their count.
+/// Applies face locations but not face orientation flags; skips nonpositive squared
+/// magnitudes. No normals are attached to the shape, and the vector is dropped on return.
 static std::size_t materialize_triangle_normals(const TopoDS_Shape &shape) {
   std::vector<gp_Vec> normals;
   normals.reserve(triangle_count(shape));
@@ -375,6 +435,9 @@ static std::size_t materialize_triangle_normals(const TopoDS_Shape &shape) {
   return normals.size();
 }
 
+/// Extrudes a double-sampled polygonal disk along +Z, not an analytic circle face.
+/// Fixed fixtures use positive finite radius/height and at least three segments;
+/// builder preconditions/failures are delegated without separate argument validation.
 static TopoDS_Shape extruded_circle(double radius, double height,
                                     std::size_t segments) {
   BRepBuilderAPI_MakePolygon polygon;
@@ -389,6 +452,10 @@ static TopoDS_Shape extruded_circle(double radius, double height,
   return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, height)).Shape();
 }
 
+/// Constructs a Boolean operation, sets no added fuzz/non-destructive/serial flags and builds.
+/// Constructor work occurs before these setters and is part of the call. The explicit
+/// Build must report IsDone; otherwise throws. Stored shape tolerances still apply,
+/// and no independent BRep validity, source-fidelity or nonempty assertion is made here.
 template <typename BooleanOperation>
 static TopoDS_Shape boolean_shape(const TopoDS_Shape &left,
                                   const TopoDS_Shape &right) {
@@ -405,6 +472,14 @@ static TopoDS_Shape boolean_shape(const TopoDS_Shape &left,
   return operation.Shape();
 }
 
+/// Runs analytic, sampled-polygon, generated-corpus and optional control/hull workloads.
+/// Counts are case-specific: many nominal inputs are hard-coded polygon counterparts,
+/// while analytic query rows may use one. Graphics rows remesh/count without creating
+/// graphics buffers; subdivide remeshes more finely; identical intersection remeshes
+/// the existing box. Neither case names nor checksums prove cross-engine equivalence.
+/// Setup and gated corpus imports can run even when their timing rows are unselected.
+/// The final STL case writes a fixed temporary filename, measures size and removes it;
+/// no concurrency isolation or exception cleanup is provided. Exceptions abort the run.
 int main() {
   csgrs_bench::Harness harness("opencascade-double-tight");
   harness.run("kernel", "construct_box", "unit", 64, [] {
@@ -561,15 +636,17 @@ int main() {
         boolean_shape<BRepAlgoAPI_Fuse>(topology_left, topology_touching), 24);
   });
   harness.run("kernel", "boolean_intersection", "identical_boxes", 8, [&] {
+    // Identity shortcut: remesh/count the existing operand without a Boolean call.
     return measured(topology_left, 24);
   });
 
-  // Precision::Confusion() is 1e-7 in OCCT. A 1e-6 overlap is deliberately
-  // above that modeling threshold and is run without added Boolean fuzz.
+  // Assert the intended 1e-6 fixture scale exceeds this installed kernel's modeling
+  // threshold. The shift itself is a double, and volume checks below are tolerant.
   static_assert(1.0e-6 > Precision::Confusion());
   const TopoDS_Shape sliver_left = centered_box(2.0);
   const TopoDS_Shape sliver_right = centered_box(2.0, 1.999999, 0.0, 0.0);
   harness.run("precision", "boolean_sliver", "overlap_1e-6", 1, [&] {
+    // These bounds comparisons do not explicitly reject a NaN mass value.
     TopoDS_Shape output =
         boolean_shape<BRepAlgoAPI_Common>(sliver_left, sliver_right);
     if (output.IsNull()) {
@@ -628,6 +705,7 @@ int main() {
     return measured(output, 960, false);
   });
   harness.run("kernel", "subdivide", "sphere_medium_level1", 2, [&] {
+    // Historical label: finer tessellation, not four-way triangle midpoint subdivision.
     TopoDS_Shape output = analysis_source;
     triangulate(output, kHighResolutionMesh);
     return measured(output, 960, false);
@@ -661,6 +739,7 @@ int main() {
     return Measurement{960, corners, corners};
   });
   harness.run("kernel", "graphics_buffers", "sphere_medium", 16, [&] {
+    // Remeshing and count only; no separate position/normal/index buffers are exported.
     TopoDS_Shape output = analysis_source;
     triangulate(output);
     const std::size_t corners = triangle_count(output) * 3;
@@ -678,6 +757,7 @@ int main() {
     return Measurement{960, 1, valid ? 1U : 0U};
   });
   harness.run("kernel", "contains_point", "sphere_two_queries", 8, [&] {
+    // Every classifier state other than OUT maps to true, including ON/UNKNOWN states.
     BRepClass3d_SolidClassifier classifier(analysis_source);
     classifier.Perform(gp_Pnt(0, 0, 0), Precision::Confusion());
     const bool inside = classifier.State() != TopAbs_OUT;
@@ -687,6 +767,7 @@ int main() {
                                    (static_cast<std::uint64_t>(outside) << 1U)};
   });
   harness.run("kernel", "ray_intersections", "sphere_diameter", 8, [&] {
+    // Despite the ray label, query only the finite [0,40] line interval, as below.
     IntCurvesFace_ShapeIntersector intersector;
     intersector.Load(analysis_source, Precision::Confusion());
     intersector.Perform(gp_Lin(gp_Pnt(-20, 0, 0), gp_Dir(1, 0, 0)), 0.0,
@@ -703,6 +784,8 @@ int main() {
     return Measurement{960, hits, hits};
   });
   harness.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, [&] {
+    // The selection tests abs(normal dot) < 0.5, not shared topology; face orientation
+    // flags are not applied to these UV derivative normals.
     const TopoDS_Shape shape = centered_box(2.0);
     std::vector<gp_Vec> normals;
     for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More();
@@ -733,6 +816,8 @@ int main() {
     return Measurement{12, 1, std::bit_cast<std::uint64_t>(angle)};
   });
 
+  /// Imports/sews one fixture, then runs six cases; setup is outside selection gates.
+  /// Graphics remeshes/counts; connectivity builds separate per-face neighbor lists.
   const auto run_generated_corpus =
       [&](std::string_view benchmark_case,
           const std::filesystem::path &path) {
