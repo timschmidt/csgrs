@@ -8,13 +8,16 @@
 //! enclosure: plan corners are rounded or bevelled by the planar offset, and
 //! nothing here is a normal-distance 3D shell or a spatial edge blend.
 //!
-//! Volumes are compared exactly with values derived by hand from the plan
-//! dimensions, membership is classified under `STRICT`, and every completed
-//! solid must be a certified closed manifold. Round plan corners are exact
-//! arcs in the region but are sampled by extrusion; that case checks the
-//! exact plan area, records the sampling and bounds the volume only as a
-//! labelled smoke check.
+//! Linear/bevel plan volumes use independently derived exact expectations and
+//! membership queries use `STRICT`. Selected solids pass certified native face
+//! and geometric edge checks; these are separate from embedding or source fidelity.
+//! Round plan corners remain exact arcs until sampled extrusion. That case uses
+//! certified plan-area enclosures, retained sampling flags and a labelled
+//! binary64 volume smoke bound. Empty symmetric differences check agreement
+//! between modeling paths through the production kernel, not an independent
+//! universal set oracle.
 
+/// Shared exact scalar, native validity, evidence-flag and index-topology checks.
 #[allow(dead_code)]
 #[path = "support/downstream_workloads.rs"]
 mod support;
@@ -26,9 +29,11 @@ use hypercurve::{BooleanOp as RegionOp, CurveRegion2, OffsetCornerStyle2};
 use hyperlattice::Point3;
 use support::*;
 
+/// Fixed strict geometry policy for extrusion and invalid-height checks.
 const STRICT: GeometryContext = GeometryContext::STRICT;
 
-/// `2^exponent` for a possibly negative exponent.
+/// Forms exact `2^exponent`, using a reciprocal for a negative exponent.
+/// Panics on scalar construction failure; the helper imposes no total-work cap.
 fn power_of_two(exponent: i32) -> Real {
     let magnitude = Real::from(2)
         .powi(exponent.unsigned_abs().into())
@@ -40,15 +45,19 @@ fn power_of_two(exponent: i32) -> Real {
     }
 }
 
+/// Constructs an exact rectangular plan at the origin; invalid dimensions panic.
 fn plan(width: i64, length: i64) -> CurveRegion2 {
     curve::rectangle(r(width), r(length)).expect("plan rectangle")
 }
 
+/// Selects planar miter corners with exact limit two for the enclosure fixtures.
 fn miter() -> OffsetCornerStyle2 {
     OffsetCornerStyle2::Miter { limit: r(2) }
 }
 
-/// The wall section: the outer region minus its inward offset by `thickness`.
+/// Forms the wall section as outer minus offset by negative `thickness`.
+/// Positive fixture thickness means erosion; zero may yield empty walls. This
+/// helper adds no thickness validation or fallback and panics on operation failure.
 fn wall_section(
     outer: &CurveRegion2,
     thickness: &Real,
@@ -62,13 +71,19 @@ fn wall_section(
         .expect("strict wall-section difference")
 }
 
+/// Extrudes under STRICT and requires a locally Certified receipt before returning.
+///
+/// Source sampling qualifications remain on the mesh; this helper does not
+/// validate face/edge topology or assert fidelity to an analytic profile.
 fn extrude(region: &CurveRegion2, height: Real) -> TriangleMesh {
     let outcome = curve::try_extrude(region, height, STRICT).expect("strict extrusion");
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     outcome.into_value()
 }
 
-/// Base slab of height `floor` under walls of height `height`, both from z = 0.
+/// Unites a base slab of height `floor` with walls of height `height`, both from z=0.
+/// Extrusions require local certification; their union passes native face/edge
+/// checks. Heights are absolute from the shared base, not stacked increments.
 fn enclosure(
     outer: &CurveRegion2,
     section: &CurveRegion2,
@@ -80,7 +95,9 @@ fn enclosure(
     certified(base.try_union(&walls), "base and walls")
 }
 
-/// The axis-aligned box `[x0, x1] x [y0, y1] x [z0, z1]`.
+/// Constructs the axis-aligned box `[x0,x1] × [y0,y1] × [z0,z1]` from exact bounds.
+/// Cuboid admission validates the derived dimensions; any construction or
+/// placement failure panics. No minimum/maximum sorting is performed.
 fn cut_box(min: [Real; 3], max: [Real; 3]) -> TriangleMesh {
     let [x0, y0, z0] = min;
     let [x1, y1, z1] = max;
@@ -90,21 +107,34 @@ fn cut_box(min: [Real; 3], max: [Real; 3]) -> TriangleMesh {
         .expect("box placement")
 }
 
+/// Imports integer bounds exactly before constructing a placed box.
 fn int_box(min: [i64; 3], max: [i64; 3]) -> TriangleMesh {
     cut_box(min.map(r), max.map(r))
 }
 
-/// Requires a strict Boolean to finish as a certified closed manifold.
+/// Unwraps a result and requires certified native face/edge validity checks.
+///
+/// Callers supply strict convenience Booleans whose operation receipts are already
+/// discarded. This helper checks face uniqueness/nondegeneracy and geometric edge
+/// pairing through shared assertions, not that discarded receipt, vertex links,
+/// embeddedness or source fidelity. Failure panics with the supplied label.
 fn certified(result: hypermesh::HypermeshResult<TriangleMesh>, label: &str) -> TriangleMesh {
     let mesh = result.unwrap_or_else(|error| panic!("{label}: {error:?}"));
     assert_certified_closed_manifold(&mesh, label);
     mesh
 }
 
+/// Requires strict equality of the mesh's signed six-volume and the expected scalar.
+/// The sum retains winding/orientation and is not by itself a set-equality test.
 fn assert_six_volume(mesh: &TriangleMesh, expected: &Real, label: &str) {
     assert_strictly_equal(&six_volume(mesh), expected, label);
 }
 
+/// Requires the production strict XOR to return both canonical empty buffers.
+///
+/// Exercises regularized-set agreement of two construction paths. This reuses
+/// the native Boolean implementation and is not an independent geometry oracle;
+/// it does not compare triangulation, serialization or construction evidence.
 fn assert_same_set(left: &TriangleMesh, right: &TriangleMesh, label: &str) {
     let xor = left
         .try_xor(right)
@@ -115,17 +145,22 @@ fn assert_same_set(left: &TriangleMesh, right: &TriangleMesh, label: &str) {
     );
 }
 
+/// Returns the strict native interior-membership answer; query failure panics.
+/// Boundary is excluded. The convenience path does not expose a local receipt.
 fn inside(mesh: &TriangleMesh, point: [Real; 3]) -> bool {
     let [x, y, z] = point;
     solid::contains_point(mesh, &Point3::new(x, y, z)).expect("strict membership")
 }
 
+/// Imports a three-coordinate integer probe exactly into native scalars.
 fn int_point(point: [i64; 3]) -> [Real; 3] {
     point.map(r)
 }
 
 /// Twelve by eight plan, unit walls, unit floor and height five: six times
 /// the volume is 6 (96 * 1 + (96 - 60) * 4) = 1440.
+/// Requires one material/one hole loop and wall area 36 before building the solid;
+/// consumers separately compare the resulting signed volume with the formula.
 fn reference_enclosure() -> TriangleMesh {
     let outer = plan(12, 8);
     let section = wall_section(&outer, &r(1), &miter());
@@ -134,6 +169,11 @@ fn reference_enclosure() -> TriangleMesh {
     enclosure(&outer, &section, 1, 5)
 }
 
+/// Checks base/wall construction, three successive windows and a mirrored pair.
+///
+/// Requires exact signed six-volumes, selected memberships, index topology and
+/// native face/edge checks. A raised-cavity construction must agree by empty
+/// production XOR. Sampling/projection flags must be absent on the initial body.
 #[test]
 fn walls_and_repeated_window_cuts_have_exact_volumes() {
     let body = reference_enclosure();
@@ -192,6 +232,9 @@ fn walls_and_repeated_window_cuts_have_exact_volumes() {
 /// The enclosure's integer coordinates are exact in binary64, so an OBJ round
 /// trip reimports the same set, and the imported version continues the
 /// workflow with the same window cut.
+/// Requires native face/edge checks, exact signed volumes and empty production
+/// XORs before and after the cut. This checks the reimported coordinate model;
+/// it does not assert preservation of pre-export construction provenance.
 #[cfg(feature = "obj-io")]
 #[test]
 fn an_imported_enclosure_continues_the_workflow() {
@@ -209,6 +252,11 @@ fn an_imported_enclosure_continues_the_workflow() {
     assert_same_set(&cut, &original, "imported window");
 }
 
+/// Checks a half-wall pocket, through-opening, and four restore/recut generations.
+///
+/// Hand-derived signed volumes and pocket memberships supplement production XOR
+/// agreement. Successive restored/cut triangle-count pairs must remain identical;
+/// this count assertion is not a memory, timing or universal growth bound.
 #[test]
 fn pocket_opening_restoration_and_recut_return_the_same_sets() {
     let body = reference_enclosure();
@@ -248,6 +296,11 @@ fn pocket_opening_restoration_and_recut_return_the_same_sets() {
     );
 }
 
+/// Checks five dyadic wall thicknesses down to `2^-80`, zero walls and invalid height.
+///
+/// Exact planar areas and solid signed volumes survive a window cut, with probes
+/// placed relative to each thickness. Zero thickness requires empty wall buffers
+/// and the base volume alone; zero extrusion height must report `ZeroParameter`.
 #[test]
 fn walls_approaching_zero_thickness_stay_exact_and_zero_thickness_is_empty() {
     let outer = plan(12, 8);
@@ -287,6 +340,12 @@ fn walls_approaching_zero_thickness_stay_exact_and_zero_thickness_is_empty() {
     ));
 }
 
+/// Checks vanishing cavities and a corridor whose inward offset splits into two rooms.
+///
+/// Thickness four/five fills the rectangular plan and must agree with a solid
+/// block by production XOR. Miter/bevel corridor cases retain their different
+/// exact cavity areas, loop roles and volumes; a subsequent doorway removes the
+/// expected eight units of material and changes the central membership probe.
 #[test]
 fn clearance_violations_and_split_offsets_keep_their_regularized_sets() {
     // A wall at least half the smaller plan dimension leaves no cavity: the
@@ -346,6 +405,11 @@ fn clearance_violations_and_split_offsets_keep_their_regularized_sets() {
     }
 }
 
+/// Checks the bevelled plan, algebraic inner area and exact window-removal volume.
+///
+/// The outer area is 94 and the inner area `54 + 4*sqrt(2)`. No sampling/projection
+/// flags may be present on the enclosure. Native face/edge checks remain separate
+/// from the exact scalar measures and retained construction flags.
 #[test]
 fn bevelled_plan_corners_stay_exact_through_the_workflow() {
     // A 10 x 6 rectangle grown by one with bevel joins: the 12 x 8 plan with
@@ -374,6 +438,13 @@ fn bevelled_plan_corners_stay_exact_through_the_workflow() {
     assert_six_volume(&cut, &(six - r(48)), "bevelled window");
 }
 
+/// Checks round-plan area enclosures and qualified sampled solid continuation.
+///
+/// Plan areas are compared within certified `10^-30` enclosures against `92+pi`
+/// and `32+pi`; erosion returns the core by empty region XOR. Sampled walls and
+/// enclosure retain flags, while the rectangular cavity has neither flag. After
+/// a window cut, a membership probe and projected volume error below 0.05 provide
+/// smoke evidence, not a certified bound on analytic-profile fidelity.
 #[test]
 fn round_plan_corners_are_exact_in_the_plan_and_sampled_in_the_solid() {
     // Growing the 10 x 6 core by one with round joins adds quarter circles at
@@ -398,9 +469,9 @@ fn round_plan_corners_are_exact_in_the_plan_and_sampled_in_the_solid() {
     // Extrusion consumes the arcs through the sampled-profile path and says
     // so. Its decisions are certified for the sampled mesh, not for the arcs.
     // The enclosure is built by subtracting a raised cavity from the block.
-    // The base-and-walls union gives the same set, but its coplanar contact
-    // between two differently triangulated sampled caps takes about 40 s in
-    // a release build (PERFORMANCE.md), against 38 ms here.
+    // PERFORMANCE.md records a historical same-set comparison with the
+    // base-and-walls union: about 40 s for its sampled coplanar caps versus
+    // 38 ms for subtraction. This test neither times nor reruns that comparison.
     let walls = extrude(&section, r(5));
     assert_sampled_profile(&walls, "rounded walls");
     let cavity = extrude(&inner, r(5))

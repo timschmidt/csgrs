@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/enclosure_workflows.rs` | Entire file; documented wall/base and cut helpers, dyadic/collapsed/split offsets, OBJ continuation, exact measures and sampled round-plan limits. | Focused compilation/private docs passed with OBJ enabled; all assertions unchanged and unrun. |
 | `tests/downstream_solids.rs` | Entire file; documented rotation equivalence, convex probes, required success matrices, authored planter parts and exact/enclosed measures. | Focused compilation/private docs passed; all assertions and ignored full workloads unchanged and unrun. |
 | `tests/downstream_exact_inputs.rs` | Entire file; documented exact ingress, bounded integer line oracle, overlap payloads, full-circle support relations and all tests. | Focused compilation/private docs passed; tuple layout adds only trailing commas; assertions unchanged and unrun. |
 | `tests/downstream_profiles.rs` | Entire file; documented parabola/offset/twist fixtures, area enclosures, sampled smoke bounds, side/cap oracles and continuation limits. | Focused compilation/private docs passed; comments corrected without changing formulas, expected blockers or assertions. |
@@ -3129,6 +3130,51 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-downstream-solids-check.log` and
 `/tmp/csgrs-rustdoc-downstream-solids-private.log`.
+
+### Constant-section enclosure witnesses, 26 November 2026
+
+Baseline: `559e5fb5b`. Owner: root enclosure acceptance consumer,
+P1/P3/P4/P8/P17–P19/P25/P26/P29/P37. Domain: rational rectangular plans,
+constant-height walls/base, repeated window/pocket/restoration cuts, dyadic
+thickness down to `2^-80`, empty/split inward offsets, algebraic bevel corners,
+rounded plans sampled by extrusion, and integer-coordinate OBJ continuation.
+Read the full 423-line baseline file. Shared helper contracts and the historical
+performance paragraph were inspected in context without new whole-file credit.
+
+Missing witnesses were undocumented private declarations and imprecise certainty
+and measurement descriptions. The `certified` helper receives a mesh after a
+strict convenience operation, then checks certified native face/edge validity;
+it cannot inspect the already-discarded operation receipt. Extrusion separately
+asserts its local receipt. Empty production XORs compare modeling paths through
+the kernel and are distinct from independent hand-derived measures. No claim of
+vertex-link or general embedding validation is made.
+
+Corrected the module narrative: round-plan area checks are certified `10^-30`
+enclosures, while projected solid-volume error below 0.05 is a smoke bound.
+Sampling/projection flags remain separate. Repeated-generation triangle counts
+are deterministic representation checks, not memory or total-work bounds. The
+historical sampled-cap union/subtraction timings are explicitly historical;
+this test neither times nor replays that alternative. Integer OBJ round trips
+exercise the reimported coordinate model without asserting original provenance.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline: inputs, feature gates, callback/predicate
+  order, thresholds, assertions and convenience paths were preserved.
+- All 23 declarations have Rustdoc. Private docs matched 16 rendered summaries
+  across 17 top-level pages and the support module page. Seven test definitions,
+  including the OBJ-gated body, remain source-reviewed rather than credited as
+  rendered test-function pages.
+- `cargo check --locked -p csgrs --no-default-features --features curve,obj-io
+  --test enclosure_workflows --offline -j 2` passed without warnings. Private
+  Rustdoc passed with broken links denied and checked dependency metadata supplied.
+- Geometry, OBJ round-trip execution, performance and full workflows were not run
+  under the docs-only waiver. Reused the existing curve/OBJ target metadata with
+  incremental compilation disabled; no model or renderer outputs were created.
+
+Logs: `/tmp/csgrs-rustdoc-enclosure-check.log` and
+`/tmp/csgrs-rustdoc-enclosure-private.log`.
 
 ## Next work
 
