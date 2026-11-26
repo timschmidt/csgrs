@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/generated_benchmark_corpus.rs` | Entire file; documented import/byte-stability checks, same-process scope and retained generated files. | Focused compilation/private docs passed with OBJ enabled; no fixture generation executed. |
+| `benchmarks/support/generated_corpus.rs` | Entire file; documented voxel domains, foam contact filling, deterministic boundary order, local face constant and file lifecycle. | Test and benchmark consumers compile; private docs passed; no serialized assets generated. |
 | `tests/enclosure_workflows.rs` | Entire file; documented wall/base and cut helpers, dyadic/collapsed/split offsets, OBJ continuation, exact measures and sampled round-plan limits. | Focused compilation/private docs passed with OBJ enabled; all assertions unchanged and unrun. |
 | `tests/downstream_solids.rs` | Entire file; documented rotation equivalence, convex probes, required success matrices, authored planter parts and exact/enclosed measures. | Focused compilation/private docs passed; all assertions and ignored full workloads unchanged and unrun. |
 | `tests/downstream_exact_inputs.rs` | Entire file; documented exact ingress, bounded integer line oracle, overlap payloads, full-circle support relations and all tests. | Focused compilation/private docs passed; tuple layout adds only trailing commas; assertions unchanged and unrun. |
@@ -3175,6 +3177,53 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-enclosure-check.log` and
 `/tmp/csgrs-rustdoc-enclosure-private.log`.
+
+### Generated benchmark fixture construction and consumer, 26 November 2026
+
+Baseline: `be588c902`. Owners: deterministic benchmark asset generator and root
+import/stability test, P1/P6/P17/P25/P26/P29/P37. Domain: the fixed 31-by-31-by-6
+slotted voxel labyrinth and level-three ternary foam after explicit diagonal-edge
+contact filling. Read both files completely, including the local face constant
+and filesystem installation path. Kernel-comparison import/call-site excerpts
+were checked but receive no whole-file benchmark review credit.
+
+Missing witnesses were undocumented private declarations and absent domain/file
+lifecycle limits. Foam contact filling adds cells and changes the raw fractal set;
+it is not a topology-preserving identity or universal vertex-link repair. Boundary
+extraction emits fixed outward diagonals with shared corner keys, assuming corner
+arithmetic and u32 coordinate conversion fit the small fixture domain. Generic
+large inputs have no checked work/memory budget. Native edge checks, fixed counts,
+byte determinism and mathematical set fidelity remain separate evidence.
+
+Documented runtime target-directory resolution, byte-equal reuse, process-ID
+staging followed by rename, retained outputs and failure behavior. There is no
+explicit synchronization, same-process concurrent-writer isolation, durability
+sync or cancellation cleanup; rename failure may leave the temporary file. These
+are implementation descriptions, not newly executed failure or race findings.
+The test repeats generation in one process and checks bytes/imported validity;
+it does not establish fresh-process replay or independent set equality.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline for both files; cells, order, counts, paths,
+  casts, file handling and assertions remain unchanged.
+- All 13 declarations have Rustdoc. Private docs matched 11 rendered descriptions
+  across 13 HTML pages. The test body and function-local `FACES` constant were
+  source-reviewed; neither receives standalone rendered API-page credit.
+- `cargo check --locked -p csgrs --no-default-features --features curve,obj-io
+  --test generated_benchmark_corpus --offline -j 2` passed. Private Rustdoc also
+  passed with broken links denied and checked own-library/dependency metadata.
+- Downstream `cargo check --locked -p csgrs --no-default-features --features
+  attributed,curve,obj-io,stl-io --bench kernel_comparison --offline -j 2` passed
+  without warnings. This compilation does not credit that whole benchmark as read.
+- No fixture generation, filesystem installation, geometry runtime or benchmark
+  execution under the docs-only waiver. Incremental compilation remained disabled
+  and the shared target remained approximately 1.3 GiB; no OBJ assets were emitted.
+
+Logs: `/tmp/csgrs-rustdoc-generated-corpus-check.log`,
+`/tmp/csgrs-rustdoc-generated-corpus-private.log` and
+`/tmp/csgrs-rustdoc-generated-corpus-bench.log`.
 
 ## Next work
 

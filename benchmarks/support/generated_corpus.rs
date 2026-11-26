@@ -1,4 +1,10 @@
-//! Deterministically generated serialized meshes shared by all benchmark engines.
+//! Deterministically generated serialized meshes shared by benchmark consumers.
+//!
+//! Small integer voxel boundaries are exported as OBJ under the runtime target
+//! directory and reused when bytes match. The foam's diagonal edge contacts are
+//! filled before boundary extraction; this changes the raw ternary-cell set.
+//! Fixed counts and native geometric edge checks constrain the published fixtures,
+//! separately from deterministic byte order or a general manifold/embedding proof.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -9,8 +15,13 @@ use std::{
 use hyperlattice::{Point3, Real};
 use hypermesh::{Triangle, TriangleMesh};
 
+/// Nonnegative integer grid coordinate, used for occupied unit cells and lattice corners.
 type Cell = [usize; 3];
 
+/// Builds, checks and installs the slotted 31-by-31-by-6 labyrinth fixture.
+///
+/// Requires 4,012 shared positions, 8,020 triangles and native closed-manifold
+/// geometry. Returns the retained OBJ path; failed checks/export/I/O panic.
 pub fn concave_path() -> PathBuf {
     let mesh = voxel_boundary(concave_cells());
     assert_eq!(mesh.positions.len(), 4_012);
@@ -23,6 +34,11 @@ pub fn concave_path() -> PathBuf {
     )
 }
 
+/// Builds and installs the level-three ternary foam after filling diagonal edge contacts.
+///
+/// Requires 15,232 positions, 36,096 triangles and native closed-manifold geometry.
+/// The installed fixture represents the modified cell set, not the raw fractal
+/// selection. Returns its retained OBJ path; checks/export/I/O may panic.
 pub fn sierpinski_foam_path() -> PathBuf {
     let mesh = voxel_boundary(manifoldize_voxels(sierpinski_foam_cells(3)));
     assert_eq!(mesh.positions.len(), 15_232);
@@ -31,6 +47,9 @@ pub fn sierpinski_foam_path() -> PathBuf {
     install("sierpinski_foam_level3.obj", &mesh, "sierpinski_foam_level3")
 }
 
+/// Selects a 31-by-31 footprint with seven alternating two-row side slots, six cells high.
+/// Slots occur at Y=3+4*k; even slots remove X<24 and odd slots X>=7.
+/// Ordered cells give stable boundary traversal without random seeds.
 fn concave_cells() -> BTreeSet<Cell> {
     let mut cells = BTreeSet::new();
     for x in 0..31 {
@@ -50,6 +69,15 @@ fn concave_cells() -> BTreeSet<Cell> {
     cells
 }
 
+/// Fills diagonal-only occupancy patterns around grid edges to a deterministic fixed point.
+///
+/// Scans axes and quadrants in fixed order, collecting the first absent adjacent
+/// cell for each two-opposite-quadrant contact, then applies additions together.
+/// The finite original bounding cube is unchanged, so monotone additions terminate.
+/// Empty input returns empty. This modifies the represented voxel set and removes
+/// this edge pattern only; it does not prove all vertex links or embedding.
+/// Intended for small fixture coordinates: extent arithmetic is unchecked and
+/// no total-work or memory budget is imposed.
 fn manifoldize_voxels(mut cells: BTreeSet<Cell>) -> BTreeSet<Cell> {
     let extent = cells
         .iter()
@@ -112,6 +140,12 @@ fn manifoldize_voxels(mut cells: BTreeSet<Cell>) -> BTreeSet<Cell> {
     }
 }
 
+/// Selects cells in `[0,3^level)^3` by the ternary foam rule.
+///
+/// Discards a cell when any ternary digit position has at least two coordinates
+/// equal to one. Level zero retains the unit cell. Does not repair diagonal edge
+/// contacts; callers may explicitly modify the selection before meshing. Intended
+/// for small levels: exponent arithmetic and cubic enumeration have no budget guard.
 fn sierpinski_foam_cells(level: u32) -> BTreeSet<Cell> {
     let extent = 3_usize.pow(level);
     let mut cells = BTreeSet::new();
@@ -142,7 +176,17 @@ fn sierpinski_foam_cells(level: u32) -> BTreeSet<Cell> {
     cells
 }
 
+/// Emits two outward triangles for each exposed unit-cell face in deterministic order.
+///
+/// Neighboring occupied cells suppress their shared face; integer corner keys
+/// share one position row. The fixed face order and diagonal define serialization.
+/// Requires corner addition to fit usize and every resulting coordinate to fit
+/// u32 before the existing cast; the small fixtures satisfy this domain. Returns
+/// empty buffers for no cells and does not itself validate topology or repair
+/// contacts. Exactness is relative to the supplied voxel set.
 fn voxel_boundary(cells: BTreeSet<Cell>) -> TriangleMesh {
+    /// Neighbor offsets and outward counterclockwise corner loops for the six faces.
+    /// Each loop is triangulated along its 0-to-2 diagonal; order is deterministic.
     const FACES: [([isize; 3], [[usize; 3]; 4]); 6] = [
         ([-1, 0, 0], [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]]),
         ([1, 0, 0], [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]]),
@@ -190,6 +234,13 @@ fn voxel_boundary(cells: BTreeSet<Cell>) -> TriangleMesh {
     TriangleMesh::new(positions, triangles)
 }
 
+/// Exports a fixture and installs it only when the existing UTF-8 bytes differ.
+///
+/// Creates the target fixture directory, writes a process-ID-suffixed temporary
+/// file, then renames it to the destination. Returns the final path. Export or
+/// write/rename failure panics; a rename failure can leave the temporary file.
+/// There is no explicit synchronization, same-process concurrent-writer isolation,
+/// cancellation cleanup or durability sync. Callers supply fixed local filenames.
 fn install(filename: &str, mesh: &TriangleMesh, object_name: &str) -> PathBuf {
     let directory = fixture_directory();
     fs::create_dir_all(&directory).unwrap_or_else(|error| {
@@ -220,10 +271,16 @@ fn install(filename: &str, mesh: &TriangleMesh, object_name: &str) -> PathBuf {
     path
 }
 
+/// Selects `benchmark-fixtures/generated` beneath the effective target directory.
+/// This only computes the path; installation creates it and retains generated files.
 fn fixture_directory() -> PathBuf {
     target_directory().join("benchmark-fixtures/generated")
 }
 
+/// Resolves runtime CARGO_TARGET_DIR, or defaults to the compiled manifest's target.
+///
+/// Absolute overrides are used directly; relative overrides are joined to the
+/// runtime working directory, whose lookup may panic. Paths are not canonicalized.
 fn target_directory() -> PathBuf {
     match env::var_os("CARGO_TARGET_DIR") {
         Some(directory) => {
