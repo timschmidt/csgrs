@@ -21,13 +21,24 @@ pub use mesh::{
 };
 pub use scalar::{AdapterError, AdapterResult, F32, F64, I128, RawReal, ScalarAdapter};
 
-/// Adapter-space axis-aligned bounding box.
+/// Axis-aligned bounds expressed in the adapter's host scalar type.
+///
+/// Native minimum and maximum coordinates are converted independently. With a
+/// lossy float adapter these are rounded views, not certified outward bounds;
+/// they need not enclose the original exact geometry. Public fields impose no
+/// validation when callers construct this type directly.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Aabb3<S> {
+    /// Converted lower XYZ coordinates.
     pub mins: [S; 3],
+    /// Converted upper XYZ coordinates.
     pub maxs: [S; 3],
 }
 
+/// Convert native extrema in minimum-then-maximum XYZ order.
+///
+/// Returns the first scalar export error. No outward rounding, topology proof,
+/// or certainty receipt is added to the selected adapter's conversion contract.
 fn convert_bounds<A: ScalarAdapter>(
     bounds: hyperlattice::Aabb,
 ) -> AdapterResult<Aabb3<A::Scalar>> {
@@ -45,6 +56,7 @@ fn convert_bounds<A: ScalarAdapter>(
     })
 }
 
+/// Boundary regressions for primitive and exact scalar adapter strategies.
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "curve")]
@@ -52,6 +64,7 @@ mod tests {
     use crate::adapter::{AdapterError, F32, F64, I128, RawReal, ScalarAdapter, ScalarMesh};
     use hyperreal::Real;
 
+    /// Checks translated cube bounds through the binary64 facade.
     #[test]
     fn f64_mesh_adapter_converts_at_edges() {
         let cube = ScalarMesh::<F64>::cube(2.0).unwrap();
@@ -62,6 +75,7 @@ mod tests {
         assert_eq!(bounds.maxs, [3.0, 2.0, 2.0]);
     }
 
+    /// Checks rejection of a known fraction and exact export of an integer.
     #[test]
     fn i128_adapter_rejects_fractional_output() {
         let one_half = (Real::one() / Real::from(2_u8)).unwrap();
@@ -69,6 +83,7 @@ mod tests {
         assert_eq!(I128::from_real(&Real::from(12_i128)).unwrap(), 12);
     }
 
+    /// Checks exact planar bounds through the native-real curve facade.
     #[test]
     #[cfg(feature = "curve")]
     fn raw_real_profile_stays_exact_at_boundary() {
@@ -80,6 +95,7 @@ mod tests {
         assert_eq!(bounds.maxs, [width.clone(), width.clone(), Real::zero()]);
     }
 
+    /// Checks matching vertex counts and index topology for binary32/64 exports.
     #[test]
     fn primitive_graphics_adapters_match_core_gpu_buffers() {
         let raw = ScalarMesh::<RawReal>::cube(Real::from(2))
@@ -94,6 +110,7 @@ mod tests {
         assert_eq!(actual_f32.indices, actual_f64.indices);
     }
 
+    /// Checks cube vertex counts and indices through native-real and integer exports.
     #[test]
     fn exact_and_integer_graphics_adapters_keep_generic_conversion() {
         let raw = ScalarMesh::<RawReal>::cube(Real::from(2))
@@ -110,6 +127,7 @@ mod tests {
         assert_eq!(integer.indices.as_ref(), (0..36).collect::<Vec<_>>());
     }
 
+    /// Checks that an oversized exact cube fails binary32 graphics export.
     #[test]
     fn f32_graphics_adapter_preserves_strict_overflow_error() {
         let mut huge = Real::from(2);

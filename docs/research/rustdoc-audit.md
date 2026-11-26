@@ -25,14 +25,18 @@ credit. Review all declarations, including private fields and test helpers.
 Check actual domains, failure paths, certainty, provenance, and resource limits.
 Keep changes to documentation unless a separately admitted implementation fix
 is needed. Check private-doc generation for affected configurations and inspect
-rendered items. All workflow validation required by `AGENTS.md` remains a gate
-before each push. Do not credit a narrow documentation build as that gate.
+rendered items. For this documentation-only session, the repository owner explicitly waived
+full workflow checks on 26 November 2026. Use focused documentation and formatting
+checks before committing and pushing; this exception does not change the standing
+repository rules for later sessions or authorize implementation edits.
 
 ## Reviewed Rust files
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
-| `src/context.rs` | Entire file, including tests. Documented every previously undocumented private declaration; corrected approximate-policy wording and documented receipt loss at `into_value`. | Private docs passed with no default features and with `curve`; broader feature/workflow checks pending. |
+| `src/adapter/scalar.rs` | Entire file and conversion implementations; documented all declarations and native error distinctions. | Private docs passed with and without `curve`, with broken links denied. |
+| `src/adapter/mod.rs` | Entire file including tests; documented bound conversion, fields and test intent. | Private docs passed with and without `curve`, with broken links denied. |
+| `src/context.rs` | Entire file, including tests. Documented every previously undocumented private declaration; corrected approximate-policy wording and documented receipt loss at `into_value`. | Private docs passed with no default features and with `curve`; broader feature checks pending; full workflow checks waived for this docs-only session. |
 
 ### Context batch, 26 November 2026
 
@@ -72,14 +76,49 @@ Checks after edits:
 
 Build artifacts are isolated in `/tmp/csgrs-rustdoc-target` for reuse and eventual
 cleanup. No artifacts or raw logs are committed. Full pre-push workflow checks
-have not yet run; no push is permitted on the basis of these narrow checks.
+were not run. The owner subsequently waived them for this docs-only session.
+
+### Scalar adapter batch, 26 November 2026
+
+Owner: CSGRS scalar boundary, P1/P3/P6/P25/P26/P29/P37. Domain: native `Real`,
+finite/nonfinite primitive floats, signed integers, coordinate arrays, converted
+bounds, and native error forwarding. Baseline for this batch: `782f2d9fc`.
+Missing witness: most scalar declarations, trait members, implementation methods,
+coordinate helpers, bounding-box fields and test helpers had no Rustdoc.
+
+Read every line of `src/adapter/scalar.rs` and `src/adapter/mod.rs`. Cross-checked
+native float import/export and rational-to-integer conversion in Hyperreal,
+structural `exact_rational` recognition, modeling error variants, and mesh/curve
+bound and graphics consumers. These supporting partial reads do not earn
+whole-file credit. Documented exact binary float ingress, lossy egress, distinct
+integer failures, preserved error sources, ordered component conversion, and
+lack of outward-enclosure guarantees for rounded bounds. Test docs describe
+actual assertions rather than inferring extra guarantees from test names.
+
+Validation after edits:
+
+- `git diff --check`: passed.
+- Non-comment content comparison against the batch baseline: passed after
+  normalizing whitespace and optional trailing tuple commas introduced to
+  document variant fields. No executable behavior changed.
+- Private Rustdoc with `curve` and broken links denied: passed without warnings.
+  Command: `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve --document-private-items --no-deps --offline`.
+- Parsed generated HTML for the scalar trait, integer strategy, bounds type,
+  private bound converter and private XY importer: expected contract text present.
+- The same private-doc command without `--features curve`: passed without warnings.
+- `cargo fmt --all -- --check`: passed.
+
+Logs remain under `/tmp/csgrs-rustdoc-adapter-*.log`; reused artifacts remain under
+`/tmp/csgrs-rustdoc-target`. Full workflow checks waived explicitly by the owner
+for this documentation-only session; no runtime or performance claims are made.
 
 ## Next work
 
-Commit the context batch. Audit the scalar
-adapter boundary (including exact float import, lossy export, and integer error
-semantics), then continue through the remaining root API and owning crates.
-Maintain review records with each batch. Establish automated public/private
-item coverage across manifests and features without confusing that metric with
-semantic review. Review every remaining tracked file and the complete workflow
-matrix before claiming completion.
+Continue through the mesh and curve adapter implementations, then the remaining
+root API and owning crates. Maintain review records with each batch. Establish
+automated public/private item coverage across manifests and features without
+confusing that metric with semantic review. Review every remaining tracked file
+before claiming completion. Commit and push documentation batches after focused
+checks under the owner's session-specific waiver.
