@@ -1,5 +1,10 @@
+//! Typed native failures and exact graphics-row witnesses at scalar/attribute boundaries.
+//! Fixtures separate geometric normal construction, scalar projection, authored attributes,
+//! reusable success buffers and stronger scalar proofs; export success alone is not solid validity.
+
 use csgrs::adapter::{AdapterError, F32, F64, I128, RawReal, ScalarAdapter, ScalarMesh};
 #[path = "support/uncertainty.rs"]
+/// Shared proved-zero control and independently unresolved zero for degenerate/domain fixtures.
 mod uncertainty;
 
 use csgrs::errors::{ValidationError, ValidationErrorKind};
@@ -9,12 +14,15 @@ use hypermesh::{BooleanMeshResult, GpuMeshError, Triangle};
 use hyperreal::Problem;
 use std::error::Error;
 
+/// Checks the Pythagorean control and obtains the shared strictly unresolved sine-addition zero.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
 
+/// Builds one XY triangle with origin, unit-X vertex and supplied Y height, without validating it.
+/// Zero and unresolved heights deliberately challenge exact normal construction.
 fn triangle(height: Real) -> TriangleMesh {
     TriangleMesh::new(
         vec![
@@ -26,6 +34,7 @@ fn triangle(height: Real) -> TriangleMesh {
     )
 }
 
+/// Requires native category/text, exact adapter construction-error equality and a downcastable source.
 fn assert_validation(error: AdapterError, native: ValidationError, kind: ValidationErrorKind) {
     assert_eq!(native.kind(), kind);
     assert_eq!(error.to_string(), native.to_string());
@@ -36,6 +45,8 @@ fn assert_validation(error: AdapterError, native: ValidationError, kind: Validat
     );
 }
 
+/// Converts a self-crossing integer face through one scalar family and compares native invalid-input errors.
+/// Covers the ordinary strict constructor and both explicit policies.
 fn polyhedron_failure<A: ScalarAdapter>() {
     let native_points =
         [[0, 0, 0], [3, 3, 0], [0, 2, 0], [2, 0, 0]].map(|row| row.map(Real::from));
@@ -60,6 +71,8 @@ fn polyhedron_failure<A: ScalarAdapter>() {
 }
 
 #[test]
+/// Runs the invalid-face matrix across four scalar families, then checks an unresolved raw-Real face.
+/// Ordinary strict uncertainty must be undecided; contextual cases preserve whichever native category occurs.
 fn polyhedron_failures_keep_native_causes_and_policy() {
     polyhedron_failure::<RawReal>();
     polyhedron_failure::<F32>();
@@ -91,6 +104,8 @@ fn polyhedron_failures_keep_native_causes_and_policy() {
     }
 }
 
+/// Requires exact scalar causes for zero/unresolved homogeneous weights through one adapter family.
+/// A finite translation control must map `(1,2,3)` exactly to `(5,7,9)`.
 fn point_failures<A: ScalarAdapter>() {
     let point = [1, 2, 3].map(|v| A::from_real(&v.into()).unwrap());
     for (w, expected) in [
@@ -129,6 +144,7 @@ fn point_failures<A: ScalarAdapter>() {
 }
 
 #[test]
+/// Exercises homogeneous domain failures, source downcasts and successful translation in all four scalar families.
 fn point_transforms_keep_scalar_domain_and_undecided_causes() {
     point_failures::<RawReal>();
     point_failures::<F32>();
@@ -136,6 +152,8 @@ fn point_transforms_keep_scalar_domain_and_undecided_causes() {
     point_failures::<I128>();
 }
 
+/// Repeats invalid-index, degenerate and unresolved-normal exports and checks nested native causes.
+/// Empty buffers and a positive-height triangle supply repeatable success controls with unit-Z normals.
 fn graphics_failures<A: ScalarAdapter>() {
     for (mesh, kind) in [
         (
@@ -176,6 +194,7 @@ fn graphics_failures<A: ScalarAdapter>() {
 }
 
 #[test]
+/// Requires the graphics failure/control matrix to hold for raw Real, binary32, binary64 and integer adapters.
 fn graphics_failures_keep_native_categories_in_every_scalar_family() {
     graphics_failures::<RawReal>();
     graphics_failures::<F32>();
@@ -184,6 +203,7 @@ fn graphics_failures_keep_native_categories_in_every_scalar_family() {
 }
 
 #[test]
+/// Distinguishes proved-degenerate and unresolved normals, then requires identical errors from a Boolean result view.
 fn native_export_distinguishes_zero_from_unproved_zero_in_both_carriers() {
     let degenerate = triangle(Real::zero());
     let undecided = triangle(unresolved_zero());
@@ -210,6 +230,8 @@ fn native_export_distinguishes_zero_from_unproved_zero_in_both_carriers() {
 }
 
 #[test]
+/// Checks exact source coordinates and the independently derived normal `(0,-4/5,3/5)` in raw graphics rows.
+/// The integer adapter must reject the nonintegral normal with `NotAnInteger` rather than round it.
 fn exact_normal_values_and_integer_projection_contract_survive() {
     let mesh = TriangleMesh::new(
         vec![
@@ -243,6 +265,9 @@ fn exact_normal_values_and_integer_projection_contract_survive() {
 
 #[test]
 #[cfg(feature = "attributed")]
+/// Strengthens a tiny positive Pi-minus-rational width proof after an initial export attempt.
+/// Requires original and metadata-mapped sidecars to share the successful exact buffers; the initial
+/// attempt may already succeed, so this does not require a reproducible cold failure.
 fn stronger_proof_recovers_attributed_exports_and_shared_metadata_cache() {
     use csgrs::AttributedMesh;
     use hyperreal::RealSign;
@@ -270,6 +295,8 @@ fn stronger_proof_recovers_attributed_exports_and_shared_metadata_cache() {
 }
 
 #[test]
+/// Mutates returned rows and cloned source buffers independently, checking cache isolation and new normals/errors.
+/// Nine further source identities exceed the eight-entry cache, after which the original export must agree again.
 fn graphics_cache_keeps_source_and_returned_buffer_mutations_isolated() {
     use std::sync::Arc;
     let mut mesh = triangle(2.into());
@@ -310,6 +337,8 @@ fn graphics_cache_keeps_source_and_returned_buffer_mutations_isolated() {
 
 #[test]
 #[cfg(feature = "attributed")]
+/// Synchronizes four callers at a barrier and requires one shared successful buffer address and exact rows.
+/// A separately mutated source sidecar gets new coordinates while the original sidecar stays unchanged.
 fn attributed_cache_shares_concurrent_success_without_stale_geometry() {
     use csgrs::AttributedMesh;
     use std::sync::{Arc, Barrier};
@@ -347,6 +376,8 @@ fn attributed_cache_shares_concurrent_success_without_stale_geometry() {
 
 #[test]
 #[cfg(feature = "attributed")]
+/// Exports authored nonunit normals unchanged even for a degenerate triangle, preserving its source geometry.
+/// The corresponding derived-normal export still fails; authored attributes do not certify geometry validity.
 fn authored_normal_rows_remain_explicit_boundary_attributes() {
     use csgrs::AttributedMesh;
     use hyperlattice::Vector3;

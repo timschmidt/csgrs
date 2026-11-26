@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `tests/native_boundary_failures.rs` | Entire file; documented typed polyhedron/point/graphics failures, exact normals, scalar projection, mutation and attributed cache witnesses. | Focused compilation/private docs passed with attributed cases enabled; runtime assertions unchanged, not run. |
+| `tests/planar_operation_failures.rs` | Entire file; documented compatibility trait/members, homogeneous matrix admission, typed query failures, empty/holed continuation and adapter semantics. | Focused compilation/private docs passed; trait implementation docs rendered and assertions unchanged, not run. |
 | `crates/hypermesh/src/construction.rs` | Entire file; documented private bit storage/flags, default/mutation semantics and missing-history precedence. | Owning private docs and downstream compilation passed; tuple-field formatting adds only a trailing comma. No geometry behavior changed. |
 | `tests/empty_composition.rs` | Entire file; documented box/empty witnesses, typed-invalid matrices, qualified validation, batch roots and continued empty operations. | Minimal and curve-enabled compilation/private docs passed; assertions unchanged, not executed. |
 | `tests/receipt_composition.rs` | Entire file; documented retained versus adopted controls, missing history, inherited blockers and map/and_then scope. | Minimal and curve-enabled compilation/private docs passed; assertions and proof-query order unchanged, not executed. |
@@ -2820,6 +2822,53 @@ Final-edit logs: `/tmp/csgrs-rustdoc-evidence-downstream-check.log`,
 `/tmp/csgrs-rustdoc-evidence-minimal-check.log`,
 `/tmp/csgrs-rustdoc-construction-owner-doc.log`, and
 `/tmp/csgrs-rustdoc-evidence-private.log`.
+
+### Native graphics boundaries and planar matrix admission, 26 November 2026
+
+Baseline: `03218cd2e`. Owners: root native/scalar/attribute boundary and planar
+modeling acceptance consumers, P1/P3/P4/P6/P8/P9/P17–P19/P24/P25/P29/P30/P37.
+Domain: self-crossing faces, homogeneous division, degenerate/unresolved normals,
+four scalar adapters, exact/authored graphics rows, stronger scalar proofs,
+shared/mutated caches and homogeneous maps restricted to the XY plane. Read both
+files in full, including attributed feature cases and all compatibility trait
+implementations. Supporting reads of graphics caching, attributed export and
+planar matrix admission do not add whole-file owner credit.
+
+Missing witnesses were 44 undocumented declarations/members and the absence of
+scope descriptions for several tests. Documented exact versus integer-projected
+normal values, preserved source chains, repeatable success caches and buffer
+mutation isolation. Authored nonunit normals can export degenerate geometry;
+that does not certify source validity. The stronger-proof witness deliberately
+allows the first export to succeed and does not claim a reproduced cold failure.
+The attributed worker test uses a barrier and checks shared successful addresses.
+
+The planar compatibility trait preserves legacy successful empty/None values;
+it converts only existing errors. Homogeneous gauges are normalized on XY even
+when the full 4D matrix is singular. Perspective/out-of-plane, zero-weight
+nonzero-image, all-zero-image and undecided constraints retain distinct categories.
+Documented which cases assert only error presence, area/bounds or receipt values,
+and which compare an empty symmetric difference. Input restoration is distinct
+from a larger-budget retry. No executable line, fixture, policy, assertion or
+predicate order changed.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing blank/comment-only lines
+  gives identical source to baseline in both files. All 44 declarations/members
+  have Rustdoc, including the trait method and its three implementations.
+- `cargo check --locked -p csgrs --no-default-features --features curve,attributed
+  --test native_boundary_failures --test planar_operation_failures --offline -j 2`
+  passed without warnings, including every feature-gated case in these files.
+- Private Rustdoc for both targets passed with broken links denied, using checked
+  own-library metadata and dependency paths. Inspected all 11 top-level pages,
+  both module descriptions and all 13 rendered declaration/member descriptions.
+  Test-function docs remain source-reviewed rather than credited as rendered pages.
+- Geometry, concurrency, cache eviction/proof recovery and full workflow execution
+  were not run under the docs-only waiver. The existing temporary target was reused
+  with incremental compilation disabled, and no model or graphics artifacts were emitted.
+
+Logs: `/tmp/csgrs-rustdoc-native-planar-check.log` and
+`/tmp/csgrs-rustdoc-native-planar-private.log`.
 
 ## Next work
 

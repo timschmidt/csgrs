@@ -1,6 +1,7 @@
 //! Planar modeling operations preserve matrix meaning and typed failure.
 #![cfg(feature = "curve")]
 #[path = "support/uncertainty.rs"]
+/// Shared proved-zero control and unresolved scalar witness for matrix/query admission.
 mod uncertainty;
 
 use csgrs::{GeometryCertainty, GeometryContext, Real, curve, errors::ValidationError};
@@ -8,36 +9,43 @@ use hypercurve::{BooleanOp, CurveRegion2, ExactCurveError};
 use hyperlattice::Matrix4;
 use std::error::Error;
 
-// Keep the reproduced baseline observable: legacy empty/None outputs are
-// successful values here, never retroactively interpreted as errors.
+/// Normalizes legacy values and current fallible APIs without hiding a successful empty/None result.
+/// This compatibility witness ensures changed signatures cannot retroactively reinterpret baseline success as error.
 trait Attempt<T> {
+    /// Preserves successful values and converts only an existing error to the modeling vocabulary.
     fn attempt(self) -> Result<T, ValidationError>;
 }
 impl Attempt<CurveRegion2> for CurveRegion2 {
+    /// Wraps a region as success even when it is empty.
     fn attempt(self) -> Result<CurveRegion2, ValidationError> {
         Ok(self)
     }
 }
 impl Attempt<Option<bool>> for Option<bool> {
+    /// Wraps a classification as success, including `None` for a boundary result.
     fn attempt(self) -> Result<Option<bool>, ValidationError> {
         Ok(self)
     }
 }
 impl<T, E: Into<ValidationError>> Attempt<T> for Result<T, E> {
+    /// Keeps the success value and converts the existing error without inspecting its category.
     fn attempt(self) -> Result<T, ValidationError> {
         self.map_err(Into::into)
     }
 }
+/// Checks the retained Pythagorean control and returns the shared strictly unresolved exact zero.
 fn zero_unknown_to_bounded_predicates() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one())
 }
+/// Exact one-half for hole placement and nonvertex membership queries.
 fn half() -> Real {
     (Real::one() / Real::from(2)).unwrap()
 }
 
 #[test]
+/// Requires singular X scale to remain invalid before both empty and nonempty region handling.
 fn primary_scale_rejects_singular_input_including_empty() {
     for region in [curve::empty(), curve::square(1).unwrap()] {
         let error = curve::scaled(&region, 0, 1)
@@ -48,6 +56,7 @@ fn primary_scale_rejects_singular_input_including_empty() {
 }
 
 #[test]
+/// Requires errors for a singular planar matrix on empty and square inputs, without asserting the error category.
 fn primary_transform_rejects_singular_input_including_empty() {
     let matrix = Matrix4::affine_nonuniform_scale([0.into(), 1.into(), 1.into()]);
     for region in [curve::empty(), curve::square(1).unwrap()] {
@@ -56,6 +65,7 @@ fn primary_transform_rejects_singular_input_including_empty() {
 }
 
 #[test]
+/// Requires undecided scale/determinant admission instead of successful collapsed geometry.
 fn unknown_scale_does_not_become_empty_geometry() {
     let error = curve::scaled(
         &curve::square(1).unwrap(),
@@ -68,6 +78,7 @@ fn unknown_scale_does_not_become_empty_geometry() {
 }
 
 #[test]
+/// Requires an unresolved face-coordinate query to return undecided, not a successful boundary `None`.
 fn primary_query_distinguishes_uncertainty_from_boundary() {
     let square = curve::square(1).unwrap();
     let error = curve::contains_xy(&square, zero_unknown_to_bounded_predicates(), half())
@@ -77,6 +88,7 @@ fn primary_query_distinguishes_uncertainty_from_boundary() {
 }
 
 #[test]
+/// Checks contextual query uncertainty retains the exact-curve variant and a downcastable native source.
 fn contextual_query_retains_the_native_blocker() {
     let error = curve::contains_xy_with_context(
         &curve::square(1).unwrap(),
@@ -97,6 +109,8 @@ fn contextual_query_retains_the_native_blocker() {
 }
 
 #[test]
+/// Normalizes three signed homogeneous gauges of the same invertible XY map despite a singular 4D matrix.
+/// Checks exact area six, bounds, one hole-free linear profile and all four transformed corner values.
 fn supported_homogeneous_scale_is_divided_out() {
     let square = curve::square(1).unwrap();
     // On z=0: (x,y) -> (2*x+1, -3*y+2). The third column is irrelevant.
@@ -128,6 +142,7 @@ fn supported_homogeneous_scale_is_divided_out() {
 }
 
 #[test]
+/// Requires an X-dependent homogeneous weight to remain unsupported even for an empty region.
 fn perspective_is_not_silently_discarded() {
     let matrix = Matrix4::from_row_major(
         [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1].map(Real::from),
@@ -141,6 +156,7 @@ fn perspective_is_not_silently_discarded() {
 }
 
 #[test]
+/// Requires nonzero Z contributions from X, Y or translation to remain unsupported before empty handling.
 fn out_of_plane_geometry_is_not_silently_projected() {
     for (row, column) in [(2, 0), (2, 1), (2, 3)] {
         let mut matrix = Matrix4::identity();
@@ -155,6 +171,7 @@ fn out_of_plane_geometry_is_not_silently_projected() {
 }
 
 #[test]
+/// Distinguishes a nonzero coordinate image at zero homogeneous weight as unbounded for both inputs.
 fn zero_homogeneous_weight_is_not_finite_geometry() {
     let mut matrix = Matrix4::identity();
     matrix.0[3][3] = 0.into();
@@ -167,6 +184,7 @@ fn zero_homogeneous_weight_is_not_finite_geometry() {
 }
 
 #[test]
+/// Requires the all-zero homogeneous image to be invalid, rather than a point at infinity or empty success.
 fn a_zero_homogeneous_coordinate_image_is_invalid_instead_of_unbounded() {
     let matrix = Matrix4::from_row_major(std::array::from_fn(|_| Real::zero()));
     for region in [curve::empty(), curve::square(1).unwrap()] {
@@ -176,6 +194,8 @@ fn a_zero_homogeneous_coordinate_image_is_invalid_instead_of_unbounded() {
 }
 
 #[test]
+/// Uses an unresolved exact-zero Z translation to exercise strict/approximate/strict plane admission.
+/// Strict calls stay undecided; approximate output retains its local qualification and exact area one.
 fn matrix_admission_uses_the_selected_policy_without_certainty_upgrade() {
     let square = curve::square(1).unwrap();
     let mut matrix = Matrix4::identity();
@@ -200,6 +220,7 @@ fn matrix_admission_uses_the_selected_policy_without_certainty_upgrade() {
 }
 
 #[test]
+/// Checks definite square interior/boundary/exterior classifications and canonical-empty outside membership.
 fn boundary_inside_outside_and_empty_queries_remain_definite() {
     let square = curve::square(1).unwrap();
     for (x, y, expected) in [
@@ -216,6 +237,8 @@ fn boundary_inside_outside_and_empty_queries_remain_definite() {
 }
 
 #[test]
+/// Translates, reflects/scales, rotates and identity-transforms empty geometry before union and subtraction.
+/// Requires emptiness to remain consumable, restored area four and a subsequent empty difference.
 fn canonical_empty_transforms_feed_subsequent_composition() {
     let empty = curve::translated(&curve::empty(), 2, 3).attempt().unwrap();
     let empty = curve::scaled(&empty, -2, 3).attempt().unwrap();
@@ -236,6 +259,8 @@ fn canonical_empty_transforms_feed_subsequent_composition() {
 }
 
 #[test]
+/// Reflects/scales, translates and rotates a square with a square hole, checking area eighteen at each stage.
+/// Height-two extrusion must be locally certified, have paired geometric edges and signed six-volume 216.
 fn strict_transforms_keep_holes_area_and_extrusion_volume() {
     let square = curve::square(2).unwrap();
     let hole = curve::translated(&curve::square(1).unwrap(), half(), half())
@@ -270,6 +295,7 @@ fn strict_transforms_keep_holes_area_and_extrusion_volume() {
 }
 
 #[test]
+/// Requires ordinary/contextual singular scaling through the raw adapter to retain exact-curve modeling sources.
 fn scalar_adapter_preserves_native_transform_errors() {
     use csgrs::adapter::{AdapterError, RawCurveRegion};
     let square = RawCurveRegion::square(1.into()).unwrap();
@@ -295,6 +321,8 @@ fn scalar_adapter_preserves_native_transform_errors() {
 }
 
 #[test]
+/// Requires NaN Z translation and infinite Z scale to fail even though planar source coordinates have zero Z.
+/// Checks error presence only, not a specific scalar category.
 fn scalar_adapter_does_not_ignore_nonfinite_third_components() {
     let square = csgrs::adapter::CurveRegionF64::square(1.0).unwrap();
     assert!(square.translate(0.0, 0.0, f64::NAN).is_err());
@@ -302,6 +330,7 @@ fn scalar_adapter_does_not_ignore_nonfinite_third_components() {
 }
 
 #[test]
+/// Requires Z translation and an X quarter-turn to retain unsupported-transform errors through both adapter paths.
 fn scalar_adapter_rejects_out_of_plane_translation_and_rotation() {
     use csgrs::adapter::{AdapterError, RawCurveRegion};
     let square = RawCurveRegion::square(1.into()).unwrap();
@@ -324,6 +353,7 @@ fn scalar_adapter_rejects_out_of_plane_translation_and_rotation() {
 }
 
 #[test]
+/// Checks ordinary/contextual X half-turns reflect the square's Y bounds while remaining in the XY plane.
 fn scalar_adapter_keeps_plane_preserving_half_turns() {
     let square = csgrs::adapter::CurveRegionF64::square(1.0).unwrap();
     // X half-turn maps (x,y,0) to (x,-y,0), not the identity.
@@ -341,6 +371,8 @@ fn scalar_adapter_keeps_plane_preserving_half_turns() {
 }
 
 #[test]
+/// Warms identity admission, adds exact rational `10^-12` Z translation and requires unsupported errors under both policies.
+/// Restoring zero must recover area one; this changes the input rather than retrying with a larger budget.
 fn changed_matrix_constraints_are_rechecked_and_recovery_succeeds() {
     let square = curve::square(1).unwrap();
     let mut matrix = Matrix4::identity();
@@ -366,6 +398,9 @@ fn changed_matrix_constraints_are_rechecked_and_recovery_succeeds() {
 }
 
 #[test]
+/// Compares affine-transform-after-cut with cut-after-transform for an exact square/hole fixture.
+/// Requires determinant-scaled area eighteen on both paths and empty symmetric difference; the native Boolean
+/// equivalence check is separate from the independently derived area expectation.
 fn affine_transform_commutes_with_a_regularized_cut() {
     let square = curve::square(2).unwrap();
     let hole = curve::translated(&curve::square(1).unwrap(), half(), half()).unwrap();
