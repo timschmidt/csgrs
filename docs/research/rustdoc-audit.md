@@ -5793,6 +5793,91 @@ The owner's full-check waiver applies. The future-agent public/private 100%
 Rustdoc mandate remains in root AGENTS.md. Overall repository coverage and the
 complete-file semantic audit remain unfinished.
 
+## Hyperlimit adversarial predicate and property corpus
+
+Baseline: `bd177a4c0` on `rustdoc`. Read every line of
+`crates/hyperlimit/tests/adversarial_degeneracies.rs` (347 baseline lines),
+`adversarial_predicates.rs` (587), and `adversarial_props.rs` (496). The owning
+layer is Hyperlimit's qualification corpus, with affected scalar imports,
+predicate outcomes, retained structural facts, homogeneous constructions,
+intersections, and distance/classification consumers. Relevant properties are
+P1/P3/P4 and P8–P11/P19: exact inputs/construction, policy scope, certainty,
+retained evidence, and explicit uncertainty. Missing acceptance witnesses were
+Rustdoc for all private declarations and descriptions of assertion scope.
+
+Added documentation for all 75 declarations: 20, 23, and 32 respectively,
+including 19 macro-contained property functions and the nested `evaluated_order`
+helper. The 43 test functions and nested helper are source-documented even though
+ordinary Rustdoc omits their standalone pages. Reviewed the previously audited
+`predicate.rs` outcome definition again to confirm that derived equality compares
+complete outcomes, including certainty/stage or uncertainty/stage, for the two
+batch/scalar fixtures. Other predicate checks generally extract values.
+
+The tests select APPROXIMATE_512, including the one historically named
+`strict_predicates_decide_scalar_signs_and_ordering`; they do not independently
+assert Exact receipts. Repeated queries do not assert cache behavior. The
+unknown-zero helper requires structural uncertainty for `sin(1)^2+cos(1)^2-1`,
+which does not imply policy-level undecidability. The 17-value scalar comparison
+corpus skips pairs whose precision -256 enclosure fails or contains zero;
+it is not an independent scalar kernel or exhaustive comparison-completion
+witness. Structural facts and advisory scheduling enum tests do not measure
+actual dispatch, storage allocation, leaks, or performance.
+
+Documented input conversion and specific mathematical scope: finite floats are
+imported exactly after any float arithmetic in fixture construction. The batch
+row containing `1e150+1` therefore collapses to identical points before import.
+The subnormal orientation determinant is exactly 2^-2148 although primitive
+binary64 multiplication underflows. Unit-circle perturbations are formed in
+f64; the sphere portion checks only its center. Three-point plane orientation
+has the opposite sign to the chosen coefficient normal. The Pappus fixture
+checks explicit rational intersections, and the pentagon seed is an authored
+rational polygon, not an exact regular pentagon. Its five-round construction
+replay is in-process geometry, not serialization.
+
+The property corpus requests 256 cases per property over bounded integers,
+including exact integer-valued f64 adapters. Conditional assertions may accept
+unknown outcomes; comparisons of optional values may accept two unknowns.
+Documented each such boundary rather than changing assertions. The vertical
+segment/ray domain `[0,20]^2` always satisfies x+y <= 40, so it covers hits only.
+The homogeneous coordinate-plane fixture checks affine conversion before
+homogeneous incidence; corrected the inline comment that claimed the reverse
+order. Also corrected the segment symmetry comment to acknowledge optional
+unknown results. No fixture, helper implementation, assertion, policy, or
+predicate order changed.
+
+Independent arithmetic review used Python Fraction to solve the Pappus line
+pairs, obtain `(8/5,2/5)`, `(35/11,5/11)`, `(9/2,1/2)`, and check their zero
+determinant. A separate rational line-intersection calculation verified all
+five inner/outer rounds on the exact affine pentagon coordinates. Binary64
+checks confirmed `1e150+1 == 1e150`, the smallest positive float's exact value
+2^-1074, and multiplication underflow; Fraction verified its square 2^-2148.
+Enumerating all 441 vertical-hit x/y pairs confirmed the stated domain limit.
+These calculations validate fixture arithmetic, not the Rust implementation.
+
+Validation after the final source edit:
+
+- Focused Rustfmt and `git diff --check` passed. All three files are identical
+  to baseline after removing only comment-only and blank lines. A scoped scan
+  confirmed Rustdoc on all 75 named declarations, including macro and nested
+  functions.
+- `cargo check --locked -p hyperlimit --test adversarial_degeneracies --test
+  adversarial_predicates --test adversarial_props --all-features --offline -j2`
+  passed. The same targets with `--no-default-features` also passed.
+- Private Rustdoc for all three targets passed with all features, checked
+  own-library metadata and cached dependency paths, `--document-private-items`,
+  warnings denied, and broken/private links denied. Verified 34 complete
+  rendered module/helper/constant/type-alias doc groups against source. The 43
+  test functions and one nested helper remain source-reviewed and compiled.
+- No runtime Rust tests, random property executions, or performance checks ran.
+  These test targets are the affected downstream consumers. Shared target
+  storage remains about 1.6 GiB; no additional target directory was created.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-adversarial-{check,minimal-check,private}.log`;
+checked artifact metadata uses the same prefix and `artifacts.jsonl` suffix.
+The independent arithmetic script is `/tmp/csgrs-adversarial-arithmetic.py`.
+Full workflow checks remain waived by the owner. The complete repository audit
+remains active; the existing 100% public/private mandate in AGENTS.md is retained.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

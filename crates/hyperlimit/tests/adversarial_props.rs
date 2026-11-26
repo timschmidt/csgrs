@@ -1,3 +1,12 @@
+//! Generated integer-domain predicate and construction properties.
+//!
+//! Proptest requests 256 cases per property. Coordinates are bounded integers,
+//! sometimes carried through exactly representable `f64`, rather than arbitrary
+//! floating inputs. All predicates use APPROXIMATE_512. Value extraction drops
+//! receipts; conditional assertions can admit undecided results, and equality
+//! of optional results can admit two unknowns. Only batch/scalar comparison
+//! checks complete outcomes. Each property states the guarantee it asserts.
+
 use hyperlimit::{
     AabbSphereIntersection, CircleLineRelation, CircleSegmentRelation, ConvexPointLocation, Plane3,
     PlaneSide, Point2, Point3, PredicateOutcome, Sign, SphereIntersection,
@@ -13,53 +22,66 @@ use hyperlimit::{
 };
 use proptest::prelude::*;
 
+/// Policy used by these fixtures; permits an approximate terminal without requiring it.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Exact scalar carrier used to retain imported binary values and constructed expressions.
 type Real = hyperreal::Real;
 
+/// Import the exact binary value of a finite `f64`; panic for NaN or infinity.
 fn real(value: f64) -> Real {
     Real::try_from(value).expect("finite generated scalar")
 }
 
+/// Build a planar point from exact binary imports; panic on any nonfinite coordinate.
 fn p2(x: f64, y: f64) -> Point2 {
     Point2::new(real(x), real(y))
 }
 
+/// Build a spatial point from exact binary imports; panic on any nonfinite coordinate.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(real(x), real(y), real(z))
 }
 
+/// Build a planar point by exact integer conversion of both coordinates.
 fn p2i(x: i32, y: i32) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
+/// Translate planar coordinates by exact integer offsets.
 fn translate2i(point: &Point2, dx: i32, dy: i32) -> Point2 {
     let dx = Real::from(dx);
     let dy = Real::from(dy);
     Point2::new(&point.x + &dx, &point.y + &dy)
 }
 
+/// Scale planar coordinates by an exact integer; the helper imposes no positivity check.
 fn scale2i(point: &Point2, scale: i32) -> Point2 {
     let scale = Real::from(scale);
     Point2::new(&point.x * &scale, &point.y * &scale)
 }
 
+/// Negate the x coordinate, reflecting across the y axis and reversing orientation.
 fn reflect_x(point: &Point2) -> Point2 {
     Point2::new(-&point.x, point.y.clone())
 }
 
+/// Generate integer-valued f64 coordinates in the inclusive range `[-10000, 10000]`.
 fn small_coord() -> impl Strategy<Value = f64> {
     (-10_000_i32..=10_000).prop_map(|value| value as f64)
 }
 
+/// Generate two independent bounded integer coordinates and import them exactly.
 fn point2() -> impl Strategy<Value = Point2> {
     (small_coord(), small_coord()).prop_map(|(x, y)| p2(x, y))
 }
 
+/// Generate three independent bounded integer coordinates and import them exactly.
 fn point3() -> impl Strategy<Value = Point3> {
     (small_coord(), small_coord(), small_coord()).prop_map(|(x, y, z)| p3(x, y, z))
 }
 
+/// Extract the optional decided value, discarding stage, certainty, and uncertainty details.
 fn value<T: Copy>(outcome: PredicateOutcome<T>) -> Option<T> {
     outcome.value()
 }
@@ -67,6 +89,7 @@ fn value<T: Copy>(outcome: PredicateOutcome<T>) -> Option<T> {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(256))]
 
+    /// Compare optional cyclic signs; require swap reversal only when both signs decide.
     #[test]
     fn orient2d_is_cyclic_and_reverses_on_swap(a in point2(), b in point2(), c in point2()) {
         let abc = value(orient2(&a, &b, &c, APPROX));
@@ -79,6 +102,9 @@ proptest! {
         }
     }
 
+    /// Require the corresponding line-side value whenever direct orientation decides.
+    ///
+    /// An unknown direct orientation imposes no assertion on the line classifier.
     #[test]
     fn classify_point_line_matches_orient2d_sign(a in point2(), b in point2(), c in point2()) {
         let orient = value(orient2(&a, &b, &c, APPROX));
@@ -89,6 +115,7 @@ proptest! {
         }
     }
 
+    /// Compare complete batch/scalar outcomes for generated lists of zero through 63 triples.
     #[test]
     fn orient2d_batch_matches_scalar_for_generated_cases(cases in prop::collection::vec((point2(), point2(), point2()), 0..64)) {
         prop_assert_eq!(
@@ -100,6 +127,7 @@ proptest! {
         );
     }
 
+    /// Require reversed signs after swapping two vertices when both orientations decide.
     #[test]
     fn orient3d_reverses_when_two_vertices_swap(a in point3(), b in point3(), c in point3(), d in point3()) {
         let abcd = value(orient3(&a, &b, &c, &d, APPROX));
@@ -110,6 +138,7 @@ proptest! {
         }
     }
 
+    /// Require a decided z-plane side matching comparison of exact small integer coordinates.
     #[test]
     fn axis_aligned_plane_classification_matches_coordinate_difference(x in small_coord(), y in small_coord(), z in small_coord(), plane_z in small_coord()) {
         let point = p3(x, y, z);
@@ -125,6 +154,10 @@ proptest! {
         prop_assert_eq!(value(classify_point_plane(&point, &plane, APPROX)), Some(expected));
     }
 
+    /// Require Zero whenever orientation decides for integer points `a`, `a+d`, `a+t*d`.
+    ///
+    /// The direction may vanish and t may extrapolate beyond the segment; unknown
+    /// outcomes are allowed by the conditional assertion.
     #[test]
     fn generated_collinear_points_classify_as_zero_on_oriented_line(x0 in -1000_i32..=1000, y0 in -1000_i32..=1000, dx in -100_i32..=100, dy in -100_i32..=100, t in -100_i32..=100) {
         let a = p2(x0 as f64, y0 as f64);
@@ -136,6 +169,7 @@ proptest! {
         }
     }
 
+    /// Require Zero whenever orientation decides for the xy basis and a generated point at z = 0.
     #[test]
     fn generated_coplanar_axis_points_classify_as_zero_on_plane(x in small_coord(), y in small_coord()) {
         let a = p3(0.0, 0.0, 0.0);
@@ -148,16 +182,20 @@ proptest! {
         }
     }
 
+    /// Check a coordinate-plane intersection's homogeneous weight, affine value, and incidence.
+    ///
+    /// Coordinates range inclusively from -1000 to 1000. The weight must equal one;
+    /// affine conversion is also exercised before the homogeneous incidence queries.
+    /// Intersecting the x/y plane line with the z plane must reproduce the same point.
     #[test]
     fn homogeneous_coordinate_plane_intersections_round_trip_without_scalar_division(
         x in -1000_i32..=1000,
         y in -1000_i32..=1000,
         z in -1000_i32..=1000,
     ) {
-        // Common/homogeneous vectors preserve rational geometric objects. This generated test
-        // keeps the oracle at the object level: three coordinate planes should
-        // produce one homogeneous point that satisfies all three planes before
-        // any affine division is requested.
+        // Three coordinate planes define one homogeneous point. Check its weight
+        // and affine conversion, then test homogeneous incidence and agreement
+        // with the construction through the x/y intersection line.
         let x_plane = Plane3::new(p3(1.0, 0.0, 0.0), Real::from(-x));
         let y_plane = Plane3::new(p3(0.0, 1.0, 0.0), Real::from(-y));
         let z_plane = Plane3::new(p3(0.0, 0.0, 1.0), Real::from(-z));
@@ -176,6 +214,10 @@ proptest! {
         prop_assert_eq!(line.intersect_plane(&z_plane), point);
     }
 
+    /// Compare optional segment relations after operand exchange and one endpoint reversal.
+    ///
+    /// Matching unknown values satisfy these equalities; no independent intersection
+    /// oracle or certainty assertion is supplied.
     #[test]
     fn segment3_intersection_is_symmetric_for_generated_integer_segments(
         a in point3(),
@@ -183,9 +225,8 @@ proptest! {
         c in point3(),
         d in point3(),
     ) {
-        // Symmetry is the minimum metamorphic law for a segment/segment
-        // classifier. The oracle is the exact relation itself under operand
-        // exchange, not an approximate closest-point computation.
+        // Compare optional relation values under operand exchange and endpoint
+        // reversal. These equalities also accept matching unknown outcomes.
         let relation = classify_segment3_intersection(&a, &b, &c, &d, APPROX).value();
         prop_assert_eq!(
             relation,
@@ -197,6 +238,10 @@ proptest! {
         );
     }
 
+    /// Compare optional distance orderings under cyclic and swapped triangle vertices.
+    ///
+    /// Squared thresholds range inclusively from zero to one million; degenerate
+    /// triangles are not excluded and matching unknowns satisfy the equalities.
     #[test]
     fn point_triangle3_distance_is_permutation_invariant(
         point in point3(),
@@ -223,6 +268,9 @@ proptest! {
         );
     }
 
+    /// Require a decided Equal comparison against zero at the first triangle vertex.
+    ///
+    /// Generated triangles may be degenerate; the assertion does not inspect certainty.
     #[test]
     fn point_triangle3_vertices_have_exactly_zero_distance(
         a in point3(),
@@ -237,6 +285,10 @@ proptest! {
         );
     }
 
+    /// Compare optional distance orderings after endpoint reversal and integer translation.
+    ///
+    /// Squared thresholds are in `[0, 1000000]`; translation components are in
+    /// `[-1000, 1000]`. Matching unknowns satisfy the invariance assertions.
     #[test]
     fn point_segment2_distance_is_symmetric_and_translation_invariant(
         point in point2(),
@@ -268,6 +320,11 @@ proptest! {
         );
     }
 
+    /// Require zero-distance values at incident points and Touching for two collapsed solids.
+    ///
+    /// Checks cover planar/spatial segments, a spatial line, and a horizontal plane,
+    /// plus coincident zero-radius spheres and a point box against a zero-radius
+    /// sphere. Assertions inspect decided values, not Exact certainty receipts.
     #[test]
     fn zero_distance_feature_comparisons_remain_exact_on_incidence(
         a in point3(),
@@ -304,6 +361,11 @@ proptest! {
         );
     }
 
+    /// Require intersection for vertical segments/rays through points in `[0, 20]^2`.
+    ///
+    /// All generated x/y pairs satisfy `x+y <= 40`, including edges and vertices of
+    /// the triangle. Thus this domain exercises hits only. The hit point's plane
+    /// distance must also compare equal to zero.
     #[test]
     fn generated_vertical_segment_and_ray_hit_axis_triangle(
         x in 0_i32..=20,
@@ -342,6 +404,10 @@ proptest! {
         }
     }
 
+    /// Require line/segment relations from comparing integer `abs(y)` with radius five.
+    ///
+    /// The y range is `[-10, 10]`; segment endpoints at x = -10 and 10 cover every
+    /// possible intersection with the circle.
     #[test]
     fn generated_horizontal_circle_lines_match_radius_squared(y in -10_i32..=10) {
         let center = p2(0.0, 0.0);
@@ -371,6 +437,11 @@ proptest! {
         );
     }
 
+    /// Require square/cube location labels from exact coordinate interval membership.
+    ///
+    /// Queries range over integer `[-2, 6]^3`; the closed square and cube span
+    /// `[0, 4]` on each axis. Polygon winding and six outward plane normals encode
+    /// the same inclusive boundaries.
     #[test]
     fn generated_axis_boxes_match_convex_classifiers(x in -2_i32..=6, y in -2_i32..=6, z in -2_i32..=6) {
         let square = vec![p2(0.0, 0.0), p2(4.0, 0.0), p2(4.0, 4.0), p2(0.0, 4.0)];
@@ -411,6 +482,10 @@ proptest! {
         );
     }
 
+    /// Check decided incircle signs against `x*x+y*y` for integer queries in `[-4, 4]^2`.
+    ///
+    /// Unknown outcomes are allowed; the expected sign uses radius squared one and
+    /// the fixed counterclockwise circle-point order.
     #[test]
     fn incircle_unit_circle_axis_cases_track_radius_squared(x in -4_i32..=4, y in -4_i32..=4) {
         let a = p2(1.0, 0.0);
@@ -431,6 +506,11 @@ proptest! {
         }
     }
 
+    /// Compare optional orientation signs after positive integer scaling; check reflected decisions.
+    ///
+    /// Coordinates range from -32 through 31 and scales from one through 15. Scaling
+    /// multiplies the determinant by the scale squared; negating x reverses it.
+    /// The reflection assertion applies only when both outcomes decide.
     #[test]
     fn orient2d_scaling_and_reflection_follow_determinant_sign(
         ax in -32_i32..32, ay in -32_i32..32,
@@ -463,6 +543,11 @@ proptest! {
         }
     }
 
+    /// Compare optional incircle signs before/after an exact integer similarity.
+    ///
+    /// Coordinates range from -8 through 7, translations from -16 through 15, and
+    /// positive scales from one through seven. Matching unknowns satisfy equality;
+    /// no nondegeneracy restriction or certainty assertion is imposed.
     #[test]
     fn incircle2d_translation_and_positive_scaling_preserve_sign(
         ax in -8_i32..8, ay in -8_i32..8,

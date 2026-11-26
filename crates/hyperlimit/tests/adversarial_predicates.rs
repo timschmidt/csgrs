@@ -1,3 +1,11 @@
+//! Fixed scalar, determinant, and structural-metadata regression fixtures.
+//!
+//! Predicate queries here use APPROXIMATE_512, including the historically named
+//! `strict_predicates_decide_scalar_signs_and_ordering` test. Most assertions
+//! inspect values only; the batch comparison compares complete outcomes.
+//! Metadata and schedule hints are checked separately from actual dispatch,
+//! allocation, performance, or certainty claims.
+
 use hyperlimit::{
     DeterminantScheduleHint, ExactPredicateKernel, LineSide, Plane3, PlaneSide, Point2, Point3,
     PredicateOutcome, RationalStorageClass, RealExactSetDenominatorKind,
@@ -6,32 +14,43 @@ use hyperlimit::{
     compare_reals, incircle2, orient2, orient2_batch, orient3,
 };
 
+/// Policy used by these fixtures; permits an approximate terminal without requiring it.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Exact scalar carrier used to retain imported binary values and constructed expressions.
 type Real = hyperreal::Real;
 
+/// Import the exact binary value of a finite `f64`; panic for NaN or infinity.
 fn real(value: f64) -> Real {
     Real::try_from(value).expect("finite test scalar")
 }
 
+/// Build a planar point from exact binary imports; panic on any nonfinite coordinate.
 fn p2(x: f64, y: f64) -> Point2 {
     Point2::new(real(x), real(y))
 }
 
+/// Build a spatial point from exact binary imports; panic on any nonfinite coordinate.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(real(x), real(y), real(z))
 }
 
+/// Extract a decided value or panic on uncertainty, discarding certainty and stage.
 fn decided<T: Copy>(outcome: PredicateOutcome<T>) -> T {
     outcome.value().expect("adversarial case should decide")
 }
 
+/// Construct an exact fraction; panic when the denominator is zero.
 fn rational(numerator: i64, denominator: u64) -> Real {
     hyperreal::Rational::fraction(numerator, denominator)
         .expect("valid test rational")
         .into()
 }
 
+/// Construct `sin(1)^2 + cos(1)^2 - 1` and require structurally unknown zero status.
+///
+/// The expression is mathematically zero. Structural uncertainty here does not
+/// claim that a later policy-driven predicate cannot prove it.
 fn unknown_zero() -> Real {
     let one = Real::from(1);
     let sine = one.clone().sin();
@@ -45,6 +64,10 @@ fn unknown_zero() -> Real {
     value
 }
 
+/// Check rational signs/order and twice classify `pi - 103993/33102` as positive.
+///
+/// Despite its historical name, this fixture selects APPROXIMATE_512. Repeating
+/// the same query does not assert cache hits, stage, or certainty.
 #[test]
 fn strict_predicates_decide_scalar_signs_and_ordering() {
     assert_eq!(
@@ -67,6 +90,7 @@ fn strict_predicates_decide_scalar_signs_and_ordering() {
     );
 }
 
+/// Require `-2*atan(sqrt(2)-2) - pi/8 > 0` with a negative arctangent argument.
 #[test]
 fn scalar_ordering_accounts_for_inverse_atan_argument_signs() {
     let negative_argument = Real::from(2).sqrt().unwrap() - Real::from(2);
@@ -79,6 +103,10 @@ fn scalar_ordering_accounts_for_inverse_atan_argument_signs() {
     );
 }
 
+/// Require `sqrt(225/8) > 4`, supported by a positive certified interval lower bound.
+///
+/// The interval request uses precision -128; the comparison assertion itself
+/// extracts only the decided ordering.
 #[test]
 fn scalar_ordering_does_not_treat_scaled_binade_estimates_as_exact() {
     let radius = rational(225, 8).sqrt().unwrap();
@@ -92,8 +120,16 @@ fn scalar_ordering_does_not_treat_scaled_binade_estimates_as_exact() {
     );
 }
 
+/// Compare 17 scalar fixtures pairwise against certified difference intervals.
+///
+/// Pairs whose interval fails or contains zero are skipped. This checks agreement
+/// on separated pairs, not equality coverage, an independent arithmetic kernel,
+/// or completion of every pair.
 #[test]
 fn scalar_comparison_cascade_matches_separated_full_evaluation_corpus() {
+    /// Order a difference only when its precision -256 rational enclosure excludes zero.
+    ///
+    /// Return None on interval failure or zero containment, including exact equality.
     fn evaluated_order(left: &Real, right: &Real) -> Option<core::cmp::Ordering> {
         let difference = left - right;
         let [lower, upper] = difference.certified_rational_interval(-256)?;
@@ -144,6 +180,11 @@ fn scalar_comparison_cascade_matches_separated_full_evaluation_corpus() {
     }
 }
 
+/// Check shared-denominator views, masks, storage classes, and schedule metadata.
+///
+/// Fifths, sevenths, zeros, and eighths exercise admitted views. Mixed denominators
+/// and a symbolic coordinate must decline the view. The assertions inspect
+/// reported metadata and a borrowed coordinate, not allocation or memory leaks.
 #[test]
 fn point_shared_scale_views_preserve_coordinate_facts_without_storage_leaks() {
     let point2 = Point2::new(rational(1, 5), rational(-2, 5));
@@ -226,6 +267,10 @@ fn point_shared_scale_views_preserve_coordinate_facts_without_storage_leaks() {
     assert!(symbolic.shared_scale_view().is_none());
 }
 
+/// Check zero/unit/axis masks for sparse points and preserve an unknown-zero coordinate.
+///
+/// The unknown-zero fixture must not be promoted to known sparse support or a
+/// shared-denominator schedule merely because its mathematical value is zero.
 #[test]
 fn point_structural_facts_preserve_sparse_coordinate_metadata() {
     let point2 = Point2::new(Real::from(0), Real::from(1));
@@ -274,6 +319,10 @@ fn point_structural_facts_preserve_sparse_coordinate_metadata() {
     assert!(!symbolic_facts.exact.has_shared_denominator_schedule());
 }
 
+/// Check selected PI/LOG/TRIG/EXP dependency flags for two symbolic points.
+///
+/// The assertions cover specified presence/absence bits rather than equality of
+/// the complete dependency mask.
 #[test]
 fn point_structural_facts_summarize_symbolic_dependencies() {
     let point2 = Point2::new(Real::pi(), Real::from(2).ln().unwrap());
@@ -314,6 +363,11 @@ fn point_structural_facts_summarize_symbolic_dependencies() {
     );
 }
 
+/// Check local denominator, sparsity, and symbolic metadata in retained predicate evidence.
+///
+/// Two points can each share a denominator without all fixed coordinates sharing
+/// one. Line, incircle, and insphere constructions must retain the checked masks
+/// and dependency flags; this fixture does not evaluate their query determinants.
 #[test]
 fn predicate_facts_preserve_point_local_shared_scales() {
     let a = Point2::new(rational(1, 3), rational(2, 3));
@@ -410,6 +464,10 @@ fn predicate_facts_preserve_point_local_shared_scales() {
     assert_eq!(facts.fixed_point_sparse_support_mask(), 0b0111);
 }
 
+/// Check sparse, shared-denominator, dyadic, rational, and generic schedule candidates.
+///
+/// Each fixture checks the advisory enum and its kernel/count payload where
+/// present. No predicate execution or dispatch-trace count is asserted.
 #[test]
 fn predicate_facts_select_advisory_determinant_schedule_hints() {
     let origin = Point2::new(Real::from(0), Real::from(0));
@@ -461,6 +519,7 @@ fn predicate_facts_select_advisory_determinant_schedule_hints() {
     );
 }
 
+/// Check signs above, below, and on an x-axis base, including a positive subnormal height.
 #[test]
 fn orient2d_handles_exact_degenerate_and_near_degenerate_cases() {
     let a = p2(0.0, 0.0);
@@ -486,6 +545,9 @@ fn orient2d_handles_exact_degenerate_and_near_degenerate_cases() {
     );
 }
 
+/// Check cyclic vertex invariance, odd vertex-swap reversal, and the Left line-side label.
+///
+/// The permutations reorder points, not the x/y coordinate axes.
 #[test]
 fn orientation_sign_changes_under_coordinate_permutation() {
     let a = p2(-3.0, 2.0);
@@ -506,6 +568,10 @@ fn orientation_sign_changes_under_coordinate_permutation() {
     );
 }
 
+/// Compare complete batch/scalar outcomes for near-collinear, collapsed, and tiny rows.
+///
+/// The `1e150 + 1` expressions round to `1e150` before import, so that row has
+/// identical points. Agreement does not supply an independent determinant oracle.
 #[test]
 fn batch_predicates_match_scalar_predicates_on_hostile_rows() {
     let cases = vec![
@@ -527,6 +593,10 @@ fn batch_predicates_match_scalar_predicates_on_hostile_rows() {
     );
 }
 
+/// Check signed z-side and coplanar orientation, then two plane-classification conventions.
+///
+/// The xy triangle gives negative orient3 above it and positive below. The
+/// coefficient-plane control uses z = 2 and a point at z = 3.
 #[test]
 fn orient3d_and_plane_classification_agree_on_sides_and_degeneracy() {
     let a = p3(0.0, 0.0, 0.0);
@@ -566,6 +636,7 @@ fn orient3d_and_plane_classification_agree_on_sides_and_degeneracy() {
     );
 }
 
+/// Require positive/negative/zero signs at the center, exterior, and boundary of a unit circle.
 #[test]
 fn incircle_detects_inside_outside_and_on_circle_cases() {
     let a = p2(1.0, 0.0);

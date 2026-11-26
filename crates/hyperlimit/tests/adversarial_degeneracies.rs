@@ -1,34 +1,53 @@
+//! Fixed degeneracy, exact-construction, and transformation regressions.
+//!
+//! Finite floats enter as their exact binary values; later point arithmetic uses
+//! `Real`. Predicate assertions use APPROXIMATE_512 and extract values without
+//! inspecting certainty or stage. Explicit rational-coordinate assertions check
+//! selected construction outputs separately. Replay here is repeated geometric
+//! construction in one process, not serialization.
+
 use hyperlimit::{
     LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, Sign, classify_point_line,
     classify_point_oriented_plane, classify_point_plane, compare_reals,
     construct_line_intersection_point, incircle2, insphere3, orient2, orient3,
 };
 
+/// Policy used by these fixtures; permits an approximate terminal without requiring it.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Exact scalar carrier used to retain imported binary values and constructed expressions.
 type Real = hyperreal::Real;
 
+/// Import the exact binary value of a finite `f64`; panic for NaN or infinity.
 fn real(value: f64) -> Real {
     Real::try_from(value).expect("finite test scalar")
 }
 
+/// Build a planar point from exact binary imports; panic on any nonfinite coordinate.
 fn p2(x: f64, y: f64) -> Point2 {
     Point2::new(real(x), real(y))
 }
 
+/// Build a spatial point from exact binary imports; panic on any nonfinite coordinate.
 fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(real(x), real(y), real(z))
 }
 
+/// Add planar coordinates exactly, used to translate all vertices by one offset.
 fn add2(left: &Point2, right: &Point2) -> Point2 {
     Point2::new(&left.x + &right.x, &left.y + &right.y)
 }
 
+/// Multiply both coordinates by the exact binary value of a finite scale; panic otherwise.
 fn scale2(point: &Point2, scale: f64) -> Point2 {
     let scale = real(scale);
     Point2::new(&point.x * &scale, &point.y * &scale)
 }
 
+/// Return a midpoint and a second point offset by the left normal `(-dy, dx)`.
+///
+/// For distinct endpoints these define the perpendicular bisector. Equal inputs
+/// produce two identical points; this helper does not reject that degeneracy.
 fn perpendicular_bisector(a: &Point2, b: &Point2) -> (Point2, Point2) {
     let two = Real::from(2);
     let midpoint = Point2::new(
@@ -41,14 +60,20 @@ fn perpendicular_bisector(a: &Point2, b: &Point2) -> (Point2, Point2) {
     (midpoint, endpoint)
 }
 
+/// Add spatial coordinates exactly, used to translate all tetrahedron vertices.
 fn add3(left: &Point3, right: &Point3) -> Point3 {
     Point3::new(&left.x + &right.x, &left.y + &right.y, &left.z + &right.z)
 }
 
+/// Extract a decided value or panic on uncertainty, discarding certainty and stage.
 fn decided<T: Copy>(outcome: PredicateOutcome<T>) -> T {
     outcome.value().expect("case should decide")
 }
 
+/// Require positive orientation before/after exact translation and positive scaling.
+///
+/// The base and small height are imported from floats before either transform;
+/// scaling all coordinates by eight multiplies the determinant by 64.
 #[test]
 fn orient2d_translation_and_scaling_invariance_on_near_collinear_rows() {
     let a = p2(-1.0e6, -1.0e6);
@@ -75,6 +100,11 @@ fn orient2d_translation_and_scaling_invariance_on_near_collinear_rows() {
     assert_eq!(scaled, sign);
 }
 
+/// Contrast floating underflow with positive orientation of exact subnormal imports.
+///
+/// The smallest positive binary64 value is `2^-1074`; the exact determinant is
+/// `2^-2148`. Selected input coordinates must expose rational representations;
+/// the predicate assertion checks the decided sign rather than its receipt.
 #[test]
 fn finite_f64_subnormal_import_remains_exact_dyadic_predicate_input() {
     let tiny = f64::from_bits(1);
@@ -94,6 +124,7 @@ fn finite_f64_subnormal_import_remains_exact_dyadic_predicate_input() {
     assert!(c.y.exact_rational().is_some());
 }
 
+/// Require Left for the chosen directed line and Right after reversing its endpoints.
 #[test]
 fn classify_point_line_is_consistent_for_reversed_line_orientation() {
     let a = p2(-3.0, 2.0);
@@ -110,6 +141,10 @@ fn classify_point_line_is_consistent_for_reversed_line_orientation() {
     );
 }
 
+/// Check translation invariance and odd-permutation reversal for a small-height tetrahedron.
+///
+/// The assertions compare decided signs; they do not independently require a
+/// particular nonzero base sign.
 #[test]
 fn orient3d_translation_invariance_and_swap_reversal_on_small_height() {
     let a = p3(0.0, 0.0, 0.0);
@@ -132,6 +167,10 @@ fn orient3d_translation_invariance_and_swap_reversal_on_small_height() {
     assert_eq!(swapped, sign.reversed());
 }
 
+/// Check the opposite sign conventions of coefficient and three-point plane queries.
+///
+/// For the xy triangle in the given order, positive z is Above the coefficient
+/// plane but Below the oriented plane; negative z reverses both labels.
 #[test]
 fn plane_classification_matches_oriented_plane_for_axis_aligned_case() {
     let a = p3(0.0, 0.0, 0.0);
@@ -159,6 +198,10 @@ fn plane_classification_matches_oriented_plane_for_axis_aligned_case() {
     );
 }
 
+/// Check unit-circle boundary and nearby inside/outside queries, plus a sphere center.
+///
+/// Circle offsets are formed in `f64` before exact import. The sphere portion
+/// checks only the positive center query, not a boundary or perturbed sphere.
 #[test]
 fn circle_and_sphere_predicates_distinguish_on_boundary_from_tiny_offsets() {
     let a = p2(1.0, 0.0);
@@ -188,6 +231,11 @@ fn circle_and_sphere_predicates_distinguish_on_boundary_from_tiny_offsets() {
     );
 }
 
+/// Check four radical points on the circle centered at `(2, 2)` with radius two.
+///
+/// The radicals must not expose rational representations. Four integer exterior
+/// controls require negative signs; boundary checks require decided Zero values
+/// without independently asserting Exact certainty.
 #[test]
 fn exactcore_radical_circle_points_certify_the_boundary() {
     let root_two = Real::from(2).sqrt().expect("positive radicand");
@@ -215,6 +263,11 @@ fn exactcore_radical_circle_points_certify_the_boundary() {
     }
 }
 
+/// Compare the three pairwise bisector intersections of a radical-coordinate triangle.
+///
+/// All x/y comparisons must report equality. Increasing the third vertex's y
+/// coordinate by exactly `1/123456789` changes the selected intersection: its x
+/// must decrease and its y increase. Successful construction is required.
 #[test]
 fn exactcore_algebraic_perpendicular_bisectors_concur_but_perturbation_does_not() {
     use core::cmp::Ordering;
@@ -260,6 +313,11 @@ fn exactcore_algebraic_perpendicular_bisectors_concur_but_perturbation_does_not(
     );
 }
 
+/// Check three constructed Pappus points against explicit rational coordinates.
+///
+/// The intersections are `(8/5, 2/5)`, `(35/11, 5/11)`, and `(9/2, 1/2)`.
+/// Each coordinate must expose an exact rational, and their orientation must
+/// decide Zero. The source triples lie on the parallel lines y = 0 and y = 1.
 #[test]
 fn pappus_intersection_triple_is_exactly_collinear() {
     let a = p2(0.0, 0.0);
@@ -290,6 +348,12 @@ fn pappus_intersection_triple_is_exactly_collinear() {
     assert_eq!(decided(orient2(&p, &q, &s, APPROX)), Sign::Zero);
 }
 
+/// Reconstruct one rational affine pentagon through five inner/outer intersection rounds.
+///
+/// The seed is the specified rational polygon, not an exact regular pentagon.
+/// Every round requires rational coordinates and equality with the original
+/// ordered outer array. Supporting-line intersections supply the next operands;
+/// no region Boolean, serialized replay, or certainty receipt is tested.
 #[test]
 fn affine_pentagon_inner_outer_replay_stays_exact_for_five_rounds() {
     let rational = |numerator, denominator| {
