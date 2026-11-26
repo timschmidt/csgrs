@@ -4516,6 +4516,72 @@ Hyperlimit's src and all five under src/geometry now have whole-file records;
 actual predicate implementation modules, most tests and other crate files remain
 substantial work. This is a scoped review milestone, not complete crate coverage.
 
+### Shared decision receipts and composite-policy witnesses, 26 November 2026
+
+Baseline: `140ee89e7`. Owner: Hyperlimit's private composite-decision bookkeeping,
+predicate module declarations and the composite-policy integration consumer.
+Properties: P4/P6/P8–P11/P19/P30. Domain: Decided/Unknown child outcomes, local
+certainty/stage accumulation, strict and terminal-permitted composite reports.
+The missing witnesses were undocumented private records/fields/functions and
+test helpers; the old module introduction incorrectly said strongest certainty
+and implied retention of the first unknown. Reproduced against the current
+match branches and rank tables before editing.
+
+Whole-file reviews: `crates/hyperlimit/src/predicates/decision.rs` (90 baseline
+lines), `crates/hyperlimit/src/predicates/mod.rs` (18), and
+`crates/hyperlimit/tests/composite_policy.rs` (234). All named declarations in
+these files now have explanatory docs: nine decision declarations with four
+fields, eighteen predicate-module declarations and nine test/helper functions.
+The module index describes operation roles without claiming their implementations
+have all been reviewed. Supporting reads of the first part of `predicates/exact.rs`
+and the headers of `nd.rs` and `order.rs` are excerpts only.
+
+DecisionTrace joins the weakest consumed qualification and highest ranked stage,
+not the strongest proof or a chronological trace. Its Exact/Structural default
+is an aggregation identity, not a geometry proof. `decided` updates it only on
+Decided; Unknown returns its own hint/stage without mutation, and the caller
+controls whether to stop. UnknownDecision reconstructs an Unknown outcome without
+a value or earlier receipts. No policy-admissibility check, source provenance,
+worker aggregation or resource counter is supplied by these helpers.
+
+The six composite-policy fixtures preserve both the original now-recognized
+unit-circle identity and separate angle-addition terminal controls. Docs explain
+exactly which tests assert receipts, relation/location, zero ray parameter and
+strict source replay. The constant-halfspace terminal witness checks qualification,
+not its returned feasibility status. Trigonometric proper-hit and vertex-hit
+comments no longer claim that an identity is unprovable or that the fixture
+instruments absence of a coplanarity retest. The geometry, policy sequence,
+assertions and historical fixture names remain unchanged.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Nonblank/noncomment lines are
+  byte-identical to baseline in every edited file.
+- A scoped declaration scan checked 36 documented names across the three fully
+  reviewed files. Private fields were reviewed separately. This is not a global
+  Rustdoc coverage percentage.
+- The first all-feature private Rustdoc attempt failed on three unresolved links
+  in existing module introductions after adding outer module documentation.
+  Fixed only those links: Real and PredicateOutcome in `predicates/nd.rs`, and
+  PredicateOutcome in `predicates/order.rs`, now use explicit targets. These
+  two narrowly edited files remain pending whole-file review.
+- Repeated `cargo rustdoc --locked -p hyperlimit --lib --all-features --offline
+  -j2 -- --document-private-items -D rustdoc::broken_intra_doc_links`: passed.
+  Inspected 31 declaration/field/module documentation groups on rendered pages
+  and confirmed the three corrected links have rendered type-page targets.
+- `cargo check --locked -p hyperlimit --lib --tests --all-features --offline -j2`
+  passed. This compiles the composite-policy consumer and private-helper users
+  without executing the runtime corpus. Test-only comments were source-reviewed.
+- Downstream private csgrs docs with no default features and `curve` passed with
+  locked offline dependencies and broken intra-doc links denied. Shared build
+  storage remains approximately 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-decision-{doc,check,downstream-doc}.log`.
+The shared temporary target is reused. The owner continues to waive full workflow,
+runtime and performance checks for this docs-only session. No implementation,
+fixture, gate, predicate order or dispatch count changed; most predicate module
+bodies and the remaining repository still need whole-file review.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

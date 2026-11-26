@@ -2,7 +2,7 @@
 //!
 //! These helpers are predicates rather than algebra: ordering is a decision
 //! about the sign of a Real difference, so provenance belongs in
-//! [`PredicateOutcome`].
+//! [`PredicateOutcome`](crate::PredicateOutcome).
 
 use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;

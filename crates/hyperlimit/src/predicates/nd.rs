@@ -2,7 +2,8 @@
 //!
 //! These functions provide the predicate-owner boundary for D-dimensional
 //! triangulation crates. They accept coordinate slices, build exact determinant
-//! expressions over [`Real`], and return [`PredicateOutcome`] values rather
+//! expressions over [`Real`](hyperreal::Real), and return
+//! [`PredicateOutcome`](crate::PredicateOutcome) values rather
 //! than silent approximate signs. Object crates retain combinatorics while a
 //! shared exact predicate layer decides orientation and lifted in-sphere signs.
 
