@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `benchmarks/rust/profile_primitives.rs` | Entire file; documented constructor/path counts, receipt loss, finite projection and disjoint cubic/square union timing. | Feature-bundle compilation/private docs passed; benchmark not run. |
+| `benchmarks/rust/feature_pipeline.rs` | Entire file; documented all helpers, nominal work units, immediate Boolean order, length-only cases and export/import timing boundaries. | Declared feature-bundle compilation/private docs passed; runtime catalog and numerical outcomes not executed. |
 | `benchmarks/rust/adapter_graphics_export.rs` | Entire file; documented projected-buffer equality, native intermediate allocation, warmup order and timer/drop boundaries. | Minimal-feature compilation/private docs passed; benchmark unrun. |
 | `benchmarks/rust/mesh_boolean_context.rs` | Entire file; documented historical failure/approximate outcome assertions, upper-median timing and per-policy storage rebuilding. | Minimal-feature compilation/private docs passed; assertions unchanged, runtime outcomes not reproduced. |
 | `benchmarks/rust/mesh_pipeline.rs` | Entire file; documented six loops, length-only buffer row, override defaults, output destruction and receipt loss. | Minimal-feature compilation/private docs passed; benchmark unrun. |
@@ -3493,6 +3495,47 @@ Validation after final edits:
 
 Logs: `/tmp/csgrs-rustdoc-small-benches-check.log` and
 `/tmp/csgrs-rustdoc-small-benches-private.log`.
+
+### Profile constructors and broad feature timing catalog, 26 November 2026
+
+Baseline: `a661af52a`. Owners: two root benchmark consumers, P8/P9/P19/P25–P27/
+P36/P37/P39. Read all 307/846 baseline lines and checked shared-harness and relevant
+constructor/Boolean implementation context. Domain: the fixed profile, mesh, scalar,
+implicit, text, adapter, blueprint and interchange fixtures in these executables.
+Missing witnesses were undocumented helpers and labels that suggested more than the
+current closures perform. This batch changes comments only.
+
+The profile benchmark's final union is a closed cubic plus a disjoint square,
+despite the historical line/arc label. Compound constructors discard local receipts;
+strict extrusion also returns only the value to measurement. Native source semantics,
+sampled modeling and finite projection remain distinct. Output counts do not certify
+geometry or source fidelity.
+
+The broad catalog performs separate immediate Booleans in a fixed order; it does
+not submit a shared Boolean program. Buffer cases that only read lengths are now
+identified, as are grid-only distribution cases, imports from prebuilt exports,
+fresh vector writer timing, nominal work units and lossy scalar-bit fingerprints
+that substitute zero on conversion failure. No runtime branch or failure convention
+was repaired or reclassified. Setup outside closures still occurs when its timed
+case is filtered out. Cache reuse, output destruction and discarded receipts are
+explicit rather than inferred from the benchmark labels.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Nonblank, non-comment source is
+  byte-identical to baseline in both files.
+- `cargo check --locked -p csgrs --no-default-features --features
+  bench-feature-pipeline --bench profile_primitives --bench feature_pipeline
+  --offline -j 2` passed without warnings, covering the declared feature bundle.
+- Private Rustdoc passed with broken links denied and matching library metadata.
+  Inspected sixteen rendered pages: all fourteen declaration summaries plus both
+  module introductions. Every declaration in these two files is documented.
+- No geometry cases, measurements, acquisition or full workflows were executed
+  under the owner's docs-only waiver. The existing temporary target was reused
+  with incremental compilation disabled; no repository-local build tree was added.
+
+Logs: `/tmp/csgrs-rustdoc-feature-profiles-check.log` and
+`/tmp/csgrs-rustdoc-feature-profiles-private.log`.
 
 ## Next work
 

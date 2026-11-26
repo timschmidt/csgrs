@@ -1,5 +1,13 @@
-//! Per-constructor profile benchmarks for isolating exact-geometry costs.
+//! Profile-construction and curve-consumption timings for the authored fixture catalog.
+//!
+//! Native exact carriers and sampled profile constructors retain their individual
+//! API contracts. Counts fingerprint output size, not geometric equality or source
+//! fidelity. Compound constructors select `APPROXIMATE_512` and discard their local
+//! receipts; this executable does not certify the resulting workload as exact.
+//! The shared harness times each closure including counting and output destruction,
+//! reuses process caches, and controls filtering/repetition through environment settings.
 
+/// Shared CSV timing, selection and repetition controls for this executable.
 #[path = "../support/harness.rs"]
 mod support;
 
@@ -10,6 +18,10 @@ use hypercurve::{CurvePath2, CurveRegion2, FiniteProjectionOptions, Point2};
 use hyperlattice::Matrix4;
 use support::{Config, Measurement, print_header};
 
+/// Times region construction and destruction, reporting one work unit per region.
+/// Output size is contour count; the checksum shifts that count by 32 bits. The
+/// historical wire count is always zero because the callback returns a filled region.
+/// No area, topology, receipt or boundary-equivalence assertion is performed here.
 fn run_profile(
     config: &Config,
     case: &str,
@@ -28,6 +40,9 @@ fn run_profile(
     });
 }
 
+/// Times path construction and destruction with curve-piece count as size/checksum.
+/// One invocation is one work unit, irrespective of control count or curve degree;
+/// callback failures/panics propagate rather than becoming a measurement row.
 fn run_path(
     config: &Config,
     case: &str,
@@ -40,12 +55,21 @@ fn run_path(
     });
 }
 
+/// Unwraps a compound constructor for timing, discarding its local certainty receipt.
+/// Panics on any construction error; retained region data is not independently validated.
 fn compound_region(
     result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::ValidationError>,
 ) -> CurveRegion2 {
     result.expect("compound curve Boolean").into_value()
 }
 
+/// Runs the fixed constructor catalog, Hilbert clipping and three curve-consumer cases.
+/// Constructor fixtures are built inside their timed closures; the final projection,
+/// extrusion and union reuse sources prepared outside those timers. Projection uses
+/// a `1e-3` finite-polyline tolerance. Extrusion selects strict policy then discards
+/// its receipt. The final union combines a closed cubic with a disjoint square;
+/// its historical `curved_line_arc_union` label does not imply a circular-arc input.
+/// Expected successes are unwrapped, so any error aborts the remaining benchmark.
 fn main() {
     print_header();
     let config = Config::from_env();

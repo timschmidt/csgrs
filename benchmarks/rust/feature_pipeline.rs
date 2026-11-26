@@ -1,5 +1,18 @@
-//! Broad native-carrier coverage for end-to-end optimization anchors.
+//! Timed feature catalog spanning native carriers, projections and format adapters.
+//!
+//! Requires the `bench-feature-pipeline` feature bundle. Cases exercise fixed finite
+//! fixtures, not a completeness or correctness matrix. Counts and lossy scalar-bit
+//! fingerprints are not geometric checksums. Several callers discard certainty
+//! receipts, and format reimports adopt exported coordinates without proving fidelity
+//! to the original source. Expected successes panic on failure.
+//!
+//! The shared harness times closure work, output destruction and measurement
+//! accumulation. Setup outside closures is excluded but still runs when its case is
+//! filtered out. Warmups and later cases can reuse process caches; the temperature
+//! label does not reset them. Historical case names sometimes cover fewer operations
+//! than their labels suggest, as described at the corresponding call sites.
 
+/// Shared CSV harness with environment-selected cases and repetition counts.
 #[path = "../support/harness.rs"]
 mod support;
 
@@ -22,6 +35,8 @@ use hypersdf::SdfExpr;
 use image::{GrayImage, Luma};
 use support::{Config, Measurement};
 
+/// Records caller-defined work units, face count and a rotated face/position fingerprint.
+/// Reads lengths only; no buffer conversion, geometry inspection or receipt validation.
 fn mesh_measurement(mesh: &TriangleMesh, work_units: usize) -> Measurement {
     Measurement::new(
         work_units as u64,
@@ -30,12 +45,19 @@ fn mesh_measurement(mesh: &TriangleMesh, work_units: usize) -> Measurement {
     )
 }
 
+/// Unwraps a compound profile and drops its local receipt for count-based measurement.
+/// Panics on failure; selecting approximate policy is not evidence of exact completion.
 fn compound_region(
     result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::ValidationError>,
 ) -> CurveRegion2 {
     result.expect("compound curve Boolean").into_value()
 }
 
+/// Executes the first `min(count, 4)` immediate strict mesh Booleans in fixed order.
+/// Order is union, difference, intersection, XOR; zero returns no results. Each
+/// call uses the same original operands and returns no separate local receipt.
+/// This is not a shared Boolean program. Capacity uses the uncapped count, and
+/// allocation or operation failure can panic; the benchmark calls only counts 1–4.
 fn boolean_results(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -57,6 +79,8 @@ fn boolean_results(
     results
 }
 
+/// Sums output face/position counts, using result count as nominal Boolean work.
+/// The shifted/XOR fingerprint ignores coordinates, connectivity and certainty.
 fn boolean_measurement(results: &[TriangleMesh]) -> Measurement {
     let triangles = results.iter().map(|mesh| mesh.triangles.len()).sum::<usize>();
     let positions = results.iter().map(|mesh| mesh.positions.len()).sum::<usize>();
@@ -67,10 +91,19 @@ fn boolean_measurement(results: &[TriangleMesh]) -> Measurement {
     )
 }
 
+/// Records caller-defined work units and region contour count as both size/checksum.
+/// Does not evaluate boundaries, count curve pieces or establish the represented set.
 fn curve_measurement(region: &CurveRegion2, work_units: usize) -> Measurement {
     Measurement::new(work_units as u64, region.len() as u64, region.len() as u64)
 }
 
+/// Runs fixed scalar, profile, mesh, implicit, text, blueprint and interchange cases.
+/// Work-unit numbers are case-specific nominal counts, not a uniform complexity
+/// metric. Strict and approximate-policy consumers coexist; receipts are not emitted.
+/// Most cases only require successful calls and count outputs. Scalar fingerprints
+/// use lossy binary64 conversion with zero on conversion failure, so they cannot
+/// distinguish all failures/values. Exported byte counts and reimported face/contour
+/// counts do not certify roundtrip equivalence or topology.
 fn main() {
     support::print_header();
     let config = Config::from_env();
@@ -324,6 +357,7 @@ fn main() {
         "arc_linear_grid",
         1,
         || {
+            // Historical label: this case translates fourteen squares on a grid.
             let source = curve::square(Real::one()).expect("valid planar fixture");
             let mut regions = Vec::new();
             for index in 0..14 {
@@ -419,6 +453,7 @@ fn main() {
         },
     );
     config.run("feature", "mesh_distribution", "arc_linear_grid", 1, || {
+        // Historical label: twenty-two translated grid copies are concatenated.
         let source = solid::cube(Real::one()).expect("valid primitive fixture");
         let copies = (0..22)
             .map(|index| {
@@ -544,6 +579,7 @@ fn main() {
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
     config.run("feature", "hypermesh", "buffers_hull_minkowski", 1, || {
+        // The buffer contribution below is a count; only hull and sum are constructed.
         let hull = solid::convex_hull(&mesh).expect("hull");
         let sum = solid::minkowski_sum(
             &solid::cube(Real::from(2)).expect("valid primitive fixture"),
@@ -554,6 +590,7 @@ fn main() {
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
     config.run("feature", "hypermesh", "adapter_buffers", 1, || {
+        // Counts only: no adapter or output buffer is constructed by this closure.
         Measurement::new(
             mesh.triangles.len() as u64,
             (mesh.triangles.len() * 3) as u64,
@@ -785,6 +822,7 @@ fn main() {
     let stl = csgrs::io::stl::to_stl_binary(&io_mesh, "benchmark").expect("STL fixture");
     let obj = csgrs::io::obj::to_obj(&io_mesh, "benchmark").expect("OBJ fixture");
     config.run("feature", "mesh_io", "roundtrip_importers", 1, || {
+        // The exports above are setup; only imports, counting and drops are timed.
         let from_stl = csgrs::io::stl::from_stl(&stl).expect("STL import");
         let from_obj =
             csgrs::io::obj::from_obj(Cursor::new(obj.as_bytes())).expect("OBJ import");
@@ -816,6 +854,10 @@ fn main() {
     });
 }
 
+/// Builds four unrepeated corners of an axis-aligned square at exact integer height.
+/// Positive half-width gives counterclockwise order viewed from +Z, for the loft
+/// fixture. No domain validation occurs: zero collapses the loop and `i64::MIN`
+/// cannot be negated without overflow. Current callers use half-widths two and four.
 fn square_loop(z: i64, half_width: i64) -> Vec<Point3> {
     [
         (-half_width, -half_width),
@@ -828,6 +870,9 @@ fn square_loop(z: i64, half_width: i64) -> Vec<Point3> {
     .collect()
 }
 
+/// Times a writer into a fresh byte vector, counting bytes and dropping it in the loop.
+/// The supplied mesh contributes only input face count; the callback chooses the
+/// exported geometry and may panic. No disk I/O, reimport or byte comparison occurs.
 fn writer_case(
     config: &Config,
     case: &str,
