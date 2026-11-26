@@ -39,7 +39,11 @@ use cache::{
 use cache::{retain_flatten, retain_slice, retained_flatten, retained_slice};
 
 #[cfg(feature = "curve")]
-/// Filled region, open strings, and open paths produced by a horizontal slice.
+/// Planar slice output: filled region, unfilled section strings, and path list.
+///
+/// [`slice_z_with_context`] currently leaves the third component empty. Native
+/// source-edge parameters and triangle-incidence records are not retained in
+/// this tuple; use [`TriangleMesh::slice_z`] when those records are needed.
 pub type SliceResult = (
     hypercurve::CurveRegion2,
     Vec<hypercurve::CurveString2>,
@@ -2660,12 +2664,22 @@ pub fn exact_mass_properties(
 /// Zero-area projected faces are omitted. Invalid indices and undecided
 /// orientation or region predicates remain typed errors. This projects faces,
 /// not an inferred analytic source, and does not certify input manifoldness.
+/// Uses strict policy; [`flatten_with_context`] retains the local predicate receipt.
 #[cfg(feature = "curve")]
 pub fn flatten(mesh: &TriangleMesh) -> Result<hypercurve::CurveRegion2, ValidationError> {
     flatten_with_context(mesh, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Flattens faces with the selected policy, retaining errors and aggregate certainty.
+///
+/// Projects only referenced XY coordinates in triangle order. Each nonzero-area
+/// triangle is oriented positively and admitted as material, then unioned with
+/// previous faces; opposite source winding does not cancel projected material.
+/// Unused positions have no effect, and no triangles yields an empty region.
+///
+/// Cache entries match source buffers/construction evidence and `context`, and
+/// return the stored receipt. The resulting region and local receipt do not carry
+/// the mesh's inherited construction qualifications or a source-fidelity claim.
 #[cfg(feature = "curve")]
 pub fn flatten_with_context(
     mesh: &TriangleMesh,
@@ -2720,13 +2734,25 @@ pub fn flatten_with_context(
 /// undecided predicates are errors, including when the geometric result would
 /// otherwise be empty. This operation does not certify manifoldness or
 /// inherited construction provenance, nor impose a total-work or byte bound.
+/// Converts Z exactly before applying strict policy; see [`slice_z_with_context`]
+/// for the receipt-bearing form and [`SliceResult`] for tuple component meanings.
 #[cfg(feature = "curve")]
 pub fn slice_z(mesh: &TriangleMesh, z: impl IntoReal) -> Result<SliceResult, ValidationError> {
     let z = z.into_real()?;
     slice_z_with_context(mesh, z, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
-/// Slices with the selected policy, retaining native diagnostics and certainty.
+/// Slices with the selected policy, propagating native failures and local certainty.
+///
+/// Fills closed chains from above and below separately with nonzero winding,
+/// then unions them with the nonzero-winding coplanar triangles. Structurally
+/// identical directed above/below chain records reuse one filled result. Remaining
+/// native chains become XY strings; the path list is currently always empty.
+///
+/// Native source triangle/edge records are consumed to build these curves but
+/// are not exposed by [`SliceResult`]. The outcome reports section and region
+/// predicate certainty, without inherited mesh construction qualifications.
+/// Successful results are cached by source buffers/evidence, height and context.
 #[cfg(feature = "curve")]
 pub fn slice_z_with_context(
     mesh: &TriangleMesh,
@@ -2815,6 +2841,19 @@ pub fn slice_z_with_context(
 }
 
 /// Converts native geometry to a Bevy triangle mesh at the renderer boundary.
+///
+/// Builds separate render vertices for triangle corners, derives flat unit
+/// normals, and projects positions/normals to finite `f32` buffers with `u32`
+/// indices. Returns a triangle-list mesh with default render-asset usages and
+/// only position/normal attributes. This is a lossy display representation;
+/// no approximation-error bound, source provenance or certainty receipt is attached.
+///
+/// # Panics
+///
+/// Panics if native GPU export fails, including invalid indices, unavailable or
+/// undecidable normals, scalar failures, excessive vertex counts or nonfinite
+/// attribute projection. Use [`TriangleMesh::try_to_gpu_mesh_f32`] directly to
+/// retain the typed export error before constructing a renderer mesh.
 #[cfg(feature = "bevymesh")]
 pub fn to_bevy_mesh(mesh: &TriangleMesh) -> bevy_mesh::Mesh {
     use bevy_asset::RenderAssetUsages;
@@ -2832,11 +2871,21 @@ pub fn to_bevy_mesh(mesh: &TriangleMesh) -> bevy_mesh::Mesh {
 }
 
 /// Exact convex hull of all native mesh positions.
+///
+/// Uses strict policy and ignores triangle indices, so unused positions contribute
+/// and malformed triangle rows are not checked. Fewer than four unique noncoplanar
+/// points, including empty input, is a degenerate-point-set error rather than an
+/// empty hull. See [`convex_hull_with_context`] for local certainty.
 pub fn convex_hull(mesh: &TriangleMesh) -> HypermeshResult<TriangleMesh> {
     convex_hull_with_context(mesh, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Computes the convex hull with the selected policy and aggregate certainty.
+///
+/// Native hull construction selects extreme positions and outward-wound faces,
+/// with policy-selected equality/incidence decisions. It consumes positions only;
+/// no source topology is validated. Retains source construction qualifications
+/// separately from the local receipt, without certifying analytic-source fidelity.
 pub fn convex_hull_with_context(
     mesh: &TriangleMesh,
     context: GeometryContext,
@@ -2851,6 +2900,8 @@ pub fn convex_hull_with_context(
 /// Concavity, holes and disconnected components retain their set meaning.
 /// Unused positions do not contribute. Both operands are validated before empty
 /// identities. For the former stored-vertex convexification, use [`minkowski_hull`].
+/// Selects strict policy and the native default collection limits, retaining
+/// mesh construction history without a separate operation receipt.
 pub fn minkowski_sum(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -2862,6 +2913,9 @@ pub fn minkowski_sum(
 /// Computes the represented-set sum with operation-local aggregate certainty.
 ///
 /// See [`hypermesh::minkowski_sum`] for the domain and provenance distinction.
+/// Uses [`hypermesh::MinkowskiOptions::default`], with no additional collection
+/// limit or cancellation flag. Input qualifications remain attached to the output
+/// mesh even for an empty result; they are separate from this operation's receipt.
 pub fn minkowski_sum_with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -2874,6 +2928,10 @@ pub fn minkowski_sum_with_context(
 ///
 /// Counts and cooperative cancellation do not bound primitive work or heap bytes;
 /// see [`hypermesh::MinkowskiOptions`]. Exhaustion never returns a partial mesh.
+/// Native resource-limit and cancellation errors remain wrapped as
+/// [`ValidationError::Mesh`]. Cancellation is checked before operand preparation
+/// and before publication; validation, hull and Boolean calls are not internally
+/// interruptible through these options. Both operands' qualifications survive.
 pub fn minkowski_sum_with_options(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -2895,6 +2953,9 @@ pub fn minkowski_sum_with_options(
 /// This preserves the former vertex-hull interpretation of [`minkowski_sum`].
 /// Unused positions participate; concavity and disconnected gaps are filled.
 /// Use [`minkowski_sum`] for the sum of the represented solids.
+/// Selects strict policy. An empty position set on either side yields canonical
+/// empty geometry without validating triangle rows; a nonempty lower-dimensional
+/// sum returns a degenerate-point-set error.
 pub fn minkowski_hull(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -2904,6 +2965,12 @@ pub fn minkowski_hull(
 }
 
 /// Computes a stored-position Minkowski hull with aggregate certainty.
+///
+/// Forms the Cartesian product of stored positions, adds each pair exactly and
+/// constructs its convex hull. Triangle indices and source closure are ignored.
+/// Combines both meshes' construction qualifications, including for empty results;
+/// the receipt covers only decisions consumed by this operation. Native count/
+/// reservation failures remain typed, without a total-work or heap-byte budget.
 pub fn minkowski_hull_with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -2941,11 +3008,26 @@ pub fn minkowski_hull_with_context(
 /// the first section to that of the last returns
 /// [`ValidationError::InvalidArguments`]. Cap winding follows the complete
 /// boundary; invalid or undecided section/mesh predicates return typed errors.
+/// This convenience form uses strict policy; [`loft_with_context`] retains the
+/// local predicate receipt.
 pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
     loft_with_context(sections, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Lofts sections with the selected policy for validation and cap triangulation.
+///
+/// Uses [`loft`]'s correspondence and fixed side-diagonal rules. Checks cyclically
+/// adjacent points before comparing a section with the last retained section;
+/// pointwise-equal sections coalesce under `context`. Every retained section is
+/// independently projected and triangulated to validate its planar simple ring,
+/// though only the first and last triangulations become caps.
+///
+/// The first boundary's oriented normal and first-to-last vertex-zero travel
+/// determine winding. Count/inline-byte checks and fallible primary reservations
+/// precede assembly; they are not total-work or memory bounds. Completed output
+/// is checked as closed PWN input. All consumed equality, planarity, triangulation
+/// and mesh-validation certainty is retained in the receipt and construction
+/// evidence, including approximate decisions used to coalesce sections.
 pub fn loft_with_context(
     sections: &[Vec<Point3>],
     context: GeometryContext,
@@ -3066,6 +3148,12 @@ pub fn loft_with_context(
 }
 
 /// Fluent CSG grammar implemented directly for native Hypermesh geometry.
+///
+/// The native implementation delegates to this module's free functions, preserving
+/// their input domains and errors. Convenience operations use strict policy and
+/// return no separate local receipt; mesh construction qualifications persist.
+/// Explicit-context Boolean methods return [`GeometryOutcome`]. For shared
+/// deferred Boolean work across operations, use [`crate::SolidExpr`].
 pub trait SolidExt: Sized {
     /// Regularized union under [`GeometryContext::STRICT`].
     /// See [`Self::try_union_with_context`] to select a predicate policy.
@@ -3103,9 +3191,10 @@ pub trait SolidExt: Sized {
         other: &Self,
         context: GeometryContext,
     ) -> HypermeshResult<GeometryOutcome<Self>>;
-    /// Apply a homogeneous transform.
+    /// Apply a nonsingular homogeneous transform under strict policy; see [`transform`].
     fn transformed(&self, matrix: &Matrix4) -> Result<Self, ValidationError>;
-    /// Translate by an exact vector.
+    /// Translate by exactly converted components under strict policy.
+    /// Conversion precedes [`transform`]'s index and homogeneous-transform checks.
     fn translated(
         &self,
         x: impl IntoReal,
@@ -3130,31 +3219,47 @@ pub trait SolidExt: Sized {
     fn mirrored(&self, plane: &Plane) -> Result<Self, ValidationError>;
     /// Translate so the exact bounding-box center is at the origin. Same as [`center`].
     fn centered(&self) -> Result<Self, ValidationError>;
-    /// Return exact bounds.
+    /// Return strict bounds of every position row; see [`bounding_box`].
+    /// Use `SolidExt::exact_bounds(&mesh)` to select this trait method over the
+    /// native context-taking method of the same name.
     fn exact_bounds(&self) -> Result<Option<Aabb>, ValidationError>;
     /// Visit native triangles without constructing a csgrs mesh facade.
+    ///
+    /// The native implementation visits stored triangle order, passing cloned
+    /// exact position triples with authored winding. It does not validate geometry
+    /// or attach a receipt; no triangles means no calls.
+    ///
+    /// # Panics
+    ///
+    /// The native implementation indexes positions directly and panics on an
+    /// out-of-range triangle index. Visitor panics propagate.
     fn visit_native_triangles<F>(&self, visitor: F)
     where
         F: FnMut([Point3; 3]);
 }
 
 impl SolidExt for TriangleMesh {
+    /// Delegate strict union to [`boolean`], including canonical-empty validation rules.
     fn try_union(&self, other: &Self) -> HypermeshResult<Self> {
         boolean(self, other, BooleanOp::Union)
     }
 
+    /// Delegate strict ordered difference to [`boolean`].
     fn try_difference(&self, other: &Self) -> HypermeshResult<Self> {
         boolean(self, other, BooleanOp::Difference)
     }
 
+    /// Delegate strict intersection to [`boolean`].
     fn try_intersection(&self, other: &Self) -> HypermeshResult<Self> {
         boolean(self, other, BooleanOp::Intersection)
     }
 
+    /// Delegate strict symmetric difference to [`boolean`].
     fn try_xor(&self, other: &Self) -> HypermeshResult<Self> {
         boolean(self, other, BooleanOp::SymmetricDifference)
     }
 
+    /// Delegate union and receipt aggregation to [`boolean_with_context`].
     fn try_union_with_context(
         &self,
         other: &Self,
@@ -3163,6 +3268,7 @@ impl SolidExt for TriangleMesh {
         boolean_with_context(self, other, BooleanOp::Union, context)
     }
 
+    /// Delegate ordered difference and receipt aggregation to [`boolean_with_context`].
     fn try_difference_with_context(
         &self,
         other: &Self,
@@ -3171,6 +3277,7 @@ impl SolidExt for TriangleMesh {
         boolean_with_context(self, other, BooleanOp::Difference, context)
     }
 
+    /// Delegate intersection and receipt aggregation to [`boolean_with_context`].
     fn try_intersection_with_context(
         &self,
         other: &Self,
@@ -3179,6 +3286,7 @@ impl SolidExt for TriangleMesh {
         boolean_with_context(self, other, BooleanOp::Intersection, context)
     }
 
+    /// Delegate symmetric difference and receipt aggregation to [`boolean_with_context`].
     fn try_xor_with_context(
         &self,
         other: &Self,
@@ -3187,10 +3295,12 @@ impl SolidExt for TriangleMesh {
         boolean_with_context(self, other, BooleanOp::SymmetricDifference, context)
     }
 
+    /// Apply [`transform`]'s strict validation and orientation correction.
     fn transformed(&self, matrix: &Matrix4) -> Result<Self, ValidationError> {
         transform(self, matrix)
     }
 
+    /// Convert X/Y/Z components in order and apply a strict affine translation.
     fn translated(
         &self,
         x: impl IntoReal,
@@ -3203,6 +3313,7 @@ impl SolidExt for TriangleMesh {
         )
     }
 
+    /// Apply [`rotate`]'s strict X-then-Y-then-Z Euler rotation.
     fn rotated(
         &self,
         x: impl IntoReal,
@@ -3212,6 +3323,7 @@ impl SolidExt for TriangleMesh {
         rotate(self, x, y, z)
     }
 
+    /// Apply [`scale`]'s strict nonzero-factor and winding rules.
     fn scaled(
         &self,
         x: impl IntoReal,
@@ -3221,18 +3333,23 @@ impl SolidExt for TriangleMesh {
         scale(self, x, y, z)
     }
 
+    /// Apply [`mirror`]'s strict plane reflection and winding reversal.
     fn mirrored(&self, plane: &Plane) -> Result<Self, ValidationError> {
         mirror(self, plane)
     }
 
+    /// Apply [`center`]'s strict bounding-box-midpoint translation.
     fn centered(&self) -> Result<Self, ValidationError> {
         center(self)
     }
 
+    /// Delegate to [`bounding_box`], validating indices and including unused positions.
     fn exact_bounds(&self) -> Result<Option<Aabb>, ValidationError> {
         bounding_box(self)
     }
 
+    /// Clone each indexed position triple and invoke the visitor in triangle order.
+    /// Direct indexing can panic for malformed input; this performs no validation.
     fn visit_native_triangles<F>(&self, mut visitor: F)
     where
         F: FnMut([Point3; 3]),
@@ -3249,6 +3366,11 @@ impl SolidExt for TriangleMesh {
 }
 
 /// Converts native topology to the optional attributed boundary carrier.
+///
+/// Clones the mesh's shared storage and assigns cloned uniform metadata to every
+/// triangle. Preserves native construction evidence; adds no authored corner
+/// normals and performs no geometric validation. Metadata is a sidecar, not a
+/// replacement for native triangle authority.
 #[cfg(feature = "attributed")]
 pub fn with_face_metadata<M>(mesh: &TriangleMesh, metadata: M) -> crate::AttributedMesh<M>
 where
@@ -3257,20 +3379,27 @@ where
     crate::AttributedMesh::from_uniform(mesh.clone(), metadata)
 }
 
-/// Places a native point at the origin of a translation matrix.
+/// Constructs a translation that maps the origin to `point`.
+/// Retains its exact components without validation or coordinate projection.
 pub fn translation_to(point: &Point3) -> Matrix4 {
     Matrix4::affine_translation([point.x.clone(), point.y.clone(), point.z.clone()])
 }
 
 /// Constructs an exact translation matrix from a vector.
+/// Uses the vector components as offsets without geometric validation; the matrix
+/// maps the origin to that vector's position and retains native scalar values.
 pub fn translation(vector: Vector3) -> Matrix4 {
     Matrix4::affine_translation(vector.0)
 }
 
 #[cfg(test)]
 mod tests {
+    //! Primitive and modeling smoke witnesses over native triangle buffers.
+    //! Edge checks and lossy volume signs are narrower than a general embedding proof.
     use super::*;
 
+    /// Sum lossy signed tetrahedral contributions divided by six, skipping terms
+    /// without finite projection. Used as an orientation diagnostic, not exact volume.
     fn signed_volume(mesh: &TriangleMesh) -> f64 {
         mesh.triangles
             .iter()
@@ -3284,6 +3413,7 @@ mod tests {
             / 6.0
     }
 
+    /// Four angular samples retain exact sine/cosine pairs at the cardinal angles.
     #[test]
     fn sampled_circle_retains_exact_cardinal_angles() {
         assert_eq!(
@@ -3297,6 +3427,7 @@ mod tests {
         );
     }
 
+    /// A two-unit cube has twelve native triangles and passes polygon-soup admission.
     #[test]
     fn constructors_return_native_hypermesh_geometry() {
         let mesh: TriangleMesh = cube(Real::from(2_u8)).expect("valid primitive fixture");
@@ -3305,6 +3436,7 @@ mod tests {
             .expect("native cube must satisfy Hypermesh's input contract");
     }
 
+    /// Maximal sample counts fail with typed capacity overflow for the tested families.
     #[test]
     fn primitive_sample_count_arithmetic_is_checked() {
         let mut results = vec![
@@ -3319,6 +3451,8 @@ mod tests {
         }
     }
 
+    /// Retained primitive/gear fixtures emit nonempty indexed and geometric edge
+    /// closure, unique nondegenerate triangles and positive diagnostic volume.
     #[test]
     fn nominal_direct_solid_catalog_is_closed_and_consistently_indexed() {
         let one = Real::one();
@@ -3424,6 +3558,8 @@ mod tests {
         }
     }
 
+    /// Both arrow-tip placements and orientation-reversing cube transforms retain
+    /// indexed edge pairing and positive diagnostic volume; collapsed scale fails.
     #[test]
     fn arrows_and_orientation_reversing_transforms_keep_outward_manifold_winding() {
         let defects = |mesh: &TriangleMesh| {
@@ -3489,6 +3625,8 @@ mod tests {
         assert!(signed_volume(&mirrored) > 0.0);
     }
 
+    /// Fluent cube union yields unique nondegenerate triangles, geometric edge
+    /// closure and a result accepted again by native polygon-soup admission.
     #[test]
     fn fluent_boolean_returns_reusable_native_geometry() {
         let left = cube(Real::from(2_u8)).expect("valid primitive fixture");
@@ -3516,6 +3654,7 @@ mod tests {
             .expect("native Boolean output must be reusable as Hypermesh input");
     }
 
+    /// A planar golden-ratio quadrilateral admits a two-triangle native face.
     #[test]
     fn polyhedron_certifies_symbolically_planar_faces_before_normalization() {
         let phi = ((Real::one() + Real::from(5_u8).sqrt().expect("five is positive"))
@@ -3535,6 +3674,8 @@ mod tests {
         assert_eq!(mesh.triangles.len(), 2);
     }
 
+    /// Independently planar tilted caps produce valid triangle/edge checks, while
+    /// a nonplanar upper section is rejected.
     #[test]
     fn loft_uses_each_cap_plane_and_rejects_nonplanar_sections() {
         let point = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));

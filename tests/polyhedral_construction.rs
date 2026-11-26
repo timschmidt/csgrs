@@ -1,3 +1,7 @@
+//! Planar-face admission and corresponding-section loft contracts.
+//! Independent exact areas/volumes, selected membership and downstream operations
+//! complement native closure checks without asserting universal set equivalence.
+
 #[path = "support/uncertainty.rs"]
 mod uncertainty;
 
@@ -9,26 +13,34 @@ use csgrs::{
 use hypermesh::{HypermeshError, Point3};
 use std::error::Error;
 
+/// Promote an integer fixture exactly.
 fn r(n: i32) -> Real {
     n.into()
 }
+/// Construct an exact rational fixture with a nonzero denominator.
 fn q(n: i32, d: i32) -> Real {
     (r(n) / r(d)).unwrap()
 }
+/// Require certified scalar equality through precision -1024; undecided fails.
 fn exact(left: &Real, right: &Real) {
     assert_eq!(left.certified_eq_until(right, -1024).as_bool(), Some(true));
 }
+/// Lift an ordered integer XY ring to a constant integer Z plane.
 fn section(xy: &[(i32, i32)], z: i32) -> Vec<Point3> {
     xy.iter()
         .map(|&(x, y)| Point3::new(r(x), r(y), r(z)))
         .collect()
 }
+/// Clone native point coordinates into the polyhedron constructor's row format.
 fn rows(points: &[Point3]) -> Vec<[Real; 3]> {
     points
         .iter()
         .map(|p| [p.x.clone(), p.y.clone(), p.z.clone()])
         .collect()
 }
+/// Compare independent divergence-theorem volume to an exact fixture expectation.
+/// Each face flux must have a proved rational normal form before summation;
+/// oriented multiplicity is preserved by this calculation.
 fn volume(mesh: &TriangleMesh, expected: Real) {
     // Independent divergence theorem, not the mesh's volume implementation.
     let six = mesh.triangles.iter().fold(r(0), |sum, t| {
@@ -38,6 +50,8 @@ fn volume(mesh: &TriangleMesh, expected: Real) {
     });
     exact(&six, &(r(6) * expected));
 }
+/// Require native closed-PWN admission and geometric triangle/edge checks under
+/// one policy. This does not independently certify embedding or analytic fidelity.
 fn valid(mesh: &TriangleMesh, context: GeometryContext) {
     mesh.validate_closed_pwn(&context.mesh_context()).unwrap();
     assert!(
@@ -46,18 +60,25 @@ fn valid(mesh: &TriangleMesh, context: GeometryContext) {
             .value
     );
 }
+/// Assert canonical empty geometry in both native buffers.
 fn empty(mesh: &TriangleMesh) {
     assert!(mesh.positions.is_empty() && mesh.triangles.is_empty());
 }
+/// Counterclockwise concave L ring of area five, starting at a reflex-adjacent corner.
 fn l_shape() -> [(i32, i32); 6] {
     [(3, 1), (1, 1), (1, 3), (0, 3), (0, 0), (3, 0)]
 }
+/// Cap and side indices for two consecutive corresponding n-vertex rings.
+/// Reverses the lower cap and preserves the upper ring's authored winding.
 fn prism_faces(n: usize) -> Vec<Vec<usize>> {
     let mut faces = vec![(0..n).rev().collect(), (n..2 * n).collect()];
     faces.extend((0..n).map(|i| vec![i, (i + 1) % n, n + (i + 1) % n, n + i]));
     faces
 }
 
+/// Both policies, ring orientations and cyclic starts retain signed face/prism
+/// expectations, while lofts orient outward and preserve the notch, volume ten
+/// and empty/union/difference composition.
 #[test]
 fn concave_faces_keep_authored_winding_and_lofts_compose_in_all_orders() {
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
@@ -130,7 +151,7 @@ fn concave_faces_keep_authored_winding_and_lofts_compose_in_all_orders() {
 #[test]
 fn loft_sides_use_the_documented_diagonal_and_reject_unequal_counts() {
     let bottom = section(&[(0, 0), (2, 0), (2, 2), (0, 2)], 0);
-    // The bottom square turned by a quarter turn about its center, scaled by
+    // The bottom square turned by an eighth turn about its center, scaled by
     // sqrt(2) and lifted.
     let top = section(&[(1, -1), (3, 1), (1, 3), (-1, 1)], 2);
     for travel_reversed in [false, true] {
@@ -161,6 +182,8 @@ fn loft_sides_use_the_documented_diagonal_and_reject_unequal_counts() {
     );
 }
 
+/// Concave lofts keep positive volume ten and native validity across all cyclic
+/// coordinate projections and both signed travel directions.
 #[test]
 fn concave_loft_orientation_survives_axis_projection_and_negative_travel() {
     for travel in [-2, 2] {
@@ -188,6 +211,8 @@ fn concave_loft_orientation_survives_axis_projection_and_negative_travel() {
     }
 }
 
+/// Consecutive duplicate sections coalesce with certified receipts and exact
+/// volume eight; all-equal sections fail and forward-collinear vertices survive.
 #[test]
 fn redundant_sections_coalesce_without_losing_the_result_or_receipt() {
     let square = [(0, 0), (2, 0), (2, 2), (0, 2)];
@@ -226,6 +251,8 @@ fn redundant_sections_coalesce_without_losing_the_result_or_receipt() {
     }
 }
 
+/// Crossing, repeated and backtracking rings preserve triangulation error causes;
+/// collapsed loft sides retain native degeneracy errors and later valid work succeeds.
 #[test]
 fn invalid_faces_and_sections_fail_before_publishing_geometry() {
     let rings: &[&[(i32, i32)]] = &[
@@ -271,6 +298,8 @@ fn invalid_faces_and_sections_fail_before_publishing_geometry() {
     }
 }
 
+/// Unresolved support predicates retain their source and category, while a loft
+/// requiring approximate planarity remains qualified across strict/approximate retries.
 #[test]
 fn support_predicate_cause_survives_and_approximate_evidence_stays_qualified() {
     let sin = Real::e().sin();
@@ -315,6 +344,8 @@ fn support_predicate_cause_survives_and_approximate_evidence_stays_qualified() {
     }
 }
 
+/// Canonical empty, position-only and open-face outputs retain distinct downstream
+/// admission behavior; invalid face indices preserve their typed bounds error.
 #[test]
 fn structural_empty_and_open_faces_keep_their_distinct_contracts() {
     empty(&solid::polyhedron(&[], &[]).unwrap());
@@ -338,6 +369,8 @@ fn structural_empty_and_open_faces_keep_their_distinct_contracts() {
     ));
 }
 
+/// Original tetrahedron and expanding-square loft meet independent volumes 4/3
+/// and 896/3, with native validity and the loft's volume retained after empty union.
 #[test]
 fn original_tetrahedron_and_square_loft_keep_independent_exact_volumes() {
     let points = [
@@ -363,6 +396,8 @@ fn original_tetrahedron_and_square_loft_keep_independent_exact_volumes() {
     );
 }
 
+/// Original README pyramid/three-section fixtures retain independent integration
+/// expectations over their exact binary64 inputs and survive loft union with empty.
 #[test]
 fn original_readme_polyhedron_and_three_section_loft_keep_their_meaning() {
     // These values and resolutions are the original render fixtures. Import
@@ -419,6 +454,8 @@ fn original_readme_polyhedron_and_three_section_loft_keep_their_meaning() {
     volume(&loft.try_union(&solid::empty()).unwrap(), expected);
 }
 
+/// Approximate pointwise section equality reduces the fixture to eight positions
+/// with volume eight while retaining its receipt; strict retries remain undecided.
 #[test]
 fn approximate_section_coalescing_retains_its_qualification() {
     let sin = Real::e().sin();

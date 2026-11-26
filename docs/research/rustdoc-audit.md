@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `src/solid.rs` | Entire file, cumulatively across the recorded primitive, transform, sampling, distribution and final projection/loft batches; all private helpers, trait implementation methods and tests reviewed/documented. | Private docs passed in recorded minimal and gated configurations, including `curve,attributed,bevymesh`; source-only review of tests, runtime checks waived. |
+| `tests/polyhedral_construction.rs` | Entire file; documented all helpers/witnesses and corrected the twisted-square fixture's rotation comment to 45 degrees. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `crates/hypermesh/src/mesh/concatenation.rs` | Entire file including tests; documented capacity helper, fixtures and proof/identity witnesses; existing public contract reviewed. | Hypermesh private docs passed; helper page inspected; test bodies unchanged, not rerun. |
 | `tests/distribution_contracts.rs` | Entire file; documented every helper and admission, placement, certainty, capacity, multiplicity and cache witness. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
 | `tests/native_queries.rs` | Entire file; documented ray parameter, copy-count and hull-count expectations with their scope. | Source, formatting and comment-only checks passed; assertions unchanged, not rerun. |
@@ -690,10 +692,75 @@ Logs: `/tmp/csgrs-rustdoc-concatenation-doc.log`,
 is about 160 MiB. Full workflow/runtime checks remain waived for this docs-only
 session. No implementation, assertion or performance claim changed.
 
+### Solid projection, hull, loft and fluent API completion, 26 November 2026
+
+Owner: CSGRS solid-to-planar, hull/Minkowski, loft, renderer and fluent API
+boundaries; P1/P6/P8/P9/P17/P18/P19/P20/P25/P30/P37. Baseline: `093ec2c88`.
+Read every line of `src/solid.rs` from `flatten` through end of file, including
+the `SolidExt` implementation and all module tests. Together with the prior
+explicit section records, this completes the file's source review. Read every
+line of `tests/polyhedral_construction.rs`. Supporting reads covered native
+section records/assembly, hull and Minkowski entry paths, source preparation and
+pair hulls, GPU normal construction/projection and feature configuration; those
+owning modules do not receive whole-file credit here.
+
+Missing witnesses: public summaries omitted projection/winding behavior,
+incidence-record loss, hull degeneracy and renderer/visitor panic contracts.
+Fluent implementation methods and smoke-test declarations lacked their own
+Rustdoc. Documented `SliceResult` component meanings and its currently empty path
+list; slicing consumes native incidence records without returning them. Flatten
+orients every projected face as material, so reversed source faces do not cancel.
+Both operations retain local certainty without carrying mesh construction history
+into the planar result, and cache completed source/context-specific outcomes.
+
+Hull docs distinguish all stored positions from represented triangle sets,
+including unchecked triangle rows and degenerate empty/lower-dimensional inputs.
+Minkowski docs distinguish the represented-solid sum from pairwise stored-position
+convexification and explain native default limits, cooperative cancellation and
+construction qualifications. Loft docs describe section equality/coalescing,
+per-section plane validation, cap selection, fixed side diagonals, orientation,
+checked primary buffers and closed-PWN output validation. Approximate coalescing
+remains qualified in the receipt and mesh evidence.
+
+Bevy export is documented as lossy `f32` display geometry with flat normals and
+panic-on-error behavior. Triangle visitation clones exact positions in authored
+order but directly indexes them, so malformed indices can panic. Trait docs
+state strict convenience behavior, explicit-context receipts and deferred Boolean
+composition; every native implementation method has a scoped delegation contract.
+Uniform metadata, exact translation helpers and all unit-test declarations are
+documented. Polyhedral test docs identify independent area/volume expectations,
+policy transitions and downstream admission separately from universal set proofs.
+The existing twisted-square comment incorrectly said a quarter turn; its literal
+coordinates encode an eighth turn followed by scaling, so only the comment changed.
+
+Validation after the final Rust edit:
+
+- `rustfmt --check --edition 2024 src/solid.rs tests/polyhedral_construction.rs`:
+  passed. `git diff --check`: passed.
+- Every nonblank, non-comment source line matches baseline in both files,
+  including tests, feature gates, panic paths and predicate order.
+- `CARGO_TARGET_DIR=/tmp/csgrs-rustdoc-target CARGO_INCREMENTAL=0
+  RUSTDOCFLAGS='-D rustdoc::broken_intra_doc_links' cargo doc --locked -p csgrs
+  --no-default-features --features curve,attributed,bevymesh
+  --document-private-items --no-deps --offline`: passed without warnings.
+  The equivalent no-feature private-doc build passed as well.
+- Inspected eleven generated contracts covering the slice alias, projection,
+  slicing, Bevy panic/loss behavior, hull and Minkowski distinctions, loft,
+  trait visitation, metadata and translation. Unit/integration-test docs remain
+  source-reviewed; ordinary library documentation does not render test items.
+
+Logs: `/tmp/csgrs-rustdoc-solid-completion-doc.log` and
+`/tmp/csgrs-rustdoc-solid-completion-minimal-doc.log`. Reused build storage grew
+to about 502 MiB for the optional Bevy dependency check; `/tmp` has over 125 GiB
+available. No separate target tree or runtime test build was created. Full
+workflow/runtime checks remain waived for this docs-only session. No executable
+behavior, test assertion or performance claim changed. Completion here describes
+this file's source audit, not repository-wide Rustdoc coverage or kernel closure.
+
 ## Next work
 
-Resume `src/solid.rs` at `flatten`, then continue through native operations and the
-remaining root modules, then the owning crates. Maintain review records with each batch. Establish
+Review `tests/slice_projection_contract.rs` and `tests/minkowski_contracts.rs`,
+then continue through the remaining root modules and owning crates. Maintain review records with each batch. Establish
 automated public/private item coverage across manifests and features without
 confusing that metric with semantic review. Review every remaining tracked file
 before claiming completion. Commit and push documentation batches after focused
