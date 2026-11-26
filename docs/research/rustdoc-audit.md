@@ -5878,6 +5878,93 @@ The independent arithmetic script is `/tmp/csgrs-adversarial-arithmetic.py`.
 Full workflow checks remain waived by the owner. The complete repository audit
 remains active; the existing 100% public/private mandate in AGENTS.md is retained.
 
+## Hyperlimit support-DOP and scalar-representation consumers
+
+Baseline: `d5e176944` on `rustdoc`. Read every line of
+`crates/hyperlimit/tests/support_dop.rs` (775 baseline lines) and
+`crates/hyperlimit/tests/real_representations.rs` (1280). The owning layer is
+Hyperlimit's support-bound/report and scalar-representation qualification corpus.
+Relevant contracts are P1/P3/P4 and P8–P11/P19: exact imported/construction data,
+retained source identities, policy/receipt boundaries, and replay. Missing
+acceptance witnesses were documentation for all private items and accurate
+limits on the claims established by the existing tests.
+
+Documented all 52 named declarations (24 support-DOP and 28 representation),
+including two nested tag-inventory constants, plus all three RepresentationCase
+fields. The support fixtures test exact integer/rational projections, extrema
+indices, boundary classifications, coarse directional box relations, closed
+halfspace side reports, selected forgery failures, and refresh counters. Queries
+select APPROXIMATE_512 and extract values without certainty assertions. Tests
+with names claiming every forgery cover only their listed finite mutations;
+no test was broadened or weakened. Axis reversal compares optional values for
+four samples. Refresh counters do not establish time or allocation cost.
+
+Read supporting DOP validator/replay excerpts at baseline lines 557–690 and
+739–845; these are not full review of `predicates/dop.rs`, which remains pending.
+Source replay compares the newly produced report value after local validation
+and discards the new outcome receipt. This batch documents test expectations;
+it does not certify universal validator soundness. Previously recorded limits
+of halfspace feasibility replay still apply to its consumers.
+
+The scalar corpus has 22 named-class recipes, eight public structural kinds,
+four rational storage classes, and five primitive-range status categories.
+Its common helper exercises seven predicates whose shared translation carrier
+cancels mathematically, including a collapsed triangle distance check. Therefore
+successful consumption after reload does not independently establish equality
+of original/restored scalar values. JSON/CBOR tests check selected tags and
+kinds; they do not assert cache absence, deterministic bytes, fresh-process
+replay, or general value preservation. The 70 node and 18 constant inventories
+are checked against serde diagnostic wording at runtime; this batch reviewed
+the assertions but did not execute them or claim current runtime success.
+
+Documented private cache probes as Debug substring checks, the exact
+HYPERLIMIT_EXPECT_F32_CACHE present/absent/unavailable behavior, neighboring-float
+bounds, unconditional F64 markers, and the limits of abort-signal checks. The
+large overflow views use clones; their subsequent translation fixture consumes
+the original huge scalar. Triggered signals preserving known positive signs and
+one opaque Unknown do not prove general cancellation cleanup, retry, or resource
+bounds. The unit-circle opaque zero accepts Exact or Filtered certainty; the
+angle-addition approximate Zero assertion extracts only its value.
+
+Read Hyperreal's Carlson approximation excerpt through line 115 and the complete
+small `computable/node/elliptic_integrals.rs` constructor for supporting context.
+These excerpts explain why the root-node corpus's `(1/8,0,0)` internal tuple
+encodes mathematical Carlson arguments `(1/64,1,1)`: the first child is squared
+and the other two exponentiated. It is not a raw singular Carlson input. The
+constructor itself has not yet received its own Rustdoc audit/coverage edits;
+no full approximation-file review is claimed. Also checked the `Computable::approx`
+signature and previously reviewed PredicateOutcome value extraction. Node reload
+assertions compare approximation integers at precision -24, not an independent
+exact-value oracle or arbitrary expression-composition coverage.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Both files are identical to
+  baseline after removing only comment-only and blank lines. Scoped scans
+  verified Rustdoc on all 52 declarations and three fields, including nested
+  constants and serde-gated helpers.
+- `cargo check --locked -p hyperlimit --test support_dop --test
+  real_representations --all-features --offline -j2` passed. The same targets
+  with `--no-default-features` passed; serde-gated tests/helpers are excluded
+  in that configuration.
+- Private Rustdoc passed for both targets with all features, checked own-library
+  metadata and cached dependency paths, `--document-private-items`, warnings
+  denied, and broken/private links denied. Verified 31 complete rendered
+  module/helper/constant/struct/field doc groups against source. Twenty-four test
+  functions and two nested constants remain source-reviewed and compiled, not
+  standalone Rustdoc pages. Private Rustdoc was not run without default features.
+- Independent Python integer/Fraction checks verified the first support fixture's
+  min/max witness indices and x+y values, and strict separation of 1/2 from
+  1/2+2^-1074. These validate fixture arithmetic, not Rust predicate execution.
+  No runtime tests, cache-environment matrix, serialization replay, or abort
+  executions ran in this batch. These test targets are the affected downstream
+  consumers; no library implementation changed. Shared target remains 1.6 GiB.
+
+Logs: `/tmp/csgrs-rustdoc-hyperlimit-support-representations-{check,minimal-check,private}.log`;
+checked artifact metadata uses the same prefix and `artifacts.jsonl` suffix.
+Full workflow checks remain waived by the owner. The repository-wide semantic
+review and coverage mandate remain active and incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

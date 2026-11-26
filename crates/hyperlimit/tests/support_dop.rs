@@ -1,3 +1,11 @@
+//! Directional support bounds, source witnesses, and retained-report regressions.
+//!
+//! Fixed integer/rational fixtures exercise slab projection, point and plane
+//! classification, conservative AABB relations, and selected report mutations.
+//! Queries use APPROXIMATE_512 and generally inspect values rather than certainty.
+//! Replay means validation against in-process sources; no serialization is used.
+//! Mutation coverage is the explicit cases below, not every possible forgery.
+
 use hyperlimit::{
     ConvexPointLocation, HalfspaceFeasibilityReport, Plane3, Point3, PredicateOutcome,
     PredicatePolicy, SupportDop3, SupportDopAabb3ValidationError, SupportDopAxis3,
@@ -7,28 +15,38 @@ use hyperlimit::{
 };
 use hyperreal::{Rational, Real};
 
+/// Policy for the fixed support fixtures; permits an approximate terminal without requiring it.
 const POLICY: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+/// Convert an integer to an exact scalar.
 fn r(value: i64) -> Real {
     Real::from(value)
 }
 
+/// Construct an exact fraction; panic if its denominator is zero.
 fn q(num: i64, den: u64) -> Real {
     Real::from(Rational::fraction(num, den).expect("test rational denominator is nonzero"))
 }
 
+/// Assemble a spatial point from the supplied exact scalar expressions.
 fn p(x: Real, y: Real, z: Real) -> Point3 {
     Point3::new(x, y, z)
 }
 
+/// Build a spatial point by exact conversion of three integer coordinates.
 fn pi(x: i64, y: i64, z: i64) -> Point3 {
     p(r(x), r(y), r(z))
 }
 
+/// Extract a decided value or panic on uncertainty, discarding certainty and stage.
 fn decided<T: Clone>(outcome: PredicateOutcome<T>) -> T {
     outcome.value().expect("test predicate should decide")
 }
 
+/// Check extrema indices for x, y, and x+y projections of four source points.
+///
+/// The x+y bounds must be zero and six. Source count and slab count are checked;
+/// no assertion inspects the construction's certainty receipt.
 #[test]
 fn support_dop_build_records_exact_support_witnesses() {
     let axes = vec![pi(1, 0, 0), pi(0, 1, 0), pi(1, 1, 0)];
@@ -48,6 +66,9 @@ fn support_dop_build_records_exact_support_witnesses() {
     assert_eq!(dop.slabs()[2].max, r(6));
 }
 
+/// Require Inside, Boundary, and Outside for three queries against tetrahedral support slabs.
+///
+/// The axes constrain x/y/z and x+y+z. Assertions check decided location values.
 #[test]
 fn support_dop_classifies_point_inside_boundary_and_outside_exactly() {
     let axes = vec![pi(1, 0, 0), pi(0, 1, 0), pi(0, 0, 1), pi(1, 1, 1)];
@@ -68,6 +89,10 @@ fn support_dop_classifies_point_inside_boundary_and_outside_exactly() {
     );
 }
 
+/// Check conservative overlap, boundary touch, and separation for three AABB queries.
+///
+/// The slabs constrain x, y, and x+y; z remains unbounded. These are directional
+/// interval-relation labels, not a general exact solid-intersection oracle.
 #[test]
 fn support_dop_aabb_relation_uses_exact_projection_intervals() {
     let dop = SupportDop3::from_slabs(vec![
@@ -93,6 +118,10 @@ fn support_dop_aabb_relation_uses_exact_projection_intervals() {
     );
 }
 
+/// Check all three slab reports and selected projection intervals for a boundary query.
+///
+/// The x interval is `[4, 5]` and x+y interval is `[5, 7]`. Validation against the
+/// same source DOP/box must succeed, and the direct relation must match.
 #[test]
 fn support_dop_aabb_report_retains_boundary_projection_evidence() {
     let dop = SupportDop3::from_slabs(vec![
@@ -126,6 +155,9 @@ fn support_dop_aabb_report_retains_boundary_projection_evidence() {
     );
 }
 
+/// Require one retained report and terminal index zero when the x slab separates.
+///
+/// The projected interval must be `[5, 6]`; source replay must accept the report.
 #[test]
 fn support_dop_aabb_report_stops_at_first_separating_slab() {
     let dop = SupportDop3::from_slabs(vec![
@@ -152,6 +184,9 @@ fn support_dop_aabb_report_stops_at_first_separating_slab() {
     );
 }
 
+/// Require early Degenerate for an inverted first slab, with no query interval retained.
+///
+/// The single report must identify terminal slab zero and pass source validation.
 #[test]
 fn support_dop_aabb_report_records_invalid_retained_slab_as_degenerate() {
     let dop = SupportDop3::from_slabs(vec![
@@ -174,6 +209,7 @@ fn support_dop_aabb_report_records_invalid_retained_slab_as_degenerate() {
     );
 }
 
+/// Require distinct validation errors for a forged overall relation and a removed slab report.
 #[test]
 fn support_dop_aabb_report_rejects_forged_relations_and_missing_evidence() {
     let dop = SupportDop3::from_slabs(vec![
@@ -199,6 +235,11 @@ fn support_dop_aabb_report_rejects_forged_relations_and_missing_evidence() {
     );
 }
 
+/// Check a unit cube below/above external planes and intersecting tangent/crossing planes.
+///
+/// The tangent x = 1 report retains six slab halfspaces and feasible reports for
+/// both closed sides. Tangent and diagonal crossing reports must replay against
+/// sources. Here strict sides describes geometry, not the selected policy.
 #[test]
 fn support_dop_plane_report_classifies_strict_sides_and_intersections() {
     let dop = SupportDop3::from_slabs(vec![
@@ -250,6 +291,11 @@ fn support_dop_plane_report_classifies_strict_sides_and_intersections() {
     );
 }
 
+/// Distinguish inverted bounds from contradictory valid slabs within Degenerate reports.
+///
+/// Invalid bounds retain no carrier feasibility. Incompatible x = 0 and x = 1
+/// slabs retain an infeasible carrier and no side reports. Both source replays
+/// must accept their respective report structures.
 #[test]
 fn support_dop_plane_report_detects_invalid_and_infeasible_carriers() {
     let invalid = SupportDop3::from_slabs(vec![SupportSlab3::new(pi(1, 0, 0), r(2), r(1))]);
@@ -286,6 +332,7 @@ fn support_dop_plane_report_detects_invalid_and_infeasible_carriers() {
     );
 }
 
+/// Reject a forged Intersecting label and a missing below-side feasibility report.
 #[test]
 fn support_dop_plane_report_rejects_forged_side_evidence() {
     let dop = SupportDop3::from_slabs(vec![
@@ -311,6 +358,10 @@ fn support_dop_plane_report_rejects_forged_side_evidence() {
     );
 }
 
+/// Compare optional point labels for four samples after negating an axis and swapping bounds.
+///
+/// The slabs encode the same `0 <= x <= 4` set. The assertions compare optional
+/// values and do not independently require decided outcomes or universal set equality.
 #[test]
 fn support_dop_reversed_axis_preserves_same_closed_region() {
     let positive = SupportDop3::from_slabs(vec![SupportSlab3::new(pi(1, 0, 0), r(0), r(4))]);
@@ -324,6 +375,10 @@ fn support_dop_reversed_axis_preserves_same_closed_region() {
     }
 }
 
+/// Distinguish x = 1/2 from the upper boundary at `1/2 + 2^-1074`.
+///
+/// The subnormal is imported before addition in `Real`, preserving the separation
+/// that binary64 addition to one half would lose.
 #[test]
 fn support_dop_keeps_dyadic_f64_imports_exact_at_boundaries() {
     let tiny = Real::try_from(f64::from_bits(1)).expect("subnormal dyadic imports exactly");
@@ -341,6 +396,7 @@ fn support_dop_keeps_dyadic_f64_imports_exact_at_boundaries() {
     );
 }
 
+/// Require Degenerate for point and AABB queries against one inverted x slab.
 #[test]
 fn support_dop_reports_inverted_explicit_slabs_as_degenerate() {
     let dop = SupportDop3::from_slabs(vec![SupportSlab3::new(pi(1, 0, 0), r(4), r(0))]);
@@ -356,6 +412,12 @@ fn support_dop_reports_inverted_explicit_slabs_as_degenerate() {
     );
 }
 
+/// Check axis catalogs, expansion metadata, projected margins, and selected invalid reports.
+///
+/// Orthogonal axes validate; the zero axis fails. The 26-DOP catalog must have 13
+/// nonzero, pairwise unequal direction records. A margin of two extends x extrema
+/// -2 and 4 to -4 and 6, retaining witness indices. Negative and inconsistent
+/// expansion metadata must fail. These checks do not serialize or measure loss.
 #[test]
 fn witnessed_axis_and_expansion_metadata_contracts_are_replayable() {
     let orthogonal = SupportDopAxis3::orthogonal_axes();
@@ -430,6 +492,11 @@ fn witnessed_axis_and_expansion_metadata_contracts_are_replayable() {
     );
 }
 
+/// Check the listed empty-input, count, axis, and witness validation failures.
+///
+/// Mutations cover out-of-range indices, mismatched points/distances, and
+/// nonminimal/nonmaximal witnesses on a three-point x-axis fixture. Despite the
+/// name, this finite mutation set is not an exhaustive forgery proof.
 #[test]
 fn witnessed_support_dop_rejects_every_forgeable_source_mismatch() {
     let points = [pi(0, 0, 0), pi(4, 0, 0), pi(2, 0, 0)];
@@ -526,6 +593,11 @@ fn witnessed_support_dop_rejects_every_forgeable_source_mismatch() {
     );
 }
 
+/// Check refresh counters and selected witnesses after four single-vertex changes.
+///
+/// A nonwitness extends either extreme or stays internal; changing the existing
+/// maximum witness triggers rebuild. Invalid changed indices, vertex counts, and
+/// expansion axis counts fail. Counter assertions do not measure runtime cost.
 #[test]
 fn witnessed_support_dop_refresh_distinguishes_rebuild_extension_and_noop() {
     let initial = [pi(0, 0, 0), pi(4, 0, 0), pi(2, 0, 0)];
@@ -584,6 +656,12 @@ fn witnessed_support_dop_refresh_distinguishes_rebuild_extension_and_noop() {
     );
 }
 
+/// Check empty-input behavior and the listed retained AABB-report validation failures.
+///
+/// Mutations exercise slab indices/bounds, missing or inverted projected intervals,
+/// relations, terminal markers, and invalid-slab evidence. A changed query must
+/// fail source replay. Empty construction checks also retain source-point counts;
+/// the finite cases do not cover every malformed report.
 #[test]
 fn support_dop_aabb_report_validation_rejects_each_retained_evidence_forge() {
     let empty = SupportDop3::from_slabs(Vec::new());
@@ -677,6 +755,11 @@ fn support_dop_aabb_report_validation_rejects_each_retained_evidence_forge() {
     );
 }
 
+/// Check selected empty, invalid, and infeasible plane-report mutations and source mismatch.
+///
+/// Assertions distinguish halfspace-count, carrier/side-witness, missing-carrier,
+/// unexpected-side, and relation errors. The mismatched source plane must fail
+/// replay. These cases do not prove complete validator soundness.
 #[test]
 fn support_dop_plane_report_validation_rejects_each_retained_evidence_forge() {
     let plane = Plane3::new(pi(1, 0, 0), r(-2));

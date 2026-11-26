@@ -1,3 +1,13 @@
+//! Scalar-representation compatibility through a shared geometric predicate corpus.
+//!
+//! Recipes cover named certificates, public structural kinds, rational storage,
+//! primitive-view metadata, cache states, and abort signals. Serde-gated fixtures
+//! additionally check private tag inventories and in-process JSON/CBOR reloads.
+//! Most assertions inspect values rather than receipts. Translation identities
+//! test consumption of a shared carrier, not preservation of its absolute value;
+//! tag coverage and one-precision approximation equality are not universal
+//! representation, serialization-fidelity, or decision-completeness proofs.
+
 use core::cmp::Ordering;
 use std::sync::{
     Arc,
@@ -11,19 +21,35 @@ use hyperlimit::{
 };
 use hyperreal::{PrimitiveFloatStatus, Rational, RationalStorageClass, Real, StructuralKind};
 
+/// Policy requiring certified decisions in the representation-consumption fixtures.
 const STRICT: PredicatePolicy = PredicatePolicy::STRICT;
+/// Policy permitting an approximate terminal in the paired-policy and opaque-zero fixtures.
 const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+/// One constructed scalar with its expected structural kind and diagnostic certificate label.
+///
+/// The label identifies a recipe; serde tests separately check its serialized
+/// class tag. The record does not itself certify the value or representation.
 struct RepresentationCase {
+    /// Recipe label used in diagnostics and, for named-class cases, expected serialized tags.
     certificate: &'static str,
+    /// Expected public structural classification for this fixture.
     public_kind: StructuralKind,
+    /// Constructed scalar consumed by translation, metadata, cache, and replay checks.
     value: Real,
 }
 
+/// Construct an exact rational scalar, panicking on a zero denominator.
 fn fraction(numerator: i64, denominator: u64) -> Real {
     Real::new(Rational::fraction(numerator, denominator).expect("nonzero denominator"))
 }
 
+/// Build 22 positive scalar recipes spanning the eight public structural kinds.
+///
+/// Labels track the expected private class tags, from rational scale through
+/// constant products, logarithms, radicals, rational-angle trigonometry, and opaque
+/// sin(1). Serde-gated tests detect tag-list drift; this list alone does not prove
+/// coverage of all values or arithmetic compositions in a class.
 fn optimized_certificate_representatives() -> Vec<RepresentationCase> {
     let pi = Real::pi();
     let e = Real::e();
@@ -152,6 +178,10 @@ fn optimized_certificate_representatives() -> Vec<RepresentationCase> {
     ]
 }
 
+/// Require the expected decided value with a contextual diagnostic on failure.
+///
+/// The helper does not assert certainty or escalation; debug output includes the
+/// outcome only to explain a failed assertion.
 fn assert_decided<T>(actual: PredicateOutcome<T>, expected: T, context: &str)
 where
     T: Copy + core::fmt::Debug + PartialEq,
@@ -159,6 +189,9 @@ where
     assert_eq!(actual.value(), Some(expected), "{context}: {actual:?}");
 }
 
+/// Require a substring in the scalar's Debug output as a private cache-state probe.
+///
+/// This depends on diagnostic formatting and does not count cache hits.
 fn assert_private_cache_debug(value: &Real, expected: &str, context: &str) {
     let debug = format!("{value:?}");
     assert!(
@@ -167,6 +200,7 @@ fn assert_private_cache_debug(value: &Real, expected: &str, context: &str) {
     );
 }
 
+/// Reject a substring in Debug output to check absence of the named cache representation.
 fn assert_private_cache_debug_excludes(value: &Real, excluded: &str, context: &str) {
     let debug = format!("{value:?}");
     assert!(
@@ -175,6 +209,7 @@ fn assert_private_cache_debug_excludes(value: &Real, excluded: &str, context: &s
     );
 }
 
+/// Map every public structural kind to a distinct slot in the eight-entry coverage bitmap.
 fn structural_kind_index(kind: StructuralKind) -> usize {
     match kind {
         StructuralKind::ExactRational => 0,
@@ -188,6 +223,7 @@ fn structural_kind_index(kind: StructuralKind) -> usize {
     }
 }
 
+/// Map the four rational storage classes to coverage-bitmap slots.
 fn rational_storage_index(storage: RationalStorageClass) -> usize {
     match storage {
         RationalStorageClass::Zero => 0,
@@ -197,6 +233,7 @@ fn rational_storage_index(storage: RationalStorageClass) -> usize {
     }
 }
 
+/// Map the five primitive-range statuses to coverage-bitmap slots.
 fn primitive_status_index(status: PrimitiveFloatStatus) -> usize {
     match status {
         PrimitiveFloatStatus::Zero => 0,
@@ -207,6 +244,13 @@ fn primitive_status_index(status: PrimitiveFloatStatus) -> usize {
     }
 }
 
+/// Consume a shared scalar as a translation in seven fixed predicate expectations.
+///
+/// Checks include scalar order, planar/spatial orientation, segment/triangle
+/// membership, zero distance to a collapsed triangle, and a translated plane
+/// side. The carrier cancels mathematically, so these checks establish the stated
+/// relations without independently measuring its absolute value. Receipts and
+/// stages are not asserted.
 fn assert_translation_predicates(case: &RepresentationCase, policy: PredicatePolicy) {
     let carrier = &case.value;
     let one = Real::one();
@@ -266,6 +310,10 @@ fn assert_translation_predicates(case: &RepresentationCase, policy: PredicatePol
     );
 }
 
+/// Check 22 recipes' expected kinds, all eight kind slots, and consumption under both policies.
+///
+/// The class count is fixed here; private class-tag inventory agreement is checked
+/// separately by the serde-gated test.
 #[test]
 fn every_public_kind_and_optimized_certificate_crosses_predicate_families() {
     let cases = optimized_certificate_representatives();
@@ -284,6 +332,12 @@ fn every_public_kind_and_optimized_certificate_crosses_predicate_families() {
     assert_eq!(observed_kinds, [true; 8], "missing public Real kind");
 }
 
+/// Check eight rational fixtures across all storage and primitive-range status classes.
+///
+/// Binary32/binary64 inputs retain exact represented values, including signed zero
+/// and a subnormal. A 101-bit integer and 10^1300 cover larger storage. Each rational
+/// runs the strict translation corpus; opaque sin(e) supplies additional range
+/// metadata only, without running that corpus here.
 #[test]
 fn exact_rational_storage_and_primitive_origin_matrix_crosses_predicates() {
     let zero = Real::zero();
@@ -361,6 +415,20 @@ fn exact_rational_storage_and_primitive_origin_matrix_crosses_predicates() {
     );
 }
 
+/// Check signs, rational scaling, warmed primitive views, and attached abort states.
+///
+/// For 22 recipes, binary32 neighbors must enclose the scalar before/after a
+/// precision -128 interval query. `HYPERLIMIT_EXPECT_F32_CACHE=present` additionally
+/// requires repeated-value equality and an F32 Debug marker; `absent` forbids the
+/// marker. Other readable values panic, while an unavailable variable skips those
+/// cache-specific assertions. Binary64 repeated values and Debug markers are
+/// always checked, including overflow None for 10^1300.
+///
+/// Separate clones exercise each primitive view before strict translation checks.
+/// Unset abort signals are attached to three representatives; triggered signals
+/// must preserve their decided positive signs. One triggered opaque unit-circle
+/// identity must remain Unknown. This does not test general cancellation cleanup,
+/// retry, time bounds, or independence of every shared cache.
 #[test]
 fn sign_scale_cache_and_abort_states_preserve_predicate_results() {
     for case in optimized_certificate_representatives() {
@@ -560,6 +628,12 @@ fn sign_scale_cache_and_abort_states_preserve_predicate_results() {
     ));
 }
 
+/// Check two opaque zeros with different policy expectations.
+///
+/// The unit-circle identity at e must decide Zero with Exact or Filtered certainty
+/// through STRICT, APPROXIMATE_512, then STRICT. The independent angle-addition
+/// identity must remain unknown under STRICT and decide Zero under approximate
+/// policy; that second decision's certainty and stage are not asserted.
 #[test]
 fn unresolved_opaque_terminal_form_respects_policy_boundary() {
     let sine = Real::e().sin();
@@ -598,6 +672,13 @@ fn unresolved_opaque_terminal_form_respects_policy_boundary() {
     );
 }
 
+/// Match the private class inventory and consume 22 JSON/CBOR-reloaded recipes under STRICT.
+///
+/// An unknown-tag serde diagnostic must list exactly the recipe names in order.
+/// Each JSON class tag and both reloads' public kind are checked after warming
+/// primitive views. Translation predicates use the restored values in one process;
+/// no original/restored scalar equality, serialized cache absence, or byte-level
+/// round-trip identity is asserted.
 #[cfg(feature = "serde")]
 #[test]
 fn every_optimized_certificate_survives_serialized_representation() {
@@ -607,10 +688,8 @@ fn every_optimized_certificate_survives_serialized_representation() {
         .map(|case| case.certificate)
         .collect::<Vec<_>>();
 
-    // Serde's generated unknown-variant diagnostic is the only public view of
-    // Hyperreal's private Class enumeration. Comparing it with this matrix
-    // makes a newly added private certificate fail here until it receives a
-    // predicate representative.
+    // Compare serde's generated unknown-variant diagnostic with the recipe
+    // names so private Class inventory changes require a matching fixture.
     let mut probe: serde_json::Value =
         serde_json::from_str(&Real::one().to_json()).expect("valid probe JSON");
     probe["class"] = serde_json::Value::String("__hyperlimit_variant_probe__".into());
@@ -686,17 +765,23 @@ fn every_optimized_certificate_survives_serialized_representation() {
     }
 }
 
+/// Deserialize a Computable from the supplied internal-node JSON, panicking on rejection.
+///
+/// This helper assembles representation fixtures rather than selecting a public
+/// mathematical constructor for each node.
 #[cfg(feature = "serde")]
 fn computable_from_internal(internal: serde_json::Value) -> hyperreal::Computable {
     serde_json::from_value(serde_json::json!({ "internal": internal }))
         .expect("valid serialized Computable node")
 }
 
+/// Serialize a Computable to a JSON value; panic if serialization fails.
 #[cfg(feature = "serde")]
 fn serialized_computable(value: &hyperreal::Computable) -> serde_json::Value {
     serde_json::to_value(value).expect("Computable serializes")
 }
 
+/// Serialize an exact fraction to JSON; panic on zero denominator or serialization failure.
 #[cfg(feature = "serde")]
 fn serialized_rational(numerator: i64, denominator: u64) -> serde_json::Value {
     serde_json::to_value(
@@ -705,6 +790,10 @@ fn serialized_rational(numerator: i64, denominator: u64) -> serde_json::Value {
     .expect("Rational serializes")
 }
 
+/// Extract the serialized root-node tag from a string or single-key object.
+///
+/// Missing internal data or an unexpected tag shape panics; child tags are not
+/// inspected by this helper.
 #[cfg(feature = "serde")]
 fn computable_root_tag(value: &hyperreal::Computable) -> String {
     let serialized = serialized_computable(value);
@@ -722,6 +811,11 @@ fn computable_root_tag(value: &hyperreal::Computable) -> String {
     }
 }
 
+/// Install a supplied Computable graph in an opaque Real JSON template with unit scale.
+///
+/// The class is set to Irrational and the resulting representation is deserialized.
+/// Invalid template data or rejected deserialization panics. This does not prove
+/// that the graph represents an irrational number.
 #[cfg(feature = "serde")]
 fn opaque_real_from_computable(value: &hyperreal::Computable) -> Real {
     let mut serialized: serde_json::Value =
@@ -733,6 +827,7 @@ fn opaque_real_from_computable(value: &hyperreal::Computable) -> Real {
     serde_json::from_value(serialized).expect("valid opaque Real with supplied Computable graph")
 }
 
+/// Format ordered names as comma-separated backtick-quoted tags for a serde diagnostic comparison.
 #[cfg(feature = "serde")]
 fn quoted_variant_list(names: &[&str]) -> String {
     names
@@ -742,6 +837,10 @@ fn quoted_variant_list(names: &[&str]) -> String {
         .join(", ")
 }
 
+/// Extract the list after `expected one of ` and before any ` at line ` suffix.
+///
+/// The expected diagnostic delimiter must exist; the optional source-location
+/// suffix is stripped. This is coupled to serde diagnostic wording.
 #[cfg(feature = "serde")]
 fn serde_reported_variants(error: &str) -> &str {
     error
@@ -753,6 +852,14 @@ fn serde_reported_variants(error: &str) -> &str {
         .expect("variant list precedes source location")
 }
 
+/// Build one serialized representation recipe for each of the 70 listed root-node tags.
+///
+/// Most recipes use small rational children to preserve an intended internal node
+/// instead of allowing public constructors to simplify it. Payloads follow each
+/// node's internal encoding: for example, the Carlson tuple encodes a square
+/// argument and two exponential arguments, not three raw integral arguments.
+/// The caller checks tag inventory/order and one approximation precision. This is
+/// a finite root-tag corpus, not exhaustive child graphs or singularity coverage.
 #[cfg(feature = "serde")]
 fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
     use hyperreal::Computable;
@@ -1113,11 +1220,20 @@ fn exhaustive_computable_nodes() -> Vec<(&'static str, hyperreal::Computable)> {
     ]
 }
 
+/// Check 70 node tags and 18 shared-constant tags against serde's reported inventories.
+///
+/// Each node recipe must retain its expected root tag. Original and reloaded
+/// Computables must agree at approximation precision -24; the restored graph is
+/// then wrapped as an opaque scalar for strict translation predicates. Shared
+/// constants follow the same approximation/reload path. This finite in-process
+/// corpus does not assert exact original/restored scalar equality or arbitrary
+/// compositions, and the approximation comparison is not an independent oracle.
 #[cfg(feature = "serde")]
 #[test]
 fn every_computable_node_and_shared_constant_representation_crosses_predicates() {
     use hyperreal::Computable;
 
+    /// Ordered private node-tag inventory expected from the serde unknown-variant diagnostic.
     const NODE_NAMES: [&str; 70] = [
         "Int",
         "One",
@@ -1190,6 +1306,7 @@ fn every_computable_node_and_shared_constant_representation_crosses_predicates()
         "JacobiCn",
         "JacobiDn",
     ];
+    /// Ordered shared-constant inventory expected from serde and instantiated individually.
     const SHARED_CONSTANT_NAMES: [&str; 18] = [
         "E",
         "Pi",
