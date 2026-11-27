@@ -1,5 +1,6 @@
 use core::fmt;
 
+/// Borrowed and formatter-driven presentation adapters over the exact scalar.
 impl Real {
     /// Borrow a decimal display view with a fixed number of fractional digits.
     ///
@@ -18,9 +19,15 @@ impl Real {
     /// assert_eq!(format!("{:.3}", value.fixed_decimal()), "0.125");
     /// ```
     pub fn fixed_decimal(&self) -> impl fmt::Display + '_ {
-        struct FixedDecimal<'a>(&'a Real);
+        /// Borrow the authoritative scalar while selecting Computable's fixed decimal formatter.
+        struct FixedDecimal<'a>(
+            /// Source including its rational scale; folded only when formatting is requested.
+            &'a Real,
+        );
 
+        /// Format the folded full value without an adaptive scientific-notation decision.
         impl fmt::Display for FixedDecimal<'_> {
+            /// Forward precision and signs to the underlying approximate display implementation.
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Display::fmt(&self.0.fold_ref(), f)
             }
@@ -29,8 +36,19 @@ impl Real {
         FixedDecimal(self)
     }
 
-    /// Format this Real as a decimal rather than rational.
-    /// Scientific notation will be used if the value is very large or small.
+    /// Format an approximate decimal, choosing notation from a leading-bit estimate.
+    ///
+    /// Fold the rational scale into the computable value, query its leading bit
+    /// with a -20 precision stop, and use fixed notation only for an estimate
+    /// in -19..60. All other outcomes select lowercase scientific notation,
+    /// whose leading-bit search may require much more refinement. Cache state
+    /// can affect this estimate; this is not an exact magnitude-window test.
+    /// The formatter precision is fractional places in the selected notation.
+    ///
+    /// This is the alternate Display path. It returns only formatting errors,
+    /// not typed numerical uncertainty or abort receipts. Use Self::try_decimal
+    /// for checked rounding with an exact notation window, or Self::fixed_decimal
+    /// to avoid scientific leading-bit discovery for unresolved cancellation.
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let folded = self.fold_ref();
         match folded.iter_msd_stop(-20) {
@@ -40,21 +58,35 @@ impl Real {
     }
 }
 
+/// Approximate uppercase scientific display of the folded value.
+/// Delegates leading-bit search, digits and formatter flags to Computable; it
+/// does not provide the checked rounding/failure contract of Real::try_scientific.
 impl fmt::UpperExp for Real {
+    /// Include the rational scale and delegate to the matching computable formatter.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let folded = self.fold_ref();
         folded.fmt(f)
     }
 }
 
+/// Approximate lowercase scientific display of the folded value.
+/// Delegates leading-bit search, digits and formatter flags to Computable; it
+/// does not provide the checked rounding/failure contract of Real::try_scientific.
 impl fmt::LowerExp for Real {
+    /// Include the rational scale and delegate to the matching computable formatter.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let folded = self.fold_ref();
         folded.fmt(f)
     }
 }
 
+/// Human-readable retained-form display, or approximate decimal when alternate is set.
+/// Ordinary output prints the exact rational scale followed by a named basis
+/// expression (or class Debug fallback). It omits the opaque graph and is not
+/// a round-trip serialization grammar; even rational mixed fractions need not
+/// parse back through FromStr. Alternate output delegates to Real::decimal.
 impl fmt::Display for Real {
+    /// Select decimal display for `#`; otherwise emit the scale and class-specific suffix.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
             self.decimal(f)
@@ -102,9 +134,21 @@ impl fmt::Display for Real {
     }
 }
 
+/// Parse exact rational numeric text, with a lazy fallback for very large scientific exponents.
+/// Integers, fractions, decimals and e/E scientific literals enter through Rational;
+/// no binary floating value is introduced. Symbolic Display expressions such as
+/// pi/root/log forms are not accepted by this parser. Malformed input and zero
+/// denominators retain the rational parser's typed errors.
+///
+/// Only Exhausted with an e/E marker selects the fallback: parse the significand
+/// as Rational and the exponent as BigInt, then retain significand * 10^exponent
+/// through powi. This avoids mandatory expanded numerator/denominator storage;
+/// it does not guarantee cheap future evaluation or a total resource bound.
 impl std::str::FromStr for Real {
+    /// Preserve parse, domain and construction/resource failures from the owning scalar paths.
     type Err = Problem;
 
+    /// Prefer a payload-free exact rational; retry only exhausted scientific input as an exact power.
     fn from_str(s: &str) -> Result<Self, Problem> {
         match s.parse::<Rational>() {
             Ok(rational) => Ok(Self {
@@ -123,7 +167,9 @@ impl std::str::FromStr for Real {
                 let (significand, exponent) =
                     s.split_once(['e', 'E']).ok_or(Problem::BadDecimal)?;
                 let significand = significand.parse::<Rational>()?;
-                let exponent = exponent.parse::<BigInt>().map_err(|_| Problem::BadDecimal)?;
+                let exponent = exponent
+                    .parse::<BigInt>()
+                    .map_err(|_| Problem::BadDecimal)?;
                 let scale = Self::from(10_u8).powi(exponent)?;
                 crate::trace_dispatch!("real", "parse", "lazy-scientific-scale");
                 Ok(Self::new(significand) * scale)

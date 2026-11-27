@@ -14,10 +14,14 @@ pub enum ScientificCase {
     Upper,
 }
 
+/// Maximum requested fractional digits and exponent accepted by temporary powers of ten.
 pub(super) const MAX_DECIMAL_DIGITS: usize = 1_000_000;
+/// Maximum negative computable precision magnitude requested by checked formatting; not total work.
 const MAX_REFINEMENT_BITS: i32 = 1_000_000;
+/// Maximum bit length of either exact rational part admitted to rounding arithmetic.
 pub(super) const MAX_RATIONAL_BITS: u64 = 4_000_000;
 
+/// Checked scientific formatting and the shared enclosure-to-string certificate search.
 impl Real {
     /// Return a certified, rounded scientific decimal or a typed failure.
     ///
@@ -40,8 +44,8 @@ impl Real {
     ///
     /// * [`Problem::UnknownZero`]: the finite enclosure search cannot separate
     ///   this value from zero. An inconclusive search never formats as zero.
-    /// * [`Problem::Exhausted`]: the value is known nonzero but rounding remains
-    ///   ambiguous, evaluation is aborted, or a formatting resource limit is
+    /// * [`Problem::Exhausted`]: a requested enclosure proves nonzero but rounding
+    ///   remains ambiguous, evaluation is aborted, or a formatting resource limit is
     ///   exceeded. An exact rational halfway case is decided directly; an
     ///   unresolved expression at the same boundary can remain ambiguous.
     /// * [`Problem::OutOfRange`]: `min_precision` is positive.
@@ -76,6 +80,22 @@ impl Real {
         })
     }
 
+    /// Certify a formatting string by exact value or agreement of enclosing endpoint strings.
+    /// Validate requests first, then use exact rationals before checking abort.
+    /// Other values check abort, consult structural zero, and request scaled
+    /// rational enclosures at 0, -16, -40, ... clamped to min_precision.
+    ///
+    /// The callback must be sound on each Rational, with equal endpoint strings
+    /// implying identical output throughout the enclosed interval. The two
+    /// callers supply nearest-even rounding with distinguishable notation regions;
+    /// this is not valid for an arbitrary string-valued callback. Callback errors
+    /// propagate immediately. Enclosure-based success is rechecked for cancellation.
+    ///
+    /// Only enclosures requested in this search set nonzero_proved: a cached
+    /// sign alone does not turn UnknownZero into Exhausted. Reaching the floor
+    /// returns the former if no enclosure excluded zero, otherwise the latter.
+    /// Failed interval production is Exhausted. Guards bound requests, not the
+    /// entire cost of structural analysis or one underlying approximation.
     pub(super) fn try_decimal_rounding(
         &self,
         decimal_places: usize,
@@ -137,6 +157,9 @@ impl Real {
     }
 }
 
+/// Construct exact 10^exponent within the decimal expansion cap, otherwise Exhausted.
+/// The cap also makes the usize-to-u32 cast exact; allocation by BigUint is not
+/// independently budgeted or cancellable through this helper.
 fn ten_to(exponent: usize) -> Result<BigUint, Problem> {
     if exponent > MAX_DECIMAL_DIGITS {
         return Err(Problem::Exhausted);
@@ -144,6 +167,15 @@ fn ten_to(exponent: usize) -> Result<BigUint, Problem> {
     Ok(BigUint::from(10_u8).pow(exponent as u32))
 }
 
+/// Produce normalized scientific digits by exact integer quotient/remainder rounding.
+/// The caller must bound decimal_places by MAX_DECIMAL_DIGITS before entry:
+/// reservation and the zero path use that precondition before ten_to is called.
+/// Nonzero rational parts are bit-limited; decimal digit counts bracket the
+/// exponent and one comparison corrects it. Ties select an even significand;
+/// a carry into the next decade increments the exponent and renormalizes digits.
+/// Zero is unsigned with exponent zero. Preserve case only in the exponent marker.
+/// Fallible string reservation and guarded powers report Exhausted; this does
+/// not turn every internal bigint/string allocation into a typed memory limit.
 pub(super) fn round_rational(
     value: &Rational,
     decimal_places: usize,

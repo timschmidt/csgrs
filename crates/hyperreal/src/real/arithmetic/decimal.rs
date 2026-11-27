@@ -7,6 +7,7 @@ use core::fmt;
 use num::bigint::BigUint;
 use num::{Integer, One};
 
+/// Checked adaptive output and a borrowed diagnostic wrapper over the same rounding path.
 impl Real {
     /// Return a certified rounded decimal with a deterministic notation choice.
     ///
@@ -70,12 +71,18 @@ impl Real {
     /// assert_eq!(format!("{}", value.diagnostic_decimal(-128)), "0.125");
     /// ```
     pub fn diagnostic_decimal(&self, min_precision: i32) -> impl fmt::Display + '_ {
+        /// Borrow a scalar and its requested refinement floor until formatting occurs.
         struct DiagnosticDecimal<'a> {
+            /// Authoritative source value, never replaced by the resulting diagnostic string.
             value: &'a Real,
+            /// Floor forwarded to checked conversion, with validity tested there.
             min_precision: i32,
         }
 
+        /// Render checked output or a nonnumeric failure marker without replacing the exact source.
         impl fmt::Display for DiagnosticDecimal<'_> {
+            /// Trim only default-precision mantissa zeros, then apply integral sign/width padding.
+            /// Failure markers are written directly and do not receive this numeric padding.
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 let precision = f.precision();
                 let mut text = match self
@@ -111,6 +118,11 @@ impl Real {
     }
 }
 
+/// Round an exact rational using the unrounded magnitude to choose notation.
+/// Reject oversized rational parts, then use fixed output on [2^-19, 2^60)
+/// and lowercase scientific output elsewhere, including zero. A rounding carry
+/// does not reselect notation. The caller has already bounded places; this
+/// helper also inherits the selected rounding routine's resource failures.
 fn round_adaptive(value: &Rational, places: usize) -> Result<String, Problem> {
     if value.numerator().bits() > MAX_RATIONAL_BITS
         || value.denominator().bits() > MAX_RATIONAL_BITS
@@ -130,6 +142,12 @@ fn round_adaptive(value: &Rational, places: usize) -> Result<String, Problem> {
     round_fixed(value, places)
 }
 
+/// Round an admitted fixed-window rational to places fractional digits, ties to even.
+/// The caller supplies bounded rational parts and magnitude below 2^60; the
+/// local places cap bounds decimal scaling, and places+24 reserves space for
+/// that magnitude, sign and point. Only this string reservation is fallible here;
+/// BigUint arithmetic and other allocation are not a global memory budget.
+/// Retain the source's negative sign even when its rounded magnitude is zero.
 fn round_fixed(value: &Rational, places: usize) -> Result<String, Problem> {
     if places > MAX_DECIMAL_DIGITS {
         return Err(Problem::Exhausted);

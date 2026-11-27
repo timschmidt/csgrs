@@ -16158,6 +16158,104 @@ and final logs, and complete source/render matches. Builds reused the approximat
 build tree or probe binary was created. Full workflows remain owner-waived; no
 focused check remains blocked. Repository-wide documentation work remains open.
 
+## Hyperreal comparisons, numeric parsing and checked display (2026-11-27)
+
+Whole-file review at revision 136158bb931a90412a57bdee4dd0686d84801ac6:
+
+- src/real/arithmetic/comparison.rs (81 -> 105 lines).
+- src/real/arithmetic/format_parse.rs (134 -> 180 lines).
+- src/real/arithmetic/decimal.rs (164 -> 182 lines).
+- src/real/arithmetic/scientific.rs (207 -> 239 lines).
+
+All paths are under crates/hyperreal. The owning layers are scalar comparison,
+exact numeric ingress and explicit display projections. P1/P3/P4/P5/P6/P29 and
+the admission protocol require preservation of exact input, honest unresolved
+outcomes, cache-aware claims and separation of display from authoritative values.
+The domain includes rational/named/opaque scalar representations, finite and
+nonfinite float comparison operands, numeric text with very large exponents,
+exact rounding ties, notation boundaries, unresolved cancellation, cached values,
+abort/retry and invalid/excessive precision requests. Missing witnesses were
+private helper/local wrapper Rustdoc and accurate descriptions of trait-versus-
+checked behavior and error selection. The 24 existing checked-decimal (seven),
+checked-scientific (twelve) and fixed-decimal (five) tests passed before editing.
+
+All fifty declarations, three local fields, two enum variants and two module
+blocks now have Rustdoc (57 complete blocks, including existing audited comments).
+Review documents:
+
+- PartialEq compares exact scales then basis identity, without semantic refinement.
+  Opaque bases use retained structural graphs. False is not a proof of distinct
+  mathematical values. Rational interoperability additionally requires Class::One.
+  Float operands are imported as exact binary fractions; NaN/infinities yield
+  false equality and None ordering, rather than a typed conversion receipt.
+- PartialOrd projects a certified decision at the -2048 precision floor and drops
+  the certificate. That floor is not total work. A consumer reproduced an existing
+  trait-consistency limitation: admitted ConstOffset(pi_power=0, exp_power=0,
+  offset=1) represents two but compares structurally unequal to native two, while
+  partial_cmp returns Some(Equal). Rustdoc explicitly states that the usual
+  PartialOrd/PartialEq consistency rule cannot be assumed for such representations.
+  This is documented existing behavior, not a claim of trait-law compliance or a
+  runtime fix; changing comparison semantics requires separate implementation work.
+- Display prints a rational scale plus a class-specific expression or Debug tag;
+  it omits opaque graphs and is not a round-trip grammar. Alternate Display uses
+  a leading-bit estimate to choose fixed/scientific notation. The fixed wrapper
+  and exponent traits fold the full value and delegate to Computable. Those paths
+  do not provide checked rounding, typed numeric failures or exact notation choice.
+- FromStr delegates exact numeric grammar to Rational. Only exhausted e/E inputs
+  retry through an exact significand and BigInt exponent with retained power-of-ten
+  construction. This avoids mandatory expanded rational storage, not all future
+  work. Symbolic Display expressions and mixed-fraction display are not accepted
+  as general round-trip syntax; malformed and zero-denominator errors survive.
+- Checked output validates requests, handles exact rationals before abort, then
+  uses structural zero or precision-clamped rational enclosures. Equal endpoint
+  strings certify an interval only under the supplied rounding callbacks' contract;
+  this is not a generic arbitrary-string callback algorithm. Only the requested
+  enclosures establish the nonzero flag used to distinguish exhausted ambiguous
+  rounding from UnknownZero. A cached sign alone does not choose that outcome.
+- Adaptive notation depends on unrounded exact magnitude, including at boundaries;
+  a rounding carry does not reselect notation. Fixed rounding retains a negative
+  sign on rounded zero. Scientific rounding uses exact quotient/remainder ties to
+  even and decade-carry normalization. Its private entry point relies on the caller
+  to bound digit count before reservation/zero handling. Digit, bit and power caps
+  are distinct from a complete memory/work budget; fallible output reservation does
+  not make all internal bigint/string allocations typed resource failures.
+- Local borrowed wrappers preserve the authoritative source. Diagnostic rendering
+  trims only default-precision mantissa zeros, applies numeric sign/width padding
+  on success, and directly writes nonnumeric error markers on failure.
+
+After the final source edit:
+
+- All 24 formatting tests and four selected parse/comparison unit tests passed
+  both without optional features and with all features. Existing checks include
+  directed MPFR rounding brackets, exact ties and carries, notation boundaries,
+  tiny/huge scales, unresolved zero, cache warming, abort/clear/retry, resource
+  guards, lazy extreme exponents and shared-basis structural negation.
+- The four public formatting doctests passed. The calculator integration test
+  passed through the actual binary: an unresolved result prints [UnknownZero]
+  and does not prevent the following calculation from printing 0.125.
+- A warnings-denied consumer linked to the rebuilt library checked both float
+  operand orders, exact dyadic equality versus decimal 0.1/binary 0.1 inequality,
+  all nonfinite cases, symmetric rational comparison, the reproduced noncanonical
+  equality/ordering distinction, display non-roundtrip, e/E markers and parse errors.
+- Actual private cargo doc passed without optional features and with all features,
+  denying warnings and broken/private links. Forty-eight full blocks matched the
+  generated all-feature pages. Nine function-local wrapper blocks are omitted by
+  ordinary Rustdoc; all nine rendered and matched as supplemental Markdown. This
+  supplemental check is not claimed as generated local item pages.
+- Token comparison found only one optional tuple-field trailing comma introduced with
+  multiline field documentation, plus whitespace formatting. All other noncomment
+  tokens, including string contents, remain unchanged. Selected Rustfmt and git
+  diff --check passed. No predicates, dispatch order, fixtures or runtime semantics
+  changed; no performance or universal completeness claim is made.
+
+Evidence: /tmp/csgrs-hyperreal-format-audit/ retains baseline/final logs, commands,
+source/render matches and the consumer source/result. Its roughly 18 MiB executable
+was removed; compilation reused the approximately 5.6 GiB shared nonincremental
+locked/offline target. Supporting scalar/parser/formatter and test excerpts, plus
+the calculator caller, earn no additional whole-file audit credit. Full workflows
+remain owner-waived; no focused check remains blocked. The comparison inconsistency
+remains explicitly documented, and repository-wide documentation work remains open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
