@@ -1,3 +1,42 @@
+/// Register 31 native vector rows for one scalar-conversion label: 18 vec3 and 13 vec4.
+///
+/// Builds four-case dense/sparse left/right arrays and four scalar divisors before
+/// timing. make_scalar receives binary64 fixtures; s preserves their exact binary
+/// values, while qr authors rationals from displayed decimals. Arbitrary callbacks
+/// can invalidate nonzero/domain assumptions. Four-dimensional lanes are Euclidean
+/// coordinates here, including w; no homogeneous projection or point validation runs.
+///
+/// | Rows | Actual operation and cancellation flag |
+/// | --- | --- |
+/// | vec3 new, zero | Convert rotating raw coordinates during timing, or construct zero. |
+/// | vec3 dot_abort | Dense paired dot with a clear flag. |
+/// | vec3/vec4 dot_sparse | Paired dot over the sparse corpus, including zero vectors. |
+/// | vec3/vec4 dot_abort_sparse | Sparse paired dot with the flag already set. |
+/// | vec3/vec4 dot_abort_dense | Dense paired dot with the flag already set. |
+/// | vec3 magnitude_abort | Magnitude with a clear flag; unwrap the result. |
+/// | vec3 normalize_checked | Checked normalization of dense nonzero fixtures; unwrap. |
+/// | vec3 normalize_checked_abort | Checked normalization with a clear flag; unwrap. |
+/// | vec3 div_scalar_checked, div_scalar_checked_abort | Checked scalar division, with a clear flag in the abort variant; clone operands and unwrap. |
+/// | vec4 dot, magnitude, normalize | Ordinary dense Euclidean operations; unwrap magnitude/normalization. |
+/// | vec3/vec4 add, sub, neg | Owned componentwise operations on cloned retained inputs. |
+/// | vec3/vec4 add_scalar, sub_scalar, mul_scalar, div_scalar | Componentwise scalar operations on cloned operands; unwrap division. |
+///
+/// The two flags are created outside timing and never toggled during iteration.
+/// A set flag exercises cooperative attachment/dispatch; dot_with_abort returns a
+/// Real and exact shortcuts can still finish. No cancellation outcome or subsequent
+/// forced evaluation is asserted. Sparse zero vectors are used for dot work, not
+/// normalization. Errors at unwrap/expect panic, without a policy certainty receipt.
+///
+/// Each nonconstant row rotates its four inputs with a per-callback cursor. Ordinary
+/// iter timing includes selection, cursor updates, explicit clones, operation work
+/// and returned-output destruction. Fixture setup is excluded except for vec3 new;
+/// retained scalar evidence can be reused. No value/path/count oracle or independent
+/// total-work/memory bound is supplied.
+///
+/// Eight optional trace hooks precede measured registration: sparse dot, active-flag
+/// sparse/dense dot in both dimensions, then vec3 checked normalization with and
+/// without the clear flag. Each loops once over four retained cases. These are
+/// untimed diagnostic passes, not a complete trace of every measured row.
 fn bench_vector_operations_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -9,10 +48,14 @@ fn bench_vector_operations_for<F>(
     let rhs3_cases = sample_vec3_b_cases().map(|value| blas_vec3_with(value, make_scalar));
     let lhs4_cases = sample_vec4_cases().map(|value| blas_vec4_with(value, make_scalar));
     let rhs4_cases = sample_vec4_b_cases().map(|value| blas_vec4_with(value, make_scalar));
-    let sparse_lhs3_cases = sample_vec3_sparse_cases().map(|value| blas_vec3_with(value, make_scalar));
-    let sparse_rhs3_cases = sample_vec3_sparse_b_cases().map(|value| blas_vec3_with(value, make_scalar));
-    let sparse_lhs4_cases = sample_vec4_sparse_cases().map(|value| blas_vec4_with(value, make_scalar));
-    let sparse_rhs4_cases = sample_vec4_sparse_b_cases().map(|value| blas_vec4_with(value, make_scalar));
+    let sparse_lhs3_cases =
+        sample_vec3_sparse_cases().map(|value| blas_vec3_with(value, make_scalar));
+    let sparse_rhs3_cases =
+        sample_vec3_sparse_b_cases().map(|value| blas_vec3_with(value, make_scalar));
+    let sparse_lhs4_cases =
+        sample_vec4_sparse_cases().map(|value| blas_vec4_with(value, make_scalar));
+    let sparse_rhs4_cases =
+        sample_vec4_sparse_b_cases().map(|value| blas_vec4_with(value, make_scalar));
     let scalar_cases = [
         make_scalar(2.0),
         make_scalar(1.0e-9),
@@ -69,18 +112,15 @@ fn bench_vector_operations_for<F>(
             );
         }
     });
-    trace_dispatch_row(
-        format!("vector_ops/{label}/vec3 normalize_checked"),
-        || {
-            for value in &lhs3_cases {
-                black_box(
-                    black_box(value)
-                        .normalize_checked()
-                        .expect("benchmark vectors have known nonzero norms"),
-                );
-            }
-        },
-    );
+    trace_dispatch_row(format!("vector_ops/{label}/vec3 normalize_checked"), || {
+        for value in &lhs3_cases {
+            black_box(
+                black_box(value)
+                    .normalize_checked()
+                    .expect("benchmark vectors have known nonzero norms"),
+            );
+        }
+    });
     trace_dispatch_row(
         format!("vector_ops/{label}/vec3 normalize_checked_abort"),
         || {
@@ -119,8 +159,7 @@ fn bench_vector_operations_for<F>(
             let index = cursor.get();
             cursor.set((index + 1) % sparse_lhs3_cases.len());
             black_box(
-                black_box(&sparse_lhs3_cases[index])
-                    .dot(black_box(&sparse_rhs3_cases[index])),
+                black_box(&sparse_lhs3_cases[index]).dot(black_box(&sparse_rhs3_cases[index])),
             )
         })
     });
@@ -141,10 +180,8 @@ fn bench_vector_operations_for<F>(
             let index = cursor.get();
             cursor.set((index + 1) % lhs3_cases.len());
             black_box(
-                black_box(&lhs3_cases[index]).dot_with_abort(
-                    black_box(&rhs3_cases[index]),
-                    &active_signal,
-                ),
+                black_box(&lhs3_cases[index])
+                    .dot_with_abort(black_box(&rhs3_cases[index]), &active_signal),
             )
         })
     });
@@ -272,8 +309,7 @@ fn bench_vector_operations_for<F>(
             let index = cursor.get();
             cursor.set((index + 1) % sparse_lhs4_cases.len());
             black_box(
-                black_box(&sparse_lhs4_cases[index])
-                    .dot(black_box(&sparse_rhs4_cases[index])),
+                black_box(&sparse_lhs4_cases[index]).dot(black_box(&sparse_rhs4_cases[index])),
             )
         })
     });
@@ -294,10 +330,8 @@ fn bench_vector_operations_for<F>(
             let index = cursor.get();
             cursor.set((index + 1) % lhs4_cases.len());
             black_box(
-                black_box(&lhs4_cases[index]).dot_with_abort(
-                    black_box(&rhs4_cases[index]),
-                    &active_signal,
-                ),
+                black_box(&lhs4_cases[index])
+                    .dot_with_abort(black_box(&rhs4_cases[index]), &active_signal),
             )
         })
     });
@@ -378,13 +412,17 @@ fn bench_vector_operations_for<F>(
     });
 }
 
+/// Register vector_ops for two native input models and three external adapters.
+///
+/// Native s/qr routes register 31 rows each; Numerica, Rug/GMP/MPFR and Symbolica
+/// routes register 25 each, for 137 total. Each external set omits the six native
+/// sparse/active-dot rows. All group sample/time settings come from Criterion.
+/// Shared names do not certify equal numeric inputs, output materialization,
+/// cancellation behavior, checked guards, arithmetic precision or completed work.
+/// This family adds no cross-backend result comparison or performance assertion.
 fn bench_vector_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("vector_ops");
-    bench_vector_operations_for::<_>(
-        &mut group,
-        "hyperreal",
-        s,
-    );
+    bench_vector_operations_for::<_>(&mut group, "hyperreal", s);
     bench_vector_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_vector_operations(&mut group, "numerica128");
     bench_gmp_vector_operations(&mut group, "gmp_mpfr128");
@@ -392,6 +430,26 @@ fn bench_vector_operations(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register 25 float-adapter rows under the Numerica comparison label.
+///
+/// The local adapter uses Symbolica's Float backend with requested precision 128.
+/// Four retained dense left/right vectors per dimension and four scalars originate
+/// from binary64; no sparse fixtures or diagnostic trace hooks are registered here.
+/// Except for constructors, rows rotate retained inputs and call borrowed adapter
+/// methods. Internal scalar cloning/allocation and ordinary iter output destruction
+/// remain measured; no numerical or accuracy assertions are made.
+///
+/// Fifteen vec3 names cover new, zero, dot_abort, magnitude_abort, both checked
+/// normalization labels and nine arithmetic/scalar-division labels. Ten vec4 names
+/// cover dot, magnitude, normalize and seven arithmetic/scalar operations. Abort
+/// names do not pass a flag; checked names reuse ordinary normalization or division
+/// without native structural guards or typed Results.
+///
+/// vec3 magnitude_abort returns Vec3(magnitude,0,0), while vec4 dot/magnitude return
+/// Vec4(result,0,0,0) so each branch has the vector output type. Those extra zero
+/// constructions and vector destruction are measured and differ from native scalar
+/// outputs. The remaining operations return their adapter's natural scalar/vector
+/// carrier; these rows do not establish the same completed contract as native rows.
 fn bench_numerica_vector_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -426,7 +484,11 @@ fn bench_numerica_vector_operations(
             black_box(lhs3_cases[index].dot(&rhs3_cases[index], &ctx))
         })
     });
-    for name in ["vec3 magnitude_abort", "vec3 normalize_checked", "vec3 normalize_checked_abort"] {
+    for name in [
+        "vec3 magnitude_abort",
+        "vec3 normalize_checked",
+        "vec3 normalize_checked_abort",
+    ] {
         group.bench_function(format!("{label}/{name}"), |b| {
             let cursor = Cell::new(0);
             b.iter(|| {
@@ -522,15 +584,28 @@ fn bench_numerica_vector_operations(
     }
 }
 
+/// Register the 25 dense-vector comparison rows using Rug/GMP/MPFR at precision 128.
+///
+/// Uses the same fixed binary64-origin shapes and name schedule as the Numerica
+/// wrapper: fifteen vec3 rows and ten vec4 rows, with no sparse or trace rows. It
+/// does not restore authored decimal/symbolic input values from those floats.
+/// Per-row cursors, borrowed retained operands, adapter work and output destruction
+/// are inside ordinary iter timing; vec3 new includes coordinate construction.
+///
+/// Abort-labeled rows pass no cancellation flag, and checked labels call ordinary
+/// methods. vec3 magnitude_abort packages its scalar into Vec3(magnitude,0,0);
+/// vec4 dot and magnitude package into Vec4(result,0,0,0), adding zero-lane and
+/// carrier work absent from native scalar outputs. Results are black-boxed without
+/// value/error/precision assertions or a common-contract guarantee.
 fn bench_gmp_vector_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
 ) {
     let ctx = gmp_engine::Ctx::new(128);
-    let lhs3_cases = sample_vec3_cases()
-        .map(|value| gmp_engine::Vec3::new(&ctx, value.x, value.y, value.z));
-    let rhs3_cases = sample_vec3_b_cases()
-        .map(|value| gmp_engine::Vec3::new(&ctx, value.x, value.y, value.z));
+    let lhs3_cases =
+        sample_vec3_cases().map(|value| gmp_engine::Vec3::new(&ctx, value.x, value.y, value.z));
+    let rhs3_cases =
+        sample_vec3_b_cases().map(|value| gmp_engine::Vec3::new(&ctx, value.x, value.y, value.z));
     let lhs4_cases = sample_vec4_cases()
         .map(|value| gmp_engine::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
     let rhs4_cases = sample_vec4_b_cases()
@@ -556,7 +631,11 @@ fn bench_gmp_vector_operations(
             black_box(lhs3_cases[index].dot(&rhs3_cases[index], &ctx))
         })
     });
-    for name in ["vec3 magnitude_abort", "vec3 normalize_checked", "vec3 normalize_checked_abort"] {
+    for name in [
+        "vec3 magnitude_abort",
+        "vec3 normalize_checked",
+        "vec3 normalize_checked_abort",
+    ] {
         group.bench_function(format!("{label}/{name}"), |b| {
             let cursor = Cell::new(0);
             b.iter(|| {
@@ -652,6 +731,20 @@ fn bench_gmp_vector_operations(
     }
 }
 
+/// Register the 25 dense-vector comparison rows using the local Symbolica Atom adapter.
+///
+/// Stores context argument 128, but vector construction/arithmetic use Atom::num(f64)
+/// and Atom operations rather than that field as a precision setting. Inputs remain
+/// float-origin; this does not certify a 128-bit evaluation or native Real equality.
+/// Initialization/license behavior is owned by the driver and dependency.
+///
+/// The fifteen vec3 and ten vec4 names follow the other external wrappers, omitting
+/// native sparse/active-dot rows. Abort labels carry no flag; checked labels reuse
+/// ordinary methods without native guards or typed Results. Magnitude in the vec3
+/// abort-named row and dot/magnitude in vec4 are embedded in vectors with remaining
+/// lanes zero, and that construction/destruction is part of timing. Other rows
+/// rotate borrowed retained inputs, with conversion included in vec3 new. No trace,
+/// numerical-result, certification or equal-work assertion is added.
 fn bench_symbolica_vector_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -686,7 +779,11 @@ fn bench_symbolica_vector_operations(
             black_box(lhs3_cases[index].dot(&rhs3_cases[index], &ctx))
         })
     });
-    for name in ["vec3 magnitude_abort", "vec3 normalize_checked", "vec3 normalize_checked_abort"] {
+    for name in [
+        "vec3 magnitude_abort",
+        "vec3 normalize_checked",
+        "vec3 normalize_checked_abort",
+    ] {
         group.bench_function(format!("{label}/{name}"), |b| {
             let cursor = Cell::new(0);
             b.iter(|| {

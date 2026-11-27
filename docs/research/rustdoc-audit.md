@@ -12007,6 +12007,88 @@ This file now has a whole-file record; remaining mathbench engines, scalar/vecto
 matrix/borrowed operation families, comparisons and report generation remain open,
 alongside the larger repository audit and earlier generated-item documentation gaps.
 
+## Hyperlattice mathbench vector-operation comparisons (2026-11-27)
+
+Read all baseline lines of `crates/hyperlattice/benches/mathbench/vector_ops.rs`
+(783 → 880) on `8b588040e`. Owner: native/external vector benchmark registration,
+fixture/cursor selection and cancellation-flag use. Relevant contracts are P1/P3/P4,
+P5/P6 and P36/P37: input models, cooperative cancellation, failure and equivalent
+completed workloads. The domain comprises four-case dense/sparse 3D/4D fixtures,
+scalar converters, two fixed flags and five backend labels. Missing acceptance
+evidence was attached documentation for the five private registration functions.
+The baseline all-feature mathbench Cargo check passed before edits.
+
+Added five complete groups, including a native-operation table and explicit external
+wrapper contracts. Read selected scalar-adapter, flag-constructor, native vector
+and external Vec3/Vec4 implementations as context; their whole-file coverage is not
+credited again or inferred from this review.
+
+Contracts clarified:
+
+- Each native input model registers 31 rows (18 vec3, 13 vec4). Each of the three
+  external adapters registers 25 (15 vec3, 10 vec4), yielding 137 registrations.
+  The external schedules omit six native sparse/active-dot names. Eight native
+  trace hooks each loop over four retained cases before measured registration;
+  these diagnostic passes do not trace every measured row.
+- Native s/qr paths retain exact binary inputs or author their displayed decimal
+  rationals, respectively. An arbitrary converter can alter zero/nonzero and domain
+  properties. Fourth lanes participate in Euclidean dot/norm/arithmetic, without
+  homogeneous projection. Sparse zero vectors are used for dot work, not normalization.
+- Native dot_abort uses a clear flag; dot_abort_sparse and dot_abort_dense use an
+  already-set flag in both dimensions. Magnitude and checked normalization/scalar
+  division abort variants use the clear flag. Neither flag is toggled by timed
+  code. dot_with_abort returns Real and exact shortcuts can finish with a set flag;
+  these rows assert neither cancellation failure nor forced later evaluation.
+- Native retained rows time cursor/selection, explicit clones, operations and
+  ordinary iter output destruction. vec3 new additionally times coordinate conversion;
+  other fixture construction precedes timing. Native Results are unwrapped, with no
+  value, path-count or policy-receipt assertion and no total-work/memory bound.
+- External abort names pass no signal, and checked names invoke ordinary adapter
+  normalization/division without native structural guards or typed Results. Inputs
+  are borrowed and retained, while internal adapter allocation/cloning still runs.
+  Naming overlap does not establish equal errors, cancellation behavior or work.
+- External vec3 magnitude_abort embeds the scalar result in (magnitude,0,0).
+  External vec4 dot/magnitude embed it in (result,0,0,0). Extra zero construction and
+  vector destruction are measured, unlike native scalar-result rows. This material
+  output difference is documented separately from arithmetic/precision differences.
+- The Numerica label uses the local Symbolica Float adapter at requested precision
+  128; GMP uses Rug/MPFR at that precision. Symbolica Atom vector operations do not
+  use the stored 128 context field as a precision setting. No higher-precision input
+  reconstruction or common exactness/completion claim is made by these wrappers.
+
+Validation after final edits:
+
+- Focused Rustfmt and git diff --check passed. Noncomment source equals Rustfmt
+  of the original using crates configuration. Beyond whitespace, it removes four
+  optional call commas and adds three optional array commas; all other tokens remain
+  identical. Fixtures, flags, evaluation order, unwraps and row names are unchanged.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 with incremental compilation disabled. Warnings and broken/private
+  links were denied. Complete text for all five groups rendered on five pages in
+  each mode.
+- Static schedule enumeration verified the 31 native suffixes, all three 25-name
+  external schedules, their exact six-name difference and eight native trace hooks.
+  Checked that external registration bodies contain no trace/with_abort/signal use.
+  These counts are registration evidence, not measurements of numerical completion.
+- Built the owning library in each configuration and ran standalone probes with
+  matching rlibs, warnings denied and a 30-second external process timeout. The
+  probes consumed the four current sparse fixture pairs in each dimension. Independent
+  integer expectations were [0,-24,-113,10] and [0,4,-13,19]. All sixteen evaluations
+  per configuration (clear/set flag) returned those exact rationals, and flags retained
+  their original values. This demonstrates permitted exact completion under a set
+  flag for these inputs, not universal cancellation correctness or dense-case behavior.
+- No complete benchmark row, Criterion timing run, external adapter workload,
+  Symbolica initialization or report writer was executed. Stored performance data
+  remains unchanged. Full workflows and unrelated runtime checks remain owner-waived;
+  no focused check is blocked. Removed probe executables; retained scripts/commands
+  use about 104 KiB, with the reused target still approximately 2.7 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-vectorbench-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-vectorbench-audit/` scripts, commands and formatter deltas.
+This file now has a whole-file record. Remaining mathbench engine, scalar/matrix/
+borrowed, comparison and report files still need review; the repository-wide audit
+and earlier generated-item documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
