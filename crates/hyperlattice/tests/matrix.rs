@@ -678,6 +678,10 @@ fn matrix4_negative_homogeneous_weight_stays_on_generic_projective_path() {
     );
 }
 
+/// Compares assumed point/direction batches with single-vector wrappers, including identity.
+///
+/// Inputs satisfy the assumed weights; wrapper agreement does not independently
+/// validate projective normalization or invalid-weight behavior.
 #[test]
 fn matrix4_assumed_homogeneous_batches_match_single_lane_transforms() {
     let transform = Matrix4::new([
@@ -1202,6 +1206,7 @@ fn matrix4_known_diagonal_div_vector_direction_only_matches_matrix_division() {
     );
 }
 
+/// Compares fused diagonal division/point application with a materialized quotient at unit w scale.
 #[test]
 fn matrix4_known_diagonal_div_vector_point_matches_matrix_division() {
     let numerator = Matrix4::new([
@@ -1220,6 +1225,9 @@ fn matrix4_known_diagonal_div_vector_point_matches_matrix_division() {
     );
 }
 
+/// Compares fused point application with materialized division when d3=7 rescales w.
+///
+/// The numerator is projective; this checks composition, not an independent inverse oracle.
 #[test]
 fn matrix4_known_diagonal_div_vector_point_scaled_w() {
     let numerator = Matrix4::new([
@@ -1608,6 +1616,7 @@ fn matrix3_known_diagonal_division_matches_matrix_division() {
     );
 }
 
+/// Compares reciprocal-prescaled vector application with a materialized 3×3 diagonal quotient.
 #[test]
 fn matrix3_known_diagonal_div_vector_matches_matrix_division() {
     let numerator = Matrix3::new([
@@ -1735,6 +1744,7 @@ fn ordinary_matrix_inverse_prefers_known_nonzero_pivots() {
     assert!(matrix.inverse().is_ok());
 }
 
+/// Checks exact permutation coordinates plus rational, sign and nonzero facts on fractional data.
 #[test]
 fn hyperreal_matrix_transform_preserves_exact_rational_facts() {
     let permutation = Matrix3::new([
@@ -1756,6 +1766,7 @@ fn hyperreal_matrix_transform_preserves_exact_rational_facts() {
     assert_eq!(output[1].zero_status(), ZeroKnowledge::NonZero);
 }
 
+/// Checks identity preserves a fractional vector and its rational/sign facts, including a zero lane.
 #[test]
 fn hyperreal_matrix_transform_identity_preserves_facts() {
     let identity = Matrix3::new([
@@ -1776,6 +1787,9 @@ fn hyperreal_matrix_transform_identity_preserves_facts() {
     assert_eq!(output[2].structural_facts().sign, Some(RealSign::Zero));
 }
 
+/// Checks diagonal scales, a collapsed z lane and homogeneous one with exact values and facts.
+///
+/// Despite the test name, this fixture has no nonzero spatial translation.
 #[test]
 fn hyperreal_matrix_transform_diagonal_and_translation_semantics() {
     let scale_translate = Matrix4::new([
@@ -1803,6 +1817,7 @@ fn hyperreal_matrix_transform_diagonal_and_translation_semantics() {
     assert_eq!(output[2].zero_status(), ZeroKnowledge::Zero);
 }
 
+/// Checks literal fractional translations for w=1 and unchanged directions for w=0, with exact scalar facts.
 #[test]
 fn hyperreal_matrix_transform_preserves_homogeneous_direction_points_semantics() {
     let translation = Matrix4::new([
@@ -1840,6 +1855,7 @@ fn hyperreal_matrix_transform_preserves_homogeneous_direction_points_semantics()
     );
 }
 
+/// Checks sparse direction output values and retained zero/nonzero status for all four lanes.
 #[test]
 fn hyperreal_matrix_transform_direction_zero_lane_facts() {
     let linear_matrix = Matrix4::new([
@@ -1867,6 +1883,9 @@ fn hyperreal_matrix_transform_direction_zero_lane_facts() {
     );
 }
 
+/// Checks symbolic direction output sign, zero and rationality facts without requiring coordinate equality.
+///
+/// The active π term remains symbolic; the e coefficient multiplies an input zero.
 #[test]
 fn hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts() {
     let symbolic_linear = Matrix4::new([
@@ -1901,6 +1920,7 @@ fn hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts() {
     assert!(transformed[2].structural_facts().exact_rational);
 }
 
+/// Checks a 3D diagonal transform with negative, zero and positive scales against exact coordinates and sign facts.
 #[test]
 fn hyperreal_matrix_transform_propagates_zero_and_sign() {
     let matrix = Matrix3::new([
@@ -1930,6 +1950,9 @@ fn hyperreal_matrix_transform_propagates_zero_and_sign() {
     assert_eq!(transformed[2].zero_status(), ZeroKnowledge::NonZero);
 }
 
+/// Compares 3D and mixed point/direction 4D batches with single-vector products.
+///
+/// Expected values share the scalar/matrix implementation; this is wrapper agreement.
 #[test]
 fn matrix_transform_batch_matches_pointwise_transform() {
     let matrix3 = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(-2), r(1)], [r(-1), r(4), r(2)]]);

@@ -7729,6 +7729,19 @@ fn multiply_arrays4_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real
     multiply_arrays4_borrowed(left, right)
 }
 
+/// Applies a matrix to a borrowed vector for the admitted dimensions three and four.
+///
+/// For `N=4`, collects minimal matrix facts, tries identity then diagonal, and
+/// classifies w once. Directions omit the final column; points add that column
+/// as an offset, with a diagonal-affine shortcut. Minus one and other/unknown
+/// weights stay on the full homogeneous route, using three terms only where the
+/// final-column coefficient is definitely zero. All four output rows are computed;
+/// a projective matrix can give a direction a nonzero output weight.
+///
+/// For `N=3`, identity and diagonal shortcuts precede three-term row combinations.
+/// The const-generic signature is implementation sharing, not general-N support:
+/// callers must supply dimension three or four. No normalization to a Cartesian
+/// point, checked nonzero test, signal attachment or total-work bound occurs here.
 fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real; N]) -> [Real; N] {
     if N == 4 {
         // Probe only the identity, diagonal, affine, and translation facts read
@@ -7834,11 +7847,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
             }
         })
     } else {
-        // Probe only the identity/diagonal facts used by this transform. Full
-        // public matrix facts remain available through `structural_facts`, but
-        // building exact-set summaries and masks here made dense transforms pay
-        // for metadata they never read.
-        // Reference: Golub and Van Loan, *Matrix Computations* (4th ed.).
+        // Current non-4D callers are 3D; only identity/diagonal facts are consumed.
         let left_facts = matrix_identity_diagonal_facts(left);
         if left_facts.is_identity {
             trace_matrix!("helper", "transform-vector3-identity");
@@ -7860,6 +7869,11 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
     }
 }
 
+/// Computes three row-ordered linear combinations without matrix shape dispatch.
+///
+/// Pairs each matrix row with all three vector coordinates. The dense name means
+/// the caller bypassed identity/diagonal shortcuts; zero and symbolic entries remain
+/// valid, and scalar linear-combination handling owns pruning and aggregation.
 #[inline]
 fn transform_vector3_rhs_dense_ref(left: &[[Real; 3]; 3], right: &[Real; 3]) -> [Real; 3] {
     let vector_terms = [&right[0], &right[1], &right[2]];
@@ -7869,6 +7883,12 @@ fn transform_vector3_rhs_dense_ref(left: &[[Real; 3]; 3], right: &[Real; 3]) -> 
     })
 }
 
+/// Applies three retained three-term linear forms without another lattice zero scan.
+///
+/// Uses the active scalar constructor for each row, preserving lane order. Active
+/// means scheduled for arithmetic, not proved nonzero or rational. Used after vector
+/// prescaling for diagonal division; the helper neither inverts nor validates those
+/// scales and adds no independent matrix-shape check.
 #[inline]
 fn transform_vector3_rhs_dense_active_ref(left: &[[Real; 3]; 3], right: &[Real; 3]) -> [Real; 3] {
     trace_matrix!("helper", "transform-vector3-dense-active");
@@ -7879,6 +7899,16 @@ fn transform_vector3_rhs_dense_active_ref(left: &[[Real; 3]; 3], right: &[Real; 
     })
 }
 
+/// Applies a full homogeneous transform using supplied matrix and column facts.
+///
+/// Identity clones the vector; diagonal scales all four lanes. Otherwise each row
+/// uses its first three columns, adding the fourth product unless the corresponding
+/// column flag certifies zero. Callers route general-weight vectors here, including
+/// known minus one; no point/direction classifier runs locally.
+///
+/// All facts must apply to this matrix state. A true zero flag authorizes omission;
+/// a false flag retains the product without proving it nonzero. Does not normalize
+/// output w or establish projective validity.
 #[inline]
 fn transform_vector4_rhs_ref_cached_with_matrix_facts(
     left: &[[Real; 4]; 4],
@@ -7917,6 +7947,17 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts(
     })
 }
 
+/// Chooses a homogeneous transform from caller-supplied vector and matrix evidence.
+///
+/// Directions use the three-term direction helper. Points choose all-zero column,
+/// all-retained column, or per-row offset handling, in that order. Unknown means
+/// not classified as w=0 or w=1, including known other weights; only that case
+/// consumes the optional matrix facts or collects them lazily when absent.
+///
+/// The vector kind and all positive shape/zero flags must describe these operands.
+/// The all-nonzero name denotes no definitely-zero column entries, not positive
+/// nonzero proofs. This dispatcher does not revalidate supplied facts or attach
+/// a signal; misclassified w can change the transform.
 #[inline]
 #[allow(clippy::too_many_arguments)]
 fn transform_vector4_rhs_ref_with_facts(
@@ -7929,10 +7970,7 @@ fn transform_vector4_rhs_ref_with_facts(
     matrix_facts: Option<Matrix4Facts>,
     facts: Vector4GeometricFacts,
 ) -> [Real; 4] {
-    // Retained homogeneous classification lets us choose affine-specialized
-    // kernels before re-running scalar structure probes. This mirrors the
-    // retained-structure thesis for exact geometry, where cheap geometric
-    // facts gate fast paths early and postpone canonicalization.
+    // Trust the supplied homogeneous classification instead of probing w again.
     match facts.homogeneous {
         Vector4HomogeneousKind::Direction => {
             // Keeping directions on the 3-term linear form also avoids touching
@@ -7960,6 +7998,13 @@ fn transform_vector4_rhs_ref_with_facts(
     }
 }
 
+/// Transforms an assumed w=0 vector while omitting the matrix's final column.
+///
+/// A true diagonal-direction fact must certify a diagonal top-left block and zero
+/// bottom-row xyz entries. It selects three cached scales and exact output w=0.
+/// Otherwise computes three-term combinations for all four rows, so a projective
+/// bottom row can produce nonzero w. False need only mean missing shortcut evidence.
+/// The input w and retained matrix fact are not checked here.
 #[inline]
 fn transform_vector4_rhs_direction_ref_cached(
     left: &[[Real; 4]; 4],
@@ -7976,9 +8021,8 @@ fn transform_vector4_rhs_direction_ref_cached(
         ];
     }
 
-    // `direction_is_diagonal` is an exact retained fact from the matrix scan.
-    // If it is false, identity/diagonal direction cases are already ruled out,
-    // so the remaining valid fast form is the three-term linear combination.
+    // No diagonal-direction shortcut was supplied. The general three-term form
+    // is valid even when that structure exists but was not recognized.
     trace_matrix!("helper", "transform-vector4-batch-direction");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
@@ -7987,6 +8031,13 @@ fn transform_vector4_rhs_direction_ref_cached(
     })
 }
 
+/// Transforms an ordered batch whose vectors are already known to have w=0.
+///
+/// Allocates output capacity for the input length and selects the matrix schedule
+/// once. A valid diagonal-direction fact gives three scales and zero w per vector;
+/// otherwise four three-term row forms omit translation. No per-vector homogeneous
+/// classification occurs. Empty input yields an empty vector; output allocation and
+/// scalar work have no typed resource budget here.
 fn transform_vector4_direction_batch_assumed_ref(
     left: &[[Real; 4]; 4],
     rhs: &[Vector4],
@@ -8011,12 +8062,7 @@ fn transform_vector4_direction_batch_assumed_ref(
 
     trace_matrix!("helper", "transform-vector4-direction-batch-linear-assumed");
     for vector in rhs {
-        // Directions have `w = 0`, so the translation column cannot contribute.
-        // Keep the row computation as a three-term linear form to preserve
-        // hyperreal's delayed product-sum reduction instead of constructing a
-        // generic four-term expression with a structural zero. This is the
-        // projective point/direction split used by exact geometric kernels; see
-        // the exact object-structure policy
+        // Assumed w=0 removes the final-column contribution in every row.
         let vector_terms = [&vector.0[0], &vector.0[1], &vector.0[2]];
         transformed.push(Vector4(from_fn(|row| {
             let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -8026,32 +8072,41 @@ fn transform_vector4_direction_batch_assumed_ref(
     transformed
 }
 
+/// Transforms an assumed point through a known affine matrix with diagonal linear block.
+///
+/// Computes each xyz coordinate as its cached diagonal scale plus translation,
+/// then clones the input w lane. Requires w=1 and the caller-established matrix
+/// shape; neither is checked. Cloning preserves the existing scalar representation,
+/// whereas the corresponding batch loop constructs a fresh one. No perspective
+/// division is needed under the stated affine precondition.
 #[inline]
 fn transform_vector4_rhs_point_affine_linear_diagonal_ref_cached(
     left: &[[Real; 4]; 4],
     right: &[Real; 4],
 ) -> [Real; 4] {
-    // For affine matrices with diagonal linear blocks and point vectors (w = 1),
-    // each spatial lane is one cached scale plus one translation add. This avoids
-    // building three-term linear combinations whose off-diagonal terms are known
-    // structural zeros. The specialization follows the projective point/direction
-    // split used in exact geometric computation.
+    // The caller establishes a diagonal affine linear block and w=1.
     trace_matrix!("helper", "transform-vector4-point-affine-linear-diagonal");
     [
         right[0].clone().mul_cached(&left[0][0]) + &left[0][3],
         right[1].clone().mul_cached(&left[1][1]) + &left[1][3],
         right[2].clone().mul_cached(&left[2][2]) + &left[2][3],
-        // The caller either explicitly assumed a point or arrived here after
-        // a retained homogeneous fact proved `w == 1`. Reusing the existing
-        // lane avoids constructing a fresh scalar and preserves any cached
-        // exact/symbolic representation already carried by the point. This is
-        // the same object-level information preservation advocated for exact
-        // geometric computation by the exact object-structure policy,
-        // 1997.
+        // Preserve the existing point-weight scalar rather than constructing one.
         right[3].clone(),
     ]
 }
 
+/// Applies a pre-scaled point using a separately supplied effective homogeneous weight.
+///
+/// Computes each of four rows as `linear_xyz * right_xyz + last_column * w_scale`.
+/// The matrix may be projective. The fourth right lane is not read: the caller must
+/// keep the separate scale and its one flag consistent with the intended vector,
+/// as in diagonal-divisor prescaling of an original w=1 point.
+///
+/// All-zero column evidence omits offsets. With all column entries retained,
+/// precomputes four offsets (clones for scale one, otherwise cached products), then
+/// uses active three-term forms plus those offsets. The partial case uses ordinary
+/// forms and adds only retained offsets. All-nonzero means no definite-zero flags;
+/// it does not certify any coefficient nonzero. No facts are validated locally.
 #[inline]
 fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
     left: &[[Real; 4]; 4],
@@ -8062,15 +8117,12 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
     w_scale_is_one: bool,
     w_scale: &Real,
 ) -> [Real; 4] {
-    // For known point vectors scaled by `w'`, the 4-term point transform
-    // can be written as a 3-term spatial product plus `w'`-scaled
-    // translation terms. Keeping this as an affine-only specialization
-    // preserves inexpensive structural dispatch while avoiding full homogeneous
-    // matrix multiplication when only one structural coefficient changed.
+    // A separately retained weight scales the final column in all four rows;
+    // this formula also applies to projective matrices.
     let vector_terms = [&right[0], &right[1], &right[2]];
     // Precomputed translation flags allow this helper to avoid rescanning `w`-column
     // structural zeros after its caller already inspected it. That keeps this
-    // short path branch-flat for known all-zero/all-nonzero affine offsets.
+    // all-zero/all-retained offset schedules independent of per-row zero probes.
     if all_translation_zero {
         trace_matrix!(
             "helper",
@@ -8083,9 +8135,8 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
     }
 
     if all_translation_nonzero {
-        // All rows have non-zero translation coefficients, so we can avoid
-        // per-row branches on homogeneous offset activity and apply one
-        // multiplied offset term per lane.
+        // No final-column coefficient was definitely zero; retain all offsets.
+        // Unknown coefficients do not need a nonzero proof for this sum.
         trace_matrix!("helper", "transform-vector4-point-scaled-w-full-nonzero");
         let translation: [Real; 4] = if w_scale_is_one {
             from_fn(|row| left[row][3].clone())
@@ -8120,18 +8171,20 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
     })
 }
 
+/// Applies an assumed w=1 point using per-row final-column zero evidence.
+///
+/// Computes four three-term xyz forms, adding the corresponding final-column entry
+/// only when its flag is false. True flags must certify zero for this matrix; false
+/// flags may retain unknowns. No identity/diagonal rescan or homogeneous classifier
+/// runs, and a projective output need not have w=1.
 #[inline]
 fn transform_vector4_rhs_point_ref_cached(
     left: &[[Real; 4]; 4],
     right: &[Real; 4],
     translation_is_zero: &[bool; 4],
 ) -> [Real; 4] {
-    // Keep point transforms on the 3-term linear form and only add offsets
-    // when needed according to cached structural translation facts. Callers
-    // enter this helper after retained matrix facts have already ruled out
-    // identity and diagonal transforms; rechecking them here made cached
-    // point and mixed-batch paths pay a second full matrix probe.
-    // the exact object-structure policy
+    // Reuse final-column zero flags without repeating matrix-shape classification.
+    // Non-affine diagonal matrices can also reach this point schedule.
     trace_matrix!("helper", "transform-vector4-batch-point");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
@@ -8145,13 +8198,18 @@ fn transform_vector4_rhs_point_ref_cached(
     })
 }
 
+/// Adds every final-column offset to the three-term transform of an assumed point.
+///
+/// Computes all four rows with ordinary scalar linear combinations. The selected
+/// schedule retains every offset; the caller's all-nonzero flag only means none was
+/// definitely zero, so unknown offsets are valid. The input must have w=1. No local
+/// zero test, affine-shape assertion or perspective normalization is performed.
 #[inline]
 fn transform_vector4_rhs_point_all_nonzero_ref_cached(
     left: &[[Real; 4]; 4],
     right: &[Real; 4],
 ) -> [Real; 4] {
-    // Point transforms with guaranteed non-zero translation entries in every row
-    // use a compact 3-term affine core and explicit offset for the same reason.
+    // Every final-column offset is retained, including coefficients of unknown status.
     trace_matrix!("helper", "transform-vector4-point-all-nonzero");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
@@ -8160,6 +8218,11 @@ fn transform_vector4_rhs_point_all_nonzero_ref_cached(
     })
 }
 
+/// Applies four three-term row forms when the entire final column is known zero.
+///
+/// The caller certifies all four zero coefficients, including the bottom-right
+/// entry. The input w is irrelevant and is not read. This is valid for a general
+/// homogeneous matrix; it does not imply affine shape or output w=1.
 #[inline]
 fn transform_vector4_rhs_full_no_translation_ref_cached(
     left: &[[Real; 4]; 4],
@@ -8173,6 +8236,14 @@ fn transform_vector4_rhs_full_no_translation_ref_cached(
     })
 }
 
+/// Converts homogeneous coordinates to a Cartesian point by sharing one w reciprocal.
+///
+/// If w is definitely one, moves xyz directly into the point. Otherwise takes the
+/// ordinary scalar inverse and scales x, y, z in order. A known zero weight returns
+/// the inverse error; unknown status does not trigger a checked nonzero guard and
+/// may construct a symbolic reciprocal. Success is not a separate nonzero certificate
+/// or completed numerical evaluation. No epsilon, absolute-value normalization or
+/// special point-at-infinity carrier is introduced.
 fn point3_from_homogeneous(transformed: Vector4) -> BlasResult<Point3> {
     let [x, y, z, w] = transformed.0;
     if w.definitely_one() {
@@ -8186,13 +8257,21 @@ fn point3_from_homogeneous(transformed: Vector4) -> BlasResult<Point3> {
     ))
 }
 
+/// Borrowed matrix and minimal shape facts for one immediate 3D vector batch.
+///
+/// The shared reference prevents ordinary mutation of the matrix while this handle
+/// exists. Construction collects identity/diagonal facts once; this is not a public
+/// persistent cache or a bound on output allocation or scalar work.
 #[derive(Clone, Copy)]
 struct BatchTransform3<'a> {
+    /// Matrix borrowed for the lifetime of this immediate batch handle.
     matrix: &'a Matrix3,
+    /// Identity/diagonal snapshot collected from this matrix by the constructor.
     facts: MatrixIdentityDiagonalFacts,
 }
 
 impl<'a> BatchTransform3<'a> {
+    /// Borrows the matrix and immediately collects its minimal identity/diagonal facts.
     fn new(matrix: &'a Matrix3) -> Self {
         Self {
             matrix,
@@ -8200,13 +8279,22 @@ impl<'a> BatchTransform3<'a> {
         }
     }
 
+    /// Applies the three-term kernel to one vector after batch shortcut selection.
+    ///
+    /// The batch method handles identity/diagonal cases before calling this method.
+    /// Its dense trace label does not certify nonzero entries or dense output.
     fn transform_vector(&self, rhs: &Vector3) -> Vector3 {
-        // The batch entry point returns before reaching this helper for
-        // identity and diagonal matrices, so every call here is dense.
+        // The batch entry point handles recognized identity/diagonal matrices first.
+        // Other matrices need row combinations, but need not have dense support.
         trace_matrix!("helper", "transform-vector3-dense");
         Vector3(transform_vector3_rhs_dense_ref(&self.matrix.0, &rhs.0))
     }
 
+    /// Transforms vectors in input order using the cached matrix shape once.
+    ///
+    /// Identity clones the slice; diagonal maps three scales per vector; the remaining
+    /// route allocates capacity for the input length and uses row combinations. Empty
+    /// input returns empty output. No per-vector shape report is allocated.
     fn transform_vector_batch(&self, rhs: &[Vector3]) -> Vec<Vector3> {
         if self.facts.is_identity {
             trace_matrix!("method", "transform-vector3-batch-identity");
@@ -8231,17 +8319,37 @@ impl<'a> BatchTransform3<'a> {
     }
 }
 
+/// Borrowed homogeneous transform with matrix and final-column facts for immediate batches.
+///
+/// The matrix remains shared-borrowed while the handle exists. Supplied facts must
+/// belong to that same matrix; the alternate constructor does not validate their
+/// origin. Cached flags select arithmetic without converting unknowns to false
+/// geometry claims. This handle supplies no persistent cache, cancellation token
+/// or typed allocation/work budget.
 #[derive(Clone, Copy, Debug)]
 struct BatchTransform4<'a> {
+    /// Matrix whose entries the cached facts must describe.
     matrix: &'a Matrix4,
+    /// Caller-valid or freshly collected shape report for this matrix.
     facts: Matrix4Facts,
+    /// Definite-zero evidence for all four final-column entries, including m33.
     translation_is_zero: [bool; 4],
+    /// All four final-column zero flags are true, permitting complete omission.
     all_translation_zero: bool,
+    /// All four zero flags are false; entries are retained, possibly unknown.
     all_translation_nonzero: bool,
+    /// Diagonal top-left block and zero bottom xyz row, sufficient for three direction scales.
     direction_is_diagonal: bool,
 }
 
 impl<'a> BatchTransform4<'a> {
+    /// Transforms one vector with caller-valid homogeneous classification.
+    ///
+    /// Identity is normally intercepted by public/batch callers. Diagonal direction
+    /// cases use three scales and zero w; affine diagonal points use the point helper,
+    /// which clones w. Other diagonal vectors scale all four lanes. A remaining affine
+    /// matrix with diagonal linear block also gets the point shortcut. All other
+    /// cases forward the retained column/matrix/vector facts without reclassification.
     #[inline]
     fn transform_vector_with_facts(
         &self,
@@ -8263,12 +8371,7 @@ impl<'a> BatchTransform4<'a> {
             if matches!(vector_facts.homogeneous, Vector4HomogeneousKind::Point)
                 && self.facts.is_affine
             {
-                // Affine diagonal point transforms preserve homogeneous w = 1.
-                // When the point fact is already known, returning structural one
-                // saves the otherwise redundant `1 * m33` multiply and keeps the
-                // exact projective point/direction invariant visible to later
-                // kernels. This follows the homogeneous-coordinate split used by
-                // exact geometric computation.
+                // The affine diagonal point helper clones the supplied w=1 lane.
                 return Vector4(
                     transform_vector4_rhs_point_affine_linear_diagonal_ref_cached(
                         &self.matrix.0,
@@ -8304,11 +8407,18 @@ impl<'a> BatchTransform4<'a> {
         ))
     }
 
+    /// Collects matrix facts once, then derives the retained final-column flags.
     fn new(matrix: &'a Matrix4) -> Self {
         let facts = matrix4_facts(&matrix.0);
         Self::new_with_facts(matrix, facts)
     }
 
+    /// Borrows the matrix with an existing, caller-valid shape report.
+    ///
+    /// Reuses the three xyz column-zero flags, queries only m33 for the fourth flag,
+    /// then computes all-zero/all-retained summaries and reuses diagonal-direction
+    /// evidence. The supplied report is not checked against the matrix. All-retained
+    /// does not establish known nonzero status for any column entry.
     fn new_with_facts(matrix: &'a Matrix4, facts: Matrix4Facts) -> Self {
         // Cache the per-row homogeneous-column definitely-zero facts once; this
         // keeps batch direction/path selection on the fast linear form when the
@@ -8341,6 +8451,11 @@ impl<'a> BatchTransform4<'a> {
         }
     }
 
+    /// Injects the assumed w=1 classification into retained single-vector dispatch.
+    ///
+    /// Does not inspect input w. Public one-shot callers have already intercepted the
+    /// affine diagonal-linear case; other private use still relies on a true point
+    /// precondition and valid cached matrix facts.
     #[inline]
     fn transform_point_vector(&self, rhs: &Vector4) -> Vector4 {
         // The public one-shot point entry point intercepts every affine matrix
@@ -8354,6 +8469,20 @@ impl<'a> BatchTransform4<'a> {
         )
     }
 
+    /// Transforms a batch using uniform-kind shortcuts or a second per-vector fact pass.
+    ///
+    /// Identity clones the slice. Diagonal matrices classify the first w and test only
+    /// the matching zero/one property on later vectors for uniform direction/affine-point
+    /// shortcuts; other diagonal batches scale all four lanes. Remaining matrices scan
+    /// until two homogeneous kinds are seen. This early stop establishes mixture, not
+    /// a complete inventory of kinds later in the slice.
+    ///
+    /// Uniform direction, point and general-weight batches reuse one schedule without
+    /// a vector of per-input facts. Mixed batches allocate that vector and classify
+    /// every input again, so a third kind later in the slice still gets correct
+    /// per-vector dispatch. All paths preserve order and allocate owned output as
+    /// needed; uniform does not mean allocation-free. Empty input yields empty output.
+    /// Neither output length nor fixed row arity bounds scalar-expression work.
     fn transform_vector_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         if self.facts.is_identity {
             trace_matrix!("method", "transform-vector4-batch-identity");
@@ -8423,9 +8552,8 @@ impl<'a> BatchTransform4<'a> {
         }
         let mut transformed = Vec::with_capacity(rhs.len());
 
-        // Classify batch shape with one cheap pass and no per-vector storage.
-        // This keeps all-regular batches allocation-free and lets unknown/point
-        // direction specialization stay branch-free until needed.
+        // Classify batch kind without a per-vector fact array. Output storage was
+        // already reserved; uniform batches only avoid the later fact-vector allocation.
         let mut has_direction = false;
         let mut has_point = false;
         let mut has_unknown = false;
@@ -8510,8 +8638,8 @@ impl<'a> BatchTransform4<'a> {
         }
 
         if has_unknown && !has_direction && !has_point {
-            // All unknown homogeneous vectors can use the generic point/pointish
-            // kernel directly without materializing fact structs.
+            // All general-weight vectors can use the full homogeneous kernel
+            // without a vector of per-input classification records.
             trace_matrix!("helper", "transform-vector4-batch-unknown");
             for vector in rhs {
                 transformed.push(Vector4(transform_vector4_rhs_ref_cached_with_matrix_facts(
@@ -8557,19 +8685,19 @@ impl<'a> BatchTransform4<'a> {
         transformed
     }
 
-    /// Transforms a batch whose inputs are known homogeneous points.
+    /// Transforms a batch whose inputs are assumed to have w=1, without classifying them.
     ///
-    /// This skips the generic point/direction/unknown classification pass and
-    /// keeps all lanes on the same retained point schedule.
+    /// Identity clones the inputs. Affine diagonal-linear matrices use three scales
+    /// plus offsets and construct fresh output ones. Otherwise chooses all-retained
+    /// column, all-zero column, then per-row offset handling. All-retained includes
+    /// unknown coefficients and supplies no nonzero proof. The precondition is not
+    /// validated, and invalid weights can behave differently across these shortcuts.
+    /// Allocates output in input order; empty input remains empty.
     fn transform_point_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         trace_matrix!("method", "transform-vector4-point-batch-assumed");
         if self.facts.is_identity {
             trace_matrix!("helper", "transform-vector4-point-batch-identity-assumed");
-            // Same retained-object reduction as directions: for identity
-            // transforms the mathematically exact result is the input batch, so
-            // cloning preserves all scalar structure and avoids unnecessary
-            // approximation, canonicalization, and additive identity work. See
-            // the exact object-structure policy
+            // Identity preserves the supplied scalar representations by cloning.
             return rhs.to_vec();
         }
         let mut transformed = Vec::with_capacity(rhs.len());
@@ -8578,20 +8706,13 @@ impl<'a> BatchTransform4<'a> {
                 "helper",
                 "transform-vector4-point-batch-affine-linear-diagonal-assumed"
             );
-            // Keep this hot affine point-batch loop local to the cached
-            // handle. If a future exact-Real kernel run shows a stable hyperreal
-            // win from a different shape, gate it behind a structural Real kernel
-            // capability. Exploit retained point facts, but do not introduce
-            // abstraction cost into a nanosecond-scale kernel.
+            // Apply the caller-established point fact uniformly across this batch.
             for vector in rhs {
                 transformed.push(Vector4([
                     vector.0[0].clone().mul_cached(&self.matrix.0[0][0]) + &self.matrix.0[0][3],
                     vector.0[1].clone().mul_cached(&self.matrix.0[1][1]) + &self.matrix.0[1][3],
                     vector.0[2].clone().mul_cached(&self.matrix.0[2][2]) + &self.matrix.0[2][3],
-                    // Keep the canonical point lane as a freshly constructed
-                    // `1` in this batch kernel. Cloning the input `w` lane was
-                    // tested because the API assumes a point, but it regressed
-                    // both approx and hyperreal-family rows in this hot loop.
+                    // This batch kernel constructs a fresh canonical point lane.
                     Real::one(),
                 ]));
             }

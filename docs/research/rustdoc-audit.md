@@ -9870,6 +9870,145 @@ checkers and private docs. The next contiguous boundary is
 `transform_vector_rhs_ref`, currently core.rs line 7732. Transform/cofactor
 kernels, public APIs and remaining matrix tests still require audit.
 
+## 2026-11-27: Hyperlattice vector transforms and immediate batch handles
+
+Base revision: `3c077382e`. The preceding turn made progress by pushing the
+matrix-multiplication audit. This batch continues at `transform_vector_rhs_ref`.
+Owning layer: Hyperlattice matrix/vector transforms over Hyperreal scalar facts
+and linear forms. Relevant contracts: P1/P3 for exact values and conservative
+knowledge, P4/P10 for retained facts and predicate order, P5 for allocation/work
+claims, and P6 for reciprocal failures and assumed-input preconditions. Inputs
+are exact 3D vectors and 4D homogeneous vectors; named point/direction helpers
+require the declared w=1/w=0 facts, while general paths admit other weights and
+projective matrices. Before editing, 31 items lacked Rustdoc, one batch method's
+docs omitted material preconditions, and comments overstated nonzero evidence,
+affine-only scope and allocation avoidance. The selected original tests and
+independent public probes passed on the target revision before edits.
+
+Coverage:
+
+- Read all of core.rs original lines 7732–8642, through both immediate batch
+  handles: 911 lines, now 1032. Reviewed/documented 13 free functions, nine
+  methods, two private types and eight fields, for 32 Rustdoc groups. One
+  existing point-batch doc was expanded; the other 31 groups were missing.
+- Read public transform, Cartesian conversion, diagonal-divisor prescaling,
+  vector-kind and scalar linear-form consumers as context. These contextual
+  reads do not complete the later public API's own audit. The matrix source
+  and test file remain only partially audited.
+- Added docs to twelve original tests: assumed homogeneous batches; 3D diagonal
+  divisor/vector composition; two 4D point/divisor compositions; seven exact
+  rational/sign/zero/homogeneous transform fact tests; and pointwise/batch
+  agreement. The existing translated-diagonal and negative-weight test docs
+  were not counted again. Tests now distinguish literal expectations from
+  shared-implementation agreement and identify the no-translation fixture
+  whose name suggests translation.
+
+Documented behavior and corrections:
+
+- The const-generic one-shot helper serves N=3/N=4 callers; the signature is not
+  a general-dimensional transform contract. Identity and diagonal shortcuts
+  precede homogeneous classification in 4D. Directions omit the final column,
+  points add it as offsets, and minus one/other weights remain general. All
+  output rows are computed; a projective matrix may turn input w=0 into nonzero w.
+- Cached zero flags authorize omission only when true. The field and helper
+  names containing all-nonzero mean every definite-zero flag is false, so they
+  also admit unknown coefficients. Corrected comments that claimed guaranteed
+  nonzero offsets. Active linear forms describe scheduled arithmetic, not
+  positive nonzero or rationality proofs.
+- The separate scaled-weight helper computes each row's spatial linear form plus
+  the final-column coefficient times the supplied w scale. It works for projective
+  matrices, contrary to the old affine-only comment. It does not read right[3];
+  its caller must correlate the separate scale and one flag with the prescaled
+  point. All-retained offsets are precomputed before row forms, with the active
+  three-term kernel; partial offsets retain ordinary linear forms and row checks.
+- Direction-diagonal facts require both a diagonal top-left block and zero
+  bottom xyz entries, permitting three scales and output zero w. Missing shortcut
+  evidence does not prove the opposite shape. Assumed direction batches choose
+  the schedule once, preserve input order, and do not classify individual weights.
+- Affine diagonal-linear single-point transforms clone the input w=1 scalar;
+  the corresponding point-batch loop creates fresh ones. Both require valid point
+  assumptions. Cached point helpers can also receive non-affine diagonal matrices;
+  corrected the claim that all diagonal cases had already been excluded.
+- The 3D batch helper's dense label only means the identity/diagonal shortcuts
+  were bypassed; it does not prove dense support. Both batch handles hold shared
+  references, preventing ordinary geometric mutation during their lifetime.
+  The 4D alternate constructor trusts its supplied report, reuses xyz column-zero
+  facts, queries m33 and derives summaries without validating report origin.
+- Generic 4D batch dispatch treats identity and diagonal separately. Other
+  batches scan until two homogeneous kinds appear; that early stop proves a
+  mixture rather than recording every later kind. Uniform batches reuse a
+  schedule; mixed batches allocate per-vector facts and classify every input
+  again, so a third kind later in the slice still dispatches from its own facts.
+- Corrected the allocation-free claim: uniform batches avoid the per-vector
+  fact array but still construct owned output storage. Empty inputs return empty
+  output. Fixed arity/input count is not a scalar-expression or total-memory bound.
+- Cartesian point conversion moves xyz directly for definite w=1; otherwise it
+  takes one ordinary w reciprocal and scales xyz in order. Known zero returns
+  the inverse error. Unknown status is not checked here and can produce a symbolic
+  construction; success is not a separately established nonzero certificate or
+  completed numerical evaluation. No epsilon or point-at-infinity substitute
+  is introduced. Public Cartesian batches return the first conversion failure
+  rather than a successful partial point list.
+- Removed vague policy/literature references and unsupported local performance
+  assertions where the actual retained-fact or cloning schedule suffices. No
+  executable statements, predicates, trace events, assertions or fixtures changed.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves identical executable source in both edited Rust files against
+  `3c077382e`, including guards, traces, branches and existing assertions.
+- Hyperlattice builds and all fourteen selected original matrix tests passed
+  with all features and no defaults; the all-feature baseline passed the same
+  tests. Direct rustc harnesses used matching Cargo artifact graphs and
+  60-second process limits; public probes had a 30-second external limit.
+- Independent Python integer/rational row sums supplied expectations for eight
+  4×4 matrix shapes: identity, diagonal, affine diagonal, all-zero/fully-retained/
+  partial final columns, direction-diagonal projective and general affine.
+  Weights 0, 1, -1 and 2 were checked through four ownership operators and the
+  one-shot method, with exact selected-route counts in all-feature mode.
+- Each shape also passed singleton generic batches, valid assumed point/direction
+  calls, uniform directions/points/general weights, both orders of mixed batches,
+  and empty batches. Mixed [0,1,-1] cases exercise the later third kind after the
+  first-pass stop; [-1,0,1] exercises the alternate mixture. Exact top-level
+  mixed/general-weight trace counts were asserted on the selected paths.
+- Six independent scaled-point expectations covered zero/retained/partial final
+  columns with divisor d3 equal to one and seven, including projective bottom
+  rows. The expected scaled-weight branch count was one in each case.
+- Identity, diagonal, permutation and general 3×3 transforms matched independent
+  integer values through four ownership modes and nonempty/empty batches.
+  Existing scalar-fact tests separately cover exact rationality, signs, zero
+  lanes and symbolic π/e coefficients; sampled membership is not used as an oracle.
+- Cartesian point probes checked literal rational normalization, DivideByZero
+  at output w=0, a batch with an earlier valid point followed by that failure,
+  empty input, and successful construction with the existing unknown-zero-status
+  sine fixture as weight. The last check does not claim arbitrary symbolic
+  termination or verify a general nonzero certificate.
+- Before/after all-feature probe stdout matched exactly. No-default mode repeated
+  all semantics with tracing compiled out. Final tests/probes were warning-free;
+  no existing trace-count assertion or validation fixture was weakened.
+- Private library and integration-target Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full-text checks found
+  the 32 core groups on their function/type pages, including all methods and
+  fields. Twelve newly documented #[test] functions were source-reviewed and
+  executed; Rustdoc omits them. The 298 inspected HTML pages are rendering
+  evidence, not 298 newly completed API audits.
+- Cargo checks passed for the matrix integration target, mathbench and downstream
+  Hyperspatial library including Hyperlimit with all features and no defaults.
+  Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and one shared target directory.
+- Full workflows remain owner-waived. No full matrix suite, benchmark, sanitizer,
+  allocator profile, binary-size or universal symbolic closure claim was added.
+  No focused check remains blocked. Removed the two temporary executables;
+  the shared target remains near 2.5 GiB and no duplicate target tree was created.
+- The root AGENTS.md 100% public/private Rustdoc mandate remains active.
+  Repository-wide completion remains unproven; the wider audit is still open.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-transform-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-transform-audit/` temporary generator, probes, checkers and
+private docs. The next contiguous boundary is `scale_by_shared_factor`, currently
+core.rs line 8764. Scalar combination/cofactor/inverse kernels, public APIs and
+remaining matrix tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
