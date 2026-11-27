@@ -5,12 +5,18 @@ use std::sync::{
 };
 
 #[path = "support/mpfr.rs"]
+/// Register thread-local cleanup for development-only MPFR computations.
 mod mpfr;
 #[path = "support/legendre_oracle.rs"]
+/// Supply independent binomial-series and AGM/square-sum Legendre references.
 mod oracle;
 #[path = "support/representations.rs"]
+/// Supply the finite shared inventory of 22 positive scalar construction recipes.
 mod representations;
 
+/// Require an eight-guard-bit enclosure of actual-expected inside +/-2^(-bits).
+/// Compare exact rational endpoints for absolute-error qualification; this relies
+/// on the enclosure API and does not promise relative accuracy or identical rounding.
 fn close(actual: &Real, expected: &Real, bits: i32) {
     let [lo, hi] = (actual - expected)
         .certified_rational_interval(-bits - 8)
@@ -23,6 +29,10 @@ fn close(actual: &Real, expected: &Real, bits: i32) {
 }
 
 #[test]
+/// Require exact rational-normal-form zero for 48 signed quarter-period identities.
+/// Use three parameters, eight integer counts including 1e30, and both integral
+/// kinds. This checks retained endpoint relations without accepting a merely
+/// small sampled difference as symbolic cancellation.
 fn exact_quarter_amplitudes_retain_complete_integral_relations() {
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
     for text in ["0.5", "-3", "0"] {
@@ -56,6 +66,11 @@ fn exact_quarter_amplitudes_retain_complete_integral_relations() {
 }
 
 #[test]
+/// Check signal retention through both endpoint shortcuts and distinguish nearby amplitudes.
+/// Attach a clear signal to pi/2, construct each integral, then assert the signal
+/// before evaluation. Require cancellation, recovery and correct signs for offsets
+/// +/-1e-60 at m=1/2. This tests a post-construction pre-evaluation stop, not
+/// interruption during arithmetic or tolerance-based endpoint identification.
 fn quarter_endpoint_reduction_retains_cancellation_and_distinct_offsets() {
     let parameter: Real = "0.5".parse().unwrap();
     let quarter = (Real::pi() / Real::from(2)).unwrap();
@@ -93,6 +108,10 @@ fn quarter_endpoint_reduction_retains_cancellation_and_distinct_offsets() {
 }
 
 #[test]
+/// Check complete/incomplete circular identities and reject m=1,2 before zero-amplitude shortcuts.
+/// Preserve amplitudes zero, e and 1e320 exactly when m=0; both complete circular
+/// values equal pi/2. Require typed NotANumber even for the finite second-kind
+/// endpoint, which remains outside the common API domain.
 fn circular_identities_and_parameter_domain() {
     let zero = Real::zero();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
@@ -120,6 +139,11 @@ fn circular_identities_and_parameter_domain() {
 }
 
 #[test]
+/// Compare both integrals at 512-bit accuracy against independent series for 44 parameter/amplitude pairs.
+/// For each of 22 recipes verify its public structural kind, map v to
+/// s=v/(4*(v+1)), and use amplitude pi+s with parameters +/-s. This supplies
+/// the oracle's small-parameter domain; it is not exhaustive graph/value coverage.
+/// Register MPFR thread cleanup before reference computation.
 fn independent_integrand_series_all_scalar_families() {
     mpfr::cleanup_on_thread_exit();
     for case in representations::optimized_certificate_representatives() {
@@ -136,6 +160,11 @@ fn independent_integrand_series_all_scalar_families() {
 }
 
 #[test]
+/// Compare six complete-integral complement fixtures with AGM and their incomplete endpoint values.
+/// Use c=1/4,1/2,1,4,1e-160,1e160 with m=1-c and 192-bit absolute comparisons.
+/// Normalize E by sqrt(c) only in the largest-complement case. AGM supplies an
+/// independent reference; endpoint agreement also checks the retained complete
+/// relation. Register MPFR cleanup, without claiming a universal oracle error bound.
 fn complete_integrals_match_independent_agm_and_incomplete_endpoints() {
     mpfr::cleanup_on_thread_exit();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
@@ -168,6 +197,10 @@ fn complete_integrals_match_independent_agm_and_incomplete_endpoints() {
 }
 
 #[test]
+/// Check the m=-3 principal values at phi=5/16 using complementary m=3/4 series.
+/// Subtract the complementary remainder from its pi/2 endpoint, scaling F by
+/// one half and E by two. Demand 512-bit absolute agreement; this reference
+/// uses integrand series rather than Carlson duplication. Register MPFR cleanup.
 fn prolate_principal_values_match_complementary_integrand_series() {
     mpfr::cleanup_on_thread_exit();
     let phi: Real = "0.3125".parse().unwrap();
@@ -187,6 +220,9 @@ fn prolate_principal_values_match_complementary_integrand_series() {
 }
 
 #[test]
+/// Exercise four nonzero offsets around pi/2 with parameters +/-3/4 and offsets +/-5/16.
+/// Compare both integral kinds at 512 bits to independent direct-amplitude series,
+/// covering odd-quarter complement transport on either side. Register MPFR cleanup.
 fn nonzero_odd_quarter_reductions_match_independent_integrand_series() {
     mpfr::cleanup_on_thread_exit();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
@@ -202,6 +238,10 @@ fn nonzero_odd_quarter_reductions_match_independent_integrand_series() {
 }
 
 #[test]
+/// Check odd symmetry, signed quarter endpoints and full-period shifts for two parameters.
+/// Use m=3/4,-3 and counts -7 through 7 for both kinds at 192 bits. Quarter
+/// expectations use n complete integrals; pi shifts add 2n complete integrals to
+/// the original offset integral, preserving the unwrapped amplitude.
 fn odd_symmetry_and_periods_preserve_unwrapped_amplitudes() {
     for parameter in ["0.75", "-3"] {
         let m: Real = parameter.parse().unwrap();
@@ -240,6 +280,10 @@ fn odd_symmetry_and_periods_preserve_unwrapped_amplitudes() {
 }
 
 #[test]
+/// Check normalized increments for +/-1e-320 offsets from pi/2 at m=3/4.
+/// For F/E compare the difference divided by the exact offset to endpoint
+/// derivatives two and one half at 96-bit absolute accuracy. This finite quotient
+/// check would reject snapping these represented displacements to zero.
 fn tiny_offsets_at_quarter_periods_remain_distinct() {
     let m: Real = "0.75".parse().unwrap();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
@@ -266,6 +310,10 @@ fn tiny_offsets_at_quarter_periods_remain_distinct() {
 }
 
 #[test]
+/// Check normalized behavior at signed amplitudes 1e320 and 1e-320 for m=1/2.
+/// For both kinds compare the large value/amplitude ratio to twice the complete
+/// integral divided by pi, and the tiny ratio to one, at 128 bits. These finite
+/// asymptotic fixtures do not impose a native work bound for arbitrary magnitudes.
 fn enormous_amplitudes_and_tiny_integrals_are_refinable() {
     let m: Real = "0.5".parse().unwrap();
     for sign in [-1, 1] {
@@ -301,6 +349,11 @@ fn enormous_amplitudes_and_tiny_integrals_are_refinable() {
 }
 
 #[test]
+/// Separate an undecided zero amplitude from an unproved positive parameter complement.
+/// The opaque trigonometric zero is a valid amplitude at m=1/2 and agrees with
+/// zero at 256 bits. Using it as 1-m must instead return Exhausted for all four
+/// APIs, including zero-amplitude calls. Also retain exact equatorial identities
+/// for the known valid parameter; uncertainty is not permission to assume a domain.
 fn unresolved_parameter_is_not_a_circular_or_zero_identity() {
     let opaque_zero = Real::e().sin().powi(2.into()).unwrap()
         + Real::e().cos().powi(2.into()).unwrap()
@@ -330,6 +383,11 @@ fn unresolved_parameter_is_not_a_circular_or_zero_identity() {
 }
 
 #[test]
+/// Exercise sign retention, nonmonotone precision requests, abort/retry and concurrent readers.
+/// For F/E at amplitude e and m=-3 require positive structural sign and overlap
+/// across 32,512,64,256-bit enclosures, not nestedness. An already asserted stop
+/// must deny an enclosure; clearing it recovers 256-bit agreement. Four readers
+/// require positive lower bounds. This is same-process evidence, not a latency test.
 fn precision_order_cancellation_recovery_and_shared_readers() {
     let m: Real = "-3".parse().unwrap();
     for value in [
@@ -367,6 +425,11 @@ fn precision_order_cancellation_recovery_and_shared_readers() {
 
 #[cfg(feature = "serde")]
 #[test]
+/// Check JSON/CBOR replay of both kinds at signed amplitudes +/-e and m=3/4.
+/// Require structural equality, matching amplitude signs, unchanged JSON after
+/// 512-bit warming, and 256-bit replay agreement. Numerical agreement and wire
+/// stability are separate assertions; this does not qualify hostile payloads or
+/// fresh-process cache isolation.
 fn serialization_preserves_amplitude_parameter_sign_and_identity() {
     let m: Real = "0.75".parse().unwrap();
     for amplitude in [Real::e(), -Real::e()] {

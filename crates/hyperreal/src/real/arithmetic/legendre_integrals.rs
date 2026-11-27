@@ -1,3 +1,4 @@
+/// Admit the real parameter domain before complete or unwrapped Legendre construction.
 impl Real {
     /// Complete elliptic integral of the first kind, `K(m) = F(pi/2|m)`.
     ///
@@ -40,6 +41,11 @@ impl Real {
         self.elliptic_incomplete(parameter, true)
     }
 
+    /// Share complete-integral admission and the circular identity for F/E.
+    /// Validate log(1-m) before recognizing m=0 and returning pi/2. Otherwise pass
+    /// that logarithm to the exact native complete constructor, selecting E when
+    /// second is true. Invalid or unresolved logarithm domains propagate as typed
+    /// problems; negative m remains valid and m=1 is excluded for both kinds.
     fn elliptic_complete(parameter: &Self, second: bool) -> Result<Self, Problem> {
         let log_complement = (Self::one() - parameter).ln()?;
         if parameter.definitely_zero() {
@@ -50,9 +56,15 @@ impl Real {
         ))
     }
 
+    /// Share unwrapped F/E construction while validating the parameter before identity shortcuts.
+    /// Compute log(1-m) first; only then may an exact zero amplitude or circular
+    /// parameter return this value unchanged. No amplitude sign/domain proof is
+    /// required. Otherwise retain the folded amplitude and log complement and recover
+    /// recognized public carriers through elliptic_result, including exact inverse
+    /// relations. Child validity and existing precision/resource contracts still apply.
     fn elliptic_incomplete(self, parameter: &Self, second: bool) -> Result<Self, Problem> {
         // Domain validation precedes both identity shortcuts. The logarithm
-        // makes the serialized parameter intrinsically valid.
+        // encodes a positive complement when the retained child is finite and valid.
         let log_complement = (Self::one() - parameter).ln()?;
         if self.definitely_zero() || parameter.definitely_zero() {
             return Ok(self);

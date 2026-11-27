@@ -18313,6 +18313,155 @@ new whole-file audit credit. Historical sanitizer/cost claims were not reproduce
 or promoted into current performance guarantees. The repository-wide line audit
 and 100% Rustdoc mandate remain incomplete.
 
+## Forward Legendre definitions, period transport and shared oracles
+
+On 2026-11-27, reviewed the complete files at baseline
+f95ab5c0dbec947c6a860b9233e07c18e7d49423:
+
+| File | Baseline lines | Documented declarations |
+| --- | ---: | ---: |
+| crates/hyperreal/src/computable/node/legendre_integrals.rs | 65 | 3 |
+| crates/hyperreal/src/computable/approximation/legendre_integrals.rs | 66 | 2 |
+| crates/hyperreal/src/real/arithmetic/legendre_integrals.rs | 64 | 7 |
+| crates/hyperreal/src/computable/approximation/legendre_tests.rs | 29 | 2 |
+| crates/hyperreal/tests/legendre_integrals.rs | 393 | 17 |
+| crates/hyperreal/tests/support/legendre_oracle.rs | 79 | 5 |
+
+All 696 lines were reviewed. Thirty-seven Rustdoc blocks cover thirty-six
+named declarations and the shared oracle's module overview: thirty-two new
+blocks, one revised overview and four reviewed public operation descriptions.
+The owner is Hyperreal (P1–P7), with exact retained inverse/endpoint relations,
+replay and downstream operation composition relevant to P19/P20. The missing
+acceptance witness was accurate documentation of private construction, reduction,
+fixtures and oracle limits. The domain remains finite real unwrapped amplitudes
+and the real parameter m<1, including negative m and excluding m=1 for both
+integral kinds. No implementation, domain or certainty policy changed.
+
+Public wrappers validate log(1-m) before zero/circular shortcuts. Complete
+circular results remain pi/2; incomplete circular results preserve the original
+amplitude. Other incomplete results retain amplitude and log complement, then
+recover recognized public carriers through the existing result adapter. The
+logarithm encodes positivity of c=1-m only for finite valid children; corrected
+the comment that described a serialized parameter as intrinsically valid without
+that qualification. This is not arbitrary imported-graph validation.
+
+The native constructor first cancels a matching inverse kind with a structurally
+equal log-complement child, then recognizes integer multiples of pi/2. Those
+endpoint relations retain n complete integrals, not a sampled approximation or
+an equality decision for nearby amplitudes. Otherwise it boxes the original
+pair, preserves any known amplitude sign and leaves its magnitude bound unknown.
+Amplitude signal selection precedes complement signal selection; shortcut
+results retain that selection ahead of their existing attachment. Complete K
+uses RF(0,c,1); complete E uses c*(RD(0,c,1)+RD(0,1,c))/3, a positive expression
+using Carlson's root/log encoding rather than unencoded argument payloads.
+
+The period reducer calls approx_signal at precision zero on 2*amplitude/pi;
+it does not call near_integer or decide floor/nearest rounding. The documented
+approximation API promises completed error at most one, rather than strictly
+less than one. Therefore its direct chart consequence is the closed interval
+[-pi/2,pi/2]. Corrected the old source comment's strict-error/open-chart claim
+and documented why the weaker bound suffices without changing any result.
+This is a proof-scope correction, not a reproduced numerical failure or an
+assertion that the worst-case equality occurs on a tested execution.
+
+For S=sin(r), C=cos(r), Y=C^2+c*S^2, the first-kind principal formula is
+S*RF(C^2,Y,1). The second-kind formula is
+S*C/sqrt(Y)+c*S^3*(RD(C^2,Y,1)+RD(C^2,1,Y))/3. On the closed chart C>=0
+and Y>0, so nonzero terms have S's sign. The cyclic RD derivation is applied in
+the chart interior; continuity extends the resulting finite formula to C=0.
+At either endpoint the first term vanishes, Y=c, and the remaining expressions
+are the appropriately signed complete values. The Carlson arguments remain
+admitted with exactly one zero. This does not require applying the singular
+cyclic identity itself at C=0 or narrowing the public amplitude domain.
+
+For odd signed n, the shifted integrand's radicand is
+sin(r)^2+c*cos(r)^2 = c*(cos(r)^2+sin(r)^2/c). Accordingly negate the local
+log complement and scale F by c^-1/2 or E by c^1/2. Even n uses c directly;
+all cases add n complete integrals. The node retains the exact amplitude and
+subtraction, not a specific integer as its definition. Stop checks precede and
+follow phase sampling; interrupted samples cannot be consumed as chart witnesses.
+Subsequent expression construction adds no local polling or cumulative work,
+heap-byte or precision budget. Child resource and publication contracts remain.
+
+Independent exact Fraction checks verified the positive-form coefficient identity
+and odd-quarter radicand identity at 606 rational sine/cosine/complement cases,
+including twelve endpoint coefficient cases, plus 255 one-unit phase examples.
+The endpoint calculation checks mathematical coefficients, not execution of a
+forced native endpoint branch. These finite checks support the described algebra;
+they are not a universal implementation or approximation-error proof.
+
+The two direct-kernel tests preserve an already-asserted stop and eighteen
+circular requests at amplitudes 0,-7,11 and precisions 8,-32,-128. Despite a
+name mentioning serializable payloads, the latter supplies arguments directly;
+it does not serialize/reimport and compares against the shared amplitude
+approximation. The integration corpus separately requires forty-eight exact
+quarter identities, signal retention through endpoint simplification, and
+correctly signed offsets of 1e-60. Quotients across offsets of 1e-320 test local
+derivatives without permitting those represented displacements to be snapped.
+
+Documented the independent 44-case signed-parameter recipe comparisons, six
+AGM complement fixtures, prolate complementary substitution, nonzero odd-quarter
+cases, signed periods, and normalized huge/tiny input comparisons. Existing
+precision sequences assert overlap rather than nestedness. Cancellation and
+shared-reader tests are same-process observations; they do not measure active
+cancellation latency. JSON/CBOR tests distinguish structural identity, signs,
+stable JSON after warming and numerical agreement, without claiming hostile
+payload or fresh-process qualification.
+
+The shared oracle uses exact rational inputs when recognized, otherwise a -896
+enclosure midpoint, before nearest-rounded 1024-bit MPFR conversion. Its series
+retains the zeroth term plus 2048 nonconstant terms, with sine-power moments
+from integration by parts. The rounded-input assertions abs(phi)<8 and
+abs(m)<=3/4 are oracle guards, not exact production-domain admission. Exact
+arithmetic verifies 8*(3/4)^2049/(1-3/4) < 2^-840 for the omitted analytic tail;
+that bound does not include all MPFR conversion/rounding errors. The complete
+oracle performs exactly thirty-two AGM/square-sum steps, with positive finite
+complement a caller precondition and no convergence test for arbitrary inputs.
+Converting its output to an exact binary rational preserves the rounded oracle
+value, not the exact integral. Replaced the module's generic quadrature label
+with its actual series/AGM roles. No oracle tolerance or fixture changed.
+
+The baseline passed two direct-kernel tests and thirteen all-feature forward
+integration tests. The documentation batch passed the two units in both feature
+configurations, twelve no-default-feature and thirteen all-feature forward
+integrations, two inverse-Legendre kernel consumers, one Jacobi kernel consumer,
+and all eleven inverse integration tests. The latter includes fresh exact
+rational MPFR integral references whose native inverses cannot cancel a paired
+forward node structurally. Both direct-unit configurations were rerun after the
+final clarification that only nonzero second-kind terms have S's sign.
+
+Hyperspatial's two all-feature elliptic_representations tests passed after that
+final edit: 176 family/regime/cold-warm workflows and 484 ordered scalar-family
+pairs, with Carlson/Legendre identities, strict proofs, ellipsoid construction,
+ECEF output and certainty checks. These are affected consumers, not a full
+geospatial or policy-matrix qualification. No focused check remains blocked.
+
+Private cargo doc passed both feature configurations with warnings and broken
+or private links denied. Twelve blocks matched actual private library pages;
+twenty-three integration/support blocks matched temporary private Rustdoc pages
+built with thirteen test attributes removed and support paths resolved in a
+copy. Two cfg(test) blocks passed inventory and supplemental Markdown rendering;
+ordinary library Rustdoc does not emit those unit-test functions. All thirty-seven
+blocks were accounted for, including the shared oracle overview.
+
+Five files have identical raw executable/signature tokens to the baseline.
+The approximation kernel differs only by three removed optional commas and one
+added comma, independently reproduced by Rustfmt. All six files match an
+independently formatted baseline. Focused Rustfmt with child traversal disabled
+and git diff --check passed. Predicate order, expression construction, trace
+calls, constants, fixtures, assertions and tolerances are preserved. Full
+workflow checks remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-legendre-audit/ includes baseline/final logs,
+commands, exact arithmetic checks, declaration/token inventories, temporary
+integration source and rendered-block matches. Builds reused the locked/offline,
+nonincremental shared target, roughly 6.3 GiB. Duplicate temporary HTML was
+removed after inspection. Approximation-query guarantees, inverse result recovery,
+selected inverse tests, spatial workflows and historical admission prose supplied
+context without new whole-file audit credit. No historical coverage, sanitizer,
+performance or universal closure claim was re-established here. The repository-
+wide line audit and 100% Rustdoc mandate remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

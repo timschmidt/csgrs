@@ -1,4 +1,18 @@
+/// Retain unwrapped Legendre definitions and exact inverse/quarter-period relations.
 impl Computable {
+    /// Construct unwrapped F or E from this amplitude and a retained log(1-m).
+    /// Finite valid children give a positive complement c=exp(log_complement).
+    /// Select E when second is true. First cancel a matching inverse node when its
+    /// log-complement child is structurally equal, then recognize integer multiples
+    /// of pi/2 and retain the corresponding multiple of the complete integral.
+    /// These are structural/construction witnesses, not arbitrary scalar equality
+    /// or numerical snapping of nearby amplitudes.
+    ///
+    /// Otherwise box the original amplitude and log complement, carrying any known
+    /// amplitude sign into the integral's sign fact and leaving its magnitude bound
+    /// unknown. Prefer the amplitude signal to the complement signal; shortcut
+    /// results retain that selected signal ahead of any result attachment. This
+    /// builder does not validate arbitrary child graphs or impose a work budget.
     pub(crate) fn elliptic_legendre(self, log_complement: Self, second: bool) -> Self {
         let signal = self
             .signal
@@ -47,6 +61,13 @@ impl Computable {
         }
     }
 
+    /// Construct complete K or E from log(c), where c=1-m must be positive through valid finite data.
+    /// K is RF(0,c,1). Complete E is the positive combination
+    /// `c*(RD(0,c,1)+RD(0,1,c))/3`, avoiding cancellation between first-kind terms.
+    /// Pass Carlson's encoded root/log payloads, not raw integral arguments, and
+    /// retain the log source for both permutations and c's exponential. Child signal
+    /// propagation and numerical/resource limits belong to the shared constructors
+    /// and evaluators; no independent complete-integral approximation is stored.
     pub(crate) fn elliptic_legendre_complete(log_complement: Self, second: bool) -> Self {
         let first =
             Self::elliptic_carlson([Self::zero(), log_complement.clone(), Self::zero()], second);
