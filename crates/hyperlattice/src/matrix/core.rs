@@ -10224,6 +10224,18 @@ fn matrix4_adjugate_from_factors_dense_exact_known_rational(
     ]
 }
 
+/// Generates the common Matrix3/Matrix4 constructors, arithmetic and formatting API.
+///
+/// The named tuple carrier must hold a row-major square Real array; the vector
+/// carrier has the matching dimension. The supplied hooks implement ordinary
+/// and checked right division, unsigned powers and ownership-specific products.
+/// Current instantiations are dimensions three and four; the shared vector
+/// transform helper is specialized to those dimensions, not arbitrary sizes.
+///
+/// Matrix products act on column vectors; scalar addition/subtraction broadcast
+/// to every entry. Division returns a typed result, and checked variants retain
+/// zero-versus-unknown errors. This macro supplies no independent predicate
+/// policy, certainty receipt, arithmetic cache or total-work budget.
 macro_rules! impl_matrix {
     (
         $name:ident,
@@ -10238,20 +10250,28 @@ macro_rules! impl_matrix {
         $div_checked_fn:ident,
         $div_checked_abort_fn:ident
     ) => {
+        /// Shared constructors, scalar operations and fallible matrix operations.
         impl $name {
-            /// Constructs a matrix from row-major entries.
+            /// Moves row-major Real entries into the matrix without validation or conversion.
+            ///
+            /// The array type fixes the dimensions. Singular and symbolic entries are accepted;
+            /// this constructor does not establish invertibility or a geometric transform kind.
             pub fn new(values: [[Real; $n]; $n]) -> Self {
                 trace_matrix!("constructor", "new");
                 Self(values)
             }
 
-            /// Returns the zero matrix.
+            /// Constructs an array of exact scalar zeros in row-major order.
+            ///
+            /// This is the additive identity, and is singular for both supported dimensions.
             pub fn zero() -> Self {
                 trace_matrix!("constructor", "zero");
                 Self(from_fn(|_| from_fn(|_| Real::zero())))
             }
 
-            /// Returns the identity matrix.
+            /// Constructs the multiplicative identity with exact ones on the diagonal.
+            ///
+            /// Off-diagonal entries are exact zeros; no arithmetic or shape recognition is needed.
             pub fn identity() -> Self {
                 trace_matrix!("constructor", "identity");
                 Self(from_fn(|row| {
@@ -10265,23 +10285,29 @@ macro_rules! impl_matrix {
                 }))
             }
 
-            /// Returns the transpose.
+            /// Returns the transpose by cloning scalar handles in output row-major order.
+            ///
+            /// Entry `(row, col)` comes from `(col, row)`. No arithmetic or conjugation occurs;
+            /// scalar sharing can remain, so this is not independent proof/cache storage.
             pub fn transpose(&self) -> Self {
                 trace_matrix!("method", "transpose");
                 Self(from_fn(|row| from_fn(|col| self.0[col][row].clone())))
             }
 
-            /// Returns the matrix inverse.
+            /// Consumes the matrix and forwards to [`Self::inverse`].
             ///
-            /// This is equivalent to [`inverse`](Self::inverse).
+            /// This compatibility spelling adds its own dispatch event before the inverse's
+            /// schedule. It is a matrix inverse, not componentwise reciprocation, and preserves
+            /// the ordinary inverse's domain errors and handling of unknown status.
             pub fn reciprocal(self) -> BlasResult<Self> {
                 trace_matrix!("method", "reciprocal");
                 self.inverse()
             }
 
-            /// Returns the checked matrix inverse.
+            /// Consumes the matrix and forwards to [`Self::inverse_checked`].
             ///
-            /// This is equivalent to [`inverse_checked`](Self::inverse_checked).
+            /// Adds its own dispatch event, preserving the checked inverse's divisor guards
+            /// and typed errors. This is a matrix inverse, not componentwise reciprocation.
             pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
                 trace_matrix!("method", "reciprocal-checked");
                 self.inverse_checked()
@@ -10300,13 +10326,6 @@ macro_rules! impl_matrix {
                     trace_matrix!("powi", "negative-one-inverse");
                     return self.inverse();
                 }
-                // Negative powers deliberately materialize A^-1 before
-                // repeated squaring. A delayed-scale prototype using
-                // A^-k = adj(A)^k * det(A)^-k looked structurally attractive,
-                // but 2026-05 targeted Criterion showed it regressed
-                // hyperreal-rational mat3/mat4 powi(-2) by roughly 6%/12%.
-                // The larger unscaled cofactors outweighed saving the common
-                // determinant scale, so keep the inverse-first schedule.
                 let base = if exponent < 0 {
                     self.inverse()?.0
                 } else {
@@ -10360,7 +10379,13 @@ macro_rules! impl_matrix {
                 Ok(Self($power_fn(base, exponent.unsigned_abs())))
             }
 
-            /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
+            /// Divides every entry by one shared scalar reciprocal after a nonzero guard.
+            ///
+            /// Queries the divisor before any scaling: known zero returns `DivideByZero`,
+            /// unknown status returns `UnknownZero`, without refinement by this guard.
+            /// Then constructs one reciprocal and multiplies entries row-major through the
+            /// borrowed-factor adapter. Even an all-zero matrix must pass the divisor guard;
+            /// other scalar reciprocal errors propagate before output construction.
             pub fn div_scalar_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
                 trace_matrix!("method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
@@ -10371,7 +10396,12 @@ macro_rules! impl_matrix {
                 ))
             }
 
-            /// Divides every entry by `rhs` after attaching an abort signal.
+            /// Attaches the signal to the divisor before checked componentwise division.
+            ///
+            /// Attachment precedes the known-nonzero guard, even on zero/unknown failure.
+            /// On success, constructs one reciprocal and scales entries row-major as in
+            /// [`Self::div_scalar_checked`]. Attachment alone does not poll the flag; scalar
+            /// propagation governs later cancellation. This is not a preemptive work bound.
             pub fn div_scalar_checked_with_abort(
                 self,
                 rhs: Real,
@@ -10387,13 +10417,25 @@ macro_rules! impl_matrix {
                 ))
             }
 
-            /// Divides by another matrix using checked inversion of the divisor.
+            /// Computes right division `X * rhs = self` using checked divisor schedules.
+            ///
+            /// For invertible `rhs`, the result is `self * rhs⁻¹`, with operand order preserved.
+            /// Dispatch may use structural formulas, shared adjugates or a transposed solve;
+            /// it need not materialize the inverse. Required zero/unknown pivots or divisors
+            /// return `DivideByZero`/`UnknownZero`; scalar errors also propagate. A zero dividend
+            /// does not authorize bypassing a singular divisor. Only completed results return.
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
                 trace_matrix!("method", "div-matrix-checked");
                 Ok(Self($div_checked_fn(self.0, rhs.0)?))
             }
 
-            /// Divides by another matrix using abort-aware checked inversion.
+            /// Computes checked right division with branch-specific cooperative signal use.
+            ///
+            /// Has the equation and failure contract of [`Self::div_matrix_checked`]. Forwards
+            /// `signal` to the dimension-specific dispatcher; structural shortcuts may bypass
+            /// attachment, while cofactor or solve paths attach to their selected divisors.
+            /// There is no unconditional polling here, and a set flag need not prevent an
+            /// exact shortcut from completing. No uniform cancellation latency is promised.
             pub fn div_matrix_checked_with_abort(
                 self,
                 rhs: Self,
@@ -10404,21 +10446,43 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Borrows rows through zero-based array indexing.
         impl Index<usize> for $name {
+            /// One complete row of scalar entries.
             type Output = [Real; $n];
 
+            /// Borrows the selected row without copying entries.
+            ///
+            /// # Panics
+            /// Panics when the row index is outside the matrix dimension.
             fn index(&self, index: usize) -> &Self::Output {
                 &self.0[index]
             }
         }
 
+        /// Exposes mutable row storage without preserving previously collected matrix facts.
         impl IndexMut<usize> for $name {
+            /// Mutably borrows the selected row, allowing any Real entries to replace it.
+            ///
+            /// Callers must re-establish retained facts affected by mutation.
+            ///
+            /// # Panics
+            /// Panics when the row index is outside the matrix dimension.
             fn index_mut(&mut self, index: usize) -> &mut Self::Output {
                 &mut self.0[index]
             }
         }
 
+        /// Formats nested row-major brackets for human-readable matrix diagnostics.
         impl fmt::Display for $name {
+            /// Writes rows and columns with comma-space separators.
+            ///
+            /// Ordinary formatting uses each Real display. Alternate formatting (`{:#}`)
+            /// uses `diagnostic_decimal(-256)` with its default 32 decimal places and
+            /// trailing-zero removal; scalar conversion failures appear as nonnumeric
+            /// markers. Outer precision, width and alignment are not forwarded to entries
+            /// or applied to the whole matrix. Writer errors propagate as `fmt::Error`.
+            /// This display is not an exact serialization or a geometric certificate.
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 f.write_str("[")?;
                 for row in 0..$n {
@@ -10442,9 +10506,15 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Entrywise matrix addition, consuming both matrices.
         impl Add for $name {
+            /// The owned matrix of entrywise results.
             type Output = Self;
 
+            /// Forms each output entry as `left[row][col] + right[row][col]`.
+            ///
+            /// Updates the owned left entries row-major through scalar assignment. Operand order is
+            /// preserved.
             fn add(mut self, rhs: Self) -> Self::Output {
                 trace_matrix!("op", "add-owned-owned");
                 for row in 0..$n {
@@ -10456,27 +10526,45 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Entrywise matrix addition, consuming the left matrix and borrowing the right.
         impl Add<&$name> for $name {
+            /// The owned matrix of entrywise results.
             type Output = Self;
 
+            /// Forms each output entry as `left[row][col] + right[row][col]`.
+            ///
+            /// Maps entries row-major through the borrowed-right scalar adapter. Operand order is
+            /// preserved.
             fn add(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "add-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Real::add_cached))
             }
         }
 
+        /// Entrywise matrix addition, borrowing the left matrix and consuming the right.
         impl Add<$name> for &$name {
+            /// The owned matrix of entrywise results.
             type Output = $name;
 
+            /// Forms each output entry as `left[row][col] + right[row][col]`.
+            ///
+            /// Maps entries row-major with borrowed left and owned right scalars. Operand order is
+            /// preserved.
             fn add(self, rhs: $name) -> Self::Output {
                 trace_matrix!("op", "add-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs + rhs))
             }
         }
 
+        /// Entrywise matrix addition, borrowing both matrices.
         impl Add<&$name> for &$name {
+            /// The owned matrix of entrywise results.
             type Output = $name;
 
+            /// Forms each output entry as `left[row][col] + right[row][col]`.
+            ///
+            /// Constructs output entries row-major through borrowed scalar arithmetic. Operand
+            /// order is preserved.
             fn add(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "add-ref-ref");
                 $name(from_fn(|row| {
@@ -10485,9 +10573,15 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Broadcasts scalar addition across an owned matrix.
         impl Add<Real> for $name {
+            /// The owned matrix after scalar broadcasting.
             type Output = Self;
 
+            /// Applies `+ rhs` to every entry, including off-diagonal entries.
+            ///
+            /// Uses a borrowed reusable scalar in each row-major addition. This is not addition of
+            /// a scalar multiple of identity.
             fn add(self, rhs: Real) -> Self::Output {
                 trace_matrix!("op", "add-scalar-owned");
                 let rhs = &rhs;
@@ -10495,18 +10589,30 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Broadcasts scalar addition across an owned matrix.
         impl Add<&Real> for $name {
+            /// The owned matrix after scalar broadcasting.
             type Output = Self;
 
+            /// Applies `+ rhs` to every entry, including off-diagonal entries.
+            ///
+            /// Uses a borrowed reusable scalar in each row-major addition. This is not addition of
+            /// a scalar multiple of identity.
             fn add(self, rhs: &Real) -> Self::Output {
                 trace_matrix!("op", "add-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
             }
         }
 
+        /// Entrywise matrix subtraction, consuming both matrices.
         impl Sub for $name {
+            /// The owned matrix of entrywise results.
             type Output = Self;
 
+            /// Forms each output entry as `left[row][col] - right[row][col]`.
+            ///
+            /// Updates the owned left entries row-major through scalar assignment. Operand order is
+            /// preserved.
             fn sub(mut self, rhs: Self) -> Self::Output {
                 trace_matrix!("op", "sub-owned-owned");
                 for row in 0..$n {
@@ -10518,27 +10624,45 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Entrywise matrix subtraction, consuming the left matrix and borrowing the right.
         impl Sub<&$name> for $name {
+            /// The owned matrix of entrywise results.
             type Output = Self;
 
+            /// Forms each output entry as `left[row][col] - right[row][col]`.
+            ///
+            /// Maps entries row-major through the borrowed-right scalar adapter. Operand order is
+            /// preserved.
             fn sub(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "sub-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Real::sub_cached))
             }
         }
 
+        /// Entrywise matrix subtraction, borrowing the left matrix and consuming the right.
         impl Sub<$name> for &$name {
+            /// The owned matrix of entrywise results.
             type Output = $name;
 
+            /// Forms each output entry as `left[row][col] - right[row][col]`.
+            ///
+            /// Maps entries row-major with borrowed left and owned right scalars. Operand order is
+            /// preserved.
             fn sub(self, rhs: $name) -> Self::Output {
                 trace_matrix!("op", "sub-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs - rhs))
             }
         }
 
+        /// Entrywise matrix subtraction, borrowing both matrices.
         impl Sub<&$name> for &$name {
+            /// The owned matrix of entrywise results.
             type Output = $name;
 
+            /// Forms each output entry as `left[row][col] - right[row][col]`.
+            ///
+            /// Constructs output entries row-major through borrowed scalar arithmetic. Operand
+            /// order is preserved.
             fn sub(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "sub-ref-ref");
                 $name(from_fn(|row| {
@@ -10547,9 +10671,15 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Broadcasts scalar subtraction across an owned matrix.
         impl Sub<Real> for $name {
+            /// The owned matrix after scalar broadcasting.
             type Output = Self;
 
+            /// Applies `- rhs` to every entry, including off-diagonal entries.
+            ///
+            /// Negates the owned scalar once, then uses borrowed addition. This is not addition of
+            /// a scalar multiple of identity.
             fn sub(self, rhs: Real) -> Self::Output {
                 trace_matrix!("op", "sub-scalar-owned");
                 let rhs = -rhs;
@@ -10558,9 +10688,15 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Broadcasts scalar subtraction across an owned matrix.
         impl Sub<&Real> for $name {
+            /// The owned matrix after scalar broadcasting.
             type Output = Self;
 
+            /// Applies `- rhs` to every entry, including off-diagonal entries.
+            ///
+            /// Clones and negates the borrowed scalar once, then uses borrowed addition. This is
+            /// not addition of a scalar multiple of identity.
             fn sub(self, rhs: &Real) -> Self::Output {
                 trace_matrix!("op", "sub-scalar-ref");
                 let rhs = -rhs.clone();
@@ -10568,27 +10704,38 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Entrywise negation of a consumed matrix.
         impl Neg for $name {
+            /// The owned additive inverse matrix.
             type Output = Self;
 
+            /// Negates each scalar through the fixed-size row-major owned schedule.
             fn neg(self) -> Self::Output {
                 trace_matrix!("op", "neg-owned");
                 Self(<[[Real; $n]; $n] as MatrixNegOwned>::neg_owned(self.0))
             }
         }
 
+        /// Entrywise negation of a borrowed matrix.
         impl Neg for &$name {
+            /// The owned additive inverse matrix.
             type Output = $name;
 
+            /// Negates each scalar through the fixed-size row-major borrowed schedule.
             fn neg(self) -> Self::Output {
                 trace_matrix!("op", "neg-ref");
                 $name(<[[Real; $n]; $n] as MatrixNegRefs>::neg_refs(&self.0))
             }
         }
 
+        /// Scales every entry of an owned matrix by a consumed scalar.
         impl Mul<Real> for $name {
+            /// The owned scaled matrix.
             type Output = Self;
 
+            /// Multiplies entries row-major in place using scalar multiplication assignment.
+            ///
+            /// Zero and symbolic factors are accepted; no invertibility condition is required.
             fn mul(mut self, rhs: Real) -> Self::Output {
                 trace_matrix!("op", "mul-scalar-owned");
                 for row in &mut self.0 {
@@ -10600,9 +10747,14 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Scales every entry of an owned matrix by a borrowed scalar.
         impl Mul<&Real> for $name {
+            /// The owned scaled matrix.
             type Output = Self;
 
+            /// Multiplies entries row-major through the borrowed-factor adapter.
+            ///
+            /// Zero and symbolic factors are accepted; no invertibility condition is required.
             fn mul(self, rhs: &Real) -> Self::Output {
                 trace_matrix!("op", "mul-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
@@ -10611,9 +10763,17 @@ macro_rules! impl_matrix {
 
         // The shared reciprocal is computed once, then applied to every lane.
         #[allow(clippy::suspicious_arithmetic_impl)]
+        /// Fallible componentwise division by a consumed scalar.
         impl Div<Real> for $name {
+            /// The scaled matrix or a scalar division error.
             type Output = BlasResult<Self>;
 
+            /// Rejects a definitely-zero divisor, then constructs one shared reciprocal.
+            ///
+            /// Unknown zero status is not rejected by this ordinary guard; scalar inverse
+            /// errors propagate. Scales all entries row-major only after reciprocal success.
+            /// Consumes the divisor for its reciprocal, then scales entries in place. Even a zero
+            /// dividend does not bypass the divisor.
             fn div(mut self, rhs: Real) -> Self::Output {
                 trace_matrix!("op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
@@ -10628,9 +10788,18 @@ macro_rules! impl_matrix {
         }
 
         #[allow(clippy::suspicious_arithmetic_impl)]
+        /// Fallible componentwise division by a borrowed scalar.
         impl Div<&Real> for $name {
+            /// The scaled matrix or a scalar division error.
             type Output = BlasResult<Self>;
 
+            /// Rejects a definitely-zero divisor, then constructs one shared reciprocal.
+            ///
+            /// Unknown zero status is not rejected by this ordinary guard; scalar inverse
+            /// errors propagate. Scales all entries row-major only after reciprocal success.
+            /// Uses a borrowed reciprocal; Matrix3 multiplies through borrowed scalars,
+            /// while Matrix4 uses the borrowed-factor adapter. Even a zero dividend does not bypass
+            /// the divisor.
             fn div(self, rhs: &Real) -> Self::Output {
                 trace_matrix!("op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
@@ -10646,117 +10815,214 @@ macro_rules! impl_matrix {
             }
         }
 
+        /// Matrix composition, consuming both matrices.
         impl Mul for $name {
+            /// The owned matrix product.
             type Output = Self;
 
+            /// Forms `left * right`, with entry `(i,j)` equal to the sum of
+            /// `left[i][k]*right[k][j]`.
+            ///
+            /// On column vectors the right transformation acts first. Delegates to the owned
+            /// product dispatcher.
             fn mul(self, rhs: Self) -> Self::Output {
                 trace_matrix!("op", "mul-owned-owned");
                 Self($mul_owned_fn(self.0, rhs.0))
             }
         }
 
+        /// Matrix composition, consuming the left matrix and borrowing the right.
         impl Mul<&$name> for $name {
+            /// The owned matrix product.
             type Output = Self;
 
+            /// Forms `left * right`, with entry `(i,j)` equal to the sum of
+            /// `left[i][k]*right[k][j]`.
+            ///
+            /// On column vectors the right transformation acts first. Delegates to the
+            /// owned-left/borrowed-right product dispatcher.
             fn mul(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "mul-owned-ref");
                 Self($mul_rhs_ref_fn(self.0, &rhs.0))
             }
         }
 
+        /// Matrix composition, borrowing the left matrix and consuming the right.
         impl Mul<$name> for &$name {
+            /// The owned matrix product.
             type Output = $name;
 
+            /// Forms `left * right`, with entry `(i,j)` equal to the sum of
+            /// `left[i][k]*right[k][j]`.
+            ///
+            /// On column vectors the right transformation acts first. Uses the fully borrowed
+            /// product dispatcher before dropping the owned right matrix.
             fn mul(self, rhs: $name) -> Self::Output {
                 trace_matrix!("op", "mul-ref-owned");
                 $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
 
+        /// Matrix composition, borrowing both matrices.
         impl Mul<&$name> for &$name {
+            /// The owned matrix product.
             type Output = $name;
 
+            /// Forms `left * right`, with entry `(i,j)` equal to the sum of
+            /// `left[i][k]*right[k][j]`.
+            ///
+            /// On column vectors the right transformation acts first. Delegates to the fully
+            /// borrowed product dispatcher.
             fn mul(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "mul-ref-ref");
                 $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
 
+        /// Fallible right division, consuming both matrices.
         impl Div for $name {
+            /// The owned right quotient or a propagated division error.
             type Output = BlasResult<Self>;
 
+            /// Solves `X * right = left`, mathematically `left * right⁻¹` for invertible right.
+            ///
+            /// Delegates to the ordinary owned right-division dispatcher. The dispatcher selects
+            /// structural, cofactor or transposed-solve
+            /// schedules; inverse materialization is not required. Scalar domain errors
+            /// propagate. Ordinary paths do not uniformly certify unknown divisor status;
+            /// use the checked method when known-nonzero guards are required.
             fn div(self, rhs: Self) -> Self::Output {
                 trace_matrix!("op", "div-owned-owned");
                 Ok(Self($div_fn(self.0, rhs.0)?))
             }
         }
 
+        /// Fallible right division, consuming the left matrix and borrowing the right.
         impl Div<&$name> for $name {
+            /// The owned right quotient or a propagated division error.
             type Output = BlasResult<Self>;
 
+            /// Solves `X * right = left`, mathematically `left * right⁻¹` for invertible right.
+            ///
+            /// Clones the right matrix handles and invokes owned/owned division. The dispatcher
+            /// selects structural, cofactor or transposed-solve
+            /// schedules; inverse materialization is not required. Scalar domain errors
+            /// propagate. Ordinary paths do not uniformly certify unknown divisor status;
+            /// use the checked method when known-nonzero guards are required.
             fn div(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "div-owned-ref");
                 self / rhs.clone()
             }
         }
 
+        /// Fallible right division, borrowing the left matrix and consuming the right.
         impl Div<$name> for &$name {
+            /// The owned right quotient or a propagated division error.
             type Output = BlasResult<$name>;
 
+            /// Solves `X * right = left`, mathematically `left * right⁻¹` for invertible right.
+            ///
+            /// Clones the left matrix handles and invokes owned/owned division. The dispatcher
+            /// selects structural, cofactor or transposed-solve
+            /// schedules; inverse materialization is not required. Scalar domain errors
+            /// propagate. Ordinary paths do not uniformly certify unknown divisor status;
+            /// use the checked method when known-nonzero guards are required.
             fn div(self, rhs: $name) -> Self::Output {
                 trace_matrix!("op", "div-ref-owned");
                 self.clone() / rhs
             }
         }
 
+        /// Fallible right division, borrowing both matrices.
         impl Div<&$name> for &$name {
+            /// The owned right quotient or a propagated division error.
             type Output = BlasResult<$name>;
 
+            /// Solves `X * right = left`, mathematically `left * right⁻¹` for invertible right.
+            ///
+            /// Delegates directly to the fully borrowed right-division dispatcher. The dispatcher
+            /// selects structural, cofactor or transposed-solve
+            /// schedules; inverse materialization is not required. Scalar domain errors
+            /// propagate. Ordinary paths do not uniformly certify unknown divisor status;
+            /// use the checked method when known-nonzero guards are required.
             fn div(self, rhs: &$name) -> Self::Output {
                 trace_matrix!("op", "div-ref-ref");
                 Ok($name($div_ref_fn(&self.0, &rhs.0)?))
             }
         }
 
+        /// Column-vector transformation, consuming the matrix and consuming the vector.
         impl Mul<$vector> for $name {
+            /// The owned transformed vector with the original dimension.
             type Output = $vector;
 
+            /// Forms one row-dot-vector result per output coordinate through the shared
+            /// borrowed-input dispatcher. Owned operands remain available to that call.
+            ///
+            /// Matrix4 uses the supplied homogeneous weight, including nonunit values;
+            /// this operation does not divide by the output weight or convert to a point.
             fn mul(self, rhs: $vector) -> Self::Output {
                 trace_matrix!("op", "transform-vector-owned-owned");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 
+        /// Column-vector transformation, consuming the matrix and borrowing the vector.
         impl Mul<&$vector> for $name {
+            /// The owned transformed vector with the original dimension.
             type Output = $vector;
 
+            /// Forms one row-dot-vector result per output coordinate through the shared
+            /// borrowed-input dispatcher. Owned operands remain available to that call.
+            ///
+            /// Matrix4 uses the supplied homogeneous weight, including nonunit values;
+            /// this operation does not divide by the output weight or convert to a point.
             fn mul(self, rhs: &$vector) -> Self::Output {
                 trace_matrix!("op", "transform-vector-owned-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 
+        /// Column-vector transformation, borrowing the matrix and consuming the vector.
         impl Mul<$vector> for &$name {
+            /// The owned transformed vector with the original dimension.
             type Output = $vector;
 
+            /// Forms one row-dot-vector result per output coordinate through the shared
+            /// borrowed-input dispatcher. Owned operands remain available to that call.
+            ///
+            /// Matrix4 uses the supplied homogeneous weight, including nonunit values;
+            /// this operation does not divide by the output weight or convert to a point.
             fn mul(self, rhs: $vector) -> Self::Output {
                 trace_matrix!("op", "transform-vector-ref-owned");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 
+        /// Column-vector transformation, borrowing the matrix and borrowing the vector.
         impl Mul<&$vector> for &$name {
+            /// The owned transformed vector with the original dimension.
             type Output = $vector;
 
+            /// Forms one row-dot-vector result per output coordinate through the shared
+            /// borrowed-input dispatcher. Owned operands remain available to that call.
+            ///
+            /// Matrix4 uses the supplied homogeneous weight, including nonunit values;
+            /// this operation does not divide by the output weight or convert to a point.
             fn mul(self, rhs: &$vector) -> Self::Output {
                 trace_matrix!("op", "transform-vector-ref-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 
+        /// Uses the caret operator as fallible integer matrix exponentiation.
         impl BitXor<i32> for $name {
+            /// The powered matrix or an inverse error.
             type Output = BlasResult<Self>;
 
+            /// Forwards the exponent to [`Self::powi`], including negative inverse powers.
+            ///
+            /// This is arithmetic matrix power, not entrywise power or bitwise XOR.
             fn bitxor(self, rhs: i32) -> Self::Output {
                 trace_matrix!("op", "bitxor-powi");
                 self.powi(rhs)

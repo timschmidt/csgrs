@@ -10264,6 +10264,129 @@ and private docs. The next contiguous boundary is `macro_rules! impl_matrix`,
 currently core.rs line 10227. Macro-generated public APIs, later matrix
 implementations and remaining tests still require audit.
 
+## 2026-11-27: common matrix API macro and generated operator contracts
+
+Scope and acceptance witness:
+
+- Continued from `20712b69a`, reading every line of the original core.rs
+  10227–10793 block, including `impl_matrix!` and both invocations. The 567-line
+  block becomes 833 lines including documentation. It contains one macro,
+  35 generated impl blocks, 47 method templates and 32 associated-type
+  templates. Of 115 resulting doc groups, 102 were missing, ten existing groups
+  were expanded/corrected and three previously audited power groups retained.
+- Added Rustdoc to three existing matrix tests: scalar broadcasting, matrix
+  display and checked scalar division with an unset abort flag. Read surrounding
+  helpers, both right-division dispatchers, scalar formatting/guards and existing
+  borrowed-operator/diagnostic-display tests as consumer context. This does not
+  claim new whole-file coverage of those files or the remaining matrix APIs.
+- Owner: Hyperlattice's public fixed-size arithmetic wrappers over Hyperreal;
+  properties P1 exact arithmetic, P4 preserved query/dispatch order and P6 typed
+  divisor errors. Domain: Matrix3/Matrix4 and corresponding column vectors with
+  rational/symbolic entries, scalar broadcasts, fallible matrix/scalar division,
+  integer powers, array indexing and diagnostic formatting.
+- Missing acceptance witness: authored docs for generated impls/methods/output
+  types, plus accurate right-division, display, ownership, indexing and checked
+  scalar contracts. Reproduced the missing groups and misleading inversion/display
+  descriptions on the starting revision. Baseline library probes and original
+  tests establish existing behavior; repository edits contain comments only.
+
+Contracts clarified:
+
+- Constructors retain row-major Real entries without validating invertibility
+  or transform kind. Zero/identity use exact literals; transpose clones handles
+  without arithmetic or conjugation and does not promise independent scalar caches.
+- Scalar addition/subtraction broadcast to every entry, including off-diagonals.
+  Matrix addition/subtraction are entrywise; multiplication is composition with
+  the right transformation acting first on column vectors. All generated
+  ownership forms describe the actual consumed/borrowed operands and schedules.
+- Mutable row indexing does not transport previously collected facts across
+  mutation. Both indexing methods panic at an out-of-range row. The row output
+  type and all arithmetic result types now have their own documentation.
+- Matrix division solves `X * right = left`; structural formulas, shared
+  adjugates or a transposed solve need not materialize an inverse. Mixed-ownership
+  ordinary division clones the borrowed matrix handles and forwards to the
+  owned/owned operator, adding that operator's event; fully borrowed division
+  invokes its dedicated dispatcher directly.
+- Ordinary scalar division rejects definitely-zero divisors before one shared
+  reciprocal. Unknown status is not itself rejected there. Checked division
+  requires known nonzero status, returning DivideByZero/UnknownZero before
+  scaling. Signal-aware scalar division attaches before that guard. A zero
+  matrix does not authorize invalid scalar division. Borrowed scalar division
+  retains the distinct Matrix3 borrowed-product and Matrix4 adapter schedules.
+- Reciprocal aliases preserve matrix-inverse semantics and add their own dispatch
+  event. The caret operator delegates to integer power. Existing power docs
+  retain negative inversion, unsigned i32::MIN handling, singular exponent-zero
+  identity and branch-specific cancellation behavior. Removed the macro's
+  historical percentage-win comment; no current performance claim replaces it.
+- Matrix-vector operators use the shared borrowed-input transform dispatcher.
+  Matrix4 retains the supplied homogeneous weight; output is neither normalized
+  by that weight nor converted to a point by this operator.
+- Display writes nested row-major brackets. Ordinary entries use Real display;
+  alternate entries use diagnostic_decimal(-256) with default precision and
+  failure markers. Outer precision/width/alignment are not forwarded or applied
+  to the complete matrix. Writer errors propagate. Display is not exact replay.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Stripping only comment-only and
+  blank lines leaves identical executable source in core.rs and tests/matrix.rs
+  against `20712b69a`, preserving formulas, attributes, predicates and assertions.
+- Hyperlattice library builds passed with all features and no defaults. Twelve
+  original tests passed in each final configuration: nine selected matrix tests,
+  the borrowed matrix operator test and both diagnostic-display tests. The
+  all-feature baseline passed the first ten. Direct rustc harnesses used the
+  matching Cargo artifact graph and retained every original assertion.
+- Independent Fraction arithmetic and Gauss–Jordan inverse expectations checked
+  all four matrix add/subtract/product/quotient ownership forms in both sizes,
+  both scalar ownership forms for all four arithmetic operators, both negations
+  and all four matrix-vector ownership forms. Literal expectations also checked
+  constructors, transpose, mutation and reciprocal aliases. Trace-mode probes
+  asserted each selected operator label, mixed-ownership division forwarding,
+  scalar scaling counts and checked scalar attachment counts.
+- Scalar tests distinguished exact-zero rejection and fresh unknown status in
+  ordinary/checked/abort-aware paths. Checked failures stopped before scaling.
+  Checked matrix division matched independent right-quotient expectations.
+  Ordinary unknown reciprocal construction is not a completed-evaluation claim.
+- For `A = I + N` with `N² = 0`, independent expectations `A^e = I + eN`
+  checked ten exponents including i32::MIN, negative one, zero and positive
+  square/cube/general paths, through ordinary/checked/signal-aware/caret APIs
+  in both sizes. A set signal did not prevent these exact shortcuts. Singular
+  zero matrices returned identity at exponent zero and DivideByZero at -1.
+- Formatting probes checked literal rational/decimal strings, ignored outer
+  precision/width, writer failure and an unresolved sin(e)²+cos(e)²-1 marker.
+  Corrected an initial temporary-probe expectation: the shared unknown_zero
+  fixture is a nonzero sine difference whose decimal refinement can succeed,
+  so lack of cheap zero knowledge does not require an UnknownZero display
+  marker. Preserved the initial failed log; no repository assertion was weakened.
+- Both immutable and mutable out-of-bounds row probes caught the documented
+  panic in each dimension. Their expected panic-hook stderr is retained;
+  probe processes returned success. Final probes compiled without warnings,
+  completed within 30 seconds, and all-feature before/after plus no-default
+  stdout matched. Original test processes used 60-second limits.
+- Library and integration-target private Rustdoc passed with warnings and
+  broken/private links denied under both feature configurations. Full-text
+  validation checked all 114 generated doc groups inside their own impl
+  sections on each concrete matrix page, plus the private macro page: 229
+  checks for 115 source templates. This verifies both expansions rather than
+  only the macro source. The three #[test] docs were source-reviewed; Rustdoc
+  omits test functions. Coverage of this block is not whole-crate coverage.
+- Cargo checks passed for matrix, borrowed_ops, diagnostic_display, mathbench
+  and downstream Hyperspatial including Hyperlimit with all features and no
+  defaults. Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared
+  target. Full workflows remain owner-waived; no performance, size, memory,
+  sanitizer or universal symbolic-completion claim is made. No focused check
+  remains blocked. Removed four owned temporary executables; the shared target
+  remains near 2.5 GiB, without another Cargo target tree.
+- The root AGENTS.md public/private 100% Rustdoc mandate remains active.
+  The wider repository audit is incomplete; generated APIs must continue to be
+  checked in their concrete rendered expansions as well as their source templates.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-macro-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-macro-audit/` temporary generators, probes, checkers and private
+docs. The next contiguous boundary is the dedicated `impl Matrix3` beginning
+with `exact_facts`, currently core.rs line 11061. Those public APIs and the
+remaining Matrix4 APIs/tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

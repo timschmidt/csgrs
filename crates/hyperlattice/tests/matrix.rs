@@ -867,6 +867,7 @@ fn targeted_fractional_matrix_forms_round_trip_exactly() {
     );
 }
 
+/// Checks scalar broadcasting against literal results for all nine entries, including off-diagonals.
 #[test]
 fn matrix_scalar_add_and_subtract_are_componentwise() {
     let matrix = Matrix3::new([[r(1), r(2), r(3)], [r(4), r(5), r(6)], [r(7), r(8), r(9)]]);
@@ -881,6 +882,10 @@ fn matrix_scalar_add_and_subtract_are_componentwise() {
     );
 }
 
+/// Checks row delimiters, exact rational display and alternate diagnostic decimals.
+///
+/// The half and quarter fixture verifies default decimal presentation, not outer
+/// precision forwarding or lossless serialization of arbitrary scalar expressions.
 #[test]
 fn matrix_display_forwards_real_formatting() {
     let half = frac(1, 2);
@@ -1724,6 +1729,10 @@ fn checked_matrix_inverse_rejects_unknown_zero_pivots() {
     );
 }
 
+/// Checks exact componentwise halving with an initially unset cooperative abort flag.
+///
+/// This fixture exercises successful signal-aware division, not cancellation
+/// latency or behavior with an already-set flag.
 #[test]
 fn checked_matrix_scalar_division_accepts_abort_signal() {
     let matrix = Matrix3::new([
