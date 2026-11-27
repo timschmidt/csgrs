@@ -16695,3 +16695,7 @@ times are indicative only. Targets they suggest:
   - The MOSFET cascade DC fails.
   - The KiCad schematic round trip fails on mesh netlists.
   - `gyroid_solid` at 16³ returns an empty mesh, while 8³ does not.
+
+All 24 crates ran through `run.sh --quick --resources` in 84 minutes,
+including release builds. Evidence: csgrs-evidence f706cf45b,
+`docs/evidence/2026-11-27-resource-atlas-coverage`.
