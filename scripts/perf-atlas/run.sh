@@ -41,7 +41,8 @@ for crate in $CRATES; do
   echo "== $crate" >&2
   out="$(cd "$OUT" && pwd)/$crate.json"
   if [ "$crate" = hypervoxel ]; then
-    (cd "$dir" && cargo run --locked --release -q --all-features --example perf_atlas -- \
+    # Its default members are the voxelis crates, so name the package.
+    (cd "$dir" && cargo run --locked --release -q -p hypervoxel --all-features --example perf_atlas -- \
       --out "$out" "${ARGS[@]}")
   else
     cargo run --locked --release -q -p "$crate" --all-features --example perf_atlas -- \
