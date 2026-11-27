@@ -11264,6 +11264,92 @@ and `/tmp/csgrs-lattice-api-audit/`. The root AGENTS.md mandate for 100% public 
 private Rustdoc remains active. The repository audit is incomplete; reconcile
 whole-file coverage of matrix tests and continue the remaining source/support files.
 
+## Whole-file matrix-test reconciliation (2026-11-27)
+
+Read all 2048 lines of `crates/hyperlattice/tests/matrix.rs` on `067d7a80b`,
+from the common-module declaration through the last batch comparison. This
+reconciles the earlier section-specific reviews into one complete-file record;
+it does not count their existing function docs as new work. The test file is now
+2065 lines. Also re-read the directly relevant determinant/minor and inverse
+helper excerpts in matrix/core.rs, whose existing whole-file review remains in
+force; this batch adds no second whole-file credit for that production file.
+
+Owner: Hyperlattice matrix regression tests and adjacent determinant terminology.
+Relevant contracts are P1–P6, P17–P19 and P37: exact values, qualified facts and
+failure, composition, and accurately scoped evidence. Inputs comprise fixed
+rational, symbolic, unknown-cheap-status and sampled-binary64 fixtures. Before
+editing, all 69 existing matrix tests passed on the current revision. The missing
+acceptance witness was a file-level explanation of the evidence categories;
+remaining inaccurate comments confused six determinant terms with twelve minors
+or implied that value/fact assertions established a dispatch/work contract.
+
+Coverage and changes:
+
+- The full-file inventory has 73 functions: 69 tests and four private helpers.
+  All already had attached Rustdoc from prior batches. Together with the existing
+  common-module declaration and new file overview, there are 75 reviewed doc groups
+  in the test file. Local closures, attributes, assertions and ordinary comments
+  were included in the reading pass; imports are not new owned API definitions.
+- Added the overview and revised six test-doc groups: the unit-determinant inverse
+  composition, negative homogeneous weight, general integer inverse, fractional
+  determinant, default/alternate display, and symbolic lane-fact regressions.
+  Clarified two corresponding ordinary-comment blocks. The overview distinguishes
+  literal expectations, related-path comparisons and the sampled-helix helper's
+  lossy binary64 consistency checks at absolute tolerance 1e-12.
+- Corrected the private known-rational determinant helper doc and the adjacent
+  determinant comment: twelve 2×2 minors form six signed products, with signs
+  +,-,+,+,-,+ and complementary column-pair indices. Re-read both six-element
+  factor arrays, the product-sum formula and its dispatcher. The fractional test
+  asserts 75933/5000; it does not count minor construction or dispatch calls.
+- Inverse/product identities do not independently assert every inverse entry;
+  wrapper equality does not prove a particular internal route. The integer
+  fixture's -198 determinant remains an independent literal expectation.
+- Weight -1 must retain its negative translation contribution, but the existing
+  coordinate assertions do not prescribe or count a schedule. Likewise symbolic
+  zero/sign/rationality facts do not establish skipped products or reduced work.
+- The display fixture expects rational fractions by default and decimals with
+  alternate formatting. It does not test outer precision forwarding or exact
+  interchange of arbitrary expressions.
+- Preserved all existing distinctions: the singular helper accepts either
+  DivideByZero or UnknownZero; all abort flags in this file are inactive; schedule
+  hints are advisory metadata; shared-denominator fixtures depend on reduced
+  representations; assumed-weight batches use valid inputs. No assertions or
+  failure expectations were weakened.
+
+Validation after the final edit:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and
+  blank lines leaves both changed Rust files identical to `067d7a80b`. All
+  executable expressions, fixtures, attributes, assertions, predicate order and
+  dispatch trace statements are unchanged.
+- All 69 original tests passed on the all-feature baseline and after edits with
+  all features and no defaults. Direct rustc harnesses compiled the actual matrix
+  integration source against matching Cargo artifacts and cfgs. Each test ran
+  in a separate process with a 60-second limit; none timed out.
+- Private integration Rustdoc passed in both configurations with warnings and
+  broken/private links denied. Complete rendered text matched the new file
+  overview, common-module declaration and all four private helpers. All 69 test
+  docs were verified attached to their functions in source and those tests were
+  executed; Rustdoc omits individual test pages.
+- Library builds and private library docs passed in both configurations. The full
+  revised private determinant-helper text was verified in rendered library output.
+  Cargo checks for the complete matrix integration target also passed, using
+  --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target directory.
+- No executable downstream consumer changed. Full workflows and unrelated runtime
+  downstream checks remain owner-waived for this docs-only session. No focused
+  check is blocked and no new performance, cancellation, topology or universal
+  matrix-closure claim is made.
+- Removed the owned temporary test executable; retained the checker scripts,
+  rendered private docs and logs. The single shared Cargo target remains near
+  2.6 GiB; no duplicate target tree was created.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-file-*.log`, corresponding Cargo artifact JSON,
+and `/tmp/csgrs-matrix-file-audit/` including the extracted 73-function doc manifest.
+This closes the full-file reading/documentation record for tests/matrix.rs, not
+all Hyperlattice support files or the repository audit. Continue reviewing the
+crate root and remaining manifests, benchmark/support files and other crates.
+The AGENTS.md mandate for 100% public/private Rustdoc remains active.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

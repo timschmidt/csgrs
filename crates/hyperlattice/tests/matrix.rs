@@ -1,3 +1,17 @@
+//! Matrix arithmetic, structural facts and homogeneous-transform regression fixtures.
+//!
+//! Exact rational expectations cover selected determinants, inverses, coordinate
+//! transforms and metadata. Other checks compare related implementation paths or
+//! compose a computed inverse with its source; those are not independent oracles.
+//! The sampled-helix alignment helper instead checks lossy binary64 values with
+//! absolute tolerance 1e-12, after adopting sampled coordinates as exact inputs.
+//!
+//! Unknown cheap zero knowledge is distinct from mathematical singularity. The
+//! shared singular-error assertion accepts either DivideByZero or UnknownZero.
+//! Abort-aware fixtures use inactive flags. No dispatch-count, cancellation-latency,
+//! performance, general symbolic equality or complete geometric closure proof is
+//! established by this file; advisory schedule labels are not execution traces.
+
 /// Shared exact scalar, unknown-status, and cancellation fixtures for these matrix tests.
 mod common;
 
@@ -19,7 +33,9 @@ fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
     ));
 }
 
-/// Checks a unit-determinant rational inverse and the exact zero/one power identities.
+/// Checks determinant one, inverse/product composition and zero/one power identities.
+///
+/// The inverse is verified through multiplication by its source, not literal entries.
 #[test]
 fn matrix3_inverse_and_power() {
     let matrix = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(1), r(4)], [r(5), r(6), r(0)]]);
@@ -666,6 +682,7 @@ fn matrix4_translated_diagonal_affine_preserves_point_direction_semantics() {
 ///
 /// Independent integer expectations distinguish it from weights zero and one,
 /// including a mixed batch containing both negative-weight and ordinary points.
+/// These assertions check values, not which internal dispatch path was selected.
 #[test]
 fn matrix4_negative_homogeneous_weight_stays_on_generic_projective_path() {
     let transform = Matrix4::new([
@@ -677,10 +694,9 @@ fn matrix4_negative_homogeneous_weight_stays_on_generic_projective_path() {
     let negative_weight = Vector4::new([r(5), r(7), r(11), -r(1)]);
     let point = Vector4::new([r(5), r(7), r(11), r(1)]);
 
-    // A signed unit `w = -1` is exact structural information, but it is not a
-    // direction (`w = 0`) or affine point (`w = 1`). Yap's object-fact boundary
-    // requires keeping it on the full projective transform schedule instead of
-    // silently reusing an affine point/direction shortcut.
+    // Weight -1 contributes the negative translation column, unlike weights
+    // zero and one. The expected coordinates check that contribution without
+    // counting or prescribing the implementation's dispatch steps.
     let expected_negative = Vector4::new([r(-90), r(-179), r(-256), -r(1)]);
     assert_eq!(
         transform.clone() * negative_weight.clone(),
@@ -793,8 +809,9 @@ fn matrix4_assumed_homogeneous_batches_match_single_lane_transforms() {
 
 /// Checks determinant -198, inverse/product composition and three inverse modes.
 ///
-/// The zero at (1,0) bypasses the early three-witness inverse route; this
-/// nontriangular, nonaffine fixture exercises the general cofactor fallback.
+/// The nontriangular, nonaffine integer fixture contains zero entries. Checked
+/// and inactive-signal inverses must match the ordinary result; no trace assertion
+/// identifies the route or independently verifies every inverse entry.
 #[test]
 fn matrix4_inverse_and_determinant_cover_general_integer_matrix() {
     let matrix = Matrix4::new([
@@ -816,8 +833,9 @@ fn matrix4_inverse_and_determinant_cover_general_integer_matrix() {
 
 /// Checks a fully nonzero rational determinant against the literal 75933/5000.
 ///
-/// Authored tenths include reduced integer and dyadic entries; the matrix as a
-/// whole exercises the known-rational six-minor determinant path.
+/// Authored tenths include reduced integer and dyadic entries. The current
+/// determinant implementation forms twelve 2×2 minors and combines them in six
+/// signed products; this test asserts the value, not internal work or dispatch counts.
 #[test]
 fn matrix4_dense_fractional_determinant_uses_exact_value() {
     let matrix = Matrix4::new([
@@ -906,8 +924,9 @@ fn matrix_scalar_add_and_subtract_are_componentwise() {
 
 /// Checks row delimiters, exact rational display and alternate diagnostic decimals.
 ///
-/// The half and quarter fixture verifies default decimal presentation, not outer
-/// precision forwarding or lossless serialization of arbitrary scalar expressions.
+/// The half and quarter fixture expects rational fractions under default formatting
+/// and decimals under alternate formatting. It does not test outer precision
+/// forwarding or lossless serialization of arbitrary scalar expressions.
 #[test]
 fn matrix_display_forwards_real_formatting() {
     let half = frac(1, 2);
@@ -1946,6 +1965,7 @@ fn hyperreal_matrix_transform_direction_zero_lane_facts() {
 /// Checks symbolic direction output sign, zero and rationality facts without requiring coordinate equality.
 ///
 /// The active π term remains symbolic; the e coefficient multiplies an input zero.
+/// Lane facts do not by themselves establish skipped products or reduced work.
 #[test]
 fn hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts() {
     let symbolic_linear = Matrix4::new([
@@ -1958,11 +1978,8 @@ fn hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts() {
 
     let transformed = symbolic_linear * symbolic_direction;
 
-    // Symbolic no-translation path should keep this as a pure 3-term directional
-    // transform and preserve lane-level public facts.
-    // This guards against future constructor changes that would accidentally
-    // materialize symbolic terms as full 4-lane work and erase demand-driven
-    // zero/sign separation.
+    // Check lane-level zero/sign/rationality facts. These assertions do not
+    // count scalar products or distinguish three- from four-term schedules.
     assert_eq!(transformed[0].zero_status(), ZeroKnowledge::NonZero);
     assert_eq!(transformed[1].zero_status(), ZeroKnowledge::Zero);
     assert_eq!(transformed[2].zero_status(), ZeroKnowledge::NonZero);

@@ -9620,7 +9620,7 @@ fn matrix4_factors_dense_exact_known_rational(m: &[[Real; 4]; 4]) -> ([Real; 6],
 /// or nonzero test on the determinant is needed.
 fn determinant4_from_factors(s: &[Real; 6], c: &[Real; 6]) -> Real {
     trace_matrix!("helper", "determinant4-from-factors");
-    // This is the fixed six-minor determinant polynomial
+    // This is the fixed six-term determinant polynomial in twelve minors
     //   s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0.
     // Route it as one signed product sum so hyperreal exact rationals can
     // share a final denominator instead of reducing a dot product plus two
@@ -9638,7 +9638,7 @@ fn determinant4_from_factors(s: &[Real; 6], c: &[Real; 6]) -> Real {
     )
 }
 
-/// Evaluates the six-minor determinant polynomial with a known-rational aggregate.
+/// Evaluates the six-term determinant polynomial with a known-rational aggregate.
 ///
 /// Uses the signs and pairing of [`determinant4_from_factors`] without local
 /// pruning or representation checks. All twelve supplied values must currently
