@@ -14295,6 +14295,118 @@ duplicate temporary HTML were removed. The shared Cargo target is approximately
 support/conformance files and the repository-wide audit remain open; these scoped
 counts do not establish repository-wide coverage.
 
+## Hyperlattice-interval shape oracle and exponent witnesses (2026-11-27)
+
+Whole-file review on target revision e2ed33ae0b462d43d601cd3edf8fe43e8ef61f23:
+
+- crates/hyperlattice-interval/tests/dyadic_product_exponents.rs (28 -> 42 lines).
+- crates/hyperlattice-interval/tests/shape_replay.rs (42 -> 57 lines).
+- crates/hyperlattice-interval/tests/support/shape_oracle.rs (233 -> 299 lines).
+- All bytes of the five unchanged tests/fixtures/shapes/*.bin fixtures: 8 bytes
+  for empty-before-invalid, 76 for prefix-overflow, 68 each for replayed-overflow
+  and replayed-sum-overflow, and 532 for wide-quarter-grid.
+
+The owning layer is Cartesian test support, with fixed/dyadic arithmetic and
+native replay consumers. P1/P5/P6/P18/P20/P26/P35/P37 and the admission protocol
+require exact expectations, honest resource/failure claims, subsequent consumption
+and retained regressions. The domain consists of seven fixed shapes with i32
+quarter-grid endpoints, deliberately malformed wire data, and two dyadic exponent
+boundary products. Three focused tests passed before edits. Missing acceptance
+coverage was Rustdoc for the private oracle aliases/status/variants/helpers and
+test entry points, rather than a demonstrated arithmetic defect. No executable
+code, test assertion, fixture byte, dependency, feature or lockfile changed.
+
+The 22 authored blocks cover all 12 function declarations, three module
+introductions, the oracle module declaration, two aliases, the status enum and
+its three variants.
+Review records these distinctions:
+
+- The byte decoder cycles through a nonempty payload; empty input returns from
+  check before indexing. Low tag bits choose 0x0, 0x3, 3x0, 2x3, 3x2, 1x33 or
+  33x1. High bits choose signed bytes, extrema substitutions or little-endian i32;
+  mode three returns to ordinary signed bytes. Source endpoint pairs are ordered
+  before edits. Bytes >=128 disable the corresponding matrix/vector edit.
+- Predicted status is derived from the edit, not the decoder. Null lanes produce
+  empty only after complete validation; reversed/out-of-range scalars and missing/
+  excess entries must fail. With one lane, the reversed-bounds edit overwrites
+  the same null slot. Edits requiring nonexistent rows/lanes append instead and
+  remain invalid. Zero-dimensional unit products remain distinct from empty.
+- Independent i64 products of raw i32 endpoints fit; each term is rounded outward
+  to the quarter grid before ordered addition. Every previously accepted prefix
+  fits i32, so one further rounded term also fits i64 before the i32 check. Term
+  and prefix overflow remain failures even if subsequent terms would cancel.
+  The oracle compares the error value, not kernel endpoint-check order. Its zip
+  assumes matching lengths supplied by the shape generator; it is not a general
+  shape-validation API. Zero terms give zero; no rows and empty operands differ.
+- Both wire carriers are decoded/checked. Invalid vectors still permit matrix
+  transpose/projection checks; invalid matrices stop matrix actions. Projection
+  errors include the selected index/dimension and precede emptiness shortcuts.
+  A successful first product is serialized/reloaded and consumed by the transpose.
+  This second action uses independent Cartesian lanes, not recovered correlations
+  or an exact correlated A-transpose*A image. Replay here stays in-process.
+- The deterministic sweep comprises 6,615 inputs, not exhaustive endpoint coverage.
+  The allocating oracle bounds generated dimensions but supplies no arithmetic,
+  input-memory, cancellation or total-work budget. Two dyadic witnesses repair a
+  temporary exponent by shifting mantissas above i32::MAX or removing a common
+  factor below i32::MIN, then reuse the output through scale-by-one. Each shares
+  a 4096-bit/1,000,000,000-work budget; exhaustion is not tested by those cases.
+
+Context included actual Cartesian dot/matrix iteration and projections, native
+array validation, fixed checked multiplication/addition and dyadic exponent repair.
+The unchanged cartesian_shapes fuzz entry includes this same oracle and forwards
+arbitrary bytes; its manifest enables fixed+serde via lattice-shapes. These context
+reads do not claim whole-file review of the scalar implementations, fuzz manifest
+or generated libFuzzer API.
+
+Independent decoding of every retained byte established these raw-numerator results:
+
+| Fixture | Shape | Witness |
+| --- | --- | --- |
+| prefix-overflow | 2x3 | First row's second prefix is 2,147,483,651, before cancellation. |
+| replayed-overflow | 3x2 | First output is (262144,0,0); the next action's first product is 4,294,967,296. |
+| replayed-sum-overflow | 3x2 | First output has three 49152 coordinates; the next action's third prefix is 2,415,919,104. |
+| wide-quarter-grid | 1x33 | First output is [-965,-652]; all 33 second-action interval bounds fit and were independently checked. |
+| empty-before-invalid | 2x3 | First row is edited to null, [-1,17], [1,-1], with an empty vector; matrix decoding must fail. |
+
+Validation after the final source edit:
+
+- Locked/offline Cargo, j2, incremental disabled and the reused target: all three
+  tests passed with all features; the two shape tests passed with only fixed+serde
+  and the dyadic test passed with only dyadic. These are six test executions of
+  three tests, not six distinct cases. No assertions or fixtures were weakened.
+- The real downstream cartesian_shapes target passed cargo check with its locked
+  fuzz manifest and lattice-shapes feature. Initial offline resolution lacked
+  arbitrary 1.5.0; the required sandbox escalation allowed downloading locked
+  dependencies. The final check passed offline. No fuzz campaign, sanitizer run
+  or generated libFuzzer documentation completion is claimed.
+- Private Rustdoc denied warnings, broken links and private-link violations.
+  Ordinary test documentation rendered all 15 shared-oracle blocks, including
+  private helpers, aliases and variants. Rustdoc omits the three #[test] functions;
+  temporary copies removed exactly those attributes, retained all bodies and
+  fixtures, and rendered the remaining seven test-file blocks in full. Interval
+  notation was corrected to code spans after the first render caught broken links.
+- Independent Python Fraction arithmetic decoded all five fixtures, classified
+  product versus prefix failures, and calculated all second-action bounds. A
+  warnings-denied temporary Rust probe exercised actual matrix/replay consumers
+  against those independent values. An unmodified-source copy of the oracle plus
+  a temporary probe entry checked private helper edge cases, per-product rounding,
+  failure before cancellation, unit/empty products, and all 256 single-byte inputs
+  plus empty input. An external 30-second timeout bounds probe execution only.
+- Removing only comment and blank lines leaves byte-identical source in all three
+  files; all five fixture files are byte-identical to the target revision, with
+  sizes and SHA-256 recorded in the validation log. Selected-file rustfmt and
+  git diff --check passed. The root 100% public/private/generated mandate remains
+  in force. Full workflow checks remain owner-waived for this docs-only session.
+
+Evidence: /tmp/csgrs-rustdoc-interval-shape-{before,tests,validation,validate,
+fixtures,probe,final-all,final-fixed,final-dyadic,final-fuzz-check}.log and
+/tmp/csgrs-interval-shape-audit/ (Cargo artifacts, rendering matches, source identity
+checks, complete decoded fixtures, probe source and scripts). Owned executables and
+duplicate temporary HTML were removed. The shared Cargo target is approximately
+4.2 GiB; no second target was created. No focused check remains blocked. Remaining
+conformance/examples and the repository-wide audit stay open; these item/file counts
+do not establish repository-wide Rustdoc coverage or universal arithmetic closure.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

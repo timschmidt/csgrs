@@ -1,19 +1,42 @@
+//! Shared fixed-point wire and action oracle for deterministic tests and fuzzing.
+//!
+//! Small rectangular shapes include empty and zero-dimensional unit products and
+//! dimensions above Serde's traditional small-array implementations. Expected wire
+//! status comes from deliberate edits, while endpoint calculations use i64 integer
+//! arithmetic independently of the interval kernels. Quarter-grid product rounding
+//! and prefix overflow are part of the expected operation sequence.
+//!
+//! The second action consumes a replayed Cartesian enclosure: correlations lost
+//! by the first action are not restored. Checks assert and panic on disagreement;
+//! this allocating test harness is neither a production validator nor a resource
+//! budget. Its byte decoder bounds shape size, not the caller's input allocation.
+
 use hyperlattice_interval::hyperinterval::{FixedInterval, IntervalError};
 use hyperlattice_interval::{IntervalLatticeError, IntervalMatrix, IntervalVector};
 use serde_json::{Value, json};
 
+/// Closed real intervals with signed i32 endpoints measured in quarter units.
 type Scalar = FixedInterval<i32, 2>;
+/// Ordered lower/upper raw numerators; `[a,b]` denotes `[a/4,b/4]`.
 type Bounds = [i32; 2];
 
+/// Expected decoding outcome derived from the authored wire edit, before replay.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Status {
+    /// Valid inhabited product, including a zero-dimensional unit.
     Nonempty,
+    /// Valid empty Cartesian set, serialized canonically as null after admission.
     Empty,
+    /// Malformed shape or scalar bounds that must fail rather than become empty.
     Invalid,
 }
 
-// Change an otherwise valid vector or a selected matrix row. The expected
-// status follows from the edit, independently of the replay implementation.
+/// Mutate an otherwise valid fixed-length lane array and predict its admission.
+/// Mode zero preserves it; mode one inserts null; modes two through four remove
+/// a lane, write reversed bounds after null, or write an out-of-i32 endpoint.
+/// Other cases append a lane, including edits that need a lane when none exists.
+/// In the one-lane mode-three case, reversed bounds overwrite the same null lane.
+/// Selection wraps modulo the nonzero length; status never consults the decoder.
 fn edit_lanes(lanes: &mut Vec<Value>, mode: u8, index: usize) -> Status {
     match mode {
         0 => return Status::Nonempty,
@@ -39,6 +62,11 @@ fn edit_lanes(lanes: &mut Vec<Value>, mode: u8, index: usize) -> Status {
     Status::Invalid
 }
 
+/// Encode valid rows, then preserve them (zero), insert outer null (six), remove
+/// a row (seven), edit a selected row (one through five), or append an extra row.
+/// An attempted row removal/edit on no rows appends instead and is invalid.
+/// Inner empty edits collapse the entire matrix only after all entries validate.
+/// The same selector chooses the row and its lane, modulo their respective sizes.
 fn encode_rows(rows: &[Vec<Bounds>], mode: u8, index: usize) -> (Value, Status) {
     let mut wire: Vec<Value> = rows.iter().map(|row| json!(row)).collect();
     match mode {
@@ -60,6 +88,8 @@ fn encode_rows(rows: &[Vec<Bounds>], mode: u8, index: usize) -> (Value, Status) 
     }
 }
 
+/// Encode outer null for mode six; otherwise apply the shared lane edit.
+/// Empty zero-length vectors remain distinct from inhabited zero-length arrays.
 fn encode_vector(lanes: &[Bounds], mode: u8, index: usize) -> (Value, Status) {
     if mode == 6 {
         return (Value::Null, Status::Empty);
@@ -69,9 +99,17 @@ fn encode_vector(lanes: &[Bounds], mode: u8, index: usize) -> (Value, Status) {
     (wire.into(), status)
 }
 
-// Products are rounded outward to the quarter grid before addition. For one
-// output row the input lanes vary independently, so each term attains both
-// extrema at one of its four endpoint pairs.
+/// Predict an ordered dot-product enclosure on the quarter grid using integers.
+/// Callers supply equally long, ordered interval slices with independent lanes.
+/// Four endpoint products give each term's extrema; divide by four with floor
+/// and ceiling before accumulating raw numerators. Reject either an out-of-i32
+/// term or prefix sum immediately, even if later terms would cancel it. No terms
+/// yields `[0,0]`. Slice zip would silently truncate mismatched lengths, so shape
+/// agreement is a caller invariant rather than validation performed here.
+///
+/// Products of two i32 endpoints fit i64. Every preceding accepted prefix fits
+/// i32, so adding one rounded product is also safe in i64. The reference compares
+/// overflow outcomes, not the lower/upper endpoint ordering of kernel checks.
 fn dot(row: &[Bounds], vector: &[Bounds]) -> Result<Bounds, IntervalLatticeError> {
     let mut bounds = [0_i64; 2];
     for (a, b) in row.iter().zip(vector) {
@@ -90,6 +128,10 @@ fn dot(row: &[Bounds], vector: &[Bounds]) -> Result<Bounds, IntervalLatticeError
     Ok(bounds.map(|v| i32::try_from(v).unwrap()))
 }
 
+/// Apply the independent dot oracle row by row, stopping at the first overflow.
+/// None denotes an empty operand/image; Some with no rows denotes a unit output.
+/// For inhabited inputs, callers provide a common row/vector length. Allocation
+/// and partial-result cleanup use ordinary Vec/Result collection semantics.
 fn product(
     rows: &[Vec<Bounds>],
     lanes: Option<&[Bounds]>,
@@ -99,6 +141,10 @@ fn product(
         .transpose()
 }
 
+/// Select the first invalid index, usize::MAX, or a reduced small index.
+/// Residues zero/one modulo four choose the two invalid cases; the others use
+/// byte/4 modulo max(dimension,1). Dimension zero therefore never yields a valid
+/// index, and dimensions larger than 64 are not exhaustively addressed.
 fn index(byte: u8, dimension: usize) -> usize {
     match byte % 4 {
         0 => dimension,
@@ -107,6 +153,21 @@ fn index(byte: u8, dimension: usize) -> usize {
     }
 }
 
+/// Decode a nonempty byte slice into one fixed rectangular qualification case.
+/// All byte reads cycle through the payload. The top tag bits select signed-byte
+/// endpoints, signed bytes with 127/128 mapped to i32 extrema, or little-endian
+/// i32 endpoints (tag mode two); mode three uses ordinary signed bytes. Endpoint
+/// pairs are sorted before wire edits. Matrix/vector edit bytes below 128 reduce
+/// modulo nine/seven; bytes at least 128 leave those carriers unedited.
+///
+/// Decode both carriers and check predicted admission and canonical JSON. Invalid
+/// matrices stop further checks after vector replay; invalid vectors still allow
+/// matrix transpose/projection checks. Invalid indices fail even on empty matrices.
+/// For valid operands, compare the product with independent per-term rounding
+/// and overflow expectations, serialize/reload a successful result, and consume
+/// it in the transposed matrix action. The second action treats its input lanes
+/// as independent, so it does not assert an exact correlated A-transpose*A image.
+/// Caller-enforced nonempty input prevents a modulo-zero panic in byte lookup.
 fn shape<const R: usize, const C: usize>(data: &[u8]) {
     let byte = |i: usize| data[i % data.len()];
     let endpoint = |i: usize| {
@@ -219,6 +280,11 @@ fn shape<const R: usize, const C: usize>(data: &[u8]) {
     }
 }
 
+/// Check one arbitrary byte string; empty input is a no-op.
+/// The low six tag bits modulo seven select 0x0, 0x3, 3x0, 2x3, 3x2, 1x33 or
+/// 33x1. The remaining tag bits select endpoint encoding inside shape. This
+/// bounds generated dimensions independently of payload length. All malformed
+/// cases must match the predicted failure; assertion panics signal regressions.
 pub fn check(data: &[u8]) {
     let Some(&tag) = data.first() else { return };
     match (tag & 63) % 7 {
