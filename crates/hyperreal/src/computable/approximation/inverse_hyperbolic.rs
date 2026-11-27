@@ -1,3 +1,10 @@
+/// Evaluate principal acosh for an admitted `c >= 1` through a near-one logarithm reduction.
+///
+/// Use `ln1p((c-1) + sqrt(c^2-1))` so a small result enters the stable log1p
+/// path. The identity is valid throughout this domain; the name describes its
+/// scheduling role, not a separately enforced upper bound. Build the exact
+/// graph on demand, then pass `signal` and `p` to its approximation. This wrapper
+/// performs no domain check, stop poll or independent resource accounting.
 fn acosh_near_one(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Near one, acosh(x) is ln1p((x - 1) + sqrt(x^2 - 1)). Deferring the graph
     // keeps construction cheap for endpoint-adjacent scalar rows without
@@ -11,6 +18,13 @@ fn acosh_near_one(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigI
         .approx_signal(signal, p)
 }
 
+/// Evaluate principal acosh for an admitted `c >= 1` as `ln(c + sqrt(c^2-1))`.
+///
+/// This deferred node serves inputs outside the near-one schedule without
+/// allocating the sqrt/log graph during public construction. The identity also
+/// holds at one. Return an integer in `2^p` units through the child expression;
+/// domain checking, cancellation publication and resource limits belong to
+/// its callers and underlying operations.
 fn acosh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Large acosh inputs use ln(x + sqrt(x^2 - 1)); this node is used by Real
     // construction paths where allocating that graph eagerly is the bottleneck.
@@ -19,6 +33,13 @@ fn acosh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt
     c.clone().add(radicand.sqrt()).ln().approx_signal(signal, p)
 }
 
+/// Evaluate asinh through `ln1p(c + c^2/(sqrt(1+c^2)+1))` on demand.
+///
+/// Rationalizing `sqrt(1+c^2)-1` avoids that subtraction for small inputs.
+/// The exact identity holds for every finite real child, although this node
+/// serves the near-zero schedule and does not certify a uniform cost bound.
+/// It builds the reduction at evaluation time and forwards `signal` and `p`,
+/// with no local stop poll or total-work accounting.
 fn asinh_near_zero(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Near zero, asinh(x) is evaluated through ln1p(x + x^2/(sqrt(1+x^2)+1)).
     // This deferred node removes construction overhead but preserves the
@@ -32,6 +53,13 @@ fn asinh_near_zero(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
         .approx_signal(signal, p)
 }
 
+/// Evaluate the direct identity `asinh(c) = ln(c + sqrt(1+c^2))` on demand.
+///
+/// The identity is real for every finite child. Callers use odd symmetry for
+/// known negative inputs to avoid cancellation in the logarithm's argument;
+/// this helper itself does not normalize the sign. It defers graph allocation
+/// until digits are requested, passes `signal` and `p` through, and adds no
+/// stop poll or independent resource limit.
 fn asinh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Large asinh inputs use ln(x + sqrt(1+x^2)); deferring the direct identity
     // keeps scalar construction from allocating the sqrt/log graph eagerly.
@@ -39,6 +67,13 @@ fn asinh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt
     c.clone().add(radicand.sqrt()).ln().approx_signal(signal, p)
 }
 
+/// Route a sign-separated argument outside the small asinh series to the direct identity.
+///
+/// The caller supplies a proved `negative` flag from an exact rational or a
+/// working sample separated from zero. Negate both input and result in that
+/// case, implementing odd symmetry before the log/sqrt evaluation so a large
+/// negative source does not cancel internally. This helper does not verify the
+/// flag or add cancellation polls, precision checks or a total-work bound.
 fn asinh_outside_series(
     signal: &Option<Signal>,
     c: &Computable,
@@ -55,7 +90,18 @@ fn asinh_outside_series(
     }
 }
 
-// Approximate asinh(c) for small |c|.
+/// Approximate asinh with a sample-certified `abs(c) <= 1/2` series, otherwise reduce by sign.
+///
+/// Use `min(p, 0)` when sizing the range probe, so even a coarse request must
+/// justify the small-input shortcut. Reserving the sample's one-unit error
+/// proves the half bound. A failed check also separates the sign and selects
+/// the direct logarithmic identity with odd symmetry; a stored tag alone does
+/// not prove the range. Only after that check may `p >= 1` return zero.
+///
+/// The alternating odd series shares asin's coefficient magnitudes. It returns
+/// `2^p` units, or an entry-stop placeholder/loop partial sum for the caller to
+/// reject on abort. Precision and counter arithmetic is unchecked, and the
+/// iteration estimate and guard bits do not impose a total-work limit.
 fn asinh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Dedicated tiny-argument asinh series. It avoids constructing the generic
     // ln(x + sqrt(1+x^2)) or ln1p expression for exact tiny rational inputs.
@@ -109,6 +155,16 @@ fn asinh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Bi
     scale(sum, calc_precision - p)
 }
 
+/// Approximate asinh from an exact rational without a temporary sampled child node.
+///
+/// Zero or a known binary magnitude at most -2 admits the alternating series,
+/// which means strict magnitude below one half for nonzero inputs. All other
+/// magnitudes, including missing metadata, route to the direct identity after
+/// sign normalization. The small range justifies coarse `p >= 1` returning zero.
+///
+/// Rational sampling and series setup precede the loop's cancellation poll;
+/// partial sums are not certified abort results. Working precisions/counters
+/// must fit, and this helper supplies no coefficient-size or total-work cap.
 fn asinh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Direct exact-rational variant of the tiny asinh series. It is the same
     // recurrence as `asinh_computable`, but it feeds the stored Rational
@@ -159,6 +215,12 @@ fn asinh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt
     scale(sum, calc_precision - p)
 }
 
+/// Evaluate principal atanh for admitted `-1 < c < 1` through `ln((1+c)/(1-c))/2`.
+///
+/// Defer the positive log-ratio graph until approximation is requested. Domain
+/// checking must precede this node: endpoints are infinite and exterior real
+/// arguments are outside the real branch. Forward `signal` and `p` to the
+/// expression, adding no stop poll, typed domain check or separate work limit.
 fn atanh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Endpoint atanh construction should not eagerly allocate the full exact
     // log-ratio graph. Approximation still uses the stable identity
@@ -173,7 +235,18 @@ fn atanh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt
         .approx_signal(signal, p)
 }
 
-// Approximate atanh(c) for small |c|.
+/// Approximate principal atanh on `(-1, 1)` with a certified tiny series or a log ratio.
+///
+/// After an entry stop check, coarse requests use the child's small-argument
+/// proof before returning zero; failure selects the direct identity. Finer
+/// requests reuse the series' working sample, reserving its one-unit error to
+/// prove `abs(c) <= 1/8`. This range check is distinct from full domain admission
+/// and must not be inferred solely from a stored prescaled tag.
+///
+/// Accumulate `c + c^3/3 + c^5/5 + ...` with guarded integer powers and divisions,
+/// then scale to `2^p` units. Loop stops leave partial output for the caller to
+/// reject. Precision/counter arithmetic is unchecked; iteration planning is
+/// neither a total-work bound nor a cancellation-latency guarantee.
 fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Dedicated tiny-argument atanh series. Prove its domain before both the
     // fixed error budget and the coarse-zero shortcut, including stored nodes.
@@ -225,6 +298,18 @@ fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Bi
     scale(sum, calc_precision - p)
 }
 
+/// Approximate principal atanh of an admitted exact rational in `(-1, 1)`.
+///
+/// Zero or a known binary magnitude at most -4 admits the direct odd series,
+/// so nonzero series inputs have magnitude strictly below one eighth. Otherwise
+/// re-enter the native rational constructor, whose exact log-ratio and shared
+/// half-argument identities avoid recreating this inadmissible series schedule.
+/// Missing magnitude metadata is not treated as evidence of smallness.
+///
+/// For the small range, `p >= 1` may return zero; finer requests sample the
+/// rational directly and truncate successive odd-power quotients. Setup has no
+/// initial stop poll on that path; loop stops return a partial sum for the caller
+/// to reject. Signed precision arithmetic and integer work have no local cap.
 fn atanh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Direct exact-rational variant of the tiny atanh series. This mirrors the
     // direct rational trig kernels: preserve the symbolic rational payload and
@@ -237,8 +322,8 @@ fn atanh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt
             return Zero::zero();
         }
         // Native rational atanh uses this kernel only for MSD <= -4, so this
-        // fallback instead reaches its exact logarithm reduction or endpoint
-        // identities without recreating the inadmissible series node.
+        // fallback instead reaches its exact logarithm reduction or shared
+        // half-argument identities without recreating the inadmissible series node.
         return Computable::rational(r.clone())
             .atanh()
             .approx_signal(signal, p);

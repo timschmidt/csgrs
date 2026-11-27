@@ -17706,6 +17706,122 @@ Rational conversion, checked word arithmetic, dispatch, representation,
 constructors and existing consumer-test excerpts supplied context only.
 The repository-wide line audit and full Rustdoc coverage remain incomplete.
 
+## Inverse trigonometric and hyperbolic approximation kernels
+
+On baseline 9fd5731832e52662af78274d590476739b71b25d, read every line of
+crates/hyperreal/src/computable/approximation/inverse_trig.rs (515 lines),
+inverse_hyperbolic.rs (274), and the integration files
+crates/hyperreal/tests/serde_asinh_ranges.rs (144) and
+serde_atanh_rational_ranges.rs (175). These 1,108 lines are new whole-file
+review credit. The owner is Hyperreal's retained-function approximation and
+replay layer, under P1–P7 and P19. The domain includes principal real inverse
+functions, their admitted rational/computable children, applicable small-series
+ranges, replayed nodes, nonzero integral reciprocal atan denominators and
+representable working precision. Mathematical domains remain distinct from
+implementation resource restrictions and local convergence preconditions.
+
+All thirty-four function declarations lacked Rustdoc. Added thirty-six blocks,
+including the coefficient helper/test, nine integration helpers/tests and two
+integration module overviews. Documentation records exact identities, units of
+2^p, range and sign preconditions, direct versus deferred construction, guard
+precision, abort placeholders/partial sums, and unchecked precision/counter
+arithmetic. Twenty-seven selected unit tests and eleven integration/consumer
+tests passed on the baseline. The missing documentation/rendering witness was
+established before editing; no test, fixture, predicate order or code changed.
+
+Generic atan rechecks a sample-certified half interval; rational and two-step
+half-angle fallbacks avoid selecting the same borderline prescaled schedule.
+Asin and atanh generic series reserve a sample-error unit to prove the eighth
+interval. Asinh uses a half-interval proof and sign-separated fallback. Its
+coarse request must pass the range proof before zero can be returned; the
+asin/atan global principal-angle bounds justify their different coarse paths.
+None of these local range checks replaces full domain admission where required.
+Rational small-series routes differ: nonzero asin/atanh metadata at most -4
+proves strict magnitude below 1/8, while asinh metadata at most -2 proves
+strict magnitude below 1/2. Missing metadata is not a smallness certificate.
+
+Negative acos retains a nonnegative magnitude r and computes acos(-r), not
+acos(r) for a signed negative payload. The square-root atan flag chooses between
+sampling the retained rational square and squaring the integer root sample;
+it does not prove rationality or exactness of the sampled square. Deferred
+acosh/asin/acos identities retain their caller-admitted domains, while asinh's
+identities hold for every finite real argument and use sign normalization to
+avoid cancellation when the sign is known. Native wrappers add no separate
+typed domain checks or total resource bounds.
+
+The four ordinary rational atan anchor intervals were checked with independent
+exact Fraction arithmetic and monotonicity of (x-a)/(1+a*x). Closed enclosing
+residual ranges are [-1/18,0] for anchor 2, [-1/18,2/29] for 3/2,
+[-1/8,2/23] for 2/3, and [-1/9,1/7] for 1. Branch boundaries and trace order
+remain unchanged. Code inspection also identifies a restriction: a positive
+noninteger input above two with an exponent outside i32 cannot take the
+metadata-guarded reciprocal route, and its final half-anchor fallback has no
+established small-residual bound. This extreme coefficient case was not
+allocated or executed; the limitation is static control-flow evidence, not a
+claim of observed completion or an alteration of the target support contract.
+
+Removed the integral-atan comment's unsupported error-budget conclusion: its
+listed fractions add to 11/8, so that text did not prove an error below one
+unit. Replacement comments describe exact-denominator division, guard precision,
+term stopping and final rounding without inventing a new universal proof.
+This comment defect does not by itself demonstrate incorrect kernel results.
+Also replaced an unmeasured speed assertion for the root-sample square path
+with its actual calculation, corrected atanh's shared half-argument identity
+wording, corrected the fixture identity sinh(1) = (e-1/e)/2, and removed
+redundant small-series headers superseded by full Rustdoc.
+
+The wide coefficient helper's positive-i32 products fit u64; exact integer
+arithmetic verified the maximum endpoint. Its unchanged test compares sixteen
+products against u128 at eight selected indices. Four separate existing series
+regressions evaluate both signs at 192,000 bits using directed precision-matched
+MPFR enclosures, crossing the old 23,171 squared-coefficient overflow boundary.
+Existing working/coarse-cache regressions include 624 and 46,050 counted checks,
+plus aborted-cache retry and legacy replay. These are finite qualification
+witnesses, not exhaustive kernel error or resource proofs.
+
+The asinh replay fixture covers six signed large graph spellings, native
+JSON/CBOR signs, 108 scaled Real import paths, four signed symbolic cases and
+six tiny/zero cases. Its independent bounds derive from elementary exponential
+inequalities. The rational atanh fixture covers four signed inputs including
+(2^256-1)/(2^256+1), sixteen native and seventy-two scaled Real import paths.
+Native intervals need only overlap broad bounds; finer Real intervals must
+lie inside them. Subsequent addition and stable serialization remain separate
+assertions from interval/sign checks. Eight invalid atanh graph spellings,
+including multiplication by zero, remain rejected even with zero outer scale;
+direct Real imports require ParseError, not the arithmetic API's endpoint or
+domain variants. These are same-process replays, not fresh-process tests.
+
+Exact arithmetic independently checked the replay fixtures' inequalities using
+a finite e-series enclosure, the near-one atanh log-ratio identity, and the
+coefficient-width endpoint. This supplies evidence for those expectations,
+not for all internal fixed-point error bounds. The numerical cross-reference
+consumer uses host floating-point comparisons; it is supplementary evidence,
+not an exact oracle for the principal branches.
+
+Final validation passed twenty-six unit tests without default features and
+twenty-seven with all features. Each affected check used the final source
+for its target. All ten selected serde integration
+tests and the one principal-branch cross-reference consumer passed with all
+features; five downstream Hyperlimit resolver tests also passed. Private cargo
+doc passed both configurations with warnings and broken/private links denied.
+Twenty-four kernel/helper blocks matched actual private library pages. Eleven
+integration blocks matched standalone Rustdoc pages generated from temporary
+copies that removed only two #[test] attributes each. The coefficient test's
+block passed source inventory and supplemental Markdown rendering; ordinary
+library Rustdoc does not emit its test-only page. No focused check remains
+blocked. Full workflow checks remain owner-waived for this docs-only session.
+
+All four files retain identical raw executable and signature tokens, including
+trace branches, counter updates, tests and fixtures. Selected Rustfmt and
+git diff --check passed. Evidence in
+/tmp/csgrs-hyperreal-inverse-kernels-audit/ includes commands, baseline/final logs,
+exact arithmetic checks, token/declaration inventories and rendered-block
+matches. Builds reused the roughly 6.0 GiB locked/offline nonincremental target;
+duplicate integration/supplemental HTML was removed after inspection. Native
+constructors, checked Real paths, shared constants and other consumer-test
+excerpts supplied context only. The repository-wide line audit and 100% Rustdoc
+coverage target remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,16 +1,20 @@
 #![cfg(feature = "serde")]
+//! Replay regressions for asinh range rechecking, signed bounds, and subsequent arithmetic.
 
 use hyperreal::{Computable, Rational, Real, RealSign};
 use serde_json::{Value, json};
 
+/// Encode an exact rational fixture as its native JSON payload; invalid fixture denominators panic.
 fn q(n: i64, d: u64) -> Value {
     serde_json::to_value(Rational::fraction(n, d).unwrap()).unwrap()
 }
 
+/// Wrap a named approximation payload in the native graph envelope without validating its domain.
 fn node(kind: &str, value: Value) -> Value {
     json!({"internal": {kind: value}})
 }
 
+/// Encode fixture JSON values as CBOR for alternate native-import routes; encoding failure panics.
 fn bytes(value: &Value) -> Vec<u8> {
     let mut bytes = Vec::new();
     ciborium::ser::into_writer(value, &mut bytes).unwrap();
@@ -18,6 +22,14 @@ fn bytes(value: &Value) -> Vec<u8> {
 }
 
 #[test]
+/// Replay both signs of four through three direct/prescaled asinh graph spellings.
+///
+/// Check native JSON/CBOR signs before and after refinement and JSON stability.
+/// Across three outer scales and six Real import routes, use independent bounds
+/// `2 < asinh(4) < 3`: coarse intervals overlap them, fine intervals lie inside,
+/// and adding one preserves the translated bounds. Zero scales remain explicit.
+/// Require stable Real JSON and CBOR bytes after evaluation; replay occurs in
+/// this process and does not prove fresh-process cache independence.
 fn imported_asinh_kernels_enclose_large_values_before_and_after_refinement() {
     // e < 11/4 gives sinh(2) < 121/32 < 4. Also e > 8/3 gives
     // sinh(3) > ((8/3)^3 - 1)/2 > 4. Thus 2 < asinh(4) < 3.
@@ -100,8 +112,14 @@ fn imported_asinh_kernels_enclose_large_values_before_and_after_refinement() {
 }
 
 #[test]
+/// Check four signed symbolic asinh imports and six tiny rational/zero graph imports.
+///
+/// Independent sinh inequalities place asinh(pi) and asinh(sqrt(2)) in `(1, 2)`;
+/// odd symmetry supplies negative bounds. For the tiny cases, require the fine
+/// interval inside the signed interval between zero and the input, or containing
+/// zero for exact zero. Exercise JSON for symbolic inputs and CBOR for tiny ones.
 fn asinh_series_accept_symbolic_arguments_and_small_values() {
-    // sinh(1) < (e-1/e)/2 < (11/4-4/11)/2 < sqrt(2), while
+    // sinh(1) = (e-1/e)/2 < (11/4-4/11)/2 < sqrt(2), while
     // sinh(2) > ((8/3)^2-(3/8)^2)/2 > 22/7 > pi. Both values lie in (1,2).
     for constant in ["Pi", "Sqrt2"] {
         for sign in [-1, 1] {

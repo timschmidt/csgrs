@@ -1,12 +1,15 @@
 #![cfg(feature = "serde")]
+//! Replay regressions for rational atanh range reduction and typed rejection of invalid graphs.
 
 use hyperreal::{Computable, Problem, Rational, Real, RealSign};
 use serde_json::{Value, json};
 
+/// Build a native approximation graph envelope from a tag and payload, including deliberately invalid fixtures.
 fn node(kind: &str, argument: Value) -> Value {
     json!({"internal": {kind: argument}})
 }
 
+/// Serialize a fixture JSON value into CBOR bytes; encoding failure is a test-construction panic.
 fn bytes(value: &Value) -> Vec<u8> {
     let mut bytes = Vec::new();
     ciborium::ser::into_writer(value, &mut bytes).unwrap();
@@ -14,6 +17,14 @@ fn bytes(value: &Value) -> Vec<u8> {
 }
 
 #[test]
+/// Replay both signs of two rational atanh inputs, including one extremely close to one.
+///
+/// Use exact log-ratio identities and independent exponential inequalities for
+/// broad bounds. Four native import routes check overlap with those bounds and
+/// unchanged graph JSON. Three outer scales and six Real routes also check fine
+/// containment, certified signs, subsequent addition and stable JSON/CBOR bytes.
+/// Zero outer scales have explicit zero-interval expectations. These finite
+/// same-process checks do not establish arbitrary replay or global error bounds.
 fn imported_rational_atanh_preserves_enclosures_and_following_arithmetic() {
     // atanh(31/32)=ln(63)/2. From 8/3<e<11/4, e^4<63<e^6,
     // hence 2<atanh(31/32)<3 independently of the scalar evaluator.
@@ -130,6 +141,12 @@ fn imported_rational_atanh_preserves_enclosures_and_following_arithmetic() {
 }
 
 #[test]
+/// Reject both endpoints and two exterior rational atanh arguments, even behind multiplication by zero.
+///
+/// Check native JSON/CBOR imports and collections. Across three outer Real scales,
+/// require ParseError for direct JSON/CBOR and borrowed/owned CBOR conversion,
+/// and an error for each collection route. ParseError here is the import failure;
+/// the test does not expect the public arithmetic API's Infinity/NotANumber variants.
 fn rational_atanh_import_preserves_typed_domain_failures() {
     for argument in [-2, -1, 1, 2] {
         let graph = node("AtanhRational", json!(Rational::new(argument)));

@@ -1,3 +1,17 @@
+/// Approximate the principal angle `atan(1/i)` in units of `2^p` for nonzero integer `i`.
+///
+/// The division-only alternating series uses successive powers of `1/i^2`;
+/// its geometric convergence schedule requires `abs(i) >= 2`. Unit denominators
+/// instead use the native `atan(±1)` identity. This kernel supplies Machin-style
+/// pi and shared arctangent constants without allocating a rational child node.
+/// For `p >= 1`, the angle bound permits zero without examining the denominator;
+/// that shortcut does not validate an invalid zero denominator.
+///
+/// A loop stop returns the accumulated partial sum, which the caller must not
+/// publish or cache as certified. Setup precedes that poll. Working precisions,
+/// iteration counters and shifts must fit; the iteration estimate is not an
+/// enforced total-work bound. The output is an approximation, not a promise of
+/// correct rounding of the exact angle.
 fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     // Integral atan is used for atan(1/n), where division by n^2 each iteration
     // is cheaper and more stable than approximating a rational Computable child.
@@ -26,11 +40,9 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     // exclusive of error in op.
 
     let calc_precision = p - bound_log2(2 * iterations_needed) - 2;
-    // Error in argument results in error of < 3/8 ulp.
-    // Cumulative arithmetic rounding error is < 1/4 ulp.
-    // Series truncation error < 1/4 ulp.
-    // Final rounding error is <= 1/2 ulp.
-    // Thus final error is < 1 ulp.
+    // The denominator is exact. Guard precision accounts for integer division
+    // in the retained powers and terms; the term threshold controls the tail.
+    // The final scale operation rounds the accumulated integer once more.
 
     let max_trunc_error: BigUint = BigUint::one() << (p - 2 - calc_precision);
 
@@ -60,7 +72,18 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     scale(sum, calc_precision - p)
 }
 
-// Approximate atan(c) for |c| <= 1/2.
+/// Approximate principal `atan(c)`, certifying the local series range from its working sample.
+///
+/// For `p >= 1`, zero is valid for every finite real child. Otherwise, reserve
+/// the sample's one-unit error when checking `abs(c) <= 1/2`. If the check fails,
+/// use exact-rational reduction when available, or two half-angle steps that
+/// avoid reselecting this kernel at a borderline cache rounding. An imported
+/// prescaled tag alone does not justify the Taylor series.
+///
+/// The alternating recurrence uses guard precision and a term threshold before
+/// scaling to `2^p` units. Stops can return a partial sum; the caller handles
+/// abort publication. Setup and fixed guard bits supply no total-work bound,
+/// and precision/counter arithmetic is unchecked.
 fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // This coarse result is valid for every finite real c: |atan(c)| < pi/2 < 2.
     if p >= 1 {
@@ -114,6 +137,12 @@ fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     scale(sum, calc_precision - p)
 }
 
+/// Evaluate a retained arctangent source by invoking its native convergence reducer on demand.
+///
+/// The child remains authoritative while construction avoids eagerly allocating
+/// the reduced graph. The principal real branch is defined for every finite
+/// child; `signal` and `p` pass to the resulting expression. This wrapper adds
+/// no cancellation poll or resource bound beyond the reducer and evaluation.
 fn atan_deferred(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Preserve the source argument at construction time, then apply the same
     // convergence reduction previously performed eagerly by Computable::atan.
@@ -121,6 +150,14 @@ fn atan_deferred(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigIn
     c.clone().atan_reduced().approx_signal(signal, p)
 }
 
+/// Evaluate the alternating arctangent series for a caller-proved `abs(r) <= 1/2`.
+///
+/// Sample the exact rational directly at guarded precision, avoiding a temporary
+/// Computable child and its cache. Unlike the general rational reducer, this
+/// helper does not check the small-range precondition. Return an integer in
+/// `2^p` units; coarse `p >= 1` uses the global principal-angle bound.
+/// Loop cancellation leaves a partial sum for the caller to reject. Setup,
+/// precision arithmetic and rational integer sizes have no local resource cap.
 fn atan_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Same Taylor kernel as `atan_computable`, but exact rational leaves can
     // provide the working approximation directly. This removes a Computable
@@ -155,6 +192,15 @@ fn atan_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision) -> B
     scale(sum, calc_precision - p)
 }
 
+/// Form the exact tangent subtraction residual `(r - a/b) / (1 + r*a/b)`.
+///
+/// Require nonnegative `r`, nonnegative anchor numerator `a`, and positive
+/// anchor denominator `b`. The implementation uses the stored magnitude parts
+/// of `r`, so it is not a signed-rational formula for negative inputs. Positive
+/// denominators justify the construction's expect; the principal arctangent
+/// difference stays between `-pi/2` and `pi/2`, avoiding a branch correction.
+/// Combining numerator/denominator products directly avoids temporary rational
+/// quotients but does not impose a coefficient-growth budget.
 fn atan_anchor_residual(r: &Rational, anchor_numerator: u8, anchor_denominator: u8) -> Rational {
     // atan(r) - atan(a/b) = atan((r-a/b)/(1+r*a/b)). For exact positive
     // rationals, compute the residual from numerator/denominator parts in one
@@ -168,6 +214,19 @@ fn atan_anchor_residual(r: &Rational, anchor_numerator: u8, anchor_denominator: 
         .expect("atan anchor residual denominator is positive")
 }
 
+/// Approximate `atan(sqrt(r))` for caller-proved `0 <= r <= 1/4`.
+///
+/// Form a nonnegative integer root sample with eight bits before the square
+/// root, then shift four bits to the series scale. No temporary Sqrt node is
+/// needed. When `sample_exact_square` is true, sample the retained rational `r`
+/// for the squared argument; otherwise square and rescale the root sample.
+/// The flag selects a calculation path, not a claim that the root is rational
+/// or that its sampled square is exact.
+///
+/// The caller supplies any outer factor two by requesting precision `p - 1`.
+/// This helper returns `2^p` units, assumes the range without checking it, and
+/// can return a partial sum on cancellation. Its signed precision arithmetic
+/// and integer allocations have no checked resource contract.
 fn atan_sqrt_rational_small(
     signal: &Option<Signal>,
     r: &Rational,
@@ -192,8 +251,8 @@ fn atan_sqrt_rational_small(
         // benefits from reusing that division path instead of a wide square.
         ratio(r, op_prec)
     } else {
-        // The standalone acos kernel is faster at this precision when it
-        // squares the root sample it already owns.
+        // The standalone acos path squares the root sample it already owns
+        // instead of requesting a second rational division.
         scale(&op_appr * &op_appr, op_prec)
     };
 
@@ -217,6 +276,22 @@ fn atan_sqrt_rational_small(
     scale(sum, calc_precision - p)
 }
 
+/// Reduce an exact rational's principal arctangent before evaluating a small residual.
+///
+/// Apply odd symmetry first. Unit numerators with denominator greater than one
+/// use integral reciprocal atan; other inputs at most one half use the direct
+/// series. Large positive integers
+/// and certified magnitudes at least two use `pi/2 - atan(1/r)`. Middle inputs
+/// select anchors in order: two, three halves, two thirds, then one. The two-thirds
+/// anchor reuses `pi/4 - atan(1/5)`. Three guard bits combine cached anchor and
+/// residual approximations into `2^p` units. Preserve branch and trace order.
+///
+/// Large noninteger inputs need a representable exact magnitude for reciprocal
+/// routing. If that metadata is unavailable, the final half-anchor fallback
+/// has no established small-residual range; this is an implementation limit,
+/// not a proof of convergence for every rational coefficient size.
+/// The reducer adds no entry stop poll or total-work limit, and its precision
+/// subtractions must fit. Child/kernel aborts must not be published as certified.
 fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Exact rational atan keeps the public constructor shallow and performs
     // range reduction directly here. The identities are the same as
@@ -307,6 +382,13 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
 }
 
 #[inline]
+/// Return `(2n-1)^2` and `2n*(2n+1)` for the nth odd-power asin coefficient update.
+///
+/// For positive `i32` indices, widening before multiplication keeps both exact
+/// products in `u64`, including indices beyond the old signed-word overflow
+/// boundary. Asinh uses the same magnitudes and negates each successive term.
+/// The positive-index precondition is a debug assertion, not a typed domain
+/// check or a bound on the caller's iteration count.
 fn inverse_sine_series_coefficients(n: i32) -> (u64, u64) {
     // Widen before multiplication: (2*n-1)^2 already exceeds i32 at n=23171.
     // For every positive i32 index, 2*n <= u32::MAX-1, so both products fit
@@ -317,6 +399,11 @@ fn inverse_sine_series_coefficients(n: i32) -> (u64, u64) {
 }
 
 #[test]
+/// Compare both coefficient products with independent `u128` formulas at eight positive indices.
+///
+/// Include the old squared-coefficient overflow boundary and `i32::MAX`. These
+/// sixteen assertions sample the width argument; they do not enumerate every
+/// index or establish an entire series' approximation error.
 fn inverse_sine_series_coefficients_cover_the_index_range() {
     for n in [1, 2, 23_170, 23_171, 65_535, 65_536, 1 << 30, i32::MAX] {
         let even = (n as u128) * 2;
@@ -326,6 +413,19 @@ fn inverse_sine_series_coefficients_cover_the_index_range() {
     }
 }
 
+/// Approximate principal `asin(r)` for an admitted rational in `[-1, 1]`.
+///
+/// An exact binary magnitude at most -4 admits the small odd-power series.
+/// Otherwise reduce the magnitude through `pi/2 - acos(abs(r))` and restore the
+/// sign. For half-angle residual `(1-abs(r))/(1+abs(r))` at most one quarter,
+/// combine guarded pi and square-root atan samples directly; larger residuals
+/// use the generic expression's adaptive schedule. Zero has no magnitude
+/// metadata and follows the complement route if presented directly here.
+///
+/// The coarse `p >= 1` shortcut uses the valid-domain angle bound without
+/// checking that domain. Series cancellation may return a partial sum; the
+/// caller handles abort status. Precision/counter arithmetic and temporary
+/// rational work have no local checked resource bound.
 fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Tiny exact rational inputs use the direct odd series. Larger magnitudes
     // retain the cancellation-safe pi/2 - acos(|x|) schedule, but build that
@@ -404,7 +504,17 @@ fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
     scale(sum, calc_precision - p)
 }
 
-// Approximate asin(c) for small |c|.
+/// Approximate principal `asin(c)` using a certified tiny-argument series or a deferred transform.
+///
+/// Require an admitted child in `[-1, 1]`. After the entry stop check, coarse
+/// `p >= 1` needs no sample. Finer requests reserve one unit of sample error to
+/// prove `abs(c) <= 1/8`; a failed range check selects the atan/sqrt transform.
+/// A prescaled node or an estimated magnitude is not a range certificate.
+///
+/// The positive-coefficient odd-power recurrence shares its wide coefficient
+/// helper with asinh and returns `2^p` units. Loop stops leave partial output
+/// for the caller to reject. Fixed guard bits do not bound total work, and
+/// intermediate precisions and counters must fit their signed words.
 fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Dedicated tiny-argument asin series. It avoids the generic atan/sqrt
     // transform, which is overkill and slower when |x| is already very small.
@@ -457,6 +567,12 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     scale(sum, calc_precision - p)
 }
 
+/// Evaluate principal asin on `[-1, 1]` via `2*atan(c/(sqrt(1-c^2)+1))`.
+///
+/// The positive denominator also covers both endpoints. Build the exact
+/// reduction only when approximation is requested, preserving the compact
+/// source until then. This wrapper assumes domain admission, passes `signal`
+/// and `p` to the result, and adds no stop poll or independent work limit.
 fn asin_deferred(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Generic asin uses asin(x) = 2*atan(x / (sqrt(1-x^2)+1)).
     // Keeping this as one approximation node mirrors the deferred acos and
@@ -471,6 +587,12 @@ fn asin_deferred(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigIn
         .approx_signal(signal, p)
 }
 
+/// Evaluate principal acos for an admitted nonnegative child at most one.
+///
+/// Use `2*atan(sqrt((1-c)/(1+c)))`, whose residual is nonnegative and tends to
+/// zero at the upper endpoint. Defer the exact quotient/root graph until digits
+/// are requested. Domain validation belongs to the caller; this wrapper passes
+/// `signal` and `p` through without an extra stop poll or resource limit.
 fn acos_positive(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Positive-domain acos uses 2*atan(sqrt((1-x)/(1+x))). Keeping it as one
     // approximation node makes public construction cheap for endpoint-heavy
@@ -486,6 +608,13 @@ fn acos_positive(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigIn
         .approx_signal(signal, p)
 }
 
+/// Approximate principal acos for `0 <= r <= 1` using its exact half-angle residual.
+///
+/// Construct `(1-r)/(1+r)` as a rational. Residuals at most one quarter use the
+/// small square-root atan kernel at `p - 1`, incorporating the outer factor two
+/// without a separate graph. Larger residuals use native sqrt/atan reduction.
+/// Return `2^p` units. The range is a caller precondition; the helper adds no
+/// stop poll, checked precision subtraction, or coefficient-size bound.
 fn acos_positive_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Exact-rational endpoint inputs benefit from forming the half-angle
     // residual directly. This follows the same cancellation-avoiding reduction
@@ -501,6 +630,13 @@ fn acos_positive_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -
         .approx_signal(signal, p)
 }
 
+/// Approximate `acos(-r)` from the stored nonnegative magnitude `0 <= r <= 1`.
+///
+/// The payload is not the negative argument itself. Evaluate `pi - acos(r)`
+/// with two guard bits and round the difference once to `2^p` units. An entry
+/// stop returns an abort placeholder; the caller must also handle any later
+/// child aborts. The precision subtraction is unchecked, and the two samples
+/// do not constitute a separate total-work budget.
 fn acos_negative_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     if should_stop(signal) {
         return Zero::zero();
