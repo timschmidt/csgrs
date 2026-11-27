@@ -17617,6 +17617,95 @@ checked Real domain handling, magnitude helpers, degree deserialization and
 other unit-test excerpts supplied context only. The repository-wide audit and
 100% Rustdoc coverage target remain incomplete.
 
+## Arithmetic approximation kernels and precision exponent regressions
+
+On baseline 3cfb31164c7c5d74a7ccbcfe90568e059ff9b4c6, read every line of
+computable/approximation/arithmetic_kernels.rs (264 lines) and
+computable/approximation/precision_tests.rs (32 lines), both under
+crates/hyperreal/src/. These 296 lines are new whole-file review credit.
+The owning layer is Hyperreal's integer approximation machinery, with P1–P7
+and P19 governing exact source retention, certified magnitude use, cache order,
+resource honesty, failure, and subsequent consumption. The admitted arithmetic
+inputs are valid child expressions, nonzero reciprocal denominators, rational
+weights with representable magnitudes, and representable working precision
+arithmetic. Those implementation restrictions do not narrow the target contract.
+
+All thirteen functions lacked Rustdoc, including the function-local weighted
+helper. Added fourteen blocks: eleven kernel/helper declarations, two tests,
+and one test-module overview. Recorded units of 2^p, operand ordering, magnitude
+anchors, rounding, signal propagation and unchecked precision arithmetic.
+Corrected inline comments that equated dropping a small addend with an unchanged
+answer, or claimed one small product operand alone sufficed for a zero result.
+Removed the unattached exponential-range comment at the arithmetic file's end.
+The missing acceptance witness was declaration-level documentation plus private
+rendering; forty-four existing selected unit tests passed before editing.
+
+Reciprocal magnitude division rounds its integer quotient to nearest with ties
+away from zero. Rational scaling truncates toward zero; nonnegative rational
+precision then uses the scale helper's ties-toward-positive-infinity rounding.
+Neither route promises correctly rounded evaluation of the original exact real.
+The reciprocal's 16,384 scale guard runs only after a zero divisor sample is
+refined; it is not a universal precision, allocation or total-work bound.
+Magnitude queries use child-attached signals, whereas samples receive the
+explicit signal. The caller remains responsible for rejecting abort placeholders.
+
+A contained debug probe reproduced native Computable::zero().inverse().approx(0)
+returning integer zero, while Real::zero().inverse() returned DivideByZero.
+This is an existing native invalid-domain gap, not a valid reciprocal or a change
+in the P6 target. No behavior was changed in this documentation batch.
+
+The fixed three-term sum preserves index order, gives each rational product
+eight coefficient guard bits, and accumulates four bits below the target before
+rounding. An unavailable Rational::msd_exact currently skips the term. Inspection
+of the shared magnitude helper confirms None includes both zero and an exponent
+outside i32; this is not a proof that every skipped weight is zero. The latter
+case was identified from control flow, not reproduced by allocating a rational
+with more than two billion bits. It remains an implementation gap. Zero-weight
+shortcuts also do not validate hidden coefficient-domain errors.
+
+A source-extracted bound_log2 probe compared 65,933 distinct signed inputs near
+powers of two and on a fixed grid against exact integer bit lengths. On this
+x86_64-unknown-linux-gnu host with rustc 1.100.0, only the two signs of 2^29-1
+used an extra bit; no sampled result underestimated the integer expectation.
+The three invalid signed inputs i32::MIN and either sign of i32::MAX panicked
+in the debug build. This finite host measurement is neither exhaustive input
+coverage nor an all-platform proof for floating logarithms. Binary64 here plans
+guard bits and does not replace the authoritative scalar. Probes were limited
+to 1 GiB address space, ten CPU seconds, fifteen wall seconds and no core dumps.
+The same observations were reproduced after the final edits.
+
+The precision tests retain 252 comparisons across nine sample bit widths,
+seven selected precisions, two integer endpoints and two signs. Their i64 oracle
+checks representable exponents; two further cases require rejection by panic of
+an exponent above i32::MAX. Neither test proves all kernels accept extreme
+precision inputs, nor does the panic implement a typed resource outcome.
+
+After the final source edit, all forty-four selected tests passed with no default
+features and with all features. These include magnitude planning, near-cancelled
+reciprocals, operand-order multiplication, repeated powers, additions and deep
+chains, rational samples, a three-term coefficient consumer, offsets and inverse
+trig/hyperbolic consumers. Five downstream Hyperlimit resolver tests passed.
+Private cargo doc passed both configurations with warnings and broken/private
+links denied. Ten kernel blocks matched actual private Rustdoc pages; the local
+weighted helper and three test/module blocks passed source inventory and
+supplemental Markdown rendering. Ordinary library Rustdoc does not emit these
+four function-local or cfg(test) pages. No focused check remains blocked.
+
+The arithmetic file has only four raw executable-token differences: trailing
+commas removed by Rustfmt. Its tokens match an independently formatted baseline;
+precision_tests.rs has identical raw executable/signature tokens. Selected
+Rustfmt and git diff --check passed. Full workflow checks remain owner-waived
+for this docs-only session; no performance, size or universal closure claim is
+made. The existing future-agent 100% Rustdoc mandate in AGENTS.md remains intact.
+
+Evidence in /tmp/csgrs-hyperreal-arithmetic-audit/ includes baseline/final commands,
+logs, source inventories, rendered-block matches and the contained probe source.
+Builds reused the roughly 5.9 GiB locked/offline nonincremental target; the probe
+executable and duplicate supplemental HTML were removed after inspection.
+Rational conversion, checked word arithmetic, dispatch, representation,
+constructors and existing consumer-test excerpts supplied context only.
+The repository-wide line audit and full Rustdoc coverage remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

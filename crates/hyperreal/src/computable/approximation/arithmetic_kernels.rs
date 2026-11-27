@@ -1,3 +1,20 @@
+/// Approximate `1/c` in units of `2^p`, assuming an admitted nonzero child.
+///
+/// Certified magnitude facts, or magnitude refinement when unavailable, size the
+/// integer dividend and divisor. A divisor sample that rounds to zero triggers
+/// eight more bits of refinement. The final magnitude quotient rounds to nearest
+/// with ties away from zero before restoring the divisor's sign; this does not
+/// promise a correctly rounded reciprocal of the exact child.
+///
+/// This is not domain validation: a child certified as zero currently returns
+/// zero rather than a typed error. A stop observed after a zero divisor sample
+/// also returns zero as an abort placeholder, not a certified approximation.
+/// The caller must handle cancellation before publishing or caching a result.
+/// Magnitude queries use the child's attached signal; samples use `signal`.
+///
+/// Precision arithmetic is unchecked. The 16,384 scale guard panics only after
+/// a failed divisor sample is refined, so it is neither a general precision cap
+/// nor a total work or allocation bound. A nonzero first sample bypasses it.
 fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // A raw planning hint may overestimate a near-cancelled denominator by an
     // arbitrary amount. Use an exact magnitude or refine before sizing the
@@ -48,8 +65,21 @@ fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     }
 }
 
+/// Approximate `c1 + c2` in units of `2^p` using magnitude cutoffs before full addition.
+///
+/// Known zero forwards the other child. A cutoff of `p - 4` permits discarding
+/// small contributions within the approximation error allowance; it does not
+/// prove those contributions exactly zero. The certified same-sign branches
+/// avoid treating possible cancellation as dominance. The fallback samples both
+/// children at `p - 2`, sums their integers, and rounds with `scale`.
+///
+/// Read both certified facts left to right, then query missing magnitudes left
+/// to right; retain that order for cache/proof reuse. Magnitude queries use each
+/// child's attached signal; samples receive `signal`. There is no local stop
+/// poll or total work bound,
+/// and precision subtractions must fit their signed representation.
 fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
-    // Addition first tries to prove one operand too small to affect the result
+    // Addition first tries to bound an operand below the error allowance
     // at precision p. That dominates deep structural sums and avoids touching
     // tiny terms when signs/MSDs are already known.
     let extra = 4;
@@ -96,11 +126,31 @@ fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) 
     )
 }
 
+/// Return the leading-bit exponent of the dyadic sample `appr * 2^prec`.
+///
+/// For nonzero `appr`, this is `prec + bits(abs(appr)) - 1`, independent of
+/// sign. It describes the sample, not necessarily the exact child's binade.
+/// Callers supply nonzero samples: zero has no leading bit, though this helper
+/// would mechanically compute `prec - 1` when representable.
+///
+/// The shared wide arithmetic checks the final exponent and panics if it does
+/// not fit `Precision`; it never silently wraps that exponent.
 fn msd_from_appr(prec: Precision, appr: &BigInt) -> Precision {
     crate::verified::word::checked_bit_length_msd(appr.magnitude().bits(), 1, false, prec)
         .expect("Approximation magnitude is outside the precision range")
 }
 
+/// Approximate `known * other` using an established magnitude anchor for `known`.
+///
+/// Sample `other` first at `p - known_msd - 3`; its nonzero sample's leading bit
+/// then determines the precision needed from `known`. This asymmetric order
+/// avoids first evaluating the expensive known-size child more finely than the
+/// other operand requires. Rescale the integer product to units of `2^p`.
+/// A zero sample returns zero at this demand, not an exact-zero certificate.
+///
+/// The anchor must come from the caller's certified/magnitude-query path, not
+/// an arbitrary structural hint. Child samples carry `signal`; this helper adds
+/// no stop poll or work limit, and its precision arithmetic must fit.
 fn multiply_with_known_msd(
     signal: &Option<Signal>,
     known: &Computable,
@@ -126,10 +176,22 @@ fn multiply_with_known_msd(
     scale(appr_known * appr_other, scale_digits)
 }
 
+/// Choose a magnitude anchor and approximate the product in units of `2^p`.
+///
+/// Inspect certified facts in operand order, then query missing magnitudes at
+/// `(p >> 1) - 1` (floor division by two before subtracting one). A certified
+/// zero short-circuits; two unresolved magnitudes at this cutoff permit a zero
+/// approximation. With one known magnitude use it as the anchor; with two use
+/// the larger, preferring the left on a tie. The asymmetric helper evaluates
+/// the other operand first. These cutoffs are not exact-zero classifications.
+///
+/// Magnitude queries use the children's attached signals and samples receive
+/// `signal`. Domain admission precedes these shortcuts. There is no local stop
+/// poll, and fixed guard bits do not bound total work or precision arithmetic.
 fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
     // Prefer the operand with known larger magnitude as the precision anchor.
-    // If one side is effectively zero at the planning cutoff, the product is
-    // zero at the requested precision without evaluating both sides deeply.
+    // If neither magnitude is resolved at the planning cutoff, return a zero
+    // approximation without evaluating both sides deeply.
     let half_prec = (p >> 1) - 1;
     let (sign1, msd1) = c1.certified_sign_and_msd();
     let (sign2, msd2) = c2.certified_sign_and_msd();
@@ -150,11 +212,29 @@ fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precis
     }
 }
 
-fn linear_combination3(
-    signal: &Option<Signal>,
-    form: &LinearCombination3,
-    p: Precision,
-) -> BigInt {
+/// Approximate the fixed three-term sum of computable coefficients times rational values.
+///
+/// Evaluate indices zero, one, and two in that order at `p - 4`; each weighted
+/// term requests eight additional coefficient guard bits relative to its exact
+/// rational magnitude. Round the aggregate back by four bits. Truncation of
+/// the three rational products is thus accounted for before the final rounding,
+/// rather than building and rounding a separate general expression per term.
+///
+/// Nonzero rational magnitudes and intermediate precision arithmetic must fit
+/// `i32`. The helper currently treats an unavailable rational magnitude as zero,
+/// including an out-of-range exponent; that case is not a valid zero proof.
+/// Zero weights skip their coefficients, so this kernel does not validate hidden
+/// domain errors. Child evaluation receives `signal`; rational integer work has
+/// no local cancellation poll, coefficient-size cap, or total work budget.
+fn linear_combination3(signal: &Option<Signal>, form: &LinearCombination3, p: Precision) -> BigInt {
+    /// Approximate one computable coefficient times an exact rational weight at precision `p`.
+    ///
+    /// Use the weight's binary magnitude to request eight coefficient guard bits,
+    /// then multiply by its signed numerator and divide by its positive denominator
+    /// with the required binary shift. Integer division truncates toward zero.
+    /// An unavailable magnitude returns zero without evaluating the coefficient:
+    /// this covers exact zero but also the unsupported out-of-range exponent case.
+    /// The caller must ensure a representable magnitude for every nonzero weight.
     fn weighted(
         signal: &Option<Signal>,
         coefficient: &Computable,
@@ -167,10 +247,8 @@ fn linear_combination3(
         // Eight coefficient guard bits leave ample room for the rational
         // scale and the truncating integer division below.
         let coefficient_precision = p - msd - 8;
-        let approximation =
-            coefficient.approx_signal(signal, coefficient_precision);
-        let signed_numerator =
-            BigInt::from_biguint(value.sign(), value.numerator().clone());
+        let approximation = coefficient.approx_signal(signal, coefficient_precision);
+        let signed_numerator = BigInt::from_biguint(value.sign(), value.numerator().clone());
         let mut numerator = approximation * signed_numerator;
         let mut denominator = value.denominator().clone();
         let shift = coefficient_precision - p;
@@ -187,25 +265,24 @@ fn linear_combination3(
     // aggregate absolute error below one target unit.
     let guard = 4;
     let precision = p - guard;
-    let sum = weighted(
-        signal,
-        &form.coefficients[0],
-        &form.values[0],
-        precision,
-    ) + weighted(
-        signal,
-        &form.coefficients[1],
-        &form.values[1],
-        precision,
-    ) + weighted(
-        signal,
-        &form.coefficients[2],
-        &form.values[2],
-        precision,
-    );
+    let sum = weighted(signal, &form.coefficients[0], &form.values[0], precision)
+        + weighted(signal, &form.coefficients[1], &form.values[1], precision)
+        + weighted(signal, &form.coefficients[2], &form.values[2], precision);
     scale(sum, -guard)
 }
 
+/// Approximate `c^2` from one child sample rather than two product operands.
+///
+/// A certified zero sign short-circuits, but an inexact structural magnitude
+/// hint is not used to choose working precision. Query the child's magnitude
+/// at `(p >> 1) - 1`, sample at `p - msd - 3`, and rescale the integer square.
+/// An absent magnitude or zero sample yields a zero approximation at this demand,
+/// not an exact-zero proof. Querying the magnitude avoids compounding a binade
+/// error across repeated squares.
+///
+/// Magnitude refinement uses the child's attached signal; the sample receives
+/// `signal`. This kernel has no separate stop poll or work limit, and the signed
+/// precision arithmetic must fit.
 fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Square can reuse one approximation of the child. Constructors create this
     // node for repeated powers so multiplication does not duplicate child work.
@@ -236,6 +313,16 @@ fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(&appr * &appr, scale_digits)
 }
 
+/// Approximate the exact rational `r` in units of `2^p` by integer division.
+///
+/// For negative `p`, shift the numerator by `-p` and truncate the quotient toward
+/// zero. For nonnegative `p`, truncate to an integer first and then use `scale`
+/// to round to the coarser binary grid, with ties toward positive infinity.
+/// These stages satisfy the approximation role rather than promising a single
+/// correctly rounded division of the original rational.
+///
+/// Negating `i32::MIN` is unsupported by the current precision arithmetic.
+/// Shifts and division have no cancellation signal or local allocation budget.
 fn ratio(r: &Rational, p: Precision) -> BigInt {
     // Exact rationals approximate by shifting the numerator/denominator ratio
     // directly; dyadic rationals make this path especially cheap.
@@ -246,12 +333,27 @@ fn ratio(r: &Rational, p: Precision) -> BigInt {
     }
 }
 
+/// Evaluate the retained binary scale `c * 2^n` at precision `p` by requesting `c` at `p - n`.
+///
+/// This transports the precision without materializing a power-of-two factor.
+/// The subtraction must fit `Precision`; the helper adds no checked failure,
+/// stop poll, or resource limit to the child's evaluation with `signal`.
 fn offset(signal: &Option<Signal>, c: &Computable, n: i32, p: Precision) -> BigInt {
     // x * 2^n at precision p is just x at precision p-n. This is why dyadic
     // scales are represented as Offset nodes instead of generic multiplication.
     c.approx_signal(signal, p - n)
 }
 
+/// Estimate the guard-bit count `ceil(log2(abs(n) + 1))` for series accumulation.
+///
+/// This uses binary64 logarithms only to plan guard precision; it does not
+/// replace an authoritative scalar value with a float. It is not an exact
+/// integer logarithm: rounding can add a guard bit, for example at `2^29 - 1`
+/// on the audited host. The formula alone supplies no all-platform certification
+/// of the floating-point bound.
+///
+/// Require `abs(n) + 1` to fit `i32`. Both `i32::MIN` and either sign of
+/// `i32::MAX` violate that requirement; checked arithmetic builds panic.
 fn bound_log2(n: i32) -> i32 {
     let abs_n = n.abs();
     let ln2 = 2.0_f64.ln();
@@ -259,6 +361,3 @@ fn bound_log2(n: i32) -> i32 {
     let ans: f64 = (n_plus_1.ln() / ln2).ceil();
     ans as i32
 }
-
-/* Only intended for Computable values < 0.5, others will be pre-scaled
- * in Computable::exp */
