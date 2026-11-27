@@ -1,8 +1,15 @@
+/// Qualify acos of negative rational arguments, including its stored nonnegative magnitude.
+/// Directed MPFR endpoints check public construction and raw complement tags across
+/// precision reuse, cancellation and concurrent access. Finite schedules do not prove
+/// race freedom or total resource bounds; MPFR cleanup is registered on each using thread.
 #[cfg(test)]
 mod acos_complement_range_tests {
     use super::*;
     use rug::{Float, Integer, Rational as Q, float::Round};
 
+    /// Build AcosNegativeRational(r) with invalid initial bound/sign evidence and no signal.
+    /// The payload r is the nonnegative magnitude, so the represented angle is acos(-r).
+    /// Fixtures must supply 0<=r<=1; parsing is exact, but this helper does not validate the domain.
     fn imported(r: &Q) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,6 +21,10 @@ mod acos_complement_range_tests {
         }
     }
 
+    /// Enclose acos(-r) at 2048 bits for fixture magnitudes 0<=r<=1.
+    /// Because acos decreases, round -r upward for the lower output and downward for the upper;
+    /// then round the function results outward and convert them to exact rationals.
+    /// Out-of-domain/nonfinite conversion would panic rather than return a typed failure.
     fn oracle(r: &Q) -> [Q; 2] {
         let x = -r.clone();
         // acos is decreasing: the upper input bound supplies the lower output.
@@ -24,6 +35,11 @@ mod acos_complement_range_tests {
         [lo.to_rational().unwrap(), hi.to_rational().unwrap()]
     }
 
+    /// Require the integer approximation's closed one-unit interval to contain the entire oracle interval.
+    /// Interpret the returned integer exactly as a*2^p, with error radius 2^p, using Rug rationals.
+    /// This checks containment, not correct rounding or equality of cold and warm samples.
+    /// Fixture precisions must permit the signed shifts (in particular p must not be i32::MIN);
+    /// conversion or a failed enclosure panics. The supplied bounds must already be valid.
     fn encloses(value: &Computable, p: i32, bounds: &[Q; 2]) {
         let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
         let unit = if p > 0 {
@@ -38,6 +54,10 @@ mod acos_complement_range_tests {
         );
     }
 
+    /// Check 12 magnitudes through raw complement tags and public acos(-r) construction.
+    /// Include both endpoints, tiny inputs, and distances 2^-64 and 2^-512 from one.
+    /// Thirteen precision requests exercise cold and reused nodes against independent
+    /// MPFR bounds; public endpoint simplification need not retain the imported tag.
     #[test]
     fn negative_acos_complement_encloses_rational_and_endpoint_inputs() {
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -76,6 +96,10 @@ mod acos_complement_range_tests {
         }
     }
 
+    /// Check four raw complement nodes leave no numerical cache when cancelled on entry.
+    /// Clear the shared signal, retry at -128, compare with the now-warm ordinary call,
+    /// and require an MPFR enclosure. The discarded abort integer is not certified output;
+    /// this tests entry cancellation, not interruption at every internal stage.
     #[test]
     fn negative_acos_complement_recovers_after_cancellation() {
         use std::sync::atomic::{AtomicBool, Ordering};
@@ -97,6 +121,9 @@ mod acos_complement_range_tests {
         }
     }
 
+    /// Check six scoped readers sharing each of two raw complement nodes at mixed precisions.
+    /// Each worker requires its own MPFR enclosure and registers cleanup; three further
+    /// requests check the shared node after joining. This finite schedule is not a race-freedom proof.
     #[test]
     fn negative_acos_complement_preserves_concurrent_enclosures() {
         crate::mpfr_test::cleanup_on_thread_exit();

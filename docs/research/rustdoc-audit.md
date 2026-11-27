@@ -20745,6 +20745,111 @@ temporary HTML were removed after inspection; builds reused the approximately
 100% public/private Rustdoc mandate remains in force. Repository-wide line review
 and all-configuration coverage remain unfinished.
 
+## Hyperreal inverse-function range and retained-fact fixtures (27 November 2026)
+
+Baseline: `ef4f1b6011a08986f2342a2279717dad8c574ac3` on `rustdoc`.
+Reviewed every line of six files in `crates/hyperreal/src/computable/node/`:
+
+| File | Baseline lines | Documented lines | Named functions | Tests |
+| --- | ---: | ---: | ---: | ---: |
+| `asinh_range_tests.rs` | 123 | 148 | 5 | 2 |
+| `acos_complement_range_tests.rs` | 121 | 148 | 6 | 3 |
+| `atanh_rational_range_tests.rs` | 92 | 116 | 5 | 2 |
+| `integral_atan_range_tests.rs` | 94 | 119 | 6 | 3 |
+| `atan_range_tests.rs` | 187 | 219 | 7 | 4 |
+| `integral_atan_facts_tests.rs` | 162 | 192 | 7 | 3 |
+
+The 779 baseline lines contain 42 reviewed Rustdoc blocks: six modules and 36
+functions (19 helpers and 17 tests). All 42 rendered in a temporary private
+Rustdoc build with only these modules' cfg(test)/test gates removed and the
+unchanged MPFR cleanup support made available. Ordinary library Rustdoc excludes
+these items and cannot establish their coverage. No additional named local
+items or derived APIs occur in the selected files; closures were read in context.
+
+Ownership is Hyperreal's approximation and retained-fact qualification corpus,
+P2–P6, with downstream scalar decision consumers under P8–P11 and composition
+under P19–P20. The missing acceptance witness was accurate item-level documentation
+of the fixtures' admitted domains, exact expectations, oracle direction, cache
+states and assertion limits. All 17 tests passed on the baseline before edits.
+Contextual reads of approximation dispatch, inverse-trig/hyperbolic kernels,
+argument readers, guard precision planning and MPFR support do not add whole-file
+review credit to those separately tracked files.
+
+The documentation now distinguishes:
+
+- Raw node construction bypasses normalization and starts without bound/sign
+  facts or a signal. Tags are not domain or range certificates. IntegralAtan(n)
+  means atan(1/n), and AcosNegativeRational(r) means acos(-r) with nonnegative r.
+  The zero-denominator fixture is used only to check argument-reader refusal.
+- The 2048-bit MPFR oracles round rational inputs and function outputs outward.
+  Increasing asinh, atan and atanh use corresponding lower/upper input endpoints;
+  decreasing acos reverses them. Symbolic atan fixtures apply outward sqrt,
+  exact binary scaling, outward atan, and endpoint-swapping negation. Rug converts
+  finite endpoints to exact rationals. Atanh additionally requires its rounded
+  input endpoints to remain inside (-1,1), as these fixtures ensure.
+- Each enclosure helper interprets the returned integer a as a*2^p and requires
+  the closed interval with radius 2^p to contain the entire MPFR interval. This
+  is stronger than interval overlap but is not a correct-rounding assertion.
+  Cold and warm samples need not be identical. Fixture shifts must fit signed
+  precision arithmetic; arbitrary precision/resource safety is not established.
+- Asinh checks 23 rational inputs through two tags at eight requests. Acos
+  checks 12 magnitudes through imported and public construction at 13 requests.
+  Atanh checks 25 interior inputs at 12 requests, approaching but never using
+  the undefined ±1 endpoints. Integral atan checks ten signed denominators at
+  13 requests. Generic atan checks 25 signed rational values through direct and
+  raw Add(q,0) children at nine requests, plus 24 signed/scaled square-root
+  inputs at seven requests. No dispatch-count assertion was added or inferred.
+- Each boundary-rounding fixture enumerates all admissible integer samples for
+  its selected finite input grid near ±1/2. Five precision pairs, 17 quarter-unit
+  perturbations and both signs give 390 admitted samples and 1170 enclosure
+  assertions after fine/coarse reuse. Asinh includes the coarse p=1 request;
+  atan uses a finer -1024 follow-up. This finite exhaustiveness is not a claim
+  about every real input or precision.
+- Cancellation fixtures set the signal before entry, discard the returned abort
+  integer, require the queried cache to remain empty, clear the flag, then check
+  retry and an independent enclosure. The equality comparison is to the now-warm
+  call; it does not certify abort placeholders, all child caches, or interruption
+  at every internal stage. Concurrency cases are finite scoped schedules. In
+  the facts fixture, a reader that makes no explicit warming request can still
+  observe another thread's sample; it is not guaranteed a cold execution.
+- Exact retained-argument fixtures check signed reciprocal recovery, unchanged
+  family/payload and an unsampled original angle. For nonzero n, their square
+  expectations are 1/(n²+1) and n²/(n²+1), with branch-aware signs. Pi shifts
+  negate both coordinates; ±pi/2-minus-angle complements swap squares and set
+  the expected signs. sign_until(0) must prove the square residual zero; the
+  helper alone does not assert a particular proof path or absence of child work.
+  Strict monotonicity gives atan(1/2)>atan(1/5).
+
+An independent Python Fraction check enumerated every integer in each exact
+allowed sample interval, rather than trusting the fixture's three-candidate
+construction. It confirmed both 390/1170 counts and the selected working
+precision pairs using integer logarithm bounds. Separate rational tangent
+normalization and quarter-turn/reflection matrices confirmed 40 exact square
+and sign rows for the ten denominators. These finite expectations supplement
+the existing directed-MPFR tests; they do not constitute a universal kernel proof.
+
+After the final source edit, focused locked/offline two-job checks passed:
+
+- All 17 reviewed tests without default features and all 17 with all features.
+- Both private library Rustdoc builds with warnings, broken intra-doc links and
+  private intra-doc links denied; temporary test/helper rendering with the same
+  diagnostics denied and all 42 rendered block checks.
+- All-feature `serde_graph_domains` (four tests), `serde_opaque_operand_domains`
+  (five tests), and downstream Hyperlimit `resolve::tests` (five tests).
+- Selected Rustfmt and git diff --check. Raw non-comment tokens are identical
+  in every selected file; independently formatted comment-free tokens also
+  agree. No assertions, fixtures, signatures, dispatch order or algorithms changed.
+
+No focused check remains blocked. Full workflows and performance measurements
+remain owner-waived for this docs-only session; no performance claim is made.
+Evidence under `/tmp/csgrs-hyperreal-inverse-range-fixtures-audit/` retains exact
+commands/logs, the independent rational expectations and item/render/token
+inventories. Owned shadow sources and temporary HTML were removed after review;
+builds reused the approximately 6.6 GiB shared Cargo target with incremental
+compilation disabled. AGENTS.md's existing 100% public/private Rustdoc mandate
+remains in force. Repository-wide line review and all-configuration coverage
+remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,7 +1,14 @@
+/// Qualify exact argument recovery and subsequent operations on imported atan(1/n) nodes.
+/// Independent rational square identities, sign expectations and unsampled-root checks
+/// exercise cold, warm and concurrent reuse. Invalid n=0 is tested only through
+/// argument readers, never as an admitted approximation operand.
 #[cfg(test)]
 mod integral_atan_facts_tests {
     use super::*;
 
+    /// Build IntegralAtan(n) without normalization, initial bound/sign evidence or a signal.
+    /// A zero parameter is deliberately permitted for reader-rejection fixtures; this
+    /// helper does not validate n or authorize approximation of the undefined reciprocal.
     fn imported(n: &BigInt) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,6 +20,9 @@ mod integral_atan_facts_tests {
         }
     }
 
+    /// Return negative then positive versions of 1,2,5,239 and 2^512.
+    /// These ten nonzero exact integers cover unit angle identities, ordinary reciprocal
+    /// series parameters and a tiny-angle input without using floating-point values.
     fn denominators() -> Vec<BigInt> {
         [
             BigInt::one(),
@@ -26,6 +36,9 @@ mod integral_atan_facts_tests {
         .collect()
     }
 
+    /// Return sin(atan(1/n))²=1/(n²+1) and cos(atan(1/n))²=n²/(n²+1).
+    /// The denominator is always positive, justifying the fixture unwraps. Interpreting
+    /// these rationals as trigonometric expectations additionally requires n!=0.
     fn squared_expectations(n: &BigInt) -> [Rational; 2] {
         let square = n * n;
         let denominator = (&square + BigInt::one()).to_biguint().unwrap();
@@ -35,11 +48,18 @@ mod integral_atan_facts_tests {
         ]
     }
 
+    /// Require value²-expected to have a definite zero sign at sign_until(0).
+    /// This asserts exact equality through the scalar proof API, not sampled agreement.
+    /// The helper alone does not assert which proof path ran or that every child stayed uncached.
     fn exact_square(value: Computable, expected: &Rational) {
         let delta = value.square().add(Computable::rational(-expected.clone()));
         assert_eq!(delta.sign_until(0), Some(RealSign::Zero));
     }
 
+    /// Recover exact signed 1/n from ten fresh raw angles through both argument readers.
+    /// Require inverse-trig family recognition, unchanged IntegralAtan payload and no
+    /// numerical root cache. Both readers must decline n=0; this does not exercise its
+    /// approximation failure behavior or assert a typed public error.
     #[test]
     fn integral_atan_readers_retain_exact_argument_and_family() {
         for n in denominators() {
@@ -63,6 +83,11 @@ mod integral_atan_facts_tests {
         assert!(undefined.atan_argument().is_none());
     }
 
+    /// Check exact trig squares and signs for ten atan(1/n) angles before and after warming.
+    /// Compose with pi and ±pi/2 complements, requiring the appropriate sign changes and
+    /// swapped square expectations. Cold passes leave the original angle unsampled;
+    /// this assertion does not forbid all internal child work. Finally prove
+    /// atan(1/2)-atan(1/5)>0 from the retained rational arguments.
     #[test]
     fn integral_atan_facts_compose_through_trig_and_arithmetic() {
         for n in denominators() {
@@ -136,6 +161,11 @@ mod integral_atan_facts_tests {
         assert_eq!(difference.sign_until(0), Some(RealSign::Positive));
     }
 
+    /// Check exact sine/cosine squares with four scoped readers for n=-5,-1,1,5.
+    /// Two readers request a -128 angle sample and two do not; thread scheduling may
+    /// warm their shared root before either supposedly cold reader executes. Repeat
+    /// both square assertions after joining; this is a finite reuse witness, not a
+    /// claim that every interleaving or race-freedom property has been proved.
     #[test]
     fn integral_atan_facts_survive_concurrent_reuse() {
         for n in [-5, -1, 1, 5] {

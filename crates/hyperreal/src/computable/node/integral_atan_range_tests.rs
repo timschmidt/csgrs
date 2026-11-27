@@ -1,8 +1,15 @@
+/// Qualify raw IntegralAtan(n), which means atan(1/n), for nonzero integer denominators.
+/// Directed MPFR enclosures cover unit identities and nonunit series under precision
+/// reuse, cancellation and concurrent access. Each MPFR-using thread registers cleanup;
+/// the finite cases do not certify arbitrary precision arithmetic or concurrency schedules.
 #[cfg(test)]
 mod integral_atan_range_tests {
     use super::*;
     use rug::{Float, Integer, Rational as Q, float::Round};
 
+    /// Build IntegralAtan(n) with no initial bound/sign evidence or abort signal.
+    /// Convert the integer exactly without reducing the tag; nonzero n is a caller
+    /// precondition for approximation, and this helper performs no domain validation.
     fn imported(n: &Integer) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,6 +21,9 @@ mod integral_atan_range_tests {
         }
     }
 
+    /// Enclose atan(1/n) for a nonzero integer by directed 2048-bit MPFR evaluation.
+    /// Form the reciprocal as an exact rational before outward input rounding, then use
+    /// atan's monotonicity. Invalid division or nonfinite endpoint conversion panics.
     fn oracle(n: &Integer) -> [Q; 2] {
         let q = Q::from((Integer::from(1), n.clone()));
         let mut lo = Float::with_val_round(2048, &q, Round::Down).0;
@@ -23,6 +33,11 @@ mod integral_atan_range_tests {
         [lo.to_rational().unwrap(), hi.to_rational().unwrap()]
     }
 
+    /// Require the integer approximation's closed one-unit interval to contain the entire oracle interval.
+    /// Interpret the returned integer exactly as a*2^p, with error radius 2^p, using Rug rationals.
+    /// This checks containment, not correct rounding or equality of cold and warm samples.
+    /// Fixture precisions must permit the signed shifts (in particular p must not be i32::MIN);
+    /// conversion or a failed enclosure panics. The supplied bounds must already be valid.
     fn encloses(value: &Computable, p: i32, bounds: &[Q; 2]) {
         let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
         let unit = if p > 0 {
@@ -37,6 +52,9 @@ mod integral_atan_range_tests {
         );
     }
 
+    /// Check both signs of denominators 1,2,5,239 and 2^512 at 13 precision requests.
+    /// Fresh and reused imported nodes must each enclose the independent atan(1/n)
+    /// interval; unit denominators exercise the native angle identity instead of its series.
     #[test]
     fn imported_integral_atan_encloses_unit_and_nonunit_denominators() {
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -54,6 +72,10 @@ mod integral_atan_range_tests {
         }
     }
 
+    /// Require cancelled atan(1/±1) requests to leave the queried numerical cache empty.
+    /// After clearing the flag, compare the -128 retry with a subsequent warm call and
+    /// check its MPFR enclosure. The abort integer is discarded and entry cancellation
+    /// alone is covered; this does not assert every child cache remains empty.
     #[test]
     fn integral_atan_unit_identity_recovers_after_cancellation() {
         use std::sync::atomic::{AtomicBool, Ordering};
@@ -70,6 +92,9 @@ mod integral_atan_range_tests {
         }
     }
 
+    /// Check six scoped readers of each shared unit-denominator atan node at mixed precisions.
+    /// Workers register MPFR cleanup and assert enclosures; three sequential requests after
+    /// joining check reuse. This finite concurrency witness does not establish race freedom.
     #[test]
     fn integral_atan_unit_identity_preserves_concurrent_enclosures() {
         crate::mpfr_test::cleanup_on_thread_exit();

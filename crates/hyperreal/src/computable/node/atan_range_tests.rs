@@ -1,8 +1,15 @@
+/// Qualify imported generic atan series nodes independently of constructor range hints.
+/// Directed MPFR bounds cover rational and symbolic children, half-angle reduction,
+/// admissible boundary samples, cache reuse and entry cancellation. Fixtures register
+/// per-thread MPFR cleanup; finite cases do not prove the full real/precision domain.
 #[cfg(test)]
 mod atan_range_tests {
     use super::*;
     use rug::{Float, Integer, Rational as Q, float::Round};
 
+    /// Build a node with no initial bound, exact-sign evidence or abort signal, bypassing constructors.
+    /// The supplied tag is authoritative input to the kernel test, not a range/domain certificate.
+    /// Callers must choose defined fixture operands; this helper performs no validation.
     fn raw(kind: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,6 +21,9 @@ mod atan_range_tests {
         }
     }
 
+    /// Enclose principal atan(q) by outward rounding a finite rational at 2048 bits.
+    /// Monotonicity permits downward evaluation at the lower input and upward evaluation
+    /// at the upper. Return exact rational endpoints; nonfinite conversion panics.
     fn oracle(q: &Q) -> [Q; 2] {
         let mut lo = Float::with_val_round(2048, q, Round::Down).0;
         let mut hi = Float::with_val_round(2048, q, Round::Up).0;
@@ -22,6 +32,11 @@ mod atan_range_tests {
         [lo.to_rational().unwrap(), hi.to_rational().unwrap()]
     }
 
+    /// Require the integer approximation's closed one-unit interval to contain the entire oracle interval.
+    /// Interpret the returned integer exactly as a*2^p, with error radius 2^p, using Rug rationals.
+    /// This checks containment, not correct rounding or equality of cold and warm samples.
+    /// Fixture precisions must permit the signed shifts (in particular p must not be i32::MIN);
+    /// conversion or a failed enclosure panics. The supplied bounds must already be valid.
     fn encloses(value: &Computable, p: i32, bounds: &[Q; 2]) {
         let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
         let unit = if p > 0 {
@@ -36,6 +51,10 @@ mod atan_range_tests {
         );
     }
 
+    /// Check 25 signed rational inputs through PrescaledAtan with direct and wrapped children.
+    /// A raw Add(q,0) must lack exact_rational metadata, selecting generic handling while
+    /// preserving the same value. Nine precision requests check cold and reused enclosures,
+    /// including near-half, huge and tiny arguments; no dispatch-count equality is asserted.
     #[test]
     fn imported_atan_series_preserve_rational_and_generic_arguments() {
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -80,6 +99,10 @@ mod atan_range_tests {
         }
     }
 
+    /// Check both signs of sqrt(n)*2^shift for n=2,5,17 and four shifts from -32 to 32.
+    /// Outward MPFR sqrt followed by exact binary scaling and outward atan supplies the
+    /// independent bounds; negate by swapping endpoints. Require nonrational child metadata
+    /// and cold/reused enclosures at seven requests, without asserting an internal trace.
     #[test]
     fn atan_half_angle_fallback_encloses_symbolic_children() {
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -118,6 +141,11 @@ mod atan_range_tests {
         }
     }
 
+    /// Inject all admissible integer samples for selected signed inputs near the half-unit boundary.
+    /// Five request/working-precision pairs and quarter-unit perturbations yield 390
+    /// samples within the one-unit contract. Require a generic Add child, then check
+    /// each result at the original request, -1024 and the original request again,
+    /// for 1170 enclosures. Exhaustiveness is over this finite sample grid, not all inputs.
     #[test]
     fn atan_range_proof_handles_every_allowed_working_sample_rounding() {
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -165,6 +193,10 @@ mod atan_range_tests {
         assert_eq!(checks, 1170);
     }
 
+    /// Check entry cancellation on generic atan children of value ±4 leaves the root uncached.
+    /// Clear the shared flag, retry at -128, compare with the subsequent warm call and
+    /// require an MPFR enclosure. The abort placeholder is discarded; child-cache state
+    /// and cancellation at every reduction stage are not checked.
     #[test]
     fn aborted_atan_range_reduction_recovers_without_publishing_a_cache() {
         use std::sync::atomic::{AtomicBool, Ordering};

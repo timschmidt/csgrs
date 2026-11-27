@@ -1,8 +1,15 @@
+/// Qualify imported asinh series tags with independent directed MPFR enclosures.
+/// Exercise small/large signed rationals, cold and reused caches, and admissible
+/// working samples near the half-unit series boundary. The finite corpus is not a
+/// universal precision or resource proof. Tests register per-thread MPFR cleanup.
 #[cfg(test)]
 mod asinh_range_tests {
     use super::*;
     use rug::{Float, Integer, Rational as Q, float::Round};
 
+    /// Build a node with no initial bound, exact-sign evidence or abort signal, bypassing constructors.
+    /// The supplied tag is authoritative input to the kernel test, not a range/domain certificate.
+    /// Callers must choose defined fixture operands; this helper performs no validation.
     fn raw(kind: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,6 +21,9 @@ mod asinh_range_tests {
         }
     }
 
+    /// Enclose principal asinh(q) by rounding a finite rational input outward at 2048 bits.
+    /// Monotonicity permits downward asinh on the lower input and upward asinh on the upper.
+    /// Return the finite MPFR endpoints as exact Rug rationals; nonfinite conversion panics.
     fn oracle(q: &Q) -> [Q; 2] {
         let mut lo = Float::with_val_round(2048, q, Round::Down).0;
         let mut hi = Float::with_val_round(2048, q, Round::Up).0;
@@ -22,6 +32,11 @@ mod asinh_range_tests {
         [lo.to_rational().unwrap(), hi.to_rational().unwrap()]
     }
 
+    /// Require the integer approximation's closed one-unit interval to contain the entire oracle interval.
+    /// Interpret the returned integer exactly as a*2^p, with error radius 2^p, using Rug rationals.
+    /// This checks containment, not correct rounding or equality of cold and warm samples.
+    /// Fixture precisions must permit the signed shifts (in particular p must not be i32::MIN);
+    /// conversion or a failed enclosure panics. The supplied bounds must already be valid.
     fn encloses(value: &Computable, p: i32, bounds: &[Q; 2]) {
         let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
         let unit = if p > 0 {
@@ -36,6 +51,10 @@ mod asinh_range_tests {
         );
     }
 
+    /// Check 23 rational inputs through both AsinhRational and PrescaledAsinh tags.
+    /// Include zero, both signs around one half, magnitudes 2^512 and 2^-512, and larger
+    /// arguments requiring reduction. Eight precision requests compare fresh and reused
+    /// nodes independently with MPFR enclosures; no particular reduction trace is asserted.
     #[test]
     fn both_asinh_series_reduce_large_inputs_and_preserve_small_inputs() {
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -75,6 +94,12 @@ mod asinh_range_tests {
         }
     }
 
+    /// Inject every integer sample satisfying the one-unit contract for the selected boundary inputs.
+    /// Five request/working-precision pairs and signed quarter-unit perturbations around
+    /// one half yield 390 admitted samples. Check each at the original request, -256,
+    /// and the original request again (1170 enclosures), including coarse p=1.
+    /// The raw Add child preserves the injected cache; this finite enumeration does not
+    /// cover every real input or every precision, and asserts no dispatch counts.
     #[test]
     fn asinh_range_proof_accounts_for_every_allowed_sample_rounding() {
         crate::mpfr_test::cleanup_on_thread_exit();
