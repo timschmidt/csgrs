@@ -19950,6 +19950,125 @@ nonincremental builds reused the approximately 6.6 GiB Cargo target. The existin
 AGENTS.md mandate for 100% public/private Rustdoc remains unchanged. Complete
 repository line review and all-configuration coverage remain unfinished.
 
+## Hyperreal shared polynomial state, arithmetic and limit witnesses (27 November 2026)
+
+Baseline: 75dba5e1f9d33321a6428e5a2ce6ca6345fc9dd6 on rustdoc. Whole-file
+review covered crates/hyperreal/src/computable/node/ring_polynomial.rs
+(378 baseline lines) and ring_polynomial_tests.rs (138), totaling 516 lines.
+Prior contextual reads of the shared state did not count as whole-file review.
+Field consumers were inspected in the quotient, root, trig-congruence,
+additional-relation and native strategies; those contextual reads do not grant
+whole-file credit to the other files.
+
+The owning layer is hyperreal's shared optional polynomial-recognition engine,
+under P2–P6 and downstream P8–P11. Inputs are normalized exact rational
+polynomials, query-relative atom IDs, coherent strategy tables and defined
+native real atoms. A zero formal polynomial is zero for any admitted atom
+values; a nonzero formal polynomial can still vanish at those values. The
+missing witness was complete accurate private documentation of this ownership,
+each state field and each helper's actual charging/admission contract. Before
+editing, all eighty-seven all-feature computable::node::ring_ tests passed on
+the target revision, exercising shared arithmetic across its consumers.
+
+Fifty-six blocks now cover two structs, twenty-three fields, two impl overviews,
+nine associated constants, thirteen production methods, one test-module
+overview and six test/helper functions. The state documentation distinguishes:
+
+- Canonical sparse polynomial zero, constant monomials, sorted atom multisets,
+  distinct lexicographically ordered terms and nonzero exact coefficients.
+  Clone copies query-relative data without checking IDs; Default produces zero.
+- Borrowed authoritative atoms versus owned temporary recipes, live pointer-key
+  quotient memoization, node allowance, explicit work charges, and the root
+  wrapper's borrowed stop handle. Strategy adapters must configure compatible
+  flags/tables; arbitrary combinations are not independently validated.
+- Built-in root-square enable/use flags, rational-only admission, trig argument
+  quotients and successful rational trig projections, additional rational-square
+  and unit-circle relations, and strategy-specific success gates. The extended
+  degree flag does not by itself install the larger work allowance.
+- Native relation, branch-completion and early-root hints; parallel relation/sign
+  tables; stable query-local Jacobi basis choices and guarded opaque parameter
+  arithmetic. These are temporary proof/strategy roles, not new scalar carriers.
+
+The method audit documents several distinctions important to consuming these
+helpers correctly. A charge polls the root signal before decrementing and
+counts an explicit step, not all nested rational arithmetic, structural DAG
+matching, allocation or sorting. Coefficient admission handles zero first,
+otherwise rejecting oversized stored representation before canonical component
+bit checks. Node, depth, atom, term, degree, coefficient and work caps remain
+separate, with no claim of a complete heap/time resource bound.
+
+Insertion checks degree and coefficient size before ignoring a zero coefficient,
+merges exact matching terms and removes cancellations. A failed insertion leaves
+that result unchanged while spending work. Empty-right addition and ordinary
+zero multiplication can perform no charge; native multiplication has a distinct
+entry charge and identity shortcut. Its cloned identity operand is already
+admitted, rather than revalidated. Native root completion may collapse root
+pairs before the retained-degree check; other paths check concatenated degree
+before their optional relations. In-place root-pair reduction can leave partial
+candidate changes on decline; an incoming product coefficient may already
+exceed the stored cap before its next check.
+
+Plain atom insertion compares structural recipes and has no extra initial
+insertion charge or depth/stop poll; expansion supplies those entry checks.
+This is not complete scalar equality. Plain expansion visits arithmetic children
+left before right, checks every linear-form coefficient, and rejects extreme
+binary shifts before materialization. It does not memoize shared arithmetic
+expansions. Opaque shapes, including inverses, assume defined real values and
+are not traversed as an import-domain validation pass. A completed plain-ring
+projection checks cancellation, publishes only the exact sign and existing
+trace, and returns the rational. It does not retain that rational in a tower;
+a later call rebuilds its optional projection. Declines publish no negative fact.
+
+A disposable private harness compiled against the baseline and final owning
+file produced identical logs. Eighty-one products and eighty-one sums matched
+independent integer BTreeMap convolution/addition. Direct probes confirmed two
+charges for duplicate-term cancellation, one spent charge for a degree-nine zero
+insertion decline, no pair charge for plain zero multiplication/empty addition,
+and the separate native entry charge. A first direct opaque insertion succeeded
+without extra charge/depth polling while expansion still rejected the stopped
+root at entry; subsequent equality matching required a charge. A shared child
+was expanded twice (three total nodes including its parent) while retaining one
+atom ID. Changing the extended-degree flag left work unchanged. A repeated
+plain-ring zero proof published a sign while leaving the retained rational-tower
+and numeric caches empty. These probes establish the documented helper boundary,
+not permission to bypass the outer admission/publication contract. Containment
+was one GiB address space, ten CPU seconds, fifteen wall seconds and no core
+dumps; these are external probe limits, not production completion guarantees.
+
+The four reviewed tests retain all original assertions: independently exhausted
+node/work/depth allowances followed by fresh recovery; stop/reset publication
+visible through a shared clone; separate 32-atom, 64-term and degree-eight caps;
+and coefficient/extreme-shift admission before expansion. The binomial fixture
+has the independent identity (a+b)^2-(a^2+b^2+2ab)=0 for defined atoms. The
+private sine's numeric cache is checked separately from process-global pi
+cache warmth. These tests do not bound unrelated optional recognizers.
+
+After the final edit, the selected ring suite passed without default features
+(eighty-four tests) and with all features (eighty-seven). The three extra
+all-feature cases are the two quotient domain-contradiction tests and captured
+cone projections; they are not silently counted in the no-default run.
+All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+and downstream hyperlimit resolve::tests (five) passed. Both private cargo doc
+configurations passed with warnings and broken/private intra-doc links denied.
+All forty-nine ordinary blocks matched library HTML. Seven module/test/helper
+blocks matched actual Rustdoc from an owned copy with only this test module's
+cfg(test)/test attributes removed. RingPolynomial's derived Clone/Default
+implementation anchors were inspected. No ghost/Verus configuration coverage
+or universal mathematical completeness is claimed.
+
+Comment-free code independently formatted with Rustfmt is identical to baseline.
+The sole raw token difference is one brace pair Rustfmt added around the existing
+identity-test closure. No predicate order, signature, assertion, fixture, policy
+or algorithm changed. Selected Rustfmt and git diff --check passed. No focused
+check remains blocked. Full workflow validation and performance measurements
+remain owner-waived for this docs-only session. Evidence under
+/tmp/csgrs-hyperreal-ring-polynomial-audit/ retains commands/logs, probe sources
+and results, and item/render/token inventories. Owned probe binaries, temporary
+HTML and shadow sources were removed after inspection. Locked/offline,
+nonincremental builds reused the approximately 6.6 GiB shared Cargo target.
+AGENTS.md's existing 100% public/private Rustdoc mandate remains unchanged.
+Repository-wide line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,7 +1,9 @@
 #[cfg(test)]
+/// Qualification of plain polynomial recognition, separate caps and abort-safe publication/retry.
 mod ring_polynomial_tests {
     use super::*;
 
+    /// Construct a native fixture with uninitialized facts and no stop handle, bypassing simplification.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,6 +15,9 @@ mod ring_polynomial_tests {
         }
     }
 
+    /// Retain (a+b)^2-(a^2+b^2+2ab) with two different rational-angle sine atoms.
+    /// The independent ring identity is zero for any defined a,b; fixture construction
+    /// keeps the composite arithmetic unsimplified so the polynomial path must prove it.
     fn binomial_identity() -> Computable {
         let a = Computable::rational(Rational::fraction(1, 3).unwrap()).sin();
         let b = Computable::rational(Rational::fraction(2, 5).unwrap()).sin();
@@ -33,6 +38,9 @@ mod ring_polynomial_tests {
     }
 
     #[test]
+    /// Exhaust node, work and depth allowances separately on the retained binomial identity.
+    /// Require no global sign or numeric cache from declines, then a fresh ordinary
+    /// attempt must prove zero and publish its sign without numeric refinement.
     fn ring_limits_decline_without_caching_and_allow_later_recovery() {
         let value = binomial_identity();
         let mut nodes = RingRecognition::new(&value);
@@ -56,6 +64,9 @@ mod ring_polynomial_tests {
     }
 
     #[test]
+    /// Stop a polynomial proof, then reset its handle and retry the same shared node.
+    /// A clone must observe no premature sign and then the successful exact-zero sign,
+    /// showing shared proof publication and retry rather than cached failure.
     fn aborted_ring_proof_does_not_publish_and_can_recover() {
         let mut value = binomial_identity();
         let clone = value.clone();
@@ -75,6 +86,10 @@ mod ring_polynomial_tests {
     }
 
     #[test]
+    /// Fill all 32 opaque-atom slots and 64 polynomial terms, then test each next insertion.
+    /// Separately reject degree nine in an ordinary degree-eight attempt. Fixtures
+    /// use distinct small sine recipes and sorted two-factor monomials; this tests
+    /// the independent caps, not a total allocation or runtime bound.
     fn polynomial_term_degree_and_atom_caps_are_independent() {
         let atoms: Vec<_> = (1..=33)
             .map(|i| Computable::rational(Rational::fraction(i, 100).unwrap()).sin())
@@ -83,7 +98,11 @@ mod ring_polynomial_tests {
         for atom in &atoms[..32] {
             assert!(recognition.atom(atom, RingRecognition::MAX_DEPTH).is_some());
         }
-        assert!(recognition.atom(&atoms[32], RingRecognition::MAX_DEPTH).is_none());
+        assert!(
+            recognition
+                .atom(&atoms[32], RingRecognition::MAX_DEPTH)
+                .is_none()
+        );
         let mut polynomial = RingPolynomial::default();
         let monomials: Vec<_> = (0_u8..12)
             .flat_map(|a| (a..12).map(move |b| vec![a, b]))
@@ -108,6 +127,11 @@ mod ring_polynomial_tests {
     }
 
     #[test]
+    /// Check coefficient admission around the 4096-bit cap and reject excessive products/shifts.
+    /// An integer 2^4094 fits, while 2^4096 and the square of 2^2048 do not. Both
+    /// i32 shift extremes must decline through this recognizer before coefficient
+    /// materialization. The private sine remains numerically cold; other recognizers
+    /// and process-global pi-cache warmth are outside these assertions.
     fn coefficient_and_shift_limits_precede_unbounded_expansion() {
         let within = Rational::from_bigint(BigInt::one() << 4094_usize);
         assert!(RingRecognition::constant(within).is_some());
