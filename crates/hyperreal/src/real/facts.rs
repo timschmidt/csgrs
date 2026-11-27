@@ -1,6 +1,7 @@
-//! Structural fact and zero/sign queries for [`Real`].
+//! Documentation anchor for structural fact and zero/sign queries on [`crate::Real`].
 //!
-//! The implementations currently live in [`super::arithmetic`] because fact
-//! queries read the same representation invariants that arithmetic constructors
-//! maintain. Keeping them adjacent avoids accidental approximation and keeps
-//! predicate-only callers on cheap symbolic paths.
+//! This module defines no fact queries. Individual scalar queries live in
+//! [`super::arithmetic`], including its `arithmetic/facts.rs` implementation file;
+//! [`super::exact_set`] owns aggregate summaries of borrowed scalar sequences.
+//! Those implementations determine which facts are structural, cached or require
+//! explicit refinement. This anchor supplies navigation, not another fact cache.

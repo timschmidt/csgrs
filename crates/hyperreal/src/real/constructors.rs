@@ -1,9 +1,7 @@
-//! Constructor-focused helpers for [`Real`].
+//! Documentation anchor for constructing [`crate::Real`].
 //!
-//! The current constructor behavior remains in `arithmetic.rs`; this module
-//! keeps the requested split layout.
-//! Public and internal `Real` constructors live in [`super::arithmetic`].
-//!
-//! Constructor simplification is intentionally close to arithmetic rewrites and
-//! structural facts. Moving it out before the representation settles risks
-//! hiding performance-sensitive invariants that keep exact forms symbolic.
+//! This module defines no constructors of its own. Public and internal
+//! constructors live in [`super::arithmetic`], where symbolic simplification,
+//! arithmetic rewrites and structural queries share the same private
+//! representation invariants. This anchor preserves the semantic grouping in
+//! private documentation without introducing another construction path.

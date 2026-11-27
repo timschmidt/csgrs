@@ -3,6 +3,14 @@
 //! These facts sit in `hyperreal` because they are about scalar representation,
 //! not about any particular vector, matrix, or predicate object. Geometry crates
 //! can carry the summary as object metadata without inspecting rational storage.
+//!
+//! A "set" here is the supplied sequence of references: repeated values count
+//! repeatedly, and no uniqueness or geometric relationship is checked. Rational
+//! eligibility follows the current Real representation, not a general decision
+//! of mathematical rationality. Sign/zero facts can also describe symbolic values.
+//! The returned snapshot contains no source identity, lifetime binding, predicate
+//! policy or certainty receipt. Consumers must keep it associated with the values
+//! that were scanned and obtain new facts when that association changes.
 
 use crate::{Rational, RationalStorageClass, Real, RealSign, ZeroKnowledge};
 
@@ -29,9 +37,9 @@ pub enum RealExactSetDenominatorKind {
 pub enum RealExactSetDyadicExponentClass {
     /// All dyadic denominators are `2^0`.
     Integer,
-    /// The largest dyadic denominator shift is at most 32 bits.
+    /// The largest dyadic denominator shift is in 1..=32 bits.
     Small,
-    /// The largest dyadic denominator shift is at most 128 bits.
+    /// The largest dyadic denominator shift is in 33..=128 bits.
     Medium,
     /// The largest dyadic denominator shift is larger than 128 bits.
     Large,
@@ -67,6 +75,13 @@ pub enum RealExactSetSignPattern {
 /// schedules, while [`crate::Rational`] keeps ownership of its representation
 /// and reduction policy, preserving object-level rational structure before
 /// scalar expansion.
+///
+/// Use [`Self::from_reals`] or [`Real::exact_set_facts`] to obtain coherent facts.
+/// Fields are public and query methods trust them: manually assembled or edited
+/// counts/flags are not revalidated against each other or against any source.
+/// Equality compares these summary fields, not the scanned values or their order.
+/// Independent sequences can have identical summaries. Reusing one as a proof for
+/// different coordinates is therefore not justified by this type.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RealExactSetFacts {
     /// Number of values examined.
@@ -84,14 +99,18 @@ pub struct RealExactSetFacts {
     /// to sign and shift work. The count is deliberately coarse: callers learn
     /// that the shape exists, not the exponent or numerator.
     pub exact_power_of_two_count: usize,
-    /// Number of values structurally known to be exactly one.
+    /// Number of recognized exact-rational values equal to one.
+    /// Symbolic/computable representations are not separately searched for this identity.
     pub known_one_count: usize,
-    /// Number of values structurally known to be exactly minus one.
+    /// Number of recognized exact-rational values equal to minus one.
+    /// Symbolic/computable representations are not separately searched for this identity.
     pub known_minus_one_count: usize,
     /// Whether every examined value is represented as an exact rational.
+    /// False for an empty sequence; this is eligibility, not vacuous universal truth.
     pub all_exact_rational: bool,
     /// Whether every examined value is an exact rational with a power-of-two
     /// denominator.
+    /// False for an empty sequence, and does not require equal dyadic exponents.
     pub all_dyadic: bool,
     /// Whether every examined value is exact rational and all reduced
     /// denominators are equal.
@@ -99,6 +118,9 @@ pub struct RealExactSetFacts {
     /// This is a common-scale eligibility fact only. It does not reveal the
     /// denominator itself, so callers remain on the right side of the scalar
     /// abstraction boundary.
+    /// This compares reduced denominators, not whether a common denominator could
+    /// be constructed. In particular, zero has denominator one and can prevent
+    /// a sequence of otherwise equal fractional denominators from qualifying.
     pub shared_denominator: bool,
     /// Largest exact-rational storage bucket seen in the borrowed set.
     ///
@@ -106,6 +128,9 @@ pub struct RealExactSetFacts {
     /// Callers can use it to avoid repeatedly selecting expensive exact routes
     /// for very large scalar coordinates. The bucket is collected
     /// opportunistically during the same scan as the denominator facts.
+    /// Detailed rational queries use canonical values, including for lazy internal
+    /// ratios. None means no rational representation was encountered; in a mixed
+    /// sequence this still describes its rational subset, not every value's cost.
     pub max_rational_storage: Option<RationalStorageClass>,
     /// Coarse largest dyadic denominator exponent when all values are dyadic.
     ///
@@ -113,6 +138,8 @@ pub struct RealExactSetFacts {
     /// object-level kernels decide whether dyadic exact arithmetic will remain
     /// a cheap shift schedule or should be treated as a larger exact-rational
     /// route while preserving object structure before scalar expansion.
+    /// None for empty, mixed/nonrational or non-dyadic sequences. Unlike the
+    /// denominator-kind query, this does not require all denominators to be equal.
     pub max_dyadic_exponent_class: Option<RealExactSetDyadicExponentClass>,
     /// Number of values structurally known to be exactly zero.
     ///
@@ -120,6 +147,7 @@ pub struct RealExactSetFacts {
     /// reaching into rational storage.
     pub known_zero_count: usize,
     /// Number of values structurally known to be nonzero.
+    /// A certified nonzero value may still have unknown sign.
     pub known_nonzero_count: usize,
     /// Number of values whose zero status is not structurally certified.
     pub unknown_zero_count: usize,
@@ -129,12 +157,31 @@ pub struct RealExactSetFacts {
     pub known_negative_count: usize,
 }
 
+/// Construct scalar-owned snapshots and select schedules from their stored fields.
 impl RealExactSetFacts {
     /// Returns facts for a borrowed set of reals.
     ///
     /// Empty sets are not considered all-exact: callers use these facts to
     /// select a concrete exact schedule, and no schedule is meaningful without
     /// at least one scalar.
+    ///
+    /// Consume a finite iterator whose total count fits usize, in its supplied
+    /// order, without retaining references or deduplicating values. For each value,
+    /// gather structural zero/sign facts first, then inspect its borrowed rational
+    /// representation. Continue scanning after any eligibility flag becomes false:
+    /// rational-subset and sign/zero counts still cover the entire sequence.
+    /// Known zero, nonzero and unknown-zero counts partition the visited values.
+    /// Recognized rational zero is an integer and dyadic, but not a signed power
+    /// of two. Signed powers include positive/negative integral and fractional powers.
+    ///
+    /// No approximation/refinement request or geometry predicate is issued by
+    /// this scan. Scalar structural queries can use existing certified caches,
+    /// and rational queries can canonicalize lazy ratios and retain learned facts.
+    /// The local accumulator has fixed size, but arbitrary iterator work, scalar
+    /// coefficient size, canonicalization, allocations and tracing are not bounded
+    /// by a caller budget here. Iterator/scalar panics propagate; this API has no
+    /// typed exhaustion or partial-result contract. Counter overflow is not checked
+    /// separately from ordinary usize arithmetic.
     pub fn from_reals<'a, I>(values: I) -> Self
     where
         I: IntoIterator<Item = &'a Real>,
@@ -230,12 +277,14 @@ impl RealExactSetFacts {
 
     /// Returns true when the set contains at least one value and all values are
     /// exact rationals.
+    /// Consults only len and all_exact_rational; it does not rescan or cross-check counts.
     #[inline]
     pub fn is_nonempty_exact_rational(self) -> bool {
         self.len != 0 && self.all_exact_rational
     }
 
     /// Returns true when a dyadic exact schedule can be selected directly.
+    /// Requires nonempty rational eligibility and all_dyadic, not a common exponent.
     #[inline]
     pub fn has_dyadic_schedule(self) -> bool {
         self.is_nonempty_exact_rational() && self.all_dyadic
@@ -256,6 +305,9 @@ impl RealExactSetFacts {
     /// Signed-permutation and axis-aligned transforms can use this as a cheap
     /// route selector while still leaving geometric decisions to exact
     /// predicates.
+    /// This gate does not require all_exact_rational: known structural zeros may
+    /// qualify alongside the recognized rational +/-1 counts. It requires a
+    /// nonempty sequence, no unknown zero status, and matching total unit/zero counts.
     #[inline]
     pub fn has_signed_unit_schedule(self) -> bool {
         self.len != 0
@@ -265,6 +317,8 @@ impl RealExactSetFacts {
 
     /// Returns true when an equal-denominator exact schedule can be selected
     /// directly.
+    /// Requires a nonempty all-rational snapshot and the equal-denominator flag;
+    /// it neither computes an LCM nor creates a denominator for the caller.
     #[inline]
     pub fn has_shared_denominator_schedule(self) -> bool {
         self.is_nonempty_exact_rational() && self.shared_denominator
@@ -276,6 +330,8 @@ impl RealExactSetFacts {
     /// This is the scalar fact that vector, matrix, and predicate objects carry
     /// upward for Yap-style exact geometric computation: choose the arithmetic
     /// package from preserved object facts before expanding scalar arithmetic.
+    /// Dyadic values with unequal reduced denominators return None even though
+    /// has_dyadic_schedule can be true; this query first requires equality of scale.
     #[inline]
     pub fn shared_denominator_kind(self) -> Option<RealExactSetDenominatorKind> {
         if !self.has_shared_denominator_schedule() {
@@ -294,6 +350,10 @@ impl RealExactSetFacts {
     /// facts gathered during [`Self::from_reals`]. It does not refine
     /// computable values, so callers can use it speculatively in hot exact
     /// dispatch code.
+    /// Empty takes precedence. Unknown zero status or an incomplete partition into
+    /// zero/positive/negative counts yields Unknown, including known-nonzero values
+    /// with unresolved sign. Otherwise distinguish one occupied sign class from
+    /// MixedKnown. Stored public fields are trusted; no values are consulted again.
     #[inline]
     pub fn sign_pattern(self) -> RealExactSetSignPattern {
         if self.len == 0 {
@@ -317,6 +377,9 @@ impl RealExactSetFacts {
     }
 }
 
+/// Fold one recognized rational's cost bucket into an optional running maximum.
+/// None is the initial no-rational state; any next bucket produces Some. Keep the
+/// current bucket on an equal rank. This orders cost classes, not numeric values.
 fn max_storage_class(
     current: Option<RationalStorageClass>,
     next: RationalStorageClass,
@@ -327,6 +390,8 @@ fn max_storage_class(
     })
 }
 
+/// Order Zero < WordSized < MultiLimb < VeryLarge without relying on enum discriminants.
+/// The ranks support a coarse maximum only; they are neither byte counts nor work limits.
 fn storage_rank(storage: RationalStorageClass) -> u8 {
     match storage {
         RationalStorageClass::Zero => 0,
@@ -336,6 +401,9 @@ fn storage_rank(storage: RationalStorageClass) -> u8 {
     }
 }
 
+/// Bucket an already established maximum denominator exponent at 0, 32 and 128.
+/// Accept every u64 shift; Large covers all values above 128. This does not test
+/// rationality, bound a numerator or decide whether a later shift is affordable.
 fn dyadic_exponent_class(shift: u64) -> RealExactSetDyadicExponentClass {
     match shift {
         0 => RealExactSetDyadicExponentClass::Integer,

@@ -1,6 +1,6 @@
-//! Constant-value constructors and cached nodes for [`Computable`].
+//! Documentation anchor for constants and cached nodes of [`crate::Computable`].
 //!
-//! Constants remain implemented in [`super::node`] because the constructors
-//! share representation caches with the core expression enum. Keeping those
-//! constructors adjacent avoids extra module boundaries in cold approximation
-//! setup while still documenting this semantic area.
+//! This module defines no constructors or caches of its own. Constant constructors
+//! remain in [`super::node`], alongside the expression representation and caches
+//! they use. This anchor makes that semantic area discoverable in private docs;
+//! it does not create a second constant store or alter initialization behavior.

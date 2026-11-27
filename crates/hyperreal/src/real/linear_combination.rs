@@ -1,6 +1,6 @@
-//! Hot-path linear-combination and transform-style helpers for [`Real`].
+//! Documentation anchor for linear combinations and transforms of [`crate::Real`].
 //!
-//! The implementations currently live in [`super::arithmetic`] near the exact
-//! rational and symbolic constructors they reuse. Dot products and affine
-//! combinations deliberately reduce symbolic structure before approximation and
-//! share exact-rational denominators where possible.
+//! This module defines no arithmetic entry points. Implementations remain in
+//! [`super::arithmetic`], alongside the rational and symbolic constructors they
+//! reuse. Dot products and affine combinations select retained exact-rational or
+//! symbolic paths there; this anchor neither evaluates nor reassociates a sum.

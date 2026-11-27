@@ -702,7 +702,7 @@ impl Real {
     ///
     /// This keeps conjugate-product formation, norm construction, and the two
     /// final quotient reductions in the scalar layer. Division by an exact
-    /// zero norm returns [`Problem::DivideByZero`](crate::Problem::DivideByZero).
+    /// zero norm returns [`Problem::DivideByZero`].
     pub fn exact_rational_complex_quotient_known_exact(
         left: [&Real; 2],
         right: [&Real; 2],
@@ -760,7 +760,7 @@ impl Real {
     /// Fixed-size matrix crates use this aggregate entry point to keep all nine
     /// cofactors and their shared determinant reciprocal inside the scalar
     /// representation layer. Division by a singular exact matrix returns
-    /// [`Problem::DivideByZero`](crate::Problem::DivideByZero).
+    /// [`Problem::DivideByZero`].
     pub fn exact_rational_matrix3_inverse_known_exact(
         matrix: [[&Real; 3]; 3],
     ) -> Result<[[Real; 3]; 3], crate::Problem> {
@@ -786,7 +786,7 @@ impl Real {
     ///
     /// The scalar aggregate keeps minors and cofactors in the rational layer
     /// and wraps only the final result. Division by a singular exact matrix returns
-    /// [`Problem::DivideByZero`](crate::Problem::DivideByZero).
+    /// [`Problem::DivideByZero`].
     pub fn exact_rational_matrix4_inverse_known_exact(
         matrix: [[&Real; 4]; 4],
     ) -> Result<[[Real; 4]; 4], crate::Problem> {

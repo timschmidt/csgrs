@@ -1,9 +1,7 @@
-//! Parse and display helpers for [`Rational`].
+//! Documentation anchor for parsing and displaying [`crate::Rational`].
 //!
-//! Parsing behavior remains in `arithmetic.rs`; this file exists to match the
-//! planned split layout.
-//! Rational parsing implementations live in [`super::arithmetic`].
-//!
-//! Parsing stays close to the representation constructors so decimal,
-//! scientific, and fractional input can reuse canonicalization and
-//! small-constant fast paths.
+//! This module defines no parser or formatter. The implementations live in
+//! [`super::arithmetic`], whose included `arithmetic/format_parse.rs` shares the
+//! rational representation constructors and canonicalization helpers. This
+//! anchor preserves the semantic area in private documentation without moving
+//! or duplicating those implementations.

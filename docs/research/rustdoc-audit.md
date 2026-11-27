@@ -15547,6 +15547,117 @@ completed API/support audits. Root AGENTS.md continues to require 100% public,
 private and generated Rustdoc. Hyperreal gaps and the repository-wide audit remain
 open; the owner waiver applies to full checks, not the documentation mandate.
 
+## Hyperreal exact-set snapshots and private documentation anchors (2026-11-27)
+
+Whole-file review on target revision 10d931e98dff84e21da64e721e2f661462a83b41:
+
+- crates/hyperreal/src/real/exact_set.rs (346 -> 414 lines).
+- src/rational/parse.rs (9 -> 7), src/computable/constants.rs (6 -> 6),
+  src/real/approximation.rs (6 -> 7), src/real/constructors.rs (9 -> 7),
+  src/real/facts.rs (6 -> 7), and src/real/linear_combination.rs (6 -> 6),
+  all relative to crates/hyperreal.
+- Three comment-only link corrections in src/real/arithmetic/facts.rs, around
+  complex quotient and matrix inverse entry points. Only the affected methods
+  and other selected fact/query excerpts were read; this 1,827-line file receives
+  no whole-file review credit in this batch.
+
+The owning layer is scalar representation introspection and its documentation.
+P1/P3/P4/P5/P6/P19/P36/P37 and the admission protocol require conservative facts,
+source association, explicit certainty/resource scope and preserved dispatch.
+The domain is finite borrowed Real sequences whose length fits usize, including
+rational, symbolic, computable, empty and repeated inputs. Query methods consume
+publicly editable snapshots without source validation. The baseline exact-set
+unit regression passed before the source edit. Missing acceptance witnesses were
+Rustdoc on three private classification helpers, unclear snapshot/cost limits,
+and absent medium/large exponent boundary coverage in that existing unit test.
+
+The exact-set module now has 45 full Rustdoc blocks, covering its four public
+carrier/enumeration types, fields/variants, implementation group and all eleven
+function declarations. Review and focused probes established:
+
+- A set is the iterator sequence, with repeated references counted repeatedly.
+  Eligibility recognizes existing Real rational storage; absence is not proof
+  of mathematical irrationality. Structural zero/sign counts also cover symbolic
+  values. Empty sequences deliberately fail nonempty schedule gates.
+- The scan gathers structural facts before rational facts for each element and
+  continues after global eligibility becomes false. Rational subset/storage counts
+  still describe the entire visited sequence. Zero is integral/dyadic but not a
+  signed power of two; +/-1 counts are restricted to recognized rational values.
+- Equal reduced denominators differ from the existence of a constructible common
+  scale. A zero's denominator one can disqualify otherwise equal fractional
+  denominators. Unequal dyadic scales can still select the dyadic schedule while
+  shared_denominator_kind returns None. Reduced scale buckets have boundaries
+  0, 1..=32, 33..=128, and above 128.
+- Storage maximum ranks Zero, WordSized, MultiLimb and VeryLarge, retaining the
+  existing maximum on ties. It is a cost-class ordering, not a numeric order or
+  resource bound. Mixed sequences retain their rational subset's storage maximum
+  but have no all-dyadic exponent class. Detailed queries can canonicalize lazy
+  ratios, so the class is not a claim about the unreduced backing allocation.
+- The scan issues no approximation/refinement request at this layer. Scalar
+  queries can read certified caches, canonicalize ratios and retain learned facts.
+  A fixed-size accumulator does not bound iterator work, coefficient complexity,
+  allocation, tracing or canonicalization. There is no caller resource budget,
+  typed exhaustion or partial result; ordinary panic/counter arithmetic applies.
+- Snapshots retain no source reference/identity, policy or certainty receipt.
+  Public fields can be edited, and query methods do not cross-validate them.
+  Equality compares summary fields, not values or order. Independent value sets
+  can have equal summaries; a snapshot stays unchanged when later source values
+  or certified caches change. Consumers own continued source association.
+- Sign-pattern queries give empty precedence, then require a complete known
+  zero/positive/negative partition before classifying. Known nonzero alone need
+  not establish a sign. Signed-unit eligibility does not require the all-rational
+  flag: structural zeros may qualify alongside recognized rational +/-1 values.
+
+The initial warnings-denied private build exposed six unresolved type links in
+empty documentation-anchor modules and three redundant explicit error links.
+Those links were corrected without lint allowances. The six modules now explicitly
+state that they contain no implementation and point to its actual owner; the Real
+approximation anchor distinguishes primitive egress in convert from certified
+queries in arithmetic. Their prose no longer implies a second constructor/cache
+or asserts unmeasured performance effects from the module boundary. Initial
+findings were observed in tool output and retained as a structured finding summary;
+the successful doc rerun replaced the original local doc.log.
+
+After the final source edit:
+
+- The existing all-feature Hyperreal exact-set unit regression passed, as it did
+  before editing. The existing Hyperlattice vector common-scale regression and
+  Hyperlimit unknown-zero geometry-facts regression each passed with all features.
+  These are three focused existing tests, not the complete crate suites.
+- A warnings-denied temporary consumer against the actual built Hyperreal library
+  checked exponent/storage edges at shifts 0/1/32/33/63/64/128/129/4094/4095, reduced
+  equal denominators, zero/mixed-scale exclusions, integer/signed-power counts,
+  symbolic/rational subsets, duplicate references and equal summaries of distinct
+  values. No source tests, fixtures or arithmetic expectations were weakened.
+- That consumer also demonstrated public-field trust and stale snapshots without
+  using forged metadata to perform geometry. Two recorded scans of a three-rational
+  fixture each had one real/exact_set_facts/scan and three real/structural_facts/
+  exact-rational events, with zero observed rational temporary/reduction/GCD counts.
+  This finite trace is not a universal allocation or no-canonicalization claim.
+- For pi-103993/33102, the first summary retained Unknown. An explicit external
+  refinement to -128 certified positive; a subsequent summary reported positive
+  without acquiring rational eligibility. The old summary remained Unknown.
+  Final rebuilt probe facts and full trace output matched its earlier run exactly.
+- Private cargo doc passed for the actual all-feature library with warnings and
+  broken/private links denied. Every full exact-set block and each of the six
+  navigation blocks rendered (51 total), including separate pages for all three
+  private helpers. The existing full Hyperreal private-item coverage deficit is
+  still open; a successful documentation build does not enforce missing-doc coverage.
+- All eight changed Rust files have byte-identical noncomment/nonblank source
+  compared with baseline. Function signatures, order, trace hooks, assertions and
+  feature selections remain unchanged. Selected Rustfmt for the seven whole-file
+  edits and git diff --check passed. Full workflow/performance checks remain
+  owner-waived; no universal correctness, completeness or performance claim follows.
+
+Evidence: /tmp/csgrs-hyperreal-exact-set-audit/ retains about 188 KiB of commands,
+unit/downstream/probe logs, full rendered-text matches, source comparisons and the
+initial link-finding summary. The temporary probe executable was removed. Builds
+reused the approximately 5.0 GiB shared target, with no second Cargo target.
+Rational canonicalization/storage, computable structural-query, parent-module,
+dispatch-counter and downstream-call excerpts were supporting context, not new
+whole-file audits. The broader Hyperreal gaps and complete repository audit remain
+open; no focused check required for this documentation batch remains blocked.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
