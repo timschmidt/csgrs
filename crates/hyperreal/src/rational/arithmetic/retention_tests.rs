@@ -143,3 +143,56 @@ fn wide_values_and_replaced_operands_keep_independent_exact_answers() {
         assert_eq!(exact_reference(&actual), expected);
     }
 }
+
+#[test]
+fn interned_constants_do_not_pin_results_computed_with_them() {
+    // Word-sized arithmetic results come from the interned pools, which live
+    // for the whole process (simulation states start out this small).
+    let pooled = |make: &dyn Fn() -> Rational| {
+        let (a, b) = (make(), make());
+        assert!(Arc::ptr_eq(&a.0, &b.0), "{a:?} is not interned");
+        a
+    };
+    let third = Rational::fraction(1, 3).unwrap();
+    let constants = [
+        pooled(&|| &Rational::fraction(3, 2).unwrap() * &Rational::new(2)),
+        pooled(&|| &Rational::fraction(-3, 2).unwrap() * &Rational::new(2)),
+        pooled(&|| &Rational::fraction(1, 128).unwrap() * &Rational::new(2)),
+        pooled(&|| &Rational::fraction(-5, 21).unwrap() * &(&third * &Rational::new(9))),
+        Rational::one(),
+        Rational::minus_one(),
+    ];
+    for constant in &constants {
+        let pooled = Arc::downgrade(&constant.0);
+        let value = Rational::fraction(5_000_000_011_i64, 1_000_000_007).unwrap();
+        // Fill the value's own write-once slots, so later results can only be
+        // retained on the interned partner.
+        for partner in 0..3_i64 {
+            let partner = Rational::fraction(17 + partner, 1_000_000_009).unwrap();
+            let _ = &value * &partner;
+            let _ = &value + &partner;
+            let _ = &value - &partner;
+        }
+        let product = &value * constant;
+        let sum = &value + constant;
+        let difference = constant - &value;
+        let products = Arc::downgrade(&product.0);
+        let sums = Arc::downgrade(&sum.0);
+        let differences = Arc::downgrade(&difference.0);
+        assert_eq!(
+            exact_reference(&product),
+            exact_reference(&value) * exact_reference(constant)
+        );
+        drop((product, sum, difference, value));
+        assert!(
+            products.upgrade().is_none(),
+            "{constant:?} pinned a product"
+        );
+        assert!(sums.upgrade().is_none(), "{constant:?} pinned a sum");
+        assert!(
+            differences.upgrade().is_none(),
+            "{constant:?} pinned a difference"
+        );
+        assert!(pooled.upgrade().is_some());
+    }
+}

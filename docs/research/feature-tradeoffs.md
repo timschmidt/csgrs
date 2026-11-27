@@ -126,6 +126,24 @@ retention. "Shipped" sizes are linked release or deployed images.
   unavailable in practice.
 
 
+### Sealed interned rationals (27 November 2026)
+
+- **Capability:** none new; removes process-lifetime retention found by the
+  hyperphysics resource atlas (spring residue about equal to peak heap).
+- **Memory:** a 1024-step exact spring integration that starts from interned
+  states leaves 944 B instead of 3.8 MB after all values are dropped; the
+  pinned amount grew about n^1.75 with the step count.
+- **Performance:** 151 Hyperreal rational micro benchmarks, two alternating
+  passes per side, geometric mean 1.0006 (neutral). The spring probe is about
+  30% faster (65 ms to 45 ms). Repeated arithmetic on the same small values
+  loses cross-call cache hits: `rational_matmul_8` (8×8 of small fractions)
+  +5% and `tanh_rational_one` +10%, both confirmed in reruns.
+  `rational_clone_pair` +13% is code layout: it clones large non-interned
+  values and never reaches the changed code.
+- **Code size:** one constructor (about 30 lines) and one retention test.
+- **Reconsider:** if repeated small-constant workloads matter more than
+  retention, let sealed owners keep results that are themselves interned.
+
 ### QR frame proposal backoff (25 November 2026)
 
 - **Capability:** none new; a cheaper frame-proposal schedule.

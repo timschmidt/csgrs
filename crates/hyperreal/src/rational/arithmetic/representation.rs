@@ -288,12 +288,17 @@ static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(5_u8));
 static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));
 static RATIONAL_ZERO: LazyLock<Rational> = LazyLock::new(|| {
-    Rational::from_parts_raw(NoSign, BigUint::ZERO, BigUint::one())
+    Rational::interned(NoSign, BigUint::ZERO, BigUint::one())
 });
 static RATIONAL_ONE: LazyLock<Rational> =
-    LazyLock::new(|| Rational::from_parts_raw(Plus, BigUint::one(), BigUint::one()));
+    LazyLock::new(|| Rational::interned(Plus, BigUint::one(), BigUint::one()));
 static RATIONAL_MINUS_ONE: LazyLock<Rational> =
-    LazyLock::new(|| Rational::from_parts_raw(Minus, BigUint::one(), BigUint::one()));
+    LazyLock::new(|| Rational::interned(Minus, BigUint::one(), BigUint::one()));
+// Result slot of the inert entries that seal interned values. It is never
+// handed out, so nothing is ever cached on it.
+static SEALED_PLACEHOLDER: LazyLock<Rational> = LazyLock::new(|| {
+    Rational::from_parts_raw(NoSign, BigUint::ZERO, BigUint::one())
+});
 static SMALL_POSITIVE_RATIONALS: [OnceLock<Rational>; 63] =
     [const { OnceLock::new() }; 63];
 static SMALL_NEGATIVE_RATIONALS: [OnceLock<Rational>; 63] =

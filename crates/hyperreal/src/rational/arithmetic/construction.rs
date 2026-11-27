@@ -11,6 +11,40 @@ impl Rational {
         }))
     }
 
+    /// A process-lifetime value for the interned constant pools.
+    ///
+    /// Every cache slot is filled with an inert entry first. Cached results
+    /// are held strongly and carry caches of their own, so a slot on a value
+    /// that is never dropped would pin the whole chain of results computed
+    /// after it (for example every state of a simulation stepped by an
+    /// interned `dt`). Sealed values cache nothing; their partners still do.
+    fn interned(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
+        let value = Self::from_parts_raw(sign, numerator, denominator);
+        let inert = || CachedRationalLinearEntry {
+            other: std::sync::Weak::new(),
+            kind: CachedRationalLinearKind::Product,
+            result: SEALED_PLACEHOLDER.clone(),
+        };
+        let sealed = |entry| {
+            let slot = OnceLock::new();
+            let _ = slot.set(entry);
+            slot
+        };
+        let _ = value.product_cache.set(CachedRationalProduct {
+            other: Some(std::sync::Weak::new()),
+            result: SEALED_PLACEHOLDER.clone(),
+        });
+        let _ = value.linear_cache.set(Box::new(CachedRationalArithmetic {
+            primary: inert(),
+            secondary: sealed(inert()),
+            tertiary: sealed(inert()),
+            quaternary: sealed(inert()),
+            quinary: sealed(inert()),
+            square_reduction: OnceLock::new(),
+        }));
+        value
+    }
+
     #[inline]
     pub(crate) fn from_parts_raw_unreduced(
         sign: Sign,
@@ -216,7 +250,7 @@ impl Rational {
             NoSign => return Some(Self::zero()),
         };
         let value = values.get(index)?.get_or_init(|| {
-            Self::from_parts_raw(
+            Self::interned(
                 sign,
                 BigUint::from((index + 2) as u8),
                 BigUint::one(),
@@ -244,7 +278,7 @@ impl Rational {
             NoSign => return Some(Self::zero()),
         };
         let value = values.get(index)?.get_or_init(|| {
-            Self::from_parts_raw(
+            Self::interned(
                 sign,
                 BigUint::from(magnitude),
                 BigUint::from(denominator),
@@ -275,7 +309,7 @@ impl Rational {
             NoSign => return Some(Self::zero()),
         };
         let value = values[index].get_or_init(|| {
-            Self::from_parts_raw(
+            Self::interned(
                 sign,
                 BigUint::from(magnitude),
                 BigUint::from(denominator),
