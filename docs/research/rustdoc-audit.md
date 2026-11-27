@@ -10387,6 +10387,139 @@ docs. The next contiguous boundary is the dedicated `impl Matrix3` beginning
 with `exact_facts`, currently core.rs line 11061. Those public APIs and the
 remaining Matrix4 APIs/tests still require audit.
 
+## 2026-11-27: dedicated Matrix3 API and signed-axis decoding
+
+Scope and acceptance witness:
+
+- Continued from `c228286e6`, reviewing every line of core.rs's original
+  11061–11357 block: the dedicated Matrix3 impl, SignedAxis4 and its private
+  decoding helpers. The 297-line block becomes 401 lines. Expanded 22 public
+  method docs plus the enum/eight variant docs, and added six missing groups
+  for two impl blocks and four private functions/methods: 37 groups total.
+- Read the structural collector, scalar equality, triangular inverse/solve
+  kernels, immediate batch transformer, determinant/inverse dispatchers and
+  signed-permutation consumers needed to explain the contracts. Added a doc
+  to the existing signed-permutation comparison test. Context reads and
+  execution do not claim new whole-file coverage for remaining tests or APIs.
+- Owner: Hyperlattice fixed-size arithmetic and representation inspection over
+  Hyperreal; properties P1 exact values, P4 structural evidence/query order and
+  P6 distinct zero/unknown failures. Inputs include rational/symbolic matrices,
+  caller-established triangular shapes, diagonal scalars, vector batches and
+  signed coordinate selectors. Shape-specific methods retain their existing
+  preconditions rather than claiming runtime validation.
+- Missing acceptance witness: public docs distinguishing shape assumptions
+  from checked divisors, snapshot facts from live caches, matrix scaling from
+  affine scaling, ordinary versus checked inversion and branch-specific signal
+  attachment; private decoding contracts were absent. Reproduced these gaps
+  and the selected behavior on the starting revision before repository edits.
+
+Contracts clarified:
+
+- exact_facts currently invokes the full structural collector before extracting
+  the scalar-set packet. Both fact queries return conservative snapshots, not
+  automatic mutation tracking or complete mathematical classification.
+- Diagonal construction allows zero/symbolic values. Its inverse takes three
+  ordinary reciprocals in ascending index order; diagonal division computes all
+  three before nine row-major column scales. Failure is not bypassed by a zero
+  dividend, and these ordinary APIs add no checked unknown-status guard.
+- Named triangular methods trust their zero triangle, including checked forms.
+  Checked means ascending diagonal nonzero guards before reciprocals, not shape
+  validation. Upper right solves advance coordinates; lower right solves reverse
+  them after the same ascending reciprocal construction. No inverse matrix is
+  needed for these row solves, and failure publishes no partial quotient.
+- Diagonal-vector division tests structural equality d0==d1 then d0==d2 and
+  can share one reciprocal for equal symbolic values. It prescales three vector
+  coordinates and always uses active row combinations, without ordinary
+  identity/diagonal shortcuts. Equivalent scalar expressions need not compare
+  structurally equal to the output of a different construction schedule.
+- uniform_scale constructs sI across all three coordinates, including a
+  homogeneous weight; it is not diag(s,s,1). Its inverse takes one reciprocal
+  and duplicates that scalar. Immediate vector transforms do not normalize
+  homogeneous coordinates. Batches collect minimal shape facts once, retain
+  input order, accept empty input and allocate output without a total-work bound.
+- Ordinary inverse dispatch includes rational, identity, diagonal, triangular,
+  affine and cofactor schedules; it is not always an adjugate construction.
+  Checked routes guard their actual diagonal/determinant divisors. Signal-aware
+  identity/diagonal/triangular shortcuts bypass attachment; affine routes attach
+  to their relevant divisors; dense/general cofactors attach after construction.
+  The dense signal route bypasses the ordinary rational aggregate shortcut.
+- Determinant is division-free first-row expansion and returns an expression,
+  not a sign or nonsingularity certificate. SignedAxis4 names one coordinate
+  and sign; a collection needs a separate uniqueness precondition for
+  permutation-specific inverses/division. Private helpers decode index/sign,
+  construct exact ±1 or apply only the sign to an already selected scalar.
+- Removed historical performance/citation prose from these method descriptions;
+  no timing or memory assertion replaces it. All bodies, predicates, trace
+  events, attributes and original test assertions remain unchanged.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and
+  blank lines leaves identical executable source in core.rs and tests/matrix.rs
+  against `c228286e6`.
+- Hyperlattice library builds and fourteen selected original matrix tests passed
+  with all features and no defaults. The all-feature baseline passed the same
+  tests. These cover fact packets, diagonal/uniform/triangular inverses,
+  triangular failures, diagonal/triangular division, prescaled vectors and
+  signed permutations. Direct rustc harnesses used matching Cargo artifacts.
+- Independent Fraction inverse/product expectations checked non-dyadic upper
+  and lower inverses/quotients, three diagonal families and their vector
+  applications. Results also composed with their sources to identity. Trace
+  mode asserted nine diagonal/triangular quotient scales, three vector scales,
+  the active row-combination route and uniform reciprocal selection.
+- Every diagonal position was tested with zero in ordinary/checked triangular
+  inverses and checked zero-dividend solves; unknown entries were checked in
+  each position. First-unknown/later-zero versus first-zero/later-unknown
+  fixtures confirmed guard order. Deliberately violated triangular assumptions
+  demonstrated that checked methods still ignore the excluded triangle rather
+  than reject it; these are limitation witnesses, not supported-domain claims.
+- Zero diagonal-vector application and zero matrix dividends still returned
+  DivideByZero for a zero divisor. Uniform-scale zero construction succeeded,
+  while its inverse failed. Literal diagonal and symbolic π reciprocal
+  constructions retained their expected values and uniform-selection trace.
+- The initial symbolic vector probe incorrectly required structural equality
+  between an active combination and a simpler PiInv expression. Preserved its
+  failed log and replaced that expectation with an explicit structural
+  difference assertion plus bounded numerical consistency: each difference's
+  certified -128 rational interval contained zero with width below 2^-60.
+  These enclosures are not an exact equality proof. No original repository
+  assertion or validation policy was weakened, and no implementation was changed.
+- Re-ran the independent nine-fixture determinant/inverse oracle probe from the
+  cofactor audit on this revision, including all three inverse modes and branch
+  counts, symbolic dense entries, ordinary unknown construction and singular
+  rejection. Signal attachment counts retained the documented branch behavior.
+- Literal row-dot expectations checked identity, diagonal and general batches,
+  input order and empty results. Mutation probes kept old snapshots unchanged
+  while new calls reflected changed shape and symbolic representation.
+- Extracted the actual SignedAxis4 definition and private helper bodies into a
+  temporary probe. All eight variants matched expected indices/signs and sign
+  application on zero, integer and π scalars. Public constructor, inverse and
+  vector application matched independent entry/transpose/coordinate formulas
+  for all 4! × 16 = 384 valid signed-permutation layouts. This is finite selector
+  coverage, not a general scalar or arbitrary-matrix correctness claim.
+- Final probes compiled without warnings and completed within 30 seconds;
+  original tests used 60-second process limits. All-feature before/after and
+  no-default probe stdout matched; no-default mode compiled out trace assertions.
+- Library and integration-target private Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full-text checks found
+  all 37 groups in their owning public/private pages, including private enum
+  methods and free helpers. The added #[test] doc was source-reviewed and its
+  test executed; Rustdoc omits test functions.
+- Cargo checks passed for matrix, mathbench and downstream Hyperspatial including
+  Hyperlimit with all features and no defaults, using --locked --offline -j 2,
+  CARGO_INCREMENTAL=0 and one shared target. Full workflows remain owner-waived.
+  No focused check remains blocked; no performance, sanitizer, size or total-work
+  claim was added. Removed two owned temporary executables; the shared target
+  remains near 2.5 GiB without a duplicate target tree.
+- The root AGENTS.md public/private 100% Rustdoc mandate remains active. This
+  completes this contiguous block, not the full matrix file or repository audit.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix3-api-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix3-api-audit/` generators, probes, source extracts and private
+docs. The next contiguous boundary is the dedicated `impl Matrix4` beginning
+with `from_row_major`, currently core.rs line 11463. Its public methods and
+remaining matrix tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

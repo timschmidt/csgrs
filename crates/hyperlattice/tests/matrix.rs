@@ -1077,6 +1077,11 @@ fn matrix4_known_affine_orthonormal_matches_generic_paths() {
     );
 }
 
+/// Checks a signed-axis layout against a literal inverse, then compares related application paths.
+///
+/// Division and vector/batch application are compared with ordinary matrix
+/// operations on the same valid permutation. These comparisons do not validate
+/// duplicate-axis inputs or independently prove all signed permutations.
 #[test]
 fn matrix4_known_signed_permutation_matches_generic_paths() {
     let rows = [

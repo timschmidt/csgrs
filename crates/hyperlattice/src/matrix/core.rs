@@ -11058,33 +11058,36 @@ impl_matrix!(
     right_divide_matrix4_checked_with_abort
 );
 
+/// Matrix3 representation queries, structural constructors and exact arithmetic methods.
 impl Matrix3 {
-    /// Returns exact-rational representation facts for all matrix entries.
+    /// Returns the scalar-set representation facts from a fresh full matrix snapshot.
     ///
-    /// This exposes the matrix-level common-scale signal without exposing
-    /// rational storage. Callers that retain this fact can select dyadic or
-    /// shared-denominator exact schedules before entering determinant, inverse,
-    /// or predicate preparation code. Object structure stays visible long enough
-    /// to choose the exact arithmetic package.
+    /// The packet covers all nine entries and can guide dyadic/shared-denominator
+    /// arithmetic. Currently this calls the same complete structural collector as
+    /// [`Self::structural_facts`] before extracting its exact-set field. Missing
+    /// rational recognition is not a proof of irrationality. Retained facts are not
+    /// automatically updated after mutation; recompute them for changed entries.
     pub fn exact_facts(&self) -> RealExactSetFacts {
         trace_matrix!("query", "matrix3-exact-facts");
         matrix3_facts(&self.0).public.exact
     }
 
-    /// Returns structural and exact-rational facts for this matrix.
+    /// Collects current shape, scalar representation, entry masks and dependencies.
     ///
-    /// This is the object-level fact boundary for matrix callers: zero/one
-    /// masks, triangular/affine shape, and exact coordinate-set facts are
-    /// gathered together without exposing scalar storage internals. Keeping the
-    /// summary at the matrix layer matches the recommendation to select exact
-    /// geometric algorithms from retained object structure before scalar
-    /// expansion.
+    /// Separate structural and scalar-set passes produce a conservative snapshot,
+    /// including zero/one, triangular and 2D homogeneous-affine facts. Unrecognized
+    /// structure does not establish its mathematical impossibility. The returned
+    /// value is not a live cache or a proof bound to future mutations; callers must
+    /// keep retained evidence aligned with the matrix that produced it.
     pub fn structural_facts(&self) -> Matrix3StructuralFacts {
         trace_matrix!("query", "matrix3-structural-facts");
         matrix3_facts(&self.0).public
     }
 
-    /// Constructs a 3x3 diagonal matrix from known diagonal entries.
+    /// Moves three diagonal scalars into a matrix with exact off-diagonal zeros.
+    ///
+    /// Zero and symbolic entries are valid. Construction establishes diagonal shape,
+    /// not nonsingularity; it performs no inversion or nonzero guard.
     pub fn diagonal(diagonal: [Real; 3]) -> Self {
         trace_matrix!("constructor", "diagonal3");
         let [d0, d1, d2] = diagonal;
@@ -11095,15 +11098,12 @@ impl Matrix3 {
         ])
     }
 
-    /// Constructs the inverse of a known 3x3 diagonal matrix.
+    /// Constructs `diag(1/d0, 1/d1, 1/d2)` using three ordinary scalar reciprocals.
     ///
-    /// This opt-in constructor carries the diagonal object fact from the caller
-    /// instead of rediscovering it with structural probes inside
-    /// [`Matrix3::reciprocal`]. That keeps ordinary inverse/division paths flat
-    /// while preserving the exact diagonal solve `D^-1 = diag(1/d_i)` when the
-    /// geometry layer already knows the matrix shape. The choice follows the
-    /// object-package guidance for exact geometric computation the exact object-structure policy and the diagonal-system specialization in
-    /// Golub and Van Loan, *Matrix Computations*.
+    /// Evaluates reciprocals in index order and stops at the first scalar error,
+    /// then constructs the diagonal matrix. Equal entries do not select reciprocal
+    /// reuse here. Unknown zero status is not separately rejected by a checked
+    /// guard; use a checked matrix inverse when that prerequisite is required.
     pub fn diagonal_inverse(diagonal: [Real; 3]) -> BlasResult<Self> {
         trace_matrix!("constructor", "diagonal3-inverse");
         let [d0, d1, d2] = diagonal;
@@ -11114,16 +11114,14 @@ impl Matrix3 {
         ]))
     }
 
-    /// Divides this matrix on the right by a known 3x3 diagonal matrix.
+    /// Right-divides by `D = diag(d0,d1,d2)` through column scaling.
     ///
-    /// Right division by `D = diag(d0,d1,d2)` is column scaling:
-    /// `A / D = A * diag(1/d0,1/d1,1/d2)`. This explicit path avoids building
-    /// a diagonal inverse matrix and avoids generic matrix multiplication when
-    /// a caller already retained the diagonal object fact. Keeping the route
-    /// opt-in preserves deterministic performance for ordinary matrix division
-    /// while exploiting geometric-object structure. The algebra is the standard
-    /// diagonal linear-system specialization described by Golub and Van Loan,
-    /// *Matrix Computations*.
+    /// Computes `self * D⁻¹`, with entry `(i,j)` equal to `self[i][j]/dj`.
+    /// Constructs all three ordinary reciprocals in index order before nine
+    /// row-major scaling calls. No diagonal matrix or matrix product is materialized.
+    /// Scalar inverse errors propagate even for a zero dividend; unknown divisor
+    /// status is not separately guarded. The array supplies the diagonal values,
+    /// so no additional matrix-shape assertion is needed.
     pub fn div_diagonal(self, diagonal: [Real; 3]) -> BlasResult<Self> {
         trace_matrix!("method", "div-diagonal3");
         let [[a00, a01, a02], [a10, a11, a12], [a20, a21, a22]] = self.0;
@@ -11150,35 +11148,59 @@ impl Matrix3 {
         ]))
     }
 
-    /// Inverts a caller-certified upper-triangular 3x3 matrix.
+    /// Inverts a caller-established upper-triangular matrix by substitution.
     ///
-    /// This skips the generic structural classifier and enters the fixed-size
-    /// triangular substitution kernel directly. Use it only when the object
-    /// layer already knows the matrix is upper triangular.
+    /// The entries below the diagonal must be zero. This precondition is not
+    /// validated: those entries are ignored and the output lower triangle is zero.
+    /// Constructs three ordinary diagonal reciprocals in index order, then the
+    /// upper inverse entries. Scalar inverse errors propagate; unknown zero status
+    /// is not separately rejected. Use [`Self::inverse`] for unclassified matrices.
     pub fn upper_triangular_inverse(self) -> BlasResult<Self> {
         trace_matrix!("method", "upper-triangular3-inverse");
         Ok(Self(invert_matrix3_upper_triangular(&self.0)?))
     }
 
-    /// Checked variant of [`Matrix3::upper_triangular_inverse`].
+    /// Guards diagonal divisors before the known upper-triangular inverse schedule.
+    ///
+    /// Retains the unvalidated shape precondition of [`Self::upper_triangular_inverse`].
+    /// Checks diagonal entries from index zero to two before any reciprocal:
+    /// zero returns `DivideByZero`, unknown returns `UnknownZero`, with no refinement
+    /// by these guards. A successful guard does not validate triangular shape.
     pub fn upper_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "upper-triangular3-inverse-checked");
         Ok(Self(invert_matrix3_upper_triangular_checked(&self.0)?))
     }
 
-    /// Inverts a caller-certified lower-triangular 3x3 matrix.
+    /// Inverts a caller-established lower-triangular matrix by substitution.
+    ///
+    /// The entries above the diagonal must be zero; they are ignored rather than
+    /// validated, and the output upper triangle is zero. Takes ordinary diagonal
+    /// reciprocals from index zero to two before constructing the lower inverse.
+    /// Scalar errors propagate without a separate known-nonzero guard. Use
+    /// [`Self::inverse`] when triangular shape has not been established.
     pub fn lower_triangular_inverse(self) -> BlasResult<Self> {
         trace_matrix!("method", "lower-triangular3-inverse");
         Ok(Self(invert_matrix3_lower_triangular(&self.0)?))
     }
 
-    /// Checked variant of [`Matrix3::lower_triangular_inverse`].
+    /// Guards the three diagonal divisors before known lower-triangular inversion.
+    ///
+    /// The shape precondition of [`Self::lower_triangular_inverse`] remains unchecked.
+    /// Guards run in ascending index order before all reciprocals, returning
+    /// `DivideByZero` for zero or `UnknownZero` for unknown status without refinement.
+    /// Successful divisor checks alone do not certify the matrix shape.
     pub fn lower_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "lower-triangular3-inverse-checked");
         Ok(Self(invert_matrix3_lower_triangular_checked(&self.0)?))
     }
 
-    /// Right-divides by a caller-certified upper-triangular 3x3 matrix.
+    /// Solves `X * divisor = self` for a caller-established upper-triangular divisor.
+    ///
+    /// The dividend is unrestricted. The divisor's lower triangle must be zero;
+    /// it is ignored, not validated. Computes three shared ordinary diagonal
+    /// reciprocals, then solves each row's coordinates from zero to two. Does not
+    /// materialize an inverse. Scalar reciprocal failures propagate, including
+    /// for a zero dividend; there is no separate known-nonzero guard.
     pub fn div_upper_triangular(self, divisor: Self) -> BlasResult<Self> {
         trace_matrix!("method", "div-upper-triangular3");
         Ok(Self(divide_matrix3_by_upper_triangular(
@@ -11186,7 +11208,12 @@ impl Matrix3 {
         )?))
     }
 
-    /// Checked variant of [`Matrix3::div_upper_triangular`].
+    /// Checks diagonal divisors before the known upper-triangular right solve.
+    ///
+    /// Retains the unchecked shape precondition of [`Self::div_upper_triangular`].
+    /// Guards diagonal entries zero through two before constructing reciprocals or
+    /// solving rows. The first zero/unknown returns `DivideByZero`/`UnknownZero`
+    /// without refinement by the guard; no partial quotient is returned.
     pub fn div_upper_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "div-upper-triangular3-checked");
         Ok(Self(divide_matrix3_by_upper_triangular_checked(
@@ -11194,7 +11221,13 @@ impl Matrix3 {
         )?))
     }
 
-    /// Right-divides by a caller-certified lower-triangular 3x3 matrix.
+    /// Solves `X * divisor = self` for a caller-established lower-triangular divisor.
+    ///
+    /// The dividend is unrestricted. The divisor's upper triangle must be zero;
+    /// it is ignored, not validated. Takes three shared ordinary reciprocals in
+    /// ascending diagonal order, then solves each row's coordinates two, one, zero.
+    /// No inverse matrix is built. Scalar errors propagate without a separate
+    /// known-nonzero guard, even when the dividend is zero.
     pub fn div_lower_triangular(self, divisor: Self) -> BlasResult<Self> {
         trace_matrix!("method", "div-lower-triangular3");
         Ok(Self(divide_matrix3_by_lower_triangular(
@@ -11202,7 +11235,13 @@ impl Matrix3 {
         )?))
     }
 
-    /// Checked variant of [`Matrix3::div_lower_triangular`].
+    /// Checks diagonal divisors before the known lower-triangular right solve.
+    ///
+    /// Retains the unchecked shape precondition of [`Self::div_lower_triangular`].
+    /// Guards ascend from diagonal index zero to two, although the later row solves
+    /// run in reverse coordinate order. The first zero/unknown returns
+    /// `DivideByZero`/`UnknownZero` before reciprocals; guards do not refine or
+    /// certify triangular shape, and failure returns no partial quotient.
     pub fn div_lower_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "div-lower-triangular3-checked");
         Ok(Self(divide_matrix3_by_lower_triangular_checked(
@@ -11210,15 +11249,19 @@ impl Matrix3 {
         )?))
     }
 
-    /// Divides `self` by a known 3x3 diagonal matrix and applies the result to
-    /// a single vector.
+    /// Applies `(self / D) * rhs` by prescaling the vector with the diagonal inverse.
     ///
-    /// For `D = diag(d0,d1,d2)`, matrix-vector application follows:
-    /// `(A / D) * x = A * (D^{-1} x)`. Scaling `x` first by the reciprocal
-    /// diagonal then using the normal matrix-vector kernel preserves the exact
-    /// structure while avoiding construction of an intermediate matrix.
+    /// For `D = diag(d0,d1,d2)`, computes `self * (D⁻¹ * rhs)` without building an
+    /// intermediate matrix. Tests `d0 == d1` then `d0 == d2` using structural Real
+    /// equality; a match shares one reciprocal, including for recognized equal
+    /// symbolic values. Otherwise constructs three reciprocals in index order.
+    /// This is not a complete mathematical equality decision.
     ///
-    /// This path is an opt-in structural fast path for a known diagonal divisor.
+    /// After three coordinate scales, uses active three-term row combinations,
+    /// without identity/diagonal matrix shortcuts or local zero pruning. Equivalent
+    /// results need not have the same structural scalar representation as an
+    /// ordinary transform. Scalar inverse errors return before vector application,
+    /// even for a zero vector; no checked unknown-status guard is added.
     pub fn div_diagonal_vector(&self, diagonal: [Real; 3], rhs: &Vector3) -> BlasResult<Vector3> {
         trace_matrix!("method", "div-diagonal3-vector");
         let [d0, d1, d2] = diagonal;
@@ -11239,7 +11282,12 @@ impl Matrix3 {
         Ok(Vector3(mapped))
     }
 
-    /// Constructs a scalar multiple of the 3x3 identity matrix.
+    /// Constructs `scale * I` with the same scalar on all three diagonal entries.
+    ///
+    /// Clones the scalar twice and moves it into the last entry; off-diagonal values
+    /// are exact zeros. Zero and symbolic scales are accepted. All three coordinates
+    /// are scaled, including the homogeneous weight if this matrix is used for 2D
+    /// homogeneous geometry; this is not the affine matrix `diag(scale,scale,1)`.
     pub fn uniform_scale(scale: Real) -> Self {
         trace_matrix!("constructor", "uniform-scale3");
         Self([
@@ -11249,83 +11297,130 @@ impl Matrix3 {
         ])
     }
 
-    /// Constructs the inverse of a known scalar multiple of the 3x3 identity.
+    /// Constructs `(1/scale) * I` with one ordinary scalar reciprocal and two clones.
     ///
-    /// This mirrors [`Matrix4::uniform_scale_inverse`] for 2D homogeneous
-    /// geometry. It is intentionally explicit: previous hidden uniform-scale
-    /// detection regressed adjacent diagonal reciprocal paths because equality
-    /// checks taxed every diagonal matrix. When a caller already knows `A = sI`,
-    /// one scalar inverse and two clones are sufficient.
+    /// The caller supplies the common scale directly, avoiding equality discovery.
+    /// A scalar inverse error returns before matrix construction. Unknown status
+    /// is not separately rejected by a checked guard. All three diagonal entries
+    /// receive the reciprocal, as in [`Self::uniform_scale`].
     pub fn uniform_scale_inverse(scale: Real) -> BlasResult<Self> {
         trace_matrix!("constructor", "uniform-scale3-inverse");
         let inv = scale.inverse()?;
         Ok(Self::uniform_scale(inv))
     }
 
-    /// Transforms all vectors in `rhs` using the same matrix.
+    /// Applies this matrix to every column vector, preserving input order.
     ///
-    /// Matrix facts are computed once per call and reused for every vector.
+    /// Collects identity/diagonal facts once for this immediate batch. Identity
+    /// clones the inputs, a diagonal matrix scales coordinates, and other shapes
+    /// use three row combinations per vector. Empty input returns an empty vector;
+    /// nonempty output owns its storage but scalar sharing can remain. This is not
+    /// a persistent cache and supplies no total scalar-work or allocation bound.
     pub fn transform_vec3_batch(&self, rhs: &[Vector3]) -> Vec<Vector3> {
         trace_matrix!("method", "transform-vector-vec3-batch");
         BatchTransform3::new(self).transform_vector_batch(rhs)
     }
 
-    /// Transforms one vector immediately.
+    /// Applies this matrix immediately to a three-coordinate column vector.
+    ///
+    /// Delegates to borrowed matrix-vector multiplication, including identity and
+    /// diagonal shortcuts. Every coordinate participates; this method performs no
+    /// homogeneous division or normalization and returns a Vector3 directly.
     pub fn transform_vec3(&self, rhs: &Vector3) -> Vector3 {
         trace_matrix!("method", "transform-vector-vec3");
         self * rhs
     }
 
-    /// Returns the matrix inverse using the adjugate and determinant.
+    /// Returns the ordinary matrix inverse selected from shape and representation facts.
     ///
-    /// The ordinary path rejects a definite-zero determinant and otherwise
-    /// propagates scalar arithmetic errors from the selected Real kernel.
+    /// An early three-entry nonzero witness can select a rational aggregate or a
+    /// dense cofactor schedule. Otherwise tries identity, diagonal, upper/lower
+    /// triangular and 2D affine shortcuts before a general scaled adjugate. Upper
+    /// routing excludes affine matrices with diagonal linear blocks. The cofactor
+    /// routes share a determinant reciprocal; structured routes use their own
+    /// divisors and need not construct the full determinant.
+    ///
+    /// Scalar inverse errors propagate. Unknown divisor status alone is not rejected
+    /// by an explicit checked guard; successful symbolic construction is not a
+    /// universal nonsingularity decision. Use [`Self::inverse_checked`] when the
+    /// selected schedule must have known-nonzero divisors.
     pub fn inverse(self) -> BlasResult<Self> {
         trace_matrix!("method", "matrix3-inverse");
         Ok(Self(invert_matrix3(self.0)?))
     }
 
-    /// Returns the matrix inverse after rejecting unknown-zero determinants.
+    /// Inverts through checked divisor schedules while preserving structural dispatch.
+    ///
+    /// Uses the structural priority of [`Self::inverse`]. Rational aggregate results,
+    /// including singular errors, are final; other routes guard their diagonal or
+    /// determinant divisors before reciprocals. Known zero returns `DivideByZero`,
+    /// unknown returns `UnknownZero`, without refinement by those guards. This is
+    /// local knowledge for the selected schedule, not a universal symbolic
+    /// invertibility test. Identity needs no divisor guard.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "matrix3-inverse-checked");
         Ok(Self(invert_matrix3_checked(self.0)?))
     }
 
-    /// Returns the checked matrix inverse after attaching an abort signal.
+    /// Performs checked inversion with branch-specific cooperative signal attachment.
+    ///
+    /// Identity, diagonal and triangular shortcuts do not consume `signal`. Affine
+    /// paths attach it to the relevant determinant or two diagonal scalars. Dense
+    /// and general cofactor paths form the adjugate/determinant first, then attach
+    /// to the determinant before its nonzero guard, reciprocal and final scaling.
+    /// The dense route skips the ordinary inverse's rational aggregate shortcut.
+    ///
+    /// Attachment alone does not poll the flag. Scalar propagation governs later
+    /// cancellation, and a set flag need not reject every exact shortcut. Neither
+    /// pre-attachment work nor total work has a preemptive bound here. Zero/unknown
+    /// and other scalar failures propagate as in [`Self::inverse_checked`].
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "matrix3-inverse-checked-with-abort");
         Ok(Self(invert_matrix3_checked_with_abort(self.0, signal)?))
     }
 
-    /// Returns the determinant.
+    /// Evaluates the determinant by first-row cofactor expansion without division.
+    ///
+    /// Constructs three signed 2×2 minors, then their dot product with the first row.
+    /// Symbolic and singular matrices are valid inputs; no pivot or nonzero guard
+    /// is required. The returned Real is the determinant expression, not a sign or
+    /// invertibility certificate, and scalar expression work is not uniformly bounded.
     pub fn determinant(&self) -> Real {
         trace_matrix!("method", "matrix3-determinant");
         determinant3(&self.0)
     }
 }
 
-/// A signed 4D basis axis used by caller-certified signed-permutation matrices.
+/// A signed input-coordinate selector in the order X, Y, Z, W.
+///
+/// Each variant identifies one coordinate and a sign. In a signed-permutation
+/// row specification it selects the input coordinate for that output row.
+/// An individual value does not certify that a collection uses each axis once;
+/// callers of permutation-specific inverse/division paths must establish that
+/// separate uniqueness precondition.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SignedAxis4 {
-    /// Positive X axis.
+    /// Selects coordinate 0 (X) with coefficient +1.
     PosX,
-    /// Negative X axis.
+    /// Selects coordinate 0 (X) with coefficient -1.
     NegX,
-    /// Positive Y axis.
+    /// Selects coordinate 1 (Y) with coefficient +1.
     PosY,
-    /// Negative Y axis.
+    /// Selects coordinate 1 (Y) with coefficient -1.
     NegY,
-    /// Positive Z axis.
+    /// Selects coordinate 2 (Z) with coefficient +1.
     PosZ,
-    /// Negative Z axis.
+    /// Selects coordinate 2 (Z) with coefficient -1.
     NegZ,
-    /// Positive W axis.
+    /// Selects coordinate 3 (W) with coefficient +1.
     PosW,
-    /// Negative W axis.
+    /// Selects coordinate 3 (W) with coefficient -1.
     NegW,
 }
 
+/// Decodes coordinate and sign without scalar arithmetic or collection validation.
 impl SignedAxis4 {
+    /// Returns the zero-based coordinate index, ignoring the sign: X=0, Y=1, Z=2, W=3.
     #[inline]
     fn index(self) -> usize {
         match self {
@@ -11336,12 +11431,16 @@ impl SignedAxis4 {
         }
     }
 
+    /// Returns whether this selector carries coefficient -1 rather than +1.
     #[inline]
     fn is_negative(self) -> bool {
         matches!(self, Self::NegX | Self::NegY | Self::NegZ | Self::NegW)
     }
 }
 
+/// Converts only the selector sign to exact scalar +1 or -1.
+///
+/// The coordinate index is ignored; matrix constructors choose its location.
 #[inline]
 fn signed_axis4_scalar(axis: SignedAxis4) -> Real {
     if axis.is_negative() {
@@ -11351,6 +11450,11 @@ fn signed_axis4_scalar(axis: SignedAxis4) -> Real {
     }
 }
 
+/// Applies the selector sign to an already selected scalar coordinate.
+///
+/// Positive selectors return the owned value unchanged; negative selectors use
+/// scalar negation. This helper neither selects a coordinate nor validates a
+/// permutation. Zero and symbolic values remain admissible.
 #[inline]
 fn signed_axis4_apply(value: Real, axis: SignedAxis4) -> Real {
     if axis.is_negative() { -value } else { value }
