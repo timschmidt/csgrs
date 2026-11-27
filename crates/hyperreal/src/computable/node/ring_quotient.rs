@@ -1,15 +1,26 @@
-// Rational functions over the same opaque atoms and polynomial arithmetic.
-// A denominator is admitted only with an exact nonzero witness. Products of
-// those denominators remain nonzero; no polynomial independence is assumed.
+/// A rational function over one recognition attempt's normalized opaque-atom polynomials.
+/// An omitted denominator is one. Every explicit denominator must already be
+/// proved nonzero at the actual atom values; a nonzero formal polynomial alone
+/// is insufficient because atoms need not be algebraically independent. This
+/// private carrier stores no separate proof receipt and relies on its admission
+/// path. Clone copies the representation with the same query-relative atom IDs.
 #[derive(Clone)]
 struct RingQuotient {
+    /// Exact polynomial above the fraction bar, with this attempt's atom numbering.
+    /// An empty term list is zero; constructors may then drop an admitted denominator.
     numerator: RingPolynomial,
-    // None represents one. Every explicit denominator is proved nonzero at
-    // the actual atom values, not merely a nonzero formal polynomial.
+    /// None means one; an explicit polynomial carries an admission precondition
+    /// that its selected atom values make it nonzero. This field does not enforce
+    /// that precondition itself or encode a separate nonzero certificate.
     denominator: Option<RingPolynomial>,
 }
 
+/// Wrap already admitted fractions without performing domain proof search.
 impl RingQuotient {
+    /// Wrap an admitted quotient, discarding its denominator when the numerator is zero.
+    /// This is representation normalization, not denominator validation: the caller
+    /// must already have proved every explicit denominator nonzero at the atom values.
+    /// No cancellation poll, work debit, factor reduction or size check occurs here.
     fn new(numerator: RingPolynomial, denominator: Option<RingPolynomial>) -> Self {
         // The denominator already has a nonzero witness. Once the numerator
         // cancels, retaining its denominator only creates irrelevant work.
@@ -24,6 +35,9 @@ impl RingQuotient {
         }
     }
 
+    /// Embed a normalized polynomial with implicit denominator one.
+    /// The atom IDs and coefficients must satisfy the enclosing recognition attempt's
+    /// invariants. This wrapper does not validate them or spend recognition work.
     fn polynomial(numerator: RingPolynomial) -> Self {
         Self {
             numerator,
@@ -32,7 +46,13 @@ impl RingQuotient {
     }
 }
 
+/// Expand, combine and project guarded rational functions within one proof attempt.
 impl<'a> RingRecognition<'a> {
+    /// Compare stored normalized polynomials over this attempt's atom IDs.
+    /// Unequal term counts return false without a work debit; otherwise charge before
+    /// each monomial/coefficient comparison. Equality is formal coefficient equality,
+    /// not a complete test of equality at potentially dependent atom values. None
+    /// means a charge declined; two empty polynomials compare equal without a poll.
     fn same_polynomial(&mut self, a: &RingPolynomial, b: &RingPolynomial) -> Option<bool> {
         if a.terms.len() != b.terms.len() {
             return Some(false);
@@ -46,6 +66,13 @@ impl<'a> RingRecognition<'a> {
         Some(true)
     }
 
+    /// Add two domain-admitted quotients, avoiding unnecessary denominator products.
+    /// Zero operands return the other operand immediately. Equal stored denominators
+    /// are shared; native mode next tries exact divisibility in each direction before
+    /// cross multiplication. A cancelled cross numerator returns zero before building
+    /// the denominator product. These shortcuts rely on both operands' earlier domain
+    /// checks. None combines arithmetic limits and cancellation; failed optional
+    /// factor searches consume work and do not restore the attempt's budget.
     fn quotient_add(&mut self, a: RingQuotient, b: RingQuotient) -> Option<RingQuotient> {
         // Both operands have been expanded, including all inverse guards.
         if a.numerator.terms.is_empty() {
@@ -91,6 +118,12 @@ impl<'a> RingRecognition<'a> {
         Some(RingQuotient::new(numerator, denominator))
     }
 
+    /// Multiply admitted quotients, with optional native cross-factor cancellation.
+    /// When native relations are enabled and a denominator is explicit, clone the
+    /// operands and try dividing each numerator by the opposite denominator in order.
+    /// A failed division leaves that operand unchanged but can spend work. Delegate
+    /// the resulting pair to the admitted product helper. No new nonzero witness is
+    /// sought here; denominator removal uses the existing domain proof.
     fn quotient_multiply(&mut self, a: &RingQuotient, b: &RingQuotient) -> Option<RingQuotient> {
         if self.native_relations && (a.denominator.is_some() || b.denominator.is_some()) {
             let (mut a, mut b) = (a.clone(), b.clone());
@@ -111,7 +144,16 @@ impl<'a> RingRecognition<'a> {
         self.quotient_multiply_admitted(a, b)
     }
 
-    fn quotient_multiply_admitted(&mut self, a: &RingQuotient, b: &RingQuotient) -> Option<RingQuotient> {
+    /// Form a product from already domain-checked operands under the polynomial caps.
+    /// Compute the numerator first. If it vanishes, return zero with denominator one;
+    /// otherwise clone a sole explicit denominator or multiply the two denominators.
+    /// The nonzero product proof is inherited from operand admission. No unconditional
+    /// entry poll is added here; polynomial arithmetic controls charging and None.
+    fn quotient_multiply_admitted(
+        &mut self,
+        a: &RingQuotient,
+        b: &RingQuotient,
+    ) -> Option<RingQuotient> {
         let numerator = self.multiply(&a.numerator, &b.numerator)?;
         if numerator.terms.is_empty() {
             return Some(RingQuotient::polynomial(numerator));
@@ -124,6 +166,10 @@ impl<'a> RingRecognition<'a> {
         Some(RingQuotient::new(numerator, denominator))
     }
 
+    /// Scale an admitted numerator exactly and normalize a resulting zero quotient.
+    /// Retain its existing nonzero denominator unless the numerator cancels. The
+    /// polynomial scale path checks the rational coefficient and spends its usual
+    /// work; zero scaling is safe only after the operand's domain was admitted.
     fn quotient_scale(&mut self, value: RingQuotient, scale: Rational) -> Option<RingQuotient> {
         Some(RingQuotient::new(
             self.scale(value.numerator, scale)?,
@@ -131,6 +177,12 @@ impl<'a> RingRecognition<'a> {
         ))
     }
 
+    /// Try to extract a rational value from a domain-admitted quotient.
+    /// If unit-circle pairs are recorded, first reduce cloned numerator and denominator
+    /// with those relations, then apply proportional-coefficient projection. Otherwise
+    /// project the original representation. Relations, denominator validity and atom
+    /// identity must belong to this attempt; no numerical refinement or fact publication
+    /// occurs here. None leaves rationality undecided and may also reflect spent limits.
     fn project_quotient(&mut self, value: &RingQuotient) -> Option<Rational> {
         if !self.unit_circle_pairs.is_empty() {
             let numerator = self.reduce_unit_circle_pairs(value.numerator.clone())?;
@@ -143,6 +195,14 @@ impl<'a> RingRecognition<'a> {
         self.project_reduced_quotient(value)
     }
 
+    /// Recognize zero, a rational constant, or proportional numerator/denominator terms.
+    /// Charge on entry, then accept an empty numerator using prior denominator admission.
+    /// For an explicit denominator, require equal term counts, form the ratio of leading
+    /// stored coefficients, enforce its coefficient cap, and check every matching
+    /// monomial and scaled coefficient with a charge. This is sufficient, not necessary,
+    /// for a rational value when atoms satisfy additional relations. Normalized nonzero
+    /// coefficients and a nonzero denominator are caller invariants. None is not proof
+    /// of irrationality; temporary coefficient arithmetic is not a total-memory bound.
     fn project_reduced_quotient(&mut self, value: &RingQuotient) -> Option<Rational> {
         self.charge()?;
         if value.numerator.terms.is_empty() {
@@ -175,6 +235,19 @@ impl<'a> RingRecognition<'a> {
         Some(ratio)
     }
 
+    /// Expand an authoritative graph node into this attempt's exact quotient cache.
+    /// Require positive depth even on a hit. A hit charges and polls before cloning a
+    /// completed quotient; it spends no node visit and can succeed with no nodes left.
+    /// A miss expands normally, then tries recovery only if a node was available on
+    /// entry and child depth is positive. Both routes share spent work and partial local
+    /// state. A seen root relation additionally reduces Square/Multiply results before
+    /// insertion. Only completed results enter the live-pointer-keyed cache, using the
+    /// same atom table and strategy flags; failed children may leave other completed
+    /// entries. Entries are bounded by the node allowance, not by a byte budget.
+    ///
+    /// The graph and recognition strategy must remain compatible for this attempt.
+    /// There is no cross-query memo here and no publication of a queried root fact.
+    /// None combines unsupported recognition, unproved domains, limits and cancellation.
     fn expand_quotient(&mut self, value: &'a Computable, depth: usize) -> Option<RingQuotient> {
         if depth == 0 {
             return None;
@@ -198,34 +271,56 @@ impl<'a> RingRecognition<'a> {
             None => return None,
         };
         let quotient = if self.root_relation_seen
-            && matches!(value.internal.approximation, Approximation::Square(_) | Approximation::Multiply(..))
-        {
+            && matches!(
+                value.internal.approximation,
+                Approximation::Square(_) | Approximation::Multiply(..)
+            ) {
             self.reduce_native_relation_proof(quotient, NativeReduction::Roots)?
-        } else { quotient };
+        } else {
+            quotient
+        };
         // At most MAX_NODES entries: each miss consumes a node before it can
         // succeed. Failed or partial expansions are never inserted.
         self.quotients.insert(identity, quotient.clone());
         Some(quotient)
     }
 
+    /// Perform quotient admission for one cache miss, in recipe evaluation order.
+    /// The wrapper supplies positive depth. Native mode first reuses retained rational
+    /// proofs, then recognizes guarded parameter/scalar-product atoms; other
+    /// non-arithmetic recipes delegate to polynomial atom admission. Arithmetic spends
+    /// an entry charge and node visit, expands left before right, and checks all three
+    /// linear-combination children even when later scaling erases a term. Offset
+    /// magnitudes must be below the coefficient-bit cap before dyadic materialization.
+    ///
+    /// An inverse expands its child before using an immediate nonzero sign or a local
+    /// admitted-quotient nonzero proof; zero and unproved divisors decline. Opaque leaves
+    /// otherwise retain the polynomial path's defined-real precondition. This is not a
+    /// general imported-domain validator. None does not roll back spent work or local
+    /// child projections, and does not distinguish their reasons for declining.
     fn expand_quotient_uncached(
         &mut self,
         value: &'a Computable,
         depth: usize,
     ) -> Option<RingQuotient> {
-        if self.native_relations && let Some(rational) = value.retained_rational_reduction() {
+        if self.native_relations
+            && let Some(rational) = value.retained_rational_reduction()
+        {
             self.charge()?;
             self.nodes_left = self.nodes_left.checked_sub(1)?;
             return Self::constant(rational).map(RingQuotient::polynomial);
         }
         if self.native_relations
             && (self.is_parameter_atom(value)?
-                || matches!(value.internal.approximation, Approximation::Multiply(..) | Approximation::Square(_))
-                    && self.scalar_product_shape(value, 8)?)
+                || matches!(
+                    value.internal.approximation,
+                    Approximation::Multiply(..) | Approximation::Square(_)
+                ) && self.scalar_product_shape(value, 8)?)
         {
             self.charge()?;
             self.nodes_left = self.nodes_left.checked_sub(1)?;
-            return self.native_relation_atom(std::borrow::Cow::Borrowed(value), depth - 1)
+            return self
+                .native_relation_atom(std::borrow::Cow::Borrowed(value), depth - 1)
                 .map(RingQuotient::polynomial);
         }
         // Reuse the polynomial leaf/atom admission, with its own single node
@@ -300,12 +395,20 @@ impl<'a> RingRecognition<'a> {
         }
     }
 
+    /// Invert a quotient already proved defined and nonzero by its caller.
+    /// Native mode first tries a quadratic reciprocal of the numerator. A lone scaled
+    /// square-root atom with a retained relation r²=N/H next uses 1/(c*r)=r*H/(c*N),
+    /// optionally compacting the resulting denominator by another quadratic reciprocal.
+    /// Otherwise swap numerator and denominator, supplying one for an omitted original
+    /// denominator. Optional failed recognizers retain their work debits. Atom indices,
+    /// parallel relation tables and square-root relation powers must be valid; this
+    /// helper itself does not reject a zero value or independently prove a divisor.
     fn invert_admitted_quotient(&mut self, quotient: RingQuotient) -> Option<RingQuotient> {
         if self.native_relations
             && let Some(reciprocal) = self.reciprocal_quadratic_polynomial(&quotient.numerator)
         {
             let numerator = match &quotient.denominator {
-                Some(denominator) => self.multiply(&reciprocal,denominator)?,
+                Some(denominator) => self.multiply(&reciprocal, denominator)?,
                 None => reciprocal,
             };
             return Some(RingQuotient::polynomial(numerator));
@@ -313,17 +416,22 @@ impl<'a> RingRecognition<'a> {
         // Both callers have already proved this value nonzero and expanded
         // every inverse it contains. A retained r²=N/H permits 1/r=r*H/N;
         // N is nonzero because r and H have nonzero witnesses.
-        if self.native_relations && quotient.denominator.is_none()
+        if self.native_relations
+            && quotient.denominator.is_none()
             && let [(monomial, coefficient)] = quotient.numerator.terms.as_slice()
             && let [atom] = monomial.as_slice()
         {
             self.charge()?;
             let index = usize::from(*atom);
-            if matches!(self.atoms[index].internal.approximation,
-                Approximation::Sqrt(_) | Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3))
-                && let Some(relation) = self.relations[index].clone()
+            if matches!(
+                self.atoms[index].internal.approximation,
+                Approximation::Sqrt(_)
+                    | Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3)
+            ) && let Some(relation) = self.relations[index].clone()
             {
-                let root = RingPolynomial { terms: vec![(vec![*atom], Rational::one())] };
+                let root = RingPolynomial {
+                    terms: vec![(vec![*atom], Rational::one())],
+                };
                 let numerator = match relation.value.denominator {
                     Some(denominator) => self.multiply(&root, &denominator)?,
                     None => root,
@@ -333,25 +441,35 @@ impl<'a> RingRecognition<'a> {
                 // field. Compact that already nonzero denominator before
                 // repeated component squares raise its polynomial degree.
                 if let Some(reciprocal) = self.reciprocal_quadratic_polynomial(&denominator) {
-                    return self.multiply(&numerator, &reciprocal).map(RingQuotient::polynomial);
+                    return self
+                        .multiply(&numerator, &reciprocal)
+                        .map(RingQuotient::polynomial);
                 }
                 return Some(RingQuotient::new(numerator, Some(denominator)));
             }
         }
         Some(RingQuotient {
-            numerator: quotient.denominator.unwrap_or(Self::constant(Rational::one())?),
+            numerator: quotient
+                .denominator
+                .unwrap_or(Self::constant(Rational::one())?),
             denominator: Some(quotient.numerator),
         })
     }
 }
 
+/// Query guarded quotient proofs or rejection-only conditional domain identities.
 impl Computable {
-    // A conditional identity can refute an imported domain even when an
-    // opaque atom's own domain is unknown: either a dependency is undefined,
-    // or all dependencies are real and the projected argument is invalid.
-    // Keep this rejection-only. Publishing the conditional rational or its
-    // sign would turn an assumed domain into a certificate of a real value.
     #[cfg(feature = "serde")]
+    /// Refute an imported argument domain using a conditional rational identity only.
+    /// Assume opaque leaves denote reals, expand an arithmetic root, and apply `invalid`
+    /// to its rational projection after the final stop check. If a leaf is undefined,
+    /// the argument is already invalid; otherwise the projected value can refute its
+    /// domain. The caller must supply a sound rejection predicate. This method never
+    /// publishes the conditional rational or its sign, even if the predicate rejects it.
+    ///
+    /// Non-arithmetic roots, failed recognition, limits, cancellation or a false
+    /// predicate return false, which does not validate the domain. The closure is
+    /// called at most once and its own cost is outside recognition's work accounting.
     fn bounded_domain_contradiction(&self, invalid: impl FnOnce(&Rational) -> bool) -> bool {
         // The caller already tried exact leaves and defined rational forms.
         // Every other non-arithmetic root expands to one opaque atom, which
@@ -378,21 +496,45 @@ impl Computable {
         !should_stop(&self.signal) && invalid(&rational)
     }
 
+    /// Try an exact rational projection of a defined-real graph using guarded quotients.
+    /// Cancel formal polynomial terms and divide only with nonzero witnesses, including
+    /// already retained signs. Opaque leaves must already denote defined real values;
+    /// use the rejection-only import path for conditional domain contradictions.
+    /// Success publishes the root's exact sign and a rational-quotient dispatch event,
+    /// not a retained rational tower or numerical sample. None conflates unrecognized
+    /// forms, unproved divisors, resource limits and cancellation; a fresh call can retry.
     pub(crate) fn bounded_quotient_rational(&self) -> Option<Rational> {
         self.bounded_quotient_projection(false, false)
     }
 
+    /// Try a guarded quotient proof that actually uses shared √2 or √3 square reduction.
+    /// Use the ordinary quotient envelope with the two named root-square identities.
+    /// A rational result reached without using either reduction still declines; this
+    /// keeps the specialized dispatch meaningful. Defined-real inputs are required.
+    /// Only completed, uncancelled success publishes the exact root sign and the
+    /// root-square-quotient trace; no numerical sample or rational tower is retained.
     pub(crate) fn bounded_root_square_rational(&self) -> Option<Rational> {
         self.bounded_quotient_projection(true, false)
     }
 
-    // Reuse the quotient evaluator and its existing limits, but require every
-    // leaf to be rational and every inverse to have a nonzero denominator.
-    // Both children are checked before multiplication can erase a zero term.
+    /// Evaluate an arithmetic graph whose admitted leaves must all be rational.
+    /// Reuse quotient limits but disallow opaque atoms and require nonzero inverse
+    /// arguments. Both multiplication children and every linear-combination child are
+    /// checked before zero absorption, so cancellation cannot hide an undefined leaf.
+    /// Success publishes the queried sign and rational-quotient event; None means this
+    /// bounded rational-only route did not establish a value, not that it is undefined.
     fn bounded_defined_rational(&self) -> Option<Rational> {
         self.bounded_quotient_projection(false, true)
     }
 
+    /// Run a fresh quotient strategy and publish only its completed rational proof.
+    /// Set the root-square and rational-only flags once, expand under MAX_DEPTH, project,
+    /// and check cancellation before publishing. Root-square mode additionally requires
+    /// that its relation was used. Success stores only the root's exact sign and emits
+    /// the selected dispatch event; query-local atoms, quotients and work state are then
+    /// dropped. No policy-specific approximation is involved and failures are not cached.
+    /// The shared node/work/degree/coefficient caps are distinct limits, not a bound on
+    /// all allocation, elapsed time or total arithmetic cost.
     fn bounded_quotient_projection(
         &self,
         root_squares: bool,

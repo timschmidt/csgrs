@@ -1,7 +1,13 @@
-// Optional recovery after quotient arithmetic declines. Existing successful
-// expansions never pay for factor search. All work uses the same recognizer,
-// atom identities, strict divisor witnesses and remaining operation budget.
+/// Recover declined quotient arithmetic through exact factor reduction.
+/// Ordinary quotient recovery is deferred until expansion fails. Native quotient
+/// addition and multiplication can also call exact division proactively. All
+/// routes share atom identities, prior divisor witnesses and remaining work.
 impl<'a> RingRecognition<'a> {
+    /// Select the greatest monomial by total degree, then lexicographic factor order.
+    /// Scan every stored term with one charge, preserving the polynomial's separate
+    /// lexicographic storage order. Empty input or a declined charge returns None.
+    /// Sorted factor lists make this a multiplicative monomial order suitable for
+    /// long division; coefficients do not affect the selected index.
     fn leading_polynomial_term(&mut self, polynomial: &RingPolynomial) -> Option<usize> {
         polynomial.terms.first()?;
         let mut leading = 0;
@@ -18,6 +24,20 @@ impl<'a> RingRecognition<'a> {
         Some(leading)
     }
 
+    /// Try exact polynomial division without assuming independent atom values.
+    /// Native mode delegates to formal graded division. Otherwise repeatedly cancel the
+    /// greatest degree/lexicographic term, requiring the divisor monomial's sorted
+    /// factors to be a submultiset and each stored quotient coefficient to fit.
+    /// Return a polynomial only when the entire remainder vanishes; a leading term
+    /// that cannot divide declines. Empty formal divisors, growth limits and spent
+    /// charges also decline, and temporary clones/products are local to this call.
+    /// Ordinary multiplication may apply enabled root/additional relations while
+    /// subtracting products; with those flags off this is formal long division.
+    ///
+    /// The inputs must be normalized in this attempt's atom table. This helper does
+    /// not prove the divisor nonzero at those atom values: fraction cancellation may
+    /// consume it only after separate domain admission. Degree/term caps can reject
+    /// an exact mathematical quotient; None is not a nondivisibility certificate.
     fn divide_exact_polynomial(
         &mut self,
         numerator: &RingPolynomial,
@@ -69,6 +89,12 @@ impl<'a> RingRecognition<'a> {
         Some(quotient)
     }
 
+    /// Retrieve a completed local quotient and try removing its explicit denominator.
+    /// Charge before lookup by live node pointer. A successful exact division returns
+    /// a polynomial and true; no denominator or failed optional division returns the
+    /// original clone and false, even if the division spent its last work charge.
+    /// Missing cache entries or a declined entry charge return None. The original
+    /// cache is not overwritten. Its admission proof justifies factor cancellation.
     fn reduce_cached_quotient(&mut self, value: &Computable) -> Option<(RingQuotient, bool)> {
         self.charge()?;
         let quotient = self.quotients.get(&Arc::as_ptr(&value.internal))?.clone();
@@ -82,6 +108,12 @@ impl<'a> RingRecognition<'a> {
         Some((quotient, false))
     }
 
+    /// Retry a declined expansion using the same attempt's remaining proof resources.
+    /// First reduce already cached child quotients and retry arithmetic. If that fails
+    /// for an Add recipe, try ordinary factored-zero recovery at child depth. The caller
+    /// must have admitted this recovery with depth greater than one and a node available
+    /// at the original miss; this method does not reset budgets or refund previous work.
+    /// Neither route publishes a root fact or bypasses inverse-domain obligations.
     fn recover_quotient(&mut self, value: &'a Computable, depth: usize) -> Option<RingQuotient> {
         self.recover_reduced_quotient(value).or_else(|| {
             if let Approximation::Add(a, b) = &value.internal.approximation {
@@ -92,6 +124,13 @@ impl<'a> RingRecognition<'a> {
         })
     }
 
+    /// Retry selected arithmetic after cached child fractions become polynomials.
+    /// Handle Add, Multiply, Square and LinearCombination3, retrieving every needed
+    /// completed child and requiring at least one successful denominator removal.
+    /// Linear combinations gather all children before applying scales. Negation,
+    /// offsets, inverses and other recipes decline here; in particular no inverse
+    /// guard is skipped. Use remaining charges, leave the child cache unchanged, and
+    /// return None for missing children, no reduction or unsuccessful retry arithmetic.
     fn recover_reduced_quotient(&mut self, value: &Computable) -> Option<RingQuotient> {
         match &value.internal.approximation {
             Approximation::Add(a, b) => {

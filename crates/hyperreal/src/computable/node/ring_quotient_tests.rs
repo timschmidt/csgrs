@@ -1,7 +1,10 @@
 #[cfg(test)]
+/// Guarded quotient identities, domain refusals, local reuse and resource regressions.
 mod ring_quotient_tests {
     use super::*;
 
+    /// Build a raw recipe with invalid sign/bound facts, no sample and no stop signal.
+    /// Bypass simplifying constructors so each fixture exercises quotient admission.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,6 +16,8 @@ mod ring_quotient_tests {
         }
     }
 
+    /// Build 4 + sin(1/3) with no immediate sign proof.
+    /// Its mathematical positivity lets tests establish a witness later by refinement.
     fn positive_denominator() -> Computable {
         raw(Approximation::Add(
             raw(Approximation::Int(BigInt::from(4))),
@@ -22,6 +27,8 @@ mod ring_quotient_tests {
         ))
     }
 
+    /// Build d*(1/d)-1 without simplifying it, sharing the supplied divisor node.
+    /// The expected zero is valid only after d is proved defined and nonzero.
     fn inverse_identity(denominator: &Computable) -> Computable {
         raw(Approximation::Add(
             raw(Approximation::Multiply(
@@ -32,6 +39,8 @@ mod ring_quotient_tests {
         ))
     }
 
+    /// Require the queried node to retain neither an exact sign nor a numerical sample.
+    /// This does not assert absence of unrelated bounds or facts in child nodes.
     fn assert_unproved(value: &Computable) {
         assert!(matches!(
             value.internal.facts.exact_sign(),
@@ -42,6 +51,9 @@ mod ring_quotient_tests {
 
     #[test]
     #[cfg(feature = "serde")]
+    /// Check that conditional zero can reject a reciprocal domain without certifying it.
+    /// Use an undefined opaque square root, verify a false rejection predicate and an
+    /// unprojectable expression, and ensure rational-only recognition rejects the leaf.
     fn domain_contradictions_never_publish_conditional_facts() {
         let atom = raw(Approximation::Sqrt(raw(Approximation::Negate(raw(
             Approximation::AtanRational(Rational::one()),
@@ -63,6 +75,9 @@ mod ring_quotient_tests {
 
     #[test]
     #[cfg(feature = "serde")]
+    /// Exercise depth rejection, a stopped query and retry after clearing the signal.
+    /// Warm an atom's sign at repeated precisions; conditional cancellation may reject
+    /// the domain but must leave the queried expression's facts and sample unpublished.
     fn domain_contradiction_limits_and_abort_preserve_facts_and_recover() {
         let atom = raw(Approximation::PrescaledSin(Computable::rational(
             Rational::fraction(1, 2).unwrap(),
@@ -92,6 +107,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Require a valid divisor sign rather than Invalid or Unknown cache states.
+    /// After refinement establishes positivity, d/d-1 projects to zero without a sample.
     fn quotient_reuse_requires_a_real_nonzero_proof_and_can_recover() {
         let denominator = positive_denominator();
         let value = inverse_identity(&denominator);
@@ -113,6 +130,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Decline literal, raw and cancelled zero divisors as well as an unproved nonzero one.
+    /// No attempted d/d-1 query may acquire a sign or approximation on these failures.
     fn quotient_rejects_zero_and_unproved_denominators() {
         let a = positive_denominator();
         let cancelled = raw(Approximation::Add(a.clone(), raw(Approximation::Negate(a))));
@@ -129,6 +148,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Admit a divisor that cancels formally to two without publishing its local proof.
+    /// Only the completed d/d-1 query succeeds; the divisor stays unsampled and unsigned.
     fn quotient_can_prove_a_nonzero_denominator_without_refinement() {
         let a = positive_denominator();
         let denominator = raw(Approximation::Add(
@@ -148,6 +169,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Check small node/work/depth allowances and cancellation on a guarded identity.
+    /// Failures leave the root unproved; clearing cancellation permits a fresh exact retry.
     fn quotient_limits_and_cancellation_publish_no_partial_proof() {
         let denominator = positive_denominator();
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -181,6 +204,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Decline a reciprocal's degree-sixteen power and extreme signed dyadic offsets.
+    /// Both i32 extremes must stop before coefficient materialization or root publication.
     fn quotient_expansion_preserves_degree_and_coefficient_limits() {
         let denominator = positive_denominator();
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -198,6 +223,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Prove 128*d/d-128 using a seven-level shared sum within unchanged node limits.
+    /// This exercises DAG quotient reuse without demanding a numerical root sample.
     fn shared_quotient_subexpressions_fit_the_existing_expansion_budget() {
         let denominator = positive_denominator();
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -220,6 +247,9 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Verify memo hits need work, positive depth and a clear signal but no node visits.
+    /// Local reuse alone publishes nothing; the completed public-in-crate query may then
+    /// publish the identity's exact zero sign.
     fn reused_quotient_proofs_still_charge_work_and_observe_cancellation() {
         let denominator = positive_denominator();
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -248,6 +278,9 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Combine a proved zero fraction with a degree-eight reciprocal in both orders.
+    /// Zero absorption and addition must preserve the identity without growing unused
+    /// denominators beyond the degree cap or creating numerical samples.
     fn zero_quotients_do_not_accumulate_irrelevant_denominators() {
         let denominator = positive_denominator();
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -282,6 +315,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Prove 1/d⁴-d⁴/d⁸=0 without forming the unused degree-twelve denominator.
+    /// Warm the nonzero divisors first and require an exact result without a root sample.
     fn cancelled_cross_numerators_need_no_denominator_product() {
         let denominator = positive_denominator();
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -305,6 +340,8 @@ mod ring_quotient_tests {
     }
 
     #[test]
+    /// Require both operand domains before absorbing zero on either multiplication side.
+    /// An unproved positive divisor and an actual zero divisor both prevent publication.
     fn zero_absorption_does_not_hide_unproved_or_zero_divisors() {
         for denominator in [positive_denominator(), Computable::zero()] {
             let reciprocal = raw(Approximation::Inverse(denominator));

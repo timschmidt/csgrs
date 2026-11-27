@@ -1,7 +1,10 @@
 #[cfg(test)]
+/// Factor-recovery identities and the domain, depth and growth guards they retain.
 mod ring_quotient_reduction_tests {
     use super::*;
 
+    /// Build a raw recipe with invalid sign/bound facts, no sample and no stop signal.
+    /// Bypass simplifying constructors so each fixture exercises quotient admission.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,6 +16,9 @@ mod ring_quotient_reduction_tests {
         }
     }
 
+    /// Return (a²-b²)/(a-b), a+b and the shared denominator as raw expression graphs.
+    /// Here a=4+sin(1/3) and b=1+sin(1/5), so a-b is positive. Optionally negate both
+    /// numerator and denominator to exercise the same value with a negative witness.
     fn factored_quotient(negative: bool) -> (Computable, Computable, Computable) {
         let a = raw(Approximation::Add(
             Computable::rational(Rational::from(4)),
@@ -45,6 +51,8 @@ mod ring_quotient_reduction_tests {
         (quotient, raw(Approximation::Add(a, b)), denominator)
     }
 
+    /// Wrap a raw value in count squares, representing its power 2^count.
+    /// Do not simplify or establish domain/sign facts along the new chain.
     fn repeated_square(mut value: Computable, count: usize) -> Computable {
         for _ in 0..count {
             value = raw(Approximation::Square(value));
@@ -52,6 +60,9 @@ mod ring_quotient_reduction_tests {
         value
     }
 
+    /// Build ((a²-b²)/(a-b))⁸-(a+b)⁸ from corresponding fixture operands.
+    /// The exact result is zero after admitting a-b≠0; factor reduction keeps the
+    /// polynomial degree at eight instead of the unreduced numerator's sixteen.
     fn identity(quotient: Computable, polynomial: Computable) -> Computable {
         // ((a^2-b^2)/(a-b))^8 - (a+b)^8 = 0, provided a-b != 0.
         // The reduced degree is 8; unreduced numerators reach degree 16.
@@ -61,6 +72,8 @@ mod ring_quotient_reduction_tests {
         ))
     }
 
+    /// Require the queried node to retain neither an exact sign nor a numerical sample.
+    /// This does not assert absence of unrelated bounds or facts in child nodes.
     fn assert_unproved(value: &Computable) {
         assert!(matches!(
             value.internal.facts.exact_sign(),
@@ -70,6 +83,8 @@ mod ring_quotient_reduction_tests {
     }
 
     #[test]
+    /// Check eighth-power cancellation with positive and negative divisor witnesses.
+    /// The queried identity must project to exact zero without numerical sampling.
     fn exact_polynomial_quotients_survive_repeated_squaring() {
         for negative in [false, true] {
             let (quotient, polynomial, denominator) = factored_quotient(negative);
@@ -88,6 +103,8 @@ mod ring_quotient_reduction_tests {
     }
 
     #[test]
+    /// Decline factor cancellation before the divisor's sign is proved, then retry.
+    /// A fresh query after divisor refinement must complete the same exact identity.
     fn factor_reduction_requires_the_retained_nonzero_witness() {
         let (quotient, polynomial, denominator) = factored_quotient(false);
         let value = identity(quotient, polynomial);
@@ -99,6 +116,9 @@ mod ring_quotient_reduction_tests {
     }
 
     #[test]
+    /// Verify cached children do not bypass child-depth or parent-node admission.
+    /// An eighth power can need recovery, but a sixteenth power remains beyond the
+    /// ordinary degree envelope; failed roots receive neither sign nor sample.
     fn factor_reduction_keeps_degree_limits_and_cached_depth_checks() {
         let (quotient, _, denominator) = factored_quotient(false);
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -130,6 +150,8 @@ mod ring_quotient_reduction_tests {
     }
 
     #[test]
+    /// Exercise eight-charge exhaustion, cancellation, and an uncancelled fresh retry.
+    /// Only the final exact eighth-power identity may complete; no root sample is needed.
     fn factor_reduction_preserves_exhaustion_cancellation_and_recovery() {
         let (quotient, polynomial, denominator) = factored_quotient(false);
         assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
@@ -153,6 +175,9 @@ mod ring_quotient_reduction_tests {
     }
 
     #[test]
+    /// Decline division of 2^2048 by 2^-2048 despite both inputs fitting storage limits.
+    /// The exact quotient 2^4096 exceeds the stored numerator-plus-denominator bit cap;
+    /// formal division must not publish any fact on the unrelated attempt root.
     fn polynomial_division_preserves_the_coefficient_limit() {
         let root = raw(Approximation::One);
         let large = Rational::from_bigint(BigInt::one() << 2048_usize);

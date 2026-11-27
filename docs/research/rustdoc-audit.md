@@ -20069,6 +20069,126 @@ nonincremental builds reused the approximately 6.6 GiB shared Cargo target.
 AGENTS.md's existing 100% public/private Rustdoc mandate remains unchanged.
 Repository-wide line review and all-configuration coverage remain unfinished.
 
+## Hyperreal guarded quotients and factor recovery (27 November 2026)
+
+Baseline: `852ea34c7dee123dc0fe94cfb2dc1727eaff45b8` on `rustdoc`.
+This documentation-only batch reviewed every line of four files: 1,052 baseline
+lines, separately from contextual reads of their callers and dependencies.
+
+| Whole-file review | Baseline lines | Reviewed lines after documentation |
+| --- | ---: | ---: |
+| `crates/hyperreal/src/computable/node/ring_quotient.rs` | 419 | 561 |
+| `crates/hyperreal/src/computable/node/ring_quotient_reduction.rs` | 142 | 181 |
+| `crates/hyperreal/src/computable/node/ring_quotient_tests.rs` | 321 | 358 |
+| `crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs` | 170 | 195 |
+
+Ownership is Hyperreal's query-local exact quotient recognizer, P2–P6, consumed
+by rational normal-form recognition, import-domain rejection and the P8–P11
+predicate cascade. The admitted domain is normalized rational polynomials over
+one attempt's opaque real atoms, compatible strategy flags and separately
+established nonzero denominator witnesses. The missing acceptance witness was
+item-level private documentation of that domain, local proof lifetime, optional
+recovery behavior and resource/publication boundaries. The baseline all-feature
+ring suite passed 87 tests before edits. Contextual reads included polynomial
+arithmetic, native divisor/sign/relation helpers, product-sum recovery,
+serialized-argument rejection and Real's normal-form dispatch. These contextual
+reads do not earn additional whole-file review credit.
+
+The batch documents 57 blocks: one struct, two fields, four impls, 22 production
+methods, two test modules and 26 fixture/test functions. All 29 ordinary-library
+blocks were found in generated private HTML; all 28 test-module/helper blocks
+were found in a disposable source copy with only the selected cfg(test)/test
+attributes removed for rendering. Reviewed the generated RingQuotient Clone
+implementation and confirmed its HTML anchor. No function-local named API needs
+a supplemental rendering in these files. These counts do not establish coverage
+for the rest of the repository or a ghost/Verus configuration.
+
+Semantic findings recorded in the Rustdoc:
+
+- RingQuotient carries a fraction and query-relative atom IDs, not a separate
+  nonzero receipt. Its constructors trust denominator admission. Normalizing a
+  zero numerator can discard that denominator only after its domain was proved.
+  A formally nonzero polynomial is not proof of a nonzero selected value.
+- Addition reuses equal denominators, and native addition can try divisibility
+  before cross multiplication. Native multiplication can proactively cancel
+  opposite factors. The former file-level claim that all factor search waited
+  for expansion failure was too broad; only ordinary recovery is deferred.
+  Zero absorption and cancelled cross numerators avoid irrelevant denominator
+  growth, without excusing prior child/inverse admission.
+- Projection establishes zero, a constant, or proportional stored terms,
+  optionally after unit-circle reduction. Failure is not irrationality.
+  Formal equality compares coefficient lists, not all values of dependent atoms.
+- Quotient memoization uses live authoritative node pointers within one attempt.
+  A hit checks positive depth, charges and polls, but consumes no node visit.
+  A miss may recover only with the wrapper's original node/depth admission;
+  completed children can remain after a failed parent. Strategy and atom tables
+  must stay compatible. Entry counts are not retained-byte bounds.
+- Expansion preserves left/right and three-term evaluation order. Inverse
+  admission uses a retained nonzero sign or a local nonzero quotient proof.
+  Native retained rational/parameter routes precede general arithmetic.
+  Opaque native leaves retain a defined-real precondition; this recognizer is
+  not a complete imported-domain validator. Inversion itself trusts its caller,
+  including the nonzero proof for quadratic and retained square-root formulas.
+- Ordinary exact division scans degree/lexicographic leading terms. With
+  relation flags disabled it is formal long division; ordinary multiplication
+  can apply enabled root/additional relations during subtraction. Native mode
+  delegates to formal graded division. Neither route establishes that a divisor
+  is nonzero at selected atom values. Limits can decline a mathematically exact
+  quotient, and None is not a nondivisibility certificate.
+- Optional cached factor reduction can consume the remaining work allowance
+  and still return the original admitted quotient with changed=false. It does
+  not overwrite the child cache. Recovery does not refund work or bypass an
+  inverse guard; its arithmetic retry requires at least one child reduction.
+- Conditional domain contradiction is rejection-only and invokes its supplied
+  predicate at most once after projection and the final stop check. False does
+  not validate a domain. It publishes neither conditional value nor sign.
+  Defined-rational mode instead disallows opaque leaves before cancellation.
+- Completed quotient queries publish an exact root sign and dispatch event,
+  not a numerical sample or retained rational tower. Root-square mode must
+  actually use the named sqrt(2)/sqrt(3) identity. Fresh attempts can retry;
+  None combines limits, cancellation and unsuccessful proof search. Distinct
+  node, work, degree and coefficient limits are not total-time/heap contracts.
+
+Independent disposable probes ran on both baseline and final sources with
+identical output. They checked 81 ordinary exact divisions against independently
+formed integer-map polynomial convolutions, plus 441 rational quotient sums and
+products against integer fraction formulas and all 378 nonzero inverse cases.
+They also checked empty/mismatched formal comparisons versus charged nonempty
+comparison, zero-addition bypass, zero-numerator normalization after admission,
+optional division's exhausted unchanged-result path, memo depth/stop/node
+behavior, root-square usage gating, and sign-only final publication. No imported
+undefined value was treated as an admitted geometry success. Probe processes
+were externally contained at 1 GiB address space, 10 CPU seconds and 15 seconds
+wall time with core dumps disabled; those are harness limits, not production
+resource guarantees. An initial scratch harness compile used signed denominator
+arguments where Rational::fraction requires u64; the harness normalized signs
+and used positive denominators before either successful run. No repository
+assertion or fixture changed to accommodate that harness error.
+
+After the final Rustdoc edit, the locked/offline, two-job checks passed:
+
+- Hyperreal library `computable::node::ring_`: 84 tests without default features
+  and 87 with all features, including the reviewed quotient and reduction tests.
+- Both corresponding `cargo doc --no-deps --document-private-items` builds with
+  warnings, broken intra-doc links and private intra-doc links denied.
+- All-feature `serde_graph_domains` (4 tests), `serde_opaque_operand_domains`
+  (5 tests), and Hyperlimit `resolve::tests` (5 tests).
+- Temporary private test/helper Rustdoc, all 57 block-render checks, the derived
+  Clone anchor, selected-file Rustfmt, and git diff --check.
+
+Comment-free token streams independently normalized by Rustfmt are identical
+before and after. The only raw token changes are two harmless trailing commas
+added by Rustfmt in ring_quotient.rs; the other three files have identical raw
+non-comment tokens. No signature, assertion, fixture, dispatch order, predicate
+order or algorithm changed. No focused check remains blocked. Full workflows
+and performance measurements remain owner-waived for this documentation-only
+session. Evidence in `/tmp/csgrs-hyperreal-ring-quotient-audit/` retains scripts,
+commands/logs, probe source/results and item/render/token inventories. Owned
+shadow sources, probe binary/rlib and temporary HTML were removed after review;
+the approximately 6.6 GiB shared nonincremental Cargo target was reused.
+AGENTS.md's existing 100% public/private Rustdoc mandate remains in force.
+Repository-wide line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
