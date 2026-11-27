@@ -1027,182 +1027,279 @@ mod numerica_engine {
     }
 }
 
+/// Rug/MPFR floating adapter behind mathbench's GMP comparison labels.
+///
+/// Ctx supplies precision when constructing Float values and constants. Arithmetic
+/// works on clones of existing operands without resetting their precision from ctx;
+/// binary operations clone lhs, and unary numerical operations clone their input.
+/// Constructors import already-rounded f64 data, not exact authored decimal sources.
+/// No wrapper validates finiteness, compatible precision or numerical domains, or
+/// translates backend outcomes into Hyperreal Problem/Result or certainty receipts.
+/// Scalar powi additionally panics when its u64 exponent cannot fit in u32.
+///
+/// Composite arithmetic is implemented locally for benchmark rows. Vectors include
+/// all coordinates in Euclidean norms, including Vec4 w. Matrices use row-major
+/// storage and column-vector products; no affine shortcut or perspective divide is
+/// applied. Mat3 inverse uses cofactors; Mat4 inverse has no row pivoting or zero check.
+/// Matrix/complex powers use linear repeated multiplication. Row labels containing
+/// checked or abort do not add guards or cancellation to these methods.
+///
+/// These are numerical backend results, not exact-source certificates. Exceptional
+/// values/panics remain backend behavior. Requested precision is not a total-work,
+/// memory, refinement or cancellation contract, none of which this adapter supplies.
 mod gmp_engine {
     use rug::{Float, float::Constant, ops::Pow};
 
+    /// Requested construction precision for this Rug/MPFR benchmark adapter.
+    ///
+    /// Clone copies the public mutable u32 setting. new stores it without validation;
+    /// backend constructors receive it later. Arithmetic clones existing operands and
+    /// does not explicitly reset them to this setting, so context changes do not convert
+    /// already-created values. No numerical state or proof cache is stored here.
     #[allow(dead_code)]
     #[derive(Clone)]
     pub struct Ctx {
+        /// Requested precision passed to Rug Float constructors, without wrapper validation.
         pub _precision: u32,
     }
 
     impl Ctx {
+        /// Stores precision unchanged; backend constructors, not this function, consume it.
         pub fn new(precision: u32) -> Self {
             Self {
                 _precision: precision,
             }
         }
 
+        /// Imports a supplied f64 with Float::with_val at the stored precision.
+        ///
+        /// The input is already a binary float, not an exact decimal-source specification.
+        /// No finiteness check or typed import error is supplied by this wrapper.
         pub fn f(&self, value: f64) -> Float {
             Float::with_val(self._precision, value)
         }
 
+        /// Constructs Rug Float zero with Float::new at the stored precision.
         pub fn zero(&self) -> Float {
             Float::new(self._precision)
         }
 
+        /// Imports exactly representable f64 one through f at the stored precision.
         pub fn one(&self) -> Float {
             self.f(1.0)
         }
 
+        /// Computes exp of newly constructed one; returns a numerical approximation to e.
         pub fn e(&self) -> Float {
             self.one().exp()
         }
 
+        /// Constructs numerical pi from Rug Constant::Pi at the stored precision.
         pub fn pi(&self) -> Float {
             Float::with_val(self._precision, Constant::Pi)
         }
 
+        /// Multiplies freshly constructed two by numerical pi; no symbolic tau is retained.
         pub fn tau(&self) -> Float {
             let two = self.f(2.0);
             let pi = self.pi();
             self.mul(&two, &pi)
         }
 
+        /// Clones lhs and adds borrowed rhs using Rug floating addition.
         pub fn add(&self, lhs: &Float, rhs: &Float) -> Float {
             lhs.clone() + rhs
         }
 
+        /// Clones lhs and subtracts borrowed rhs using Rug floating subtraction.
         pub fn sub(&self, lhs: &Float, rhs: &Float) -> Float {
             lhs.clone() - rhs
         }
 
+        /// Clones lhs and multiplies by borrowed rhs using Rug floating multiplication.
         pub fn mul(&self, lhs: &Float, rhs: &Float) -> Float {
             lhs.clone() * rhs
         }
 
+        /// Clones lhs and divides by borrowed rhs; adds no zero check or typed error.
         pub fn div(&self, lhs: &Float, rhs: &Float) -> Float {
             lhs.clone() / rhs
         }
 
+        /// Clones the input and applies unary negation, without consulting context precision.
         pub fn neg(&self, value: &Float) -> Float {
             -value.clone()
         }
 
+        /// Clones the input and calls recip; no zero guard or typed error is added.
         pub fn reciprocal(&self, value: &Float) -> Float {
             value.clone().recip()
         }
 
+        /// Clones lhs and calls Rug Pow with borrowed rhs as a floating exponent.
         pub fn pow(&self, lhs: &Float, rhs: &Float) -> Float {
             lhs.clone().pow(rhs)
         }
 
+        /// Clones the scalar and calls Rug Pow after narrowing the u64 exponent to u32.
+        ///
+        /// Panics with the benchmark-exponent invariant message when n exceeds u32::MAX.
+        /// No negative exponent or checked Result is accepted. This is a backend scalar
+        /// power call, distinct from this module's linear matrix/complex power loops.
         pub fn powi(&self, value: &Float, n: u64) -> Float {
-            value.clone().pow(u32::try_from(n).expect("benchmark exponent fits in u32"))
+            value
+                .clone()
+                .pow(u32::try_from(n).expect("benchmark exponent fits in u32"))
         }
 
+        /// Clones the input and calls its natural exponential; context precision is unused.
         pub fn exp(&self, value: &Float) -> Float {
             value.clone().exp()
         }
 
+        /// Clones the input and calls natural logarithm; no positive-domain guard is added.
         pub fn ln(&self, value: &Float) -> Float {
             value.clone().ln()
         }
 
+        /// Clones the input and calls native log10, without a change-of-base formula or guard.
         pub fn log10(&self, value: &Float) -> Float {
             value.clone().log10()
         }
 
+        /// Clones the input and calls square root; no nonnegative-domain guard is added.
         pub fn sqrt(&self, value: &Float) -> Float {
             value.clone().sqrt()
         }
 
+        /// Clones the radian input and calls sine with backend range reduction.
         pub fn sin(&self, value: &Float) -> Float {
             value.clone().sin()
         }
 
+        /// Clones the radian input and calls cosine with backend range reduction.
         pub fn cos(&self, value: &Float) -> Float {
             value.clone().cos()
         }
 
+        /// Clones the radian input and calls tangent without a pole check or typed error.
         pub fn tan(&self, value: &Float) -> Float {
             value.clone().tan()
         }
 
+        /// Clones the input and calls hyperbolic sine without a wrapper overflow bound.
         pub fn sinh(&self, value: &Float) -> Float {
             value.clone().sinh()
         }
 
+        /// Clones the input and calls hyperbolic cosine without a wrapper overflow bound.
         pub fn cosh(&self, value: &Float) -> Float {
             value.clone().cosh()
         }
 
+        /// Clones the input and calls hyperbolic tangent without an independent error bound.
         pub fn tanh(&self, value: &Float) -> Float {
             value.clone().tanh()
         }
 
+        /// Clones the input and calls inverse sine, real on `[-1,1]`; unchecked here.
         pub fn asin(&self, value: &Float) -> Float {
             value.clone().asin()
         }
 
+        /// Clones the input and calls inverse cosine, real on `[-1,1]`; unchecked here.
         pub fn acos(&self, value: &Float) -> Float {
             value.clone().acos()
         }
 
+        /// Clones the input and calls native atan, without constructing an atan2 denominator.
         pub fn atan(&self, value: &Float) -> Float {
             value.clone().atan()
         }
 
+        /// Clones the input and calls inverse hyperbolic sine, using backend conventions.
         pub fn asinh(&self, value: &Float) -> Float {
             value.clone().asinh()
         }
 
+        /// Clones the input and calls inverse hyperbolic cosine, real for value >= 1; unchecked.
         pub fn acosh(&self, value: &Float) -> Float {
             value.clone().acosh()
         }
 
+        /// Clones the input and calls inverse hyperbolic tangent, real for -1 < value < 1; unchecked.
         pub fn atanh(&self, value: &Float) -> Float {
             value.clone().atanh()
         }
 
+        /// Queries the current Rug floating value for zero without cloning it.
+        ///
+        /// Returns a Boolean, not Hyperreal ZeroKnowledge or an exact-source certificate.
+        /// No refinement, tolerance argument or certainty receipt is provided.
         pub fn is_zero(&self, value: &Float) -> bool {
             value.is_zero()
         }
     }
 
+    /// Three owned floating components for Euclidean benchmark vector formulas.
     #[derive(Clone)]
     pub struct Vec3 {
+        /// First Euclidean component.
         pub x: Float,
+        /// Second Euclidean component.
         pub y: Float,
+        /// Third Euclidean component.
         pub z: Float,
     }
 
+    /// Owned row-major 3-by-3 floating matrix for local benchmark formulas.
     #[derive(Clone)]
     pub struct Mat3 {
+        /// Owned entries indexed `[row][column]`; no matrix invariants are enforced.
         pub m: [[Float; 3]; 3],
     }
 
+    /// Four owned floating components, treated as a Euclidean four-vector.
+    ///
+    /// Dot products, magnitude and normalization include w. This type does not encode
+    /// a homogeneous point/direction contract or perform perspective division.
     #[derive(Clone)]
     pub struct Vec4 {
+        /// First component.
         pub x: Float,
+        /// Second component.
         pub y: Float,
+        /// Third component.
         pub z: Float,
+        /// Fourth Euclidean component, included in dot products and normalization.
         pub w: Float,
     }
 
+    /// Owned row-major 4-by-4 floating matrix for local benchmark formulas.
+    ///
+    /// All sixteen entries participate in products; arbitrary last rows are retained.
+    /// The inverse routine requires usable nonzero diagonal pivots without row swaps.
     #[derive(Clone)]
     pub struct Mat4 {
+        /// Owned entries indexed `[row][column]`, including an unrestricted final row.
         pub m: [[Float; 4]; 4],
     }
 
+    /// Owned real/imaginary floating pair for benchmark complex arithmetic.
+    ///
+    /// Formulas are expanded into real operations here. No exact complex identity,
+    /// zero-denominator check, cancellation signal or certainty receipt is added.
     #[allow(dead_code)]
     #[derive(Clone)]
     pub struct Complex {
+        /// Owned real component.
         pub re: Float,
+        /// Owned imaginary component.
         pub im: Float,
     }
 
     impl Vec3 {
+        /// Imports each supplied f64 component separately through the context.
         pub fn new(ctx: &Ctx, x: f64, y: f64, z: f64) -> Self {
             Self {
                 x: ctx.f(x),
@@ -1211,6 +1308,7 @@ mod gmp_engine {
             }
         }
 
+        /// Constructs three independently created backend zero components.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 x: ctx.zero(),
@@ -1219,6 +1317,7 @@ mod gmp_engine {
             }
         }
 
+        /// Computes the componentwise product sum in the order (x*x_rhs + y*y_rhs) + z*z_rhs.
         pub fn dot(&self, rhs: &Self, ctx: &Ctx) -> Float {
             let x = ctx.mul(&self.x, &rhs.x);
             let y = ctx.mul(&self.y, &rhs.y);
@@ -1227,16 +1326,22 @@ mod gmp_engine {
             ctx.add(&xy, &z)
         }
 
+        /// Computes sqrt(dot(self,self)) with the same rounded sum order; no scaled norm.
         pub fn magnitude(&self, ctx: &Ctx) -> Float {
             let dot = self.dot(self, ctx);
             ctx.sqrt(&dot)
         }
 
+        /// Computes magnitude once, then divides every component by it.
+        ///
+        /// Zero magnitude is not checked and no typed failure or exact unit-length
+        /// certificate is returned. Underflow/overflow and rounding follow the backend.
         pub fn normalize(&self, ctx: &Ctx) -> Self {
             let magnitude = self.magnitude(ctx);
             self.div_scalar(&magnitude, ctx)
         }
 
+        /// Adds matching components through the context without consuming either vector.
         pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, &rhs.x),
@@ -1245,6 +1350,7 @@ mod gmp_engine {
             }
         }
 
+        /// Adds the scalar to every component, not just one coordinate.
         pub fn add_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, scalar),
@@ -1253,6 +1359,7 @@ mod gmp_engine {
             }
         }
 
+        /// Subtracts matching rhs components from self through the context.
         pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, &rhs.x),
@@ -1261,6 +1368,7 @@ mod gmp_engine {
             }
         }
 
+        /// Subtracts the scalar from every component in self-minus-scalar order.
         pub fn sub_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, scalar),
@@ -1269,6 +1377,7 @@ mod gmp_engine {
             }
         }
 
+        /// Negates each component through the context, retaining the original vector.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.neg(&self.x),
@@ -1277,6 +1386,7 @@ mod gmp_engine {
             }
         }
 
+        /// Multiplies every component by the borrowed scalar through the context.
         pub fn mul_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.mul(&self.x, scalar),
@@ -1285,6 +1395,7 @@ mod gmp_engine {
             }
         }
 
+        /// Divides every component by the borrowed scalar without checking it for zero.
         pub fn div_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.div(&self.x, scalar),
@@ -1295,6 +1406,7 @@ mod gmp_engine {
     }
 
     impl Vec4 {
+        /// Imports each supplied f64 component separately through the context.
         pub fn new(ctx: &Ctx, x: f64, y: f64, z: f64, w: f64) -> Self {
             Self {
                 x: ctx.f(x),
@@ -1304,6 +1416,7 @@ mod gmp_engine {
             }
         }
 
+        /// Computes (x*x_rhs + y*y_rhs) + (z*z_rhs + w*w_rhs), including the fourth lane.
         pub fn dot(&self, rhs: &Self, ctx: &Ctx) -> Float {
             let x = ctx.mul(&self.x, &rhs.x);
             let y = ctx.mul(&self.y, &rhs.y);
@@ -1312,16 +1425,22 @@ mod gmp_engine {
             ctx.add(&ctx.add(&x, &y), &ctx.add(&z, &w))
         }
 
+        /// Computes sqrt(dot(self,self)) with the same rounded sum order; no scaled norm.
         pub fn magnitude(&self, ctx: &Ctx) -> Float {
             let dot = self.dot(self, ctx);
             ctx.sqrt(&dot)
         }
 
+        /// Computes magnitude once, then divides every component by it.
+        ///
+        /// Zero magnitude is not checked and no typed failure or exact unit-length
+        /// certificate is returned. Underflow/overflow and rounding follow the backend.
         pub fn normalize(&self, ctx: &Ctx) -> Self {
             let magnitude = self.magnitude(ctx);
             self.div_scalar(&magnitude, ctx)
         }
 
+        /// Adds matching components through the context without consuming either vector.
         pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, &rhs.x),
@@ -1331,6 +1450,7 @@ mod gmp_engine {
             }
         }
 
+        /// Adds the scalar to every component, not just one coordinate.
         pub fn add_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, scalar),
@@ -1340,6 +1460,7 @@ mod gmp_engine {
             }
         }
 
+        /// Subtracts matching rhs components from self through the context.
         pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, &rhs.x),
@@ -1349,6 +1470,7 @@ mod gmp_engine {
             }
         }
 
+        /// Subtracts the scalar from every component in self-minus-scalar order.
         pub fn sub_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, scalar),
@@ -1358,6 +1480,7 @@ mod gmp_engine {
             }
         }
 
+        /// Negates each component through the context, retaining the original vector.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.neg(&self.x),
@@ -1367,6 +1490,7 @@ mod gmp_engine {
             }
         }
 
+        /// Multiplies every component by the borrowed scalar through the context.
         pub fn mul_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.mul(&self.x, scalar),
@@ -1376,6 +1500,7 @@ mod gmp_engine {
             }
         }
 
+        /// Divides every component by the borrowed scalar without checking it for zero.
         pub fn div_scalar(&self, scalar: &Float, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.div(&self.x, scalar),
@@ -1387,6 +1512,7 @@ mod gmp_engine {
     }
 
     impl Mat3 {
+        /// Imports every f64 entry through the context, preserving row/column positions.
         pub fn new(ctx: &Ctx, m: [[f64; 3]; 3]) -> Self {
             Self {
                 m: [
@@ -1397,12 +1523,14 @@ mod gmp_engine {
             }
         }
 
+        /// Constructs a fresh backend zero in every matrix entry.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
             }
         }
 
+        /// Constructs backend ones on the diagonal and zeros elsewhere.
         pub fn identity(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|row| {
@@ -1411,12 +1539,17 @@ mod gmp_engine {
             }
         }
 
+        /// Clones entry `[column][row]` into `[row][column]`, without scalar arithmetic.
         pub fn transpose(&self) -> Self {
             Self {
                 m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
             }
         }
 
+        /// Expands the first row using three 2-by-2 minors in (t0 - t1) + t2 order.
+        ///
+        /// This is a rounded floating determinant, without exact sign/zero certification,
+        /// pivoting or a numerical error bound.
         pub fn determinant(&self, ctx: &Ctx) -> Float {
             let a = ctx.mul(&self.m[1][1], &self.m[2][2]);
             let b = ctx.mul(&self.m[1][2], &self.m[2][1]);
@@ -1437,6 +1570,11 @@ mod gmp_engine {
             ctx.add(&t0_minus_t1, &t2)
         }
 
+        /// Computes the adjugate times the reciprocal of the rounded determinant.
+        ///
+        /// Builds nine signed transposed cofactors directly. There is no singularity check,
+        /// pivoting or typed error; invertibility and usable numerical conditioning are
+        /// caller responsibilities, and the output is not a certified exact inverse.
         pub fn inverse(&self, ctx: &Ctx) -> Self {
             let m = &self.m;
             let det = self.determinant(ctx);
@@ -1473,6 +1611,10 @@ mod gmp_engine {
             }
         }
 
+        /// Computes all nine row-by-column products with (p0 + p1) + p2 sums.
+        ///
+        /// Initializes an output array with zeros before replacing every entry. Both input
+        /// matrices are borrowed; scalar operations perform their own internal cloning.
         pub fn mul_mat3(&self, rhs: &Self, ctx: &Ctx) -> Self {
             let mut out: [[Float; 3]; 3] =
                 core::array::from_fn(|_| core::array::from_fn(|_| ctx.f(0.0)));
@@ -1488,6 +1630,7 @@ mod gmp_engine {
             Self { m: out }
         }
 
+        /// Multiplies by a column vector using three (p0 + p1) + p2 row sums.
         pub fn transform_vec3(&self, v: &Vec3, ctx: &Ctx) -> Vec3 {
             let x0 = ctx.mul(&self.m[0][0], &v.x);
             let x1 = ctx.mul(&self.m[0][1], &v.y);
@@ -1507,6 +1650,10 @@ mod gmp_engine {
             Vec3 { x, y, z }
         }
 
+        /// Clones the whole matrix, then calls op(ctx, entry, scalar) on each entry.
+        ///
+        /// Traversal is row-major. The callback receives a borrowed cloned entry and the
+        /// same borrowed scalar, with entry first; its failures and side effects propagate.
         pub fn map_scalar(
             &self,
             scalar: &Float,
@@ -1521,6 +1668,10 @@ mod gmp_engine {
             }
         }
 
+        /// Calls op(ctx, self_entry, rhs_entry) for each matching row-major pair.
+        ///
+        /// Entries are borrowed directly, without a preliminary whole-matrix clone. This
+        /// is elementwise combination, not matrix multiplication; callback behavior propagates.
         pub fn combine(
             &self,
             rhs: &Self,
@@ -1534,16 +1685,25 @@ mod gmp_engine {
             }
         }
 
+        /// Clones the matrix, then negates each entry through a context call that clones it again.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
             }
         }
 
+        /// Computes self times inverse(rhs), in that order, using this adapter's inverse.
+        ///
+        /// This is right matrix division, not elementwise division. No singularity or
+        /// conditioning validation is added to the inverse routine.
         pub fn div_matrix(&self, rhs: &Self, ctx: &Ctx) -> Self {
             self.mul_mat3(&rhs.inverse(ctx), ctx)
         }
 
+        /// Starts at identity and right-multiplies by self exactly exponent times.
+        ///
+        /// Zero returns identity. This is linear repeated multiplication, not exponentiation
+        /// by squaring; no negative exponents, cancellation or total-work bound are provided.
         pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
             let mut acc = Self::identity(ctx);
             for _ in 0..exponent {
@@ -1554,23 +1714,46 @@ mod gmp_engine {
     }
 
     impl Mat4 {
+        /// Imports every f64 entry through the context, preserving row/column positions.
         pub fn new(ctx: &Ctx, m: [[f64; 4]; 4]) -> Self {
             Self {
                 m: [
-                    [ctx.f(m[0][0]), ctx.f(m[0][1]), ctx.f(m[0][2]), ctx.f(m[0][3])],
-                    [ctx.f(m[1][0]), ctx.f(m[1][1]), ctx.f(m[1][2]), ctx.f(m[1][3])],
-                    [ctx.f(m[2][0]), ctx.f(m[2][1]), ctx.f(m[2][2]), ctx.f(m[2][3])],
-                    [ctx.f(m[3][0]), ctx.f(m[3][1]), ctx.f(m[3][2]), ctx.f(m[3][3])],
+                    [
+                        ctx.f(m[0][0]),
+                        ctx.f(m[0][1]),
+                        ctx.f(m[0][2]),
+                        ctx.f(m[0][3]),
+                    ],
+                    [
+                        ctx.f(m[1][0]),
+                        ctx.f(m[1][1]),
+                        ctx.f(m[1][2]),
+                        ctx.f(m[1][3]),
+                    ],
+                    [
+                        ctx.f(m[2][0]),
+                        ctx.f(m[2][1]),
+                        ctx.f(m[2][2]),
+                        ctx.f(m[2][3]),
+                    ],
+                    [
+                        ctx.f(m[3][0]),
+                        ctx.f(m[3][1]),
+                        ctx.f(m[3][2]),
+                        ctx.f(m[3][3]),
+                    ],
                 ],
             }
         }
 
+        /// Constructs a fresh backend zero in every matrix entry.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
             }
         }
 
+        /// Constructs backend ones on the diagonal and zeros elsewhere.
         pub fn identity(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|row| {
@@ -1579,17 +1762,26 @@ mod gmp_engine {
             }
         }
 
+        /// Clones entry `[column][row]` into `[row][column]`, without scalar arithmetic.
         pub fn transpose(&self) -> Self {
             Self {
                 m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
             }
         }
 
+        /// Expands the first row into four cloned 3-by-3 minors, in column order.
+        ///
+        /// Starts from floating zero and alternately adds/subtracts each coefficient times
+        /// its Mat3 determinant. No exact sign/zero certificate or error bound is produced.
         pub fn determinant(&self, ctx: &Ctx) -> Float {
             (0..4).fold(ctx.f(0.0), |acc, col| {
                 let minor: [[Float; 3]; 3] = core::array::from_fn(|row| {
                     core::array::from_fn(|minor_col| {
-                        let source_col = if minor_col < col { minor_col } else { minor_col + 1 };
+                        let source_col = if minor_col < col {
+                            minor_col
+                        } else {
+                            minor_col + 1
+                        };
                         self.m[row + 1][source_col].clone()
                     })
                 });
@@ -1602,6 +1794,13 @@ mod gmp_engine {
             })
         }
 
+        /// Runs Gauss-Jordan elimination on a clone beside an identity matrix.
+        ///
+        /// Processes diagonal pivots in index order, normalizes each pivot row, then
+        /// eliminates that column in every other row. Never swaps rows or checks pivots.
+        /// A nonsingular matrix needing a row swap is therefore outside this routine's
+        /// usable domain; zero or poorly conditioned pivots inherit backend division and
+        /// rounding behavior. No singularity Result or certified inverse is returned.
         pub fn inverse(&self, ctx: &Ctx) -> Self {
             let mut left = self.m.clone();
             let mut right: [[Float; 4]; 4] = core::array::from_fn(|row| {
@@ -1630,6 +1829,10 @@ mod gmp_engine {
             Self { m: right }
         }
 
+        /// Computes all sixteen row-by-column products as (p0 + p1) + (p2 + p3).
+        ///
+        /// Initializes an output array with zeros before replacing every entry. Both input
+        /// matrices are borrowed; scalar operations perform their own internal cloning.
         pub fn mul_mat4(&self, rhs: &Self, ctx: &Ctx) -> Self {
             let mut out: [[Float; 4]; 4] =
                 core::array::from_fn(|_| core::array::from_fn(|_| ctx.f(0.0)));
@@ -1647,6 +1850,10 @@ mod gmp_engine {
             Self { m: out }
         }
 
+        /// Computes each row's (p0 + p1) + (p2 + p3) column-vector product.
+        ///
+        /// All four input coordinates and all sixteen entries participate, including the
+        /// output w. No affine shortcut, assumed input weight or perspective divide is used.
         pub fn transform_vec4(&self, v: &Vec4, ctx: &Ctx) -> Vec4 {
             let transform_row = |row: usize| {
                 let p0 = ctx.mul(&self.m[row][0], &v.x);
@@ -1663,6 +1870,10 @@ mod gmp_engine {
             }
         }
 
+        /// Clones the whole matrix, then calls op(ctx, entry, scalar) on each entry.
+        ///
+        /// Traversal is row-major. The callback receives a borrowed cloned entry and the
+        /// same borrowed scalar, with entry first; its failures and side effects propagate.
         pub fn map_scalar(
             &self,
             scalar: &Float,
@@ -1677,6 +1888,10 @@ mod gmp_engine {
             }
         }
 
+        /// Calls op(ctx, self_entry, rhs_entry) for each matching row-major pair.
+        ///
+        /// Entries are borrowed directly, without a preliminary whole-matrix clone. This
+        /// is elementwise combination, not matrix multiplication; callback behavior propagates.
         pub fn combine(
             &self,
             rhs: &Self,
@@ -1690,16 +1905,25 @@ mod gmp_engine {
             }
         }
 
+        /// Clones the matrix, then negates each entry through a context call that clones it again.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
             }
         }
 
+        /// Computes self times inverse(rhs), in that order, using this adapter's inverse.
+        ///
+        /// This is right matrix division, not elementwise division. No singularity or
+        /// conditioning validation is added to the inverse routine.
         pub fn div_matrix(&self, rhs: &Self, ctx: &Ctx) -> Self {
             self.mul_mat4(&rhs.inverse(ctx), ctx)
         }
 
+        /// Starts at identity and right-multiplies by self exactly exponent times.
+        ///
+        /// Zero returns identity. This is linear repeated multiplication, not exponentiation
+        /// by squaring; no negative exponents, cancellation or total-work bound are provided.
         pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
             let mut acc = Self::identity(ctx);
             for _ in 0..exponent {
@@ -1711,6 +1935,7 @@ mod gmp_engine {
 
     #[allow(dead_code)]
     impl Complex {
+        /// Imports real and imaginary f64 parts separately through the context.
         pub fn new(ctx: &Ctx, re: f64, im: f64) -> Self {
             Self {
                 re: ctx.f(re),
@@ -1718,6 +1943,7 @@ mod gmp_engine {
             }
         }
 
+        /// Constructs independently created backend zeros for both components.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 re: ctx.zero(),
@@ -1725,6 +1951,7 @@ mod gmp_engine {
             }
         }
 
+        /// Constructs backend one plus zero times i, the multiplicative identity.
         pub fn one(ctx: &Ctx) -> Self {
             Self {
                 re: ctx.one(),
@@ -1732,6 +1959,7 @@ mod gmp_engine {
             }
         }
 
+        /// Constructs backend zero plus one times i, the imaginary unit.
         pub fn i(ctx: &Ctx) -> Self {
             Self {
                 re: ctx.zero(),
@@ -1739,6 +1967,7 @@ mod gmp_engine {
             }
         }
 
+        /// Clones the supplied real part and constructs a zero imaginary part from ctx.
         pub fn from_scalar(value: &Float, ctx: &Ctx) -> Self {
             Self {
                 re: value.clone(),
@@ -1746,6 +1975,7 @@ mod gmp_engine {
             }
         }
 
+        /// Clones the real part and asks the context to clone and negate the imaginary part.
         pub fn conjugate(&self, ctx: &Ctx) -> Self {
             Self {
                 re: self.re.clone(),
@@ -1753,10 +1983,15 @@ mod gmp_engine {
             }
         }
 
+        /// Computes re*re + im*im with rounded real arithmetic, without a square root.
         pub fn norm_squared(&self, ctx: &Ctx) -> Float {
             ctx.add(&ctx.mul(&self.re, &self.re), &ctx.mul(&self.im, &self.im))
         }
 
+        /// Computes (re,-im)/(re*re + im*im), sharing the squared-norm denominator.
+        ///
+        /// No zero, overflow or underflow guard is applied; no scaled complex division or
+        /// typed error is supplied. Components use ordinary real backend division.
         pub fn reciprocal(&self, ctx: &Ctx) -> Self {
             let denom = self.norm_squared(ctx);
             Self {
@@ -1765,6 +2000,10 @@ mod gmp_engine {
             }
         }
 
+        /// Starts at complex one and right-multiplies by self exactly exponent times.
+        ///
+        /// Zero returns one. Exponents are nonnegative usize values; no squaring shortcut,
+        /// negative-exponent rule, cancellation or total-work bound is implemented.
         pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
             let mut acc = Self::one(ctx);
             for _ in 0..exponent {
@@ -1773,6 +2012,7 @@ mod gmp_engine {
             acc
         }
 
+        /// Adds corresponding real and imaginary parts through the context.
         pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.add(&self.re, &rhs.re),
@@ -1780,6 +2020,7 @@ mod gmp_engine {
             }
         }
 
+        /// Subtracts corresponding rhs parts from self through the context.
         pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.sub(&self.re, &rhs.re),
@@ -1787,6 +2028,7 @@ mod gmp_engine {
             }
         }
 
+        /// Negates both real and imaginary parts through the context.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.neg(&self.re),
@@ -1794,6 +2036,7 @@ mod gmp_engine {
             }
         }
 
+        /// Computes (ac - bd, ad + bc) from four real products, without special cases.
         pub fn mul(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.sub(&ctx.mul(&self.re, &rhs.re), &ctx.mul(&self.im, &rhs.im)),
@@ -1801,10 +2044,12 @@ mod gmp_engine {
             }
         }
 
+        /// Multiplies self by rhs.reciprocal(ctx); inherits its unchecked denominator.
         pub fn div(&self, rhs: &Self, ctx: &Ctx) -> Self {
             self.mul(&rhs.reciprocal(ctx), ctx)
         }
 
+        /// Divides both components by the borrowed real scalar without a zero guard.
         pub fn div_real(&self, rhs: &Float, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.div(&self.re, rhs),

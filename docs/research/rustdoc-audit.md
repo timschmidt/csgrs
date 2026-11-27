@@ -12729,6 +12729,100 @@ and reviewed inverse body. Continue engines.rs with gmp_engine, then symbolica_e
 remaining matrix-operation support, repository-wide review and previously recorded
 generated-item documentation gaps remain open.
 
+## Hyperlattice GMP/MPFR comparison adapter (2026-11-27)
+
+Target revision: `1e72a5964bee9910f590799d697dad4cb0634a96`. Read every line of
+`crates/hyperlattice/benches/mathbench/engines.rs` from 1030 through 1816, the complete
+gmp_engine module and separator. That 787-line block is now 1,032 lines, occupying
+1030 through 2061. The preceding reviewed module and following unreviewed symbolic
+module are byte-identical. Selected matrix/scalar benchmark callers were inspected
+for checked/abort labels, cloning and context use, without whole-file credit for
+pending matrix_ops.rs. Baseline all-feature mathbench compilation passed.
+
+Owning layer: local Rug/MPFR floating benchmark adapter, not the exact kernel.
+Relevant contracts are P1/P2 input/representation meaning, P3 floating-zero
+qualification, P5 precision versus resources, P6 failure disclosure, P9 certainty,
+P10 completed-work comparison and P37 accurate API claims. Reproduced missing
+acceptance witness: none of the adapter's module/type/field/method groups had
+Rustdoc, including the scalar u64-to-u32 exponent restriction and matrix inverse
+preconditions. Existing checked/abort benchmark labels add no such contracts here.
+
+Added 115 authored groups: one module, six types, twelve fields and ninety-six
+methods, including all thirty-two Ctx methods. Every authored declaration in this
+block has a verified description; all complete groups render on seven private pages.
+The complete composite declarations and bodies were read, then mechanically compared
+against the preceding adapter after formatting before reusing matching descriptions.
+Scalar descriptions were written for this implementation, and extra negation clones
+were explicitly documented. No mathematical behavior or fixture changed.
+
+Contracts clarified:
+
+- Ctx stores a mutable requested construction precision without validation. f, zero
+  and pi pass it directly to Rug constructors; one imports f64 one, e computes its
+  exponential, and tau multiplies numerical two and pi. Input f64 values are already
+  rounded binary data, not exact decimal-source specifications. Constants are
+  numerical values rather than retained Hyperreal symbols.
+- Twenty-four scalar arithmetic/transcendental wrappers explicitly clone an input
+  and never consult context precision. Binary operations clone lhs and borrow rhs;
+  unary methods clone their scalar. Changing contexts does not explicitly convert
+  already-created operands here. is_zero borrows and returns a Boolean about the
+  current floating value, without an exact-source certificate or three-way fact.
+- log10 and atan call the backend's dedicated methods. Scalar pow uses a borrowed
+  floating exponent; scalar powi narrows its u64 argument with u32::try_from and
+  expect, panicking above u32::MAX before invoking Pow. This differs from the
+  module's matrix/complex usize powers, which perform a linear number of complete
+  right multiplications starting at identity/one and return that identity at zero.
+- Domain, nonfinite-input, compatible-precision and zero-denominator checks are not
+  added here. Backend outcomes are not converted to Hyperreal Problem/Result or
+  certainty receipts. Precision does not supply total-work/memory bounds, refinement
+  or cancellation; row labels do not create guards or attach abort signals.
+- Vec3/Vec4 products retain their explicit left-associated or pairwise sum order;
+  magnitude is sqrt of the self-dot and normalize divides each lane by that magnitude
+  without a zero/scaling guard. Vec4 w participates as an ordinary Euclidean lane.
+- Row-major matrices compute column-vector products, retaining every entry/output
+  lane without affine assumptions or perspective division. Mat3 inverse uses signed
+  transposed cofactors over the determinant. Mat4 inverse uses diagonal-pivot
+  Gauss-Jordan elimination without swaps or pivot checks, so nonsingularity alone
+  does not establish applicability. Determinants add no exact sign/zero certificate.
+- map_scalar clones the matrix before row-major callbacks with entry first; combine
+  borrows entry pairs; neg clones the whole matrix and the scalar context then
+  clones each entry again. Right division is multiplication by the rhs inverse.
+  Complex reciprocal uses the shared squared norm without scaled division or zero
+  checking; conjugation clones the real part and the context clones/negates the
+  imaginary part. Complex multiplication uses four real products.
+
+Validation after final edits:
+
+- Scoped formatting under crates configuration and git diff --check passed.
+  Noncomment source equals Rustfmt of the original module. The only nonwhitespace
+  token changes are four optional trailing commas; call order, formulas, branches,
+  fixtures and assertions are unchanged. Both surrounding modules are byte-identical.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 with incremental disabled. Warnings and broken/private links were
+  denied. Source-hash-specific empty headers forced regeneration. Exhaustive authored
+  declaration matching and full rendered-text checks verified all 115 groups on all
+  seven pages in both configurations.
+- Static scalar inspection confirmed all thirty-two methods, twenty-four explicit
+  clone paths, direct context-precision access only in f/zero/pi, native log10/atan,
+  the u32 exponent guard and borrowing zero query. The initial auxiliary checker
+  miscounted Ctx methods as thirty-one; its expectation was corrected against the
+  complete declaration enumeration, without changing source or documentation.
+- An independent exact permutation-matrix witness again has determinant -1, square
+  equal to identity and first pivot zero. Inspection of this adapter's actual inverse
+  confirms unguarded division by that pivot without swapping or zero testing. This
+  establishes the documented applicability restriction from source; backend exceptional
+  behavior was not executed or characterized.
+- No external numerical engine, full Criterion timing row, dispatch report or
+  performance measurement ran. Full workflows remain owner-waived; no focused check
+  remains blocked. Temporary scripts/metadata/text occupy about 72 KiB and the shared
+  target remains approximately 2.8 GiB; no new target or linked probe was created.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-gmp-*` baseline/check/doc/render/scalar logs and
+`/tmp/csgrs-lattice-gmp-audit/` scripts, commands, formatter token deltas and reviewed
+inverse body. Continue engines.rs with symbolica_engine at current line 2062.
+The file's whole-file review, matrix-operation support, repository-wide review and
+previously recorded generated-item documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
