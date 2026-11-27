@@ -7651,6 +7651,112 @@ artifact. Hyperlattice's remaining implementations, tests, benches, support file
 and the broader codebase remain open. The root AGENTS.md public/private coverage
 mandate remains in force.
 
+## Hyperlattice Cartesian points and fact snapshots (2026-11-26)
+
+Reviewed all 777 baseline lines of `crates/hyperlattice/src/point.rs` at
+`c29a3b817`, including six structs, fields, trait implementations, operators,
+private bit/fact helpers, and both unit tests. The file now has 978 lines. All
+104 authored declarations (81 functions/methods, sixteen associated output types,
+six structs, and one test module) and thirty fields have attached documentation.
+Compiler-generated derive members are not counted as authored declarations.
+
+Owning layer: Hyperlattice's Cartesian coordinate carriers and structural fact
+snapshots. Relevant properties are P1/P2/P3/P4/P6/P9/P10/P17/P37: exact coordinate
+meaning, conservative facts, cache scope, failure vocabulary, preserved dispatch
+order, explicit equality criteria, and consumable API documentation. Missing
+acceptance witnesses included private/trait item comments and accurate domains
+for shared-denominator eligibility, one-hot support, mask dimensions, collection
+failure, and float conversion. This remains a documentation-only change.
+
+Reproduced the following on the baseline before editing:
+
+- Shared-scale views require a nonempty set of recognized exact rationals with
+  equal reduced denominators. `(1/3,2/3)` qualifies; `(1/2,1/4)` and `(0,1/3)` do
+  not. The constructor does not rewrite values onto a mathematical common
+  denominator or resolve a symbolic value into a rational representation.
+- Public view metadata can be changed while its borrowed coordinates remain the
+  same. Detached fact packets are likewise freely constructible/editable. Counts
+  use every set bit, including bits outside the point dimension; other queries
+  trust stored flags/index fields without rechecking coordinates or consistency.
+  These carrier APIs alone do not make user-supplied metadata a proof.
+- `Point3(0,-7,0)` is one-hot with axis index 1 and one_mask 0. One-hot means one
+  known nonzero coordinate, not a coordinate equal to one. `(0,2,3)` does not meet
+  has_sparse_support's zero-or-single-coordinate shortcut despite being sparse in
+  the ordinary broader sense. Family dependency flags are not correlated-root IDs.
+- N=0 view construction returns None. A manually constructed zero-dimensional
+  facts packet with zero masks reports both known-zero and known-dense. N=128
+  all-zero input succeeds with all 128 mask bits set. Eligible N=129 input panics
+  during the shift in the tested overflow-checked build. The public generic type
+  has no enforced size bound or typed oversize error. Documenting this existing
+  implementation restriction does not fix it or establish P6 conformance; release
+  overflow-disabled behavior was not qualified, and no assertion was weakened.
+- Float arrays import exact binary values; `0.1_f64` differs from exact `1/10`.
+  NaN/Infinity return their native scalar error variants. Interpolation accepts
+  parameters outside [0,1], and weighted sums accept negative/non-unit weights
+  without normalization. Empty/mismatched weighted collections return None.
+
+The comments also explain ownership and delegation: point-to-vector consumption
+moves coordinates, while consuming a vector into a point currently clones its
+lanes. Translation returns a point; ordered point subtraction returns a displacement.
+Collection methods clone points into an allocated vector collection before the
+vector implementation validates shape. Centroid uses an ordered sum and integer
+count; its delegated Option path also collapses count-conversion/division failures.
+Lossy exports stop at the first missing/nonfinite result and carry no certified
+geometric error or topology guarantee. Detached facts require recomputation after
+coordinate mutation; scalar cache changes can strengthen later observations.
+No arithmetic, call order, ownership path, or failure behavior was changed.
+
+Context inspection followed the actual vector lerp/mean/weighted_sum methods,
+Hyperreal exact-set eligibility and scalar float conversion/fact methods, and the
+Hyperlimit re-exports/plane fact usage. Those files received targeted reads only.
+Read the complete point-specific API-surface test and its imports for validation;
+the rest of that integration file remains unaudited. The test calls several
+operator/fact methods without asserting their results; execution alone is not a
+semantic oracle for those calls. The two unit tests also use lossy float assertions,
+which are now explicitly distinguished from exact coordinate proofs.
+
+Validation after final edits:
+
+- Comment/blank-line removal produces byte-identical remaining source against
+  `c29a3b817`; no executable line, fixture, attribute, assertion, or policy changed.
+  Focused Rustfmt and `git diff --check` passed.
+- Hyperlattice library builds and private Rustdoc passed with no default features
+  and all features. Rustdoc denied warnings and broken/private intra-doc links.
+  Initial bracketed formulas were interpreted as links; code formatting corrected
+  them without suppressing lints. Full normalized text of 131 source documentation
+  groups matched fourteen item pages in each configuration, including From impl
+  documentation rendered on the vector pages.
+- Separate private cfg(test) Rustdoc rendered the test module and private `real`
+  fixture. Both #[test] functions retain reviewed source comments but have no
+  individual item pages under Rustdoc. No test attributes or visibility changed
+  in the repository to influence that result.
+- Both original point unit tests and the selected original point API-surface test
+  passed in each feature configuration. A temporary harness includes the actual
+  point source unchanged and links actual scalar/vector libraries; the original
+  integration source is compiled directly, with only its point test selected.
+  Unrelated development dependencies and tests were not built/run through Cargo.
+- Bounded independent exact expectations reproduced denominator eligibility,
+  editable metadata, N=0/128/129 behavior, nonunit one-hot support, binary float
+  ingress/errors, extrapolation, and weighted-sum shape/sign behavior before and
+  after edits. The N=129 panic is an observed implementation gap, not geometric
+  success or resource-exhaustion evidence. The probe does not certify arbitrary
+  symbolic inputs or general completeness.
+- Hyperlimit downstream library checks passed with no default features and all
+  features. Full workflow checks remain owner-waived for this docs-only session;
+  no benchmark, dispatch-count change, or performance improvement is claimed.
+- Used one shared Cargo target with incremental compilation disabled and two
+  workers, locked/offline. Temporary test/probe executables are deleted after
+  validation; source probes, rendered docs, and logs remain available under /tmp.
+
+Evidence: `/tmp/csgrs-rustdoc-point-{min,all}-{build,doc,tests,render}.log`,
+`/tmp/csgrs-rustdoc-point-downstream-{min,all}.log`, and
+`/tmp/csgrs-rustdoc-point-test-docs.log`; Cargo artifact manifests are alongside
+these logs. Scripts are `/tmp/csgrs-point-*.py`, the exact probe source is
+`/tmp/csgrs-point-probe.rs`, and private test docs are under
+`/tmp/csgrs-point-harness/doc`. These temporary artifacts are not a durable evidence
+archive. Remaining Hyperlattice modules/tests/support files and the wider
+repository still require review; this entry does not claim complete crate coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
