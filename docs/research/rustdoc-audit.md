@@ -18462,6 +18462,175 @@ context without new whole-file audit credit. No historical coverage, sanitizer,
 performance or universal closure claim was re-established here. The repository-
 wide line audit and 100% Rustdoc mandate remain incomplete.
 
+## Inverse Legendre construction, clipped roots and reference solver
+
+On 2026-11-27, the worktree was clean on rustdoc at baseline
+c40f8d309c8b2bbffff80104fd4ec936da9a3d46. Reviewed all lines of these files:
+
+| File | Baseline lines | Documented declarations |
+| --- | ---: | ---: |
+| crates/hyperreal/src/computable/node/inverse_legendre.rs | 74 | 3 |
+| crates/hyperreal/src/computable/approximation/inverse_legendre.rs | 109 | 2 |
+| crates/hyperreal/src/real/arithmetic/inverse_legendre.rs | 41 | 5 |
+| crates/hyperreal/src/computable/approximation/inverse_legendre_tests.rs | 31 | 2 |
+| crates/hyperreal/tests/inverse_legendre.rs | 330 | 19 |
+| crates/hyperreal/tests/support/inverse_legendre_oracle.rs | 48 | 1 |
+
+The 633-line review accounts for thirty-three Rustdoc blocks: thirty-two named
+declarations and one oracle module overview, including thirty new blocks and
+two reviewed public operation descriptions. The overview was revised. The owner
+is Hyperreal (P1–P7), with exact defining relations, replay and supported subsequent
+operations relevant to P19/P20. Missing acceptance was documentation of private
+construction, local scaling recognition, clipped root refinement and the actual
+scope of qualification fixtures. Inputs remain finite real values and parameter
+m<1, including negative m, with continuous unwrapped inverses of F or E. The
+original equations and all executable behavior remain unchanged.
+
+Public admission computes log(1-m) before exact zero/circular shortcuts. Native
+construction first cancels a matching forward kind with a structurally equal
+parameter child, then builds the complete integral Q and seeks an integer
+structural multiple of it. The local scaled helper visits at most 32 levels
+per chain, peeling Negate, binary Offset and Multiply with a recognized rational
+factor. It tries the left factor first. A nonmatching product is retained as a
+single base with scale one, not recursively normalized; a zero budget declines
+before inspecting the node. None declines the shortcut rather than reporting
+scalar resource exhaustion. Rational recognition, multiplication and power-of-two
+allocation are not bounded by that visit count. The shift helper's unsupported
+negation of i32::MIN is a source-level limitation, not a newly executed extreme-
+allocation probe or a new typed resource claim.
+
+Matching residual bases and an integer ratio of rational scales recover an exact
+multiple of pi/2. The complete scale is nonzero for the valid positive Q; nearby
+values or merely value-equal but structurally different bases do not establish
+that identity. Otherwise the original pair is boxed with any known input sign
+and no magnitude bound. Input signal selection precedes parameter selection,
+and native exact results retain the selected attachment. These constructors assume
+valid finite children rather than validating arbitrary imported graphs.
+The public result adapter first recognizes pi multiples, then uses the shared
+identity conversion to recover recognized rational/pure-quadratic carriers or
+retain the exact opaque Computable. It is not general canonicalization.
+
+A contained public-API probe reproduced a cancellation-attachment gap in that
+adapter for both kinds at m=3/4. Attach a clear flag to a complete integral Q,
+then invert Q to exact pi/2 and assert the flag. The source retains its flag and
+returns no enclosure; the recovered pi carrier has no attached signal and still
+returns an enclosure. Its exact value is correct, but the public reconstruction
+does not transport the native constructor's selected cancellation attachment.
+Documented this existing behavior at elliptic_result; no implementation fix or
+new cancellation guarantee is included in this docs-only batch. It remains
+relevant follow-up for P5/P19 rather than evidence of end-to-end cancellation
+support. The probe uses a fresh process with 1 GiB address-space, ten CPU-second,
+fifteen wall-second limits and no core dumps.
+
+Numerical reduction samples value/Q at precision zero, with the completed API's
+at-most-one-unit guarantee. As in the preceding forward audit, that guarantee
+puts the local root in the closed half-pi chart; it does not establish strict
+interior selection or nearest rounding. Odd signed phases reciprocate c=1-m
+and rescale the target by sqrt(c) for F or its reciprocal for E. The exact phase
+angle and retained inverse definition remain distinct from numerical root work.
+Cancellation is checked before a sampled phase can supply the chart witness.
+
+For p<4, the solver takes k from the lower rational pi/2 enclosure at grid p-8.
+The clipped root stays in [-k,k], with clipping gap at most 2^(p-7), and its
+bracket narrows to width 2^(p-4). The derivative helper constructs sqrt(Y) or
+its reciprocal, Y=cos(at)^2+c*sin(at)^2, at rational angles. That formula is
+positive for every angle; monotonicity in absolute angle requires the principal
+chart. Nearest/farthest absolute bracket endpoints bound the derivative without
+deciding whether an arbitrary c is above or below one.
+
+Working residual precision starts at -16 and is retained across outer iterations,
+refining in 32-bit steps until the derivative lower bound is positive and the
+residual width is at most that bound times current bracket width divided by
+sixteen. Signed interval division, outward dyadic rounding, clamping and certified
+residual signs then narrow the bracket. If the actual local root is outside the
+inner clipped interval, the derivative argument applies between the midpoint
+and the clipped endpoint; it does not extend a local bound beyond its scope.
+
+Clipping, bracket midpoint, final evaluation and rounding allow respectively
+1/128, 1/32, 1/8 and 1/2 output units, totaling 85/128. At p>=4, the omitted
+local angle is at most pi/2; a two-guard-bit phase sample plus rounding gives
+at most 3/4+pi/32 units at p=4 and a smaller omission thereafter. Exact Machin
+rational bounds establish pi<22/7 and positivity of k under the coarsest fine
+schedule. Independent Fraction checks also covered 606 derivative-squared
+bounds, 162 signed interval divisions and 15,251 oracle derivative-bound cases.
+These are finite consistency checks of the described mathematics, not execution
+or a universal proof of the implementation, every precision or MPFR rounding.
+
+Documented stop placeholders, checked precision-subtraction panics, and absence
+of cumulative work/heap-byte accounting. Exact rational arithmetic and child
+construction do not poll a stop at every step. Neither an interrupted zero nor
+a clipped midpoint is a replacement exact inverse value. No resource limit or
+mathematical support restriction was changed by the documentation.
+
+The direct-kernel tests cover entry aborts, six coarse requests, and twelve
+circular inverse requests with constructor shortcuts bypassed. The circular
+test's name refers to serialized values, but its body passes payload-shaped
+arguments directly; it does not serialize or reimport. The integration fixtures
+separately cover 88 fresh forward-series points across 22 scalar recipes, 24
+signed principal/odd-quarter/period cases, twelve direct rational inverse-oracle
+inputs, AGM-derived quarter/half-period expectations, normalized 1e-320 offsets,
+exact quarter multiples, both composition directions and wrong-kind/parameter
+noncancellation. Refined overlap, same-process abort/retry/readers and JSON/CBOR
+checks keep their actual scope; they do not prove nestedness, cancellation
+latency, hostile graph validity or fresh-process cache isolation.
+
+The MPFR inverse oracle asserts rounded abs(target)<4 and abs(m)<=3/4. On the
+mathematical parameter range, both forward derivatives are at least one half,
+placing the root inside (-8,8). Its bracketed Newton proposals use the independent
+forward-series reference at 1024 bits; proposals outside the strict bracket fall
+back to bisection. It tries at most 24 steps and also stops on a rounded proposal
+that cannot move. Either stopping path must still pass the recomputed residual
+threshold 2^-800. This rejects a merely exhausted unconverged iterate, but it is
+not a directed MPFR error enclosure or a native certainty receipt. The shared
+series' analytic tail and caller comparison margins remain distinct from total
+floating-point rounding error. No oracle fixture or threshold was changed.
+
+Before editing, the two direct-kernel tests and all eleven all-feature inverse
+integration tests passed. The focused validation batch passed both unit tests
+under no-default and all features, ten no-default integration tests and eleven
+all-feature integration tests. It also passed two forward-Legendre unit tests,
+one Jacobi unit test and thirteen forward integration tests. Hyperspatial's
+selected inverse_integrals_cross_all_families_regimes_and_warm_states test passed:
+176 workflows across 22 scalar families, four regimes and two sign/warm states,
+including native inverse evaluation, further forward construction, strict ECEF
+proofs and provenance checks. The separate 484-pair spatial test was not run in
+this batch; this is not whole-spatial-suite qualification.
+
+After the last comment addition recording the pi-carrier attachment gap, the
+exact defining-relations integration test passed again in both configurations.
+The final rebuilt public probe produced byte-identical output to its baseline
+run for both inverse kinds. The final forward/spatial consumers and private doc
+builds also completed after that addition. No focused check remains blocked.
+
+Private cargo doc passed with no-default and all features, denying warnings and
+broken/private intra-doc links. Nine blocks matched actual private library pages;
+twenty-one integration/support blocks matched temporary private Rustdoc pages
+with eleven test attributes removed and four support paths resolved in a copy.
+Two cfg(test) functions and the function-local scaled helper passed inventory
+and supplemental Markdown rendering; ordinary library Rustdoc does not emit
+those three items. All thirty-three blocks were accounted for without treating
+supplemental rendering as compiler-emitted item coverage.
+
+Five files have identical raw executable/signature tokens to the baseline.
+The approximation kernel has only one removed optional comma and two inserted
+commas, independently reproduced by Rustfmt. All six files match an independently
+formatted baseline. Focused Rustfmt with child traversal disabled and git diff
+--check passed. Predicate order, construction, trace calls, assertions, fixtures
+and tolerances remain unchanged. Full workflow checks remain owner-waived for
+this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-inverse-legendre-audit/ includes baseline/final
+logs, command records, exact arithmetic checks, declaration/token inventories,
+rendered-block matches and the cancellation probe's source and before/after
+output. Locked/offline builds reused the nonincremental shared target, roughly
+6.4 GiB. The owned probe executable and duplicate temporary HTML were removed
+after inspection. Source signal/scaling helpers, result conversion, historical
+admission prose and spatial consumers supplied context without additional
+whole-file audit credit. No new sanitizer, performance or universal closure
+claim is made. AGENTS.md already contains the future-agent 100% private/public
+Rustdoc mandate and private-build requirement. Repository-wide line review and
+100% coverage remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

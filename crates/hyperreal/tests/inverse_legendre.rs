@@ -5,15 +5,20 @@ use std::sync::{
 };
 
 #[path = "support/inverse_legendre_oracle.rs"]
+/// Supply a residual-checked MPFR inverse reference independent of native Carlson refinement.
 mod inverse_oracle;
 #[path = "support/legendre_oracle.rs"]
+/// Supply shared forward-series and complete-AGM references plus exact reference-value transfer.
 mod legendre_oracle;
 #[path = "support/mpfr.rs"]
+/// Register thread-local cleanup for the development MPFR backend.
 mod mpfr;
 use legendre_oracle as oracle;
 #[path = "support/representations.rs"]
+/// Supply the finite shared inventory of 22 positive scalar construction recipes.
 mod representations;
 
+/// Select Jacobi amplitude or inverse E for a valid fixture; fail the test on a typed construction error.
 fn inverse(value: Real, m: &Real, second: bool) -> Real {
     if second {
         value.inverse_elliptic_e(m)
@@ -23,6 +28,7 @@ fn inverse(value: Real, m: &Real, second: bool) -> Real {
     .unwrap()
 }
 
+/// Select the corresponding unwrapped forward F/E operation for a valid fixture.
 fn forward(value: Real, m: &Real, second: bool) -> Real {
     if second {
         value.elliptic_e(m)
@@ -32,6 +38,7 @@ fn forward(value: Real, m: &Real, second: bool) -> Real {
     .unwrap()
 }
 
+/// Select the complete F/E value used to construct period fixtures and independent expectations.
 fn complete(m: &Real, second: bool) -> Real {
     if second {
         Real::elliptic_e_complete(m)
@@ -41,6 +48,10 @@ fn complete(m: &Real, second: bool) -> Real {
     .unwrap()
 }
 
+/// Require an eight-guard-bit enclosure of actual-expected within +/-2^(-bits).
+/// Use exact rational endpoint comparisons for absolute-error qualification,
+/// conditional on the scalar enclosure contract; this is not correct-rounding
+/// or relative-error certification.
 fn close(actual: &Real, expected: &Real, bits: i32) {
     let [lo, hi] = (actual - expected)
         .certified_rational_interval(-bits - 8)
@@ -53,6 +64,9 @@ fn close(actual: &Real, expected: &Real, bits: i32) {
 }
 
 #[test]
+/// Preserve three circular input values exactly and reject m=1,2 before zero-input shortcuts.
+/// Use zero, e and 1e320 for both inverses at m=0; invalid parameter assertions
+/// require typed NotANumber and keep the common m<1 domain explicit.
 fn inverse_circular_and_invalid_parameter_contract() {
     for value in [Real::zero(), Real::e(), "1e320".parse().unwrap()] {
         assert_eq!(
@@ -77,6 +91,11 @@ fn inverse_circular_and_invalid_parameter_contract() {
 }
 
 #[test]
+/// Check 88 inverse evaluations from independent series points across 22 scalar recipes.
+/// Validate each structural category, form s=v/(4*(v+1)) and phi=pi+s, and use
+/// parameters +/-s for both kinds. Import rounded MPFR integral references as
+/// fresh exact rational values, preventing paired native forward-node cancellation.
+/// Demand 512-bit absolute agreement and register MPFR thread cleanup.
 fn fresh_independent_integrals_cover_all_scalar_families() {
     mpfr::cleanup_on_thread_exit();
     for case in representations::optimized_certificate_representatives() {
@@ -96,6 +115,10 @@ fn fresh_independent_integrals_cover_all_scalar_families() {
 }
 
 #[test]
+/// Recover 24 signed principal/quarter/period fixtures from independent forward-series values.
+/// Use parameters +/-3/4 and amplitudes +/-5/16, +/-1.8 and +/-7.5 for both
+/// kinds, with 256-bit absolute comparisons. Register MPFR cleanup; the finite
+/// corpus does not enumerate all period choices or seam behavior.
 fn independently_sampled_principal_and_odd_quarter_roots() {
     mpfr::cleanup_on_thread_exit();
     for text in ["0.75", "-0.75"] {
@@ -111,6 +134,10 @@ fn independently_sampled_principal_and_odd_quarter_roots() {
 }
 
 #[test]
+/// Compare twelve fresh rational inverse inputs with the independent safeguarded MPFR solver.
+/// Use parameters 1/2,-3/4, values 5/16,-1.8,3.5 and both kinds at 512-bit
+/// absolute accuracy. Register backend cleanup. The oracle's residual threshold
+/// is a separate assertion from the native/reference comparison.
 fn independent_inverse_oracle_accepts_fresh_rational_inputs() {
     mpfr::cleanup_on_thread_exit();
     for m in ["0.5", "-0.75"] {
@@ -126,6 +153,10 @@ fn independent_inverse_oracle_accepts_fresh_rational_inputs() {
 }
 
 #[test]
+/// Check normalized inverse increments for +/-1e-320 displacements from a complete integral.
+/// At m=3/4 compare the displacement divided by its input offset with inverse
+/// endpoint derivatives one half for F and two for E, at 96 bits. Snapping the
+/// represented offsets to the exact quarter identity would fail this check.
 fn tiny_offsets_from_quarter_periods_are_never_snapped() {
     let m: Real = "0.75".parse().unwrap();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
@@ -140,6 +171,11 @@ fn tiny_offsets_from_quarter_periods_are_never_snapped() {
 }
 
 #[test]
+/// Check signed quarter inverses and a first-kind half-period identity using AGM references.
+/// Use complements 1/4,4,1e-160,1e160; both signed complete references recover
+/// +/-pi/2 for both kinds. Independently expect atan(c^(-1/4)) at K/2 for Jacobi
+/// amplitude. Comparisons use 192-bit absolute accuracy and MPFR cleanup; the
+/// reference points are rounded oracle values, not retained native complete nodes.
 fn agm_quarter_periods_and_jacobi_half_period_are_independent() {
     mpfr::cleanup_on_thread_exit();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
@@ -170,6 +206,11 @@ fn agm_quarter_periods_and_jacobi_half_period_are_independent() {
 }
 
 #[test]
+/// Verify exact quarter multiples, both composition directions and rejection of mismatched relations.
+/// At m=3/4 require exact identities for counts -7,1,2,1e320; check five preimages
+/// at 512 bits and exact public carriers for selected rational/pi results.
+/// Changing the parameter or integral kind must produce a certified nonzero
+/// difference for the selected 5/16 fixture, not an accidental cancellation.
 fn defining_relations_and_exact_quarter_multiples_survive() {
     let m: Real = "0.75".parse().unwrap();
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
@@ -226,6 +267,10 @@ fn defining_relations_and_exact_quarter_multiples_survive() {
 }
 
 #[test]
+/// Check normalized inverse behavior at signed 1e320 and 1e-320 inputs with m=1/2.
+/// For both kinds compare the large ratio with pi/(2Q) and the tiny ratio with
+/// one at 128 bits. These finite asymptotic fixtures neither wrap the inverse
+/// nor establish a resource bound for arbitrary magnitudes.
 fn huge_and_tiny_inputs_keep_the_unwrapped_real_domain() {
     let m: Real = "0.5".parse().unwrap();
     for second in [false, true] {
@@ -247,6 +292,10 @@ fn huge_and_tiny_inputs_keep_the_unwrapped_real_domain() {
 }
 
 #[test]
+/// Reject an unproved positive complement even for zero input, while admitting an undecided zero value.
+/// Use an opaque trigonometric zero as the complement to require Exhausted from
+/// both public inverses. As an input at known m=1/2 it remains valid and agrees
+/// with zero at 128 bits; input uncertainty and parameter admission are distinct.
 fn unresolved_domain_is_not_a_zero_shortcut() {
     let opaque_zero = Real::e().sin().powi(2.into()).unwrap()
         + Real::e().cos().powi(2.into()).unwrap()
@@ -264,6 +313,11 @@ fn unresolved_domain_is_not_a_zero_shortcut() {
 }
 
 #[test]
+/// Check sign retention, overlapping refinement, preexisting abort/retry and four shared readers.
+/// For both inverses at value e and m=-3, request 32,512,64,256 bits and require
+/// successive overlap rather than nesting. Clearing an asserted flag recovers
+/// 256-bit agreement; concurrent readers require positive lower endpoints.
+/// This same-process test does not measure interruption latency or inspect caches.
 fn precision_order_cancellation_recovery_and_concurrent_readers() {
     let m: Real = "-3".parse().unwrap();
     for second in [false, true] {
@@ -299,6 +353,11 @@ fn precision_order_cancellation_recovery_and_concurrent_readers() {
 
 #[cfg(feature = "serde")]
 #[test]
+/// Check same-process JSON/CBOR replay and both forward/inverse relations at signed e and m=3/4.
+/// Require structural identity, matching signs, forward recovery at 512 bits,
+/// unchanged JSON after warming and CBOR agreement at 256 bits. Reimport a
+/// forward expression before inversion as well. These assertions do not qualify
+/// hostile payloads or fresh-process cache isolation.
 fn serialization_preserves_values_and_both_defining_relations() {
     let m: Real = "0.75".parse().unwrap();
     for second in [false, true] {

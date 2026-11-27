@@ -1,11 +1,23 @@
-//! Development-only MPFR inverse, independent of the native Carlson kernel.
+//! Development-only residual-checked MPFR inverse, independent of native Carlson root refinement.
 use hyperreal::Real;
 use rug::Float;
 
 use crate::legendre_oracle as integrals;
 
-// Safeguarded Newton iteration for the integrand series' small-parameter
-// domain. Fixed precision and iteration counts belong only to this oracle.
+/// Compute an independent inverse F/E reference with safeguarded Newton steps and a final residual check.
+/// Convert inputs through the shared 1024-bit MPFR adapters and assert rounded
+/// abs(target)<4 and abs(m)<=3/4. Both forward derivatives are at least one half
+/// on that mathematical parameter range, so the real root is inside (-8,8).
+/// Start at the target; update a sign bracket from the forward-series residual,
+/// accept a Newton proposal only strictly inside it, and otherwise bisect.
+///
+/// Try at most 24 steps, stopping early if the rounded proposal cannot move.
+/// Regardless of that stopping reason, recompute the forward-series residual and
+/// require its magnitude below 2^-800 before returning phi. An exhausted iterate
+/// is not silently accepted. This threshold and the series' analytic tail leave
+/// room for callers' 512-bit comparisons, but do not provide a directed MPFR
+/// rounding proof or native certainty receipt. Domain checks concern rounded
+/// oracle inputs; the caller supplies valid fixtures and backend cleanup.
 pub fn inverse(value: &Real, parameter: &Real, second: bool) -> Float {
     let target = integrals::value(value);
     let m = integrals::value(parameter);
