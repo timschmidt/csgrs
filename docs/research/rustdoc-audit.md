@@ -16900,6 +16900,101 @@ they do not receive additional whole-file documentation-audit credit here. No fo
 check is blocked and no new performance claim is made. Full repository coverage is
 still incomplete.
 
+## Hyperreal scaling helpers and evaluation regressions (2026-11-27)
+
+Baseline: e42e5a5d2171440faa9372b8a0dda903e5964faa. Whole-file review of the
+following computable/node sources (609 baseline lines total):
+
+- scale.rs: 30 lines.
+- precision_boundary_tests.rs: 116 lines.
+- cache_rescale_tests.rs: 142 lines.
+- linear_demand_tests.rs: 226 lines.
+- magnitude_boundary_tests.rs: 95 lines.
+
+The owning layer is Hyperreal integer scaling and computable evaluation/cache
+qualification. Relevant properties are P1, P3–P6, P10 and P19: exact rounding rules,
+conservative metadata, monotone retained evidence, resource distinctions, scheduling
+and replay. Domains include signed integers with i32 scale/precision exponents;
+restricted symbolic pi monomials; boundary magnitude metadata; signed scheduling
+hints; exact radical-prefix expressions; stopped and resumed evaluations; shared
+cache writers and native graph replay. Missing witnesses were private helper,
+constant, module and test Rustdoc describing their actual oracles and limits.
+All seventeen owning tests passed with all features on the baseline before editing.
+
+All 33 authored functions/constants/modules now have Rustdoc:
+
+- shift floors when discarding bits, including negative integers. scale and
+  scale_at_precision round to nearest with halfway cases toward positive infinity,
+  using opposite exponent conventions. The i32::MIN shift magnitude is representable
+  without signed negation, but large nonzero left shifts still have large allocation
+  costs. Zero at that endpoint is a separate safe case. These helpers have no total
+  work/allocation/cancellation budget and do not promise correctly rounded general
+  computable conversion.
+- Integer approximation compares both public and raw kernels against exact division
+  for 16,995 integer/precision pairs. The extreme fixtures avoid enormous nonzero
+  left shifts. An independent recursive interpreter over pi/inverse-pi, offset,
+  square and inverse syntax uses i128 exponents to verify twelve native and imported
+  offset cases through further operations. Its restricted domain and fixture panic
+  are explicit; it does not evaluate huge approximations or call production equality.
+- Cache rounding uses an exact quotient/remainder oracle. Its large-gap shortcut
+  asserts a strict small-magnitude precondition before returning zero; that shortcut
+  is not a general replacement algorithm. Coverage includes 8193 integers at
+  seventeen coarsening gaps, fourteen selected widths through 65536 bits, signed
+  near-power/halfway cases and full-i32 precision gaps. Some cases repeat. Public
+  warmed-cache tests assert zero/nonzero transitions rather than all output digits.
+- Eight synchronized writers publish 256 precisions of exact 3/2, check five known
+  coarsenings after each write and require the finest final cache. This is an observed
+  concurrent execution, not exhaustive interleaving coverage or a performance result.
+- Magnitude fixtures preserve nonzero/sign facts when exponent metadata is absent
+  or unrepresentable, distinguish Some(None) zero from unresolved magnitude, and
+  compare transform estimates against widened arithmetic. Reciprocal/square estimate
+  formulas are not mislabeled exact binades. Approximation-derived planning metadata
+  remains separate from an exact-MSD certificate.
+- Scheduling fixtures verify packed-field independence and hint saturation separately
+  from numerical meaning. The 257-prefix radical expression is checked against an
+  independent 512-fractional-bit integer-square-root enclosure after rearranging
+  the double sum into suffix weights. Every returned interval must contain that
+  full reference enclosure. Fresh graph construction does not reset shared constant
+  caches; cold-state or dispatch-count coverage is not invented.
+- Six stopped/retried atan-prefix cases discard the interrupted return value, check
+  empty numeric caches and unchanged hints, then clear the same flag and compare
+  resumed evaluation with a compact expression within two integer units. This is
+  cache hygiene/retry evidence, not cancellation latency or exact equality from
+  sampled values. The same-process JSON test checks omitted hint/fact fields and
+  approximation agreement, not independent semantic equality or fresh-process replay.
+
+A separate compiled harness included the actual scale.rs source and an exact copy
+of the runtime approximation_scale_plan function, checked against its current source.
+It compared all three helpers against independent floor-division/nearest-rounding
+expectations for 12,593 signed input/shift pairs and safe extreme cases. It passed
+before and after editing. The initial harness lacked the private word-plan module;
+adding the actual function body resolved compilation without changing repository
+code. This is isolated helper validation, not a new formal proof or a replacement
+for the owning crate's tests.
+
+After the final edit, the fifteen nonoptional and seventeen all-feature owning tests
+passed. In each configuration, the retained-tower approximation regression and
+adjacent-integer integration test passed too. Five all-feature downstream Hyperlimit
+resolver tests passed with their existing policy/certainty/callback assertions.
+Private cargo doc passed with optional features disabled and with all features,
+with warnings and broken/private links denied. The three runtime helper blocks
+matched actual private pages. Thirty cfg(test)/local-function/constant blocks passed
+source/declaration checks and supplemental Markdown rendering; these do not claim
+ordinary library Rustdoc exposes test-only or function-local item pages.
+
+All executable/signature tokens match the baseline. Formatting only reflowed an
+existing offset array and JSON unwrap expression; no assertion, fixture, call order
+or runtime behavior changed. Selected Rustfmt and git diff --check passed. Full
+workflows remain owner-waived for this docs-only session. No focused check is blocked,
+and no performance or universal correctness claim is inferred from these finite tests.
+
+Evidence is retained in /tmp/csgrs-hyperreal-eval-regressions-audit/: baseline/final
+logs, commands, isolated helper harness, declaration/token inventory and rendered-block
+matches. Temporary executable and duplicate test Markdown HTML were removed; builds
+reused the roughly 5.7 GiB locked/offline nonincremental target. Cache publication,
+word planning, bound transforms and constructor-hint excerpts were supporting context,
+not additional whole-file audit credit. Repository-wide coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

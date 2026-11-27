@@ -1,8 +1,13 @@
 #[cfg(test)]
+/// Exact cache-rescaling expectations, extreme precision gaps and concurrent finest-result retention.
 mod cache_rescale_tests {
     use super::*;
     use num::Integer;
 
+    /// Compute nearest `n/2^gap` by exact floor quotient/remainder, choosing positive infinity at a tie.
+    /// For gaps above one million, assert the fixture magnitude is strictly below half
+    /// a unit and return zero without allocating an enormous divisor. That assertion
+    /// is a domain condition of this test shortcut, not a general large-gap rounding algorithm.
     fn rounded(n: &BigInt, gap: u32) -> BigInt {
         if gap > 1_000_000 {
             assert!(n.bits() < u64::from(gap));
@@ -14,6 +19,8 @@ mod cache_rescale_tests {
     }
 
     #[test]
+    /// For 8193 signed integers, reject a finer request and check all seventeen coarsening gaps against the exact oracle.
+    /// Require the stored integer to remain unchanged after every lookup sequence.
     fn cache_rescale_rounding_and_misses() {
         for n in -4096..=4096 {
             let value = BigInt::from(n);
@@ -33,6 +40,9 @@ mod cache_rescale_tests {
     }
 
     #[test]
+    /// Exercise fourteen binary widths through 65536 bits, four nearby magnitudes and both signs at thirteen listed gaps.
+    /// Some gaps/cases repeat. Check nearest rounding against exact division and preserve
+    /// the original precision/value; this is a chosen boundary corpus, not every limb configuration.
     fn cache_rescale_limb_and_halfway_boundaries() {
         for bits in [
             1_u32, 2, 31, 32, 33, 63, 64, 65, 127, 128, 129, 1024, 4096, 65536,
@@ -69,6 +79,8 @@ mod cache_rescale_tests {
     }
 
     #[test]
+    /// Check nine signed integers at five precision pairs, including a gap spanning the full i32 range.
+    /// Use unsigned absolute differences in the independent oracle and require the original cache entry to survive.
     fn cache_rescale_extreme_gaps() {
         for n in [-65537, -3, -2, -1, 0, 1, 2, 3, 65537] {
             for (q, p) in [
@@ -88,6 +100,8 @@ mod cache_rescale_tests {
     }
 
     #[test]
+    /// Warm five public rational/root/constant values, query i32::MAX coarsely, then request finer nonzero results.
+    /// The assertions check zero/nonzero outcomes across cache transitions, not every approximation digit.
     fn cache_rescale_public_warmed_extreme() {
         for input in [
             Computable::rational(17.into()).sqrt(),
@@ -103,6 +117,10 @@ mod cache_rescale_tests {
     }
 
     #[test]
+    /// Run eight synchronized writers publishing 256 distinct precisions of exact 3/2.
+    /// After each write, check five coarsenings against known dyadic answers; finally
+    /// require the finest -256 entry. This observed concurrent execution is not an
+    /// exhaustive scheduling proof or a throughput measurement.
     fn cache_rescale_concurrent_monotone_publication() {
         let cache = EvaluationCache::new();
         let barrier = std::sync::Barrier::new(8);

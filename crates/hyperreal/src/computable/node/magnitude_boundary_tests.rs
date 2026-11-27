@@ -1,8 +1,11 @@
 #[cfg(test)]
+/// Preserve sign/nonzero evidence when exponent metadata is absent, estimated or unrepresentable.
 mod magnitude_boundary_tests {
     use super::*;
 
     #[test]
+    /// Transport both known signs without an exponent through seven bound forms and require unresolved magnitude.
+    /// Contrast known zero, whose nested Option is Some(None), with absence of any magnitude certificate.
     fn absent_nonzero_magnitude_does_not_certify_zero() {
         for sign in [Sign::Plus, Sign::Minus] {
             let bound = BoundInfo::with_sign(sign, None);
@@ -27,6 +30,11 @@ mod magnitude_boundary_tests {
     }
 
     #[test]
+    /// Check eight boundary exponents and 64 offset/product pairs against widened arithmetic.
+    /// Inverse and square expectations concern stored estimates 1-e and 2*e; square-root
+    /// metadata uses exact floor(e/2). Preserve signs when an exponent cannot fit, and
+    /// keep an opposed-sign maximum-exponent sum Unknown. This is a metadata-transform
+    /// fixture, not an independent enclosure proof for every represented real.
     fn bound_transforms_check_the_complete_exponent() {
         let exponents = [
             i32::MIN,
@@ -77,6 +85,8 @@ mod magnitude_boundary_tests {
     }
 
     #[test]
+    /// Use four separated approximation/precision pairs to retain sign while checking exponent representability.
+    /// Require exact-MSD queries to decline even when an in-range planning estimate exists.
     fn approximation_bound_retains_sign_without_wrapped_magnitude() {
         for (precision, integer, expected) in [
             (i32::MAX, 2, None),

@@ -1,10 +1,13 @@
 #[cfg(test)]
+/// Scheduling-hint transport, independent enclosure checks, aborted publication and native replay.
 mod linear_demand_tests {
     use super::*;
     use num::Signed;
     use num::bigint::BigUint;
 
     #[test]
+    /// Preserve seven signed demand hints through bound, exact-sign and inverse-trigonometric-presence updates.
+    /// The constructed fact combinations test packed-field independence, not a coherent geometric value.
     fn linear_demand_hint_survives_independent_fact_updates() {
         assert_eq!(AtomicFacts::default().linear_demand(), 0);
         for demand in [i16::MIN, -512, -1, 0, 1, 512, i16::MAX] {
@@ -33,7 +36,11 @@ mod linear_demand_tests {
     }
 
     #[test]
+    /// Check negation, nine offsets and five second-operand demands for each of seven hint values.
+    /// Compute expected saturation in wider arithmetic; no numerical expression evaluation is needed.
     fn linear_demand_hint_saturates_and_accounts_for_binary_scaling() {
+        /// Create a fresh exact-one node and inject only its initially zero scheduling field.
+        /// This deliberately sets a cost hint independently of numerical value to test constructor transport.
         fn with_hint(demand: i16) -> Computable {
             let value = Computable::one();
             value.internal.facts.0.fetch_or(
@@ -74,10 +81,19 @@ mod linear_demand_tests {
     }
 
     #[test]
+    /// Enclose a weighted sum of 257 alternating radical prefixes using integer square-root bounds at 512 fractional bits.
+    /// Reorder the double sum into independent suffix weights, then require each returned
+    /// interval to contain the entire reference enclosure. Exercise fresh graphs, ascending
+    /// and mixed precision reuse, and three concurrent requests. Shared constant caches
+    /// are not reset, and no exact dispatch-count or performance claim follows.
     fn linear_demand_schedule_matches_independent_signed_root_enclosures() {
         use crate::Real;
+        /// Number of prefix terms; shared prefixes make evaluation order and retained work relevant.
         const N: usize = 257;
+        /// Fractional binary precision of the independent integer-root enclosure, finer than all tested requests.
         const REFERENCE_BITS: usize = 512;
+        /// Build prefixes of alternating sqrt(k+1), weighting each prefix by two at multiples of three and minus one otherwise.
+        /// Return a newly constructed graph without replacing it by the oracle's suffix-weight formula.
         fn expression() -> Real {
             let mut prefix = Real::zero();
             let values: Vec<_> = (1..=N)
@@ -153,9 +169,16 @@ mod linear_demand_tests {
     }
 
     #[test]
+    /// For three offsets and both outer operand orders, assert a stop before evaluating a shared atan-prefix graph.
+    /// Discard the returned partial integer, require empty numeric caches and unchanged
+    /// hints, then clear the same flag and retry. Compare the resumed result with a
+    /// compact reference within two integer units and require publication. This checks
+    /// cache hygiene/retry, not cancellation latency or exact equality from sampled values.
     fn linear_demand_schedule_does_not_publish_aborted_results() {
         use std::sync::atomic::{AtomicBool, Ordering};
 
+        /// Build an unsimplified node with invalid bound/sign facts and no attached signal.
+        /// The test passes the explicit stop signal to evaluation so constructor rewrites cannot erase its history.
         fn raw(approximation: Approximation) -> Computable {
             Computable {
                 internal: Arc::new(Node::new(
@@ -208,6 +231,10 @@ mod linear_demand_tests {
 
     #[cfg(feature = "serde")]
     #[test]
+    /// Require a sum of roots to omit demand/fact fields in JSON and reload with a zero demand hint.
+    /// At three precision requests, compare original and replayed approximations within
+    /// two units. This is same-process omission/reuse coverage, not an independent
+    /// semantic-equality proof, deterministic-byte check or fresh-process replay witness.
     fn linear_demand_hint_is_not_serialized_numerical_state() {
         let value = Computable::rational(Rational::from(2))
             .sqrt()

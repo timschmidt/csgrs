@@ -1,9 +1,13 @@
 #[cfg(test)]
+/// Exact integer rounding and symbolic offset preservation at precision/exponent boundaries.
 mod precision_boundary_tests {
     use super::*;
     use num::Integer;
 
     #[test]
+    /// Compare public and raw integer approximation against exact Euclidean-division rounding for 16,995 input/precision pairs.
+    /// Halfway cases go toward positive infinity, including negative integers. Also require
+    /// both One representations to agree with integer one over the same 33 precisions.
     fn integer_approximation_matches_exact_rounding() {
         for n in -257..=257 {
             let integer = BigInt::from(n);
@@ -38,6 +42,9 @@ mod precision_boundary_tests {
     }
 
     #[test]
+    /// Check zero at i32::MIN precision and nine signed small integers under extreme right shifts.
+    /// Floor shift preserves a negative sign as -1, while nearest scaling and maximum
+    /// positive approximation precision yield zero. No huge nonzero left-shift allocation is attempted.
     fn zero_at_minimum_precision_and_extreme_right_shifts() {
         assert!(Computable::zero().approx(i32::MIN).is_zero());
         assert!(
@@ -56,9 +63,10 @@ mod precision_boundary_tests {
         }
     }
 
-    // An independent exact denotation for the restricted family pi^k * 2^e.
-    // Widened exponents let the tests inspect huge/small reals without building
-    // their integer approximations or relying on production equality rewrites.
+    /// Interpret the restricted raw syntax as exact exponents (k,e) for pi^k * 2^e.
+    /// Use i128 arithmetic to inspect fixture rewrites without evaluating huge integers
+    /// or invoking production equality. Unsupported node tags panic as fixture errors;
+    /// this recursive oracle is limited to constants pi/inverse-pi, offsets, squares and inverses.
     fn pi_monomial(value: &Computable) -> (i128, i128) {
         match &value.internal.approximation {
             Approximation::Constant(SharedConstant::Pi) => (1, 0),
@@ -79,11 +87,24 @@ mod precision_boundary_tests {
         }
     }
 
+    /// Twelve signed offsets spanning i32 endpoints and the half-range thresholds that squaring can cross.
     const OFFSET_BOUNDARIES: [i32; 12] = [
-        i32::MIN, i32::MIN + 1, -1_073_741_825, -1_073_741_824,
-        -8, -1, 0, 1, 8, 1_073_741_823, 1_073_741_824, i32::MAX,
+        i32::MIN,
+        i32::MIN + 1,
+        -1_073_741_825,
+        -1_073_741_824,
+        -8,
+        -1,
+        0,
+        1,
+        8,
+        1_073_741_823,
+        1_073_741_824,
+        i32::MAX,
     ];
 
+    /// Check a shifted pi, its square, its inverse and its twice-squared inverse against independent exponent pairs.
+    /// Expected exponents use i128, preserving the meaning when no single i32 offset can store the result.
     fn assert_offset_rewrites(value: Computable, exponent: i32) {
         let exponent = i128::from(exponent);
         assert_eq!(pi_monomial(&value), (1, exponent));
@@ -96,6 +117,7 @@ mod precision_boundary_tests {
     }
 
     #[test]
+    /// Apply all twelve boundary offsets through the native constructor and verify the full symbolic rewrite chain.
     fn offset_rewrites_preserve_values_at_exponent_limits() {
         for exponent in OFFSET_BOUNDARIES {
             assert_offset_rewrites(Computable::pi().shift_left(exponent), exponent);
@@ -104,12 +126,15 @@ mod precision_boundary_tests {
 
     #[cfg(feature = "serde")]
     #[test]
+    /// Deserialize raw pi-offset graphs at all twelve boundaries, then verify the same exponent-preserving rewrites.
+    /// This checks semantic replay and later composition in this process, not byte-stable serialization or fresh-process state.
     fn deserialized_offset_rewrites_preserve_values_at_exponent_limits() {
         let pi = serde_json::to_value(Computable::pi()).unwrap();
         for exponent in OFFSET_BOUNDARIES {
             let value = serde_json::from_value(serde_json::json!({
                 "internal": { "Offset": [pi, exponent] }
-            })).unwrap();
+            }))
+            .unwrap();
             assert_offset_rewrites(value, exponent);
         }
     }
