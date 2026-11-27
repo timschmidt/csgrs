@@ -16708,6 +16708,99 @@ approximation-query and rational square-extraction excerpts were supporting cont
 not whole-file credit. Full workflows remain owner-waived for this docs-only session;
 no focused check is blocked. Repository-wide documentation coverage is incomplete.
 
+## Hyperreal iterated radical reducer and eighth-angle fixtures (2026-11-27)
+
+Baseline: 2c5107b27b96fcb0ba4aec8f02e88a019796042e. Whole-file review:
+
+- crates/hyperreal/src/computable/node/radical_tower.rs (413 baseline lines).
+- crates/hyperreal/src/computable/node/radical_eighth_angle_tests.rs
+  (114 baseline lines).
+
+The owning layer is Hyperreal's query-local radical arithmetic and its shared-root
+sign/decline adapter. P1–P6, P10 and P19 govern exact selected roots, conservative
+recognition, proof reuse, resource/failure distinctions and downstream predicates.
+Inputs include rational leaves, ordered dependent/independent square-root extensions,
+raw arithmetic DAGs, exact rational-angle sine leaves and invalid-domain expressions.
+The missing witness was complete private/helper/test Rustdoc and accurate descriptions
+of guard scope, basis identity and cached outcomes. On the baseline, all three
+raw-graph eighth-angle tests and five Real radical tests passed before editing.
+
+All 46 authored declarations/fields/variants now have Rustdoc. The audit records:
+
+- RadicalElement is a boxed coefficient tree, not a shared DAG. Its generator
+  indices refer to one RadicalTower; indices from separate towers are not identities.
+  Derived equality compares presentation with exact rational leaf equality, not all
+  equivalent scalar expressions. Structural zero requires every leaf zero; dependent
+  root relations can prove additional zeros. Clone preserves values but duplicates
+  boxed coefficient structure. Root relations are positive and ordered by dependency.
+- Addition aligns levels and join removes only structurally unused high parts.
+  Multiplication applies the exact square relation. Sign compares opposed terms by
+  squared magnitudes and remains valid for dependent generators. Conjugate inversion
+  can nevertheless decline a nonzero value with zero norm. The old zero-norm comment
+  was corrected: zero norm can also arise from a zero value, and does not by itself
+  prove that the root generator is dependent.
+- Guard names do not constitute a total-work budget. The 256-node threshold counts
+  completed memo entries, excluding pending depth and separate helper traversal;
+  the ten-generator threshold applies after rational-root/tree-reuse attempts.
+  The 256-term measure counts all rational leaves, including zeros. The 4096-bit
+  measure takes the maximum canonical numerator-plus-denominator size of any leaf,
+  not their sum. Rational accessors may canonicalize and cache fractions while
+  measuring them. Exact-rational traversal shortcuts bypass element checks.
+- Products and completed ordinary graph nodes apply size guards after construction.
+  Addition, sign differences and generator relations are not uniformly guarded
+  intermediates, and there is no cumulative work/allocation/cancellation bound.
+  Offsets build a separate power-of-two factor before scaling, so their shift guard
+  does not cancel powers already in a child as the quadratic coefficient path does.
+  These are current implementation limits, not changes to the target resource contract.
+- Rational-root recognition reads canonical magnitudes but assumes nonnegative input.
+  Its shared partial square extractor can decline beyond its recognition envelope;
+  decline is not a nonsquare proof. Positive radicands first try that shortcut, then
+  exactly equal existing trees, then a new generator. No complete basis minimization
+  or independence proof is required for the sign argument.
+- PrescaledSin admits recognized pi/8 and 3*pi/8 arguments via their positive
+  half-angle roots, retaining the source sine nodes. The separate pi-multiple
+  recognizer owns additional traversal limits. A local radical basis is discarded
+  after every query; successful signs, but not that basis, are retained. Calling
+  this method again after success rebuilds the basis. Every decline is memoized
+  without a reason or caller budget/policy key; other sign-query paths remain usable.
+  Unsupported syntax, domain failure, dependent-root inversion and guard decline
+  remain combined in Option, not typed exhaustion or universal undecidability.
+- Raw test helpers bypass constructor simplification and start with invalid facts.
+  The four half-angle identities have twelve signed residual cases, each queried
+  twice without a numeric root cache; sine tags remain intact. The rejection test
+  covers four unsupported arguments and inverse zero, with no negative-radicand
+  witness. The test named full_hull_determinant evaluates a supplied factored scalar
+  expression and does not call a hull/four-point determinant implementation.
+
+An independent polynomial calculation over Q[a,r,x,y] expanded
+`det(B-A,C-A,D-A)` for the four points named by the fixture and exactly recovered
+`a*r^2*(x^2+y^2-1)`. This verifies the supplied algebraic factorization, not a hull
+kernel. A compiled public consumer exercised the four eighth-angle identities,
+twelve signed residual cases and cloned retries, dependent-root cancellation and
+repeated pi decline. All passed against the rebuilt library.
+
+After the final source edit, three eighth-angle, five Real radical and thirteen
+quadratic reducer tests passed both without optional features and with all features.
+All four lazy-certificate replay tests passed with all features. Five downstream
+Hyperlimit resolver tests passed with all features, preserving their existing policy,
+certainty and callback-precedence assertions; their success is not claimed to force
+the radical stage on every path. Both private cargo doc configurations passed with warnings and
+broken/private links denied. All 35 runtime blocks matched actual private pages;
+the eleven cfg(test) module/function blocks passed source checks and supplemental
+Markdown rendering. Derived Clone, Debug and PartialEq methods render their inherited
+trait documentation. No runtime test assertion or public API changed.
+
+Executable/signature tokens match the baseline except one optional tuple-field
+trailing comma added with field documentation. Selected Rustfmt and git diff --check
+passed. Evidence is retained in /tmp/csgrs-hyperreal-radical-reducer-audit/: commands,
+baseline/final logs, public probe, exact polynomial calculation, declaration/token
+inventory, rendered-block matches and generated-doc checks. Temporary executable
+and duplicate Markdown HTML were removed; builds reused the roughly 5.7 GiB shared
+locked/offline nonincremental target. Cache, rational accessor/comparison/extraction,
+pi recognizer and resolver excerpts supplied context, not additional whole-file credit.
+Full workflows remain owner-waived; no focused check is blocked, no performance
+claim is made, and repository-wide documentation coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
