@@ -1018,6 +1018,7 @@ fn matrix4_uniform_scale_inverse_reuses_one_reciprocal_semantics() {
     );
 }
 
+/// Checks known uniform inversion and ordinary inversion against literal sixths on all four axes.
 #[test]
 fn matrix4_known_uniform_scale_inverse_matches_matrix_inverse() {
     let scale = r(6);
@@ -1152,6 +1153,7 @@ fn matrix4_known_signed_permutation_matches_generic_paths() {
     );
 }
 
+/// Checks known and ordinary diagonal inverses against independently specified rational entries.
 #[test]
 fn matrix4_known_diagonal_inverse_matches_matrix_inverse() {
     let diagonal = [r(2), r(3), r(5), r(7)];
@@ -1190,6 +1192,9 @@ fn matrix4_known_diagonal_division_matches_matrix_division() {
     );
 }
 
+/// Compares fused diagonal division/vector application with a materialized quotient for weight 13.
+///
+/// This is exact path agreement on a rational fixture, not an independent quotient oracle.
 #[test]
 fn matrix4_known_diagonal_div_vector_matches_matrix_division() {
     let numerator = Matrix4::new([
@@ -1208,6 +1213,10 @@ fn matrix4_known_diagonal_div_vector_matches_matrix_division() {
     );
 }
 
+/// Checks fused w=0 action against a materialized quotient for an invertible diagonal divisor.
+///
+/// The nonaffine numerator exercises a nonzero output weight; this fixture does not
+/// cover the fused method's acceptance of a singular fourth divisor.
 #[test]
 fn matrix4_known_diagonal_div_vector_direction_matches_matrix_division() {
     let numerator = Matrix4::new([
@@ -1226,6 +1235,10 @@ fn matrix4_known_diagonal_div_vector_direction_matches_matrix_division() {
     );
 }
 
+/// Checks the explicit direction-only entry point against materialized division on a w=0 input.
+///
+/// All four divisor entries are nonzero here. Agreement does not test the unchecked
+/// input-weight precondition or ignored fourth-divisor cases.
 #[test]
 fn matrix4_known_diagonal_div_vector_direction_only_matches_matrix_division() {
     let numerator = Matrix4::new([

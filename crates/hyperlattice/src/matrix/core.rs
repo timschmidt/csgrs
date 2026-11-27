@@ -12042,7 +12042,11 @@ impl Matrix4 {
             .collect()
     }
 
-    /// Constructs a 4x4 diagonal matrix from known diagonal entries.
+    /// Constructs `diag(d0,d1,d2,d3)` with exact zero off-diagonal entries.
+    ///
+    /// Moves the supplied scalars without validation or arithmetic. Zero and symbolic
+    /// entries are allowed; the result need not be invertible or affine. In homogeneous
+    /// coordinates the fourth entry scales weight as well as the three spatial scales.
     pub fn diagonal(diagonal: [Real; 4]) -> Self {
         trace_matrix!("constructor", "diagonal");
         let [d0, d1, d2, d3] = diagonal;
@@ -12054,17 +12058,14 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs the inverse of a known 4x4 diagonal matrix.
+    /// Constructs `diag(1/d0,1/d1,1/d2,1/d3)` using four scalar reciprocals.
     ///
-    /// Keep this as an explicit known-structure API rather than another hidden
-    /// [`Matrix4::reciprocal`] branch. Prior diagonal/uniform-scale experiments
-    /// showed that adding dynamic probes to the general inverse path made
-    /// adjacent cases less deterministic. When callers retain the object-level
-    /// fact that `D` is diagonal, the exact inverse is just four independent
-    /// scalar reciprocals and certified off-diagonal zeros. This mirrors the
-    /// recommendation to exploit geometric-object structure before arithmetic
-    /// the exact object-structure policy and the diagonal solve
-    /// treatment in Golub and Van Loan, *Matrix Computations*.
+    /// Attempts inverses in index order, returning the first native scalar error before
+    /// assembling a matrix. Equal diagonal entries do not select a shared-reciprocal
+    /// shortcut here; use [`Self::uniform_scale_inverse`] for a known scalar multiple
+    /// of identity. Every entry must be certifiably nonzero through Real inversion;
+    /// zero and unresolved decisions retain their typed errors. No matrix shape scan
+    /// or determinant is needed because the diagonal structure is supplied explicitly.
     pub fn diagonal_inverse(diagonal: [Real; 4]) -> BlasResult<Self> {
         trace_matrix!("constructor", "diagonal-inverse");
         let [d0, d1, d2, d3] = diagonal;
@@ -12076,17 +12077,14 @@ impl Matrix4 {
         ]))
     }
 
-    /// Divides this matrix on the right by a known 4x4 diagonal matrix.
+    /// Computes `self * diag(1/d0,1/d1,1/d2,1/d3)` by scaling columns.
     ///
-    /// For `D = diag(d0,d1,d2,d3)`, right division scales each column of `A` by
-    /// the matching reciprocal. This is deliberately separate from generic
-    /// [`Matrix4::div_matrix_checked`] and `/` dispatch: previous dynamic
-    /// structure-detection experiments showed probe costs can make related
-    /// division paths less flat. When a higher geometry layer already knows the
-    /// divisor is diagonal, this path uses four scalar reciprocals and sixteen
-    /// cached multiplies with no determinant/cofactor work. This follows the
-    /// object-level exact geometric computation guidance the exact object-structure policy and the diagonal solve specialization in
-    /// Golub and Van Loan, *Matrix Computations*.
+    /// Constructs all four scalar reciprocals in ascending index order before sixteen
+    /// row-major cached multiplications. A zero or unresolved divisor propagates the
+    /// native inverse error even when the corresponding dividend column is zero.
+    /// The dividend may be singular or nonaffine. Supplied diagonal structure avoids
+    /// matrix classification and determinant work; no quotient matrix is returned if
+    /// any reciprocal fails.
     pub fn div_diagonal(self, diagonal: [Real; 4]) -> BlasResult<Self> {
         trace_matrix!("method", "div-diagonal");
         let [
@@ -12128,31 +12126,62 @@ impl Matrix4 {
         ]))
     }
 
-    /// Inverts a caller-certified upper-triangular 4x4 matrix.
+    /// Inverts a caller-established upper-triangular matrix by row substitution.
+    ///
+    /// Requires every entry below the diagonal to be zero; this shape is not checked.
+    /// Constructs four diagonal reciprocals in ascending index order, then solves
+    /// rows of `X*self = I`, visiting columns from each diagonal upward. Entries below
+    /// the diagonal remain zero. Scalar inverse errors propagate; invalid shape can
+    /// produce an incorrect inverse without a typed shape error.
     pub fn upper_triangular_inverse(self) -> BlasResult<Self> {
         trace_matrix!("method", "upper-triangular4-inverse");
         Ok(Self(invert_matrix4_by_upper_triangular(&self.0)?))
     }
 
-    /// Checked variant of [`Matrix4::upper_triangular_inverse`].
+    /// Checks diagonal nonzero facts before known upper-triangular inversion.
+    ///
+    /// Guards entries 0 through 3 before any reciprocal, using structural/cached zero
+    /// knowledge without initiating refinement in the guards. The first zero yields
+    /// `DivideByZero`; the first unknown yields `UnknownZero`. Successful guards
+    /// then use the schedule of [`Self::upper_triangular_inverse`], including native inverse
+    /// errors. Checked does not validate the required zero entries below the diagonal.
     pub fn upper_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "upper-triangular4-inverse-checked");
         Ok(Self(invert_matrix4_by_upper_triangular_checked(&self.0)?))
     }
 
-    /// Inverts a caller-certified lower-triangular 4x4 matrix.
+    /// Inverts a caller-established lower-triangular matrix by row substitution.
+    ///
+    /// Requires every entry above the diagonal to be zero, without checking shape.
+    /// Constructs four diagonal reciprocals in ascending index order, then solves
+    /// rows of `X*self = I` with columns decreasing from each diagonal. Entries above
+    /// the diagonal remain zero. Native inverse errors propagate; supplied entries
+    /// above the diagonal are ignored rather than rejected.
     pub fn lower_triangular_inverse(self) -> BlasResult<Self> {
         trace_matrix!("method", "lower-triangular4-inverse");
         Ok(Self(invert_matrix4_by_lower_triangular(&self.0)?))
     }
 
-    /// Checked variant of [`Matrix4::lower_triangular_inverse`].
+    /// Checks diagonal nonzero facts before known lower-triangular inversion.
+    ///
+    /// Guards entries 0 through 3 in ascending order even though subsequent row
+    /// substitution visits columns in reverse. All guards precede reciprocals;
+    /// structural/cached zero gives `DivideByZero` and unknown gives `UnknownZero`,
+    /// without refinement in the guard. Uses the schedule of [`Self::lower_triangular_inverse`]
+    /// after success. Required zero entries above the diagonal are not validated.
     pub fn lower_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "lower-triangular4-inverse-checked");
         Ok(Self(invert_matrix4_by_lower_triangular_checked(&self.0)?))
     }
 
-    /// Right-divides by a caller-certified upper-triangular 4x4 matrix.
+    /// Solves `X*divisor = self` for a caller-established upper-triangular divisor.
+    ///
+    /// The divisor must be upper triangular with invertible diagonal; no shape check
+    /// is performed. Four reciprocals are constructed in ascending index order before
+    /// any row solve. Each dividend row is unrestricted and is solved from x0 through
+    /// x3, sharing reciprocals across sixteen result scalings. Native inverse errors
+    /// propagate. Entries below the divisor diagonal are ignored, so invalid shape
+    /// need not produce a typed error or the intended right quotient.
     pub fn div_upper_triangular(self, divisor: Self) -> BlasResult<Self> {
         trace_matrix!("method", "div-upper-triangular4");
         Ok(Self(divide_matrix4_by_upper_triangular(
@@ -12160,7 +12189,13 @@ impl Matrix4 {
         )?))
     }
 
-    /// Checked variant of [`Matrix4::div_upper_triangular`].
+    /// Guards four divisor pivots before known upper-triangular right division.
+    ///
+    /// Checks structural/cached nonzero status in ascending diagonal order before
+    /// any reciprocal or quotient row. Stops at the first `DivideByZero` or
+    /// `UnknownZero`, without guard refinement, then uses the schedule of
+    /// [`Self::div_upper_triangular`]. The dividend is unrestricted; the divisor's
+    /// upper-triangular shape remains an unchecked caller precondition.
     pub fn div_upper_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "div-upper-triangular4-checked");
         Ok(Self(divide_matrix4_by_upper_triangular_checked(
@@ -12168,7 +12203,13 @@ impl Matrix4 {
         )?))
     }
 
-    /// Right-divides by a caller-certified lower-triangular 4x4 matrix.
+    /// Solves `X*divisor = self` for a caller-established lower-triangular divisor.
+    ///
+    /// Requires lower-triangular shape without checking entries above the diagonal.
+    /// Constructs four diagonal reciprocals in ascending index order, then solves
+    /// each unrestricted dividend row from x3 down to x0, sharing those reciprocals
+    /// across sixteen result scalings. Scalar inverse errors propagate. Invalid shape
+    /// is not rejected, and ignored upper entries can invalidate the quotient.
     pub fn div_lower_triangular(self, divisor: Self) -> BlasResult<Self> {
         trace_matrix!("method", "div-lower-triangular4");
         Ok(Self(divide_matrix4_by_lower_triangular(
@@ -12176,7 +12217,13 @@ impl Matrix4 {
         )?))
     }
 
-    /// Checked variant of [`Matrix4::div_lower_triangular`].
+    /// Guards four divisor pivots before known lower-triangular right division.
+    ///
+    /// Checks diagonal entries 0 through 3 before reciprocals, despite the subsequent
+    /// reverse coordinate solve. Structural/cached zero and unknown return
+    /// `DivideByZero` and `UnknownZero` respectively, without guard refinement.
+    /// After success, uses the schedule of [`Self::div_lower_triangular`]. Checked does not
+    /// validate the required zero upper entries or constrain the dividend's shape.
     pub fn div_lower_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "div-lower-triangular4-checked");
         Ok(Self(divide_matrix4_by_lower_triangular_checked(
@@ -12184,18 +12231,26 @@ impl Matrix4 {
         )?))
     }
 
-    /// Divides `self` by a known 4x4 diagonal matrix and applies the result to
-    /// a single homogeneous vector.
+    /// Applies a known diagonal right division by prescaling one homogeneous vector.
     ///
-    /// Using `D = diag(d0,d1,d2,d3)`, the vector multiply obeys
-    /// `(A / D) * x = A * (D^{-1} x)`. Pre-scaling `x` by reciprocal
-    /// diagonal factors is substantially cheaper than materializing `A / D`
-    /// before the transform and keeps homogeneous direction/point structure in
-    /// the matrix-vector helper where one existing structural branch can still
-    /// run.
+    /// For invertible `D = diag(d0,d1,d2,d3)`, computes `(self / D)*rhs` as
+    /// `self*(rhs.x/d0, rhs.y/d1, rhs.z/d2, rhs.w/d3)` without constructing the
+    /// sixteen-entry quotient. Classifies the original weight once: known zero is a
+    /// direction, known one a point, and all other or unresolved weights use general
+    /// homogeneous action. The output retains all four coordinates without dividing by w;
+    /// a nonaffine matrix may map a direction to nonzero weight.
     ///
-    /// Retain object facts, defer expensive algebra, and reduce to a cheaper
-    /// exact kernel when the divisor structure is known.
+    /// A known direction never inverts or uses d3. In that case this method also
+    /// accepts zero or unresolved d3 and computes the restricted action
+    /// `self*(rhs.x/d0, rhs.y/d1, rhs.z/d2, 0)`. Such success does not establish
+    /// invertibility of D or existence of the full matrix quotient.
+    ///
+    /// Structural equality `d0 == d1 && d0 == d2` shares one spatial reciprocal,
+    /// including recognized equal symbolic values; otherwise constructs three in
+    /// index order. All three spatial divisors must be invertible even for zero input
+    /// coordinates. Non-directions then invert d3 unless it is definitely one, retaining
+    /// known point weight as a factor for the point helper. Native inverse failures
+    /// propagate. There is no independent scalar-work budget or cancellation input.
     pub fn div_diagonal_vector(&self, diagonal: [Real; 4], rhs: &Vector4) -> BlasResult<Vector4> {
         trace_matrix!("method", "div-diagonal4-vector");
         let [d0, d1, d2, d3] = diagonal;
@@ -12319,13 +12374,18 @@ impl Matrix4 {
         }
     }
 
-    /// Divides a matrix by a known 4x4 diagonal divisor and applies the result
-    /// to a direction vector.
+    /// Applies `self*(rhs.x/d0, rhs.y/d1, rhs.z/d2, 0)` for an assumed direction.
     ///
-    /// Direction vectors have `w == 0`, so the fourth diagonal divisor entry is
-    /// provably irrelevant. Avoiding its inversion and W-scaling is an exact
-    /// structural optimization: preserve and exploit projective-direction facts
-    /// so arithmetic follows the minimal necessary path.
+    /// The caller supplies the w=0 interpretation. The method does not inspect rhs.w,
+    /// and always replaces it with zero; a supplied point is therefore not transformed
+    /// as a point. The fourth divisor is unused and may be zero or unresolved. This
+    /// is a restricted direction action, not evidence of an invertible full divisor.
+    ///
+    /// Constructs d0, d1 and d2 reciprocals separately in that order, even for equal
+    /// scales or zero vector coordinates, and propagates the first scalar failure.
+    /// Three cached prescalings precede the direction transform. The matrix's last
+    /// column is omitted; all four output rows remain relevant, so a nonaffine matrix
+    /// may produce nonzero output weight. No Cartesian normalization is performed.
     #[inline]
     pub fn div_diagonal_direction_vector(
         &self,
@@ -12350,7 +12410,12 @@ impl Matrix4 {
         )))
     }
 
-    /// Constructs a scalar multiple of the 4x4 identity matrix.
+    /// Constructs `scale * I`, scaling all four homogeneous coordinates.
+    ///
+    /// Clones the scalar for the first three diagonal entries and moves it into the
+    /// fourth, with exact zero elsewhere. Zero and symbolic scales are accepted.
+    /// This differs from an affine spatial scale: for nonzero scale, projective
+    /// normalization of a finite point cancels this common factor.
     pub fn uniform_scale(scale: Real) -> Self {
         trace_matrix!("constructor", "uniform-scale");
         Self([
@@ -12361,15 +12426,12 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs the inverse of a known scalar multiple of the 4x4 identity.
+    /// Constructs `(1/scale) * I` from one native scalar reciprocal.
     ///
-    /// This is intentionally an opt-in API rather than an automatic
-    /// `Matrix4::reciprocal` dispatch branch: prior targeted benches showed
-    /// that dynamic equality checks for uniform scale made adjacent diagonal
-    /// inverse paths less flat. When the caller already owns the object-level
-    /// fact `A = sI`, one scalar inverse is sufficient and reusing it preserves
-    /// hyperreal's exact/symbolic node cache. This is an explicit object-layer
-    /// specialization of the diagonal solve.
+    /// Clones that reciprocal across the four diagonal entries through
+    /// [`Self::uniform_scale`], preserving shared scalar structure. A zero or
+    /// unresolved nonzero decision propagates its typed inverse error. This explicit
+    /// known-structure constructor needs no matrix shape or equality probes.
     pub fn uniform_scale_inverse(scale: Real) -> BlasResult<Self> {
         trace_matrix!("constructor", "uniform-scale-inverse");
         let inv = scale.inverse()?;

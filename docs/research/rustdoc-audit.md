@@ -10654,6 +10654,115 @@ and `/tmp/csgrs-matrix4-construction-audit/` generators, probes, checkers and
 private docs. The next contiguous boundary is Matrix4::diagonal's documentation,
 currently core.rs line 12045. Remaining Matrix4 methods and tests still need audit.
 
+## 2026-11-27: Matrix4 diagonal, triangular and restricted direction operations
+
+Scope and acceptance witness:
+
+- Continued from `e12b853b9`, reading every line of the dedicated Matrix4
+  block at original core.rs lines 12045–12378 (334 lines; now 396). Revised
+  all fifteen public method contracts through uniform_scale_inverse, and added
+  five missing Rustdoc groups to their original matrix tests.
+- Owner: Hyperlattice's matrix schedules, with scalar inversion/nonzero decisions
+  owned by Hyperreal and checked pivot guards owned by Hyperlattice scalar glue.
+  Relevant properties: P1 exact arithmetic, P2 retained symbolic structure,
+  P3/P4 scoped facts, P6 typed failure and P37 precise support claims.
+- Domain: diagonal and caller-established triangular matrices over Real scalars;
+  unrestricted dividends; homogeneous vectors with known zero, known one or
+  other/unresolved weights. Missing acceptance evidence was the distinction
+  between pivot checking and shape validation, the restricted direction action
+  when the fourth divisor is singular, and the supplied-weight precondition of
+  the direction-only entry point. Reproduced these on the starting revision.
+- Re-read owning inverse/division helpers, direction classification/application,
+  checked scalar guards and native reciprocal checks. Inspected relevant
+  matrix_api_surface_coverage and mathbench call sites. These contextual reads
+  do not claim another full-file audit.
+
+Contracts clarified:
+
+- Diagonal construction accepts zero and symbolic entries. Full diagonal inverse
+  attempts four reciprocals in index order; full right division completes those
+  before sixteen column scalings. Zero dividend columns do not bypass a divisor
+  failure. Uniform inverse explicitly constructs one reciprocal and shares it.
+- Uniform scale multiplies all four coordinates, including homogeneous weight.
+  It is distinct from affine spatial scaling: a common nonzero factor cancels
+  upon projective normalization of a finite point.
+- Both triangular orientations require caller-established shape. Ordinary
+  schedules invert four pivots in ascending order, then use increasing columns
+  for upper and decreasing columns for lower row substitution. Entries in the
+  opposite triangle are ignored. Invalid shape can therefore return a formula
+  that is not the intended inverse or quotient, without a typed shape error.
+- Checked triangular entry points guard all four pivots in ascending order before
+  any reciprocal, without guard refinement. The first structural/cached zero or
+  unknown returns DivideByZero or UnknownZero. They use the same arithmetic
+  schedules as ordinary entry points but do not call those public wrappers or
+  acquire their dispatch events. Checked does not establish triangular shape.
+- Fused diagonal-vector application classifies original weight once. A known
+  direction omits d3 entirely, including zero or unresolved d3. Its successful
+  restricted action does not prove a full quotient exists. The explicit
+  direction-only entry point also ignores the supplied input w, replacing it
+  with zero; a non-direction input is not transformed as its stored vector.
+- Both direction paths require the three spatial reciprocals even for zero
+  coordinates. The general fused entry point shares a spatial reciprocal for
+  structurally equal d0/d1/d2, including recognized symbolic equality. The
+  explicit direction-only entry point constructs three separately. Non-direction
+  weights require d3 inversion unless it is definitely one. All four output
+  rows remain relevant; nonaffine action may produce nonzero direction weight.
+- Replaced historical benchmark anecdotes and a broad cheaper-than claim with
+  the actual construction and work schedules. No new performance claim is made.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and
+  blank lines from both edited Rust files gives identical executable source
+  against `e12b853b9`; attributes, formulas, predicate order and tests are intact.
+- Hyperlattice library builds and fifteen original matrix tests passed with all
+  features and no defaults. The all-feature baseline passed those same tests.
+  Direct rustc harnesses used dependency paths and libraries from matching
+  Cargo artifact JSON; each original test had a 60-second process limit.
+- Independent Python Fraction inversion/product expectations verified three
+  diagonal fixtures and nontrivial rational upper/lower fixtures, covering
+  construction, ordinary/checked inversion and right division. Inverses also
+  composed to identity. Trace mode asserted sixteen full diagonal scales,
+  ten triangular inverse scales and sixteen triangular quotient scales, plus
+  the corresponding fused division route.
+- Every triangular pivot position was exercised with known zero and a fresh
+  structurally unknown fixture. Mixed unknown/zero fixtures verified ascending
+  first-error behavior for upper and lower checked inverses. Wrong-shape
+  witnesses demonstrated ignored opposite-triangle entries in both checked
+  inverse and division; these are limitations, not newly supported inverses.
+- Sixty independent rational four-term expectations covered four matrix shapes,
+  three divisor patterns and weights 0, 1, -1, 2 and 7. These include point-weight
+  scaling, general weight rescaling to one, nonaffine output weight and shared
+  spatial factors. Separate probes exercised zero/unresolved d3, ignored supplied
+  w in direction-only action, all spatial zero pivots even on zero vectors,
+  zero/negative uniform scales and symbolic π reciprocal sharing.
+- Trace assertions distinguished the general direction uniform-factor route
+  from the explicit direction-only schedule and verified three prescalings.
+  A symbolic uniform spatial factor selected the retained uniform-factor route.
+  No-default mode compiled out trace assertions. Before/after/minimal stdout
+  matched; probes completed within a 30-second external process limit.
+- The initial temporary restricted-direction oracle accidentally used the wrong
+  literal output for its rational matrix. Recomputed the four independent row
+  sums as 2/3, 2, 10/3, 14/3 and corrected only that temporary expectation. The
+  initial failure log is retained; no repository test or implementation changed.
+- Private library Rustdoc passed with warnings and broken/private links denied
+  in both feature configurations. Complete rendered text matched all fifteen
+  revised contracts on the owning Matrix4 page. The five added #[test] docs
+  were source-reviewed and executed; Rustdoc omits those test functions.
+- Cargo checks passed for matrix, matrix_api_surface_coverage, mathbench, and
+  downstream Hyperspatial including Hyperlimit with all features and no defaults.
+  Commands used --locked --offline -j 2 and CARGO_INCREMENTAL=0 with the shared
+  target. Full workflows, exhaustive runtime downstream tests and performance
+  measurements remain owner-waived. No focused check remains blocked.
+- Removed the two owned temporary executable files after validation. The shared
+  target remains near 2.5 GiB. The existing AGENTS.md public/private 100% mandate
+  remains active; this batch does not establish repository-wide coverage.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix4-structured-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix4-structured-audit/` generators, probes and rendered-text checks.
+The next contiguous boundary is transform_vec4_point's documentation, currently
+core.rs line 12441. Remaining Matrix4 methods and tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
