@@ -11825,6 +11825,101 @@ The driver and trace collector now have whole-file records; continue with the
 remaining mathbench fixtures, engines, operation families and report generator.
 The repository audit and previously recorded generated-item gaps remain open.
 
+## Hyperlattice mathbench fixtures and representation recipes (2026-11-27)
+
+Read all original lines of `crates/hyperlattice/benches/mathbench/fixtures.rs`
+(1,031 → 1,216) and `representation_ops.rs` (101 → 150) on `647ad1754`. Owner:
+benchmark input construction, scalar adapters, case rotation and the combined
+representation workload. Relevant contracts are P1/P2/P3/P6 and P36/P37: distinguish
+authored decimal values, binary imports and symbolic recipes, preserve failure and
+do not confuse identifiers/timing with representation or correctness evidence.
+The domain is the fixed vector/matrix corpora, converter callbacks and 22 Real
+recipes. The missing acceptance witness was accurate private Rustdoc for their
+types, fields, constructors and measurement boundaries. The baseline all-feature
+mathbench Cargo check passed before edits.
+
+Added 71 groups: five fixture record types, fourteen fields, fifty fixture helpers
+and two representation functions. All authored items in these two files now have
+attached documentation. Read selected comparison/targeted-matrix consumers as
+context without claiming whole-file review of those larger include files.
+
+Contracts clarified:
+
+- Sample records hold already-evaluated binary64 values, including decimal-literal
+  arithmetic and rounded pi/e-related constants. s imports that exact binary value;
+  qr parses its displayed decimal string, which is a different input model and
+  does not reconstruct the original source expression or exact symbolic constant.
+  q and explicit rational fixtures author integer ratios without float ingress.
+- Vector case families describe scale, sign, support and general fourth weights;
+  sparse corpora include zero and, in one family, a dense final vector. These are
+  selected dot/operation inputs, not universally valid normalization arguments.
+  Dense matrix cases mix base, near-dependent, scale and constant-rich patterns
+  without computing rank/conditioning. Affine/pure-translation families explain
+  their bottom rows and linear blocks; arbitrary converters need not preserve them.
+- The targeted labels describe authored ratio tables. In particular denominators
+  initially equal to ten can reduce differently, so equal_decimal_den does not
+  prove a shared reduced-denominator schedule. Conversion callbacks own values,
+  errors and side effects; no classification or invertibility proof is added.
+- next_case requires nonempty input and an in-range cursor. It updates the cursor
+  before indexing, so an invalid cursor can mutate before panic; empty input and
+  index arithmetic have no recovery contract. This is deterministic rotation, not
+  random selection. s/q/qr panic at existing expect calls for invalid ingress.
+- Representation row labels are not queried or verified as actual tags. One is the
+  rational 3/2; Irrational is sin(1), not an irrationality proof. The table describes
+  all 22 exact recipes, including ln(2e), pi products and fractional powers. Shared
+  symbolic dependencies and scalar simplification are preserved by construction.
+- For each scalar x, the measured routine constructs (x,1,2), a 3x3 matrix and x+i,
+  then computes self-dot, determinant and complex cube. Mathematical expectations
+  are x^2+5, 6x+1 and (x^3-3x)+(3x^2-1)i, but the benchmark only checks list length
+  and unwraps power success. It does not compare those outputs or prove tag coverage.
+  Batched setup clones a retained scalar outside timing, with object construction
+  and operations inside. Returned-output destruction follows the measured batch
+  interval. Sample/time settings are not independent resource bounds. This family
+  has no explicit trace hook; trace-only driver mode still constructs its recipes.
+
+Validation after final edits:
+
+- Focused Rustfmt and git diff --check passed. Initial checks exposed pre-existing
+  array/chain layout differences. Formatting changed whitespace and removed sixteen
+  optional array trailing commas in fixtures plus one in representation_ops; all
+  other non-whitespace tokens remain identical. The checker also requires noncomment
+  source to match Rustfmt of the original with the applicable crates configuration.
+  Coefficients, operation order, assertions, timing settings and policies did not change.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 and incremental compilation disabled. Warnings and broken/private
+  links were denied. Complete text of all 71 groups rendered on 57 pages under each
+  configuration, including every field and helper.
+- The initial Rustdoc run interpreted the matrix brackets as links; corrected them
+  to code markup and retained that diagnostic. Temporary source-check assumptions
+  also needed correction: Rustfmt removes optional trailing array commas, and stdin
+  formatting needed the crates config rather than root style. Both are now checked
+  explicitly; no repository test, lint or validation policy was weakened.
+- Built the owning library per configuration and compiled original/final fixture
+  sources plus the representation constructor into isolated probes with matching
+  rlibs and warnings denied. Both versions passed in fresh processes with a 30-second
+  external timeout, producing identical output in each configuration. Verified
+  qr(0.1)=1/10 while s(0.1) differs, equality at 0.5, and rational ingress of the
+  displayed floating pi value. Nonfinite s/qr inputs and zero-denominator q panicked
+  as documented. Cursor cycling, empty/out-of-range failures and mutation before
+  the latter panic were reproduced.
+- Probes checked converter call counts for 3x3/4x4 adapters, construction and labels
+  of the four targeted matrix families, and successful construction of all 22 recipes
+  with One=3/2. Unexecuted fixture helpers were referenced for warning-clean compilation;
+  this is not a claim that every fixture/operation or symbolic tag was dynamically
+  validated. Numerical determinant/dot/cube formulas were not benchmark assertions
+  or executed as independent correctness tests in these probes.
+- No Criterion timing run, full mathbench driver, Symbolica initialization or report
+  writer executed. No stored performance results changed. Full workflows and unrelated
+  runtime consumers remain owner-waived; no focused check remains blocked. Removed
+  probe executables; scripts/source/commands use about 296 KiB and the reused target
+  remains approximately 2.7 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-fixtures-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-fixtures-audit/` manifests, scripts and exact commands.
+Both files now have whole-file records. Remaining mathbench engines, comparison and
+operation families, and report generation still need review; the repository-wide
+audit and previously recorded generated-item documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
