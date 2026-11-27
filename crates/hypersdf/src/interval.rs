@@ -478,8 +478,15 @@ fn torus_interval(
     min: &Point3,
     max: &Point3,
 ) -> PredicateOutcome<SdfInterval> {
-    let zero = Real::zero();
-    let radial = match cylinder_radial_interval(axis, center, &zero, min, max) {
+    // The field is F(u, a) = (u + a + c)^2 - 4 R^2 u, where u is the squared
+    // radial distance, a the squared axial distance and c = R^2 - r^2. Over a
+    // cell, u and a range independently (they use disjoint coordinates), and
+    // both ranges below are exact. F is convex (its Hessian is
+    // [[2, 2], [2, 2]]), so its exact range over the (u, a) rectangle has its
+    // maximum at a corner and its minimum at a corner or at the stationary
+    // point of an edge. Evaluating the two terms separately instead loses the
+    // dependency on u and never certifies cells close to the surface.
+    let radial = match cylinder_radial_interval(axis, center, &Real::zero(), min, max) {
         Ok(interval) => interval,
         Err(outcome) => return outcome,
     };
@@ -487,31 +494,127 @@ fn torus_interval(
         Ok(interval) => interval,
         Err(outcome) => return outcome,
     };
-    let radial_plus_axial = match interval_add(radial.clone(), axial) {
-        Ok(interval) => interval,
-        Err(outcome) => return outcome,
-    };
+    let range = torus_range(&radial, &axial, major_radius_squared, minor_radius_squared);
+    match range {
+        Ok(interval) => {
+            PredicateOutcome::decided(interval, hyperlimit::Certainty::Exact, Escalation::Exact)
+        }
+        Err(outcome) => outcome,
+    }
+}
+
+fn excludes_zero(interval: &SdfInterval) -> bool {
+    let zero = Real::zero();
+    match compare_reals(&interval.lower, &zero) {
+        PredicateOutcome::Decided {
+            value: Ordering::Greater,
+            ..
+        } => true,
+        PredicateOutcome::Decided { .. } => matches!(
+            compare_reals(&interval.upper, &zero),
+            PredicateOutcome::Decided {
+                value: Ordering::Less,
+                ..
+            }
+        ),
+        PredicateOutcome::Unknown { .. } => false,
+    }
+}
+
+/// `(u + a + c)^2` and `4 R^2 u` bounded separately: valid but not tight.
+fn torus_term_bound(
+    radial: &SdfInterval,
+    axial: &SdfInterval,
+    major_radius_squared: &Real,
+    minor_radius_squared: &Real,
+) -> Result<SdfInterval, PredicateOutcome<SdfInterval>> {
+    let radial_plus_axial = interval_add(radial.clone(), axial.clone())?;
     let q = SdfInterval {
         lower: &(&radial_plus_axial.lower + major_radius_squared) - minor_radius_squared,
         upper: &(&radial_plus_axial.upper + major_radius_squared) - minor_radius_squared,
         metric_status: SdfMetricStatus::SignEquivalent,
     };
-    let q_squared = match square_interval(q) {
-        Ok(interval) => interval,
-        Err(outcome) => return outcome,
-    };
+    let q_squared = square_interval(q)?;
     let four_major = Real::from(4_i32) * major_radius_squared;
     let radial_term = SdfInterval {
         lower: &four_major * &radial.lower,
         upper: &four_major * &radial.upper,
         metric_status: SdfMetricStatus::SignEquivalent,
     };
-    match interval_sub(q_squared, radial_term) {
-        Ok(interval) => {
-            PredicateOutcome::decided(interval, hyperlimit::Certainty::Exact, Escalation::Exact)
-        }
-        Err(outcome) => outcome,
+    interval_sub(q_squared, radial_term)
+}
+
+/// Exact range of `(u + a + c)^2 - 4 R^2 u` over `u in radial`, `a in axial`.
+fn torus_range(
+    radial: &SdfInterval,
+    axial: &SdfInterval,
+    major_radius_squared: &Real,
+    minor_radius_squared: &Real,
+) -> Result<SdfInterval, PredicateOutcome<SdfInterval>> {
+    let offset = major_radius_squared - minor_radius_squared;
+    let four_major = Real::from(4_i32) * major_radius_squared;
+    let field = |u: &Real, a: &Real| {
+        let s = &(u + a) + &offset;
+        &(&s * &s) - &(&four_major * u)
+    };
+    let two_major = Real::from(2_i32) * major_radius_squared;
+    // When u + a + c >= 0 on the whole rectangle (any ring torus, R >= r),
+    // dF/da = 2 (u + a + c) >= 0, so the maximum is on the edge a = a1 (at a
+    // corner, by convexity) and the minimum on the edge a = a0.
+    let smallest_sum = &(&radial.lower + &axial.lower) + &offset;
+    if let PredicateOutcome::Decided {
+        value: Ordering::Greater | Ordering::Equal,
+        ..
+    } = compare_reals(&smallest_sum, &Real::zero())
+    {
+        let upper = max_real(
+            field(&radial.lower, &axial.upper),
+            field(&radial.upper, &axial.upper),
+        )?;
+        let stationary = &(&two_major - &axial.lower) - &offset;
+        let u = clamp_real(&stationary, &radial.lower, &radial.upper)?;
+        return Ok(SdfInterval {
+            lower: field(&u, &axial.lower),
+            upper,
+            metric_status: SdfMetricStatus::SignEquivalent,
+        });
     }
+    // Otherwise the two-term bound is cheaper and decides most cells; only
+    // cells it leaves undecided pay for the general exact range.
+    let naive = torus_term_bound(radial, axial, major_radius_squared, minor_radius_squared)?;
+    if excludes_zero(&naive) {
+        return Ok(naive);
+    }
+    let corners = [
+        field(&radial.lower, &axial.lower),
+        field(&radial.lower, &axial.upper),
+        field(&radial.upper, &axial.lower),
+        field(&radial.upper, &axial.upper),
+    ];
+    let mut upper = corners[0].clone();
+    let mut lower = corners[0].clone();
+    for corner in &corners[1..] {
+        upper = max_real(upper, corner.clone())?;
+        lower = min_real(lower, corner.clone())?;
+    }
+    // Edges of fixed a: dF/du = 2 (u + a + c) - 4 R^2 vanishes at
+    // u = 2 R^2 - a - c. Edges of fixed u: dF/da = 2 (u + a + c) vanishes at
+    // a = -u - c. Clamping to the edge gives that edge's minimizer.
+    for a in [&axial.lower, &axial.upper] {
+        let stationary = &(&two_major - a) - &offset;
+        let u = clamp_real(&stationary, &radial.lower, &radial.upper)?;
+        lower = min_real(lower, field(&u, a))?;
+    }
+    for u in [&radial.lower, &radial.upper] {
+        let stationary = -&(u + &offset);
+        let a = clamp_real(&stationary, &axial.lower, &axial.upper)?;
+        lower = min_real(lower, field(u, &a))?;
+    }
+    Ok(SdfInterval {
+        lower,
+        upper,
+        metric_status: SdfMetricStatus::SignEquivalent,
+    })
 }
 
 fn cylinder_radial_interval(

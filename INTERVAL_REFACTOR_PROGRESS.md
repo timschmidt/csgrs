@@ -16699,3 +16699,27 @@ times are indicative only. Targets they suggest:
 All 24 crates ran through `run.sh --quick --resources` in 84 minutes,
 including release builds. Evidence: csgrs-evidence f706cf45b,
 `docs/evidence/2026-11-27-resource-atlas-coverage`.
+
+## 2026-11-27: exact torus cell ranges (Phase 13, F-rep consumer)
+
+The Hypersdf atlas showed `classify_cell` never certifying a torus cell
+outside, at any gap. The torus field was bounded term by term, so the
+dependence of `(u + a + c)^2` and `4 R^2 u` on the same radial range was lost.
+This is a wrapping-control problem of the kind Phase 13 names.
+
+**Method.** The field is convex in the exact radial and axial ranges, so its
+exact range over a cell follows from at most three evaluations on a ring torus.
+Other tori take the corners and the edge stationary points, after the old
+bound when that already decides the sign.
+
+**Results.**
+- Near-surface outside cells: 0 of 11 certified before, 11 of 11 now, down to
+  a gap of 2^-40 in the new tests.
+- On the 16^3 atlas torus grid, boundary cells drop from 1,488 to 472 and 96
+  cells are certified inside (none before).
+- Classifying the whole grid costs 1.0x at 8^3, 1.13x at 16^3 and 1.2x at
+  24^3 (probe binaries built from base and change; atlas exact voxel
+  classification 1.2-1.4x).
+
+**Checks.** Hypersdf tests pass under default and all features, as do Clippy
+for both, `-D warnings` docs, and the root crate's `sdf` tests in release.

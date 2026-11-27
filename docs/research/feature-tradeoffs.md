@@ -126,6 +126,24 @@ retention. "Shipped" sizes are linked release or deployed images.
   unavailable in practice.
 
 
+### Exact torus cell ranges in Hypersdf (27 November 2026)
+
+- **Capability:** `classify_cell` now certifies torus cells inside, and
+  certifies them outside down to a gap of at least 2^-40. Before, every cell
+  just outside the surface was `Boundary`, and none were certified inside.
+- **Method:** F(u, a) = (u + a + c)^2 - 4 R^2 u is convex in the exact
+  radial and axial ranges u and a. A ring torus takes three evaluations: the
+  maximum is on edge a = a1 and the minimum on edge a = a0. Other tori use
+  the cheap two-term bound when it already excludes zero, and otherwise the
+  corners and edge stationary points.
+- **Effect:** on the 16^3 atlas torus grid, boundary cells go from 1,488 to
+  472 and inside cells from 0 to 96. Whole-grid classification takes the
+  same time at 8^3, 1.13x at 16^3 and 1.2x at 24^3. Callers that subdivide
+  boundary cells do fewer of them.
+- **Code size:** one exact-range function and three tests.
+- **Reconsider:** when another non-monotone primitive (capsule, rounded box)
+  shows the same dependency loss in the atlas.
+
 ### Interned rationals keep only process-lifetime results (27 November 2026)
 
 - **Capability:** none new. It removes the process-lifetime retention found

@@ -4,6 +4,15 @@
 
 Initial release.
 
+- Torus cell intervals are the exact range of the field over the cell. They
+  were bounds on its two terms evaluated separately, which lost the shared
+  dependence on radial distance.
+  - Before, `classify_cell` reported `Boundary` for every cell just outside a
+    torus, at every distance, and never certified a cell inside one.
+  - On a 16^3 grid around a torus, boundary cells drop from 1,488 to 472,
+    96 cells are certified inside (none before), and whole-grid
+    classification costs 1.0-1.2x.
+
 - Native `SdfProgram` voxel classification now retains whole-cell range proofs
   alongside exact Hypervoxel addresses and frames. Algebraic coordinate
   enclosures, source transforms, unresolved signs and metric qualification are
