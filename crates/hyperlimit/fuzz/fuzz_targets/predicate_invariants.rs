@@ -129,9 +129,9 @@ struct Input {
     q: RawPoint3,
     /// Third spatial site, second segment start, and oriented-plane/triangle vertex.
     r: RawPoint3,
-    /// Fourth spatial site, second segment end, and oriented-plane/triangle vertex.
+    /// Fourth spatial site, second segment end, triangle vertex, and segment/plane-event start.
     s: RawPoint3,
-    /// Sphere query, third oriented-plane vertex, and fifth support-DOP witness.
+    /// Sphere query, segment/plane-event end, and fifth support-DOP witness.
     t: RawPoint3,
 }
 

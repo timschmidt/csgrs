@@ -6799,6 +6799,117 @@ are complete for these targets; generated-item coverage and the wider audit
 remain open. Hyperlimit's predicates benchmark workloads, perf-atlas example,
 and other support/documentation artifacts still require review.
 
+## Hyperlimit predicate benchmark workloads
+
+Audited all 3,599 baseline lines of `crates/hyperlimit/benches/predicates.rs` at
+`8ec8ae9ef`, including every fixture, timed closure, score adapter, feature gate,
+and the custom main. The previously reviewed benchmark_report and dispatch_trace
+modules remain separately recorded. Ownership is predicate cost/qualification
+instrumentation, with P1, P5, P8–P11 and the admission protocol's same-completed-
+workload requirements. Inputs include generated binary64 values imported exactly,
+explicit rational fixtures, and one symbolic pi-scaled simplex. Missing witnesses
+were accurate private-item docs and clear separation of timing labels from the
+geometry and validation actually performed.
+
+Documented 118 authored declarations, two Workload variants, and the module.
+This includes 99 functions/methods, twelve aliases, four constants, the enum,
+and two module declarations. One constant is local to the parallel registration
+function. There are no authored struct fields. Corrected narrative comments
+that described reused-input rows as cold or suggested timing scores establish
+exact-output preservation. Executable source remains identical after removing
+comment-only/blank lines; no fixtures, assertions, APIs, scoring, policies,
+registration order, timed calls, or pre-existing lint allowances changed.
+
+The 512-case base, exact binary64 ingress versus explicit fractions, constructor
+preconditions, tuple order, transforms, and mathematical fixture domains are now
+documented individually. Immediate rows time one prebuilt query; most generated
+rows traverse a complete vector. Other rows perform mixed work: 64 area queries,
+two sets of 512 convex-membership queries, or two feasibility classifications.
+Only the parallel helper publishes element throughput, requests 20 samples, and
+times allocation/destruction of result vectors. Its 8,192 inputs repeat the base
+sixteen times; it does not assert sequential/Rayon equality. Prepared evidence
+is generally constructed outside query timing, while evidence-derivation and
+support-DOP construction rows deliberately include preparation.
+
+Most outcomes are reduced to unasserted scores that discard certainty/reasons.
+Unknown has a distinct score in some adapters but is conflated with false or
+failed validation in other rows. The infeasible-halfspace flag defaults to true
+on Unknown. Floating determinant scoring maps NaN to zero. Summed scores are not
+collision-free checksums. A few filter and support-DOP constructors expect success
+and can panic, but this does not turn the whole harness into a completion corpus.
+No cold-cache reset or target-wide work/memory/cancellation/time budget exists.
+
+Independently checked three source-derived geometric observations with exact
+Python Fraction arithmetic, saved in the witness log below:
+
+- `large_rational_near_degenerate_incircle2d_cases` constructs x=(2tD)/D=2t,
+  with D=1,000,003, while y uses denominator (D²+t²)D. It does not use the
+  usual rational-circle denominator for x. At index zero, t=-501 and x=-1002;
+  squared radius is strictly greater than one. The label cannot establish a
+  near-unit-circle fixture. The generator and benchmark row were preserved.
+- `oriented_plane_cases` uses near-degenerate height 0.38t+0.24u±1e-13, which
+  is not the plane through its fixed sites. For the first generated query,
+  exact arithmetic on the resulting binary64 coordinates gives a vertical
+  residual whose absolute value exceeds 1/100. This verifies the documentation
+  limitation without executing the predicate or claiming a timing measurement.
+- The port helper's projected-line row sends the endpoints of a vertical
+  segment through XY projection. Both become (0,0) on the supporting x-axis;
+  both orientation determinants and their difference are zero. Inspection of
+  the previously reviewed projected-ratio API confirms this exercises an absent
+  ratio, not a transverse projected crossing. The companion midpoint segment
+  ratio has a different, noncollapsed fixture.
+
+The triangle rows named report_replay construct reports and score relations;
+they do not call source replay validators. Selected DOP/plane/triangle/ring rows
+do call internal validators, sometimes only after an intersecting/inside relation,
+and score failures without asserting success. The DOP rows include building the
+source object on each iteration. Revisited the relevant projection and
+segment/plane API signatures to verify caller argument meaning. That inspection
+also corrected the previous batch's two fuzz Input field comments: s/t are the
+segment endpoints for the segment/plane event, while p/q/r define its plane.
+This correction changes only those comments, not the fuzz code or prior results.
+
+Custom main is authored and now documented, unlike the retained-fuzz Criterion
+macro-generated entry points. Either exact trace flag selects a never-matching
+Criterion filter and bypasses normal Criterion argv configuration, but all
+fixture construction and registration still happen. Sampling requires the
+dispatch-trace feature and the enabled run switch; its report path bypasses the
+benchmark-summary skip flag. Without that feature the trace-only path samples
+and writes nothing. Normal mode may write stored Criterion summaries after its
+final summary; write errors are logged rather than returned as failure status.
+
+Validation after final source edits:
+
+- Focused Rustfmt, `git diff --check`, authored-item/variant scans, and exact
+  comment-stripped source comparisons passed for both changed Rust files.
+- `cargo check --locked -p hyperlimit --bench predicates --offline -j2` passed
+  with all features, no default features, and no default features plus parallel.
+- Private benchmark Rustdoc passed for all three configurations, denying warnings
+  and broken/private intra-doc links, using matching checked rmeta and transitive
+  dependency search paths as established in the earlier benchmark-helper audit.
+  Initial interval notation was parsed as links; wrapping it in code spans fixed
+  the five reported link errors before the final successful runs.
+- Verified complete doc text for 120 groups across 116 pages in all-feature and
+  parallel-only docs, and 117 groups across 113 pages in minimal docs. The local
+  PARALLEL_BATCH constant has source Rustdoc but no standalone page; the minimal
+  build additionally omits three parallel-gated functions. Derived Clone/Copy
+  APIs are not counted as authored declarations or independently re-audited here.
+- Rechecked and regenerated private docs for the corrected fuzz invariant target;
+  its rendered fields were inspected with the existing fuzz render checker.
+  No benchmark, dispatch collector, report writer, test, or fuzz campaign ran.
+  No timing, certified-completion, dispatch-count, or correctness claim for the
+  geometry implementation was newly established. Full workflow checks remain
+  owner-waived for this documentation-only session.
+
+Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-predicates-bench-{all,minimal,parallel}`
+with `-check.log`, `-artifacts.jsonl`, `-doc-command.json`, and `-doc.log` suffixes.
+Exact fixture observations are in `predicates-bench-witnesses.log` under the same
+`/tmp/csgrs-rustdoc-hyperlimit-` prefix. The fuzz correction uses
+`/tmp/csgrs-rustdoc-hyperlimit-fuzz-argument-doc{,-check}.log`. Whole-file reading
+and authored documentation of this benchmark are complete; the perf-atlas
+example, other Hyperlimit support/documentation artifacts, generated-item gaps,
+and the wider repository audit remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

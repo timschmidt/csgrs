@@ -1,6 +1,29 @@
+//! Criterion fixtures for immediate predicates, retained evidence, filters, and composition.
+//!
+//! Most rows reuse preconstructed inputs under APPROXIMATE_512 and reduce outcomes
+//! to black-boxed scores. They do not assert expected geometry, completion, or
+//! certainty; scores can combine different outcomes and discard receipts. Rows
+//! explicitly expecting filter/construction success can panic. Repeated calls share
+//! inputs and caches without a cold-state reset. Timing a full case loop differs
+//! from timing one query; only the parallel batch helper declares element throughput.
+//!
+//! Float fixtures are computed in binary64 before exact import of their resulting
+//! binary values. Rational fixtures use explicit fractions; these are different
+//! input domains. Workload labels, especially near_degenerate and report_replay,
+//! do not certify proximity, source replay, or comparable completed contracts.
+//! Per-function docs describe the actual timing boundaries and known label limits.
+//!
+//! The custom main optionally samples dispatch outside measured loops and writes
+//! reports. Trace-only mode still constructs/registers every fixture; normal mode
+//! can update stored Criterion summaries. No target-wide work, retained-memory,
+//! cancellation, or elapsed-time budget is enforced here. This harness is cost
+//! instrumentation, not a substitute for geometric acceptance tests.
+
 #![allow(dead_code, unused_variables)]
 
+/// Shared writer for stored Criterion Markdown and declared-suite inventories.
 mod benchmark_report;
+/// Feature-gated diagnostic sampling outside timed benchmark loops.
 mod dispatch_trace;
 
 use criterion::{BenchmarkId, Criterion, black_box};
@@ -40,31 +63,50 @@ use hyperlimit::{
 };
 use robust::{Coord, Coord3D};
 
+/// Base case count for generated workload vectors; most full-loop timings include all 512 cases.
 const BATCH: usize = 512;
+/// Policy permitting terminal approximation for all policy-bearing benchmark queries.
 const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
+/// Three planar sites ordered as the arguments of an orientation query.
 type Orient2Case = (Point2, Point2, Point2);
+/// Four spatial sites for orientation, also reused as three plane sites plus query.
 type Orient3Case = (Point3, Point3, Point3, Point3);
+/// Three planar circle sites followed by the query point.
 type Incircle2Case = (Point2, Point2, Point2, Point2);
+/// Four spatial sphere sites followed by the query point.
 type Insphere3Case = (Point3, Point3, Point3, Point3, Point3);
+/// Two ordered endpoint pairs for spatial segment intersection.
 type Segment3Case = (Point3, Point3, Point3, Point3);
+/// Segment endpoints followed by three triangle vertices.
 type SegmentTriangle3Case = (Point3, Point3, Point3, Point3, Point3);
+/// Two binary64 coordinates before a library-specific wrapper or exact import.
 type RawPoint2 = [f64; 2];
+/// Three binary64 coordinates before a library-specific wrapper or exact import.
 type RawPoint3 = [f64; 3];
+/// Three raw binary64 planar sites used by competing predicates and exact imports.
 type RawOrient2Case = (RawPoint2, RawPoint2, RawPoint2);
+/// Four raw binary64 spatial sites used by competing predicates and exact imports.
 type RawOrient3Case = (RawPoint3, RawPoint3, RawPoint3, RawPoint3);
+/// Three raw binary64 circle sites and one query.
 type RawIncircle2Case = (RawPoint2, RawPoint2, RawPoint2, RawPoint2);
+/// Four raw binary64 sphere sites and one query.
 type RawInsphere3Case = (RawPoint3, RawPoint3, RawPoint3, RawPoint3, RawPoint3);
 
+/// Select the easy or nominally near-degenerate fixture recipe, without certifying its geometry.
 #[derive(Clone, Copy)]
 enum Workload {
+    /// Broadly separated or ordinary generated coordinates; no uniform condition-number guarantee.
     Easy,
+    /// Small-perturbation recipe label; individual generators document any geometric mismatch.
     NearDegenerate,
 }
 
 impl Workload {
+    /// Stable registration order: easy before nominally near-degenerate.
     const ALL: [Self; 2] = [Self::Easy, Self::NearDegenerate];
 
+    /// Return the stable Criterion/trace identifier used for this workload.
     const fn name(self) -> &'static str {
         match self {
             Self::Easy => "easy",
@@ -73,6 +115,11 @@ impl Workload {
     }
 }
 
+/// Register immediate, representation, competing-library, construction, and composed workloads.
+///
+/// Registration order is fixed and can affect retained caches. Parallel batch groups
+/// are added only with the parallel feature. All input setup and enabled dispatch
+/// sampling occur through these calls even if Criterion filters out the timed rows.
 fn bench_predicates(c: &mut Criterion) {
     bench_real_sign_pair(c);
     bench_point2_equality(c);
@@ -100,6 +147,10 @@ fn bench_predicates(c: &mut Criterion) {
     bench_parallel_batches(c);
 }
 
+/// Time equality of a rational point with its clone and inequality in its y coordinate.
+///
+/// Uses (17/3,-29/7) and (17/3,-30/7); construction is outside each timed query.
+/// Results are consumed by Criterion without asserting equality or certainty.
 fn bench_point2_equality(c: &mut Criterion) {
     let left = rational_point2(17, 3, -29, 7);
     let equal = left.clone();
@@ -114,6 +165,9 @@ fn bench_point2_equality(c: &mut Criterion) {
     group.finish();
 }
 
+/// Compare two scalar sign calls with one paired call on the same prebuilt -7 and 11.
+///
+/// The composed row returns both outcomes; neither row checks their values or receipts.
 fn bench_real_sign_pair(c: &mut Criterion) {
     let left = hyperreal_real(-7.0);
     let right = hyperreal_real(11.0);
@@ -132,6 +186,9 @@ fn bench_real_sign_pair(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time sidedness of (1,2) against the line (0,0)→(4,1), reusing prepared orientation.
+///
+/// Preparation is outside timing; the returned outcome is not validated.
 fn bench_line2_immediate(c: &mut Criterion) {
     let from = rational_point2(0, 1, 0, 1);
     let to = rational_point2(4, 1, 1, 1);
@@ -153,6 +210,10 @@ fn bench_line2_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time origin queries against fixed unit-circle and unit-sphere sites using prepared evidence.
+///
+/// Both rational site sets and lifted evidence are built outside the iterations.
+/// The evidence-consuming calls are timed without assertions or source replay.
 fn bench_lifted_predicate_immediate(c: &mut Criterion) {
     let circle_a = rational_point2(1, 1, 0, 1);
     let circle_b = rational_point2(0, 1, 1, 1);
@@ -199,6 +260,9 @@ fn bench_lifted_predicate_immediate(c: &mut Criterion) {
     sphere_group.finish();
 }
 
+/// Time feasibility of a shifted rational box and the inconsistent pair x≤-1, x≥0.
+///
+/// Planes are prebuilt; each iteration performs classification without asserting its status.
 fn bench_halfspace_immediate(c: &mut Criterion) {
     let feasible = exact_rational_shifted_box_planes3();
     let infeasible = vec![
@@ -215,6 +279,9 @@ fn bench_halfspace_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time (1,1,0) in the right triangle with legs length four, reusing its orientation.
+///
+/// The triangle and its orientation outcome are prepared outside timing; no result is asserted.
 fn bench_triangle3_immediate(c: &mut Criterion) {
     let a = rational_point3(0, 1, 0, 1, 0, 1);
     let b = rational_point3(4, 1, 0, 1, 0, 1);
@@ -238,6 +305,9 @@ fn bench_triangle3_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time (1,1) in the right triangle with legs length four using a precomputed orientation.
+///
+/// Orientation derivation is excluded from timing and its receipt is passed to the classifier.
 fn bench_triangle2_immediate(c: &mut Criterion) {
     let a = rational_point2(0, 1, 0, 1);
     let b = rational_point2(4, 1, 0, 1);
@@ -261,6 +331,10 @@ fn bench_triangle2_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time midpoint classification and intersection with a collapsed midpoint segment.
+///
+/// The base segment is (0,0)→(4,0); both segments' facts are built before timing.
+/// Rows call the fact-consuming APIs without asserting the resulting relations.
 fn bench_segment2_immediate(c: &mut Criterion) {
     let start = rational_point2(0, 1, 0, 1);
     let end = rational_point2(4, 1, 0, 1);
@@ -292,6 +366,10 @@ fn bench_segment2_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time point incidence on an x-axis segment and its transverse crossing in z=0.
+///
+/// Inputs are prebuilt integers. Unlike the planar immediate rows, no separate
+/// prepared-fact object is supplied to the timed spatial classifiers.
 fn bench_segment3_immediate(c: &mut Criterion) {
     let first_start = rational_point3(0, 1, 0, 1, 0, 1);
     let first_end = rational_point3(4, 1, 0, 1, 0, 1);
@@ -317,6 +395,10 @@ fn bench_segment3_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time a radius-five boundary query and separate integer point-distance orderings.
+///
+/// The sphere query is (3,4,0). Planar squared distances are 25 versus 26; spatial
+/// ones are 26 versus 30. These are fixture relations, not assertions in the rows.
 fn bench_explicit_sphere_immediate(c: &mut Criterion) {
     let center = rational_point3(0, 1, 0, 1, 0, 1);
     let radius_squared = hyperreal::Real::from(25);
@@ -355,6 +437,12 @@ fn bench_explicit_sphere_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time eight immediate box classifiers on prebuilt integer fixtures.
+///
+/// Planar rows use the zero-height box `[0,8]×{0}`, an overlapping rectangle, and an
+/// on-segment query. Spatial rows use `[0,4]^3`, a face-touching box, a contained box,
+/// and an interior query. Planar facts are prepared outside timing; ordered variants
+/// receive already ordered coordinates. Outcomes are not checked.
 fn bench_aabb_immediate(c: &mut Criterion) {
     let first_2d_min = rational_point2(0, 1, 0, 1);
     let first_2d_max = rational_point2(8, 1, 0, 1);
@@ -462,6 +550,13 @@ fn bench_aabb_immediate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time five distinct stages over the 512 easy planar orientation fixtures.
+///
+/// Rows measure robust arithmetic, six exact binary64 views, six lossy views,
+/// a certified scalar determinant filter, and the public predicate. View rows XOR
+/// bits; sign rows sum scores. Exact/lossy conversions and filter certification are
+/// expected to succeed or panic. These are different operations, not independently
+/// validated equivalent end-to-end contracts; reused inputs/caches are not reset.
 fn bench_filter_cost_breakdown(c: &mut Criterion) {
     let raw_cases = raw_orient2d_cases(Workload::Easy);
     let cases = orient2d_cases(Workload::Easy, hyperreal_real);
@@ -541,6 +636,12 @@ fn bench_filter_cost_breakdown(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time robust and geometry_predicates on four raw binary64 predicate families, plus planar APFP.
+///
+/// Each iteration traverses 512 easy or near-degenerate cases and sums sign scores.
+/// Robust coordinate wrappers are constructed within the timed loop; APFP tuples
+/// are prepared beforehand. No cross-library value assertion, receipt comparison,
+/// or exact-completion check occurs. Float determinant scoring treats NaN as zero.
 fn bench_robust_predicates(c: &mut Criterion) {
     let mut orient2_group = c.benchmark_group("orient2d");
     for workload in Workload::ALL {
@@ -761,6 +862,11 @@ fn bench_robust_predicates(c: &mut Criterion) {
     insphere_group.finish();
 }
 
+/// Time plane/segment and plane/triangle classification for dyadic and fractional fixtures.
+///
+/// Each row traverses 512 prebuilt triples and counts decided outcomes, not specific
+/// relations or certified receipts. The dyadic plane is (1/2,-3/4,5/4) dot p - 1/4;
+/// the fractional plane uses coefficients 1/3,-2/5,4/7 and offset -3/11.
 fn bench_plane_composition_filters(c: &mut Criterion) {
     let mut group = c.benchmark_group("plane_composition_filters");
     let plane = Plane3::new(
@@ -860,6 +966,10 @@ fn bench_plane_composition_filters(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time 4D orientation and in-sphere at the center of a dense pi-scaled orthogonal simplex.
+///
+/// The simplex and center are prepared once; full outcomes are black-boxed without
+/// asserting signs or receipts. No independent construction or cache-reset cost is timed.
 fn bench_nd_symbolic_scale(c: &mut Criterion) {
     let mut group = c.benchmark_group("nd_symbolic_scale");
     let (simplex, center) = symbolic_orthogonal_simplex4();
@@ -872,6 +982,20 @@ fn bench_nd_symbolic_scale(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time retained predicate helpers used by mesh-style construction and topology workloads.
+///
+/// Fixed coplanar/noncoplanar triangles, a segment crossing z=0, and a six-point
+/// cloud drive degeneracy, plane events, triangle relations, projected parameters,
+/// and support-DOP rows. The report_replay triangle rows construct reports and
+/// score relations; they do not call source replay validators. The projected segment
+/// ratio uses a midpoint, but the projected line row collapses both vertical segment
+/// endpoints to the same XY point, so it exercises an absent ratio rather than a
+/// transverse projected crossing.
+///
+/// Support-DOP rows build the DOP each iteration. They expect construction/report
+/// decisions and can panic on Unknown; report rows call internal validate and score
+/// failure rather than asserting validity. Only the noncoplanar triangle pair is
+/// sampled for dispatch here. Inputs are otherwise prepared outside timing.
 fn bench_hypermesh_port_helpers(c: &mut Criterion) {
     let mut group = c.benchmark_group("hypermesh_port_helpers");
     let points = vec![
@@ -1145,6 +1269,10 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time ball-sign certification over 512 rational intervals that exclude zero.
+///
+/// Centers have magnitude at least 3/7 and radii at most 5/14. Scores distinguish
+/// Some(Unknown) from None but are not asserted against the center's sign.
 fn bench_certified_filters(c: &mut Criterion) {
     let mut group = c.benchmark_group("certified_filters");
     let balls = certified_ball_cases();
@@ -1164,6 +1292,12 @@ fn bench_certified_filters(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time preparation itself for displacement, line, plane, circle, and sphere evidence.
+///
+/// Rows compare specialized scalar-filter constructors with predicate-layer evidence
+/// constructors on fixed dyadic or fractional inputs. These return different objects;
+/// no equality or downstream decision is checked. Inputs are reused, while each
+/// timed iteration builds and drops its result.
 fn bench_evidence_derivation(c: &mut Criterion) {
     let mut group = c.benchmark_group("evidence_derivation");
     let line_a = point2(-1.0, -1.0, hyperreal_real);
@@ -1349,6 +1483,11 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register eight predicate groups using one label and f64-to-Real conversion callback.
+///
+/// Current main registration uses exact binary64 import. The callback is invoked
+/// during fixture construction, outside each measured query loop; it need not be an
+/// exact conversion in general, so labels alone do not certify representation fidelity.
 fn bench_representation(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     bench_orient2d(c, label, real);
     bench_line_side(c, label, real);
@@ -1360,8 +1499,14 @@ fn bench_representation(c: &mut Criterion, label: &'static str, real: fn(f64) ->
     bench_insphere3d(c, label, real);
 }
 
+/// Compare sequential/Rayon batch APIs on 8,192 repeated near-degenerate inputs per family.
+///
+/// Four groups cover planar/spatial orientation and in-circle/in-sphere. Each repeats
+/// its 512-case base sixteen times before timing. No output equality or completion
+/// check is performed; batch vector allocation and destruction are included.
 #[cfg(feature = "parallel")]
 fn bench_parallel_batches(c: &mut Criterion) {
+    /// Requested batch length, obtained by repeating each 512-case base sixteen times.
     const PARALLEL_BATCH: usize = 8_192;
 
     bench_batch_pair(
@@ -1406,6 +1551,11 @@ fn bench_parallel_batches(c: &mut Criterion) {
     );
 }
 
+/// Register sequential and Rayon-labeled callbacks over the same owned case vector.
+///
+/// Requests 20 samples and element throughput equal to case count. Each timed call
+/// creates and drops its output vector, which is black-boxed without checking length,
+/// values, or certainty. The callback names do not enforce actual parallel execution.
 #[cfg(feature = "parallel")]
 fn bench_batch_pair<T, O>(
     c: &mut Criterion,
@@ -1426,6 +1576,10 @@ fn bench_batch_pair<T, O>(
     group.finish();
 }
 
+/// Clone cyclic prefixes of a nonempty base until exactly count elements are returned.
+///
+/// Panics on an empty base even when count is zero. Reserves count elements and
+/// performs no independent memory/work check; clones can retain shared scalar caches.
 #[cfg(feature = "parallel")]
 fn repeat_cases<T: Clone>(base: Vec<T>, count: usize) -> Vec<T> {
     assert!(!base.is_empty());
@@ -1437,6 +1591,22 @@ fn repeat_cases<T: Clone>(base: Vec<T>, count: usize) -> Vec<T> {
     repeated
 }
 
+/// Time rational predicate families and selected compositions, with mixed work per row.
+///
+/// Most rows traverse 512 prebuilt cases; distance-order rows make one call, ring
+/// area repeats 64 times, convex membership visits two 512-case sets, and halfspace
+/// feasibility classifies two fixed systems. Ray rows form directions inside timing;
+/// homogeneous rows build intersections and classify them against source planes.
+/// Plane/AABB report rows internally validate each decided report; triangle/ring
+/// report rows validate only after an intersecting/inside relation. These are not
+/// source replay checks. Unknown, false relations, and validation failure can share
+/// a score. The infeasible-halfspace flag even defaults to true on Unknown.
+///
+/// All predicate calls use APPROXIMATE_512 and no aggregate score is asserted.
+/// Common-denominator inputs can reduce to different scalar storage. The large
+/// in-circle generator's near-degenerate label is not a geometric guarantee; see
+/// its helper for the actual coordinates. The dyadic-threshold triangle row still
+/// uses fractional coordinates, whereas the integer row builds a separate fixture.
 fn bench_exact_rational_kernels(c: &mut Criterion) {
     let mut group = c.benchmark_group("exact_rational_kernels");
 
@@ -1456,8 +1626,8 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         });
     });
 
-    // Larger near-degenerate exact rationals ensure the benchmark preserves the
-    // algebraic decision rather than a nearby primitive-float surrogate.
+    // Preserve exact rational input to the near-collinear orientation queries.
+    // Timing scores do not themselves assert the decision or its certainty.
     let orient2_large = large_rational_near_degenerate_orient2d_cases();
     group.bench_function("orient2d/larger_rational_near_degenerate", |b| {
         b.iter(|| {
@@ -1970,6 +2140,12 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time point metadata views and circle/sphere predicates with nonzero denominator-seven inputs.
+///
+/// Point view rows measure metadata access. Predicate rows compare ordinary calls
+/// with evidence prepared once from the fixed sites, excluded from timing. Scores
+/// are not asserted; the rows do not prove a specific dispatch path or compare cold
+/// caches. Circle and sphere queries repeat nine and 27 distinct positions respectively.
 fn bench_shared_scale_views(c: &mut Criterion) {
     let mut group = c.benchmark_group("shared_scale_views");
     let point2 = rational_point2(1, 7, -2, 7);
@@ -1982,11 +2158,9 @@ fn bench_shared_scale_views(c: &mut Criterion) {
         bench.iter(|| black_box(point3.shared_scale_view()))
     });
 
-    // These predicate rows retain nonzero common-denominator coordinates while
-    // the point-view rows measure metadata collection itself. Predicate timing
-    // guards the compact translated rational kernels selected after benchmarks
-    // showed that expanding homogeneous shared-scale schedules costs more than
-    // direct exact arithmetic for these low-dimensional determinants.
+    // Keep nonzero common-denominator queries alongside point metadata access.
+    // Predicate rows can compare ordinary and prepared-query cost, but their
+    // scores alone do not establish a dispatch path or historical speed claim.
     let incircle_cases = shared_scale_incircle2d_cases();
     group.bench_function("incircle2d/common_denominator_predicate", |bench| {
         bench.iter(|| {
@@ -2063,6 +2237,12 @@ fn bench_shared_scale_views(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time orientation, prepared sidedness, and circle predicates on scaled/translated rationals.
+///
+/// Transforms and reusable line/plane/circle evidence are prepared before timing.
+/// Dispatch samples cover each row only when trace sampling is enabled. Ordinary
+/// and evidence-aware circle calls both reuse inputs; neither is forced cold, and
+/// scores are not compared. Uniform positive scales are used, not general affine maps.
 fn bench_transformed_predicates(c: &mut Criterion) {
     let mut group = c.benchmark_group("transformed_predicates");
 
@@ -2158,9 +2338,9 @@ fn bench_transformed_predicates(c: &mut Criterion) {
         );
     }
 
-    // The in-circle determinant is especially sensitive to expansion strategy.
-    // Cold and evidence-aware transformed rows reveal whether lifted-circle
-    // coefficient reuse preserves the exact determinant sign.
+    // Compare ordinary and evidence-aware transformed circle-query costs.
+    // Inputs/caches are reused and scores are not compared, so these rows do not
+    // establish cold execution or preservation of the determinant sign.
     let incircle_cases = transformed_incircle2d_cases();
     trace_dispatch_cases(
         "transformed_predicates/incircle2d/exact_rational_affine",
@@ -2216,6 +2396,10 @@ fn bench_transformed_predicates(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time 512 planar orientations per iteration for each workload using prebuilt converted inputs.
+///
+/// Optionally samples dispatch outside timing. Sums sign scores without verifying
+/// expected signs, completion, or certainty; no per-element throughput is declared.
 fn bench_orient2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("orient2d");
     for workload in Workload::ALL {
@@ -2249,6 +2433,10 @@ fn bench_orient2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyper
     group.finish();
 }
 
+/// Time 512 point/line classifications per iteration on the orientation fixture triples.
+///
+/// Both endpoints can vary in easy fixtures. Optionally samples dispatch, then
+/// sums sidedness scores without checking geometry or receipts.
 fn bench_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("classify_point_line");
     for workload in Workload::ALL {
@@ -2282,6 +2470,11 @@ fn bench_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -> hype
     group.finish();
 }
 
+/// Time ordinary and prepared classification against the fixed line y=x.
+///
+/// Prepared orientation is derived once from the first case outside timing; every
+/// case shares those endpoints. Each iteration visits 512 queries per workload.
+/// Dispatch samples and score sums do not assert parity between the two paths.
 fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("classify_point_line_fixed");
     for workload in Workload::ALL {
@@ -2354,6 +2547,10 @@ fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -
     group.finish();
 }
 
+/// Time 512 spatial orientations per iteration for each converted binary64 workload.
+///
+/// Optionally samples dispatch outside timing and accumulates sign scores. Input
+/// construction is excluded; outcomes and receipts are not independently checked.
 fn bench_orient3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("orient3d");
     for workload in Workload::ALL {
@@ -2388,6 +2585,10 @@ fn bench_orient3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyper
     group.finish();
 }
 
+/// Time ordinary and evidence-consuming queries against one fixed explicit plane per workload.
+///
+/// Evidence is prepared once from the first plane and reused for all 512 queries.
+/// Both paths have optional dispatch samples; scores are not compared or asserted.
 fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("classify_point_plane");
     for workload in Workload::ALL {
@@ -2450,6 +2651,11 @@ fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
     group.finish();
 }
 
+/// Time ordinary and retained-evidence queries against a fixed three-point plane.
+///
+/// Each iteration visits 512 queries; evidence is derived once outside timing.
+/// The near-degenerate height recipe is not the plane through those sites, so that
+/// label does not guarantee proximity. Scores and optional trace samples are diagnostic.
 fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("classify_point_oriented_plane");
     for workload in Workload::ALL {
@@ -2520,6 +2726,11 @@ fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
     group.finish();
 }
 
+/// Time ordinary and retained-evidence in-circle queries for two 512-case workloads.
+///
+/// All cases share three sites; evidence from the first is built outside timing.
+/// Input generation, including binary64 trigonometry, is excluded. Optional tracing
+/// and accumulated sign scores do not assert ordinary/evidence parity or certainty.
 fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("incircle2d");
     for workload in Workload::ALL {
@@ -2586,6 +2797,11 @@ fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
     group.finish();
 }
 
+/// Time ordinary and retained-evidence in-sphere queries for two 512-case workloads.
+///
+/// Four sites are fixed and evidence is prepared once. Timed loops reuse the cases
+/// and caches, sum sign scores, and omit value/receipt assertions; optional dispatch
+/// sampling runs outside Criterion timing.
 fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
     let mut group = c.benchmark_group("insphere3d");
     for workload in Workload::ALL {
@@ -2654,6 +2870,10 @@ fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
     group.finish();
 }
 
+/// Convert every coordinate of 512 raw planar orientation triples through the supplied callback.
+///
+/// Raw arithmetic happens in f64 first; conversion cannot recover an unrounded
+/// ideal decimal construction. The callback's conversion/failure semantics apply.
 fn orient2d_cases(
     workload: Workload,
     real: fn(f64) -> hyperreal::Real,
@@ -2670,6 +2890,11 @@ fn orient2d_cases(
         .collect()
 }
 
+/// Build 512 binary64 planar triples, either separated fixtures or perturbations about y=x.
+///
+/// The near-degenerate branch fixes (-1,-1),(1,1), then offsets query y from x by
+/// alternating ±1e-13 using rounded binary64 arithmetic. No exact determinant is
+/// asserted by this generator.
 fn raw_orient2d_cases(workload: Workload) -> Vec<RawOrient2Case> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -2692,6 +2917,10 @@ fn raw_orient2d_cases(workload: Workload) -> Vec<RawOrient2Case> {
     cases
 }
 
+/// Build 512 queries against converted endpoints (-1,-1),(1,1).
+///
+/// Easy y values vary independently; near-degenerate y is x plus alternating
+/// binary64 ±1e-13. Endpoint clones share their scalar representations.
 fn fixed_line_cases(
     workload: Workload,
     real: fn(f64) -> hyperreal::Real,
@@ -2710,6 +2939,7 @@ fn fixed_line_cases(
     cases
 }
 
+/// Convert all coordinates of 512 raw spatial orientation quadruples using the callback.
 fn orient3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Orient3Case> {
     raw_orient3d_cases(workload)
         .into_iter()
@@ -2724,6 +2954,10 @@ fn orient3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<O
         .collect()
 }
 
+/// Build 512 binary64 tetrahedra with varying easy sites or query z=±1e-13.
+///
+/// Near-degenerate source sites are the origin and unit x/y points, so their plane
+/// is exactly z=0. Easy fixtures are fixed formulas, not randomized distributions.
 fn raw_orient3d_cases(workload: Workload) -> Vec<RawOrient3Case> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -2754,6 +2988,11 @@ fn raw_orient3d_cases(workload: Workload) -> Vec<RawOrient3Case> {
     cases
 }
 
+/// Pair 512 converted query points with plane 0.8x-0.55y+z-0.05=0.
+///
+/// Near-degenerate z uses the corresponding binary64 solved height plus alternating
+/// ±1e-13; coefficients and arithmetic are rounded before conversion. Recreates
+/// the same coefficient values for each case, without asserting plane residuals.
 fn explicit_plane_cases(
     workload: Workload,
     real: fn(f64) -> hyperreal::Real,
@@ -2777,6 +3016,11 @@ fn explicit_plane_cases(
     cases
 }
 
+/// Build 512 queries against three fixed converted sites with a non-axis-aligned plane.
+///
+/// Near-degenerate z uses 0.38t+0.24u±1e-13. That height formula is not the plane
+/// through the supplied sites, so its name does not guarantee near-coplanarity.
+/// Easy z ranges from 0.5 toward 0.9. All raw formulas are evaluated in binary64.
 fn oriented_plane_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Orient3Case> {
     let a = point3(-0.85, -0.7, -0.25, real);
     let b = point3(0.9, -0.35, 0.35, real);
@@ -2799,6 +3043,7 @@ fn oriented_plane_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) ->
     cases
 }
 
+/// Convert 512 raw circle-site/query quadruples coordinatewise through the callback.
 fn incircle2d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Incircle2Case> {
     raw_incircle2d_cases(workload)
         .into_iter()
@@ -2813,6 +3058,11 @@ fn incircle2d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec
         .collect()
 }
 
+/// Build 512 binary64 circle queries around sites (0.82,0),(0,0.82),(-0.82,0).
+///
+/// Angles use TAU times unit values and ordinary sin/cos. Easy radial values range
+/// from 0.35 toward 0.8; near-degenerate radii perturb 0.82 by ±1e-12. Rounded
+/// trigonometry means the exact imported coordinates are not exact polar constructions.
 fn raw_incircle2d_cases(workload: Workload) -> Vec<RawIncircle2Case> {
     let a = [0.82, 0.0];
     let b = [0.0, 0.82];
@@ -2830,6 +3080,7 @@ fn raw_incircle2d_cases(workload: Workload) -> Vec<RawIncircle2Case> {
     cases
 }
 
+/// Convert 512 raw sphere-site/query quintuples coordinatewise through the callback.
 fn insphere3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Insphere3Case> {
     raw_insphere3d_cases(workload)
         .into_iter()
@@ -2845,6 +3096,11 @@ fn insphere3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec
         .collect()
 }
 
+/// Build 512 binary64 queries against four radius-0.82 axis sites.
+///
+/// Query z ranges from -0.6 toward 0.6. Easy horizontal radii range from 0.25 toward
+/// 0.6; near-degenerate radii use sqrt(max(0,0.82²-z²))±1e-12. Ordinary sin/cos,
+/// square root, and rounding precede exact import; no exact radial relation is asserted.
 fn raw_insphere3d_cases(workload: Workload) -> Vec<RawInsphere3Case> {
     let a = [0.82, 0.0, 0.0];
     let b = [-0.82, 0.0, 0.0];
@@ -2866,6 +3122,10 @@ fn raw_insphere3d_cases(workload: Workload) -> Vec<RawInsphere3Case> {
     cases
 }
 
+/// Build 512 deterministic planar triples using modular integer numerators over seven.
+///
+/// Fractions may reduce; a shared authored denominator does not imply all reduced
+/// scalar denominators or storage variants remain identical.
 fn exact_rational_orient2d_cases() -> Vec<Orient2Case> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -2879,6 +3139,10 @@ fn exact_rational_orient2d_cases() -> Vec<Orient2Case> {
     cases
 }
 
+/// Build 512 spatial quadruples from signed modular numerators over nine.
+///
+/// Sites are generated independently by fixed modular recipes; degeneracy and sign
+/// are not asserted, and rational reduction can remove common denominator factors.
 fn exact_rational_orient3d_cases() -> Vec<Orient3Case> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -2893,6 +3157,10 @@ fn exact_rational_orient3d_cases() -> Vec<Orient3Case> {
     cases
 }
 
+/// Build 512 queries over eleven against the right triangle (0,0),(8/11,0),(0,8/11).
+///
+/// Positive query numerators cycle modulo 17 and 19; the set includes different
+/// circle relations without storing independent expected results.
 fn exact_rational_incircle2d_cases() -> Vec<Incircle2Case> {
     let a = rational_point2(0, 11, 0, 11);
     let b = rational_point2(8, 11, 0, 11);
@@ -2910,6 +3178,9 @@ fn exact_rational_incircle2d_cases() -> Vec<Incircle2Case> {
     cases
 }
 
+/// Build 512 queries over thirteen against the origin and three axis sites at 9/13.
+///
+/// Query numerators cycle modulo 17,19,23; fixed source clones retain shared scalars.
 fn exact_rational_insphere3d_cases() -> Vec<Insphere3Case> {
     let a = rational_point3(0, 13, 0, 13, 0, 13);
     let b = rational_point3(9, 13, 0, 13, 0, 13);
@@ -2929,6 +3200,9 @@ fn exact_rational_insphere3d_cases() -> Vec<Insphere3Case> {
     cases
 }
 
+/// Build 512 unit-normal coordinate-plane triples meeting at modular fractions over seventeen.
+///
+/// Tuple order is x plane, y plane, z plane; offsets are the negated coordinates.
 fn exact_rational_coordinate_plane_cases() -> Vec<(Plane3, Plane3, Plane3)> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -2942,6 +3216,11 @@ fn exact_rational_coordinate_plane_cases() -> Vec<(Plane3, Plane3, Plane3)> {
     cases
 }
 
+/// Cycle 512 denominator-eleven segment pairs through six relation fixtures.
+///
+/// The cycle contains a planar transverse crossing, planar separation, a skew pair,
+/// partial collinear overlap, a translated endpoint touch, and identical reversed
+/// segments. These follow the coordinates but are not asserted by the timing loop.
 fn exact_rational_segment3_cases() -> Vec<Segment3Case> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -2988,6 +3267,11 @@ fn exact_rational_segment3_cases() -> Vec<Segment3Case> {
     cases
 }
 
+/// Build 512 (query,start,end,plane) tuples with denominator-eleven coordinates.
+///
+/// The endpoint pair is always distinct and also passed as AABB bounds by a consumer;
+/// y components are not guaranteed ordered there. Plane normal is (1,-2,3)/11 with
+/// varying rational offset. No distance/box relation is preclassified.
 fn exact_rational_point_feature_distance_cases() -> Vec<(Point3, Point3, Point3, Plane3)> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -3004,6 +3288,11 @@ fn exact_rational_point_feature_distance_cases() -> Vec<(Point3, Point3, Point3,
     cases
 }
 
+/// Build 512 query/triangle tuples using one positive denominator.
+///
+/// Every fourth triangle is collinear with x numerators 0,40,80; others are right
+/// triangles with axis legs 40. Queries include varying planar positions and z.
+/// Panics for denominator zero; callers use eleven or one.
 fn exact_rational_point_triangle_distance_cases(
     denominator: u64,
 ) -> Vec<(Point3, Point3, Point3, Point3)> {
@@ -3030,6 +3319,10 @@ fn exact_rational_point_triangle_distance_cases(
     cases
 }
 
+/// Build 512 plane/min/max tuples with ordered cubes of side 4/11.
+///
+/// Plane normal is (1,-2,1)/11 and offsets vary; all bounds and coefficients are
+/// exact fractions, without precomputed relation or validation expectations.
 fn exact_rational_plane_aabb3_cases() -> Vec<(Plane3, Point3, Point3)> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -3045,6 +3338,10 @@ fn exact_rational_plane_aabb3_cases() -> Vec<(Plane3, Point3, Point3)> {
     cases
 }
 
+/// Build 512 vertical segments crossing z=0 near a fixed right triangle of leg 40/11.
+///
+/// Endpoints share x,y and use z=±5/11. Query numerators cycle modulo 31, so some
+/// plane crossings lie outside the triangle; the name does not imply every segment hits.
 fn exact_rational_segment_triangle3_cases() -> Vec<SegmentTriangle3Case> {
     let a = rational_point3(0, 11, 0, 11, 0, 11);
     let b = rational_point3(40, 11, 0, 11, 0, 11);
@@ -3065,6 +3362,10 @@ fn exact_rational_segment_triangle3_cases() -> Vec<SegmentTriangle3Case> {
     cases
 }
 
+/// Build 512 horizontal segments across a radius-5/11 origin circle.
+///
+/// Returns center, squared radius 25/121, and endpoints at x=±10/11. Heights cycle
+/// from -7/11 to 7/11, supplying crossing, tangent, and disjoint line/segment cases.
 fn exact_rational_circle2_line_segment_cases() -> Vec<(Point2, hyperreal::Real, Point2, Point2)> {
     let center = rational_point2(0, 11, 0, 11);
     let radius_squared = rational_real(25, 121);
@@ -3081,6 +3382,7 @@ fn exact_rational_circle2_line_segment_cases() -> Vec<(Point2, hyperreal::Real, 
     cases
 }
 
+/// Return the counterclockwise square `[0,40/11]²` with no repeated closing vertex.
 fn exact_rational_convex_polygon2() -> Vec<Point2> {
     vec![
         rational_point2(0, 11, 0, 11),
@@ -3090,6 +3392,10 @@ fn exact_rational_convex_polygon2() -> Vec<Point2> {
     ]
 }
 
+/// Return six outward planes for the closed halfspace box `[0,40/11]^3`.
+///
+/// Normals have axis magnitude 1/11; upper-face offsets are -40/121, so bounds
+/// are 40/11 rather than 40. Interior satisfies normal dot point + offset ≤ 0.
 fn exact_rational_convex_box_planes3() -> Vec<Plane3> {
     vec![
         Plane3::new(rational_point3(-1, 11, 0, 11, 0, 11), rational_real(0, 11)),
@@ -3110,6 +3416,9 @@ fn exact_rational_convex_box_planes3() -> Vec<Plane3> {
     ]
 }
 
+/// Return six outward unit-normal planes for `[2,5]×[3,6]×[1,4]`.
+///
+/// This feasible box excludes the origin and exercises non-origin witness searches.
 fn exact_rational_shifted_box_planes3() -> Vec<Plane3> {
     vec![
         Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(2, 1)),
@@ -3121,6 +3430,10 @@ fn exact_rational_shifted_box_planes3() -> Vec<Plane3> {
     ]
 }
 
+/// Build 512 five-vertex 4D simplices over denominator seventeen.
+///
+/// The first four sites are the origin and three axis points at 9/17; the fifth
+/// has positive fourth coordinate (9+j%3)/17, making each simplex nondegenerate.
 fn exact_rational_orient_d_cases() -> Vec<Vec<Vec<hyperreal::Real>>> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -3136,6 +3449,11 @@ fn exact_rational_orient_d_cases() -> Vec<Vec<Vec<hyperreal::Real>>> {
     cases
 }
 
+/// Return the origin, four orthogonal pi/2 sign columns, and circumcenter (pi,0,0,0).
+///
+/// Each nonzero vertex has squared norm pi², and all five sites have distance pi
+/// from the center. Dense sign columns exercise shared symbolic scale in 4D rather
+/// than a rational fixture. The fixed 1/2 constructor unwrap has a nonzero denominator.
 fn symbolic_orthogonal_simplex4() -> (Vec<Vec<hyperreal::Real>>, Vec<hyperreal::Real>) {
     let half = hyperreal::Real::from(hyperreal::Rational::fraction(1, 2).unwrap());
     let half_pi = half * hyperreal::Real::pi();
@@ -3161,6 +3479,9 @@ fn symbolic_orthogonal_simplex4() -> (Vec<Vec<hyperreal::Real>>, Vec<hyperreal::
     (simplex, center)
 }
 
+/// Build 512 4D sphere queries over nineteen against the origin and four axis sites at 8/19.
+///
+/// Query coordinates use positive modular numerators; each tuple clones the fixed simplex.
 fn exact_rational_insphere_d_cases() -> Vec<(Vec<Vec<hyperreal::Real>>, Vec<hyperreal::Real>)> {
     let simplex = vec![
         rational_point_d(&[0, 0, 0, 0], 19),
@@ -3180,6 +3501,10 @@ fn exact_rational_insphere_d_cases() -> Vec<(Vec<Vec<hyperreal::Real>>, Vec<hype
     cases
 }
 
+/// Build exact near-collinear triples with signed displacement 1/1,000,003² from y=x.
+///
+/// Fixes endpoints (-1,-1),(1,1); query x is t/D and y is (tD±1)/D². Current
+/// 512-case bounds keep integer products in range and ensure nonzero displacement.
 fn large_rational_near_degenerate_orient2d_cases() -> Vec<Orient2Case> {
     let den = 1_000_003_u64;
     let den_sq = den * den;
@@ -3196,6 +3521,14 @@ fn large_rational_near_degenerate_orient2d_cases() -> Vec<Orient2Case> {
     cases
 }
 
+/// Build the actual large-denominator circle queries, without a general proximity guarantee.
+///
+/// For D=1,000,003 and t=i%1003-501, x is (2tD)/D=2t, while y is
+/// ((D²-t²)D±1)/((D²+t²)D). The x denominator is D, not D²+t²; this therefore
+/// is not the usual rational unit-circle parametrization. The first query has
+/// x=-1002 and is far from the fixed unit-circle sites despite the function name.
+/// Current 512-case bounds fit the products and the checked i128-to-i64 conversion;
+/// the conversion panics if future fixture growth violates that bound.
 fn large_rational_near_degenerate_incircle2d_cases() -> Vec<Incircle2Case> {
     let den = 1_000_003_u64;
     let a = rational_point2(1, 1, 0, 1);
@@ -3227,6 +3560,10 @@ fn large_rational_near_degenerate_incircle2d_cases() -> Vec<Incircle2Case> {
     cases
 }
 
+/// Build 512 denominator-seven circle cases with nonzero numerators throughout.
+///
+/// Fixed sites are (1,1),(4,1),(1,4) over seven; queries cycle through the nine
+/// pairs with numerator coordinates 2..=4, retaining denominator seven after reduction.
 fn shared_scale_incircle2d_cases() -> Vec<Incircle2Case> {
     let a = rational_point2(1, 7, 1, 7);
     let b = rational_point2(4, 7, 1, 7);
@@ -3244,6 +3581,10 @@ fn shared_scale_incircle2d_cases() -> Vec<Incircle2Case> {
     cases
 }
 
+/// Build 512 denominator-seven sphere cases with nonzero coordinates.
+///
+/// Fixed sites start at (1,1,1)/7 with three axis displacements 3/7. Queries repeat
+/// 27 triples with numerator coordinates 2..=4, preserving reduced denominators.
 fn shared_scale_insphere3d_cases() -> Vec<Insphere3Case> {
     let a = rational_point3(1, 7, 1, 7, 1, 7);
     let b = rational_point3(4, 7, 1, 7, 1, 7);
@@ -3263,6 +3604,9 @@ fn shared_scale_insphere3d_cases() -> Vec<Insphere3Case> {
     cases
 }
 
+/// Apply scale 5/3 and translation (-17/11,23/13) to all rational orientation triples.
+///
+/// Transforms are evaluated exactly before timing; this positive similarity preserves orientation.
 fn transformed_orient2d_cases() -> Vec<Orient2Case> {
     let mut cases = Vec::with_capacity(BATCH);
     let scale = rational_real(5, 3);
@@ -3278,6 +3622,10 @@ fn transformed_orient2d_cases() -> Vec<Orient2Case> {
     cases
 }
 
+/// Build 512 transformed line queries using scale 7/4 and translation (31/17,-29/19).
+///
+/// Base endpoints lie on y=x; queries differ from that line by alternating ±1/23
+/// in y before the common transform. Clones share the transformed fixed endpoints.
 fn transformed_line_cases() -> Vec<Orient2Case> {
     let base_a = rational_point2(-1, 5, -1, 5);
     let base_b = rational_point2(7, 5, 7, 5);
@@ -3299,6 +3647,9 @@ fn transformed_line_cases() -> Vec<Orient2Case> {
     cases
 }
 
+/// Apply positive scale 9/5 and translation (-41/29,37/31) to all rational circle cases.
+///
+/// Transforms sites and queries together exactly, retaining their circle relations.
 fn transformed_incircle2d_cases() -> Vec<Incircle2Case> {
     let scale = rational_real(9, 5);
     let tx = rational_real(-41, 29);
@@ -3315,6 +3666,10 @@ fn transformed_incircle2d_cases() -> Vec<Incircle2Case> {
     cases
 }
 
+/// Build 512 queries against a transformed coordinate plane with positive scale 11/7.
+///
+/// Translation is (-13/17,19/23,-29/31); pre-transform query z alternates ±1/37.
+/// Both source sites and queries receive the same exact similarity before timing.
 fn transformed_oriented_plane_cases() -> Vec<Orient3Case> {
     let scale = rational_real(11, 7);
     let tx = rational_real(-13, 17);
@@ -3337,6 +3692,10 @@ fn transformed_oriented_plane_cases() -> Vec<Orient3Case> {
     cases
 }
 
+/// Return scale times point plus the supplied planar translation using exact scalar arithmetic.
+///
+/// Accepts zero/negative scale too; callers use positive rationals. Zero collapses
+/// points and negative scale is not rejected. No approximate coordinate conversion occurs.
 fn transform_point2(
     point: &Point2,
     scale: &hyperreal::Real,
@@ -3348,6 +3707,10 @@ fn transform_point2(
     Point2::new(&scaled_x + tx, &scaled_y + ty)
 }
 
+/// Return scale times point plus the supplied spatial translation exactly.
+///
+/// No nonzero/positive-scale check occurs. Callers use positive rationals; other
+/// scales can collapse geometry or reverse spatial orientation.
 fn transform_point3(
     point: &Point3,
     scale: &hyperreal::Real,
@@ -3361,18 +3724,22 @@ fn transform_point3(
     Point3::new(&scaled_x + tx, &scaled_y + ty, &scaled_z + tz)
 }
 
+/// Return +1 for even signed indices and -1 for odd ones, including negative indices.
 fn signed_jitter(index: i64) -> i64 {
     if index % 2 == 0 { 1 } else { -1 }
 }
 
+/// Apply the conversion callback to x and y, preserving callback order and failure behavior.
 fn point2(x: f64, y: f64, real: fn(f64) -> hyperreal::Real) -> Point2 {
     Point2::new(real(x), real(y))
 }
 
+/// Apply the conversion callback in x,y,z order to construct a spatial point.
 fn point3(x: f64, y: f64, z: f64, real: fn(f64) -> hyperreal::Real) -> Point3 {
     Point3::new(real(x), real(y), real(z))
 }
 
+/// Copy two binary64 components into robust's planar coordinate record without arithmetic.
 #[inline]
 fn coord2(point: [f64; 2]) -> Coord<f64> {
     Coord {
@@ -3381,11 +3748,13 @@ fn coord2(point: [f64; 2]) -> Coord<f64> {
     }
 }
 
+/// Construct APFP's planar binary64 coordinate from the two supplied components.
 #[inline]
 fn apfp_coord2(point: [f64; 2]) -> apfp::geometry::f64::Coord {
     apfp::geometry::f64::Coord::new(point[0], point[1])
 }
 
+/// Copy three binary64 components into robust's spatial coordinate record without arithmetic.
 #[inline]
 fn coord3(point: [f64; 3]) -> Coord3D<f64> {
     Coord3D {
@@ -3395,14 +3764,19 @@ fn coord3(point: [f64; 3]) -> Coord3D<f64> {
     }
 }
 
+/// Import the exact value of a finite binary64 number, panicking for nonfinite input.
+///
+/// A decimal-looking f64 such as 0.1 represents its binary value, not the exact ratio 1/10.
 fn hyperreal_real(value: f64) -> hyperreal::Real {
     hyperreal::Real::try_from(value).expect("finite benchmark real")
 }
 
+/// Build two exact rational coordinates; panics if either supplied denominator is zero.
 fn rational_point2(x_num: i64, x_den: u64, y_num: i64, y_den: u64) -> Point2 {
     Point2::new(rational_real(x_num, x_den), rational_real(y_num, y_den))
 }
 
+/// Build three exact rational coordinates; panics if any supplied denominator is zero.
 fn rational_point3(
     x_num: i64,
     x_den: u64,
@@ -3418,6 +3792,10 @@ fn rational_point3(
     )
 }
 
+/// Map numerators to exact coordinates over one denominator, preserving slice order.
+///
+/// Panics on a zero denominator when the slice is nonempty; an empty slice returns
+/// empty without constructing or validating a fraction.
 fn rational_point_d(numerators: &[i64], denominator: u64) -> Vec<hyperreal::Real> {
     numerators
         .iter()
@@ -3425,10 +3803,14 @@ fn rational_point_d(numerators: &[i64], denominator: u64) -> Vec<hyperreal::Real
         .collect()
 }
 
+/// Construct the exact numerator/denominator scalar, panicking on a zero denominator.
 fn rational_real(numerator: i64, denominator: u64) -> hyperreal::Real {
     hyperreal::Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
 }
 
+/// Return the unit-normal plane x_axis=coordinate with offset minus coordinate.
+///
+/// Panics for axes outside 0..=2; fixtures use fixed valid axes.
 fn coordinate_plane(axis: usize, coordinate: hyperreal::Real) -> Plane3 {
     let normal = match axis {
         0 => Point3::new(1.into(), 0.into(), 0.into()),
@@ -3439,6 +3821,10 @@ fn coordinate_plane(axis: usize, coordinate: hyperreal::Real) -> Plane3 {
     Plane3::new(normal, -coordinate)
 }
 
+/// Build 512 alternating-sign rational centers and positive radii with intervals excluding zero.
+///
+/// Center magnitudes are 3..=19 over seven, radii 1..=5 over fourteen. Thus every
+/// interval has its center's sign; timing code does not assert that expectation.
 fn certified_ball_cases() -> Vec<(hyperreal::Real, hyperreal::Real)> {
     let mut cases = Vec::with_capacity(BATCH);
     for i in 0..BATCH {
@@ -3453,12 +3839,18 @@ fn certified_ball_cases() -> Vec<(hyperreal::Real, hyperreal::Real)> {
     cases
 }
 
+/// Map an index deterministically to a binary64 dyadic in [0,1) by a wrapping u64 step.
+///
+/// Uses the high 53 bits after multiplying by a fixed odd constant and adding one.
+/// This is a stateless fixture mixer, not an independent random sample generator;
+/// indices wider than u64 would be truncated by the cast.
 fn unit(index: usize) -> f64 {
     let mut x = index as u64;
     x = x.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
     ((x >> 11) as f64) * (1.0 / ((1_u64 << 53) as f64))
 }
 
+/// Return magnitude on even indices and its negation on odd indices, without finite/sign validation.
 fn alternating_eps(index: usize, magnitude: f64) -> f64 {
     if index.is_multiple_of(2) {
         magnitude
@@ -3467,6 +3859,9 @@ fn alternating_eps(index: usize, magnitude: f64) -> f64 {
     }
 }
 
+/// Encode decided signs as -1/0/1 and Unknown as 7, discarding certainty and failure detail.
+///
+/// Accumulated scores are consumption barriers, not collision-free result checksums.
 fn sign_score(outcome: PredicateOutcome<Sign>) -> i64 {
     match outcome {
         PredicateOutcome::Decided { value, .. } => match value {
@@ -3478,6 +3873,10 @@ fn sign_score(outcome: PredicateOutcome<Sign>) -> i64 {
     }
 }
 
+/// Encode a positive/negative binary64 determinant as ±1, otherwise zero.
+///
+/// Both signed zero and NaN map to zero; infinities follow their sign. No validity
+/// check or robust-certificate inspection occurs here.
 #[inline]
 fn determinant_score(determinant: f64) -> i64 {
     if determinant > 0.0 {
@@ -3489,6 +3888,7 @@ fn determinant_score(determinant: f64) -> i64 {
     }
 }
 
+/// Map APFP Clockwise/CoLinear/CounterClockwise to -1/0/1 for score accumulation.
 #[inline]
 fn apfp_orientation_score(orientation: apfp::geometry::Orientation) -> i64 {
     match orientation {
@@ -3498,6 +3898,7 @@ fn apfp_orientation_score(orientation: apfp::geometry::Orientation) -> i64 {
     }
 }
 
+/// Map a scalar Negative/Zero/Positive sign to -1/0/1 without retaining proof provenance.
 #[inline]
 fn real_sign_score(sign: hyperreal::RealSign) -> i64 {
     match sign {
@@ -3507,6 +3908,7 @@ fn real_sign_score(sign: hyperreal::RealSign) -> i64 {
     }
 }
 
+/// Encode decided false/true as 0/1 and Unknown as 7, discarding receipts and reasons.
 fn bool_score(outcome: PredicateOutcome<bool>) -> i64 {
     match outcome {
         PredicateOutcome::Decided { value, .. } => i64::from(value),
@@ -3514,10 +3916,12 @@ fn bool_score(outcome: PredicateOutcome<bool>) -> i64 {
     }
 }
 
+/// Encode None as 11; otherwise use sign_score, which encodes Unknown as 7.
 fn maybe_sign_score(outcome: Option<PredicateOutcome<Sign>>) -> i64 {
     outcome.map_or(11, sign_score)
 }
 
+/// Encode Right/On/Left as -1/0/1 and Unknown as 7, discarding certainty and reasons.
 fn line_score(outcome: PredicateOutcome<LineSide>) -> i64 {
     match outcome {
         PredicateOutcome::Decided { value, .. } => match value {
@@ -3529,6 +3933,7 @@ fn line_score(outcome: PredicateOutcome<LineSide>) -> i64 {
     }
 }
 
+/// Encode Below/On/Above as -1/0/1 and Unknown as 7, discarding certainty and reasons.
 fn plane_score(outcome: PredicateOutcome<PlaneSide>) -> i64 {
     match outcome {
         PredicateOutcome::Decided { value, .. } => match value {
@@ -3540,6 +3945,7 @@ fn plane_score(outcome: PredicateOutcome<PlaneSide>) -> i64 {
     }
 }
 
+/// Encode Less/Equal/Greater as -1/0/1 and Unknown as 7, discarding certainty and reasons.
 fn ordering_score(outcome: PredicateOutcome<std::cmp::Ordering>) -> i64 {
     match outcome {
         PredicateOutcome::Decided { value, .. } => match value {
@@ -3551,6 +3957,10 @@ fn ordering_score(outcome: PredicateOutcome<std::cmp::Ordering>) -> i64 {
     }
 }
 
+/// Encode six decided segment relations and Unknown for black-box score accumulation.
+///
+/// Skew/coplanar disjoint map to -3/-2, proper crossing to 1, endpoint touch to 2,
+/// overlap to 3, identical to 4, and Unknown to 7. Certainty and reasons are dropped.
 fn segment3_intersection_score(outcome: PredicateOutcome<Segment3Intersection>) -> i64 {
     match outcome {
         PredicateOutcome::Decided { value, .. } => match value {
@@ -3565,6 +3975,18 @@ fn segment3_intersection_score(outcome: PredicateOutcome<Segment3Intersection>) 
     }
 }
 
+/// Run Criterion normally or register all groups for dispatch-only sampling.
+///
+/// Either exact trace flag enables tracing and installs a never-matching benchmark
+/// filter without parsing other Criterion CLI settings. Fixture construction and
+/// registration still run, and enabled trace callbacks execute; writing dispatch
+/// output is feature-dependent and does not consult the benchmark-report skip flag.
+/// Without dispatch-trace the trace-only path collects/writes nothing.
+///
+/// Normal mode configures Criterion from argv, registers groups, prints its final
+/// summary, and optionally rewrites benchmarks.md from stored results. Report errors
+/// are logged, not returned as a failure status. Setup or expectation panics propagate;
+/// no whole-run resource limit or result validation is added.
 fn main() {
     let trace_only = std::env::args()
         .any(|arg| arg == "--write-dispatch-trace-md" || arg == "--dispatch-trace-only");
