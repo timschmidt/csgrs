@@ -1,9 +1,16 @@
 impl Computable {
-
+    /// Construct a wrapper for the shared natural-logarithm-of-two constant.
+    /// The wrapper carries known positive facts; numerical refinement is reused
+    /// through the constant cache shared across threads, not through wrapper identity.
     pub(crate) fn ln2() -> Self {
         Self::shared_constant(SharedConstant::Ln2)
     }
 
+    /// Divide out all copies of the caller-supplied prime and return their exponent.
+    /// Callers use 2, 3, 5 or 7. Mutate value to its remaining cofactor; zero is
+    /// left unchanged with exponent zero. Require prime > 1 rather than validating
+    /// it here. A factor count exceeding i32 panics after the corresponding division;
+    /// there is no rollback, cancellation polling or total-work limit.
     fn factor_small_prime_power(value: &mut BigUint, prime: u32) -> i32 {
         let prime_big = BigUint::from(prime);
         let mut exponent = 0_i32;
@@ -16,6 +23,17 @@ impl Computable {
         exponent
     }
 
+    /// Try to retain a positive 7-smooth rational's logarithm as a sum of shared prime logs.
+    /// Factor canonical numerator and denominator over 2,3,5,7, then use their signed
+    /// exponent differences in that order. Any remaining cofactor, nonpositive input,
+    /// one, or a single prime to exponent +1 declines. The last exclusion prevents
+    /// shared log constants from recursively requesting themselves during cache fill;
+    /// None does not mean the logarithm is undefined.
+    ///
+    /// At most four terms are retained, but factoring arbitrary-size coefficients
+    /// is not bounded by that count. Individual exponents must fit i32; the factor
+    /// helper panics on overflow. Every emitted base has a shared ln constant, which
+    /// justifies expect when assembling the sum.
     fn ln_smooth_rational(rational: &Rational) -> Option<Self> {
         if rational.sign() != Sign::Plus {
             return None;
@@ -61,6 +79,11 @@ impl Computable {
         Some(result)
     }
 
+    /// Prefer shared ln constants for exact integers 2,3,5,6,7,10, then try the prime-log sum.
+    /// Extract the small integer once and keep the established probe order. This
+    /// helper returns None on other forms, including nonpositive inputs, without
+    /// claiming a domain failure. Availability of the six constants justifies unwrap;
+    /// smooth factoring retains its coefficient-work and exponent limits.
     fn ln_shared_or_smooth_rational(rational: &Rational) -> Option<Self> {
         // Shared logs for small smooth bases reuse one approximation cache
         // across all expressions. Extracting the integer once avoids
@@ -102,6 +125,16 @@ impl Computable {
         None
     }
 
+    /// Try exact binary reduction of ln(rational), assuming the caller supplied rational >= 1.
+    /// Below 3/2 retain rational-1 directly. Otherwise choose an exact binade scale,
+    /// increase it once if needed, and verify the scaled argument lies strictly
+    /// between 1/2 and 3/2 before retaining residual=scaled-1 and the binary shift.
+    /// The represented value is ln(1+residual)+shift*ln(2).
+    ///
+    /// None means a magnitude/shift operation or range check declined, not a proved
+    /// invalid logarithm. The early branch does not check positivity, so this is
+    /// not an input validator. No numerical evaluation is needed, but exact rational
+    /// scaling/normalization is not covered by a total-work or allocation bound.
     fn ln_binary_scaled_exact_rational(rational: &Rational) -> Option<Self> {
         // If exact binary scaling already puts a nonsmooth rational in the
         // ln1p kernel's convergence window, skip the generic Ratio -> ln()
@@ -134,6 +167,12 @@ impl Computable {
         Some(Self::binary_scaled_ln_rational(fraction, shift))
     }
 
+    /// Construct a logarithm from an owned positive rational after an internal reduction.
+    /// Return zero at one, normalize values below one by -ln(1/r), then prefer shared
+    /// or smooth logs and binary-scaled residuals before the generic constructor.
+    /// Nonpositive input panics with ArithmeticException; this internal helper does
+    /// not return Problem. The positive-domain check makes rational inversion safe,
+    /// while optional representation declines preserve the fallback.
     fn ln_exact_rational(rational: Rational) -> Self {
         // Internal exact-rational log constructor for reductions that already
         // have a positive rational argument. It reuses the shared small-log
@@ -161,7 +200,17 @@ impl Computable {
         Self::rational(rational).ln()
     }
 
-    /// Natural logarithm of this number.
+    /// Construct the natural logarithm of a strictly positive, defined real value.
+    /// Preserve exact one, rational residuals, smooth prime-log sums and dyadic scale
+    /// where recognized. Other inputs use certified magnitude facts and numerical
+    /// probes to choose inversion, repeated square roots or binary scaling before
+    /// a retained ln(1+x) kernel. Planning estimates alone do not authorize a rewrite.
+    ///
+    /// This low-level constructor may evaluate its operand, recurse or panic; known
+    /// negative inputs panic with ArithmeticException. It does not provide typed
+    /// domain checking for nonpositive or undefined graphs. Use [crate::Real::ln]
+    /// for checked domain handling. Shift arithmetic has explicit invariant expects,
+    /// and there is no total-work/memory bound or cancellation outcome for construction.
     pub fn ln(self) -> Computable {
         if self.exact_rational().is_some_and(|r| r.is_one()) {
             crate::trace_dispatch!("computable", "ln", "exact-one-zero");
@@ -261,8 +310,8 @@ impl Computable {
             panic!("ArithmeticException");
         }
         if rough_appr <= *low_ln_limit {
-            // For values below 0.5, invert and negate so the prescaled ln1p kernel sees a
-            // better-conditioned argument.
+            // A completed precision -4 sample at most 8 puts a positive input
+            // below 9/16. Invert and negate to move it away from zero.
             crate::trace_dispatch!("computable", "ln", "small-inverse-rewrite");
             return self.inverse().ln().negate();
         }
@@ -313,42 +362,74 @@ impl Computable {
         Self::prescaled_ln(fraction)
     }
 
+    /// Retain ln(1+self) lazily, assuming the residual is a defined real greater than -1.
+    /// The name does not require |self| < 1/2: the demand-time kernel certifies its
+    /// series range and reduces larger valid residuals. Do not approximate or validate
+    /// the domain here. The wrapper starts with invalid magnitude/sign facts and no
+    /// outer signal; the retained child keeps its own handle.
     fn prescaled_ln(self) -> Self {
         // Lazy ln(1+x) node. Normal ln construction reduces x first, but ln_1p
         // may pass any in-domain residual; the kernel checks its own range.
         Self {
-            internal: Arc::new(Node::new(Approximation::PrescaledLn(self), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::PrescaledLn(self),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         }
     }
 
+    /// Retain ln(1+rational) without allocating a separate rational child node.
+    /// Require rational > -1, which makes the result's sign equal to the residual's
+    /// sign even outside the small-series range. Store that exact sign but no magnitude
+    /// fact or outer signal. The approximation kernel checks its own convergence
+    /// range; this constructor does not validate the logarithm's domain.
     fn prescaled_ln_rational(rational: Rational) -> Self {
         // Exact-rational ln1p reductions can skip a Ratio child and feed the
-        // residual directly to the approximation kernel. For |x| < 1, ln(1+x)
-        // has the same sign as x, so store that cheap certificate too.
+        // residual directly to the approximation kernel. For the admitted
+        // domain x > -1, ln(1+x) has the sign of x, even outside the series range.
         let sign = rational.sign();
         Self {
-            internal: Arc::new(Node::new(Approximation::PrescaledLnRational(rational), BoundCache::Invalid, ExactSignCache::Valid(sign))),
+            internal: Arc::new(Node::new(
+                Approximation::PrescaledLnRational(rational),
+                BoundCache::Invalid,
+                ExactSignCache::Valid(sign),
+            )),
             signal: None,
         }
     }
 
+    /// Retain ln(1+residual)+shift*ln(2) in one exact rational/shift node.
+    /// Require residual > -1. The mathematical shift is a coefficient of ln(2), so
+    /// representing it does not require materializing the integer 2^shift. Native
+    /// reduction supplies a small residual, while evaluation can also reduce larger
+    /// valid imported residuals. Start without sign/magnitude facts or an outer
+    /// signal; neither the domain nor numerical precision is validated here.
     fn binary_scaled_ln_rational(residual: Rational, shift: i32) -> Self {
         // Private constructor for ln(2^shift * (1+residual)) after exact
         // rational range reduction. This keeps the exact shift/residual facts
         // together for hot ln(1+x^2) offenders and lets the approximation
         // kernel combine the two terms without allocating a short-lived graph.
         Self {
-            internal: Arc::new(Node::new(Approximation::BinaryScaledLnRational { residual, shift }, BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::BinaryScaledLnRational { residual, shift },
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         }
     }
 
+    /// Retain ln(1+self) without eagerly adding one or evaluating the residual.
+    /// Callers must establish self > -1; [crate::Real::ln_1p] owns public domain
+    /// checking. Inverse-hyperbolic constructions and the checked API may supply
+    /// large valid residuals, so the kernel chooses reduction only when digits are
+    /// requested. This wrapper adds no sign certificate or outer abort signal.
     pub(crate) fn ln_1p(self) -> Self {
         // Preserve a small residual without eagerly forming 1+x. Real's public
         // ln_1p and inverse-hyperbolic identities also pass larger residuals,
         // which the approximation kernel reduces only when digits are needed.
         self.prescaled_ln()
     }
-
 }

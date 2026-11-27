@@ -17447,6 +17447,87 @@ primitive constructors, algebra/structural readers, checked-Real dispatch and
 other unit-test excerpts supplied context only, not further whole-file credit.
 Repository-wide Rustdoc coverage and the complete-file audit remain unfinished.
 
+## Hyperreal logarithm construction, kernels and replay (2026-11-27)
+
+Baseline: 9246024834512d4d1a31c382adb89a26dc86dca3. Whole-file review of
+computable/node/logarithms.rs (354 baseline lines),
+computable/approximation/logarithms.rs (163) and
+tests/serde_log_rational_ranges.rs (162): 679 lines. Also reviewed and corrected
+only Real::ln and Real::ln_1p in real/arithmetic/elementary_functions.rs; that
+large file does not receive whole-file credit. Hyperreal owns the affected
+scalar domain, retained-structure, refinement and replay contracts (P1–P7, P19).
+Missing witnesses were documentation on eighteen of nineteen declarations in
+the three whole files, their kernel error/resource preconditions, and the
+checked public API's zero/unresolved-domain outcomes. Thirty selected unit
+tests and two replay tests passed before editing those files; five checked-Real
+ln tests passed before the two scoped public edits.
+
+All 21 reviewed declarations and the replay module overview now have Rustdoc:
+
+- Smooth logarithms factor canonical numerator/denominator over 2,3,5,7 in the
+  existing order. Unit and single-prime exponent-one forms decline the sum;
+  the latter prevents recursive shared-constant cache fill. Four retained
+  terms do not bound factoring work. The factor helper mutates before its
+  checked i32 exponent increment and has no rollback or cancellation polling.
+- Binary rational reduction retains ln(1+r)+k*ln(2), with exact scaling and an
+  optional decline. The early branch relies on its caller's positive input.
+  The shift is an integer coefficient, not a requirement to allocate 2^k.
+  Lazy constructors retain domain preconditions; they do not validate raw
+  graphs. ln(1+r) has the sign of r throughout its admitted domain r > -1.
+- The generic kernel certifies the series range from its working sample and
+  error bound; the rational kernel uses exact magnitude. Outside that range,
+  each reduces through a valid logarithm identity. The series is
+  2*(y+y^3/3+...), y=r/(2+r). Coarse-zero answers require a range proof first.
+  Shifted evaluation reserves separate sum and coefficient guard bits.
+  Cancellation can yield provisional integers, not success receipts; precision
+  arithmetic and total-work limits remain distinct implementation concerns.
+- Checked Real::ln rejects proved zero as well as negative values. Its sign
+  query maps an unresolved result to Problem::Exhausted. Real::ln_1p checks
+  1+x > 0 while retaining the residual, rather than requiring a small series
+  argument. These descriptions report current behavior, not a new policy.
+- Eight valid import graphs exercise 48 native interval-overlap checks and
+  144 scaled Real values across six import routes. Overlap, finer containment,
+  sign decisions, addition and JSON/CBOR stability are distinct assertions.
+  Eighteen invalid graphs produce 36 native errors, 216 exact ParseError
+  outcomes and 108 collection errors; zero products/scales cannot hide the
+  bad residual. This is same-process replay, not a universal closure proof.
+
+A contained public probe reproduced existing gaps before and after edits:
+native ln(-1) panics, and i32::MIN approximation requests for ln(5/4), ln(11)
+and ln(sqrt(2)) panic. The rational/generic residual cases overflow negation
+in the log kernels; the binary-scaled public path fails earlier in
+approximation_queries. The probe also requires typed NotANumber for checked
+ln(-1), ln(0) and ln_1p(-1). It uses a 1 GiB address-space cap, a ten-second
+CPU limit, a fifteen-second wall timeout and disabled core dumps. These are
+observed debug-build behaviors, not accepted typed exhaustion or evidence of
+full-Precision support. The underlying gaps remain unfixed in this docs-only
+session; caught panics are recorded separately from successful geometry/numbers.
+
+After the final edits, 32 selected unit tests passed without optional features
+and 35 with all features. Both replay tests and five downstream Hyperlimit
+resolver tests passed. Private cargo doc passed both feature configurations
+with warnings and broken/private links denied. All sixteen library/API blocks
+matched actual private Rustdoc pages. The integration overview and five private
+helpers/tests matched standalone Rustdoc pages from a temporary copy removing
+only its two #[test] attributes. No focused documentation check is blocked.
+
+Executable/signature tokens are identical in the kernels, replay file and
+scoped public file. The constructor file has three optional trailing commas
+from Rustfmt; independently formatting its baseline yields identical tokens.
+Selected whole-file Rustfmt and git diff --check passed. The large public file
+received only two comment replacements, without formatting unrelated code.
+An incorrect coarse-bound comment was corrected to 9/16, and an unrelated
+orphan arctangent comment was removed from the logarithm kernel file. No fixture,
+assertion, dependency, signature, dispatch or predicate order changed. Full
+workflows remain owner-waived; no performance claim is made.
+
+Evidence is in /tmp/csgrs-hyperreal-log-audit/: commands, baseline/final logs,
+source/render inventories, temporary integration source and contained probe.
+Duplicate HTML and the probe executable were removed after inspection; builds
+reused the roughly 5.8 GiB locked/offline nonincremental target. Shared constants,
+import validation, sign resolution, inverse-hyperbolic consumers and previously
+audited range tests supplied context only. Repository-wide coverage remains open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

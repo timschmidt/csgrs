@@ -1,3 +1,20 @@
+/// Approximate ln(1+c) at binary precision p for an admitted residual c > -1.
+/// On completed evaluation with a valid precision plan, return an integer a with
+/// |a*2^p-ln(1+c)| < 2^p. Reuse the working operand sample's magnitude and its
+/// one-unit error bound to certify |c| <= 1/2. If that proof fails, use
+/// 2*ln(sqrt(1+c)) and the normal constructor's reduction instead. Only after
+/// the range proof may p >= 0 return zero.
+///
+/// For the series, set y=c/(2+c) and sum 2*(y+y³/3+y⁵/5+...), using guarded
+/// fixed-point arithmetic and an odd-term truncation threshold. This avoids
+/// subtracting nearly equal numbers when the residual is small.
+///
+/// Poll cancellation before work, before fallback and in the series loop.
+/// Early cancellation returns zero; loop cancellation returns a partial scaled
+/// sum, not a certified result or typed outcome. Publication/cancellation handling
+/// belongs to the enclosing approximation machinery. Precision arithmetic is
+/// unchecked (including negation at i32::MIN), and neither precision nor the
+/// term threshold bounds all nested work or memory.
 fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // This computes ln(1+x). ln_1p and stored expressions can reach it without
     // prior reduction, so certify the local series domain at demand time.
@@ -71,6 +88,19 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(sum << 1, calc_precision - p)
 }
 
+/// Approximate ln(1+r) directly from an exact rational residual r > -1.
+/// Use the atanh-transformed series only for zero or a proved |r| < 1/2;
+/// otherwise evaluate the normal logarithm of exact 1+r without changing the
+/// stored source node. In the series branch, p >= 0 returns zero only after
+/// that range check. Sampling the rational directly avoids a temporary child
+/// node/cache. Completed valid-precision evaluation has the same one-unit
+/// binary error contract as the generic ln kernel.
+///
+/// Cancellation is checked before the fallback and during the series, not before
+/// all setup: a small residual can perform rational scaling before the first
+/// poll. A stopped call can return zero or a partial sum with no success receipt.
+/// The caller owns domain admission and result publication. Precision arithmetic
+/// can overflow, including -p at i32::MIN; there is no total-work bound.
 fn ln_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Stored rational residuals need the same range proof as generic ln1p.
     // Only zero or a proved |r| < 1/2 admits the series and its coarse-zero
@@ -129,6 +159,18 @@ fn ln_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     scale(sum << 1, calc_precision - p)
 }
 
+/// Approximate ln(1+residual)+shift*ln(2), assuming residual > -1.
+/// At shift zero delegate directly to ln_rational. Otherwise compute the sum
+/// at p-2, request ln(2) with three additional guard bits beyond the binary
+/// magnitude of shift, multiply by the signed integer coefficient, and round
+/// the sum back to p. This preserves the one-unit error contract on completed
+/// evaluation without constructing an add/multiply expression graph.
+///
+/// unsigned_abs handles shift=i32::MIN without negating it in i32; the shift
+/// is a coefficient, not an allocation of 2^shift. The separate precision
+/// subtractions are unchecked. Cancellation is delegated to the component calls,
+/// with no final stop check here; a returned partial integer is not a completion
+/// receipt. This routine adds no domain validation or total resource bound.
 fn binary_scaled_ln_rational(
     signal: &Option<Signal>,
     residual: &Rational,
@@ -158,6 +200,3 @@ fn binary_scaled_ln_rational(
 
     scale(residual_appr + ln2_term, -2)
 }
-
-// Approximate the Arctangent of 1/n where n is some small integer > base
-// what is "base" in this context?

@@ -770,7 +770,13 @@ impl Real {
         })
     }
 
-    /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
+    /// Construct the natural logarithm after establishing that this Real is positive.
+    /// Return [`Problem::NotANumber`] for a proved zero or negative value, and
+    /// [`Problem::Exhausted`] if the bounded sign query remains unresolved.
+    /// Preserve recognized rational, root, rational-power and exponential
+    /// identities; otherwise retain a computable logarithm. Domain checking
+    /// and construction may refine the operand, so constructing a result is
+    /// not a bound on later evaluation work or memory.
     pub fn ln(self) -> Result<Real, Problem> {
         if self.operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", "ln", "domain-not-positive");
@@ -845,7 +851,14 @@ impl Real {
         Ok(self.make_computable(Computable::ln))
     }
 
-    /// Natural logarithm of `1 + x`, preserving the small-residual shape.
+    /// Construct ln(1+self) while retaining the residual for accurate evaluation near zero.
+    /// Require self > -1: return [`Problem::NotANumber`] when 1+self is proved
+    /// nonpositive, or [`Problem::Exhausted`] when the required sign query cannot
+    /// decide. Exact rationals use an exact domain check; a retained positive
+    /// sign avoids constructing 1+self solely to check the domain.
+    /// Recognized zero returns zero. Other valid residuals remain in a lazy
+    /// logarithm node whose kernel checks its series range at evaluation time;
+    /// validity does not require |self| < 1/2 or promise bounded total work.
     pub fn ln_1p(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "ln_1p", "exact-zero");

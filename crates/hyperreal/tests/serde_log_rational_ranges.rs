@@ -1,16 +1,28 @@
+//! Logarithm replay witnesses for domain validation, intervals and subsequent arithmetic.
+//!
+//! Raw rational residuals and binary-scaled logarithms exercise native and
+//! checked-Real import routes. Broad independent bounds, certified API outcomes
+//! and serialization stability are checked separately.
+
 #![cfg(feature = "serde")]
 
 use hyperreal::{Computable, Problem, Rational, Real, RealSign};
 use serde_json::{Value, json};
 
+/// Serialize an exact n/d rational for a raw import fixture, requiring d != 0.
+/// Unexpected rational-construction or JSON-encoding failures panic in the test.
 fn q(n: i64, d: u64) -> Value {
     serde_json::to_value(Rational::fraction(n, d).unwrap()).unwrap()
 }
 
+/// Wrap an argument in the named raw Computable syntax tag for import testing.
+/// This builds JSON shape only; it deliberately does not admit the mathematical
+/// domain or prove any stored facts.
 fn node(kind: &str, argument: Value) -> Value {
     json!({"internal": {kind: argument}})
 }
 
+/// Encode a JSON fixture value as CBOR, panicking on an unexpected writer failure.
 fn bytes(value: &Value) -> Vec<u8> {
     let mut bytes = Vec::new();
     ciborium::ser::into_writer(value, &mut bytes).unwrap();
@@ -18,6 +30,19 @@ fn bytes(value: &Value) -> Vec<u8> {
 }
 
 #[test]
+/// Exercise eight valid raw log graphs with independent broad logarithm bounds.
+/// Rational bounds on e give 1 < ln(5) < 2, -3 < ln(1/16) < -2 and
+/// 2/3 < ln(2) < 1. Through two native import formats, check 48 approximation
+/// interval overlaps over coarse/fine/coarse histories and preserve JSON values.
+/// Overlap with these broad bounds alone does not certify the exact logarithm.
+///
+/// For each graph, three outer scales and six checked-Real import routes produce
+/// 144 values. Check intervals and signs at three precisions, require strict
+/// containment inside the broad bounds at -64 for nonzero scales, then test
+/// containment after adding one. Preserve JSON and CBOR bytes separately from
+/// those semantic checks. Zero scales require intervals containing zero. This
+/// is same-process replay with shared caches, not a universal or fresh-process
+/// replay proof.
 fn imported_rational_logs_preserve_enclosures_and_following_arithmetic() {
     let mut cases = Vec::new();
     // e < 11/4 and e > 8/3 prove 1 < ln(5) < 2 and
@@ -120,6 +145,14 @@ fn imported_rational_logs_preserve_enclosures_and_following_arithmetic() {
 }
 
 #[test]
+/// Reject residuals -1, -2 and -3/2 in three raw log forms, also beneath multiplication by zero.
+/// Eighteen graphs give 36 native JSON/CBOR deserialization-error assertions.
+/// For three outer scales, including zero, four checked-Real adapters must each
+/// return Problem::ParseError (216 assertions); two collection routes must fail
+/// through their deserializer errors (108 assertions). Thus neither a zero outer
+/// scale nor a zero product may conceal an invalid logarithm. This exercises
+/// import validation, not numerical evaluation or a promise of a more specific
+/// domain Problem at this serialization boundary.
 fn rational_log_import_keeps_invalid_residuals_as_typed_failures() {
     for (n, d) in [(-1, 1), (-2, 1), (-3, 2)] {
         for graph in [
