@@ -1,123 +1,248 @@
+/// Retained positive product pi^n * exp(q), with a signed integral pi exponent.
+/// Native factories prefer smaller variants when possible; wire admission may retain equivalent nonspecialized forms.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ConstProductClass {
     // Signed pi power lets reciprocal products such as 1/pi and e^q/pi remain
     // symbolic instead of falling into a generic inverse node.
+    /// Signed pi exponent; negative powers represent reciprocals without changing the outer Real scale.
     pi_power: i16,
+    /// Exact rational exponent of e, including zero for a pure pi power.
     exp_power: Rational,
 }
 
+/// Retained positive sum pi^n * exp(q) + offset.
+/// Native construction uses cheap positivity certificates; wire admission can also use bounded sign refinement.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ConstOffsetClass {
     // Invariant: the inner value pi^n*e^q + offset is constructed only when
     // cheaply certified positive. The outer Real.rational carries any sign.
+    /// Signed exponent of pi in the positive multiplicative term.
     pi_power: i16,
+    /// Exact rational exponent of e in that term.
     exp_power: Rational,
+    /// Exact additive rational; positivity concerns the entire basis, not this field alone.
     offset: Rational,
 }
 
+/// Factored positive product pi^n * exp(q) * sqrt(r).
+/// Keeping the root separate allows subsequent products and inverses to reuse its defining relation.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ConstProductSqrtClass {
     // Factored sqrt products are positive internally. Keeping the sqrt separate
     // allows later multiplication/division to cancel it exactly.
+    /// Signed pi exponent, independent of the rational outer scale.
     pi_power: i16,
+    /// Exact rational exponential factor.
     exp_power: Rational,
+    /// Positive rational under the square root; without pi/e factors it must not be a perfect rational square.
     radicand: Rational,
 }
 
+/// Positive basis offset + ln(base), retaining the additive logarithmic definition.
+/// Native construction requires base > 1 and nonnegative offset; wire admission also accepts other proved-positive sums.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct LnAffineClass {
     // Constructed only for positive offset + ln(base). This preserves the
     // nonzero/sign invariant shared by all non-Irrational classes.
+    /// Exact rational additive term; wire-validated values need not have nonnegative offset.
     offset: Rational,
+    /// Positive rational unequal to one, with positivity of the entire sum established separately.
     base: Rational,
 }
 
+/// Positive product ln(left) * ln(right).
+/// Native construction sorts bases; wire validation requires positive nonunit bases on the same side of one but does not sort them.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct LnProductClass {
     // Bases are sorted at construction so products compare and combine without
     // considering operand order.
+    /// First exact rational log base; native factories put the lesser base here.
     left: Rational,
+    /// Second exact rational log base, whose log has the same nonzero sign as the first.
     right: Rational,
 }
 
+/// Exact basis certificates kept separately from Real's rational scale.
+/// Named variants denote positive nonzero bases after native construction or
+/// wire validation. The opaque Irrational tag has no such sign/rationality claim.
+/// A certificate is not the whole scaled value: a zero outer scale is still zero.
+/// Derived decoding alone does not admit these invariants; RealWire validates them.
+/// Equality recognizes matching retained forms, not all mathematical identities.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) enum Class {
-    // `Class` is a certificate, not the whole value: `Real.rational` scales the
-    // mathematical value represented here. All variants except `Irrational` are
-    // exact, nonzero, and positive internally unless a comment says otherwise.
-    // These symbolic forms are hyperreal-specific performance shortcuts layered
-    // on top of the computable exact-real machinery; the invariants are kept
-    // adjacent here because sign/zero/fact predicates rely on them for early
-    // exits without approximation.
-    One,                // Exactly one
-    Pi,                 // Exactly pi
-    PiPow(u8),          // Exactly pi**n, n >= 2
-    PiInv,              // Exactly 1 / pi
-    PiExp(Rational),    // Exactly pi * e**Rational
-    PiInvExp(Rational), // Exactly e**Rational / pi
-    PiSqrt(Rational),   // Exactly pi * sqrt(Rational)
-    // Boxed so uncommon combined constants do not bloat every `Real` value.
-    // Dense algebra and borrowed-op benches are sensitive to enum size.
-    ConstProduct(Box<ConstProductClass>), // Exactly pi**n * e**Rational, signed n
-    ConstOffset(Box<ConstOffsetClass>),   // Exactly pi**n * e**Rational + Rational
-    ConstProductSqrt(Box<ConstProductSqrtClass>), // Exactly pi**n * e**Rational * sqrt(Rational)
-    Sqrt(Rational), // Square root of some positive integer without an integer square root
-    Exp(Rational),  // Rational is never zero
-    Ln(Rational),   // Rational > 1
-    LnAffine(Box<LnAffineClass>), // Exactly Rational + ln(Rational), constructed positive only
-    // Boxed for the same reason as `ConstProduct`: keep the common `Real`
-    // representation small while still preserving a lightweight symbolic form.
-    LnProduct(Box<LnProductClass>), // Product of two logarithms, ordered by base
-    Log10(Rational),                // Rational > 1 and never a multiple of ten
-    Log2(Rational),                 // Rational > 1 and never a power of two
-    Pow10(Rational), // Exactly 10**Rational for a noninteger exponent not represented as a sqrt
-    Pow2(Rational),  // Exactly 2**Rational for a noninteger exponent not represented as a sqrt
-    SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
-    TanPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
+    /// Unit basis; the outer Real rational scale carries the entire value.
+    One,
+    /// The positive transcendental constant pi.
+    Pi,
+    /// Positive integral pi power; admitted exponent is at least two.
+    PiPow(
+        /// Exponent n in pi^n; zero and one use simpler native variants.
+        u8,
+    ),
+    /// The positive reciprocal 1/pi.
+    PiInv,
+    /// Product pi * exp(q); no general irrationality claim follows for a nonzero rational q.
+    PiExp(
+        /// Exact exponential exponent q; wire admission permits zero.
+        Rational,
+    ),
+    /// Product exp(q)/pi, retaining the reciprocal pi factor.
+    PiInvExp(
+        /// Exact rational exponent of e; mathematical rationality need not be known.
+        Rational,
+    ),
+    /// Product pi * sqrt(r) for a positive rational r, including perfect squares.
+    PiSqrt(
+        /// Positive exact radicand; pi supplies the transcendental factor.
+        Rational,
+    ),
+    /// General signed-pi-power/exponential product, boxed to keep uncommon parameters indirect.
+    ConstProduct(
+        /// Retained multiplicative parameters, possibly equivalent to a dedicated wire variant.
+        Box<ConstProductClass>,
+    ),
+    /// Proved-positive constant product plus a rational offset.
+    ConstOffset(
+        /// Retained product/offset parameters; the outer Real scale supplies the overall sign.
+        Box<ConstOffsetClass>,
+    ),
+    /// Positive pi/exponential product with an explicit rational square root.
+    ConstProductSqrt(
+        /// Factored definition whose root relation can be reused by multiplication/division.
+        Box<ConstProductSqrtClass>,
+    ),
+    /// Square root of a positive rational with no perfect rational square root.
+    Sqrt(
+        /// Exact nonsquare radicand; not restricted to integral or square-free inputs by wire admission.
+        Rational,
+    ),
+    /// Positive exp(q) with nonzero rational q; exp(0) uses One in native construction.
+    Exp(
+        /// Nonzero exact exponent, guaranteeing a transcendental basis.
+        Rational,
+    ),
+    /// Positive natural logarithm of a rational greater than one.
+    Ln(
+        /// Exact base greater than one; logarithm is nonzero and transcendental.
+        Rational,
+    ),
+    /// Proved-positive rational offset plus a natural logarithm.
+    LnAffine(
+        /// Additive definition whose sign is established at construction or wire admission.
+        Box<LnAffineClass>,
+    ),
+    /// Positive product of two nonzero real logarithms, without a general irrationality claim.
+    LnProduct(
+        /// Native sorted or wire-preserved pair of bases with same-sign logarithms.
+        Box<LnProductClass>,
+    ),
+    /// Positive base-ten logarithm excluding bases with an exact integer base-ten logarithm.
+    Log10(
+        /// Rational base greater than one; this excludes powers of ten, not all multiples of ten.
+        Rational,
+    ),
+    /// Positive binary logarithm excluding bases with an exact integer binary logarithm.
+    Log2(
+        /// Rational base greater than one, excluding integral powers of two.
+        Rational,
+    ),
+    /// Positive ten raised to a noninteger rational exponent.
+    Pow10(
+        /// Exact nonintegral exponent; native simplification may choose a root specialization.
+        Rational,
+    ),
+    /// Positive two raised to a noninteger rational exponent.
+    Pow2(
+        /// Exact nonintegral exponent, retained without primitive-float projection.
+        Rational,
+    ),
+    /// Positive sine of pi*q for 0 < q < 1/2, excluding q=1/6.
+    /// Native tables also simplify additional special angles; wire admission need not do so.
+    SinPi(
+        /// Exact principal pi-multiple; excluded 1/6 would give the rational one-half.
+        Rational,
+    ),
+    /// Positive tangent of pi*q for 0 < q < 1/2, excluding q=1/4.
+    /// Native tables also simplify additional special angles; the half-turn pole is outside this domain.
+    TanPi(
+        /// Exact principal pi-multiple; excluded 1/4 would give the rational one.
+        Rational,
+    ),
+    /// Opaque basis requiring a separate Computable payload.
+    /// The name is not proof of irrationality, sign or nonzero value; even this tag compared with itself is not a Class equality proof.
     Irrational,
 }
 
 use Class::*;
+/// Disposable primitive projection state, not an exact scalar certificate.
+/// Some values must be finite; None records a conversion overflow. F64 exists independently of cache feature flags.
 #[derive(Clone, Copy, Debug, Default)]
 pub(super) enum PrimitiveApproxCache {
+    /// No reusable primitive projection has been stored.
     #[default]
     Empty,
+    /// Feature-enabled binary32 projection or overflow result.
     #[cfg(feature = "cached-f32-approx")]
-    F32(Option<f32>),
-    F64(Option<f64>),
+    F32(
+        /// Finite binary32 bits, or None for overflow.
+        Option<f32>,
+    ),
+    /// Binary64 projection or overflow result; also used when cached-f64-approx is disabled.
+    F64(
+        /// Finite binary64 bits, or None for overflow.
+        Option<f64>,
+    ),
 }
 
-/// Lock-free cache for lossy primitive conversions.
+/// One atomic word holding disposable primitive projections with binary64 preference.
 ///
 /// Exact-real values never convert to NaN, so reserved quiet-NaN bit patterns
 /// can represent the empty and overflow states without increasing `Real`'s
 /// layout. A tagged negative-NaN range carries cached finite `f32` values;
 /// every other finite bit pattern is a cached `f64`.
-pub(super) struct AtomicPrimitiveApproxCache(std::sync::atomic::AtomicU64);
+/// Callers must supply finite Some values; encoding does not validate that rule.
+/// Reserved NaNs would collide with tags, so this is not an arbitrary-float codec.
+/// Relaxed accesses synchronize this word only, not unrelated data. Same-rank
+/// writes may replace one another; reset is unconditional and can race with writers.
+/// The weak-CAS retry loop has no per-call iteration or cancellation bound.
+pub(super) struct AtomicPrimitiveApproxCache(
+    /// Tagged bits; only the encoder/decoder define their interpretation.
+    std::sync::atomic::AtomicU64,
+);
 
+/// Encode, load and update the single-word projection cache without numeric proof work.
 impl AtomicPrimitiveApproxCache {
+    /// Reserved positive quiet-NaN bit pattern for an empty view.
     const EMPTY: u64 = 0x7ff8_0000_0000_0001;
     #[cfg(feature = "cached-f32-approx")]
+    /// Reserved quiet-NaN bit pattern for binary32 overflow.
     const F32_NONE: u64 = 0x7ff8_0000_0000_0002;
+    /// Reserved quiet-NaN bit pattern for binary64 overflow.
     const F64_NONE: u64 = 0x7ff8_0000_0000_0003;
     #[cfg(feature = "cached-f32-approx")]
+    /// High-word negative-NaN tag; the low 32 bits contain a finite binary32 encoding.
     const F32_TAG: u64 = 0xffff_ffff_0000_0000;
 
+    /// Encode one caller-admitted view into a fresh atomic word; do not validate finite-value preconditions.
     pub(super) fn new(value: PrimitiveApproxCache) -> Self {
         Self(std::sync::atomic::AtomicU64::new(Self::encode(value)))
     }
 
     #[inline]
+    /// Load relaxed and decode one atomic snapshot, without refinement or synchronization of other state.
     pub(super) fn get(&self) -> PrimitiveApproxCache {
         Self::decode(self.0.load(std::sync::atomic::Ordering::Relaxed))
     }
 
+    /// Clear unconditionally for Empty; otherwise retry weak compare-exchange while the stored rank is no higher.
+    /// F64 outranks F32 and Empty; equal ranks may replace. A concurrent higher rank stops the update.
+    /// This prioritizes representation width, not a certified accuracy order, and has no bounded retry count.
     pub(super) fn set(&self, value: PrimitiveApproxCache) {
         let encoded = Self::encode(value);
         if matches!(value, PrimitiveApproxCache::Empty) {
@@ -141,6 +266,7 @@ impl AtomicPrimitiveApproxCache {
         }
     }
 
+    /// Encode finite views or sentinel states; callers own the finite-Some invariant and source association.
     fn encode(value: PrimitiveApproxCache) -> u64 {
         match value {
             PrimitiveApproxCache::Empty => Self::EMPTY,
@@ -153,6 +279,8 @@ impl AtomicPrimitiveApproxCache {
         }
     }
 
+    /// Check Empty, feature-enabled F32 sentinels/tag, then F64 overflow, otherwise reinterpret as F64 bits.
+    /// This is inverse encoding on admitted states, not validation of arbitrary bit patterns.
     fn decode(value: u64) -> PrimitiveApproxCache {
         if value == Self::EMPTY {
             return PrimitiveApproxCache::Empty;
@@ -172,6 +300,8 @@ impl AtomicPrimitiveApproxCache {
         PrimitiveApproxCache::F64(Some(f64::from_bits(value)))
     }
 
+    /// Decode the state and rank Empty=0, F32=1, F64=2, including overflow states.
+    /// The ordering is cache preference, not scalar magnitude or mathematical certainty.
     fn rank(value: u64) -> u8 {
         match Self::decode(value) {
             PrimitiveApproxCache::Empty => 0,
@@ -182,20 +312,28 @@ impl AtomicPrimitiveApproxCache {
     }
 }
 
+/// Default to an empty projection, without evaluating the exact source.
 impl Default for AtomicPrimitiveApproxCache {
+    /// Initialize the reserved Empty state.
     fn default() -> Self {
         Self::new(PrimitiveApproxCache::Empty)
     }
 }
 
+/// Format the current decoded projection snapshot rather than the tagged storage word.
 impl std::fmt::Debug for AtomicPrimitiveApproxCache {
+    /// Delegate formatting to one decoded snapshot; concurrent writes may change a later snapshot.
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.get().fmt(formatter)
     }
 }
 
-// We can't tell whether an Irrational value is ever equal to anything
+/// Recognize identical named representations, comparing retained rational parameters in order.
+/// Different tags never match; two Irrational tags also return false because the
+/// graph identity lives elsewhere. Thus this is deliberately not reflexive for
+/// the opaque marker and cannot implement Eq or serve as semantic scalar equality.
 impl PartialEq for Class {
+    /// Compare matching tag parameters, short-circuiting in field order; return false for every other pair.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (One, One) => true,
@@ -238,6 +376,7 @@ impl PartialEq for Class {
     }
 }
 
+/// Construct/decompose exact retained bases and validate their admitted parameter domains.
 impl Class {
     /// Whether this exact symbolic class proves that its value is irrational.
     ///
@@ -246,6 +385,10 @@ impl Class {
     /// include familiar constants whose rationality is not known. A single
     /// transcendental factor times a nonzero algebraic factor is safe, as are
     /// the retained algebraic roots and rational-angle trigonometric values.
+    /// This assumes admitted parameters and concerns the basis only, not a zero
+    /// outer Real scale. False means no irrationality proof here, not rationality.
+    /// Mixed pi/e products remain conservative; constant-product tests use the
+    /// presence of their factors and the admitted nonsquare-root invariant.
     fn definitely_irrational(&self) -> bool {
         match self {
             One | PiExp(_) | PiInvExp(_) | LnProduct(_) | Irrational => false,
@@ -269,6 +412,7 @@ impl Class {
         }
     }
 
+    /// Recognize only the simple Ln variant for cheap two-log combination; reject wider logarithmic forms.
     fn is_ln(&self) -> bool {
         // Only simple `Ln(base)` values participate in the two-log sum/difference
         // collapse. Wider log classes intentionally skip that shortcut so the
@@ -276,6 +420,7 @@ impl Class {
         matches!(self, Ln(_))
     }
 
+    /// Normalize exp(0) to One; otherwise pair the retained nonzero rational exponent with its exact computable definition.
     fn make_exp(br: Rational) -> (Class, Computable) {
         // `e^0` is the rational one. Normalizing here keeps exp-products from
         // leaving behind a symbolic class that would slow equality and sign checks.
@@ -286,9 +431,12 @@ impl Class {
         }
     }
 
+    /// Build pi^power with one multiplication per additional factor; zero returns one.
+    /// The u16 parameter bounds the loop count, not graph evaluation cost or memory independently.
+    /// This is a left-associated construction, not exponentiation by squaring.
     fn pi_power_computable(power: u16) -> Computable {
-        // Pi powers are kept as shallow multiply chains only for symbolic
-        // constants. Large generic powers still use the normal pow machinery.
+        // Retained symbolic pi powers use a linear multiply chain.
+        // Generic powers use their separate pow machinery.
         if power == 0 {
             return Computable::one();
         }
@@ -299,6 +447,7 @@ impl Class {
         value
     }
 
+    /// Use One for exponent zero, Pi for one, otherwise PiPow with the positive-power graph.
     fn make_pi_power(power: u8) -> (Class, Computable) {
         match power {
             0 => (One, Computable::one()),
@@ -307,10 +456,14 @@ impl Class {
         }
     }
 
+    /// Delegate pi*exp(q) to constant-product normalization, allowing q=0 to collapse to Pi.
     fn make_pi_exp(br: Rational) -> (Class, Computable) {
         Self::make_const_product(1, br)
     }
 
+    /// Construct pi^n*exp(q) using dedicated unit, exponential, small positive power and reciprocal forms first.
+    /// Then prefer PiExp/PiInvExp for n=+/-1, otherwise retain boxed parameters and an exact graph.
+    /// Zero q omits the exponential graph; i16 exponent bounds do not bound subsequent evaluation work.
     fn make_const_product(pi_power: i16, exp_power: Rational) -> (Class, Computable) {
         // Normalize back to the smaller dedicated variants whenever possible.
         // Rarer signed pi powers stay boxed; direct `pi`, `1/pi`, `e^q`,
@@ -355,6 +508,9 @@ impl Class {
         )
     }
 
+    /// Cheap sufficient positivity test for pi^n*exp(q)+offset. Nonnegative offsets always pass.
+    /// For negative offsets, admit only pi-minus-threshold with threshold <=3 or e-minus-threshold <=2.
+    /// False means this recognizer declined; it is not a proof of nonpositivity.
     fn const_offset_positive_certified(
         pi_power: i16,
         exp_power: &Rational,
@@ -378,6 +534,8 @@ impl Class {
         }
     }
 
+    /// Normalize zero offset to a constant product; decline nonzero pure-rational offsets or unproved positivity.
+    /// Otherwise retain the exact sum with a positive-basis certificate. None selects caller fallback, not invalid input.
     fn make_const_offset(
         pi_power: i16,
         exp_power: Rational,
@@ -404,6 +562,8 @@ impl Class {
         ))
     }
 
+    /// Construct nonnegative pi powers directly; negative powers invert the positive unsigned magnitude.
+    /// unsigned_abs handles i16::MIN without signed negation overflow; the basis pi is nonzero.
     fn signed_pi_power_computable(power: i16) -> Computable {
         // Negative pi powers are represented by inverting the positive cached
         // pi-chain. This is cheaper than creating an opaque reciprocal product
@@ -414,6 +574,8 @@ impl Class {
         Self::pi_power_computable(power.unsigned_abs()).inverse()
     }
 
+    /// Extract (signed pi power, rational e exponent) from the eight admitted multiplicative variants.
+    /// Clone exponent data as needed; None is a representation mismatch, not proof of a different mathematical family.
     fn const_product_parts(&self) -> Option<(i16, Rational)> {
         // A lightweight deconstructor for the pi^n * e^q family. This is the
         // single point that lets newer classes (`1/pi`, `e^q/pi`) participate
@@ -431,6 +593,7 @@ impl Class {
         }
     }
 
+    /// Extract an explicit offset or extend a recognized multiplicative form with exact zero offset.
     fn const_offset_parts(&self) -> Option<(i16, Rational, Rational)> {
         // Treat plain constant products as offset-zero values. This lets
         // rational addition/subtraction share one normalization path while the
@@ -448,6 +611,7 @@ impl Class {
         }
     }
 
+    /// Cheap tag gate for pi/exponential forms and existing offsets; exclude One and unrelated root/log/trig forms.
     fn can_take_const_offset(&self) -> bool {
         // Gate the offset probe so ordinary sqrt/log/trig additions do not pay
         // for a const-product deconstruction they can never use. This gate was
@@ -464,6 +628,8 @@ impl Class {
         )
     }
 
+    /// Decompose both bases, checked-subtract their i16 pi powers, subtract rational e exponents and normalize.
+    /// None reports an unmatched representation or exponent overflow so the caller can fall back; no certificate wraps.
     fn divide_const_products(left: &Class, right: &Class) -> Option<(Class, Computable)> {
         // General quotient closure for symbolic constants. The checked integer
         // arithmetic is a guardrail for rare constructed powers; overflow falls
@@ -474,6 +640,8 @@ impl Class {
         Some(Self::make_const_product(pi_power, left_exp - right_exp))
     }
 
+    /// Decompose both bases, checked-add their i16 pi powers, add rational e exponents and normalize.
+    /// None preserves caller fallback on unmatched forms or finite-tag overflow.
     fn multiply_const_products(left: &Class, right: &Class) -> Option<(Class, Computable)> {
         // Product closure mirrors division and is kept behind the exact special
         // forms in `Mul`; this retains very small hot arms while still catching
@@ -484,6 +652,8 @@ impl Class {
         Some(Self::make_const_product(pi_power, left_exp + right_exp))
     }
 
+    /// Pair pi*sqrt(r) with retained PiSqrt parameters; the caller must supply a positive rational radicand.
+    /// This helper performs no separate admission or square-factor normalization.
     fn make_pi_sqrt(r: Rational) -> (Class, Computable) {
         // `pi * sqrt(n)` appears in algebra kernels; keeping it symbolic lets
         // repeated products collapse before falling back to generic computables.
@@ -493,6 +663,8 @@ impl Class {
         )
     }
 
+    /// Reuse shared sqrt(2)/sqrt(3) constants after exact i64 recognition; otherwise build the rational-root graph.
+    /// The caller supplies a valid radicand; this helper does not prove positivity.
     fn const_product_sqrt_computable(radicand: &Rational) -> Computable {
         // Composite `pi^n*e^q*sqrt(r)` values are often cloned through matrix
         // rows. For the dominant square-free residuals 2 and 3, reuse the
@@ -506,6 +678,9 @@ impl Class {
             .unwrap_or_else(|| Computable::sqrt_rational(radicand.clone()))
     }
 
+    /// Normalize radicand one, then prefer plain Sqrt or PiSqrt when the pi/e factors permit it.
+    /// Otherwise retain the boxed factored product and root graph. Callers own positive-radicand
+    /// and nonsquare plain-Sqrt invariants; this routine does not extract arbitrary square factors.
     fn make_const_product_sqrt(
         pi_power: i16,
         exp_power: Rational,
@@ -536,6 +711,8 @@ impl Class {
         )
     }
 
+    /// Extract explicit root-factor parameters from Sqrt, PiSqrt or ConstProductSqrt only.
+    /// Do not treat an implicit unit root in a plain product as an explicit factor.
     fn const_product_sqrt_parts(&self) -> Option<(i16, Rational, Rational)> {
         // Deconstructor for classes that contain an explicit sqrt factor. It is
         // intentionally narrower than `const_product_parts` so hot pi/e products
@@ -552,12 +729,15 @@ impl Class {
         }
     }
 
+    /// Recognize exactly the three tags handled by the root-product deconstructor.
     fn has_const_product_sqrt_factor(&self) -> bool {
         // Cheap prefilter before calling the heavier sqrt-product deconstructor
         // in multiply/divide fallbacks.
         matches!(self, Sqrt(_) | PiSqrt(_) | ConstProductSqrt(_))
     }
 
+    /// Reuse shared log constants for exact integer bases 2, 3, 5, 6, 7 and 10; otherwise build ln(base).
+    /// Callers supply a positive rational base. The unwrap follows the enumerated constant table invariant.
     fn ln_computable(base: &Rational) -> Computable {
         // Common logarithm constants share Computable caches. Dense symbolic
         // expressions repeatedly build ln(2), ln(3), etc.; routing them here
@@ -573,12 +753,16 @@ impl Class {
         Computable::rational(base.clone()).ln()
     }
 
+    /// Build exp(exponent*ln(base)) exactly, assuming the caller supplies a positive rational base.
+    /// The helper does not choose root specializations or validate that precondition.
     fn rational_base_power_computable(base: &Rational, exponent: &Rational) -> Computable {
         Self::ln_computable(base)
             .multiply(Computable::rational(exponent.clone()))
             .exp()
     }
 
+    /// Admit only base>1 and nonnegative offset; zero offset collapses to Ln.
+    /// Other sums return None even when mathematically positive, leaving caller fallback available.
     fn make_ln_affine(offset: Rational, base: Rational) -> Option<(Class, Computable)> {
         // Like `ConstOffset`, this additive form is only admitted when the
         // inner value is structurally positive. That keeps sign and zero queries
@@ -600,6 +784,8 @@ impl Class {
         ))
     }
 
+    /// Sort bases using exact rational order and retain ln(left)*ln(right) with the matching graph.
+    /// Callers must supply positive nonunit bases with same-sign logarithms; sorting is not domain validation.
     fn make_ln_product(left: Rational, right: Rational) -> (Class, Computable) {
         // Sort factors so ln(a)*ln(b) and ln(b)*ln(a) compare equal and share
         // downstream structural facts.
@@ -617,6 +803,10 @@ impl Class {
         )
     }
 
+    /// Reconstruct the unscaled named basis from retained parameters, reusing constant helpers where available.
+    /// This does not validate parameters, include the outer Real scale or attach its abort signal.
+    /// Opaque Irrational lacks a recipe and panics: its owning Real must retain a payload.
+    /// Graphs/allocations may grow with stored exponents; no total resource budget is supplied.
     pub(super) fn computable_certificate(&self) -> Computable {
         // Materialize a missing computable payload from its exact symbolic
         // certificate. Existing immutable payloads can be shared by cloning.
@@ -685,6 +875,11 @@ impl Class {
     }
 
     #[cfg(feature = "serde")]
+    /// Check named-basis domain and cheap fact invariants without requiring native canonicalization.
+    /// Admit equivalent constant products, perfect PiSqrt radicands, unsorted same-sign log pairs
+    /// and extra irrational special-angle forms when valid. Reject invalid shape parameters with ParseError.
+    /// Additive positivity may require certificate-only refinement and return UnknownCertificate.
+    /// Payload presence, domains and agreement are separate RealWire obligations; this check alone does not admit a Real.
     fn validate_serialized_parameters(&self) -> Result<(), Problem> {
         let positive_root = |r: &Rational| r.sign() == Sign::Plus;
         let irrational_root = |r: &Rational| positive_root(r) && r.perfect_nth_root(2).is_none();
@@ -744,6 +939,9 @@ impl Class {
     }
 
     #[cfg(feature = "serde")]
+    /// Reconstruct from rational class parameters alone and require a positive sign at precision floor -256.
+    /// Zero/negative returns ParseError, unresolved sign UnknownCertificate. Never trust the supplied
+    /// wire payload as its own certificate; precision is bounded here, total evaluation work is not.
     fn validate_serialized_positive_sum(&self) -> Result<(), Problem> {
         // Only construct from already defined rational parameters. Never refine
         // an untrusted supplied payload to validate its own certificate. Unlike

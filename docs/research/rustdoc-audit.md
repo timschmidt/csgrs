@@ -15998,6 +15998,95 @@ not additional whole-file review. Full workflows remain owner-waived. No focused
 check remains blocked; the broader source and private-documentation audit remains
 open.
 
+## Hyperreal symbolic classes, normalization and primitive cache (2026-11-27)
+
+Whole-file review of crates/hyperreal/src/real/arithmetic/classification.rs on
+revision b8e9f5dfe987bdc75b329aa4ab63dee3e99f77ca (758 -> 956 lines).
+The owning layer is retained scalar certificates and disposable primitive views.
+P1/P2/P3/P4/P5/P6/P19 and the admission protocol require precise stored meaning,
+conservative facts, exact normalization/fallback and cache scope. The domain is
+admitted rational-parameter symbolic bases, opaque graphs, serialized proposals,
+finite float views and overflow/empty cache states. Missing witnesses were Rustdoc
+for carriers, fields/variants, cache internals, class constructors/deconstructors,
+and a distinction between native normalization and broader wire admission.
+Baseline named-certificate (five) and lazy-certificate (four) tests passed.
+
+All 53 declarations, twelve named fields, 21 tuple fields and 25 enum variants
+now have Rustdoc (111 complete blocks). Review documents:
+
+- Class stores a basis, not the outer scaled Real value. Admitted named bases
+  are positive/nonzero; the Irrational marker is opaque rather than proof of
+  irrationality or sign. Derived Class decoding alone does not admit invariants.
+  Matching-form equality compares parameters in order and deliberately declines
+  even Irrational versus itself; it is not universal scalar equality or Eq.
+- Parameter comments now match rational domains: Sqrt is not restricted to
+  integers, Log10 excludes exact integer-log bases rather than all multiples of
+  ten, and SinPi/TanPi wire admission excludes only the rational-value special
+  angle inside each principal interval. Native tables simplify more angles.
+- Product, offset, root and logarithmic carriers retain exact defining factors.
+  Native factories prefer dedicated variants and sorted log bases; wire admission
+  can retain equivalent noncanonical forms, positive nonsquare rational roots,
+  perfect PiSqrt radicands, unsorted log pairs below one, and proved-positive
+  additive forms beyond cheap native recognizers. A declined native recognizer
+  selects caller fallback, not proof of invalidity.
+- Irrationality facts concern admitted bases, not zero outer scales. Mixed pi/e
+  products and logarithmic products remain conservative. A false irrationality
+  query does not establish rationality. Root factories rely on caller invariants;
+  they do not independently normalize arbitrary square factors or prove domains.
+- Pi power graphs use a linear multiplication chain, correcting the old shallow
+  characterization. Signed magnitudes handle i16::MIN with unsigned_abs; checked
+  tag addition/subtraction returns None rather than wrapping. Tag/precision bounds
+  are not total evaluation-work or memory contracts. Log and selected root helpers
+  reuse their enumerated shared constants before general exact graph construction.
+- Certificate reconstruction excludes the outer scale and attached signal, and
+  panics for an opaque tag without its separate payload. Serialized additive
+  positivity reconstructs from class parameters and queries sign at -256; it never
+  trusts the supplied graph as its own certificate. Refuted and unresolved checks
+  retain ParseError and UnknownCertificate, with other RealWire obligations separate.
+- Primitive caches encode empty/overflow sentinels and finite IEEE values in one
+  atomic word. Binary64 exists without optional cache features. Callers own the
+  finite-Some precondition; encoding does not reject NaNs or infinities. Reserved
+  NaNs collide with tags, so this is not a general float interchange encoding.
+  Relaxed accesses synchronize the word, not unrelated state. F64 outranks F32,
+  same-rank values can replace, and Empty resets unconditionally. Weak-CAS retries
+  have no per-call iteration/cancellation bound or mathematical accuracy ordering.
+
+After the final edit:
+
+- Filtered conversion tests passed with no optional features (32), f32 cache only
+  (34), f64 cache only (38), and all features (42), retaining existing cache-upgrade,
+  signed-zero, overflow, mixed-thread and property-test assertions. All nine named
+  and lazy certificate integration tests also passed after editing.
+- A temporary cache probe compiled a verbatim extracted implementation under all
+  four cache-feature combinations. It checked finite signed-zero/subnormal/extreme
+  bit round trips, empty/overflow states, equal-rank replacement, width preference,
+  reset and Debug output. A deliberate forbidden Some(NaN) demonstrated the documented
+  reserved-bit collision. This isolated probe is not the whole library or a proof
+  of concurrent behavior; production conversion tests supply the integration check.
+- A separate warnings-denied consumer linked to the rebuilt library admitted 13
+  noncanonical/extended wire forms with positive facts, retained tags and successful
+  interval queries. These include Log10(20), nonsquare rational roots, extra irrational
+  special angles and same-sign logarithms below one. Four rationality-invariant
+  violations were rejected. These are admission/retention witnesses, not a new
+  claim that interval availability proves every intended mathematical value.
+- Actual private cargo doc passed both without optional features and with all
+  features, denying warnings and broken/private links. Every one of the 111 full
+  blocks matched the generated all-feature pages, including tuple-field comments.
+- The only noncomment token changes are 21 optional trailing commas before closing
+  tuple delimiters, introduced when field Rustdoc required multiline formatting.
+  A token-aware comparison verified every other token, including string contents,
+  unchanged. Types, order, arithmetic, cache transitions, hooks and fixtures remain
+  unchanged. Selected Rustfmt and git diff --check passed. No performance or new
+  universal algebraic-completeness claim is made.
+
+Evidence: /tmp/csgrs-hyperreal-classification-audit/ retains source/render matches,
+commands, baseline/final logs and both probe sources/results. The roughly 22 MiB
+probe executables were removed; builds reused the approximately 5.5 GiB shared
+nonincremental target with locked/offline dependencies. Constructor, root, arithmetic
+consumer and selected named-certificate test excerpts were supporting context,
+not additional whole-file audit credit. Full workflows remain owner-waived; no
+focused check remains blocked. Repository-wide documentation work remains open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
