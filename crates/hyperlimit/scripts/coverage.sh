@@ -64,7 +64,7 @@ for object in "${test_objects[@]:1}"; do
     object_args+=(--object "${object}")
 done
 
-ignore_regex='/(\.cargo/registry|\.rustup|rustc|hyperreal|hyperlattice|target|tests|benches|examples|fuzz)/'
+ignore_regex='/(\.cargo/registry|\.rustup|rustc|hyperreal|hyperlattice|perf-atlas|target|tests|benches|examples|fuzz)/'
 
 echo "Instrumented Rust source (inline #[cfg(test)] modules included):"
 "${llvm_cov}" report \
