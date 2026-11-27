@@ -21088,6 +21088,147 @@ approximately 6.6 GiB shared target with incremental compilation disabled.
 AGENTS.md's existing 100% public/private Rustdoc mandate remains in force.
 Repository-wide line review and all-configuration coverage remain unfinished.
 
+## Hyperreal algebra constructors, probability recipes and complete file review (27 November 2026)
+
+Baseline: `e09f26d6c6002bb9c166d86c736754f825b5b704` on `rustdoc`.
+Reviewed the remaining 912 baseline lines of
+`crates/hyperreal/src/computable/node/algebra.rs`, from the documentation for
+Computable::negate at line 1834 through the final brace. The main Computable impl
+also received its now-complete overview. Together with the continuous reviews
+recorded in `8a613c4f157d49d0a1f06014f75fca5a2d66bc23` and
+`e09f26d6c6002bb9c166d86c736754f825b5b704`, **the entire current file is now
+line-reviewed**: 2906 lines after this batch, 2745 at this baseline and 2423 before
+the first of the three batches. Previously scoped quantile documentation was
+reread in its complete implementation context, not counted as a second file.
+This whole-file result does not establish repository-wide completion.
+
+This batch covers 26 blocks: 23 methods, two function-local helpers and the main
+impl. The cumulative whole-file inventory covers 110 reviewed Rustdoc blocks:
+five structs, 15 fields, six impls, 69 methods, two associated constants, one
+module-level constant, two test modules, eight fixture/test functions and two
+function-local functions. All 98 ordinary blocks were checked in private library
+HTML, ten test-only blocks in temporary enabled-module Rustdoc, and two local
+helpers through supplemental Markdown rendering because Rustdoc omits nested
+function items even with --document-private-items. All five generated Clone
+implementation anchors and the named-item inventories were checked again.
+Closure bodies were reviewed in context. No doc-hidden or lint suppression was
+added; the existing should_implement_trait annotation was retained unchanged.
+
+Ownership is Hyperreal's exact native construction and scalar evaluation boundary,
+P1–P7, with cached facts and downstream predicate consumers under P8–P11 and
+retained composition under P19–P20. The missing witness was faithful documentation
+of actual constructor rewrites, admitted input domains, metadata/signal behavior,
+probability semantics and resource limits. Baseline checks passed 48 selected
+all-feature library tests and seven normal-quantile integration tests. An initial
+library-name filter selected zero quantile integration tests; it was replaced by
+the actual --test normal_quantile_evidence target before taking that evidence.
+Contextual reads included existing arithmetic/normal kernels, approximation signal
+handling, exponent/affine tests and Real's retained dot-product consumer. Those
+reads do not add whole-file credit to other files.
+
+The documentation now distinguishes:
+
+- Native infallible arithmetic requires already-defined operands, and inverse
+  requires nonzero input. Recognized cancellation and zero annihilation can discard
+  other subgraphs without validating their domains. Constructors are not universal
+  import validators or replacements for checked Real entry points.
+- Negation, inversion, square, multiplication and addition preserve their existing
+  rewrite/predicate sequence. Nonzero/nonnegative guards protect the selected
+  reciprocal/square-root rewrites. Generic nodes carry only their established
+  sign/bound facts; identities and reconstructed nodes need not share one storage
+  shape, cache state or signal attachment.
+- General multiplication recognizes binary scales before general rational-product
+  folding, while multiply_rational folds a rational self first. Thus 2*3 can be an
+  Offset through multiply and a rational leaf through multiply_rational, both
+  exactly six. Shift-left retains nested offsets when checked exponent addition
+  fails, and square/inverse retain their outer node when exponent movement fails.
+  Those construction guards do not certify safe arbitrary-precision evaluation.
+- Rational affine-offset recognition charges one shared traversal unit per call.
+  Eight-visit callers do not receive a total arithmetic/work budget. Binary shifts
+  are limited to absolute value 4096 and individual rational scales to 4097 bits;
+  direct rational offsets and accumulated coefficients are not covered by those
+  individual checks. Failed branches retain their spent budget. The two local
+  equality helpers are sufficient cancellation recognizers, not complete equality
+  procedures; commuted-pair checks do not generally reorder sums.
+- The three-term retained dot stores ordered computable coefficients and rational
+  weights, avoiding a separate product/sum graph per term. It starts with invalid
+  facts and no signal. Its kernel can skip zero-weight children and has separate
+  representable-magnitude/precision prerequisites, not a general domain or resource
+  guarantee. The current out-of-range weight limitation remains described in the
+  separately reviewed kernel docs.
+- A new arithmetic wrapper commonly has no outer abort attachment, while identity
+  returns can keep the chosen operand's signal. Even rational scaling by one can
+  rebuild an exact rational leaf first and drop its attachment. abort changes only
+  that wrapper's attachment: previous clones retain their old attachment, later
+  clones share the new Arc, child attachments/caches are not recursively modified,
+  and explicit approx_signal inputs override it for that request. Setting a flag
+  is not a synchronous cancellation receipt.
+- Erf uses an auxiliary series multiplied by exp(-x²) and 2/sqrt(pi); erfc, erfcx,
+  CDF, density and their logarithms retain the actual exact compositions. Some
+  composite constructors can refine through exponential range selection, so they
+  are not uniformly lazy. Erfc/log-tail wrappers are not separate tail asymptotic
+  algorithms. Positive/negative initial facts presume defined finite input.
+- normal_interval is the signed difference Phi(hi)-Phi(lo), not unconditional
+  nonnegative probability mass. It permits reversed endpoints, checks structural
+  equality first, then evaluates both depth-48 rational projections in lower/upper
+  order even if the first declines. Their sign facts may be retained. Exact order
+  supplies the result sign; uncertain order stays unproved. Quantile seeds remain
+  evaluation hints, with interior probability admission required and exact CDF
+  inverse facts preferred. No new practical input window, total-work or heap-byte
+  budget is introduced by these constructors.
+
+Temporary probes on baseline and documented source checked 49 rational operand
+pairs against exact sum/product expectations, unary identities, the two distinct
+storage paths for six, clone/identity/rebuild signal cases, checked extreme-offset
+fallbacks, a retained dot with exact value 2*7+3*11+5*13=112, shared affine traversal
+charges, the 4096/4097 shift boundary, the 4097/4098 scale-bit boundary, an admitted
+8193-bit direct offset, normal interval signs, exact zero-input function values
+and the half-probability quantile shortcut with an attached signal and extreme seed
+exponent. These finite probes are not complete algebra or resource proofs.
+
+**Existing invalid/overflow behavior reproduced separately from valid arithmetic:**
+Computable::zero().inverse() retains an Inverse node; approx(0) returns and caches
+zero instead of a typed domain error. Zero multiplication/scaling and direct
+self-cancellation can discard that invalid subgraph. These are violations of a
+putative checked-input contract, not successful reciprocal/cancellation proofs;
+valid-domain native callers must not supply the invalid operand. Debug
+shift_right(i32::MIN) panics on negation. The retained ErfSeries at x=65536,p=0
+panics in its magnitude guard; this is an evaluation implementation limit even
+though erf is mathematically defined there. Both panics were caught in contained
+probes, and neither is typed exhaustion. Runtime behavior is unchanged in this
+docs-only session. Constructor docs describe the limitations rather than claiming
+that documentation repairs them.
+
+After the final edit, focused locked/offline two-job checks passed:
+
+- Selected library tests: 47 without default features and 48 with all features;
+  the difference is the serde-gated linear-demand serialization fixture.
+- Both private library Rustdoc builds with warnings, broken intra-doc links and
+  private intra-doc links denied, temporary test/helper Rustdoc with the same
+  diagnostics denied, supplemental local-helper rendering, all 110 whole-file
+  rendered-block checks and five Clone anchors.
+- All-feature normal_quantile_evidence (seven tests), serde_graph_domains (four),
+  serde_opaque_operand_domains (five), and downstream Hyperlimit resolve::tests
+  (five). Quantile integration includes exact composition/replay assertions and
+  nearest-rounded MPFR reference comparisons; the latter are not directed proofs.
+- Selected Rustfmt and git diff --check. Raw non-comment tokens and independently
+  formatted comment-free tokens are identical across the entire file. No runtime
+  algorithm, predicate/dispatch order, signature, fixture or assertion changed.
+
+The first private-doc run caught bracketed array indexing being interpreted as an
+intra-doc link. The expression was marked as inline code, then the focused checks
+were rerun successfully. No focused check remains blocked; the reproduced runtime
+limitations remain unfixed. Full workflow/performance checks remain owner-waived
+for this docs-only session, and no performance claim is made. Probe containment
+was 1 GiB address space, ten CPU seconds, fifteen wall seconds and no core dumps,
+not a production resource guarantee. Evidence under
+`/tmp/csgrs-hyperreal-algebra-constructors-audit/` retains commands/logs, probe
+sources and the cumulative whole-file item/render/token inventory. Owned shadow
+sources, probe executable/rlib and temporary HTML were removed after inspection;
+builds reused the approximately 6.6 GiB shared target with incremental compilation
+disabled. AGENTS.md's verified existing 100% public/private Rustdoc mandate remains
+in force. Repository-wide line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

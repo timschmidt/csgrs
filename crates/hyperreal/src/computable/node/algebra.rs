@@ -794,6 +794,18 @@ impl PiAtanLinearForm {
     }
 }
 
+/// Native exact-expression construction, retained algebraic/angle recognition and probability recipes.
+/// These methods operate on already-defined finite real operands, with additional
+/// nonzero, nonnegative or probability-domain preconditions where stated. Native
+/// infallible constructors are not substitutes for checked Real admission: cancellation
+/// or zero factors can discard unvalidated raw subgraphs, and inverse zero is not
+/// rejected here. Optional forms distinguish recognition success from refusal.
+///
+/// Simplifications preserve exact definitions and selected structural facts under
+/// those preconditions; they need not produce one canonical storage shape. Newly
+/// allocated wrappers commonly start with no outer abort signal, while identity
+/// returns can keep an existing handle. Nested work and numerical evaluation have
+/// no single total-work/memory limit; individual method docs describe the local guards.
 impl Computable {
     /// Recognize a restricted Laurent form using the supplied depth budget and 512 node charges.
     /// Start with no shared-node memo; unsupported subexpressions may survive as exact
@@ -1831,7 +1843,12 @@ impl Computable {
         }
     }
 
-    /// Negate this number.
+    /// Construct the additive inverse of a defined real, simplifying exact leaves and signs.
+    /// Fold rational values, remove a direct double negation, and absorb a negative
+    /// rational factor before allocating Negate. A generic node flips a valid cached
+    /// sign, starts with invalid magnitude evidence and has no outer abort signal.
+    /// Returning or rebuilding a child can preserve different controls; there is no
+    /// general signal-inheritance promise or independent work/cancellation limit.
     pub fn negate(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             // Keep exact leaves exact; a Negate node would hide cheap rational
@@ -1873,7 +1890,18 @@ impl Computable {
         }
     }
 
-    /// Multiplicative inverse of this number.
+    /// Construct a reciprocal, requiring an already-defined nonzero operand.
+    /// Reuse the shared pi/inverse-pi constants and exact rational inverses. Peel
+    /// negation, binary scales, rational factors, double inverses and squares only
+    /// with the implemented nonzero-sign guards; exponent negation must fit before
+    /// moving an offset. Otherwise retain an Inverse node with any valid nonzero sign,
+    /// invalid magnitude evidence and no outer abort signal.
+    ///
+    /// This infallible native API does not reject zero: its fallback retains Inverse(0),
+    /// and the current approximation kernel can return zero for that invalid reciprocal.
+    /// That is not a valid reciprocal or typed domain failure. Use checked admission
+    /// before this constructor; unresolved sign alone does not prove a domain error.
+    /// Nested recognition/evaluation has no new total-work or allocation budget.
     pub fn inverse(self) -> Computable {
         if self.shared_constant_kind() == Some(SharedConstant::Pi) {
             crate::trace_dispatch!("computable", "inverse", "shared-pi");
@@ -1951,6 +1979,13 @@ impl Computable {
         }
     }
 
+    /// Represent self*2^n exactly for a signed binary exponent, without materializing 2^n.
+    /// Zero shift returns the original handle. Move scaling inside negation and combine
+    /// nested offsets only when their exponent sum fits i32; otherwise retain both.
+    /// A new Offset copies an already-valid sign, invalidates magnitude evidence and
+    /// starts without an outer signal. Even scaled rational leaves may remain offsets.
+    /// Construction preserving extreme exponents does not make every later precision
+    /// translation safe: evaluation arithmetic and allocations retain their own limits.
     pub(crate) fn shift_left(self, n: i32) -> Self {
         if n == 0 {
             return self;
@@ -1984,11 +2019,20 @@ impl Computable {
         }
     }
 
+    /// Represent self*2^-n by negating n and delegating to shift_left.
+    /// Require n!=i32::MIN: the unary i32 negation is unchecked, panicking with overflow
+    /// checks or wrapping when disabled. This helper supplies no typed exponent error.
     fn shift_right(self, n: i32) -> Self {
         self.shift_left(-n)
     }
 
-    /// Square of this number.
+    /// Construct self² for a defined real, retaining useful exact structure.
+    /// Fold rational values and negations; collapse sqrt(x)² only with nonnegative
+    /// radicand evidence. Move binary scales outside only when doubling their exponent
+    /// fits, and square rational factors separately. Otherwise allocate Square, mapping
+    /// valid zero/nonzero signs to zero/positive and leaving magnitude evidence invalid.
+    /// A generic wrapper has no outer signal; child-return paths follow the child's
+    /// controls. These are sufficient rewrites, not domain validation or a total-work bound.
     pub fn square(self) -> Self {
         if let Some(rational) = self.exact_rational() {
             // Exact rationals can square without approximation or expression growth.
@@ -2047,7 +2091,18 @@ impl Computable {
         }
     }
 
-    /// Multiply this number by some other number.
+    /// Multiply defined real operands using the established structural rewrite order.
+    /// Try shared reciprocals, square quotients and Jacobi products before sign peeling
+    /// and selected pi/inverse-pi cancellations. Then handle zero and ±1, derive sign
+    /// facts, recognize binary scales, fold rational products and combine adjacent
+    /// rational factors. Binary-scale handling precedes general rational folding, so
+    /// an exact rational product can remain an Offset instead of a rational leaf.
+    ///
+    /// Zero annihilation can discard the other graph without validating its domain.
+    /// A generic Multiply stores a sign only from available exact evidence, invalid
+    /// magnitude evidence and no outer abort signal. Identity returns preserve the
+    /// chosen operand's controls; other rewrites need not transport both input signals.
+    /// There is no aggregate construction-work, coefficient-size or cancellation limit.
     pub fn multiply(self, other: Computable) -> Computable {
         if let Some(result) = self.shared_reciprocal_product(&other) {
             crate::trace_dispatch!("computable", "multiply", "shared-reciprocal-product");
@@ -2225,6 +2280,13 @@ impl Computable {
         }
     }
 
+    /// Retain the ordered sum `coefficients[i]*values[i]` for exactly three terms.
+    /// Box the computable coefficients and exact rational weights together for Real's
+    /// mixed dot-product path, avoiding a separate multiplication/addition graph per term.
+    /// Do not simplify zero weights or establish domains/signs here; initial bound/sign
+    /// facts are invalid and the outer signal is unset. Evaluation can skip zero-weight
+    /// children and requires representable nonzero weight magnitudes and derived
+    /// precisions; it has no local total-work bound or general raw-domain validation.
     pub(crate) fn linear_combination3(
         coefficients: [Computable; 3],
         values: [Rational; 3],
@@ -2242,6 +2304,14 @@ impl Computable {
         }
     }
 
+    /// Scale a defined scalar by an exact rational, folding exact leaves before binary scales.
+    /// Zero returns a fresh zero; exact rational self folds immediately, then ±1,
+    /// powers of two and nested rational factors take their dedicated paths. This
+    /// precedence differs from multiply and can give different exact storage shapes.
+    /// A remaining product stores the rational first, propagates a valid cached sign,
+    /// and starts with invalid magnitude evidence and no outer signal. Identity returns
+    /// can preserve the source handle. Zero scaling does not validate discarded graphs;
+    /// coefficient arithmetic and recursive factor peeling have no total-work budget.
     pub(crate) fn multiply_rational(self, scale: Rational) -> Computable {
         if scale.sign() == Sign::NoSign {
             // Multiplying by zero drops the expression tree, including any
@@ -2302,6 +2372,17 @@ impl Computable {
     // Expose an exact affine offset only when cancellation needs it. Keep
     // ordinary sums and their shared approximation caches intact. Bound the
     // total traversal and scale materialization; never approximate here.
+    /// Borrow a base and exact (scale, offset) with self=base*scale+offset when recognized.
+    /// Charge one shared traversal unit per call, including failed branches. An Add
+    /// with a rational child supplies its other child as the base; otherwise both Add
+    /// branches must reduce to structurally matching bases. Peel negation, offsets
+    /// with abs(shift)<=4096, and products with a rational scale of at most 4097 bits
+    /// in numerator and denominator. There is no general leaf-as-base fallback.
+    ///
+    /// Direct rational offsets and accumulated scale/offset arithmetic are not bounded
+    /// by that per-wrapper size check. None leaves spent budget spent and means this
+    /// recognizer declined, not inequality. No approximation or signal poll occurs;
+    /// source domains and the nested structural/arithmetic helpers remain prerequisites.
     fn rational_offset_parts(&self, budget: &mut usize) -> Option<(&Self, Rational, Rational)> {
         *budget = budget.checked_sub(1)?;
         let (child, scale) = match &self.internal.approximation {
@@ -2337,12 +2418,30 @@ impl Computable {
         Some((base, coefficient * &scale, offset * scale))
     }
 
-    /// Add some other number to this number.
+    /// Add defined real operands, preserving the existing proof and rewrite precedence.
+    /// Try Jacobi identities, direct/commuted-pair cancellation and inverse-angle collapse;
+    /// then rational affine-offset folding, nested and affine cancellation, zero/one
+    /// identities and exact rational sums. Equality recognizers are sufficient structural
+    /// proofs, not general algebraic equality decisions. They may discard matched raw
+    /// subgraphs, so undefined inputs must be excluded before calling this constructor.
+    ///
+    /// A generic Add retains an available shared-constant/rational magnitude bound and
+    /// chooses sign evidence from that bound, cached child signs, then a canonical-sine
+    /// interval proof. Otherwise facts remain invalid. New wrappers have no outer
+    /// signal; returning a surviving operand retains its own controls. Affine probes
+    /// use local eight-visit budgets, not a bound on all nested arithmetic, comparison,
+    /// allocation or construction work. This method adds no cancellation outcome.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
         if let Some(value) = self.jacobi_square_sum(&other) {
             return value;
         }
+        /// Sufficient equality check for cancelling affine expressions around a shared base.
+        /// Independently allow eight visits per side; require equal rational offsets, or
+        /// zero offset when only one side decomposes. Compare bases directly for equal
+        /// scales, otherwise rebuild exact rational-scaled bases and compare structurally.
+        /// False includes unrecognized/exhausted forms, not proved inequality. Temporary
+        /// construction and nested comparisons are not fully metered by those budgets.
         fn affine_offset_eq(left: &Computable, right: &Computable) -> bool {
             let left_parts = left.rational_offset_parts(&mut 8);
             let right_parts = right.rational_offset_parts(&mut 8);
@@ -2369,6 +2468,10 @@ impl Computable {
             }
         }
 
+        /// Recognize two immediate Add nodes with their children exchanged.
+        /// Check left-first against right-second, then left-second against right-first,
+        /// short-circuiting structural comparisons. This supports cancellation without
+        /// general flattening/reordering; false does not establish different scalar values.
         fn commuted_add_pair_eq(left: &Computable, right: &Computable) -> bool {
             matches!(
                 (&left.internal.approximation, &right.internal.approximation),
@@ -2546,6 +2649,10 @@ impl Computable {
         }
     }
 
+    /// Construct an exact arbitrary-size integer, reusing the one constructor for n=1.
+    /// Other inputs retain an Int node with initially invalid bound/sign evidence and
+    /// no outer signal; exact integer queries can derive their facts later. This method
+    /// imposes no input-bit or allocation budget.
     pub(crate) fn integer(n: BigInt) -> Self {
         if n == *signed::ONE {
             return Self::one();
@@ -2560,7 +2667,14 @@ impl Computable {
         }
     }
 
-    /// Error function, erf(x).
+    /// Construct erf(x) for a defined finite real x using an auxiliary odd-series graph.
+    /// An exact rational zero returns zero. Otherwise combine S(x), exp(-x²) and
+    /// 2/sqrt(pi), where S(x)=sqrt(pi)*exp(x²)*erf(x)/2 is the retained ErfSeries value.
+    /// The exponential constructor can approximate while selecting its reduction;
+    /// this composite constructor is not uniformly lazy or a total-work budget.
+    /// Its series can have large intermediates and unchecked precision/counter overflow
+    /// during evaluation. Newly built wrappers do not promise inheritance of x's
+    /// outer abort signal; the exact graph remains authoritative until approximation.
     pub fn erf(self) -> Computable {
         if let Some(rational) = self.exact_rational()
             && rational.sign() == Sign::NoSign
@@ -2580,7 +2694,11 @@ impl Computable {
         two_over_sqrt_pi.multiply(gaussian).multiply(series)
     }
 
-    /// Complementary error function, erfc(x) = 1 - erf(x).
+    /// Retain erfc(x)=1-erf(x) for an admitted finite real, returning one at exact zero.
+    /// A nonzero/unknown input gets an Erfc node with proved positive sign, invalid
+    /// magnitude evidence and no outer signal. Evaluation uses the exact complement
+    /// graph, not a dedicated tail asymptotic, so tiny tails can require substantial
+    /// refinement and inherit the erf kernel's resource/precision limitations.
     pub fn erfc(self) -> Computable {
         if let Some(rational) = self.exact_rational()
             && rational.sign() == Sign::NoSign
@@ -2597,7 +2715,11 @@ impl Computable {
         }
     }
 
-    /// Scaled complementary error function, erfcx(x) = exp(x^2) * erfc(x).
+    /// Construct exp(x²)*erfc(x) for an admitted finite real, returning one at exact zero.
+    /// This is an exact composition, not a separate scaled-tail kernel. Exponential
+    /// construction may refine to choose a reduction; large intermediate values and
+    /// later precision arithmetic have no additional budget. The composed result does
+    /// not promise to retain the source wrapper's outer abort signal.
     pub fn erfcx(self) -> Computable {
         if let Some(rational) = self.exact_rational()
             && rational.sign() == Sign::NoSign
@@ -2607,7 +2729,12 @@ impl Computable {
         self.clone().square().exp().multiply(self.erfc())
     }
 
-    /// Standard normal CDF.
+    /// Construct the standard normal CDF Phi(x)=(1+erf(x/sqrt(2)))/2 for finite real x.
+    /// Return exact one half for a recognized rational zero. Prefer the shared sqrt(2)
+    /// constructor, with an exact square-root fallback. Retain the arithmetic definition
+    /// rather than a rounded probability; nested erf/exponential construction can refine.
+    /// No practical input window or total-work budget is enforced here, and outer abort
+    /// inheritance is not guaranteed. Checked Real entry points apply their own rules.
     pub fn pnorm(self) -> Computable {
         if let Some(rational) = self.exact_rational()
             && rational.sign() == Sign::NoSign
@@ -2619,14 +2746,22 @@ impl Computable {
         Self::one().add(z.erf()).shift_right(1)
     }
 
-    /// Standard normal density.
+    /// Construct the standard normal density exp(-x²/2)/sqrt(2*pi) for a defined finite x.
+    /// The result is mathematically positive. Nested square/root/exponential and product
+    /// constructors determine representation, facts and signals; construction may refine
+    /// for exponential reduction. This composite adds no input window, work/memory cap
+    /// or general promise to carry the source wrapper's abort signal.
     pub fn dnorm(self) -> Computable {
         let neg_half_x_sq = self.square().shift_right(1).negate();
         let sqrt_2pi = Self::pi().shift_left(1).sqrt();
         neg_half_x_sq.exp().multiply(sqrt_2pi.inverse())
     }
 
-    /// Standard normal upper-tail probability, 1 - pnorm(x).
+    /// Retain the standard normal survival probability 1-Phi(x) for a defined finite x.
+    /// Exact rational zero returns one half. Otherwise create NormalSf with a positive
+    /// sign fact, invalid magnitude evidence and no outer signal. Evaluation uses
+    /// Phi(-x), not subtraction of rounded probabilities, while inheriting the CDF
+    /// implementation's precision/work limits rather than imposing a local tail budget.
     pub fn normal_sf(self) -> Computable {
         if let Some(rational) = self.exact_rational()
             && rational.sign() == Sign::NoSign
@@ -2643,7 +2778,18 @@ impl Computable {
         }
     }
 
-    /// Standard normal probability mass over [lo, hi].
+    /// Construct the signed CDF difference Phi(hi)-Phi(lo) for defined finite endpoints.
+    /// For lo<=hi it is interval probability mass; reversed endpoints yield a negative
+    /// value and are not rejected by this native API. Structural endpoint equality
+    /// returns zero first. Otherwise query both endpoints' depth-48 Laurent rational
+    /// forms, lower then upper, even when the lower projection declines. Proven rational
+    /// order gives a zero/positive/negative result or sign fact; unresolved order leaves
+    /// sign evidence invalid. These projections may retain endpoint sign facts.
+    ///
+    /// A remaining NormalInterval node retains both endpoints with invalid magnitude
+    /// evidence and no outer signal. Its evaluator composes two CDFs, without separate
+    /// tail bounds or total-work accounting. Raw domain errors can be hidden by equality
+    /// shortcuts; checked admission and resource policy belong to callers.
     pub fn normal_interval(lo: Computable, hi: Computable) -> Computable {
         if Computable::internal_structural_eq(&lo, &hi) {
             return Self::zero();
@@ -2674,7 +2820,10 @@ impl Computable {
         }
     }
 
-    /// Natural logarithm of the standard normal CDF.
+    /// Retain ln(Phi(x)) for a defined finite real x, with a proved negative sign.
+    /// Allocate LogPnorm with invalid magnitude evidence and no outer signal, without
+    /// special-casing zero. Evaluation composes the exact CDF and logarithm; it is not
+    /// a dedicated log-tail expansion and adds no independent work or precision contract.
     pub fn log_pnorm(self) -> Computable {
         Self {
             internal: Arc::new(Node::new(
@@ -2686,7 +2835,10 @@ impl Computable {
         }
     }
 
-    /// Natural logarithm of the standard normal upper-tail probability.
+    /// Retain ln(1-Phi(x)) for a defined finite real x, with a proved negative sign.
+    /// Allocate LogNormalSf with invalid magnitude evidence and no outer signal.
+    /// Evaluation takes the logarithm of the retained exact survival probability,
+    /// not a rounded float; tiny tails still inherit the nested evaluation costs and limits.
     pub fn log_normal_sf(self) -> Computable {
         Self {
             internal: Arc::new(Node::new(
@@ -2698,7 +2850,10 @@ impl Computable {
         }
     }
 
-    /// Natural logarithm of the standard normal density.
+    /// Retain the analytic normal log density -x²/2-ln(2*pi)/2 for a defined finite x.
+    /// Allocate LogDnorm with a negative sign fact, invalid magnitude evidence and no
+    /// outer signal. Evaluation uses that analytic identity rather than first forming
+    /// an exponentially small density; no new total-work or precision bound is supplied.
     pub fn log_dnorm(self) -> Computable {
         Self {
             internal: Arc::new(Node::new(
@@ -2710,20 +2865,18 @@ impl Computable {
         }
     }
 
-    /// Standard normal quantile for a defined probability strictly between zero and one.
+    /// Construct the standard normal quantile for a defined probability strictly inside (0,1).
+    /// The integer seed times 2^seed_prec is an evaluation hint, not a certified root.
+    /// A retained rational CDF-inverse identity returns a rational immediately; otherwise
+    /// box p, the seed and its binary exponent for safeguarded Newton/monotone search.
+    /// Numerical enclosures, not the seed, certify completed evaluations.
     ///
-    /// The seed is an evaluation hint. A retained CDF identity or numerical
-    /// enclosures certify the result; safeguarded Newton iteration and monotone
-    /// search repair inaccurate seeds.
-    /// This native constructor assumes the probability domain; it does not return
-    /// a typed validation error for endpoints or invalid imported graphs. A
-    /// recognized rational CDF inverse returns immediately; otherwise retain p,
-    /// the raw seed integer and its binary exponent in a boxed payload. The outer
-    /// signal starts unset, including
-    /// on exact shortcuts; retaining a child is not automatic abort inheritance.
-    /// Numerical evaluation has no new total-work or heap-byte limit, and extreme
-    /// output precision can encounter unchecked integer overflow. Public Real
-    /// entry points apply their own admission and practical-window rules.
+    /// This infallible constructor assumes probability admission and returns no typed
+    /// error for endpoints or invalid raw graphs. Generic initial bound/sign evidence
+    /// is invalid, and the outer signal is unset on both generic and exact paths.
+    /// Retaining p does not automatically inherit its signal. Evaluation has no new
+    /// total-work/heap-byte limit, and extreme output precision can overflow unchecked
+    /// integer arithmetic. Real entry points apply their own admission and practical-window rules.
     pub fn normal_quantile(p: Computable, seed: BigInt, seed_prec: Precision) -> Computable {
         if let Some(exact) = p.exact_normal_quantile() {
             return Self::rational(exact);
@@ -2738,7 +2891,15 @@ impl Computable {
         }
     }
 
-    /// Attach an abort signal checked by long-running approximation routines.
+    /// Attach or replace this wrapper's shared atomic abort flag for future ordinary evaluations.
+    /// Change only self.signal, without mutating the expression, invalidating caches or
+    /// recursively changing child/previous-clone attachments. Later clones share this
+    /// flag; toggling it affects wrappers holding that same Arc. A separately supplied
+    /// approx_signal argument overrides this attachment for that request.
+    /// This setter neither cancels synchronously nor returns a completion receipt:
+    /// exact/cache shortcuts and constructor paths need not poll, and new arithmetic
+    /// wrappers do not uniformly inherit it. Interrupted approximations must be handled
+    /// under their own incomplete-result contract before being treated as certified.
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s);
     }
