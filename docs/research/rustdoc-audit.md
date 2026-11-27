@@ -15658,6 +15658,91 @@ dispatch-counter and downstream-call excerpts were supporting context, not new
 whole-file audits. The broader Hyperreal gaps and complete repository audit remain
 open; no focused check required for this documentation batch remains blocked.
 
+## Hyperreal exact ingress, primitive projections and folding (2026-11-27)
+
+Whole-file review of crates/hyperreal/src/real/convert.rs on target revision
+a45a9c8179bb658fc26e479e27d72f1837c8cca6 (1,326 -> 1,509 lines).
+The owning layer is scalar conversion and retained-expression materialization;
+P1/P2/P3/P4/P5/P6/P19/P26/P29 and the admission protocol govern exact ingress,
+explicit approximation, retained evidence and resource/cancellation disclosure.
+The domain includes all ten supported fixed-width integer types, finite IEEE
+binary32/binary64 inputs, rational/symbolic/computable Real values, nonfinite
+import rejection, signed-zero views, underflow, overflow and cache-feature states.
+Missing witnesses were private helper/local constant/test documentation and
+explicit limits on rounding, cache reuse and cancellation. The existing 42
+all-feature conversion tests passed before editing.
+
+The file now has 98 full Rustdoc blocks. All 96 named declarations found by the
+source check have adjacent documentation, including impl/method templates,
+associated errors, private helpers, local constants and test/helper functions.
+Review distinguishes these implemented behaviors:
+
+- Integer ingress recognizes zero then one before exact rational conversion.
+  Float ingress decodes exact dyadics, rejects Infinity/NotANumber and retains
+  original binary64 view bits (widened for f32). Mathematical zero is canonical;
+  its primitive view may retain negative zero. Decimal-looking literals are not
+  exact decimal fractions.
+- Borrowed and owned folding preserve the rational scale/class definition and
+  attached abort signal, reuse or reconstruct computable certificates, and can
+  allocate/populate caches. Owned folding discards the primitive view.
+- Owned float exports use 8/24/64 guard-bit requests. Resolved interval agreement
+  certifies a rounding decision, but the final unresolved transition chooses the
+  even adjacent integer without proving an exact midpoint. The former universal
+  cache-independence/sub-ULP wording was too strong. Precision floors and three
+  requests are not total-work/memory bounds. Checked significand conversions
+  enforce internal fit invariants; these APIs have no typed exhaustion outcome.
+- Borrowed exports use rational/symbolic shortcuts or an unguarded computable
+  path. Unknown sign can yield positive zero. Generic binary64 absent-magnitude
+  handling does not uniformly preserve negative underflow sign. Exact source
+  values remain authoritative; projected bits are not directed bounds or proofs.
+- Binary64 cache lookup/storage is unconditional. Feature gates affect binary32
+  cache entries and F64 reuse; f64-only binary32 rational conversion may itself
+  retain an F64 proposal. The neighborhood helper tests three adjacent proposals,
+  not the exact Real. Existing F64 entries are not downgraded to F32.
+- Exact dyadic export requires recognized rational storage plus retained evidence
+  or a fresh representability check; a primitive cache entry alone is not proof.
+  A declined view does not prove irrationality. Retained facts can be shared by
+  rational clones; uncached projection can still populate scalar/node caches.
+- Cancellation has no separate conversion result. A temporary consumer with an
+  already-set abort flag returned ordinary floats: imported 1/2 and rational
+  11/32 retained correct exact views; symbolic pi returned f64 pi and f32 1.0.
+  This reproduces the existing Real::abort allowance for incorrect interrupted
+  approximations. Some(float) alone cannot certify completed evaluation. The
+  existing cancellation test asserts cache suppression, not result accuracy.
+
+After the final source edit:
+
+- Filtered conversion unit tests passed with no default features (32), f32-cache
+  only (34), f64-cache only (38), and all features (42). Existing tests include
+  independent directed 4096-bit MPFR bounds, selected subnormal/overflow cases,
+  five feature-dependent 512-case property tests and 1,024 mixed concurrent reads.
+  These finite witnesses do not establish universal rounding or concurrency proofs.
+- All ten numeric_roundtrip_formats integration tests passed with all features,
+  including five 1,024-case property tests and exact ingress -> JSON/CBOR replay
+  -> owned export. That whole test file was read as consumer context; its missing
+  Rustdoc remains separate audit work and it is not credited as a completed audit.
+- Actual all-feature private cargo doc passed with warnings and broken/private
+  links denied. All 33 production-level full blocks rendered, including six
+  private function pages and the macro page; all ten generated integer impls and
+  their methods carry their full template documentation.
+- Ordinary Rustdoc omits the test module/functions and function-local constants.
+  The remaining 65 blocks (test module, 46 test/helper contracts, 18 constants)
+  were source-checked and rendered as standalone Markdown with warnings denied.
+  This does not claim those items appear in ordinary library item pages.
+- Noncomment/nonblank source is byte-identical to the baseline. Signatures,
+  predicate/dispatch order, feature gates, test assertions and generators are
+  unchanged. Selected Rustfmt and git diff --check passed. Cargo runs used locked,
+  offline dependencies, two jobs, no incremental output and the shared target.
+  Full workflow checks remain owner-waived; no new performance claim is made.
+
+Evidence: /tmp/csgrs-hyperreal-convert-audit/ retains commands, before/after logs,
+abort probe source/output, full rendered-text/source checks and standalone
+source-block rendering. The owned 17 MiB probe executable was removed. The shared
+Cargo target grew from about 5.0 to 5.2 GiB across feature configurations; no
+second target was created. Existing broader Hyperreal missing-doc diagnostics
+remain open. This batch documents present behavior without declaring it full
+conformance to every target property; the repository-wide audit remains active.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

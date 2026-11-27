@@ -1,10 +1,30 @@
+//! Exact numeric ingress, retained-expression folding and explicit primitive-float egress.
+//!
+//! Integer and finite IEEE inputs keep their exact values; decimal-looking float
+//! literals retain their binary fractions, so 0.1_f64 is not the rational 1/10.
+//! Float export is a separate boundary. Owned From conversions use guarded
+//! significand rounding and can return infinities; borrowed lossy methods return
+//! finite views or None and can return zero when a sign remains unresolved.
+//! Neither route is a geometric predicate or a directed enclosure.
+//!
+//! Primitive caches are views of the retained Real, not replacements for it.
+//! Binary64 cache use is unconditional; feature gates primarily affect binary32
+//! caching/reuse here. Precision floors and guard-bit schedules do not bound
+//! total evaluation work or memory. Attached abort signals are transported to
+//! computable evaluations, but cancellation has no typed result in these APIs:
+//! the Real::abort contract permits incorrect interrupted approximations.
+
 use crate::RealSign;
 use crate::real::{Class, PrimitiveApproxCache};
 use crate::{Computable, Problem, Rational, Real};
 
+/// Generate exact ingress for each listed signed/unsigned fixed-width integer type.
+/// Zero and one use dedicated Real constructors; other values delegate to Rational.
 macro_rules! impl_integer_conversion {
     ($T:ty) => {
+        /// Preserve the integer value without passing through a floating-point representation.
         impl From<$T> for Real {
+            /// Recognize zero, then one, then wrap the scalar owner's exact integer conversion.
             #[inline]
             fn from(n: $T) -> Real {
                 // Integer identity conversion is a public hot path through
@@ -35,15 +55,22 @@ impl_integer_conversion!(u32);
 impl_integer_conversion!(u64);
 impl_integer_conversion!(u128);
 
+/// Transfer an exact rational into the native rational Real representation.
 impl From<Rational> for Real {
+    /// Delegate to Real::new without floating projection or symbolic fitting.
     fn from(rational: Rational) -> Real {
         Real::new(rational)
     }
 }
 
+/// Import a finite binary32 value as its exact dyadic rational, including subnormals.
+/// Mathematical zero has no sign, but the seeded binary64 view retains input zero bits.
 impl TryFrom<f32> for Real {
+    /// Infinity and NotANumber are preserved from the rational decoder.
     type Error = Problem;
 
+    /// Decode exactly, mark binary64 representability, and seed the widened input view.
+    /// Every finite f32 widens exactly to f64; no decimal interpretation is involved.
     fn try_from(n: f32) -> Result<Real, Self::Error> {
         // Import floats as exact dyadic rationals. That preserves structural
         // facts and avoids immediately lowering user data to Computable nodes.
@@ -56,9 +83,13 @@ impl TryFrom<f32> for Real {
     }
 }
 
+/// Import a finite binary64 value exactly; reject infinities and NaNs with Problem.
 impl TryFrom<f64> for Real {
+    /// Scalar import errors, distinguishing Infinity from NotANumber.
     type Error = Problem;
 
+    /// Retain the rational decoder's exact-origin fact and seed the original binary64 bits.
+    /// The mathematical zero is canonical even when the view preserves negative zero.
     fn try_from(n: f64) -> Result<Real, Self::Error> {
         // Same exact dyadic import as f32; the public Real constructor keeps the
         // value in the rational class so matrix inputs stay cheap.
@@ -70,7 +101,12 @@ impl TryFrom<f64> for Real {
     }
 }
 
+/// Materialize the full exact value as a computable graph when a generic kernel needs it.
 impl Real {
+    /// Borrow the value, combine its rational scale with its class only as needed,
+    /// and reattach any abort signal. Unit scale reuses the computable certificate;
+    /// the rational class becomes a rational node, otherwise multiply the class by
+    /// its exact scale. Source meaning is unchanged; caches/graph allocation can occur.
     #[inline]
     pub(crate) fn fold_ref(&self) -> Computable {
         use crate::real::Class;
@@ -93,6 +129,9 @@ impl Real {
         c
     }
 
+    /// Consume the same scaled definition, moving its payload where possible.
+    /// An absent payload is reconstructed from the class certificate, not replaced
+    /// by one. Preserve the payload's abort signal and discard the primitive view.
     #[inline]
     pub(crate) fn fold(self) -> Computable {
         // Owned folding mirrors `fold_ref` but moves the computable when the
@@ -130,11 +169,15 @@ use crate::computable::Precision;
 ///
 /// `Computable::approx(p)` is within one integer unit of the value scaled by
 /// `2^-p`. Evaluate below the destination precision and round both ends of that
-/// closed error interval. Equal results certify the rounded integer and make
-/// conversion independent of whichever finer approximation happens to be
-/// cached. The terminal 64-guard-bit case chooses the even adjacent integer;
-/// this handles exact midpoints deterministically and bounds an unresolved
-/// lossy conversion to far below one destination ULP.
+/// closed error interval. Agreement certifies that rounding decision. Try 8, 24,
+/// then 64 guard bits; an unresolved final transition chooses the even adjacent
+/// integer without proving that the exact value is a midpoint. This deterministic
+/// terminal is a lossy choice, not a universal correctly-rounded certificate.
+///
+/// Internal callers supply a float-sized significand and fitting precision shifts;
+/// magnitude/rounded-result overflow panics at the checked u128/u64 conversions.
+/// The three precision requests do not bound each computable evaluation's work,
+/// and an aborted approximation is subject to the caller's cancellation contract.
 #[inline(never)]
 fn stable_rounded_magnitude(c: &Computable, precision: Precision) -> u64 {
     for guard in [8_u32, 24, 64] {
@@ -170,10 +213,16 @@ fn stable_rounded_magnitude(c: &Computable, precision: Precision) -> u64 {
     unreachable!()
 }
 
-// (Significand, Exponent)
+/// Return binary32 fraction/exponent fields from guarded magnitude rounding.
+/// Use the fixed -149 subnormal grid at msd <= -126; otherwise request msd-24
+/// and re-evaluate after each rounding carry. The caller supplies an admitted MSD
+/// estimate and handles sign/range; this helper neither reports uncertainty nor
+/// creates a signed float. Exponent one handles subnormal-to-normal carry.
 #[inline(never)]
 fn sig_exp_32_stable(c: &Computable, mut msd: Precision) -> (u32, u32) {
+    /// Mask of stored fraction bits; the implicit normal leading bit is excluded.
     const SIG_BITS: u32 = 0x007f_ffff;
+    /// Carry threshold beyond the normal significand window, used to repair the exponent.
     const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -126 {
@@ -199,11 +248,15 @@ fn sig_exp_32_stable(c: &Computable, mut msd: Precision) -> (u32, u32) {
     }
 }
 
-// Explicitly lossy exports retain the single-approximation path used by mesh
-// rendering and broad-phase views. Certified topology decisions never consume
-// these bits without an exact filter or fallback.
+/// Return binary32 fields using one approximation at the selected output scale.
+/// The normal path repairs oversized significands by shifting the existing value;
+/// it does not use guard-bit rounding or re-evaluate after carry. Subnormals use
+/// precision -149. Internal caller preconditions bound the integer conversion;
+/// violations panic. These fields are an approximate view, not a certified bound.
 fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
+    /// Mask of stored fraction bits; the implicit normal leading bit is excluded.
     const SIG_BITS: u32 = 0x007f_ffff;
+    /// Carry threshold beyond the normal significand window, used to repair the exponent.
     const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -126 {
@@ -231,10 +284,20 @@ fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
     }
 }
 
+/// Consume Real into a lossy binary32 value, including signed zero or infinity.
+/// Guarded rounding has an even fallback at an unresolved final transition.
 impl From<Real> for f32 {
+    /// Fold the exact expression, search magnitude down to -150, then determine
+    /// sign down to -2000. A missing magnitude gives signed zero when negativity
+    /// is established; unresolved sign elsewhere gives positive zero. Oversize
+    /// values saturate to signed infinity when sign is known. No failure/certainty
+    /// object accompanies the bits, and cancellation can invalidate the approximation.
     fn from(r: Real) -> f32 {
+        /// Primitive IEEE sign-bit mask, separate from exponent and fraction fields.
         const NEG_BITS: u32 = 0x8000_0000;
+        /// Primitive IEEE exponent-field mask; trailing zeros locate its packing shift.
         const EXP_BITS: u32 = 0x7f80_0000;
+        /// Mask of stored fraction bits; the implicit normal leading bit is excluded.
         const SIG_BITS: u32 = 0x007f_ffff;
         debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
 
@@ -267,6 +330,7 @@ impl From<Real> for f32 {
     }
 }
 
+/// Borrowed finite binary32 projections with optional primitive-view caching.
 impl Real {
     /// Return a finite borrowed lossy `f32` approximation, or `None` on overflow.
     ///
@@ -276,6 +340,17 @@ impl Real {
     /// [`Real::certified_sign_until`] or the higher-level predicate crates when
     /// a decision needs proof, separating certified decisions from approximate
     /// numerical views.
+    ///
+    /// Some(0.0) can mean unresolved sign rather than a proved zero. The generic
+    /// route searches sign/magnitude to -150 and uses unguarded significand bits;
+    /// a plain rational uses a binary64 shortcut only away from binary32 ties,
+    /// otherwise the rational owner's correctly-rounded conversion. There is no
+    /// universal directed-error or correctly-rounded guarantee for symbolic inputs.
+    ///
+    /// With either cache feature, read reusable F64 views; cached-f32-approx also
+    /// reads/writes F32 entries. F64(None) implies binary32 overflow. Finite F64
+    /// proposals are reused only through the neighborhood test. Store F32 only
+    /// into an empty, non-aborted cache; an existing F64 entry is not downgraded.
     #[inline]
     pub fn to_f32_lossy(&self) -> Option<f32> {
         #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
@@ -305,8 +380,16 @@ impl Real {
         value
     }
 
+    /// Compute a binary32 projection without consulting the primitive cache first.
+    /// Plain nonzero rationals attempt binary64 narrowing then exact rational tie
+    /// resolution. In the f64-only feature configuration this can still store a
+    /// proposal: "uncached" does not mean cache-pure. The generic path folds before
+    /// sign refinement, preserves known underflow sign, maps unknown sign to +0,
+    /// and rejects nonfinite assembled output. Abort is not a typed outcome.
     fn to_f32_lossy_uncached(&self) -> Option<f32> {
+        /// Primitive IEEE sign-bit mask, separate from exponent and fraction fields.
         const NEG_BITS: u32 = 0x8000_0000;
+        /// Primitive IEEE exponent-field mask; trailing zeros locate its packing shift.
         const EXP_BITS: u32 = 0x7f80_0000;
 
         if matches!(self.class, Class::One)
@@ -365,6 +448,9 @@ impl Real {
 /// immediate neighbors, where narrowing an approximate proposal could select
 /// a different adjacent value. Signed zero deliberately falls through so the
 /// exact sign can be retained.
+/// Outer None declines reuse (including nonfinite input); Some(None) establishes
+/// overflow of all three narrowed proposals; Some(Some(x)) supplies the common
+/// finite result. This only examines neighboring proposals, not an exact Real.
 fn unambiguous_f32_from_f64(value: f64) -> Option<Option<f32>> {
     if value == 0.0 || !value.is_finite() {
         return None;
@@ -376,10 +462,14 @@ fn unambiguous_f32_from_f64(value: f64) -> Option<Option<f32>> {
         .then(|| value32.is_finite().then_some(value32))
 }
 
-// (Significand, Exponent)
+/// Binary64 counterpart of sig_exp_32_stable: fraction/exponent fields with guarded
+/// rounding, a -1074 subnormal grid and msd-53 normal requests. Re-evaluate on
+/// significand carry; the caller owns sign, range and cancellation interpretation.
 #[inline(never)]
 fn sig_exp_64_stable(c: &Computable, mut msd: Precision) -> (u64, u64) {
+    /// Mask of stored fraction bits; the implicit normal leading bit is excluded.
     const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+    /// Carry threshold beyond the normal significand window, used to repair the exponent.
     const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -1022 {
@@ -404,9 +494,14 @@ fn sig_exp_64_stable(c: &Computable, mut msd: Precision) -> (u64, u64) {
     }
 }
 
+/// Binary64 fields from one approximate magnitude, repairing normal carry by shifts.
+/// Use precision -1074 for subnormals or msd-53 for normal values. This is the
+/// unguarded borrowed-export path; internal significand-fit violations panic.
 #[inline(never)]
 fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
+    /// Mask of stored fraction bits; the implicit normal leading bit is excluded.
     const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+    /// Carry threshold beyond the normal significand window, used to repair the exponent.
     const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -1022 {
@@ -434,10 +529,19 @@ fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
     }
 }
 
+/// Consume Real into a lossy binary64 value through guarded computable rounding.
 impl From<Real> for f64 {
+    /// Search magnitude down to -1075 and sign down to -2000. Below the magnitude
+    /// floor, retain negative zero only with known negative sign; above range,
+    /// return signed infinity only with known sign. An unresolved sign maps to +0.
+    /// This bypasses borrowed symbolic shortcuts and primitive-view caches and
+    /// returns no typed cancellation, overflow or rounding-certainty information.
     fn from(r: Real) -> f64 {
+        /// Primitive IEEE sign-bit mask, separate from exponent and fraction fields.
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
+        /// Primitive IEEE exponent-field mask; trailing zeros locate its packing shift.
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
+        /// Mask of stored fraction bits; the implicit normal leading bit is excluded.
         const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
         debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
 
@@ -470,13 +574,24 @@ impl From<Real> for f64 {
     }
 }
 
+/// Exact representable binary64 views and separate lossy binary64 projections.
 impl Real {
     /// Return an `f64` only when this value is an exact dyadic rational whose
     /// conversion is lossless.
+    /// Requires recognized rational storage and finite exact representability,
+    /// not just dyadic mathematical value or a cached approximate float. None is
+    /// a declined exact view, not proof of irrationality. This may populate the
+    /// rational's retained fact and Real's primitive cache. Attached cancellation
+    /// remains subject to Real::abort, rather than a distinct result variant.
     pub fn to_f64_exact_dyadic(&self) -> Option<f64> {
         self.exact_dyadic_f64_cached()
     }
 
+    /// Require a rational representation, then reuse its retained exact-f64 fact
+    /// before inspecting denominator shape. Without that fact, reject definitely
+    /// non-dyadic denominators and let Rational prove exact representability.
+    /// Cache successful bits. A primitive cache entry alone is never the proof;
+    /// the fact belongs to the immutable rational value, possibly shared by clones.
     #[inline]
     pub(crate) fn exact_dyadic_f64_cached(&self) -> Option<f64> {
         let rational = self.exact_rational_ref()?;
@@ -511,6 +626,13 @@ impl Real {
     /// The API name makes the approximation boundary visible, matching Yap's
     /// exact-computation rule that approximate values are views with proof
     /// obligations, not replacements for exact decisions.
+    ///
+    /// F64 cache lookup and storage occur even without cached-f64-approx. A miss
+    /// can upgrade an F32 entry; store finite/overflow results only when not aborted.
+    /// Symbolic shortcuts use ordinary host floating arithmetic. The generic path
+    /// can return positive zero on unresolved sign or absent magnitude, so negative
+    /// underflow sign is not uniformly preserved across all representations. No
+    /// directed enclosure, universal nearest rounding or typed cancellation is promised.
     #[inline]
     pub fn to_f64_lossy(&self) -> Option<f64> {
         if let PrimitiveApproxCache::F64(value) = self.primitive_approx_cache.get() {
@@ -525,8 +647,16 @@ impl Real {
         value
     }
 
+    /// Try plain rational conversion, unit-scale symbolic constants, then scaled
+    /// symbolic host-float formulas before the generic folded graph. Failed or
+    /// nonfinite shortcuts fall through. Generic sign/magnitude searches stop at
+    /// -1075; missing sign/magnitude returns +0, while overflow returns None.
+    /// Does not read/write the primitive view cache, but scalar/node caches may
+    /// still be populated. This method is neither a proof API nor an abort status.
     fn to_f64_lossy_uncached(&self) -> Option<f64> {
+        /// Primitive IEEE sign-bit mask, separate from exponent and fraction fields.
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
+        /// Primitive IEEE exponent-field mask; trailing zeros locate its packing shift.
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
 
         use crate::real::Class;
@@ -620,6 +750,8 @@ impl Real {
     }
 }
 
+/// Exact ingress, float-range, rounding, cache and cancellation regression witnesses.
+/// Property generators cover bounded rationals; MPFR supplies independent selected-case rounding.
 #[cfg(test)]
 mod tests {
     use num::bigint::ToBigInt;
@@ -630,6 +762,8 @@ mod tests {
     use super::*;
 
     #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    /// Generate reduced rationals from bounded signed numerators and positive denominators.
+    /// This finite-range distribution is not uniform over distinct rational values.
     fn finite_rational_strategy() -> impl Strategy<Value = Rational> {
         (-1_000_000_i64..=1_000_000, 1_u64..=1_000_000).prop_map(|(numerator, denominator)| {
             Rational::fraction(numerator, denominator).unwrap()
@@ -637,11 +771,13 @@ mod tests {
     }
 
     #[cfg(feature = "cached-f64-approx")]
+    /// Reject zero from the bounded rational strategy for negation-cache witnesses.
     fn nonzero_finite_rational_strategy() -> impl Strategy<Value = Rational> {
         finite_rational_strategy().prop_filter("nonzero rational", |r| !r.is_zero())
     }
 
     #[test]
+    /// Check both positive IEEE zeros import as the exact Real zero; this does not compare zero sign bits.
     fn zero() {
         let f: f32 = 0.0;
         let d: f64 = 0.0;
@@ -653,6 +789,7 @@ mod tests {
     }
 
     #[test]
+    /// Require typed Infinity errors for selected positive f32 and negative f64 infinities.
     fn infinity() {
         let f = f32::INFINITY;
         let d = f64::NEG_INFINITY;
@@ -663,6 +800,7 @@ mod tests {
     }
 
     #[test]
+    /// Require typed NotANumber errors for the canonical NaN of each primitive width.
     fn nans() {
         let f = f32::NAN;
         let d = f64::NAN;
@@ -673,6 +811,7 @@ mod tests {
     }
 
     #[test]
+    /// Require both owned exports to preserve exactly representable positive one-half.
     fn half_to_float() {
         let half = Real::new(Rational::fraction(1, 2).unwrap());
         let f: f32 = half.clone().into();
@@ -682,6 +821,7 @@ mod tests {
     }
 
     #[test]
+    /// Require both primitive ingress paths to produce the exact rational one-half.
     fn half_from_float() {
         let half = 0.5_f32;
         let correct = Real::new(Rational::fraction(1, 2).unwrap());
@@ -694,6 +834,7 @@ mod tests {
     }
 
     #[test]
+    /// Require both owned exports to preserve the sign and value of negative one-half.
     fn negative_half() {
         let half = Real::new(Rational::fraction(-1, 2).unwrap());
         let f: f32 = half.clone().into();
@@ -703,6 +844,7 @@ mod tests {
     }
 
     #[test]
+    /// Check exact arithmetic after float ingress: imported 27 divided by 81 equals rational one-third.
     fn rational() {
         let f: f32 = 27.0;
         let d: f32 = 81.0;
@@ -714,6 +856,7 @@ mod tests {
     }
 
     #[test]
+    /// Divide each least-positive subnormal by three and require owned export to underflow to zero.
     fn too_small() {
         let r: Real = f32::from_bits(1).try_into().unwrap();
         let s = r * Real::new(Rational::fraction(1, 3).unwrap());
@@ -726,6 +869,7 @@ mod tests {
     }
 
     #[test]
+    /// Check the exact dyadic fraction encoded by the selected binary32 decimal-looking literal.
     fn repr_f32() {
         let f: f32 = 1.234_567_9;
         let a: Real = f.try_into().unwrap();
@@ -734,6 +878,7 @@ mod tests {
     }
 
     #[test]
+    /// Check the exact dyadic fraction encoded by the selected binary64 decimal-looking literal.
     fn repr_f64() {
         let f: f64 = 1.23456789;
         let a: Real = f.try_into().unwrap();
@@ -742,6 +887,7 @@ mod tests {
     }
 
     #[test]
+    /// Check owned folding of nine at coarse then unit precision, including repeated cached approximation.
     fn fold_nine() {
         let nine = Real::new(Rational::new(9));
         let c = nine.fold();
@@ -751,6 +897,7 @@ mod tests {
     }
 
     #[test]
+    /// Check mathematical positive-zero round trips through both widths, without bitwise signed-zero assertions.
     fn zero_roundtrip() {
         let zero = 0.0_f32;
         let zero: Real = zero.try_into().unwrap();
@@ -764,6 +911,7 @@ mod tests {
         assert_eq!(zero, 0.0);
     }
 
+    /// Import through TryInto and export through owned From; panic if the selected input fails import.
     fn roundtrip<T>(f: T) -> T
     where
         T: TryInto<Real> + From<Real>,
@@ -774,6 +922,7 @@ mod tests {
     }
 
     #[test]
+    /// Require the largest positive and negative finite values of both widths to survive owned round trips.
     fn big_roundtrip() {
         assert_eq!(f32::MAX, roundtrip(f32::MAX));
         assert_eq!(f64::MAX, roundtrip(f64::MAX));
@@ -782,6 +931,7 @@ mod tests {
     }
 
     #[test]
+    /// Require each minimum positive normal and its triple to survive owned round trips.
     fn small_roundtrip() {
         assert_eq!(f32::MIN_POSITIVE * 3.0, roundtrip(f32::MIN_POSITIVE * 3.0));
         assert_eq!(f64::MIN_POSITIVE * 3.0, roundtrip(f64::MIN_POSITIVE * 3.0));
@@ -790,6 +940,7 @@ mod tests {
     }
 
     #[test]
+    /// Check four selected decimal-looking/large finite literals through exact ingress and owned export.
     fn arbitrary_roundtrip() {
         assert_eq!(0.123_456_79_f32, roundtrip(0.123_456_79_f32));
         assert_eq!(987654321_f32, roundtrip(987654321_f32));
@@ -798,6 +949,7 @@ mod tests {
     }
 
     #[test]
+    /// Check retained exact-origin evidence, cached input bits and lossless view reuse after cloning.
     fn exact_f64_import_seeds_and_reuses_the_certified_primitive_view() {
         let source = 0.123_456_789_f64;
         let value = Real::try_from(source).unwrap();
@@ -823,6 +975,7 @@ mod tests {
     }
 
     #[test]
+    /// Require one-third to decline the exact binary64 view without marking eligibility or filling the cache.
     fn certified_primitive_view_rejects_non_dyadic_rationals() {
         let value = Real::new(Rational::fraction(1, 3).unwrap());
         assert_eq!(value.exact_dyadic_f64_cached(), None);
@@ -834,6 +987,7 @@ mod tests {
     }
 
     #[test]
+    /// Check formatting and owned round-trip equality for each greatest primitive value below two.
     fn almost_two() {
         // Largest f32 which is smaller than two
         let h = f32::from_bits(0x3fff_ffff);
@@ -852,6 +1006,7 @@ mod tests {
     }
 
     #[test]
+    /// Require selected small and near-normal subnormals to retain all bits through owned conversion.
     fn subnormal_roundtrip() {
         let before = 1.234e-310_f64;
         assert_ne!(before, 0.0);
@@ -869,6 +1024,7 @@ mod tests {
     // Sometimes during conversion the approximation fits without shifting, that's fine
     // but none of our other tests for f32 catch that
     #[test]
+    /// Check a trigonometric binary32 result and warmed/cold owned bit agreement for it and negative atanh(1/2).
     fn bit_conversion() {
         let value = || {
             let r = Real::new(Rational::fraction(2, 5).unwrap()) * Real::pi();
@@ -898,6 +1054,7 @@ mod tests {
 
     // Our Pi isn't exactly equal to the IEEE approximations since it's more accurate
     #[test]
+    /// Require owned pi exports to lie within one ULP of the standard primitive constants; not exact equality.
     fn pi() {
         let f: f32 = Real::pi().into();
         assert!(std::f32::consts::PI.to_bits().abs_diff(f.to_bits()) < 2);
@@ -906,6 +1063,7 @@ mod tests {
     }
 
     #[test]
+    /// Check owned binary32 export of exact u64::MAX against the primitive integer cast.
     fn max_u64_f32() {
         let max_u64: Rational = u64::MAX.into();
         let r = Real::new(max_u64);
@@ -914,6 +1072,7 @@ mod tests {
     }
 
     #[test]
+    /// Check owned binary64 export of exact u64::MAX against the primitive integer cast.
     fn max_u64_f64() {
         let max_u64: Rational = u64::MAX.into();
         let r = Real::new(max_u64);
@@ -922,6 +1081,7 @@ mod tests {
     }
 
     #[test]
+    /// Check borrowed half/third values and a one-ULP pi comparison on selected finite inputs.
     fn borrowed_f64_lossy_finite_values() {
         let half = Real::new(Rational::fraction(1, 2).unwrap());
         assert_eq!(half.to_f64_lossy(), Some(0.5));
@@ -934,6 +1094,7 @@ mod tests {
     }
 
     #[test]
+    /// Require repeated borrowed export bits to agree for zero, a rational, negative pi and sqrt(2).
     fn borrowed_lossy_float_exports_are_repeatable() {
         let values = [
             Real::from(0),
@@ -954,6 +1115,9 @@ mod tests {
     }
 
     #[test]
+    /// Use directed 4096-bit MPFR rational bounds that agree on binary64 rounding.
+    /// Require exact selected subnormals, at most one ULP for other fixtures, correct sign,
+    /// repeatability and exact-view reuse from a sibling rational; this is a finite corpus.
     fn borrowed_f64_preserves_values_with_large_denominators() {
         use num::{BigUint, One};
         use rug::{Float, Integer, Rational as GmpRational, float::Round, integer::Order};
@@ -1029,6 +1193,7 @@ mod tests {
     }
 
     #[test]
+    /// Check +/-2^-1200 underflow with signed zero and +/-2^1200 overflow as None on the rational path.
     fn borrowed_f64_lossy_underflow_and_overflow() {
         let tiny = Real::new(
             Rational::from_bigint_fraction(BigInt::from(1), num::BigUint::from(1_u8) << 1200)
@@ -1050,6 +1215,7 @@ mod tests {
     }
 
     #[test]
+    /// Check negative sqrt(2) retains sign and meets the selected numerical error bound.
     fn borrowed_f64_lossy_tracks_negative_finite_values() {
         let value = -(Real::new(Rational::new(2)).sqrt().unwrap());
         let approx = value.to_f64_lossy().unwrap();
@@ -1058,6 +1224,7 @@ mod tests {
     }
 
     #[test]
+    /// Check 11-sqrt(2) remains positive and numerically close despite a negative symbolic tail.
     fn borrowed_f64_lossy_keeps_positive_translation_over_negative_symbolic_tail() {
         let sqrt_two = Real::from(2).sqrt().unwrap();
         let value = Real::from(10) + (Real::from(1) - sqrt_two);
@@ -1070,6 +1237,7 @@ mod tests {
 
     #[test]
     #[cfg(all(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    /// With both cache features, require pi to populate F32 then upgrade to F64 while retaining fixture accuracy.
     fn primitive_approx_cache_fills_and_upgrades() {
         let value = Real::pi();
 
@@ -1090,6 +1258,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "cached-f64-approx")]
+    /// Check ordinary narrowing, zero/tie declines and certain overflow in the three-proposal reuse helper.
     fn f64_neighborhood_only_reuses_unambiguous_f32_rounding() {
         assert_eq!(
             unambiguous_f32_from_f64(1.1_f64),
@@ -1107,6 +1276,7 @@ mod tests {
 
     #[test]
     #[cfg(all(feature = "cached-f64-approx", not(feature = "cached-f32-approx")))]
+    /// In the f64-only configuration, require rational binary32 export to retain/reuse an F64 proposal.
     fn rational_f32_export_retains_its_f64_proposal() {
         let value = Real::new(Rational::fraction(1, 7).unwrap());
         let expected = value.to_f32_lossy();
@@ -1118,6 +1288,7 @@ mod tests {
     }
 
     #[test]
+    /// Require binary64 overflow to populate F64(None), including builds without cache features.
     fn primitive_approx_cache_keeps_overflow_state() {
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
 
@@ -1130,6 +1301,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "cached-f32-approx")]
+    /// Require enabled binary32 caching to retain overflow as F32(None).
     fn primitive_approx_cache_keeps_f32_overflow_state() {
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 200));
 
@@ -1141,6 +1313,7 @@ mod tests {
     }
 
     #[test]
+    /// Attaching an unset abort flag must clear an existing primitive cache, before cancellation is requested.
     fn abort_invalidates_primitive_approx_cache() {
         use std::sync::Arc;
         use std::sync::atomic::AtomicBool;
@@ -1160,6 +1333,7 @@ mod tests {
     }
 
     #[test]
+    /// Check Arc identity of an attached unset flag through rational materialization, cloning and owned folding.
     fn exact_real_abort_signal_survives_materialization_clone_and_fold() {
         use std::sync::Arc;
         use std::sync::atomic::AtomicBool;
@@ -1192,6 +1366,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "cached-f64-approx")]
+    /// With an already-set abort flag, require a lossy call to leave the cache empty; no result accuracy is asserted.
     fn aborted_lossy_conversion_is_not_cached() {
         use std::sync::Arc;
         use std::sync::atomic::AtomicBool;
@@ -1209,6 +1384,8 @@ mod tests {
 
     #[test]
     #[cfg(all(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    /// Run eight scoped threads with 128 alternating-width reads each and require uncached fixture values.
+    /// The final cache must be F64; this finite stress check is not a memory-model proof.
     fn primitive_approx_cache_is_safe_under_concurrent_mixed_reads() {
         use std::sync::Arc;
 
@@ -1242,6 +1419,7 @@ mod tests {
 
         #[test]
         #[cfg(feature = "cached-f64-approx")]
+        /// For generated bounded rationals, require repeated binary64 cache hits to match fresh uncached bits.
         fn cached_f64_matches_uncached_for_rationals(rational in finite_rational_strategy()) {
             let value = Real::new(rational.clone());
             let expected = Real::new(rational).to_f64_lossy_uncached();
@@ -1256,6 +1434,7 @@ mod tests {
 
         #[test]
         #[cfg(feature = "cached-f64-approx")]
+        /// Warm an F64 proposal and require binary32 reuse/fallback to match fresh uncached rational export.
         fn cached_f64_proposal_matches_uncached_f32_export(rational in finite_rational_strategy()) {
             let value = Real::new(rational.clone());
             let expected = Real::new(rational).to_f32_lossy_uncached();
@@ -1266,6 +1445,7 @@ mod tests {
 
         #[test]
         #[cfg(feature = "cached-f32-approx")]
+        /// For generated bounded rationals, require repeated binary32 bits and the F32 cache tag.
         fn cached_f32_matches_uncached_for_rationals(rational in finite_rational_strategy()) {
             let value = Real::new(rational.clone());
             let expected = Real::new(rational).to_f32_lossy_uncached();
@@ -1280,6 +1460,7 @@ mod tests {
 
         #[test]
         #[cfg(all(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+        /// Require both generated rational projections to match uncached bits while the cache upgrades from F32 to F64.
         fn f32_then_f64_cache_upgrade_matches_uncached(rational in finite_rational_strategy()) {
             let value = Real::new(rational.clone());
             let expected_f32 = Real::new(rational.clone()).to_f32_lossy_uncached();
@@ -1299,6 +1480,8 @@ mod tests {
 
         #[test]
         #[cfg(feature = "cached-f64-approx")]
+        /// For nonzero generated rationals with distinct opposite export bits, require both negation forms
+        /// to clear the primitive view and match a freshly negated uncached value.
         fn cached_f64_is_not_reused_after_negation(rational in nonzero_finite_rational_strategy()) {
             let value = Real::new(rational.clone());
             let cached_positive = value.to_f64_lossy();
