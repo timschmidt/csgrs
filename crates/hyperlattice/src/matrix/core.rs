@@ -469,6 +469,7 @@ pub struct Matrix4(
     pub [[Real; 4]; 4],
 );
 
+/// Clones row-major Matrix3 storage while retaining each scalar's shared representation.
 impl Clone for Matrix3 {
     /// Clones all nine scalar handles in row-major order, preserving scalar sharing.
     #[inline]
@@ -493,6 +494,7 @@ impl Clone for Matrix3 {
     }
 }
 
+/// Clones row-major Matrix4 storage while retaining each scalar's shared representation.
 impl Clone for Matrix4 {
     /// Clones all sixteen scalar handles in row-major order, preserving scalar sharing.
     #[inline]
@@ -556,6 +558,7 @@ pub enum MatrixDeterminantScheduleHint {
     GenericRealFallback,
 }
 
+/// Groups advisory schedules by the retained evidence they require, without computing determinants.
 impl MatrixDeterminantScheduleHint {
     /// Returns whether this hint is selected entirely by retained matrix shape.
     ///
@@ -685,6 +688,7 @@ pub struct Matrix3StructuralFacts {
     pub transform_kind: Matrix3TransformKind,
 }
 
+/// Queries stored 3×3 masks and schedule facts without revalidating their source matrix.
 impl Matrix3StructuralFacts {
     /// Returns true when every matrix entry is known to be exactly zero.
     pub fn is_zero(self) -> bool {
@@ -890,6 +894,7 @@ pub struct Matrix4StructuralFacts {
     pub transform_kind: Matrix4TransformKind,
 }
 
+/// Queries stored 4×4 masks, signed selectors and schedule facts without revalidating their source.
 impl Matrix4StructuralFacts {
     /// Returns true when every matrix entry is known to be exactly zero.
     pub fn is_zero(self) -> bool {
@@ -1541,6 +1546,7 @@ fn neg_row4_refs(row: &[Real; 4]) -> [Real; 4] {
     [-&row[0], -&row[1], -&row[2], -&row[3]]
 }
 
+/// Consumes 3×3 storage for row-major scalar negation without an intermediate matrix clone.
 impl MatrixNegOwned for [[Real; 3]; 3] {
     #[inline]
     /// Negates entries in row-major order, consuming the input matrix.
@@ -1550,6 +1556,7 @@ impl MatrixNegOwned for [[Real; 3]; 3] {
     }
 }
 
+/// Builds negated 3×3 storage from borrowed row-major scalar handles.
 impl MatrixNegRefs for [[Real; 3]; 3] {
     #[inline]
     /// Negates entries in row-major order, borrowing the input matrix.
@@ -1562,6 +1569,7 @@ impl MatrixNegRefs for [[Real; 3]; 3] {
     }
 }
 
+/// Consumes 4×4 storage for row-major scalar negation without an intermediate matrix clone.
 impl MatrixNegOwned for [[Real; 4]; 4] {
     #[inline]
     /// Negates entries in row-major order, consuming the input matrix.
@@ -1576,6 +1584,7 @@ impl MatrixNegOwned for [[Real; 4]; 4] {
     }
 }
 
+/// Builds negated 4×4 storage from borrowed row-major scalar handles.
 impl MatrixNegRefs for [[Real; 4]; 4] {
     #[inline]
     /// Negates entries in row-major order, borrowing the input matrix.
@@ -8240,10 +8249,11 @@ fn transform_vector4_rhs_full_no_translation_ref_cached(
 ///
 /// If w is definitely one, moves xyz directly into the point. Otherwise takes the
 /// ordinary scalar inverse and scales x, y, z in order. A known zero weight returns
-/// the inverse error; unknown status does not trigger a checked nonzero guard and
-/// may construct a symbolic reciprocal. Success is not a separate nonzero certificate
-/// or completed numerical evaluation. No epsilon, absolute-value normalization or
-/// special point-at-infinity carrier is introduced.
+/// the inverse error. Initially unknown zero status is delegated to native inverse
+/// certification, which may resolve it or return a typed error; it is not rejected
+/// immediately by a checked lattice guard. Success returns no separate certainty
+/// receipt and need not evaluate coordinates numerically. No epsilon, absolute-value
+/// normalization or special point-at-infinity carrier is introduced.
 fn point3_from_homogeneous(transformed: Vector4) -> BlasResult<Point3> {
     let [x, y, z, w] = transformed.0;
     if w.definitely_one() {
@@ -8270,6 +8280,7 @@ struct BatchTransform3<'a> {
     facts: MatrixIdentityDiagonalFacts,
 }
 
+/// Collects and reuses borrowed 3×3 identity/diagonal facts during immediate vector batches.
 impl<'a> BatchTransform3<'a> {
     /// Borrows the matrix and immediately collects its minimal identity/diagonal facts.
     fn new(matrix: &'a Matrix3) -> Self {
@@ -8342,6 +8353,7 @@ struct BatchTransform4<'a> {
     direction_is_diagonal: bool,
 }
 
+/// Collects or accepts 4×4 matrix evidence and reuses it across homogeneous transform schedules.
 impl<'a> BatchTransform4<'a> {
     /// Transforms one vector with caller-valid homogeneous classification.
     ///
@@ -12438,9 +12450,16 @@ impl Matrix4 {
         Ok(Self::uniform_scale(inv))
     }
 
-    /// Transforms a point vector assuming `rhs[3] == 1`, which keeps a single
-    /// guaranteed affine helper shape and avoids probing point/direction
-    /// predicates.
+    /// Applies the matrix to a caller-established homogeneous point with w=1.
+    ///
+    /// The matrix may be affine or projective. Recognized affine diagonal-linear
+    /// matrices use three scales plus translations; otherwise a fresh matrix-fact
+    /// snapshot selects the retained point schedule. All four output coordinates are
+    /// returned without perspective division, so projective output need not have w=1.
+    ///
+    /// The input weight is not validated. Shortcuts can clone it or assume it is one;
+    /// this is not a conversion of arbitrary weights into points. Use
+    /// [`Self::transform_vec4`] for an unrestricted homogeneous vector.
     pub fn transform_vec4_point(&self, rhs: &Vector4) -> Vector4 {
         if matrix4_affine_linear_is_diagonal(&self.0) {
             return Vector4(
@@ -12454,7 +12473,15 @@ impl Matrix4 {
         BatchTransform4::new_with_facts(self, facts).transform_point_vector(rhs)
     }
 
-    /// Transforms a 3D point using homogeneous coordinates.
+    /// Transforms a Cartesian point as `(x,y,z,1)` and divides by the resulting weight.
+    ///
+    /// Uses the assumed-point homogeneous schedule, then moves xyz directly when the
+    /// output w is definitely one. Otherwise constructs one native reciprocal of w
+    /// and scales the three coordinates in order. Zero w returns `DivideByZero`;
+    /// unresolved nonzero decisions retain the scalar inverse error. An initially
+    /// unknown cheap zero status is delegated to native inversion, not immediately
+    /// rejected by a checked lattice guard. No point-at-infinity carrier or tolerance
+    /// normalization is supplied; successful coordinates retain exact scalar expressions.
     pub fn transform_point3(&self, point: &Point3) -> BlasResult<Point3> {
         let transformed = self.transform_vec4_point(&Vector4::new([
             point.x.clone(),
@@ -12465,10 +12492,17 @@ impl Matrix4 {
         point3_from_homogeneous(transformed)
     }
 
-    /// Transforms 3D points in one immediate batch.
+    /// Transforms Cartesian points in input order and normalizes their homogeneous weights.
     ///
-    /// Matrix facts are computed once for the operation; no caller-managed
-    /// transform state escapes the call.
+    /// Materializes all `(x,y,z,1)` inputs and their transformed four-coordinate outputs
+    /// before normalizing points in order as in [`Self::transform_point3`]. Matrix
+    /// facts are collected once for the homogeneous batch. The first normalization
+    /// error returns `Err` without a partial point vector; later points' homogeneous
+    /// transforms have already been constructed. Empty input succeeds with empty output.
+    ///
+    /// Temporary input/output vectors and final point storage are owned by the call.
+    /// There is no separate typed allocation limit, total scalar-work budget or
+    /// cancellation input; a fixed four-coordinate kernel does not bound those costs.
     pub fn transform_point3_batch(&self, points: &[Point3]) -> BlasResult<Vec<Point3>> {
         let homogeneous = points
             .iter()
@@ -12487,7 +12521,13 @@ impl Matrix4 {
             .collect()
     }
 
-    /// Transforms a 3D direction using homogeneous coordinates.
+    /// Applies the upper-left 3×3 linear block to a spatial direction.
+    ///
+    /// Embeds the direction with w=0, uses the homogeneous direction schedule, then
+    /// discards the output weight. Translation never contributes. For a nonaffine
+    /// matrix that discarded weight may be nonzero: this method still returns only
+    /// the three linear coordinates, without perspective division or a projective
+    /// point/direction validity check. It does not normalize the resulting length.
     pub fn transform_direction3(&self, direction: &Vector3) -> Vector3 {
         let transformed = self.transform_vec4_direction(&Vector4::new([
             direction.0[0].clone(),
@@ -12499,7 +12539,13 @@ impl Matrix4 {
         Vector3::new([x, y, z])
     }
 
-    /// Transforms 3D directions in one immediate batch.
+    /// Applies the spatial linear block to each direction, preserving input order.
+    ///
+    /// Builds a temporary w=0 vector for every input, transforms the homogeneous batch,
+    /// then moves each xyz triple into the result and discards its output w. Translation
+    /// is omitted; nonaffine bottom-row contributions are discarded without validation.
+    /// No unit-length normalization occurs. Empty input returns empty output; temporary
+    /// and returned vectors have no independent typed allocation or scalar-work budget.
     pub fn transform_direction3_batch(&self, directions: &[Vector3]) -> Vec<Vector3> {
         let homogeneous = directions
             .iter()
@@ -12521,8 +12567,16 @@ impl Matrix4 {
             .collect()
     }
 
-    /// Transforms a direction vector assuming `rhs[3] == 0`, keeping the fast
-    /// 3-term affine-less form.
+    /// Applies the matrix to a caller-established direction with input w=0.
+    ///
+    /// Classifies only the direction-relevant matrix block. Identity action clones
+    /// the whole vector; diagonal action scales xyz and emits zero weight; otherwise
+    /// four three-term row combinations omit the translation column. A projective
+    /// bottom row may produce nonzero output w, which is returned without normalization.
+    ///
+    /// The input weight is not checked. Identity cloning and other shortcuts can treat
+    /// an invalid nonzero input weight differently; this is not a general projection
+    /// to w=0. Use [`Self::transform_vec4`] for an unrestricted input.
     pub fn transform_vec4_direction(&self, rhs: &Vector4) -> Vector4 {
         match matrix4_direction_linear_kind(&self.0) {
             Matrix4DirectionLinearKind::Identity => {
@@ -12538,11 +12592,17 @@ impl Matrix4 {
         }
     }
 
-    /// Transforms a batch of homogeneous directions, assuming every input has `w = 0`.
+    /// Transforms an ordered batch whose input weights are caller-established zeros.
     ///
-    /// Use this when geometry/object-level facts already classify the whole
-    /// batch as directions. It avoids the generic batch classifier and keeps
-    /// the translation column out of the arithmetic schedule.
+    /// Checks diagonal direction action once, avoiding the full matrix report and
+    /// per-vector weight classification. The diagonal schedule scales xyz and emits
+    /// zero w; otherwise all four three-term row forms omit the last matrix column.
+    /// The input w lanes are not read. Unlike the single-vector identity shortcut,
+    /// this batch does not simply clone each supplied vector under identity action.
+    ///
+    /// Valid directions may acquire nonzero output w under a nonaffine matrix. Outputs
+    /// are not perspective-normalized. Empty input returns empty output; no typed
+    /// allocation limit, scalar-work budget or cancellation input is supplied.
     pub fn transform_vec4_direction_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         trace_matrix!("method", "transform-vector-vec4-direction-batch");
         // Direction batches do not need the full Matrix4 fact
@@ -12557,11 +12617,17 @@ impl Matrix4 {
         )
     }
 
-    /// Transforms a batch of homogeneous points, assuming every input has `w = 1`.
+    /// Transforms an ordered batch whose input weights are caller-established ones.
     ///
-    /// Use this when geometry/object-level facts already classify the whole
-    /// batch as points. It preserves the exact point invariant and avoids the
-    /// generic point/direction/unknown classification pass.
+    /// Collects matrix/column facts once and selects one point schedule, without
+    /// classifying each input weight. Identity clones inputs; affine diagonal-linear
+    /// transforms use scales and offsets; other matrices use three-term forms plus
+    /// retained last-column offsets. Projective output need not have w=1 and is not
+    /// normalized. Use [`Self::transform_point3_batch`] for Cartesian output.
+    ///
+    /// The w=1 precondition is not validated or repaired uniformly across shortcuts.
+    /// Empty input returns empty output. The method allocates owned output but supplies
+    /// no separate typed allocation limit or bound on scalar-expression work.
     pub fn transform_vec4_point_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         trace_matrix!("method", "transform-vector-vec4-point-batch");
         // Unlike direction batches, point batches did not benefit from a
@@ -12572,60 +12638,114 @@ impl Matrix4 {
         BatchTransform4::new(self).transform_point_batch(rhs)
     }
 
-    /// Transforms all vectors in `rhs` using the same matrix.
+    /// Applies the same matrix to unrestricted homogeneous vectors in input order.
     ///
-    /// Per-row homogeneous-coordinate facts are computed once per call and
-    /// reused for every vector in the batch.
+    /// Collects matrix and final-column facts once. Identity clones the input slice;
+    /// diagonal and uniform point/direction/general-weight batches select shared
+    /// schedules. A mixed batch can classify an initial prefix, then classify every
+    /// vector again into temporary per-vector facts. Homogeneous kind is therefore
+    /// not promised to be queried exactly once per input.
+    ///
+    /// Weights other than known zero or one, including minus one, retain the full
+    /// homogeneous contribution. All four output coordinates are returned without
+    /// Cartesian normalization. Empty input returns empty output; allocation and scalar
+    /// work have no independent typed budget or cancellation input here.
     pub fn transform_vec4_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         trace_matrix!("method", "transform-vector-vec4-batch");
         BatchTransform4::new(self).transform_vector_batch(rhs)
     }
 
-    /// Transforms one homogeneous vector immediately.
+    /// Multiplies one unrestricted homogeneous column vector by this matrix.
+    ///
+    /// Uses borrowed matrix/vector multiplication with identity, diagonal and
+    /// weight-sensitive schedules. All four output coordinates are retained, including
+    /// general or negative weights; no Cartesian division or validity check occurs.
+    /// Scalar expressions remain authoritative, and no approximation is requested.
     pub fn transform_vec4(&self, rhs: &Vector4) -> Vector4 {
         trace_matrix!("method", "transform-vector-vec4");
         self * rhs
     }
 
-    /// Returns the matrix inverse using a fixed-size cofactor expansion.
+    /// Returns an exact matrix inverse using shape schedules and cofactor arithmetic.
     ///
-    /// The ordinary path rejects a definite-zero determinant and propagates
-    /// scalar arithmetic errors from the selected Real kernel.
+    /// First checks three nonzero witnesses that exclude structural shortcuts; this
+    /// route tries a rational aggregate and otherwise uses active cofactors. Remaining
+    /// inputs select identity, diagonal, upper triangular, lower triangular, affine,
+    /// then general cofactor handling. Upper-triangular handling leaves affine matrices
+    /// with diagonal linear blocks to their affine specialization.
+    ///
+    /// Inversion requires native scalar reciprocals on the selected path. Singular or
+    /// unresolved divisor decisions propagate typed errors; there is no extra checked
+    /// zero-status guard at this entry point. In particular, an initially unknown
+    /// cheap status may be resolved by native inversion. This is not a pivot-search
+    /// algorithm, and not every matrix goes through a full determinant expansion.
     pub fn inverse(self) -> BlasResult<Self> {
         trace_matrix!("method", "matrix4-inverse");
         Ok(Self(invert_matrix4(self.0)?))
     }
 
-    /// Returns the matrix inverse after rejecting unknown-zero determinants.
+    /// Returns the inverse with structural/cached nonzero guards on selected divisors.
+    ///
+    /// Uses the shape priority of [`Self::inverse`]. Identity needs no divisor; the
+    /// rational aggregate returns its exact result or singularity error directly.
+    /// Other cofactor paths guard the determinant, while diagonal, triangular and
+    /// affine shortcuts use their own divisor guards. Guarded zero gives
+    /// `DivideByZero`, guarded unknown gives `UnknownZero` without initiating
+    /// refinement in that guard. Native reciprocal errors still propagate afterward.
+    /// No abort signal or independent scalar-work budget is supplied.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "matrix4-inverse-checked");
         Ok(Self(invert_matrix4_checked(self.0)?))
     }
 
-    /// Returns the checked matrix inverse after attaching an abort signal.
+    /// Performs checked inversion with branch-specific cooperative abort propagation.
+    ///
+    /// Uses [`Self::inverse_checked`]'s dispatch order. Identity, diagonal, triangular
+    /// and the early rational-aggregate paths do not consume the signal. Affine
+    /// translation/diagonal-linear shortcuts also bypass attachment; general affine
+    /// inversion forwards the signal to the 3×3 linear inverse.
+    ///
+    /// Other dense/general cofactor paths construct minors and determinant first,
+    /// attach the signal to the determinant, then guard it and form the scaled
+    /// adjugate. Attachment alone does not poll the flag. An already-set flag need
+    /// not prevent exact shortcut success; this is neither an entry-time abort check
+    /// nor a uniform total-work or cancellation-latency bound.
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
         trace_matrix!("method", "matrix4-inverse-checked-with-abort");
         Ok(Self(invert_matrix4_checked_with_abort(self.0, signal)?))
     }
 
-    /// Returns the determinant.
+    /// Constructs the 4×4 determinant from twelve 2×2 minors without division.
+    ///
+    /// Uses the known-rational reducer only when every entry exposes a nonzero rational
+    /// value; zeros or missing rational views select ordinary pruning helpers.
+    /// Singular and symbolic matrices are valid inputs. The returned Real expression
+    /// is not a sign decision or invertibility certificate, and this method does not
+    /// consume the advisory structural-fact schedule hint.
     pub fn determinant(&self) -> Real {
         trace_matrix!("method", "matrix4-determinant");
         determinant4(&self.0)
     }
 }
 
+/// Target-local layout regressions for immediate matrix dispatch fact packets.
 #[cfg(test)]
 mod fact_layout_tests {
     use super::{Matrix3Facts, Matrix3StructuralFacts, Matrix4Facts, Matrix4StructuralFacts};
     use std::mem::size_of;
 
+    /// Bounds internal fact-packet size by the public packet plus 32 scheduling bytes.
+    ///
+    /// Uses this target's size_of results, including padding, for both dimensions.
+    /// This guards against duplicated retained summaries but does not prove field
+    /// identity, total heap usage, or a portable exact layout across targets.
     #[test]
     fn immediate_matrix_facts_retain_one_exact_set_summary() {
         // Private dispatch packets add only compact booleans and masks to the
         // public structural packet. A second RealExactSetFacts is 96 bytes on
         // the validation target, so this budget catches accidental duplicate
         // retention while leaving room for small scheduling facts.
+        /// Maximum extra in-object bytes allowed for private scheduling flags and padding.
         const INTERNAL_SCHEDULING_FACT_BUDGET: usize = 32;
 
         assert!(

@@ -10763,6 +10763,121 @@ Evidence: `/tmp/csgrs-rustdoc-matrix4-structured-*.log`, Cargo artifact JSON and
 The next contiguous boundary is transform_vec4_point's documentation, currently
 core.rs line 12441. Remaining Matrix4 methods and tests still require audit.
 
+## 2026-11-27: Matrix4 transforms, inverse entry points and matrix-core audit tail
+
+Scope and acceptance witness:
+
+- Continued from `ec6469e4c`, reading the final 200 lines of matrix/core.rs
+  (original 12441–12640), from transform_vec4_point through the private layout
+  regression. That tail now spans 308 lines. Revised fourteen public method
+  contracts and documented the private test module, test and local budget constant.
+- A supplemental declaration screen identified eleven undocumented impl blocks
+  earlier in the file. Re-read their implementations and surrounding contracts,
+  then documented cloning, stored-fact queries, owned/borrowed negation and
+  borrowed batch dispatch. Clarified native inverse certification in the private
+  point3_from_homogeneous doc. Total: 29 revised or added Rustdoc groups.
+- Owner: Hyperlattice's homogeneous transforms and inverse dispatch; Hyperreal
+  owns scalar reciprocal certification. Properties P1/P2 preserve exact
+  expressions, P3/P4 scope retained facts, P6 distinguishes typed failures, and
+  P5/P20/P37 require honest resource and completion claims.
+- Domain: arbitrary Real matrices and homogeneous vectors; assumed-weight
+  APIs additionally require w=0 or w=1. Cartesian conversion requires invertible
+  output weight. Missing acceptance witnesses were unchecked weight behavior,
+  projective output interpretation, whole-batch work before normalization failure,
+  branch-specific abort attachment and private layout-test documentation.
+  Reproduced these behaviors on the starting revision before editing repository files.
+- Context reads included batch dispatch, point normalization, direction classifiers,
+  determinant/inverse helpers and the VRML and attachment consumers. These are
+  supporting reads, not new whole-file claims for the consumer modules.
+
+Contracts clarified:
+
+- Unrestricted homogeneous transforms preserve all four coordinates and weights
+  other than zero/one. Assumed-point and assumed-direction APIs do not validate
+  input weights; their shortcuts do not repair invalid weights uniformly. In
+  particular, identity direction cloning preserves a supplied nonzero w while
+  its batch counterpart emits zero w. Affine diagonal point handling can clone
+  the single input w while the corresponding batch constructs one.
+- Point3 methods construct w=1 input and normalize output by one shared scalar
+  reciprocal, unless w is definitely one. Zero weight fails typed. Initially
+  unknown cheap zero status is delegated to native inversion, not a checked
+  lattice rejection. No point-at-infinity carrier or numerical tolerance is used.
+- Point3 batches construct all homogeneous outputs before Cartesian normalization
+  starts. A first normalization error returns no partial point vector, but later
+  homogeneous transforms have already run. Empty batches remain valid.
+- Direction3 methods apply the spatial 3×3 block and discard output w. For a
+  nonaffine matrix that weight may be nonzero; these methods still return spatial
+  linear coordinates without projective normalization or unit-length validation.
+- Generic batches collect matrix facts once, but mixed homogeneous kinds can
+  cause a prefix classification followed by a second per-vector pass. Temporary
+  vector allocations and scalar work have no separate typed budget here.
+- Inverse docs now describe structural and rational shortcuts before cofactor
+  fallback, rather than claiming every input uses a full cofactor expansion.
+  Checked guards concern selected divisors, not always a full determinant.
+  Guard failure and native inverse certification remain separate stages.
+- Abort-aware inversion bypasses signal attachment on identity, diagonal,
+  triangular, early rational-aggregate and affine translation/diagonal-linear
+  shortcuts. Other cofactor paths attach after constructing the determinant.
+  Attachment is not an entry-time poll or a total-work/latency guarantee.
+- Determinant construction uses twelve 2×2 minors, with known-rational reducers
+  only for fully nonzero exposed rational entries; it returns an expression,
+  not an invertibility/sign decision or execution of the advisory schedule hint.
+- The private layout regression checks this target's in-object sizes, including
+  padding, against public packets plus 32 bytes. It does not establish field
+  identity, heap consumption or a portable exact layout.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Comment-only/blank-line removal
+  leaves executable source identical to `ec6469e4c`, including all attributes,
+  assertions, predicate order and dispatch calls. No integration test source changed.
+- Hyperlattice builds passed with all features and no defaults. Twelve selected
+  original integration tests passed in each configuration and on the all-feature
+  baseline. Direct rustc harnesses used matching Cargo artifacts and 60-second
+  per-test limits. The actual library test configuration was compiled with its
+  dependency/features, and the private layout regression passed in all three runs.
+- Independent Fraction expectations covered eight matrix shapes, three coordinate
+  triples and four weights (0, 1, -1, 2), plus mixed batches containing a third
+  homogeneous kind after the first two. Covered all ten public transform methods,
+  ordered/empty results, valid assumed weights, Cartesian positive/negative/zero
+  output weights and discarded projective direction weights.
+- Invalid-weight witnesses reproduced the differing single/batch shortcuts without
+  treating them as supported general transforms. A trace assertion counted three
+  homogeneous point transforms before the first Cartesian normalization failed.
+  Separate fixtures checked native inversion of a fresh unknown weight and
+  retention of a symbolic π point coordinate.
+- Reused and reran the independent nine-fixture rational determinant/inverse
+  corpus from the cofactor4 audit, including all three inverse modes, identity
+  composition and route/attachment counts. Also reran literal π-dependent inverse
+  entries, fresh unknown guards, and already-set-flag rational success/singularity
+  witnesses. This is finite qualification, not universal inversion/cancellation proof.
+- Before/after/minimal probe stdout matched. No-default mode omits trace checks;
+  probes had a 30-second external limit. The initial temporary generator moved
+  an expected array before reusing it; corrected ownership in the probe, preserving
+  the initial compile-error log. No repository code or fixture was weakened.
+- Private Rustdoc passed with warnings and broken/private links denied under both
+  feature configurations. Complete rendered text matched fourteen public methods,
+  eleven impl blocks and the private point-normalization helper on owning pages.
+  Three cfg(test)/test-local doc groups are source-reviewed and backed by execution
+  of the actual private test; ordinary Rustdoc does not expose those test items.
+- The supplemental source screen found attached docs for 528 declaration patterns
+  covering functions, types, impls, constants, modules and macro definitions.
+  This is a gap screen, not a parser-based field/variant inventory or semantic
+  review substitute. Earlier contiguous records cover the rest of core.rs; this
+  batch reaches EOF and closes that sequential reading pass, not the repository audit.
+- Checks passed for matrix, matrix_api_surface_coverage, mathbench and downstream
+  Hyperspatial including Hyperlimit in both configurations, using --locked --offline
+  -j 2, CARGO_INCREMENTAL=0 and the shared target. Full workflows and exhaustive
+  runtime downstream checks remain owner-waived. No focused check remains blocked;
+  no new timing, memory, binary-size or universal coverage claim is made.
+- Removed three owned temporary executables. The shared target remains near
+  2.5 GiB. The AGENTS.md public/private 100% Rustdoc mandate remains active.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix4-final-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix4-final-audit/` generators, probes and rendered-text/declaration
+checks. Next reconcile remaining matrix-test review coverage and continue the
+remaining Hyperlattice modules and repository files; the complete audit is open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
