@@ -1,16 +1,24 @@
 #[cfg(all(test, feature = "serde"))]
+/// Serde-enabled sign replay and conservative range-proof regressions for sine and tangent graphs.
 mod trig_range_proof_tests {
     use super::*;
     use serde_json::{Value, json};
 
+    /// Deserialize a selected raw trig tag around a supplied argument JSON value, panicking on unexpected import rejection.
+    /// The fixture bypasses native constructor normalization; successful decoding is
+    /// not a general domain proof for every possible supplied graph.
     fn raw_trig(kind: &str, argument: Value) -> Computable {
         serde_json::from_value(json!({"internal": {kind: argument}})).unwrap()
     }
 
+    /// Serialize an exactly constructed rational multiple of pi for the raw import fixtures.
     fn pi_multiple(q: Rational) -> Value {
         serde_json::to_value(Computable::pi().multiply(Computable::rational(q))).unwrap()
     }
 
+    /// Require an immediate imported sign, two agreeing structural queries and an empty numeric cache throughout.
+    /// Also preserve the serialized JSON value after inspection. This is same-process
+    /// proof replay, not fresh-process state isolation or proof from serialized fact flags.
     fn assert_unwarmed_sign(kind: &str, argument: Value, expected: RealSign) {
         let value = raw_trig(kind, argument);
         let wire = serde_json::to_value(&value).unwrap();
@@ -35,6 +43,9 @@ mod trig_range_proof_tests {
     }
 
     #[test]
+    /// Import ten reduced sine/tangent cases: four signed pi fractions and one tiny positive binary pi offset per function.
+    /// Require exact signs without numerical cache creation, using the common sign
+    /// of q for nonzero q*pi strictly between -pi/2 and pi/2.
     fn reduced_pi_graphs_prove_sign_without_approximation_after_import() {
         // Sine and tangent have the sign of q for -1/2 < q < 1/2.
         // Reimported graphs have no serialized cache facts or Real class tag.
@@ -56,6 +67,11 @@ mod trig_range_proof_tests {
     }
 
     #[test]
+    /// Check five pi multiples for both sine and tangent, including tangent poles.
+    /// Any returned sign must match the independent quadrant expectation and caches
+    /// must remain empty. The conditional assertion permits unresolved signs even
+    /// where the function is defined; at poles it requires no sign certificate.
+    /// No pole is numerically evaluated and no typed domain-error outcome is asserted.
     fn range_proofs_do_not_certify_poles_or_wrong_quadrants() {
         for kind in ["PrescaledSin", "PrescaledTan"] {
             for (q, sine, tangent) in [
@@ -92,7 +108,13 @@ mod trig_range_proof_tests {
     }
 
     #[test]
+    /// Prove signs for both trig functions at signed pi*2^i32::MIN while keeping argument/output caches empty.
+    /// Decline excessive negation depth, an overflowing accumulated shift and an
+    /// undefined inverse hidden in a pi product. The fixture checks signs and cache
+    /// state, not allocated-byte counters or total-work bounds.
     fn extreme_shifts_and_unsupported_graphs_do_not_expand_coefficients() {
+        /// Wrap raw syntax with invalid facts and no signal for extreme or invalid fixture graphs.
+        /// This helper does not admit domains; the test queries structural proofs without numerical evaluation.
         fn raw(approximation: Approximation) -> Computable {
             Computable {
                 internal: Arc::new(Node::new(

@@ -1,3 +1,9 @@
+//! Native and checked-Real interchange witnesses for exact arctangent/pi anchors.
+//!
+//! JSON/CBOR, collections, warming and legacy graph replay exercise retained
+//! trigonometric facts. Same-process replay, exact square identities and finite
+//! certified enclosures are separate checks; none is a universal replay proof.
+
 #![cfg(feature = "serde")]
 
 use hyperreal::{Computable, Problem, Rational, Real, RealSign};
@@ -7,14 +13,18 @@ use serde_json::{Value, json};
 use std::cmp::Ordering;
 
 #[path = "support/mpfr.rs"]
+/// Shared thread-exit cleanup support for the independent MPFR oracle; it does not supply Hyperreal results.
 mod mpfr;
 
+/// Encode a JSON fixture value as CBOR, panicking on an unexpected serialization failure.
 fn bytes(value: &Value) -> Vec<u8> {
     let mut result = Vec::new();
     ciborium::ser::into_writer(value, &mut result).unwrap();
     result
 }
 
+/// Require a Computable square to equal its exact rational expectation by a zero-sign decision at precision zero.
+/// The square alone does not establish the sign of the original value.
 fn native_square(value: Computable, square: &Rational) {
     assert_eq!(
         value
@@ -25,6 +35,9 @@ fn native_square(value: Computable, square: &Rational) {
     );
 }
 
+/// Require the checked Real square comparison to decide Equal at precision zero.
+/// Read ordering from the returned comparison outcome; the assertion concerns squared
+/// magnitude and does not by itself select the original signed branch.
 fn real_square(value: Real, square: &Rational) {
     assert_eq!(
         (&value * &value)
@@ -34,6 +47,8 @@ fn real_square(value: Real, square: &Rational) {
     );
 }
 
+/// Return the independent rational sin(pi/d)² expectation for d=3,4,6.
+/// Other denominators violate this fixture helper's domain and panic.
 fn sine_square(denominator: u64) -> Rational {
     Rational::fraction(
         match denominator {
@@ -48,6 +63,12 @@ fn sine_square(denominator: u64) -> Rational {
 }
 
 #[test]
+/// Exercise eighteen signed/period-shifted anchor angles through five native carriers and four scales through six Real import routes.
+/// Before and after explicit warming, verify sine/cosine squares after further
+/// JSON/CBOR replay. Checked Real paths also verify the unit-circle relation,
+/// cotangent-square and cotangent*sine=cosine, or typed rejection of cotangent
+/// at scale zero. Preserve original angle serialization independently of these
+/// semantic assertions. This does not reset global caches or spawn a fresh process.
 fn atan_pi_anchors_retain_trig_facts_through_interchange() {
     for d in [3, 4, 6] {
         for sign in [-1, 1] {
@@ -158,6 +179,9 @@ fn atan_pi_anchors_retain_trig_facts_through_interchange() {
     }
 }
 
+/// Build an independent directed 512-bit MPFR enclosure of the chosen signed square root.
+/// Convert the nonnegative rational square exactly through GMP rational text;
+/// negation reverses endpoints. Fixtures have finite roots, justifying conversion unwraps.
 fn bounds(square: &Rational, negative: bool) -> [Rational; 2] {
     let square = square.to_string().parse::<Q>().unwrap();
     let mut lo = Float::with_val_round(512, &square, Round::Down).0;
@@ -175,6 +199,13 @@ fn bounds(square: &Rational, negative: bool) -> [Rational; 2] {
 }
 
 #[test]
+/// Replay all 48 checked-in legacy trig rows through JSON and CBOR with independent signed-root enclosures.
+/// Reconstruct each authored source and require its JSON value to match source_wire
+/// separately from output validation. At precisions 0,-128,0, require the legacy
+/// approximation interval to contain the reference enclosure and preserve output
+/// serialization. This gives 288 finite enclosure checks, not symbolic equality
+/// of every legacy graph. History/mode and prior certification flags in the fixture
+/// are not consumed as proof. Register MPFR cleanup; replay stays in this process.
 fn prior_atan_pi_anchor_graphs_remain_consumable() {
     mpfr::cleanup_on_thread_exit();
     let rows: Vec<Value> =

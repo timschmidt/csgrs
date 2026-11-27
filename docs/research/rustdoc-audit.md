@@ -17281,6 +17281,95 @@ approximation, ring recognition, stored-rational classification and sign-query
 excerpts supplied context, not additional whole-file audit credit. Repository-wide
 coverage remains incomplete.
 
+## Hyperreal arctangent anchors, range witnesses and replay (2026-11-27)
+
+Baseline: 347c24128d90d29ac37150c2b1dbaa229c411799. Whole-file review of
+computable/node/atan_pi_anchors.rs (98 baseline lines), atan_pi_anchor_tests.rs
+(165), trig_range_proof_tests.rs (145), range_reduction_tests.rs (30), and
+tests/serde_atan_pi_anchors.rs (233), totaling 671 baseline lines. The owning
+layer is Hyperreal exact angle correspondence and its trig/range/replay consumers.
+Relevant properties are P1–P6 and P19: exact scalar structure, conservative facts,
+cache reuse, resource distinctions and retained evidence through interchange.
+Missing witnesses were private Rustdoc on anchor variants/methods, unit-test
+helpers and integration oracles. Eight owning unit tests and two integration
+tests passed on the baseline before edits.
+
+The documentation now describes all 35 authored declarations and an integration
+module overview:
+
+- AtanPiAnchor binds positive arguments 1, sqrt(3), 1/sqrt(3) to pi/4, pi/3,
+  pi/6. Scale recognition assumes the caller has identified the root-three
+  radicand and handled its sign. from_positive_turn takes a coefficient in pi
+  units, not full revolutions. angle requires a nonzero sign, with a debug-only
+  assertion for misuse; fixed literal denominators/root construction justify
+  its invariant expects. This table is not a general inverse-trig solver.
+- Periodic recovery first checks canonical denominator 3, 4 or 6, then uses
+  absolute-value integer parity and fractional reflection to recover separate
+  sine/cosine signs and a positive principal tangent argument. That argument
+  is not the signed tangent at the original angle. Integer/half-integer and
+  other denominators decline. Arbitrarily large finite period counts remain
+  exact, but coefficient arithmetic/allocation is not bounded by this lookup.
+- The composition test covers 126 forms, including periods -2^256 and 2^256+1,
+  with 504 sign checks and 1008 square checks across warming and later output
+  refinement. The 2^-512 perturbed cases permit an unresolved coarse sign but
+  require the independently correct nonzero sign at -1024. Sixteen-worker
+  square checks observe one schedule and do not independently select signs.
+- Reduced trig import tests require immediate signs and untouched numeric caches
+  for ten reduced cases. The separate quadrant/pole test conditionally checks
+  any returned sign: it permits unresolved defined cases and requires no sign
+  at a pole. It does not demand typed pole rejection. Extreme-shift/undefined
+  cases assert proof and cache outcomes, not measured allocation bounds.
+- Huge quotient tests assert an integer within one unit of the selected 2^1100-scale
+  reference integer, rather than a uniquely nearest quotient. Optional exp
+  reduction must decline an unrepresentable scale while preserving lazy graph
+  construction; no enormous exponential evaluation or downstream completion
+  is inferred from constructing that node.
+- Integration coverage uses eighteen base angles, five native carrier routes,
+  four outer scales and six checked-Real import routes. Exact square checks,
+  signed/relational checks, original serialization stability and numeric cache
+  warming are described separately. A squared-magnitude proof alone does not
+  choose the original sign. Cotangent at zero retains its typed error assertion.
+- Legacy replay reconstructs source_wire separately from 288 finite output
+  enclosure checks on 48 rows through two formats and three precision requests.
+  Directed 512-bit MPFR square roots supply independent signed expectations.
+  Stored history/mode and certification flags are not consumed as proof. This
+  is same-process replay, not universal symbolic equality or fresh-process
+  validation. Fixture metadata was inspected as context; the 4300-line JSON
+  artifact does not receive whole-file audit credit in this batch.
+
+After the final comment edits, five owning tests passed without optional features
+and eight with all features. The two interchange integration tests passed, along
+with three existing computable composition witnesses, one checked-Real atan2
+anchor witness and five downstream Hyperlimit resolver tests. Private cargo doc
+passed both feature configurations with warnings and broken/private links denied.
+All ten anchor runtime blocks matched actual private library HTML.
+
+The integration file's eight declarations and module overview also matched
+standalone private Rustdoc pages. A temporary copy removed only its two test
+attributes and resolved the support-module and included-fixture paths to their
+original absolute locations; the repository source was not altered for this
+render. The first attempt lacked the relative fixture path; resolving that
+copy-only path fixed it. All seventeen remaining unit-test blocks, including
+one function-local helper, passed source inventory and supplemental Markdown
+rendering. This does not claim ordinary library Rustdoc emits test-only or
+function-local pages. No focused check is blocked.
+
+Raw executable/signature tokens are identical except one optional array trailing
+comma in a preexisting formatting deficiency. Independently formatting the
+baseline yields exactly the final source tokens after comments/whitespace are
+removed. No predicate order, fixture, assertion, signature, policy, representation
+or dependency changed. Selected Rustfmt and git diff --check passed. Full workflows
+remain owner-waived for this docs-only session; no new performance or universal
+closure claim is made.
+
+Evidence is retained in /tmp/csgrs-hyperreal-atan-anchor-audit/: baseline/final
+logs, commands, declaration/token inventory, fixture-context metadata, temporary
+integration source and rendered-block matches. Duplicate integration/supplemental
+HTML was removed after inspection. Builds reused the roughly 5.7 GiB locked/offline
+nonincremental target. Angle-constructor/reader, structural-sign, range-reduction
+and shared MPFR support excerpts supplied context, not additional whole-file
+audit credit. Repository-wide coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

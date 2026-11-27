@@ -1,7 +1,9 @@
 #[cfg(test)]
+/// Composition, non-match and concurrent-refinement witnesses for the three exact arctangent/pi anchors.
 mod atan_pi_anchor_tests {
     use super::*;
 
+    /// Return arguments 1, sqrt(3), 1/sqrt(3) with independent expected principal sine squares 1/2, 3/4, 1/4.
     fn anchors() -> [(Computable, Rational); 3] {
         let three = Computable::rational(Rational::new(3)).sqrt();
         [
@@ -11,6 +13,8 @@ mod atan_pi_anchor_tests {
         ]
     }
 
+    /// Require an exact zero sign at precision zero for value² minus the expected rational square.
+    /// This checks squared magnitude; callers must establish the intended sign separately.
     fn assert_square(value: Computable, expected: &Rational) {
         assert_eq!(
             value
@@ -22,6 +26,11 @@ mod atan_pi_anchor_tests {
     }
 
     #[test]
+    /// Check 126 angle forms from three anchors, two signs, seven periods and three complement compositions.
+    /// Periods include -2^256 and 2^256+1. Before and after explicit angle warming,
+    /// check sine/cosine signs and exact squares, then recheck squares after output
+    /// refinement: 504 sign checks and 1008 square checks. In the unwarmed pass require
+    /// the composed angle cache to stay empty; shared constant caches are not reset.
     fn atan_pi_anchors_preserve_facts_through_periods_and_complements() {
         let periods = [
             -(BigInt::one() << 256_usize),
@@ -96,6 +105,10 @@ mod atan_pi_anchor_tests {
     }
 
     #[test]
+    /// Decline seven non-anchor denominators, six nonzero 2^-512 perturbations and two other unsupported forms.
+    /// For the perturbations, a coarse query must not claim zero and a -1024 query
+    /// must prove the sign from strict increase of sine squared inside (0,pi/2).
+    /// The coarse query may remain unresolved; decline alone does not prove inequality.
     fn atan_pi_anchor_reader_declines_unproved_correspondences() {
         for denominator in [1, 2, 5, 7, 8, 12, 1009] {
             let angle =
@@ -135,6 +148,10 @@ mod atan_pi_anchor_tests {
     }
 
     #[test]
+    /// Run sixteen workers over three shared anchor angles, with even workers explicitly warming each angle.
+    /// Require sine/cosine square proofs in every worker and again after joining.
+    /// This observes one concurrent execution; it is not exhaustive scheduling coverage
+    /// or a timing/dispatch-count measurement, and squares alone do not determine signs.
     fn atan_pi_anchor_facts_survive_concurrent_refinement() {
         let values: Vec<_> = anchors()
             .into_iter()
