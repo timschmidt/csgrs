@@ -8761,23 +8761,24 @@ impl<'a> BatchTransform4<'a> {
     }
 }
 
+/// Multiplies an owned scalar by a borrowed reusable factor through `mul_cached`.
+///
+/// Used for shared determinant reciprocals, but the factor can be any Real,
+/// including zero. This helper neither inverts nor checks it and owns no cache;
+/// scalar arithmetic controls expression sharing and simplification.
 fn scale_by_shared_factor(value: Real, factor: &Real) -> Real {
-    // The determinant reciprocal is a common scale applied to every cofactor.
-    // Hyperreal opts into borrowing that scale so exact/symbolic state is not
-    // cloned per lane. This is the fixed-size analogue of delaying the common
-    // denominator in fraction-free elimination:
-    // fraction-free elimination.
+    // Borrow the reusable factor; the scalar layer owns any cache/structure reuse.
     value.mul_cached(factor)
 }
 
+/// Scales nine consumed matrix entries row-major by the same borrowed factor.
+///
+/// Unrolls the final scale pass used after adjugate/product construction. Calls
+/// [`scale_by_shared_factor`] nine times without cloning the factor here. Does
+/// not prove that the factor is a determinant reciprocal, require nonzero entries,
+/// or perform fraction-free elimination.
 fn scale_matrix3(matrix: [[Real; 3]; 3], factor: &Real) -> [[Real; 3]; 3] {
-    // Keep the shared determinant inverse borrowed and unroll the fixed 3x3
-    // scale. The cofactor inverse/division kernels follow the fraction-free
-    // principle of delaying the common denominator until the last pass
-    // (fraction-free elimination);
-    // spelling out the final pass avoids nested `array::map` closure layout for
-    // hyperreal reciprocal/div_matrix rows while preserving that single shared
-    // inverse.
+    // Apply the borrowed common factor in one unrolled row-major pass.
     let [[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]] = matrix;
     [
         [
@@ -8798,6 +8799,12 @@ fn scale_matrix3(matrix: [[Real; 3]; 3], factor: &Real) -> [[Real; 3]; 3] {
     ]
 }
 
+/// Scales sixteen consumed matrix entries row-major by one borrowed factor.
+///
+/// Used to apply a shared determinant reciprocal to an unscaled right-division
+/// product. Performs sixteen shared-factor calls without an additional matrix
+/// classification, reciprocal or zero guard. This is elementwise scaling, not
+/// an invertibility proof or a scalar-work bound.
 fn scale_matrix4(matrix: [[Real; 4]; 4], factor: &Real) -> [[Real; 4]; 4] {
     // Same shared-scale rationale as `scale_matrix3`, but for right-division's
     // unscaled 4x4 adjugate. `invert_matrix4` has its own fused cofactor-scale
@@ -8836,14 +8843,16 @@ fn scale_matrix4(matrix: [[Real; 4]; 4], factor: &Real) -> [[Real; 4]; 4] {
     ]
 }
 
+/// Computes the first product minus the second, pruning definitely-zero factors.
+///
+/// Tests the first pair then the second, left factor before right within each
+/// short-circuiting pair. Both pair statuses precede arithmetic. Unknown factors
+/// remain active. Zero/one retained products give zero, a negated second product,
+/// or the first product; two use an ordered active sum with signs `[+, -]`.
+/// No sign refinement or independent nonzero certificate is established.
 #[inline]
 fn mul_sub(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real {
-    // Structural zero pruning is intentionally done before forming exact
-    // products. In hyperreal this avoids allocating symbolic/rational terms
-    // that would later canonicalize to zero.
-    // The sparse-kernel idea follows sparse-kernel observation that skipping
-    // known-zero products is the central win in sparse matrix arithmetic:
-    // sparse-matrix scheduling.
+    // Test pairwise zero evidence before constructing products; retain unknowns.
     let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
     let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
@@ -8860,12 +8869,22 @@ fn mul_sub(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real
     Real::active_signed_product_sum2([true, false], [[left_a, right_a], [left_b, right_b]])
 }
 
+/// Computes the ordered two-product difference without local zero pruning.
+///
+/// Uses active signs `[+, -]`. Dense/exact names do not require rational storage
+/// or prove nonzero factors; the scalar reducer selects exact-rational aggregation
+/// or its symbolic fallback. No factor-class precondition is bypassed here.
 #[inline]
 fn mul_sub_dense_exact(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real {
     trace_matrix!("helper", "mul-sub-dense-exact");
     Real::active_signed_product_sum2([true, false], [[left_a, right_a], [left_b, right_b]])
 }
 
+/// Computes a two-product difference assuming all four factors are exact rationals.
+///
+/// Passes signs `[+, -]` to the unchecked known-rational reducer. Zeros are valid,
+/// but every current factor representation must satisfy the caller's proof. No
+/// class check or typed mismatch is returned; stale evidence can change the value.
 #[inline]
 fn mul_sub_dense_exact_known_rational(
     left_a: &Real,
@@ -8880,6 +8899,12 @@ fn mul_sub_dense_exact_known_rational(
     )
 }
 
+/// Computes a two-product difference under an exact-dyadic representation precondition.
+///
+/// All four factors must currently expose rational values with power-of-two
+/// denominators, including zero/integer cases. Uses signs `[+, -]` without local
+/// zero or representation checks. The caller must preserve that proof; the helper
+/// does not turn a violated precondition into a typed error.
 #[inline]
 fn mul_sub_dense_exact_known_dyadic(
     left_a: &Real,
@@ -8894,13 +8919,14 @@ fn mul_sub_dense_exact_known_dyadic(
     )
 }
 
+/// Adds two products after ordered definite-zero pruning.
+///
+/// Tests the first factor pair, then the second, short-circuiting each pair left
+/// before right. Unknown factors are retained. Zero/one retained products return
+/// zero or the surviving product; two use active signs `[+, +]`. Scalar reducers
+/// own rational denominator aggregation and symbolic construction.
 fn mul_add(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real {
-    // Same structural-zero gate as `mul_sub`: delay exact product
-    // construction until after cheap zero facts decide which lanes can
-    // contribute. The surviving nonzero lanes are then passed to the
-    // Real fused product-sum path so exact rationals can share one
-    // denominator, mirroring fraction-free delayed-canonicalization principle
-    // (Math. Comp. 22(103), 1968, .
+    // Share the ordered zero-gate schedule with mul_sub, using positive signs.
     let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
     let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
@@ -8917,6 +8943,13 @@ fn mul_add(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real
     Real::active_signed_product_sum2([true, true], [[left_a, right_a], [left_b, right_b]])
 }
 
+/// Computes `a_left*a_right + b_left*b_right - c_left*c_right` with zero pruning.
+///
+/// Tests all three pairs in a,b,c order, left before right within each pair.
+/// Retains unknowns. Zero active pairs yield zero; one preserves its sign; two
+/// use the corresponding ordered signed subset; three use `[+, +, -]`.
+/// The pruned match's unreachable arm follows from counting three booleans and
+/// entering only at count at most two, not from a scalar sign proof.
 #[inline]
 fn mul_add_sub(
     left_a: &Real,
@@ -8926,11 +8959,7 @@ fn mul_add_sub(
     left_c: &Real,
     right_c: &Real,
 ) -> Real {
-    // Three-term cofactors are the hottest inverse path. Check inexpensive
-    // structural zero facts before building any products so sparse minors
-    // collapse without approximation or BigInt gcd work. Dense minors still
-    // use the fused exact-rational product-sum path to defer denominator
-    // canonicalization until the Real kernel sees all signed terms together.
+    // Prune certified zero products, preserving the signs of every retained pair.
     let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
     let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
     let third_zero = left_c.definitely_zero() || right_c.definitely_zero();
@@ -8976,6 +9005,10 @@ fn mul_add_sub(
     )
 }
 
+/// Computes three ordered products with signs `[+, +, -]` and no local zero scan.
+///
+/// The active reducer retains all supplied terms and owns rational/symbolic
+/// selection. The name supplies neither rationality nor nonzero certificates.
 #[inline]
 fn mul_add_sub_dense_exact(
     left_a: &Real,
@@ -8992,6 +9025,11 @@ fn mul_add_sub_dense_exact(
     )
 }
 
+/// Computes signs `[+, +, -]` after the caller proves all six factors exact rational.
+///
+/// Delegates directly to the known-rational reducer, accepting zeros and omitting
+/// class/zero checks. Representation evidence must still describe these factors;
+/// this helper supplies no typed response to stale or invalid evidence.
 #[inline]
 fn mul_add_sub_dense_exact_known_rational(
     left_a: &Real,
@@ -9008,6 +9046,13 @@ fn mul_add_sub_dense_exact_known_rational(
     )
 }
 
+/// Computes the first product minus both remaining products, despite the name.
+///
+/// The actual polynomial is `a_left*a_right - b_left*b_right - c_left*c_right`.
+/// Tests pairs in a,b,c order, left before right, and retains unknown factors.
+/// Pruned subsets preserve signs `[+, -, -]` and lane order, including a negative
+/// third-only product and a two-negative-product sum when a vanishes. The zero
+/// count bounds the pruned match, making its unreachable arm an integer invariant.
 fn mul_sub_add(
     left_a: &Real,
     right_a: &Real,
@@ -9065,6 +9110,10 @@ fn mul_sub_add(
     )
 }
 
+/// Computes signs `[+, -, -]` without local zero pruning; the third product is subtracted.
+///
+/// Matches [`mul_sub_add`]'s polynomial, retaining all terms for the active scalar
+/// reducer. Dense/exact does not independently establish rationality or nonzero values.
 #[inline]
 fn mul_sub_add_dense_exact(
     left_a: &Real,
@@ -9081,6 +9130,11 @@ fn mul_sub_add_dense_exact(
     )
 }
 
+/// Computes signs `[+, -, -]` assuming all six current factors are exact rationals.
+///
+/// The third product is subtracted, matching [`mul_sub_add`] rather than a literal
+/// reading of its name. No representation or zero checks are added. Zeros are
+/// admissible; invalid caller evidence need not produce a typed mismatch.
 #[inline]
 fn mul_sub_add_dense_exact_known_rational(
     left_a: &Real,
@@ -9097,24 +9151,29 @@ fn mul_sub_add_dense_exact_known_rational(
     )
 }
 
+/// Evaluates a 3×3 determinant by first-row cofactor expansion without division.
+///
+/// Forms the three signed minors from rows one and two in column order, then
+/// uses `dot3` with row zero. The minor helpers prune definite-zero factors;
+/// unknown and symbolic factors remain valid. Returns a Real directly, including
+/// zero for singular rational cases, without pivot selection or a nonzero guard.
+/// Division-free arithmetic does not imply bounded scalar expression work.
 #[inline]
 fn determinant3(m: &[[Real; 3]; 3]) -> Real {
     trace_matrix!("helper", "determinant3");
-    // Keep determinant infallible and division-free. A fraction-free elimination prototype would
-    // need pivot divisions and a fallback for singular or unknown-zero pivots,
-    // which does not match the public determinant contract and adds exact
-    // rational normalization work to the common 3x3 case. The algorithm was
-    // checked against fraction-free integer-preserving elimination paper
-    // (;
-    // for these fixed sizes, keeping cofactors division-free plus delaying dot
-    // canonicalization in hyperreal gave the measured wins without changing
-    // determinant semantics.
+    // First-row expansion is defined without selecting or dividing by pivots.
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
     let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
     Real::dot3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20])
 }
 
+/// Constructs the classical adjugate and determinant, sharing three expansion minors.
+///
+/// Builds all nine transposed cofactors in adjugate row-major order using `mul_sub`.
+/// Then dots the source's first row with the adjugate's first column to obtain the
+/// determinant. No reciprocal, invertibility check or density assumption is used;
+/// singular matrices still have a well-defined adjugate and determinant.
 #[inline]
 fn matrix3_adjugate_and_determinant(matrix: &[[Real; 3]; 3]) -> ([[Real; 3]; 3], Real) {
     trace_matrix!("helper", "matrix3-adjugate-and-determinant");
@@ -9132,6 +9191,16 @@ fn matrix3_adjugate_and_determinant(matrix: &[[Real; 3]; 3]) -> ([[Real; 3]; 3],
     ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
 }
 
+/// Constructs nine unpruned adjugate entries and their shared determinant expression.
+///
+/// With `known_dyadic=true`, every source entry must currently be exact dyadic;
+/// minor differences and the final three-product determinant bypass representation
+/// checks. With false, ordinary active reducers admit rational or symbolic inputs.
+/// The boolean is not validated and does not prove nonzero determinant or density.
+///
+/// Entries are constructed adjugate row-major, then the source first row is paired
+/// with the adjugate first column. The returned pair remains defined for singular
+/// inputs; no reciprocal is taken here.
 #[inline(never)]
 fn matrix3_adjugate_and_determinant_dense_exact(
     matrix: &[[Real; 3]; 3],
@@ -9162,6 +9231,14 @@ fn matrix3_adjugate_and_determinant_dense_exact(
     ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
 }
 
+/// Forms a general 3×3 inverse through nine pruned cofactors and one determinant reciprocal.
+///
+/// Builds the adjugate entries row-major, obtains the determinant from the source
+/// first row and adjugate first column, then takes the ordinary scalar inverse.
+/// Only afterward scales the nine entries into the result. A reciprocal error
+/// propagates without a completed inverse; unknown determinant status is not
+/// rejected by a checked guard here. No pivoting or universal singularity decision
+/// is performed.
 #[inline]
 fn matrix3_scaled_adjugate(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     trace_matrix!("helper", "matrix3-scaled-adjugate");
@@ -9177,10 +9254,7 @@ fn matrix3_scaled_adjugate(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]
     let c22 = mul_sub(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
     let det = Real::dot3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
     let inv_det = det.inverse()?;
-    // Mat3 reciprocal is hot enough to keep a scaled-cofactor schedule separate
-    // from right-division's unscaled-adjugate path. This avoids constructing an
-    // intermediate matrix only to immediately rescale it, while preserving one
-    // shared determinant reciprocal and delays common-scale normalization.
+    // Scale individual cofactors while constructing the output, sharing inv_det.
     Ok([
         [
             scale_by_shared_factor(c00, &inv_det),
@@ -9200,15 +9274,26 @@ fn matrix3_scaled_adjugate(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]
     ])
 }
 
+/// Inverts through an aggregate rational path or an unpruned cofactor schedule.
+///
+/// Scans representations row-major, stopping at the first missing rational view.
+/// Encountering a non-dyadic rational does not stop the scan: only an entirely
+/// rational matrix with at least one non-dyadic entry selects the scalar aggregate.
+/// Otherwise a fully dyadic scan authorizes unchecked dyadic minors/determinant;
+/// a missing rational view selects ordinary active reducers for all cofactors.
+///
+/// The cofactor routes form nine adjugate entries and the determinant, take one
+/// ordinary reciprocal, then scale the result row-major. Scalar failures propagate.
+/// This helper establishes its own representation choice; its dense name does not
+/// require every entry nonzero. The ordinary inverse dispatcher already tries a
+/// rational aggregate before reaching this fallback.
 #[inline(never)]
 fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     trace_matrix!("helper", "matrix3-scaled-adjugate-dense-exact");
     let exact_rational_is_dyadic = matrix.iter().flatten().try_fold(true, |all_dyadic, value| {
         Some(all_dyadic & value.exact_rational_ref()?.is_dyadic())
     });
-    // Binary64-derived dyadics are faster through the Real-level cofactor
-    // schedule; general rationals retain the scalar aggregate that avoids
-    // wrapping every intermediate cofactor.
+    // Only a completed rational scan with a non-dyadic entry selects this aggregate.
     if matches!(exact_rational_is_dyadic, Some(false)) {
         trace_matrix!(
             "helper",
@@ -9262,6 +9347,18 @@ fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[
     ])
 }
 
+/// Dispatches ordinary 3×3 inversion from structural and representation evidence.
+///
+/// First tests the three nonzero witnesses excluding triangular/affine shortcuts;
+/// they do not prove full density or invertibility. If admitted, tries the rational
+/// aggregate (whose error is final) and otherwise the dense cofactor helper.
+/// Remaining cases collect matrix facts and try identity, diagonal, upper triangular,
+/// lower triangular, then affine, in order. Upper handling excludes affine matrices
+/// with diagonal linear blocks so their affine specialization remains reachable.
+///
+/// The fallback is a scaled adjugate, not Gauss–Jordan. Ordinary scalar inverse
+/// errors propagate; unknown determinant status can still construct a symbolic
+/// result. No global nonzero proof, signal polling or total-work limit is added.
 #[inline]
 fn invert_matrix3(matrix: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     trace_matrix!("helper", "invert-matrix3");
@@ -9282,9 +9379,7 @@ fn invert_matrix3(matrix: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
         return invert_matrix3_by_diagonal(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
-        // Triangular kernels beat general affine/cofactor methods when this fact
-        // holds, because each row/column has one structural dependency chain.
-        // This is a small, explicit specialization for exact-geometric workloads.
+        // Retain the triangular-before-affine ordering for this admitted shape.
         trace_matrix!("helper", "invert-matrix3-upper-triangular");
         return invert_matrix3_upper_triangular(&matrix);
     }
@@ -9296,12 +9391,21 @@ fn invert_matrix3(matrix: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
         trace_matrix!("helper", "invert-matrix3-affine");
         return invert_matrix3_affine(&matrix, facts.linear_is_diagonal);
     }
-    // Cofactor inversion is intentionally kept for 3x3 reciprocal/inverse.
-    // A Gauss-Jordan solve against the identity was benchmarked on the matrix
-    // suite and was much slower because it pays one pivot inverse per column.
+    // The general ordinary inverse uses a determinant reciprocal, not a pivot solve.
     matrix3_scaled_adjugate(&matrix)
 }
 
+/// Inverts with checked reciprocal prerequisites while preserving structural priority.
+///
+/// The early three-entry witness admits a rational aggregate when available;
+/// its singular error returns directly. Otherwise an all-dyadic scan chooses the
+/// dense adjugate schedule and the determinant must be known nonzero before inversion.
+/// Identity, diagonal, upper/lower triangular and affine cases follow ordinary
+/// priority, with the appropriate checked helpers. The remaining general adjugate
+/// also guards its determinant before inversion and scaling.
+///
+/// Zero/unknown guard errors propagate without a partial result. Checked knowledge
+/// is local to the chosen schedule, not a universal decision for symbolic singularity.
 #[inline]
 fn invert_matrix3_checked(matrix: [[Real; 3]; 3]) -> CheckedBlasResult<[[Real; 3]; 3]> {
     trace_matrix!("helper", "invert-matrix3-checked");
@@ -9345,6 +9449,18 @@ fn invert_matrix3_checked(matrix: [[Real; 3]; 3]) -> CheckedBlasResult<[[Real; 3
     Ok(scale_matrix3(adjugate, &inv_det))
 }
 
+/// Routes checked inversion with determinant/pivot signal behavior specific to each branch.
+///
+/// The early three-entry witness goes directly to a dense adjugate after testing
+/// all-dyadic representation; unlike the other two dispatchers, it does not call
+/// the rational aggregate. Attaches the signal to the constructed determinant before
+/// its known-nonzero guard, inverse and final scaling. The general adjugate fallback
+/// uses the same attachment order.
+///
+/// Identity, diagonal and triangular shortcuts do not consume the signal. Affine
+/// handling forwards it to that helper's determinant/diagonal schedule. No local
+/// polling or preemptive work bound is added; construction before attachment can
+/// already perform scalar work. A supplied flag need not reject every shortcut.
 #[inline]
 fn invert_matrix3_checked_with_abort(
     matrix: [[Real; 3]; 3],

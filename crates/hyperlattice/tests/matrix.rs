@@ -1731,8 +1731,11 @@ fn checked_matrix_scalar_division_accepts_abort_signal() {
     );
 }
 
-/// Checks that ordinary inversion can complete with an unknown diagonal and later
-/// known-nonzero pivot candidates; success alone does not independently verify the inverse.
+/// Checks ordinary cofactor inversion can construct a result with an unknown diagonal.
+///
+/// On this fixture the current dispatcher uses a scaled adjugate, not pivot search.
+/// The test name does not establish pivot behavior, and success alone does not
+/// independently verify the inverse.
 #[test]
 fn ordinary_matrix_inverse_prefers_known_nonzero_pivots() {
     let matrix = Matrix3::new([

@@ -10009,6 +10009,143 @@ private docs. The next contiguous boundary is `scale_by_shared_factor`, currentl
 core.rs line 8764. Scalar combination/cofactor/inverse kernels, public APIs and
 remaining matrix tests still require audit.
 
+## 2026-11-27: Hyperlattice signed products and 3×3 cofactor inversion
+
+Base revision: `6f898839f`. The preceding goal turn made progress by pushing the
+vector-transform/batch audit. This batch continues at `scale_by_shared_factor`.
+Owning layer: Hyperlattice scalar schedules and matrix cofactors, delegating
+arithmetic/representation decisions to Hyperreal. Relevant contracts: P1/P3 for
+exact polynomials and conservative zero knowledge, P4/P10 for retained evidence
+and predicate/dispatch order, P5 for work/cache claims, and P6 for reciprocal
+failures and unchecked representation preconditions. Inputs are Real factors
+and exact 3×3 matrices; known-rational/dyadic helpers require their stated
+current representations. Before editing, 22 functions lacked Rustdoc, several
+comments contained incomplete references or unsupported performance comparisons,
+and a test description incorrectly suggested pivot selection. Baseline original
+tests and public/private probes reproduced current behavior before source edits.
+
+Coverage:
+
+- Read core.rs original lines 8764–9396: all 633 lines from shared scaling
+  through `invert_matrix3_checked_with_abort`, now 749 lines. All 22 private
+  functions have Rustdoc: shared scale passes, pruned/active signed products,
+  determinant/adjugate construction, scaled adjugates and three inverse dispatchers.
+- Read the later rational aggregate adapter, scalar known-rational inverse
+  entry points, existing arithmetic adapters/trace forwarding, public determinant
+  consumer and selected matrix tests as context. Those reads do not complete
+  later definitions' own audits. Matrix source and tests remain partially audited.
+- Corrected the existing doc for
+  `ordinary_matrix_inverse_prefers_known_nonzero_pivots`: the current fixture
+  reaches `matrix3_scaled_adjugate`, not a pivot search. The assertion checks
+  construction success only. No test names, bodies or expectations changed;
+  this is a correction to earlier documented coverage, not a newly counted test.
+
+Documented behavior and corrections:
+
+- Shared scaling consumes entries and borrows one factor, with nine or sixteen
+  row-major `mul_cached` calls. The factor can be zero or any Real; these helpers
+  neither invert it nor prove a determinant relation. The adapter owns no cache.
+  Replaced incomplete fraction-free-elimination references with this actual
+  elementwise schedule and scalar-owned sharing semantics.
+- Pruned two/three-product helpers inspect pairs in source order, left before
+  right within each short-circuit pair, and finish the status checks before
+  arithmetic. Unknown factors are retained. Zero/one/two/three active subsets
+  preserve original lane order and signs. The unreachable pruned match arms
+  follow from small integer counts, not from scalar sign assumptions.
+- `mul_sub_add` and both corresponding dense variants compute A-B-C, including
+  a negative third-only term. Their names must not be read as A-B+C. Documented
+  the exact polynomial explicitly without renaming or changing any caller.
+  `mul_add_sub` instead uses A+B-C; two-term helpers use A-B or A+B.
+- Dense-exact names without a known-representation suffix still use active
+  scalar selection and admit symbolic factors. Known-rational/dyadic variants
+  skip local representation checks and accept zeros, but require valid current
+  caller evidence. Invalid evidence is not guaranteed to yield a typed error;
+  the scalar reducer can read only stored rational components.
+- The 3×3 determinant uses three signed minors and first-row dot expansion,
+  without reciprocal or pivot selection. The adjugate helpers construct all nine
+  transposed cofactors row-major, then pair the source first row with the adjugate
+  first column for the determinant. Singular matrices still have these outputs.
+- Dense adjugate construction trusts a true known-dyadic flag for every entry;
+  false selects ordinary active arithmetic. Scaled adjugates take one ordinary
+  determinant reciprocal after cofactor construction, then scale the output.
+  Unknown determinant status is not a checked rejection on ordinary paths.
+- The dense scaled helper scans rational representations row-major until the
+  first missing view. A non-dyadic entry alone does not stop this scan: the
+  aggregate branch requires a completed rational scan. All-dyadic data uses
+  known-dyadic minors/determinant; missing representation selects ordinary
+  active reducers. The ordinary dispatcher already tries its rational aggregate
+  before this fallback; direct helper probes also exercise its independent branches.
+- Inversion first tries three nonzero witnesses excluding triangular/affine
+  shortcuts, not certifying full density or nonsingularity. Ordinary/checked
+  paths then try a rational aggregate whose error is final. Otherwise shape
+  priority is identity, diagonal, upper triangular, lower triangular, affine,
+  then general cofactors; upper handling excludes affine diagonal-linear cases.
+- The signal-aware dense path skips the rational aggregate, constructs its
+  adjugate/determinant and attaches the signal before the determinant guard.
+  General fallback does the same. Identity/diagonal/triangular shortcuts do not
+  consume the flag; affine paths forward it to their own attachment schedule.
+  Construction before attachment is not covered by a preemptive work bound.
+- Removed unsupported timing-win statements and broken citations from this block.
+  No representation, arithmetic, scalar-call order, predicates or traces changed.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Stripping comment-only and blank
+  lines leaves identical executable source in both edited Rust files against
+  `6f898839f`, including attributes, trace events and assertions.
+- Hyperlattice builds and eleven selected original matrix tests passed with all
+  features and no defaults; the all-feature baseline passed the same tests.
+  Tests cover inverse/product composition, fractional inputs, triangular and
+  diagonal inverse agreement, singular/unknown rejection and right division.
+  Direct rustc harnesses used matching Cargo artifact graphs.
+- Independent Python Fraction Gauss–Jordan inversion and signed permutation
+  determinant sums supplied expectations for nine rational fixtures: identity,
+  diagonal, upper/lower triangular, diagonal-linear affine, general affine,
+  general fallback, dense dyadic and dense non-dyadic rational. Ordinary,
+  checked and signal-aware inverses matched, with selected-route counts and
+  rational-aggregate usage asserted in all-feature mode.
+- Public symbolic probes verified a literal π-dependent dense inverse and
+  determinant, plus successful construction and exactly one scaled-adjugate
+  event for the unknown-diagonal test fixture. All-ones singular matrices
+  returned DivideByZero in all three inverse modes. The signal-aware failure
+  attached its determinant exactly once before rejection. Unknown construction
+  is not a completed-evaluation or general nonzero-certification claim.
+- Extracted the actual first nineteen helper implementations and included the
+  repository's actual scalar adapter and trace modules in a temporary harness.
+  Independent signed integer arithmetic checked every 16-mask two-product and
+  64-mask three-product factor-zero combination across the applicable pruned,
+  dense, known-rational and dyadic variants. Pruned-event counts were exactly
+  zero or one as prescribed; no existing count was weakened.
+- Direct private probes checked retained unknown factors, row-major scale values
+  and nine/sixteen scaling events. Three independently generated rational
+  adjugate/inverse fixtures exercised ordinary, dense, dyadic and aggregate
+  helper paths, including singular failure. These source extracts preserve
+  the real helper bodies and scalar adapters; no mock arithmetic was substituted.
+- All-feature before/after public and private stdout matched exactly. No-default
+  mode repeated semantic checks with trace assertions compiled out. Final
+  probes were warning-free. Original tests had 60-second process limits; probes
+  had 30-second limits. This finite corpus is not a universal symbolic proof.
+- Private library and integration-target Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full-text checks matched
+  all 22 doc groups on their individual private function pages. The corrected
+  #[test] doc was source-reviewed and its original assertion executed; Rustdoc
+  omits test functions. The 298 HTML pages inspected do not imply 298 new audits.
+- Cargo checks passed for the matrix integration target, mathbench and downstream
+  Hyperspatial including Hyperlimit, with all features and no defaults. Used
+  --locked --offline -j 2, CARGO_INCREMENTAL=0 and one shared Cargo target.
+- Full workflows remain owner-waived. No full matrix suite, timing benchmark,
+  sanitizer, allocator profile, binary-size or total-work claim was added.
+  No focused check remains blocked. Removed three temporary executables;
+  the shared target remains near 2.5 GiB and no duplicate target tree was created.
+- The root AGENTS.md 100% public/private Rustdoc mandate remains active.
+  Repository-wide completion remains unproven and the wider audit is open.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-cofactor3-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-cofactor3-audit/` temporary generators, source extracts,
+probes, checkers and private docs. The next contiguous boundary is
+`matrix4_factors`, currently core.rs line 9514. The 4×4 cofactor/inverse kernels,
+public matrix APIs and remaining tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
