@@ -1,12 +1,29 @@
+//! Fresh-process replay of retained interval bounds whose half projections have limits.
+//!
+//! The parent sends fixed, optional IEEE and optional dyadic source definitions as
+//! JSON environment payloads. A readable preexisting marker selects child checks
+//! directly, so environment setup controls whether a new process is launched.
+//! The parent captures output and checks child exit success; it has no internal
+//! timeout or sandbox. Projection errors do not replace retained sources.
+
 #![cfg(all(feature = "fixed", feature = "serde"))]
 use hyperlattice_interval::{
     IntervalLatticeError, IntervalVector, MidpointRadiusVector,
     hyperinterval::{FixedInterval, IntervalError},
 };
+/// Signed 64-bit endpoint grid used by the mandatory fixed-vector payload.
 type I = FixedInterval<i64, 63>;
 
 #[test]
+/// Spawn the same exact-filtered test, or validate payloads in its child branch.
+/// Fixed replay checks identical encoding, an off-grid midpoint, typed radius overflow
+/// and subsequent exact width selection. Optional f64 matrix replay checks identical
+/// encoding, a maximal finite radius, reconstructed-source intersection and a
+/// nonsingleton midpoint enclosure. Optional minimum-exponent dyadic replay checks
+/// identical encoding, outward midpoint neighbors and an exact source width.
+/// No materialized half coordinates or live projection caches cross the process boundary.
 fn retained_halves_replay_in_a_fresh_process() {
+    /// Mandatory fixed-source payload; a readable value selects the child validation branch.
     const KEY: &str = "HYPERLATTICE_MIDPOINT_RADIUS_REPLAY";
     if let Ok(text) = std::env::var(KEY) {
         let form: MidpointRadiusVector<I, 2> = serde_json::from_str(&text).unwrap();

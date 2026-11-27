@@ -13736,6 +13736,104 @@ temporary HTML; retained batch evidence uses 124 KiB. The single reused target r
 approximately 3.7 GiB. No focused check remains blocked. Other companion files and the
 repository-wide line-by-line/documentation audit remain open.
 
+## Hyperlattice-interval retained midpoint/radius forms (2026-11-27)
+
+Target revision: 4167658dca70d459e0f5527f04cd679c20ff464e, on rustdoc.
+Whole-file review covers three companion files:
+
+| File in crates/hyperlattice-interval | Original lines | Final lines | Doc blocks |
+| --- | ---: | ---: | ---: |
+| src/midpoint_radius.rs | 190 | 260 | 32 |
+| tests/midpoint_radius.rs | 316 | 361 | 13 |
+| tests/midpoint_radius_replay.rs | 116 | 133 | 4 |
+
+The owning layer retains Cartesian bounds as exact midpoint/radius definitions and
+delegates numerical projections to Hyperinterval. P1/P5/P6/P18/P20/P26/P27/P37 and
+the admission protocol govern exact source retention, explicit outward projection,
+typed failure, shared work accounting and validated replay. The domain includes all
+admitted scalar families, unrepresentable half-steps/radii, zero-dimensional units,
+canonical empty products and finite dyadic limits. Before editing, private source
+fields, impl blocks, projection helpers, serialization internals and test support
+items lacked Rustdoc. The five projection/reconstruction tests and fresh-process
+replay test passed on the target revision with all replay markers cleared.
+
+The 49 source blocks cover both retained types/fields, eight impls, four modules,
+25 function declarations, five test aliases, two local macros and one local constant.
+The exact decomposition is distinguished from independently authored centered forms:
+
+- The original source is stored once. Ownership conversion computes no coordinates;
+  immutable access and reconstruction perform no scalar projection. Reconstruction
+  moves retained bounds out instead of combining rounded halves, and remains valid
+  after projection failure. Equality delegates to the source carrier; earlier lost
+  correlations are not recovered. No duplicate center/radius storage or cache exists.
+- Projections traverse vector lanes or matrix entries in their established order,
+  sharing context. Empty/unit states invoke no scalar projection. The first error
+  discards partial output without replacing the source or refunding prior charges.
+  Radius entries refer to exact source midpoints, not separately rounded centers.
+- Serde delegates directly to the original carrier encoding. Deserialization validates
+  dimensions and scalar data through native constructors before infallible wrapping.
+  No half coordinates or validity flags are serialized. Format errors use Serde's
+  error type, and serialization/parsing/Clone have no arithmetic context accounting.
+- The 15^3 finite corpus checks explicit half constructions and subsequent signed
+  linear endpoint expectations for vectors and 2-by-3 matrices. Fixed halves use
+  Euclidean floor/ceiling; rational expected halves use exact division; dyadic halves
+  use exponent -1. IEEE tests are explicitly x86_64-gated, including tiny and maximal
+  spans. Inline size equality is not evidence of total heap or performance equality.
+- The extreme-scale dyadic budget fixture reuses an initially measured projection
+  result to check exact work admission/retry. Its docs distinguish that purpose from
+  an independent geometry oracle. Other checks retain source definitions through
+  signed-radius overflow, empty/unit states and malformed JSON rejection.
+- The replay parent sends retained fixed and optional IEEE/dyadic source definitions
+  to the same test in a child process. A preexisting readable marker can bypass spawn;
+  the harness checks captured exit status without an internal timeout. Unlike the
+  earlier width fixture, this test does assert source encoding identity for all three
+  enabled payloads. Reconstruction feeds width, selection and intersection operations.
+
+Context review included native fixed/dyadic/IEEE/rational projection implementations,
+source-carrier Serde, authored-centered construction and the downstream facade fixture.
+These excerpts do not close the separate audits of those files. The earlier context
+lookup for fixed projections found no match in fixed.rs; the actual implementation
+in fixed_arithmetic.rs was located and read before documenting its behavior.
+
+Validation after final edits:
+
+- Locked/offline Cargo, j2, incremental disabled, shared target. With all three replay
+  markers cleared, five midpoint/radius tests, the fresh-process replay test and the
+  primitive allocation test passed (seven total). The existing midpoint/radius
+  doctest passed with all features and unchanged example text. All seven actual
+  Hyperlattice interval_surface downstream tests passed as well.
+- A warnings-denied temporary probe distinguished exact reconstruction of raw fixed
+  [0,1] from recombination of rounded halves yielding [-1,2]. It checked replay and
+  further exact width queries after signed-radius overflow, malformed data after an
+  empty lane, and minimum-exponent dyadic midpoint/radius neighbors. Distinct
+  WorkExhausted/SizeExhausted expectations verified matrix row-major order; exact
+  literal retry results, spent budget and unchanged source encodings were checked.
+  Empty and unit matrix projections succeeded with zero budgets. An external
+  30-second timeout bounded this probe, not the underlying arithmetic APIs.
+- Private cargo doc passed for all features and no default features with warnings,
+  broken links and private-link violations denied. Full text of all 32 source blocks
+  rendered in the former and all 23 non-Serde blocks in the latter. Current minimal
+  vector/matrix form pages exclude optional serialization methods.
+- Actual test-source Rustdoc omits six test functions and their local items. Temporary
+  copies removed exactly those test attributes and rendered ten test-file blocks,
+  preserving every assertion. Seven function-local macro/alias/constant blocks were
+  reviewed at their source attachment and rendered separately as Markdown; Rustdoc
+  emits no normal standalone API page for them. No page-coverage claim is made for
+  these local items, nor is the scoped block count repository-wide coverage.
+- Removing only comment/blank lines gives identical remaining source bytes in all
+  three files. All 25 function declarations have attached Rustdoc. Selected-file
+  rustfmt and git diff --check passed. AGENTS.md retains the public/private/generated
+  coverage mandate. Full workflow checks remain owner-waived for this docs-only
+  session; no new general performance, allocation, cancellation or closure proof is claimed.
+
+Evidence: /tmp/csgrs-rustdoc-interval-midpoint-{before,tests,build,doc-all,doc-min,
+doctest,probe,validation,render-min,downstream}.log and
+/tmp/csgrs-interval-midpoint-audit/ (matching artifacts, scripts, probe, source copies
+and full-text match records). Owned executables and duplicate temporary HTML were
+removed; retained batch evidence uses 140 KiB. The reused target is approximately
+3.8 GiB, with no second Cargo target. No focused check remains blocked. Remaining
+companion implementations/support files and the repository-wide audit remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

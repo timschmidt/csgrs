@@ -1,3 +1,10 @@
+//! Finite retained-half projection, reconstruction, budget and replay witnesses.
+//!
+//! A shared small-grid corpus checks vector and matrix forms against explicit half
+//! constructions and signed linear endpoint formulas. Separate cases cover limits
+//! of endpoint storage, source retention after failure and malformed JSON. Layout
+//! assertions measure inline object sizes, not total heap use or performance.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -8,6 +15,14 @@ use hyperlattice_interval::{
     IntervalArithmetic, IntervalMatrix, IntervalVector, MidpointRadiusMatrix, MidpointRadiusVector,
 };
 
+/// Check all 15^3 three-interval combinations with a backend-specific half oracle.
+///
+/// Scalar must construct exact inclusive integer bounds; half returns the expected
+/// outward enclosure of n/2. Each operation gets fresh context. Vector and 2-by-3
+/// matrix projections match those halves; exact reconstruction then feeds dot/matrix
+/// products with weights (1,-1,2) and literal signed endpoint expectations. Empty and
+/// both zero-dimension matrix shapes remain distinct from units. Inline wrapper/source
+/// size equality is asserted for these monomorphizations, not heap or cost equivalence.
 fn corpus<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     scalar: impl Fn(i32, i32) -> I,
     half: impl Fn(i32) -> I,
@@ -132,9 +147,14 @@ fn corpus<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Check both signed integer-grid families with directed half-step expectations.
+/// An additional full-range i64/63 source has an unprojectable signed radius, but its
+/// midpoint enclosure succeeds and reconstruction preserves the u64::MAX exact width.
 fn fixed_decomposition_and_reconstruction() {
     use hyperlattice_interval::IntervalLatticeError;
     use hyperlattice_interval::hyperinterval::{FixedInterval, IntervalError};
+    /// Instantiate integer-grid tests with floor/ceiling halves, including negative odd numerators.
+    /// The callback uses Euclidean division and a one-unit upper adjustment for odd inputs.
     macro_rules! family {
         ($i:ty) => {{
             let scalar = |a, b| <$i>::new(a as _, b as _).unwrap();
@@ -147,6 +167,7 @@ fn fixed_decomposition_and_reconstruction() {
     }
     family!(FixedInterval<i32,0>);
     family!(FixedInterval<i64,0>);
+    /// Signed 64-bit endpoint grid with 63 fractional bits, including unrepresentable exact halves.
     type I = FixedInterval<i64, 63>;
     let source = IntervalVector::new([I::new(i64::MIN, i64::MAX).unwrap()]).unwrap();
     let form = source.midpoint_radius();
@@ -168,6 +189,9 @@ fn fixed_decomposition_and_reconstruction() {
 
 #[cfg(feature = "rational")]
 #[test]
+/// Run the finite rational corpus with expected halves constructed by exact division by two.
+/// The oracle uses scalar interval division rather than either midpoint/radius method;
+/// no work or allocation bound is supplied by the unit context.
 fn rational_decomposition_and_reconstruction() {
     use hyperlattice_interval::hyperinterval::RationalInterval as I;
     // Integer numerator divided by exact two, independently constructed.
@@ -180,6 +204,13 @@ fn rational_decomposition_and_reconstruction() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Check exact dyadic halves, finest-grid outward projections and shared-budget failures.
+/// The corpus uses exponent -1 to construct expected n/2 values. A separate matrix at
+/// extreme scales measures each projection's work: exactly that allowance succeeds,
+/// one less fails, and a one-bit cap reports SizeExhausted. Its expected output comes
+/// from the initial projection, so this portion tests admission/retry rather than an
+/// independent geometry oracle. Source reconstruction and zero-budget empty/unit queries
+/// remain valid. Fresh ordinary contexts allow 256 bits and 1,000,000 work units.
 fn dyadic_decomposition_and_reconstruction() {
     use hyperlattice_interval::IntervalLatticeError;
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I, IntervalError};
@@ -255,8 +286,14 @@ fn dyadic_decomposition_and_reconstruction() {
 
 #[cfg(all(feature = "float-enclosure", target_arch = "x86_64"))]
 #[test]
+/// On x86_64, check both IEEE families using exactly representable small half-integers.
+/// Additional lanes require an enclosure for half a subnormal and preserve the maximum
+/// finite radius of the full symmetric span. Reconstruction retains the original bounds.
+/// This cfg-gated test supplies no execution evidence for other qualified architectures.
 fn float_decomposition_and_reconstruction() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+    /// Instantiate one IEEE precision's half-integer corpus and subnormal/extreme-span checks.
+    /// The small n*0.5 oracle is exactly representable; the tiny case intentionally is not a point.
     macro_rules! family {
         ($i:ty,$f:ty) => {{
             corpus(
@@ -285,14 +322,21 @@ fn float_decomposition_and_reconstruction() {
 
 #[cfg(all(feature = "fixed", feature = "serde"))]
 #[test]
+/// Round-trip 33 lanes using the source encoding and reject malformed retained definitions.
+/// The form must serialize exactly like its source. Bad vector/matrix dimensions,
+/// endpoint order, scalar types and invalid fixed scales reject, including zero-dimensional
+/// empty/unit encodings. A valid empty lane canonicalizes the form to JSON null.
+/// This is same-process validation; the separate subprocess fixture covers fresh replay.
 fn replay_checks_shape_scale_and_source_order() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
+    /// Signed 64-bit endpoint grid with 63 fractional bits, including unrepresentable exact halves.
     type I = FixedInterval<i64, 63>;
     let source = IntervalVector::new([I::new(0, 1).unwrap(); 33]).unwrap();
     let text = serde_json::to_string(&source.midpoint_radius()).unwrap();
     assert_eq!(text, serde_json::to_string(&source).unwrap());
     let replay: MidpointRadiusVector<I, 33> = serde_json::from_str(&text).unwrap();
     assert_eq!(replay.into_intervals(), source);
+    /// One-lane retained vector used to reject wrong lengths, scalars and endpoint order.
     type V = MidpointRadiusVector<I, 1>;
     for bad in ["[]", "[[0,1],[0,1]]", "[[1,0]]", "[[0]]", "[true]"] {
         assert!(serde_json::from_str::<V>(bad).is_err(), "{bad}");
@@ -301,6 +345,7 @@ fn replay_checks_shape_scale_and_source_order() {
     assert!(
         serde_json::from_str::<MidpointRadiusVector<FixedInterval<i64, 64>, 0>>("null").is_err()
     );
+    /// Two-row, one-column retained matrix used to reject malformed nested arrays.
     type M = MidpointRadiusMatrix<I, 2, 1>;
     for bad in [
         "[]",
