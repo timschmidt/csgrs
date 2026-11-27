@@ -1,5 +1,13 @@
+//! Finite branch, scaling, replay, and oracle regressions for complex atanh.
+//!
+//! Exact axis/error assertions are separate from bounded interval comparisons.
+//! The independent-formula oracle has documented MPFR rounding gaps; passing it
+//! is not a universal certified-enclosure or exact-equality proof. Test names do
+//! not establish exhaustive scalar coverage or fresh-process replay.
+
 use hyperlattice::{Complex, Problem, Rational, Real, RealSign};
 
+/// Check selected real/imaginary axis identities structurally, Infinity at exact ±1, and NotANumber at exact ±2; real scalar methods supply the axis expectations.
 #[test]
 fn axes_and_principal_cuts_have_explicit_semantics() {
     for x in [
@@ -31,13 +39,17 @@ fn axes_and_principal_cuts_have_explicit_semantics() {
     }
 }
 
+/// Shared thread-local MPFR cache cleanup; used by the two independent-reference tests.
 #[path = "../../hyperreal/tests/support/mpfr.rs"]
 mod mpfr;
+/// Local-series/reciprocal reference with documented radius/tail rounding limitations; also consumed by a benchmark.
 #[path = "support/complex_atanh_oracle.rs"]
 mod oracle;
+/// Shared finite labeled scalar recipes; labels are not distinct private-tag assertions in this test.
 #[path = "../../hyperreal/tests/support/representations.rs"]
 mod representations;
 
+/// Compare nine small fixtures and ten large nonreal fixtures against the series/reciprocal reference, requiring overlap and narrow rounded widths rather than exact equality.
 #[test]
 fn independent_series_and_reciprocal_enclosures() {
     mpfr::cleanup_on_thread_exit();
@@ -53,6 +65,11 @@ fn independent_series_and_reciprocal_enclosures() {
     }
 }
 
+/// Visit the shared finite recipe list, assert each advertised public kind, then compare scaled values and reciprocals.
+///
+/// For each current recipe use small=v/(4*(v+1)), both real signs, and imaginary
+/// part small/2. The recipe list currently has 22 entries; this test does not assert
+/// its count or distinguish every private representation. Oracle limitations remain.
 #[test]
 fn every_scalar_family_reaches_the_independent_reference() {
     mpfr::cleanup_on_thread_exit();
@@ -72,6 +89,11 @@ fn every_scalar_family_reaches_the_independent_reference() {
     }
 }
 
+/// Require a certified difference enclosure at -bits-16 to lie within ±2^-bits.
+///
+/// Uses exact rational bounds and panics on unavailable enclosure or invalid
+/// arithmetic. This establishes the requested finite tolerance, not exact equality;
+/// callers supply positive small bits, and no overflow/work guard is added.
 fn close(a: &Real, b: &Real, bits: i32) {
     let [lo, hi] = (a - b).certified_rational_interval(-bits - 16).unwrap();
     let tolerance = Rational::fraction(1, 2).unwrap().powi(bits.into()).unwrap();
@@ -81,11 +103,17 @@ fn close(a: &Real, b: &Real, bits: i32) {
     );
 }
 
+/// Apply close to real then imaginary components using the same absolute tolerance; no relative-error or branch proof follows from closeness alone.
 fn complex_close(a: &Complex, b: &Complex, bits: i32) {
     close(&a.re, &b.re, bits);
     close(&a.im, &b.im, bits);
 }
 
+/// Build tanh(x+iy) from sinh(2x), sin(2y), and cosh(2x)+cos(2y).
+///
+/// This forward identity is distinct from the inverse implementation, but shares
+/// native Real arithmetic/transcendentals. All construction errors unwrap-panic;
+/// fixture selection, not this helper, excludes poles.
 fn forward_tanh(z: Complex) -> Complex {
     let twice_re = Real::from(2) * z.re;
     let twice_im = Real::from(2) * z.im;
@@ -96,6 +124,7 @@ fn forward_tanh(z: Complex) -> Complex {
     )
 }
 
+/// Check conjugation, oddness, and forward tanh within 2^-192 for five fixtures, plus an exact positive sign for pi/2-|Im(atanh(z))|.
 #[test]
 fn conjugation_parity_and_forward_composition_preserve_the_branch() {
     for (x, y) in [
@@ -122,6 +151,12 @@ fn conjugation_parity_and_forward_composition_preserve_the_branch() {
     }
 }
 
+/// Check scaled leading corrections near ±1 and the exterior cuts at ±2 from both imaginary signs.
+///
+/// Use delta=10^-40 and 10^-320. Normalize real corrections by delta^2 and imaginary
+/// corrections by delta, then require 2^-64 closeness to analytic coefficients.
+/// These finite asymptotic checks preserve the original hard cases but do not prove
+/// a uniform remainder bound or all branch-cut behavior.
 #[test]
 fn both_banks_and_tiny_pole_offsets_remain_distinct() {
     for text in ["1e-40", "1e-320"] {
@@ -165,6 +200,11 @@ fn both_banks_and_tiny_pole_offsets_remain_distinct() {
     }
 }
 
+/// Use opaque sin(e)^2+cos(e)^2-1 to reproduce unresolved zero sign and cut refusal.
+///
+/// Assert no immediate/refined sign, require Exhausted with real part two, and
+/// compare two cut-free interior/imaginary-axis constructions within 2^-192.
+/// The fixture is mathematically zero; unavailable sign knowledge is not nonzero.
 #[test]
 fn unknown_signs_are_not_silently_classified_as_cuts() {
     let zero = Real::e().sin().powi(2.into()).unwrap() + Real::e().cos().powi(2.into()).unwrap()
@@ -193,6 +233,12 @@ fn unknown_signs_are_not_silently_classified_as_cuts() {
     );
 }
 
+/// Exercise interval requests, cancellation/retry, and concurrent reads on two result components.
+///
+/// Require successive overlap in the 32→512→64→256 sequence, not nested intervals.
+/// Attach an already-set signal to a clone, require no -1024 enclosure, clear it,
+/// and compare within 2^-256. Four reader threads require available intervals only;
+/// they do not compare every reader's values or establish independent cold caches.
 #[test]
 fn precision_cancellation_and_concurrent_readers_preserve_values() {
     use std::sync::{
@@ -229,6 +275,11 @@ fn precision_cancellation_and_concurrent_readers_preserve_values() {
     }
 }
 
+/// Round-trip four result component pairs through JSON in the same process.
+///
+/// Require 2^-256 closeness and deterministic reserialization text. This does not
+/// establish exact value equality, fresh-process independence, or replay of the
+/// original complex input/operation and its branch-decision evidence.
 #[cfg(feature = "serde")]
 #[test]
 fn serialized_components_replay_the_selected_branch() {
@@ -246,6 +297,7 @@ fn serialized_components_replay_the_selected_branch() {
     }
 }
 
+/// Use cos(e)+i*sin(e), check imaginary output near pi/4 and forward composition near the input at 2^-192; no explicit unit-norm knowledge assertion is made.
 #[test]
 fn unit_circle_without_a_norm_zero_certificate_remains_admitted() {
     let angle = Real::e();
@@ -255,6 +307,7 @@ fn unit_circle_without_a_norm_zero_certificate_remains_admitted() {
     complex_close(&forward_tanh(value), &z, 192);
 }
 
+/// Check 10^-320 near-zero linear scaling and 10^320 far-field corrections for both imaginary signs, normalized before 2^-128 closeness comparisons.
 #[test]
 fn tiny_values_and_huge_reciprocal_corrections_are_not_erased() {
     let tiny: Real = "1e-320".parse().unwrap();

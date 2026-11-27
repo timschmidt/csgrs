@@ -1,16 +1,36 @@
+//! Principal complex elementary continuation over exact native Real expressions.
+//!
+//! The atanh path separates axis/domain decisions from logarithmic magnitude and
+//! quadrant-aware angle construction. It delegates scalar decisions and failures
+//! to Hyperreal; it does not fit, sample, or round authoritative complex values.
+
 use super::Complex;
 use crate::{BlasResult, Problem, Real, RealSign};
 
 impl Complex {
-    /// Principal inverse hyperbolic tangent off the real cuts `(-∞,-1]`
-    /// and `[1,∞)`. Components remain exact native [`Real`] expressions.
+    /// Principal inverse hyperbolic tangent off the real cuts `(-∞,-1]` and `[1,∞)`.
     ///
-    /// The real interval `(-1,1)` reuses [`Real::atanh`]. The endpoints
-    /// return [`Problem::Infinity`]; other points on a cut return
-    /// [`Problem::NotANumber`]. This API does not choose a bank of a cut
-    /// from a signed-zero convention. Undecided cut membership returns
-    /// [`Problem::Exhausted`]. Native precision and cancellation contracts
-    /// apply; no total-work or retained-heap bound is added.
+    /// Components remain exact native [`Real`] expressions. For z=x+iy, put
+    /// L=(1-x)^2+y^2 and U=(1+x)^2+y^2. The general result is
+    /// `ln(U/L)/4 + i*atan2(2y, 1-x^2-y^2)/2`, derived from the
+    /// [principal logarithmic definition](https://dlmf.nist.gov/4.37.E24).
+    /// An immediately known nonnegative x uses ln_1p(4x/L); negative x uses
+    /// -ln_1p(-4x/U). Unknown x keeps ln(U/L), without refining merely to select
+    /// the stable form. The angle uses the native difference-of-products constructor.
+    ///
+    /// Axis checks precede sign refinement: definitely-zero imaginary part delegates
+    /// to real atanh, then definitely-zero real part gives i*atan(y). Otherwise query
+    /// the imaginary sign at [`Real::PARTIAL_CMP_MIN_PRECISION`]. A certified zero
+    /// delegates to the real path. If the sign is unresolved, a proved positive
+    /// 1-x^2 still admits the input inside the cut-free real strip; otherwise return
+    /// [`Problem::Exhausted`]. Subsequent scalar log/division/atan2 failures propagate.
+    ///
+    /// The real interval `(-1,1)` uses [`Real::atanh`]. Certified endpoints return
+    /// [`Problem::Infinity`]; certified exterior real cut points return
+    /// [`Problem::NotANumber`]. No signed-zero convention chooses a bank of a cut.
+    /// Undecided branch decisions remain typed failures, not guessed zero signs.
+    /// The scalar precision/cancellation contract applies; no total-work, retained-heap,
+    /// wall-time bound, predicate-policy argument, or separate certainty receipt is added.
     pub fn atanh(self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_complex", "method", "atanh");
         if self.im.definitely_zero() {

@@ -8503,6 +8503,138 @@ These are temporary review artifacts, not a durable performance archive. The
 remaining complex continuation files, other library implementations/tests,
 benchmarks/support material, and most of the wider repository remain open.
 
+## Hyperlattice complex atanh and reference qualifications (27 November 2026)
+
+Whole-file review at `3ce14924b` covered `crates/hyperlattice/src/complex/elementary.rs`
+(61 → 81 lines), `tests/complex_atanh.rs` (279 → 332), and
+`tests/support/complex_atanh_oracle.rs` (227 → 300), with test paths relative to
+Hyperlattice. Documented the public operation and module role, all 16 test-file
+declarations (including ten tests, three helpers, and three imported modules),
+and all 21 oracle declarations, two named fields, and two tuple fields. The
+oracle's three impl blocks for Interval share mathematical authority; no helper,
+formula, assertion, precision, fixture, or execution order was changed.
+
+Owning layers: exact complex continuation over Hyperreal, and test/benchmark
+reference qualification. Relevant contracts are P1/P3 (exact construction and
+honest knowledge), P4 (refinement/cancellation observations), P5/P6 (resource scope
+and typed domain failures), P7 (stable scalar forms), P9 (scope of certainty),
+and P36/P37 (completed-workload evidence and coverage). The operation domain is
+native Real pairs with branch decisions sufficient to exclude the real cuts.
+The reference has a smaller local/reciprocal rectangle domain. Missing private
+docs, incomplete branch descriptions, and an overstated reference-enclosure claim
+were the acceptance gaps. All ten existing tests passed on the baseline, while
+bounded probes reproduced the reference rounding problem on that same revision.
+The root AGENTS.md public/private 100% Rustdoc mandate remains in force.
+
+Clarified operation and test contracts:
+
+- For z=x+iy, L=(1-x)^2+y^2 and U=(1+x)^2+y^2, the general result is
+  ln(U/L)/4 + i*atan2(2y,1-x^2-y^2)/2. The immediately known sign of x selects
+  ln_1p(4x/L), -ln_1p(-4x/U), or the exact quotient-log fallback. No extra sign
+  refinement is performed solely to choose that stable expression. The angle
+  uses the native difference-of-products constructor. This follows the
+  [NIST principal logarithmic definition](https://dlmf.nist.gov/4.37.E24).
+- Definitely-zero imaginary and real components select the real-atanh and
+  imaginary-atan paths before imaginary-sign refinement. An unresolved imaginary
+  sign still permits the strict strip 1-x^2>0 when that sign is certified; otherwise
+  it returns Exhausted. Certified real endpoints ±1 return Infinity and certified
+  exterior cut points return NotANumber. No signed-zero convention selects a cut
+  bank. Native failures propagate without a new policy, certainty receipt, or
+  total-work/retained-memory bound.
+- Existing tests separately cover axis identities/errors; nine small and ten large
+  oracle fixtures; the shared 22 labeled scalar recipes; conjugation, parity and
+  forward composition; tiny offsets at poles/cuts; unresolved zero knowledge;
+  cancellation/retry and reader availability; same-process JSON replay; an opaque
+  unit circle; and tiny/huge scaling. The recipe loop does not assert its count or
+  distinct private representation tags. Native forward formulas share scalar
+  machinery, and finite tolerance checks are not exact-equality proofs.
+- The cancellation test checks successive interval overlap, not nesting, in the
+  32→512→64→256 request sequence. It checks interval availability in four threads,
+  not equality between every reader. Serialization checks component closeness and
+  deterministic text in the same process; it is not fresh-process replay of the
+  originating complex operation and branch-decision evidence. Tiny-offset fixtures
+  compare normalized analytic leading coefficients, not a uniform remainder bound.
+- The oracle converts native -850 input enclosures to 768-bit MPFR endpoints.
+  Its local sum has 385 terms through z^769, with intended conservative tail
+  q^771/(1-q^2), where q must upper-bound the L1 radius. If the original computed
+  radius exceeds 3/4 it uses a reciprocal and requires the selected computed
+  radius <=3/4. Reciprocal continuation requires a strictly signed original
+  imaginary interval and adds the corresponding ±i*pi/2. These formulas agree
+  with the [NIST local series](https://dlmf.nist.gov/4.38.E5) and
+  [reciprocal series](https://dlmf.nist.gov/4.38.E6); formula validity does not
+  establish the implementation's rounding guarantees.
+
+Open reference-qualification finding, reproduced without changing implementation:
+
+- Pair::radius passes an already-computed owned Float sum to with_val_round(Up).
+  Rug 1.30.0 owned arithmetic uses nearest rounding; converting that value at the
+  same precision cannot recover a lost bit. At 768 bits, actual Pair components
+  exactly 1 and 2^-800 produce radius 1, strictly below their exact L1 sum. The
+  corresponding borrowed addition with upward rounding is strictly greater than 1.
+- The tail denominator similarly computes owned `1 - q2` before Down conversion.
+  For q2=2^-800, that expression returns 1, above the directed lower subtraction.
+  The final owned quotient likewise precedes Up conversion: at 768 bits, 1/11
+  rounds below the directly upward-rounded quotient. These are mechanism witnesses;
+  the latter two are not a demonstration that the full reference reaches those
+  exact intermediate values for its existing fixtures.
+- agrees_with computes nearest-rounded widths rather than certified upper widths.
+  It tests overlap and small widths, assuming valid ordered input rectangles. It
+  cannot by itself certify exact equality or repair earlier reference-bound gaps.
+- Both original reference comparisons exercised by the probe and all existing
+  tests still pass. No end-to-end erroneous atanh fixture result was demonstrated.
+  The universal certified-oracle claim is unsupported; the numerical kernel and
+  reference remain unchanged under the owner's docs-only scope. Future work must
+  repair directed arithmetic in the reference owner, preserve the hard fixtures,
+  and establish enclosure/tail evidence before treating benchmark or test overlap
+  as uniformly certified. This documentation is not that repair or qualification.
+
+Read the shared Hyperreal MPFR cleanup and representation recipe files, relevant
+scalar atanh/atan2 and rational sign/magnitude code, Rug's owned/borrowed arithmetic
+implementation, and the direct benchmark's oracle import as context. They receive
+no new whole-file completion credit in this batch. The remaining Jacobi child,
+benchmark implementation, and wider library/test corpus still require their own
+review. The previously incomplete elementary child now has whole-file credit.
+
+Validation after the documentation edits:
+
+- Focused Rustfmt and git diff --check passed. After removing documentation and
+  canonical Rustfmt normalization, all three files are identical to `3ce14924b`.
+  Normalization accounts for multiline tuple-field doc attributes/trailing commas;
+  executable expressions, assertions, fixtures, and literal messages are preserved.
+- Actual all-feature and no-default-feature library builds passed. Direct rustc
+  harnesses ran all ten original tests with serde and all nine without it against
+  their corresponding built libraries. A 60-second external process timeout
+  contained each harness. The bounded reference probe used a 20-second external
+  timeout and also checked negative-rational endpoint order and zero multiplication.
+  Before/after all-feature and no-default-feature probe stdout matched exactly.
+- Both feature configurations generated private library Rustdoc with warnings and
+  broken/private links denied. Explicit private test Rustdoc compiled under each
+  matching serde configuration. Complete text of 33 documentation groups plus
+  two tuple-field docs matched the rendered output across 32 HTML pages. The ten
+  test-function doc groups were source-reviewed; Rustdoc omits #[test] functions,
+  and the serde test is executed only when enabled. Linked source URLs are omitted
+  from HTML visible text, so the checker normalizes Markdown link destinations.
+- Cargo checks of the direct complex_atanh integration test and benchmark passed
+  with all features and no defaults; these were repeated after final test/oracle
+  wording edits. Hyperlimit downstream library checks passed in both configurations.
+  All Cargo work used --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared
+  target. The temporary direct harness selected serde_json from the matching
+  production Cargo artifact graph after an initial temporary dependency-feature
+  mismatch; no repository dependency or lockfile change was needed.
+- Full workflow checks remain owner-waived. No timing benchmark, exhaustive branch
+  proof, sanitizer, release-size comparison, or full repository suite ran. This is
+  a docs-only audit with an explicitly open oracle finding, not a performance or
+  universal complex-transcendental correctness claim.
+- Removed the two temporary test/probe executables after validation. The shared
+  Cargo target is approximately 2.5 GiB; no duplicate target tree was introduced.
+
+Evidence: `/tmp/csgrs-rustdoc-atanh-{before,after,build,doc,render,consumers,downstream}.log`,
+`/tmp/csgrs-rustdoc-atanh-minimal-{build,test,doc,render,consumers,downstream}.log`,
+corresponding Cargo artifact JSON, and `/tmp/csgrs-atanh-audit/` contain temporary
+probes/checkers and generated private test docs. Temporary artifacts are review
+evidence, not a durable performance archive. Most of the repository audit remains
+open; declarations counted here do not establish overall 100% coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
