@@ -12267,6 +12267,100 @@ and report files still need review. Repository-wide private-item coverage and th
 previously recorded generated-item gaps remain open; this is not completion of the
 overall audit.
 
+## Hyperlattice mathbench curated report writer (2026-11-27)
+
+Base: `8e72bacbfda5cac03eeea61740668fbfe333c0b3`. Whole-file review of
+`crates/hyperlattice/benches/mathbench/report.rs`, all 1045 original lines
+(1179 after documentation). The owning layer is benchmark result collection and
+presentation, not scalar or geometric decision authority. Relevant contracts are
+P5 work/memory disclosure, P6 actual failure handling, P9 evidence qualification,
+P10 measurement interpretation and the admission protocol's same-completed-contract
+requirement for performance claims. No implementation, benchmark data, fixture,
+policy, output string or predicate order changes.
+
+Reproduced witness: twenty-three authored groups lacked Rustdoc; the existing
+criterion_dir comment did not fully specify environment, ancestry and fallback
+behavior. Baseline all-features mathbench compilation passed. Now twenty-four groups
+cover the row carrier, three fields, seven catalogs and thirteen functions including
+local visit. Read selected case builders, registration names, driver calls and the
+shared report writer as context without claiming whole-file review of those files.
+
+Contracts clarified:
+
+- Catalogs are curated presentation lists, not complete registration or support
+  inventories. Static counts are 41 scalar, 19 complex, 1 varying complex, 3 vector
+  comparisons, 25 vector API, 8 matrix comparisons and 40 matrix API descriptors.
+  Dynamic lists add 36 trig/inverse, two sets of 12 hyperbolic and 60 borrowed rows:
+  257 descriptors in eleven tables. Native/external omissions and naming differences
+  do not disappear merely because their values share a report row.
+- Dynamic builders use Box::leak for title/id strings: 72 for trig, 48 across the
+  two hyperbolic lists and 104 for borrowed rows, totaling 224 strings per full
+  render with current lists. Dropping vectors/document text does not reclaim them.
+  This is a source allocation count, not a measured heap-byte or peak-memory claim.
+- Lookup tries four ordered, independently normalized historical keys. Slash and
+  underscore encodings can collide; no ambiguity, freshness, run metadata or numeric
+  contract is checked. Native labels prefer hyperreal variants over realistic
+  aliases. Ratios divide native dyadic by external medians; larger-than-one means
+  a larger native estimate, with no significance or confidence-interval calculation.
+- Directory selection honors CRITERION_HOME verbatim, then CARGO_TARGET_DIR/criterion,
+  then the nearest executable ancestor with criterion, then cwd-relative target/criterion.
+  Recursive collection only reads new/estimates.json medians. Bad/unreadable data is
+  silently skipped, negative numeric values are not rejected, lossy path keys may
+  collide, and filesystem traversal order is not stabilized. Directory symlinks
+  are followed without cycle/depth/work guards; files are read whole.
+- Duration thresholds precede rounding, with ns/us/ms and no seconds branch.
+  Missing values and zero-denominator ratios become dashes; other negative/nonfinite
+  formatter inputs are not validated. Titles are inserted into Markdown unescaped.
+- The generated prose contains a hard-coded Ryzen/Fedora attribution and broad
+  input/workload claims. They are not derived from map contents or host inspection;
+  report generation cannot establish their accuracy or complete numerical work.
+  These preexisting output strings remain unchanged in this docs-only batch.
+- The local updater honors either skip variable even empty and exact --test/--list/
+  --help tokens, without requiring --bench. Empty collection preserves the old file;
+  any nonempty map triggers a direct full overwrite of cwd/benchmarks.md. Write
+  failure logs and returns unit; partial output and silent partial-data replacement
+  remain possible. The shared writer has a separate gate and crate-root destination.
+
+Validation after final edits:
+
+- Focused Rustfmt and git diff --check passed. Every noncomment executable token
+  is unchanged; comparison against formatted baseline also passed. Only attached
+  Rustdoc changed, including expansion of the prior directory comment.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 and incremental compilation disabled. Warnings and broken/private
+  links were denied. Source-hash-specific empty headers forced fresh doc generation.
+  Twenty-three groups rendered in full on twenty pages; local visit was verified
+  in source because Rustdoc does not emit its own private item page.
+- Catalog/source checks and executable assertions verify all static/dynamic lengths,
+  257 data rows and eleven table headers. The initial count check rejected a draft
+  arithmetic error (357 rather than 257); corrected the documentation and reran.
+- Compiled standalone original/final report sources with the actual shared case
+  builders, serde_json, warnings denied and 30-second external per-process timeouts.
+  Independent assertions covered ordered key precedence and collisions, missing/
+  signed-zero/negative/NaN formatting, threshold rounding, native alias precedence,
+  unescaped labels, environment precedence (including empty/relative values),
+  executable-ancestor/fallback selection, malformed/wrong-field/wrong-type JSON,
+  ignored base estimates, negative medians and a controlled directory symlink.
+- Temporary writer probes covered both skip variables, all three exact skip flags,
+  empty/missing-data preservation, full replacement without --bench, partial-data
+  acceptance and logged write failure without a failing process status. Original
+  and final outputs were byte-identical: empty-map document 19277 bytes, SHA-256
+  836ff1c2ad1969366bda3011f0e386c603b85785030156f745b70231fa9890f5;
+  synthetic populated document 19295 bytes, SHA-256
+  e13c891c1cf14d6108efaee02121a9d9eb5c84f0d1caff291c413c474fc3bafe.
+- All writes stayed in the owned temporary probe directory. No tracked report,
+  Criterion timing workload or external numeric engine ran. Cyclic/unbounded
+  traversal was disclosed from source, not deliberately triggered. Full workflows
+  remain owner-waived; no focused check remains blocked. Probe binaries were removed;
+  retained scripts/fixtures/reports use about 292 KiB and the shared target about
+  2.8 GiB after building the small standalone probe dependency set.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-report-*` baseline/check/doc/render/probe logs
+and `/tmp/csgrs-lattice-report-audit/` commands, sources, fixtures and before/after
+reports. This file now has a whole-file record. Remaining mathbench engine, matrix
+and comparison files need review. Repository-wide coverage, nested-item rendering
+limitations and previously recorded generated-item gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

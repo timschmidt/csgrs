@@ -1,10 +1,25 @@
+/// One curated report row, identifying estimates without proving workload equivalence.
+///
+/// The table renderer combines group/id with fixed backend labels and legacy key
+/// aliases. These static references can point to literals or intentionally leaked
+/// generated strings; copying a row does not copy or reclaim those strings.
 #[derive(Clone, Copy)]
 struct BenchRow {
+    /// Display label inserted verbatim in a Markdown code span, without escaping.
     title: &'static str,
+    /// Criterion group prefix used for estimate lookup, not a validated suite name.
     group: &'static str,
+    /// Backend-independent operation suffix interpreted by the lookup heuristics.
     id: &'static str,
 }
 
+/// Builds thirty-six trig/inverse report rows from the shared case names, in order.
+///
+/// Expands six trig cases into sin/cos, four unit cases into asin/acos/atanh,
+/// four real cases into atan/asinh, and four acosh cases into acosh. Titles use
+/// operation then case; lookup IDs use case_operation. Case values are not checked
+/// or evaluated here. Every call leaks two allocated strings per row to satisfy
+/// BenchRow's static references, so dropping the returned vector cannot reclaim them.
 fn scalar_trig_rows() -> Vec<BenchRow> {
     let mut rows = Vec::new();
     for case in trig_cases() {
@@ -44,6 +59,12 @@ fn scalar_trig_rows() -> Vec<BenchRow> {
     rows
 }
 
+/// Builds twelve operation/case rows for the supplied group without validating it.
+///
+/// Orders half, negative_tiny, positive_20 and negative_20, each with sinh/cosh/tanh.
+/// The renderer uses this for both construction and explicit-f64 groups; identical
+/// IDs do not imply identical output contracts. Two strings per row are leaked on
+/// each call, independently of whether any corresponding estimate exists.
 fn scalar_hyperbolic_case_rows(group: &'static str) -> Vec<BenchRow> {
     let mut rows = Vec::new();
     for case in ["half", "negative_tiny", "positive_20", "negative_20"] {
@@ -58,6 +79,13 @@ fn scalar_hyperbolic_case_rows(group: &'static str) -> Vec<BenchRow> {
     rows
 }
 
+/// Builds the sixty curated borrowed-operation rows in benchmark registration order.
+///
+/// Includes twenty scalar mixes, fourteen vector and eighteen matrix operations,
+/// two matrix-vector products and six complex rows. Names match the registration
+/// schedule but do not certify equal native/external ownership or timing boundaries.
+/// The first fifty-two rows each leak separate title/id strings; the final eight
+/// reuse literals. Repeated rendering retains those allocations for process lifetime.
 fn borrowed_op_rows() -> Vec<BenchRow> {
     let mut rows = Vec::new();
     for op in ["add", "sub", "mul", "div"] {
@@ -136,6 +164,11 @@ fn borrowed_op_rows() -> Vec<BenchRow> {
     rows
 }
 
+/// Forty-one selected scalar rows, including exp_128 from a separate group.
+///
+/// Includes external-only zero_status_abort but omits powi_negative_one and the
+/// dedicated sqrt-case group. This is a presentation catalog, not complete native
+/// API coverage or proof that every backend supplies every cell.
 const SCALAR_OP_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "zero",
@@ -344,6 +377,9 @@ const SCALAR_OP_ROWS: &[BenchRow] = &[
     },
 ];
 
+/// Nineteen selected complex rows, omitting both negative-one power registrations.
+///
+/// Checked labels are retained as lookup names without asserting equal backend guards.
 const COMPLEX_OP_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "zero",
@@ -442,12 +478,14 @@ const COMPLEX_OP_ROWS: &[BenchRow] = &[
     },
 ];
 
+/// Single varying-input complex multiplication row; the label is not a cold-cache proof.
 const COMPLEX_MUL_COLD_ROWS: &[BenchRow] = &[BenchRow {
     title: "varying exact inputs",
     group: "complex_mul_cold",
     id: "varying",
 }];
 
+/// Three baseline Vec3 comparison rows from the separate vectors group.
 const VECTOR_COMPARISON_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "vec3 dot",
@@ -466,6 +504,10 @@ const VECTOR_COMPARISON_ROWS: &[BenchRow] = &[
     },
 ];
 
+/// Twenty-five vector API rows, omitting the six native sparse/active-dot rows.
+///
+/// Keeps fifteen Vec3 and ten Vec4 names in presentation order; checked/abort
+/// names do not establish matching output types, guards or signals across engines.
 const VECTOR_OP_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "vec3 new",
@@ -594,6 +636,10 @@ const VECTOR_OP_ROWS: &[BenchRow] = &[
     },
 ];
 
+/// Eight baseline matrix comparisons: determinant, inverse, product and transform per size.
+///
+/// Looks in matrix3/matrix4; specialized transform/fact and targeted-form rows are
+/// not inferred from this catalog or from matching backend labels.
 const MATRIX_COMPARISON_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "mat3 determinant",
@@ -637,6 +683,10 @@ const MATRIX_COMPARISON_ROWS: &[BenchRow] = &[
     },
 ];
 
+/// Forty curated matrix API rows: twenty-four Mat3 and sixteen Mat4 entries.
+///
+/// Deliberately separate from baseline matrix comparisons; this static list is
+/// not an inventory of all current registrations or a qualification of their results.
 const MATRIX_OP_ROWS: &[BenchRow] = &[
     BenchRow {
         title: "mat3 new",
@@ -840,10 +890,20 @@ const MATRIX_OP_ROWS: &[BenchRow] = &[
     },
 ];
 
+/// Forms group/variant_id after replacing only forward slashes in id with underscores.
+///
+/// Group/variant text, spaces and existing underscores are unchanged. The mapping
+/// is lossy (a/b and a_b collide) and is a lookup convention, not path sanitization.
 fn estimate_key(group: &str, variant: &str, id: &str) -> String {
     format!("{group}/{}_{}", variant, id.replace('/', "_"))
 }
 
+/// Returns the first stored value found by four ordered historical key conventions.
+///
+/// Tries slash-flattened id, literal id, space-to-underscore id, then a nested
+/// group/variant/id with every id underscore changed to a slash. Replacements are
+/// independent, not cumulative; duplicate candidates are allowed. No ambiguity,
+/// provenance, freshness, unit, sign or finiteness validation accompanies a match.
 fn estimate_value(
     estimates: &BTreeMap<String, f64>,
     group: &str,
@@ -860,9 +920,14 @@ fn estimate_value(
     .find_map(|key| estimates.get(&key).copied())
 }
 
-/// Criterion's output directory: `$CRITERION_HOME`, `$CARGO_TARGET_DIR/criterion`, or the
-/// `criterion` directory beside the target this bench binary was built in
-/// (the workspace target in a monorepo).
+/// Chooses the stored-estimate root from environment, executable ancestry or cwd.
+///
+/// CRITERION_HOME wins verbatim, even if empty or nonexistent. Otherwise
+/// CARGO_TARGET_DIR is joined with criterion without existence checks. With neither
+/// set, uses the nearest executable ancestor containing a criterion directory;
+/// inability to obtain the executable or find such an ancestor falls back to
+/// relative target/criterion. Relative environment paths use the process cwd in
+/// later I/O. No canonicalization, crate-root anchoring or directory creation occurs.
 fn criterion_dir() -> std::path::PathBuf {
     if let Some(home) = std::env::var_os("CRITERION_HOME") {
         return std::path::PathBuf::from(home);
@@ -881,7 +946,26 @@ fn criterion_dir() -> std::path::PathBuf {
     }
 }
 
+/// Collects stored median point estimates from recursive new/estimates.json files.
+///
+/// Uses criterion_dir and keys each value by its benchmark directory relative to
+/// that root, with lossy Unicode components joined by forward slashes. Does not read
+/// benchmark metadata, confidence intervals, sample counts or run timestamps.
+/// Unreadable directories/files, bad JSON and missing/non-numeric median estimates
+/// are silently skipped; an empty map cannot distinguish absent data from errors.
+/// Numeric values are accepted without positivity or unit checks. Key collisions
+/// overwrite in filesystem traversal order; the resulting map itself is sorted.
+///
+/// Traversal follows directory symlinks with no cycle detection, depth/work limit
+/// or cancellation. Files are read whole and retained entries are unbounded here.
 fn read_estimates() -> BTreeMap<String, f64> {
+    /// Recurses from path, inserting readable numeric median estimates under root-relative keys.
+    ///
+    /// Directory/entry/read/parse failures are ignored. is_dir follows symlinks;
+    /// there is no visited-set or recursion guard. Only files named estimates.json
+    /// immediately inside a directory named new qualify, and the containing bench
+    /// directory must strip root as a prefix. Lossy-key collisions keep the last
+    /// visited value, with no stable traversal-order guarantee or finite/sign check.
     fn visit(root: &Path, path: &Path, out: &mut BTreeMap<String, f64>) {
         let Ok(entries) = fs::read_dir(path) else {
             return;
@@ -931,6 +1015,11 @@ fn read_estimates() -> BTreeMap<String, f64> {
     estimates
 }
 
+/// Formats an optional assumed nanosecond estimate with two fractional digits.
+///
+/// None becomes a dash. Values below 1000 use ns, below one million use us, and
+/// everything else uses ms; there is no seconds branch. Thresholds precede rounding,
+/// and negative/nonfinite values are not rejected or clamped.
 fn format_duration(ns: Option<f64>) -> String {
     let Some(ns) = ns else {
         return "-".to_string();
@@ -944,6 +1033,12 @@ fn format_duration(ns: Option<f64>) -> String {
     }
 }
 
+/// Formats numerator/denominator to two fractional digits followed by x.
+///
+/// Missing operands or a denominator equal to either signed zero produce a dash.
+/// Negative and nonfinite inputs otherwise use ordinary f64 arithmetic/formatting.
+/// For report medians, ratios above one mean the numerator took longer; no confidence
+/// interval or statistical significance accompanies this point-estimate ratio.
 fn format_ratio(numerator: Option<f64>, denominator: Option<f64>) -> String {
     match (numerator, denominator) {
         (Some(numerator), Some(denominator)) if denominator != 0.0 => {
@@ -953,6 +1048,16 @@ fn format_ratio(numerator: Option<f64>, denominator: Option<f64>) -> String {
     }
 }
 
+/// Renders rows in supplied order into a five-backend Markdown timing table.
+///
+/// Native columns prefer hyperreal/hyperreal-rational keys, falling back to legacy
+/// realistic/realistic-rational only when the preferred lookup finds no value.
+/// External columns use numerica128, gmp_mpfr128 and symbolica. The last three
+/// columns divide the native dyadic median by each external median; ratios above
+/// one indicate a larger native estimate. Missing values display as dashes and values use
+/// the duration/ratio formatters without statistical or workload validation.
+/// Titles are inserted unescaped in code spans. This performs no I/O or benchmarks;
+/// matching keys/headers alone do not certify input fidelity or equivalent work.
 fn render_table(estimates: &BTreeMap<String, f64>, rows: &[BenchRow]) -> String {
     let mut out = String::new();
     out.push_str("| Benchmark | Hyperreal exact dyadic input | Hyperreal explicit exact rational | numerica128 | GMP/MPFR 128 | symbolica | Exact dyadic / numerica128 | Exact dyadic / GMP | Exact dyadic / symbolica |\n");
@@ -981,6 +1086,19 @@ fn render_table(estimates: &BTreeMap<String, f64>, rows: &[BenchRow]) -> String 
     out
 }
 
+/// Builds the legacy curated Markdown document from supplied stored estimates.
+///
+/// Emits eleven ordered tables containing 257 row descriptors with current case
+/// lists, including missing cells; unlisted estimates are ignored. It does not
+/// read files, run benchmarks, verify data freshness or establish complete coverage.
+/// The fixed prose includes a Ryzen/Fedora attribution and general workload/input
+/// claims that are not derived from the supplied map or checked against the host.
+/// Those strings must not be treated as per-run provenance or completion evidence.
+///
+/// Calls the dynamic row builders, which together leak 224 generated title/id
+/// strings per render with the current lists. The returned document is ordinary
+/// owned text; dropping it does not reclaim those static row strings. No output
+/// size/work limit or Markdown escaping is added here.
 fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     let mut out = String::new();
     out.push_str(
@@ -1026,6 +1144,22 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out
 }
 
+/// Optionally overwrites cwd/benchmarks.md from stored estimates, logging write failure.
+///
+/// Returns before reading data if either HYPERLATTICE_SKIP_BENCHMARK_REPORTS or
+/// REALISTIC_BLAS_SKIP_BENCHMARK_DOC_UPDATE exists, even empty, or argv contains an
+/// exact --test/--list/--help token. No --bench token is required. Argument parsing
+/// is just string comparison; non-Unicode argv can panic through std::env::args.
+/// If collection yields no estimates, leaves any existing document untouched.
+/// Otherwise renders the curated document and directly truncates/writes the cwd
+/// file, without reading/preserving its old contents, atomic replacement or writer
+/// coordination. A failed write is printed to stderr and does not propagate as a
+/// return value; partial output is possible. Traversal errors can silently produce
+/// a partial nonempty map that still triggers a full replacement.
+///
+/// This is separate from the shared benchmark_report writer, which targets the
+/// crate's generated section and uses a different argv gate. They coincide in
+/// destination only when cwd is the crate directory. No benchmarks run here.
 fn update_benchmarks_doc() {
     if std::env::var_os("HYPERLATTICE_SKIP_BENCHMARK_REPORTS").is_some()
         || std::env::var_os("REALISTIC_BLAS_SKIP_BENCHMARK_DOC_UPDATE").is_some()
