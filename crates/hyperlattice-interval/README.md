@@ -35,6 +35,13 @@ accounting. `rational` enables Hyperreal, std and its Rust 1.95 requirement.
 including std and the same Rust 1.95 requirement.
 `serde` validates scalar endpoints, dimensions and fixed scales on replay.
 
+Generate public and private API documentation with
+`cargo doc -p hyperlattice-interval --all-features --no-deps --document-private-items`
+on a compiler meeting all selected features' requirements. For the primitive
+Rust 1.88 path, select `--no-default-features --features fixed` instead of
+`--all-features`. The [crate root](src/lib.rs) explains the carrier relationships,
+backend contexts and typed errors; private helpers remain part of the documented API.
+
 The affine image example carries one shared parameter through two maps and
 checks the exact relation `2x − y = −1`. Run it with
 `cargo run -p hyperlattice-interval --features fixed --example affine_image`.
@@ -42,11 +49,14 @@ checks the exact relation `2x − y = −1`. Run it with
 Measure native all-feature library and integration test coverage with
 `python3 scripts/interval_coverage.py --package hyperlattice-interval` from
 the workspace root. Install the active compiler's `llvm-tools-preview`.
-For branch counts, use nightly with `RUSTFLAGS=-Zcoverage-options=branch`.
-The report separates the test-only module from production sources and writes
+For branch counts, use nightly with `RUSTFLAGS=-Zcoverage-options=branch` when
+`CARGO_ENCODED_RUSTFLAGS` is unset; otherwise add the option to the encoded flags.
+The report separates the named test-only module from production sources and writes
 per-file counts and uncovered code under the Cargo target directory. Use a
 separate `CARGO_TARGET_DIR` for each checkout so LLVM's source paths match
-the revision being measured.
+the revision being measured. This measures native test execution, not Rustdoc
+coverage or all configurations. Zero branch counts mean unmeasured. A written
+`summary.json` can accompany a failing run; check the exit status and diagnostics.
 
 The `float-enclosure-aarch64-linux-gnu` feature enables strict scalar and
 Cartesian floating-point enclosures on little-endian LP64 AArch64 GNU/Linux.
@@ -69,8 +79,9 @@ inclusion, sums/differences, dot products, matrix products, affine enclosures,
 transpose and checked row/column projections. Vector and matrix one/infinity
 norms include lower and upper bounds. Square matrices also supply logarithmic
 one/infinity measures (with signed diagonals) and row/column diagonal-dominance
-margin vectors. These supply interval evidence for downstream decisions. All loops have dimension bounds;
-inline storage and stack use grow with those dimensions. Scalar overflow and
+margin vectors. These supply interval evidence for downstream decisions. Cartesian
+loops are bounded by dimensions; retained affine definitions also scale with map
+depth or capacity. Inline storage and stack use grow accordingly. Scalar overflow and
 resource errors propagate; no partial result is returned. Rational operations,
 explicit clones and serialization have no total-work or heap bound.
 
@@ -92,6 +103,14 @@ precede or follow a chain. Replay checks every map and the receiving capacity.
 fixed widths and float widths that cannot fit a finite float. `widest_axis`
 compares exact widths and breaks ties by the lowest index. Empty boxes have no
 widths; the zero-dimensional unit has an empty width array and no axis.
+
+Dyadic vectors also provide `bisect_axis` for an exact closed midpoint partition
+and `regrid` for explicit outward grid transport. The two bisection children share
+their midpoint boundary. An empty source or singleton selected lane has no split;
+an invalid axis is rejected first. An unrepresentable exact half or exhausted
+budget returns an error rather than a rounded split. Regridding can enlarge the
+set and does not retain its original definition; both operations share the caller's
+dyadic budget.
 
 Jacobian carriers, broader authored-form composition and measured
 specializations remain under development in Phase 6 of the

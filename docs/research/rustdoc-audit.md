@@ -15440,6 +15440,113 @@ client now have whole-file review records across the four FOC batches; this does
 not imply complete coverage of its external dependencies or the repository.
 The remaining repository-wide source, support-file and documentation audit is open.
 
+## Hyperlattice interval README and native coverage helper (2026-11-27)
+
+Whole-file review on target revision f6c7721571fd7eb9180cbb41b6f7b231dbda9ab1:
+
+- crates/hyperlattice-interval/README.md (137 -> 156 lines).
+- scripts/interval_coverage.py (120 -> 159 lines).
+- The crate's unchanged CHANGELOG.md (36 lines), LICENSE-MIT (21 lines), and
+  LICENSE-APACHE (202 lines), including the Apache appendix and MIT attribution.
+  License terms/notices were retained verbatim; this is a file-review record,
+  not legal advice or a change of license.
+
+The owning layer is API orientation and native coverage evidence tooling.
+P5/P18/P20/P36/P37 and the admission protocol require preserved set semantics,
+resource qualifications and evidence matching the claimed scope. The helper's
+input is a trusted LLVM export for a selected native, all-feature package build;
+its counters are not a Rustdoc inventory. Baseline helper execution preceded
+editing. Missing comments covered both functions, production exclusions, source
+reconciliation, flags, profile cleanup and report failure semantics. The README
+needed discoverable private-doc commands and distinctions between documentation,
+execution coverage and unmeasured branches. Only comments and Markdown changed.
+
+Reviewed and documented:
+
+- The README now gives all-feature private Rustdoc generation and the primitive
+  fixed-only alternative for Rust 1.88, links the crate root, and retains the
+  executable quickstart unchanged. It distinguishes dimension-bounded Cartesian
+  loops from affine nesting/capacity, rather than describing every loop solely
+  by coordinate dimension.
+- Dyadic bisection retains two closed children sharing a midpoint boundary. Axis
+  validation precedes empty/singleton no-split outcomes; failure to represent an
+  exact half or obtain enough budget is not rounded success. Explicit regrid
+  can enlarge the set and does not retain a separate pre-rounding definition.
+  The README description was checked against the complete subdivision source;
+  affine/contraction/translated-source excerpts and prior qualification records
+  support the other carrier statements. Changelog entries remain unchanged.
+- Coverage selects native all-feature library/integration tests and exports
+  src/**/*.rs. It does not select examples, benches, doctests or independent
+  conformance manifests. TEST_MODULES is an explicit file-level subtraction from
+  production totals, not automatic removal of all cfg(test) items. Test-file
+  records remain visible and participate in source inventory validation.
+- summarize accepts missing src/lib.rs records, rejects other missing/extra or
+  outside-crate paths, and requires nonzero line/region/function denominators.
+  Zero branch counts remain unmeasured. A duplicate filename's last row wins;
+  this is not a merger of independent exports. LLVM's schema/counts are trusted,
+  and an exclusion name does not itself prove that a file was present.
+- Coverage flags append through CARGO_ENCODED_RUSTFLAGS when it exists, otherwise
+  ordinary RUSTFLAGS. The README now explains which channel must receive nightly
+  branch instrumentation. Profiles use process/module names; raw profiles are
+  cleaned through TemporaryDirectory, while reports, merged data and instrumented
+  target artifacts remain. No subprocess has an internal work/memory/time cap.
+- Merge diagnostics fail even after a successful merge. Export diagnostics also
+  fail, but summary.json is already written; its existence is not a pass signal.
+  Incomplete measured metrics generate uncovered.txt and a failing exit, whereas
+  unmeasured zero branches do not themselves fail the equality gate.
+
+Validation after the final edit:
+
+- Private cargo doc passed for the actual crate with all features on the active
+  compiler and fixed-only on Rust 1.88.0, with warnings and broken/private links
+  denied. The README's exact marked quickstart passed as an isolated, locked,
+  offline Rust 1.88 consumer with only the real fixed path dependency. Its exact
+  [-3,2] then [-6,4] assertions were unchanged. This is a source-path consumer,
+  not an unpacked-package release qualification.
+- A small temporary Rust fixture generated real instrumented LLVM profiles and
+  exports. The production summary was exactly two covered of three functions and
+  lines, six of nine regions, and zero/unmeasured branches; the separate test file
+  was excluded only from totals. Baseline/final summarize output was identical.
+  Additional export copies exercised four missing/extra/outside/zero-denominator
+  failures, duplicate replacement, optional root records and an absent exclusion.
+- The actual helper main ran against that temporary three-file fixture through
+  an explicit WORKSPACE override, using real Cargo tests and LLVM tools. Both
+  baseline/final uncovered runs exited unsuccessfully after writing summary.json
+  and uncovered.txt with identical file/production counters. A third fixture run
+  executed all three functions and succeeded while still printing branches as
+  unmeasured. Encoded flags took precedence over an intentionally unusable ordinary
+  RUSTFLAGS value. Raw profile directories were cleaned after every run. The
+  deliberate unused fixture function produced its expected compiler warning;
+  no repository warning was introduced or suppressed. These runs validate the
+  helper's reporting behavior, not actual production execution coverage.
+- Cargo Clippy with --no-deps, --all-features, --lib --tests --examples and
+  -D clippy::missing_docs_in_private_items passed for hyperlattice-interval.
+  This is one configuration and the lint's item scope, not a proof of every
+  generated/local Rustdoc block or semantic accuracy. Earlier item-level review
+  and rendering records remain necessary.
+- The initial Clippy invocation without --no-deps also scanned local dependencies
+  and failed on 1,798 missing-documentation errors in Hyperreal. Its raw diagnostics
+  and file-location inventory are retained as open repository audit work. The
+  crate-scoped pass does not supersede that broader failure. No lint configuration,
+  allow attribute, source implementation or coverage denominator was weakened.
+- Python AST and noncomment bytes are identical to baseline; compilation and
+  same-argv CLI help checks passed. A first help comparison used different-length
+  snapshot basenames and encountered argparse wrapping differences; fixing only
+  the checker argv established identical help. README local links resolve, the
+  marked Rust block is byte-identical, unchanged files match baseline, and
+  git diff --check passed. Full CI/workflow checks remain owner-waived; no actual
+  all-package coverage rebuild or new production branch percentage is claimed.
+
+Evidence: /tmp/csgrs-interval-readme-audit/ retains approximately 848 KiB of helper
+snapshots, real LLVM exports/merged data, reports, isolated consumer/fixture source,
+commands, build logs, source checks and dependency-gap diagnostics. Owned duplicate
+fixture executable/raw profiles were removed and the approximately 4.6 GiB shared
+Cargo target was reused. The full scripts/check_interval_wasm.py file and selected
+release-check/implementation-plan sections were read as context, not credited as
+completed API/support audits. Root AGENTS.md continues to require 100% public,
+private and generated Rustdoc. Hyperreal gaps and the repository-wide audit remain
+open; the owner waiver applies to full checks, not the documentation mandate.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
