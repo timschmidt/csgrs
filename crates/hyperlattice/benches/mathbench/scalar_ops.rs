@@ -1,3 +1,46 @@
+/// Registers forty native scalar rows over retained four-case input families.
+///
+/// `make_scalar` constructs fixtures before timing: callers use `s` for exact
+/// binary-float ingress or `qr` for displayed-decimal rational authoring. Numeric
+/// expressions, including `PI / 7` and `1000 * PI + 1e-20`, are evaluated as f64
+/// first; the latter loses its tiny addend before conversion. Imported `E` and
+/// `PI` fixtures are not the symbolic constants returned by the separate native
+/// `e`, `pi` and `tau` constructor rows, which do not use `make_scalar`.
+///
+/// | Retained family | Consumers |
+/// | --- | --- |
+/// | Signed arithmetic pairs, including cancellation and disparate scales | add, sub, mul, div |
+/// | Positive bases with fractional exponents | pow |
+/// | Nonzero signed scalars | neg, reciprocal variants, powers 5 and -1 |
+/// | Positive scalars | ln, log10 variants, sqrt |
+/// | Half, rounded PI/7, one million, rounded 1000 PI | sin, cos, tan, atan/asinh variants |
+/// | Half, negative tiny, positive/negative twenty | sinh, cosh, tanh |
+/// | Scalars strictly between -1 and 1 | exp, asin/acos/atanh variants |
+/// | Scalars greater than 1 | acosh variants |
+/// | Three nonzero scalars and an explicit native zero | zero_status |
+///
+/// These domain descriptions apply to the supplied converters, not arbitrary
+/// `F`. Native fallible operations are unwrapped and can panic if conversion or
+/// evaluation fails. Checked reciprocal additionally requires known nonzero
+/// status, rejecting both zero and unknown without refinement. `zero_status`
+/// returns structural/cached `ZeroKnowledge`, not a general equality decision.
+///
+/// Ordinary `iter` times case selection, cursor advancement, operand clones,
+/// arithmetic and output destruction. Each cycling row has its own cursor. Constants
+/// are constructed inside timing; other inputs are retained and may share
+/// evidence across iterations. Abort rows attach a cloned, clear signal to a
+/// cloned operand inside timing, including any attachment/cache work. The flag
+/// is never set here: these rows measure attachment plus the operation, not
+/// cancellation response. Arithmetic outputs remain scalar objects; no primitive-float
+/// conversion, common numerical accuracy target or policy receipt is requested.
+///
+/// Thirty-one trace hooks precede timed registrations. When enabled and selected,
+/// each visits four cases: add/sub/mul perform two operations per case, sqrt
+/// three, and all others one. Trace neg/mul/div borrow inputs whereas measured
+/// rows clone them; trace counts do not describe an identical timed iteration.
+/// Constants, reciprocal variants and zero_status have no trace hooks here.
+/// No numerical or dispatch-count assertions or total-work/memory bounds are
+/// imposed. There is no native zero_status_abort row in this schedule.
 fn bench_scalar_operations_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -64,28 +107,52 @@ fn bench_scalar_operations_for<F>(
     ];
     let signal = abort_signal();
 
-    trace_dispatch_cases(format!("scalar_ops/{label}/add"), &arithmetic_cases, |(lhs, rhs)| {
-        let _ = black_box(lhs.clone() + rhs.clone());
-        let _ = black_box(lhs.clone() + rhs.clone());
-    });
-    trace_dispatch_cases(format!("scalar_ops/{label}/sub"), &arithmetic_cases, |(lhs, rhs)| {
-        let _ = black_box(lhs.clone() - rhs.clone());
-        let _ = black_box(lhs.clone() - rhs.clone());
-    });
-    trace_dispatch_cases(format!("scalar_ops/{label}/neg"), &reciprocal_cases, |value| {
-        let _ = black_box(-value);
-    });
-    trace_dispatch_cases(format!("scalar_ops/{label}/mul"), &arithmetic_cases, |(lhs, rhs)| {
-        let _ = black_box(lhs * rhs);
-        let _ = black_box(lhs * rhs);
-    });
-    trace_dispatch_cases(format!("scalar_ops/{label}/div"), &arithmetic_cases, |(lhs, rhs)| {
-        let _ = black_box((lhs / rhs).unwrap());
-    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/add"),
+        &arithmetic_cases,
+        |(lhs, rhs)| {
+            let _ = black_box(lhs.clone() + rhs.clone());
+            let _ = black_box(lhs.clone() + rhs.clone());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/sub"),
+        &arithmetic_cases,
+        |(lhs, rhs)| {
+            let _ = black_box(lhs.clone() - rhs.clone());
+            let _ = black_box(lhs.clone() - rhs.clone());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/neg"),
+        &reciprocal_cases,
+        |value| {
+            let _ = black_box(-value);
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/mul"),
+        &arithmetic_cases,
+        |(lhs, rhs)| {
+            let _ = black_box(lhs * rhs);
+            let _ = black_box(lhs * rhs);
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/div"),
+        &arithmetic_cases,
+        |(lhs, rhs)| {
+            let _ = black_box((lhs / rhs).unwrap());
+        },
+    );
 
-    trace_dispatch_cases(format!("scalar_ops/{label}/pow"), &pow_cases, |(lhs, rhs)| {
-        let _ = black_box(Real::pow(lhs.clone(), rhs.clone()).unwrap());
-    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/pow"),
+        &pow_cases,
+        |(lhs, rhs)| {
+            let _ = black_box(Real::pow(lhs.clone(), rhs.clone()).unwrap());
+        },
+    );
     trace_dispatch_cases(
         format!("scalar_ops/{label}/powi"),
         &reciprocal_cases,
@@ -121,18 +188,25 @@ fn bench_scalar_operations_for<F>(
         format!("scalar_ops/{label}/log10_abort"),
         &positive_cases,
         |value| {
-            let _ = black_box({
-let mut value = value.clone();
-value.abort(signal.clone());
-value.log10()
-}.unwrap());
+            let _ = black_box(
+                {
+                    let mut value = value.clone();
+                    value.abort(signal.clone());
+                    value.log10()
+                }
+                .unwrap(),
+            );
         },
     );
-    trace_dispatch_cases(format!("scalar_ops/{label}/sqrt"), &positive_cases, |value| {
-        let _ = black_box(Real::sqrt(value.clone()).unwrap());
-        let _ = black_box(Real::sqrt(value.clone()).unwrap());
-        let _ = black_box(Real::sqrt(value.clone()).unwrap());
-    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/sqrt"),
+        &positive_cases,
+        |value| {
+            let _ = black_box(Real::sqrt(value.clone()).unwrap());
+            let _ = black_box(Real::sqrt(value.clone()).unwrap());
+            let _ = black_box(Real::sqrt(value.clone()).unwrap());
+        },
+    );
     trace_dispatch_cases(format!("scalar_ops/{label}/sin"), &trig_cases, |value| {
         let _ = black_box(Real::sin(value.clone()));
     });
@@ -174,11 +248,14 @@ value.log10()
         format!("scalar_ops/{label}/asin_abort"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box({
-let mut value = value.clone();
-value.abort(signal.clone());
-value.asin()
-}.unwrap());
+            let _ = black_box(
+                {
+                    let mut value = value.clone();
+                    value.abort(signal.clone());
+                    value.asin()
+                }
+                .unwrap(),
+            );
         },
     );
     trace_dispatch_cases(
@@ -192,11 +269,14 @@ value.asin()
         format!("scalar_ops/{label}/acos_abort"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box({
-let mut value = value.clone();
-value.abort(signal.clone());
-value.acos()
-}.unwrap());
+            let _ = black_box(
+                {
+                    let mut value = value.clone();
+                    value.abort(signal.clone());
+                    value.acos()
+                }
+                .unwrap(),
+            );
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/atan"), &trig_cases, |value| {
@@ -206,11 +286,14 @@ value.acos()
         format!("scalar_ops/{label}/atan_abort"),
         &trig_cases,
         |value| {
-            let _ = black_box({
-let mut value = value.clone();
-value.abort(signal.clone());
-value.atan()
-}.unwrap());
+            let _ = black_box(
+                {
+                    let mut value = value.clone();
+                    value.abort(signal.clone());
+                    value.atan()
+                }
+                .unwrap(),
+            );
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/asinh"), &trig_cases, |value| {
@@ -220,11 +303,14 @@ value.atan()
         format!("scalar_ops/{label}/asinh_abort"),
         &trig_cases,
         |value| {
-            let _ = black_box({
-let mut value = value.clone();
-value.abort(signal.clone());
-value.asinh()
-}.unwrap());
+            let _ = black_box(
+                {
+                    let mut value = value.clone();
+                    value.abort(signal.clone());
+                    value.asinh()
+                }
+                .unwrap(),
+            );
         },
     );
     trace_dispatch_cases(format!("scalar_ops/{label}/acosh"), &acosh_cases, |value| {
@@ -234,11 +320,14 @@ value.asinh()
         format!("scalar_ops/{label}/acosh_abort"),
         &acosh_cases,
         |value| {
-            let _ = black_box({
-let mut value = value.clone();
-value.abort(signal.clone());
-value.acosh()
-}.unwrap());
+            let _ = black_box(
+                {
+                    let mut value = value.clone();
+                    value.abort(signal.clone());
+                    value.acosh()
+                }
+                .unwrap(),
+            );
         },
     );
     trace_dispatch_cases(
@@ -252,11 +341,14 @@ value.acosh()
         format!("scalar_ops/{label}/atanh_abort"),
         &unit_interval_cases,
         |value| {
-            let _ = black_box({
-let mut value = value.clone();
-value.abort(signal.clone());
-value.atanh()
-}.unwrap());
+            let _ = black_box(
+                {
+                    let mut value = value.clone();
+                    value.abort(signal.clone());
+                    value.atanh()
+                }
+                .unwrap(),
+            );
         },
     );
 
@@ -266,12 +358,8 @@ value.atanh()
     group.bench_function(format!("{label}/one"), |b| {
         b.iter(|| black_box(Real::one()))
     });
-    group.bench_function(format!("{label}/e"), |b| {
-        b.iter(|| black_box(Real::e()))
-    });
-    group.bench_function(format!("{label}/pi"), |b| {
-        b.iter(|| black_box(Real::pi()))
-    });
+    group.bench_function(format!("{label}/e"), |b| b.iter(|| black_box(Real::e())));
+    group.bench_function(format!("{label}/pi"), |b| b.iter(|| black_box(Real::pi())));
     group.bench_function(format!("{label}/tau"), |b| {
         b.iter(|| black_box(Real::tau()))
     });
@@ -311,10 +399,7 @@ value.atanh()
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                Real::inverse(black_box(
-                    next_case(&reciprocal_cases, &cursor).clone(),
-                ))
-                .unwrap(),
+                Real::inverse(black_box(next_case(&reciprocal_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -334,10 +419,10 @@ value.atanh()
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&reciprocal_cases, &cursor).clone());
-value.abort(signal.clone());
-hyperlattice::reciprocal_checked(value)
-}
+                    let mut value = black_box(next_case(&reciprocal_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    hyperlattice::reciprocal_checked(value)
+                }
                 .unwrap(),
             )
         })
@@ -371,26 +456,20 @@ hyperlattice::reciprocal_checked(value)
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                Real::exp(black_box(next_case(&unit_interval_cases, &cursor).clone()))
-                    .unwrap(),
+                Real::exp(black_box(next_case(&unit_interval_cases, &cursor).clone())).unwrap(),
             )
         })
     });
     group.bench_function(format!("{label}/ln"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::ln(black_box(next_case(&positive_cases, &cursor).clone())).unwrap(),
-            )
+            black_box(Real::ln(black_box(next_case(&positive_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/log10"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::log10(black_box(next_case(&positive_cases, &cursor).clone()))
-                    .unwrap(),
-            )
+            black_box(Real::log10(black_box(next_case(&positive_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/log10_abort"), |b| {
@@ -398,10 +477,10 @@ hyperlattice::reciprocal_checked(value)
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&positive_cases, &cursor).clone());
-value.abort(signal.clone());
-value.log10()
-}
+                    let mut value = black_box(next_case(&positive_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    value.log10()
+                }
                 .unwrap(),
             )
         })
@@ -409,10 +488,7 @@ value.log10()
     group.bench_function(format!("{label}/sqrt"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::sqrt(black_box(next_case(&positive_cases, &cursor).clone()))
-                    .unwrap(),
-            )
+            black_box(Real::sqrt(black_box(next_case(&positive_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/sin"), |b| {
@@ -433,45 +509,31 @@ value.log10()
     });
     group.bench_function(format!("{label}/tan"), |b| {
         let cursor = Cell::new(0);
-        b.iter(|| {
-            black_box(
-                Real::tan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
-            )
-        })
+        b.iter(|| black_box(Real::tan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap()))
     });
     group.bench_function(format!("{label}/sinh"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::sinh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
-                    .unwrap(),
-            )
+            black_box(Real::sinh(black_box(next_case(&hyperbolic_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/cosh"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::cosh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
-                    .unwrap(),
-            )
+            black_box(Real::cosh(black_box(next_case(&hyperbolic_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/tanh"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::tanh(black_box(next_case(&hyperbolic_cases, &cursor).clone()))
-                    .unwrap(),
-            )
+            black_box(Real::tanh(black_box(next_case(&hyperbolic_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/asin"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                Real::asin(black_box(next_case(&unit_interval_cases, &cursor).clone()))
-                    .unwrap(),
+                Real::asin(black_box(next_case(&unit_interval_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -480,10 +542,10 @@ value.log10()
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
-value.abort(signal.clone());
-value.asin()
-}
+                    let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    value.asin()
+                }
                 .unwrap(),
             )
         })
@@ -492,8 +554,7 @@ value.asin()
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                Real::acos(black_box(next_case(&unit_interval_cases, &cursor).clone()))
-                    .unwrap(),
+                Real::acos(black_box(next_case(&unit_interval_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -502,10 +563,10 @@ value.asin()
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
-value.abort(signal.clone());
-value.acos()
-}
+                    let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    value.acos()
+                }
                 .unwrap(),
             )
         })
@@ -513,9 +574,7 @@ value.acos()
     group.bench_function(format!("{label}/atan"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::atan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
-            )
+            black_box(Real::atan(black_box(next_case(&trig_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/atan_abort"), |b| {
@@ -523,10 +582,10 @@ value.acos()
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&trig_cases, &cursor).clone());
-value.abort(signal.clone());
-value.atan()
-}
+                    let mut value = black_box(next_case(&trig_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    value.atan()
+                }
                 .unwrap(),
             )
         })
@@ -534,9 +593,7 @@ value.atan()
     group.bench_function(format!("{label}/asinh"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::asinh(black_box(next_case(&trig_cases, &cursor).clone())).unwrap(),
-            )
+            black_box(Real::asinh(black_box(next_case(&trig_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/asinh_abort"), |b| {
@@ -544,10 +601,10 @@ value.atan()
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&trig_cases, &cursor).clone());
-value.abort(signal.clone());
-value.asinh()
-}
+                    let mut value = black_box(next_case(&trig_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    value.asinh()
+                }
                 .unwrap(),
             )
         })
@@ -555,9 +612,7 @@ value.asinh()
     group.bench_function(format!("{label}/acosh"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(
-                Real::acosh(black_box(next_case(&acosh_cases, &cursor).clone())).unwrap(),
-            )
+            black_box(Real::acosh(black_box(next_case(&acosh_cases, &cursor).clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/acosh_abort"), |b| {
@@ -565,10 +620,10 @@ value.asinh()
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&acosh_cases, &cursor).clone());
-value.abort(signal.clone());
-value.acosh()
-}
+                    let mut value = black_box(next_case(&acosh_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    value.acosh()
+                }
                 .unwrap(),
             )
         })
@@ -577,8 +632,7 @@ value.acosh()
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
-                Real::atanh(black_box(next_case(&unit_interval_cases, &cursor).clone()))
-                    .unwrap(),
+                Real::atanh(black_box(next_case(&unit_interval_cases, &cursor).clone())).unwrap(),
             )
         })
     });
@@ -587,10 +641,10 @@ value.acosh()
         b.iter(|| {
             black_box(
                 {
-let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
-value.abort(signal.clone());
-value.atanh()
-}
+                    let mut value = black_box(next_case(&unit_interval_cases, &cursor).clone());
+                    value.abort(signal.clone());
+                    value.atanh()
+                }
                 .unwrap(),
             )
         })
@@ -606,13 +660,17 @@ value.atanh()
     });
 }
 
+/// Registers and finishes the 203-row scalar comparison group.
+///
+/// Two native input models contribute forty rows each, and each of three external
+/// adapters contributes forty-one under inherited Criterion settings. External
+/// schedules additionally include zero_status_abort and use ordinary adapter
+/// operations for checked/abort names. Only native registration offers diagnostic
+/// trace hooks. Shared labels do not establish equal errors, cancellation behavior,
+/// input values, numeric precision or measured work; see the individual registrars.
 fn bench_scalar_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_ops");
-    bench_scalar_operations_for::<_>(
-        &mut group,
-        "hyperreal",
-        s,
-    );
+    bench_scalar_operations_for::<_>(&mut group, "hyperreal", s);
     bench_scalar_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_scalar_operations(&mut group, "numerica128");
     bench_gmp_scalar_operations(&mut group, "gmp_mpfr128");
@@ -620,6 +678,20 @@ fn bench_scalar_operations(c: &mut Criterion) {
     group.finish();
 }
 
+/// Separates four retained square-root inputs into twenty backend/case rows.
+///
+/// The cases are 9, the binary-float literal 1e-12, 1e12 and imported binary-float E.
+/// The two perfect cases have roots 3 and 1e6. Decimal authoring through `qr`
+/// makes the tiny case exactly 1/10¹² with root 1/10⁶; `s` instead preserves its
+/// binary-float value. Imported E is not the symbolic constant e.
+///
+/// Inputs and three external contexts with argument 128 are created outside timing.
+/// Each ordinary iteration clones a native scalar and unwraps its square root, or
+/// borrows an external input for the adapter's sqrt, then destroys the output.
+/// There is no cursor, trace hook, output conversion or exact-value assertion.
+/// Native results may retain exact/lazy definitions, floating adapters return their
+/// numeric results, and Symbolica returns Atom expressions; these are not a common
+/// precision/materialization contract. The group uses inherited Criterion settings.
 fn bench_scalar_sqrt_cases(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_sqrt_cases");
     let numerica_ctx = numerica_engine::Ctx::new(128);
@@ -642,9 +714,7 @@ fn bench_scalar_sqrt_cases(c: &mut Criterion) {
             b.iter(|| black_box(Real::sqrt(black_box(hyperreal.clone())).unwrap()))
         });
         group.bench_function(format!("hyperreal-rational/{name}"), |b| {
-            b.iter(|| {
-                black_box(Real::sqrt(black_box(hyperreal_rational.clone())).unwrap())
-            })
+            b.iter(|| black_box(Real::sqrt(black_box(hyperreal_rational.clone())).unwrap()))
         });
         group.bench_function(format!("numerica128/{name}"), |b| {
             b.iter(|| black_box(numerica_ctx.sqrt(black_box(&numerica))))
@@ -659,6 +729,20 @@ fn bench_scalar_sqrt_cases(c: &mut Criterion) {
     group.finish();
 }
 
+/// Registers sixty retained-input hyperbolic rows without a requested float output.
+///
+/// Each of half, negative 1e-12, twenty and negative twenty is paired with sinh,
+/// cosh and tanh for two native models and three adapters. Inputs and external
+/// contexts with argument 128 precede timing. Native `s` preserves binary-float
+/// values; `qr` authors displayed-decimal rationals. Ordinary iterations time
+/// operation selection, native clones or borrowed adapter calls, and destruction
+/// of the result. Native Results are unwrapped; no numeric oracle, trace hook,
+/// cancellation signal or total-work bound is installed.
+///
+/// Native results can retain exact/lazy definitions, floating adapters compute
+/// numeric outputs, and Symbolica builds Atom expressions (hyperbolics through
+/// exponentials). No common materialization or precision is enforced. Compare
+/// [`bench_scalar_hyperbolic_f64_cases`] for rows that also request float conversion.
 fn bench_scalar_hyperbolic_cases(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_hyperbolic_cases");
     let numerica_ctx = numerica_engine::Ctx::new(128);
@@ -681,23 +765,27 @@ fn bench_scalar_hyperbolic_cases(c: &mut Criterion) {
             group.bench_function(format!("hyperreal/{operation}/{name}"), |b| {
                 b.iter(|| {
                     let value = black_box(hyperreal.clone());
-                    black_box(match operation {
-                        "sinh" => Real::sinh(value),
-                        "cosh" => Real::cosh(value),
-                        _ => Real::tanh(value),
-                    }
-                    .unwrap())
+                    black_box(
+                        match operation {
+                            "sinh" => Real::sinh(value),
+                            "cosh" => Real::cosh(value),
+                            _ => Real::tanh(value),
+                        }
+                        .unwrap(),
+                    )
                 })
             });
             group.bench_function(format!("hyperreal-rational/{operation}/{name}"), |b| {
                 b.iter(|| {
                     let value = black_box(hyperreal_rational.clone());
-                    black_box(match operation {
-                        "sinh" => Real::sinh(value),
-                        "cosh" => Real::cosh(value),
-                        _ => Real::tanh(value),
-                    }
-                    .unwrap())
+                    black_box(
+                        match operation {
+                            "sinh" => Real::sinh(value),
+                            "cosh" => Real::cosh(value),
+                            _ => Real::tanh(value),
+                        }
+                        .unwrap(),
+                    )
                 })
             });
             group.bench_function(format!("numerica128/{operation}/{name}"), |b| {
@@ -732,6 +820,21 @@ fn bench_scalar_hyperbolic_cases(c: &mut Criterion) {
     group.finish();
 }
 
+/// Registers forty-eight hyperbolic rows including explicit lossy f64 output.
+///
+/// Uses the same four values and three operations as
+/// [`bench_scalar_hyperbolic_cases`], but only the two native models and the
+/// Symbolica Float/Numerica and Rug/MPFR adapters. The Symbolica Atom backend is
+/// absent. Inputs and 128-precision external contexts are retained outside timing.
+/// Native iterations clone, construct the operation, and unwrap `to_f64_lossy`;
+/// external iterations borrow the input, compute, and call the Float's `to_f64`.
+/// Thus conversion and intermediate destruction are measured alongside arithmetic.
+///
+/// Native scalar errors or failed float conversion panic through unwrap. A finite
+/// rounded float is an approximate view, not an exact scalar or certainty receipt;
+/// no error bound, inter-backend equality or correct-rounding assertion is checked
+/// here. The group uses ordinary `iter` and inherited Criterion settings, without
+/// trace hooks, cancellation or a separate total-work/memory limit.
 fn bench_scalar_hyperbolic_f64_cases(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_hyperbolic_f64_cases");
     let numerica_ctx = numerica_engine::Ctx::new(128);
@@ -798,6 +901,18 @@ fn bench_scalar_hyperbolic_f64_cases(c: &mut Criterion) {
     group.finish();
 }
 
+/// Registers five retained-input exp(128) rows and two native diagnostic hooks.
+///
+/// Native inputs use exact binary 128 and the ratio 128/1, which denote the same
+/// integer. External contexts receive argument 128 and import that integer before
+/// timing. Ordinary iterations clone the native input and unwrap exp, or borrow
+/// it for the adapter, then destroy the result. Each enabled/selected native trace
+/// hook constructs exp once before timing, allowing retained evidence to be reused.
+///
+/// This isolates large-integer exponential construction/computation by backend;
+/// it does not request conversion of exact/lazy or Atom results to a numeric
+/// approximation, enforce common precision, or assert values/dispatch counts.
+/// Inherited Criterion settings apply, with no cancellation or total-work bound.
 fn bench_large_integer_exp(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_large_integer_exp");
     let hyperreal = s(128.0);
@@ -823,9 +938,7 @@ fn bench_large_integer_exp(c: &mut Criterion) {
         b.iter(|| black_box(Real::exp(black_box(hyperreal.clone())).unwrap()))
     });
     group.bench_function("hyperreal-rational/exp_128", |b| {
-        b.iter(|| {
-            black_box(Real::exp(black_box(hyperreal_rational.clone())).unwrap())
-        })
+        b.iter(|| black_box(Real::exp(black_box(hyperreal_rational.clone())).unwrap()))
     });
     group.bench_function("numerica128/exp_128", |b| {
         b.iter(|| black_box(numerica_ctx.exp(black_box(&numerica))))
@@ -839,6 +952,21 @@ fn bench_large_integer_exp(c: &mut Criterion) {
     group.finish();
 }
 
+/// Registers forty-one scalar rows through the local Symbolica Float adapter.
+///
+/// The Numerica label uses `numerica_engine` and requests precision 128, not a
+/// separate Numerica crate. Four-case families parallel the native schedule but
+/// import binary-float values; even the tiny perturbation of 1000 PI is already
+/// rounded away. Constants are constructed inside timing; other inputs are retained.
+/// Ordinary `iter` times selection, borrowed adapter calls (including internal
+/// cloning/allocation) and output destruction, without native trace hooks.
+///
+/// Reciprocal/checked/checked_abort all call the same reciprocal method; negative
+/// exponent -1 also calls reciprocal. Abort-suffixed transcendental rows use their
+/// ordinary methods without a signal. Both zero_status names return Boolean
+/// `is_zero`, not native three-way ZeroKnowledge; zero_status_abort has no native
+/// row. Adapter log10 constructs ln(x)/ln(10), and atan uses atan2(x,1). No native
+/// guards, typed Results, policy receipts or numerical/dispatch assertions apply.
 fn bench_numerica_scalar_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -872,7 +1000,9 @@ fn bench_numerica_scalar_operations(
     let acosh_cases = [9.0, 1.0 + 1.0e-12, 1.0e6, std::f64::consts::E].map(|value| ctx.f(value));
     let zero_status_cases = [ctx.f(2.5), ctx.zero(), ctx.f(1.0e-12), ctx.f(-1.0e12)];
 
-    group.bench_function(format!("{label}/zero"), |b| b.iter(|| black_box(ctx.zero())));
+    group.bench_function(format!("{label}/zero"), |b| {
+        b.iter(|| black_box(ctx.zero()))
+    });
     group.bench_function(format!("{label}/one"), |b| b.iter(|| black_box(ctx.one())));
     group.bench_function(format!("{label}/e"), |b| b.iter(|| black_box(ctx.e())));
     group.bench_function(format!("{label}/pi"), |b| b.iter(|| black_box(ctx.pi())));
@@ -1000,6 +1130,19 @@ fn bench_numerica_scalar_operations(
     }
 }
 
+/// Registers forty-one scalar rows through Rug/MPFR with requested precision 128.
+///
+/// Binary-float fixture families are retained outside timing; ordinary `iter`
+/// includes selection, borrowed adapter calls with their internal clones, and
+/// result destruction. Constant rows construct their values inside timing.
+/// Reciprocal/checked/checked_abort all use ordinary reciprocal, as does negative
+/// exponent -1. Other abort names call ordinary methods without cancellation flags.
+/// Both zero_status names call Boolean `is_zero`; zero_status_abort is additional
+/// to the native schedule. GMP uses its native log10 and atan adapter methods.
+///
+/// These labels do not provide native guards, typed Results, three-way zero facts,
+/// policy receipts or trace hooks. No numerical equality/accuracy or dispatch-count
+/// assertion establishes equivalence with the native or other external workloads.
 fn bench_gmp_scalar_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -1033,7 +1176,9 @@ fn bench_gmp_scalar_operations(
     let acosh_cases = [9.0, 1.0 + 1.0e-12, 1.0e6, std::f64::consts::E].map(|value| ctx.f(value));
     let zero_status_cases = [ctx.f(2.5), ctx.zero(), ctx.f(1.0e-12), ctx.f(-1.0e12)];
 
-    group.bench_function(format!("{label}/zero"), |b| b.iter(|| black_box(ctx.zero())));
+    group.bench_function(format!("{label}/zero"), |b| {
+        b.iter(|| black_box(ctx.zero()))
+    });
     group.bench_function(format!("{label}/one"), |b| b.iter(|| black_box(ctx.one())));
     group.bench_function(format!("{label}/e"), |b| b.iter(|| black_box(ctx.e())));
     group.bench_function(format!("{label}/pi"), |b| b.iter(|| black_box(ctx.pi())));
@@ -1161,6 +1306,23 @@ fn bench_gmp_scalar_operations(
     }
 }
 
+/// Registers forty-one scalar rows constructing Symbolica Atom expressions.
+///
+/// Binary-float fixtures enter through `Atom::num` before timing; the stored 128
+/// context argument is not used as a numeric precision setting by these methods.
+/// The e/pi constant rows also import binary-float constants, and tau multiplies
+/// the imported pi by two, unlike the native symbolic constants. Ordinary `iter`
+/// times selection, borrowed adapter operations and destruction without requesting
+/// a numeric evaluation or common precision. Constant construction is timed.
+///
+/// Reciprocal/checked/checked_abort and exponent -1 use ordinary reciprocal.
+/// Abort-suffixed transcendental rows use ordinary methods without signals. The
+/// adapter constructs log10 as a log quotient, tan as sin/cos, hyperbolics through
+/// exponentials and inverse functions through log/radical formulas, including
+/// complex intermediates. Branch/value agreement is not asserted by these rows.
+/// Both zero_status names compare with the zero Atom and return bool, not native
+/// ZeroKnowledge; zero_status_abort has no native counterpart. No native guards,
+/// typed Results, certainty receipts, trace hooks or correctness assertions apply.
 fn bench_symbolica_scalar_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -1194,7 +1356,9 @@ fn bench_symbolica_scalar_operations(
     let acosh_cases = [9.0, 1.0 + 1.0e-12, 1.0e6, std::f64::consts::E].map(|value| ctx.f(value));
     let zero_status_cases = [ctx.f(2.5), ctx.zero(), ctx.f(1.0e-12), ctx.f(-1.0e12)];
 
-    group.bench_function(format!("{label}/zero"), |b| b.iter(|| black_box(ctx.zero())));
+    group.bench_function(format!("{label}/zero"), |b| {
+        b.iter(|| black_box(ctx.zero()))
+    });
     group.bench_function(format!("{label}/one"), |b| b.iter(|| black_box(ctx.one())));
     group.bench_function(format!("{label}/e"), |b| b.iter(|| black_box(ctx.e())));
     group.bench_function(format!("{label}/pi"), |b| b.iter(|| black_box(ctx.pi())));

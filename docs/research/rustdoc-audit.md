@@ -12172,6 +12172,101 @@ engine, scalar/matrix, comparison and report files still require review. The
 repository-wide audit, automated private-item coverage and earlier generated-item
 Rustdoc gaps remain open; this batch does not establish complete coverage.
 
+## Hyperlattice mathbench scalar-operation comparisons (2026-11-27)
+
+Base: `682a5fe2aa06251f48b3dd6840c46ea19693f457`. Whole-file review of
+`crates/hyperlattice/benches/mathbench/scalar_ops.rs`, all 1323 original lines
+(1487 after documentation and Rustfmt). The owning layer is Hyperlattice's
+benchmark harness consuming Hyperreal scalar constructors/facts and three external
+adapters. Relevant contracts are P1 input meaning and explicit float export, P2
+symbolic preservation, P3 conservative zero facts, P4 retained evidence, P5 resource
+disclosure, P6 failure, P9 certainty qualification and P10 measurement scope.
+No mathematical domain, implementation, fixture, policy or predicate order changes.
+
+Reproduced missing acceptance witness: none of the nine authored functions had
+attached Rustdoc. The baseline all-features mathbench check passed. Added nine
+complete groups, including a native input/consumer table and all dedicated case
+families. Read the shared converter/abort/trace helpers, checked reciprocal,
+Real abort/zero_status/float-export entry points and external scalar methods as
+context; this does not credit those files with new whole-file review.
+
+Contracts clarified:
+
+- The main group registers forty native rows per converter and forty-one per
+  external adapter, totaling 203. External schedules add zero_status_abort.
+  Dedicated square-root, hyperbolic, hyperbolic-f64 and exp(128) groups register
+  twenty, sixty, forty-eight and five rows respectively: 336 in this file overall.
+- Native fixtures use exact binary ingress or displayed-decimal rational authoring.
+  Arithmetic on float literals occurs before either conversion: 1000*PI+1e-20
+  loses its addend, and imported E/PI are finite approximations, not the named
+  symbolic constants. Native constructor rows bypass the input converter.
+- Native input families describe their actual valid domains, including positive
+  powers/logs, nonzero reciprocal inputs, interior unit-interval inverse inputs
+  and acosh inputs above one. Arbitrary converters need not preserve those
+  domains. Checked reciprocal rejects both zero and unknown without refinement;
+  zero_status returns ZeroKnowledge. Unwrapped scalar failures panic.
+- Ordinary iter measures cursor/selection where present, native operand cloning,
+  adapter work and output destruction. Inputs are retained; constructor rows build
+  inside timing. Native abort rows attach a cloned clear flag, including attachment
+  and cache work, but never set it and do not test cancellation response.
+- Thirty-one native diagnostic hooks per converter precede registration. When
+  selected/enabled they visit four cases, with two add/sub/mul operations per case,
+  three sqrt operations and one otherwise. Trace neg/mul/div borrow inputs while
+  measured rows clone them. Constants, reciprocal variants and zero_status have
+  no hooks. exp(128) adds two native hooks; sixty-four hooks overall are distinct
+  from measured iterations and assert no dispatch counts or numerical results.
+- External checked/abort names call ordinary methods without native guards or
+  signals. Reciprocal aliases and exponent -1 call reciprocal; both zero-status
+  names return bool. Numerica labels use Symbolica Float at requested precision
+  128, with log10 expressed as a log quotient and atan as atan2(x,1). Rug uses
+  its native log10/atan methods. Symbolica Atom ignores the stored 128 in these
+  methods, imports E/PI as float constants and constructs transcendental formulas,
+  sometimes with complex intermediates. No shared branch/error contract is proved.
+- Dedicated sqrt rows distinguish perfect roots 3 and 1e6, decimal tiny root
+  1/1e6, binary tiny input and imported E. Ordinary hyperbolic rows return scalar
+  objects without requested numeric conversion; the f64 group includes native
+  lossy conversion or external Float conversion and omits Symbolica Atom. The
+  exp(128) rows share integer inputs, not a common output materialization target.
+  These schedules contain no accuracy oracle, policy receipt or total-work bound.
+
+Validation after final edits:
+
+- Focused Rustfmt and git diff --check passed. Noncomment source equals Rustfmt
+  of the original under crates configuration. Beyond whitespace, the formatter
+  adds sixteen optional commas and removes twelve; it removes five expression-only
+  closure brace pairs and adds three. Operations, domains, fixtures, calls,
+  assertions and timing boundaries remain unchanged.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 and incremental compilation disabled. Warnings and broken/private
+  links were denied. Complete text of all nine groups, including the table, rendered
+  on nine pages in both configurations. Static schedule enumeration verified the
+  counts above and the exact additional zero_status_abort name for all adapters.
+- The initial render checker rejected stale HTML even though Cargo reported success.
+  Regenerated docs by passing an empty HTML header at a source-hash-specific temporary
+  path, changing the Rustdoc command without changing source/configuration semantics
+  or displayed content. The final complete-text checks passed. Future batches must
+  continue checking rendered content rather than trusting Cargo freshness alone.
+- Built the owning library per feature configuration and ran matching-rlib standalone
+  probes with warnings denied and a 30-second external process timeout. Using the
+  current shared s/q/qr helper bodies, both models produced exact perfect roots,
+  the four expected ZeroKnowledge facts and checked reciprocal 4/5 with an unchanged
+  clear flag. Decimal tiny sqrt was exactly 1/1e6; binary tiny differed from decimal
+  tiny; the two exp inputs agreed at 128. A Rust bit comparison confirmed the
+  trigonometric perturbation was lost before import. These are scoped fixture and
+  exact-result checks, not full-row, transcendental-accuracy or cancellation proofs.
+- No Criterion timing run, external workload, Symbolica initialization or report
+  writer executed. Stored performance artifacts remain unchanged. Full workflows
+  and unrelated runtime checks remain owner-waived; no focused check remains blocked.
+  Probe binaries were removed. Temporary evidence occupies about 128 KiB, and the
+  reused target remains approximately 2.7 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-scalarbench-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-scalarbench-audit/` scripts, commands and formatter deltas.
+This file now has a whole-file record. Remaining mathbench engine, matrix, comparison
+and report files still need review. Repository-wide private-item coverage and the
+previously recorded generated-item gaps remain open; this is not completion of the
+overall audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
