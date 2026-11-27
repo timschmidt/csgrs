@@ -16801,6 +16801,105 @@ pi recognizer and resolver excerpts supplied context, not additional whole-file 
 Full workflows remain owner-waived; no focused check is blocked, no performance
 claim is made, and repository-wide documentation coverage remains incomplete.
 
+## Hyperreal computable approximation and query cascade (2026-11-27)
+
+Baseline: 82b8ce6eadb1e6687f8950df1470b0188001cc05. Read all 882 baseline lines
+of crates/hyperreal/src/computable/node/approximation_queries.rs, including the
+inline stack, local continuation enum, every query branch and existing examples.
+The owner is Hyperreal's computable evaluation/query layer. P1, P3–P6, P9–P10 and
+P19 govern approximation enclosures, conservative facts, monotone caches, distinct
+resource controls, failure/certainty reporting, dispatch order and retained proof
+consumption. The input domain is valid exact expression graphs with attached or
+explicit stop signals and signed i32 precision/tolerance requests; current extreme
+exponent and interruption limitations are reported rather than silently repaired.
+
+The missing witness was complete private stack/field/local-enum Rustdoc plus accurate
+public contracts for precision floors, tolerance comparison, magnitude estimates and
+cancellation. Five linear-demand and four absolute-comparison tests passed on the
+baseline. A public consumer also reproduced adjacent-integer behavior, tolerance
+Equal versus exact order and the debug overflow at the minimum absolute tolerance
+before editing. Its initial use of a private shift helper was replaced with the
+public exact-ratio constructor; no repository implementation changed for the probe.
+
+All 39 authored declarations/fields/variants now have documentation:
+
+- InlineStack is a LIFO with an occupied inline prefix and later vector entries;
+  spill is unbounded and N=0 is valid. Values move rather than clone. The local
+  continuation enum documents each parent/child precision and both tuple fields
+  of every variant. Addition scheduling may reverse child evaluation order while
+  retaining the same two guard bits and exact sum.
+- approx returns a scaled integer with the ordinary one-unit enclosure guarantee
+  on valid completed evaluation, not a canonical/correctly-rounded conversion.
+  Both executable examples were simplified without weakening their assertions.
+  near_integer makes one outer precision -2 request and rounds its result divided
+  by four; the 3/4 combined error proves adjacency. One request is not a total-work
+  bound, and incomplete interrupted evaluation has no adjacency guarantee.
+- approx_signal uses the explicit signal in place of the wrapper attachment.
+  Exact leaves, shared-constant caches, node caches and retained quadratic towers
+  precede kernels. Negate/Add/Offset use explicit stacks; other kernels can recurse.
+  Publication suppresses interrupted results and retains stronger/finer evidence,
+  but the returned BigInt has no cancellation receipt. An asserted signal may
+  coexist with a completed exact/cache shortcut or an incomplete kernel result.
+  Precision-dependent integer storage also depends on the input magnitude; the
+  old comment bounding limb count solely by requested precision was corrected.
+- immediate_sign only reads retained root facts. structural_facts and zero_status
+  can perform structural analysis and cache updates without requesting new numeric
+  refinement. Sign, unsigned nonzero, exact-rational availability and qualified
+  magnitude remain distinct; missing rational evidence is not irrationality proof.
+- sign_until preserves its exact-sign/cache/bound/filter/refinement order and
+  deferred algebraic zero-target check. Its floor constrains outer requests, not
+  finer reused evidence or child guard bits. None remains unresolved; interruption
+  has no separate receipt and the signal is not polled at every return. No precision
+  parameter is a cumulative work/memory limit.
+- Exact comparison's default tolerance floor is -4096. The explicit-floor path
+  preserves structural/shared-perturbation/rational/sign/magnitude proofs before
+  lowering comparison tolerances. It never converts unresolved tolerance Equal
+  into an exact equality certificate. Exact leaf comparisons borrow wrappers but
+  may still allocate rational arithmetic temporaries; the old allocation-free
+  comment was narrowed to that actual behavior.
+- compare_absolute compares signed values. Exact shortcuts may separate arbitrarily
+  close inputs while shared-perturbation tolerance can deliberately return Equal.
+  The numerical fallback uses tolerance-1 and a one-integer-unit separation test;
+  it is not a uniform approximate-equivalence relation. Derived i32 exponents are
+  not uniformly checked. The public debug probe catches specifically "attempt to
+  subtract with overflow" for pi versus e at i32::MIN tolerance. This is an existing
+  implementation gap, not a typed failure or an intentional narrowed target domain.
+- known_msd translates the cached integer's leading bit; it is not a new exact
+  binade proof near a boundary and can panic for a missing/unrepresentable cache.
+  msd distinguishes exact structural bounds from approximation-based estimates,
+  but its None combines known zero and unresolved magnitude. iter_msd_stop always
+  starts at zero and still invokes msd(p) after a stop/floor break. iter_msd uses
+  STOP_PRECISION for unresolved/zero as well as a possible exponent, so consumers
+  must not treat that plain integer as an independent nonzero certificate.
+
+After the final source edit, 34 selected unit tests passed without optional features
+and 36 with all features. They cover linear scheduling/abort publication, cache
+rescaling, precision/magnitude boundaries, retained exact signs, comparison/sign
+queries and retained-tower approximation. The adjacent-integer integration test
+and both updated doctests passed in both configurations. Five all-feature downstream
+Hyperlimit resolver tests passed with their existing policy/callback/certainty checks.
+The rebuilt public consumer passed 1377 rational adjacent-integer choices, exact
+ordering versus tolerance Equal, an asserted-signal exact leaf, zero at minimum
+precision, a structural sign and the caught existing debug overflow. These checks
+do not certify every i32 precision, interrupted query or graph kernel.
+
+Private cargo doc passed both feature configurations with warnings and broken/private
+links denied. All 26 runtime blocks matched actual private pages. The thirteen
+function-local enum/variant/tuple-field blocks passed source inventory and supplemental
+Markdown rendering; ordinary library Rustdoc omits these item pages. Executable and
+signature tokens are identical except four optional local tuple-field trailing commas.
+No predicate order, existing test, assertion or runtime behavior changed. Selected
+Rustfmt and git diff --check passed; full workflows remain owner-waived for this session.
+
+Evidence is retained in /tmp/csgrs-hyperreal-approx-query-audit/: commands, baseline/final
+logs, consumer source/results, token/item inventory and full rendered-block matches.
+Temporary executable and duplicate local Markdown HTML were removed. Builds reused
+the roughly 5.7 GiB locked/offline nonincremental target. Supporting cache, bound,
+structural-analysis, arithmetic-planning and regression sources supplied context;
+they do not receive additional whole-file documentation-audit credit here. No focused
+check is blocked and no new performance claim is made. Full repository coverage is
+still incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
