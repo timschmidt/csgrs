@@ -1,26 +1,41 @@
 #![cfg(feature = "serde")]
 
+//! Native graph-domain rejection and checked Real replay composition fixtures.
+//! Invalid partial functions must remain errors beneath outer identities and
+//! collections; valid recipes retain exact wire structure and remain consumable.
+//! This finite corpus does not prove arbitrary imported graph validity.
+
 use hyperreal::{Computable, Problem, Rational, Real};
 use serde_json::{Value, json};
 
+/// Encode an exact rational fixture as JSON; zero denominators are test-author errors.
 fn rational(numerator: i64, denominator: u64) -> Value {
     serde_json::to_value(Rational::fraction(numerator, denominator).unwrap()).unwrap()
 }
 
+/// Wrap an exact rational JSON payload in the native Ratio-node envelope.
 fn leaf(numerator: i64, denominator: u64) -> Value {
     json!({"internal": {"Ratio": rational(numerator, denominator)}})
 }
 
+/// Build a named native recipe envelope without applying its production constructor.
+/// This permits deliberately invalid domain fixtures and preserved raw graph shapes.
 fn node(kind: &str, argument: Value) -> Value {
     json!({"internal": {kind: argument}})
 }
 
+/// Serialize a fixture through Ciborium, treating writer/encoding failures as test failures.
+/// The byte vector is used to exercise an independent native format boundary.
 fn cbor(value: &impl serde::Serialize) -> Vec<u8> {
     let mut bytes = Vec::new();
     ciborium::ser::into_writer(value, &mut bytes).unwrap();
     bytes
 }
 
+/// Build 44 explicit out-of-domain recipes spanning reciprocal, roots and partial functions.
+/// Log payloads are ln(1+x) residuals, negative-acos payloads are magnitudes,
+/// and quantile seeds are only hints. Include Int/One variants as well as Ratio
+/// leaves so domain rejection cannot depend on one scalar spelling.
 fn invalid_nodes() -> Vec<Value> {
     let mut cases = vec![
         node("Inverse", leaf(0, 1)),
@@ -74,6 +89,9 @@ fn invalid_nodes() -> Vec<Value> {
 }
 
 #[test]
+/// Require JSON and CBOR decoding to reject all 44 invalid native recipes.
+/// Both error messages must identify a domain failure. Collect every accepted
+/// case before failing so one regression does not hide the rest of the corpus.
 fn native_graph_import_rejects_exact_out_of_domain_arguments() {
     let mut accepted = Vec::new();
     for wire in invalid_nodes() {
@@ -94,6 +112,12 @@ fn native_graph_import_rejects_exact_out_of_domain_arguments() {
 }
 
 #[test]
+/// Require invalid children to fail beneath identity-like wrappers, scales and collections.
+/// For each invalid recipe test itself, zero multiplication, addition and square,
+/// then three Real scales through JSON, CBOR and generic Value import. Repeat
+/// inside two-element collections for JSON/CBOR. Check ParseError for explicit
+/// Real import and any decoding error for collections; no invalid value may
+/// become successful zero merely because an outer scale vanishes.
 fn undefined_children_cannot_be_hidden_by_outer_identities_or_collections() {
     let mut accepted = Vec::new();
     for invalid in invalid_nodes() {
@@ -134,6 +158,11 @@ fn undefined_children_cannot_be_hidden_by_outer_identities_or_collections() {
 }
 
 #[test]
+/// Replay 17 valid partial-function fixtures through JSON and CBOR and consume each in addition.
+/// Use exact rational enclosures at precision -32 for broad independent value
+/// windows, plus separate equality of serialized strings/bytes. Include real
+/// endpoints, logarithm residuals and opaque pi operands. Those windows alone
+/// do not prove full semantic equality; wire determinism is a separate assertion.
 fn valid_partial_functions_preserve_values_and_wire_representation() {
     let mut values = vec![
         (Real::zero().sqrt().unwrap(), 0, 0),
@@ -190,6 +219,10 @@ fn valid_partial_functions_preserve_values_and_wire_representation() {
 }
 
 #[test]
+/// Check three ln(1+x) payload spellings at x=-1/4,0,1/4 in both native formats.
+/// Require signed intervals for nonzero inputs, a narrow zero-containing interval
+/// at zero, and identical JSON structure after replay. These assertions catch
+/// confusing a stored residual with the logarithm's positive input.
 fn logarithm_residuals_preserve_zero_and_both_sides_of_one() {
     // For |x| <= 1/4, |ln(1+x)| < 1/2. At x=0 the result is exactly zero.
     // Exercise every stored logarithm residual representation directly.

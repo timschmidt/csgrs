@@ -19398,6 +19398,133 @@ target. The existing AGENTS.md future-agent mandate for 100% public/private
 Rustdoc and private documentation builds remains unchanged. Repository-wide
 line review and complete coverage remain unfinished.
 
+## Node representation, cache facts, and native domain fixtures (27 November 2026)
+
+Baseline: 73ff311c7fabe7c783c255764eed2200f9d9cae2 on rustdoc. Whole-file
+line review covered computable/node/representation.rs (1182 baseline lines)
+and tests/serde_graph_domains.rs (232), both under crates/hyperreal. Prior
+scoped link repairs did not establish whole-file review. Consumers inspected
+for context included Real import, node operand traversal, structural cache
+publication, radical decline handling, and quadratic tower storage; this does
+not grant whole-file credit to those contextual reads.
+
+The owning layer is hyperreal's retained expression graph, native import, and
+accelerator state. Relevant contracts are P1–P6, with downstream predicate
+reuse under P8–P11. Inputs include native recipes, exact rational and opaque
+operand domains, signed integer approximation samples and i32 precisions,
+packed cache facts, concurrent access, stop handles, and serialized graphs.
+The missing acceptance witness was item-by-item accurate documentation of
+these private invariants and their actual limitations, with rendered private
+coverage. Before editing, the existing graph-domain, opaque-domain, and
+kernel-invariant suites reproduced the baseline behavior (4+5+6 tests).
+
+The 128 representation blocks cover six structs, one enum, seventeen fields,
+four variants, forty-eight methods, three function-local helpers, fifteen
+associated constants, nineteen statics, twelve impl overviews, two module
+overviews and one associated type. Nine fixture functions and their crate
+overview add ten blocks, for 138 total. Documentation now states:
+
+- Computable clones share the recipe and node caches but carry their own stop
+  handle; native serialization omits signals and accelerator facts and expands
+  shared Arc contents into replayed values. Native decoding rejects recognized
+  invalid domains and kernel ranges, but can leave opaque conditions unproved.
+  Checked Real import additionally proves graph operand domains before comparing
+  the imported class/payload, including when the outer scale is zero.
+- Import validation checks children before parents, then tries interval filters
+  and ordered conditions. False conditions yield ParseError; unproved conditions
+  yield UnknownCertificate at the checked layer. The spilling traversal stack
+  and local recognition counters are not total resource bounds. Domain-filter
+  None means unresolved overlap, not necessarily equality. Affine-pi and Laurent
+  recognizers retain their precise predicates, traversal order and bounded
+  recognition roles; declining a recognizer does not refute the condition.
+- Numeric cache installation uses a lazily allocated lock with atomic ownership
+  transfer and exclusive destruction. Poisoned lock recovery retains its data.
+  Equal or coarser samples do not replace a retained sample; strictly finer ones
+  do. Downscaling rounds the stored integer to nearest with ties toward positive
+  infinity, not the exact real itself. Unsigned precision-gap arithmetic handles
+  the full i32 range. Raw storage has no stop check; the outer publication layer
+  supplies that check and routes named constants through their shared cache.
+- Tower storage retains the first successful value. The radical-decline bit
+  permanently records a live-node attempt without retaining its cause or budget;
+  it is not evidence of universal undecidability. No new retry guarantee is
+  inferred. These are existing behaviors, not fixes to P4/P5 gaps.
+- AtomicFacts bit lanes separate bounds, exact sign, scheduling demand and a
+  selective inverse-trig-presence hint. Encoding accepts combinations that need
+  not be mathematically consistent: callers supply the proof. Conditional stores
+  protect resolved bounds; the unconditional bound store can weaken one. Sign
+  publication preserves an already valid sign, with contradictory valid signs
+  asserted in debug builds. Presence true cannot be cleared by a later false
+  store. The hint's recognizer is selective; Tau and some unpropagated forms are
+  outside it, so it is not an exhaustive graph-dependency predicate.
+
+A disposable private harness compiled against baseline and final representation
+files produced identical observation logs. It checked 6695 signed rescalings
+(515 integers times thirteen gaps) against an independent integer nearest/ties-
+positive-infinity formula, plus the full i32 precision gap. It checked equal,
+coarser and finer writes; intentional lock poisoning and read recovery; sixteen
+concurrent exact-three samples retaining precision -16; and persistent radical
+decline. Forty raw packed-bound combinations round-tripped, including deliberately
+semantically invalid combinations used solely to test encoding, not as real
+certificates. Lane updates preserved unrelated hints/sign; the unconditional
+bound setter demonstrably weakened a bound. Replayed Add(Pi, Pi) reset cache,
+demand and presence, duplicated the formerly shared child allocation, then
+recomputed presence. Tau remained outside that selective hint. Runs were
+contained by one GiB address space, ten CPU seconds and fifteen wall seconds,
+with core dumps disabled; these limits do not establish production bounds.
+An initial scratch harness compile needed an explicit BigInt type annotation;
+no production code or repository test changed for that harness issue.
+
+The fixture audit retains all original assertions. Forty-four invalid native
+recipes exercise JSON and CBOR rejection. Four enclosing recipes and three
+outer scales give 528 hidden-invalid Real fixtures, including zero scale.
+Seventeen valid endpoint/opaque fixtures check enclosures, deterministic wire
+replay and subsequent addition. Three logarithm residuals across three recipes
+and two formats give eighteen further round trips. The docs distinguish these
+windows and deterministic serialization checks from a universal exact-semantic
+replay proof.
+
+After the final source edit, all fifteen admission integration tests passed
+again. Focused cache, abort, hint and linear-demand unit selections passed
+without default features (eight tests) and with all features (nine). Additional
+all-feature integration checks passed: serde_symbolic_domains (three),
+serde_cotangent_continuation (five), and the complete existing representation
+round-trip/evaluation fixture (one). The downstream hyperlimit all-feature
+resolve::tests selection passed (five). No focused check remains blocked.
+Full workflow checks remain owner-waived for this docs-only session; no new
+performance, universal domain-closure or resource-bound claim is made.
+
+Private cargo doc passed in both no-default/all-feature configurations with
+warnings and broken/private intra-doc links denied. All 124 ordinary blocks
+matched private library HTML. Eleven blocks matched actual Rustdoc from an
+owned temporary source copy: the cache_snapshot test-only method and ten
+integration fixture blocks. Only the relevant cfg(test)/test attributes were
+removed in that copy; repository visibility and attributes remain unchanged.
+Three function-local helper comments rendered separately as supplemental
+Markdown because ordinary Rustdoc omits local declarations. These fourteen
+blocks are not counted as ordinary private library coverage. Generated native
+Clone/Debug/Serialize/Deserialize implementations for Computable, Debug/Serde
+for Node, Default for CachedEvaluation, and Debug for AtomicFacts were inspected
+on the rendered pages. Authored Verus specifications were read and unchanged;
+this batch did not run a ghost/Verus configuration and does not claim its
+expanded API coverage.
+
+Baseline/final comment-free tokens, independently formatted, are identical.
+The only raw token differences are five optional trailing commas introduced
+by Rustfmt for documented tuple fields. No fixture, assertion, predicate order,
+API signature, policy or algorithm changed. Selected Rustfmt and git diff
+--check passed. The HTML inventory's initial Markdown-link normalization was
+corrected in the scratch script; all 138 blocks then matched their stated
+rendering path.
+
+Evidence is retained in /tmp/csgrs-hyperreal-node-representation-audit/:
+commands/logs, contained harness sources and outputs, item/render/token
+inventory, and supplemental local documentation. Owned shadow sources,
+probe binaries and temporary HTML were removed after inspection. Locked,
+offline, nonincremental Cargo reused the roughly 6.5 GiB shared target.
+AGENTS.md already mandates future-agent maintenance of 100% public/private
+Rustdoc and buildable private documentation; it remains unchanged.
+Repository-wide line review and complete coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
