@@ -1,5 +1,20 @@
-// Exact trigonometric consequences of already admitted argument quotients.
+/// Derive rational trig values and directed unit-circle rewrites from admitted quotients.
 impl<'a> RingRecognition<'a> {
+    /// Project sin/cos of ±atan(q)+k*pi/2 when q and sqrt(1+q²) are rational.
+    /// Use the already admitted argument quotient, first requiring exact polynomial
+    /// division if its denominator is explicit. Parse a constant plus pi and at most
+    /// one AtanRational atom; the quarter-turn helper requires zero constant, atan
+    /// coefficient ±1 and integral k. Pure quarter turns without an atan atom are not
+    /// recognized by this route. The positive hypotenuse yields q/h and 1/h, with
+    /// swaps/signs determined exactly from the quarter turn.
+    ///
+    /// The caller supplies a matching sine/cosine recipe, normalized terms, valid atom
+    /// IDs and denominator evidence. Other recipe kinds would follow the cosine branch
+    /// and are outside the contract. Charge explicit scans/arithmetic and enforce stored
+    /// coefficient caps; perfect-root extraction and rational internals have no additional
+    /// stop polls here. Unsupported forms, irrational hypotenuse and limits all return
+    /// None. No approximate fallback, usage flag or global fact is published by this
+    /// helper; its caller records a successful projection.
     fn rational_trig_projection(
         &mut self,
         value: &Computable,
@@ -72,16 +87,22 @@ impl<'a> RingRecognition<'a> {
         })
     }
 
-    /// Records one pair of atoms whose squares sum to one.
+    /// Record at most one proved square-sum-one pair for the newly appended trig atom.
+    /// Require new_atom to match the last admitted trig_arguments entry, with valid
+    /// atom IDs and function kinds. Opposite sine/cosine kinds require equal argument
+    /// quotients. Two sines or two cosines require their arguments to sum exactly to
+    /// pi/2; denominator-free rational pi multiples use a cheaper coefficient test.
+    /// Otherwise test the sum through quotient arithmetic. Stop after the first pair.
     ///
-    /// A sine and a cosine pair when their admitted arguments are equal. Two
-    /// sines, or two cosines, pair when their arguments sum to exactly
-    /// `pi / 2`, because `sin(pi/2 - x) = cos(x)` and `cos(pi/2 - x) = sin(x)`
-    /// for every real `x`. Exact `cos(pi * r)` values are stored as
-    /// `sin(pi * (1/2 - r))`, so this complementary form is how a rational
-    /// turn's sine and cosine reach the recognizer. In a complementary pair
-    /// the older atom takes the sine role and the newer one is reduced, so no
-    /// chain of reductions returns to an atom it replaced.
+    /// The stored pair denotes retained and replaced square roles, not necessarily
+    /// literal sine and cosine kinds. For complementary functions the older atom is
+    /// retained and the newer is reduced, preserving the directed reduction order.
+    /// Exact cos(pi*r) can arrive as sin(pi*(1/2-r)), motivating this same-kind rule.
+    /// This is a sufficient test, not all trigonometric equalities (evenness and other
+    /// periodic complements are not added). Some(()) also means no pair was proved;
+    /// None covers missing state and failed charged substeps. Some false comparisons
+    /// can include spent optional proof work. Registration itself does not mark relation
+    /// use or publish facts; reduction must subsequently consume a recorded pair.
     fn register_unit_circle_pair(&mut self, new_atom: u8) -> Option<()> {
         let (new_id, argument) = self.trig_arguments.as_ref()?.last()?.clone();
         debug_assert_eq!(new_atom, new_id);
@@ -140,7 +161,10 @@ impl<'a> RingRecognition<'a> {
         Some(())
     }
 
-    /// The rational `r` of a polynomial quotient that is exactly `r * pi`.
+    /// Recognize the stored one-term, degree-one shape r*pi and return r exactly.
+    /// Require a valid atom ID naming the built-in Pi constant. Zero polynomials,
+    /// multiterm expressions and equivalent forms needing simplification return None;
+    /// this is not a complete value-equivalence test. No charge or stop poll occurs.
     fn pi_multiple(&self, polynomial: &RingPolynomial) -> Option<Rational> {
         let [(monomial, coefficient)] = polynomial.terms.as_slice() else {
             return None;
@@ -155,9 +179,11 @@ impl<'a> RingRecognition<'a> {
         .then(|| coefficient.clone())
     }
 
-    /// Whether an admitted quotient is exactly `pi / 2`: after any exact
-    /// division by its denominator, one term `(1/2) * pi`. Any other form,
-    /// including an inexact division, is not proved equal.
+    /// Test a sufficient stored-shape proof that an admitted quotient equals pi/2.
+    /// First try exact division for an explicit, already nonzero denominator. A declined
+    /// division returns Some(false), including when it exhausted work; false means not
+    /// proved, not inequality. Otherwise charge before testing the polynomial for its
+    /// single half-pi term. A declined final charge returns None. No fact is published.
     fn quotient_is_half_pi(&mut self, value: &RingQuotient) -> Option<bool> {
         let polynomial = match &value.denominator {
             Some(denominator) => {
@@ -175,6 +201,20 @@ impl<'a> RingRecognition<'a> {
         )
     }
 
+    /// Replace recorded second-role squares by one minus the first-role square.
+    /// Scan terms in storage order, pairs in registration order and adjacent sorted
+    /// factor IDs in position order. For c*rest*v² with recorded u²+v²=1, remove that
+    /// term and insert c*rest and -c*rest*u² under the active polynomial limits. Repeat
+    /// until no replaceable pair remains, setting additional_relation_used only after
+    /// both insertions complete. The pair table must contain sound directed relations
+    /// from compatible admitted atoms; arbitrary cycles are outside this contract.
+    ///
+    /// Work and intermediate term/coefficient growth are charged/guarded; None can
+    /// leave the attempt's usage flag or other local state changed, while the owned
+    /// partial polynomial is discarded. No matches (including an empty polynomial or
+    /// pair list) can return without a stop poll. Success means these recorded rewrites
+    /// finished, not that the polynomial is zero or globally canonical. The caller
+    /// retains final projection, cancellation and publication responsibility.
     fn reduce_unit_circle_pairs(
         &mut self,
         mut polynomial: RingPolynomial,

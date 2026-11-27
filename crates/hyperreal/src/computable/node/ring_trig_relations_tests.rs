@@ -1,7 +1,10 @@
 #[cfg(test)]
+/// Exact quarter-turn values, unit-circle argument rules and positive-cache boundaries.
 mod ring_trig_relations_tests {
     use super::*;
 
+    /// Build an unsimplified recipe with invalid bound/sign facts, no sample and no stop signal.
+    /// Fixtures use symbolic identities without relying on numeric evaluation of raw kernels.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -12,20 +15,27 @@ mod ring_trig_relations_tests {
             signal: None,
         }
     }
+    /// Build a raw exact n/d Ratio node for a strictly positive i32 denominator.
+    /// Zero or negative denominators violate this fixture helper's unwrap preconditions.
     fn rational(n: i32, d: i32) -> Computable {
         raw(Approximation::Ratio(
             Rational::fraction(i64::from(n), u64::try_from(d).unwrap()).unwrap(),
         ))
     }
+    /// Build a raw sum with the supplied operand order and sharing.
     fn add(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Add(a, b))
     }
+    /// Build a raw product without simplifying coefficients or discarding operand domains.
     fn mul(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Multiply(a, b))
     }
+    /// Wrap an operand in raw negation without simplifying its recipe.
     fn negate(a: Computable) -> Computable {
         raw(Approximation::Negate(a))
     }
+    /// Build a raw cosine when requested, otherwise a raw sine, over the supplied argument.
+    /// This fixture helper does not perform prescaling or numerical kernel-range admission.
     fn function(cosine: bool, argument: Computable) -> Computable {
         raw(if cosine {
             Approximation::PrescaledCos(argument)
@@ -33,14 +43,18 @@ mod ring_trig_relations_tests {
             Approximation::PrescaledSin(argument)
         })
     }
+    /// Build the exact atan(n/d) recipe for a strictly positive denominator d.
     fn angle(n: i32, d: i32) -> Computable {
         raw(Approximation::AtanRational(
             Rational::fraction(i64::from(n), u64::try_from(d).unwrap()).unwrap(),
         ))
     }
+    /// Return atan(3/4)+turns*pi/2 as an unsimplified quarter-turn argument.
     fn shifted_angle(turns: i32) -> Computable {
         add(angle(3, 4), mul(rational(turns, 2), Computable::pi()))
     }
+    /// Build sin(a)²+cos(b)²-1, retaining both argument graphs and their obligations.
+    /// Zero is expected only when an applicable exact identity is established.
     fn circle(a: Computable, b: Computable) -> Computable {
         let sine = function(false, a);
         let cosine = function(true, b);
@@ -51,6 +65,10 @@ mod ring_trig_relations_tests {
     }
 
     #[test]
+    /// Check 608 exact sine/cosine projections from rational right-triangle data.
+    /// Vary four slopes, slope sign, atan coefficient ±1 and quarter turns -9 through 9.
+    /// Expected signs/swaps come from integer quadrant rotation; raw fixture kernels are
+    /// not numerically evaluated at these unreduced angles.
     fn rational_quarter_turn_values_keep_every_quadrant_and_sign() {
         for (n, d, h) in [(0, 1, 1), (3, 4, 5), (5, 12, 13), (8, 15, 17)] {
             for sign in [-1, 1] {
@@ -81,6 +99,10 @@ mod ring_trig_relations_tests {
     }
 
     #[test]
+    /// Use equal half-atan argument graphs to prove unit-circle powers, inverse one and residuals.
+    /// Reject inverse zero, a 10^-12 argument gap, an unrecognized opposite-argument
+    /// identity and invalid inverse arguments. A decline on opposite arguments is a
+    /// recognizer limitation, not a claim that the mathematical identity is false.
     fn unit_circle_requires_equal_admitted_arguments_and_keeps_offsets() {
         let a = mul(rational(1, 2), angle(3, 4));
         let b = add(add(a.clone(), Computable::pi()), negate(Computable::pi()));
@@ -116,10 +138,12 @@ mod ring_trig_relations_tests {
         );
     }
 
+    /// Build the exact rational multiple (n/d)*pi without combining its raw factors.
     fn pi_turn(n: i32, d: i32) -> Computable {
         mul(Computable::pi(), rational(n, d))
     }
 
+    /// Build first²+second²-1 while preserving the two function recipes and sharing.
     fn squares_minus_one(first: Computable, second: Computable) -> Computable {
         add(
             add(mul(first.clone(), first), mul(second.clone(), second)),
@@ -128,6 +152,9 @@ mod ring_trig_relations_tests {
     }
 
     #[test]
+    /// Prove complementary same-kind trig squares for three small rational pi turns.
+    /// Exercise sine and cosine, reversed operand order and an exact 5/7 residual,
+    /// including turns beyond the existing cyclotomic proof's order limit.
     fn complementary_sines_and_cosines_lie_on_the_unit_circle() {
         // Exact cos(pi * r) is stored as sin(pi * (1/2 - r)), so the sine and
         // cosine of one rational turn reach the recognizer as two sines. The
@@ -154,6 +181,9 @@ mod ring_trig_relations_tests {
     }
 
     #[test]
+    /// Pair atan(1/2) with pi/2-atan(1/2) for either trig function kind.
+    /// The irrational hypotenuse prevents rational-value projection, so the proof must
+    /// use complementary admitted argument quotients and the unit-circle relation.
     fn complementary_arguments_need_not_be_rational_turns() {
         // atan(1/2) has no rational sine, so both functions stay atoms, and
         // the sum pi/2 - atan(1/2) + atan(1/2) cancels in quotient arithmetic.
@@ -169,6 +199,10 @@ mod ring_trig_relations_tests {
     }
 
     #[test]
+    /// Decline nearby and unsupported complementary forms rather than inferring them by proximity.
+    /// Include the mathematically valid sin(pi/2+a)=cos(a), whose argument sum misses
+    /// the implemented half-pi test, and reject equal same-kind or complementary mixed-kind
+    /// arguments that do not satisfy this rule. None does not certify a nonzero value.
     fn complementary_pairs_require_an_exact_half_pi_sum() {
         let a = pi_turn(1, 1_800_000);
         let complement = pi_turn(899_999, 1_800_000);
@@ -198,6 +232,9 @@ mod ring_trig_relations_tests {
     }
 
     #[test]
+    /// Decline irrational hypotenuse, rational translation, doubled atan and oversized-square forms.
+    /// Matching functions of a negative square root must also decline without root-sign
+    /// publication. These cases distinguish domain rejection from missing exact rules.
     fn unsupported_and_oversized_trig_projections_do_not_guess() {
         for a in [
             angle(1, 1),
@@ -221,6 +258,10 @@ mod ring_trig_relations_tests {
     }
 
     #[test]
+    /// Fill the 32-entry rational-function cache while all 34 quadrant projections succeed.
+    /// A separately allocated equal recipe reuses the proof with one node debit, but a
+    /// shallow request or stop signal still declines. Clearing cancellation or the
+    /// positive cache must permit later exact reconstruction of the same 3/5 value.
     fn positive_function_reuse_preserves_cancellation_depth_and_capacity() {
         let values: Vec<_> = (0..34).map(|t| function(false, shifted_angle(t))).collect();
         let signal = Arc::new(AtomicBool::new(false));

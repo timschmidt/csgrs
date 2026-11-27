@@ -20410,6 +20410,122 @@ was reused with incremental builds disabled. AGENTS.md's existing 100% public/
 private Rustdoc mandate remains unchanged. Repository-wide line review and
 all-configuration coverage remain unfinished.
 
+## Hyperreal trig congruence, rational projections and unit-circle rewrites (27 November 2026)
+
+Baseline: `e4d540b99a0ff1866b1b136357b54ffdf6cdd6a7` on `rustdoc`.
+Reviewed every line of four files, totaling 739 baseline lines:
+
+| Whole-file review | Baseline lines | Lines after documentation |
+| --- | ---: | ---: |
+| `crates/hyperreal/src/computable/node/ring_trig_congruence.rs` | 104 | 139 |
+| `crates/hyperreal/src/computable/node/ring_trig_congruence_tests.rs` | 144 | 165 |
+| `crates/hyperreal/src/computable/node/ring_trig_relations.rs` | 210 | 250 |
+| `crates/hyperreal/src/computable/node/ring_trig_relations_tests.rs` | 281 | 322 |
+
+Ownership is Hyperreal's exact trig argument/value recognition over the guarded
+quotient ring, P2–P6, with normal-form and predicate consumers under P8–P11.
+Inputs require matching function/argument recipes, normalized query-local atom
+IDs, compatible argument/relation tables, valid inverse witnesses and defined
+opaque dependencies. The missing acceptance witness was item-level private
+Rustdoc identifying the exact admitted identities, positive-cache behavior,
+resource declines and publication scope. The baseline all-feature ring suite
+passed 87 tests before edits. Contextual review of PiAtanLinearForm and its
+quarter_turn_parts helper in algebra.rs adds no whole-file review credit there.
+
+Documented and verified 42 blocks: three impls, seven production methods, two
+test modules and 30 fixture/test functions. Ten blocks rendered in normal
+private library HTML; 32 rendered in a disposable copy with the selected test
+module cfg(test)/test attributes removed. Every named function, including the
+crate-visible query, matches a rendered inventory entry. These files have no
+selected derived traits or named function-local items requiring separate
+rendering; closure bodies were reviewed in context. This is scoped coverage,
+not a repository-wide or ghost/Verus configuration claim.
+
+The Rustdoc records these distinctions:
+
+- trig_atom first reuses structurally equal successful rational projections,
+  then admits the argument and optionally attempts a new rational trig value.
+  Failed optional projection can spend work before opaque admission proceeds.
+  The positive cache is capped independently of successful uncached projections.
+- Same-function argument quotient differences must project to exact zero before
+  an atom is reused. Sine and cosine are not merged, nor are nearby arguments.
+  Existing trig atoms require compatible argument-table entries; a missing
+  entry declines rather than silently skipping it. Failed admission can leave
+  local tables/flags changed. Native opaque domains and prescaled numerical
+  kernel ranges are not universally validated by this helper.
+- The dedicated congruence query requires trig_congruence_used, even after a
+  rational result is found. It enables shared-root squares but not additional
+  rational-root/trig-value/unit-circle relations. Final cancellation checking
+  precedes exact root-sign publication and its dispatch event; no numerical
+  sample or rational tower is retained.
+- Rational trig projection recognizes ±atan(q)+k*pi/2 with rational q and a
+  perfect rational sqrt(1+q²). It requires an atan atom, zero rational offset,
+  coefficient ±1 and integral quarter turns. Explicit denominators must divide
+  exactly first. Sufficient exact formulas and quadrant signs do not imply a
+  complete rational-trigonometry recognizer; other kinds of recipe are outside
+  the helper's sine/cosine precondition.
+- A registered pair denotes retained/replaced square roles, not necessarily
+  literal sine/cosine functions. Opposite kinds require equal arguments;
+  same kinds require an exact pi/2 sum. Rational pi multiples have a cheaper
+  comparison, while general complements use quotient arithmetic. At most the
+  first matching pair is registered, without marking relation use yet.
+- pi_multiple accepts only the stored one-term Pi shape and does not recognize
+  zero as 0*pi. It is uncharged. quotient_is_half_pi maps failed exact division,
+  including work exhaustion, to Some(false), meaning not proved. A failed final
+  charge instead yields None; neither outcome is a certified inequality.
+- Unit-circle reduction replaces c*rest*v² with c*rest-c*rest*u² using the
+  recorded u²+v²=1. It preserves the implementation's term/pair/position search
+  order and marks usage only after both insertions complete. The directed pair
+  table is a precondition, not arbitrary cyclic rewrite input. No-match paths
+  can return without a cancellation poll, and success means those rewrites
+  completed, not that the result is zero or globally canonical. Outer queries
+  retain completion and publication responsibility.
+
+Test documentation now explicitly distinguishes raw symbolic fixtures from
+numerical evaluation at unreduced prescaled angles. It also distinguishes
+unsupported true identities from invalid ones: cos(-a)=cos(a) and
+sin(pi/2+a)=cos(a) do not acquire proofs through the narrower implemented
+argument rules merely because their mathematical identities are valid. Existing
+None assertions were preserved; they are not descriptions of nonzero values.
+
+Independent disposable probes ran on baseline and final sources with identical
+output. Thirty-five unit-circle rewrites through degree eight matched binomial
+coefficients for scale*(1-s²)^n, including zero/negative coefficients and usage
+flags. They also checked uncharged Pi shape recognition, both half-pi decline
+forms at zero work, cancellation with empty versus nonempty rewrite scans,
+missing argument-table entries, same-function atom reuse versus distinct
+sine/cosine atoms, and the congruence-use gate with sign-only publication. Probe
+subprocesses had external 1 GiB address-space, 10 CPU-second and 15 wall-second
+limits with core dumps disabled; these do not establish a production total-work
+or memory bound.
+
+After the final edit, focused locked/offline two-job checks passed:
+
+- Hyperreal library `computable::node::ring_`: 84 tests without default features
+  and 87 with all features, including the eleven reviewed trig tests. The
+  quarter-turn test checked 608 exact projections against integer quadrant
+  rotations of four rational right-triangle inputs, both signs and both atan
+  coefficients over nineteen quarter turns. Complementary arguments, invalid
+  inverse domains, small budgets and cache capacity/retry assertions also passed.
+- Both private library Rustdoc builds with warnings, broken intra-doc links and
+  private intra-doc links denied; temporary private test/helper Rustdoc and all
+  42 rendered block checks passed.
+- All-feature `serde_graph_domains` (4 tests), `serde_opaque_operand_domains`
+  (5 tests), and downstream Hyperlimit `resolve::tests` (5 tests).
+- Selected Rustfmt and git diff --check. All four files have identical raw
+  non-comment tokens; independent comment-free Rustfmt normalization also agrees.
+
+No signature, predicate/dispatch order, fixture, assertion or runtime algorithm
+changed. No focused check remains blocked. Full workflow and performance checks
+remain owner-waived for this docs-only session; no performance claim is made.
+Evidence under `/tmp/csgrs-hyperreal-trig-ring-audit/` retains commands/logs,
+probe sources/results and item/render/token inventories. Owned shadow sources,
+probe binary/rlib and temporary HTML were removed after inspection; builds reused
+the approximately 6.6 GiB shared Cargo target with incremental compilation
+disabled. AGENTS.md's existing 100% public/private Rustdoc mandate remains in
+force. Repository-wide line review and all-configuration coverage remain
+unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,7 +1,29 @@
-// Function congruence: equal exact arguments give equal sine/cosine values.
-// This later attempt reuses the quotient authority; it neither reconstructs
-// the expression nor interprets numerical closeness as argument equality.
+/// Reuse sine/cosine identities through exact argument quotients within one query.
+/// Equality is proved algebraically, never inferred from sampled closeness. This
+/// stage shares the quotient authority and preserves the original expression.
 impl<'a> RingRecognition<'a> {
+    /// Represent a sine/cosine using an admitted argument quotient and local exact proofs.
+    /// Require positive depth and value's matching PrescaledSin/PrescaledCos argument.
+    /// First scan successful rational function projections by structural recipe equality,
+    /// charging before each lookup; a hit reuses prior argument admission. Otherwise
+    /// expand the argument, including encountered inverse guards, before optional
+    /// rational trig projection when the additional-relation strategy is enabled.
+    /// A successful projection marks additional relation use and may enter the bounded
+    /// positive cache; a failed optional projection can spend work before falling through.
+    ///
+    /// For remaining atoms, compare only the same function kind, in atom order, by
+    /// subtracting its stored argument quotient and proving zero. A match sets
+    /// trig_congruence_used and reuses that ID. Different functions or merely nearby
+    /// arguments are not merged. Otherwise append an atom and argument record, then
+    /// optionally register a unit-circle pair. Positive-cache capacity does not reject
+    /// an uncached rational success; opaque atom capacity does reject new admission.
+    ///
+    /// The strategy requires a complete compatible trig_arguments table for existing
+    /// trig atoms; a missing record declines immediately. Failure may leave atoms,
+    /// arguments, proofs or flags changed locally. This method does not validate every
+    /// opaque dependency or the prescaled numerical kernel's range. No numerical
+    /// refinement or root fact publication occurs; None also covers depth/work/stop
+    /// limits and unproved domains, and supplies no inequality certificate.
     fn trig_atom(
         &mut self,
         value: &'a Computable,
@@ -85,7 +107,20 @@ impl<'a> RingRecognition<'a> {
     }
 }
 
+/// Run the specialized congruence attempt and publish only a completed exact proof.
 impl Computable {
+    /// Try a rational quotient proof that actually reuses equal sine/cosine arguments.
+    /// Start a fresh ordinary-limit attempt with shared sqrt(2)/sqrt(3) squares and
+    /// trig argument admission enabled, but without additional rational-root/trig-value
+    /// or unit-circle relations. Require a completed rational projection and a set
+    /// trig_congruence_used flag; structural quotient reuse alone need not set it.
+    /// Defined native operands and compatible inherited facts remain preconditions.
+    ///
+    /// After a final stop check, publish only the exact root sign and the
+    /// trig-congruence-quotient dispatch event, not a numerical sample or rational tower.
+    /// None combines unsupported recognition, unproved domains, exhausted limits and
+    /// cancellation. Local state is discarded and a fresh query can retry. The separate
+    /// node/work/degree/coefficient caps do not establish total-time or heap bounds.
     pub(crate) fn bounded_trig_congruence_rational(&self) -> Option<Rational> {
         let mut recognition = RingRecognition::new(self);
         recognition.root_squares = true;
