@@ -16256,6 +16256,89 @@ the calculator caller, earn no additional whole-file audit credit. Full workflow
 remain owner-waived; no focused check remains blocked. The comparison inconsistency
 remains explicitly documented, and repository-wide documentation work remains open.
 
+## Hyperreal formatting acceptance tests and MPFR teardown (2026-11-27)
+
+Whole-file review at revision af1fcf98a4c9d7f8b73c691dcde6fdf7bb68c3bf,
+all under crates/hyperreal/tests:
+
+- checked_decimal.rs (158 -> 181 lines).
+- checked_scientific.rs (304 -> 350 lines).
+- fixed_decimal.rs (61 -> 74 lines).
+- calculator_diagnostics.rs (39 -> 48 lines).
+- support/mpfr.rs (22 -> 30 lines).
+
+The owning layer is acceptance evidence for exact decimal rounding, explicit
+presentation loss and reusable independent numeric oracles. P1/P3/P4/P5/P6/P29/P37
+and the admission protocol require exact expectations, honest uncertainty/cache
+claims and bounded descriptions of what a finite test establishes. The domain
+includes rational ties/carries, signed rounded zero, fixed/scientific boundaries,
+scaled symbolic inputs outside float range, unresolved identities, abort/retry,
+invalid precision/resource requests and the calculator's subsequent operation.
+Missing witnesses were module/test/helper Rustdoc and explicit limits on oracle,
+warming, cancellation, teardown and subprocess claims. All 25 tests passed on the
+named baseline before edits.
+
+All 38 declarations now have Rustdoc: 34 functions (including Drop and the cleanup
+registration helper), one type, one impl, one macro-authored static and one module
+declaration. With five module-level comments, all 43 blocks were reviewed. Notes
+now distinguish:
+
+- Literal expected strings from notation-marker-only assertions. The adaptive
+  suite's eighteen rational rows cover ties, carries, signed rounded zero and
+  notation-dependent precision. Its eight boundary rows check notation, not all
+  digits. Some warming queries discard their result; repeated outputs/errors are
+  asserted, not a particular cache transition or successful query result.
+- The independent MPFR oracle builds directed 256-bit bounds from exact rationals
+  or independently computed pi/sqrt(2), then requires both endpoints to round to
+  the same expected string. The rational corpus has 576 numerator/denominator pairs
+  and 4,608 output cases, not 576 distinct values (zero repeats). The endpoint
+  formatter assumes finite operands and small place counts; it does not itself
+  establish enclosure agreement. The finite corpus is not a universal proof.
+- Checked UnknownZero for three retained cancellation forms versus Exhausted at
+  an unresolved nonzero halfway boundary; direct rational ties are decided. The
+  original add/subtract/hypot chain remains alongside its minimized identity.
+  Coarse/fine/warm/clone tests preserve the stated error and success vocabulary.
+- Sequential abort/clear/retry exercises an attached final-value flag, not
+  concurrent cancellation latency. The aborted-rational test checks success only,
+  not exact output digits or measured work. The oversized-rational test constructs
+  its 4,000,001-bit numerator before formatting rejection; it does not prove a
+  total allocation bound or admission without prior allocation.
+- Fixed display's zero-looking strings are approximate presentation expectations,
+  not exact-zero certificates. Tiny signed output must stay fixed after a finer
+  scientific display; that scientific string is not itself asserted.
+- The calculator test uses the Cargo-built binary and closes stdin after a fixed
+  two-line request. It checks success, empty stderr and selected output substrings,
+  not an entire transcript. Its five-second polling deadline begins after input
+  delivery and is not a bound on spawn, writing or every cleanup operation.
+- MPFR cleanup uses one lazy guard per thread and requests only local backend cache
+  release. Registration does not immediately clear caches or add another guard;
+  live oracle values own separate destruction. Shared caches remain untouched and
+  abrupt process termination/other TLS destructor ordering are outside the helper's
+  guarantee. Rug 1.30.0's local free_cache implementation was read as supporting
+  dependency context; no teardown-memory measurement is claimed.
+
+After the final edit, all 25 tests passed with all features. Without optional
+features, the 24 formatting tests passed; the simple-feature-only calculator target
+correctly contained zero tests. The two MPFR-backed scientific tests exercise the
+shared cleanup helper. Every noncomment, nonblank source line matches the named
+baseline, including all assertions, fixture data, feature gates and macro bodies.
+Selected Rustfmt and git diff --check passed.
+
+Ordinary Rustdoc omits test functions. Temporary copies removed only #[test] and
+otherwise preserved the source bodies, copied the unchanged support module path,
+and supplied the Cargo-built calculator path for its environment macro. Actual
+private Rustdoc with warnings and broken/private links denied rendered all 43 full
+blocks and their declarations, including the macro-emitted cleanup static. These
+are documentation copies, not a replacement for executing the original test targets.
+
+Evidence: /tmp/csgrs-hyperreal-format-tests-audit/ retains baseline/final logs,
+commands, source copies and render matches. Duplicate generated HTML/static assets
+were removed after verification. Builds reused the approximately 5.6 GiB shared
+nonincremental target with locked/offline dependencies; no probe executable or
+second build tree was created. Full workflows remain owner-waived. No focused check
+is blocked, no implementation or performance claim changed, and the repository-wide
+Rustdoc audit remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

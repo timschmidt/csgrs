@@ -1,10 +1,18 @@
+//! Acceptance corpus for checked adaptive decimal output and diagnostic display.
+//!
+//! Exact strings, notation boundaries and typed failures are distinct assertions.
+//! Fixtures exercise direct rationals, retained computable forms and unresolved
+//! identities; a displayed zero is never treated as an exact zero certificate.
+
 use hyperreal::{Problem, Real};
 use std::sync::{Arc, atomic::AtomicBool};
 
+/// Parse a fixture through exact numeric ingress; malformed authored test data panics.
 fn scalar(token: &str) -> Real {
     token.parse().unwrap()
 }
 
+/// Build sin(e)^2 + cos(e)^2 - 1, mathematically zero but unresolved by the tested formatting search.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
@@ -12,6 +20,8 @@ fn unresolved_zero() -> Real {
 }
 
 #[test]
+/// Check eighteen exact rational cases at precision floor zero against literal nearest-even strings.
+/// Include fixed/scientific places, signed rounded zero, halfway parity and a carry into the next integer.
 fn decimal_rounding_keeps_fixed_places_scientific_places_and_exact_ties_distinct() {
     for (token, places, expected) in [
         ("1/8", 3, "0.125"),
@@ -42,6 +52,9 @@ fn decimal_rounding_keeps_fixed_places_scientific_places_and_exact_ties_distinct
 }
 
 #[test]
+/// Check the notation marker for eight signed rational boundary/near-boundary inputs.
+/// Repeat after an interval query whose return is discarded; this asserts notation stability,
+/// not a specific cache transition or complete output digits.
 fn notation_boundaries_are_defined_by_exact_magnitude() {
     for (token, scientific) in [
         ("1/524288", false),
@@ -68,6 +81,8 @@ fn notation_boundaries_are_defined_by_exact_magnitude() {
 }
 
 #[test]
+/// Check six-place pi/root/scaled-pi strings before and after a finer interval query.
+/// The query result is discarded; equality of the repeated output is the asserted contract.
 fn computable_values_use_certified_enclosures_in_both_notations() {
     for (value, expected) in [
         (Real::pi(), "3.141593"),
@@ -82,6 +97,8 @@ fn computable_values_use_certified_enclosures_in_both_notations() {
 }
 
 #[test]
+/// Distinguish unresolved zero, ambiguous halfway rounding and a notation-boundary ambiguity.
+/// Repeat the expected errors after a finer interval query, and require coarse pi rounding to exhaust.
 fn unresolved_zero_rounding_and_notation_remain_typed() {
     for (value, error) in [
         (unresolved_zero(), Problem::UnknownZero),
@@ -96,6 +113,8 @@ fn unresolved_zero_rounding_and_notation_remain_typed() {
 }
 
 #[test]
+/// Require an asserted final-value abort flag to produce Exhausted and its diagnostic marker.
+/// Exercise pi with and without a preceding interval query; do not claim mid-evaluation cancellation.
 fn final_value_abort_does_not_become_a_number() {
     for prepared in [false, true] {
         let mut value = Real::pi();
@@ -112,6 +131,8 @@ fn final_value_abort_does_not_become_a_number() {
 }
 
 #[test]
+/// Check default trimming without stripping integer/exponent zeros, explicit sign/zero padding,
+/// alternate formatting, and a nonnumeric marker for unresolved zero.
 fn diagnostic_text_trims_only_fractional_zeros_and_preserves_formatter_signs() {
     for (token, expected) in [
         ("0", "0e0"),
@@ -141,6 +162,8 @@ fn diagnostic_text_trims_only_fractional_zeros_and_preserves_formatter_signs() {
 }
 
 #[test]
+/// Require typed errors for a positive precision floor, excessive places and excessive refinement.
+/// Also check the diagnostic marker; these assertions do not measure allocation or total work.
 fn invalid_or_excessive_requests_fail_before_decimal_expansion() {
     assert_eq!(Real::one().try_decimal(6, 1), Err(Problem::OutOfRange));
     assert_eq!(

@@ -1,3 +1,10 @@
+//! Certified scientific-output acceptance with exact literals and independent MPFR brackets.
+//!
+//! The finite corpus separates rounding correctness, presentation case, unresolved
+//! zero, ambiguous rounding, resource rejection and abort/retry. MPFR oracle
+//! endpoints must round to one common string before that string is an expectation.
+
+/// Thread-exit cleanup for the independent Rug/MPFR oracle workers.
 #[path = "support/mpfr.rs"]
 mod mpfr;
 
@@ -7,21 +14,30 @@ use rug::{Float, Rational as Mpq};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+/// Parse exact rational/scientific fixture text; invalid fixture syntax panics.
 fn scalar(text: &str) -> Real {
     text.parse().unwrap()
 }
 
+/// Retain sin(e)^2 + cos(e)^2 - 1 as the unresolved mathematical-zero witness.
 fn unresolved_zero() -> Real {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     &sine * &sine + &cosine * &cosine - Real::one()
 }
 
+/// Preserve the original cancellation chain through add/subtract one and hypot2 with zero.
+/// Keeping this larger regression complements the directly minimized zero identity.
 fn original_hypot() -> Real {
     let delta = (Real::one() + unresolved_zero()) - Real::one();
     Real::hypot2(&delta, &Real::zero()).unwrap()
 }
 
+/// Render a finite MPFR endpoint using places+1 significant decimal digits, nearest rounding.
+/// Convert MPFR exponent placement to one leading digit and the requested e/E marker;
+/// normalize either signed zero to unsigned exponent zero. Callers provide small place
+/// counts and finite values; nonzero exponents and digit slicing rely on those preconditions.
+/// This helper formats one endpoint; callers establish an exact expectation by agreement of both bounds.
 fn mpfr_text(value: &Float, places: usize, case: ScientificCase) -> String {
     let (negative, digits, exponent) =
         value.to_sign_string_exp_round(10, Some(places + 1), Round::Nearest);
@@ -48,6 +64,8 @@ fn mpfr_text(value: &Float, places: usize, case: ScientificCase) -> String {
 }
 
 #[test]
+/// Check nine exact rational fixtures in both exponent cases, including unsigned exact zero
+/// and scales beyond primitive-float range, without requiring negative refinement precision.
 fn rational_outputs_preserve_sign_precision_scale_and_case() {
     for (input, places, expected) in [
         ("0", 6, "0.000000e0"),
@@ -73,6 +91,8 @@ fn rational_outputs_preserve_sign_precision_scale_and_case() {
 }
 
 #[test]
+/// Check nine exact halfway fixtures with both signs against literal nearest-even outputs.
+/// Include carries across decimal decades and zero fractional places.
 fn exact_halfway_values_round_to_even_including_decade_carries() {
     for (input, places, expected) in [
         ("2.5", 0, "2e0"),
@@ -97,6 +117,10 @@ fn exact_halfway_values_round_to_even_including_decade_carries() {
 }
 
 #[test]
+/// Check 576 numerator/denominator pairs at four place counts in both cases (4,608 outputs).
+/// Construct 256-bit downward/upward MPFR bounds directly from each exact rational;
+/// require their rounded strings to agree before comparing Hyperreal. Pairs include
+/// repeated zero values; this is a finite oracle corpus, not a universal rounding proof.
 fn generated_exact_rationals_match_directed_mpfr_reference_brackets() {
     mpfr::cleanup_on_thread_exit();
     for denominator in [3_i64, 7, 11, 13, 17, 19, 23, 31, 97] {
@@ -126,6 +150,9 @@ fn generated_exact_rationals_match_directed_mpfr_reference_brackets() {
 }
 
 #[test]
+/// Bracket pi and positive sqrt(2) independently with directed 256-bit MPFR operations.
+/// Require endpoint-string agreement at four place counts through fifty digits and
+/// both cases, then compare the checked Hyperreal output at refinement floor -512.
 fn pi_and_square_root_match_directed_mpfr_reference_brackets() {
     mpfr::cleanup_on_thread_exit();
     let pi = Real::pi();
@@ -148,6 +175,8 @@ fn pi_and_square_root_match_directed_mpfr_reference_brackets() {
 }
 
 #[test]
+/// Check pi scaled by 10^400 and signed 10^-400 against six-place scientific strings.
+/// The retained exact scale must survive beyond primitive-float overflow and underflow.
 fn rational_scale_is_preserved_outside_primitive_float_range() {
     for (scale, expected) in [
         ("1e400", "3.141593e400"),
@@ -163,6 +192,9 @@ fn rational_scale_is_preserved_outside_primitive_float_range() {
 }
 
 #[test]
+/// Require UnknownZero for three cancellation forms at four floors and both cases.
+/// After a successful finer interval query, repeat through a clone; cached evidence
+/// must not turn an unresolved coarse formatting search into numeric zero.
 fn original_unresolved_zero_forms_return_typed_failure() {
     for value in [
         unresolved_zero(),
@@ -186,6 +218,8 @@ fn original_unresolved_zero_forms_return_typed_failure() {
 }
 
 #[test]
+/// Offset unresolved zero by signed 10^-40: coarse search stays UnknownZero while finer search succeeds.
+/// After a still-finer enclosure, repeat the coarse failure and fine uppercase clone success.
 fn tiny_unresolved_nonzero_values_need_sufficient_enclosure_precision() {
     for (offset, expected) in [("1e-40", "1.000000e-40"), ("-1e-40", "-1.000000e-40")] {
         let value = unresolved_zero() + scalar(offset);
@@ -210,6 +244,8 @@ fn tiny_unresolved_nonzero_values_need_sufficient_enclosure_precision() {
 }
 
 #[test]
+/// At a nonzero halfway boundary, require Exhausted for the unresolved expression
+/// but exact ties-to-even output for the direct rational with the same mathematical value.
 fn ambiguous_rounding_is_distinct_from_unresolved_zero() {
     let value = unresolved_zero() + scalar("1.234565");
     assert_eq!(
@@ -223,6 +259,9 @@ fn ambiguous_rounding_is_distinct_from_unresolved_zero() {
 }
 
 #[test]
+/// Toggle one attached flag through abort, clear/succeed, abort and clear/succeed again.
+/// Require aborted enclosures to be absent and formatting to exhaust even after warming;
+/// this exercises sequential retry, not concurrent mid-call cancellation latency.
 fn final_value_abort_is_honored_after_warming_and_clearing() {
     let flag = Arc::new(AtomicBool::new(true));
     let mut value = unresolved_zero() + scalar("1e-40");
@@ -252,6 +291,8 @@ fn final_value_abort_is_honored_after_warming_and_clearing() {
 }
 
 #[test]
+/// Require successful direct formatting of zero and 1/8 despite an asserted abort flag.
+/// This test checks success only, not the returned strings or a measured absence of work.
 fn direct_rational_output_does_not_require_numeric_refinement() {
     let flag = Arc::new(AtomicBool::new(true));
     for input in ["0", "1/8"] {
@@ -262,6 +303,9 @@ fn direct_rational_output_does_not_require_numeric_refinement() {
 }
 
 #[test]
+/// Check positive floors, usize::MAX/excessive places, i32::MIN refinement and an oversized rational.
+/// The last fixture already allocates a 4,000,001-bit numerator before the formatter
+/// rejects it; typed outcomes do not establish a total allocation or runtime bound.
 fn invalid_or_excessive_requests_fail_before_formatting() {
     let value = Real::one();
     assert_eq!(
@@ -290,6 +334,8 @@ fn invalid_or_excessive_requests_fail_before_formatting() {
 }
 
 #[test]
+/// Contrast zero-looking fixed output for the original hypot witness and -10^-400
+/// with checked scientific output retaining the latter nonzero scale and negative sign.
 fn existing_fixed_decimal_view_remains_separate() {
     assert_eq!(
         format!("{:.6}", original_hypot().fixed_decimal()),

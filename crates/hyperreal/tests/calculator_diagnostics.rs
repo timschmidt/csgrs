@@ -1,3 +1,8 @@
+//! End-to-end diagnostic recovery through the simple-feature calculator binary.
+//!
+//! A fixed two-line input checks that unresolved display does not stop later work;
+//! substring assertions do not specify the calculator's entire transcript.
+
 #![cfg(feature = "simple")]
 
 use std::io::Write;
@@ -5,6 +10,10 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 #[test]
+/// Spawn the Cargo-built calculator, write unresolved cancellation followed by 1/8, and close stdin.
+/// Poll after input delivery with a five-second deadline, killing/reaping the child on timeout;
+/// this guard is not a bound on spawn, input writing or every cleanup operation. Require
+/// success, empty stderr, an UnknownZero marker, and the second answer label plus 0.125.
 fn unresolved_decimal_answer_does_not_prevent_the_next_calculation() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_hyperreal"))
         .stdin(Stdio::piped())
