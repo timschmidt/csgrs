@@ -963,6 +963,25 @@ fn bench_matrix3(c: &mut Criterion) {
     group.finish();
 }
 
+/// Registers seven binary-native Mat4 rows and matching four-case trace hooks.
+///
+/// Imports supplied matrices/vectors exactly from their finite binary-float
+/// coordinates before timing. Dense determinant, inverse, matrix product and
+/// homogeneous vector product use the supplied corpora. Three sparse rows use
+/// the shared diagonal/triangular corpus for determinant, inverse and product;
+/// both sparse operands are separately imported copies of the same cases, so
+/// each sparse product squares its corresponding matrix.
+///
+/// Each ordinary iter row cycles through four retained cases. Determinants borrow,
+/// inverses consume a clone, and products clone both operands; selection, explicit
+/// clones, operations and output destruction are timed. All four homogeneous
+/// output coordinates are retained without perspective division or requested float
+/// conversion. Inverse Results are unwrapped; invalid ingress or inverse failure
+/// can panic, and arbitrary supplied matrices are not prevalidated here.
+///
+/// Each enabled/selected hook visits all four cases once before timing, permitting
+/// evidence reuse. Sparse names do not assert a dispatch route. There are no value,
+/// path-count, policy-receipt, cancellation or total-work/memory checks in this helper.
 fn bench_blas_matrix4(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -1035,9 +1054,7 @@ fn bench_blas_matrix4(
     });
     group.bench_function(format!("{label}/mat4 determinant sparse"), |b| {
         let cursor = Cell::new(0);
-        b.iter(|| {
-            black_box(black_box(next_case(&blas_sparse_cases, &cursor)).determinant())
-        })
+        b.iter(|| black_box(black_box(next_case(&blas_sparse_cases, &cursor)).determinant()))
     });
     group.bench_function(format!("{label}/mat4 inverse sparse"), |b| {
         let cursor = Cell::new(0);
@@ -1083,19 +1100,64 @@ fn bench_blas_matrix4(
     });
 }
 
+/// Registers sixty-one Mat4 timing rows and offers forty-nine native diagnostic hooks.
+///
+/// Seven binary-native rows cover four dense and three sparse operations. Each of
+/// three external adapters adds only four dense rows; these schedules cycle through
+/// four retained cases. Twenty-two fixed hyperreal-rational and twenty fixed
+/// hyperreal-symbolic rows add baseline operations and transform consumers. Those
+/// labels name workload families, not a guarantee that every operand is rational
+/// or symbolic, and the fixed inputs are not the complete rotating corpus.
+///
+/// The fixed rational baseline matrices and vector have integer entries. General
+/// symbolic transforms use pi/e/rational matrix entries and vector weight 9/2.
+/// Both direction variables contain the rational vector (3/2,-11/7,9/4,0), even
+/// under the symbolic label. The rational-labeled point row uses a rational matrix
+/// with the symbolic point (pi,5/3,7/2,1), satisfying transform_vec4_point's input
+/// precondition. Transform outputs retain four homogeneous coordinates; no row performs
+/// perspective division. An input direction need not remain a direction under
+/// these general homogeneous matrices: its output weight is -23/4 for the fixed rational
+/// matrix and 3161/1008 for the full symbolic matrix.
+///
+/// The no-translation matrices have an entirely zero final column, including the
+/// bottom-right entry; both are singular, not standard affine homogeneous matrices.
+/// The rational one also has a zero final row and always outputs zero weight.
+/// The symbolic one keeps three nonzero coefficients in that row. These rows use
+/// ordinary matrix/vector multiplication; no inverse or Cartesian conversion of
+/// those singular matrices is attempted.
+///
+/// Ordinary iter includes cursor work where present, explicit clones, operations,
+/// requested consumers and destruction. Native determinants borrow, inverses
+/// consume clones, and ordinary products clone both sides. External baselines
+/// clone the left matrix before borrowed adapter calls. Batch rows clone a matrix
+/// and borrow four copies of one vector; each call constructs four outputs with
+/// matrix/final-column facts shared within that call, not a persistent batch cache.
+/// Fixtures and contexts are retained outside timing. Numerica/Symbolica Float and
+/// Rug/MPFR request precision 128; Atom methods do not use their stored 128 as a
+/// numeric precision setting. Output evaluation and cloning costs differ by engine.
+///
+/// | Transform consumer | Explicit requests after construction |
+/// | --- | --- |
+/// | Plain single/batch/point/direction | No primitive-float conversion or fact query |
+/// | Single one-coord/all-coord approx | One / all four coordinates as optional lossy f64 |
+/// | Batch one-coord/all-coord approx | First coordinate of first vector / all sixteen coordinates |
+/// | Single structural or sign/zero facts | Sign and zero status for all four coordinates |
+/// | Batch structural facts, including direction batches | Sign and zero status for all sixteen coordinates |
+/// | Symbolic single sign refinement | refine_sign_until(0) on all four coordinates |
+///
+/// Approximation/sign Options and unknown structural facts are black-boxed without
+/// requiring success. Native inverse Results are unwrapped. Seven binary hooks
+/// visit four cases each; forty-two fixed native hooks mirror their timing rows.
+/// These diagnostics assert neither demand isolation nor dispatch counts or
+/// numerical correctness, and add no policy receipt, cancellation signal or total
+/// resource bound. Context argument 128 is not a bound on exact scalar work.
 fn bench_matrix4(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix4");
     let lhs_cases = sample_mat4_cases();
     let rhs_cases = sample_mat4_b_cases();
     let vector_cases = sample_vec4_cases();
 
-    bench_blas_matrix4(
-        &mut group,
-        "hyperreal",
-        lhs_cases,
-        rhs_cases,
-        vector_cases,
-    );
+    bench_blas_matrix4(&mut group, "hyperreal", lhs_cases, rhs_cases, vector_cases);
 
     {
         let rational_lhs = blas_mat4_rational();
@@ -1119,12 +1181,7 @@ fn bench_matrix4(c: &mut Criterion) {
             [q(9, 7), q(4, 3), q(11, 5), q(0, 1)],
             [q(0, 1), q(0, 1), q(0, 1), q(0, 1)],
         ]);
-        let symbolic_vector = Vector4::new([
-            Real::pi(),
-            q(-2, 3),
-            Real::e(),
-            q(9, 2),
-        ]);
+        let symbolic_vector = Vector4::new([Real::pi(), q(-2, 3), Real::e(), q(9, 2)]);
         let symbolic_vec_batch = [
             symbolic_vector.clone(),
             symbolic_vector.clone(),
@@ -1164,23 +1221,33 @@ fn bench_matrix4(c: &mut Criterion) {
         trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4", || {
             black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
         });
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 batch", || {
-            black_box(black_box(rational_lhs.clone()).transform_vec4_batch(black_box(
-                &rational_vec_batch,
-            )));
-        });
-        // Batch-demand rows ensure the shared transform kernel keeps
-        // one-coordinate approximation cheap even when many vectors share one matrix.
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx", || {
-            let transformed = black_box(
-                black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
-            );
-            black_box(transformed[0][0].to_f64_lossy());
-        });
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx", || {
-            let transformed = black_box(
-                black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
-            );
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 batch",
+            || {
+                black_box(
+                    black_box(rational_lhs.clone())
+                        .transform_vec4_batch(black_box(&rational_vec_batch)),
+                );
+            },
+        );
+        // Request one coordinate after batch construction; no cost bound is asserted.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(rational_lhs.clone())
+                        .transform_vec4_batch(black_box(&rational_vec_batch)),
+                );
+                black_box(transformed[0][0].to_f64_lossy());
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(rational_lhs.clone())
+                        .transform_vec4_batch(black_box(&rational_vec_batch)),
+                );
                 black_box((
                     transformed[0][0].to_f64_lossy(),
                     transformed[0][1].to_f64_lossy(),
@@ -1199,13 +1266,16 @@ fn bench_matrix4(c: &mut Criterion) {
                     transformed[3][2].to_f64_lossy(),
                     transformed[3][3].to_f64_lossy(),
                 ));
-        });
-        // Structural-fact extraction should not request full-coordinate approximation.
+            },
+        );
+        // Construct the batch, then request sign/zero facts without float conversion.
         trace_dispatch_row(
             "matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts",
             || {
-                let transformed =
-                    black_box(black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)));
+                let transformed = black_box(
+                    black_box(rational_lhs.clone())
+                        .transform_vec4_batch(black_box(&rational_vec_batch)),
+                );
                 let _ = black_box((
                     transformed[0][0].structural_facts().sign,
                     transformed[0][1].structural_facts().sign,
@@ -1242,15 +1312,16 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // Direction-vector batches should keep the translation column out of the
-        // arithmetic because `w == 0` is a directional fact.
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 batch direction", || {
-            black_box(
-                black_box(rational_lhs.clone()).transform_vec4_batch(black_box(
-                    &rational_direction_batch,
-                )),
-            );
-        });
+        // Input weights are zero; the last column contributes nothing to these products.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 batch direction",
+            || {
+                black_box(
+                    black_box(rational_lhs.clone())
+                        .transform_vec4_batch(black_box(&rational_direction_batch)),
+                );
+            },
+        );
         trace_dispatch_row(
             "matrix4/hyperreal-rational/mat4 transform vec4 batch direction one-coord approx",
             || {
@@ -1288,8 +1359,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // Structural-facts only for direction-batch keeps symbolic predicate logic
-        // off per-lane approximation paths.
+        // Query every direction-batch coordinate without explicitly requesting float output.
         trace_dispatch_row(
             "matrix4/hyperreal-rational/mat4 transform vec4 batch direction structural facts",
             || {
@@ -1333,12 +1403,15 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 no-translation", || {
-            black_box(
-                black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
-            );
-        });
-        // Demand-driven approximation check for full transform outputs.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 no-translation",
+            || {
+                black_box(
+                    black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                );
+            },
+        );
+        // Compare explicit approximation requests after constructing the transform.
         trace_dispatch_row(
             "matrix4/hyperreal-rational/mat4 transform vec4 no-translation one-coord approx",
             || {
@@ -1362,12 +1435,13 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // Structural fact extraction should not force full-coordinate approximation.
+        // Request structural facts without explicit float conversion or work assertions.
         trace_dispatch_row(
             "matrix4/hyperreal-rational/mat4 transform vec4 no-translation structural facts",
             || {
-                let transformed =
-                    black_box(black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()));
+                let transformed = black_box(
+                    black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                );
                 let _ = black_box((
                     transformed[0].structural_facts().sign,
                     transformed[1].structural_facts().sign,
@@ -1380,7 +1454,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // Predicate-only row should avoid forcing full-to-f64 approximation.
+        // Build the transform before querying sign/zero facts, without explicit float output.
         trace_dispatch_row(
             "matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts",
             || {
@@ -1406,18 +1480,20 @@ fn bench_matrix4(c: &mut Criterion) {
                 black_box(transformed[0].to_f64_lossy());
             },
         );
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx", || {
-            let transformed =
-                black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-            black_box((
-                transformed[0].to_f64_lossy(),
-                transformed[1].to_f64_lossy(),
-                transformed[2].to_f64_lossy(),
-                transformed[3].to_f64_lossy(),
-            ));
-        });
-        // Symbolic matrix+vector probes exercise transform fast paths when
-        // coefficients and inputs carry non-rational fact metadata.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx",
+            || {
+                let transformed =
+                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+                black_box((
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
+                    transformed[3].to_f64_lossy(),
+                ));
+            },
+        );
+        // Exercise symbolic matrix/vector products without asserting a dispatch route.
         trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4", || {
             black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
         });
@@ -1444,25 +1520,32 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // Symbolic batch path keeps the same handle-based shared-matrix scheduling
-        // while still preserving one-coordinate demand demotion in this branch.
-        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4 batch", || {
-            black_box(
-                black_box(symbolic_mat4.clone())
-                    .transform_vec4_batch(black_box(&symbolic_vec_batch)),
-            );
-        });
-        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx", || {
-            let transformed = black_box(
-                black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
-            );
-            black_box(transformed[0][0].to_f64_lossy());
-        });
+        // Build the immediate symbolic batch, then request selected output coordinates.
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 batch",
+            || {
+                black_box(
+                    black_box(symbolic_mat4.clone())
+                        .transform_vec4_batch(black_box(&symbolic_vec_batch)),
+                );
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat4.clone())
+                        .transform_vec4_batch(black_box(&symbolic_vec_batch)),
+                );
+                black_box(transformed[0][0].to_f64_lossy());
+            },
+        );
         trace_dispatch_row(
             "matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx",
             || {
                 let transformed = black_box(
-                    black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
+                    black_box(symbolic_mat4.clone())
+                        .transform_vec4_batch(black_box(&symbolic_vec_batch)),
                 );
                 black_box((
                     transformed[0][0].to_f64_lossy(),
@@ -1484,16 +1567,17 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // Symbolic direction-vector batches exercise the same no-translation
-        // branch sharing in the batch handle cache.
-        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction", || {
-            black_box(
-                black_box(symbolic_mat4.clone())
-                    .transform_vec4_batch(black_box(&symbolic_direction_batch)),
-            );
-        });
-        // Directional batch structural facts stay on fast predicate dispatch and
-        // intentionally avoid `to-f64-approx` work for shared-batch workloads.
+        // Share matrix facts within this immediate batch of zero-weight inputs.
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction",
+            || {
+                black_box(
+                    black_box(symbolic_mat4.clone())
+                        .transform_vec4_batch(black_box(&symbolic_direction_batch)),
+                );
+            },
+        );
+        // Request all batch sign/zero facts; no float conversion or dispatch assertion follows.
         trace_dispatch_row(
             "matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts",
             || {
@@ -1537,45 +1621,50 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // Symbolic batch predicate path also stays fact-only.
-        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts", || {
-            let transformed =
-                black_box(black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)));
-            let _ = black_box((
-                transformed[0][0].structural_facts().sign,
-                transformed[0][1].structural_facts().sign,
-                transformed[0][2].structural_facts().sign,
-                transformed[0][3].structural_facts().sign,
-                transformed[1][0].structural_facts().sign,
-                transformed[1][1].structural_facts().sign,
-                transformed[1][2].structural_facts().sign,
-                transformed[1][3].structural_facts().sign,
-                transformed[2][0].structural_facts().sign,
-                transformed[2][1].structural_facts().sign,
-                transformed[2][2].structural_facts().sign,
-                transformed[2][3].structural_facts().sign,
-                transformed[3][0].structural_facts().sign,
-                transformed[3][1].structural_facts().sign,
-                transformed[3][2].structural_facts().sign,
-                transformed[3][3].structural_facts().sign,
-                transformed[0][0].zero_status(),
-                transformed[0][1].zero_status(),
-                transformed[0][2].zero_status(),
-                transformed[0][3].zero_status(),
-                transformed[1][0].zero_status(),
-                transformed[1][1].zero_status(),
-                transformed[1][2].zero_status(),
-                transformed[1][3].zero_status(),
-                transformed[2][0].zero_status(),
-                transformed[2][1].zero_status(),
-                transformed[2][2].zero_status(),
-                transformed[2][3].zero_status(),
-                transformed[3][0].zero_status(),
-                transformed[3][1].zero_status(),
-                transformed[3][2].zero_status(),
-                transformed[3][3].zero_status(),
-            ));
-        });
+        // Construct the symbolic batch before requesting its sign/zero facts.
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat4.clone())
+                        .transform_vec4_batch(black_box(&symbolic_vec_batch)),
+                );
+                let _ = black_box((
+                    transformed[0][0].structural_facts().sign,
+                    transformed[0][1].structural_facts().sign,
+                    transformed[0][2].structural_facts().sign,
+                    transformed[0][3].structural_facts().sign,
+                    transformed[1][0].structural_facts().sign,
+                    transformed[1][1].structural_facts().sign,
+                    transformed[1][2].structural_facts().sign,
+                    transformed[1][3].structural_facts().sign,
+                    transformed[2][0].structural_facts().sign,
+                    transformed[2][1].structural_facts().sign,
+                    transformed[2][2].structural_facts().sign,
+                    transformed[2][3].structural_facts().sign,
+                    transformed[3][0].structural_facts().sign,
+                    transformed[3][1].structural_facts().sign,
+                    transformed[3][2].structural_facts().sign,
+                    transformed[3][3].structural_facts().sign,
+                    transformed[0][0].zero_status(),
+                    transformed[0][1].zero_status(),
+                    transformed[0][2].zero_status(),
+                    transformed[0][3].zero_status(),
+                    transformed[1][0].zero_status(),
+                    transformed[1][1].zero_status(),
+                    transformed[1][2].zero_status(),
+                    transformed[1][3].zero_status(),
+                    transformed[2][0].zero_status(),
+                    transformed[2][1].zero_status(),
+                    transformed[2][2].zero_status(),
+                    transformed[2][3].zero_status(),
+                    transformed[3][0].zero_status(),
+                    transformed[3][1].zero_status(),
+                    transformed[3][2].zero_status(),
+                    transformed[3][3].zero_status(),
+                ));
+            },
+        );
         trace_dispatch_row(
             "matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx",
             || {
@@ -1616,8 +1705,9 @@ fn bench_matrix4(c: &mut Criterion) {
         trace_dispatch_row(
             "matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement",
             || {
-                let transformed =
-                    black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
+                let transformed = black_box(
+                    black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
+                );
                 black_box((
                     transformed[0].refine_sign_until(0),
                     transformed[1].refine_sign_until(0),
@@ -1626,12 +1716,15 @@ fn bench_matrix4(c: &mut Criterion) {
                 ));
             },
         );
-        // No-translation symbolic rows reuse the 3-term constructor path while
-        // preserving the same one-coordinate demand behavior as point/direction
-        // variants.
-        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation", || {
-            black_box(black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()));
-        });
+        // A zero final column removes its homogeneous contribution; this matrix is singular.
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation",
+            || {
+                black_box(
+                    black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                );
+            },
+        );
         trace_dispatch_row(
             "matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx",
             || {
@@ -1674,39 +1767,48 @@ fn bench_matrix4(c: &mut Criterion) {
             },
         );
         // Point/direction semantics are predicate-relevant workloads in this stack.
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform point vec4", || {
-            black_box(
-                black_box(rational_lhs.clone()).transform_vec4_point(black_box(&symbolic_point)),
-            );
-        });
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform direction vec4", || {
-            black_box(
-                black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()),
-            );
-        });
-        // Structural-facts direction probe keeps this fast path from forcing
-        // all-coordinate approximation on the predicate path.
-        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts", || {
-            let transformed = black_box(
-                black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()),
-            );
-            let _ = black_box((
-                transformed[0].structural_facts().sign,
-                transformed[1].structural_facts().sign,
-                transformed[2].structural_facts().sign,
-                transformed[3].structural_facts().sign,
-                transformed[0].zero_status(),
-                transformed[1].zero_status(),
-                transformed[2].zero_status(),
-                transformed[3].zero_status(),
-            ));
-        });
-        // Symbolic direction transform stays in the direction (w == 0) branch.
-        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform direction vec4", || {
-            black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()));
-        });
-        // Mirroring rational direction predicate behavior, keep symbolic row
-        // structural extraction independent of numeric approximation demand.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform point vec4",
+            || {
+                black_box(
+                    black_box(rational_lhs.clone())
+                        .transform_vec4_point(black_box(&symbolic_point)),
+                );
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform direction vec4",
+            || {
+                black_box(black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()));
+            },
+        );
+        // Query direction-result facts without explicitly requesting float output.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts",
+            || {
+                let transformed = black_box(
+                    black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()),
+                );
+                let _ = black_box((
+                    transformed[0].structural_facts().sign,
+                    transformed[1].structural_facts().sign,
+                    transformed[2].structural_facts().sign,
+                    transformed[3].structural_facts().sign,
+                    transformed[0].zero_status(),
+                    transformed[1].zero_status(),
+                    transformed[2].zero_status(),
+                    transformed[3].zero_status(),
+                ));
+            },
+        );
+        // The input has w=0; the projective output is not required to have zero weight.
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform direction vec4",
+            || {
+                black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()));
+            },
+        );
+        // Query all four symbolic direction-result coordinates for sign/zero facts.
         trace_dispatch_row(
             "matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts",
             || {
@@ -1764,93 +1866,109 @@ fn bench_matrix4(c: &mut Criterion) {
         });
         group.bench_function("hyperreal-rational/mat4 transform vec4 batch", |b| {
             b.iter(|| {
-                black_box(black_box(rational_lhs.clone()).transform_vec4_batch(black_box(
-                    &rational_vec_batch,
-                )))
-            })
-        });
-        group.bench_function("hyperreal-rational/mat4 transform vec4 batch one-coord approx", |b| {
-            b.iter(|| {
-                let transformed = black_box(
-                    black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
-                );
-                black_box(transformed[0][0].to_f64_lossy())
-            })
-        });
-        group.bench_function("hyperreal-rational/mat4 transform vec4 batch structural facts", |b| {
-            b.iter(|| {
-                let transformed = black_box(
-                    black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
-                );
-                black_box((
-                    transformed[0][0].structural_facts().sign,
-                    transformed[0][1].structural_facts().sign,
-                    transformed[0][2].structural_facts().sign,
-                    transformed[0][3].structural_facts().sign,
-                    transformed[1][0].structural_facts().sign,
-                    transformed[1][1].structural_facts().sign,
-                    transformed[1][2].structural_facts().sign,
-                    transformed[1][3].structural_facts().sign,
-                    transformed[2][0].structural_facts().sign,
-                    transformed[2][1].structural_facts().sign,
-                    transformed[2][2].structural_facts().sign,
-                    transformed[2][3].structural_facts().sign,
-                    transformed[3][0].structural_facts().sign,
-                    transformed[3][1].structural_facts().sign,
-                    transformed[3][2].structural_facts().sign,
-                    transformed[3][3].structural_facts().sign,
-                    transformed[0][0].zero_status(),
-                    transformed[0][1].zero_status(),
-                    transformed[0][2].zero_status(),
-                    transformed[0][3].zero_status(),
-                    transformed[1][0].zero_status(),
-                    transformed[1][1].zero_status(),
-                    transformed[1][2].zero_status(),
-                    transformed[1][3].zero_status(),
-                    transformed[2][0].zero_status(),
-                    transformed[2][1].zero_status(),
-                    transformed[2][2].zero_status(),
-                    transformed[2][3].zero_status(),
-                    transformed[3][0].zero_status(),
-                    transformed[3][1].zero_status(),
-                    transformed[3][2].zero_status(),
-                    transformed[3][3].zero_status(),
-                ))
-            })
-        });
-        group.bench_function("hyperreal-rational/mat4 transform vec4 batch all-coord approx", |b| {
-            b.iter(|| {
-                let transformed = black_box(
-                    black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
-                );
-                black_box((
-                    transformed[0][0].to_f64_lossy(),
-                    transformed[0][1].to_f64_lossy(),
-                    transformed[0][2].to_f64_lossy(),
-                    transformed[0][3].to_f64_lossy(),
-                    transformed[1][0].to_f64_lossy(),
-                    transformed[1][1].to_f64_lossy(),
-                    transformed[1][2].to_f64_lossy(),
-                    transformed[1][3].to_f64_lossy(),
-                    transformed[2][0].to_f64_lossy(),
-                    transformed[2][1].to_f64_lossy(),
-                    transformed[2][2].to_f64_lossy(),
-                    transformed[2][3].to_f64_lossy(),
-                    transformed[3][0].to_f64_lossy(),
-                    transformed[3][1].to_f64_lossy(),
-                    transformed[3][2].to_f64_lossy(),
-                    transformed[3][3].to_f64_lossy(),
-                ))
-            })
-        });
-        group.bench_function("hyperreal-rational/mat4 transform vec4 batch direction", |b| {
-            b.iter(|| {
                 black_box(
                     black_box(rational_lhs.clone())
-                        .transform_vec4_batch(black_box(&rational_direction_batch)),
+                        .transform_vec4_batch(black_box(&rational_vec_batch)),
                 )
             })
         });
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 batch one-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_lhs.clone())
+                            .transform_vec4_batch(black_box(&rational_vec_batch)),
+                    );
+                    black_box(transformed[0][0].to_f64_lossy())
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 batch structural facts",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_lhs.clone())
+                            .transform_vec4_batch(black_box(&rational_vec_batch)),
+                    );
+                    black_box((
+                        transformed[0][0].structural_facts().sign,
+                        transformed[0][1].structural_facts().sign,
+                        transformed[0][2].structural_facts().sign,
+                        transformed[0][3].structural_facts().sign,
+                        transformed[1][0].structural_facts().sign,
+                        transformed[1][1].structural_facts().sign,
+                        transformed[1][2].structural_facts().sign,
+                        transformed[1][3].structural_facts().sign,
+                        transformed[2][0].structural_facts().sign,
+                        transformed[2][1].structural_facts().sign,
+                        transformed[2][2].structural_facts().sign,
+                        transformed[2][3].structural_facts().sign,
+                        transformed[3][0].structural_facts().sign,
+                        transformed[3][1].structural_facts().sign,
+                        transformed[3][2].structural_facts().sign,
+                        transformed[3][3].structural_facts().sign,
+                        transformed[0][0].zero_status(),
+                        transformed[0][1].zero_status(),
+                        transformed[0][2].zero_status(),
+                        transformed[0][3].zero_status(),
+                        transformed[1][0].zero_status(),
+                        transformed[1][1].zero_status(),
+                        transformed[1][2].zero_status(),
+                        transformed[1][3].zero_status(),
+                        transformed[2][0].zero_status(),
+                        transformed[2][1].zero_status(),
+                        transformed[2][2].zero_status(),
+                        transformed[2][3].zero_status(),
+                        transformed[3][0].zero_status(),
+                        transformed[3][1].zero_status(),
+                        transformed[3][2].zero_status(),
+                        transformed[3][3].zero_status(),
+                    ))
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 batch all-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_lhs.clone())
+                            .transform_vec4_batch(black_box(&rational_vec_batch)),
+                    );
+                    black_box((
+                        transformed[0][0].to_f64_lossy(),
+                        transformed[0][1].to_f64_lossy(),
+                        transformed[0][2].to_f64_lossy(),
+                        transformed[0][3].to_f64_lossy(),
+                        transformed[1][0].to_f64_lossy(),
+                        transformed[1][1].to_f64_lossy(),
+                        transformed[1][2].to_f64_lossy(),
+                        transformed[1][3].to_f64_lossy(),
+                        transformed[2][0].to_f64_lossy(),
+                        transformed[2][1].to_f64_lossy(),
+                        transformed[2][2].to_f64_lossy(),
+                        transformed[2][3].to_f64_lossy(),
+                        transformed[3][0].to_f64_lossy(),
+                        transformed[3][1].to_f64_lossy(),
+                        transformed[3][2].to_f64_lossy(),
+                        transformed[3][3].to_f64_lossy(),
+                    ))
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 batch direction",
+            |b| {
+                b.iter(|| {
+                    black_box(
+                        black_box(rational_lhs.clone())
+                            .transform_vec4_batch(black_box(&rational_direction_batch)),
+                    )
+                })
+            },
+        );
         group.bench_function(
             "hyperreal-rational/mat4 transform vec4 batch direction one-coord approx",
             |b| {
@@ -1892,8 +2010,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 })
             },
         );
-        // Direction-batch structural-facts benchmark keeps representation-preserving
-        // dispatch off any coordinate-approximation work.
+        // Measure batch construction plus sign/zero queries without explicit float output.
         group.bench_function(
             "hyperreal-rational/mat4 transform vec4 batch direction structural facts",
             |b| {
@@ -1939,13 +2056,16 @@ fn bench_matrix4(c: &mut Criterion) {
                 })
             },
         );
-        group.bench_function("hyperreal-rational/mat4 transform vec4 no-translation", |b| {
-            b.iter(|| {
-                black_box(
-                    black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
-                )
-            })
-        });
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 no-translation",
+            |b| {
+                b.iter(|| {
+                    black_box(
+                        black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                    )
+                })
+            },
+        );
         group.bench_function(
             "hyperreal-rational/mat4 transform vec4 no-translation one-coord approx",
             |b| {
@@ -1977,8 +2097,9 @@ fn bench_matrix4(c: &mut Criterion) {
             "hyperreal-rational/mat4 transform vec4 no-translation structural facts",
             |b| {
                 b.iter(|| {
-                    let transformed =
-                        black_box(black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()));
+                    let transformed = black_box(
+                        black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                    );
                     black_box((
                         transformed[0].structural_facts().sign,
                         transformed[1].structural_facts().sign,
@@ -1992,50 +2113,64 @@ fn bench_matrix4(c: &mut Criterion) {
                 })
             },
         );
-        group.bench_function("hyperreal-rational/mat4 transform vec4 sign/zero facts", |b| {
-            b.iter(|| {
-                let transformed =
-                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-                black_box((
-                    transformed[0].structural_facts().sign,
-                    transformed[1].structural_facts().sign,
-                    transformed[2].structural_facts().sign,
-                    transformed[3].structural_facts().sign,
-                    transformed[0].zero_status(),
-                    transformed[1].zero_status(),
-                    transformed[2].zero_status(),
-                    transformed[3].zero_status(),
-                ))
-            })
-        });
-        group.bench_function("hyperreal-rational/mat4 transform vec4 one-coord approx", |b| {
-            b.iter(|| {
-                let transformed =
-                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-                black_box(transformed[0].to_f64_lossy())
-            })
-        });
-        group.bench_function("hyperreal-rational/mat4 transform vec4 all-coord approx", |b| {
-            b.iter(|| {
-                let transformed =
-                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-                black_box((
-                    transformed[0].to_f64_lossy(),
-                    transformed[1].to_f64_lossy(),
-                    transformed[2].to_f64_lossy(),
-                    transformed[3].to_f64_lossy(),
-                ))
-            })
-        });
-        // Timed symbolic no-translation row keeps parity with symbolic full-vector
-        // and validates demand-demotion behavior in the zero-translation branch.
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 no-translation", |b| {
-            b.iter(|| {
-                black_box(
-                    black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
-                )
-            })
-        });
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 sign/zero facts",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_lhs.clone()) * black_box(rational_vector.clone()),
+                    );
+                    black_box((
+                        transformed[0].structural_facts().sign,
+                        transformed[1].structural_facts().sign,
+                        transformed[2].structural_facts().sign,
+                        transformed[3].structural_facts().sign,
+                        transformed[0].zero_status(),
+                        transformed[1].zero_status(),
+                        transformed[2].zero_status(),
+                        transformed[3].zero_status(),
+                    ))
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 one-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_lhs.clone()) * black_box(rational_vector.clone()),
+                    );
+                    black_box(transformed[0].to_f64_lossy())
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 all-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_lhs.clone()) * black_box(rational_vector.clone()),
+                    );
+                    black_box((
+                        transformed[0].to_f64_lossy(),
+                        transformed[1].to_f64_lossy(),
+                        transformed[2].to_f64_lossy(),
+                        transformed[3].to_f64_lossy(),
+                    ))
+                })
+            },
+        );
+        // Measure the symbolic zero-column product; this row asserts no demand behavior.
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 no-translation",
+            |b| {
+                b.iter(|| {
+                    black_box(
+                        black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                    )
+                })
+            },
+        );
         group.bench_function(
             "hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx",
             |b| {
@@ -2063,43 +2198,55 @@ fn bench_matrix4(c: &mut Criterion) {
                 })
             },
         );
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 sign refinement", |b| {
-            b.iter(|| {
-                let transformed =
-                    black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
-                black_box((
-                    transformed[0].refine_sign_until(0),
-                    transformed[1].refine_sign_until(0),
-                    transformed[2].refine_sign_until(0),
-                    transformed[3].refine_sign_until(0),
-                ))
-            })
-        });
-        // Timed symbolic coverage for demand-driven approximation behavior.
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 sign refinement",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
+                    );
+                    black_box((
+                        transformed[0].refine_sign_until(0),
+                        transformed[1].refine_sign_until(0),
+                        transformed[2].refine_sign_until(0),
+                        transformed[3].refine_sign_until(0),
+                    ))
+                })
+            },
+        );
+        // Time symbolic construction and the explicitly requested consumers separately.
         group.bench_function("hyperreal-symbolic/mat4 transform vec4", |b| {
             b.iter(|| {
                 black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()))
             })
         });
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 one-coord approx", |b| {
-            b.iter(|| {
-                let transformed =
-                    black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
-                black_box(transformed[0].to_f64_lossy())
-            })
-        });
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 all-coord approx", |b| {
-            b.iter(|| {
-                let transformed =
-                    black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
-                black_box((
-                    transformed[0].to_f64_lossy(),
-                    transformed[1].to_f64_lossy(),
-                    transformed[2].to_f64_lossy(),
-                    transformed[3].to_f64_lossy(),
-                ))
-            })
-        });
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 one-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
+                    );
+                    black_box(transformed[0].to_f64_lossy())
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 all-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
+                    );
+                    black_box((
+                        transformed[0].to_f64_lossy(),
+                        transformed[1].to_f64_lossy(),
+                        transformed[2].to_f64_lossy(),
+                        transformed[3].to_f64_lossy(),
+                    ))
+                })
+            },
+        );
         group.bench_function("hyperreal-symbolic/mat4 transform vec4 batch", |b| {
             b.iter(|| {
                 black_box(
@@ -2108,88 +2255,103 @@ fn bench_matrix4(c: &mut Criterion) {
                 )
             })
         });
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 batch structural facts", |b| {
-            b.iter(|| {
-                let transformed = black_box(
-                    black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
-                );
-                black_box((
-                    transformed[0][0].structural_facts().sign,
-                    transformed[0][1].structural_facts().sign,
-                    transformed[0][2].structural_facts().sign,
-                    transformed[0][3].structural_facts().sign,
-                    transformed[1][0].structural_facts().sign,
-                    transformed[1][1].structural_facts().sign,
-                    transformed[1][2].structural_facts().sign,
-                    transformed[1][3].structural_facts().sign,
-                    transformed[2][0].structural_facts().sign,
-                    transformed[2][1].structural_facts().sign,
-                    transformed[2][2].structural_facts().sign,
-                    transformed[2][3].structural_facts().sign,
-                    transformed[3][0].structural_facts().sign,
-                    transformed[3][1].structural_facts().sign,
-                    transformed[3][2].structural_facts().sign,
-                    transformed[3][3].structural_facts().sign,
-                    transformed[0][0].zero_status(),
-                    transformed[0][1].zero_status(),
-                    transformed[0][2].zero_status(),
-                    transformed[0][3].zero_status(),
-                    transformed[1][0].zero_status(),
-                    transformed[1][1].zero_status(),
-                    transformed[1][2].zero_status(),
-                    transformed[1][3].zero_status(),
-                    transformed[2][0].zero_status(),
-                    transformed[2][1].zero_status(),
-                    transformed[2][2].zero_status(),
-                    transformed[2][3].zero_status(),
-                    transformed[3][0].zero_status(),
-                    transformed[3][1].zero_status(),
-                    transformed[3][2].zero_status(),
-                    transformed[3][3].zero_status(),
-                ))
-            })
-        });
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 batch one-coord approx", |b| {
-            b.iter(|| {
-                let transformed = black_box(
-                    black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
-                );
-                black_box(transformed[0][0].to_f64_lossy())
-            })
-        });
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 batch all-coord approx", |b| {
-            b.iter(|| {
-                let transformed = black_box(
-                    black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
-                );
-                black_box((
-                    transformed[0][0].to_f64_lossy(),
-                    transformed[0][1].to_f64_lossy(),
-                    transformed[0][2].to_f64_lossy(),
-                    transformed[0][3].to_f64_lossy(),
-                    transformed[1][0].to_f64_lossy(),
-                    transformed[1][1].to_f64_lossy(),
-                    transformed[1][2].to_f64_lossy(),
-                    transformed[1][3].to_f64_lossy(),
-                    transformed[2][0].to_f64_lossy(),
-                    transformed[2][1].to_f64_lossy(),
-                    transformed[2][2].to_f64_lossy(),
-                    transformed[2][3].to_f64_lossy(),
-                    transformed[3][0].to_f64_lossy(),
-                    transformed[3][1].to_f64_lossy(),
-                    transformed[3][2].to_f64_lossy(),
-                    transformed[3][3].to_f64_lossy(),
-                ))
-            })
-        });
-        group.bench_function("hyperreal-symbolic/mat4 transform vec4 batch direction", |b| {
-            b.iter(|| {
-                black_box(
-                    black_box(symbolic_mat4.clone())
-                        .transform_vec4_batch(black_box(&symbolic_direction_batch)),
-                )
-            })
-        });
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 batch structural facts",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone())
+                            .transform_vec4_batch(black_box(&symbolic_vec_batch)),
+                    );
+                    black_box((
+                        transformed[0][0].structural_facts().sign,
+                        transformed[0][1].structural_facts().sign,
+                        transformed[0][2].structural_facts().sign,
+                        transformed[0][3].structural_facts().sign,
+                        transformed[1][0].structural_facts().sign,
+                        transformed[1][1].structural_facts().sign,
+                        transformed[1][2].structural_facts().sign,
+                        transformed[1][3].structural_facts().sign,
+                        transformed[2][0].structural_facts().sign,
+                        transformed[2][1].structural_facts().sign,
+                        transformed[2][2].structural_facts().sign,
+                        transformed[2][3].structural_facts().sign,
+                        transformed[3][0].structural_facts().sign,
+                        transformed[3][1].structural_facts().sign,
+                        transformed[3][2].structural_facts().sign,
+                        transformed[3][3].structural_facts().sign,
+                        transformed[0][0].zero_status(),
+                        transformed[0][1].zero_status(),
+                        transformed[0][2].zero_status(),
+                        transformed[0][3].zero_status(),
+                        transformed[1][0].zero_status(),
+                        transformed[1][1].zero_status(),
+                        transformed[1][2].zero_status(),
+                        transformed[1][3].zero_status(),
+                        transformed[2][0].zero_status(),
+                        transformed[2][1].zero_status(),
+                        transformed[2][2].zero_status(),
+                        transformed[2][3].zero_status(),
+                        transformed[3][0].zero_status(),
+                        transformed[3][1].zero_status(),
+                        transformed[3][2].zero_status(),
+                        transformed[3][3].zero_status(),
+                    ))
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 batch one-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone())
+                            .transform_vec4_batch(black_box(&symbolic_vec_batch)),
+                    );
+                    black_box(transformed[0][0].to_f64_lossy())
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 batch all-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone())
+                            .transform_vec4_batch(black_box(&symbolic_vec_batch)),
+                    );
+                    black_box((
+                        transformed[0][0].to_f64_lossy(),
+                        transformed[0][1].to_f64_lossy(),
+                        transformed[0][2].to_f64_lossy(),
+                        transformed[0][3].to_f64_lossy(),
+                        transformed[1][0].to_f64_lossy(),
+                        transformed[1][1].to_f64_lossy(),
+                        transformed[1][2].to_f64_lossy(),
+                        transformed[1][3].to_f64_lossy(),
+                        transformed[2][0].to_f64_lossy(),
+                        transformed[2][1].to_f64_lossy(),
+                        transformed[2][2].to_f64_lossy(),
+                        transformed[2][3].to_f64_lossy(),
+                        transformed[3][0].to_f64_lossy(),
+                        transformed[3][1].to_f64_lossy(),
+                        transformed[3][2].to_f64_lossy(),
+                        transformed[3][3].to_f64_lossy(),
+                    ))
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 batch direction",
+            |b| {
+                b.iter(|| {
+                    black_box(
+                        black_box(symbolic_mat4.clone())
+                            .transform_vec4_batch(black_box(&symbolic_direction_batch)),
+                    )
+                })
+            },
+        );
         group.bench_function(
             "hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx",
             |b| {
@@ -2231,8 +2393,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 })
             },
         );
-        // Keep symbolic batch-direction structural facts on the shared-handle
-        // predicate path instead of forcing 16-way approximation.
+        // Construct all four outputs, then query sixteen signs and sixteen zero statuses.
         group.bench_function(
             "hyperreal-symbolic/mat4 transform vec4 batch direction structural facts",
             |b| {
@@ -2300,9 +2461,7 @@ fn bench_matrix4(c: &mut Criterion) {
         );
         group.bench_function("hyperreal-symbolic/mat4 transform direction vec4", |b| {
             b.iter(|| {
-                black_box(
-                    black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
-                )
+                black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()))
             })
         });
         group.bench_function(
@@ -2332,8 +2491,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 })
             },
         );
-        // Symbolic direction structural-facts benchmark mirrors rational's
-        // predicate-only measurement to guard the shared dispatch path.
+        // Measure symbolic direction construction plus structural-fact queries.
         group.bench_function(
             "hyperreal-symbolic/mat4 transform direction vec4 structural facts",
             |b| {
@@ -2368,8 +2526,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 black_box(black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()))
             })
         });
-        // Benchmark structural-fact-only direction flow to guard demand-driven
-        // approximation behavior independent of to-f64 workloads.
+        // Measure rational-matrix direction construction and facts without float conversion.
         group.bench_function(
             "hyperreal-rational/mat4 transform direction vec4 structural facts",
             |b| {
@@ -2396,21 +2553,17 @@ fn bench_matrix4(c: &mut Criterion) {
         lhs_cases.map(|value| numerica_engine::Mat4::new(&numerica_ctx, value.m));
     let numerica_rhs_cases =
         rhs_cases.map(|value| numerica_engine::Mat4::new(&numerica_ctx, value.m));
-    let numerica_vector_cases = vector_cases.map(|value| {
-        numerica_engine::Vec4::new(&numerica_ctx, value.x, value.y, value.z, value.w)
-    });
+    let numerica_vector_cases = vector_cases
+        .map(|value| numerica_engine::Vec4::new(&numerica_ctx, value.x, value.y, value.z, value.w));
     group.bench_function("numerica128/mat4 determinant", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(next_case(&numerica_lhs_cases, &cursor).clone())
-                .determinant(&numerica_ctx)
+            black_box(next_case(&numerica_lhs_cases, &cursor).clone()).determinant(&numerica_ctx)
         })
     });
     group.bench_function("numerica128/mat4 inverse", |b| {
         let cursor = Cell::new(0);
-        b.iter(|| {
-            black_box(next_case(&numerica_lhs_cases, &cursor).clone()).inverse(&numerica_ctx)
-        })
+        b.iter(|| black_box(next_case(&numerica_lhs_cases, &cursor).clone()).inverse(&numerica_ctx))
     });
     group.bench_function("numerica128/mat4 mul mat4", |b| {
         let cursor = Cell::new(0);
@@ -2432,25 +2585,17 @@ fn bench_matrix4(c: &mut Criterion) {
     });
 
     let gmp_ctx = gmp_engine::Ctx::new(128);
-    let gmp_lhs_cases =
-        lhs_cases.map(|value| gmp_engine::Mat4::new(&gmp_ctx, value.m));
-    let gmp_rhs_cases =
-        rhs_cases.map(|value| gmp_engine::Mat4::new(&gmp_ctx, value.m));
-    let gmp_vector_cases = vector_cases.map(|value| {
-        gmp_engine::Vec4::new(&gmp_ctx, value.x, value.y, value.z, value.w)
-    });
+    let gmp_lhs_cases = lhs_cases.map(|value| gmp_engine::Mat4::new(&gmp_ctx, value.m));
+    let gmp_rhs_cases = rhs_cases.map(|value| gmp_engine::Mat4::new(&gmp_ctx, value.m));
+    let gmp_vector_cases = vector_cases
+        .map(|value| gmp_engine::Vec4::new(&gmp_ctx, value.x, value.y, value.z, value.w));
     group.bench_function("gmp_mpfr128/mat4 determinant", |b| {
         let cursor = Cell::new(0);
-        b.iter(|| {
-            black_box(next_case(&gmp_lhs_cases, &cursor).clone())
-                .determinant(&gmp_ctx)
-        })
+        b.iter(|| black_box(next_case(&gmp_lhs_cases, &cursor).clone()).determinant(&gmp_ctx))
     });
     group.bench_function("gmp_mpfr128/mat4 inverse", |b| {
         let cursor = Cell::new(0);
-        b.iter(|| {
-            black_box(next_case(&gmp_lhs_cases, &cursor).clone()).inverse(&gmp_ctx)
-        })
+        b.iter(|| black_box(next_case(&gmp_lhs_cases, &cursor).clone()).inverse(&gmp_ctx))
     });
     group.bench_function("gmp_mpfr128/mat4 mul mat4", |b| {
         let cursor = Cell::new(0);
@@ -2482,8 +2627,7 @@ fn bench_matrix4(c: &mut Criterion) {
     group.bench_function("symbolica/mat4 determinant", |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(next_case(&symbolica_lhs_cases, &cursor).clone())
-                .determinant(&symbolica_ctx)
+            black_box(next_case(&symbolica_lhs_cases, &cursor).clone()).determinant(&symbolica_ctx)
         })
     });
     group.bench_function("symbolica/mat4 inverse", |b| {

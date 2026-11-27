@@ -12451,6 +12451,101 @@ and independent expectations. Continue this file at bench_blas_matrix4. Remainin
 mathbench engines and matrix-operation files, repository-wide coverage and earlier
 generated-item gaps remain open; this batch does not establish whole-file coverage.
 
+## Hyperlattice Mat4 comparison consumers and homogeneous weights (2026-11-27)
+
+Base: `592fa631fb0607e1cc01fda0adb4e9563985b920`. Sequential review of revision
+lines 966–2516 of `crates/hyperlattice/benches/mathbench/comparisons.rs`: 1551 lines
+covering bench_blas_matrix4 and bench_matrix4 in full. The reviewed block now occupies
+lines 966–2660 (1695 lines). Earlier lines 1–965 and the tail beginning with TrigCase's
+derive are byte-identical. Together with the previous record, sequential review now
+reaches that derive on line 2661; the trigonometric portion remains unaudited.
+
+The owning layer is comparison instrumentation consuming native homogeneous matrix
+operations and external adapters. Relevant contracts are P1 exact inputs/explicit
+lossy views, P3 fact qualification, P4 evidence reuse, P5 resource disclosure,
+P6 inverse failure, P9 certainty and P10 measuring the declared completed work.
+Reproduced witness: both functions lacked Rustdoc, and several comments claimed
+cache/demand properties without assertions. Baseline all-features mathbench check
+passed. Added two complete groups and corrected inline commentary without changing
+workloads or assertions. Selected fixture, immediate-batch and assumed-point
+implementations were read as context; no additional whole-file credit is inferred.
+
+Contracts clarified:
+
+- The group registers sixty-one timing rows: seven binary-native, twenty-two fixed
+  rational-labeled, twenty fixed symbolic-labeled and four per external adapter.
+  Forty-nine native hooks comprise seven four-case binary passes and forty-two
+  fixed consumers matching native timing names. External adapters have no hooks
+  or sparse counterparts in this group.
+- Binary fixtures cycle through four cases. Sparse determinant/inverse/product
+  use the shared diagonal/triangular corpus; both sparse product operands are
+  independently imported copies of identical cases, so those rows square matrices.
+  Fixed integer/rational/symbolic operands are not the whole rotating corpus.
+- General symbolic vectors have weight 9/2. Both direction variables are the same
+  rational (3/2,-11/7,9/4,0), despite the symbolic variable/row naming. Rational-labeled
+  point rows actually combine a rational matrix with (pi,5/3,7/2,1). The assumed-point
+  precondition is satisfied; outputs remain homogeneous without perspective division.
+- Zero input weight does not imply zero output weight for the full matrices.
+  The fixed rational direction output has w=-23/4 and the full symbolic matrix
+  produces w=3161/1008. These rows do not assert affine direction preservation.
+- Both no-translation matrices have an entirely zero final column, including the
+  bottom-right entry, and are singular. The rational matrix also has a zero final
+  row and outputs w=0; the symbolic matrix retains three nonzero final-row entries.
+  These are general homogeneous products, not ordinary affine maps or inverse rows.
+- Native determinant borrows; inverse consumes a clone; ordinary products clone
+  both sides. External baselines explicitly clone the left matrix. All use ordinary
+  iter, timing cursor work where present, clones, operations, requested consumers
+  and destruction. Inputs/contexts remain outside timing. Precision 128 is not
+  an exact-work bound or a shared output-evaluation contract for all engines.
+- Each batch immediately constructs four copies' transformed outputs with shared
+  per-call matrix/final-column facts, not a persistent handle cache. All-coord
+  rows request every lane (four for singles, sixteen for batches); one-coord rows
+  request only the first lane. Structural-fact rows request sign and zero status
+  for all four/sixteen lanes. Symbolic sign refinement requests all four signs at
+  precision argument zero. Options and unknown facts are not required to resolve.
+- Diagnostic names/comments do not prove demand isolation, path counts or numerical
+  completion. Native inverse Results are unwrapped. No policy receipt, cancellation
+  input or independent total-work/memory limit is added by these benchmark functions.
+
+Validation after final edits:
+
+- Formatted and checked only the two complete reviewed functions under crates
+  configuration. Noncomment source equals Rustfmt of the original block; prefix
+  and tail are byte-identical. Formatting adds forty-five optional commas, removes
+  seven and removes six expression-only closure brace pairs, beyond whitespace.
+  No call order, fixture, branch, coordinate request or assertion changed.
+  git diff --check passed.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 and incremental compilation disabled; warnings and broken/private
+  links were denied. Source-hash-specific empty headers forced regeneration.
+  Complete text of both groups, including the consumer table, rendered on two pages
+  in each configuration.
+- Static checks enumerate timing/trace names, verify fixed native schedules match,
+  and parse every native conversion/fact/sign consumer in both timing and tracing
+  closures. Confirmed exact coordinate sequences for one/all single/batch outputs,
+  all sign/zero queries, and four refine_sign_until(0) calls. These are explicit
+  request counts, not measurements of all internal scalar evaluation.
+- Built the owning library per configuration and ran matching-rlib standalone probes
+  with warnings denied and 30-second external per-process timeouts. Independent
+  Python Fraction cofactor/product/row expectations matched the fixed determinant,
+  sixteen inverse and sixteen product entries, ordinary and assumed-point transforms,
+  and four-vector batches. Direction singles/batches and the symbolic matrix's
+  rational fourth-row result confirmed the stated weights. Both zero-column
+  determinants were exactly zero; sparse determinants were 24, -462, 1 and 1155.
+  Current authored fixture bodies were used, with exact expectations retained in JSON.
+- No complete Criterion timing row, external numerical engine, symbolic sign-refinement
+  workload, dispatch report or performance measurement ran. These scoped checks
+  establish the documented fixture facts, not universal closure or demand isolation.
+  Full workflows remain owner-waived; no focused check remains blocked. Removed
+  probe executables; temporary evidence occupies about 180 KiB and the reused target
+  remains approximately 2.8 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-comparison4-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-comparison4-audit/` scripts, commands, formatter deltas
+and independent expectations. Continue comparisons.rs at TrigCase and its case
+builders. Remaining engine/matrix-operation files, repository-wide coverage and
+previous generated-item gaps remain open; comparisons.rs has no whole-file record yet.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
