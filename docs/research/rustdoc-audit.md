@@ -12546,6 +12546,98 @@ and independent expectations. Continue comparisons.rs at TrigCase and its case
 builders. Remaining engine/matrix-operation files, repository-wide coverage and
 previous generated-item gaps remain open; comparisons.rs has no whole-file record yet.
 
+## Hyperlattice trigonometric comparison fixtures and whole-file closure (2026-11-27)
+
+Target revision: `71e80ecf5bb26a7a079dc79aae381e6d55f3409b`. Read every line of
+`crates/hyperlattice/benches/mathbench/comparisons.rs` from 2661 through 3067,
+covering TrigCase, four case lists, three exact builders, two benchmark functions
+and the shared abort-signal allocator. The preceding 2,660 lines are byte-identical.
+Together with the two preceding contiguous review records, this closes sequential
+review of the entire file, now 3,155 lines. Selected fixture helpers, external
+inverse adapters and signal callers were reread for context; those contextual
+reads do not establish whole-file review of engines or other pending files.
+
+Owning layer: Hyperlattice's private mathbench comparison/fixture support, consuming
+Hyperreal scalar constructions and three external adapters. Relevant contracts are
+P1 exact input meaning, P2 symbolic preservation, P4 retained evidence, P5 resource
+and cancellation scope, P6 failures, P9 qualification, P10 equivalent completed
+measurement and P37 accurate API claims. Reproduced missing witness: the tail's
+thirteen authored item/field groups had no Rustdoc, leaving the misleading rational
+label, payload-ignoring selectors and float perturbation loss unexplained. Baseline
+all-feature mathbench compilation passed. No scalar algorithm or fixture changed.
+
+Added thirteen complete Rustdoc groups: one private type, both fields and ten
+functions. Across all three batches, the whole file now has twenty authored groups
+(seventeen functions, one type and two fields) on eighteen private Rustdoc pages.
+This is local authored-item coverage, not a repository-wide or generated-item claim.
+
+Contracts clarified:
+
+- TrigCase's name is both a row/report label and an exact-builder selector. Its
+  precomputed f64 payload is used by binary-native and external paths. Neither
+  builder checks agreement: recognized names ignore even a NaN payload, and unknown
+  names panic. These functions are closed fixture selectors, not parsers or general
+  conversion/domain validators.
+- Six trig cases include exact decimal fractions, integer 10^30 and two symbolic
+  inputs in the historically rational-labeled model: pi/7 and 1000*pi+1/10^20.
+  The binary model instead uses rounded floats; its 1e30 is a different integer,
+  and adding 1e-20 to floating 1000*PI loses the addend. Matching row names therefore
+  do not always denote the same intended input.
+- The exact tiny rational is parsed from fixed valid decimal text on every call,
+  avoiding both a float intermediate and the q helper's u64 denominator limit.
+  No numerical range-reduction accuracy is asserted by constructing this fixture.
+- Four unit-domain inverse cases lie strictly inside (-1,1), four real-domain
+  cases span signs/scales, and four acosh cases lie above one. The ten distinct
+  inverse names select exact ratios/integers or symbolic e, including exact
+  1+1/10^12 instead of the rounded near-one input. Boundary/error cases are absent.
+- Each of five models contributes thirty-six timing rows: twelve sin/cos,
+  twelve asin/acos/atanh, eight atan/asinh and four acosh. Seventy-two native
+  diagnostic hooks each request one operation before their corresponding row;
+  external adapters have no hooks. Inputs are fixed per row, without a cursor.
+- Construction/context setup precedes timing. Ordinary iter measures native input
+  clones or borrowed external-adapter calls, operations and result destruction,
+  without requesting output float conversion. Native inverse Results are unwrapped.
+  Numerica uses Symbolica Float and GMP uses Rug/MPFR at requested precision 128;
+  the Atom context's stored 128 does not set numerical precision. Its inverse
+  formulas include logarithms/radicals/complex intermediates. Numerica atan uses
+  atan2(x,1); GMP uses atan. Neither branch/accuracy agreement nor a common output
+  materialization contract follows from the shared operation names.
+- Fresh abort signals are clear and independently allocated; clones share a flag.
+  The allocator neither attaches nor sets a signal, starts a worker nor installs
+  a deadline. Clear attachment alone does not demonstrate cancellation handling.
+
+Validation after final edits:
+
+- Full-file formatting under crates configuration and git diff --check passed.
+  Tail noncomment source equals Rustfmt of the original tail; all noncomment
+  nonwhitespace tokens are identical, and the reviewed prefix is byte-identical.
+  No operation order, call, fixture, branch, assertion or policy changed.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2, incremental disabled. Warnings and broken/private links were
+  denied; source-hash-specific empty headers forced regeneration. Complete text of
+  all twenty groups rendered on all eighteen pages in each configuration.
+- Static loop expansion checked each operation/case sequence for all five models:
+  180 timing rows and 72 native hooks, with no external hooks. These are requested
+  registrations, not measured dispatch counts or completed timing results.
+- Matching-library standalone probes passed in both configurations, compiled with
+  warnings denied and run under 30-second external process timeouts. Actual fixture
+  bodies confirmed exact rational/decimal-integer expectations, pi/7 times seven,
+  symbolic e, 1/10^20, ignored NaN payloads, unknown-name panics, inverse fixture
+  domains, binary-versus-decimal distinctions and the vanished float perturbation.
+  The symbolic 1000*pi+epsilon fixture was constructed but not numerically evaluated;
+  the documentation's recipe follows its unchanged source expression. Shared-clone
+  flag mutation and independence of separately allocated flags were verified.
+- No full Criterion row, numerical trigonometric accuracy workload, external engine,
+  dispatch report or performance measurement ran. Full workflows remain owner-waived;
+  no focused check is blocked. Probe executables were removed. Temporary evidence
+  occupies about 88 KiB; the reused target remains approximately 2.8 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-trigbench-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-trigbench-audit/` scripts, exact-source probes and commands.
+The all-feature rendered-text check was also observed directly in tool output.
+Remaining mathbench engines/matrix-operation files, repository-wide file review
+and previously recorded generated-item documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

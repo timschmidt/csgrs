@@ -2658,12 +2658,26 @@ fn bench_matrix4(c: &mut Criterion) {
     group.finish();
 }
 
+/// Named scalar fixture pairing a precomputed float with an exact-builder selector.
+///
+/// The native binary/external paths import value; exact authored builders dispatch
+/// solely on name and ignore value. No constructor checks that the two agree or
+/// that a name is recognized. Copying a case copies only the static label and f64.
 #[derive(Clone, Copy)]
 struct TrigCase {
+    /// Stable row/report label and exact-builder match key, not a parsed expression.
     name: &'static str,
+    /// Already-rounded binary-float input for binary-native and external adapters.
     value: f64,
 }
 
+/// Returns six fixed sin/cos cases, including large range-reduction arguments.
+///
+/// Values are 0.1, 1.23456789, 1e6, 1e30, floating PI/7 and floating 1000*PI+1e-20.
+/// Computation happens in f64: 1e30 is not the exact decimal integer, PI is not
+/// symbolic pi, and the last expression loses its tiny addend. trig_rational uses
+/// the names to author different exact inputs. Returned order controls registration
+/// and report order; these fixtures alone do not qualify range-reduction accuracy.
 fn trig_cases() -> [TrigCase; 6] {
     [
         TrigCase {
@@ -2693,6 +2707,11 @@ fn trig_cases() -> [TrigCase; 6] {
     ]
 }
 
+/// Returns half, negative/positive 0.999999 and 1e-12 for asin/acos/atanh rows.
+///
+/// All four floats lie strictly between -1 and 1; endpoints are not exercised.
+/// Names select exact decimal fractions in inverse_rational, which need not equal
+/// the stored binary values. This is a fixed interior-domain corpus, not a guard.
 fn inverse_unit_cases() -> [TrigCase; 4] {
     [
         TrigCase {
@@ -2714,6 +2733,11 @@ fn inverse_unit_cases() -> [TrigCase; 4] {
     ]
 }
 
+/// Returns half, negative 1e-12 and positive/negative 1e6 for atan/asinh rows.
+///
+/// These finite inputs span signs and scales. inverse_rational authors values by
+/// name; the tiny decimal differs from its binary-float value. No infinity or
+/// invalid input is included, and order is reused by the report builder.
 fn inverse_real_cases() -> [TrigCase; 4] {
     [
         TrigCase {
@@ -2735,6 +2759,11 @@ fn inverse_real_cases() -> [TrigCase; 4] {
     ]
 }
 
+/// Returns four floats above one for acosh: 9, 1+1e-12, 1e6 and imported E.
+///
+/// The near-one expression is rounded before import. inverse_rational instead
+/// constructs exactly 1+1/10^12 and symbolic e for those names. The domain boundary
+/// at one and below-domain failures are not exercised by this list.
 fn inverse_acosh_cases() -> [TrigCase; 4] {
     [
         TrigCase {
@@ -2756,10 +2785,23 @@ fn inverse_acosh_cases() -> [TrigCase; 4] {
     ]
 }
 
+/// Parses the exact rational 1/10^20 used in the symbolic range-reduction fixture.
+///
+/// The decimal literal avoids a float intermediate and the u64 denominator limit
+/// of q. Parsing is repeated on each call; unwrap relies on this fixed valid text.
+/// Adding it to symbolic 1000*pi retains a term that the f64 case expression loses.
 fn one_e_minus_20() -> Real {
     "0.00000000000000000001".parse::<Rational>().unwrap().into()
 }
 
+/// Authors the six trig inputs from their names, including two nonrational inputs.
+///
+/// Decimal names map to exact ratios/integers, including integer 10^30. pi_7 maps
+/// to symbolic pi/7, and 1000pi_eps to symbolic 1000*pi plus exact 1/10^20. Thus the
+/// historical rational label does not mean every result is rational or equal to
+/// the binary case value. The payload is ignored, even if nonfinite or inconsistent.
+/// Unknown names panic through unreachable; this is a closed fixture selector, not
+/// a general parser or validation/conversion API. Constant division is unwrapped.
 fn trig_rational(case: TrigCase) -> Real {
     match case.name {
         "0.1" => q(1, 10),
@@ -2772,6 +2814,13 @@ fn trig_rational(case: TrigCase) -> Real {
     }
 }
 
+/// Authors exact inverse-function inputs from ten recognized names, ignoring value.
+///
+/// Uses fractions/integers for the decimal cases, exactly 1+1/10^12 for the near-one
+/// case and symbolic e for the e case. The historical name does not restrict output
+/// to rationals. It does not validate a float payload or determine which inverse
+/// operation is applicable; each caller's case list supplies that domain contract.
+/// A name outside the union of the three inverse lists panics through unreachable.
 fn inverse_rational(case: TrigCase) -> Real {
     match case.name {
         "0.5" => q(1, 2),
@@ -2788,6 +2837,18 @@ fn inverse_rational(case: TrigCase) -> Real {
     }
 }
 
+/// Registers thirty-six native binary-input rows and matching diagnostic hooks.
+///
+/// Six sin/cos cases give twelve rows, four asin/acos/atanh cases twelve, four
+/// atan/asinh cases eight, and four acosh cases four. Each case is imported through
+/// s outside timing and then retained for its own row; there is no rotating cursor.
+/// Ordinary iter measures cloning, scalar operation and output destruction without
+/// requesting a primitive-float approximation or a common accuracy target.
+///
+/// Each enabled/selected hook invokes its operation once before registering that
+/// timing row, allowing retained source/evidence reuse. Inverse-function Results
+/// are unwrapped. No numerical, range-reduction, dispatch-count or certainty-receipt
+/// assertion is made, and there is no cancellation input or total-work/memory limit.
 fn bench_blas_scalar_trig(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -2854,6 +2915,29 @@ fn bench_blas_scalar_trig(
     }
 }
 
+/// Registers 180 fixed-case trig/inverse rows and seventy-two native trace hooks.
+///
+/// Each of two native models and three external engines contributes thirty-six
+/// rows under inherited Criterion settings. The binary-native path and external
+/// adapters import each case's precomputed float. The historical hyperreal-rational
+/// path instead uses name-based exact builders: decimal fractions, integer 10^30,
+/// symbolic pi/7, symbolic 1000*pi+1/10^20, and symbolic e where selected. Matching
+/// labels therefore compare different intended inputs in several cases.
+///
+/// Fixture construction and external contexts precede timing. Ordinary iter clones
+/// native scalars but borrows external adapter inputs, including any adapter-internal
+/// work; result destruction is measured. No output float conversion is requested.
+/// Numerica labels use Symbolica Float and GMP uses Rug/MPFR at requested precision
+/// 128; the Atom adapter stores 128 without using it as a precision setting here.
+/// Its inverse formulas use log/radical expressions, including complex intermediates;
+/// native/adapter branch agreement, errors and accuracy are not checked. Numerica's
+/// atan uses atan2(x,1), while GMP uses its atan operation.
+///
+/// Thirty-six hooks per native model construct one operation per case/row before
+/// timing. External rows have no hooks. Native inverse Results are unwrapped; there
+/// are no value/path-count assertions, cancellation signals, policy receipts or
+/// total-work bounds. Scalar-object construction and floating computation do not
+/// constitute a common output-materialization contract merely by sharing row names.
 fn bench_scalar_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("scalar_trig");
 
@@ -2924,8 +3008,7 @@ fn bench_scalar_trig(c: &mut Criterion) {
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/asinh", case.name),
             || {
-                let _ =
-                    black_box(Real::asinh(black_box(rational_value.clone())).unwrap());
+                let _ = black_box(Real::asinh(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/asinh", case.name), |b| {
@@ -2937,8 +3020,7 @@ fn bench_scalar_trig(c: &mut Criterion) {
         trace_dispatch_row(
             format!("scalar_trig/hyperreal-rational/{}/acosh", case.name),
             || {
-                let _ =
-                    black_box(Real::acosh(black_box(rational_value.clone())).unwrap());
+                let _ = black_box(Real::acosh(black_box(rational_value.clone())).unwrap());
             },
         );
         group.bench_function(format!("hyperreal-rational/{}/acosh", case.name), |b| {
@@ -3062,6 +3144,12 @@ fn bench_scalar_trig(c: &mut Criterion) {
     group.finish();
 }
 
+/// Allocates a fresh, initially clear shared atomic cancellation flag for benchmarks.
+///
+/// Clones share the same flag; separate calls allocate independent flags. This
+/// helper neither attaches the signal to an operation nor sets it, starts a worker,
+/// or installs a deadline/resource limit. Callers choose whether and when to set it;
+/// creating or attaching a clear signal alone does not exercise cancellation.
 fn abort_signal() -> hyperlattice::AbortSignal {
     std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))
 }
