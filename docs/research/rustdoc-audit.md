@@ -11448,6 +11448,108 @@ stored reports and other ancillary files. Consult earlier completed records befo
 counting supporting files again. The repository-wide audit and AGENTS.md 100%
 public/private Rustdoc mandate remain active.
 
+## Hyperlattice retained-fixture benchmark and persistence helper (2026-11-27)
+
+Read every baseline line of `crates/hyperlattice/benches/retained_fuzz.rs`
+(122 → 178) and `benches/support/retained_fuzz.rs` (588 → 773) on `22a92f043`.
+Owner: benchmark-specific fixture generation, wall-clock selection, retention and
+report persistence. Relevant contracts are P5/P36/P37 and the admission protocol's
+same-completed-workload/evidence requirements. The domain is target/seed callbacks,
+environment/argv, Markdown history, promoted TSV and score metadata. The missing
+witness was accurate attached documentation for private functions, data fields,
+constants and the scope of measurement. The target compiled with all features on
+the starting revision before documentation edits.
+
+The support implementation is executable-line-identical to the already documented
+Hyperlimit copy. Re-read this full target file and every candidate documentation
+block, confirmed equality after removing only comment-only/blank lines, then reused
+those verified docs rather than inventing a divergent description. Added an impl
+summary for TimedCase's formatting helpers. This is new review/documentation of the
+Hyperlattice file, not a second credit for the Hyperlimit implementation.
+
+Added 71 authored documentation groups across the two files: 63 in support
+(including thirteen fields, one impl summary and its module overview), and eight
+in the benchmark (module overview, two child modules, CONFIG and four functions).
+All constants, record types/fields, methods, private functions and authored module
+items are covered. Generated Criterion items remain a separate gap below.
+
+Contracts clarified:
+
+- The five target names select locally generated fixtures; neither libFuzzer nor
+  saved corpus-byte decoding occurs. Mixed seed/lane bits give nonzero exact
+  rationals with numerator magnitude 1 through 2001 and denominator 1 through 257,
+  before reduction. Sign and denominator are correlated, not independent uniform
+  choices. This differs from both actual fuzz decoders and Hyperlimit's generator.
+- Scalar powers use exponents 1 through 5; complex work includes product norm and
+  left powers; vector work uses dot/cross/squared norm. Matrix inputs are rational
+  upper-triangular 3×3 matrices with known nonzero diagonals. The representation
+  workload selects pi times a rational or sqrt(q*q+1), which can itself reduce to
+  a rational. These are not exhaustive scalar/representation workloads.
+- Operation Results and enclosure Options are discarded. The timings therefore
+  do not assert successful exact outcomes, certainty receipts or geometric validity.
+  Fixture construction/destruction occur within callbacks. Fixed dimensions and
+  coefficient bounds are not independent work, memory or cancellation limits.
+- Collection defaults to 20,000 cases total, round-robin: 4,000 seeds per current
+  target, five immediate probes per case if callbacks return normally. Counts are
+  derived from the source loops, not a measured benchmark run. Invalid/zero count
+  settings fall back to default; smaller valid counts can leave targets unsampled.
+- Fresh times are best-of-five wall-clock minima, clamped to one nanosecond. History
+  merges by target/seed using maxima, then keeps the 1,000 slowest rows. It stores
+  no revision, machine, policy, completion or distribution evidence. Human-readable
+  durations round through binary64; permissive parsing can round or clamp values.
+- Existing promotions are filtered by current target names, re-timed before
+  truncation, and retain historical maxima. Rotation releases the fastest existing
+  case, excludes its key from same-refresh additions and backfills toward 100.
+  Duplicates and shorter sets can remain. Historical additions are not filtered
+  against current target names or re-timed at selection, so stale names can later
+  panic in the callback. The replay_promoted_100 row name does not prove set size.
+- The skip variable suppresses writes and score probes, not initial collection or
+  promotion re-probing. Criterion row filtering follows that initial work. Its
+  sample/warm-up/measurement settings are not total wall-clock bounds.
+- Persistence writes promoted TSV, history and then score Markdown without a
+  transaction; I/O errors log rather than propagate. Scoring computes an integer
+  arithmetic mean of fresh minima, with saturating sum and unchecked signed-range
+  conversions/differences. Generated output calls it deterministic lexicase, but
+  the code implements neither deterministic wall time nor lexicase selection.
+  Prior metadata does not establish comparable case sets or conditions. Missing
+  closing markers prepend a new section without removing the incomplete old one.
+
+Inspected the current five-target fuzz manifest and the stored-report callback as
+configuration/caller context; their earlier completed records are not counted again.
+Read the locked Criterion 0.7.0 group/main macro bodies: they emit public benches
+and private main without attached item documentation. Private rendered pages confirm
+both are still undocumented. Their behavior is described in the benchmark overview,
+but that does not close generated-item coverage. This remains an explicit gap under
+the 100% mandate; no macro implementation, dependency or lint policy was changed.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Comment-only/blank-line removal
+  leaves both files identical to `22a92f043`. No generators, field layouts, sampling
+  bounds, retention policy, output strings, callback order, macro invocations or
+  persistence behavior changed.
+- Cargo checks for the retained_fuzz benchmark passed with all features and no
+  defaults, using --locked --offline -j 2 and CARGO_INCREMENTAL=0.
+- Private benchmark Rustdoc passed in both configurations with warnings and
+  broken/private links denied. Used matching Cargo-built dependency rmeta paths
+  and transitive search directories. Verified complete rendered text for all 71
+  authored groups across 54 pages, including the thirteen fields and impl summary.
+  Separately checked the two generated pages and recorded their missing docs.
+- No benchmark, callback timing probe, fuzz target or report writer was executed.
+  Existing slow-history, promotion, score and Criterion results were not refreshed.
+  This batch establishes documentation/build evidence, not a current performance
+  comparison, fresh replay qualification or compliance of generated report claims.
+- Full workflows and unrelated runtime downstream checks remain owner-waived for
+  this docs-only session. No focused compile/doc check remains blocked. The shared
+  target remains about 2.7 GiB, and temporary scripts/manifests occupy about 56 KiB;
+  no owned executable or second Cargo target tree was created.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-retained-{before,all,minimal}*` check/artifact
+logs and `/tmp/csgrs-lattice-retained-audit/` build/render scripts and doc manifests.
+Authored items in these two files now have whole-file review records; generated
+Criterion docs and the larger repository audit remain incomplete. Next review
+regression_sentinels.rs and the remaining benchmark/mathbench/support files.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

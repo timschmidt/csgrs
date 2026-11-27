@@ -1,61 +1,120 @@
+//! Retained slow-case selection and reporting for a benchmark-specific replay callback.
+//!
+//! Samples deterministic target/seed identities using wall-clock probes, retains
+//! maximum historical minima, and rotates a bounded returned promotion set. It does
+//! not execute cargo-fuzz, decode corpus bytes, assert geometric outcomes, or preserve
+//! certainty receipts. History and input reads, initial sampling, and re-probing have
+//! no overall time/work/memory limit. Report writes are best-effort direct updates;
+//! the skip flag suppresses writes/scoring but not collection or promotion re-probes.
+//! Generated report terminology does not establish exact completion, replay fidelity,
+//! statistical significance, or equivalent workloads across runs.
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::hint::black_box;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+/// Crate-relative Markdown history file used for retaining worst observed probe values.
 const REPORT_NAME: &str = "slow_performers.txt";
+/// Crate-relative tab-separated file storing the promoted target/seed replay set.
 const PROMOTED_NAME: &str = "promoted_slow_offenders.txt";
+/// Crate-relative Markdown file containing the current promoted-score section.
 const BENCHMARKS_NAME: &str = "benchmarks.md";
+/// Number of immediate wall-clock probes per case; the minimum is retained.
 const SAMPLE_REPEATS: usize = 5;
+/// Maximum history rows retained after deduplication and worst-first sorting.
 const REPORT_LIMIT: usize = 1_000;
+/// Default total case count across all targets, despite the target-oriented constant name.
 const DEFAULT_TARGET_CASES: usize = 20_000;
+/// Maximum fastest existing cases released per refresh and first-pass historical additions.
 const PROMOTION_ROTATION: usize = 1;
+/// Upper bound on the returned promoted set and desired backfill size, not a guaranteed count.
 const PROMOTED_TARGET: usize = 100;
+/// Opening marker for the first replaceable promoted-score section.
 const SCORE_SECTION_BEGIN: &str = "<!-- BEGIN promoted_slow_offender_score -->";
+/// Closing marker searched after a score-section opening marker.
 const SCORE_SECTION_END: &str = "<!-- END promoted_slow_offender_score -->";
+/// Comment prefix carrying the current average probe time as an integer nanosecond value.
 const SCORE_NANOS_PREFIX: &str = "<!-- promoted_slow_score_nanos:";
+/// Comment prefix carrying the previous average probe time.
 const SCORE_PREVIOUS_NANOS_PREFIX: &str = "<!-- promoted_slow_previous_score_nanos:";
+/// Comment prefix carrying the last signed difference between successive score averages.
 const SCORE_DELTA_PREFIX: &str = "<!-- promoted_slow_score_delta_nanos:";
 
+/// Names configuring this crate's retained-case benchmark reporting.
+///
+/// Paths still derive from compile-time CARGO_MANIFEST_DIR. Names do not validate
+/// target replayability, results, measurement comparability, or resource bounds.
 #[derive(Clone, Copy)]
 pub struct Config {
+    /// Display name in history and score reports.
     pub crate_title: &'static str,
+    /// Benchmark target name interpolated into generated commands.
     pub bench_target: &'static str,
+    /// Presence-based switch suppressing persistence and score probes during refresh.
     pub skip_env: &'static str,
+    /// Environment variable selecting the total initial probe-case count.
     pub case_count_env: &'static str,
 }
 
+/// Target/seed identity paired with a nanosecond timing value.
+///
+/// The meaning of nanos depends on provenance: fresh best-of-five, retained maximum
+/// of such probes, or parsed history. There is no stored revision, policy, machine,
+/// success receipt, or timing-distribution evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TimedCase {
+    /// Callback dispatch name; replayability is a caller/loader precondition.
     pub target: String,
+    /// Deterministic callback seed, not an encoded libFuzzer input.
     pub seed: u64,
+    /// Probe duration or retained/parsed historical value, without measurement provenance.
     pub nanos: u128,
 }
 
+/// Render stored callback identities for reports and Criterion labels, without validating replayability.
 impl TimedCase {
+    /// Format the replay identity as seed followed by its decimal u64 in square brackets.
     fn input(&self) -> String {
         format!("seed[{}]", self.seed)
     }
 
+    /// Combine a sanitized target label with the decimal seed for Criterion registration.
+    ///
+    /// Sanitization is lossy, so distinct arbitrary target names can collide.
     pub fn criterion_name(&self) -> String {
         format!("{}_seed_{}", sanitize(&self.target), self.seed)
     }
 }
 
+/// Promoted cases selected for subsequent Criterion replay, without persistence-success status.
 pub struct Refresh {
+    /// Rotated cases for Criterion replay, possibly fewer than 100 or containing pre-existing duplicates.
     pub promoted: Vec<TimedCase>,
 }
 
+/// Current arithmetic-mean probe score and finite differences from stored score metadata.
+///
+/// These differences are between refresh values, not time-normalized derivatives.
+/// The promoted sets and measurement conditions need not match between refreshes.
 #[derive(Clone, Copy, Debug)]
 struct PromotedScore {
+    /// Number of newly timed cases, or assumed 100 when reconstructing prior metadata.
     cases: usize,
+    /// Stored prior average or current average when no usable baseline exists.
     previous_nanos: u128,
+    /// Integer mean of fresh best-of-five probes, subject to saturating-sum behavior.
     average_nanos: u128,
+    /// Current average minus prior average, using unchecked signed-range conversion/arithmetic.
     delta_nanos: i128,
+    /// Change in delta from prior metadata; not divided by elapsed time.
     derivative_nanos: i128,
 }
 
+/// Skip sampling unless argv contains exact --bench and none of --test/--list/--help.
+///
+/// Does not inspect the report skip environment variable or parse general CLI syntax.
 pub fn metadata_only_invocation() -> bool {
     let args: Vec<_> = std::env::args().collect();
     !args.iter().any(|arg| arg == "--bench")
@@ -64,6 +123,11 @@ pub fn metadata_only_invocation() -> bool {
             .any(|arg| arg == "--test" || arg == "--list" || arg == "--help")
 }
 
+/// Extract, sort, and deduplicate the first quoted name in each explicit bin block.
+///
+/// Uses a line scan, not a TOML parser: strips everything after # even in strings,
+/// recognizes exact `[[bin]]` headers, and ends a block at another table header or
+/// its first name. Does not validate paths, executability, or generator mappings.
 pub fn fuzz_targets_from_manifest(manifest: &str) -> Vec<String> {
     let mut targets = Vec::new();
     let mut in_bin = false;
@@ -87,6 +151,18 @@ pub fn fuzz_targets_from_manifest(manifest: &str) -> Vec<String> {
     targets
 }
 
+/// Probe a configured total number of target/seed pairs, then sort slowest first.
+///
+/// A positive usize environment value overrides the 20,000 total default; absent,
+/// non-Unicode, invalid, or zero values fall back to it. Targets are selected round
+/// robin in supplied order, with seed = ordinal / target count. A count smaller
+/// than target count leaves some targets unsampled. Each case invokes five probes;
+/// there is no independent time/work/memory bound or report-skip check here.
+///
+/// # Panics
+///
+/// Panics for an empty target list, a seed ordinal not fitting u64, or a panicking
+/// callback. Requested capacity is allocated before sampling.
 pub fn collect_cases(
     config: Config,
     targets: &[String],
@@ -111,6 +187,11 @@ pub fn collect_cases(
     cases
 }
 
+/// Invoke one target/seed callback five times and retain minimum elapsed nanoseconds, at least one.
+///
+/// No explicit warm-up, timeout, isolation, correctness assertion, or certainty
+/// inspection occurs. Callback work, input construction, and cache effects are
+/// included; black-boxing does not prove successful completion. Panics propagate.
 fn time_case(target: &str, seed: u64, run_case: fn(&str, u64)) -> TimedCase {
     let mut best = u128::MAX;
     for _ in 0..SAMPLE_REPEATS {
@@ -125,6 +206,18 @@ fn time_case(target: &str, seed: u64, run_case: fn(&str, u64)) -> TimedCase {
     }
 }
 
+/// Merge history, rotate the promoted set, and optionally write reports and a fresh score.
+///
+/// Uses the crate's compile-time manifest root. Rotation, including re-timing all
+/// accepted existing promoted rows, happens even when the skip environment variable
+/// is present. With writes enabled, writes promoted data, history, then scored
+/// Markdown in that order. Write errors only log; updates are not transactional.
+/// Returns the rotated set, not the freshly re-timed score rows or write status.
+///
+/// Previous-score eligibility depends only on whether the promoted file existed
+/// before refresh, not whether its contents parsed. Historical rows are not filtered
+/// against current targets before promotion; callers need replayable history or a
+/// later callback can panic. No workload-equivalence or completion check occurs.
 pub fn refresh(
     config: Config,
     targets: &[String],
@@ -158,6 +251,9 @@ pub fn refresh(
     Refresh { promoted }
 }
 
+/// Read a matching key and a wholly double-quoted right side, returning its literal interior.
+///
+/// Does not decode escapes or implement TOML string syntax.
 fn assignment_string(line: &str, key: &str) -> Option<String> {
     let (left, right) = line.split_once('=')?;
     if left.trim() != key {
@@ -170,6 +266,7 @@ fn assignment_string(line: &str, key: &str) -> Option<String> {
         .map(ToOwned::to_owned)
 }
 
+/// Keep ASCII letters, digits, and underscores; replace each other character with an underscore.
 fn sanitize(value: &str) -> String {
     value
         .chars()
@@ -183,6 +280,7 @@ fn sanitize(value: &str) -> String {
         .collect()
 }
 
+/// Sort descending nanos, breaking ties by ascending target text and seed.
 fn sort_worst_first(cases: &mut [TimedCase]) {
     cases.sort_by(|left, right| {
         right
@@ -193,6 +291,10 @@ fn sort_worst_first(cases: &mut [TimedCase]) {
     });
 }
 
+/// Display integer nanoseconds with ns/us/ms/s cutoffs and three decimals for scaled units.
+///
+/// Scaled output converts to f64 and can lose precision; it is not exact persistence
+/// of arbitrary u128 values when later parsed from the human-readable history.
 fn format_duration(nanos: u128) -> String {
     if nanos < 1_000 {
         format!("{nanos} ns")
@@ -205,6 +307,7 @@ fn format_duration(nanos: u128) -> String {
     }
 }
 
+/// Format a signed nanosecond difference, using unsigned_abs for negative i128 values.
 fn format_signed_duration(nanos: i128) -> String {
     if nanos < 0 {
         format!("-{}", format_duration(nanos.unsigned_abs()))
@@ -213,6 +316,11 @@ fn format_signed_duration(nanos: i128) -> String {
     }
 }
 
+/// Parse the first numeric/unit whitespace tokens and round their scaled f64 value to u128.
+///
+/// Accepts ns/us/ms/s and ignores trailing tokens. Missing/unparseable tokens or an
+/// unknown unit return None. No nonnegative/finite/range check occurs: float-to-u128
+/// casting can clamp values, and rounding can lose the original integer duration.
 fn parse_duration_nanos(value: &str) -> Option<u128> {
     let mut parts = value.split_whitespace();
     let number = parts.next()?.parse::<f64>().ok()?;
@@ -226,16 +334,24 @@ fn parse_duration_nanos(value: &str) -> Option<u128> {
     Some((number * multiplier).round() as u128)
 }
 
+/// Extract the first backtick-delimited substring without interpreting escapes or Markdown.
 fn extract_tick_value(value: &str) -> Option<String> {
     let start = value.find('`')? + 1;
     let end = value[start..].find('`')? + start;
     Some(value[start..end].to_owned())
 }
 
+/// Parse an exact seed[...] wrapper containing a u64 decimal value, or return None.
 fn parse_seed(input: &str) -> Option<u64> {
     input.strip_prefix("seed[")?.strip_suffix(']')?.parse().ok()
 }
 
+/// Parse target/seed/timing columns from a prior human-readable Markdown history.
+///
+/// Read failure returns an empty list. Only pipe-prefixed lines without --- or Rank
+/// are considered; malformed columns are skipped. Family and rank are ignored,
+/// targets are not validated, and duration parsing may round/clamp. No deduplication
+/// occurs until merging, and the input file is read in full without a size bound.
 fn read_existing_cases(report_path: &Path) -> Vec<TimedCase> {
     let Ok(report) = fs::read_to_string(report_path) else {
         return Vec::new();
@@ -257,6 +373,10 @@ fn read_existing_cases(report_path: &Path) -> Vec<TimedCase> {
         .collect()
 }
 
+/// Deduplicate by target/seed, retain each maximum nanos, and keep the 1,000 slowest rows.
+///
+/// Current probes cannot reduce retained history times. Does not compare revisions,
+/// measurement conditions, validity, or policy, nor filter inactive target names.
 fn merge_case_sets(previous: Vec<TimedCase>, current: &[TimedCase]) -> Vec<TimedCase> {
     let mut merged: BTreeMap<(String, u64), TimedCase> = BTreeMap::new();
     for case in previous.into_iter().chain(current.iter().cloned()) {
@@ -271,10 +391,16 @@ fn merge_case_sets(previous: Vec<TimedCase>, current: &[TimedCase]) -> Vec<Timed
     merged
 }
 
+/// Read prior Markdown history and merge it with current probes using maximum-time retention.
 fn merge_historical_cases(report_path: &Path, current: &[TimedCase]) -> Vec<TimedCase> {
     merge_case_sets(read_existing_cases(report_path), current)
 }
 
+/// Read tab-separated promoted rows whose target is currently registered and seed/time parse.
+///
+/// Requires four fields but ignores the saved Criterion name; skips comments, blank
+/// lines, malformed rows, and inactive targets. Read failure returns empty. Keeps
+/// duplicates and zero timings, with no input-size or row-count bound at this stage.
 fn read_promoted_cases(promoted_path: &Path, targets: &[String]) -> Vec<TimedCase> {
     let Ok(contents) = fs::read_to_string(promoted_path) else {
         return Vec::new();
@@ -298,12 +424,22 @@ fn read_promoted_cases(promoted_path: &Path, targets: &[String]) -> Vec<TimedCas
         .collect()
 }
 
+/// Re-probe one promoted case and keep the maximum of its prior time and current best-of-five.
 fn time_promoted_case(case: &TimedCase, run_case: fn(&str, u64)) -> TimedCase {
     let mut timed = time_case(&case.target, case.seed, run_case);
     timed.nanos = timed.nanos.max(case.nanos);
     timed
 }
 
+/// Re-time existing promotions, release the fastest one, and backfill from ordered history.
+///
+/// Existing timings remain maxima after re-probing. Excludes released target/seed
+/// keys from additions in this refresh; adds the first eligible historical row,
+/// then backfills toward 100 before sorting/truncating. History order is trusted
+/// to be worst-first. Existing duplicates are not removed, historical target names
+/// are not validated, and new historical additions are not re-timed here. The
+/// result can have fewer than 100 rows when eligible history is insufficient.
+/// All existing rows are timed before truncation; callback panics propagate.
 fn rotate_case_sets(
     existing: Vec<TimedCase>,
     historical: &[TimedCase],
@@ -361,6 +497,10 @@ fn rotate_case_sets(
     retained
 }
 
+/// Filter existing promoted rows by current targets, then rotate against unfiltered history.
+///
+/// The historical input must remain replayable; only the loaded existing file is
+/// checked against targets. Inherits re-probing, duplicate, and short-set behavior.
 fn rotate_promoted_cases(
     promoted_path: &Path,
     historical: &[TimedCase],
@@ -374,6 +514,11 @@ fn rotate_promoted_cases(
     )
 }
 
+/// Overwrite the promoted tab-separated file, logging write errors without returning status.
+///
+/// Writes supplied rows in order without enforcing uniqueness, count, escaping, or
+/// replayability. The header's 100-case/replayable wording is not validated here.
+/// The direct write is neither atomic nor coordinated with other report updates.
 fn write_promoted_cases(config: Config, path: &Path, cases: &[TimedCase]) {
     let mut out = format!(
         "# Generated by `cargo bench --bench {}`.\n",
@@ -398,6 +543,13 @@ fn write_promoted_cases(config: Config, path: &Path, cases: &[TimedCase]) {
     }
 }
 
+/// Overwrite human-readable timing history and per-target sample/retention counts.
+///
+/// Consumes supplied order and counts without enforcing the stated retention policy.
+/// The fixed family label is cargo-fuzz, but generated seeds need not be libFuzzer
+/// corpus bytes. Zero-sample targets are printed as not sampled. Replaces backticks
+/// in target labels, not arbitrary Markdown; duration formatting can lose precision.
+/// Write errors log only, and the update is not atomic.
 fn write_report(
     config: Config,
     path: &Path,
@@ -465,6 +617,10 @@ fn write_report(
     }
 }
 
+/// Return the integer mean of nanos, or None for an empty slice.
+///
+/// Uses a saturating u128 sum then truncating integer division. Once the sum
+/// saturates this no longer equals the exact arithmetic mean.
 fn average_nanos(cases: &[TimedCase]) -> Option<u128> {
     (!cases.is_empty()).then(|| {
         cases
@@ -474,6 +630,15 @@ fn average_nanos(cases: &[TimedCase]) -> Option<u128> {
     })
 }
 
+/// Freshly re-probe promotions, average their minima, and compare with optional stored metadata.
+///
+/// Sorts fresh timings worst-first and returns None for an empty set. If previous
+/// score use is allowed, reads benchmarks.md; absent/invalid metadata uses the
+/// current average as baseline and zero prior delta. Computes delta and change in
+/// delta without checking that the cases/configuration/machine are comparable.
+/// Despite report wording, this is an arithmetic mean, not lexicase selection.
+/// u128-to-i128 casts and signed subtraction are unchecked for representable range;
+/// extreme values can wrap or overflow. Callback panics propagate.
 fn score_promoted_cases(
     promoted: &[TimedCase],
     run_case: fn(&str, u64),
@@ -509,6 +674,7 @@ fn score_promoted_cases(
     ))
 }
 
+/// Return the first parseable prefixed HTML-comment integer, ignoring malformed matching lines.
 fn parse_metadata_i128(contents: &str, prefix: &str) -> Option<i128> {
     contents.lines().find_map(|line| {
         let value = line.trim().strip_prefix(prefix)?.trim();
@@ -516,6 +682,11 @@ fn parse_metadata_i128(contents: &str, prefix: &str) -> Option<i128> {
     })
 }
 
+/// Read score metadata, returning None on I/O failure or invalid/negative required averages.
+///
+/// Previous average defaults to current, missing/invalid delta to zero. Reconstructs
+/// cases as 100 and derivative as zero without reading those quantities; no source
+/// identity or configuration comparison is possible from this record.
 fn read_previous_promoted_score(path: &Path) -> Option<PromotedScore> {
     let contents = fs::read_to_string(path).ok()?;
     let average_nanos = parse_metadata_i128(&contents, SCORE_NANOS_PREFIX)?;
@@ -530,6 +701,12 @@ fn read_previous_promoted_score(path: &Path) -> Option<PromotedScore> {
     })
 }
 
+/// Render score metadata, finite-difference metrics, and up to ten supplied timing rows.
+///
+/// Labels the value deterministic lexicase, but calculation is the arithmetic mean
+/// of wall-clock probe minima and timings are not deterministic. Assumes supplied
+/// rows are worst-first; does not sort, validate score consistency, or compare
+/// completed contracts. Target escaping only replaces backticks.
 fn promoted_score_section(config: Config, score: PromotedScore, timed: &[TimedCase]) -> String {
     let mut out = format!("{SCORE_SECTION_BEGIN}\n## `promoted_slow_offender_score`\n\n");
     out.push_str(&format!(
@@ -563,6 +740,10 @@ fn promoted_score_section(config: Config, score: PromotedScore, timed: &[TimedCa
     out
 }
 
+/// Replace the first complete score marker pair, or prepend a new section if either marker is missing.
+///
+/// Preserves the rest byte-for-byte. An unterminated old section remains after the
+/// prepended section, so duplicate markers can accumulate. Does not validate nesting.
 fn replace_section(contents: &str, section: &str) -> String {
     let Some(start) = contents.find(SCORE_SECTION_BEGIN) else {
         return format!("{section}\n{contents}");
@@ -574,6 +755,10 @@ fn replace_section(contents: &str, section: &str) -> String {
     format!("{}{}{}", &contents[..start], section, &contents[end..])
 }
 
+/// Rewrite the score section, substituting a fresh header when reading existing Markdown fails.
+///
+/// Writes directly and logs errors without returning success/failure. No atomic
+/// replacement or coordination with the separate benchmark report writer occurs.
 fn update_benchmarks_score(config: Config, path: &Path, score: PromotedScore, timed: &[TimedCase]) {
     let section = promoted_score_section(config, score, timed);
     let contents = fs::read_to_string(path).unwrap_or_else(|_| {
