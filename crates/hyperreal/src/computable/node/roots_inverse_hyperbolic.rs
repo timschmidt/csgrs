@@ -1,10 +1,29 @@
+/// Retained roots, inverse-angle reductions and inverse-hyperbolic compositions.
+/// Native construction assumes valid real operands; checked Real entry points
+/// own domain admission. Branch recognition, approximation and cancellation
+/// remain distinct, and no finite expression guarantees bounded total work.
 impl Computable {
+    /// Retain the unique geodetic latitude for a finite isometric latitude and log axis ratio.
+    /// `self` is psi and `log_axis_ratio` is ln(b/a), encoding a positive axis ratio
+    /// when the child is defined and finite. The result lies in `(-pi/2,pi/2)` and
+    /// has psi's sign. See [`crate::Real::inverse_isometric_latitude`] for the
+    /// oblate/prolate defining equations. No equation solving or domain validation
+    /// occurs here. Copy a known sign and prefer self's signal over the ratio's;
+    /// retain both exact children for subsequent refinement.
     pub(crate) fn inverse_isometric_latitude(self, log_axis_ratio: Self) -> Self {
-        let exact_sign = self.exact_sign().map_or(ExactSignCache::Invalid, ExactSignCache::Valid);
-        let signal = self.signal.clone().or_else(|| log_axis_ratio.signal.clone());
+        let exact_sign = self
+            .exact_sign()
+            .map_or(ExactSignCache::Invalid, ExactSignCache::Valid);
+        let signal = self
+            .signal
+            .clone()
+            .or_else(|| log_axis_ratio.signal.clone());
         Self {
             internal: Arc::new(Node::new(
-                Approximation::InverseIsometricLatitude { psi: self, log_axis_ratio },
+                Approximation::InverseIsometricLatitude {
+                    psi: self,
+                    log_axis_ratio,
+                },
                 BoundCache::Invalid,
                 exact_sign,
             )),
@@ -12,6 +31,9 @@ impl Computable {
         }
     }
 
+    /// Borrow the immediate child of a retained Square node, otherwise return None.
+    /// This syntactic inspection performs no refinement or algebraic recognition;
+    /// a product of equal children or a square-valued expression need not match.
     pub(super) fn square_operand(&self) -> Option<&Computable> {
         match &self.internal.approximation {
             Approximation::Square(child) => Some(child),
@@ -19,8 +41,15 @@ impl Computable {
         }
     }
 
+    /// Largest degree scheduled as a direct nonnegative NthRoot node (minimum three).
+    /// Native replay and evaluation use this implementation bound; larger Real
+    /// roots have a rational-exponent path. It is not a mathematical degree limit.
     pub(crate) const MAX_DIRECT_NTH_ROOT_DEGREE: u32 = 9;
 
+    /// Construct the nonnegative square root of an admitted nonnegative rational.
+    /// Route through the ordinary rational and sqrt constructors so recognized
+    /// perfect squares and scaled shared radicals can simplify. Negative inputs
+    /// are outside this unchecked helper's contract; no typed domain error is returned.
     pub(crate) fn sqrt_rational(r: Rational) -> Self {
         // Preserve the rational leaf so sqrt can still collapse perfect
         // rational squares before allocating a generic Sqrt node.
@@ -28,6 +57,12 @@ impl Computable {
         Self::sqrt(rational)
     }
 
+    /// Wrap a previously decomposed nonnegative rational radicand directly in Sqrt.
+    /// Real's retained radical classes use this to avoid repeating extraction.
+    /// The name assumes the caller's decomposition; this helper neither verifies
+    /// squarefreeness nor collapses perfect squares. A debug assertion rejects
+    /// negative input, but release construction does not validate it. Initialize
+    /// zero sign for zero, positive sign otherwise, unknown magnitude and no signal.
     pub(crate) fn sqrt_squarefree_rational(radicand: Rational) -> Self {
         debug_assert!(radicand.sign() != Sign::Minus);
         let child = Self::rational(radicand);
@@ -45,7 +80,20 @@ impl Computable {
         }
     }
 
-    /// Square root of this number.
+    /// Retain the principal nonnegative square root of a caller-admitted nonnegative value.
+    ///
+    /// Collapse a retained square to the absolute value of its child when the sign
+    /// is known, and recognize exact-square rational scales around such squares.
+    /// Try rational square extraction before retaining a generic Sqrt. Scaled
+    /// sqrt(2)/sqrt(3) residuals can reuse named constants; plain sqrt(2)/sqrt(3)
+    /// retain their ordinary node. An unresolved child sign keeps the square root
+    /// rather than choosing an unjustified sign.
+    ///
+    /// This native constructor does not return typed negative-domain errors; use
+    /// [`crate::Real::sqrt`] for checked admission. Its sign facts presuppose a
+    /// valid radicand. A generic node has no outer signal, and simplification paths
+    /// follow the returned child's/composition's controls rather than promising
+    /// transport of the source wrapper's signal. There is no total-work budget.
     pub fn sqrt(self) -> Computable {
         if let Approximation::Square(child) = &self.internal.approximation {
             // sqrt(x^2) can collapse to abs(x) when the sign is structurally known.
@@ -106,8 +154,8 @@ impl Computable {
             // Perfect rational squares stay exact. For scaled sqrt(2)/sqrt(3)
             // residuals, keep the irrational part shared and the exact scale
             // symbolic. Plain sqrt(2) and sqrt(3) deliberately stay on the
-            // generic node because repeated cached approximation of a single
-            // node is faster than a thread-local shared-cache lookup.
+            // generic node; named radical constants use the separate process-wide
+            // approximation cache.
             let (root, rest) = rational.extract_square_reduced();
             if rest.is_one() {
                 crate::trace_dispatch!("computable", "sqrt", "exact-rational-square");
@@ -146,6 +194,12 @@ impl Computable {
         }
     }
 
+    /// Retain a nonnegative nth root for an admitted nonnegative child and degree 3 through 9.
+    /// Negative odd roots are handled by Real's sign symmetry outside this node.
+    /// A debug assertion checks the degree here; native replay and the evaluator
+    /// have their own degree checks. This implementation range is not a mathematical
+    /// completeness or total-resource bound. Copy only already-stored zero/positive
+    /// sign facts, leave magnitude unknown and attach no outer signal.
     pub(crate) fn nth_root(self, degree: u32) -> Computable {
         debug_assert!((3..=Self::MAX_DIRECT_NTH_ROOT_DEGREE).contains(&degree));
         let exact_sign = match self.internal.facts.exact_sign() {
@@ -163,6 +217,11 @@ impl Computable {
         }
     }
 
+    /// Retain principal `atan(1/n)` from an exact nonzero integer denominator.
+    /// Machin pi and arctangent reductions use this payload to avoid a rational
+    /// child and perform division-only series work. Magnitudes at least two use
+    /// the series; unit denominators have a separate evaluator identity. No
+    /// nonzero check occurs here, and sign/magnitude start unknown with no signal.
     pub(crate) fn prescaled_atan(n: BigInt) -> Self {
         // atan(1/n) kernel used by pi and atan reduction constants. Passing the
         // denominator as an integer keeps the series loop division-only.
@@ -176,6 +235,10 @@ impl Computable {
         }
     }
 
+    /// Retain principal atan of any exact rational for evaluation-time anchor reduction.
+    /// Avoid allocating the intermediate quotient/reduction graph during construction.
+    /// The rational remains authoritative; sign/magnitude start unknown and the
+    /// fresh wrapper has no signal. Deferral supplies no total-work or size budget.
     fn atan_rational_deferred(rational: Rational) -> Self {
         // Exact rational atan reductions used to allocate intermediate
         // add/multiply/inverse nodes before reaching the small atan series. This
@@ -192,6 +255,10 @@ impl Computable {
         }
     }
 
+    /// Retain principal atan of a defined finite child without eagerly reducing its range.
+    /// Copy a known exact sign and the child's outer signal, leaving magnitude
+    /// unknown. Evaluation invokes atan_reduced on the retained source; no numerical
+    /// sample or uniform convergence-cost bound is supplied by this constructor.
     fn atan_deferred(value: Computable) -> Self {
         crate::trace_dispatch!("computable", "constructor", "atan-deferred");
         let sign = value.exact_sign();
@@ -206,6 +273,10 @@ impl Computable {
         }
     }
 
+    /// Retain principal asin of a caller-admitted rational in `[-1,1]`.
+    /// Keep the signed exact payload for the evaluator's tiny series or
+    /// endpoint-stable acos complement. Initialize its exact sign and unknown
+    /// magnitude, without checking the domain or attaching a signal.
     fn asin_rational_deferred(rational: Rational) -> Self {
         // Exact rational asin stores the signed input directly. Tiny values use
         // the odd series, while larger values select the endpoint-stable acos
@@ -223,7 +294,14 @@ impl Computable {
         }
     }
 
-    /// Arctangent of this number.
+    /// Retain principal arctangent in `(-pi/2,pi/2)` for a defined finite real input.
+    /// Recognize the sqrt(35)/35 asin anchor and supported sqrt(3) pi anchors,
+    /// then exact rationals, including a bounded Laurent recognition attempt.
+    /// Zero and +/-one yield exact angular constants; other rationals use a
+    /// deferred node with negative symmetry. Remaining inputs retain a deferred
+    /// source and its signal. Constant/rational shortcuts do not promise to retain
+    /// the original outer signal. No numerical range reduction is forced here,
+    /// and the recognition limits do not bound all future evaluation work.
     pub fn atan(self) -> Computable {
         if let Some((scale, radicand)) = self.exact_pure_quadratic_surd()
             && radicand == Rational::new(35)
@@ -281,6 +359,19 @@ impl Computable {
         Self::atan_deferred(self)
     }
 
+    /// Choose an exact convergence reduction for a defined finite arctangent source.
+    /// Rationals delegate to atan. Normalize a known negative sign, then use only
+    /// a certified small binade or a certified large binade with positive sign
+    /// for structural series/reciprocal scheduling. Otherwise sample at precision
+    /// -4: magnitude at most seven proves `abs(x) <= 1/2` for a completed sample;
+    /// a separated negative sample uses odd symmetry. Positive middle inputs use
+    /// `atan(1/2) + atan((x-1/2)/(1+x/2))`; larger ones use the reciprocal identity.
+    ///
+    /// The series evaluator independently checks its working range. Construction
+    /// may refine the source using its attached signal, while fresh prescaled
+    /// wrappers have no outer signal. Interrupted samples are not certificates;
+    /// callers retain responsibility for abort publication. No total-work limit
+    /// or typed exhaustion outcome is introduced by this reduction.
     pub(crate) fn atan_reduced(self) -> Computable {
         if self.exact_rational().is_some() {
             return self.atan();
@@ -357,25 +448,22 @@ impl Computable {
             .add(self.inverse().atan().negate())
     }
 
-    /// Two-argument arctangent of `(self, x)`, returning the angle of the
-    /// point `(x, self)` measured counterclockwise from the positive `x`
-    /// axis in the principal range `(-pi, pi]`.
+    /// Retain the angle of `(x,self)` counterclockwise from the positive x axis.
+    /// The principal range is `(-pi,pi]`, with self denoting y. Axes produce exact
+    /// zero, +/-pi/2 or pi; the origin is defined as zero. These real values do not
+    /// distinguish IEEE signed-zero cases. Known quadrants use atan(y/x) with a
+    /// pi correction, while a known nonzero y permits a half-angle fallback when
+    /// x's sign remains unresolved.
     ///
-    /// `self` is the `y` coordinate and `x` is the `x` coordinate, matching
-    /// the IEEE 754 `atan2(y, x)` convention. The implementation reduces to
-    /// the single-argument [`Computable::atan`] kernel after a quadrant
-    /// correction:
-    /// - `x > 0`: returns `atan(self / x)`.
-    /// - `x < 0` and `self >= 0`: returns `atan(self / x) + pi`.
-    /// - `x < 0` and `self < 0`: returns `atan(self / x) - pi`.
-    /// - axes return exact constants: `pi/2`, `-pi/2`, `pi`, or zero.
-    /// - the origin `(0, 0)` returns zero, matching `f64::atan2`.
+    /// Use the sign-refinement floor -4096 through [`Self::try_atan2_until`]. That
+    /// floor is not a total-work/memory bound. Both inputs must be defined finite
+    /// reals; this constructor has no typed domain or cancellation receipt, and
+    /// axis constants do not inherit operand signals.
     ///
     /// # Panics
     ///
-    /// Panics when the default bounded refinement cannot certify a required
-    /// axis or quadrant. Use [`Computable::try_atan2_until`] to preserve that
-    /// uncertainty.
+    /// Panics if the bounded sign search and half-angle fallback cannot establish
+    /// an applicable branch. Use [`Self::try_atan2_until`] to retain that uncertainty.
     #[inline]
     pub fn atan2(self, x: Computable) -> Computable {
         self.try_atan2_until(x, ATAN2_SIGN_REFINEMENT_FLOOR).expect(
@@ -383,9 +471,18 @@ impl Computable {
         )
     }
 
-    /// Checked `atan2` construction with a caller-selected exact-refinement floor.
+    /// Construct principal atan2 with a chosen binary sign-refinement floor.
+    /// Inspect structural signs and exact axes first. Refine x only if needed;
+    /// positive x needs no y sign, whereas negative/zero x requires y's sign.
+    /// When x remains unresolved, an already-known nonzero y permits the exact
+    /// half-angle identity without selecting a quadrant from a rounded sample.
+    /// Otherwise return None, never an axis value inferred from an unknown sign.
     ///
-    /// Returns `None` rather than treating an unresolved sign as an axis value.
+    /// For defined finite operands, successful results have the same principal
+    /// branch and zero-origin convention as [`Self::atan2`]. The floor limits sign
+    /// refinement precision, not total work, allocations or cancellation latency.
+    /// There is no separate abort receipt or domain validation; result controls
+    /// follow the chosen composition and axis constants have no attached signal.
     #[inline]
     pub fn try_atan2_until(self, x: Computable, min_precision: Precision) -> Option<Computable> {
         let y_sign = self.structural_facts().sign.map(private_sign);
@@ -454,15 +551,32 @@ impl Computable {
         }
     }
 
+    /// Construct `2*atan(y/(sqrt(x^2+y^2)+x))` on the principal atan2 branch.
+    /// The caller must ensure finite defined inputs and a positive denominator;
+    /// atan2's fallback supplies nonzero y. This excludes the origin and negative
+    /// x axis, where the formula would divide by zero. No sign check or branch
+    /// selection is performed here; multiplication by two is an exact binary shift.
     fn atan2_half_angle(y: Computable, x: Computable) -> Computable {
         Self::atan2_half_angle_argument(y, x).atan().shift_left(1)
     }
 
+    /// Build the exact half-angle ratio `y/(sqrt(x^2+y^2)+x)`.
+    /// Require finite defined operands with a positive denominator: nonzero y or
+    /// positive x suffices. Retain squares, root and reciprocal so numerical
+    /// cancellation does not replace the source by rounded coordinates. The
+    /// helper itself does not check this precondition or impose a work budget.
     fn atan2_half_angle_argument(y: Computable, x: Computable) -> Computable {
         let radius = x.clone().square().add(y.clone().square()).sqrt();
         y.multiply(radius.add(x).inverse())
     }
 
+    /// Reduce atan of a finite real source by two exact half-angle steps.
+    /// Use x=1 for both ratios, making each denominator positive even at y=0.
+    /// For theta=atan(self), the retained quarter-angle tangent has magnitude
+    /// below `tan(pi/8)=sqrt(2)-1 < 1/2`, independently of a borderline coarse
+    /// sample. Apply atan there and scale by four with the binary shift's precision
+    /// transport. This prevents reselection of the same borderline series range;
+    /// it does not establish a total-work or cancellation bound.
     pub(crate) fn atan_with_half_angle_reduction(self) -> Computable {
         // For theta = atan(self), each step maps tan(theta) to tan(theta/2).
         // Since |theta| < pi/2, two steps give an argument of magnitude
@@ -473,7 +587,14 @@ impl Computable {
         quarter.atan().shift_left(2)
     }
 
-    /// Inverse sine of this number.
+    /// Retain principal arcsine on the caller-admitted closed real interval `[-1,1]`.
+    /// Zero simplifies exactly. Other rationals retain their signed payload for
+    /// series/endpoint evaluation. Normalize a known negative nonrational input;
+    /// a small planning exponent only schedules a candidate series whose kernel
+    /// must independently prove its range. Otherwise defer the half-angle identity.
+    /// This native API does not return typed domain errors; use [`crate::Real::asin`]
+    /// for checked admission. New deferred nodes do not retain an outer signal,
+    /// and no global work/memory bound follows from lazy construction.
     pub fn asin(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             match rational.sign() {
@@ -517,7 +638,18 @@ impl Computable {
         Self::asin_deferred(self)
     }
 
-    /// Inverse cosine of this number.
+    /// Retain principal arccosine in `[0,pi]` for a caller-admitted input in `[-1,1]`.
+    /// Normalize rational endpoints, zero and +/-one-half to exact pi multiples.
+    /// Small rational magnitudes use pi/2-asin; other rational inputs retain a
+    /// positive argument or a separate negative-input magnitude. A bounded Laurent
+    /// recognizer can recover another rational before the positive-input
+    /// half-angle or generic pi/2-asin path.
+    ///
+    /// Unknown equality to one must remain compatible with a zero result, so the
+    /// generic positive-input helper does not assert a strictly positive sign.
+    /// No typed domain check or uniform signal transport occurs here; checked
+    /// admission belongs to [`crate::Real::acos`]. Recognition bounds are not a
+    /// total evaluation-work or memory budget.
     pub fn acos(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.is_one() {
@@ -579,7 +711,15 @@ impl Computable {
         Self::pi().shift_right(1).add(self.asin().negate())
     }
 
-    /// Inverse hyperbolic sine of this number.
+    /// Retain real inverse hyperbolic sine for a defined finite input.
+    /// Normalize exact zero and known negative inputs. Recognized rational binades
+    /// at most -2 select the odd series; those at least 3 select the direct
+    /// log/sqrt graph. Other inputs choose between the rationalized log1p identity
+    /// and `ln(x+sqrt(1+x^2))` using planning magnitude or a precision -4 sample.
+    /// That sample schedules a mathematically equivalent identity, not a domain
+    /// proof. Construction can evaluate the source and builds the selected graph
+    /// eagerly; branch-dependent signal propagation and existing kernel resource
+    /// limits apply, with no new typed exhaustion or total-work budget.
     pub fn asinh(self) -> Computable {
         let exact_rational = self.exact_rational();
         if exact_rational
@@ -639,8 +779,17 @@ impl Computable {
         self.add(radicand.sqrt()).ln()
     }
 
-    /// Inverse hyperbolic cosine of this number. The caller is responsible for
-    /// ensuring the input is in-domain.
+    /// Retain principal inverse hyperbolic cosine for a caller-admitted real `x >= 1`.
+    /// Recognize immediate one/two and sqrt(2) anchors. For immediate rational or
+    /// integer x at least two, form x^2-1 rationally before constructing the root.
+    /// Otherwise planning magnitude or a precision -4 sample selects the near-one
+    /// `ln1p((x-1)+sqrt(x^2-1))` or direct `ln(x+sqrt(x^2-1))` graph. Both identities
+    /// hold throughout the admitted domain; scheduling does not validate it.
+    ///
+    /// Use [`crate::Real::acosh`] for checked domain failures. Native construction
+    /// may refine and allocate a reduction graph, and signal transport depends on
+    /// the selected path. Precision/exponent arithmetic and underlying kernels keep
+    /// their existing limitations; no total-work or typed resource contract is added.
     pub fn acosh(self) -> Computable {
         let exact_rational_msd = match &self.internal.approximation {
             Approximation::One => {
@@ -733,8 +882,17 @@ impl Computable {
         self.add(radicand.sqrt()).ln()
     }
 
-    /// Inverse hyperbolic tangent of this number. The caller is responsible for
-    /// ensuring the input is in-domain.
+    /// Retain principal inverse hyperbolic tangent for caller-admitted `-1 < x < 1`.
+    /// Normalize zero and negative symmetry, retain a tiny rational series, and
+    /// recognize one-half as ln(3)/2. Other admitted positive rationals form the
+    /// exact ratio `(1+x)/(1-x)` before logarithm construction. Nonrational small
+    /// planning estimates schedule a series with an independent evaluation-time
+    /// range check; the remaining path builds the half-log-ratio graph.
+    ///
+    /// The endpoints are not finite values and inputs outside the interval are
+    /// outside this native contract. Use [`crate::Real::atanh`] for typed admission.
+    /// No uniform outer-signal transport or total-work budget is supplied, and
+    /// planning smallness is not an exact domain certificate.
     pub fn atanh(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             match rational.sign() {
@@ -762,9 +920,8 @@ impl Computable {
                         // For exact rationals, atanh(x) is one exact ln ratio.
                         // That keeps common factors in the logarithm constructor
                         // instead of building a generic quotient Computable first.
-                        // The final multiply uses the cached exact 1/2 leaf so
-                        // construction does not allocate a new rational after
-                        // the symbolic reduction has already succeeded.
+                        // The final multiply reuses the shared exact half rational,
+                        // while half() still constructs a fresh Computable wrapper.
                         let one = Rational::one();
                         let ratio = (one.clone() + rational.clone()) / (one - rational);
                         crate::trace_dispatch!("computable", "atanh", "exact-log-ratio");
@@ -796,6 +953,17 @@ impl Computable {
             .multiply(Self::half())
     }
 
+    /// Sufficiently prove `abs(self) <= 1/8` for coarse inverse-series scheduling.
+    /// First inspect only the cached certified nonzero binade: an exponent at most
+    /// -4 implies strict magnitude below one eighth. Otherwise a precision -8
+    /// sample of magnitude at most 31 plus its one-unit error proves the closed
+    /// bound. Missing facts, zero metadata and estimated exponents take this sample
+    /// path. False means the sufficient test declined, not a proof of large input.
+    ///
+    /// The explicit signal is forwarded to sampling, but this helper does not poll
+    /// it or return an abort receipt. Its boolean is a range certificate only for
+    /// completed evaluation; callers must reject interrupted placeholder results.
+    /// This fixed precision does not bound total child work or memory.
     pub(crate) fn inverse_series_argument_is_small(&self, signal: &Option<Signal>) -> bool {
         // Some inputs retain an exact magnitude. Deserialization drops caches,
         // and a constructor may schedule this series from an estimate alone.

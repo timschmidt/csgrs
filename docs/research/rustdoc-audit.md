@@ -19169,6 +19169,122 @@ reused the roughly 6.5 GiB shared target. The existing AGENTS.md mandate already
 requires future agents to maintain 100% public/private Rustdoc and private builds.
 Repository-wide line review and full coverage remain incomplete.
 
+## Hyperreal root and inverse-angle constructor audit
+
+Baseline: a41e2b559d799640538ebe0459141777e39eaa81, branch rustdoc. Reviewed
+all 810 baseline lines of
+crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs. Previous entries
+only inspected callers or selected methods in this file. This batch supplies
+whole-file credit, including its scaled-square closure and all branch/constant
+paths. Read the relevant rational extraction, approximation kernels, bound/cache
+queries, Real root/inverse-function admission, atan2 adapters and selected tests;
+those surrounding files receive no new whole-file credit here.
+
+The owner is hyperreal expression construction, with P1–P7 exact structure,
+conservative facts, domain admission, resource honesty and stable reductions;
+consumers include checked Real operations and predicate resolution (P8–P11).
+The input domain is defined finite exact-real graphs with each partial function's
+real-domain preconditions and the direct root kernel's nonnegative degree-3–9
+schedule. The missing acceptance witness was undocumented private helpers and
+a degree constant, plus public one-line descriptions omitting domains, control
+and failure behavior. Twenty-five blocks now cover 23 methods, one associated
+constant and the impl overview. This does not qualify new scalar/curve support,
+change an input contract or establish any performance improvement.
+
+The review documents:
+
+- Sqrt's sign-dependent absolute-value cancellation, exact-square scales,
+  rational extraction and shared scaled radicals. The squarefree-named helper
+  assumes prior decomposition, does not test squarefreeness and retains even
+  a perfect-square payload. Native sqrt requires domain admission; a stored
+  sign is not a negative-radicand check. Direct nth roots take nonnegative
+  children even for odd degree; Real applies negative odd-root symmetry.
+  The degree cap is an implementation schedule, not a mathematical bound.
+- Named atan anchors, retained rational versus generic graphs, and series
+  scheduling from certified binades or completed samples. At precision -4,
+  sample magnitude at most seven plus its error permits abs(x)<=1/2. The
+  evaluator rechecks its working range. Two half-angle steps bound the new
+  argument strictly below tan(pi/8)=sqrt(2)-1; the binary shift transports
+  result precision rather than adopting a rounded angle as authoritative.
+- Atan2's principal branch, explicit zero-origin convention and absence of
+  IEEE signed-zero distinctions. A known positive x needs no y sign; negative
+  or zero x needs a resolved y sign. Unresolved x with already-known nonzero y
+  admits y/(sqrt(x^2+y^2)+x), whose denominator is positive. If neither the
+  sign search nor that fallback applies, try_atan2_until returns None and
+  atan2's default -4096-floor wrapper panics. A precision floor is not total
+  work, and these native APIs do not return a domain/cancellation receipt.
+- Closed asin/acos domains versus open atanh and nonnegative acosh branches,
+  exact anchors and eager versus deferred log/sqrt graphs. Planning magnitudes
+  choose identities; they do not prove a tiny-series domain. Recognized rational
+  binades, not an unrestricted magnitude claim, select asinh's small/large paths.
+- Explicit outer-signal selection for inverse latitude and deferred atan;
+  generic sqrt, axis constants and other reductions do not uniformly transport
+  the original wrapper's signal. Log axis ratio encodes positivity only when
+  that child is defined and finite. No constructor supplies a total-work budget.
+- The cached-certified-binade or precision -8 sample used by the coarse inverse
+  series range helper. Sample magnitude at most 31 plus its one-unit allowance
+  proves abs(x)<=1/8 only after completed evaluation. Estimated exponents and
+  cached zero metadata fall through to sampling. The helper has no stop poll
+  or abort receipt, and false is only failure of this sufficient recognition.
+
+A temporary private harness in a disposable source copy reproduced current
+behavior using the baseline and final constructor files, with identical logs:
+
+- sqrt_squarefree_rational(4) retained Sqrt while sqrt_rational(4) recovered
+  exact two. Their matching samples were auxiliary; the independent exact
+  radicand/root relation and retained tags supply the stated expectations.
+- An attached signal survived generic atan, but generic sqrt and an atan2 axis
+  constant had no outer signal. Inverse latitude preferred psi's flag over a
+  distinct ratio flag, as the source's explicit selection specifies.
+- An asserted stop made the raw ln(5/4) small-series helper return true without
+  caching a sample; an uninterrupted retry returned false. Independently,
+  ln(5/4)>1/5>1/8 by the integral lower bound, so the stopped boolean cannot be
+  consumed as a range certificate. The surrounding kernel's abort-publication
+  test passed; this observation is not a claim of a newly found completed-output
+  failure. No cancellation behavior was changed by documentation.
+- With floor zero, atan2(sin(100),sin(100)) returned None when both signs were
+  unresolved. Atan2(1,sin(100)) used the half-angle-positive-y dispatch exactly
+  once despite unresolved x sign. The later sample lay above pi/2; that sample
+  is not used as a universal branch proof.
+
+Probe execution used one GiB address space, ten CPU seconds, fifteen wall
+seconds and disabled core dumps. These external containment limits are not
+native resource guarantees. The probe's extra public observation entry existed
+only in the temporary copy, not in the committed API.
+
+Thirteen baseline all-feature unit tests passed. After the final wording edit,
+twenty selected unit tests passed in each no-default/all-feature configuration:
+atan range/sign/cache boundaries, root evaluation/history, sqrt composition,
+atan2 axes/quadrants/shared cancellation, series admission/abort retry, the asinh
+half boundary and exact quadratic atan anchors. The independently constructed
+oblate/prolate/spherical inverse-latitude fixture passed through subsequent
+sine/cosine. Forged direct-degree replay rejection and five downstream hyperlimit
+resolve tests passed. These are finite witnesses, not universal correctness or
+coverage proofs. No focused check remains blocked. Full CI/workflow validation
+remains owner-waived for this docs-only session.
+
+Private cargo doc passed both feature configurations with warnings and broken
+or private intra-doc links denied. All 25 reviewed blocks matched actual private
+library HTML, including the private methods and associated constant. There are
+no function-local item declarations or new derives requiring supplemental API
+rendering in this file. The source-level closure explanation was reviewed as
+part of sqrt, separately from declared-item counts. No visibility or lint
+suppression was introduced.
+
+Comment-free baseline/final tokens, formatted independently, are identical.
+The raw token difference is one optional trailing comma introduced by Rustfmt;
+all other changes are comments and whitespace. Selected Rustfmt and git diff
+--check passed. No signatures, predicate order, arithmetic, assertions, fixtures,
+policies or serialization attributes changed.
+
+Evidence is retained in /tmp/csgrs-hyperreal-root-constructors-audit/: commands,
+logs, rendered-item/token inventory and disposable-probe source/output. Owned
+source copies, rlib and executable were removed after inspection. Locked/offline
+nonincremental builds reused the approximately 6.5 GiB shared target; no second
+private-documentation tree was created. AGENTS.md's existing 100% public/private
+Rustdoc and private-build mandate was re-read and remains in force for future
+agents. Repository-wide line review and complete coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
