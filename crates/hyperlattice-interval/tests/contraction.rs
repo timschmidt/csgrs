@@ -1,3 +1,8 @@
+//! Primitive boundary cases for identity subtraction and norm contraction margins.
+//!
+//! Literal endpoint assertions distinguish valid empty/unit products, unavailable
+//! constants, intermediate overflow and outward IEEE evidence at the zero boundary.
+
 #![cfg(any(feature = "fixed", feature = "float-enclosure"))]
 #[cfg(feature = "fixed")]
 use hyperlattice_interval::IntervalArithmetic;
@@ -6,8 +11,15 @@ use hyperlattice_interval::{IntervalLatticeError, IntervalMatrix};
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Check real-one representability, invalid scales and subtraction overflow.
+/// Empty inputs bypass one construction; unit identity subtraction needs no one,
+/// but its contraction margin does. A later off-diagonal overflow leaves the
+/// source unchanged even after an earlier entry could have succeeded.
 fn fixed_constants_extremes_and_unit_products() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
+    /// Instantiate the highest valid signed fixed scale for i32 or i64.
+    /// Real one is unavailable at these scales; empty and unit expectations expose
+    /// which operations construct it before attempting arithmetic.
     macro_rules! highest_scale {
         ($i:ty) => {{
             assert_eq!(<$i>::one(), Err(IntervalError::Overflow));
@@ -52,6 +64,7 @@ fn fixed_constants_extremes_and_unit_products() {
         FixedInterval::<i64, 64>::one(),
         Err(IntervalError::InvalidScale)
     );
+    /// Whole-unit fixed backend whose minimum raw entry cannot be negated.
     type I = FixedInterval<i32, 0>;
     let m = IntervalMatrix::new([[I::point(i32::MIN).unwrap()]]).unwrap();
     assert_eq!(
@@ -77,8 +90,15 @@ fn fixed_constants_extremes_and_unit_products() {
 
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Keep subnormal terms in remainders and outward norm margins for both IEEE types.
+/// A row with entries one and a positive tiny value has exact margin -tiny, but
+/// sequential outward arithmetic can also include zero. Neither enclosure is
+/// converted into a strict-contraction status; large intermediate norms can fail.
 fn subnormal_tails_and_boundary_margins_are_not_rounded_to_proofs() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+    /// Instantiate matching IEEE interval/scalar types and their adjacent-value checks.
+    /// Use representable neighbors of one and the least positive subnormal to make
+    /// outward rounding, exact zero margins and overflow independently observable.
     macro_rules! case {
         ($i:ty, $f:ty) => {{
             let p = |x| <$i>::point(x).unwrap();

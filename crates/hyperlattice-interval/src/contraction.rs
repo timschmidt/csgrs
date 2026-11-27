@@ -1,5 +1,12 @@
+//! Identity remainders and norm margins for interval contraction arithmetic.
+//!
+//! These are Cartesian enclosure operations built on existing matrix norms and
+//! scalar subtraction. They supply evidence for consumers that separately
+//! establish the hypotheses of a contraction or interval root theorem.
+
 use crate::{IntervalArithmetic, IntervalLatticeError, IntervalMatrix, array_result};
 
+/// Square-matrix remainders and margins with shared scalar context accounting.
 impl<I: IntervalArithmetic, const N: usize> IntervalMatrix<I, N, N> {
     /// Encloses `{ Id - A : A in self }`, subtracting from the identity matrix.
     ///
@@ -8,6 +15,10 @@ impl<I: IntervalArithmetic, const N: usize> IntervalMatrix<I, N, N> {
     /// constructing scalar one. Otherwise one must be representable: fixed
     /// i32/F31 and i64/F63 return typed overflow, even if some output entries
     /// would fit. All scalar subtraction failures propagate without partial output.
+    /// Positive dimensions construct one before zero, then subtract each entry
+    /// from its identity entry. The unit product constructs neither scalar
+    /// constant because both array callbacks are skipped. These constants do
+    /// not charge the context; entry subtractions do, without refund on failure.
     ///
     /// This supplies the `Id - C*J(X)` remainder in Krawczyk arithmetic after
     /// a matrix product. It does not establish that `J(X)` encloses a Jacobian,
@@ -46,6 +57,9 @@ impl<I: IntervalArithmetic, const N: usize> IntervalMatrix<I, N, N> {
     /// Rational/dyadic success gives the exact range. Primitive arithmetic may
     /// widen or overflow, including in an intermediate norm. Constant
     /// construction has the same accounting exclusion as scalar zero.
+    /// The unit-product value one is conditional on representable constants
+    /// and successful scalar subtraction; unlike `identity_minus`, this query
+    /// can exhaust a dyadic work budget even in dimension zero.
     pub fn contraction_margin_one(
         &self,
         context: &mut I::Context,

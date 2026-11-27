@@ -1,3 +1,11 @@
+//! Finite qualification corpus for Cartesian norms, measures and dominance margins.
+//!
+//! Integer-grid expectations are independent scalar formulas. For this corpus,
+//! absolute-value extrema occur at endpoints or zero, and separate rows/columns
+//! can attain their extrema independently. The sampled integer members therefore
+//! include the continuous extrema used here; this is not a general theorem for
+//! arbitrary piecewise-linear maps or correlated input sets.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -12,6 +20,11 @@ use hyperlattice_interval::{
 // Independent oracle: enumerate integer members, not interval endpoint formulas.
 // Absolute-value breakpoints are at zero, so integer endpoints and these interior
 // grid points include every extremum of the piecewise-linear functions used here.
+/// Visit every integer tuple in a small ordered inclusive box, coordinate zero fastest.
+///
+/// The zero-dimensional box visits its single empty tuple once. Fixture bounds
+/// must be ordered and permit the loop's integer increments; this helper neither
+/// validates malformed bounds nor limits the number or cost of callback calls.
 fn enumerate<const N: usize>(bounds: [(i32, i32); N], mut visit: impl FnMut([i32; N])) {
     let mut point = bounds.map(|(lo, _)| lo);
     loop {
@@ -27,6 +40,12 @@ fn enumerate<const N: usize>(bounds: [(i32, i32); N], mut visit: impl FnMut([i32
         point[index] += 1;
     }
 }
+/// Compute componentwise discrete extrema of an integer-valued fixture callback.
+///
+/// Initialize each output with sentinel extrema and visit the entire input grid.
+/// A zero-dimensional input still evaluates once; zero output dimension returns
+/// an empty array. Continuous-range claims require the corpus-specific extrema
+/// argument in the module documentation, not merely enumeration.
 fn ranges<const N: usize, const M: usize>(
     bounds: [(i32, i32); N],
     value: impl Fn([i32; N]) -> [i32; M],
@@ -40,6 +59,16 @@ fn ranges<const N: usize, const M: usize>(
     });
     result
 }
+/// Check 125 three-coordinate boxes, 625 square boxes and a rectangular witness.
+///
+/// The constructor and fresh-context factory instantiate the same independent
+/// integer expectations for each scalar family. Checks cover both vector/matrix
+/// norms, signed measures, row/column dominance, identity subtraction and its
+/// involution, contraction margins, transpose correspondences and subsequent
+/// norm queries. A 2-by-3 box exercises unequal dimensions; negative measures,
+/// empty products and zero-dimensional units have explicit expectations.
+/// Each query starts with a fresh context; cumulative-budget behavior is tested
+/// separately. Small integer arithmetic here must remain representable.
 fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     scalar: impl Fn(i32, i32) -> I,
     mut context: impl FnMut() -> I::Context,
@@ -311,6 +340,7 @@ fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
 }
 #[cfg(feature = "fixed")]
 #[test]
+/// Run the common exact integer corpus on i32 and i64 fixed intervals at scale four.
 fn fixed_norms_measures_and_margins() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
     qualify(
@@ -324,6 +354,7 @@ fn fixed_norms_measures_and_margins() {
 }
 #[cfg(feature = "rational")]
 #[test]
+/// Run the common corpus with exact rational endpoints and a unit context.
 fn rational_norms_measures_and_margins() {
     use hyperlattice_interval::hyperinterval::RationalInterval;
     qualify(
@@ -333,6 +364,7 @@ fn rational_norms_measures_and_margins() {
 }
 #[cfg(feature = "dyadic")]
 #[test]
+/// Run the common corpus with exact dyadic endpoints and fresh adequate budgets.
 fn dyadic_norms_measures_and_margins() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval};
     qualify(
@@ -342,6 +374,9 @@ fn dyadic_norms_measures_and_margins() {
 }
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Run both IEEE backends on integer fixtures whose expected extrema are exact.
+/// The feature-enabled test requires a supported floating environment; it does
+/// not treat an unsupported-environment error as a successful enclosure.
 fn float_norms_measures_and_margins() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
     qualify(|a, b| F32Enclosure::new(a as f32, b as f32).unwrap(), || ());
@@ -350,8 +385,14 @@ fn float_norms_measures_and_margins() {
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Distinguish raw fixed units from real one, and signed measures from absolute norms.
+///
+/// At i64/F63, raw -1 can be reflected to raw +1 although real one cannot fit.
+/// The minimum raw diagonal remains a valid signed measure while its absolute
+/// image overflows. Summing two maximum values overflows; their maximum fits.
 fn primitive_extremes_and_overflow_are_explicit() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
+    /// Highest valid i64 scale: raw integer endpoints represent multiples of 2^-63.
     type I = FixedInterval<i64, 63>;
     let x = IntervalVector::new([I::point(-1).unwrap()]).unwrap(); // +1 cannot be stored
     assert_eq!(x.norm_one(&mut ()).unwrap(), I::point(1).unwrap());
@@ -384,8 +425,13 @@ fn primitive_extremes_and_overflow_are_explicit() {
 
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Check subnormal absolute images, outward half-ulp sums and typed overflow.
+/// Both IEEE precisions retain tiny terms; a maximum can fit when a sum cannot.
 fn ieee_subnormals_and_nonrepresentable_sums_remain_enclosed() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+    /// Instantiate the same endpoint assertions with matching interval and float types.
+    /// `$half_ulp` is half the gap above one for that precision; expected bounds use
+    /// adjacent representable values rather than rounding the exact sum to one.
     macro_rules! case {
         ($i:ty,$f:ty,$half_ulp:expr) => {{
             let point = |x| <$i>::point(x).unwrap();
@@ -412,6 +458,9 @@ fn ieee_subnormals_and_nonrepresentable_sums_remain_enclosed() {
 
 #[cfg(feature = "rational")]
 #[test]
+/// Check explicit rational norm, signed-measure and dominance endpoints.
+/// The unequal denominators exercise noninteger extrema independently of the
+/// integer-grid oracle and include negative measures and both margin orientations.
 fn fractional_ranges_preserve_exact_lower_and_upper_bounds() {
     use hyperlattice_interval::hyperinterval::RationalInterval as I;
     let scalar = |a: &str, b: &str| I::new(a.parse().unwrap(), b.parse().unwrap()).unwrap();
@@ -445,8 +494,18 @@ fn fractional_ranges_preserve_exact_lower_and_upper_bounds() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Exercise shared dyadic work/size limits across eleven reduction operations.
+///
+/// Measured exact work admits a retry and one fewer unit fails; low coefficient
+/// capacity fails separately. Sources remain unchanged. A dominance-to-norm chain
+/// shares one context and checks literal endpoints; empty/unit shortcuts are
+/// checked with zero work. These are resource witnesses, not cancellation tests.
 fn all_reductions_share_budget_and_allow_retry() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I};
+    /// Measure one operation, then check work exhaustion, size exhaustion and retry.
+    /// The initial successful result is reused to test budget admission, not offered
+    /// as an independent geometry oracle. Exactly the measured work must suffice
+    /// with none remaining; each failed or successful attempt uses a fresh budget.
     fn check<T: core::fmt::Debug + PartialEq>(
         operation: impl Fn(&mut DyadicBudget) -> Result<T, IntervalLatticeError>,
     ) {
@@ -535,9 +594,13 @@ fn all_reductions_share_budget_and_allow_retry() {
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Contrast the exact line (x,1-x) with its independent Cartesian projection.
+/// For x in `[0,1]`, projection permits a one-norm range `[0,2]`. Composing the sum
+/// before projection retains the relation and yields exactly one.
 fn norms_of_cartesian_projections_do_not_replace_retained_correlations() {
     use hyperlattice_interval::AffineMap;
     use hyperlattice_interval::hyperinterval::FixedInterval as F;
+    /// Whole-unit fixed backend for the retained affine relation fixture.
     type I = F<i32, 0>;
     let p = |x| I::point(x).unwrap();
     let source = IntervalVector::new([I::new(0, 1).unwrap()]).unwrap();

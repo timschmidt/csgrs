@@ -13834,6 +13834,111 @@ removed; retained batch evidence uses 140 KiB. The reused target is approximatel
 3.8 GiB, with no second Cargo target. No focused check remains blocked. Remaining
 companion implementations/support files and the repository-wide audit remain open.
 
+## Hyperlattice-interval norms, matrix measures and contraction arithmetic (2026-11-27)
+
+Whole-file review on target revision 37077a8983257e92198d0431cc1bd4b54d27c056:
+
+- crates/hyperlattice-interval/src/norms.rs (209 -> 264 lines).
+- crates/hyperlattice-interval/src/contraction.rs (75 -> 89 lines).
+- crates/hyperlattice-interval/tests/norms.rs (565 -> 628 lines).
+- crates/hyperlattice-interval/tests/contraction.rs (118 -> 138 lines).
+- crates/hyperlattice-interval/tests/norm_replay.rs (52 -> 69 lines).
+- crates/hyperlattice-interval/tests/krawczyk_arithmetic.rs (183 -> 224 lines).
+
+The owning layer reduces Cartesian interval products; Hyperinterval owns scalar
+absolute images, maximum images, arithmetic, rounding and resource accounting.
+P1/P5/P6/P18/P20/P26/P27/P37 and the admission protocol govern exact range claims,
+explicit enclosure, preserved errors, composition, shared budgets and replay.
+The domain includes all admitted scalar families, independent Cartesian entries,
+empty/unit products, signed measures, fixed constant limits and IEEE subnormals.
+Before editing, five private reduction helpers, four impls and the test support
+items lacked Rustdoc. Sixteen existing focused tests passed on the target revision
+with both replay markers cleared. Missing documentation and rendered private/test
+coverage were the acceptance gap; no algorithm change was needed or made.
+
+The 64 doc blocks now cover 41 function declarations, seven modules, four impls,
+seven aliases, three local macros and two local constants. Review distinguishes:
+
+- Absolute sums start from exact zero and preserve iterator order. Maxima move
+  their first candidate without a zero seed, preserving negative matrix measures.
+  A maximum image is neither a hull nor selection of an entire operand interval.
+  Failure leaves the prior private accumulator intact, but may consume budget.
+- Matrix one-norms traverse columns; infinity-norms traverse rows. Independent
+  lines permit exact extrema on rational/dyadic success. Primitive operations may
+  widen or fail. A 0-by-C unit matrix still reduces C zero column sums, and an
+  R-by-0 unit matrix reduces R zero row sums: multiple maxima require dyadic work.
+- Measures retain signed diagonals. Each line computes its off-diagonal sum before
+  adding the diagonal and updating the maximum. Dominance instead computes that
+  sum, then the absolute diagonal, then subtracts. Nonempty 0-by-0 measures report
+  UnboundedImage; empty inputs return empty and unit dominance returns a unit vector.
+- Identity subtraction constructs one before zero for positive dimension and then
+  subtracts entries in row-major order. A unit matrix invokes neither array callback
+  and constructs neither constant. Unit contraction margins still construct one and
+  perform scalar subtraction, so representability and work admission remain required.
+  Constants have no arithmetic-context charge; failures publish no partial output.
+- Norm margins and the Krawczyk-shaped client supply arithmetic evidence, not root
+  statuses. The client computes center, remainder, displacement and affine image
+  in that order, even computing the first two before an empty domain propagates.
+  Point preconditions, f(x0), Jacobian validity and analytic theorem hypotheses
+  remain the consumer's responsibility. Lost Cartesian correlations are not recovered.
+- Integer enumeration visits coordinate zero fastest and the zero-dimensional tuple
+  once. The oracle is discrete: its continuous-extremum justification applies to
+  these separable absolute-value fixtures with endpoints and zero on the grid,
+  not arbitrary piecewise-linear maps. The 125-vector/625-square-box corpus also
+  checks rectangular inputs, transpose correspondences, involution and further use.
+  Budget tests reuse an initial result for admission/retry, not an independent oracle.
+- Both replay tests send source inputs to an exactly selected test in a child of the
+  same executable, check source encoding identity and recompute derived arithmetic.
+  The norm fixture additionally round-trips derived margins inside the child.
+  A readable preexisting marker bypasses spawning; there is no internal timeout.
+  Fresh-process source replay and child-local derived roundtrip are distinct claims.
+
+Context included the adapter, native dyadic absolute/max images and reserve order,
+manifest features, existing admission rules and downstream facade witnesses. These
+excerpts do not close the separate whole-file audits of those context sources.
+
+Validation after final edits:
+
+- Locked/offline Cargo, j2, incremental disabled and the existing shared target.
+  With HYPERLATTICE_NORM_REPLAY and HYPERLATTICE_CONTRACTION_REPLAY unset, nine norm,
+  two contraction, one norm replay, four Krawczyk arithmetic and one allocation
+  tests passed (17 local tests). All seven Hyperlattice interval_surface tests
+  passed. The existing norm doctest passed with its example text unchanged.
+- An external warnings-denied probe verified unit-product norm budget asymmetry,
+  first-candidate maxima, unit identity versus budgeted margin subtraction,
+  successful empty versus unbounded measures, off-diagonal-first WorkExhausted
+  before a later SizeExhausted, spent work, exact retry and unchanged source JSON.
+  An external 30-second timeout bounds the probe, not the arithmetic APIs.
+- Independent Python Fraction calculations matched all eight fractional
+  norm/measure/dominance ranges. Exact inverse-Jacobian and radius transport
+  calculations matched the coupled fixture's remainder, both norm margins and
+  two successive image endpoint pairs. These finite calculations are not a
+  universal contraction theorem or a resource/performance measurement.
+- Private cargo doc passed with all features and no default features, denying
+  warnings, broken links and private-link violations. Full text of all 22 source
+  blocks rendered in each configuration. Actual test Rustdoc omits the 16 tests;
+  temporary copies removed exactly those test attributes and rendered 33 test-file
+  blocks without changing assertions. Nine function-local function/macro/type/constant
+  blocks were checked at their source attachment and rendered separately as Markdown;
+  Rustdoc provides no ordinary standalone API pages for them. This check caught
+  unescaped interval brackets in three new test-doc lines; code formatting fixed
+  them, and the complete scoped rendering check then passed.
+- Removing only whole comment/blank lines leaves identical remaining source bytes
+  in all six files. All 41 function declarations have attached Rustdoc. The original
+  doctest block is unchanged. Selected-file rustfmt and git diff --check passed.
+  AGENTS.md retains the 100% public/private/generated documentation mandate.
+  Full workflow checks remain owner-waived for this docs-only session. No new
+  general performance, allocation, cancellation or completeness claim is made.
+
+Evidence: /tmp/csgrs-rustdoc-interval-norms-{before,tests,build,doc-all,doc-min,
+doctest,probe,math,validation,render-min,downstream}.log and
+/tmp/csgrs-interval-norms-audit/ (matching artifacts, scripts, probes, source copies
+and full-text match records). Owned executables and duplicate temporary HTML were
+removed. The reused Cargo target is approximately 3.8 GiB, with no second target.
+No focused check remains blocked. Remaining companion implementations, support files
+and the repository-wide audit remain open; these scoped counts do not establish
+repository-wide coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

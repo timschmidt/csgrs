@@ -1,12 +1,29 @@
+//! Fresh-process replay of a fixed matrix followed by norm and margin arithmetic.
+//!
+//! Only source geometry crosses the parent/child boundary. Derived dominance
+//! margins also round-trip within the child before a further vector norm query.
+
 #![cfg(all(feature = "fixed", feature = "serde"))]
 use hyperlattice_interval::hyperinterval::FixedInterval;
 use hyperlattice_interval::{IntervalMatrix, IntervalVector};
+/// i32 fixed intervals at scale four, allowing exact small integer fixtures.
 type I = FixedInterval<i32, 4>;
+/// Build ordered integer-valued fixture bounds by multiplying raw endpoints by 16.
+/// Callers supply small valid bounds. Multiplication is unchecked by this helper;
+/// constructor failure panics.
 fn scalar(a: i32, b: i32) -> I {
     I::new(a * 16, b * 16).unwrap()
 }
 #[test]
+/// Replay source bounds, verify encoding identity and recompute exact expectations.
+///
+/// The parent invokes this exact test in the same executable and checks captured
+/// exit status. A readable marker selects the child branch, so external runs must
+/// clear it to exercise process creation. There is no internal timeout. Derived
+/// norm ranges are later treated as independent vector lanes; their original
+/// joint correlations are not asserted to survive that construction.
 fn fresh_process_replay_recomputes_and_consumes_ranges() {
+    /// Source-matrix JSON payload and child-branch marker; unset for a parent run.
     const KEY: &str = "HYPERLATTICE_NORM_REPLAY";
     if let Ok(text) = std::env::var(KEY) {
         let matrix: IntervalMatrix<I, 2, 2> = serde_json::from_str(&text).unwrap();
