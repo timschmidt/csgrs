@@ -6910,6 +6910,116 @@ and authored documentation of this benchmark are complete; the perf-atlas
 example, other Hyperlimit support/documentation artifacts, generated-item gaps,
 and the wider repository audit remain open.
 
+## Hyperlimit performance-atlas lattice and input foundations
+
+Reviewed and documented the foundation section of
+`crates/hyperlimit/examples/perf_atlas.rs`, baseline lines 1–1073 at `fe61cfa4e`:
+axis decoding, integer arithmetic/search helpers, lattice fixtures, representation
+recipes, term evaluation, geometry decoding, and input retention/reconstruction.
+This is a partial-file batch; the 3,090-line example's workload registrations and
+later helpers are not yet fully audited or documented. Read baseline 1074–1455,
+1784–1835, 2529–2700, and 3074–3090 as consumer context, not completed item-review
+coverage. Also inspected shared perf-atlas RNG and Outcome definitions around
+lib.rs lines 78–228; that shared library still needs its own complete audit.
+
+Ownership is measurement-fixture construction and the scalar/predicate boundary.
+Relevant contracts are P1, P4, P5, P8/P9, and the admission protocol's explicit
+domain/resource/evidence requirements. The domain includes arbitrary-size lattice
+integers subject to helper preconditions, rational scales/translations, selected
+symbolic recipes, and flat geometry streams. Missing witnesses were complete
+private documentation and accurate mathematical/resource qualifications for the
+existing helper claims. Documented 86 named declarations, 35 fields (including
+two tuple payloads), 18 enum variants, and the module introduction. Three of the
+declarations are function-local static caches.
+
+Only comments changed, plus expanding the Ready and Sum enum payloads to attach
+field documentation. Exact comment-stripped source comparison passes after
+normalizing those two named tuple layouts back to their original single lines;
+no other code normalization is needed. No arithmetic, generator, range, search,
+predicate, ordering, fixture, assertion, or policy changed.
+
+The RNG helper's top-bit-set limb contract makes big/signed nonzero even for a
+requested width of zero. Odd forces the low bit without proving primality. The
+small-prime, radius-65 circle, and radius-nine sphere tables are initialized once
+and retained for process lifetime. Bounded draws use remainder reduction, so the
+example no longer implies a proved uniform distribution. Distinct-index and
+separated-angle helpers have no attempt bound; impossible requests can loop,
+and n=0 is not a valid index domain despite the RNG's zero fallback.
+
+Fixed-base Miller–Rabin screening is documented as candidate evidence, not a
+general primality certificate. Two-squares search asserts its final exact norm;
+three-squares search inherits that check but has no termination/resource contract
+for all integers matching its residue precondition. Bounded arithmetic inspection
+shows n=1 and n=2 always produce remainder one and cannot pass the prime screen.
+This checks the branch arithmetic without running a nonterminating loop or
+claiming that current large atlas fixtures fail.
+
+The planar determinant helper controls an exact determinant, not universally an
+orthogonal projection into the segment. Its vx modular interval alone is
+insufficient: u=(5,4), v=(4,16) satisfies the l=3,k=0 determinant equation with
+vx in range but has projection fraction 84/41. The exact-degenerate branch does
+use two positive multiples with the smaller point between the endpoints. Spatial
+fixtures apply a unit-lower times unit-upper matrix: determinant +1 preserves
+orientation/volume/incidence, not Euclidean distances or all coordinate structure.
+Only the factors' entries are bounded by one; their product can have a diagonal
+entry three. Inside/Crossing names describe base combinations before vertical
+lift, not a normal-displacement/projection certificate. Circle/sphere queries
+retain checked radial identities on successful decomposition, while stepping
+the initial perturbation and unbounded candidate searches prevent an exact
+proximity or total-work claim. Explicit plane t is an equation value, not
+unit-normal distance, and finite levels saturate at magnitude two.
+
+Frame docs now state each actual mapping. Integer ignores dyadic magnitude
+metadata; rational and symbolic coordinates use distinct per-axis translation
+rules; widening adds a positive factor and translation without enforcing the
+requested output bit length. Coordinate f64 conversion checks width and a lower
+shift bound but not upper overflow; length lacks that lower guard and can
+underflow; squared/offset use exact dyadics even for the F64 kind. Trig kinds are
+not admitted to framed coordinate construction, although squared's fallback
+would still produce PiSquared. Ratio divides by absolute denominator magnitude,
+not a signed denominator. Large shifts and allocations have no independent cap.
+
+Term sums retain stored addition order and skip zero coefficients; trig factors
+use rational radians with ordinary sin/cos. No strict refusal or cost trend is
+asserted as a mathematical consequence of these recipes. Input readiness depends
+on whether every term is Ready, not on Kind: ready geometry is built once;
+otherwise each run creates local atom cells, evaluates terms, builds geometry,
+calls the callback, and destroys the temporary. Cloned Ready values can retain
+shared scalar state, and fresh local cells do not reset all underlying caches.
+Geo's flat decoder panics for too few scalars and retains extras. The revised
+module introduction removes claims of exhaustive representation coverage,
+universally cold symbolic calls, and uniform typed refusal flags. Shared Outcome
+behavior distinguishes Option presence, bool truth, and unconditional numeric
+success; none alone proves geometry, certainty, or benchmark equivalence.
+
+Validation after final edits:
+
+- Focused Rustfmt, `git diff --check`, declaration/field/variant review, and the
+  narrowly normalized source-identity comparison passed.
+- `cargo check --locked -p hyperlimit --example perf_atlas --offline -j2`
+  passed with all features and no default features.
+- `cargo rustdoc --locked -p hyperlimit --example perf_atlas --offline -j2`
+  passed in both configurations with `--document-private-items -D warnings
+  -D rustdoc::broken_intra_doc_links -D rustdoc::private_intra_doc_links`.
+  Verified 137 complete doc groups across 61 pages in each configuration,
+  including tuple fields and both FromReals implementation methods on the trait
+  page. The three local static caches have attached source docs but no standalone
+  Rustdoc pages. This count excludes all unaudited downstream declarations.
+- Exact bounded arithmetic witnesses check the small three-squares limitation,
+  projection counterexample, and unimodular product-entry distinction. They do
+  not execute the atlas or certify completion of its intended workloads.
+  No benchmark, fuzz campaign, report writer, or unbounded search ran. No new
+  performance, whole-cache, primality, or implementation-completeness claim is
+  made. Incremental compilation remains disabled; full workflows remain waived
+  by the owner for this documentation-only session.
+
+Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-atlas-foundation-{all,minimal}`
+with `-check.log` and `-doc.log` suffixes. Bounded observations are in
+`/tmp/csgrs-rustdoc-hyperlimit-atlas-foundation-witnesses.log`; the render checker
+is `/tmp/csgrs-atlas-foundation-render.py`. Continue with the determinant registry
+and workload methods after In2/In3, then all remaining example sections. This
+batch does not complete the perf-atlas example or the wider repository goal.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

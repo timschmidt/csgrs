@@ -1,36 +1,29 @@
-//! Performance atlas for hyperlimit: exact geometric predicates swept across
-//! distance to degeneracy, coordinate magnitude, coordinate bit length and
-//! input size, for every scalar representation the predicates accept.
+//! Performance atlas for selected Hyperlimit predicate fixtures and scalar recipes.
 //!
-//! Run through `scripts/perf-atlas/run.sh`, or directly:
+//! Sweeps nominal degeneracy, coordinate magnitude/bit length, and input size.
+//! Lattice generators retain exact determinant or radial relations where described;
+//! their labels are not universal guarantees about Euclidean distance, conditioning,
+//! all scalar representations, or completed geometric contracts. Some randomized
+//! searches have no iteration/work bound and use probable-prime screening.
+//!
+//! Frame converts integer lattices into binary64-backed, integer, fractional, or
+//! symbolic scale/translation recipes; separate trigonometric recipes use rational
+//! angles in radians. Input rebuilds non-ready terms with fresh local atom cells on
+//! each call, while ready geometry is retained. This includes construction cost in
+//! symbolic timings but does not prove all kernel/shared caches are cold. Selecting
+//! a policy and obtaining a value do not establish a certified receipt or an
+//! independently correct geometric answer.
+//!
+//! Atlas success flags depend on each callback's return contract. For example,
+//! Option records presence and bool records truth, while numeric reference returns
+//! use the atlas's always-success implementation. Failure marks are not a uniform
+//! typed account of kernel refusal, and timings alone do not validate results.
+//!
+//! Run through `scripts/perf-atlas/run.sh`, or directly with
 //! `cargo run --release -p hyperlimit --all-features --example perf_atlas -- --out atlas.json`.
-//!
-//! Inputs are built on an integer lattice where the predicate's determinant
-//! (or the relevant signed distance) is known exactly, so a configuration's
-//! relative distance to degeneracy is about `2^-k`. The last point of every
-//! degeneracy axis (`k = 112`) is an exactly degenerate configuration. The
-//! lattice is then mapped to a representation ("kind") by a similarity, which
-//! keeps every predicate sign and the relative degeneracy unchanged:
-//!
-//! * `f64`: lattice values scaled by a power of two, imported with
-//!   `Real::try_from(f64)` (exact dyadic values with an f64 view).
-//! * `integer`: the lattice integers themselves.
-//! * `rational`: scaled by an odd 24-bit ratio and translated by per-axis
-//!   rationals with odd denominators.
-//! * `algebraic (√2, √3)`: `x √2 + t √3`; hyperreal cancels the shared
-//!   radicals structurally, so cost is flat in `k`.
-//! * `transcendental (π, e)`: `x π + t e`; near-degenerate inputs are settled
-//!   by refinement whose cost grows with `k`, exact degeneracy structurally.
-//! * `trig (cos, sin)` (in-circle/in-sphere only): points placed by cosines
-//!   and sines of rational angles, so exact degeneracy hides
-//!   `cos^2 + sin^2 = 1`; the `strict` variant runs under
-//!   `PredicatePolicy::STRICT` and is expected to refuse that case.
-//!
-//! Symbolic kinds are rebuilt from rationals inside every timed call, so no
-//! approximation cached by an earlier call is reused; exact kinds are built
-//! once. Every kind except `strict` uses `PredicatePolicy::APPROXIMATE_512`.
-//! A call that returns `PredicateOutcome::Unknown` (or `None`) is flagged as
-//! an error; every flagged point in a report is a genuine refusal.
+//! External containment is needed for fixture generation and individual calls;
+//! no total generation/work/memory bound is enforced by the helpers below.
+
 use std::cell::OnceCell;
 use std::sync::OnceLock;
 
@@ -64,19 +57,25 @@ use num::bigint::{BigInt, BigUint};
 use num::{Integer, One, Signed, ToPrimitive, Zero};
 use perf_atlas::{Atlas, Rng, powers_of_two};
 
+/// Arbitrary-size signed integer used for exact lattice construction and determinant relations.
 type Int = BigInt;
 
+/// Policy permitting the terminal approximation in ordinary atlas recipes.
 const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+/// Policy requiring certified decisions in explicitly strict recipes.
 const STRICT: PredicatePolicy = PredicatePolicy::STRICT;
 
-/// Degeneracy-axis value that stands for an exactly degenerate input.
+/// Axis sentinel interpreted as an exactly degenerate fixture rather than finite exponent 112.
 const DEG: f64 = 112.0;
-/// Deepest finite degeneracy level swept.
+/// Maximum finite degeneracy exponent used by the standard axis helper.
 const K_MAX: u32 = 96;
 
+/// Display label for the nominal relative-degeneracy axis and its sentinel convention.
 const DEGENERACY: &str = "distance to degeneracy k (≈2^-k relative; 112 = exactly degenerate)";
 
-/// `0, 4, ..., min(kmax, 96)`, then the exactly degenerate point.
+/// Return levels 0,4,... up to the largest multiple of four ≤min(kmax,96), then 112.
+///
+/// The final value is a sentinel for exact degeneracy, not another finite exponent.
 fn degeneracy_axis(kmax: u32) -> Vec<f64> {
     (0..=kmax.min(K_MAX))
         .step_by(4)
@@ -85,6 +84,10 @@ fn degeneracy_axis(kmax: u32) -> Vec<f64> {
         .collect()
 }
 
+/// Decode values below 112 as a u32 exponent; all others, including NaN, become None.
+///
+/// The cast truncates finite fractions and saturates negative values to zero.
+/// Intended callers pass the nonnegative axis levels; this is not input validation.
 fn level(k: f64) -> Option<u32> {
     (k < DEG).then_some(k as u32)
 }
@@ -92,23 +95,36 @@ fn level(k: f64) -> Option<u32> {
 // ---------------------------------------------------------------------------
 // Big-integer helpers.
 
+/// Draw a positive integer with exactly max(bits,1) bits from the shared RNG's limb recipe.
+///
+/// The top bit is set, so even bits=0 yields one. Allocation/work grows with bits;
+/// there is no independent helper budget or cryptographic randomness guarantee.
 fn big(rng: &mut Rng, bits: u32) -> Int {
     Int::from(BigUint::from_slice(&rng.limbs(bits)))
 }
 
+/// Draw a nonzero integer with max(bits,1) magnitude bits, then select its sign by an RNG bit.
 fn signed(rng: &mut Rng, bits: u32) -> Int {
     let n = big(rng, bits);
     if rng.coin() { -n } else { n }
 }
 
+/// Draw a positive max(bits,1)-bit integer and force its low bit to one.
+///
+/// Used for nonzero odd denominators/factors; this is not a primality test.
 fn odd(rng: &mut Rng, bits: u32) -> Int {
     big(rng, bits) | Int::one()
 }
 
+/// Allocate the exact integer 2^e by shifting one, without an exponent/resource cap.
 fn pow2(e: u32) -> Int {
     Int::one() << e
 }
 
+/// Return -1 for a negative integer and +1 for zero or a positive integer.
+///
+/// The zero convention is intentional for choosing search directions/apex components;
+/// this is not a three-valued mathematical sign function.
 fn sign_of(n: &Int) -> Int {
     if n.is_negative() {
         -Int::one()
@@ -117,7 +133,12 @@ fn sign_of(n: &Int) -> Int {
     }
 }
 
+/// Return a process-lifetime cached list of all primes from 2 through 1999.
+///
+/// The first call trial-divides each candidate through its square root; OnceLock
+/// shares the completed vector across threads. No reset or eviction is provided.
 fn small_primes() -> &'static [u32] {
+    /// Process-lifetime initialized prime table, shared safely across callers.
     static PRIMES: OnceLock<Vec<u32>> = OnceLock::new();
     PRIMES.get_or_init(|| {
         (2u32..2000)
@@ -126,8 +147,13 @@ fn small_primes() -> &'static [u32] {
     })
 }
 
-/// Miller-Rabin with fixed bases; deterministic far beyond the sizes used here
-/// for practical purposes.
+/// Screen for probable primality using small-prime division and twelve fixed Miller–Rabin bases.
+///
+/// Rejects integers below two, accepts cached small primes, then checks bases
+/// 2,3,5,7,11,13,17,19,23,29,31,37. Execution is deterministic, but this code
+/// supplies no arbitrary-size primality proof or certified bound for those bases.
+/// A true result is candidate evidence for fixture search, not a general primality
+/// certificate. Modular exponentiation has no independent work limit.
 fn is_prime(n: &Int) -> bool {
     if *n < Int::from(2) {
         return false;
@@ -160,7 +186,13 @@ fn is_prime(n: &Int) -> bool {
     true
 }
 
-/// `x^2 + y^2 = p` for a prime `p ≡ 1 (mod 4)` (Hermite-Serret / Cornacchia).
+/// Find x,y with x²+y²=p using a square root of -1 and Euclidean reduction.
+///
+/// The intended input is a positive prime p≡1 mod 4. Searches bases without a
+/// limit, selects the smaller modular root, then performs a Cornacchia-style
+/// reduction and integer square root. It asserts the final sum-of-squares identity.
+/// Preconditions are not validated here; invalid/composite candidates can hang or
+/// panic. Callers use probable-prime screening, so that assertion remains necessary.
 fn two_squares(p: &Int) -> (Int, Int) {
     let e = (p - 1) >> 2u32;
     let minus_one = p - 1;
@@ -186,7 +218,14 @@ fn two_squares(p: &Int) -> (Int, Int) {
     (b, y)
 }
 
-/// `x^2 + y^2 + z^2 = n` for `n ≡ 1, 2 (mod 4)`.
+/// Search for x²+y²+z²=n by reducing a random square to a prime-candidate remainder.
+///
+/// For positive n≡1 or 2 mod 4, samples x below floor(sqrt(n)), adjusts its parity,
+/// and seeks a positive remainder congruent to one mod four that passes is_prime.
+/// The two_squares assertion checks the accepted remainder. No attempt/time budget
+/// or universal termination guarantee is enforced: even small admissible residues
+/// such as n=1 or n=2 cannot succeed through this search. Zero/negative or other
+/// invalid inputs can panic or loop; production fixtures use large positive n.
 fn three_squares(n: &Int, rng: &mut Rng) -> [Int; 3] {
     let root = n.sqrt();
     let want_even_x = n.is_odd();
@@ -203,7 +242,10 @@ fn three_squares(n: &Int, rng: &mut Rng) -> [Int; 3] {
     }
 }
 
-/// Random signs and a random coordinate order for a decomposition.
+/// Permute integer coordinates using descending swaps, then independently choose their signs.
+///
+/// Preserves squared norm exactly. RNG bounded draws use remainder reduction, so
+/// no uniform distribution claim is made; zero-length arrays are returned unchanged.
 fn scatter<const D: usize>(mut v: [Int; D], rng: &mut Rng) -> [Int; D] {
     for i in (1..D).rev() {
         v.swap(i, rng.below(i as u64 + 1) as usize);
@@ -216,22 +258,27 @@ fn scatter<const D: usize>(mut v: [Int; D], rng: &mut Rng) -> [Int; D] {
     v
 }
 
+/// Add equal-dimensional integer vectors componentwise, preserving exact values.
 fn add<const D: usize>(a: &[Int; D], b: &[Int; D]) -> [Int; D] {
     std::array::from_fn(|i| &a[i] + &b[i])
 }
 
+/// Subtract equal-dimensional integer vectors componentwise, preserving exact values.
 fn sub<const D: usize>(a: &[Int; D], b: &[Int; D]) -> [Int; D] {
     std::array::from_fn(|i| &a[i] - &b[i])
 }
 
+/// Multiply every vector component by the supplied integer, including zero or negative factors.
 fn scale<const D: usize>(a: &[Int; D], s: &Int) -> [Int; D] {
     std::array::from_fn(|i| &a[i] * s)
 }
 
+/// Sum exact component products; the zero-dimensional dot product is zero.
 fn dot<const D: usize>(a: &[Int; D], b: &[Int; D]) -> Int {
     a.iter().zip(b).map(|(x, y)| x * y).sum()
 }
 
+/// Return the exact right-handed cross product of two spatial integer vectors.
 fn cross(a: &[Int; 3], b: &[Int; 3]) -> [Int; 3] {
     [
         &a[1] * &b[2] - &a[2] * &b[1],
@@ -240,11 +287,17 @@ fn cross(a: &[Int; 3], b: &[Int; 3]) -> [Int; 3] {
     ]
 }
 
+/// Draw D signed nonzero integer components with max(bits,1) magnitude bits each.
 fn rand_vec<const D: usize>(rng: &mut Rng, bits: u32) -> [Int; D] {
     std::array::from_fn(|_| signed(rng, bits))
 }
 
-/// Delta of about `m * 2^-k` with a random sign, never zero.
+/// Choose a nonzero signed integer perturbation relative to the bit length of m.
+///
+/// For k+1 below bit_length(m), draws exactly bit_length(m)-1-k magnitude bits;
+/// otherwise returns ±1. This is a nominal scale near |m|·2^-k, with an integer
+/// floor, not an exact relative ratio. Callers use positive bounded m and small k;
+/// bit-count narrowing and k+1 are not guarded against extreme-range overflow.
 fn relative_delta(m: &Int, k: u32, rng: &mut Rng) -> Int {
     let bits = m.bits() as u32;
     let magnitude = if k + 1 < bits {
@@ -258,8 +311,12 @@ fn relative_delta(m: &Int, k: u32, rng: &mut Rng) -> Int {
 // ---------------------------------------------------------------------------
 // Lattice configurations with controlled degeneracy.
 
-/// Integer points on the circle `x^2 + y^2 = 65^2`.
+/// Return the cached integer solutions of x²+y²=65² in lexicographic loop order.
+///
+/// Exhaustively enumerates coordinates -65..=65 once, retaining the vector for the
+/// process lifetime. Consumers sample distinct indices without modifying this table.
 fn circle_65() -> &'static [[i64; 2]] {
+    /// Process-lifetime radius-65 lattice circle table, initialized on first use.
     static POINTS: OnceLock<Vec<[i64; 2]>> = OnceLock::new();
     POINTS.get_or_init(|| {
         let mut out = Vec::new();
@@ -274,8 +331,11 @@ fn circle_65() -> &'static [[i64; 2]] {
     })
 }
 
-/// Integer points on the sphere `x^2 + y^2 + z^2 = 9^2`.
+/// Return the cached integer solutions of x²+y²+z²=81 in nested-loop order.
+///
+/// Enumerates coordinates -9..=9 once and retains the vector for the process lifetime.
 fn sphere_9() -> &'static [[i64; 3]] {
+    /// Process-lifetime radius-nine lattice sphere table, initialized on first use.
     static POINTS: OnceLock<Vec<[i64; 3]>> = OnceLock::new();
     POINTS.get_or_init(|| {
         let mut out = Vec::new();
@@ -292,11 +352,17 @@ fn sphere_9() -> &'static [[i64; 3]] {
     })
 }
 
+/// Convert every i64 array component into the unbounded integer carrier exactly.
 fn ints<const D: usize>(v: [i64; D]) -> [Int; D] {
     v.map(Int::from)
 }
 
-/// Distinct random indices below `n`.
+/// Sample count distinct indices by rejection from RNG draws below n.
+///
+/// Requires positive n and count≤n for the intended index contract; no explicit
+/// validation or attempt bound exists. Oversized requests can loop indefinitely;
+/// n=0 uses the RNG's zero fallback and can return an invalid zero index. Count
+/// zero returns empty without a draw. Repeated linear membership checks add work.
 fn distinct(rng: &mut Rng, n: usize, count: usize) -> Vec<usize> {
     let mut out: Vec<usize> = Vec::new();
     while out.len() < count {
@@ -308,9 +374,16 @@ fn distinct(rng: &mut Rng, n: usize, count: usize) -> Vec<usize> {
     out
 }
 
-/// `a, b, c` with `orient2(a, b, c) = s`, `|s| ≈ 2^(2L-k)`, coordinates of
-/// about `L` bits and `c` projecting between `a` and `b`. Returns `[a, b, c]`
-/// and `u = b - a`.
+/// Build an exact planar determinant fixture and return its displacement b-a.
+///
+/// For Some(k), requires k≤2l and chooses determinant ±2^(2l-k). A coprime pair
+/// u=(ux,uy) permits solving ux·vy-uy·vx=s by modular inverse; the identity is
+/// checked only by debug_assert. vx lies in [0,ux), which does not guarantee that
+/// c's Euclidean orthogonal projection lies within segment ab.
+///
+/// For None, takes integer multiples m<n of one nonzero direction, so c is exactly
+/// between a and b; this branch requires l≥12. Coprime-pair search has no iteration
+/// bound. Small checked arithmetic ranges are a caller premise, not a resource cap.
 fn near_collinear2(rng: &mut Rng, l: u32, k: Option<u32>) -> ([[Int; 2]; 3], [Int; 2]) {
     let a: [Int; 2] = rand_vec(rng, l);
     let Some(k) = k else {
@@ -343,28 +416,39 @@ fn near_collinear2(rng: &mut Rng, l: u32, k: Option<u32>) -> ([[Int; 2]; 3], [In
     ([a.clone(), add(&a, &u), add(&a, &v)], u)
 }
 
+/// Select a tetrahedron base combination before the controlled out-of-plane lift.
 #[derive(Clone, Copy)]
 enum Coplanar {
-    /// Fourth point anywhere near the plane.
+    /// Use arbitrary small integer in-plane coefficients before the vertical lift.
     Generic,
-    /// Fourth point near the plane, above the triangle's interior.
+    /// Use quarter/quarter base coefficients in a four-times-expanded triangle before lifting.
     Inside,
-    /// Segment from the third to the fourth point crosses the line through
-    /// the first two, nearly in their plane.
+    /// Arrange a segment crossing the first edge in the zero-lift case; nonzero lift need not intersect it.
     Crossing,
 }
 
+/// Exact tetrahedron sites plus displacements retained for constructing related fixtures.
 struct Tetra {
+    /// Three plane sites followed by the displaced or coplanar fourth point.
     points: [[Int; 3]; 4],
-    /// A far point on one side of the plane through the first three points.
+    /// Displacement with positive pairing against the oriented source-plane normal.
     apex_offset: [Int; 3],
-    /// A second in-plane direction for building far triangles.
+    /// A transformed in-plane direction retained for additional fixture assembly.
     in_plane: [Int; 3],
 }
 
-/// `a, b, c, d` with `orient3(a, b, c, d) ≈ 2^(3L-k)` (times 16 for the
-/// inside/crossing variants), mixed by a random unimodular matrix so no
-/// coordinate structure survives.
+/// Build a tetrahedron with controlled determinant magnitude, then apply a determinant-one shear.
+///
+/// For Some(k), requires k≤3l and constructs |det(u,v,w)|=2^(3l-k), multiplied
+/// by 16 for Inside/Crossing. None makes the determinant zero. Shape selects an
+/// in-plane base combination before a vertical lift; that lift is not generally a
+/// normal displacement, so Euclidean projection/distance is not certified by the
+/// shape name. Coprime search has no attempt bound.
+///
+/// A unit-lower times unit-upper integer map preserves determinant and incidence,
+/// not angles or distances. Translation places the result at a random lattice
+/// point. The returned apex displacement has positive normal pairing, and in_plane
+/// retains a supporting direction for consumer fixture assembly.
 fn near_coplanar3(rng: &mut Rng, l: u32, k: Option<u32>, shape: Coplanar) -> Tetra {
     let (delta, s) = match k {
         None => (Int::zero(), pow2(l)),
@@ -420,7 +504,11 @@ fn near_coplanar3(rng: &mut Rng, l: u32, k: Option<u32>, shape: Coplanar) -> Tet
     }
 }
 
-/// Random unit-lower times unit-upper matrix with entries in {-1, 0, 1}.
+/// Multiply random unit-lower and unit-upper 3×3 integer triangular matrices.
+///
+/// Each factor's off-diagonal entries are -1,0,1; product entries need not lie in
+/// that range. Determinant is exactly +1, preserving lattice volume/orientation,
+/// not Euclidean distance or all coordinate correlations.
 fn unimodular(rng: &mut Rng) -> [[i64; 3]; 3] {
     let mut lower = [[0i64; 3]; 3];
     let mut upper = [[0i64; 3]; 3];
@@ -437,16 +525,25 @@ fn unimodular(rng: &mut Rng) -> [[i64; 3]; 3] {
     })
 }
 
+/// Exact lattice circle support, its three sites, and the selected query.
 struct Circle {
+    /// Exact integer center shared by sites and radial construction.
     center: [Int; 2],
-    /// Three points exactly on the circle, then the query point.
+    /// Three distinct on-circle sites, then the query.
     points: [[Int; 2]; 4],
+    /// Exact squared radius before the query perturbation.
     radius_squared: Int,
 }
 
-/// Three lattice points on a circle with `|query - center|^2 = R^2 + Δ`,
-/// `Δ ≈ R^2 2^-k` (exactly zero when degenerate). The query point is found
-/// by writing a prime as a sum of two squares.
+/// Build three exact circle sites and a query with an explicit squared-radius perturbation.
+///
+/// Rotates/scales radius-65 table points by a nonzero complex integer and translates
+/// by a 51-bit center. Distinct site indices give three distinct circle points.
+/// None selects a fourth on-circle point. Some(k) starts with relative_delta, then
+/// steps outward in its sign until the new squared radius passes probable-prime
+/// screening and a checked two-squares decomposition. Search changes the initial
+/// perturbation; no exact proximity bound, iteration bound, or primality certificate
+/// is returned. Successful decomposition preserves the claimed radial identity.
 fn near_cocircular2(rng: &mut Rng, k: Option<u32>) -> Circle {
     let center: [Int; 2] = rand_vec(rng, 51);
     let (zx, zy) = (signed(rng, 44), signed(rng, 44));
@@ -480,17 +577,27 @@ fn near_cocircular2(rng: &mut Rng, k: Option<u32>) -> Circle {
     }
 }
 
+/// Exact lattice sphere support, four noncoplanar sites, and the selected query.
 struct Sphere {
+    /// Exact integer center shared by all source sites.
     center: [Int; 3],
-    /// Four points exactly on the sphere, then the query point.
+    /// Four noncoplanar on-sphere sites, then the query.
     points: [[Int; 3]; 5],
+    /// Square of radius, before any query perturbation.
     radius_squared: Int,
+    /// Positive integer radius: nine times squared quaternion norm.
     radius: Int,
 }
 
-/// Four lattice points on a sphere (images of `|v| = 9` points under a random
-/// integer quaternion rotation) and a query point with
-/// `|query - center|^2 = R^2 + Δ`, `Δ ≈ R^2 2^-k`.
+/// Build four noncoplanar exact sphere sites and a query at a selected squared radius.
+///
+/// An integer quaternion matrix scales radius-nine table points by its positive
+/// squared quaternion norm, then translates by a 50-bit center. Rejection sampling
+/// requires the first four table sites to have nonzero tetrahedron determinant.
+/// None chooses another site on that sphere. Some(k) adjusts a signed relative
+/// perturbation to residue one/two mod four, then searches a three-squares query.
+/// The exact radius is nine times quaternion norm; returned squared radius is its
+/// square. Searches have no attempt bound and proximity is nominal, not certified.
 fn near_cospherical3(rng: &mut Rng, k: Option<u32>) -> Sphere {
     let center: [Int; 3] = rand_vec(rng, 50);
     let [a, b, c, d]: [Int; 4] = rand_vec(rng, 22);
@@ -553,8 +660,12 @@ fn near_cospherical3(rng: &mut Rng, k: Option<u32>) -> Sphere {
     }
 }
 
-/// Explicit plane `n . x + off = 0` with 24-bit normal and a point `p` of
-/// `l` bits at signed value `n . p + off = t`, `|t| ≈ 2^(l+24-k)`.
+/// Return (normal,offset,point,t) with exact plane evaluation normal·point+offset=t.
+///
+/// Normal components have 24 magnitude bits and point components have max(l,1).
+/// None gives t=0; Some(k) gives signed 2^max(1,l+24-k), so the finite sweep
+/// saturates at magnitude two. This is a plane-equation value, not unit-normal signed
+/// distance. Callers keep l+24 and shifts within their arithmetic/allocation range.
 fn near_plane(rng: &mut Rng, l: u32, k: Option<u32>) -> ([Int; 3], Int, [Int; 3], Int) {
     let normal: [Int; 3] = rand_vec(rng, 24);
     let point: [Int; 3] = rand_vec(rng, l);
@@ -572,18 +683,27 @@ fn near_plane(rng: &mut Rng, l: u32, k: Option<u32>) -> ([Int; 3], Int, [Int; 3]
 // ---------------------------------------------------------------------------
 // Representations.
 
+/// Select a finite atlas representation recipe and its predicate policy, not all scalar classes.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Kind {
+    /// Framed dyadic coordinates imported from binary64 after explicit width checks.
     F64,
+    /// Widened lattice integers without the frame dyadic scale or extra translation.
     Integer,
+    /// Positive rational scale and per-axis rational translation with dyadic scaling.
     Rational,
+    /// Scale by sqrt(2) and translate by sqrt(3) multiples.
     Algebraic,
+    /// Scale by pi and translate by e multiples.
     Transcendental,
+    /// Direct rational-angle trigonometric circle/sphere recipes under APPROXIMATE_512.
     Trig,
+    /// The direct trigonometric recipe with STRICT decisions.
     TrigStrict,
 }
 
 impl Kind {
+    /// Return the stable report label describing this recipe; labels do not certify coverage.
     fn label(self) -> &'static str {
         match self {
             Kind::F64 => "f64",
@@ -596,6 +716,7 @@ impl Kind {
         }
     }
 
+    /// Return STRICT only for TrigStrict; all other Kind variants use APPROXIMATE_512.
     fn policy(self) -> PredicatePolicy {
         if self == Kind::TrigStrict {
             STRICT
@@ -605,6 +726,7 @@ impl Kind {
     }
 }
 
+/// Five framed kinds used for determinant sweeps, including raw lattice integers.
 const DET_KINDS: [Kind; 5] = [
     Kind::F64,
     Kind::Integer,
@@ -612,6 +734,7 @@ const DET_KINDS: [Kind; 5] = [
     Kind::Algebraic,
     Kind::Transcendental,
 ];
+/// Four framed kinds used by many composed sweeps; integer and trig recipes are omitted.
 const KINDS: [Kind; 4] = [
     Kind::F64,
     Kind::Rational,
@@ -619,26 +742,44 @@ const KINDS: [Kind; 4] = [
     Kind::Transcendental,
 ];
 
+/// Named irrational constants reused within one Atoms instance.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Atom {
+    /// Positive square root of two, used as a scale.
     Sqrt2,
+    /// Positive square root of three, used as a translation atom.
     Sqrt3,
+    /// Pi, used as a scale or to construct its square.
     Pi,
+    /// Euler's number, used as a translation atom.
     E,
+    /// Pi times itself for squared-length scaling.
     PiSquared,
 }
 
-/// Irrational constants, built once per timed call on first use.
+/// Lazy per-instance scalar constants shared by terms in one reconstruction.
+///
+/// Input::run creates fresh cells for a rebuilt geometry. This does not clear
+/// underlying kernel/global state or caches shared by cloned Ready terms.
 #[derive(Default)]
 struct Atoms {
+    /// Lazy sqrt(2) value for this reconstruction.
     sqrt2: OnceCell<Real>,
+    /// Lazy sqrt(3) value for this reconstruction.
     sqrt3: OnceCell<Real>,
+    /// Lazy pi value shared with pi_squared construction.
     pi: OnceCell<Real>,
+    /// Lazy e value for this reconstruction.
     e: OnceCell<Real>,
+    /// Lazy product of the same local pi value with itself.
     pi_squared: OnceCell<Real>,
 }
 
 impl Atoms {
+    /// Lazily construct and borrow the requested constant, reusing it in this cell set.
+    ///
+    /// PiSquared depends on the same Pi cell. Positive fixed square-root constructors
+    /// are expected to succeed or panic. Cached values live as long as this Atoms.
     fn get(&self, atom: Atom) -> &Real {
         match atom {
             Atom::Sqrt2 => self
@@ -657,22 +798,37 @@ impl Atoms {
     }
 }
 
-/// One scalar of an input: ready-made, or an expression built inside the
-/// timed call.
+/// One scalar recipe: retained ready value, linear combination of atoms, or rational-angle trig product.
 #[derive(Clone)]
 enum Term {
-    Ready(Real),
-    /// `sum c_i atom_i`.
-    Sum(Vec<(Rational, Atom)>),
-    /// `offset + radius * prod (cos|sin)(angle)`; `true` selects sine.
+    /// Retain an existing scalar and clone it when evaluated.
+    Ready(
+        /// Scalar retained by the recipe, including any shared state it owns.
+        Real,
+    ),
+    /// Sum rational multiples of named atoms in stored order.
+    Sum(
+        /// Ordered coefficient/atom pairs; zero coefficients are skipped at evaluation.
+        Vec<(Rational, Atom)>,
+    ),
+    /// Add a rational offset to a rationally scaled product of sine/cosine factors.
     Trig {
+        /// Exact additive coordinate translation.
         offset: Rational,
+        /// Exact multiplicative starting value; nonnegativity is not checked.
         radius: Rational,
+        /// Ordered radian angles and selectors: true means sine, false means cosine.
         factors: Vec<(Rational, bool)>,
     },
 }
 
 impl Term {
+    /// Clone a Ready scalar or evaluate this recipe using the supplied local atoms.
+    ///
+    /// Sum skips zero coefficients and adds remaining terms in stored order, returning
+    /// zero if none remain. Trig multiplies radius by each sine/cosine in radians,
+    /// then adds offset; empty factors yield offset+radius. No approximation is
+    /// requested explicitly and no full cache reset, validation, or budget is performed.
     fn real(&self, atoms: &Atoms) -> Real {
         match self {
             Term::Ready(r) => r.clone(),
@@ -698,6 +854,10 @@ impl Term {
     }
 }
 
+/// Construct the exact rational n·2^exponent by shifting numerator or denominator.
+///
+/// Negative exponents use a positive power-of-two denominator. Requires exponent
+/// not equal to i64::MIN to negate it safely; no shift/allocation bound is enforced.
 fn dyadic(n: &Int, exponent: i64) -> Rational {
     if exponent >= 0 {
         Rational::from_bigint(n << exponent as u64)
@@ -707,14 +867,23 @@ fn dyadic(n: &Int, exponent: i64) -> Rational {
     }
 }
 
+/// Construct n/|d| exactly, panicking if d is zero.
+///
+/// The denominator sign is discarded, so negative d is not interpreted as the signed
+/// quotient n/d. All intended fixture denominator callers supply positive values.
 fn ratio(n: &Int, d: &Int) -> Rational {
     Rational::from_bigint_fraction(n.clone(), d.magnitude().clone()).expect("nonzero denominator")
 }
 
+/// Wrap an arbitrary-size integer as an exact rational Real without float conversion.
 fn int_real(n: &Int) -> Real {
     Real::new(Rational::from_bigint(n.clone()))
 }
 
+/// Scale a binary64 value by 2^e using repeated exponent chunks of magnitude 500.
+///
+/// Multiplication can overflow to infinity or underflow/round; this is not a checked
+/// exact-scaling API. The number of iterations grows with |e| and has no work cap.
 fn ldexp(mut x: f64, mut e: i64) -> f64 {
     while e > 500 {
         x *= 2f64.powi(500);
@@ -727,25 +896,42 @@ fn ldexp(mut x: f64, mut e: i64) -> f64 {
     x * 2f64.powi(e as i32)
 }
 
-/// Maps lattice integers to one representation by a similarity
-/// `x -> s (P x + T) + t`: `P`, `T` widen coordinates to a target bit length,
-/// `s` and `t` depend on the kind (`s = 2^(e-b)` times 1, an odd ratio, `√2`
-/// or `π`; `t` zero, rational, `√3`-multiple or `e`-multiple).
+/// Representation-specific lattice scale/translation recipe and dimensional conversion helpers.
+///
+/// Widening first maps n to Wn+T with one positive integer W and three-axis shift.
+/// F64 then scales by 2^shift; Integer retains that integer; Rational applies
+/// (p/q times the widened coordinate plus tau/tau_den) times 2^shift. Symbolic
+/// coordinates use (widened coordinate times scale atom plus tau times translation
+/// atom) times 2^shift. Trig kinds are constructed separately.
+///
+/// For admitted non-overflowing values these are positive similarities, but stored
+/// bit/magnitude metadata are nominal rather than validated bounds on every input.
+/// Different scalar/length methods have different binary64 checks; they do not
+/// collectively provide a general checked transform API.
 struct Frame {
+    /// Recipe controlling coordinate construction and scale/offset conventions.
     kind: Kind,
-    /// Bits of the (widened) lattice; `2^(exponent - bits)` scales values to
-    /// about `2^exponent`.
+    /// Nominal lattice bit width used to compute shift, not a verified maximum.
     bits: u32,
+    /// Nominal magnitude exponent; ignored by Integer coordinates.
     exponent: i32,
+    /// Optional positive integer factor and three-axis lattice translation.
     widen: Option<(Int, [Int; 3])>,
+    /// Positive odd 24-bit numerator of Rational scale.
     p: Int,
+    /// Positive odd 24-bit denominator of Rational scale.
     q: Int,
+    /// Signed per-axis extra translations used by rational/symbolic kinds.
     tau: [Int; 3],
+    /// Positive odd 16-bit translation denominators used by Rational.
     tau_den: [Int; 3],
 }
 
 impl Frame {
-    /// Lattice values of about `base` bits mapped to magnitude `2^exponent`.
+    /// Create nominal base-bit magnitude metadata and random positive rational/translation parameters.
+    ///
+    /// Always draws p,q,tau,tau_den even for kinds that do not use them. Does not
+    /// validate kind suitability, base width, exponent range, or future coordinates.
     fn new(kind: Kind, base: u32, exponent: i32, rng: &mut Rng) -> Self {
         Self {
             kind,
@@ -759,7 +945,11 @@ impl Frame {
         }
     }
 
-    /// Lattice values of about `base` bits widened to about `bits` bits.
+    /// Add a positive odd integer scale and three-axis translation to enlarge lattice coordinates.
+    ///
+    /// Panics for F64. Factor bits are max(bits-base,2) using saturating subtraction;
+    /// requested bits below base still enlarge the lattice. Metadata therefore is not
+    /// an enforced output-width bound. Remaining parameters come from new(kind,bits,0).
     fn widened(kind: Kind, base: u32, bits: u32, rng: &mut Rng) -> Self {
         assert!(kind != Kind::F64, "f64 coordinates cannot be widened");
         let factor = odd(rng, bits.saturating_sub(base).max(2));
@@ -770,6 +960,10 @@ impl Frame {
         }
     }
 
+    /// Apply the optional integer widening scale/translation, otherwise clone n.
+    ///
+    /// With widening, axis must be below three or indexing panics; without widening
+    /// the axis is unused. No coordinate-size check occurs.
     fn lattice(&self, axis: usize, n: &Int) -> Int {
         match &self.widen {
             Some((p, t)) => p * n + &t[axis],
@@ -777,10 +971,16 @@ impl Frame {
         }
     }
 
+    /// Return exponent minus nominal bit width in i64, without constraining the resulting power of two.
     fn shift(&self) -> i64 {
         i64::from(self.exponent) - i64::from(self.bits)
     }
 
+    /// Convert a widened lattice coordinate to binary64 and apply the frame's dyadic shift.
+    ///
+    /// Asserts magnitude bit length≤53 and shift≥-1074 before ldexp. Does not check
+    /// upper overflow or final finiteness; coord subsequently rejects nonfinite imports.
+    /// Any widening translation inherits lattice's three-axis bound.
     fn f64(&self, axis: usize, n: &Int) -> f64 {
         let n = self.lattice(axis, n);
         assert!(n.bits() <= 53, "f64 lattice value exceeds 53 bits");
@@ -788,7 +988,7 @@ impl Frame {
         ldexp(n.to_f64().expect("53-bit value"), self.shift())
     }
 
-    /// The irrational scale and translation atoms of this kind.
+    /// Return (sqrt(2),sqrt(3)) for Algebraic or (pi,e) for Transcendental; panic for other kinds.
     fn atoms(&self) -> (Atom, Atom) {
         match self.kind {
             Kind::Algebraic => (Atom::Sqrt2, Atom::Sqrt3),
@@ -797,6 +997,12 @@ impl Frame {
         }
     }
 
+    /// Build one translated coordinate as a Ready value or a two-atom sum.
+    ///
+    /// Integer ignores dyadic exponent metadata. Rational and symbolic recipes index
+    /// three-axis translation arrays; all widened recipes also require axis<3. F64
+    /// expects finite import after its bounds checks. Trig/TrigStrict panic because
+    /// their points are built directly. This method does not verify requested magnitude.
     fn coord(&self, axis: usize, n: &Int) -> Term {
         match self.kind {
             Kind::F64 => Term::Ready(Real::try_from(self.f64(axis, n)).expect("finite")),
@@ -819,13 +1025,19 @@ impl Frame {
         }
     }
 
+    /// Clone the integer widening scale, or return one if no widening was configured.
     fn widen_factor(&self) -> Int {
         self.widen
             .as_ref()
             .map_or_else(Int::one, |(p, _)| p.clone())
     }
 
-    /// A difference vector component (scaled, not translated).
+    /// Apply coordinate scale to a difference component, omitting all translations.
+    ///
+    /// F64 asserts ≤53 magnitude bits and imports ldexp's result, but has no lower
+    /// exponent guard: underflow can become zero and nonfinite values panic on import.
+    /// Integer ignores the dyadic exponent; rational and symbolic recipes retain exact
+    /// scale definitions. Trig kinds reach atoms and panic.
     fn length(&self, n: &Int) -> Term {
         let n = self.widen_factor() * n;
         match self.kind {
@@ -841,7 +1053,12 @@ impl Frame {
         }
     }
 
-    /// A squared length (scales by `s^2`).
+    /// Scale a supplied squared-distance value by the square of all coordinate scales.
+    ///
+    /// Uses exact rational dyadics even for F64, with no binary64 width/finiteness
+    /// restriction here. Algebraic scale contributes a factor two; Transcendental
+    /// contributes PiSquared. The fallback also maps trig kinds to PiSquared, although
+    /// those are not admitted framed inputs. Does not validate nonnegativity.
     fn squared(&self, n: &Int) -> Term {
         let w = self.widen_factor();
         let n = &w * &w * n;
@@ -858,7 +1075,10 @@ impl Frame {
         }))
     }
 
-    /// A scale-free coefficient such as a plane normal component.
+    /// Keep an integer coefficient unscaled, for use with transformed plane offsets.
+    ///
+    /// F64 asserts ≤53 magnitude bits and imports the integer exactly; all other
+    /// kinds wrap an exact integer without consulting translations or symbolic atoms.
     fn plain(&self, n: &Int) -> Term {
         match self.kind {
             Kind::F64 => {
@@ -869,7 +1089,12 @@ impl Frame {
         }
     }
 
-    /// Offset of the plane `normal . x + offset = 0` after the similarity.
+    /// Transform a plane offset consistently with unscaled normal coefficients.
+    ///
+    /// Widening changes offset to W·offset-normal·T. Subsequent scaling and subtraction
+    /// of normal paired with the kind's translation produce the new offset. F64 uses
+    /// an exact dyadic rational without the coordinate f64 width guard. Trig kinds
+    /// panic through atoms; no normal nonzero or finite-output validation is added.
     fn offset(&self, normal: &[Int; 3], offset: &Int) -> Term {
         let off = match &self.widen {
             Some((p, t)) => p * offset - dot(normal, t),
@@ -895,6 +1120,10 @@ impl Frame {
         }
     }
 
+    /// Flatten each lattice point in coordinate order and apply coord to every component.
+    ///
+    /// The const dimension is not independently restricted. Translated or widened
+    /// recipes index only three axes and can panic when D>3.
     fn points<const D: usize>(&self, points: &[[Int; D]]) -> Vec<Term> {
         points
             .iter()
@@ -902,6 +1131,7 @@ impl Frame {
             .collect()
     }
 
+    /// Return the three plain normal coefficients followed by the transformed offset.
     fn plane(&self, normal: &[Int; 3], offset: &Int) -> Vec<Term> {
         let mut out: Vec<Term> = normal.iter().map(|n| self.plain(n)).collect();
         out.push(self.offset(normal, offset));
@@ -909,7 +1139,12 @@ impl Frame {
     }
 }
 
-/// Random rational angle `m / 256` with `m` in `lo..=hi`, apart from `used`.
+/// Draw a rational radian angle m/256 separated by more than eight numerator units from used.
+///
+/// Appends the accepted numerator. Callers use small valid inclusive lo..=hi ranges
+/// with enough unused space. Impossible requests loop indefinitely, and arbitrary
+/// extreme ranges are not guarded against subtraction overflow. Draws inherit the
+/// RNG's remainder reduction rather than a proven uniform distribution.
 fn angle(rng: &mut Rng, lo: i64, hi: i64, used: &mut Vec<i64>) -> Rational {
     loop {
         let m = rng.range(lo, hi);
@@ -920,7 +1155,10 @@ fn angle(rng: &mut Rng, lo: i64, hi: i64, used: &mut Vec<i64>) -> Rational {
     }
 }
 
-/// `1 + m 2^-(k+7)` with an 8-bit `m`: a relative bump of about `2^-k`.
+/// Return one for None, or 1+m·2^-(k+7) for a positive eight-bit m.
+///
+/// The finite relative increase lies from 2^-k through just below 2^(1-k), and is
+/// always positive. This is a radial multiplier, not a signed perturbation.
 fn bump(rng: &mut Rng, k: Option<u32>) -> Rational {
     match k {
         None => Rational::one(),
@@ -928,8 +1166,13 @@ fn bump(rng: &mut Rng, k: Option<u32>) -> Rational {
     }
 }
 
-/// Three points `c + R (cos θ, sin θ)` on a circle and a query at radius
-/// `R (1 + ≈2^-k)`; exact degeneracy hides `cos^2 + sin^2 = 1`.
+/// Build eight scalar terms for three circle sites and one radially perturbed query.
+///
+/// Center coordinates are signed dyadics; radius lies in [3/2,2). Distinct rational
+/// radian angles use numerator range 0..=1600 with separation greater than eight.
+/// None places the fourth point on the same mathematical circle, involving the
+/// sin²+cos² identity; it does not prescribe which policy can certify that identity.
+/// Finite k applies bump only to the query. Trig expressions are built on consumption.
 fn trig_circle(rng: &mut Rng, k: Option<u32>) -> Vec<Term> {
     let center = [dyadic(&signed(rng, 40), -20), dyadic(&signed(rng, 40), -20)];
     let radius = &dyadic(&big(rng, 40), -40) + &Rational::one();
@@ -953,8 +1196,12 @@ fn trig_circle(rng: &mut Rng, k: Option<u32>) -> Vec<Term> {
     out
 }
 
-/// Four points `c + R (cos φ cos θ, cos φ sin θ, sin φ)` on a sphere and a
-/// query at radius `R (1 + ≈2^-k)`.
+/// Build fifteen terms for four sphere sites and one radially perturbed query.
+///
+/// Uses (cos(phi)cos(theta),cos(phi)sin(theta),sin(phi)), with separate separated
+/// rational radian angle lists. Only the fifth radius receives bump for finite k;
+/// None puts all five on the mathematical sphere. No independent noncoplanarity
+/// check is applied to the first four sites. Term evaluation happens on consumption.
 fn trig_sphere(rng: &mut Rng, k: Option<u32>) -> Vec<Term> {
     let center: [Rational; 3] = std::array::from_fn(|_| dyadic(&signed(rng, 40), -20));
     let radius = &dyadic(&big(rng, 40), -40) + &Rational::one();
@@ -984,29 +1231,41 @@ fn trig_sphere(rng: &mut Rng, k: Option<u32>) -> Vec<Term> {
     out
 }
 
-/// Points, planes and remaining scalars of one input.
+/// Ordered points, explicit planes, and leftover scalars decoded from one flat input.
 struct Geo<P> {
+    /// Points decoded first, in supplied order.
     p: Vec<P>,
+    /// Explicit planes decoded next as normal plus offset.
     planes: Vec<Plane3>,
+    /// All remaining scalars, interpreted by the consumer callback.
     s: Vec<Real>,
 }
 
+/// Consume the next fixed-arity point coordinates from the flat geometry stream.
 trait FromReals: Sized {
+    /// Consume the required coordinate count, panicking when the iterator is too short.
     fn take(it: &mut std::vec::IntoIter<Real>) -> Self;
 }
 
 impl FromReals for Point2 {
+    /// Consume x then y; panics if fewer than two scalars remain.
     fn take(it: &mut std::vec::IntoIter<Real>) -> Self {
         Point2::new(it.next().unwrap(), it.next().unwrap())
     }
 }
 
 impl FromReals for Point3 {
+    /// Consume x,y,z in order; panics if fewer than three scalars remain.
     fn take(it: &mut std::vec::IntoIter<Real>) -> Self {
         Point3::new(it.next().unwrap(), it.next().unwrap(), it.next().unwrap())
     }
 }
 
+/// Consume a flat scalar vector as points, then normal/offset plane groups, then leftovers.
+///
+/// Each point consumes its FromReals arity; each plane consumes four scalars.
+/// Insufficient input panics through unwrap. Extra scalars are deliberately retained
+/// in s rather than rejected; no geometric validity or total-length check occurs.
 fn geo<P: FromReals>(reals: Vec<Real>, points: usize, planes: usize) -> Geo<P> {
     let mut it = reals.into_iter();
     let p = (0..points).map(|_| P::take(&mut it)).collect();
@@ -1023,17 +1282,29 @@ fn geo<P: FromReals>(reals: Vec<Real>, points: usize, planes: usize) -> Geo<P> {
     }
 }
 
-/// An input ready for timing: exact inputs are built once, symbolic ones are
-/// rebuilt from their terms in every call so no cached approximation is
-/// reused.
+/// Geometry holder that either retains a built object or reconstructs scalar recipes per call.
+///
+/// Readiness is determined by the terms, not by the kind label. Any non-Ready term
+/// keeps the whole recipe for reconstruction, including cloned Ready values. Fresh
+/// local atom cells do not establish globally cold caches or eliminate shared state.
+/// No constructor/result validation or resource budget is added by this holder.
 struct Input<G> {
+    /// Selected policy passed unchanged to the callback.
     policy: PredicatePolicy,
+    /// Retained geometry when every original term was Ready.
     warm: Option<G>,
+    /// Recipes retained only when at least one scalar needs reconstruction.
     terms: Vec<Term>,
+    /// Decoder invoked at construction for ready inputs or per run for recipes.
     build: fn(Vec<Real>) -> G,
 }
 
 impl<G> Input<G> {
+    /// Choose retained geometry when every term is Ready; otherwise store all terms for reconstruction.
+    ///
+    /// For the ready path consumes scalar values and calls build immediately, then
+    /// stores an empty terms vector. Empty input also follows this path. The other
+    /// path defers build to run. Kind chooses policy only; builder panics propagate.
     fn new(kind: Kind, terms: Vec<Term>, build: fn(Vec<Real>) -> G) -> Self {
         if terms.iter().any(|t| !matches!(t, Term::Ready(..))) {
             return Self {
@@ -1058,6 +1329,11 @@ impl<G> Input<G> {
         }
     }
 
+    /// Invoke f with retained geometry, or rebuild with fresh local atoms then invoke it.
+    ///
+    /// Reconstruction, builder work, and destruction of temporary geometry occur during
+    /// this call. Ready terms in a mixed recipe are cloned and can share scalar caches.
+    /// Returns f's result unchanged; does not inspect success, certainty, or correctness.
     fn run<R>(&self, f: impl FnOnce(&G, PredicatePolicy) -> R) -> R {
         if let Some(g) = &self.warm {
             return f(g, self.policy);
@@ -1068,7 +1344,9 @@ impl<G> Input<G> {
     }
 }
 
+/// Planar geometry plus policy and retention/reconstruction strategy for timed callbacks.
 type In2 = Input<Geo<Point2>>;
+/// Spatial geometry plus policy and retention/reconstruction strategy for timed callbacks.
 type In3 = Input<Geo<Point3>>;
 
 // ---------------------------------------------------------------------------
