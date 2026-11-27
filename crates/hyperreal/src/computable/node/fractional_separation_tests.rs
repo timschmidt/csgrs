@@ -1,8 +1,11 @@
 #[cfg(test)]
+/// Qualification of algebraic-integer fraction separation through inverses, roots and perturbations.
 mod fractional_separation_tests {
     use super::*;
     use crate::Real;
 
+    /// Build a native recipe with uninitialized facts and no stop handle for separation tests.
+    /// This bypasses constructor simplification and does not itself validate operand domains.
     fn raw(kind: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,6 +17,11 @@ mod fractional_separation_tests {
         }
     }
 
+    /// Build 1/(a+b*r) - (a-b*r)/(a^2-r^2) for a nested positive square root r.
+    /// The fixture assumes b is plus or minus one and uses tested depths 1..=6 with
+    /// a in -3..=3; those denominators are nonzero. Starting at two, each deeper
+    /// radicand is two plus the previous root. Checked Real operations are unwrapped
+    /// so a violated construction assumption fails the test instead of yielding a fixture.
     fn inverse_identity(depth: usize, a: i32, b: i32) -> Computable {
         let mut radicand = Real::from(2);
         for _ in 1..depth {
@@ -27,6 +35,10 @@ mod fractional_separation_tests {
     }
 
     #[test]
+    /// Certify 84 nested inverse identities as zero and bound their separation metadata by 1022 bits.
+    /// Rebuild each identity for both signs of 2^-128 and 2^-512: 336 perturbations
+    /// must not become zero at floor -64 and must have the correct sign at -1024.
+    /// Print each depth's maximum bound; this is precision/corpus evidence, not timing.
     fn fractional_separation_deep_inverse_identities_and_perturbations() {
         for depth in 1..=6 {
             let mut maximum_bound = 0;
@@ -66,6 +78,9 @@ mod fractional_separation_tests {
     }
 
     #[test]
+    /// Check inversion swaps synthetic numerator/denominator log bounds and preserves degree.
+    /// Two inversions restore the fields; the fixture tests metadata algebra and does
+    /// not establish those manually assigned bounds for an evaluated expression.
     fn fractional_separation_inverse_swaps_conjugate_bounds_without_norm_growth() {
         let mut metadata = AlgebraicSeparation::rational(&Rational::new(17)).unwrap();
         let root = Computable::rational(Rational::new(2)).sqrt();
@@ -80,6 +95,9 @@ mod fractional_separation_tests {
     }
 
     #[test]
+    /// Decline separation metadata for an inverse of exact zero and of unproved pi-3.
+    /// The latter is nonzero mathematically but outside this algebraic parser; None
+    /// is optional-certificate failure, not proof that the denominator is zero.
     fn fractional_separation_rejects_zero_and_unproved_inverse_denominators() {
         let zero = raw(Approximation::Int(BigInt::zero()));
         assert!(
@@ -99,6 +117,12 @@ mod fractional_separation_tests {
     }
 
     #[test]
+    /// Check 245 roots of ratios with both integral-fraction components negative.
+    /// For seven numerator choices, seven denominator choices and five degrees, use
+    /// 1024-bit directed MPFR square roots, exact rational quotient bounds and directed
+    /// nth roots to enclose the positive value independently. Require the reported
+    /// 2^-B separation lower bound and the native -256 approximation band to enclose
+    /// the oracle interval. This verifies these selected embeddings, not all conjugates.
     fn fractional_separation_roots_with_negative_integral_denominators_match_mpfr() {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();

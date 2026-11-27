@@ -19525,6 +19525,157 @@ AGENTS.md already mandates future-agent maintenance of 100% public/private
 Rustdoc and buildable private documentation; it remains unchanged.
 Repository-wide line review and complete coverage remain unfinished.
 
+## Hyperreal structural certificates, interval filters and separation witnesses (27 November 2026)
+
+Baseline: 6dd7c602c768de238ea41da7d9cadcd26c9c82a1 on rustdoc. Read every line
+of computable/node/structural_analysis.rs (1549 baseline lines),
+imported_domain_tests.rs (296) and fractional_separation_tests.rs (160), all
+under crates/hyperreal/src. Total: 2005 baseline lines. Earlier scoped
+exact_normal_quantile documentation remains part of the now complete file
+review. Context reads included BoundInfo projections, the sign_until consumer,
+Laurent normalization/inverse-trig relation code, exact float conversion, and
+the existing algebraic/filter tests in node/tests.rs. These context reads do
+not establish whole-file review of their containing files.
+
+Owning layer: hyperreal structural evidence and optional scalar predicate
+accelerators, under P1–P6 and downstream P8–P11. Inputs are valid retained
+native recipes, finite exact rational coefficients, admitted real roots,
+integer precision exponents, cached one-unit approximations, and optional
+separation metadata. Native recipe domain assumptions are explicit: a cheap
+sign recognizer is not an import validator. The missing witness was accurate
+private documentation for each helper, field and traversal state, with actual
+rendering and unchanged-behavior evidence. Eighteen selected all-feature unit
+tests reproduced the baseline before editing: import recognition (eight),
+fractional separation (four), algebraic separation/dependency/caps (three),
+fractional reconstruction (one), and binary64 filters (two).
+
+The structural file now has 118 reviewed blocks: three structs, seven named
+fields, three impl overviews, five associated constants, fifty-six methods,
+six local functions, three local constants, and two local Frame enums with
+sixteen variants and seventeen tuple fields. The two test modules add nineteen
+blocks, including their module overviews and the local wide fixture helper.
+All 137 blocks explain roles and consumed invariants rather than restating names.
+
+Key clarifications:
+
+- The separation proof uses the nonzero integer norm of the integral numerator
+  beta in alpha=beta/gamma. The previous wording could attribute an integer
+  norm to the fraction itself. Numerator conjugate and denominator bounds give
+  abs(alpha)>=2^-(denominator_log2+(D-1)*conjugate_log2) for nonzero alpha.
+  The product of retained root degrees may overestimate the actual degree.
+  Inversion swaps fraction bounds after a separate nonzero proof. For a root,
+  gamma*root_n(alpha) is integral even with negative selected gamma; no false
+  principal-root assumption on that integral numerator is needed.
+- Rational-root dependency recognition tests positive same-degree roots using
+  exponent combinations and exact perfect powers. Decline is not independence.
+  A failed generator insertion leaves its append in the candidate; callers
+  must discard that candidate. The parser memoizes completed nodes by live
+  allocation identity and charges 256 previously unmemoized visits. Generator,
+  degree, log, dependency and final-separation caps have distinct meanings;
+  nested proof calls, coefficient work and allocations are not globally metered.
+- The zero planner only returns -(B+2) within the requested floor. The consumer
+  must still have a one-unit approximation with magnitude at most one to use
+  the norm gap. A small numerical sample alone is not a zero certificate.
+- Finite binary64 intervals are outward filters around an authoritative exact
+  graph. Rational conversion requires integer components at most 2^53, basic
+  operations expand rounded endpoints, and zero-crossing inverse/nonfinite
+  results decline. The graph filter charges revisited shared nodes, recognizes
+  selected Pi/E and arithmetic forms, and permits only normal-power offset
+  multipliers. Its separate threshold helper constructs every representable
+  power exactly and uses zero/infinity outside that range. Neither is a general
+  floating-point replacement for scalar data or a native domain validator.
+- Small-trig proofs peel binary offsets symbolically with an i64 sum and a
+  32-visit allowance, polling only the peeled path. Reduced-pi recognition uses
+  its own 32-inspection allowance and does not poll stops. The general materialized
+  power-of-two rational helper instead allocates coefficients and negates negative
+  exponents in i32: i32::MIN causes debug overflow. It has no allocation budget.
+- Shared-constant cache lookup transports Pi/Tau samples with checked exponent
+  shifts and may populate the other process-wide cache. Publication tests the
+  supplied stop handle and strengthens only unresolved bounds from separated
+  samples. Definite structural store_bound uses the unconditional setter and
+  can replace stronger magnitude metadata; these are different publication rules.
+- Cheap bounds try depth 24 before an explicit heap-stack traversal; that depth
+  is not a total visit bound. Exact-sign discovery preserves cache/sample/Add
+  relation order, then left-before-right arithmetic traversal and the final
+  quadratic projection. Some direct cases recurse into children. Cached Unknown
+  is an unresolved route, not undecidability, and separated samples can strengthen
+  it. Domain shortcuts, zero annihilation and cached signs assume valid recipes.
+  Cancellation is not blanket-enforced on these structural queries.
+- Planning exponents may be inexact; certified projections withhold those hints.
+  Quadratic projection occurs after shared Laurent cancellation, with a depth
+  allowance of 64 and the normalizer's separate internal limits. Exact-rational
+  recognition remains selective and never accepts an arbitrary cached zero as
+  rational evidence. The previously documented retained-CDF quantile identity
+  and complete graph check remain unchanged.
+
+A disposable private probe compiled against baseline and final code produced
+identical logs. Across 1105 small rationals it checked 11033 interval operations
+against exact rational arithmetic and exact binary64-to-rational endpoints.
+Every representable power of two (-1074 through 1023, 2098 values) matched an
+exact dyadic. Invalid ordering/NaN, excessive rational components, zero-crossing
+reciprocal and overflowing square declined. These finite witnesses supplement,
+not replace, the outward-arithmetic reasoning. The existing constant-enclosure
+unit test compares against 256-bit MPFR point values; it is not a directed
+constant oracle and is not upgraded to one by this documentation.
+
+The probe also observed a failed seventeenth-generator insertion leaving
+seventeen entries; nonmaterialized separation offset at i32::MIN declining;
+a 200-level shared doubling DAG admitting metadata; a definite structural
+bound store replacing an exact exponent with an inexact hint; and a stopped
+exact leaf still returning its sign. A contained catch_unwind reproduced the
+materialized i32::MIN power helper's debug overflow before allocation. No
+production defect was repaired in this docs-only batch. Runs used one GiB
+address-space, ten CPU-second and fifteen wall-second containment limits with
+core dumps disabled, not a claimed production resource bound. An initial
+scratch doubling fixture used 3/7 and wrongly expected the conservative
+fraction metadata to fit after repeated denominator cross-products; changing
+the scratch seed to one isolated shared-node traversal. No repository fixture
+or assertion was weakened.
+
+The reviewed import fixtures distinguish nonzero recognition from sign and
+from actual serialization. They include 96 repeated affine-pi recognizer calls,
+14 declined images that are not all mathematical poles, boundary counts,
+stop/reset retry, symbolic extreme shifts, 32 small-trig sign cases, and 2709
+integer inequality cases plus 27 exponent-boundary cases. The fractional
+fixtures cover 84 inverse identities and 336 rebuilt signed perturbations,
+metadata inversion, rejected/unproved inverse denominators, and 245 roots of
+ratios with negative integral components. The latter use directed 1024-bit
+MPFR and exact rational interval arithmetic for their selected real embedding;
+they do not enumerate all conjugates. Their source assertions are unchanged.
+
+After the final edit, twenty selected no-default and thirty-one all-feature
+unit tests passed. These include the baseline selections plus exact-sign-cache,
+certified-planning and, with serde enabled, trig-range-proof tests. The attempted
+no-default trig-range selection runs zero tests because that module requires
+serde; it is not counted as coverage. Integration tests normal_quantile_evidence
+(seven), serde_graph_domains (four), and serde_opaque_operand_domains (five)
+passed, as did the downstream hyperlimit resolve::tests selection (five).
+No focused check remains blocked. Full workflow validation and performance
+measurements remain owner-waived for this docs-only session.
+
+Private cargo doc passed without default features and with all features,
+with warnings and broken/private intra-doc links denied. All seventy-three
+ordinary blocks matched library HTML. Nineteen matched actual temporary
+Rustdoc: the test-only planning_msd method and eighteen module/test/helper
+blocks. Only the relevant test gating was removed in the owned copy, which
+also exposed the existing MPFR cleanup support. Forty-five function-local
+blocks rendered as supplemental Markdown because ordinary Rustdoc omits them.
+These are reported separately, not as ordinary library coverage. Derived
+Clone/Copy anchors for Binary64Interval and Clone for both algebraic carriers
+were inspected. No ghost/Verus expanded configuration was built or claimed.
+
+Comment-free code, independently formatted, is identical to the baseline.
+Raw differences are seventeen optional tuple-field commas and one brace pair
+removed by Rustfmt around a match arm. Predicate order, signatures, fixtures,
+assertions and policy are unchanged. Selected Rustfmt and git diff --check
+passed. Evidence in /tmp/csgrs-hyperreal-structural-analysis-audit/ retains
+commands/logs, private probes, item/render/token inventory and supplemental
+local documentation. Owned probe binaries, shadow sources and temporary HTML
+were removed after inspection. Builds reused the approximately 6.6 GiB shared
+Cargo target with locked/offline, nonincremental settings. AGENTS.md's existing
+100% public/private Rustdoc mandate remains unchanged. Complete repository
+line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

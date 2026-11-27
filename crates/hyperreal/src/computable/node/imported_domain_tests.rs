@@ -1,7 +1,10 @@
 #[cfg(all(test, feature = "serde"))]
+/// Qualification of bounded import/nonzero recognizers and symbolic small-trig range proofs.
 mod imported_domain_tests {
     use super::*;
 
+    /// Build an unproved native recipe with invalid fact slots and no stop handle.
+    /// Bypass constructor reductions so tests exercise structural replay recognition directly.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,6 +16,8 @@ mod imported_domain_tests {
         }
     }
 
+    /// Retain q+a*pi as an Add and Multiply, including zero coefficients without simplification.
+    /// This fixture deliberately tests graph recognition rather than normalized Real classes.
     fn affine(q: Rational, a: Rational) -> Computable {
         raw(Approximation::Add(
             Computable::rational(q),
@@ -24,6 +29,10 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// For six q+a*pi arguments, certify sine/cosine nonzero through four outer wrappers twice.
+    /// Nonzero rational q rules out trig zeros by pi transcendence, including a=0.
+    /// Ninety-six recognizer calls must leave numeric caches and sign slots untouched;
+    /// the witness is nonzeroness, not a sign or a full serialized round trip.
     fn rational_affine_pi_images_replay_nonzero_without_a_sign_claim() {
         for q in [
             Rational::fraction(-3, 5).unwrap(),
@@ -63,6 +72,10 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// Require fourteen sine/cosine images to decline this particular affine recognizer.
+    /// The seven arguments mix zero rational parts and unsupported coefficient forms;
+    /// some images are nonzero, so false cannot mean a proved pole. Numeric caches
+    /// and exact-sign slots must remain untouched.
     fn affine_pi_replay_declines_poles_and_unsupported_coefficients() {
         let pi = Computable::pi();
         for argument in [
@@ -105,6 +118,10 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// Check the outer 48-visit boundary and a broad unsupported argument without caching failure.
+    /// Forty-seven negations plus the trig node fit; one more wrapper declines.
+    /// A depth-eight addition tree also declines, while the original small image
+    /// remains recognizable. These checks do not measure total work or retained memory.
     fn affine_pi_replay_limits_decline_without_poisoning_fresh_attempts() {
         let image = raw(Approximation::PrescaledSin(affine(
             Rational::one(),
@@ -120,6 +137,8 @@ mod imported_domain_tests {
         assert!(wrapped.cached().is_none());
         assert!(image.imported_affine_pi_trig_nonzero());
 
+        /// Build a full binary Add tree with q+a*pi leaves; depth zero returns one affine leaf.
+        /// The depth-eight fixture has 256 leaves and intentionally exceeds simple affine recognition.
         fn wide(depth: usize) -> Computable {
             if depth == 0 {
                 affine(Rational::one(), Rational::one())
@@ -134,6 +153,9 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// Recognize sin(2^shift*(1+pi)) as nonzero at both i32 exponent extremes.
+    /// Require no numeric cache; the expression proof retains the coefficient
+    /// symbolically rather than allocating the power of two.
     fn affine_pi_replay_handles_extreme_argument_shifts_without_expansion() {
         for shift in [i32::MIN, i32::MAX] {
             let argument = raw(Approximation::Offset(
@@ -150,6 +172,10 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// Check 32 trig signs from four negative shifts, two signs and four functions.
+    /// The bound 3<pi<4 gives abs((1+pi)/8)<1; further negative shifts preserve
+    /// the small-argument range. Repeat each sign query and require both image and
+    /// argument numeric caches to remain empty.
     fn small_trig_signs_keep_extreme_shifts_symbolic() {
         for shift in [i32::MIN, i32::MIN + 1, -16_384, -3] {
             for negative in [false, true] {
@@ -182,6 +208,10 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// Decline out-of-unit, huge, cancellation-ambiguous and over-depth interval proofs.
+    /// Check that exactly cancelling extreme shifts retain a positive small argument,
+    /// and that a stopped query declines but the same graph succeeds after reset.
+    /// Assert specified untouched caches/facts; no total-resource guarantee follows.
     fn small_trig_range_proof_declines_without_sign_or_approximation_facts() {
         let base = affine(Rational::one(), Rational::one());
         let outside = raw(Approximation::Offset(base.clone(), -2));
@@ -219,6 +249,10 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// Compare 2709 small dyadic cases with independent integer inequalities for abs(x)<=1.
+    /// Check sign and empty numeric caches, then 27 cases at exponent extremes and
+    /// normal/subnormal boundaries. This qualifies the selected corpus, not every
+    /// recipe accepted by the binary64 interval filter.
     fn small_trig_range_matches_integer_inequalities_at_unit_boundaries() {
         for n in -64_i64..=64 {
             for shift in -10_i32..=10 {
@@ -267,6 +301,9 @@ mod imported_domain_tests {
     }
 
     #[test]
+    /// Exercise the shared 48-visit argument allowance: five affine visits plus 43 wrappers fit.
+    /// A further wrapper declines. A stop/reset cycle on the original image must
+    /// remain retryable without warming numeric caches or publishing a sign.
     fn affine_pi_argument_work_and_cancellation_are_shared_and_retryable() {
         let mut argument = affine(Rational::one(), Rational::one());
         // The affine form uses five visits. Wrappers consume the same 48-visit
