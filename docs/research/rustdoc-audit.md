@@ -15006,6 +15006,119 @@ check remains blocked. Other conformance packages, shared support documentation 
 the repository-wide audit remain open; this batch does not establish full coverage,
 universal resource bounds, release/MSRV qualification or a layout-adoption decision.
 
+## Alumina FOC conformance transforms and sample protocol (2026-11-27)
+
+Whole-file review on target revision 4b5c292ff9198a4084e5d87fd032a0ff3aea06e5:
+
+- crates/hyperlattice-interval/conformance/alumina-foc/src/lib.rs (147 -> 209 lines).
+- Its src/samples.rs (158 -> 205 lines).
+- Its Cargo.toml (25 lines) and Cargo.lock (34 lines), unchanged.
+
+The owning layer is the unpublished FOC conformance adapter and shared fixture
+protocol. P1/P5/P6/P18/P26/P30/P37 and the admission protocol govern endpoint
+meaning, staged rounding/overflow, subsequent consumption and honest evidence.
+Inputs are validated nonempty Q2.30 intervals, validated Rotation wrappers,
+caller-authored Sample combinations and all u32 sample indices. Missing Rustdoc
+covered private adapters/types, failure order, generated providers and enum payloads.
+The old sample comment incorrectly described 64 possible workloads: construction
+actually depends on residues modulo 33 and five, giving 165 combinations. The
+usual 64-index native window is not the function's full domain.
+
+Dependency qualification was made explicit before editing. The expected sibling
+firmware checkout was absent. A local checkout at
+/mnt/models/workspace/alumina-firmware, revision
+7c23c4eddc6ae60a2865822d3cfafb4efab4b4aa, predates the client's locked dependency
+graph, so the first locked build rejected a lockfile update. Neither repository's
+manifest or lockfile was relaxed. Connected GitHub confirmed that firmware revision
+2d68e82b7341db7b747b20e4ad1455a4c1113a00, already named in interval-size-accounts.json,
+has the required Hyperinterval dependency. Approved escalation fetched that exact
+revision into /tmp; only its workspace manifest and two required crates were
+materialized. Temporary sibling aliases then let the actual, unchanged client
+manifest resolve its declared paths. All qualification below uses that firmware
+revision, not an unspecified latest firmware or the older working checkout.
+
+The two Rust files now contain 42 authored Rustdoc blocks and fifteen function
+declarations, including the provider template. Review established:
+
+- Fixed and Wide retain the same 2^-30 grid at different endpoint widths. Input
+  wrappers already validate ordered nonempty bounds. Output cannot represent
+  kernel emptiness; violating private nonempty preconditions panics. Narrowing
+  checks representability without saturation or additional rounding.
+- Scalar overflow maps to FocError::Range. Other scalar failures and nonscalar
+  lattice errors panic as invariant violations on these statically dimensioned,
+  validated paths; these helpers are not general error-conversion APIs.
+- Clarke first rejects a negative tolerance or an excessive independent residual
+  interval a+b+c. The tolerance bounds the sum, not its average. Alpha retains
+  the wide integer numerator (2a-b-c) before outward division by three, then
+  narrows before beta work. Beta retains wide b-c and multiplies by the authored
+  inverse-square-root bracket. A difference can exceed i32 while its result fits.
+- Inverse Clarke rounds HALF*alpha before negation, computes the bracketed beta
+  product, then b before c; a copies alpha. The returned independent intervals
+  need not sum to an exactly zero interval or undo previous widening.
+- Park computes d before q; inverse Park computes alpha before beta. Products
+  round individually before addition/subtraction. Intermediate Range failures
+  survive even when a combined mathematical expression would fit. The validated
+  rotation wrapper is consumed without a new norm check or enforcement of a joint
+  unit-circle relation during marginal interval arithmetic. No partial output or
+  new predicate certainty receipt is returned.
+- Samples use n=index%33-16, a 2^24 raw-unit center step, and one-unit phase/frame
+  radii. Integer n/2 truncates toward zero. Four cardinal rotations and outward
+  3/5,4/5 brackets are validated with sixteen raw units of squared-norm tolerance.
+  Public fields allow nonfixture inputs, so provider calls remain fallible.
+- Action dispatch identifies each source field and returned frame. Chain feeds
+  five transform results forward, reuses the rotation, and admits 2^20 raw units
+  of final residual after widening; it is not an identity assertion. First errors
+  short-circuit without exposing intermediate results.
+- Output tags 1/2/3 identify stationary, rotating and three-phase lanes. Two-frame
+  outputs pad the third lane with exact zero. Digest processes the tag and six
+  little-endian signed endpoints with caller-seeded wrapping FNV-1a updates;
+  equality of complete wrappers and independent enclosure checks remain distinct.
+
+Context reads included both test files, the README, native probe body, existing
+WASM consumer/JS driver/BigInt oracle, fixed arithmetic, and the selected external
+firmware's wrapper/rotation/transform implementations. These reads do not claim
+completed documentation coverage of the remaining conformance tests/drivers,
+external firmware repository, Thumb simulator or README deployment instructions.
+
+Validation after the final edit:
+
+- All seven existing tests passed before and after with cargo test --locked
+  --offline -j2 through the temporary sibling layout. The four printed outcome
+  summaries matched exactly: the Clarke matrix had 10,177 successes, 2,598 Range
+  and 260,600 unbalanced outcomes; forward/inverse Park each had 15,795 successes
+  and 6,480 Range outcomes; inverse Clarke had 1,089/936. The seeded 80,000 transform
+  calls had 52,992 successes, 9,872 Range and 17,136 unbalanced outcomes. Primitive
+  narrow/wide product/division checks covered 12,025 pairs. The allocation test
+  retained complete comparisons and reported zero requests/bytes by assertion.
+- The actual library passed locked/offline cargo check for thumbv7em-none-eabihf.
+  The actual no_std WASM consumer built in release for wasm32-unknown-unknown.
+  Existing Node v22.16.0 execution passed 825 full transform outputs and 251 range
+  checks in each of two fresh instances, covering all 165 residue combinations.
+  Its independent BigInt oracle derives radical brackets and staged endpoint
+  enclosures; the consumer also asserts native/shared full equality. The process
+  had an external 60-second timeout. No physical firmware timing or stack claim
+  follows, and the Thumb simulator was not run.
+- Native and Thumb private cargo doc builds passed with warnings, broken links
+  and private-link violations denied. Every one of the 42 authored blocks rendered
+  in full on both targets. Both generated provider pages contain their distinct
+  description plus the shared failure/composition contract; all three Output
+  payload-field descriptions render. No local-item rendering workaround was needed.
+- Removing comments/blank lines leaves identical source except the three tuple
+  variant declarations, which were wrapped with trailing commas to attach field
+  docs. Normalizing only those declarations restores exact remaining-byte identity.
+  Signatures, operation order, tests, fixtures and manifests are unchanged.
+  Selected-file rustfmt and git diff --check passed. Full workflow/performance
+  checks remain owner-waived for this documentation-only session.
+
+Evidence: /tmp/csgrs-interval-foc-audit/ retains commands, test/build/doc logs,
+rendered-text matches, exact external revision and a SHA256 inventory of thirteen
+external dependency files. Its 58 MiB fetched Git object store was removed after
+identity recording; the small source snapshot and sibling aliases remain for the
+next conformance batch. One shared Cargo target (approximately 4.7 GiB) was reused.
+No focused check remains blocked. This is finite qualification against the named
+firmware revision, not release/MSRV or whole-controller certification. Remaining
+conformance files and the complete repository-wide Rustdoc audit remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
