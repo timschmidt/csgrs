@@ -15718,8 +15718,8 @@ After the final source edit:
   five feature-dependent 512-case property tests and 1,024 mixed concurrent reads.
   These finite witnesses do not establish universal rounding or concurrency proofs.
 - All ten numeric_roundtrip_formats integration tests passed with all features,
-  including five 1,024-case property tests and exact ingress -> JSON/CBOR replay
-  -> owned export. That whole test file was read as consumer context; its missing
+  including five 1,024-case property tests, exact ingress, JSON/CBOR replay
+  and owned export of the original value. That whole test file was read as consumer context; its missing
   Rustdoc remains separate audit work and it is not credited as a completed audit.
 - Actual all-feature private cargo doc passed with warnings and broken/private
   links denied. All 33 production-level full blocks rendered, including six
@@ -15742,6 +15742,90 @@ Cargo target grew from about 5.0 to 5.2 GiB across feature configurations; no
 second target was created. Existing broader Hyperreal missing-doc diagnostics
 remain open. This batch documents present behavior without declaring it full
 conformance to every target property; the repository-wide audit remains active.
+
+## Hyperreal serialization wrappers and numeric interchange corpus (2026-11-27)
+
+Whole-file review on target revision 8cd54c2b44d5acb457dccdd275541e0055c131e1:
+
+- crates/hyperreal/src/serde.rs (322 -> 392 lines).
+- crates/hyperreal/tests/numeric_roundtrip_formats.rs (236 -> 270 lines).
+
+The owning layer is scalar interchange and its acceptance corpus. P1/P3/P4/P5/P6,
+P19/P26/P29 and the admission protocol require exact ingress, certificate replay,
+explicit approximation/error scope and honest resource accounting. The domain is
+feature-enabled Real wire encodings, CBOR numeric shorthand, exact numeric text,
+finite IEEE inputs and rejected malformed/nonfinite values. Missing witnesses
+were helper/test documentation and accurate cache, input-consumption and numeric
+adapter boundaries. Before editing, all nine serde module tests and all ten
+numeric interchange integration tests passed with all features.
+
+There are now 23 complete Rustdoc blocks in the serialization module and 15 in
+the integration test, covering all 22 and 14 named declarations respectively.
+The source and focused baseline consumer established:
+
+- Serialization omits primitive/node caches and abort signals; it does not delete
+  live source caches as the old comments claimed. Rational serialization can
+  populate its lazy canonicalization cache. Shared pointers serialize by value,
+  so definitions survive but allocation identity and shared graph topology do not.
+  Encoding unwraps in-memory serializer results and is not an admission proof.
+- JSON requires a complete wire value (plus optional whitespace). CBOR byte import
+  consumes one wire value and ignores remaining bytes. The probe appended invalid
+  trailing CBOR bytes and still decoded the first value; extra JSON values failed.
+  Neither wrapper accepts a bare numeric value in place of the Real wire shape.
+- CBOR Value conversion separately accepts integer, float, text and two-element
+  pair shorthand before wire fallback. Numeric integers must fit i64; integer
+  text can exceed that range. Every two-element array takes the pair path, with
+  no fallback after failure. Negative denominators normalize into the numerator;
+  zero denominators, malformed integer text and unsupported pair element types
+  retain their distinct DivideByZero/BadInteger/ParseError categories.
+- A probe checked both i64 overflow boundaries through borrowed/owned adapters,
+  exact text and negative-denominator pairs, unsupported shapes, NaN/infinity,
+  and zero denominators. An imported -0.0 retained its source cache bits after
+  serialization, while JSON/CBOR replay yielded numeric zero with positive export
+  bits. An attached unset abort signal remained on the source but not either replay.
+  Cold/warm JSON and CBOR bytes matched for the selected exact 11/32 fixture only.
+- Wrappers preserve RealWire validation's Problem category while dropping its
+  detail string. Direct Serde decoding retains that detail as an error string.
+  Named classes validate their payload relationship; opaque classes require a
+  payload with admitted operand domains. Validation can establish fresh facts.
+  Selected class checks use precision floor -256; partial-operation sign checks
+  use -2048 and can use exact identities or an outward-rounded filter. None of
+  these precision limits bounds total work, expansion or memory.
+- Test documentation distinguishes rational equality from compare_absolute at
+  tolerances 10 or -80. The latter is not a general exact-equality certificate.
+  Integer fixtures widen to i128/u128 before Real conversion (ten signed cases,
+  five unsigned maxima), so they do not exercise every narrow From implementation.
+  Seventeen text fixtures have exact expectations. Generated float replay and
+  owned export of the original value are separate assertions; zero sign bits are
+  not checked. Four Value-ingress assertions do not themselves perform replay.
+  The preceding batch's ledger sentence was corrected to reflect those separate
+  assertions; no test or claim was strengthened merely by naming it a round trip.
+
+After the final source edit:
+
+- Nine existing module tests and ten integration tests passed in each of two
+  configurations: no defaults plus serde, and all features. The integration suite
+  retains its five 1,024-case property tests. The CBOR public example doctest passed.
+- All-feature private cargo doc passed with warnings and broken/private links
+  denied. All twelve production-level blocks were matched in actual rendered
+  pages. Ordinary library Rustdoc omits the local parser helper and test items;
+  the other 26 blocks were source-checked and rendered as standalone Markdown,
+  not represented as ordinary generated library item pages.
+- All noncomment/nonblank source bytes match the baseline. Signatures, assertions,
+  fixture values, dispatch order, features and serializers are unchanged. Selected
+  Rustfmt and git diff --check passed. Full workflows remain owner-waived. This
+  batch claims neither universal replay completion nor new performance results.
+
+Evidence: /tmp/csgrs-hyperreal-serde-audit/ retains commands, baseline/final logs,
+probe source/output, source/render checks and Markdown rendering. The temporary
+probe initially lacked procedural-macro dependency search paths; deriving all
+artifact directories from Cargo JSON corrected the harness, after which its
+warnings-denied compile and externally time-limited execution passed. Its roughly
+20 MiB executable was removed. The shared nonincremental Cargo target is about
+5.3 GiB; no second target was created. RealWire, classification, node admission,
+comparison, rational serialization/canonicalization and Ciborium reader excerpts
+were supporting context, not whole-file audit credit. Broader Hyperreal coverage
+and the complete repository audit remain open; no focused check remains blocked.
 
 ## Next work
 

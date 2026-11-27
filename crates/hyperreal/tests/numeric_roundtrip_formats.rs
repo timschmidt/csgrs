@@ -1,13 +1,24 @@
+//! Numeric ingress and exact rational interchange regression corpus (serde feature).
+//!
+//! Fixed fixtures check values/structural facts and typed nonfinite failures;
+//! generated cases exercise finite IEEE bits and bounded numeric text. JSON and
+//! CBOR replay are separate checks from owned float export of the original Real.
+//! Signed-zero bit preservation, fresh-process replay, byte determinism and
+//! arbitrary symbolic certificate completeness are not established by this file.
+
 #![cfg(feature = "serde")]
 
 use ciborium::Value;
 use hyperreal::{Problem, Rational, Real, ZeroKnowledge};
 use proptest::prelude::*;
 
+/// Build an exact fixture fraction and panic if its denominator violates the constructor contract.
 fn q(numerator: i64, denominator: u64) -> Rational {
     Rational::fraction(numerator, denominator).unwrap()
 }
 
+/// Replay a Real through JSON and CBOR separately, requiring Real equality and identical structural facts.
+/// Does not compare bytes, caches, allocation identity or the behavior of later modeling operations.
 fn assert_lossless_real_roundtrip(value: Real) {
     let json = value.to_json();
     let json_roundtrip = Real::from_json(&json).unwrap();
@@ -21,6 +32,9 @@ fn assert_lossless_real_roundtrip(value: Real) {
 }
 
 #[test]
+/// Check ten signed cases and five unsigned maxima after widening to i128/u128.
+/// These exercise the wide integer constructors, not each narrow From implementation;
+/// the lowest signed fixture is i128::MIN+1. Require exact rational values and both replay formats.
 fn integer_primitives_roundtrip_losslessly_through_real() {
     let signed_cases = [
         i128::from(i8::MIN),
@@ -55,6 +69,8 @@ fn integer_primitives_roundtrip_losslessly_through_real() {
 }
 
 #[test]
+/// Check 17 exact zero, integer, fraction, decimal and scientific fixtures against rational expectations.
+/// Require both parsers, exact-rational extraction and both replay formats to retain the selected values.
 fn supported_numeric_text_forms_parse_losslessly() {
     let cases = [
         ("0", Rational::zero()),
@@ -93,6 +109,7 @@ fn supported_numeric_text_forms_parse_losslessly() {
 }
 
 #[test]
+/// Require six malformed or unsupported literals to fail Real parsing; no particular error category is asserted.
 fn unsupported_numeric_text_forms_fail_instead_of_rounding() {
     for text in ["", "NaN", "inf", "1 1/2", "1e", "1e1e2"] {
         let parsed: Result<Real, _> = text.parse();
@@ -104,6 +121,7 @@ fn unsupported_numeric_text_forms_fail_instead_of_rounding() {
 }
 
 #[test]
+/// Require Infinity for both signed infinities and NotANumber for canonical NaN at both primitive widths.
 fn non_finite_float_imports_are_rejected_losslessly() {
     assert_eq!(Real::try_from(f32::INFINITY), Err(Problem::Infinity));
     assert_eq!(Real::try_from(f32::NEG_INFINITY), Err(Problem::Infinity));
@@ -114,6 +132,8 @@ fn non_finite_float_imports_are_rejected_losslessly() {
 }
 
 #[test]
+/// Check four CBOR Value ingress forms against exact values: integer, dyadic float, fraction text and pair.
+/// Despite the test name, these assertions do not encode or reimport the resulting Real.
 fn cbor_value_numeric_forms_roundtrip_losslessly() {
     let integer = Value::Integer(123_i64.into());
     assert_eq!(Real::try_from(&integer).unwrap(), Real::from(123_i64));
@@ -134,10 +154,14 @@ fn cbor_value_numeric_forms_roundtrip_losslessly() {
     );
 }
 
+/// Generate arbitrary binary32 bit patterns, filtering out infinities and NaNs.
+/// Subnormals and both zero signs are eligible; finite random coverage does not guarantee every boundary.
 fn finite_f32_bits() -> impl Strategy<Value = u32> {
     any::<u32>().prop_filter("finite f32 bits", |bits| f32::from_bits(*bits).is_finite())
 }
 
+/// Generate arbitrary binary64 bit patterns, filtering out infinities and NaNs.
+/// Retain subnormals and signed zeros in the admitted generator domain.
 fn finite_f64_bits() -> impl Strategy<Value = u64> {
     any::<u64>().prop_filter("finite f64 bits", |bits| f64::from_bits(*bits).is_finite())
 }
@@ -146,6 +170,8 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(1024))]
 
     #[test]
+    /// For generated finite binary32 values, require zero knowledge, rational storage and JSON/CBOR equality.
+    /// Owned export of the original Real must retain nonzero bits; zero is compared numerically, not by sign bits.
     fn finite_f32_values_roundtrip_through_exact_dyadic_real(bits in finite_f32_bits()) {
         let value = f32::from_bits(bits);
         let real = Real::try_from(value).unwrap();
@@ -164,6 +190,8 @@ proptest! {
     }
 
     #[test]
+    /// Apply the finite-float ingress/replay witnesses to binary64, exporting the original Real.
+    /// Require bit equality for nonzero values and numeric zero equality for either zero sign.
     fn finite_f64_values_roundtrip_through_exact_dyadic_real(bits in finite_f64_bits()) {
         let value = f64::from_bits(bits);
         let real = Real::try_from(value).unwrap();
@@ -182,6 +210,8 @@ proptest! {
     }
 
     #[test]
+    /// Generate signed whole parts in +/-1,000,000 with six fractional digits and compare both exact parsers.
+    /// Require rational extraction and JSON/CBOR replay; agreement between these parsers is not an independent decimal oracle.
     fn generated_decimal_text_roundtrips_as_exact_rational(whole in -1_000_000_i64..=1_000_000, fractional in 0_u32..1_000_000) {
         let text = format!("{whole}.{fractional:06}");
         let rational: Rational = text.parse().unwrap();
@@ -194,6 +224,8 @@ proptest! {
     }
 
     #[test]
+    /// Generate six-digit decimal mantissas, exponents -18..=18, either exponent case and optional nonnegative plus signs.
+    /// Compare scientific parsing with the parsed mantissa times exact 10^exponent, then check rational storage and replay.
     fn generated_scientific_text_matches_exact_decimal_scaling(
         whole in -1_000_000_i64..=1_000_000,
         fractional in 0_u32..1_000_000,
@@ -223,6 +255,8 @@ proptest! {
     }
 
     #[test]
+    /// Generate numerators in +/-1,000,000 and positive denominators 1..=1,000,000.
+    /// Require parser agreement, rational extraction and both replay formats, without assuming unique sampled values.
     fn generated_fraction_text_roundtrips_as_exact_rational(numerator in -1_000_000_i64..=1_000_000, denominator in 1_u64..=1_000_000) {
         let text = format!("{numerator}/{denominator}");
         let rational: Rational = text.parse().unwrap();

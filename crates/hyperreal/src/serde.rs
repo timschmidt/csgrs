@@ -1,3 +1,19 @@
+//! Feature-gated Real JSON/CBOR convenience methods and CBOR numeric adapters.
+//!
+//! Wire decoding delegates certificate/domain admission to RealWire. These
+//! convenience methods preserve its Problem category but discard the additional
+//! diagnostic detail; direct Serde deserialization retains that detail as text.
+//! Encodings contain definitions, not live primitive/evaluation caches or abort
+//! signals. Serialization does not clear the source caches or validate that a
+//! later import will succeed. Shared graph pointers are serialized by value, so
+//! the encoding does not preserve allocation identity or graph sharing.
+//! Rational serialization may populate its lazy canonicalization cache.
+//!
+//! Import is proof work, not merely syntax parsing. Parser recursion limits and
+//! individual proof precision limits do not bound total work, output expansion,
+//! memory or elapsed time; these wrappers expose no resource/cancellation options.
+//! The CBOR Value adapter accepts numeric shorthand that from_bytes does not.
+
 use std::str::FromStr;
 
 use crate::{
@@ -8,20 +24,28 @@ use ciborium::{Value, de, ser};
 use num::BigInt;
 use num::bigint::Sign as BigIntSign;
 
+/// Encode retained scalar definitions and admit decoded definitions through the scalar owner.
 impl Real {
-    /// Serializes the Real to a JSON string.
+    /// Serialize this retained definition as JSON without clearing its live caches.
     ///
-    /// Note: serialization deletes the cache, so serializing and deserializing a Real may come with a performance penalty.
+    /// Primitive/evaluation caches and abort signals are omitted, so replay may
+    /// need to rediscover facts or recompute approximations. This is not a float
+    /// projection or a validation pass. The in-memory serializer is unwrapped;
+    /// an encoding error panics rather than returning Problem. Allocation and
+    /// traversal have no caller-supplied bound.
     pub fn to_json(&self) -> String {
         serde_json::to_string(self).unwrap()
     }
 
-    /// Deserializes a Real from a JSON string.
+    /// Parse one complete JSON Real wire definition and validate its certificates.
+    /// Trailing whitespace is allowed; extra values or non-whitespace are errors.
+    /// Bare numeric JSON is not the CBOR Value shorthand accepted by TryFrom.
     ///
     /// Invalid named certificates and missing opaque payloads return
     /// [`Problem::ParseError`]. An unproved named certificate or a payload whose
-    /// equality is undecided returns [`Problem::UnknownCertificate`]. A supplied
-    /// payload is preserved only after proving its relationship to the class.
+    /// equality is undecided returns [`Problem::UnknownCertificate`]. For a named
+    /// class, a supplied payload is retained only after proving that relationship;
+    /// an opaque class instead requires a payload whose operand domains are proved.
     /// Known domain and kernel-range violations, including bounded rational
     /// arithmetic arguments and symbolic domain contradictions, return
     /// [`Problem::ParseError`] before an outer scale or identity can hide them.
@@ -32,12 +56,17 @@ impl Real {
     /// operand domain proved, operands first: a nonzero reciprocal, a
     /// nonnegative root, an inverse-trigonometric or hyperbolic argument in
     /// range, a tangent or cotangent away from its poles, a quantile
-    /// probability in (0, 1). A proof is an exact identity, a structural sign,
-    /// or the bounded certified sign query that native `Real` operations use,
-    /// refining to 2^-2048. A refuted domain returns [`Problem::ParseError`];
+    /// probability in (0, 1). Admission uses exact identities, structural signs,
+    /// a bounded outward-rounded filter, or the certified sign query that native
+    /// `Real` operations use, with precision floor -2048. Selected named-class
+    /// positivity checks separately use floor -256. A refuted domain returns
+    /// [`Problem::ParseError`];
     /// an undecided one returns [`Problem::UnknownCertificate`]. This bounds
     /// precision, not total work: an operand that is slow to approximate is
     /// approximated during import, as its first sign query would otherwise do.
+    /// Syntax/shape failures map to ParseError; validation preserves its Problem
+    /// category but not the internal detail string. Primitive caches start empty,
+    /// abort signals are absent, and validation may establish fresh node facts.
     pub fn from_json(json: &str) -> Result<Self, Problem> {
         serde_json::from_str::<RealWire>(json)
             .map_err(|_| Problem::ParseError)?
@@ -45,9 +74,12 @@ impl Real {
             .map_err(|error| error.problem)
     }
 
-    /// Serializes the Real to a CBOR byte vector.
+    /// Serialize this definition into an owned CBOR byte vector.
     ///
-    /// Note: serialization deletes the cache, so serializing and deserializing a Real may come with a performance penalty.
+    /// Like to_json, this omits accelerator state and abort signals without
+    /// clearing the source. It allocates a growing vector and unwraps the writer
+    /// result, so encoding errors panic. There is no byte/work budget or numeric
+    /// shorthand conversion; a successful encoding is not an admission proof.
     ///
     /// Example:
     /// ```
@@ -63,10 +95,14 @@ impl Real {
         buf
     }
 
-    /// Deserializes a Real from a CBOR byte slice.
+    /// Decode the first CBOR Real wire definition and validate it.
     ///
     /// Uses the same representation checks and remaining mathematical-domain
-    /// limitations as [`Real::from_json`].
+    /// limitations as [`Real::from_json`]. Unlike JSON parsing, this reader does
+    /// not require the slice to end after that value; trailing bytes are ignored.
+    /// It expects the Real wire shape, not the integer/float/text/pair shorthand
+    /// of `TryFrom<&Value>`. Decode errors map to ParseError; validation retains
+    /// its Problem category and drops the internal diagnostic detail.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Problem> {
         de::from_reader::<RealWire, _>(bytes)
             .map_err(|_| Problem::ParseError)?
@@ -75,10 +111,23 @@ impl Real {
     }
 }
 
+/// Interpret borrowed CBOR numeric shorthand or validate an encoded Real definition.
 impl TryFrom<&Value> for Real {
+    /// Preserve adapter errors and the scalar admission category without wire detail text.
     type Error = Problem;
 
-    /// Attempt to convert from a CBOR Value. We accept floats, integers, and strings, and serialized Reals.
+    /// Dispatch in order: integer, float, text, two-element rational pair, then wire shape.
+    /// Integer values must fit i64, even though CBOR supports wider integers;
+    /// otherwise return BadInteger. Floats use exact binary64 ingress and reject
+    /// nonfinite values. Text uses the exact Real parser.
+    ///
+    /// Every length-two array is treated as a numerator/denominator pair. Each
+    /// element must be an i64-fitting integer or arbitrary-size integer text.
+    /// Malformed integer text gives BadInteger, other element types ParseError,
+    /// and a zero denominator DivideByZero. Normalize a negative denominator
+    /// into the numerator sign. A malformed pair does not fall back to wire decoding.
+    /// Other shapes deserialize to RealWire and run the same admission as from_json;
+    /// errors retain Problem categories but lose the extra detail string.
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Integer(x) => {
@@ -88,6 +137,10 @@ impl TryFrom<&Value> for Real {
             Value::Float(x) => (*x).try_into(),
             Value::Text(x) => Real::from_str(x),
             Value::Array(x) if x.len() == 2 => {
+                /// Decode one rational-pair component without floating conversion.
+                /// Numeric CBOR integers are restricted to i64; text parses directly
+                /// into BigInt. Report BadInteger for invalid/range-limited integers
+                /// and ParseError for unsupported shapes, in caller operand order.
                 fn as_big_int(value: &Value) -> Result<BigInt, Problem> {
                     match value {
                         Value::Integer(n) => {
@@ -126,14 +179,19 @@ impl TryFrom<&Value> for Real {
     }
 }
 
+/// Consume a CBOR value using exactly the borrowed adapter's dispatch and admission.
 impl TryFrom<Value> for Real {
+    /// The borrowed conversion's typed scalar/shape error, without additional wire detail.
     type Error = Problem;
 
+    /// Borrow the owned input for conversion, then drop it; this does not move a graph out of Value.
     fn try_from(value: Value) -> Result<Self, Self::Error> {
         Self::try_from(&value)
     }
 }
 
+/// Wire-format, numeric-adapter and selected replay regression witnesses.
+/// Tolerance comparisons below do not establish exact equality of arbitrary expressions.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,6 +199,7 @@ mod tests {
     use std::cmp::Ordering;
 
     #[test]
+    /// Freeze the exact JSON encoding of +/-5/2 and require rational equality after decoding.
     fn rational_json_serde() {
         let x: Rational = "5/2".parse().unwrap();
         let json = serde_json::to_string(&x).unwrap();
@@ -155,6 +214,8 @@ mod tests {
     }
 
     #[test]
+    /// Replay rational five and pi through raw Computable JSON, then compare at binary tolerance 10.
+    /// This coarse comparison is not an exact symbolic equality certificate or Real domain-admission test.
     fn computable_json_serde() {
         use crate::computable::Computable;
         let x = Computable::rational(Rational::new(5));
@@ -168,6 +229,7 @@ mod tests {
     }
 
     #[test]
+    /// Require rational five equality after direct Serde JSON replay; compare 5^e only at tolerance 10.
     fn real_json_serde() {
         let x = Real::new(Rational::new(5));
         let json = serde_json::to_string(&x).unwrap();
@@ -184,6 +246,7 @@ mod tests {
     }
 
     #[test]
+    /// Require rational five equality after direct Serde CBOR replay; compare 5^e only at tolerance 10.
     fn real_cbor_serde() {
         let x = Real::new(Rational::new(5));
         let mut buf = Vec::new();
@@ -201,6 +264,8 @@ mod tests {
     }
 
     #[test]
+    /// Replay six selected inverse-function results through both convenience formats.
+    /// Require folded comparisons to return Equal at binary tolerance -80, not a universal exact-equality proof.
     fn inverse_function_results_round_trip_serde() {
         let values = [
             Real::new(Rational::fraction(7, 10).unwrap())
@@ -239,6 +304,7 @@ mod tests {
     }
 
     #[test]
+    /// Require exact rational five equality through both public convenience encode/decode pairs.
     fn test_round_trip_functions() {
         let x = Real::new(Rational::new(5));
         let json = x.to_json();
@@ -251,6 +317,8 @@ mod tests {
     }
 
     #[test]
+    /// Require seven paths for exact five: wire, integer, text, float, numeric/mixed pairs and borrowed integer.
+    /// These cases compare scalar values, not original CBOR byte sequences.
     fn cbor_value_try_into() {
         use ciborium::value::Value;
 
@@ -306,12 +374,14 @@ mod tests {
     }
 
     #[test]
+    /// Require the numeric pair [1, 0] to return DivideByZero rather than a wire-shape error.
     fn cbor_rational_pair_rejects_zero_denominator() {
         let value = Value::Array(vec![Value::Integer(1.into()), Value::Integer(0.into())]);
         assert_eq!(Real::try_from(&value), Err(Problem::DivideByZero));
     }
 
     #[test]
+    /// Require the numeric pair [1, -2] to normalize to the exact rational -1/2.
     fn cbor_rational_pair_normalizes_negative_denominator() {
         let value = Value::Array(vec![Value::Integer(1.into()), Value::Integer((-2).into())]);
         assert_eq!(
