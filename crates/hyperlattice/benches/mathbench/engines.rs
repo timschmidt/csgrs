@@ -2059,124 +2059,191 @@ mod gmp_engine {
     }
 }
 
+/// Symbolica Atom expression adapter for mathbench's symbolic comparison rows.
+///
+/// Ctx stores a precision label but never reads it in an operation. f imports an
+/// already-rounded f64 with Atom::num, and e/pi import the standard f64 constants;
+/// those methods do not construct exact transcendental constants. Backend Atom
+/// arithmetic may normalize or simplify expressions, but this wrapper requests no
+/// numerical evaluation, target error, branch proof or exact-source fidelity receipt.
+/// Returning an expression is not the same completed work as evaluating a float.
+///
+/// Inverse trig/hyperbolic operations use explicit logarithm/radical formulas,
+/// sometimes with complex intermediates. Their mathematical real-domain and branch
+/// conditions are not checked here. Division, square root and inversion add no
+/// zero/domain guards or typed errors. Backend outcomes and panics propagate.
+/// is_zero only compares against a fresh zero Atom, not a general theorem prover.
+///
+/// Composite methods implement formal coordinate formulas with public Atom fields;
+/// real-valued components, Euclidean norm assumptions and matrix invertibility are
+/// not enforced. Vec4 includes w in its norm, matrices multiply column vectors with
+/// no perspective division, and Mat4 inverse never swaps or tests pivots. Complex
+/// pairs use formal real/imaginary slots even when their Atoms are not real-valued.
+/// No policy receipt, cancellation, total-work, expression-size or memory bound is
+/// provided. Matrix/complex powers perform linear repeated full multiplications.
 mod symbolica_engine {
     use symbolica::atom::{Atom, AtomCore};
 
+    /// Benchmark interface context whose stored precision is unused by Atom operations.
+    ///
+    /// new and Clone retain the public u32 label only. No method consults it to control
+    /// Atom construction, evaluation or simplification; changing it adds no accuracy
+    /// or resource guarantee. This is not an exact-real decision or evaluation context.
     #[derive(Clone)]
     pub struct Ctx {
+        /// Stored interface label; no Atom operation reads or applies this value.
         pub _precision: u32,
     }
 
     impl Ctx {
+        /// Stores the precision label unchanged; it is not used by any Atom operation.
         pub fn new(precision: u32) -> Self {
             Self {
                 _precision: precision,
             }
         }
 
+        /// Passes an already-rounded f64 to Atom::num, ignoring the precision label.
+        ///
+        /// No decimal/rational source is reconstructed and no finite-input validation or
+        /// Hyperreal import error is added. Numeric Atom construction follows the backend.
         pub fn f(&self, value: f64) -> Atom {
             Atom::num(value)
         }
 
+        /// Constructs a fresh zero Atom with Atom::new, ignoring the precision label.
         pub fn zero(&self) -> Atom {
             Atom::new()
         }
 
+        /// Constructs integer one with Atom::num(1), ignoring the precision label.
         pub fn one(&self) -> Atom {
             Atom::num(1)
         }
 
+        /// Imports std::f64::consts::E through f; does not construct exact symbolic e.
         pub fn e(&self) -> Atom {
             self.f(std::f64::consts::E)
         }
 
+        /// Imports std::f64::consts::PI through f; does not construct exact symbolic pi.
         pub fn pi(&self) -> Atom {
             self.f(std::f64::consts::PI)
         }
 
+        /// Multiplies imported f64 two by the imported f64 pi constant using Atom arithmetic.
         pub fn tau(&self) -> Atom {
             self.mul(&self.f(2.0), &self.pi())
         }
 
+        /// Adds borrowed Atom operands through the backend operator, with no explicit clone.
         pub fn add(&self, lhs: &Atom, rhs: &Atom) -> Atom {
             lhs + rhs
         }
 
+        /// Subtracts borrowed rhs from lhs through the backend operator, with no explicit clone.
         pub fn sub(&self, lhs: &Atom, rhs: &Atom) -> Atom {
             lhs - rhs
         }
 
+        /// Multiplies borrowed Atom operands through the backend operator, with no explicit clone.
         pub fn mul(&self, lhs: &Atom, rhs: &Atom) -> Atom {
             lhs * rhs
         }
 
+        /// Divides borrowed Atom operands without a denominator proof or typed failure wrapper.
         pub fn div(&self, lhs: &Atom, rhs: &Atom) -> Atom {
             lhs / rhs
         }
 
+        /// Negates the borrowed Atom through the backend operator, with no explicit clone.
         pub fn neg(&self, value: &Atom) -> Atom {
             -value
         }
 
+        /// Divides a newly constructed integer one by value without proving it nonzero.
         pub fn reciprocal(&self, value: &Atom) -> Atom {
             self.div(&self.one(), value)
         }
 
+        /// Delegates Atom-exponent power without proving a real domain or selecting a branch.
         pub fn pow(&self, lhs: &Atom, rhs: &Atom) -> Atom {
             lhs.pow(rhs)
         }
 
+        /// Delegates the full nonnegative u64 exponent to Atom power, without narrowing to u32.
         pub fn powi(&self, value: &Atom, n: u64) -> Atom {
             value.pow(n)
         }
 
+        /// Constructs the backend exponential expression without requesting numerical evaluation.
         pub fn exp(&self, value: &Atom) -> Atom {
             value.exp()
         }
 
+        /// Constructs the backend logarithm expression without a positive-real domain check.
         pub fn ln(&self, value: &Atom) -> Atom {
             value.log()
         }
 
+        /// Constructs log(value)/log(Atom::num(10.0)) by a change-of-base formula.
+        ///
+        /// No positive-real domain, logarithm-branch agreement or numerical accuracy is
+        /// checked, and the stored precision is unused.
         pub fn log10(&self, value: &Atom) -> Atom {
             let ten = self.f(10.0);
             self.div(&value.log(), &ten.log())
         }
 
+        /// Constructs a backend square-root expression without proving its argument nonnegative.
         pub fn sqrt(&self, value: &Atom) -> Atom {
             value.sqrt()
         }
 
+        /// Constructs backend sine of the radian argument without requesting a float evaluation.
         pub fn sin(&self, value: &Atom) -> Atom {
             value.sin()
         }
 
+        /// Constructs backend cosine of the radian argument without requesting a float evaluation.
         pub fn cos(&self, value: &Atom) -> Atom {
             value.cos()
         }
 
+        /// Constructs sin(value)/cos(value) without checking poles or requesting a float.
         pub fn tan(&self, value: &Atom) -> Atom {
             self.div(&value.sin(), &value.cos())
         }
 
+        /// Constructs (exp(value)-exp(-value))/2 using a freshly imported f64 two.
         pub fn sinh(&self, value: &Atom) -> Atom {
             let positive = value.exp();
             let negative = self.neg(value).exp();
             self.div(&self.sub(&positive, &negative), &self.f(2.0))
         }
 
+        /// Constructs (exp(value)+exp(-value))/2 using a freshly imported f64 two.
         pub fn cosh(&self, value: &Atom) -> Atom {
             let positive = value.exp();
             let negative = self.neg(value).exp();
             self.div(&self.add(&positive, &negative), &self.f(2.0))
         }
 
+        /// Constructs sinh(value)/cosh(value) by calling the two local formula builders.
+        ///
+        /// Each call constructs its own positive/negative exponentials. Backend reuse or
+        /// simplification is not guaranteed here; no denominator check or float is requested.
         pub fn tanh(&self, value: &Atom) -> Atom {
             let sinh = self.sinh(value);
             let cosh = self.cosh(value);
             self.div(&sinh, &cosh)
         }
 
+        /// Constructs `-i*log(i*x + sqrt(1-x*x))` using Atom::i.
+        ///
+        /// The usual real inverse-sine interpretation needs x in `[-1,1]` and compatible
+        /// log/square-root branches. No such checks or proof of a real result are added;
+        /// the returned Atom may retain complex intermediates; no numeric evaluation is requested.
         pub fn asin(&self, value: &Atom) -> Atom {
             let i = Atom::i();
             let one = self.one();
@@ -2187,6 +2254,11 @@ mod symbolica_engine {
             self.mul(&self.neg(&i), &sum.log())
         }
 
+        /// Constructs `-i*log(x + i*sqrt(1-x*x))` using Atom::i.
+        ///
+        /// The usual real inverse-cosine interpretation needs x in `[-1,1]` and compatible
+        /// branches. No domain or real-result proof is added, and no numerical evaluation
+        /// is requested by this wrapper.
         pub fn acos(&self, value: &Atom) -> Atom {
             let i = Atom::i();
             let one = self.one();
@@ -2197,6 +2269,11 @@ mod symbolica_engine {
             self.mul(&self.neg(&i), &sum.log())
         }
 
+        /// Constructs `(log(1+i*x)-log(1-i*x))/(2*i)` using Atom::i.
+        ///
+        /// Keeps the logarithms separate; does not replace their difference by a quotient
+        /// logarithm. Branch choices, complex intermediates and simplification follow the
+        /// backend, without a real-result certificate or requested numerical evaluation.
         pub fn atan(&self, value: &Atom) -> Atom {
             let i = Atom::i();
             let one = self.one();
@@ -2207,12 +2284,20 @@ mod symbolica_engine {
             self.div(&numerator, &self.mul(&self.f(2.0), &i))
         }
 
+        /// Constructs `log(x + sqrt(1+x*x))` without a branch or real-valuedness check.
+        ///
+        /// This is the usual real inverse-hyperbolic-sine formula for real x with the
+        /// nonnegative square root, but the wrapper accepts arbitrary borrowed Atoms.
         pub fn asinh(&self, value: &Atom) -> Atom {
             let x2 = self.mul(value, value);
             let inside = self.add(&self.one(), &x2);
             self.add(value, &inside.sqrt()).log()
         }
 
+        /// Constructs `log(x + sqrt(x-1)*sqrt(x+1))`, keeping two radicals separate.
+        ///
+        /// The usual real interpretation requires x >= 1 and nonnegative square roots.
+        /// No domain or branch check is made; no equality to a single sqrt(x*x-1) is asserted.
         pub fn acosh(&self, value: &Atom) -> Atom {
             let minus_one = self.sub(value, &self.one());
             let plus_one = self.add(value, &self.one());
@@ -2220,6 +2305,10 @@ mod symbolica_engine {
             self.add(value, &radical).log()
         }
 
+        /// Constructs `(log(1+x)-log(1-x))/2` with separate logarithms.
+        ///
+        /// The usual real interpretation requires -1 < x < 1. Endpoints, complex branches
+        /// and numerical evaluation are not checked or resolved by this wrapper.
         pub fn atanh(&self, value: &Atom) -> Atom {
             let one = self.one();
             let plus = self.add(&one, value);
@@ -2227,44 +2316,83 @@ mod symbolica_engine {
             self.div(&self.sub(&plus.log(), &minus.log()), &self.f(2.0))
         }
 
+        /// Compares the Atom with a newly constructed zero Atom using backend equality.
+        ///
+        /// A false result is not a proof that the represented expression cannot equal zero.
+        /// No simplification search, refinement, three-way fact or certainty receipt is added.
         pub fn is_zero(&self, value: &Atom) -> bool {
             value == &Atom::new()
         }
     }
 
+    /// Three owned Atom coordinates for formal Euclidean benchmark formulas.
+    ///
+    /// Constructors import f64 values, but public fields can contain other expressions.
+    /// No real-valuedness or positivity assumptions are established for norm formulas.
     #[derive(Clone)]
     pub struct Vec3 {
+        /// First Atom coordinate; real-valuedness is not enforced.
         pub x: Atom,
+        /// Second Atom coordinate; real-valuedness is not enforced.
         pub y: Atom,
+        /// Third Atom coordinate; real-valuedness is not enforced.
         pub z: Atom,
     }
 
+    /// Owned row-major 3-by-3 Atom matrix for benchmark expression construction.
+    ///
+    /// Public entries need not be real or numerically evaluated. No nonsingularity,
+    /// zero-decision certificate or expression-growth limit is stored with the matrix.
     #[derive(Clone)]
     pub struct Mat3 {
+        /// Owned Atom entries indexed `[row][column]`, without matrix invariants.
         pub m: [[Atom; 3]; 3],
     }
 
+    /// Four owned Atom coordinates, with w included in every Euclidean norm formula.
+    ///
+    /// Public fields are not constrained to real scalars. This type enforces neither
+    /// a homogeneous point/direction weight nor the assumptions of a Hermitian norm.
     #[derive(Clone)]
     pub struct Vec4 {
+        /// First Atom coordinate.
         pub x: Atom,
+        /// Second Atom coordinate.
         pub y: Atom,
+        /// Third Atom coordinate.
         pub z: Atom,
+        /// Fourth Atom coordinate, included in dot products and normalization.
         pub w: Atom,
     }
 
+    /// Owned row-major 4-by-4 Atom matrix for benchmark expression construction.
+    ///
+    /// Every entry participates in products, including an unrestricted final row.
+    /// Inverse requires nonzero pivots in its fixed elimination order but proves none;
+    /// public entries need not be real-valued or numerically evaluated.
     #[derive(Clone)]
     pub struct Mat4 {
+        /// Owned Atom entries indexed `[row][column]`, including the unrestricted last row.
         pub m: [[Atom; 4]; 4],
     }
 
+    /// Formal real/imaginary Atom pair for expanded benchmark complex arithmetic.
+    ///
+    /// The public slots are not required to contain real-valued expressions. Conjugate
+    /// only negates the im slot, and norm_squared forms re^2+im^2 without conjugating
+    /// Atoms. Their usual complex-number meanings require real-valued slots; this type
+    /// does not establish that precondition or certify an evaluated result.
     #[allow(dead_code)]
     #[derive(Clone)]
     pub struct Complex {
+        /// Formal real-part slot; its Atom is not validated as real-valued.
         pub re: Atom,
+        /// Formal imaginary-part slot; its Atom is not validated as real-valued.
         pub im: Atom,
     }
 
     impl Vec3 {
+        /// Imports each f64 coordinate independently through ctx.f; no real-domain proof is stored.
         pub fn new(ctx: &Ctx, x: f64, y: f64, z: f64) -> Self {
             Self {
                 x: ctx.f(x),
@@ -2273,6 +2401,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs a fresh zero Atom for each of the three components.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 x: ctx.zero(),
@@ -2281,6 +2410,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs `(x*x_rhs + y*y_rhs) + z*z_rhs`, without complex conjugation.
         pub fn dot(&self, rhs: &Self, ctx: &Ctx) -> Atom {
             let x = ctx.mul(&self.x, &rhs.x);
             let y = ctx.mul(&self.y, &rhs.y);
@@ -2288,14 +2418,23 @@ mod symbolica_engine {
             ctx.add(&ctx.add(&x, &y), &z)
         }
 
+        /// Constructs sqrt(dot(self,self)) directly through the Atom square-root method.
+        ///
+        /// This is a formal sum-of-squares norm formula, not a Hermitian norm for arbitrary
+        /// complex coordinates. Real-valuedness, positivity and numerical value are unproved.
         pub fn magnitude(&self, ctx: &Ctx) -> Atom {
             self.dot(self, ctx).sqrt()
         }
 
+        /// Constructs magnitude once and divides every component by that expression.
+        ///
+        /// No nonzero or real-valuedness proof is obtained; returning coordinates does not
+        /// certify unit length or a defined real Euclidean normalization.
         pub fn normalize(&self, ctx: &Ctx) -> Self {
             self.div_scalar(&self.magnitude(ctx), ctx)
         }
 
+        /// Adds corresponding borrowed Atom coordinates through the context.
         pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, &rhs.x),
@@ -2304,6 +2443,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Adds the same borrowed Atom to every coordinate.
         pub fn add_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, scalar),
@@ -2312,6 +2452,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Subtracts each borrowed rhs coordinate from its matching self coordinate.
         pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, &rhs.x),
@@ -2320,6 +2461,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Subtracts the scalar from every coordinate, with coordinate first.
         pub fn sub_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, scalar),
@@ -2328,6 +2470,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Negates every coordinate through borrowed Atom operations.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.neg(&self.x),
@@ -2336,6 +2479,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Multiplies every coordinate by the borrowed scalar Atom.
         pub fn mul_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.mul(&self.x, scalar),
@@ -2344,6 +2488,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Divides every coordinate by the scalar Atom, without a nonzero proof.
         pub fn div_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.div(&self.x, scalar),
@@ -2354,6 +2499,7 @@ mod symbolica_engine {
     }
 
     impl Vec4 {
+        /// Imports each f64 coordinate independently through ctx.f; no real-domain proof is stored.
         pub fn new(ctx: &Ctx, x: f64, y: f64, z: f64, w: f64) -> Self {
             Self {
                 x: ctx.f(x),
@@ -2363,6 +2509,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs `(x*x_rhs+y*y_rhs)+(z*z_rhs+w*w_rhs)`, without conjugating coordinates.
         pub fn dot(&self, rhs: &Self, ctx: &Ctx) -> Atom {
             let x = ctx.mul(&self.x, &rhs.x);
             let y = ctx.mul(&self.y, &rhs.y);
@@ -2371,14 +2518,23 @@ mod symbolica_engine {
             ctx.add(&ctx.add(&x, &y), &ctx.add(&z, &w))
         }
 
+        /// Constructs sqrt(dot(self,self)) directly through the Atom square-root method.
+        ///
+        /// This is a formal sum-of-squares norm formula, not a Hermitian norm for arbitrary
+        /// complex coordinates. Real-valuedness, positivity and numerical value are unproved.
         pub fn magnitude(&self, ctx: &Ctx) -> Atom {
             self.dot(self, ctx).sqrt()
         }
 
+        /// Constructs magnitude once and divides every component by that expression.
+        ///
+        /// No nonzero or real-valuedness proof is obtained; returning coordinates does not
+        /// certify unit length or a defined real Euclidean normalization.
         pub fn normalize(&self, ctx: &Ctx) -> Self {
             self.div_scalar(&self.magnitude(ctx), ctx)
         }
 
+        /// Adds corresponding borrowed Atom coordinates through the context.
         pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, &rhs.x),
@@ -2388,6 +2544,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Adds the same borrowed Atom to every coordinate.
         pub fn add_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.add(&self.x, scalar),
@@ -2397,6 +2554,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Subtracts each borrowed rhs coordinate from its matching self coordinate.
         pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, &rhs.x),
@@ -2406,6 +2564,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Subtracts the scalar from every coordinate, with coordinate first.
         pub fn sub_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.sub(&self.x, scalar),
@@ -2415,6 +2574,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Negates every coordinate through borrowed Atom operations.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.neg(&self.x),
@@ -2424,6 +2584,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Multiplies every coordinate by the borrowed scalar Atom.
         pub fn mul_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.mul(&self.x, scalar),
@@ -2433,6 +2594,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Divides every coordinate by the scalar Atom, without a nonzero proof.
         pub fn div_scalar(&self, scalar: &Atom, ctx: &Ctx) -> Self {
             Self {
                 x: ctx.div(&self.x, scalar),
@@ -2444,6 +2606,7 @@ mod symbolica_engine {
     }
 
     impl Mat3 {
+        /// Imports every f64 entry through ctx.f, preserving row/column positions.
         pub fn new(ctx: &Ctx, m: [[f64; 3]; 3]) -> Self {
             Self {
                 m: [
@@ -2454,12 +2617,14 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs a fresh zero Atom in every matrix entry.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
             }
         }
 
+        /// Constructs integer one Atoms on the diagonal and zero Atoms elsewhere.
         pub fn identity(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|row| {
@@ -2468,12 +2633,17 @@ mod symbolica_engine {
             }
         }
 
+        /// Clones entry `[column][row]` into `[row][column]` without scalar arithmetic.
         pub fn transpose(&self) -> Self {
             Self {
                 m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
             }
         }
 
+        /// Constructs the first-row cofactor expansion in `(t0-t1)+t2` order.
+        ///
+        /// Builds three 2-by-2 minors using Atom arithmetic. No sign/zero decision, real
+        /// coefficient restriction or numerical evaluation is requested.
         pub fn determinant(&self, ctx: &Ctx) -> Atom {
             let a = ctx.mul(&self.m[1][1], &self.m[2][2]);
             let b = ctx.mul(&self.m[1][2], &self.m[2][1]);
@@ -2493,6 +2663,11 @@ mod symbolica_engine {
             ctx.add(&ctx.sub(&t0, &t1), &t2)
         }
 
+        /// Constructs the adjugate times integer one divided by the determinant expression.
+        ///
+        /// Builds nine signed transposed cofactors. No denominator proof, singularity check
+        /// or typed failure is supplied; existence of a returned expression does not certify
+        /// that its entries define an inverse on the caller's intended domain.
         pub fn inverse(&self, ctx: &Ctx) -> Self {
             let m = &self.m;
             let det = self.determinant(ctx);
@@ -2529,6 +2704,10 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs all nine row-by-column products with `(p0+p1)+p2` grouping.
+        ///
+        /// Initializes all output entries as zero Atoms before replacing them. Inputs are
+        /// borrowed; Atom arithmetic and backend simplification determine expression storage.
         pub fn mul_mat3(&self, rhs: &Self, ctx: &Ctx) -> Self {
             let mut out: [[Atom; 3]; 3] =
                 core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero()));
@@ -2543,6 +2722,7 @@ mod symbolica_engine {
             Self { m: out }
         }
 
+        /// Constructs three row-by-column products with `(p0+p1)+p2` grouping.
         pub fn transform_vec3(&self, v: &Vec3, ctx: &Ctx) -> Vec3 {
             let x = ctx.add(
                 &ctx.add(&ctx.mul(&self.m[0][0], &v.x), &ctx.mul(&self.m[0][1], &v.y)),
@@ -2559,6 +2739,10 @@ mod symbolica_engine {
             Vec3 { x, y, z }
         }
 
+        /// Clones the whole matrix, then calls op(ctx, entry, scalar) in row-major order.
+        ///
+        /// Each callback borrows a cloned entry and the same scalar, with entry first.
+        /// The callback's backend behavior and panics propagate; no domain checks are added.
         pub fn map_scalar(
             &self,
             scalar: &Atom,
@@ -2573,12 +2757,11 @@ mod symbolica_engine {
             }
         }
 
-        pub fn combine(
-            &self,
-            rhs: &Self,
-            ctx: &Ctx,
-            op: fn(&Ctx, &Atom, &Atom) -> Atom,
-        ) -> Self {
+        /// Calls op(ctx, self_entry, rhs_entry) on matching entries in row-major order.
+        ///
+        /// Borrows both entry values directly, without first cloning the entire matrix.
+        /// This is elementwise combination, not matrix multiplication.
+        pub fn combine(&self, rhs: &Self, ctx: &Ctx, op: fn(&Ctx, &Atom, &Atom) -> Atom) -> Self {
             Self {
                 m: core::array::from_fn(|row| {
                     core::array::from_fn(|col| op(ctx, &self.m[row][col], &rhs.m[row][col]))
@@ -2586,16 +2769,25 @@ mod symbolica_engine {
             }
         }
 
+        /// Clones the complete matrix, then negates each cloned Atom through the context.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
             }
         }
 
+        /// Constructs self times inverse(rhs), in that order, using the local inverse.
+        ///
+        /// This is right matrix division, not elementwise division. It inherits unproved
+        /// denominator/pivot preconditions and adds no typed singularity result.
         pub fn div_matrix(&self, rhs: &Self, ctx: &Ctx) -> Self {
             self.mul_mat3(&rhs.inverse(ctx), ctx)
         }
 
+        /// Starts at identity and right-multiplies by self exactly exponent times.
+        ///
+        /// Zero returns identity. Exponents are nonnegative usize values; no repeated-squaring
+        /// shortcut, cancellation or bound on total work/expression growth is supplied.
         pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
             let mut acc = Self::identity(ctx);
             for _ in 0..exponent {
@@ -2606,23 +2798,46 @@ mod symbolica_engine {
     }
 
     impl Mat4 {
+        /// Imports every f64 entry through ctx.f, preserving row/column positions.
         pub fn new(ctx: &Ctx, m: [[f64; 4]; 4]) -> Self {
             Self {
                 m: [
-                    [ctx.f(m[0][0]), ctx.f(m[0][1]), ctx.f(m[0][2]), ctx.f(m[0][3])],
-                    [ctx.f(m[1][0]), ctx.f(m[1][1]), ctx.f(m[1][2]), ctx.f(m[1][3])],
-                    [ctx.f(m[2][0]), ctx.f(m[2][1]), ctx.f(m[2][2]), ctx.f(m[2][3])],
-                    [ctx.f(m[3][0]), ctx.f(m[3][1]), ctx.f(m[3][2]), ctx.f(m[3][3])],
+                    [
+                        ctx.f(m[0][0]),
+                        ctx.f(m[0][1]),
+                        ctx.f(m[0][2]),
+                        ctx.f(m[0][3]),
+                    ],
+                    [
+                        ctx.f(m[1][0]),
+                        ctx.f(m[1][1]),
+                        ctx.f(m[1][2]),
+                        ctx.f(m[1][3]),
+                    ],
+                    [
+                        ctx.f(m[2][0]),
+                        ctx.f(m[2][1]),
+                        ctx.f(m[2][2]),
+                        ctx.f(m[2][3]),
+                    ],
+                    [
+                        ctx.f(m[3][0]),
+                        ctx.f(m[3][1]),
+                        ctx.f(m[3][2]),
+                        ctx.f(m[3][3]),
+                    ],
                 ],
             }
         }
 
+        /// Constructs a fresh zero Atom in every matrix entry.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero())),
             }
         }
 
+        /// Constructs integer one Atoms on the diagonal and zero Atoms elsewhere.
         pub fn identity(ctx: &Ctx) -> Self {
             Self {
                 m: core::array::from_fn(|row| {
@@ -2631,17 +2846,26 @@ mod symbolica_engine {
             }
         }
 
+        /// Clones entry `[column][row]` into `[row][column]` without scalar arithmetic.
         pub fn transpose(&self) -> Self {
             Self {
                 m: core::array::from_fn(|row| core::array::from_fn(|col| self.m[col][row].clone())),
             }
         }
 
+        /// Constructs a first-row expansion using four cloned Mat3 minors in column order.
+        ///
+        /// Starts at zero and alternately adds/subtracts each coefficient times its minor's
+        /// determinant expression. No sign/zero decision or numeric evaluation is requested.
         pub fn determinant(&self, ctx: &Ctx) -> Atom {
             (0..4).fold(ctx.zero(), |acc, col| {
                 let minor: [[Atom; 3]; 3] = core::array::from_fn(|row| {
                     core::array::from_fn(|minor_col| {
-                        let source_col = if minor_col < col { minor_col } else { minor_col + 1 };
+                        let source_col = if minor_col < col {
+                            minor_col
+                        } else {
+                            minor_col + 1
+                        };
                         self.m[row + 1][source_col].clone()
                     })
                 });
@@ -2654,6 +2878,12 @@ mod symbolica_engine {
             })
         }
 
+        /// Constructs Gauss-Jordan elimination beside identity using fixed diagonal pivots.
+        ///
+        /// Clones the input, divides each pivot row by its diagonal entry, and eliminates
+        /// the column in all other rows. Never swaps rows or proves a pivot nonzero. Even
+        /// a nonsingular matrix needing an initial row swap violates this formula's domain.
+        /// Returning Atom entries does not certify their denominators or an actual inverse.
         pub fn inverse(&self, ctx: &Ctx) -> Self {
             let mut left = self.m.clone();
             let mut right: [[Atom; 4]; 4] = core::array::from_fn(|row| {
@@ -2682,6 +2912,10 @@ mod symbolica_engine {
             Self { m: right }
         }
 
+        /// Constructs all sixteen row-by-column products as `(p0+p1)+(p2+p3)`.
+        ///
+        /// Initializes output entries as zero Atoms before replacing each one. Inputs are
+        /// borrowed; no affine specialization or numerical evaluation is requested.
         pub fn mul_mat4(&self, rhs: &Self, ctx: &Ctx) -> Self {
             let mut out: [[Atom; 4]; 4] =
                 core::array::from_fn(|_| core::array::from_fn(|_| ctx.zero()));
@@ -2697,6 +2931,10 @@ mod symbolica_engine {
             Self { m: out }
         }
 
+        /// Constructs every row's `(p0+p1)+(p2+p3)` product with the column vector.
+        ///
+        /// All coordinates and all sixteen entries participate, including output w; there
+        /// is no assumed point/direction weight, affine shortcut or perspective division.
         pub fn transform_vec4(&self, v: &Vec4, ctx: &Ctx) -> Vec4 {
             let transform_row = |row: usize| {
                 let p0 = ctx.mul(&self.m[row][0], &v.x);
@@ -2713,6 +2951,10 @@ mod symbolica_engine {
             }
         }
 
+        /// Clones the whole matrix, then calls op(ctx, entry, scalar) in row-major order.
+        ///
+        /// Each callback borrows a cloned entry and the same scalar, with entry first.
+        /// The callback's backend behavior and panics propagate; no domain checks are added.
         pub fn map_scalar(
             &self,
             scalar: &Atom,
@@ -2727,12 +2969,11 @@ mod symbolica_engine {
             }
         }
 
-        pub fn combine(
-            &self,
-            rhs: &Self,
-            ctx: &Ctx,
-            op: fn(&Ctx, &Atom, &Atom) -> Atom,
-        ) -> Self {
+        /// Calls op(ctx, self_entry, rhs_entry) on matching entries in row-major order.
+        ///
+        /// Borrows both entry values directly, without first cloning the entire matrix.
+        /// This is elementwise combination, not matrix multiplication.
+        pub fn combine(&self, rhs: &Self, ctx: &Ctx, op: fn(&Ctx, &Atom, &Atom) -> Atom) -> Self {
             Self {
                 m: core::array::from_fn(|row| {
                     core::array::from_fn(|col| op(ctx, &self.m[row][col], &rhs.m[row][col]))
@@ -2740,16 +2981,25 @@ mod symbolica_engine {
             }
         }
 
+        /// Clones the complete matrix, then negates each cloned Atom through the context.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 m: self.m.clone().map(|row| row.map(|value| ctx.neg(&value))),
             }
         }
 
+        /// Constructs self times inverse(rhs), in that order, using the local inverse.
+        ///
+        /// This is right matrix division, not elementwise division. It inherits unproved
+        /// denominator/pivot preconditions and adds no typed singularity result.
         pub fn div_matrix(&self, rhs: &Self, ctx: &Ctx) -> Self {
             self.mul_mat4(&rhs.inverse(ctx), ctx)
         }
 
+        /// Starts at identity and right-multiplies by self exactly exponent times.
+        ///
+        /// Zero returns identity. Exponents are nonnegative usize values; no repeated-squaring
+        /// shortcut, cancellation or bound on total work/expression growth is supplied.
         pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
             let mut acc = Self::identity(ctx);
             for _ in 0..exponent {
@@ -2761,6 +3011,7 @@ mod symbolica_engine {
 
     #[allow(dead_code)]
     impl Complex {
+        /// Imports f64 values into the formal real and imaginary slots through ctx.f.
         pub fn new(ctx: &Ctx, re: f64, im: f64) -> Self {
             Self {
                 re: ctx.f(re),
@@ -2768,6 +3019,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs independently created zero Atoms for both slots.
         pub fn zero(ctx: &Ctx) -> Self {
             Self {
                 re: ctx.zero(),
@@ -2775,6 +3027,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs the formal pair (integer one, zero), the multiplicative identity.
         pub fn one(ctx: &Ctx) -> Self {
             Self {
                 re: ctx.one(),
@@ -2782,6 +3035,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs the formal pair (zero, integer one), rather than a single Atom::i.
         pub fn i(ctx: &Ctx) -> Self {
             Self {
                 re: ctx.zero(),
@@ -2789,6 +3043,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Clones value into the real slot and constructs zero for the imaginary slot.
         pub fn from_scalar(value: &Atom, ctx: &Ctx) -> Self {
             Self {
                 re: value.clone(),
@@ -2796,6 +3051,10 @@ mod symbolica_engine {
             }
         }
 
+        /// Clones the real slot and negates the imaginary slot without conjugating either Atom.
+        ///
+        /// This is ordinary complex conjugation only when both slots denote real values;
+        /// that precondition is not checked.
         pub fn conjugate(&self, ctx: &Ctx) -> Self {
             Self {
                 re: self.re.clone(),
@@ -2803,10 +3062,19 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs re*re + im*im without conjugating the component Atoms.
+        ///
+        /// This is the usual squared modulus only for real-valued slots. Positivity and
+        /// nonzeroness are not proved for arbitrary expressions.
         pub fn norm_squared(&self, ctx: &Ctx) -> Atom {
             ctx.add(&ctx.mul(&self.re, &self.re), &ctx.mul(&self.im, &self.im))
         }
 
+        /// Constructs `(re,-im)/(re*re+im*im)`, sharing the denominator expression.
+        ///
+        /// No proof that this denominator is nonzero is obtained. Public slots may contain
+        /// complex Atoms, so the usual real-slot squared-modulus interpretation is not
+        /// established; a returned pair carries no invertibility or domain certificate.
         pub fn reciprocal(&self, ctx: &Ctx) -> Self {
             let denom = self.norm_squared(ctx);
             Self {
@@ -2815,6 +3083,10 @@ mod symbolica_engine {
             }
         }
 
+        /// Starts at formal complex one and right-multiplies by self exponent times.
+        ///
+        /// Zero returns one. This uses a linear number of full pair multiplications, not
+        /// repeated squaring; no negative exponent or expression-growth bound is provided.
         pub fn powi(&self, exponent: usize, ctx: &Ctx) -> Self {
             let mut acc = Self::one(ctx);
             for _ in 0..exponent {
@@ -2823,6 +3095,7 @@ mod symbolica_engine {
             acc
         }
 
+        /// Adds corresponding formal real and imaginary slots with Atom arithmetic.
         pub fn add(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.add(&self.re, &rhs.re),
@@ -2830,6 +3103,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Subtracts corresponding rhs slots from self with Atom arithmetic.
         pub fn sub(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.sub(&self.re, &rhs.re),
@@ -2837,6 +3111,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Negates both formal slots with borrowed Atom operations.
         pub fn neg(&self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.neg(&self.re),
@@ -2844,6 +3119,7 @@ mod symbolica_engine {
             }
         }
 
+        /// Constructs `(ac-bd, ad+bc)` using four Atom products without real-slot checks.
         pub fn mul(&self, rhs: &Self, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.sub(&ctx.mul(&self.re, &rhs.re), &ctx.mul(&self.im, &rhs.im)),
@@ -2851,10 +3127,15 @@ mod symbolica_engine {
             }
         }
 
+        /// Multiplies self by the local reciprocal of rhs, inheriting its unproved denominator.
         pub fn div(&self, rhs: &Self, ctx: &Ctx) -> Self {
             self.mul(&rhs.reciprocal(ctx), ctx)
         }
 
+        /// Divides both slots by the borrowed scalar Atom without proving it nonzero or real.
+        ///
+        /// The method name describes the benchmark's intended scalar input; arbitrary Atom
+        /// arguments are not validated as real-valued.
         pub fn div_real(&self, rhs: &Atom, ctx: &Ctx) -> Self {
             Self {
                 re: ctx.div(&self.re, rhs),

@@ -12823,6 +12823,105 @@ inverse body. Continue engines.rs with symbolica_engine at current line 2062.
 The file's whole-file review, matrix-operation support, repository-wide review and
 previously recorded generated-item documentation gaps remain open.
 
+## Hyperlattice Atom adapter and complete engine-file review (2026-11-27)
+
+Target revision: `3f3505086cda079d41fd71e58380051f26759751`. Read every line of
+`crates/hyperlattice/benches/mathbench/engines.rs` from 2062 through 2865, covering
+the complete symbolica_engine module. The reviewed tail grows from 804 to 1,085
+lines; the preceding 2,061 lines are byte-identical. With the two preceding records,
+this closes sequential review of the entire originally 2,379-line engine file,
+now 3,146 lines. Baseline all-feature mathbench compilation passed.
+
+Owning layer: local Symbolica Atom benchmark adapter, not the authoritative scalar
+or predicate kernel. Relevant contracts are P1/P2 source and representation meaning,
+P3 honest zero facts, P5 expression/resource scope, P6 failure/domain disclosure,
+P9 certainty, P10 equivalent completed work and P37 accurate claims. Reproduced
+missing acceptance witness: the final adapter's module/type/field/method descriptions
+were absent, leaving unused precision, imported float constants, formal norm domains
+and logarithm/radical branch assumptions unspecified.
+
+Added 115 authored groups: one module, six types, twelve fields and ninety-six methods.
+Across the three contiguous batches, the file now has 345 authored groups on 21
+private Rustdoc pages. Every authored declaration was enumerated and matched to a
+complete rendered description in both checked feature configurations. This closes
+this file's authored-item documentation review, not all generated-item or repository
+coverage obligations.
+
+Contracts clarified:
+
+- Ctx stores the supplied u32 precision label but never reads it in an operation.
+  f passes pre-rounded f64 data to Atom::num; e and pi import the standard f64
+  constants, and tau multiplies imported two by that pi. These names do not create
+  exact transcendental constants, and a precision label does not request evaluation.
+- Borrowed Atom operators implement arithmetic without wrapper-level scalar clones.
+  Backend normalization/simplification may occur; no numerical evaluation, target
+  error, branch certificate or exact-source fidelity receipt is requested. Expression
+  construction is not the same completed workload as numerical evaluation.
+- Scalar integer power delegates the complete u64 exponent without the GMP adapter's
+  u32 narrowing. log10 uses log(x)/log(10); tangent divides sine by cosine; sinh/cosh
+  use positive/negative exponentials and tanh calls both local builders independently.
+  No reuse guarantee, pole/domain guard or total expression/work bound is added.
+- asin constructs -i*log(i*x+sqrt(1-x*x)); acos constructs
+  -i*log(x+i*sqrt(1-x*x)); atan uses the separate logarithms of 1+i*x and 1-i*x,
+  divided by 2*i. Real-domain and compatible-branch assumptions are not checked.
+  Complex intermediates can remain; backend simplification is not a real-result proof.
+- asinh uses log(x+sqrt(1+x*x)); acosh preserves separate sqrt(x-1) and sqrt(x+1)
+  factors; atanh preserves the difference of log(1+x) and log(1-x). The descriptions
+  give their usual real-domain assumptions without claiming branch selection,
+  evaluated accuracy or unrestricted logarithm/radical identities.
+- is_zero compares directly with a fresh zero Atom. False is not a general proof
+  that an expression cannot equal zero; no additional simplification search,
+  refinement, three-way result or certainty receipt exists in this wrapper.
+- Public vector/matrix/complex fields accept arbitrary Atoms, without real-valuedness
+  enforcement. Vector dots omit conjugation and norms use sqrt of the self-dot;
+  Vec4 includes w. Normalization does not prove its denominator nonzero or its output
+  a real unit vector. Matrix products preserve row/column layout and explicit sum
+  grouping, without affine shortcuts or perspective division.
+- Mat3 inverse constructs the adjugate over its determinant expression. Mat4 inverse
+  uses fixed diagonal-pivot Gauss-Jordan elimination without swaps or nonzero proofs.
+  A returned expression does not establish that denominators are defined. map_scalar
+  clones the matrix before callbacks; combine borrows matching entries; neg clones
+  the matrix and applies borrowed Atom negation. Right division multiplies by the
+  rhs inverse; matrix/complex powers use linear full multiplication loops.
+- Complex conjugate only clones the real slot and negates the imaginary slot; it does
+  not conjugate either Atom. norm_squared is re*re+im*im, without component conjugates.
+  Their usual complex-number interpretation assumes real-valued slots. Reciprocal
+  shares that formal denominator without proving it nonzero. div_real also accepts
+  arbitrary Atom arguments despite its name; no real-valuedness check is added.
+
+Validation after final edits:
+
+- Full-file formatting under crates configuration and git diff --check passed.
+  Tail noncomment source equals Rustfmt of the original tail. All preceding bytes
+  are unchanged. Formatting adds four optional array trailing commas and removes two
+  optional function-argument trailing commas when combine signatures collapse onto
+  one line; all calls, formulas, branches and assertions retain their order and meaning.
+  The temporary checker initially assumed insertion-only punctuation from the earlier
+  adapter; the actual six formatter changes were inspected and exactly enumerated.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 and incremental disabled. Warnings and broken/private links were
+  denied; source-hash-specific empty headers forced regeneration after the final edit.
+  Complete text of all 345 groups, including the preceding two modules, rendered on
+  all 21 pages in each configuration.
+- Static source checks confirmed unused precision, f64 constant imports, direct
+  zero equality, borrowed Atom scalar operations, full-u64 scalar power and unguarded
+  diagonal-pivot inversion. Independent exact permutation arithmetic confirmed the
+  nonsingular zero-first-pivot witness, without executing backend division by zero.
+- Independent Gaussian-integer arithmetic confirmed the complex-slot precondition:
+  slots a=i and b=1 encode a+i*b=2i, but a*a+b*b=0, whereas |2i|^2=4. Slot sign
+  reversal yields a-i*b=0, whereas conjugate(2i)=-2i. This demonstrates the formal
+  formula's domain limitation; it is not an Atom backend or simplifier conformance run.
+- No external numerical/Atom backend workload, complete Criterion row, dispatch
+  report, branch qualification or performance measurement ran. Full workflows remain
+  owner-waived and no focused check is blocked. Only small scripts/metadata/text were
+  added; the shared target remains approximately 2.8 GiB with no new linked probe.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-symbolic-*` baseline/check/doc/render logs and
+`/tmp/csgrs-lattice-symbolic-audit/` scripts, commands, formatter deltas and reviewed
+inverse body. engines.rs now has a whole-file review record. Remaining mathbench
+matrix_ops.rs, other crate support/non-Rust files, repository-wide review and
+previously recorded generated-item documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
