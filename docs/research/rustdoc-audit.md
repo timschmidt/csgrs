@@ -15922,6 +15922,82 @@ whole-file audit credit. Full workflows remain owner-waived. This documents curr
 contracts and limitations, not universal conformance; the repository audit remains
 open and no focused check for this batch remains blocked.
 
+## Hyperreal numeric and lazy/opaque replay acceptance tests (2026-11-27)
+
+Whole-file review on revision 18b0f32a2b765fdd59ae010a5f7081bbe0e6c714:
+
+- crates/hyperreal/tests/public_numeric_semantics.rs (272 -> 300 lines).
+- crates/hyperreal/tests/serde_payload.rs (136 -> 163 lines).
+- crates/hyperreal/tests/serde_lazy_certificates.rs (183 -> 209 lines).
+
+These are the scalar acceptance layer for P1/P3/P4/P6/P19/P26 and the admission
+protocol. Their domain is finite exact rational/numeric fixtures, named lazy
+certificates, malformed opaque definitions and selected in-process replay chains.
+The preceding representation audit read them as consumers; this batch completes
+their helper/test Rustdoc review. All 21 tests passed on this revision before the
+edit. Missing acceptance witnesses were documentation on every test/helper and
+clear statements of what each oracle, bound or serialization assertion proves.
+
+All 31 named functions now have Rustdoc, with three file introductions (34 blocks).
+The comments identify the following evidence and limits:
+
+- Numeric rounding uses nine explicit zero/half-integer expectations and 8,224
+  numerator/denominator pairs checked with independent integer floor/ceiling
+  formulas. Those pairs need not denote distinct rationals. Selected symbolic
+  values, a 4,096-bit integer translation, formatting/refinement and a trigonometric
+  integer identity extend the adjacency corpus without requiring the same permitted
+  adjacent choice after refinement. These cases do not prove universal completion.
+- Remainder tests establish range, integer quotient and exact reconstruction for
+  41 quarter-integers modulo 3/2, plus typed zero-modulus rejection. Other fixtures
+  cover angles, mean/sample deviation, Pythagorean norms, linear algebra and
+  polynomial helpers. Explicit integer expectations are distinguished from alias
+  or active/convenience agreement; shared implementation agreement alone is not
+  an independent correctness oracle.
+- Opaque-payload admission uses six malformed definitions: three scales including
+  zero, with omitted/null payloads. Direct Serde tests inspect diagnostic text;
+  wrappers and Value adapters inspect ParseError. Collection tests reject the
+  whole result but do not inspect temporary decoder allocations. Six valid values
+  and five payload-omitted named values use bounds and translation checks.
+  Deterministic re-encoding is checked separately from numerical enclosure.
+- The lazy fixture list currently covers 21 named class variants, checked against
+  the Class declaration; it does not automatically enforce future variant coverage
+  or all parameter values. Each format decodes 126 scale/payload combinations.
+  Sign/zero queries run at 0, -128, 0; detailed/domain facts are called without
+  asserting their returned fields. Reciprocal products explicitly request exact
+  normalization; positive roots have fixture-specific interval bounds. The original
+  carrier must remain lazy and serialize unchanged even if derived clones materialize.
+- The test named materialized_certificates checks public-constructed fixtures and
+  does not actually assert every payload is present. The quadratic fixture proves
+  coefficients, negative signs and compact-form agreement for -3*sqrt(2), then
+  independently checks annihilation by reducing even/odd powers using x^2=18.
+  This does not prove polynomial minimality or select a branch by equation alone.
+
+After the final edit:
+
+- The nine public numeric tests passed without optional features. With serde only
+  and with all features, all nine numeric, eight opaque-payload and four lazy
+  certificate tests passed in each configuration. These are focused unchanged
+  corpus executions, not full workflow or universal closure evidence.
+- Source comparison proves byte-identical noncomment/nonblank code for all three
+  files. No assertions, fixture values, order, API calls or generators changed.
+  Selected Rustfmt and git diff --check passed.
+- Ordinary Rustdoc omits #[test] functions. Temporary copies removed only those
+  attributes, preserving complete bodies, other attributes, signatures and docs.
+  Warnings-denied private rustdoc linked these copies to the actual all-feature
+  library/dependencies. All 31 function pages and all 34 complete blocks rendered.
+  This is an explicit test-documentation build, not a claim that cargo doc normally
+  includes test bodies. One initial unquoted Vec<Real> produced an HTML-tag warning;
+  code quoting fixed it without a lint allowance, and final rendering passed.
+
+Evidence: /tmp/csgrs-hyperreal-replay-tests-audit/ retains baseline/final logs,
+commands, source copies, initial markup diagnostic and full rendered-text match
+records. Duplicate generated HTML/static assets were removed after verification.
+The shared nonincremental target is about 5.5 GiB; no second target was created.
+Classification and selected scalar-helper references were supporting context,
+not additional whole-file review. Full workflows remain owner-waived. No focused
+check remains blocked; the broader source and private-documentation audit remains
+open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

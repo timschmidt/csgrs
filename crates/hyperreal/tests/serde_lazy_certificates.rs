@@ -1,15 +1,23 @@
+//! Replay and composition witnesses for lazy named Real certificates.
+//!
+//! The listed positive bases are tested with zero, positive and negative scales,
+//! with omitted and null payloads. Queries/operations must leave the original
+//! carrier lazy and its serialized form stable. This is an in-process finite
+//! fixture matrix, not exhaustive parameter coverage or fresh-process replay.
+
 #![cfg(feature = "serde")]
 
 use hyperreal::{Rational, Real, RealSign, ZeroKnowledge};
 use serde_json::Value;
 
+/// Construct an exact rational Real fixture; panic on a zero denominator.
 fn fraction(numerator: i64, denominator: u64) -> Real {
     Real::from(Rational::fraction(numerator, denominator).unwrap())
 }
 
-// Every named certificate, constructed through the public API. Bounds follow
-// from 3 < pi < 22/7, 8/3 < e < 11/4, 7/5 < sqrt(2) < 3/2,
-// monotonicity, and the defining power/logarithm identities.
+/// Construct 21 positive named-class fixtures with expected tags and enclosing integer bounds.
+/// The list covers the current named variants, not every parameter choice or future variant automatically.
+/// Bounds use rational constant inequalities, monotonicity and defining logarithm/power identities.
 fn certificates() -> Vec<(&'static str, Real, i64, i64)> {
     let pi = Real::pi();
     let e = Real::e();
@@ -42,6 +50,8 @@ fn certificates() -> Vec<(&'static str, Real, i64, i64)> {
     ]
 }
 
+/// Accept either the expected unit-variant string or an object containing the expected variant key.
+/// This checks the selected tag, not all payload fields or absence of unrelated object keys.
 fn assert_tag(wire: &Value, expected: &str) {
     let tag = &wire["class"];
     assert!(
@@ -52,6 +62,11 @@ fn assert_tag(wire: &Value, expected: &str) {
     );
 }
 
+/// Check sign/zero facts at precision sequence 0, -128, 0 for a scaled positive fixture.
+/// Detailed/domain fact calls are exercised but their returned fields are not asserted.
+/// Require interval bounds before/after translation, exact inverse-product normalization when nonzero,
+/// and a root enclosure in [0, 7] when positive. Root bounds rely on this finite fixture set.
+/// Finally require the original carrier's JSON/CBOR encodings to remain unchanged after queries and composition.
 fn query_and_compose(value: &Real, scale: i64, lower: i64, upper: i64) {
     let sign = match scale.cmp(&0) {
         std::cmp::Ordering::Less => RealSign::Negative,
@@ -104,6 +119,9 @@ fn query_and_compose(value: &Real, scale: i64, lower: i64, upper: i64) {
     assert_eq!(value.to_bytes(), bytes);
 }
 
+/// For each listed tag, multiply its original scale by 0, 1 or -3 and null/omit its payload.
+/// Decode all 126 definitions using the supplied adapter, exercise queries/composition, and require
+/// the original decoded carrier still to serialize a null payload; derived clones may materialize graphs.
 fn lazy_certificate_matrix(decode: impl Fn(&Value) -> Real) {
     for (name, value, lower, upper) in certificates() {
         let original = serde_json::to_value(&value).unwrap();
@@ -129,11 +147,13 @@ fn lazy_certificate_matrix(decode: impl Fn(&Value) -> Real) {
 }
 
 #[test]
+/// Run the 126-case lazy-certificate matrix through the public JSON wrapper, panicking on unexpected admission failure.
 fn json_lazy_certificates_support_queries_and_composition() {
     lazy_certificate_matrix(|wire| Real::from_json(&wire.to_string()).unwrap());
 }
 
 #[test]
+/// Encode each lazy fixture as CBOR and run the same 126-case matrix through the public byte wrapper.
 fn cbor_lazy_certificates_support_queries_and_composition() {
     lazy_certificate_matrix(|wire| {
         let mut bytes = Vec::new();
@@ -143,6 +163,8 @@ fn cbor_lazy_certificates_support_queries_and_composition() {
 }
 
 #[test]
+/// Check tags and query/composition witnesses on all 21 public-constructed fixtures at scale one.
+/// Despite the name, no assertion requires every input to have a materialized computable payload.
 fn materialized_certificates_keep_the_same_semantics() {
     for (name, value, lower, upper) in certificates() {
         assert_tag(&serde_json::to_value(&value).unwrap(), name);
@@ -151,6 +173,10 @@ fn materialized_certificates_keep_the_same_semantics() {
 }
 
 #[test]
+/// Decode payload-free -3*sqrt(2); require its exact quadratic coefficients, negative tower signs and preserved compact form.
+/// Verify the returned annihilating polynomial vanishes by independently reducing even/odd powers via x^2=18.
+/// This establishes annihilation, not polynomial minimality or branch selection by the equation alone.
+/// Require the original value to remain payload-free after the queries.
 fn lazy_quadratic_certificate_supports_normal_forms_and_towers() {
     let value = Real::from(-3) * Real::from(2).sqrt().unwrap();
     let mut wire = serde_json::to_value(value).unwrap();

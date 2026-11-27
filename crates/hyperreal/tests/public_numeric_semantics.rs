@@ -1,11 +1,21 @@
+//! Public numeric convenience API witnesses with exact rational/integer expectations.
+//!
+//! The finite corpus covers integer rounding, rational remainder, angle/aggregate
+//! helpers and selected linear algebra aliases. Adjacent-integer choices may differ
+//! after refinement while remaining valid. These tests do not establish arbitrary
+//! symbolic completion, resource bounds or cancellation behavior.
+
 use hyperreal::{Computable, Problem, Rational, Real};
 use num::BigInt;
 
+/// Construct an exact signed fixture fraction; panic if the supplied denominator is zero.
 fn r(numerator: i64, denominator: u64) -> Real {
     Real::new(Rational::fraction(numerator, denominator).expect("nonzero denominator"))
 }
 
 #[test]
+/// Check nine zero/half-integer fixtures from -7/2 to 7/2 against explicit floor, ceiling, truncation and round results.
+/// Require the fractional result to equal x-trunc(x); half ties round away from zero.
 fn certified_integer_operations_cover_signs_and_half_ties() {
     let cases = [
         (-7, 2, -4, -3, -3, -4),
@@ -30,6 +40,10 @@ fn certified_integer_operations_cover_signs_and_half_ties() {
 }
 
 #[test]
+/// Check 8,224 numerator/denominator pairs against integer Euclidean floor/ceiling oracles for both Real and Computable.
+/// Also check +/-pi, sqrt(2), exp(sqrt(2)), and 2^4096+pi before/after formatting separate instances.
+/// Each result may choose either adjacent integer; cache-state bitwise agreement is not required.
+/// The sine-square plus cosine-square identity must return one at the exact integer boundary.
 fn near_integer_is_a_total_adjacent_integer_choice() {
     for denominator in 1_i64..=32 {
         for numerator in -128_i64..=128 {
@@ -82,6 +96,7 @@ fn near_integer_is_a_total_adjacent_integer_choice() {
 }
 
 #[test]
+/// Check floor, ceiling and nearest integer for pi, and truncation toward zero for negative pi.
 fn certified_integer_operations_handle_irrational_values() {
     assert_eq!(Real::pi().floor_certified().unwrap(), BigInt::from(3));
     assert_eq!(Real::pi().ceil_certified().unwrap(), BigInt::from(4));
@@ -90,6 +105,8 @@ fn certified_integer_operations_handle_irrational_values() {
 }
 
 #[test]
+/// For 41 quarter-integers, require the remainder modulo 3/2 to lie in [0, 3/2),
+/// leave an integer quotient and reconstruct the exact dividend. Separately require NotANumber for zero modulus.
 fn euclidean_remainder_is_nonnegative_and_reconstructs_input() {
     let modulus = r(3, 2);
     for numerator in -20_i64..=20 {
@@ -110,6 +127,8 @@ fn euclidean_remainder_is_nonnegative_and_reconstructs_input() {
 }
 
 #[test]
+/// Check exact 180-degree/pi conversion and the mean/sample deviation of [1, 2, 3].
+/// Require None for an empty mean and one-element sample deviation; no generic failure category is inspected.
 fn angle_and_aggregate_helpers_preserve_exact_results() {
     assert_eq!(Real::from(180).to_radians(), Real::pi());
     assert_eq!(Real::pi().to_degrees(), Real::from(180));
@@ -122,6 +141,7 @@ fn angle_and_aggregate_helpers_preserve_exact_results() {
 }
 
 #[test]
+/// Check the 3-4-5 and 2-3-6-7 norm identities, plus hypot(x, 4)-x at x=3 and x=-3.
 fn hypot_helpers_match_exact_pythagorean_values() {
     assert_eq!(
         Real::hypot2(&Real::from(3), &Real::from(4)).unwrap(),
@@ -142,6 +162,10 @@ fn hypot_helpers_match_exact_pythagorean_values() {
 }
 
 #[test]
+/// Compare selected dot/linear/affine entry points with explicit integer expectations.
+/// Check mismatched sum-products lengths return ParseError, ascending-coefficient polynomial evaluation
+/// at two returns 17, the empty polynomial gives zero, and the rational polynomial gives 17/3.
+/// Agreement between active/convenience variants does not independently prove their algorithms.
 fn public_linear_algebra_helpers_match_expanded_arithmetic() {
     let a = [Real::from(1), Real::from(2), Real::from(3), Real::from(4)];
     let b = [Real::from(5), Real::from(6), Real::from(7), Real::from(8)];
@@ -222,6 +246,8 @@ fn public_linear_algebra_helpers_match_expanded_arithmetic() {
 }
 
 #[test]
+/// Require four signed-product-sum paths to yield 2*3-4*5=-14.
+/// Integral fixtures meet the known-exact/shared-denominator preconditions; no heterogeneous denominator case is covered.
 fn exact_product_sum_entry_points_agree() {
     let a = Real::from(2);
     let b = Real::from(3);
@@ -247,6 +273,8 @@ fn exact_product_sum_entry_points_agree() {
 }
 
 #[test]
+/// Check selected rational/identity accessors, inversion, two-element sums and ordered min/max values.
+/// Compare the lbeta alias with ln_beta for (2, 3); this is alias agreement, not an independent logarithmic oracle.
 fn public_aliases_and_structural_accessors_are_consistent() {
     let third = r(1, 3);
     assert!(third.is_rational());
