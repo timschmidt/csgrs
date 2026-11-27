@@ -13,7 +13,7 @@
 /// arbitrary expression domains or refine an operand to decide them, matching
 /// the unchecked native constructors. Valid expression graphs are preserved.
 /// A [`Real`](crate::Real) is the checked carrier: its import also proves
-/// every operand domain, as described at [`Real::from_json`](crate::Real::from_json).
+/// every operand domain, as described by the serde-enabled `Real::from_json` API.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(not(verus_keep_ghost))]

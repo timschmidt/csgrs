@@ -15827,6 +15827,101 @@ comparison, rational serialization/canonicalization and Ciborium reader excerpts
 were supporting context, not whole-file audit credit. Broader Hyperreal coverage
 and the complete repository audit remain open; no focused check remains blocked.
 
+## Hyperreal representation, wire admission and scalar helpers (2026-11-27)
+
+Whole-file review of crates/hyperreal/src/real/arithmetic/representation.rs on
+revision ec7809c5e4895723dc8665ab8a9561bbdf8ee278 (704 -> 835 lines). One existing
+feature-dependent link in src/computable/node/representation.rs was corrected;
+only relevant excerpts of that second file were reviewed, not the whole file.
+
+The owning layer is scalar representation, certificate admission and exact numeric
+convenience operations. P1/P2/P3/P4/P5/P6/P19/P26 and the admission protocol require
+retained definitions, conservative decisions, cache/signal scope and honest failure
+semantics. Inputs include exact rationals, named lazy/materialized certificates,
+opaque graphs, serialized candidates, finite aggregates and rational pi-multiples.
+The baseline nine public numeric tests, four lazy-certificate tests and eight
+payload-admission tests passed. Missing witnesses were Rustdoc on private fields,
+wire/error carriers, representation helpers and trigonometric reducers, plus
+accurate resource and endpoint descriptions.
+
+All 57 authored declarations and nine fields now have Rustdoc (66 complete blocks).
+Review and focused checks establish the following documented behavior:
+
+- Real keeps an exact outer scale separate from its basis definition. Payload
+  accessors borrow/clone/move the unscaled basis; full-value folding is separate.
+  Named certificates can reconstruct an absent payload; opaque definitions cannot.
+  same_symbolic_basis ignores scale and compares class certificates or opaque
+  graph structure. A failed match is not a proof of unequal scalar values.
+- Wire validation checks opaque payload presence, class parameters, then operand
+  domains before comparing a named class with a supplied payload. Zero outer scale
+  bypasses none of these checks. Structural/defined-product equality admits a
+  named payload; proved contradictions and unavailable proofs retain distinct
+  ParseError/UnknownCertificate outcomes. Successful admission preserves fields
+  with an empty primitive cache. The private error retains static stage context;
+  direct Serde formatting exposes it while convenience wrappers retain its category.
+- Clone shares retained graph evidence but can materialize a lazy named basis.
+  A pure payload-free rational copies its primitive view only with a cache feature;
+  other clone paths copy the view unconditionally. Signaled, opaque and ConstOffset
+  payloads are retained; an unsignaled One payload can be dropped. Clone preserves
+  value, not identical representation bytes or allocation identity.
+- Abort attachment clears this Real's primitive view, materializes a missing
+  basis if needed, and replaces its signal without setting the flag or clearing
+  shared node caches. Earlier clones retain their own signal attachment. The
+  relaxed flag read observes a request, not completed interruption. inherit_abort
+  replaces a supplied graph's signal only when the source has one; it does not
+  merge multiple cancellation sources.
+- Integer helpers document rational fast paths, ordered half-open interval
+  certification, nine floor candidates, exact-normal-form fallback, truncation
+  direction, ties away from zero, signed fractional parts and positive-modulus
+  Euclidean remainder. Exhausted reports the existing decision schedule's failure;
+  precision floors -2048/-1024 do not establish total-work or memory exhaustion.
+  near_integer's multivalued adjacency guarantee assumes uninterrupted evaluation.
+- Empty sums return zero. A lower size hint of 256 selects balanced accumulation;
+  borrowed short sums avoid input cloning, while balancing clones borrowed values.
+  mean/stddev disclose Option error-category loss, u64 length conversion and the
+  n-1 sample divisor. Standard deviation accumulates squares sequentially. min/max
+  retain self on equality or unresolved order, without proving an unresolved optimum.
+  is_finite always returns true and does not validate a graph or cancellation state.
+- Rational sine/tangent reducers accept the closed interval endpoints. The old
+  tangent comment incorrectly excluded half arguments: the caller uses the reduced
+  half to reject poles. Sine sign/parity flags do not independently prove nonzero
+  values. Public exact-turn tables and domain handling remain unchanged.
+
+After the final edit:
+
+- Public numeric semantics passed with no default features (nine tests) and all
+  features (nine). All-feature lazy-certificate (four) and payload-admission
+  (eight) integrations passed, exercising replay, queries and subsequent operations.
+- Four long-expression unit tests passed (three sum witnesses and one polynomial
+  witness), plus the curve regression and abort/materialization/clone/fold test.
+  An initial overly narrow curve filter selected zero tests; it was corrected and
+  the actual one-test run passed. The zero-test run is not counted as verification.
+- A warnings-denied temporary consumer linked to the rebuilt library confirmed
+  lazy clone materialization with preserved scalar equality, independent replacement
+  of an attached flag, equal min/max reference identity, empty sums/mean, zero
+  deviation for a constant sample, signed half-turn tangent poles, integer-turn
+  zeros, and negative-modulus rejection. Its execution had an external time limit.
+- Private cargo doc passed without optional features and with all features, denying
+  warnings and broken/private links. The first minimal build found the pre-existing
+  Computable link to serde-only Real::from_json; plain code notation now identifies
+  that feature-dependent API without an unresolved link. All 66 complete blocks,
+  including private carriers, fields and helpers, matched actual all-feature HTML.
+- All three Real examples passed. The filename filter additionally ran four Rational
+  examples, also passing (seven doctests total). Selected Rustfmt and git diff
+  --check passed. Noncomment source matches baseline except one explicitly verified
+  Rustfmt line wrap of an existing method chain; token order and behavior are
+  unchanged. No assertions, fixtures, dispatch hooks, features or APIs changed.
+
+Evidence: /tmp/csgrs-hyperreal-representation-audit/ retains command/log records,
+initial link/filter failures, consumer source/output and complete rendered/source
+matches. Its temporary executable was removed. Builds reused the shared target,
+now about 5.4 GiB, with locked/offline dependencies and incremental output disabled.
+Read consumer test files and selected classification, summation, constants,
+computable and trigonometric implementation excerpts are context, not additional
+whole-file audit credit. Full workflows remain owner-waived. This documents current
+contracts and limitations, not universal conformance; the repository audit remains
+open and no focused check for this batch remains blocked.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
