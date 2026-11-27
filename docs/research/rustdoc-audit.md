@@ -17095,6 +17095,99 @@ analysis, packed publication, constructors, native-domain reduction and approxim
 representations supplied context, not additional whole-file audit credit. Full
 repository coverage remains incomplete.
 
+## Hyperreal exponential relations and atom-comparison reuse (2026-11-27)
+
+Baseline: 8f13e57af94f8060ee96160e650d273d5550015e. Whole-file review of
+computable/node/exp_relation.rs (249 baseline lines), exp_relation_reuse.rs (82),
+exp_relation_tests.rs (308) and exp_relation_reuse_tests.rs (154): 793 baseline
+lines. The owning layer is Hyperreal exact structural sign recognition and its
+thread-local comparison accelerator. Relevant properties are P1–P6, P10 and P19:
+exact logarithmic identities, retained node identity, monotone cache evidence,
+resource distinctions and replay. Missing witnesses were private Rustdoc on the
+proof form, all fields/variants/helpers, TLS state and regression tests. All
+eighteen owning tests passed on the baseline before editing.
+
+The reviewed documentation now distinguishes:
+
+- The exact relation is a rational remainder plus weighted opaque real terms,
+  a distinguished ln(2) atom, and logarithms of selected positive bases. Sign
+  transfers by strict monotonicity of log only after all atoms cancel. This
+  does not rewrite graphs or numerically evaluate them. Native mode assumes
+  opaque arguments denote valid reals; import mode admits a narrower defined
+  grammar and may decline valid or even identical expressions.
+- Limits count 128 linear/logarithm entries, sixteen live combined atom slots
+  and 1024 bits per checked canonical numerator or denominator. The bit guard
+  uses the maximum, not their sum, and access may normalize a rational first.
+  Atom comparisons and some temporary arithmetic are outside the visit counter.
+  There is no total-work, allocation or cancellation limit supplied by this form.
+- Updates are not transactional: a failed charge remains consumed and some
+  coefficient merges or traversals partially change the form before declining.
+  Callers discard the failed accumulator. None combines grammar, unresolved
+  atoms and guard failures without a typed reason; the Boolean test helper's
+  false result also combines unresolved and proved-nonzero outcomes.
+- Positive rational log atoms compare exact values without general multiplicative
+  factorization. Binary powers use ln(2); products, roots, squares and inverses
+  transport coefficients only through recognized positive bases. Squaring alone
+  does not admit a negative/unknown base. Import mode checks opaque definedness
+  before discarding a zero coefficient. Native scalar-product recognition keeps
+  its left-first leaf test and the original recursive traversal/removal order.
+- The sixteen-slot direct-mapped cache checks both complete node addresses and
+  retains weak keys to prevent address reuse. It retains neither live payloads
+  nor child graphs after their owners disappear, but weak keys can retain allocation
+  storage. Pair ordering gives symmetric lookup; pointer identity bypasses storage.
+  A stored false is a structural-recognizer non-match, including unsupported tag
+  pairs, rather than proof that represented reals differ. Hash collisions do not
+  establish equality. Borrow conflicts or unavailable TLS use the uncached path,
+  and no borrow is held while traversing. Cached fields are ignored by that
+  recognizer, so refinement cannot invalidate these immutable-shape results.
+- The 512-case fixed-seed generator tracks coefficients with independent num
+  BigRational arithmetic; it is a finite recipe corpus. Thirty signed dyadic
+  cases cover nonzero remainder signs and subtraction order. The 2^-1024 case
+  recovers from cached Unknown through finer approximation, not increased
+  structural limits. Hot-cache snapshots, retained root tags and same-process
+  replay/byte-stability assertions are described separately.
+- Cache fixtures cover 512 pairs across three passes, weak-key release at reset
+  and worker exit, a forced borrow conflict, and refinement of one valid operand.
+  Weak counts do not measure comparator invocations, cache-hit rate or bytes.
+  Deep PrescaledSin chains are syntax fixtures that may violate reduced-kernel
+  ranges and are not numerically evaluated. The 27 deep relation cases test
+  symbolic outcomes, not their numerical domain admission or performance.
+- The import-mode invalid-operand cases call the recognizer directly, rather
+  than deserializing. The root/product fixture has no inverse case despite its
+  name. Tests claiming decline do not establish typed exhaustion or minimal
+  recognition thresholds, and no fixture was weakened to change that outcome.
+
+All 63 authored declarations have Rustdoc. After the final comment edit, sixteen
+owning tests passed without optional features and eighteen with all features.
+Eight serde-payload and four lazy-certificate integration tests passed, as did
+five downstream Hyperlimit resolver tests. Private cargo doc passed both feature
+configurations with warnings and broken/private links denied. All 35 runtime
+blocks matched actual all-feature private pages, including the generated TLS
+item; the import comparison is feature-gated. Twenty-eight test-only blocks
+passed source inventory and supplemental Markdown rendering, not a claim that
+ordinary library Rustdoc emits test-only item pages. An early render probe saw
+stale HTML while the build was still running; the final probe used completed
+build output. The source inventory also initially treated an inline const block
+initializer as a declaration; distinguishing that expression from named items
+resolved the checker error without omitting an API declaration.
+
+Raw executable/signature token differences are four optional trailing commas
+and Rustfmt's removal of the braces around one single-expression closure body.
+Formatting the baseline independently with the same Rustfmt configuration leaves
+only the documented tuple-field comma as a token difference from the final files.
+Rustfmt also repaired existing wrapping in the reuse implementation and fixtures.
+No predicate order, numeric behavior, signature, assertion, fixture, policy or
+dependency changed. Selected Rustfmt and git diff
+--check passed. Full workflows remain owner-waived for this docs-only session;
+no focused check is blocked and no new performance claim is made.
+
+Evidence is retained in /tmp/csgrs-hyperreal-exp-relation-audit/: baseline/final
+logs, commands, declaration/token inventory and complete rendered-block matches.
+Duplicate supplemental HTML was removed after inspection. Builds reused the
+roughly 5.7 GiB locked/offline nonincremental target. Supporting structural-equality,
+sign-publication and Real import excerpts supplied consumer context, not extra
+whole-file audit credit. Repository-wide coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

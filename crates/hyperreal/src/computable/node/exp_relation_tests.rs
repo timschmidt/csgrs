@@ -1,8 +1,11 @@
 #[cfg(test)]
+/// Exact exponential-relation witnesses, domain guards, finite recognition limits and cache/replay preservation.
 mod exp_relation_tests {
     use super::*;
     use num::BigRational;
 
+    /// Wrap raw syntax with invalid bound/sign facts and no stop signal, bypassing constructor rewrites.
+    /// This fixture constructor does not validate operand domains; invalid cases are used only to test decline.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,20 +16,29 @@ mod exp_relation_tests {
             signal: None,
         }
     }
+    /// Build an unsimplified Add(a, Negate(b)) so the exponential-difference recognizer sees the original operands.
     fn difference(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Add(a, raw(Approximation::Negate(b))))
     }
+    /// Convert a num BigRational fixture to an exact Hyperreal rational without float rounding.
+    /// Its canonical positive nonzero denominator justifies both unwraps.
     fn from_q(q: &BigRational) -> Computable {
         Computable::rational(
             Rational::from_bigint_fraction(q.numer().clone(), q.denom().to_biguint().unwrap())
                 .unwrap(),
         )
     }
+    /// Construct an independent exact rational coefficient from signed literals; fixtures require a nonzero denominator.
     fn q(n: i64, d: i64) -> BigRational {
         BigRational::new(n.into(), d.into())
     }
 
     #[test]
+    /// Generate 512 deterministic five-operation recipes from a fixed pseudo-random seed.
+    /// Track binary-log, rational and common-atom weights independently with num BigRational.
+    /// Require an exact relation proof and public zero-sign results, then add 1/128 to the
+    /// reference exponent and require a negative difference. This finite generator
+    /// does not cover all recipes, degrees or guard boundaries.
     fn independent_rational_log_coefficients_and_unequal_controls() {
         let mut seed = 15793u64;
         for case in 0..512 {
@@ -92,6 +104,9 @@ mod exp_relation_tests {
     }
 
     #[test]
+    /// Check sqrt(exp(sqrt(2))*exp(sqrt(3))) against exp((sqrt(2)+sqrt(3))/2).
+    /// Also require the zero-proof helper to decline a raw sqrt(-1) operand; that false
+    /// result is not a nonzero or numerical-domain classification. No inverse fixture occurs here.
     fn products_and_inverse_roots_require_positive_exponential_leaves() {
         let x = Computable::rational(Rational::new(2)).sqrt();
         let y = Computable::rational(Rational::new(3)).sqrt();
@@ -109,6 +124,10 @@ mod exp_relation_tests {
     }
 
     #[test]
+    /// Use an exponent perturbation of 2^-1024 outside the coefficient guard to exercise refinement after Unknown.
+    /// Two -64 requests remain unresolved with a cached structural failure; a -1200
+    /// request must certify the independently negative difference. This tests recovery
+    /// through finer approximation, not a larger structural-recognizer budget.
     fn cached_failure_does_not_prevent_later_separation() {
         let x = Computable::rational(Rational::fraction(1, 3).unwrap());
         let tiny = Computable::rational(
@@ -122,6 +141,10 @@ mod exp_relation_tests {
     }
 
     #[test]
+    /// Check thirty signed dyadic perturbations at five widths through 999 bits, in three subtraction arrangements.
+    /// The sign follows from exponential monotonicity and the independent perturbation
+    /// sign. Require coarse public decisions for two arrangements with empty numerical
+    /// caches and retention of the ordinary difference certificate.
     fn nonzero_remainders_and_both_subtraction_orientations() {
         let atom = || Computable::rational(Rational::fraction(3, 8).unwrap()).sin();
         for bits in [7usize, 127, 511, 767, 999] {
@@ -178,6 +201,9 @@ mod exp_relation_tests {
     }
 
     #[test]
+    /// Warm both operands, prove a negative difference for a 2^-767 exponent perturbation and preserve their exact cache snapshots.
+    /// With serde enabled, reload the same-process JSON and require the sign again;
+    /// this is not a fresh-process replay or a byte-stability assertion.
     fn nonzero_proof_preserves_numeric_caches_and_recovers_after_serde() {
         let x = Computable::rational(Rational::new(2)).sqrt();
         let a = x.clone().exp().sqrt();
@@ -198,6 +224,9 @@ mod exp_relation_tests {
     }
 
     #[test]
+    /// Warm an exponential and its retained root, then prove sqrt(exp(x)) = exp(x/2) twice.
+    /// Require unchanged operand/root cache snapshots and preservation of the Sqrt tag,
+    /// so this witness checks proof reuse without replacing the authored root recipe.
     fn proof_preserves_hot_operand_and_root_caches() {
         let x = Computable::rational(Rational::new(2)).sqrt();
         let operand = x.clone().exp();
@@ -216,6 +245,9 @@ mod exp_relation_tests {
     }
 
     #[test]
+    /// Require the zero-proof helper to decline an eighteen-atom sum and 140 nested roots.
+    /// The identities remain mathematically true; these cases cross fixed slot/visit
+    /// guards and do not assert typed exhaustion, timing bounds or exact threshold minimality.
     fn structural_limits_fail_closed() {
         let mut exponent = Computable::zero();
         for i in 1..=18 {
@@ -236,6 +268,9 @@ mod exp_relation_tests {
 
     #[cfg(feature = "serde")]
     #[test]
+    /// Require proving a root/exponential identity to leave its JSON bytes unchanged and recover its sign after reload.
+    /// Replay occurs in this process; the fixture does not establish fresh-process or
+    /// general deterministic serialization coverage.
     fn serialized_graph_recovers_proof_without_serialized_facts() {
         let x = Computable::rational(Rational::new(2)).sqrt();
         let zero = difference(x.clone().exp().sqrt(), x.shift_right(1).exp());
@@ -247,6 +282,9 @@ mod exp_relation_tests {
     }
 
     #[test]
+    /// Check four pi/exponential inverse identities, shared-versus-raw sqrt(2) products and pi < pi*e.
+    /// Expected outcomes follow from positive product/root laws and e > 1. Require
+    /// public sign decisions at precision zero without numeric caches on the differences.
     fn positive_constant_products_replay_inverse_and_root_identities() {
         // Each side follows independently from (pi*exp(q))^-1 and sqrt(2)^2=2.
         for numerator in [-7, -1, 1, 9] {
@@ -277,6 +315,10 @@ mod exp_relation_tests {
 
     #[cfg(feature = "serde")]
     #[test]
+    /// Reject a hidden zero-times-inverse-zero exponent and a negative-root exponent.
+    /// Compare the negative-root recipe with itself to rule out identity-only admission.
+    /// Also certify exp(1)=e and exp(1)>1. These are direct import-mode recognizer
+    /// checks on raw graphs, not deserialization tests or complete domain admission.
     fn imported_product_proofs_check_definedness_even_with_zero_coefficients() {
         let zero = raw(Approximation::Add(
             Computable::one(),
