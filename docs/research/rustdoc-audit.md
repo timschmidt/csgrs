@@ -19285,6 +19285,119 @@ private-documentation tree was created. AGENTS.md's existing 100% public/private
 Rustdoc and private-build mandate was re-read and remains in force for future
 agents. Repository-wide line review and complete coverage remain unfinished.
 
+## Computable diagnostic formatting and unit-fixture audit
+
+Baseline: a13d1719c9596333b282334719d218d7ce5d394f, branch rustdoc. Reviewed
+all 621 baseline lines of crates/hyperreal/src/computable/format.rs, including
+all literal digit fixtures, 25 tests, their string helper, local bit planner,
+placement payloads and trait implementations. Previous formatting entries audited
+Real adapters and integration tests, not this implementation. Read its magnitude
+search/sample/sign consumers, Real fixed/scientific delegation and checked
+formatting alternatives. Those surrounding files receive no new whole-file credit.
+The previously audited constants anchor was inspected but left unchanged.
+
+The owner is hyperreal's diagnostic presentation boundary: P1/P4–P6 and P29
+require that finite displayed digits not become exact scalar or zero evidence,
+and that precision demand not be advertised as total resource control. Inputs
+are defined finite computable sources, valid native precision plans and numeric
+digit buffers satisfying the helper assumptions. The missing witness was absent
+Rustdoc throughout the implementation and its unit fixtures. The edit adds 48
+reviewed documentation blocks, distinguishing declared-item coverage from the
+local helper and impl overviews. This is not a new formatting algorithm,
+certified rounding contract or performance qualification.
+
+The descriptions explain the actual representation and behavior:
+
+- Buffers store most-significant-first numeric digit bytes, not ASCII. Trimming
+  removes all trailing zeros and can empty an all-zero buffer. The increment
+  helper preserves the length of an all-nine mantissa as 100... and returns an
+  exponent carry. Empty input becomes [1] with a carry; its signed nine counter
+  has no explicit large-buffer bound.
+- The bit planner computes floor((places+4)*32/9), defaulting to 32 places and
+  adding only a positive leading-bit estimate. It is a guard schedule, not a
+  rounding proof. Unchecked usize/i32 arithmetic, narrowing casts, allocation
+  and digit conversion do not produce typed numerical/resource receipts.
+- Placement distinguishes scientific fractional mantissa digits from fixed
+  fractional places; the latter includes the leading decimal exponent when
+  selecting the number of extracted digits. Zero and zero-count branches are
+  separate from ordinary extraction and trimming.
+- Digit extraction normalizes an integer divisor, discarding remainders while
+  shrinking it by ten. It increments only on a strict remainder comparison,
+  with first-quotient-ten and all-nine exponent corrections. These operations
+  do not establish a uniform decimal tie rule for the original exact real.
+- Fixed Display limits leading-bit discovery by the requested absolute precision
+  and clamps its magnitude estimate to zero. Scientific display uses the much
+  deeper default search, including its unresolved-magnitude sentinel. Neither
+  provides a total-work/output-allocation bound or numerical abort receipt.
+  Known negative sources can display negative zero. Precision and explicit plus
+  are consumed; width, alignment, fill, zero padding and alternate flags are not.
+- Default formatting trims trailing zeros; explicit precision pads the requested
+  fractional count. Checked Real conversion is identified separately, including
+  its different notation-selection contract. Displayed text remains terminal
+  approximate presentation, never authoritative scalar or interchange data.
+
+A disposable private harness compiled against the baseline and final format
+files produced identical observation logs. At zero fixed places, 1/2 displayed
+as 1, 3/2 as 1, 5/2 as 2 and -3/2 as -1. Width/right alignment, zero padding and
+alternate forms of exact 5/4 all yielded the same unpadded 1.25. Explicit plus
+still worked. Direct helper probes confirmed ordinary/all-nine carries, complete
+zero trimming, the two different half comparisons, default 128 bits versus
+14 bits at zero places, and a debug panic for usize::MAX planner precision.
+An initial exploratory harness incorrectly expected empty up input to panic;
+source inspection and the corrected observation showed [1] with carry instead.
+No repository test was changed or weakened to accommodate that audit mistake.
+
+These probes ran under one GiB address-space, ten CPU-second and fifteen
+wall-second limits with core dumps disabled. The limits contain the probe and
+do not establish a production resource bound. The mixed tie behavior is existing
+native diagnostic behavior, not repaired or recast as a certified rounding mode.
+
+Every test now describes its actual witness and its limits. The two bounded-demand
+tests assert cached precision floors, not total time/memory. The very large
+fixed-threes test checks remaining characters after stripping threes, not integer
+length or exact-value reconstruction. The pi strings and digit-carry sample were
+checked independently: directed integer bounds for Machin's formula at 3070
+fractional decimal places used 2193 atan(1/5) and 645 atan(1/239) terms. An exact
+rational tangent identity and first-quadrant bounds select pi/4. The resulting
+pi interval has width 37608 grid units, and both endpoints round to each existing
+1000- and 3062-place literal. The carry integer equals 2^129-1, representing
+1-2^-129 under its supplied scale. This certifies these fixtures, not universal
+correct rounding by the formatter or all possible approximation histories.
+
+All 25 module tests passed on the baseline with all features and after the final
+source edit in both no-default/all-feature configurations. All five fixed_decimal
+integration tests passed through the Real adapter. Ten selected Real arithmetic
+doctests passed, including the four fixed/checked/diagnostic decimal/scientific
+examples; the other six are incidental broader selection, not additional reviewed
+source. No focused check remains blocked. Full workflow validation remains
+owner-waived for this docs-only session.
+
+Private cargo doc passed both feature configurations with warnings and broken or
+private intra-doc links denied. Twenty blocks matched ordinary private library
+HTML, including Places fields and the trait implementation descriptions. Its
+Clone/Copy/Debug derived implementation anchors were separately inspected.
+Twenty-seven test-module/helper blocks matched actual Rustdoc from a temporary
+source copy with only that file's cfg(test) and test attributes removed. The
+single function-local bits helper remains omitted from ordinary library docs;
+its source comment was rendered separately as supplemental Markdown. These
+27+1 blocks are not counted as ordinary library-page coverage. No repository
+visibility, fixture, test attribute or lint policy changed.
+
+Comment-free baseline/final tokens, formatted independently, are identical;
+raw token differences are only two optional trailing commas for documented
+variant fields. All literal fixtures and assertions remain intact. Selected
+Rustfmt and git diff --check passed. No predicate, arithmetic, signature,
+formatter behavior or policy changed.
+
+Evidence in /tmp/csgrs-hyperreal-computable-format-audit/ includes tests/build
+commands and logs, item/render/token inventory, supplemental local documentation,
+contained probe source/output and exact integer fixture checks. The owned source
+copy, probe rlib/executable and temporary HTML trees were removed after inspection.
+Locked/offline nonincremental Cargo builds reused the roughly 6.5 GiB shared
+target. The existing AGENTS.md future-agent mandate for 100% public/private
+Rustdoc and private documentation builds remains unchanged. Repository-wide
+line review and complete coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

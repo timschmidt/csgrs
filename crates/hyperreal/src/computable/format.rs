@@ -1,8 +1,27 @@
+//! Approximate fixed/scientific presentation of retained computable reals.
+//!
+//! These diagnostic formatters extract decimal digits from one guarded binary
+//! sample; they do not certify correctly rounded decimal text or preserve an
+//! exact interchange representation. Integer divisor scaling and strict remainder
+//! comparisons are not a universal decimal tie rule. Use Real's checked decimal
+//! or scientific APIs when rounding or numerical failure must be reported.
+//!
+//! Fixed formatting bounds leading-bit search by its output precision; scientific
+//! formatting uses the much deeper default magnitude search. Neither bounds total
+//! child work, allocation or output size. Attached cancellation follows the native
+//! approximation machinery without a formatting receipt. Width, alignment, fill,
+//! zero padding and alternate flags are not implemented; precision and explicit
+//! plus are consumed. A displayed zero is not an exact-zero proof.
+
 use crate::computable::{Precision, unsigned};
 use crate::{Computable, RealSign};
 use core::fmt;
 use num::{BigUint, Zero};
 
+/// Remove trailing numeric zero digits from a most-significant-first buffer.
+/// Digits are numeric bytes, not ASCII. Keep the first nonzero suffix boundary;
+/// an all-zero buffer becomes empty. This supports default trailing-zero
+/// suppression and does not alter the separate decimal exponent.
 fn trim(num: &mut Vec<u8>) {
     loop {
         match num.pop() {
@@ -16,6 +35,12 @@ fn trim(num: &mut Vec<u8>) {
     }
 }
 
+/// Increment a most-significant-first decimal mantissa, reporting an exponent carry.
+/// Require numeric decimal digits. Restore zeros after the rightmost non-nine;
+/// if all digits are nine, keep their original count as one followed by zeros
+/// and return true so the caller increases the exponent. Empty input becomes
+/// one with a carry. This is not a general fixed-width integer increment.
+/// The signed local nine counter and allocation have no explicit size budget.
 fn up(num: &mut Vec<u8>) -> bool {
     let mut flag = false;
     let mut nines = 0;
@@ -42,9 +67,22 @@ fn up(num: &mut Vec<u8>) -> bool {
     flag
 }
 
+/// Default number of fractional digits: fixed places or scientific mantissa places.
+/// Unspecified precision also enables trailing-zero suppression.
 const DEFAULT_PRECISION: usize = 32;
 
+/// Plan guarded binary sample bits from decimal places and a leading-bit estimate.
+/// Use `floor((places+4)*32/9)`, with 32 default places, and add only a positive
+/// msd. This supports a fixed absolute precision when Display clamps a tiny
+/// magnitude to zero; it is not a proof of correctly rounded decimal output.
+/// Unchecked usize arithmetic and positive-msd addition can overflow, and the
+/// conversion to Precision panics when it does not fit. No resource receipt
+/// or total-work bound is returned.
 fn enough_bits(msd: Precision, prec: Option<usize>) -> Precision {
+    /// Convert decimal places to the formatter's integer guard-bit estimate.
+    /// Evaluate `(p+4)*32/9` before the checked conversion to Precision. Oversized
+    /// requests can overflow the usize intermediates or panic at conversion;
+    /// this nested planner does not validate a resource envelope.
     fn bits(p: usize) -> Precision {
         let b = ((p + 4) * 32) / 9;
         b.try_into().expect("Bits of precision should fit")
@@ -54,13 +92,28 @@ fn enough_bits(msd: Precision, prec: Option<usize>) -> Precision {
     if msd > 0 { bits + msd } else { bits }
 }
 
+/// Decimal placement request independent of the binary approximation precision.
+/// Copy/Clone preserve the request; Debug exposes the variant/count for diagnostics.
 #[derive(Copy, Clone, Debug)]
 enum Places {
-    Exp(usize),
-    Zero(usize),
+    /// Scientific mantissa places, excluding its single leading digit.
+    Exp(
+        /// Requested digits after the mantissa decimal point.
+        usize,
+    ),
+    /// Fixed decimal places after the units position.
+    Zero(
+        /// Requested fractional places, independent of the leading decimal exponent.
+        usize,
+    ),
 }
 
+/// Translate a placement request into the extracted significant-digit count.
 impl Places {
+    /// Return n+1 for scientific notation, or max(n+exp+1,0) for fixed notation.
+    /// The fixed branch casts usize to i32 and adds without checked overflow;
+    /// callers must keep the request and exponent in the usable arithmetic range.
+    /// Zero count sends digit extraction to its separate rounding branch.
     fn digits(self, exp: i32) -> usize {
         use Places::*;
 
@@ -74,7 +127,10 @@ impl Places {
     }
 }
 
-// digits but when we know it's all zeroes
+/// Produce numeric zero digits and exponent zero for an already-zero sample.
+/// With stop enabled return a single zero. Otherwise emit the requested count
+/// at exponent zero, including the scientific leading digit. This describes
+/// the sample only and does not certify the represented real is zero.
 fn zeroes(places: Places, stop: bool) -> (Vec<u8>, i32) {
     if stop {
         (vec![0], 0)
@@ -84,7 +140,24 @@ fn zeroes(places: Places, stop: bool) -> (Vec<u8>, i32) {
     }
 }
 
-// output decimal digits (as bytes) Vec<u8> and a exponent
+/// Extract numeric decimal mantissa digits and a leading exponent from a binary sample.
+/// The sampled magnitude denotes `magn * 2^(msd-bits)`. Normalize an integer
+/// divisor by powers of two, five and ten, then extract the requested count
+/// with integer quotient/remainder operations. Integer division while shrinking
+/// the divisor discards remainders; this is not exact rational decimal scaling.
+///
+/// Increment only when twice the final remainder exceeds the divisor. An
+/// all-nine increment raises the exponent; a first quotient ten also becomes
+/// leading one with an increased exponent. A zero requested count has its own
+/// strict threshold branch. These rules do not establish a uniform decimal tie
+/// policy (native fixed formatting sends 1/2 to 1 but 3/2 to 1 at zero places).
+/// With stop enabled trim trailing zeros after ordinary extraction; zero and
+/// zero-count returns have separate handling.
+///
+/// Callers must provide a valid sample/precision plan that keeps the divisor
+/// nonzero for extraction and digits in range. Arithmetic, vector reservation
+/// and byte conversion are not typed numerical/resource failures. This helper
+/// does not account for the source sample's uncertainty or poll cancellation.
 fn digits(
     magn: &BigUint,
     places: Places,
@@ -166,7 +239,20 @@ fn digits(
     (num, exp)
 }
 
+/// Approximate fixed-point decimal presentation with precision-limited magnitude search.
+/// Use 32 fractional places by default, omitting trailing zeros, or exactly the
+/// explicit fractional count. A certified negative sign can produce negative
+/// zero text; unresolved sign is not a sign certificate. Width/alignment/fill,
+/// zero padding and alternate formatting are ignored.
+///
+/// This native formatter does not certify decimal rounding or return typed
+/// numerical/resource/cancellation outcomes. Use [`crate::Real::try_decimal`]
+/// for checked rounding (with its own notation-selection contract).
 impl fmt::Display for Computable {
+    /// Bound leading-bit search by the guarded fixed output precision, sample and write digits.
+    /// Clamp the magnitude estimate at zero and pad explicit fractional places.
+    /// Propagate only formatter write errors; native evaluation can still panic or
+    /// produce unqualified interrupted output.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Fixed decimal places need an absolute error bound, not a proof that
         // the value is nonzero. Stop the leading-bit search below the guarded
@@ -228,7 +314,17 @@ impl fmt::Display for Computable {
     }
 }
 
+/// Approximate scientific presentation with an uppercase E exponent marker.
+/// Use explicit mantissa places or default 32 with trailing zeros suppressed.
+/// The default leading-bit search can demand deep refinement for tiny or
+/// unresolved values; it supplies no total-work or memory bound. Only precision
+/// and explicit plus are honored among the formatting controls used here.
+/// Use [`crate::Real::try_scientific`] for checked rounding and typed failures.
 impl fmt::UpperExp for Computable {
+    /// Find the leading-bit estimate, sample, extract mantissa digits and write the exponent.
+    /// Explicit precision preserves mantissa zeros; default precision trims them.
+    /// Propagate writer errors only, with no independent cancellation or numerical
+    /// validation step around the underlying approximation.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let msd = self.iter_msd();
         let precision = f.precision();
@@ -262,7 +358,16 @@ impl fmt::UpperExp for Computable {
     }
 }
 
+/// Approximate scientific presentation with a lowercase e exponent marker.
+/// Share the uppercase formatter's sample/digit strategy and default precision,
+/// including deep leading-bit search and its resource limitations. Width,
+/// alignment, fill, zero padding and alternate flags are ignored.
+/// Use [`crate::Real::try_scientific`] for checked decimal rounding/failure receipts.
 impl fmt::LowerExp for Computable {
+    /// Find the leading-bit estimate, sample, extract mantissa digits and write the exponent.
+    /// Explicit precision preserves mantissa zeros; default precision trims them.
+    /// Propagate writer errors only, with no independent cancellation or numerical
+    /// validation step around the underlying approximation.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let msd = self.iter_msd();
         let precision = f.precision();
@@ -297,11 +402,17 @@ impl fmt::LowerExp for Computable {
 }
 
 #[cfg(test)]
+/// Literal formatting regressions, digit-helper cases and precision-demand checks.
+/// The fixtures exercise presentation of exact sources; they do not make the
+/// diagnostic formatter a certified decimal conversion API.
 mod tests {
     use super::*;
     use crate::Rational;
 
     #[test]
+    /// Check scientific output for the squared exact 10^-12 fixture.
+    /// Exercise zero/two/four/eight explicit mantissa places, both exponent cases
+    /// and default trailing-zero suppression for 10^-24.
     fn exp_smol() {
         let smol = Computable::rational(Rational::fraction(1, 1_000_000_000_000).unwrap());
         let ans = smol.clone().multiply(smol);
@@ -313,6 +424,9 @@ mod tests {
     }
 
     #[test]
+    /// Check scientific digit counts and internal zeros for 11, 101, 10001 and 1000000001.
+    /// Compare literal outputs at several explicit precisions and the default;
+    /// these are formatting regressions, not a universal rounding proof.
     fn pinch() {
         let ans = Computable::rational(Rational::new(11));
         assert_eq!(format!("{ans:.0e}"), "1e1");
@@ -336,6 +450,9 @@ mod tests {
     }
 
     #[test]
+    /// Check scientific carries from near powers of ten and rounding 12346.
+    /// Assert the retained exponent/mantissa strings, including all-nine carry
+    /// to the next decimal exponent and the three-place 1.235e4 case.
     fn almost() {
         let ans = Computable::rational(Rational::fraction(99, 10).unwrap());
         assert_eq!(format!("{ans:.0e}"), "1e1");
@@ -349,6 +466,9 @@ mod tests {
     }
 
     #[test]
+    /// Check sign, exponent and zero padding for the exact value -5*10^37.
+    /// The fixture is assembled through multiplication and compared with literal
+    /// scientific strings at explicit/default mantissa precision.
     fn exp_huge_neg() {
         let huge = Computable::rational(Rational::new(1_000_000_000_000_000_000));
         let minus_fifty = Computable::rational(Rational::new(-50));
@@ -361,6 +481,9 @@ mod tests {
     }
 
     #[test]
+    /// Check scientific formatting of the repeated-square value 10^594/3.
+    /// Assert exponent 593, the leading repeating threes and explicit/default
+    /// mantissa lengths without materializing an expected huge decimal integer.
     fn exp_bigger() {
         let mut huge = Computable::rational(Rational::new(1_000_000_000_000_000_000));
         huge = huge.clone().multiply(huge);
@@ -378,6 +501,9 @@ mod tests {
     }
 
     #[test]
+    /// Check the repeating two-thirds fraction in scientific notation.
+    /// Literal expectations cover zero/two/four/eight places and the default
+    /// 32 mantissa places, including the rounded final digit.
     fn exp_two_thirds() {
         let tt = Computable::rational(Rational::fraction(2, 3).unwrap());
         assert_eq!(format!("{tt:.0e}"), "7e-1");
@@ -388,6 +514,9 @@ mod tests {
     }
 
     #[test]
+    /// Check lowercase scientific pi against fixed reference strings through 32 places.
+    /// Explicit precision retains the last zero at 32 places; default formatting
+    /// trims it. This finite corpus does not prove all precision/rounding cases.
     fn exp_pi() {
         let pi = Computable::pi();
         assert_eq!(format!("{pi:.2e}"), "3.14e0");
@@ -399,6 +528,9 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed output of exact 8*10^-9 across coarse and finer precision.
+    /// Expect displayed zero at coarse places, a last-place increment at eight
+    /// places and the nonzero default string; zero text is not a value assertion.
     fn disp_tiny() {
         let tiny = Computable::rational(Rational::fraction(8, 1_000_000_000).unwrap());
         assert_eq!(format!("{tiny:.0}"), "0");
@@ -408,6 +540,8 @@ mod tests {
     }
 
     #[test]
+    /// Check coarse displayed zero and default nonzero text for exact 4*10^-6.
+    /// Explicit precision retains requested fractional zeros.
     fn disp_small() {
         let smol = Computable::rational(Rational::fraction(4, 1_000_000).unwrap());
         assert_eq!(format!("{smol:.0}"), "0");
@@ -416,6 +550,8 @@ mod tests {
     }
 
     #[test]
+    /// Check an exact nine-digit integer with zero, two and default fractional places.
+    /// Explicit places pad zeros while the default omits the decimal suffix.
     fn disp_big() {
         let big = Computable::rational(Rational::new(123456789));
         assert_eq!(format!("{big:.0}"), "123456789");
@@ -424,6 +560,9 @@ mod tests {
     }
 
     #[test]
+    /// Check rational zero under fixed and scientific formatting.
+    /// Assert default fixed zero, explicit fractional padding and exponent zero
+    /// in both a padded uppercase and zero-place lowercase case.
     fn actual_zero() {
         let zero = Computable::rational(Rational::zero());
         assert_eq!(format!("{zero}"), "0");
@@ -433,6 +572,10 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed text and sampled precision for sqrt(2)^2-2 at five place counts.
+    /// Assert ordinary/explicit-plus zero strings and a cached precision no finer
+    /// than the guarded demand minus two bits. This checks precision demand,
+    /// not a bound on total work, allocations or wall time.
     fn disp_cancellation_zero_has_bounded_demand() {
         for places in [0, 1, 8, 32, 128] {
             let radical = Computable::rational(Rational::new(2)).sqrt();
@@ -453,6 +596,10 @@ mod tests {
     }
 
     #[test]
+    /// Check both signs of sqrt(2)*2^-4096 before and after finer cache warming.
+    /// Assert two-place zero strings, including negative zero, and the initial
+    /// cached-precision floor. Refine to -4200 and require the same two-place and
+    /// default text. The demand assertion is not a total resource bound.
     fn disp_tiny_computable_has_bounded_demand() {
         for negative in [false, true] {
             let tiny = Computable::rational(Rational::new(2))
@@ -470,6 +617,8 @@ mod tests {
     }
 
     #[test]
+    /// Check five positive rational examples that display as zero at zero places.
+    /// The expected string tests presentation only, not equality to exact zero.
     fn disp_too_small() {
         let ratios = [(1, 3), (1, 4), (2, 5), (1, 6), (3, 7)];
         for ratio in ratios {
@@ -479,6 +628,9 @@ mod tests {
     }
 
     #[test]
+    /// Check five positive fractions displayed as one at zero places.
+    /// The corpus includes the existing 1/2 tie behavior; it does not establish a
+    /// uniform ties-to-even or ties-away rule for the formatter.
     fn disp_one() {
         let ratios = [(1, 2), (3, 4), (3, 5), (5, 6), (4, 7)];
         for ratio in ratios {
@@ -488,6 +640,8 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed one-third output at zero/two/default fractional precision.
+    /// Compare literal repeating-digit strings without treating them as exact values.
     fn disp_one_third() {
         let ot = Computable::rational(Rational::fraction(1, 3).unwrap());
         assert_eq!(format!("{ot:.0}"), "0");
@@ -496,6 +650,9 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed output of the composed value 60*pi at six precision choices.
+    /// Reference strings include explicit trailing zero padding and the default
+    /// 32 fractional places; the source remains an exact retained product.
     fn disp_sixty_pi() {
         let pi = Computable::pi();
         let sixty = Computable::rational(Rational::new(60));
@@ -508,6 +665,9 @@ mod tests {
         assert_eq!(format!("{sp}"), "188.49555921538759430775860299677017");
     }
 
+    /// Recognize exactly 0. followed by the requested number of ASCII ones.
+    /// Check byte length, prefix and every remaining character. The test caller
+    /// supplies place counts for which the length addition fits usize.
     fn check_ninth(s: &str, places: usize) -> bool {
         if s.len() != places + 2 {
             return false;
@@ -519,6 +679,9 @@ mod tests {
     }
 
     #[test]
+    /// Check one-ninth at default precision and 3, 17, 123 and 4567 explicit places.
+    /// Use the shared local string predicate to verify every repeating digit and
+    /// length; the large case exercises output allocation without claiming a budget.
     fn disp_ninth() {
         let ninth = Computable::rational(Rational::fraction(1, 9).unwrap());
         assert_eq!(format!("{ninth}"), "0.11111111111111111111111111111111");
@@ -532,6 +695,9 @@ mod tests {
     }
 
     #[test]
+    /// Check all-nine carry without trimming for the sample 1-2^-129.
+    /// With 32 mantissa places, require exponent zero and one followed by 32 zeros.
+    /// The integer fixture is 2^129-1 in units of 2^-129.
     fn digits_round_exp_false() {
         let magn: BigUint = "680564733841876926926749214863536422911".parse().unwrap();
         let (v, exp) = digits(&magn, Places::Exp(32), 128, -1, false);
@@ -546,6 +712,8 @@ mod tests {
     }
 
     #[test]
+    /// Check the same 1-2^-129 sample under fixed 32-place extraction with trimming.
+    /// Require exponent zero and a single retained one after the carry.
     fn digits_round_zero_true() {
         let magn: BigUint = "680564733841876926926749214863536422911".parse().unwrap();
         let (v, exp) = digits(&magn, Places::Zero(32), 128, -1, true);
@@ -554,6 +722,8 @@ mod tests {
     }
 
     #[test]
+    /// Check default scientific rounding of 38- and 39-digit all-nine fractions.
+    /// Both retained exact rationals must display as 1e0 at the default precision.
     fn disp_almost_one_exp() {
         let dp38: Rational = "0.99999999999999999999999999999999999999".parse().unwrap();
         let almost = Computable::rational(dp38);
@@ -564,6 +734,8 @@ mod tests {
     }
 
     #[test]
+    /// Check default fixed rounding of 38- and 39-digit all-nine fractions.
+    /// Both exact inputs are below one but their default presentation is one.
     fn disp_almost_one() {
         let dp38: Rational = "0.99999999999999999999999999999999999999".parse().unwrap();
         let almost = Computable::rational(dp38);
@@ -574,6 +746,10 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed pi against literal reference digits through 3062 decimal places.
+    /// Cover explicit and default trailing-zero behavior plus the 1000- and
+    /// 3062-place strings. These exact text regressions do not certify every input
+    /// or precision supported by the generic formatter.
     fn disp_pi() {
         let pi = Computable::pi();
         assert_eq!(format!("{pi}"), "3.1415926535897932384626433832795");
@@ -593,6 +769,8 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed two-thirds output at zero/two/four/eight/default places.
+    /// Literal expected strings exercise final-digit increments in a repeating fraction.
     fn disp_two_thirds() {
         let tt = Computable::rational(Rational::fraction(2, 3).unwrap());
         assert_eq!(format!("{tt:.0}"), "1");
@@ -603,6 +781,10 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed output of 10^594/3 after repeated exact squaring and multiplication.
+    /// Strip threes from both ends and require only the decimal point, or empty text
+    /// at zero places. This assertion checks digit shape, not the integer length
+    /// or an independent exact-value reconstruction.
     fn disp_threes() {
         let mut huge = Computable::rational(Rational::new(1_000_000_000_000_000_000));
         huge = huge.clone().multiply(huge);
