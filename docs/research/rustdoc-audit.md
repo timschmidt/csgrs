@@ -18050,6 +18050,128 @@ after comparison. Constructor, trace, constant-table and test excerpts supplied
 context only, without new whole-file review credit. The repository-wide line
 audit and 100% Rustdoc target remain incomplete.
 
+## Inverse-isometric-latitude kernels and enclosure qualification
+
+On 2026-11-27, reviewed the complete files at baseline
+7622b1d2d6b9925302852201bb5a7c4d3567d0bb:
+
+| File | Baseline lines | Documented declarations |
+| --- | ---: | ---: |
+| crates/hyperreal/src/computable/approximation/certified_interval.rs | 29 | 5 |
+| crates/hyperreal/src/computable/approximation/inverse_isometric_latitude.rs | 157 | 4 |
+| crates/hyperreal/tests/inverse_isometric_latitude.rs | 325 | 15 |
+
+All 511 lines were reviewed; the twenty-four declarations now have Rustdoc.
+The owner is Hyperreal's scalar approximation/enclosure layer (P1–P7), with
+retained-equation replay and downstream composition relevant to P19. The missing
+acceptance witness was documentation of the private kernels, interval helpers
+and qualification tests. Existing public Real construction and the scalar
+admission narrative supplied the domain: finite psi and a positive axis ratio,
+with the unique geodetic latitude strictly between -pi/2 and pi/2. Invalid axis
+ratios must be rejected before the exact-equator shortcut. No numerical or
+policy behavior changes in this batch.
+
+The inverse stores psi and log(b/a), reconstructing positive r=(b/a)^2 as an
+exponential. Its working variable s=asinh(tan(phi)) makes the forward derivative
+r/(1+(r-1)*tanh(s)^2), bounded by min(1,r) and max(1,r). The rational forward
+helper uses odd symmetry and decaying exponentials; it selects oblate/prolate
+corrections from the exact rational r endpoint, not by attempting to decide
+whether an arbitrary computable r equals one. For negative s the r-endpoint
+order reverses. Residual narrowing, signed interval division, certified signs
+and outward dyadic rounding shrink the clipped root enclosure.
+
+At p<=0, K=4-p and root width 2^(p-4) determine the temporary clipped search.
+The monotone latitude map is 1-Lipschitz. Its tail satisfies
+pi/2-g(K) < 2*exp(-K) < 2^(1-K) = 2^p/8, using exp(1)>2.
+Root midpoint, elementary evaluation and rounding allowances contribute
+1/32, 1/8 and 1/2 output units; together with clipping the sum is 25/32.
+The node continues to represent the original equation, and K grows on finer
+requests. These conditional mathematical bounds require admitted inputs and
+completed child enclosures; they do not prove every machine precision or
+resource path. Coarse p>=1 zero is valid from the latitude range, unlike the
+unbounded tangent shortcuts recorded in the preceding batch.
+
+Exact Fraction checks confirmed the derivative identity, its min/max bounds
+and positivity of the r-derivative integrand at 13,993 rational (r,u) pairs,
+including squared-axis scales 10^-80 and 10^80 and u throughout a finite grid
+inside (-1,1). They also checked the error-allowance sum and 3-4-5 triangle
+relations behind the independent oblate/prolate fixture. This is finite exact
+consistency evidence for the documented formulas, not execution or a universal
+proof of the Rust solver.
+
+Shared interval helpers preserve exact rational endpoints. Dyadic conversion
+uses unsigned_abs for negative precision rather than negating i32::MIN, but
+very large powers still allocate enormous integers. The exact-rational path
+returns a singleton without consulting precision or adding a stop poll;
+the generic path widens a completed sample by one unit each way. Exact endpoint
+arithmetic does not independently validate the child's approximation. Neither
+path carries a typed abort outcome. Clamping requires a nonnegative bound and
+a separate solver argument for the final function's clipping error. Min/max
+use exact value comparison and select the second candidate on equality.
+
+Documented checked precision-subtraction panics, lack of a total-work/heap-byte
+budget, and stop-poll placement. Rational arithmetic and fresh forward-expression
+construction do not each poll the supplied signal. An interrupted zero or partial
+child result cannot be published as a certified enclosure merely because it is
+wrapped in exact rationals. The inline test covers maximum coarse precision and
+a flag already asserted before solving; its assertions do not measure mid-solve
+cancellation latency or inspect internal caches.
+
+The integration docs distinguish the independent analytic atan(3/4) fixture
+from the 768-bit MPFR solver's 260 bisections in geodetic latitude. The latter
+uses midpoints of input enclosures at -640 and returns the exact rational value
+of its rounded MPFR midpoint as a test reference. It is a finite numerical
+oracle, not a directed enclosure of the original exact solution. The 512-bit
+schedule entry uses the analytic fixture instead. The 35-case grid, ten-entry
+precision schedule, 484 ordered recipe pairs, near-sphere perturbations,
+extreme axes and huge/tiny inputs retain their original assertions. Limit-pole
+proximity does not identify finite latitude with a pole.
+
+Cancellation coverage rejects a preexisting abort, checks refinement/retry
+after clearing the flag, and evaluates four concurrent clones.
+JSON/CBOR tests separately check node tags, compatible cold/fine signs,
+deterministic JSON after warming, numerical agreement and subsequent sine.
+Those reimports are in the same process, not fresh-process cache isolation or
+malformed-payload qualification. The finite 22-recipe inventory is not an
+exhaustive private graph or scalar-domain enumeration.
+
+On the baseline, the direct precision unit test and nine all-feature integration
+tests passed. After the final source edits, the direct unit test passed with
+both no-default-features and all-features; inverse integration passed eight tests
+without defaults and nine with all features. The no-default integration suite
+was repeated after a final oracle-wording clarification. Two all-feature inverse
+Legendre unit tests exercised the shared interval-helper consumer. Hyperspatial's
+all-feature isometric_dispatch integration test passed all 44 selected workflows:
+22 fixture families with cold/ENU and warmed/NED flags, including strict scalar
+comparisons, ECEF coordinates, local-frame coordinates and certainty checks.
+This is affected-consumer evidence, not all geospatial projections or policies.
+
+Private cargo doc passed both feature configurations with warnings and broken
+or private links denied. Seven blocks matched actual private library pages;
+fifteen integration blocks matched temporary private Rustdoc pages built from
+a copy with only nine test attributes removed and support paths resolved.
+Two inline cfg(test) blocks passed inventory and supplemental Markdown rendering;
+ordinary library Rustdoc does not emit them. All twenty-four documented items
+were accounted for. No focused check remains blocked.
+
+All three edited source files have identical raw executable/signature tokens
+to the baseline, and also match an independently formatted baseline. The kernel's
+index-expression wrapping is Rustfmt-only. Focused Rustfmt (with child traversal
+disabled for the integration root) and git diff --check passed. No assertions,
+fixtures, policy choices or predicate/trace order changed. Full workflow checks
+remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-isometric-audit/ includes baseline/final commands
+and logs, exact rational calculations, token/declaration inventories, temporary
+documentation source and rendered-block matches. Builds reused the locked,
+offline, nonincremental shared target, now roughly 6.2 GiB after the downstream
+consumer build. Duplicate integration/supplemental HTML was removed after
+inspection. The public wrapper, native constructor, inverse Legendre consumer,
+shared fixture support, geospatial workflow and historical admission narrative
+provided context without new whole-file audit credit. Historical campaign,
+coverage and timing claims in that narrative were not re-established here.
+The repository-wide line audit and 100% Rustdoc mandate remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

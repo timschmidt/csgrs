@@ -1,8 +1,16 @@
 // See docs/admission-inverse-isometric-latitude.md for the monotonicity,
 // clipping and error proofs. All interval endpoints below are exact rationals.
 
-// F(s,r), for exact rational s and positive rational r. The root algorithm
-// limits |s| to K before calling this, avoiding enormous exp(psi) intermediates.
+/// Construct the exact forward isometric equation F(s,r) at rational s and positive rational r.
+/// Here r is the squared polar/equatorial axis ratio and s = asinh(tan(phi)).
+/// For r<1 subtract `sqrt(1-r)*atanh(sqrt(1-r)*tanh(s))`; for r>1 add
+/// `sqrt(r-1)*atan(sqrt(r-1)*tanh(s))`. At r=1 the result is s.
+///
+/// Use odd symmetry for negative s and `(1-exp(-2s))/(1+exp(-2s))` for tanh
+/// on the positive branch. The inverse solver restricts abs(s) to its current K,
+/// avoiding exp of a potentially huge isometric input. Zero and spherical cases
+/// return a rational directly. Positivity is a caller invariant, not checked here;
+/// fresh expression construction attaches no supplied abort signal or work budget.
 fn isometric_at(s: &Rational, r: &Rational) -> Computable {
     if s.sign() == Sign::NoSign || r.is_one() {
         return Computable::rational(s.clone());
@@ -36,6 +44,28 @@ fn isometric_at(s: &Rational, r: &Rational) -> Computable {
     })
 }
 
+/// Approximate the unique geodetic latitude defined by finite psi and finite log(b/a).
+/// The stored logarithm gives positive `r = exp(2*log(b/a))`. Work in
+/// `s = asinh(tan(phi))`, where the forward derivative lies between min(1,r)
+/// and max(1,r), and transport rational r bounds in reversed order for negative s.
+/// Narrow residual enclosures until their width is at most one eighth of the
+/// positive derivative lower bound times the target root width; signed interval
+/// division and certified residual signs then shrink the root bracket.
+///
+/// For p<=0, enclose the root clipped to `[-K,K]`, K=4-p, within width
+/// `2^(p-4)`. Outward dyadic rounding at p-8 controls repeated denominator
+/// growth. Clipping changes the final latitude by less than one eighth of a
+/// `2^p` unit; the latitude map is 1-Lipschitz. Evaluate its midpoint via
+/// `sign(s)*(pi/2-2*atan(exp(-abs(s))))` at p-3, then round to p. The exact
+/// node keeps the original equation; no clipped midpoint replaces its value.
+/// These error statements require completed child enclosures and valid inputs.
+///
+/// For p>=1 return zero, valid since abs(latitude)<pi/2. Stops also return zero,
+/// so the caller must distinguish interruption before publishing an approximation.
+/// Root/guard/refinement precision subtraction can panic on overflow; exact
+/// arithmetic, child evaluations and repeated refinement have no total-work or
+/// heap-byte bound. The stop flag is polled between iterations and passed to
+/// sampling, not to every intermediate rational operation or construction.
 fn inverse_isometric_latitude(
     signal: &Option<Signal>,
     psi: &Computable,
@@ -78,12 +108,10 @@ fn inverse_isometric_latitude(
                 } else {
                     [rlo, rhi]
                 };
-                let flo = interval_of(&isometric_at(&midpoint, &first), signal, precision)
-                    [0]
-                .clone();
-                let fhi = interval_of(&isometric_at(&midpoint, &second), signal, precision)
-                    [1]
-                .clone();
+                let flo =
+                    interval_of(&isometric_at(&midpoint, &first), signal, precision)[0].clone();
+                let fhi =
+                    interval_of(&isometric_at(&midpoint, &second), signal, precision)[1].clone();
                 let residual = [flo - yhi, fhi - ylo];
                 if &residual[1] - &residual[0]
                     <= &minimum * &width * Rational::fraction(1, 8).unwrap()
@@ -135,10 +163,17 @@ fn inverse_isometric_latitude(
 }
 
 #[cfg(test)]
+/// Direct kernel sentinels for coarse precision and an already asserted stop flag.
+/// These cases return before tracing/refinement; they do not measure interruption
+/// latency during an active solve or certify resource bounds.
 mod isometric_precision_tests {
     use super::*;
 
     #[test]
+    /// Require zero at i32::MAX precision and on an already stopped -512 request.
+    /// Use finite psi=1 and ln(3/5) axis data. The assertions check the returned
+    /// placeholders; source control flow, rather than a trace-count assertion,
+    /// establishes that these requests return before refinement.
     fn coarse_precision_and_preexisting_abort_never_refine() {
         let psi = Computable::one();
         let log_axis = Computable::rational(Rational::fraction(3, 5).unwrap()).ln();

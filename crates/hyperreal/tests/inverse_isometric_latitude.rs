@@ -1,8 +1,10 @@
 use hyperreal::{Problem, Rational, Real};
 
 #[path = "support/mpfr.rs"]
+/// Register thread-exit cleanup for the test-only MPFR backend.
 mod mpfr;
 #[path = "support/representations.rs"]
+/// Supply the shared finite inventory of 22 positive scalar construction recipes.
 mod representations;
 
 use num::{BigInt, BigUint};
@@ -12,10 +14,15 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
+/// Construct an exact rational Real fixture; a zero denominator is a test-author error.
 fn fraction(n: i64, d: u64) -> Real {
     Real::new(Rational::fraction(n, d).unwrap())
 }
 
+/// Require the entire computed error enclosure to lie within +/-2^(-bits).
+/// Request eight guard bits from the scalar enclosure API and compare exact
+/// rational endpoints. This is an absolute-error assertion, conditional on that
+/// API's enclosure contract, rather than a relative or correctly rounded test.
 fn enclosed_error(actual: &Real, expected: &Real, bits: i32) {
     let [lo, hi] = (actual - expected)
         .certified_rational_interval(-bits - 8)
@@ -28,6 +35,10 @@ fn enclosed_error(actual: &Real, expected: &Real, bits: i32) {
 }
 
 #[test]
+/// Check three analytic inverse fixtures, odd symmetry and subsequent sine/cosine.
+/// Use sin(phi)=3/5, tan(phi)=3/4 and s=ln(2), with spherical, oblate and prolate
+/// axis ratios. Demand 160-bit absolute inverse agreement and 120-bit trig
+/// agreement. The expected angle is independently constructed as atan(3/4).
 fn independently_constructed_oblate_prolate_and_sphere_inverses() {
     // sin(phi)=3/5, tan(phi)=3/4, asinh(tan(phi))=ln(2).
     let expected = fraction(3, 4).atan().unwrap();
@@ -56,6 +67,9 @@ fn independently_constructed_oblate_prolate_and_sphere_inverses() {
 }
 
 #[test]
+/// Reject zero/negative axis ratios even at psi=0, then accept the valid exact equator.
+/// The typed NotANumber assertions prevent the zero shortcut from hiding these
+/// invalid domains; they do not exhaust unresolved or malformed graph inputs.
 fn axis_domain_is_checked_before_equator_identity() {
     for ratio in [Real::zero(), Real::from(-1)] {
         assert_eq!(
@@ -71,6 +85,11 @@ fn axis_domain_is_checked_before_equator_identity() {
     );
 }
 
+/// Convert the midpoint of a certified Real enclosure to a 768-bit MPFR test value.
+/// Transfer exact numerator, denominator and sign explicitly; Display may contain
+/// mixed fractions and is not a rational wire format. This midpoint conversion is
+/// a rounded oracle input, not a directed MPFR enclosure or production scalar.
+/// The caller registers MPFR thread cleanup.
 fn mpfr_value(value: &Real, precision: i32) -> Float {
     let [lo, hi] = value.certified_rational_interval(precision).unwrap();
     let middle = (lo + hi) / Rational::new(2);
@@ -86,8 +105,13 @@ fn mpfr_value(value: &Real, precision: i32) -> Float {
     Float::with_val(768, rational)
 }
 
-// Independent solver: bisection directly in geodetic phi, evaluated by MPFR.
-// Its fixed 260 steps produce a test oracle, never a production Real.
+/// Build an independent numerical oracle by 260 bisections directly in geodetic latitude.
+/// Evaluate the oblate/prolate forward equation with 768-bit MPFR using input
+/// midpoints enclosed at precision -640, then adopt the final MPFR midpoint's
+/// exact binary rational as a test reference. Fixed iteration and nearest rounding
+/// make this a finite oracle, not a certified solve of the original exact inputs.
+/// Register thread-local MPFR cleanup; callers choose tolerances within its useful
+/// resolution, or use an analytic reference for the 512-bit case.
 fn mpfr_inverse(psi: &Real, axis_ratio: &Real) -> Real {
     mpfr::cleanup_on_thread_exit();
     let psi = mpfr_value(psi, -640);
@@ -132,6 +156,11 @@ fn mpfr_inverse(psi: &Real, axis_ratio: &Real) -> Real {
 }
 
 #[test]
+/// Compare a 35-point psi/axis grid to MPFR and exercise ten requested precisions.
+/// The grid uses 192-bit absolute error. Nine schedule entries test reference
+/// containment in a newly constructed result's enclosure; the -512 entry instead
+/// checks the independent atan(3/4) analytic fixture beyond the 260-step oracle.
+/// This finite schedule is not coverage of every representable precision.
 fn independent_mpfr_grid_and_precision_schedule() {
     for psi in [-10, -3, -1, 0, 1, 3, 10] {
         for axis in [
@@ -172,6 +201,11 @@ fn independent_mpfr_grid_and_precision_schedule() {
 }
 
 #[test]
+/// Exercise 1e-80 and +/-1e320 inputs on three axis ratios and both near-sphere perturbations.
+/// Compare tiny inputs with the psi/(b/a)^2 leading term at 512 bits, huge inputs
+/// with the appropriate limiting pole at 256 bits, and axis ratios 1+/-1e-80
+/// with the spherical expression at 240 bits. Pole proximity is an absolute-error
+/// claim; it does not identify a finite input's latitude with the pole.
 fn tiny_huge_and_near_spherical_inputs_keep_their_meaning() {
     let tiny: Real = "1e-80".parse().unwrap();
     for axis in [fraction(3, 5), Real::one(), fraction(5, 3)] {
@@ -205,6 +239,9 @@ fn tiny_huge_and_near_spherical_inputs_keep_their_meaning() {
 }
 
 #[test]
+/// Recover atan(3/4) at 160-bit absolute accuracy for axis ratios 1e-40 and 1e40.
+/// Construct each isometric input independently from sin(phi)=3/5 and ln(2),
+/// retaining the respective oblate/prolate elementary correction exactly.
 fn extreme_axis_ratios_preserve_an_independently_constructed_latitude() {
     let expected = fraction(3, 4).atan().unwrap();
     for (text, oblate) in [("1e-40", true), ("1e40", false)] {
@@ -227,6 +264,10 @@ fn extreme_axis_ratios_preserve_an_independently_constructed_latitude() {
 }
 
 #[test]
+/// Reject an already aborted enclosure, recover after clearing the flag, then refine four clones.
+/// Compare with the MPFR reference at 160 bits and concurrent precisions 32,
+/// 128,192,64. This is clone/retry evidence within one process, not serialized
+/// replay, a mid-solve cancellation test or a cache-internals inspection.
 fn cancellation_and_concurrent_refinement_do_not_poison_replay() {
     let original = fraction(3, 7)
         .inverse_isometric_latitude(&fraction(3, 5))
@@ -249,6 +290,10 @@ fn cancellation_and_concurrent_refinement_do_not_poison_replay() {
 }
 
 #[test]
+/// Exercise all 484 ordered pairs of the 22 positive scalar fixture recipes.
+/// Check the input recipe's public structural category, inverse accuracy at 96
+/// bits against MPFR, and subsequent sine/cosine at 80 bits. These named finite
+/// recipes do not enumerate all values or all possible private expression graphs.
 fn every_scalar_family_pair_survives_inverse_and_trigonometry() {
     let cases = representations::optimized_certificate_representatives();
     assert_eq!(cases.len(), 22);
@@ -273,6 +318,12 @@ fn every_scalar_family_pair_survives_inverse_and_trigonometry() {
 
 #[cfg(feature = "serde")]
 #[test]
+/// Check native replay and trig composition for each of the 22 positive input recipes.
+/// Require the inverse node tag, compatible cold/fine signs, 160/192-bit numerical
+/// agreement, unchanged JSON after warming, and CBOR replay followed by sine.
+/// All reimports occur in the same process; this is not a fresh-process cache or
+/// malformed-payload qualification. Deterministic JSON and represented value are
+/// checked separately.
 fn cold_warm_json_and_cbor_retain_the_defining_equation() {
     for case in representations::optimized_certificate_representatives() {
         let expected = mpfr_inverse(&case.value, &fraction(3, 5));
@@ -316,6 +367,9 @@ fn cold_warm_json_and_cbor_retain_the_defining_equation() {
 }
 
 #[test]
+/// Compare four signed improper rational fixtures against direct 768-bit MPFR division.
+/// This guards explicit numerator/denominator/sign transfer against the earlier
+/// mixed-fraction Display parsing error and registers backend cleanup.
 fn oracle_adapter_preserves_mixed_fraction_values() {
     mpfr::cleanup_on_thread_exit();
     for (n, d) in [(5, 3), (-5, 3), (7, 4), (-7, 4)] {
