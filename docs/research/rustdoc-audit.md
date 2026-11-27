@@ -13149,6 +13149,79 @@ scripts, ordered call bodies, commands and independent expectations. matrix_ops.
 now has a whole-file record. Remaining crate support/non-Rust artifacts, other
 repository files and previously recorded generated-item gaps remain open.
 
+## Hyperlattice benchmark parity inventory and README qualifications (2026-11-27)
+
+Target revision: `8171a991963d33fddaf8c49559fcc3bbcce402bd` on `rustdoc`.
+Whole-file read and semantic review: tests/gmp_benchmark_coverage.rs, all 89
+original lines (now 128), including both scanners and all three sets of assertions.
+Owning layer is benchmark test support; relevant contracts are P36's matched
+completed-work evidence and P37's precise coverage claims. Input domain is raw
+UTF-8 Rust source read from fixed paths beneath the compile-time crate root.
+Missing acceptance witnesses were documentation on the constant, two private
+helpers and three tests, plus a module description that overstated parity.
+The original three tests passed on the target revision before any edit.
+
+All seven authored documentation groups now describe their actual scope:
+
+- Six named benchmark sources are scanned. Registrar suffixes are sorted/deduplicated
+  raw substring matches; an unterminated suffix at EOF is omitted, and empty or
+  digit-leading suffixes are accepted. Comments, strings and calls can contribute.
+- Implementation labels are counted by quote-prefixed substrings without requiring
+  a closing quote. Counts neither associate individual rows nor prove equal inputs,
+  schedules, output consumption, cancellation behavior or numeric contracts.
+- Adapter comparison slices at first literal module markers, requiring their expected
+  order. It compares flattened public-function name sequences across types, preserving
+  duplicate names, without checking owners or signatures. The scanner ignores forms
+  such as pub(crate) and pub async; raw comment/string matches can count.
+- The report test reads generator source and requires three substrings. It does not
+  render Markdown, check generated columns, execute the ratio formula or validate
+  stored results. Test names and assertions remain unchanged.
+
+README benchmark paragraphs now distinguish 22 labeled recipes from verified runtime
+classes and similarly named external rows from equal completed workloads. The Numerica
+label is identified as SymbolicaFloat. Report regeneration describes stored data and
+automatic suppression, and the example command selects this package from the workspace.
+Public and all-feature private library documentation commands are explicit. Relevant
+adapter, recipe, writer and callback source was checked against prior whole-file review
+records. The README was read in full (383 original lines), but only the changed sections
+receive semantic-review credit here; its remaining broad claims still require review.
+
+Four small tracked crate artifacts were read completely and preserved: .codex is empty;
+.gitignore has two lines for the target directory and local license file;
+.symbolica-license.example contains a placeholder; LICENSE is the unchanged 21-line MIT
+text. They define no authored Rust APIs. No stored benchmark report was regenerated.
+
+Validation after final edits:
+
+- Compiled the actual std-only integration-test sources directly with rustc, edition
+  2024, test mode and warnings denied, using the manifest's version/root environment.
+  All three parity tests and both README synchronization tests passed. A temporary
+  probe compiled the same parity source and exercised EOF omission, empty/digit/Unicode
+  suffixes, duplicate/comment names, skipped modifiers, unequal owner/signature pairs,
+  label-prefix matches and report labels present only in comments. Its four tests
+  passed under a 30-second external timeout. These are lexical witnesses, not numeric
+  parity tests or a complete benchmark execution.
+- Direct private Rustdoc with cfg(test), warnings and broken/private links denied
+  passed. Complete text of the module, constant and two helpers rendered on four
+  pages. Rustdoc omits the three #[test] functions even with cfg(test); a temporary
+  rendering copy removed only those three attributes and rendered all seven complete
+  descriptions on seven pages. This validates their Markdown, not ordinary test-page
+  availability. Repository attributes, visibility and lint policy were untouched.
+- Exact noncomment source bytes are identical to the target revision. Every README
+  fenced block, including the quick start, is unchanged. Focused Rustfmt and git diff
+  checks passed. Local cargo doc help confirms the documented options; this batch did
+  not rerun the unchanged library documentation build or launch a browser.
+- Full workflow checks remain owner-waived. No numeric engine, Criterion timing,
+  report writer or generated report changed or ran. No performance, geometry or full
+  crate coverage claim follows from these source checks. No required focused check is
+  blocked. Temporary test/probe executables were removed; the reused target remains
+  approximately 2.8 GiB, with about 4 MiB of local rendering evidence for this batch.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-parity-{before,after,readme,validation}.log` and
+`/tmp/csgrs-lattice-parity-audit/validate.py`, temporary probe/rendering sources and
+rendered pages. This closes the parity-test file, not the remaining README semantic
+review, repository-wide audit or previously recorded generated-item coverage gaps.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

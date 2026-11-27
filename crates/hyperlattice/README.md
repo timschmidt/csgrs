@@ -292,10 +292,13 @@ scripts/coverage.sh
 scripts/allocation_profile.sh
 ```
 
-The Criterion `real_representations` group measures the same 22-class carrier
-sweep. The broader `mathbench` compares equivalent scalar, complex, vector,
-and matrix workloads against Numerica 128, GMP/MPFR 128 through Rug, and
-Symbolica; methodology and retained results live in
+The Criterion `real_representations` group measures the same 22 labeled recipes;
+the labels do not verify distinct runtime representation classes. The broader
+`mathbench` includes similarly named scalar, complex, vector, and matrix rows for
+native carriers, SymbolicaFloat (labeled Numerica 128), GMP/MPFR 128 through Rug,
+and Symbolica's symbolic adapter. Inputs, guards, cancellation handling, and output
+materialization differ across rows; matching names do not establish equivalent
+completed workloads. Methodology and retained results live in
 [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## Ecosystem and further documentation
@@ -309,11 +312,15 @@ Symbolica; methodology and retained results live in
   [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh) own higher geometry.
 
 [`PERFORMANCE.md`](PERFORMANCE.md) records benchmark methodology and retained
-optimization evidence. [`benchmarks.md`](benchmarks.md) is refreshed after
-either Criterion timing binary runs and includes every stored row, including
-competitive and regression-sentinel results. Regenerate it without measuring
-with `cargo run --example write_benchmarks_md`. Generate the complete
-signatures and trait implementations with `cargo doc --open`.
+optimization evidence. The shared report writer updates [`benchmarks.md`](benchmarks.md)
+from retained Criterion results and the manifest's benchmark catalog. Automatic
+callbacks honor the report-suppression gate; stored results may come from older
+runs. Regenerate the report without measuring, from the workspace root, with
+`cargo run -p hyperlattice --example write_benchmarks_md`.
+
+Generate public API documentation with `cargo doc -p hyperlattice --no-deps --open`.
+To include private library items and all feature-gated APIs, use
+`cargo doc -p hyperlattice --no-deps --all-features --document-private-items --open`.
 
 ## References
 

@@ -1,8 +1,17 @@
-//! Guards parity between the existing 128-bit Numerica benchmark surface and
-//! the 128-bit GMP/MPFR comparison surface.
+//! Source-text inventory checks for the Numerica-labeled and GMP/MPFR benchmarks.
+//!
+//! The Numerica label names the SymbolicaFloat adapter. These checks compare
+//! naming patterns in selected source files and require report-generator labels;
+//! they neither compile nor execute the adapters or regenerate a report. Passing
+//! does not establish equal inputs, signatures, arithmetic, cancellation behavior,
+//! output materialization, or completed workloads across engines.
 
 use std::{collections::BTreeSet, fs, path::Path};
 
+/// Six benchmark source files scanned relative to this crate's benches/mathbench directory.
+///
+/// This explicit list excludes representation_ops and other benchmark binaries.
+/// Adapter declaration order and report labels have separate checks below.
 const BENCHMARK_MODULES: &[&str] = &[
     "borrowed_ops.rs",
     "comparisons.rs",
@@ -12,6 +21,12 @@ const BENCHMARK_MODULES: &[&str] = &[
     "vector_ops.rs",
 ];
 
+/// Collect sorted, distinct ASCII identifier-character runs following raw prefix matches.
+///
+/// Scans nonoverlapping substring matches anywhere, including comments, strings,
+/// calls and declarations. A run can be empty or start with a digit. A match is
+/// omitted if its remaining suffix has no terminating non-identifier character
+/// before EOF. Does not parse Rust or count declarations or benchmark registrations.
 fn function_suffixes(source: &str, prefix: &str) -> BTreeSet<String> {
     source
         .match_indices(prefix)
@@ -24,6 +39,13 @@ fn function_suffixes(source: &str, prefix: &str) -> BTreeSet<String> {
         .collect()
 }
 
+/// Extract a flattened, source-ordered sequence of names from literal public-function text.
+///
+/// On each line, takes the text after the first `pub fn ` and before the first
+/// opening parenthesis or angle bracket, trimming outer whitespace. Lines without
+/// both delimiters are skipped; duplicates and matches in comments/strings remain.
+/// Does not associate names with types, inspect signatures, or recognize alternate
+/// visibility and modifier spellings such as `pub(crate) fn` or `pub async fn`.
 fn public_function_sequence(source: &str) -> Vec<String> {
     source
         .lines()
@@ -35,6 +57,12 @@ fn public_function_sequence(source: &str) -> Vec<String> {
         .collect()
 }
 
+/// Require matching registrar suffix sets and implementation-label prefix counts in six files.
+///
+/// Reads sources under the compile-time crate root; unreadable files panic. The
+/// suffix sets discard multiplicity, while label counts are raw substring counts
+/// starting at a double quote, without requiring a closing quote. Neither check
+/// pairs individual rows or proves workload equivalence; comments can affect both.
 #[test]
 fn every_numerica_benchmark_family_has_gmp_parity() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("benches/mathbench");
@@ -54,6 +82,12 @@ fn every_numerica_benchmark_family_has_gmp_parity() {
     }
 }
 
+/// Require the two adapter source slices to have identical public-function name sequences.
+///
+/// Uses the first literal module markers in the engine source, assuming Numerica,
+/// GMP, then Symbolica order. Read failures, missing markers or invalid slice order
+/// panic. Names are flattened across all types: matching sequences do not certify
+/// equal owners, signatures, implementations or supported mathematical domains.
 #[test]
 fn gmp_engine_exposes_the_complete_numerica_adapter_surface() {
     let source = fs::read_to_string(
@@ -77,6 +111,11 @@ fn gmp_engine_exposes_the_complete_numerica_adapter_surface() {
     );
 }
 
+/// Require three GMP-related label substrings in the curated report generator's source.
+///
+/// Reads report.rs, not generated Markdown; unreadable source panics. The raw
+/// substring checks accept occurrences anywhere, including comments. They do not
+/// exercise rendering, check the ratio formula, or establish stored-data coverage.
 #[test]
 fn generated_report_includes_gmp_column_and_ratio() {
     let report = fs::read_to_string(
