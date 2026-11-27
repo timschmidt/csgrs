@@ -2212,8 +2212,19 @@ fn nd_predicates(atlas: &mut Atlas) {
 // ---------------------------------------------------------------------------
 // Composite predicates, swept over distance to degeneracy.
 
-/// Sweep each of `kinds` over the degeneracy axis with a lattice construction
-/// `make(rng, k) -> (points, planes, squared scalars, lengths)`.
+/// Register a framed sweep for each kind, preserving the composite fixture's scalar order.
+///
+/// For each axis value, calls make with level(value), then creates an unwidened
+/// zero-exponent Frame with the supplied nominal base width. Serializes points,
+/// then each plane's normal and offset, then squared quantities, then lengths.
+/// The build callback must decode exactly that ordering; no dimension, count,
+/// nonnegativity, or geometric-precondition validation is added here.
+///
+/// Atlas regenerates Input outside each timed call with its default settings;
+/// Input::run rebuilds symbolic terms inside timing and selects the kind's policy.
+/// The callback's Outcome governs the initial success probe, without any separate
+/// expected-result or certainty assertion. Inherits frame/conversion panics and
+/// unbounded fixture searches; the axis does not impose a total work bound.
 fn derived<P: FromReals, const D: usize, R: perf_atlas::Outcome>(
     atlas: &mut Atlas,
     kinds: &[Kind],
@@ -2243,15 +2254,26 @@ fn derived<P: FromReals, const D: usize, R: perf_atlas::Outcome>(
     }
 }
 
-/// Lattice data of a composite input.
+/// Unvalidated integer-lattice ingredients serialized by derived for composite fixtures.
+///
+/// Separates quantities by their transformation law: translated points, planes,
+/// squared distances, and linearly scaled differences. This storage is not a
+/// validated region, geometric result, or proof of any predicate precondition.
 struct Shape<const D: usize> {
+    /// Ordered D-dimensional sites; Frame applies its common coordinate scale and translation.
     points: Vec<[Int; D]>,
+    /// Spatial normals and offsets for n·x+offset=0, independent of the point dimension D.
     planes: Vec<([Int; 3], Int)>,
+    /// Squared quantities scaled by the square of the frame scale; nonnegativity is not enforced.
     squared: Vec<Int>,
+    /// Linearly scaled scalars, including radii or signed direction components, without translation.
     lengths: Vec<Int>,
 }
 
 impl<const D: usize> Shape<D> {
+    /// Retain the supplied sites and initialize all non-point ingredients as empty vectors.
+    ///
+    /// Accepts empty or degenerate point lists without validating dimension or geometry.
     fn points(points: Vec<[Int; D]>) -> Self {
         Self {
             points,
@@ -2262,10 +2284,36 @@ impl<const D: usize> Shape<D> {
     }
 }
 
+/// Rotate an integer planar vector left by 90 degrees without division or rounding.
+///
+/// Returns (-y,x), preserving squared norm and giving zero dot product with the
+/// input. Zero remains zero; callers must establish nonzero directions themselves.
 fn perp(u: &[Int; 2]) -> [Int; 2] {
     [-u[1].clone(), u[0].clone()]
 }
 
+/// Register six planar composite-predicate workloads using the four KINDS frame recipes.
+///
+/// The standard axis has finite levels 0,4,...,96 and the degenerate sentinel.
+/// Point/segment, segment/segment, and point/triangle rows reuse near_collinear2:
+/// with sites a,b,c and u=b-a, they query c against ab, intersect ab with
+/// `[c,c+perp(u)]`, or query c against triangle `[a,b,a+perp(u)]`. At the sentinel,
+/// c lies strictly between a and b, giving on-segment, T-junction, and on-edge
+/// geometry respectively. Finite levels control a determinant, not a guaranteed
+/// interior Euclidean projection or distance bound as the report prose suggests.
+///
+/// Distance ordering compares a circle site's and the generated query's squared
+/// distances to the center. Its axis drops level 96, keeping 0..92 by fours plus
+/// the sentinel. Circle/line and circle/segment rows use endpoints site±perp(w),
+/// where w=site-center, and pass the original or perturbed squared radius through
+/// Shape::squared. The unperturbed segment contains the exact tangent point.
+/// These rows still generate and discard an extra perturbed circle query, inheriting
+/// its unbounded decomposition search even when the requested radius is unperturbed.
+///
+/// All callbacks take only the predicate value, discarding certainty and Unknown
+/// reasons. Some counts as atlas success without checking the relation; no exact
+/// expectation or replay assertion is made. Generation, conversion, and timing
+/// limitations are inherited from derived and the source lattice helpers.
 fn composite_2d(atlas: &mut Atlas) {
     let axis = degeneracy_axis(96);
     atlas.operation(
@@ -2395,6 +2443,61 @@ fn composite_2d(atlas: &mut Atlas) {
     }
 }
 
+/// Register spatial incidence, distance, intersection, homogeneous, and box workloads.
+///
+/// Uses KINDS (no Integer recipe), ordinarily levels 0..96 by fours plus the
+/// sentinel; point/plane and homogeneous/plane stop at 72, sphere distance ordering
+/// at 92, and sphere intersection, lexicographic ordering, and two box rows at 44.
+/// The plane/box row also uses 72. These are nominal input axes, not certified
+/// Euclidean proximity bounds or guarantees that all samples complete.
+///
+/// Point/plane uses a 24-bit normal with a controlled plane expression, whose finite
+/// nonzero residual bottoms out at magnitude two. Triangle, tetrahedron, segment,
+/// ray, and triangle-pair rows reuse near_coplanar3's Inside construction and sites
+/// `[a,b,c,d,e,f]`, with e=d+apex_offset and f=e+in_plane. They query d against abc
+/// or abce, de against abc, the ray (d,e-d) against abc, or abc against def.
+/// The ray direction is scaled through Shape::lengths without translation and
+/// rebuilt as a Point3 inside the timed callback. Positive oriented normal pairing
+/// does not imply that the ray points away from d's side of the plane. Source lifts
+/// and determinant-one shears prove neither orthogonal interior projection nor a
+/// well-conditioned tetrahedron. The separate segment/segment row uses Crossing,
+/// whose sentinel yields a proper crossing; finite lifts need not intersect.
+///
+/// Sphere distance ordering compares an on-sphere site with the generated query.
+/// Point/sphere perturbs the squared radius while retaining an on-sphere site;
+/// sphere/sphere uses ordinary radii R/3 and R-R/3, perturbing the second by a
+/// relative_delta at k+2. R is divisible by three, so their unperturbed sum equals
+/// the center separation R. The called API classifies closed balls using ordinary
+/// radii; it does not classify surface-sphere intersections. These last two rows
+/// still generate an unused perturbed query and inherit its unbounded search.
+///
+/// Point/segment distance uses endpoints a,a+2h and query a+h+h×r. Its projection
+/// is the exact segment midpoint and its squared distance is |h×r|². Parallel h,r
+/// are not rejected: zero distance can receive a negative perturbed threshold.
+/// Point/plane distance uses a nonzero integer-length normal and offset chosen for
+/// a positive 40-bit distance, then perturbs its square. Triangle degeneracy and
+/// point/segment location reuse near_collinear3; its finite levels likewise do not
+/// guarantee interior projection. Lexicographic queries differ only in z, or are
+/// identical at the sentinel.
+///
+/// The homogeneous row builds three planes through one lattice point and a fourth
+/// with a controlled residual. It never rejects dependent first-three normals, so
+/// their minors can be the all-zero carrier. The callback tests Boolean incidence,
+/// not the sidedness asserted by the report string, and Some(false) still counts as
+/// success. Ready-input construction occurs outside timing; symbolic construction
+/// occurs inside Input::run. No validity or unique-intersection check is performed.
+///
+/// Box fixtures have positive extents, a signed x gap, overlapping y intervals,
+/// and identical z intervals. Their point query is the second box's minimum,
+/// always on the first box's minimum-z plane: a negative x gap gives boundary
+/// membership, not strict interior. The plane/box fixture grows from the selected
+/// corner along coordinate signs that increase the magnitude of the plane residual;
+/// its sentinel gives corner contact. Nonzero residual is not unit-normal distance.
+///
+/// Every predicate callback discards receipts and Unknown reasons through value().
+/// The atlas checks Option presence on its initial probe without asserting any
+/// classification, validating reports, or replaying constructions. Unbounded source
+/// searches, frame width assertions, and shared timing limitations still apply.
 fn composite_3d(atlas: &mut Atlas) {
     let axis = degeneracy_axis(96);
     let sphere_axis = degeneracy_axis(92);
@@ -2869,9 +2972,14 @@ fn composite_3d(atlas: &mut Atlas) {
     );
 }
 
-/// A near-collinear 2D triple lifted to 3D by `z = alpha x + beta y` with
-/// small integer slopes: every component of the cross product is a small
-/// multiple of the 2D determinant.
+/// Lift the controlled planar determinant fixture into the plane z=alpha*x+beta*y.
+///
+/// Draws alpha,beta in -3..=3, then calls near_collinear2 with ORIENT2_BITS.
+/// If its determinant is delta, the spatial cross product is
+/// (-alpha*delta,-beta*delta,delta), so collinearity is preserved exactly. None
+/// keeps the third point strictly between the first two. This injective linear lift
+/// is not generally an isometry, and finite levels do not prove interior projection.
+/// Inherits the planar generator's level preconditions and unbounded coprime search.
 fn near_collinear3(rng: &mut Rng, k: Option<u32>) -> [[Int; 3]; 3] {
     let (alpha, beta) = (rng.range(-3, 3), rng.range(-3, 3));
     let (points, _) = near_collinear2(rng, ORIENT2_BITS, k);
@@ -2881,6 +2989,13 @@ fn near_collinear3(rng: &mut Rng, k: Option<u32>) -> [[Int; 3]; 3] {
     })
 }
 
+/// Extend the Inside tetrahedron fixture to six sites for triangle and ray queries.
+///
+/// Preserves `[a,b,c,d]`, appends e=d+apex_offset and f=e+in_plane, and leaves all
+/// non-point Shape vectors empty. The apex displacement has positive oriented
+/// normal pairing; it is not generally perpendicular after the source shear and
+/// need not point away from d's side. No intersection, conditioning, or expected
+/// predicate value is checked. Uses the same recipe as composite_3d's local closure.
 fn with_apex_shape(rng: &mut Rng, k: Option<u32>) -> Shape<3> {
     let t = near_coplanar3(rng, ORIENT3_BITS, k, Coplanar::Inside);
     let [a, b, c, d] = t.points;
@@ -2889,8 +3004,14 @@ fn with_apex_shape(rng: &mut Rng, k: Option<u32>) -> Shape<3> {
     Shape::points(vec![a, b, c, d, e, f])
 }
 
-/// A random integer vector of integer length: `(1, 4, 8)`-type points of
-/// the radius-9 sphere rotated by a random 8-bit quaternion.
+/// Construct a nonzero integer normal together with its exact positive integer length.
+///
+/// Chooses a radius-nine lattice vector from sphere_9 (including axis points, not
+/// only permutations of (1,4,8)) and four signed 8-bit quaternion components.
+/// Writing Q for their squared norm, the unnormalized quaternion matrix satisfies
+/// RᵀR=Q²I. Thus n=Rv has length 9Q, returned without taking a square root.
+/// The quaternion components are nonzero by construction, so Q>0. Sampling inherits the RNG's
+/// remainder reduction; no uniform distribution on directions is asserted.
 fn near_cospherical3_small(rng: &mut Rng) -> ([Int; 3], Int) {
     let [a, b, c, d]: [Int; 4] = rand_vec(rng, 8);
     let norm = &a * &a + &b * &b + &c * &c + &d * &d;

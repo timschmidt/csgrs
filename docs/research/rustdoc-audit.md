@@ -7121,6 +7121,88 @@ with `-check.log` and `-doc.log` suffixes. Bounded seed/shape observations are i
 is `/tmp/csgrs-atlas-determinant-render.py`. Continue at the composite-predicate
 section, retaining the distinction between complete item review and context reads.
 
+## Hyperlimit atlas composite fixtures (2026-11-26)
+
+Reviewed every line of the composite section in
+`crates/hyperlimit/examples/perf_atlas.rs`, baseline `e0bdd0e7b` lines 2212–2920.
+This completes that section, not the remaining scalar/polygon/construction/batch
+sections or the whole repository. The owning layer is Hyperlimit's performance
+example; relevant contracts are P8–P11's policy, receipt, and decision semantics,
+with P5/P6's resource and failure distinctions. The input domain is the selected
+planar/spatial lattice recipes under the four KINDS frames. Missing acceptance
+witnesses were private item/field docs and accurate descriptions of fixture
+geometry, decoding, callback success, and construction validity.
+
+Documented nine declarations (eight functions/methods and Shape), all four Shape
+fields, and the composite registrations' formulas and limits. Read the generators,
+Frame methods, and called segment, distance, AABB, and homogeneous API context to
+check argument order, scaling powers, returned relations, and validity behavior.
+All source changes are comments; exact comment-stripped source matches the
+baseline without layout normalization. Report strings, fixture generation,
+callback ordering, policy, and output handling are unchanged.
+
+Derived serializes points, normal/offset plane tuples, squared quantities, then
+linear quantities. It does not validate the decoder's layout or geometry. The
+planar segment/triangle fixtures inherit determinant control, not guaranteed
+interior Euclidean projection. Their sentinel does give exact between-point,
+T-junction, and edge relations. Circle-line/segment tangent supports are built
+correctly, but still generate an unused perturbed query with an unbounded search.
+The distance-ordering axis omits finite level 96.
+
+Spatial documentation distinguishes determinant-one shears from isometries,
+positive normal pairing from a ray pointing away from the query's side, and
+closed-ball intersection from surface-sphere intersection. Checked the current
+sphere API: it accepts ordinary radii, and the example's two unperturbed radii
+sum to the center distance as intended. Point/sphere and sphere/sphere still
+construct an unused perturbed query. The small quaternion helper samples all
+radius-nine lattice sites, including axes, not solely (1,4,8) permutations.
+Its exact length follows from RᵀR=Q²I for squared quaternion norm Q.
+
+Source inspection and bounded exact arithmetic establish these additional limits:
+
+- Spatial collinearity lifting has cross product delta*(-alpha,-beta,1). Checked
+  all 49 slope pairs on the previously retained planar projection counterexample;
+  lifting does not turn determinant control into a projection guarantee.
+- Admissible 42-bit h and 8-bit r can be parallel (r=(128,128,128), h=2^34*r).
+  The point/segment distance is then zero; the threshold perturbation can be -1.
+  This fixture does not enforce nonnegative thresholds.
+- The three homogeneous-construction plane normals can coincide, even with the
+  required 24-bit magnitudes. Identical plane rows give zero minors and an invalid
+  all-zero projective carrier. No rank/validity rejection occurs. The callback
+  tests Boolean incidence, despite the emitted description calling it sidedness;
+  both Some(true) and Some(false) count as atlas success.
+- Box queries use the second box's minimum, which always shares the first box's
+  minimum z. Exact inequalities at x gaps -1,0,+1 give boundary,boundary,outside,
+  not interior,boundary,outside. Plane/box growth preserves the selected corner's
+  nearest signed residual; that expression is not unit-normal distance.
+- Three bounded quaternion samples preserve all 102 radius-nine table points and
+  the ordinary-radius sum. These observations illustrate the defining identities;
+  they are not runtime predicate tests or a universal generator qualification.
+
+All callbacks retain only values, dropping receipts and Unknown reasons. Atlas
+checks Option presence for its initial probe; it does not assert classifications,
+validate intersection reports, or replay construction evidence. No workload
+completion, performance, or certification claim follows from this batch.
+
+Validation after final source edits:
+
+- Focused Rustfmt, `git diff --check`, and exact comment-stripped identity passed.
+- Offline locked example checks passed with all features and no default features.
+- Private example Rustdoc passed with warnings and broken/private links denied in
+  both configurations. An initial build diagnosed bare array notation as broken
+  links; code spans fixed the comments without suppressing diagnostics.
+- Full-text rendered inspection found all 13 new groups across eight pages in both
+  configurations. Rechecked the prior 44 determinant groups and 137 foundation
+  groups; three previously recorded local statics remain source-only.
+- No atlas execution, benchmark, fuzz campaign, report write, or unbounded random
+  search ran. Full workflow checks remain owner-waived for this docs-only session.
+  The existing shared target directory is reused with incremental compilation off.
+
+Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-atlas-composites-{all,minimal}`
+with `-check.log` and `-doc.log` suffixes. Bounded arithmetic observations are in
+`/tmp/csgrs-rustdoc-hyperlimit-atlas-composites-witnesses.log`; render inspection
+uses `/tmp/csgrs-atlas-composite-render.py`. Continue at Scalar and Pair.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
