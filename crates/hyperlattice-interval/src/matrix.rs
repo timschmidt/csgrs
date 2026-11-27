@@ -1,16 +1,38 @@
+//! Cartesian matrix sets, projections and ordered interval linear algebra.
+//!
+//! Dimensions are part of the type; rows contain independent scalar intervals.
+//! Scalar backends own rounding and failure. Products materialize Cartesian output
+//! enclosures, while retained correlated affine definitions live in the affine module.
+
 use crate::{IntervalArithmetic, IntervalLatticeError, IntervalVector, array_result};
 
 /// Cartesian set of row-major `R` by `C` matrices, or the canonical empty set.
 /// All entries vary independently. Empty dimensions have a singleton unit
 /// product unless the explicit empty constructor is used.
+///
+/// Public access is immutable. Constructors validate the scalar family even when
+/// R or C is zero; native deserialization uses those constructors. Derived equality
+/// compares stored backend values, not the definitions of prior correlated images.
+/// Reusing a matrix as both operands still treats its entries independently.
+///
+/// Storage is inline in R*C. Scalar allocation/work depends on the backend; dyadic
+/// calls share one context across nested loops. Explicit Clone is outside that
+/// accounting. Fallible operations retain no partial result, leave borrowed inputs
+/// available for retry and do not refund work already charged to the context.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntervalMatrix<I: IntervalArithmetic, const R: usize, const C: usize> {
+    /// None is canonical empty; Some holds R rows of C nonempty scalar intervals.
+    /// A zero-sized Some is the unit product, not empty. Internal users must preserve
+    /// this constructor invariant; public access supplies only immutable borrows.
     pub(crate) rows: Option<[[I; C]; R]>,
 }
 
+/// Construction, set operations, rectangular products and accounted projections.
 impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R, C> {
     /// Constructs from row-major scalar intervals; singleton entries lift a point
     /// matrix. Any empty entry canonicalizes the whole matrix set to empty.
+    /// Family validation precedes row-major inspection, including for zero dimensions.
+    /// Ownership is moved without scalar copies, rounding or context reservations.
     pub fn new(rows: [[I; C]; R]) -> Result<Self, IntervalLatticeError> {
         I::validate_family()?;
         Ok(Self {
@@ -23,17 +45,20 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Constructs the empty set after validating the scalar family.
+    /// No row or entry arithmetic is performed, regardless of the declared dimensions.
     pub fn empty() -> Result<Self, IntervalLatticeError> {
         I::validate_family()?;
         Ok(Self { rows: None })
     }
 
     /// Whether the matrix set is empty.
+    /// Reads the canonical storage tag without scalar predicates or context work.
     pub const fn is_empty(&self) -> bool {
         self.rows.is_none()
     }
 
     /// Whether exactly one matrix is represented, including empty dimensions.
+    /// Empty is false; present entries are inspected row-major until a nonsingleton.
     pub fn is_singleton(&self) -> bool {
         self.rows
             .as_ref()
@@ -41,16 +66,23 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Borrowed row-major entries, or `None` for empty. No scalar copies occur.
+    /// Some preserves the array shape even when one dimension is zero.
     pub const fn rows(&self) -> Option<&[[I; C]; R]> {
         self.rows.as_ref()
     }
 
     /// Transfers owned entries without copying scalar data.
+    /// Consumes the carrier, retaining the distinction between None and a zero-sized Some.
     pub fn into_rows(self) -> Option<[[I; C]; R]> {
         self.rows
     }
 
     /// Smallest Cartesian matrix box containing both inputs.
+    ///
+    /// This is generally larger than their union. With one empty operand, entries
+    /// of the other are copied through backend accounting in row-major order; an
+    /// identity can therefore exhaust dyadic work. Two empty inputs need no copies.
+    /// Nonempty pairwise hulls also run row-major and stop on the first scalar error.
     pub fn hull(
         &self,
         other: &Self,
@@ -68,6 +100,8 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Exact Cartesian intersection, canonicalizing empty entries.
+    /// An empty operand skips entry work. Otherwise all intersections run row-major
+    /// before canonicalization: an empty early entry does not hide a later error.
     pub fn intersection(
         &self,
         other: &Self,
@@ -77,6 +111,8 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Set inclusion. The empty set is included in every matrix set.
+    /// Nonempty entries are checked row-major until the first false or error.
+    /// Empty-set shortcuts and unit/unit inclusion perform no context work.
     pub fn subset_of(
         &self,
         other: &Self,
@@ -86,6 +122,8 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Inclusion in the other's real interior (unit products are open).
+    /// Empty is included even in empty. Positive-dimensional nonempty products need
+    /// strict scalar inclusion at every entry, checked row-major with early false/error.
     pub fn interior_subset_of(
         &self,
         other: &Self,
@@ -95,6 +133,8 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Entrywise sum enclosure.
+    /// Empty operands give empty. Otherwise visits entries row-major using backend
+    /// rounding and one context, stopping at the first error with no partial matrix.
     pub fn add(
         &self,
         other: &Self,
@@ -104,6 +144,8 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Entrywise difference enclosure, treating inputs independently.
+    /// A matrix minus itself need not be zero when entries are nonsingletons.
+    /// Empty operands give empty; evaluation and failure order are row-major.
     pub fn sub(
         &self,
         other: &Self,
@@ -115,6 +157,11 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     /// Matrix-vector product enclosure. Singleton coefficients or lanes support
     /// point-matrix or point-vector products without a separate arithmetic path.
     /// Rows are evaluated in order, each dot product from column zero upward.
+    ///
+    /// Output lanes can share input variables, but their correlations are discarded.
+    /// An empty operand gives empty even with a zero output dimension. For nonempty
+    /// inputs, C=0 gives R scalar zeros; R=0 invokes no dot products and gives the
+    /// unit vector. All products and sums share context and preserve the first error.
     pub fn mul_vector(
         &self,
         vector: &IntervalVector<I, C>,
@@ -130,6 +177,11 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
 
     /// Matrix product enclosure. Entries are evaluated in row-major order and
     /// each dot product in increasing shared index. No budget is reset per row.
+    ///
+    /// The result has shape R by K; shared input entries may correlate its entries,
+    /// but those relations are not retained. Empty operands give empty. Nonempty
+    /// inputs with C=0 produce scalar zeros; a zero output dimension produces the
+    /// unit matrix without dot products. Partial rows are discarded on scalar failure.
     pub fn mul_matrix<const K: usize>(
         &self,
         other: &IntervalMatrix<I, C, K>,
@@ -146,6 +198,10 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     /// Encloses `A*x+b`, with independent matrix, vector and translation sets.
     /// Correlation between output coordinates is not retained. This does not
     /// construct the exact correlated affine image of a box.
+    ///
+    /// Checks empty translation first, avoiding even a product that would overflow.
+    /// Otherwise finishes the entire matrix-vector enclosure before adding translation
+    /// coordinatewise. Both phases share context, with no refund if the second fails.
     pub fn affine_enclosure(
         &self,
         vector: &IntervalVector<I, C>,
@@ -161,6 +217,9 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Transposes with backend accounting for owned entry copies.
+    /// Copies in output row-major order: input columns first, then rows. Empty maps
+    /// to empty; zero-sized unit matrices remain units with the dimensions swapped.
+    /// A nonempty transpose can exhaust dyadic resources even though its image is exact.
     pub fn transpose(
         &self,
         context: &mut I::Context,
@@ -175,6 +234,8 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
 
     /// Projects a row, copying with backend accounting. Invalid indices are
     /// rejected even for empty input; projecting an empty set remains empty.
+    /// Checks index < R before emptiness or context work. Valid nonempty rows copy
+    /// columns in order; when C=0 the projection is the unit vector without copies.
     pub fn row(
         &self,
         index: usize,
@@ -193,6 +254,9 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
     }
 
     /// Projects a column with backend accounting and checked index.
+    /// Checks index < C before emptiness or context work, including on empty input.
+    /// Empty projects to empty; valid nonempty columns copy rows in order. R=0
+    /// yields the unit vector without copies, while scalar failures remain typed.
     pub fn column(
         &self,
         index: usize,
@@ -210,6 +274,13 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
         }
     }
 
+    /// Lift a scalar operation across two nonempty matrices in row-major order.
+    ///
+    /// An empty operand skips op and constructs validated empty storage. Otherwise
+    /// nested array_result calls stop at the first error and discard initialized
+    /// entries/rows; Self::new canonicalizes only after complete success. An empty
+    /// intermediate result does not skip later entries. Zero-sized units call no op.
+    /// One mutable context is shared throughout, and its prior charges are not undone.
     fn zip(
         &self,
         other: &Self,
@@ -224,6 +295,12 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> IntervalMatrix<I, R,
         }
     }
 
+    /// Conjoin entry relations row-major with canonical Cartesian empty-set rules.
+    ///
+    /// Empty self returns true; nonempty self against empty returns false, without
+    /// calling op. Otherwise stop at the first false or error; later entries spend
+    /// no work and cannot change that outcome. Unit/unit returns true without calls.
+    /// Used for closed and interior inclusion, with all attempted calls sharing context.
     fn relation(
         &self,
         other: &Self,

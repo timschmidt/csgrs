@@ -13528,6 +13528,113 @@ No focused check remains blocked. The remaining companion files and repository-w
 audit remain open; neither the scoped block count nor passing tests establish 100%
 repository coverage.
 
+## Hyperlattice-interval Cartesian carriers and replay witnesses (2026-11-27)
+
+Target revision: 29e8ce17ac63c3a06290e9c07973a18e4d884c1f, on rustdoc.
+Read every line of four companion files and their final documentation changes:
+
+| File in crates/hyperlattice-interval | Original lines | Final lines | Doc blocks |
+| --- | ---: | ---: | ---: |
+| src/vector.rs | 177 | 238 | 20 |
+| src/matrix.rs | 246 | 323 | 24 |
+| tests/cartesian.rs | 603 | 679 | 20 |
+| tests/replay.rs | 79 | 99 | 5 |
+
+Owning layer: fixed-dimensional Cartesian interval algebra, with scalar authority
+in Hyperinterval. P1/P3/P5/P6/P17/P18/P20/P26/P27/P37 and the admission protocol
+govern the documented domain, independent-operand enclosures, exact set relations,
+empty/unit distinctions, typed resource failures and replay qualification. At the
+target revision, storage fields, implementation blocks, private zip/relation helpers
+and integration-test helpers lacked Rustdoc. The public method summaries did not
+explain evaluation/copy order or the difference between early-false relations and
+eager intersection construction. Before editing, the 13 Cartesian tests, three
+replay tests and primitive allocation witness all passed.
+
+The source inventory now accounts for both carrier modules/types/fields/impls,
+36 carrier function declarations, 16 test functions, four test helpers, the fixed
+test module and its scalar alias, and the replay scalar alias. All 69 documentation
+blocks were checked as complete rendered text. This scope excludes additional
+IntervalVector/IntervalMatrix implementations in other files; it is not a claim of
+complete companion-crate or repository coverage.
+
+Documented behavior and limits:
+
+- Some stores only nonempty coordinates; None is canonical empty, distinct from
+  zero-dimensional units. Constructors validate families before inspecting entries.
+  Borrowed access is immutable and owned access moves storage. Derived equality
+  compares stored values without recovering an earlier correlated source definition.
+- Independent-operand arithmetic can widen self-subtraction or self-dot. Matrix
+  products discard output-coordinate correlations. Zero shared dimensions produce
+  scalar zeros; zero output dimensions give units unless an operand is empty.
+  Empty affine translation is checked before any product, and a nonempty translation
+  is added only after the entire matrix-vector enclosure succeeds.
+- Vector traversal is by index; matrix traversal is row-major. Intersections of
+  nonempty operands evaluate every coordinate before canonicalization, so a later
+  budget failure can follow an already-empty coordinate. Inclusion instead stops
+  at the first false or error. No failure becomes false or partial success.
+- Hull with empty performs accounted owned copies. Transpose copies input columns
+  first, in output row-major order. Row/column projections check indices before
+  emptiness and copy along the selected dimension. Sources survive resource failures;
+  already-spent context work is not refunded. Inline storage is not a universal
+  bound on scalar allocation, work or cancellation.
+- The endpoint oracle enumerates corners using i64 arithmetic for small equal-length
+  fixtures of at most three lanes; it is not a general overflow-safe oracle. The
+  six-range corpus has 6^4 two-lane cases and 81 point matrices times 36 boxes; the
+  quarter-grid corpus has 15^4 cases. Rectangular coverage is 512 seeded cases per
+  backend, including literal signed-diagonal output reuse. Clone is not replay.
+- The strict IEEE test requires a supported backend; the rectangular IEEE wrapper
+  skips both precisions if its f32 support guard is false. A separate host probe
+  confirmed both backends supported here. Budget tests distinguish independent
+  literal expectations from a result reused only to test exact work admission.
+- JSON witnesses run in one process, beyond ordinary small-array dimensions, and
+  consume decoded outputs. Byte identity is asserted only where present in the test.
+  Malformed scalars after an empty lane still reject, and null/unit replays differ.
+  These checks do not certify preservation of discarded correlations or fresh-process
+  replay. The independent literal output intervals remain [6,14] and [1440,7840].
+
+Consumer context included the unchanged Serde implementations, affine definitions,
+width/subdivision consumers, scalar dyadic order/copy/intersection code, the primitive
+allocation fixture and Hyperlattice's interval_surface reexport tests. These context
+reads do not close their separate item-documentation audits. One oversized context
+output was truncated; its missing downstream test section was reread separately.
+
+Validation after final edits:
+
+- Locked/offline Cargo, j2, incremental disabled, one reused target. All-feature
+  companion tests passed: Cartesian 13, replay three, affine eight, contraction two,
+  primitive allocation one (27 total). Hyperlattice's actual all-feature
+  interval_surface integration target passed all seven downstream tests. No test
+  assertion, fixture, feature, dependency, call order or implementation changed.
+- A warnings-denied temporary probe checked early-empty intersection followed by
+  WorkExhausted and larger-budget success, first-false inclusion versus exhausted
+  later/earlier lanes, accounted hull copying, and transpose/row/column order using
+  distinct SizeExhausted/WorkExhausted expectations. It also checked index-error
+  precedence, zero-budget unit operations, empty scaling, independent self-dot/sub,
+  and empty affine translation avoiding overflow. Expectations use explicit bounds
+  and outcomes; no benchmark or universal resource guarantee is claimed.
+- All-feature and no-default-feature private cargo doc builds passed with warnings,
+  broken links and private-link violations denied. Both rendered all 44 carrier doc
+  blocks across seven pages, including private storage and helper methods.
+- Actual integration-source Rustdoc rendered the helper/type/module blocks but
+  omitted 13 Cartesian and three replay test functions. Rendering-only temporary
+  copies removed exactly those test attributes and rendered all 25 test-file blocks,
+  preserving every assertion. This exposed bracketed interval prose being parsed as
+  links; inline-code formatting fixed it without suppressing link checks.
+- Source comparison removes only comment and blank lines and finds identical remaining
+  bytes in all four files. All 56 function declarations have attached Rustdoc;
+  other authored items were inspected directly. Selected-file rustfmt and git diff
+  --check passed. AGENTS.md retains the 100% public/private/generated documentation
+  mandate. Full workflow checks remain owner-waived for this docs-only session.
+
+Evidence is in /tmp/csgrs-rustdoc-interval-cartesian-{before,build,test-build,tests,
+downstream,probe,doc-all,doc-min,validation,render-min}.log and
+/tmp/csgrs-interval-cartesian-audit/ (matching build metadata, verification scripts,
+probe, source copies and full-text match records). The probe executable and duplicate
+temporary HTML were removed; retained batch evidence uses 204 KiB. The shared target
+is approximately 3.7 GiB after building the actual downstream test's development
+dependencies; no second Cargo target was created. No focused check remains blocked.
+Remaining companion implementations, support files and the broader audit remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

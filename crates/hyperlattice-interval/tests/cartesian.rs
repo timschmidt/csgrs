@@ -1,3 +1,11 @@
+//! Finite Cartesian algebra witnesses with independent integer endpoint expectations.
+//!
+//! Small-grid and seeded rectangular cases exercise the admitted scalar families,
+//! output reuse, emptiness, ordering-visible failures and dyadic budget sharing.
+//! These are finite tests, not general closure proofs or resource benchmarks.
+//! Context factories deliberately provide fresh state for separate assertions;
+//! the budget tests below separately exercise sharing within a composite operation.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -6,8 +14,13 @@
 ))]
 use hyperlattice_interval::{IntervalArithmetic, IntervalMatrix, IntervalVector};
 
-// Independent endpoint oracle: enumerate every corner of the two independent
-// input boxes using exact i64 arithmetic, without calling any interval kernel.
+/// Enumerate independent endpoint choices to bound a sum of products with i64 arithmetic.
+///
+/// The fixtures pass equal-length slices with at most three lanes and small ordered
+/// i32 endpoints. Each variable occurs in one product, so the multilinear expression
+/// attains extrema at corners. No interval arithmetic determines the expectation.
+/// The empty dot gives (0,0). This exponential helper does not validate arbitrary
+/// lengths, mask-shift bounds or integer overflow; final bounds must fit i32.
 fn dot_bounds(a: &[(i32, i32)], b: &[(i32, i32)]) -> (i32, i32) {
     let mut result = (i64::MAX, i64::MIN);
     for mask in 0..(1_usize << (2 * a.len())) {
@@ -26,6 +39,15 @@ fn dot_bounds(a: &[(i32, i32)], b: &[(i32, i32)]) -> (i32, i32) {
     (result.0.try_into().unwrap(), result.1.try_into().unwrap())
 }
 
+/// Exercise exact Cartesian results on a finite small-integer grid for one scalar backend.
+///
+/// The scalar callback must represent the supplied inclusive integer endpoints exactly;
+/// the context factory supplies independent state for each queried operation. Six scalar
+/// ranges give 6^4 two-lane dot cases; each also checks matrix/row-column products.
+/// All 81 point matrices with entries in -1..=1 combine with 36 two-coordinate boxes.
+/// Independent corner bounds check affine outputs and their subsequent reuse. Scaling,
+/// relations, transpose and zero-dimensional units have separate assertions. These
+/// integer fixtures require exact representability, not merely outward containment.
 fn exact_products<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     scalar: impl Fn(i32, i32) -> I,
     mut context: impl FnMut() -> I::Context,
@@ -180,6 +202,8 @@ fn exact_products<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Run the finite exact-product corpus for both signed fixed families at integer scale.
+/// No fractional rounding is expected; the unit arithmetic context has no work budget.
 fn exhaustive_fixed_exact_oracles() {
     exact_products(
         |a, b| hyperlattice_interval::hyperinterval::FixedInterval::<i32, 0>::new(a, b).unwrap(),
@@ -196,6 +220,8 @@ fn exhaustive_fixed_exact_oracles() {
 
 #[cfg(feature = "rational")]
 #[test]
+/// Run the small-grid corpus with exact rational endpoints and independent integer bounds.
+/// The unit context imposes no work or allocation limit on arbitrary-precision arithmetic.
 fn exhaustive_rational_exact_oracles() {
     exact_products(
         |a, b| {
@@ -207,6 +233,8 @@ fn exhaustive_rational_exact_oracles() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Run the small-grid dyadic corpus with 256-bit / 1,000,000-work-unit query budgets.
+/// Each operation gets fresh state; the scalar products inside it must share that state.
 fn exhaustive_dyadic_exact_oracles() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval};
     exact_products(
@@ -217,6 +245,9 @@ fn exhaustive_dyadic_exact_oracles() {
 
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Run the finite integer corpus for f32 and f64 certified enclosures without slack.
+/// These small integer values/results are exactly representable. This test requires a
+/// qualified floating backend and has no skip branch for unsupported environments.
 fn exhaustive_strict_float_exact_oracles() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
     exact_products(|a, b| F32Enclosure::new(a as f32, b as f32).unwrap(), || ());
@@ -224,16 +255,26 @@ fn exhaustive_strict_float_exact_oracles() {
 }
 
 #[cfg(feature = "fixed")]
+/// Quarter-grid fixed-point checks for rounding, canonical sets and local errors.
 mod fixed {
     use super::*;
     use hyperlattice_interval::hyperinterval::{FixedInterval, IntervalError};
     use hyperlattice_interval::{BoxN, IntervalLatticeError};
+    /// Signed 32-bit scalar intervals with two fractional bits (one grid unit is 1/4).
     type I = FixedInterval<i32, 2>;
+    /// Construct a quarter-grid interval from raw signed endpoint numerators.
+    /// The fixture supplies ordered bounds; invalid construction panics through unwrap.
     fn i(a: i32, b: i32) -> I {
         I::new(a, b).unwrap()
     }
 
     #[test]
+    /// Check outward quarter-grid dot products and distinct product/sum overflow paths.
+    ///
+    /// Enumerates 15^4 pairs of two-lane boxes. Independent raw integer corner sums must
+    /// lie inside the separately rounded product sum, with less than two grid units of
+    /// slack at either endpoint. Additional witnesses check identity multiplication,
+    /// wrapped scalar causes/Display, and a local index error without a nested source.
     fn fractional_products_are_outward_and_overflow_is_typed() {
         let ranges: Vec<_> = (-2..=2)
             .flat_map(|a| (a..=2).map(move |b| (a, b)))
@@ -281,6 +322,9 @@ mod fixed {
     }
 
     #[test]
+    /// Distinguish empty from zero-dimensional units and reject invalid fixed scales.
+    /// Checks scalar zero versus empty dot images, empty lanes, inclusion identities and
+    /// a 2-by-0 times 0-by-3 product of zeros. Invalid families reject even with no entries.
     fn canonical_empty_unit_and_invalid_families() {
         let unit = IntervalVector::<I, 0>::new([]).unwrap();
         let empty = IntervalVector::<I, 0>::empty().unwrap();
@@ -309,6 +353,10 @@ mod fixed {
     }
 
     #[test]
+    /// Check exact quarter-grid relations, projections and absorbing-empty operations.
+    /// Exercises both hull identities, disjoint intersection, typed row/column bounds,
+    /// transpose and matrix/vector reuse. An empty affine translation avoids an otherwise
+    /// overflowing product; this is an empty-domain rule, not suppression of arbitrary errors.
     fn relations_projections_and_empty_shortcuts() {
         let a = IntervalVector::new([i(-4, 4), i(0, 8)]).unwrap();
         let b = IntervalVector::new([i(-2, 2), i(2, 6)]).unwrap();
@@ -378,6 +426,13 @@ mod fixed {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Show that matrix rows and accounted copies share a caller's dyadic budget.
+///
+/// Measure one row's work, then give the whole matrix only that allowance and require
+/// WorkExhausted. A fresh larger budget yields the independent literal result (-17,146).
+/// Transpose/projections/hulls and other operations reject zero work; a small size cap
+/// also fails. Retrying unchanged operands succeeds. This checks deterministic budget
+/// units and typed failures, not wall time, allocation bytes or cancellation.
 fn shared_budget_copies_exhaustion_and_retry() {
     use hyperlattice_interval::IntervalLatticeError;
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I, IntervalError};
@@ -449,6 +504,10 @@ fn shared_budget_copies_exhaustion_and_retry() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Check exact work-boundary behavior for a two-coordinate dyadic scaling fixture.
+/// Measured work completes with zero remaining; one fewer unit fails and a fresh larger
+/// budget reproduces the result. Expected geometry here comes from the initial run;
+/// independent scaling bounds are supplied by the separate exact-product corpus.
 fn vector_scale_shares_work_across_coordinates_and_retries() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I};
     let x = IntervalVector::new([
@@ -474,6 +533,14 @@ fn vector_scale_shares_work_across_coordinates_and_retries() {
     );
 }
 
+/// Check 512 deterministic 2-by-3 times 3-by-2 products and downstream vector use.
+///
+/// A fixed xorshift seed generates small inclusive integer ranges with explicit zero
+/// lanes. Corner enumeration independently bounds each dot; column projections and
+/// signed-diagonal reuse must match. Clone verifies retained values, not serialization.
+/// The scalar callback must preserve integer endpoints exactly and each query gets
+/// fresh context. Zero output/shared dimensions and empty operands are also checked;
+/// the seeded sample is neither an exhaustive domain nor an external fuzz campaign.
 fn rectangular_products_and_composition<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     scalar: impl Fn(i32, i32) -> I,
     mut context: impl FnMut() -> I::Context,
@@ -560,6 +627,8 @@ fn rectangular_products_and_composition<I: IntervalArithmetic + core::fmt::Debug
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Run rectangular composition for i32 integer and i64 sixteen-fractional-bit storage.
+/// The latter callback shifts integer endpoints exactly; this corpus does not round them.
 fn rectangular_fixed_products() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
     rectangular_products_and_composition(|a, b| FixedInterval::<i32, 0>::new(a, b).unwrap(), || ());
@@ -570,6 +639,9 @@ fn rectangular_fixed_products() {
 }
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Run both IEEE rectangular corpora when the f32 backend reports support.
+/// Otherwise the test body skips both precisions; a passed test alone on that target
+/// would not establish that either corpus executed.
 fn rectangular_ieee_products() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
     if F32Enclosure::backend_supported() {
@@ -585,6 +657,8 @@ fn rectangular_ieee_products() {
 }
 #[cfg(feature = "rational")]
 #[test]
+/// Run the deterministic rectangular corpus with exact rational interval endpoints.
+/// Independent integer corner expectations are converted only at the comparison edge.
 fn rectangular_rational_products() {
     use hyperlattice_interval::hyperinterval::RationalInterval;
     rectangular_products_and_composition(
@@ -594,6 +668,8 @@ fn rectangular_rational_products() {
 }
 #[cfg(feature = "dyadic")]
 #[test]
+/// Run the rectangular corpus with fresh 1024-bit / 10,000,000-work-unit query budgets.
+/// Nested scalar work shares each budget; these allowances are not timing measurements.
 fn rectangular_dyadic_products() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval};
     rectangular_products_and_composition(
