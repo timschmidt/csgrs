@@ -2,11 +2,20 @@
 // remainder in the same graded monomial order used by division, so each step
 // can take its leading term without rescanning every remaining coefficient.
 // The authoritative polynomial representation and older attempts stay intact.
+/// Compact admitted quadratic reciprocals and perform exact formal division for native recognition.
 impl<'a> RingRecognition<'a> {
-    // In an admitted quadratic field, a nonzero rational norm gives
+    // For an admitted root with rational square, a nonzero rational norm gives
     // 1/(a+b*r) = (a-b*r)/(a²-b²*q), where r²=q. This keeps rational
     // parameter coefficients compact before they enter larger denominators.
     // A zero or oversized norm declines; no nonzero conjugate is assumed.
+    /// Compact the inverse of a+b*r using an admitted rational square r²=q and nonzero norm.
+    /// Require at most a constant and one root monomial, a seen root relation, and
+    /// a denominator-free rational square relation. Return (a-b*r)/(a²-b²*q) as a
+    /// polynomial with rational coefficients after charged exact arithmetic and
+    /// size checks. This sufficient route can decline a nonzero value when its norm
+    /// vanishes, as for 1+sqrt(1). Other shapes, missing relations, zero norm or
+    /// exceeded work/size/stop limits return None. Valid atom IDs, normalized terms
+    /// and root-domain admission are caller invariants; no root is approximated.
     fn reciprocal_quadratic_polynomial(
         &mut self,
         value: &RingPolynomial,
@@ -79,6 +88,17 @@ impl<'a> RingRecognition<'a> {
         self.scale(conjugate, inverse)
     }
 
+    /// Return the exact formal polynomial quotient only when long division leaves zero remainder.
+    /// Use total degree then lexicographic sorted atom IDs as a multiplicative monomial
+    /// order. Sort a local remainder once and use its final term thereafter; the
+    /// returned quotient uses the normal stored order. This is division over formal
+    /// rational polynomials, not proof that the divisor is nonzero at selected real
+    /// atom values. Zero divisor, indivisible leading term, or a degree/coefficient/
+    /// term/work/stop limit declines. Even zero numerator first needs a nonempty
+    /// divisor and its invertible leading coefficient. Inputs must be normalized,
+    /// with nonzero coefficients and sorted atom lists; no atom is evaluated.
+    /// Charges cover explicit visits and arithmetic, not individual sort comparisons,
+    /// all coefficient internals or peak allocation.
     fn divide_graded_polynomial(
         &mut self,
         numerator: &RingPolynomial,

@@ -19819,6 +19819,137 @@ after inspection. Locked/offline nonincremental builds reused the approximately
 buildable private documentation, and remains unchanged. Repository-wide review
 and all-configuration documentation coverage are still incomplete.
 
+## Hyperreal native relation construction, substitution and formal division (27 November 2026)
+
+Baseline: 9755fa1c6d47eba86f7f3e40a9a803c8cea3ef08 on rustdoc. Read every
+line of four files under crates/hyperreal/src/computable/node:
+ring_native_relations.rs (390 baseline lines), ring_native_reduction.rs (254),
+ring_native_division.rs (162), and ring_native_division_tests.rs (82), totaling
+888 lines. Earlier context reads of these implementations did not establish
+whole-file review. Context for this batch included quotient admission and
+inversion, the older formal divider, recognition counters, query-local sign/
+projection consumers and the Jacobi/root/reciprocal qualification corpus.
+Those context reads do not establish whole-file coverage of their own files.
+
+The owning layer is hyperreal's optional exact native-relation algebra under
+P2–P6 and downstream P8–P11. Inputs are admitted native scalar recipes,
+normalized rational polynomials and quotients, valid query-relative atom IDs,
+positive relation powers and nonzero denominator witnesses. The missing
+acceptance witness was accurate private documentation of each representation,
+operation, proof mode and resource boundary. Before edits, forty-two selected
+all-feature unit tests reproduced baseline behavior: native signs (eighteen),
+Jacobi relations (seventeen), native division (two), and quotient reduction
+(five). The documentation change preserves that completed contract.
+
+Twenty-nine blocks were reviewed: NativeRingRelation and its three fields,
+NativeReduction and its four modes, three impl overviews, thirteen production
+methods, one test-module overview and three test/helper functions. The docs
+now explain:
+
+- A relation a^p=N/H lives within its owning attempt's atom table. H is already
+  proved nonzero at the selected values; dependencies use lower IDs. The record
+  alone is not a replayable certificate or a complete selected-root definition.
+  Its optional root_sign is supplied by root completion, not inferred from a
+  square equation alone. Clone preserves query-relative data without reproof.
+- Native atom admission first reuses structural matches, then tries square,
+  completed-root and inverse-exponential relations in that order. Dependencies
+  precede the new atom. Failed optional relations may leave an atom opaque;
+  final cap/charge failure may leave disposable dependency state already changed.
+  Scalar-product compression is a bounded representation choice, not a domain
+  validator. Root completion changes which root products may remain opaque.
+- Root-pair multiplication moves admitted rational squares into coefficients
+  before checking retained degree, keeping parity and unrelated factors. Even
+  a coefficient becoming zero does not bypass subsequent degree/work checks.
+  The query-local Jacobi basis is chosen once per structural log-complement,
+  reusing that choice across differently warmed copies. With h=1-m, the exact
+  square identities use the selected sn or cn basis, and dn replays h from its
+  retained logarithm. Native function domains remain caller preconditions.
+- Reciprocal exponential relations recognize direct exp/E shapes whose summed
+  logs cancel or leave an integral multiple of ln(2), producing a dyadic numerator
+  over an earlier positive exponential atom. The existing log matcher has its
+  own limits; the outer charge does not meter all its work. Derived expression
+  expansion owns temporary atoms and never inserts temporary pointers into the
+  authoritative DAG memo. Arithmetic order and original inverse guards remain.
+- Substitution of a^p=N/H clears H^M. A monomial containing a^e becomes its
+  other factors times a^(e mod p)*N^(e/p)*H^(M-e/p). Positive p, correct nonempty
+  power tables and sufficient M are explicit private preconditions; malformed
+  tables can panic. Exact accumulation enforces existing term/degree/coefficient
+  limits. The power builder returns one for count zero without a charge and
+  adds no separate allocation cap to its caller-supplied count.
+- The reducer scans available relations by descending IDs and priority: roots,
+  Jacobi dn, cn, then other relations. Quotient and Roots modes retain value;
+  the latter uses only square-root relations. ZeroResidual and SignedZeroResidual
+  retain only sufficient zero evidence, never a rescaled nonzero value. The
+  signed mode additionally compares squares of nonnegative sides. Canonical
+  zero may finish as soon as the substituted numerator disappears because
+  denominator admission already happened. Optional factor-cancellation failures
+  do not replenish the attempt's remaining work.
+- Quadratic reciprocals use (a-b*r)/(a^2-b^2*q) for admitted r^2=q with rational
+  q and nonzero rational norm. This does not require q to define an irreducible
+  degree-two extension. A nonzero value such as 1+sqrt(1) can still decline this
+  sufficient route because its conjugate norm vanishes. The earlier field-only
+  plain comment was corrected to include rational-square/zero-root cases that
+  the implementation already accepts.
+- Graded formal division sorts a local remainder by total degree then sorted-ID
+  lexicographic order, cancelling its leading term at each step. It returns a
+  quotient only for zero remainder. Formal divisibility is not a nonzero witness
+  for the divisor evaluated at selected atom values. Zero divisor, indivisible
+  leading term and recognition limits decline. Counter charges cover explicit
+  visits/arithmetic, not all sorting comparisons, coefficient internals or peak
+  allocation. No numerical approximation or global scalar publication occurs.
+
+A disposable private harness compiled against all four baseline files and then
+all four final files produced identical logs. It constructed 105 polynomial
+products with a separate integer BTreeMap convolution, rather than the library's
+polynomial multiplier, and recovered the independently specified quotient.
+Adding one to every product numerator made all 105 formal divisions decline;
+the divisors have a nonconstant x term, so a nonzero constant remainder cannot
+be divisible by them in the formal polynomial ring.
+
+For N=1+x, H=2+y and P=a^5+3*x*a^2-2 under a^2=N/H, the substituted polynomial
+matched a separate integer expansion of a*N^2+3*x*N*H-2*H^2 coefficient for
+coefficient. A zero-power table remained available with zero work, while a
+positive requested power declined. The harness also checked 128 quadratic
+reciprocal coefficient pairs directly against exact conjugate/norm formulas;
+twelve zero-norm cases declined. Finally sqrt(2)^2-1 returned one through
+Quotient/Roots modes and declined through both zero-only modes, demonstrating
+that a nonzero rescaled residual is not published as a value by those modes.
+These finite exact witnesses supplement the algebraic reasoning, not a universal
+closure or cost proof. Runs used one GiB address space, ten CPU seconds, fifteen
+wall seconds and disabled core dumps solely as external containment.
+
+The reviewed test corpus preserves every assertion. Its 144 known products
+must divide back to the expected factor on both strategies. A further 144
+arbitrary pairs compare successful quotients or declines; agreement between
+those implementation paths is not treated as an independent oracle. The second
+test covers zero divisor/numerator, coefficient growth to 2^4096, a two-charge
+attempt and a fresh normal-budget retry. Scratch resets are explicit fixture
+setup, not a production resource-replenishment guarantee.
+
+After the final source edit, forty-two selected unit tests passed in each of
+no-default/all-feature configurations. All-feature serde_graph_domains (four),
+serde_opaque_operand_domains (five), and downstream hyperlimit resolve::tests
+(five) passed. Private cargo doc passed both configurations with warnings and
+broken/private intra-doc links denied. All twenty-five ordinary blocks matched
+library HTML. Four test/helper blocks matched actual Rustdoc in an owned copy
+with only this test module's cfg(test)/test attributes removed. Derived Clone
+for NativeRingRelation and Clone/Copy/PartialEq/Eq for NativeReduction were
+inspected on their rendered pages. There are no function-local declarations
+requiring a supplemental rendering in these files. No ghost/Verus configuration
+coverage is claimed.
+
+Raw comment-free tokens in every changed Rust file are identical to baseline;
+no punctuation, signature, dispatch order, test assertion, fixture, policy or
+algorithm changed. Selected Rustfmt and git diff --check passed. No focused
+check remains blocked. Full workflow validation and performance measurements
+remain owner-waived for this docs-only session. Evidence under
+/tmp/csgrs-hyperreal-native-substitution-audit/ retains commands/logs, independent
+probe source/results and item/render/token inventory. Owned shadow sources,
+probe binaries and temporary HTML were removed after inspection. Locked/offline
+nonincremental builds reused the approximately 6.6 GiB Cargo target. The existing
+AGENTS.md mandate for 100% public/private Rustdoc remains unchanged. Complete
+repository line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,7 +1,12 @@
 #[cfg(test)]
+/// Qualification of native graded formal division against known products, the earlier divider and limits.
 mod ring_native_division_tests {
     use super::*;
 
+    /// Build a deterministic bounded two-variable polynomial from five possible monomials.
+    /// Test seeds 0..12 select signed integer coefficients; the standard insertion
+    /// helper merges/omits zero terms and establishes stored order. No atom values
+    /// are assigned because these fixtures exercise formal polynomial division.
     fn corpus(seed: i32) -> RingPolynomial {
         let root = Computable::one();
         let mut recognition = RingRecognition::new(&root);
@@ -19,6 +24,11 @@ mod ring_native_division_tests {
     }
 
     #[test]
+    /// Check 144 constructed products divide back to their known factor with both division strategies.
+    /// Also compare both strategies on 144 arbitrary non-product pairs, including
+    /// nonzero remainders. The explicit factor assertions check algebraic expectations;
+    /// agreement of the two implementation paths alone is not an independent oracle.
+    /// The native arbitrary-pair attempt retains work spent on its preceding product.
     fn graded_division_preserves_exact_products_and_agrees_with_the_existing_divider() {
         let root = Computable::one();
         for a in 0..12 {
@@ -44,6 +54,10 @@ mod ring_native_division_tests {
     }
 
     #[test]
+    /// Reject the zero polynomial divisor, return zero over a nonzero polynomial, and enforce caps.
+    /// The quotient 2^2048 / 2^-2048 exceeds coefficient admission, while a two-charge
+    /// attempt cannot divide the ordinary fixture by itself. A fresh normal-budget
+    /// attempt must return one; scratch resets do not imply automatic replenishment.
     fn graded_division_respects_zero_divisors_work_and_coefficient_limits() {
         let root = Computable::one();
         let mut native = RingRecognition::new(&root);

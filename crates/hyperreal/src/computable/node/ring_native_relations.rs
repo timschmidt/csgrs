@@ -3,24 +3,47 @@
 // power of H from both sides of a quotient; individual numerical expressions
 // are never rewritten into cancellation-prone square differences.
 #[derive(Clone)]
+/// Query-local identity a^power=N/H, with H nonzero at the admitted atom values.
+/// N and H reference only earlier atom IDs, enabling triangular elimination.
+/// The owning atom supplies the exact recipe/selection; this record alone is
+/// not a serialized or independently validated certificate. Clone retains the
+/// same query-relative IDs and rational coefficient data without reproving them.
 struct NativeRingRelation {
+    /// Positive replacement power; currently two for squares and one for reciprocal exponentials.
     power: usize,
+    /// Exact quotient equal to the selected atom power, with an already admitted denominator.
     value: RingQuotient,
+    /// Optional zero/positive branch sign recovered by root completion; absence does not refute a sign.
     root_sign: Option<RealSign>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
+/// Select the meaning preserved by native substitution, not the represented geometric family.
+/// Clone/Copy duplicate the strategy tag; derived equality compares modes, not
+/// polynomial values or certificate equivalence.
 enum NativeReduction {
+    /// Apply all admitted native relations while preserving the complete quotient value.
     Quotient,
+    /// Apply only square-root relations while preserving quotient value, leaving other native relations unused.
     Roots,
+    /// Retain only a sufficient zero proof; may remove factors but never return a nonzero residual value.
     ZeroResidual,
+    /// Extend zero-only reduction with nonnegative-side square proofs after substitution leaves a nonempty residual.
     SignedZeroResidual,
 }
 
+/// Admit optional triangular native relations without changing the authoritative expression graph.
 impl<'a> RingRecognition<'a> {
     // Merge admitted monomials while collapsing rational root squares. No
     // retained monomial exceeds the existing degree cap, even when an
     // unreduced product would exceed it. All visits and products are charged.
+    /// Merge two sorted admitted monomials, reducing pairs of rational-root factors before the degree check.
+    /// Only square-root atoms with an admitted power-two, denominator-free rational
+    /// relation qualify. Move each pair into the rational coefficient and retain
+    /// parity; other factors keep their multiplicity. Charge visits/products and
+    /// check coefficient and retained-degree limits even if the coefficient becomes
+    /// zero. None is a charged/cap decline, not a mathematical impossibility. Atom
+    /// IDs and relation-table alignment are caller invariants; no domain is reproved.
     fn multiply_native_root_terms(
         &mut self,
         a: &[u8],
@@ -89,6 +112,13 @@ impl<'a> RingRecognition<'a> {
         Some((result, coefficient))
     }
 
+    /// Choose whether a bounded product/square subtree may remain a single opaque scalar atom.
+    /// Recurse left before right through products; selected arithmetic/Jacobi leaves
+    /// force expansion. Roots may stay opaque in the first native strategy but not
+    /// in root completion. Other native functions are accepted without descending
+    /// into their domains. Charge each entry; depth zero gives Some(false), while
+    /// work exhaustion or cancellation gives None. This is a storage-strategy test,
+    /// not a definedness, sign or value proof.
     fn scalar_product_shape(&mut self, value: &Computable, depth: usize) -> Option<bool> {
         self.charge()?;
         if depth == 0 {
@@ -119,6 +149,14 @@ impl<'a> RingRecognition<'a> {
         }
     }
 
+    /// Reuse a structurally equal atom or append one after attempting its native relation.
+    /// Try square relations, completed principal-root relations, then inverse-exp
+    /// relations in that order. Dependencies are inserted before the new atom, so
+    /// its relation references only lower IDs. Retain borrowed or owned recipes via
+    /// Cow, and initialize the parallel sign slot empty. A declined relation can
+    /// leave an opaque atom; a failed final charge/cap check can leave dependency
+    /// state and root-relation hints already changed in this disposable attempt.
+    /// Structural matching is charged per call, not by its internal DAG work.
     fn native_relation_atom(
         &mut self,
         value: std::borrow::Cow<'a, Computable>,
@@ -163,6 +201,14 @@ impl<'a> RingRecognition<'a> {
         })
     }
 
+    /// Recognize an admitted positive exponential as a dyadic multiple of an earlier exponential's inverse.
+    /// Scan existing exp/E atoms in ID order. Use the separate bounded logarithm
+    /// recognizer on their summed logs, allowing only cancellation to zero or an
+    /// integral ln(2) coefficient with absolute exponent below the coefficient cap.
+    /// A qualifying pair yields a power-one relation with a positive earlier-atom
+    /// denominator. Other retained logs or residual terms decline. Matching, dyadic
+    /// materialization and coefficient admission have distinct limits; outer charges
+    /// do not meter all nested logarithm work. No numerical evaluation occurs.
     fn native_inverse_exp_relation(&mut self, value: &Computable) -> Option<NativeRingRelation> {
         let is_exp = |value: &Computable| {
             matches!(
@@ -219,6 +265,15 @@ impl<'a> RingRecognition<'a> {
         None
     }
 
+    /// Build an optional exact square relation for selected admitted Jacobi or root recipes.
+    /// Use one query-local sn/cn basis per structural log-complement parameter. For
+    /// h=1-m, derive cn²=1-sn² or sn²=1-cn² and dn²=1-(1-h)sn² or
+    /// h+(1-h)cn², replaying h exactly from its retained logarithm for dn.
+    /// The chosen basis atom itself remains opaque. A square root needs immediate
+    /// nonnegative radicand evidence before expansion; shared sqrt(2)/sqrt(3) use
+    /// their rational squares. Depth zero, unknown shapes/domains or spent limits
+    /// decline. Native function domains are assumed admitted; this is not an import
+    /// validator or a numeric branch detector.
     fn native_square_relation(&mut self, value: &Computable, depth: usize) -> Option<RingQuotient> {
         if depth == 0 {
             return None;
@@ -282,6 +337,12 @@ impl<'a> RingRecognition<'a> {
         }
     }
 
+    /// Choose and retain one basis for each structurally equal Jacobi log-complement in this query.
+    /// Reuse an earlier choice before consulting current warmth. A new positive
+    /// immediate log sign chooses cn; otherwise choose sn. Either basis preserves
+    /// the identity, and reuse prevents conflicting rewrite directions among equal
+    /// parameters. Each comparison/insertion is charged; cap or stop/work failure
+    /// returns None. The stored boolean is a strategy choice, not a positivity proof.
     fn jacobi_cosine_basis(&mut self, log_complement: &Computable) -> Option<bool> {
         // One choice per structurally equal parameter for the whole query.
         // Differently warmed copies must not introduce opposite rewrite rules.
@@ -303,6 +364,14 @@ impl<'a> RingRecognition<'a> {
     // Derived expressions are temporary, so their pointers must never enter
     // the memo table for the authoritative borrowed DAG. Retain opaque leaves
     // by ownership and parse arithmetic within the same visit/work budgets.
+    /// Expand a temporary derived recipe using the native attempt's shared counters and atom IDs.
+    /// Charge entry/depth/node admission, then prefer a retained rational reduction
+    /// or a selected opaque parameter/product. Parse arithmetic left before right,
+    /// checking inverse nonzero witnesses and limiting binary shifts before allocating
+    /// powers of two; other admitted function leaves become owned atoms. Reduce the
+    /// result using native relations. Do not memoize temporary allocation addresses
+    /// in the authoritative DAG's quotient table. None leaves spent work and local
+    /// dependencies intact; it supplies no global failure fact or numerical fallback.
     fn expand_relation_value(&mut self, value: &Computable, depth: usize) -> Option<RingQuotient> {
         self.charge()?;
         if depth == 0 {

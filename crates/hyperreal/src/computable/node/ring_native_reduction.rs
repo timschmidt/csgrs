@@ -1,5 +1,10 @@
 // Bounded substitution of admitted native relations in rational functions.
+/// Substitute admitted relations under distinct quotient-value and sufficient-zero contracts.
 impl RingRecognition<'_> {
+    /// Build powers zero through count inclusive in this attempt's admitted polynomial algebra.
+    /// Start at one and repeatedly multiply by the same input, sharing work/size
+    /// limits. Count zero returns just one without an explicit work charge. The
+    /// caller supplies a feasible count; this helper adds no independent vector cap.
     fn polynomial_powers(
         &mut self,
         value: &RingPolynomial,
@@ -13,6 +18,14 @@ impl RingRecognition<'_> {
         Some(powers)
     }
 
+    /// Substitute a^power=N/H into a polynomial after clearing H^M.
+    /// For an a-exponent e, retain a^(e mod power) and multiply its other factors by
+    /// N^(e/power)*H^(M-e/power), with M determined by the numerator power table.
+    /// Accumulate exact terms directly under the existing degree/coefficient/term
+    /// and charged-work limits. The caller must supply positive power, nonempty
+    /// correct power tables through M, and e/power<=M for every input term; invalid
+    /// tables can panic. H must already be proved nonzero for value-preserving
+    /// quotient use. Sorting is bounded by admitted monomial size, not charged per comparison.
     fn substitute_relation(
         &mut self,
         polynomial: RingPolynomial,
@@ -68,10 +81,34 @@ impl RingRecognition<'_> {
         Some(result)
     }
 
+    /// Reduce an admitted quotient with all available native relations while preserving its value.
+    /// Delegate to Quotient mode; None is an optional-recognition limit/stop decline.
+    /// Denominator validity and triangular relation invariants must already hold.
     fn reduce_native_relations(&mut self, value: RingQuotient) -> Option<RingQuotient> {
         self.reduce_native_relation_proof(value, NativeReduction::Quotient)
     }
 
+    /// Apply triangular native relations according to a value or zero-only proof mode.
+    /// Inspect exponents in numerator and denominator, then scan relations from high
+    /// IDs down, preferring roots, then Jacobi dn, then cn, then other relations.
+    /// Within one priority, the highest ID wins. Clear relation denominators with
+    /// matching powers on both quotient sides; zero modes retain only the zero
+    /// implication for the numerator. An emptied numerator can finish immediately
+    /// because all original and introduced denominators were already admitted.
+    ///
+    /// Try exact cancellation of introduced factors using remaining work. For root
+    /// numerators, full quotient modes require formal division of both sides; zero
+    /// modes instead require immediate positive-radicand evidence (or a shared
+    /// positive root). Plain zero mode accepts only a vanished residual; signed zero
+    /// mode may also use nonnegative-square completion. Their successful output is
+    /// canonical zero, never the rescaled nonzero residual. Quotient/Roots modes may
+    /// return a still-symbolic quotient and optionally project a rational result.
+    ///
+    /// The caller supplies valid bounded atom IDs, positive powers, lower-ID relation
+    /// dependencies and nonzero denominator witnesses. Counters, coefficient/degree/
+    /// term caps and cancellation are shared across nested operations; a failed
+    /// optional cancellation does not reset them. None is not proof of nonzero or
+    /// non-rationality. No global scalar cache is published and no approximation runs.
     fn reduce_native_relation_proof(
         &mut self,
         value: RingQuotient,
