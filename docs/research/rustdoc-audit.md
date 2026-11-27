@@ -10520,6 +10520,140 @@ docs. The next contiguous boundary is the dedicated `impl Matrix4` beginning
 with `from_row_major`, currently core.rs line 11463. Its public methods and
 remaining matrix tests still require audit.
 
+## 2026-11-27: Matrix4 storage, rotations and structural transform constructors
+
+Scope and acceptance witness:
+
+- Continued from `8cc51f24f`, reading every line of core.rs's original
+  11463–11944 prefix of the dedicated Matrix4 impl. The 482-line block becomes
+  581 lines. Reviewed and revised all 23 method docs (22 public and the private
+  minimal-rotation tail), and added the impl overview: 24 groups total.
+- Added five missing test/helper docs and expanded the sampled-helix helper
+  doc in tests/matrix.rs. Explained the two local closures in ordinary comments;
+  these local bindings do not have standalone Rustdoc API pages. Reviewed
+  normalization, scalar reciprocal/sign queries, affine update helpers and
+  downstream VRML, attachment-frame and sweep call sites as context. Those
+  contextual reads do not claim new whole-file coverage.
+- Owner: Hyperlattice matrix construction and scalar expression composition.
+  Relevant properties: P1 exact arithmetic, P2 retained structure, P3/P4 honest
+  facts and evidence reuse, P6 typed failures, and P19 source-fidelity distinctions
+  in numerical tests. Inputs include arbitrary stored Real entries, radians,
+  nonzero directions, caller-established units/orthonormal blocks and signed
+  selectors. Runtime validation and caller preconditions remain distinct.
+- Missing acceptance witness: precise rotation convention and alignment domain,
+  the private algebraic-tail contract, antipodal selection, literal storage
+  layout, unchecked structural inputs and private test helpers. Reproduced the
+  starting descriptions and behavior before repository edits. In particular,
+  antipodal directions do have many valid half-turn rotations, and a rotation
+  cannot map unequal-length vectors to identical coordinate vectors.
+
+Contracts clarified:
+
+- Flat input uses index 4*r+c. The owned constructor moves values; the slice
+  constructor rejects every length except sixteen before cloning. Neither
+  validates geometry. Fact queries collect fresh conservative snapshots; the
+  exact-only accessor currently invokes the full structural collector.
+- Translation is `[I t;0 1]`, adding w*t to spatial coordinates. Nonuniform
+  affine scale is diag(sx,sy,sz,1), allowing zero/negative/symbolic scales while
+  preserving weight. Translation inversion negates offsets; right division
+  updates the last entry of all four dividend rows, including a nonaffine row.
+- Named rotations are right-handed column-vector transforms with radian input,
+  native sine-before-cosine construction, exact zero translation and affine
+  bottom row. Axis-angle scans X/Y/Z sparse candidates, uses the literal
+  refine_sign_until(128) call, then otherwise checked-normalizes and constructs
+  Rodrigues entries. The precision parameter is not a total-work bound.
+- General vector alignment normalizes from then to and aligns directions,
+  preserving vector length. After identity recognition, a proved antipode
+  selects X only for a certified abs(from.x)<9/10 comparison; otherwise it
+  selects Y. The half-turn axis is normalized from×seed, not the seed itself.
+  Axis construction errors remain errors rather than arbitrary successful output.
+- The unit API trusts unit lengths at entry but can normalize internally on its
+  axis/angle route. Only UnknownZero/DivideByZero while obtaining that axis or
+  angle select the algebraic fallback; other errors propagate. Delegated
+  axis-angle errors are returned directly. The private helper also requires
+  its supplied dot to belong to the two inputs.
+- For units, `[k]×² = k kᵀ - (1-c²)I` gives `cI+[k]×+kkᵀ/(1+c)`.
+  The fallback constructs one reciprocal and delegates nonzero certification
+  to the scalar layer. It has no antipodal half-turn selector: known zero or
+  unresolved nonzero decisions retain their typed outcomes. The general-vector
+  API, not the unit API, supplies the explicit antipodal selection rule.
+- Orthonormal construction embeds `[R t;0 1]` without storing a proof. Inverse
+  and division trust RᵀR=I, including reflections, and use transpose/translation
+  formulas without reciprocal or validation. Invalid blocks still return the
+  formulas rather than a typed shape error; their inverse interpretation fails.
+- Signed rows select input coordinates and signs. Distinct coordinate indices
+  are required for inverse/division semantics but are not validated. The inverse
+  constructor always builds the transpose; direct vector/batch application can
+  repeat coordinates for duplicate selectors. Division selects signed columns
+  for every dividend row; W signs and input batch order remain explicit.
+- The helix fixture adopts binary64 samples as exact binary values before chord
+  normalization. Its tolerance-based mapping/orthogonality checks do not prove
+  exact equality or fidelity to analytic helix derivatives. No test or predicate
+  was weakened; only its documentation and explanatory comments changed.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing comment-only and blank
+  lines leaves identical executable source in both edited Rust files against
+  `8cc51f24f`, preserving attributes, formulas, sign-call order and assertions.
+- Hyperlattice library builds and eight selected original matrix tests passed
+  with all features and no defaults. The all-feature baseline passed the same
+  tests. Coverage includes sparse-axis representation, both alignment routes,
+  rational unit mappings/antipodes, translation/orthonormal/signed-permutation
+  paths and fact packets. Direct rustc harnesses used matching Cargo artifacts.
+- Independent Fraction inverse/product expectations checked rational affine
+  translation and orthonormal inverse/right division with identity, nontrivial
+  rational rotation and reflection blocks, including nonaffine dividends.
+  Valid inverses composed to identity. A deliberately nonorthonormal block
+  confirmed unchecked embedding/transposition rather than inverse validation.
+- Literal expectations checked all flat entry positions, slice lengths 0–20,
+  changed snapshots after mutation, zero/negative spatial scales and nonunit
+  homogeneous translation weight. Trace mode asserted four translation-column
+  updates for an unrestricted dividend.
+- Exact rotation probes checked all three quarter-turn matrices, zero-angle
+  identities, both signs of scaled coordinate axes and a general (3,4,0)
+  half-turn against independent rational entries. Zero-axis angle zero and
+  zero-source alignment retained DivideByZero. Coordinate antipodes verified
+  the deterministic general-axis selector and unit-entry rejection.
+- An unequal-length rational direction pair produced the independently expected
+  rotation and mapped length-preserving coordinates. A deliberately nonunit
+  pair with dot one returned identity, documenting the unvalidated unit
+  precondition rather than advertising support for such input.
+- Reused the actual sampled-helix fixture helpers in a temporary probe. The
+  cross normalization returned UnknownZero; the unit alignment recorded exactly
+  one algebraic-rodrigues event. Mapping matched the existing 1e-12 binary64
+  consistency criterion. This is not a new exact symbolic-equality proof.
+- All five signed-permutation APIs matched independent entry, transpose,
+  column-selection and signed-coordinate formulas over all 4! × 16 = 384 valid
+  layouts. A two-vector batch preserved order/signs. Duplicate-axis witnesses
+  showed singular construction, noninverse transposition and repeated vector
+  coordinates; empty batches succeeded. Invalid-precondition witnesses are
+  limitation evidence, not extensions of the inverse support contract.
+- Temporary probe unused imports were removed. Final probes compiled without
+  warnings and completed within 30 seconds; original tests used 60-second
+  process limits. All-feature before/after and no-default stdout matched;
+  no-default mode compiled out trace assertions.
+- Library and integration-target private Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full text matched all
+  24 Matrix4 groups, including the private tail, plus three private test-helper
+  pages. Three #[test] docs were source-reviewed and executed; Rustdoc omits
+  test functions. Rendered text and finite fixtures do not establish full-crate
+  or repository-wide semantic coverage.
+- Cargo checks passed for matrix, matrix_api_surface_coverage, mathbench and
+  downstream Hyperspatial including Hyperlimit with all features and no defaults.
+  Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target.
+  Full workflows and exhaustive downstream runtime checks remain owner-waived.
+  No focused check remains blocked; no timing, size, allocator or total-work
+  claim was added. Removed two owned temporary executables; the shared target
+  remains near 2.5 GiB without creating another target tree.
+- The AGENTS.md public/private 100% Rustdoc mandate remains active. The full
+  repository audit remains incomplete.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix4-construction-*.log`, Cargo artifact JSON
+and `/tmp/csgrs-matrix4-construction-audit/` generators, probes, checkers and
+private docs. The next contiguous boundary is Matrix4::diagonal's documentation,
+currently core.rs line 12045. Remaining Matrix4 methods and tests still need audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

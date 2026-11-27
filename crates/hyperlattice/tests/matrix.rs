@@ -33,6 +33,7 @@ fn matrix3_inverse_and_power() {
     assert_eq!((matrix.clone() ^ 1).unwrap(), matrix);
 }
 
+/// Checks scaled positive/negative Y axes retain the corresponding named rotation expression.
 #[test]
 fn axis_angle_coordinate_axes_retain_named_rotation_structure() {
     let angle = frac(1, 10_000).to_radians();
@@ -47,14 +48,21 @@ fn axis_angle_coordinate_axes_retain_named_rotation_structure() {
     );
 }
 
+/// Converts a finite binary64 fixture coordinate to its exact binary rational value.
+///
+/// Panics on nonfinite input; this helper does not recover an intended decimal
+/// or an analytic value from a previously rounded float.
 fn dyadic(value: f64) -> Real {
     Real::try_from(value).unwrap()
 }
 
 /// Unit chord and normalized chord bisector at the start of the sampled helix
-/// swept by csgrs's `extrude` example. Both are certified unit vectors, but
-/// their cross product has no structural nonzero certificate.
+/// swept by csgrs's `extrude` example. Binary64 sine/cosine samples are adopted
+/// as exact binary values before chord normalization; these are not analytic
+/// helix derivatives. Both resulting vectors are unit vectors, but the fixture's
+/// cross product lacks the cheap nonzero certificate checked by the test.
 fn sampled_helix_tangents() -> (Vector3, Vector3) {
+    // Adopt one sampled helix position as three exact binary rational coordinates.
     let point = |index: u32| {
         let t = f64::from(index) * 0.15;
         Vector3::new([
@@ -69,9 +77,13 @@ fn sampled_helix_tangents() -> (Vector3, Vector3) {
     (incoming, bisector)
 }
 
+/// Checks vector alignment and linear-block orthogonality after lossy binary64 conversion.
+///
+/// Uses absolute tolerance 1e-12 for these fixtures. This is numerical consistency
+/// evidence, not an exact equality, source-fidelity or universal topology proof.
 fn assert_numerically_maps(rotation: &Matrix4, from: &Vector3, to: &Vector3) {
-    // Independent binary64 oracle: the exact rotation maps `from` onto `to`
-    // and keeps an orthonormal linear block.
+    // Binary64 consistency checks for direction mapping and orthogonality;
+    // the tolerance is not an exact matrix or equality certificate.
     let mapped = rotation.transform_direction3(from);
     for axis in 0..3 {
         let error =
@@ -92,6 +104,11 @@ fn assert_numerically_maps(rotation: &Matrix4, from: &Vector3, to: &Vector3) {
     }
 }
 
+/// Exercises algebraic alignment when a sampled-frame cross axis lacks a cheap nonzero proof.
+///
+/// Checks the unknown unit-cross result, then numerical forward/backward alignment
+/// through the shared tolerance helper. The assertions do not establish exact
+/// structural equality of the generated matrices.
 #[test]
 fn rotation_between_vectors_does_not_require_a_structural_axis_certificate() {
     let (from, to) = sampled_helix_tangents();
@@ -107,6 +124,11 @@ fn rotation_between_vectors_does_not_require_a_structural_axis_certificate() {
     assert_numerically_maps(&back, &to, &from);
 }
 
+/// Checks exact rational alignment, identity and selected antipodal failures on unit fixtures.
+///
+/// Compares the two entry points and literal mapped vectors, preserving rational
+/// representation facts. Opposite Z and Pythagorean directions must return
+/// DivideByZero through the unit entry point, which has no half-turn selector.
 #[test]
 fn rotation_between_unit_vectors_keeps_structural_forms_and_typed_antipodes() {
     let pythagorean = Vector3::new([frac(3, 5), r(0), frac(4, 5)]);

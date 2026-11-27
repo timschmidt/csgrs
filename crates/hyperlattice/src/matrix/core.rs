@@ -11460,8 +11460,13 @@ fn signed_axis4_apply(value: Real, axis: SignedAxis4) -> Real {
     if axis.is_negative() { -value } else { value }
 }
 
+/// Matrix4 storage, affine construction, rotations and specialized geometric operations.
 impl Matrix4 {
-    /// Constructs a matrix from row-major entries.
+    /// Moves sixteen scalars into row-major storage: `values[4*r+c]` becomes entry `(r,c)`.
+    ///
+    /// Delegates to [`Self::new`] after rearranging the array without arithmetic or
+    /// conversion. Singular, nonaffine and symbolic matrices are accepted; storage
+    /// construction does not validate any transform precondition.
     pub fn from_row_major(values: [Real; 16]) -> Self {
         let [
             m00,
@@ -11489,7 +11494,11 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs a 4x4 matrix from a row-major slice of exactly 16 entries.
+    /// Clones a slice of exactly sixteen scalars into row-major matrix storage.
+    ///
+    /// Returns `None` for every other length, before cloning or indexing entries.
+    /// For a valid length, preserves scalar sharing through clones and delegates
+    /// to [`Self::from_row_major`]. No geometry or invertibility check is performed.
     pub fn from_row_slice(values: &[Real]) -> Option<Self> {
         if values.len() != 16 {
             return None;
@@ -11498,28 +11507,34 @@ impl Matrix4 {
         Some(Self::from_row_major(values))
     }
 
-    /// Returns exact-rational representation facts for all matrix entries.
+    /// Returns the sixteen-entry scalar representation packet from a fresh full snapshot.
     ///
-    /// Transform stacks often preserve a common rational grid. Carrying this
-    /// coarse summary lets higher-level code prepare exact kernels without
-    /// re-querying every scalar entry, while `hyperreal` remains responsible
-    /// for denominator storage and reduction.
+    /// Currently invokes the complete collector used by [`Self::structural_facts`]
+    /// before extracting its exact-set field. The packet can select rational/dyadic
+    /// or shared-denominator arithmetic; missing recognition is not irrationality.
+    /// It is not a live cache, and retained evidence must be reconsidered after mutation.
     pub fn exact_facts(&self) -> RealExactSetFacts {
         trace_matrix!("query", "matrix4-exact-facts");
         matrix4_facts(&self.0).public.exact
     }
 
-    /// Returns structural and exact-rational facts for this matrix.
+    /// Collects current entry masks, shape flags, signed axes and scalar-set facts.
     ///
-    /// The affine and homogeneous-direction flags are reported alongside entry
-    /// masks so transform stacks can dispatch to translation, diagonal, sparse,
-    /// or generic schedules from one retained summary.
+    /// Structural scans, rational-set classification and dependency collection form
+    /// a conservative snapshot. Shape recognition includes affine and homogeneous
+    /// direction properties; missing facts do not prove their mathematical negation.
+    /// The returned packet neither tracks future mutations nor establishes general
+    /// invertibility. Callers must keep retained evidence tied to the actual entries.
     pub fn structural_facts(&self) -> Matrix4StructuralFacts {
         trace_matrix!("query", "matrix4-structural-facts");
         matrix4_facts(&self.0).public
     }
 
-    /// Constructs a 4x4 affine translation matrix from known x/y/z offsets.
+    /// Constructs `[I t; 0 1]` with the supplied x/y/z offsets in the last column.
+    ///
+    /// For a column vector `(x,y,z,w)`, adds `w*t` to the first three coordinates and
+    /// preserves `w`. Directions with weight zero are unchanged. The offsets are
+    /// moved without numerical conversion; symbolic translations are valid.
     pub fn affine_translation(translation: [Real; 3]) -> Self {
         trace_matrix!("constructor", "affine-translation");
         let [tx, ty, tz] = translation;
@@ -11531,7 +11546,11 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs an affine non-uniform scale matrix.
+    /// Constructs `diag(sx,sy,sz,1)`, preserving the homogeneous weight.
+    ///
+    /// Scales the three spatial coordinates independently, with zero translation.
+    /// Zero, negative and symbolic scales are accepted without an invertibility or
+    /// orientation check. This differs from scaling all four diagonal entries.
     pub fn affine_nonuniform_scale(scale: [Real; 3]) -> Self {
         let [sx, sy, sz] = scale;
         Self([
@@ -11542,7 +11561,11 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs an affine x-axis rotation matrix.
+    /// Constructs a right-handed x-axis rotation for an angle in radians.
+    ///
+    /// Acts on column vectors as `(x, cos(a)*y - sin(a)*z, sin(a)*y + cos(a)*z, w)`.
+    /// Computes sine first, then cosine, retaining scalar expressions and exact
+    /// zero/one affine entries. Translation is zero and homogeneous weight is preserved.
     pub fn rotation_x(angle: Real) -> Self {
         let sin = angle.clone().sin();
         let cos = angle.cos();
@@ -11566,7 +11589,11 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs an affine y-axis rotation matrix.
+    /// Constructs a right-handed y-axis rotation for an angle in radians.
+    ///
+    /// Maps `(x,y,z,w)` to `(cos(a)*x + sin(a)*z, y, -sin(a)*x + cos(a)*z, w)`.
+    /// Computes sine then cosine and retains their scalar structure; no decimal
+    /// angle conversion or approximation is introduced by this wrapper.
     pub fn rotation_y(angle: Real) -> Self {
         let sin = angle.clone().sin();
         let cos = angle.cos();
@@ -11590,7 +11617,11 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs an affine z-axis rotation matrix.
+    /// Constructs a right-handed z-axis rotation for an angle in radians.
+    ///
+    /// Maps `(x,y,z,w)` to `(cos(a)*x - sin(a)*y, sin(a)*x + cos(a)*y, z, w)`.
+    /// Computes sine then cosine, with exact zero translation and affine bottom row.
+    /// The angle is retained through native Real trigonometric construction.
     pub fn rotation_z(angle: Real) -> Self {
         let sin = angle.clone().sin();
         let cos = angle.cos();
@@ -11614,7 +11645,20 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs an affine rotation matrix from a checked axis and angle.
+    /// Constructs a right-handed rotation about the supplied axis, with angle in radians.
+    ///
+    /// First checks coordinate axes in X/Y/Z order: the other two entries must be
+    /// definitely zero, then `refine_sign_until(128)` must establish the selected
+    /// entry's positive or negative sign. This selects the corresponding named
+    /// rotation, negating the angle for a negative axis and retaining sparse structure.
+    /// A zero or unresolved sign leaves that search for the general path.
+    ///
+    /// Otherwise checked-normalizes the axis and uses Rodrigues' formula
+    /// `cos(a) I + (1-cos(a)) u uᵀ + sin(a) [u]×`. The axis need not be unit;
+    /// zero or unproved nonzero norm returns the normalizer's typed error. This
+    /// validation still occurs for angle zero. Scalar normalization failures
+    /// propagate. The literal sign-query precision parameter is not a total-work
+    /// bound; no separate cancellation flag or predicate-policy receipt is supplied.
     pub fn rotation_axis_angle(axis: &Vector3, angle: Real) -> CheckedBlasResult<Self> {
         // Preserve the named coordinate-axis construction when the axis is
         // exactly sparse. Besides avoiding an unnecessary normalization, this
@@ -11665,13 +11709,23 @@ impl Matrix4 {
         ]))
     }
 
-    /// Constructs an affine rotation matrix that maps `from` onto `to`.
+    /// Aligns the normalized direction of `from` with that of `to` by a rotation.
     ///
-    /// Both inputs are normalized with structural zero checks. A pair whose
-    /// antipodal relation bounded refinement proves receives a half turn
-    /// about a fixed seed axis; every other pair receives the minimal
-    /// rotation of [`Self::rotation_between_unit_vectors`], including its
-    /// typed failure when `1 + from·to` cannot be certified nonzero.
+    /// Checked-normalizes `from` then `to`; zero or unresolved norm errors propagate.
+    /// A rotation preserves length, so unequal-length inputs are aligned in direction
+    /// rather than mapped to equal coordinate vectors. Tests normalized dot minus
+    /// one with `refine_sign_until(128)` first and returns identity when zero is proved.
+    ///
+    /// Next tests dot plus one. For a proved antipodal pair, chooses X as the seed
+    /// only when `abs(from.x) - 9/10` is certified negative by the same sign query;
+    /// otherwise chooses Y, including an unresolved comparison. The half-turn axis
+    /// is the checked-normalized `from × seed`, and axis-angle construction uses π.
+    /// Errors in constructing that selected axis propagate. This is an explicit
+    /// selection among the many valid antipodal half turns.
+    ///
+    /// Every remaining pair uses the shared minimal-rotation tail. Its algebraic
+    /// fallback requires a reciprocal of `1 + dot`, with native scalar zero/unknown
+    /// failures. Sign-query precision is not a bound on all construction work.
     pub fn rotation_between_vectors(from: &Vector3, to: &Vector3) -> CheckedBlasResult<Self> {
         let from = from.normalize_checked()?;
         let to = to.normalize_checked()?;
@@ -11697,22 +11751,23 @@ impl Matrix4 {
         Self::minimal_rotation_between_unit_vectors(&from, &to, dot)
     }
 
-    /// Constructs the minimal rotation that maps caller-certified unit vector
-    /// `from` onto unit vector `to`.
+    /// Constructs the minimal-angle alignment for caller-established unit vectors.
     ///
-    /// The inputs are not normalized or validated as unit vectors. When the
-    /// cross product has a structural nonzero certificate, the axis-angle
-    /// construction keeps its sparse-axis and shared sine/cosine structure.
-    /// Otherwise the same rotation is built algebraically as
-    /// `c I + [k]x + k kᵀ / (1 + c)`, with `c = from·to` and
-    /// `k = from × to`. That form needs no axis normalization, inverse cosine
-    /// or trigonometric evaluation; its only divisor is `1 + c`, which is
-    /// nonzero exactly when the vectors are not antipodal.
+    /// Unit lengths are preconditions, not validated at this entry point. Computes
+    /// the dot product and returns identity if dot minus one is proved zero using
+    /// `refine_sign_until(128)`. The shared tail first tries a checked-normalized
+    /// cross axis and the angle between the vectors, preserving the axis-angle
+    /// representation when that route succeeds. That route can normalize internally;
+    /// this API does not promise to avoid all normalization work.
     ///
-    /// Antipodal inputs have no minimal rotation and return
-    /// [`Problem::DivideByZero`]. A divisor whose nonzero sign cannot be
-    /// certified returns the scalar layer's typed problem, such as
-    /// [`Problem::UnknownZero`]; it is never treated as nonzero.
+    /// If obtaining that axis or angle reports `UnknownZero` or `DivideByZero`, uses
+    /// `c I + [k]× + k kᵀ/(1+c)`, where `c = from·to`, `k = from × to` and
+    /// `[k]× v = k × v`. Other errors propagate. This fallback needs no axis
+    /// normalization or trigonometry and delegates its divisor check to Real inverse.
+    /// A proved zero divisor returns `DivideByZero`; an unresolved nonzero decision
+    /// can return `UnknownZero`. Opposite directions admit many half-turn rotations,
+    /// but this entry point has no axis-selection policy for them; use
+    /// [`Self::rotation_between_vectors`] for that explicit selection.
     pub fn rotation_between_unit_vectors(from: &Vector3, to: &Vector3) -> CheckedBlasResult<Self> {
         trace_matrix!("constructor", "rotation-between-unit-vectors");
         let dot = from.dot(to);
@@ -11722,8 +11777,20 @@ impl Matrix4 {
         Self::minimal_rotation_between_unit_vectors(from, to, dot)
     }
 
-    /// Shared tail of the vector-alignment constructors after the identity
-    /// shortcut; `dot` is `from·to`.
+    /// Implements the shared alignment tail with caller-established units and their dot product.
+    ///
+    /// `dot` must equal `from·to`; neither that relation nor unit lengths are checked.
+    /// Constructs `cross = from × to`, then attempts checked cross normalization and
+    /// `from.angle_to(to)` in that order. Success delegates to axis-angle construction,
+    /// including its checks. Only `UnknownZero` or `DivideByZero` from the attempted
+    /// axis/angle stage selects the algebraic fallback; other errors return directly.
+    ///
+    /// For unit vectors, writing `c = dot` and `k = cross`, the identity
+    /// `[k]×² = k kᵀ - (1-c²) I` gives the equivalent Rodrigues form
+    /// `c I + [k]× + k kᵀ/(1+c)`. Constructs one ordinary scalar reciprocal of `1+c`
+    /// before its nine linear-block entries; native nonzero certification and errors
+    /// belong to that inverse. The affine translation is zero and bottom row exact.
+    /// This helper does not supply a half-turn selector when the divisor is zero.
     fn minimal_rotation_between_unit_vectors(
         from: &Vector3,
         to: &Vector3,
@@ -11743,6 +11810,7 @@ impl Matrix4 {
         trace_matrix!("rotation-between-unit-vectors", "algebraic-rodrigues");
         let scale = (Real::one() + dot.clone()).inverse()?;
         let [x, y, z] = cross.0;
+        // One entry of k kᵀ/(1+c), reusing the already constructed reciprocal.
         let scaled = |left: &Real, right: &Real| left * right * &scale;
         let zero = Real::zero();
         Ok(Self::from_row_major([
@@ -11765,23 +11833,22 @@ impl Matrix4 {
         ]))
     }
 
-    /// Constructs the inverse of a caller-certified affine translation.
+    /// Constructs `[I -t; 0 1]` by negating the three supplied translation offsets.
     ///
-    /// Translation inverse is exact negation of the offset vector. Keeping this
-    /// as a known-object API avoids the generic affine fact scan and does not
-    /// enter determinant/cofactor arithmetic.
+    /// No shape scan, determinant or reciprocal is needed: every such translation
+    /// has an inverse. Symbolic offsets retain native scalar negation semantics.
     pub fn affine_translation_inverse(translation: [Real; 3]) -> Self {
         trace_matrix!("constructor", "affine-translation-inverse");
         let [tx, ty, tz] = translation;
         Self::affine_translation([-tx, -ty, -tz])
     }
 
-    /// Right-divides this matrix by a caller-certified affine translation.
+    /// Right-divides by `[I t; 0 1]`, updating only the final column of every row.
     ///
-    /// For a translation `T(t)`, `A / T(t) = A * T(-t)`, so only the
-    /// homogeneous translation column changes. This exposes the same
-    /// object-level fast path used by generic affine dispatch without making
-    /// callers rediscover translation structure numerically.
+    /// For each row, computes `row[3] - dot(row[0..3], t)` using the active
+    /// three-product schedule. Computes all four corrections before moving the
+    /// unchanged first three columns into the result. The dividend need not be
+    /// affine; its bottom row is updated too. No inverse matrix or reciprocal is built.
     pub fn div_affine_translation(self, translation: [Real; 3]) -> Self {
         trace_matrix!("method", "div-affine-translation4");
         let [row0, row1, row2, row3] = self.0;
@@ -11803,11 +11870,13 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs a caller-certified affine orthonormal transform.
+    /// Embeds a caller-established orthonormal linear block as `[R t; 0 1]`.
     ///
-    /// The caller supplies the object fact that the 3x3 linear block is
-    /// orthonormal. This constructor does not validate that fact; it preserves
-    /// it for known-object inverse and right-division paths.
+    /// Moves entries into the affine layout without validating `RᵀR = I` or storing
+    /// an orthonormality certificate. Callers of the matching inverse/division APIs
+    /// must retain that precondition themselves. Both rotations and reflections
+    /// qualify; determinant +1 is not required. Arbitrary supplied blocks are still
+    /// embedded, but then the orthonormal inverse formulas need not apply.
     pub fn affine_orthonormal(linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
         trace_matrix!("constructor", "affine-orthonormal");
         let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
@@ -11820,11 +11889,12 @@ impl Matrix4 {
         ])
     }
 
-    /// Constructs the inverse of a caller-certified affine orthonormal transform.
+    /// Constructs `[Rᵀ -Rᵀt; 0 1]` for a caller-established orthonormal block.
     ///
-    /// For `M = [R t; 0 1]` with orthonormal `R`, `M^-1 = [R^T -R^T t; 0 1]`.
-    /// This bypasses generic affine inversion and avoids determinant/cofactor
-    /// arithmetic for rigid transform stacks.
+    /// Requires `RᵀR = I`, including reflections; no validation or reciprocal occurs.
+    /// Forms three negated column-dot-translation expressions before assembling the
+    /// transposed block. Without the precondition this expression need not be the
+    /// inverse of [`Self::affine_orthonormal`], and no typed shape error is returned.
     pub fn affine_orthonormal_inverse(linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
         trace_matrix!("constructor", "affine-orthonormal-inverse");
         let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
@@ -11840,7 +11910,13 @@ impl Matrix4 {
         ])
     }
 
-    /// Right-divides this matrix by a caller-certified affine orthonormal transform.
+    /// Right-divides by `[R t; 0 1]` using the caller's orthonormality evidence.
+    ///
+    /// Requires `RᵀR = I` without checking or storing a certificate. Computes
+    /// `u = -Rᵀt`, then transforms each dividend row `[a b]` to `[a Rᵀ, a·u+b]`.
+    /// All four rows participate, so the dividend need not be affine. Active scalar
+    /// combinations preserve the formulas without constructing an inverse matrix;
+    /// invalid orthonormality evidence is not rejected as a typed shape error.
     pub fn div_affine_orthonormal(self, linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
         trace_matrix!("method", "div-affine-orthonormal4");
         let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
@@ -11860,11 +11936,13 @@ impl Matrix4 {
         Self(result)
     }
 
-    /// Constructs a caller-certified signed-permutation matrix.
+    /// Constructs a matrix with one signed unit entry selected for each row.
     ///
-    /// Each row names the signed input axis selected by that output row. This
-    /// does not validate uniqueness; callers use it when the construction
-    /// provenance already proves signed-permutation structure.
+    /// Row `i` selects the input coordinate and sign named by `rows[i]`. For a signed
+    /// permutation, the four coordinate indices must be distinct; uniqueness is
+    /// caller-established, not checked or stored as a certificate. Repeated axes
+    /// still construct a matrix, but it is singular and the permutation-specific
+    /// inverse/division contracts no longer apply.
     pub fn signed_permutation(rows: [SignedAxis4; 4]) -> Self {
         trace_matrix!("constructor", "signed-permutation4");
         let [r0, r1, r2, r3] = rows;
@@ -11881,7 +11959,12 @@ impl Matrix4 {
         Self(matrix)
     }
 
-    /// Constructs the inverse of a caller-certified signed-permutation matrix.
+    /// Constructs the transpose of the matrix specified by signed row selectors.
+    ///
+    /// This is its inverse when all four coordinate indices are distinct, regardless
+    /// of signs. Writes each signed unit at `(selected_axis, original_row)` in an
+    /// initially zero matrix. Uniqueness is not checked; duplicates still return a
+    /// transpose and do not produce a typed singularity error.
     pub fn signed_permutation_inverse(rows: [SignedAxis4; 4]) -> Self {
         trace_matrix!("constructor", "signed-permutation4-inverse");
         let [r0, r1, r2, r3] = rows;
@@ -11898,7 +11981,13 @@ impl Matrix4 {
         Self(matrix)
     }
 
-    /// Right-divides this matrix by a caller-certified signed-permutation matrix.
+    /// Right-divides by a caller-established signed permutation using column selection.
+    ///
+    /// For the matrix `P` specified by `rows`, computes `self * Pᵀ`: output column
+    /// `j` is the signed copy of the input column selected by `rows[j]`. Clones each
+    /// selected scalar and applies its sign, with no multiplication or reciprocal.
+    /// This is division only when the coordinate indices are distinct; the method
+    /// does not check that precondition and accepts any dividend shape.
     pub fn div_signed_permutation(self, rows: [SignedAxis4; 4]) -> Self {
         trace_matrix!("method", "div-signed-permutation4");
         let [r0, r1, r2, r3] = rows;
@@ -11912,7 +12001,12 @@ impl Matrix4 {
         }))
     }
 
-    /// Applies a caller-certified signed-permutation transform to a vector.
+    /// Applies signed row selectors to a vector by coordinate selection and negation.
+    ///
+    /// Output coordinate `i` is the signed copy selected by `rows[i]`. No general
+    /// matrix product or homogeneous normalization occurs. Distinct indices give a
+    /// signed permutation; duplicate indices simply repeat selected coordinates and
+    /// are not rejected. Every sign, including that of the W coordinate, is retained.
     pub fn transform_signed_permutation_vector(rows: [SignedAxis4; 4], rhs: &Vector4) -> Vector4 {
         trace_matrix!("method", "transform-signed-permutation4-vector");
         let [r0, r1, r2, r3] = rows;
@@ -11924,7 +12018,12 @@ impl Matrix4 {
         ])
     }
 
-    /// Applies a caller-certified signed-permutation transform to a vector batch.
+    /// Applies the same signed selectors to every vector, preserving input order.
+    ///
+    /// Uses the coordinate/sign rule of [`Self::transform_signed_permutation_vector`],
+    /// cloning selected scalar handles into an owned output vector. Empty input
+    /// returns empty output; index uniqueness is not checked. There is no independent
+    /// output-allocation limit or scalar-work budget supplied by this method.
     pub fn transform_signed_permutation_batch(
         rows: [SignedAxis4; 4],
         rhs: &[Vector4],
