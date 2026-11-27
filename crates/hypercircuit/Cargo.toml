@@ -69,6 +69,7 @@ zip = { version = "2.4.2", default-features = false, features = ["deflate"], opt
 quick-xml = { version = "0.42", optional = true }
 unicode-normalization = "0.1.24"
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 
 [[bin]]
@@ -206,6 +207,10 @@ required-features = ["drc"]
 
 [[example]]
 name = "diode_transient"
+
+[[example]]
+name = "perf_atlas"
+required-features = ["layout"]
 
 [[bench]]
 name = "interval_residuals"

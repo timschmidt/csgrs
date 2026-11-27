@@ -31,6 +31,7 @@ hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features
 
 [dev-dependencies]
 criterion = "0.5"
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 
 [[bench]]
@@ -39,6 +40,10 @@ harness = false
 
 [[example]]
 name = "voxel_enclosures"
+required-features = ["enclosure-program", "hypervoxel-adapter"]
+
+[[example]]
+name = "perf_atlas"
 required-features = ["enclosure-program", "hypervoxel-adapter"]
 
 [features]

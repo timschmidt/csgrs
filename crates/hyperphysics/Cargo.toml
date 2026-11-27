@@ -38,6 +38,7 @@ hyperreal = { version = "0.14.0", path = "../hyperreal" }
 hypersolve = { version = "0.4.0", path = "../hypersolve" }
 
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["dyadic"] }
 hyperlattice-interval = { version = "0.1.0", path = "../hyperlattice-interval", default-features = false, features = ["dyadic"] }
 proptest = "1.7.0"

@@ -27,6 +27,9 @@ dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false }
 hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false }
 hypersolve = { version = "0.4.0", path = "../hypersolve", default-features = false }
+[dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
+
 [target.'cfg(all(target_arch = "wasm32", target_os = "wasi"))'.dev-dependencies]
 # Run property cases in-process and benchmarks on one thread in a WASI guest.
 proptest = { version = "1.7.0", default-features = false, features = ["std", "bit-set"] }

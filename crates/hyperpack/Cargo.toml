@@ -28,6 +28,7 @@ hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = fal
 hyperreal = { version = "0.14.0", path = "../hyperreal", features = ["serde"] }
 
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 
 [[bench]]

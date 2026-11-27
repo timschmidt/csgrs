@@ -14,21 +14,119 @@
 //! - lattice: a square integer lattice (every unit cell is cocircular and
 //!   every row, column and diagonal is collinear);
 //! - circle: exactly cocircular rational points (rational parametrisation).
+//!
+//! Resource runs (`--resources`) report result shapes: `nodes` counts
+//! triangles (cells for the D-dimensional complex), `depth` and `bits` the
+//! largest output vertex coordinate expression, which covers inserted
+//! constraint-intersection vertices.
 use std::collections::{HashMap, HashSet};
 use std::f64::consts::{PI, TAU};
 
-use hypertri::cdt::{self, CollinearPointFacts, DelaunayTriangulation};
+use hypertri::cdt::{self, CollinearPointFacts, ConstrainedTriangulation, DelaunayTriangulation};
 use hypertri::nd::{self, BistellarFlipD, DelaunayComplex, PointD, Simplex};
 use hypertri::{
     Cell, CellHandle, Constraint, Point2, PolygonInput, PolygonTriangulationAlgorithm,
     PredicatePolicy, QualityPolicy, Rational, Real, TdsBoundaryPolicyD, TriangulationCertainty,
     TriangulationContext, TriangulationD, TriangulationDataStructureD, TriangulationOptions,
 };
-use perf_atlas::{Atlas, Rng, ladder, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shaped, ladder, powers_of_two};
 
 /// Heap accounting for `--resources` runs; only this atlas binary installs it.
 #[global_allocator]
 static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
+// ---------------------------------------------------------------------------
+// Result shapes for resource atlases. Readers run after the measured call.
+
+/// Largest stored expression over exact coordinates, as the hyperreal atlas
+/// reads it.
+fn reals_shape<'a>(values: impl IntoIterator<Item = &'a Real>) -> perf_atlas::Shape {
+    values
+        .into_iter()
+        .map(|value| value.representation_size(1 << 20))
+        .fold(perf_atlas::Shape::default(), |shape, size| {
+            perf_atlas::Shape {
+                nodes: shape.nodes.max(size.nodes as u64),
+                depth: shape.depth.max(size.depth as u64),
+                bits: shape.bits.max(size.max_rational_bits),
+            }
+        })
+}
+
+/// `nodes`: triangles (or D-cells); `depth`, `bits`: the largest output vertex
+/// coordinate expression, which covers inserted intersection vertices.
+trait Mesh {
+    fn mesh(&self) -> perf_atlas::Shape;
+}
+
+fn mesh_of(cells: usize, points: &[Point2]) -> perf_atlas::Shape {
+    perf_atlas::Shape {
+        nodes: cells as u64,
+        ..reals_shape(points.iter().flat_map(|p| [&p.x, &p.y]))
+    }
+}
+
+fn indices_shape(indices: &hypertri::TriangleIndices) -> perf_atlas::Shape {
+    perf_atlas::Shape {
+        nodes: indices.len() as u64 / 3,
+        ..perf_atlas::Shape::default()
+    }
+}
+
+impl Mesh for hypertri::TriangleIndices {
+    fn mesh(&self) -> perf_atlas::Shape {
+        indices_shape(self)
+    }
+}
+impl Mesh for hypertri::EarcutReport {
+    fn mesh(&self) -> perf_atlas::Shape {
+        indices_shape(&self.triangles)
+    }
+}
+impl Mesh for hypertri::SimpleRingTriangulation {
+    fn mesh(&self) -> perf_atlas::Shape {
+        indices_shape(&self.triangles)
+    }
+}
+/// Triangles as index triples (vertices are the input points).
+impl Mesh for Vec<[usize; 3]> {
+    fn mesh(&self) -> perf_atlas::Shape {
+        perf_atlas::Shape {
+            nodes: self.len() as u64,
+            ..perf_atlas::Shape::default()
+        }
+    }
+}
+impl<R> Mesh for (hypertri::TriangleIndices, R) {
+    fn mesh(&self) -> perf_atlas::Shape {
+        indices_shape(&self.0)
+    }
+}
+impl Mesh for DelaunayTriangulation {
+    fn mesh(&self) -> perf_atlas::Shape {
+        mesh_of(self.triangles().len(), self.points())
+    }
+}
+impl Mesh for ConstrainedTriangulation {
+    fn mesh(&self) -> perf_atlas::Shape {
+        mesh_of(self.triangles().len(), self.points())
+    }
+}
+impl Mesh for DelaunayComplex {
+    fn mesh(&self) -> perf_atlas::Shape {
+        perf_atlas::Shape {
+            nodes: self.cells().len() as u64,
+            ..reals_shape(self.points().iter().flat_map(|p| p.coordinates()))
+        }
+    }
+}
+
+type Meshed<T> = Shaped<hypertri::Result<hypertri::TriangulationOutcome<T>>>;
+
+/// A triangulation result kept for its shape.
+fn meshed<T: Mesh>(result: hypertri::Result<hypertri::TriangulationOutcome<T>>) -> Meshed<T> {
+    Shaped::new(result, |r| r.as_ref().ok().map(|o| o.value.mesh()))
+}
 
 const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 const STRICT: TriangulationContext = TriangulationContext::new(PredicatePolicy::STRICT);
@@ -644,7 +742,7 @@ fn polygons(atlas: &mut Atlas) {
             kind,
             &vertices,
             |m, rng| lift(&polygon(kind, m as usize, rng)),
-            |p| hypertri::earcut(&APPROX, p, &[]).map(|o| o.value.len()),
+            |p| meshed(hypertri::earcut(&APPROX, p, &[])),
         );
     }
     atlas.fuzz(
@@ -654,14 +752,14 @@ fn polygons(atlas: &mut Atlas) {
             let n = rng.range(m as i64 / 2, m as i64) as usize;
             lift(&polygon("star", n, rng))
         },
-        |p| hypertri::earcut(&APPROX, p, &[]).map(|o| o.value.len()),
+        |p| meshed(hypertri::earcut(&APPROX, p, &[])),
     );
     atlas.grid(
         "star exterior + square holes",
         ("holes", &powers_of_two(0, 8)),
         ("exterior vertices", &powers_of_two(3, 12)),
         |h, v, rng| holed("star exterior", v as usize, h as usize, rng),
-        |(p, holes)| hypertri::earcut(&APPROX, p, holes).map(|o| o.value.len()),
+        |(p, holes)| meshed(hypertri::earcut(&APPROX, p, holes)),
     );
 
     atlas.operation(
@@ -675,10 +773,7 @@ fn polygons(atlas: &mut Atlas) {
             kind,
             &vertices,
             |m, rng| lift(&polygon(kind, m as usize, rng)),
-            |p| {
-                hypertri::earcut_report(&APPROX, p, &[])
-                    .map(|o| (o.value.triangles.len(), o.value.diagnostics.ear_tests))
-            },
+            |p| meshed(hypertri::earcut_report(&APPROX, p, &[])),
         );
     }
 
@@ -693,7 +788,7 @@ fn polygons(atlas: &mut Atlas) {
             kind,
             &powers_of_two(0, 12),
             |h, rng| holed(kind, 256, h as usize, rng),
-            |(p, holes)| hypertri::earcut(&APPROX, p, holes).map(|o| o.value.len()),
+            |(p, holes)| meshed(hypertri::earcut(&APPROX, p, holes)),
         );
     }
 
@@ -721,7 +816,7 @@ fn polygons(atlas: &mut Atlas) {
             kind,
             &ring_vertices,
             |m, rng| lift(&polygon(kind, m as usize, rng)),
-            |p| hypertri::triangulate_simple_ring(&APPROX, p).map(|o| o.value.triangles.len()),
+            |p| meshed(hypertri::triangulate_simple_ring(&APPROX, p)),
         );
     }
 
@@ -736,10 +831,7 @@ fn polygons(atlas: &mut Atlas) {
             kind,
             &ring_vertices,
             |m, rng| lift(&polygon(kind, m as usize, rng)),
-            |p| {
-                hypertri::triangulate_simple_ring_around(&APPROX, p, 0)
-                    .map(|o| o.value.triangles.len())
-            },
+            |p| meshed(hypertri::triangulate_simple_ring_around(&APPROX, p, 0)),
         );
     }
 
@@ -761,7 +853,7 @@ fn polygons(atlas: &mut Atlas) {
                     to_f64(&polygon_ints(kind, n, rng))
                 }
             },
-            |p: &Vec<[f64; 2]>| hypertri::f64::earcut(&APPROX, p, &[]).map(|o| o.value.len()),
+            |p: &Vec<[f64; 2]>| meshed(hypertri::f64::earcut(&APPROX, p, &[])),
         );
     }
 
@@ -806,7 +898,7 @@ fn polygons(atlas: &mut Atlas) {
             kind,
             &ring_vertices,
             |m, rng| PolygonInput::new(lift(&polygon("star", m as usize, rng)), Vec::new()),
-            |input| hypertri::triangulate_polygon(&APPROX, input, option).map(|o| o.value.len()),
+            |input| meshed(hypertri::triangulate_polygon(&APPROX, input, option)),
         );
     }
 
@@ -824,7 +916,7 @@ fn polygons(atlas: &mut Atlas) {
                 let (p, holes) = holed("square exterior", 4, h as usize, rng);
                 PolygonInput::new(p, holes)
             },
-            |input| hypertri::triangulate_polygon(&APPROX, input, option).map(|o| o.value.len()),
+            |input| meshed(hypertri::triangulate_polygon(&APPROX, input, option)),
         );
     }
 
@@ -840,12 +932,11 @@ fn polygons(atlas: &mut Atlas) {
             &ring_vertices,
             |m, rng| PolygonInput::new(lift(&polygon(kind, m as usize, rng)), Vec::new()),
             |input| {
-                hypertri::triangulate_polygon_with_report(
+                meshed(hypertri::triangulate_polygon_with_report(
                     &APPROX,
                     input,
                     TriangulationOptions::default(),
-                )
-                .map(|o| o.value.0.len())
+                ))
             },
         );
     }
@@ -902,7 +993,7 @@ fn delaunay(atlas: &mut Atlas) {
                 kind,
                 &counts,
                 |m, rng| lift(&points_of(kind, m as usize, rng)),
-                |p| run(&APPROX, p).map(|o| o.value.triangles().len()),
+                |p| meshed(run(&APPROX, p)),
             );
         }
         atlas.fuzz(
@@ -919,7 +1010,7 @@ fn delaunay(atlas: &mut Atlas) {
                     base
                 })
             },
-            |p| run(&APPROX, p).map(|o| o.value.triangles().len()),
+            |p| meshed(run(&APPROX, p)),
         );
     }
 
@@ -934,7 +1025,7 @@ fn delaunay(atlas: &mut Atlas) {
             kind,
             &counts,
             |m, rng| represented(kind, m as usize, rng),
-            |p| cdt::delaunay(&APPROX, p).map(|o| o.value.triangles().len()),
+            |p| meshed(cdt::delaunay(&APPROX, p)),
         );
     }
 
@@ -950,7 +1041,7 @@ fn delaunay(atlas: &mut Atlas) {
             kind,
             &bits,
             |b, rng| with_bits(kind, 128, b as u32, rng),
-            |p| cdt::delaunay(&APPROX, p).map(|o| o.value.triangles().len()),
+            |p| meshed(cdt::delaunay(&APPROX, p)),
         );
     }
     atlas.grid(
@@ -958,7 +1049,7 @@ fn delaunay(atlas: &mut Atlas) {
         ("points", &powers_of_two(3, 11)),
         ("coordinate bits", &powers_of_two(3, 11)),
         |n, b, rng| with_bits("integer", n as usize, b as u32, rng),
-        |p| cdt::delaunay(&APPROX, p).map(|o| o.value.triangles().len()),
+        |p| meshed(cdt::delaunay(&APPROX, p)),
     );
 
     atlas.operation(
@@ -972,7 +1063,7 @@ fn delaunay(atlas: &mut Atlas) {
             kind,
             &perturbations,
             |k, rng| degenerate_of(kind, 256, k as u32, rng),
-            |p| cdt::delaunay(&APPROX, p).map(|o| o.value.triangles().len()),
+            |p| meshed(cdt::delaunay(&APPROX, p)),
         );
     }
     atlas.fuzz(
@@ -982,7 +1073,7 @@ fn delaunay(atlas: &mut Atlas) {
             let k = rng.range((k as i64 / 2).max(1), k as i64) as u32;
             degenerate_of("lattice + 2^-k", 128, k, rng)
         },
-        |p| cdt::delaunay(&APPROX, p).map(|o| o.value.triangles().len()),
+        |p| meshed(cdt::delaunay(&APPROX, p)),
     );
     let grid_perturbations = [1.0, 8.0, 24.0, 48.0, 64.0, 128.0, 256.0, 512.0];
     for kind in ["circle + 2^-k", "lattice + 2^-k"] {
@@ -991,7 +1082,7 @@ fn delaunay(atlas: &mut Atlas) {
             ("points", &powers_of_two(3, 10)),
             ("perturbation exponent k", &grid_perturbations),
             |n, k, rng| degenerate_of(kind, n as usize, k as u32, rng),
-            |p| cdt::delaunay(&APPROX, p).map(|o| o.value.triangles().len()),
+            |p| meshed(cdt::delaunay(&APPROX, p)),
         );
     }
 
@@ -1020,7 +1111,7 @@ fn delaunay(atlas: &mut Atlas) {
                 }
                 points
             },
-            |p| cdt::delaunay(&context, p).map(|o| o.value.triangles().len()),
+            |p| meshed(cdt::delaunay(&context, p)),
         );
     }
 
@@ -1043,7 +1134,7 @@ fn delaunay(atlas: &mut Atlas) {
                 kind,
                 &counts,
                 |m, rng| f64_points_of(kind, m as usize, rng),
-                |p| run(&APPROX, p).map(|o| o.value.triangles().len()),
+                |p| meshed(run(&APPROX, p)),
             );
         }
         atlas.fuzz(
@@ -1061,7 +1152,7 @@ fn delaunay(atlas: &mut Atlas) {
                     })
                     .collect::<Vec<_>>()
             },
-            |p| run(&APPROX, p).map(|o| o.value.triangles().len()),
+            |p| meshed(run(&APPROX, p)),
         );
     }
 
@@ -1111,8 +1202,11 @@ fn constrained(atlas: &mut Atlas) {
             &counts,
             |c, rng| pslg(kind, 1024, c as usize, rng),
             |g| {
-                cdt::constrained_delaunay(&APPROX, &g.points, &g.constraints)
-                    .map(|o| o.value.triangles().len())
+                meshed(cdt::constrained_delaunay(
+                    &APPROX,
+                    &g.points,
+                    &g.constraints,
+                ))
             },
         );
     }
@@ -1124,8 +1218,11 @@ fn constrained(atlas: &mut Atlas) {
             pslg("crossing segments", n, c as usize, rng)
         },
         |g| {
-            cdt::constrained_delaunay(&APPROX, &g.points, &g.constraints)
-                .map(|o| o.value.triangles().len())
+            meshed(cdt::constrained_delaunay(
+                &APPROX,
+                &g.points,
+                &g.constraints,
+            ))
         },
     );
     atlas.grid(
@@ -1134,8 +1231,11 @@ fn constrained(atlas: &mut Atlas) {
         ("points", &powers_of_two(4, 11)),
         |c, n, rng| pslg("crossing segments", n as usize, c as usize, rng),
         |g| {
-            cdt::constrained_delaunay(&APPROX, &g.points, &g.constraints)
-                .map(|o| o.value.triangles().len())
+            meshed(cdt::constrained_delaunay(
+                &APPROX,
+                &g.points,
+                &g.constraints,
+            ))
         },
     );
 
@@ -1151,8 +1251,11 @@ fn constrained(atlas: &mut Atlas) {
             &point_counts,
             |n, rng| pslg(kind, n as usize, tied_constraints(kind, n as usize), rng),
             |g| {
-                cdt::constrained_delaunay(&APPROX, &g.points, &g.constraints)
-                    .map(|o| o.value.triangles().len())
+                meshed(cdt::constrained_delaunay(
+                    &APPROX,
+                    &g.points,
+                    &g.constraints,
+                ))
             },
         );
     }
@@ -1169,8 +1272,11 @@ fn constrained(atlas: &mut Atlas) {
             &point_counts,
             |n, rng| pslg(kind, n as usize, tied_constraints(kind, n as usize), rng),
             |g| {
-                cdt::constrained_delaunay_convex_hull(&APPROX, &g.points, &g.constraints)
-                    .map(|o| o.value.triangles().len())
+                meshed(cdt::constrained_delaunay_convex_hull(
+                    &APPROX,
+                    &g.points,
+                    &g.constraints,
+                ))
             },
         );
     }
@@ -1187,8 +1293,11 @@ fn constrained(atlas: &mut Atlas) {
             &point_counts,
             |n, rng| pslg(kind, n as usize, tied_constraints(kind, n as usize), rng),
             |g| {
-                cdt::constrained_triangulation_convex_hull(&APPROX, &g.points, &g.constraints)
-                    .map(|o| o.value.len())
+                meshed(cdt::constrained_triangulation_convex_hull(
+                    &APPROX,
+                    &g.points,
+                    &g.constraints,
+                ))
             },
         );
     }
@@ -1225,13 +1334,14 @@ fn constrained(atlas: &mut Atlas) {
                 (g, facts)
             },
             |(g, facts)| {
-                cdt::constrained_triangulation_convex_hull_with_collinear_facts(
-                    &APPROX,
-                    &g.points,
-                    &g.constraints,
-                    facts,
+                meshed(
+                    cdt::constrained_triangulation_convex_hull_with_collinear_facts(
+                        &APPROX,
+                        &g.points,
+                        &g.constraints,
+                        facts,
+                    ),
                 )
-                .map(|o| o.value.len())
             },
         );
     }
@@ -1284,10 +1394,7 @@ fn constrained(atlas: &mut Atlas) {
                 let g = pslg(kind, n, tied_constraints(kind, n), rng);
                 (to_f64(&g.ints), g.constraints)
             },
-            |(p, c)| {
-                hypertri::f64::constrained_delaunay(&APPROX, p, c)
-                    .map(|o| o.value.triangles().len())
-            },
+            |(p, c)| meshed(hypertri::f64::constrained_delaunay(&APPROX, p, c)),
         );
     }
 }
@@ -1306,7 +1413,7 @@ fn dimensional(atlas: &mut Atlas) {
             kind,
             &small,
             |n, rng| nd_points(kind, n as usize, rng),
-            |p| nd::delaunay_complex(&APPROX, p).map(|o| o.value.cells().len()),
+            |p| meshed(nd::delaunay_complex(&APPROX, p)),
         );
     }
     atlas.fuzz(
@@ -1316,7 +1423,7 @@ fn dimensional(atlas: &mut Atlas) {
             let kind = ["2D uniform", "3D uniform", "4D uniform"][rng.below(3) as usize];
             nd_points(kind, n as usize, rng)
         },
-        |p| nd::delaunay_complex(&APPROX, p).map(|o| o.value.cells().len()),
+        |p| meshed(nd::delaunay_complex(&APPROX, p)),
     );
 
     atlas.operation(

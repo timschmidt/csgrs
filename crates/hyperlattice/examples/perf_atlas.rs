@@ -11,11 +11,18 @@
 //! `2^-2048`; an entry whose sign stays undecided is reported as a failed call
 //! rather than refined forever, because formatting an unproven zero does not
 //! terminate.
+//!
+//! Resource runs (`--resources`) report the largest stored expression over
+//! the output entries (`Real::representation_size`: `nodes` and `depth` of the
+//! expression DAG, `bits` of the largest stored rational).
+use std::hint::black_box;
+
 use hyperlattice::{
-    Complex, Matrix3, Matrix4, Point3, Problem, ProjectivePlane3, Rational, Real, RealSign,
-    Vector2, Vector3, Vector4, intersect_three_planes, intersect_two_planes, orient2_expr,
+    Complex, HomogeneousLine3, HomogeneousPoint3, Matrix3, Matrix4, Point3, Problem,
+    ProjectivePlane3, Rational, Real, RealSign, Vector2, Vector3, Vector4, intersect_three_planes,
+    intersect_two_planes, orient2_expr,
 };
-use perf_atlas::{Atlas, Rng, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shaped, powers_of_two};
 
 /// Heap accounting for `--resources` runs; only this atlas binary installs it.
 #[global_allocator]
@@ -151,8 +158,133 @@ fn force_point(p: &Point3) -> Option<usize> {
     force([&p.x, &p.y, &p.z])
 }
 
-fn ok<T>(value: Result<T, Problem>, f: impl FnOnce(T) -> Option<usize>) -> Option<usize> {
-    value.ok().and_then(f)
+/// A forced result kept for the resource atlas's shape reader. Wrapping is a
+/// move; the reader runs only after the measured call.
+#[allow(
+    clippy::large_enum_variant,
+    reason = "boxing the large variants would add an allocation to every timed call"
+)]
+enum Out {
+    Real(Real),
+    Vector2(Vector2),
+    Vector3(Vector3),
+    Vector4(Vector4),
+    Basis(Vector3, Vector3),
+    Matrix3(Matrix3),
+    Matrix4(Matrix4),
+    Point3(Point3),
+    Points(Vec<Point3>),
+    Complex(Complex),
+    Jacobi(Complex, Complex, Complex),
+    Projective(HomogeneousPoint3, Point3),
+    Line(HomogeneousLine3),
+    /// A result without exact entries.
+    Fact,
+}
+
+macro_rules! out {
+    ($($t:ty => $v:ident),*) => {$(
+        impl From<$t> for Out {
+            fn from(value: $t) -> Self {
+                Out::$v(value)
+            }
+        }
+    )*};
+}
+out!(
+    Real => Real, Vector2 => Vector2, Vector3 => Vector3, Vector4 => Vector4,
+    Matrix3 => Matrix3, Matrix4 => Matrix4, Point3 => Point3, Vec<Point3> => Points,
+    Complex => Complex, HomogeneousLine3 => Line
+);
+impl From<(Vector3, Vector3)> for Out {
+    fn from((u, v): (Vector3, Vector3)) -> Self {
+        Out::Basis(u, v)
+    }
+}
+impl From<(Complex, Complex, Complex)> for Out {
+    fn from((a, b, c): (Complex, Complex, Complex)) -> Self {
+        Out::Jacobi(a, b, c)
+    }
+}
+impl From<(HomogeneousPoint3, Point3)> for Out {
+    fn from((p, a): (HomogeneousPoint3, Point3)) -> Self {
+        Out::Projective(p, a)
+    }
+}
+
+impl Out {
+    fn entries(&self) -> Vec<&Real> {
+        fn point(p: &Point3) -> [&Real; 3] {
+            [&p.x, &p.y, &p.z]
+        }
+        fn complex(z: &Complex) -> [&Real; 2] {
+            [&z.re, &z.im]
+        }
+        match self {
+            Out::Real(x) => vec![x],
+            Out::Vector2(v) => v.0.iter().collect(),
+            Out::Vector3(v) => v.0.iter().collect(),
+            Out::Vector4(v) => v.0.iter().collect(),
+            Out::Basis(u, v) => u.0.iter().chain(&v.0).collect(),
+            Out::Matrix3(m) => m.0.iter().flatten().collect(),
+            Out::Matrix4(m) => m.0.iter().flatten().collect(),
+            Out::Point3(p) => point(p).to_vec(),
+            Out::Points(points) => points.iter().flat_map(point).collect(),
+            Out::Complex(z) => complex(z).to_vec(),
+            Out::Jacobi(a, b, c) => [a, b, c].into_iter().flat_map(complex).collect(),
+            Out::Projective(p, a) => [&p.x, &p.y, &p.z, &p.w]
+                .into_iter()
+                .chain(point(a))
+                .collect(),
+            Out::Line(l) => point(&l.direction)
+                .into_iter()
+                .chain(point(&l.moment))
+                .collect(),
+            Out::Fact => Vec::new(),
+        }
+    }
+
+    /// Largest stored expression over the entries, as the hyperreal atlas
+    /// reads it: `nodes` and `depth` of the largest expression DAG, `bits`
+    /// of the largest stored rational.
+    fn shape(&self) -> Option<perf_atlas::Shape> {
+        if matches!(self, Out::Fact) {
+            return None;
+        }
+        Some(
+            self.entries()
+                .into_iter()
+                .map(|x| x.representation_size(1 << 20))
+                .fold(perf_atlas::Shape::default(), |shape, size| {
+                    perf_atlas::Shape {
+                        nodes: shape.nodes.max(size.nodes as u64),
+                        depth: shape.depth.max(size.depth as u64),
+                        bits: shape.bits.max(size.max_rational_bits),
+                    }
+                }),
+        )
+    }
+}
+
+/// A timed result: forced inside the call, kept for its shape.
+type Res = Shaped<Option<Out>>;
+
+/// Force `value` with `f` inside the timed call (a `None` marks a failure) and
+/// keep it for the shape reader.
+fn kept<T: Into<Out>>(value: T, f: impl FnOnce(&T) -> Option<usize>) -> Res {
+    keep_some(Some(value), f)
+}
+
+fn keep<T: Into<Out>>(value: Result<T, Problem>, f: impl FnOnce(&T) -> Option<usize>) -> Res {
+    keep_some(value.ok(), f)
+}
+
+fn keep_some<T: Into<Out>>(value: Option<T>, f: impl FnOnce(&T) -> Option<usize>) -> Res {
+    let value = value.and_then(|value| {
+        black_box(f(&value)?);
+        Some(value.into())
+    });
+    Shaped::new(value, |value| value.as_ref().and_then(Out::shape))
 }
 
 trait Vector: Sized {
@@ -324,7 +456,7 @@ fn vector_operation(
     settings: &Settings,
     (name, description): (&str, &str),
     dims: &[usize],
-    run: impl Fn(&VecIn) -> Option<usize>,
+    run: impl Fn(&VecIn) -> Res,
 ) {
     atlas.operation("vector", name, "entry bits", description);
     let main = if dims.contains(&3) { 3 } else { dims[0] };
@@ -381,7 +513,7 @@ fn matrix_operation(
     atlas: &mut Atlas,
     settings: &Settings,
     (name, description): (&str, &str),
-    run: impl Fn(&MatIn) -> Option<usize>,
+    run: impl Fn(&MatIn) -> Res,
 ) {
     atlas.operation("matrix", name, "entry bits", description);
     for kind in KINDS {
@@ -459,7 +591,7 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
             "Componentwise sum a + b; dimension 3 in the series, 2-4 in grids.",
         ),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => V::build(&x.a).plus(&V::build(&x.b)).force()),
+        |x| by_vector!(x.a.len(), V => kept(V::build(&x.a).plus(&V::build(&x.b)), |v| v.force())),
     );
     vector_operation(
         atlas,
@@ -469,7 +601,7 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
             "Vector times a scalar of the same kind and size.",
         ),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => V::build(&x.a).scaled(real(&x.t)).force()),
+        |x| by_vector!(x.a.len(), V => kept(V::build(&x.a).scaled(real(&x.t)), |v| v.force())),
     );
     vector_operation(
         atlas,
@@ -479,14 +611,14 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
             "Exact dot product, approximated to 17 significant digits.",
         ),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => digits(&V::build(&x.a).dot_with(&V::build(&x.b)))),
+        |x| by_vector!(x.a.len(), V => kept(V::build(&x.a).dot_with(&V::build(&x.b)), digits)),
     );
     vector_operation(
         atlas,
         s,
         ("norm squared", "Exact squared Euclidean norm."),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => digits(&V::build(&x.a).norm2())),
+        |x| by_vector!(x.a.len(), V => kept(V::build(&x.a).norm2(), digits)),
     );
     vector_operation(
         atlas,
@@ -496,14 +628,14 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
             "Euclidean norm: square root of the exact squared norm.",
         ),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => ok(V::build(&x.a).length(), |m| digits(&m))),
+        |x| by_vector!(x.a.len(), V => keep(V::build(&x.a).length(), digits)),
     );
     vector_operation(
         atlas,
         s,
         ("normalize", "Unit vector; every component approximated."),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => ok(V::build(&x.a).unit(), |u| u.force())),
+        |x| by_vector!(x.a.len(), V => keep(V::build(&x.a).unit(), |u| u.force())),
     );
     vector_operation(
         atlas,
@@ -513,7 +645,7 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
             "Unit vector after a structural nonzero proof of the norm; refusals are failures.",
         ),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => ok(V::build(&x.a).unit_checked(), |u| u.force())),
+        |x| by_vector!(x.a.len(), V => keep(V::build(&x.a).unit_checked(), |u| u.force())),
     );
     vector_operation(
         atlas,
@@ -523,17 +655,19 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
             "a + t (b - a) with a scalar t of the same kind and size.",
         ),
         &[2, 3, 4],
-        |x| by_vector!(x.a.len(), V => V::build(&x.a).interpolate(&V::build(&x.b), &real(&x.t)).force()),
+        |x| by_vector!(x.a.len(), V => kept(V::build(&x.a).interpolate(&V::build(&x.b), &real(&x.t)), |v| v.force())),
     );
     vector_operation(atlas, s, ("cross", "3D cross product."), &[3], |x| {
-        force(&Vector3::build(&x.a).cross(&Vector3::build(&x.b)).0)
+        kept(Vector3::build(&x.a).cross(&Vector3::build(&x.b)), |v| {
+            force(&v.0)
+        })
     });
     vector_operation(
         atlas,
         s,
         ("wedge", "2D wedge (signed parallelogram area)."),
         &[2],
-        |x| digits(&Vector2::build(&x.a).wedge(&Vector2::build(&x.b))),
+        |x| kept(Vector2::build(&x.a).wedge(&Vector2::build(&x.b)), digits),
     );
     vector_operation(
         atlas,
@@ -543,11 +677,7 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
             "acos of the dot product of the two normalized 3D vectors.",
         ),
         &[3],
-        |x| {
-            ok(Vector3::build(&x.a).angle_to(&Vector3::build(&x.b)), |a| {
-                digits(&a)
-            })
-        },
+        |x| keep(Vector3::build(&x.a).angle_to(&Vector3::build(&x.b)), digits),
     );
     vector_operation(
         atlas,
@@ -558,7 +688,7 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
         ),
         &[3],
         |x| {
-            ok(
+            keep(
                 Vector3::build(&x.a).orthonormal_basis_checked(),
                 |(u, v)| Some(u.force()? + v.force()?),
             )
@@ -574,7 +704,7 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
     let counts = powers_of_two(0, 12);
     let centroid = |p: &Vec<Vec<E>>| {
         let points: Vec<Point3> = p.iter().map(|e| point3(e)).collect();
-        Point3::centroid(&points).and_then(|c| force_point(&c))
+        keep_some(Point3::centroid(&points), force_point)
     };
     for kind in KINDS {
         atlas.sweep(
@@ -601,7 +731,7 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
         atlas,
         s,
         ("matrix add", "Entrywise sum of two square matrices."),
-        |x| by_matrix!(x.n, M => M::build(&x.a).plus(&M::build(&x.b)).force()),
+        |x| by_matrix!(x.n, M => kept(M::build(&x.a).plus(&M::build(&x.b)), |m| m.force())),
     );
     matrix_operation(
         atlas,
@@ -610,25 +740,25 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
             "matrix scale",
             "Matrix times a scalar of the same kind and size.",
         ),
-        |x| by_matrix!(x.n, M => M::build(&x.a).scaled(real(&x.s)).force()),
+        |x| by_matrix!(x.n, M => kept(M::build(&x.a).scaled(real(&x.s)), |m| m.force())),
     );
     matrix_operation(
         atlas,
         s,
         ("matrix multiply", "Exact matrix product A·B."),
-        |x| by_matrix!(x.n, M => M::build(&x.a).times(&M::build(&x.b)).force()),
+        |x| by_matrix!(x.n, M => kept(M::build(&x.a).times(&M::build(&x.b)), |m| m.force())),
     );
     matrix_operation(
         atlas,
         s,
         ("matrix × vector", "Exact matrix-vector product A·v."),
-        |x| by_matrix!(x.n, M => M::build(&x.a).apply(&<M as Matrix>::V::build(&x.v)).force()),
+        |x| by_matrix!(x.n, M => kept(M::build(&x.a).apply(&<M as Matrix>::V::build(&x.v)), |v| v.force())),
     );
     matrix_operation(
         atlas,
         s,
         ("determinant", "Exact determinant of a dense matrix."),
-        |x| by_matrix!(x.n, M => digits(&M::build(&x.a).det())),
+        |x| by_matrix!(x.n, M => kept(M::build(&x.a).det(), digits)),
     );
     matrix_operation(
         atlas,
@@ -637,7 +767,7 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
             "inverse",
             "Adjugate/determinant inverse; an unknown-zero determinant is refined, a zero one fails.",
         ),
-        |x| by_matrix!(x.n, M => ok(M::build(&x.a).inv(), |m| m.force())),
+        |x| by_matrix!(x.n, M => keep(M::build(&x.a).inv(), |m| m.force())),
     );
     matrix_operation(
         atlas,
@@ -646,7 +776,7 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
             "inverse checked",
             "Inverse that refuses a determinant not structurally known to be nonzero; refusals are failures.",
         ),
-        |x| by_matrix!(x.n, M => ok(M::build(&x.a).inv_checked(), |m| m.force())),
+        |x| by_matrix!(x.n, M => keep(M::build(&x.a).inv_checked(), |m| m.force())),
     );
     matrix_operation(
         atlas,
@@ -655,27 +785,28 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
             "right divide (solve)",
             "A / B = A·B⁻¹ through the fixed-size left solver.",
         ),
-        |x| by_matrix!(x.n, M => ok(M::build(&x.a).right_divide(&M::build(&x.b)), |m| m.force())),
+        |x| by_matrix!(x.n, M => keep(M::build(&x.a).right_divide(&M::build(&x.b)), |m| m.force())),
     );
 
     for (name, run) in [
         (
             "determinant by structure",
-            (|x: &MatIn| by_matrix!(x.n, M => digits(&M::build(&x.a).det())))
-                as fn(&MatIn) -> Option<usize>,
+            (|x: &MatIn| by_matrix!(x.n, M => kept(M::build(&x.a).det(), digits)))
+                as fn(&MatIn) -> Res,
         ),
         (
             "inverse by structure",
-            |x: &MatIn| by_matrix!(x.n, M => ok(M::build(&x.a).inv(), |m| m.force())),
+            |x: &MatIn| by_matrix!(x.n, M => keep(M::build(&x.a).inv(), |m| m.force())),
         ),
         (
             "right divide by structure",
-            |x: &MatIn| by_matrix!(x.n, M => ok(M::build(&x.b).right_divide(&M::build(&x.a)), |m| m.force())),
+            |x: &MatIn| by_matrix!(x.n, M => keep(M::build(&x.b).right_divide(&M::build(&x.a)), |m| m.force())),
         ),
         ("structural facts", |x: &MatIn| {
             // Includes rebuilding the entries; the fact scan itself is the rest.
             let facts = Matrix4::build(&x.a).structural_facts();
-            Some(usize::from(facts.has_known_zero_lane()))
+            black_box(facts.has_known_zero_lane());
+            Shaped::new(Some(Out::Fact), |_| None)
         }),
     ] {
         atlas.operation(
@@ -704,27 +835,27 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
         .map(|i| f64::from(i * 32))
         .chain([SINGULAR])
         .collect();
-    type Conditioned = fn(&MatIn) -> Option<usize>;
+    type Conditioned = fn(&MatIn) -> Res;
     let conditioned: [(&str, &str, Conditioned); 4] = [
         (
             "determinant near singular",
             "Determinant of a 3x3 matrix whose last row is the sum of the others plus 2^-k·noise (64-bit entries); the last point (k = 512) is exactly singular.",
-            |x| by_matrix!(x.n, M => digits(&M::build(&x.a).det())),
+            |x| by_matrix!(x.n, M => kept(M::build(&x.a).det(), digits)),
         ),
         (
             "inverse near singular",
             "Inverse of the same near-singular matrices; the exactly singular point fails.",
-            |x| by_matrix!(x.n, M => ok(M::build(&x.a).inv(), |m| m.force())),
+            |x| by_matrix!(x.n, M => keep(M::build(&x.a).inv(), |m| m.force())),
         ),
         (
             "inverse checked near singular",
             "Checked inverse of the same near-singular matrices; unknown-zero determinants are refused.",
-            |x| by_matrix!(x.n, M => ok(M::build(&x.a).inv_checked(), |m| m.force())),
+            |x| by_matrix!(x.n, M => keep(M::build(&x.a).inv_checked(), |m| m.force())),
         ),
         (
             "solve near singular",
             "Right division B / A by the same near-singular matrices A.",
-            |x| by_matrix!(x.n, M => ok(M::build(&x.b).right_divide(&M::build(&x.a)), |m| m.force())),
+            |x| by_matrix!(x.n, M => keep(M::build(&x.b).right_divide(&M::build(&x.a)), |m| m.force())),
         ),
     ];
     for (name, description, run) in conditioned {
@@ -774,7 +905,7 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
     );
     let exponents = powers_of_two(0, 10);
     let power =
-        |(x, e): &(MatIn, i32)| by_matrix!(x.n, M => ok(M::build(&x.a).power(*e), |m| m.force()));
+        |(x, e): &(MatIn, i32)| by_matrix!(x.n, M => keep(M::build(&x.a).power(*e), |m| m.force()));
     for kind in KINDS {
         atlas.sweep(
             kind,
@@ -809,7 +940,7 @@ fn transforms(atlas: &mut Atlas, s: &Settings) {
     let batch = |(m, points): &(Vec<E>, Vec<Vec<E>>)| {
         let matrix = Matrix4::build(m);
         let points: Vec<Point3> = points.iter().map(|p| point3(p)).collect();
-        ok(matrix.transform_point3_batch(&points), |out| {
+        keep(matrix.transform_point3_batch(&points), |out| {
             out.iter().map(force_point).sum()
         })
     };
@@ -851,9 +982,11 @@ fn transforms(atlas: &mut Atlas, s: &Settings) {
         "Build Matrix4::rotation_axis_angle about a random axis by a 53-bit dyadic angle in [1/2, 1), then transform a point; sin/cos and normalization are lazy until the output is approximated.",
     );
     let rotate = |(axis, angle, p): &(Vec<E>, E, Vec<E>)| {
-        ok(
-            Matrix4::rotation_axis_angle(&Vector3::build(axis), real(angle)),
-            |m| ok(m.transform_point3(&point3(p)), |q| force_point(&q)),
+        keep_some(
+            Matrix4::rotation_axis_angle(&Vector3::build(axis), real(angle))
+                .ok()
+                .and_then(|m| m.transform_point3(&point3(p)).ok()),
+            force_point,
         )
     };
     let angle = |rng: &mut Rng| E::Exact(&parse(&odd(rng.decimal(53))) / &pow2(54));
@@ -891,7 +1024,7 @@ fn transforms(atlas: &mut Atlas, s: &Settings) {
         "Matrix4::rotation_between_vectors for two random 3D vectors, all entries approximated.",
     );
     let between = |x: &VecIn| {
-        ok(
+        keep(
             Matrix4::rotation_between_vectors(&Vector3::build(&x.a), &Vector3::build(&x.b)),
             |m| m.force(),
         )
@@ -930,7 +1063,7 @@ fn complex(atlas: &mut Atlas, s: &Settings) {
     ];
     for (name, description, op) in binary {
         atlas.operation("complex", name, "operand bits", description);
-        let run = |x: &VecIn| ok(op(c(&x.a), c(&x.b)), |z| force_c(&z));
+        let run = |x: &VecIn| keep(op(c(&x.a), c(&x.b)), force_c);
         for kind in KINDS {
             atlas.sweep(
                 kind,
@@ -965,7 +1098,7 @@ fn complex(atlas: &mut Atlas, s: &Settings) {
         "Integer power of a complex value with 16-bit parts; fuzzed exponents take either sign.",
     );
     let exponents = powers_of_two(0, 10);
-    let power = |(z, e): &(Vec<E>, i64)| ok(c(z).powi(*e), |w| force_c(&w));
+    let power = |(z, e): &(Vec<E>, i64)| keep(c(z).powi(*e), force_c);
     for kind in KINDS {
         atlas.sweep(
             kind,
@@ -995,16 +1128,16 @@ fn complex(atlas: &mut Atlas, s: &Settings) {
             })
             .collect()
     };
-    type Unary = fn(Complex) -> Option<usize>;
-    fn force_parts(z: Complex) -> Option<usize> {
+    type Unary = fn(Complex) -> Res;
+    fn force_parts(z: &Complex) -> Option<usize> {
         force([&z.re, &z.im])
     }
     let unary: [(&str, Unary, i32, i32); 2] = [
-        ("complex atanh", |z| ok(z.atanh(), force_parts), -32, 32),
+        ("complex atanh", |z| keep(z.atanh(), force_parts), -32, 32),
         (
             "complex jacobi sncndn (m = 1/2)",
             |z| {
-                ok(
+                keep(
                     z.jacobi_sncndn(&Real::new(Rational::fraction(1, 2).unwrap())),
                     |(a, b, c)| Some(force_parts(a)? + force_parts(b)? + force_parts(c)?),
                 )
@@ -1061,7 +1194,7 @@ fn complex(atlas: &mut Atlas, s: &Settings) {
             kind,
             &ks,
             |k, rng| near_cut(kind, k, rng),
-            |z| ok(c(z).atanh(), force_parts),
+            |z| keep(c(z).atanh(), force_parts),
         );
     }
 }
@@ -1076,8 +1209,9 @@ fn geometry(atlas: &mut Atlas, s: &Settings) {
     );
     let three = |e: &Vec<E>| {
         let p = intersect_three_planes(&plane(&e[0..4]), &plane(&e[4..8]), &plane(&e[8..12]));
-        ok(p.to_affine_point(), |a| {
-            Some(force([&p.x, &p.y, &p.z, &p.w])? + force_point(&a)?)
+        let affine = p.to_affine_point();
+        keep(affine.map(|a| (p, a)), |(p, a)| {
+            Some(force([&p.x, &p.y, &p.z, &p.w])? + force_point(a)?)
         })
     };
     for kind in KINDS {
@@ -1103,7 +1237,9 @@ fn geometry(atlas: &mut Atlas, s: &Settings) {
     );
     let two = |e: &Vec<E>| {
         let line = intersect_two_planes(&plane(&e[0..4]), &plane(&e[4..8]));
-        Some(force_point(&line.direction)? + force_point(&line.moment)?)
+        kept(line, |line| {
+            Some(force_point(&line.direction)? + force_point(&line.moment)?)
+        })
     };
     for kind in KINDS {
         atlas.sweep(
@@ -1152,9 +1288,13 @@ fn geometry(atlas: &mut Atlas, s: &Settings) {
     };
     let orient = |e: &Vec<E>| {
         let r: Vec<Real> = e.iter().map(real).collect();
-        orient2_expr([&r[0], &r[1]], [&r[2], &r[3]], [&r[4], &r[5]])
-            .refine_sign_until(SIGN_PRECISION)
-            .map(|sign| sign as u8)
+        kept(
+            orient2_expr([&r[0], &r[1]], [&r[2], &r[3]], [&r[4], &r[5]]),
+            |e| {
+                e.refine_sign_until(SIGN_PRECISION)
+                    .map(|sign| sign as usize)
+            },
+        )
     };
     for kind in KINDS {
         atlas.sweep(kind, &ks, |k, rng| collinear(kind, 64, k, rng), orient);

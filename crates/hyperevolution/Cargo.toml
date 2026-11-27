@@ -26,6 +26,7 @@ dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false, features = ["std"] }
 hyperreal = { version = "0.14.0", path = "../hyperreal" }
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 
 [[bench]]

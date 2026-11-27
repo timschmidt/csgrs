@@ -1541,6 +1541,7 @@ dependencies = [
  "image",
  "js-sys",
  "manifold-rust",
+ "perf-atlas",
  "ply-rs",
  "proptest",
  "serde",
@@ -2482,6 +2483,7 @@ dependencies = [
  "hyperreal",
  "hypersolve",
  "hypertri",
+ "perf-atlas",
  "proptest",
  "serde",
  "serde_json",
@@ -2498,6 +2500,7 @@ dependencies = [
  "hyperlimit",
  "hyperreal",
  "num",
+ "perf-atlas",
  "serde_json",
 ]
 
@@ -2515,6 +2518,7 @@ dependencies = [
  "hyperphysics",
  "hyperreal",
  "hypersolve",
+ "perf-atlas",
  "proptest",
  "quick-xml",
  "ring",
@@ -2569,6 +2573,7 @@ dependencies = [
  "libc",
  "log",
  "parquet",
+ "perf-atlas",
  "proptest",
  "quick-xml",
  "rusqlite",
@@ -2599,6 +2604,7 @@ version = "0.3.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
+ "perf-atlas",
  "proptest",
 ]
 
@@ -2616,6 +2622,7 @@ dependencies = [
  "hyperreal",
  "hypertri",
  "nalgebra 0.34.2",
+ "perf-atlas",
 ]
 
 [[package]]
@@ -2689,6 +2696,7 @@ dependencies = [
  "hyperreal",
  "hypertri",
  "manifold-rust",
+ "perf-atlas",
  "proptest",
  "three-d-asset",
  "toml 0.8.23",
@@ -2702,6 +2710,7 @@ dependencies = [
  "hypercurve",
  "hyperlimit",
  "hyperreal",
+ "perf-atlas",
  "proptest",
 ]
 
@@ -2711,6 +2720,7 @@ version = "0.3.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
+ "perf-atlas",
  "proptest",
 ]
 
@@ -2722,6 +2732,7 @@ dependencies = [
  "hyperlimit",
  "hyperreal",
  "hypersolve",
+ "perf-atlas",
  "proptest",
 ]
 
@@ -2737,6 +2748,7 @@ dependencies = [
  "hypermesh",
  "hyperreal",
  "hypersolve",
+ "perf-atlas",
  "proptest",
 ]
 
@@ -2767,6 +2779,7 @@ dependencies = [
  "hyperreal",
  "hypersolve",
  "hypervoxel",
+ "perf-atlas",
  "proptest",
 ]
 
@@ -2796,6 +2809,7 @@ dependencies = [
  "hyperlimit",
  "hyperreal",
  "map_3d",
+ "perf-atlas",
  "proj4rs",
  "proptest",
  "serde_json",

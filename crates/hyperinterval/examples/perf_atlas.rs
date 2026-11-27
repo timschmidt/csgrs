@@ -15,6 +15,11 @@
 //!
 //! Run through `scripts/perf-atlas/run.sh`, or directly:
 //! `cargo run --release -p hyperinterval --all-features --example perf_atlas -- --out atlas.json`.
+//!
+//! Resource runs (`--resources`) report result shapes for exact backends:
+//! `nodes` counts interval components (two for split sets and bisections),
+//! `bits` is the largest endpoint mantissa (dyadic) or numerator plus
+//! denominator (rational). Fixed-size backends report no shape.
 use std::hint::black_box;
 
 use hyperinterval::{
@@ -24,7 +29,7 @@ use hyperinterval::{
 };
 use hyperreal::{Rational, Real};
 use num_bigint::{BigInt, BigUint};
-use perf_atlas::{Atlas, Rng, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shaped, powers_of_two};
 
 /// Heap accounting for `--resources` runs; only this atlas binary installs it.
 #[global_allocator]
@@ -47,6 +52,156 @@ fn ok<T, E>(result: Result<T, E>) -> bool {
     let succeeded = result.is_ok();
     let _ = black_box(result);
     succeeded
+}
+
+/// An exact interval result kept for the resource atlas's shape reader.
+/// Wrapping is a move; the reader runs only after the measured call.
+enum Image {
+    Dyadic(DyadicInterval),
+    Halves(Option<[DyadicInterval; 2]>),
+    Extended(Extended),
+    Split(Split),
+    Rational(RationalInterval),
+    Scalar(Rational),
+}
+
+trait IntoImage {
+    fn image(self) -> Image;
+}
+impl IntoImage for DyadicInterval {
+    fn image(self) -> Image {
+        Image::Dyadic(self)
+    }
+}
+impl IntoImage for Option<[DyadicInterval; 2]> {
+    fn image(self) -> Image {
+        Image::Halves(self)
+    }
+}
+impl IntoImage for Extended {
+    fn image(self) -> Image {
+        Image::Extended(self)
+    }
+}
+impl IntoImage for Split {
+    fn image(self) -> Image {
+        Image::Split(self)
+    }
+}
+impl IntoImage for RationalInterval {
+    fn image(self) -> Image {
+        Image::Rational(self)
+    }
+}
+impl<I: IntoImage> IntoImage for hyperinterval::RangeEnclosure<I> {
+    fn image(self) -> Image {
+        self.range.image()
+    }
+}
+
+/// `nodes`: interval components; `bits`: largest endpoint mantissa (dyadic)
+/// or numerator plus denominator (rational).
+fn dyadic_shape(x: &DyadicInterval) -> perf_atlas::Shape {
+    x.bounds()
+        .map_or(perf_atlas::Shape::default(), |(a, b, _)| {
+            perf_atlas::Shape {
+                nodes: 1,
+                depth: 0,
+                bits: a.bits().max(b.bits()),
+            }
+        })
+}
+
+fn extended_shape(x: &Extended) -> perf_atlas::Shape {
+    use hyperinterval::ExtendedIntervalView as View;
+    match x.view() {
+        View::Empty => perf_atlas::Shape::default(),
+        View::Entire => perf_atlas::Shape {
+            nodes: 1,
+            ..perf_atlas::Shape::default()
+        },
+        View::Finite(x) | View::Below(x) | View::Above(x) => dyadic_shape(x),
+    }
+}
+
+fn scalar_bits(q: &Rational) -> u64 {
+    q.numerator().bits() + q.denominator().bits()
+}
+
+fn combine(parts: impl IntoIterator<Item = perf_atlas::Shape>) -> perf_atlas::Shape {
+    parts
+        .into_iter()
+        .fold(perf_atlas::Shape::default(), |a, b| perf_atlas::Shape {
+            nodes: a.nodes + b.nodes,
+            depth: a.depth.max(b.depth),
+            bits: a.bits.max(b.bits),
+        })
+}
+
+impl Image {
+    fn shape(&self) -> perf_atlas::Shape {
+        match self {
+            Self::Dyadic(x) => dyadic_shape(x),
+            Self::Halves(None) => perf_atlas::Shape::default(),
+            Self::Halves(Some(halves)) => combine(halves.iter().map(dyadic_shape)),
+            Self::Extended(x) => extended_shape(x),
+            Self::Split(x) => combine(x.components().iter().map(extended_shape)),
+            Self::Rational(x) => {
+                x.bounds()
+                    .map_or(perf_atlas::Shape::default(), |(a, b)| perf_atlas::Shape {
+                        nodes: 1,
+                        depth: 0,
+                        bits: scalar_bits(a).max(scalar_bits(b)),
+                    })
+            }
+            Self::Scalar(q) => perf_atlas::Shape {
+                nodes: 1,
+                depth: 0,
+                bits: scalar_bits(q),
+            },
+        }
+    }
+}
+
+/// A fallible interval result with its shape.
+type Out = Shaped<Result<Image, hyperinterval::IntervalError>>;
+/// An optional exact result with its shape.
+type Exact = Shaped<Option<Image>>;
+
+fn img<T: IntoImage>(result: Result<T, hyperinterval::IntervalError>) -> Out {
+    Shaped::new(result.map(IntoImage::image), |r| {
+        r.as_ref().ok().map(Image::shape)
+    })
+}
+
+fn some<T: IntoImage>(result: Option<T>) -> Exact {
+    Shaped::new(result.map(IntoImage::image), |r| {
+        r.as_ref().map(Image::shape)
+    })
+}
+
+/// A rational interval reduced to canonical form inside the timed call.
+fn settled(x: Option<RationalInterval>) -> Exact {
+    some(x.inspect(|x| {
+        black_box(settle(x));
+    }))
+}
+
+fn scalar_shape(q: &Option<Rational>) -> Option<perf_atlas::Shape> {
+    q.as_ref().map(|q| perf_atlas::Shape {
+        nodes: 1,
+        depth: 0,
+        bits: scalar_bits(q),
+    })
+}
+
+/// A rational scalar reduced to canonical form inside the timed call.
+fn settled_scalar(q: Option<Rational>) -> Exact {
+    let q = q.map(|q| {
+        black_box(scalar_bits(&q));
+        Image::Scalar(q)
+    });
+    Shaped::new(q, |r| r.as_ref().map(Image::shape))
 }
 
 /// `lo..=hi` in steps, always including `hi`.
@@ -190,8 +345,8 @@ fn main() {
     atlas.finish();
 }
 
-type DyadicBinary = fn(&DyadicInterval, &DyadicInterval, &mut DyadicBudget) -> bool;
-type DyadicUnary = fn(&DyadicInterval, &mut DyadicBudget) -> bool;
+type DyadicBinary = fn(&DyadicInterval, &DyadicInterval, &mut DyadicBudget) -> Out;
+type DyadicUnary = fn(&DyadicInterval, &mut DyadicBudget) -> Out;
 
 fn dyadic_arithmetic(atlas: &mut Atlas) {
     let bits = powers_of_two(0, 16);
@@ -202,43 +357,43 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
             "dyadic add",
             "Exact sum of two dyadic intervals near 1 with mantissas of the given size, aligned to a shared grid.",
             false,
-            |a, b, g| ok(a.add(b, g)),
+            |a, b, g| img(a.add(b, g)),
         ),
         (
             "dyadic sub",
             "Exact Minkowski difference of two dyadic intervals near 1.",
             false,
-            |a, b, g| ok(a.sub(b, g)),
+            |a, b, g| img(a.sub(b, g)),
         ),
         (
             "dyadic mul",
             "Exact product hull (four endpoint products) of two dyadic intervals near 1.",
             false,
-            |a, b, g| ok(a.mul(b, g)),
+            |a, b, g| img(a.mul(b, g)),
         ),
         (
             "dyadic div",
             "Outward quotient hull on the 2^-64 grid by exact integer floor/ceiling division; the denominator has the same shape but never contains zero.",
             true,
-            |a, b, g| ok(a.div(b, GRID, g)),
+            |a, b, g| img(a.div(b, GRID, g)),
         ),
         (
             "dyadic hull",
             "Exact hull of two intervals near 1 with independently drawn mantissas.",
             false,
-            |a, b, g| ok(a.hull(b, g)),
+            |a, b, g| img(a.hull(b, g)),
         ),
         (
             "dyadic intersection",
             "Exact intersection of two intervals near 1 (often disjoint for point shapes, which returns empty early).",
             false,
-            |a, b, g| ok(a.intersection(b, g)),
+            |a, b, g| img(a.intersection(b, g)),
         ),
         (
             "dyadic min_image",
             "Exact image of min(x, y) over independent members.",
             false,
-            |a, b, g| ok(a.min_image(b, g)),
+            |a, b, g| img(a.min_image(b, g)),
         ),
     ];
     for (name, description, nonzero_right, op) in binary {
@@ -311,7 +466,7 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
                         -(p as i32),
                     )
                 },
-                |(a, b, p)| ok(a.div(b, *p, &mut budget())),
+                |(a, b, p)| img(a.div(b, *p, &mut budget())),
             ),
             _ => {}
         }
@@ -333,7 +488,7 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
             label,
             &gaps,
             |g, rng| (dyadic(shape, 64, 0, rng), dyadic(shape, 64, g as i32, rng)),
-            |(a, b)| ok(a.add(b, &mut budget())),
+            |(a, b)| img(a.add(b, &mut budget())),
         );
     }
     atlas.sweep(
@@ -345,7 +500,7 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
                 dyadic(Shape::Wide, 64, g as i32, rng),
             )
         },
-        |(a, b)| ok(a.add(b, &mut budget())),
+        |(a, b)| img(a.add(b, &mut budget())),
     );
 
     let unary: [(&str, &str, &Kinds, DyadicUnary); 4] = [
@@ -353,25 +508,25 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
             "dyadic square",
             "Exact pointwise square; a zero-straddling input keeps lower bound zero.",
             &SHAPES,
-            |x, g| ok(x.square(g)),
+            |x, g| img(x.square(g)),
         ),
         (
             "dyadic abs",
             "Exact absolute-value image.",
             &SHAPES,
-            |x, g| ok(x.abs(g)),
+            |x, g| img(x.abs(g)),
         ),
         (
             "dyadic sqrt by operand bits",
             "Principal square root on the 2^-64 grid by exact integer square root; the zero-straddling input has Partial domain coverage.",
             &SHAPES,
-            |x, g| ok(x.sqrt(GRID, g)),
+            |x, g| img(x.sqrt(GRID, g)),
         ),
         (
             "dyadic reciprocal by operand bits",
             "Outward reciprocal on the 2^-64 grid of an interval near 1 with mantissas of the given size.",
             &NONZERO,
-            |x, g| ok(x.reciprocal(GRID, g)),
+            |x, g| img(x.reciprocal(GRID, g)),
         ),
     ];
     for (name, description, shapes, op) in unary {
@@ -397,7 +552,7 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
             label,
             &powers_of_two(0, 18),
             |p, rng| (dyadic(shape, 64, 0, rng), -(p as i32)),
-            |(x, p)| ok(x.reciprocal(*p, &mut budget())),
+            |(x, p)| img(x.reciprocal(*p, &mut budget())),
         );
     }
 
@@ -413,7 +568,7 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
             label,
             &exponents,
             |n, rng| (dyadic(shape, 64, 0, rng), n as u32),
-            |(x, n)| ok(x.checked_pow(*n, &mut budget())),
+            |(x, n)| img(x.checked_pow(*n, &mut budget())),
         );
     }
     atlas.fuzz(
@@ -425,7 +580,7 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
             let k = rng.range(-4, 4) as i32;
             (dyadic(shape, size, k, rng), rng.range(1, n as i64) as u32)
         },
-        |(x, n)| ok(x.checked_pow(*n, &mut budget())),
+        |(x, n)| img(x.checked_pow(*n, &mut budget())),
     );
 
     atlas.operation(
@@ -443,7 +598,7 @@ fn dyadic_arithmetic(atlas: &mut Atlas) {
                 let e = 1 - m as i32;
                 (dyadic(shape, m, 0, rng), odd(rng, m), odd(rng, m), e)
             },
-            |(x, f, o, e)| ok(x.affine((f, *e), (o, *e), &mut budget())),
+            |(x, f, o, e)| img(x.affine((f, *e), (o, *e), &mut budget())),
         );
     }
 }
@@ -454,22 +609,22 @@ fn dyadic_measurements(atlas: &mut Atlas) {
         (
             "dyadic midpoint",
             "Exact midpoint as a singleton interval.",
-            |x, g| ok(x.midpoint(g)),
+            |x, g| img(x.midpoint(g)),
         ),
         (
             "dyadic width",
             "Exact endpoint distance as a singleton interval.",
-            |x, g| ok(x.width(g)),
+            |x, g| img(x.width(g)),
         ),
         (
             "dyadic radius_enclosure",
             "Exact half-width (or tight neighbours at the minimum exponent) as an interval.",
-            |x, g| ok(x.radius_enclosure(g)),
+            |x, g| img(x.radius_enclosure(g)),
         ),
         (
             "dyadic bisect",
             "Split at the exact midpoint into two closed halves; points return None after inspecting the bounds.",
-            |x, g| ok(x.bisect(g)),
+            |x, g| img(x.bisect(g)),
         ),
         (
             "dyadic regrid (coarsen)",
@@ -477,7 +632,7 @@ fn dyadic_measurements(atlas: &mut Atlas) {
             |x, g| {
                 let (a, b, e) = x.bounds().expect("nonempty");
                 let drop = (a.bits().max(b.bits()) / 2) as i32;
-                ok(x.regrid(e + drop, g))
+                img(x.regrid(e + drop, g))
             },
         ),
     ];
@@ -506,7 +661,7 @@ fn dyadic_measurements(atlas: &mut Atlas) {
             |s, rng| (dyadic(shape, 64, 0, rng), s as i32),
             |(x, s)| {
                 let e = x.bounds().expect("nonempty").2;
-                ok(x.regrid(e - s, &mut budget()))
+                img(x.regrid(e - s, &mut budget()))
             },
         );
     }
@@ -607,8 +762,8 @@ fn dyadic_measurements(atlas: &mut Atlas) {
     }
 }
 
-type RationalBinary = fn(&RationalInterval, &RationalInterval) -> Option<u64>;
-type RationalUnary = fn(&RationalInterval) -> Option<u64>;
+type RationalBinary = fn(&RationalInterval, &RationalInterval) -> Exact;
+type RationalUnary = fn(&RationalInterval) -> Exact;
 
 fn rational_arithmetic(atlas: &mut Atlas) {
     let bits = powers_of_two(1, 14);
@@ -618,31 +773,31 @@ fn rational_arithmetic(atlas: &mut Atlas) {
             "rational add",
             "Exact sum of rational intervals near 1 whose endpoints have numerators and denominators of the given size, reduced to canonical form.",
             false,
-            |a, b| Some(settle(&a.add(b))),
+            |a, b| settled(Some(a.add(b))),
         ),
         (
             "rational mul",
             "Exact product hull, reduced to canonical form.",
             false,
-            |a, b| Some(settle(&a.mul(b))),
+            |a, b| settled(Some(a.mul(b))),
         ),
         (
             "rational div",
             "Exact quotient hull (product with the reciprocal); the denominator never contains zero.",
             true,
-            |a, b| a.div(b).ok().map(|q| settle(&q)),
+            |a, b| settled(a.div(b).ok()),
         ),
         (
             "rational hull",
             "Exact hull: endpoint comparisons by cross-multiplication.",
             false,
-            |a, b| Some(settle(&a.hull(b))),
+            |a, b| settled(Some(a.hull(b))),
         ),
         (
             "rational min_image",
             "Exact image of min(x, y) over independent members.",
             false,
-            |a, b| Some(settle(&a.min_image(b))),
+            |a, b| settled(Some(a.min_image(b))),
         ),
     ];
     for (name, description, nonzero_right, op) in binary {
@@ -705,37 +860,31 @@ fn rational_arithmetic(atlas: &mut Atlas) {
             "rational square",
             "Exact pointwise square, reduced to canonical form.",
             &SHAPES,
-            |x| Some(settle(&x.square())),
+            |x| settled(Some(x.square())),
         ),
         (
             "rational reciprocal",
             "Exact reciprocal of a nonzero interval.",
             &NONZERO,
-            |x| x.reciprocal().ok().map(|r| settle(&r)),
+            |x| settled(x.reciprocal().ok()),
         ),
         (
             "rational midpoint",
             "Exact midpoint, reduced to canonical form.",
             &SHAPES,
-            |x| {
-                x.midpoint()
-                    .map(|m| m.numerator().bits() + m.denominator().bits())
-            },
+            |x| settled_scalar(x.midpoint()),
         ),
         (
             "rational width",
             "Exact width, reduced to canonical form.",
             &SHAPES,
-            |x| {
-                x.width()
-                    .map(|w| w.numerator().bits() + w.denominator().bits())
-            },
+            |x| settled_scalar(x.width()),
         ),
         (
             "rational abs",
             "Exact absolute-value image.",
             &SHAPES,
-            |x| Some(settle(&x.abs())),
+            |x| settled(Some(x.abs())),
         ),
     ];
     for (name, description, shapes, op) in unary {
@@ -768,7 +917,7 @@ fn rational_arithmetic(atlas: &mut Atlas) {
                     rational_point(m, 0, rng),
                 )
             },
-            |(x, s, o)| Some(settle(&x.affine(s, o))),
+            |(x, s, o)| settled(Some(x.affine(s, o))),
         );
     }
 
@@ -789,7 +938,7 @@ fn rational_arithmetic(atlas: &mut Atlas) {
             label,
             &exponents,
             |n, rng| (rational(shape, 16, 0, rng), sign * n as i64),
-            |(x, n)| x.checked_pow(*n).ok().map(|r| settle(&r)),
+            |(x, n)| settled(x.checked_pow(*n).ok()),
         );
     }
 
@@ -809,18 +958,14 @@ fn rational_arithmetic(atlas: &mut Atlas) {
         ok(budget().rational().compare(a, b))
     });
     atlas.sweep("add", &bits, pair, |(a, b)| {
-        budget()
-            .rational()
-            .add(a, b)
-            .ok()
-            .map(|r| r.numerator().bits())
+        let r = budget().rational().add(a, b).ok();
+        black_box(r.as_ref().map(|r| r.numerator().bits()));
+        Shaped::new(r, scalar_shape)
     });
     atlas.sweep("mul", &bits, pair, |(a, b)| {
-        budget()
-            .rational()
-            .mul(a, b)
-            .ok()
-            .map(|r| r.numerator().bits())
+        let r = budget().rational().mul(a, b).ok();
+        black_box(r.as_ref().map(|r| r.numerator().bits()));
+        Shaped::new(r, scalar_shape)
     });
     atlas.sweep(
         "interval (ordered pair)",
@@ -835,8 +980,8 @@ fn rational_arithmetic(atlas: &mut Atlas) {
     );
 }
 
-type DyadicFn = fn(&DyadicInterval, i32, &mut DyadicBudget) -> bool;
-type RationalFn = fn(&RationalInterval, i32, &mut DyadicBudget) -> bool;
+type DyadicFn = fn(&DyadicInterval, i32, &mut DyadicBudget) -> Out;
+type RationalFn = fn(&RationalInterval, i32, &mut DyadicBudget) -> Out;
 
 struct Function {
     name: &'static str,
@@ -876,16 +1021,16 @@ const ROOT: [(&str, Shape); 3] = [
     ("straddles zero (Partial)", Shape::Straddle),
 ];
 
-fn cbrt(x: &DyadicInterval, p: i32, g: &mut DyadicBudget) -> bool {
-    ok(x.pow_rational(&BigInt::from(1u8), &BigInt::from(3u8), p, g))
+fn cbrt(x: &DyadicInterval, p: i32, g: &mut DyadicBudget) -> Out {
+    img(x.pow_rational(&BigInt::from(1u8), &BigInt::from(3u8), p, g))
 }
 
 fn functions() -> Vec<Function> {
     vec![
         Function {
             name: "exp",
-            dyadic: |x, p, g| ok(x.exp(p, g)),
-            rational: Some(|x, p, g| ok(x.exp(p, g))),
+            dyadic: |x, p, g| img(x.exp(p, g)),
+            rational: Some(|x, p, g| img(x.exp(p, g))),
             exponents: steps(-32, 12, 2),
             kinds: &SIGNED,
             extra: None,
@@ -894,8 +1039,8 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "log",
-            dyadic: |x, p, g| ok(x.log(p, g)),
-            rational: Some(|x, p, g| ok(x.log(p, g))),
+            dyadic: |x, p, g| img(x.log(p, g)),
+            rational: Some(|x, p, g| img(x.log(p, g))),
             exponents: steps(-1024, 1024, 64),
             kinds: &FROM_ZERO,
             extra: None,
@@ -904,8 +1049,8 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "sqrt",
-            dyadic: |x, p, g| ok(x.sqrt(p, g)),
-            rational: Some(|x, p, g| ok(x.sqrt(p, g))),
+            dyadic: |x, p, g| img(x.sqrt(p, g)),
+            rational: Some(|x, p, g| img(x.sqrt(p, g))),
             exponents: steps(-256, 256, 16),
             kinds: &ROOT,
             extra: None,
@@ -916,22 +1061,22 @@ fn functions() -> Vec<Function> {
             name: "cbrt",
             dyadic: cbrt,
             rational: Some(|x, p, g| {
-                ok(x.pow_rational(&BigInt::from(1u8), &BigInt::from(3u8), p, g))
+                img(x.pow_rational(&BigInt::from(1u8), &BigInt::from(3u8), p, g))
             }),
             exponents: steps(-256, 256, 16),
             kinds: &SIGNED,
             extra: Some((
                 "x^(-1/3) across zero (split)",
                 Shape::Straddle,
-                |x, p, g| ok(x.pow_rational(&BigInt::from(-1), &BigInt::from(3u8), p, g)),
+                |x, p, g| img(x.pow_rational(&BigInt::from(-1), &BigInt::from(3u8), p, g)),
             )),
             home: 0,
             note: "pow_rational(1/3) by exact integer relations; the odd root admits negative bases, and the extra kind keeps two unbounded components around the pole.",
         },
         Function {
             name: "sin",
-            dyadic: |x, p, g| ok(x.sin(p, g)),
-            rational: Some(|x, p, g| ok(x.sin(p, g))),
+            dyadic: |x, p, g| img(x.sin(p, g)),
+            rational: Some(|x, p, g| img(x.sin(p, g))),
             exponents: steps(-32, 64, 4),
             kinds: &SIGNED,
             extra: None,
@@ -940,8 +1085,8 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "cos",
-            dyadic: |x, p, g| ok(x.cos(p, g)),
-            rational: Some(|x, p, g| ok(x.cos(p, g))),
+            dyadic: |x, p, g| img(x.cos(p, g)),
+            rational: Some(|x, p, g| img(x.cos(p, g))),
             exponents: steps(-32, 64, 4),
             kinds: &SIGNED,
             extra: None,
@@ -950,8 +1095,8 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "tan",
-            dyadic: |x, p, g| ok(x.tan(p, g)),
-            rational: Some(|x, p, g| ok(x.tan(p, g))),
+            dyadic: |x, p, g| img(x.tan(p, g)),
+            rational: Some(|x, p, g| img(x.tan(p, g))),
             exponents: steps(-32, 64, 4),
             kinds: &SIGNED,
             extra: None,
@@ -960,8 +1105,8 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "cot",
-            dyadic: |x, p, g| ok(x.cot(p, g)),
-            rational: Some(|x, p, g| ok(x.cot(p, g))),
+            dyadic: |x, p, g| img(x.cot(p, g)),
+            rational: Some(|x, p, g| img(x.cot(p, g))),
             exponents: steps(-32, 64, 4),
             kinds: &SIGNED,
             extra: None,
@@ -970,8 +1115,8 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "atan",
-            dyadic: |x, p, g| ok(x.atan(p, g)),
-            rational: Some(|x, p, g| ok(x.atan(p, g))),
+            dyadic: |x, p, g| img(x.atan(p, g)),
+            rational: Some(|x, p, g| img(x.atan(p, g))),
             exponents: steps(-64, 64, 4),
             kinds: &SIGNED,
             extra: None,
@@ -980,7 +1125,7 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "asin",
-            dyadic: |x, p, g| ok(x.asin(p, g)),
+            dyadic: |x, p, g| img(x.asin(p, g)),
             rational: None,
             exponents: steps(-62, -2, 4),
             kinds: &BOUNDED,
@@ -990,7 +1135,7 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "acos",
-            dyadic: |x, p, g| ok(x.acos(p, g)),
+            dyadic: |x, p, g| img(x.acos(p, g)),
             rational: None,
             exponents: steps(-62, -2, 4),
             kinds: &BOUNDED,
@@ -1000,7 +1145,7 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "atanh",
-            dyadic: |x, p, g| ok(x.atanh(p, g)),
+            dyadic: |x, p, g| img(x.atanh(p, g)),
             rational: None,
             exponents: steps(-62, -2, 4),
             kinds: &BOUNDED,
@@ -1010,7 +1155,7 @@ fn functions() -> Vec<Function> {
         },
         Function {
             name: "acosh",
-            dyadic: |x, p, g| ok(x.acosh(p, g)),
+            dyadic: |x, p, g| img(x.acosh(p, g)),
             rational: None,
             exponents: steps(0, 1024, 64),
             kinds: &FROM_ZERO,
@@ -1133,25 +1278,25 @@ fn elementary(atlas: &mut Atlas) {
         "sin point",
         &huge,
         |k, rng| dyadic(Shape::Point, 53, k as i32, rng),
-        |x| ok(x.sin(GRID, &mut budget())),
+        |x| img(x.sin(GRID, &mut budget())),
     );
     atlas.sweep(
         "sin wide (x..2x)",
         &huge,
         |k, rng| dyadic(Shape::Wide, 53, k as i32, rng),
-        |x| ok(x.sin(GRID, &mut budget())),
+        |x| img(x.sin(GRID, &mut budget())),
     );
     atlas.sweep(
         "sin rational point",
         &huge,
         |k, rng| rational(Shape::Point, 53, k as i32, rng),
-        |x| ok(x.sin(GRID, &mut budget())),
+        |x| img(x.sin(GRID, &mut budget())),
     );
     atlas.sweep(
         "tan point",
         &huge[..huge.len() - 1],
         |k, rng| dyadic(Shape::Point, 53, k as i32, rng),
-        |x| ok(x.tan(GRID, &mut budget())),
+        |x| img(x.tan(GRID, &mut budget())),
     );
 }
 
@@ -1168,14 +1313,14 @@ fn powers(atlas: &mut Atlas) {
             label,
             &degrees,
             |q, rng| (dyadic(shape, 53, 0, rng), BigInt::from(q as u32)),
-            |(x, q)| ok(x.pow_rational(&BigInt::from(1u8), q, GRID, &mut budget())),
+            |(x, q)| img(x.pow_rational(&BigInt::from(1u8), q, GRID, &mut budget())),
         );
     }
     atlas.sweep(
         "rational point",
         &degrees,
         |q, rng| (rational(Shape::Point, 53, 0, rng), BigInt::from(q as u32)),
-        |(x, q)| ok(x.pow_rational(&BigInt::from(1u8), q, GRID, &mut budget())),
+        |(x, q)| img(x.pow_rational(&BigInt::from(1u8), q, GRID, &mut budget())),
     );
     atlas.grid(
         "53-bit point",
@@ -1188,7 +1333,7 @@ fn powers(atlas: &mut Atlas) {
                 -(p as i32),
             )
         },
-        |(x, q, p)| ok(x.pow_rational(&BigInt::from(1u8), q, *p, &mut budget())),
+        |(x, q, p)| img(x.pow_rational(&BigInt::from(1u8), q, *p, &mut budget())),
     );
 
     atlas.operation(
@@ -1207,14 +1352,14 @@ fn powers(atlas: &mut Atlas) {
             label,
             &numerators,
             |n, rng| (dyadic(shape, 53, 0, rng), BigInt::from(sign * n as i64)),
-            |(x, n)| ok(x.pow_rational(n, &BigInt::from(3u8), GRID, &mut budget())),
+            |(x, n)| img(x.pow_rational(n, &BigInt::from(3u8), GRID, &mut budget())),
         );
     }
     atlas.sweep(
         "rational point",
         &numerators,
         |n, rng| (rational(Shape::Point, 53, 0, rng), BigInt::from(n as i64)),
-        |(x, n)| ok(x.pow_rational(n, &BigInt::from(3u8), GRID, &mut budget())),
+        |(x, n)| img(x.pow_rational(n, &BigInt::from(3u8), GRID, &mut budget())),
     );
     atlas.fuzz(
         "random shape and exponent ±n'/q, n' ≤ n, odd q ≤ 31",
@@ -1231,7 +1376,7 @@ fn powers(atlas: &mut Atlas) {
                 BigInt::from(q),
             )
         },
-        |(x, n, q)| ok(x.pow_rational(n, q, GRID, &mut budget())),
+        |(x, n, q)| img(x.pow_rational(n, q, GRID, &mut budget())),
     );
 }
 
@@ -1278,7 +1423,7 @@ fn domain_edges(atlas: &mut Atlas) {
             let (lo, _) = half_pi(d);
             lo.sub(&unit(d), &mut budget()).expect("difference")
         },
-        |x| ok(x.tan(GRID, &mut budget())),
+        |x| img(x.tan(GRID, &mut budget())),
     );
     atlas.sweep(
         "tan across pi/2",
@@ -1289,13 +1434,13 @@ fn domain_edges(atlas: &mut Atlas) {
             let b = hi.add(&unit(d), &mut budget()).expect("sum");
             a.hull(&b, &mut budget()).expect("hull")
         },
-        |x| ok(x.tan(GRID, &mut budget())),
+        |x| img(x.tan(GRID, &mut budget())),
     );
     atlas.sweep(
         "cot at 2^-d",
         &distances,
         |d, _| unit(d),
-        |x| ok(x.cot(GRID, &mut budget())),
+        |x| img(x.cot(GRID, &mut budget())),
     );
     atlas.sweep(
         "cot across 0",
@@ -1303,7 +1448,7 @@ fn domain_edges(atlas: &mut Atlas) {
         |d, _| {
             DyadicInterval::new(BigInt::from(-1), BigInt::from(1), -(d as i32)).expect("interval")
         },
-        |x| ok(x.cot(GRID, &mut budget())),
+        |x| img(x.cot(GRID, &mut budget())),
     );
 
     atlas.operation(
@@ -1316,25 +1461,25 @@ fn domain_edges(atlas: &mut Atlas) {
         "asin",
         &distances,
         |d, _| below_one(d),
-        |x| ok(x.asin(GRID, &mut budget())),
+        |x| img(x.asin(GRID, &mut budget())),
     );
     atlas.sweep(
         "acos",
         &distances,
         |d, _| below_one(d),
-        |x| ok(x.acos(GRID, &mut budget())),
+        |x| img(x.acos(GRID, &mut budget())),
     );
     atlas.sweep(
         "atanh",
         &distances,
         |d, _| below_one(d),
-        |x| ok(x.atanh(GRID, &mut budget())),
+        |x| img(x.atanh(GRID, &mut budget())),
     );
     atlas.sweep(
         "acosh",
         &distances,
         |d, _| above_one(d),
-        |x| ok(x.acosh(GRID, &mut budget())),
+        |x| img(x.acosh(GRID, &mut budget())),
     );
 
     atlas.operation(
@@ -1347,7 +1492,7 @@ fn domain_edges(atlas: &mut Atlas) {
         "log at 1 + 2^-d",
         &distances,
         |d, _| above_one(d),
-        |x| ok(x.log(GRID, &mut budget())),
+        |x| img(x.log(GRID, &mut budget())),
     );
     atlas.sweep(
         "log across 1",
@@ -1357,7 +1502,7 @@ fn domain_edges(atlas: &mut Atlas) {
                 .hull(&above_one(d), &mut budget())
                 .expect("hull")
         },
-        |x| ok(x.log(GRID, &mut budget())),
+        |x| img(x.log(GRID, &mut budget())),
     );
     atlas.sweep(
         "log rational 1 + 1/(3·2^d)",
@@ -1369,13 +1514,13 @@ fn domain_edges(atlas: &mut Atlas) {
                 Rational::from_bigint_fraction(numerator, denominator).expect("nonzero"),
             )
         },
-        |x| ok(x.log(GRID, &mut budget())),
+        |x| img(x.log(GRID, &mut budget())),
     );
     atlas.sweep(
         "exp at 2^-d",
         &distances,
         |d, _| unit(d),
-        |x| ok(x.exp(GRID, &mut budget())),
+        |x| img(x.exp(GRID, &mut budget())),
     );
 }
 
@@ -1412,25 +1557,25 @@ fn extended_sets(atlas: &mut Atlas) {
         "across zero [-y, x]",
         &bits,
         |m, rng| finite(Shape::Straddle, m, rng),
-        |x| ok(x.reciprocal(GRID, &mut budget())),
+        |x| img(x.reciprocal(GRID, &mut budget())),
     );
     atlas.sweep(
         "touching zero [0, x]",
         &bits,
         |m, rng| finite(Shape::FromZero, m, rng),
-        |x| ok(x.reciprocal(GRID, &mut budget())),
+        |x| img(x.reciprocal(GRID, &mut budget())),
     );
     atlas.sweep(
         "ray [x, ∞)",
         &bits,
         |m, rng| Extended::above(point(m, 0, rng)).expect("ray"),
-        |x| ok(x.reciprocal(GRID, &mut budget())),
+        |x| img(x.reciprocal(GRID, &mut budget())),
     );
     atlas.sweep(
         "finite positive (x..2x)",
         &bits,
         |m, rng| finite(Shape::Wide, m, rng),
-        |x| ok(x.reciprocal(GRID, &mut budget())),
+        |x| img(x.reciprocal(GRID, &mut budget())),
     );
 
     atlas.operation(
@@ -1448,7 +1593,7 @@ fn extended_sets(atlas: &mut Atlas) {
             label,
             &bits,
             |m, rng| (finite(numerator, m, rng), finite(denominator, m, rng)),
-            |(a, b)| ok(a.div(b, GRID, &mut budget())),
+            |(a, b)| img(a.div(b, GRID, &mut budget())),
         );
     }
     atlas.sweep(
@@ -1460,7 +1605,7 @@ fn extended_sets(atlas: &mut Atlas) {
                 finite(Shape::Wide, m, rng),
             )
         },
-        |(a, b)| ok(a.div(b, GRID, &mut budget())),
+        |(a, b)| img(a.div(b, GRID, &mut budget())),
     );
 
     atlas.operation(
@@ -1474,25 +1619,25 @@ fn extended_sets(atlas: &mut Atlas) {
         "exp of (-∞, x]",
         &steps(-32, 12, 4),
         |k, rng| Extended::below(point(53.0, k as i32, rng)).expect("ray"),
-        |x| ok(x.exp(GRID, &mut budget())),
+        |x| img(x.exp(GRID, &mut budget())),
     );
     atlas.sweep(
         "atan of [x, ∞)",
         &ks,
         |k, rng| Extended::above(point(53.0, k as i32, rng)).expect("ray"),
-        |x| ok(x.atan(GRID, &mut budget())),
+        |x| img(x.atan(GRID, &mut budget())),
     );
     atlas.sweep(
         "cbrt of [x, ∞)",
         &ks,
         |k, rng| Extended::above(point(53.0, k as i32, rng)).expect("ray"),
-        |x| ok(x.pow_rational(&BigInt::from(1u8), &BigInt::from(3u8), GRID, &mut budget())),
+        |x| img(x.pow_rational(&BigInt::from(1u8), &BigInt::from(3u8), GRID, &mut budget())),
     );
     atlas.sweep(
         "sin of [x, ∞)",
         &ks,
         |k, rng| Extended::above(point(53.0, k as i32, rng)).expect("ray"),
-        |x| ok(x.sin(GRID, &mut budget())),
+        |x| img(x.sin(GRID, &mut budget())),
     );
 
     atlas.operation(
@@ -1508,8 +1653,8 @@ fn extended_sets(atlas: &mut Atlas) {
     atlas.sweep("subset_of", &bits, sets, |(a, b)| {
         a.subset_of(b, &mut budget()).unwrap_or(false)
     });
-    atlas.sweep("hull", &bits, sets, |(a, _)| ok(a.hull(&mut budget())));
-    atlas.sweep("neg", &bits, sets, |(a, _)| ok(a.neg(&mut budget())));
+    atlas.sweep("hull", &bits, sets, |(a, _)| img(a.hull(&mut budget())));
+    atlas.sweep("neg", &bits, sets, |(a, _)| img(a.neg(&mut budget())));
 }
 
 fn pow2_f64(k: i32) -> f64 {
@@ -2004,7 +2149,7 @@ fn conversions(atlas: &mut Atlas) {
                 let (lo, hi) = mantissas(shape, 64, rng);
                 DyadicInterval::new(lo, hi, sign * e as i32).expect("ordered")
             },
-            |x| x.to_rational(&mut budget()).ok().map(|r| settle(&r)),
+            |x| settled(x.to_rational(&mut budget()).ok()),
         );
     }
 
@@ -2019,7 +2164,7 @@ fn conversions(atlas: &mut Atlas) {
             label,
             &powers_of_two(1, 16),
             |m, rng| rational(shape, m as u32, 0, rng),
-            |x| ok(x.to_dyadic(GRID, &mut budget())),
+            |x| img(x.to_dyadic(GRID, &mut budget())),
         );
     }
 
@@ -2038,7 +2183,7 @@ fn conversions(atlas: &mut Atlas) {
             label,
             &powers_of_two(0, 18),
             |p, rng| (rational_point(parts, 0, rng), -(p as i32)),
-            |(q, p)| ok(DyadicInterval::from_rational(q, *p, &mut budget())),
+            |(q, p)| img(DyadicInterval::from_rational(q, *p, &mut budget())),
         );
     }
 
@@ -2110,19 +2255,19 @@ fn conversions(atlas: &mut Atlas) {
         "f64 to_dyadic",
         &f64_k,
         |k, rng| f64_iv(k as i32, true, rng),
-        |x| ok(x.to_dyadic(&mut budget())),
+        |x| img(x.to_dyadic(&mut budget())),
     );
     atlas.sweep(
         "f64 to_rational",
         &f64_k,
         |k, rng| f64_iv(k as i32, true, rng),
-        |x| settle(&x.to_rational()),
+        |x| settled(Some(x.to_rational())),
     );
     atlas.sweep(
         "DyadicInterval::from_f64",
         &f64_k,
         |k, rng| f64_iv(k as i32, false, rng).bounds().expect("nonempty").0,
-        |x| ok(DyadicInterval::from_f64(*x, &mut budget())),
+        |x| img(DyadicInterval::from_f64(*x, &mut budget())),
     );
     atlas.sweep(
         "f32 to_f64_enclosure",
@@ -2140,19 +2285,23 @@ fn conversions(atlas: &mut Atlas) {
     let precisions = powers_of_two(3, 14);
     let input = |p: f64, rng: &mut Rng| (rational_point(53, 0, rng), -(p as i32));
     atlas.sweep("sqrt(q) → dyadic", &precisions, input, |(q, p)| {
-        Real::new(q.clone())
-            .sqrt()
-            .ok()
-            .map(|r| ok(DyadicInterval::from_real(&r, *p, &mut budget())))
+        some(
+            Real::new(q.clone())
+                .sqrt()
+                .ok()
+                .and_then(|r| DyadicInterval::from_real(&r, *p, &mut budget()).ok()),
+        )
     });
     atlas.sweep("exp(q) → dyadic", &precisions, input, |(q, p)| {
-        Real::new(q.clone())
-            .exp()
-            .ok()
-            .map(|r| ok(DyadicInterval::from_real(&r, *p, &mut budget())))
+        some(
+            Real::new(q.clone())
+                .exp()
+                .ok()
+                .and_then(|r| DyadicInterval::from_real(&r, *p, &mut budget()).ok()),
+        )
     });
     atlas.sweep("q → dyadic", &precisions, input, |(q, p)| {
-        ok(DyadicInterval::from_real(
+        img(DyadicInterval::from_real(
             &Real::new(q.clone()),
             *p,
             &mut budget(),
@@ -2163,11 +2312,12 @@ fn conversions(atlas: &mut Atlas) {
         &precisions,
         input,
         |(q, p)| {
-            Real::new(q.clone())
-                .sqrt()
-                .ok()
-                .and_then(|r| RationalInterval::from_real(&r, *p).ok())
-                .map(|x| settle(&x))
+            settled(
+                Real::new(q.clone())
+                    .sqrt()
+                    .ok()
+                    .and_then(|r| RationalInterval::from_real(&r, *p).ok()),
+            )
         },
     );
 
@@ -2178,10 +2328,10 @@ fn conversions(atlas: &mut Atlas) {
         "RealBall with a symbolic center sqrt(q) built in each call (q a 53-bit rational near 1) and radius 2^-40: dyadic and rational enclosures, and classification of a nearby rational point. The rational-center kind needs no evaluation.",
     );
     atlas.sweep("sqrt center → dyadic", &precisions, input, |(q, p)| {
-        ok(sqrt_ball(q).to_dyadic(*p, &mut budget()))
+        img(sqrt_ball(q).to_dyadic(*p, &mut budget()))
     });
     atlas.sweep("sqrt center → rational", &precisions, input, |(q, p)| {
-        sqrt_ball(q).to_rational(*p).ok().map(|x| settle(&x))
+        settled(sqrt_ball(q).to_rational(*p).ok())
     });
     atlas.sweep(
         "classify nearby point",
@@ -2201,7 +2351,7 @@ fn conversions(atlas: &mut Atlas) {
         input,
         |(q, p)| {
             let ball = RealBall::new(Real::new(q.clone()), small_radius()).expect("ball");
-            ok(ball.to_dyadic(*p, &mut budget()))
+            img(ball.to_dyadic(*p, &mut budget()))
         },
     );
 
@@ -2214,7 +2364,9 @@ fn conversions(atlas: &mut Atlas) {
     let q_k = steps(-32, 28, 2);
     let make = |k: f64, rng: &mut Rng| q32_iv(k as i32, true, rng);
     atlas.sweep("rescale to Q·16", &q_k, make, |x| ok(x.rescale::<16>()));
-    atlas.sweep("to_dyadic", &q_k, make, |x| ok(x.to_dyadic(&mut budget())));
-    atlas.sweep("to_rational", &q_k, make, |x| settle(&x.to_rational()));
+    atlas.sweep("to_dyadic", &q_k, make, |x| img(x.to_dyadic(&mut budget())));
+    atlas.sweep("to_rational", &q_k, make, |x| {
+        settled(Some(x.to_rational()))
+    });
     atlas.sweep("integer_points", &q_k, make, |x| ok(x.integer_points()));
 }

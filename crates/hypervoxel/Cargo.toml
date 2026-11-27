@@ -37,6 +37,7 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 criterion = "0.5"
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 
 [features]

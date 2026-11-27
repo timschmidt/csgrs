@@ -29,21 +29,26 @@
 //!   arithmetic can still overrun the watchdog (single calls of several
 //!   seconds were observed). Incomplete intersection results (typed blockers),
 //!   uncertain or failed exact results are reported as errors.
+//!
+//! Resource runs (`--resources`) report result shapes: contacts plus overlaps
+//! and the largest contact coordinate expression for intersections, boundary
+//! fragments for regions, control points and their largest stored scalar for
+//! splines, and the produced counts (points, events, subpaths) elsewhere.
 use std::f64::consts::PI;
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use hypercurve::{
     BezierFlatteningOptions, BooleanOp, BulgeVertex2, CancellationToken, CircularArc2, Contour2,
-    CubicBezier2, Curve2, CurveGeometry2, CurveParameter2, CurveParameterRange2, CurvePath2,
-    CurvePoint2, CurvePointLocations2, CurveRegion2, CurveString2, FillRule,
-    FiniteProjectionOptions, LineSeg2, MarchingSquaresGrid, NurbsCurve2, OffsetCap,
-    OffsetCornerStyle2, Point2, PolynomialSplineCurve2, PredicatePolicy, QuadraticBezier2,
-    Rational, RationalBezier2, RationalQuadraticBezier2, Real, Segment2, WorkBudget,
-    evaluate_with_cancellable_budget, marching_squares,
+    CubicBezier2, Curve2, CurveGeometry2, CurveIntersectionResult2, CurveParameter2,
+    CurveParameterRange2, CurvePath2, CurvePoint2, CurvePointLocations2, CurveRegion2,
+    CurveString2, FillRule, FiniteProjectionOptions, LineSeg2, MarchingSquaresGrid, NurbsCurve2,
+    OffsetCap, OffsetCornerStyle2, Point2, PolynomialSplineCurve2, PredicatePolicy,
+    QuadraticBezier2, Rational, RationalBezier2, RationalQuadraticBezier2, Real, Segment2,
+    WorkBudget, evaluate_with_cancellable_budget, marching_squares,
 };
 use num::{BigInt, BigUint};
-use perf_atlas::{Atlas, Rng, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shaped, powers_of_two};
 
 /// Heap accounting for `--resources` runs; only this atlas binary installs it.
 #[global_allocator]
@@ -625,12 +630,117 @@ fn zigzag_string(n: usize, inverted: bool, dy: i64, bulge: &Rational) -> Option<
     CurveString2::from_bulge_vertices(&vertices).ok()
 }
 
-fn intersect(a: &Shape, b: &Shape, embed: &Embed) -> Option<usize> {
+// ---------------------------------------------------------------------------
+// Result shapes for resource atlases. Readers run after the measured call.
+
+/// Largest stored expression over exact values, as the hyperreal atlas reads
+/// it: `nodes` and `depth` of the largest expression DAG, `bits` of the
+/// largest stored rational.
+fn reals_shape<'a>(values: impl IntoIterator<Item = &'a Real>) -> perf_atlas::Shape {
+    values
+        .into_iter()
+        .map(|value| value.representation_size(1 << 20))
+        .fold(perf_atlas::Shape::default(), |shape, size| {
+            perf_atlas::Shape {
+                nodes: shape.nodes.max(size.nodes as u64),
+                depth: shape.depth.max(size.depth as u64),
+                bits: shape.bits.max(size.max_rational_bits),
+            }
+        })
+}
+
+/// Coordinates of a point given by coordinates (none for implicit points).
+fn point_reals(point: &CurvePoint2) -> Vec<&Real> {
+    point
+        .coordinates()
+        .map_or_else(Vec::new, |p| vec![p.x(), p.y()])
+}
+
+/// An evaluated point, forced inside the call: its coordinates' expression size.
+fn point_shaped(point: Option<CurvePoint2>) -> Shaped<Option<CurvePoint2>> {
+    let point = point.filter(|p| std::hint::black_box(force(p)).is_some());
+    Shaped::new(point, |p| p.as_ref().map(|p| reals_shape(point_reals(p))))
+}
+
+/// `nodes`: contacts plus overlaps; `depth`, `bits`: the largest contact
+/// coordinate expression.
+fn intersection_shaped(
+    result: Option<CurveIntersectionResult2>,
+) -> Shaped<Option<CurveIntersectionResult2>> {
+    let result = result.filter(|r| r.is_complete());
+    Shaped::new(result, |r| {
+        r.as_ref().map(|r| perf_atlas::Shape {
+            nodes: (r.contacts().len() + r.overlaps().len()) as u64,
+            ..reals_shape(r.contacts().iter().flat_map(|c| point_reals(c.point())))
+        })
+    })
+}
+
+/// `nodes`: boundary fragments over every loop of the region.
+fn region_shaped(region: Option<CurveRegion2>) -> Shaped<Option<CurveRegion2>> {
+    Shaped::new(region, |r| {
+        r.as_ref().map(|r| perf_atlas::Shape {
+            nodes: r.boundary_loops().iter().map(|l| l.len() as u64).sum(),
+            ..perf_atlas::Shape::default()
+        })
+    })
+}
+
+/// A count already computed by the call (pieces, events, points): `nodes`.
+fn counted(count: Option<usize>) -> Shaped<Option<usize>> {
+    Shaped::new(count, |c| {
+        c.map(|n| perf_atlas::Shape {
+            nodes: n as u64,
+            ..perf_atlas::Shape::default()
+        })
+    })
+}
+
+/// `nodes`: control points; `depth`, `bits`: the largest stored weight, knot
+/// or affine control coordinate.
+fn nurbs_shape(n: &NurbsCurve2) -> perf_atlas::Shape {
+    let controls = n.affine_control_points().unwrap_or(&[]);
+    perf_atlas::Shape {
+        nodes: n.weights().len() as u64,
+        ..reals_shape(
+            n.weights()
+                .iter()
+                .chain(n.knots())
+                .chain(controls.iter().flat_map(|p| [p.x(), p.y()])),
+        )
+    }
+}
+
+fn spline_shape(s: &PolynomialSplineCurve2) -> perf_atlas::Shape {
+    perf_atlas::Shape {
+        nodes: s.control_points().len() as u64,
+        ..reals_shape(
+            s.knots()
+                .iter()
+                .chain(s.control_points().iter().flat_map(|p| [p.x(), p.y()])),
+        )
+    }
+}
+
+/// A spline result of either family, kept for its shape.
+enum Spline {
+    Nurbs(NurbsCurve2),
+    Polynomial(PolynomialSplineCurve2),
+}
+
+fn spline_shaped(spline: Option<Spline>) -> Shaped<Option<Spline>> {
+    Shaped::new(spline, |s| {
+        s.as_ref().map(|s| match s {
+            Spline::Nurbs(n) => nurbs_shape(n),
+            Spline::Polynomial(p) => spline_shape(p),
+        })
+    })
+}
+
+fn intersect(a: &Shape, b: &Shape, embed: &Embed) -> Shaped<Option<CurveIntersectionResult2>> {
     let f = embed.frame();
-    let (a, b) = (a.curve(&f)?, b.curve(&f)?);
-    guarded(|| a.intersect_curve(&b))
-        .filter(|r| r.is_complete())
-        .map(|r| r.contacts().len() + r.overlaps().len())
+    let curves = a.curve(&f).and_then(|a| Some((a, b.curve(&f)?)));
+    intersection_shaped(curves.and_then(|(a, b)| guarded(|| a.intersect_curve(&b))))
 }
 
 fn locations(curve: &Curve2, point: &CurvePoint2) -> Option<usize> {
@@ -743,7 +853,7 @@ fn evaluation(atlas: &mut Atlas, bits: &[f64], degrees: &[f64]) {
             kind,
             bits,
             |m, rng| warm_point(&s_cubic(), &Embed::random(num, m as u32, rng), rng),
-            |(curve, t)| curve.point_at(t).ok().and_then(|p| force(&p)),
+            |(curve, t)| point_shaped(curve.point_at(t).ok()),
         );
     }
 
@@ -758,7 +868,7 @@ fn evaluation(atlas: &mut Atlas, bits: &[f64], degrees: &[f64]) {
             kind,
             bits,
             |m, rng| warm_point(&family_shape(kind), &Embed::rational(m as u32, rng), rng),
-            |(curve, t)| curve.point_at(t).ok().and_then(|p| force(&p)),
+            |(curve, t)| point_shaped(curve.point_at(t).ok()),
         );
     }
     atlas.fuzz(
@@ -770,7 +880,7 @@ fn evaluation(atlas: &mut Atlas, bits: &[f64], degrees: &[f64]) {
             let size = rng.range(1, m as i64) as u32;
             warm_point(&family_shape(kind), &Embed::random(num, size, rng), rng)
         },
-        |(curve, t)| curve.point_at(t).ok().and_then(|p| force(&p)),
+        |(curve, t)| point_shaped(curve.point_at(t).ok()),
     );
 
     atlas.operation(
@@ -790,7 +900,7 @@ fn evaluation(atlas: &mut Atlas, bits: &[f64], degrees: &[f64]) {
                     rng,
                 )
             },
-            |(curve, t)| curve.point_at(t).ok().and_then(|p| force(&p)),
+            |(curve, t)| point_shaped(curve.point_at(t).ok()),
         );
     }
     atlas.grid(
@@ -804,7 +914,7 @@ fn evaluation(atlas: &mut Atlas, bits: &[f64], degrees: &[f64]) {
                 rng,
             )
         },
-        |(curve, t)| curve.point_at(t).ok().and_then(|p| force(&p)),
+        |(curve, t)| point_shaped(curve.point_at(t).ok()),
     );
 
     atlas.operation(
@@ -1081,10 +1191,11 @@ fn intersection(atlas: &mut Atlas, bits: &[f64], few_bits: &[f64]) {
             bits,
             |m, rng| Embed::rational(m as u32, rng),
             |embed| {
-                let curve = shape.curve(&embed.frame())?;
-                guarded(|| curve.self_intersections())
-                    .filter(|r| r.is_complete())
-                    .map(|r| r.contacts().len())
+                intersection_shaped(
+                    shape
+                        .curve(&embed.frame())
+                        .and_then(|curve| guarded(|| curve.self_intersections())),
+                )
             },
         );
     }
@@ -1106,9 +1217,11 @@ fn intersection(atlas: &mut Atlas, bits: &[f64], few_bits: &[f64]) {
             &segments,
             |n, _| n as usize,
             |&n| {
-                let a = zigzag_string(n, false, 0, &bulge)?;
-                let b = zigzag_string(n, true, dy, &bulge)?;
-                guarded(|| a.intersect_curve_string(&b)).map(|r| r.len())
+                counted((|| {
+                    let a = zigzag_string(n, false, 0, &bulge)?;
+                    let b = zigzag_string(n, true, dy, &bulge)?;
+                    guarded(|| a.intersect_curve_string(&b)).map(|r| r.len())
+                })())
             },
         );
     }
@@ -1240,7 +1353,7 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
                 let f = Embed::identity().frame();
                 let unit = CurveParameterRange2::unit();
                 let distance = real(d);
-                guarded(|| {
+                let cusps = guarded(|| {
                     let parallel = if kind.starts_with("quadratic") {
                         let [a, b, c] = &parabola;
                         QuadraticBezier2::new(f.point(a), f.point(b), f.point(c))
@@ -1258,7 +1371,8 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
                     .map_err(drop)?;
                     parallel.singularity_analysis(&unit).map_err(drop)
                 })
-                .map(|analysis| analysis.parallel_cusps().len())
+                .map(|analysis| analysis.parallel_cusps().len());
+                counted(cusps)
             },
         );
     }
@@ -1279,8 +1393,10 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
         Shape::Line(pt(1, 1), pt(-1, 1)),
         Shape::Line(pt(-1, 1), pt(-1, -1)),
     ];
-    let offset = |region: &CurveRegion2, distance: &Rational, style: &OffsetCornerStyle2| {
-        guarded(|| region.offset(real(distance), style)).map(|r| r.boundary_loops().len())
+    let offset = |region: Option<&CurveRegion2>,
+                  distance: &Rational,
+                  style: &OffsetCornerStyle2| {
+        region_shaped(region.and_then(|region| guarded(|| region.offset(real(distance), style))))
     };
     atlas.operation(
         "offset",
@@ -1326,7 +1442,7 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
             kind,
             &ratios,
             |r, _| &(&exact_ratio(r) * &size) * &int(sign),
-            |d| offset(region.as_ref()?, d, &style),
+            |d| offset(region.as_ref(), d, &style),
         );
     }
     atlas.fuzz(
@@ -1339,7 +1455,7 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
         },
         {
             let region = region_from(&cap, &identity.frame());
-            move |d| offset(region.as_ref()?, d, &OffsetCornerStyle2::Round)
+            move |d| offset(region.as_ref(), d, &OffsetCornerStyle2::Round)
         },
     );
 
@@ -1359,7 +1475,7 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
                 let d = &int(0) - &embed.length(&ratio(1, 8));
                 (region, d)
             },
-            |(region, d)| offset(region.as_ref()?, d, &OffsetCornerStyle2::Round),
+            |(region, d)| offset(region.as_ref(), d, &OffsetCornerStyle2::Round),
         );
     }
     atlas.grid(
@@ -1375,7 +1491,7 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
             let d = &int(0) - &embed.length(&(&exact_ratio(r) * &ratio(1, 2)));
             (region, d)
         },
-        |(region, d)| offset(region.as_ref()?, d, &OffsetCornerStyle2::Round),
+        |(region, d)| offset(region.as_ref(), d, &OffsetCornerStyle2::Round),
     );
 
     atlas.operation(
@@ -1419,9 +1535,9 @@ fn offsets(atlas: &mut Atlas, segments: &[f64]) {
                 path_from(&shapes, &Embed::identity().frame())
             },
             |path| {
-                let path = path.as_ref()?;
-                guarded(|| CurveRegion2::stroke_path(path, real(&ratio(1, 4)), &style, cap))
-                    .map(|r| r.boundary_loops().len())
+                region_shaped(path.as_ref().and_then(|path| {
+                    guarded(|| CurveRegion2::stroke_path(path, real(&ratio(1, 4)), &style, cap))
+                }))
             },
         );
     }
@@ -1451,16 +1567,17 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
                 Some(kind) => closed_loop(kind, n as usize, 0.0),
             },
             |shapes| {
-                let f = frame_embed.frame();
-                let curves = shapes
-                    .iter()
-                    .map(|s| s.curve(&f))
-                    .collect::<Option<Vec<_>>>()?;
-                guarded(|| {
-                    let path = CurvePath2::try_new(curves)?;
-                    CurveRegion2::try_from_boundary_paths(&[path], FillRule::NonZero)
-                })
-                .map(|r| r.boundary_loops().len())
+                region_shaped((|| {
+                    let f = frame_embed.frame();
+                    let curves = shapes
+                        .iter()
+                        .map(|s| s.curve(&f))
+                        .collect::<Option<Vec<_>>>()?;
+                    guarded(|| {
+                        let path = CurvePath2::try_new(curves)?;
+                        CurveRegion2::try_from_boundary_paths(&[path], FillRule::NonZero)
+                    })
+                })())
             },
         );
     }
@@ -1484,8 +1601,11 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
             segments,
             |n, _| pair(kind, n as usize),
             |(a, b)| {
-                let (a, b) = (a.as_ref()?, b.as_ref()?);
-                guarded(|| a.boolean_region(b, BooleanOp::Union)).map(|r| r.boundary_loops().len())
+                region_shaped(
+                    a.as_ref()
+                        .zip(b.as_ref())
+                        .and_then(|(a, b)| guarded(|| a.boolean_region(b, BooleanOp::Union))),
+                )
             },
         );
     }
@@ -1501,8 +1621,11 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
             )
         },
         |(a, b)| {
-            let (a, b) = (a.as_ref()?, b.as_ref()?);
-            guarded(|| a.boolean_region(b, BooleanOp::Union)).map(|r| r.boundary_loops().len())
+            region_shaped(
+                a.as_ref()
+                    .zip(b.as_ref())
+                    .and_then(|(a, b)| guarded(|| a.boolean_region(b, BooleanOp::Union))),
+            )
         },
     );
     atlas.grid(
@@ -1517,8 +1640,11 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
             )
         },
         |(a, b)| {
-            let (a, b) = (a.as_ref()?, b.as_ref()?);
-            guarded(|| a.boolean_region(b, BooleanOp::Union)).map(|r| r.boundary_loops().len())
+            region_shaped(
+                a.as_ref()
+                    .zip(b.as_ref())
+                    .and_then(|(a, b)| guarded(|| a.boolean_region(b, BooleanOp::Union))),
+            )
         },
     );
 
@@ -1534,8 +1660,27 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
             segments,
             |n, _| pair(kind, n as usize),
             |(a, b)| {
-                let (a, b) = (a.as_ref()?, b.as_ref()?);
-                guarded(|| a.boolean_regions(b)).map(|_| ())
+                let results = a
+                    .as_ref()
+                    .zip(b.as_ref())
+                    .and_then(|(a, b)| guarded(|| a.boolean_regions(b)));
+                // `nodes`: boundary fragments of the largest of the four regions.
+                Shaped::new(results, |r| {
+                    r.as_ref().map(|r| perf_atlas::Shape {
+                        nodes: [r.union(), r.intersection(), r.difference(), r.xor()]
+                            .iter()
+                            .map(|region| {
+                                region
+                                    .boundary_loops()
+                                    .iter()
+                                    .map(|l| l.len() as u64)
+                                    .sum::<u64>()
+                            })
+                            .max()
+                            .unwrap_or(0),
+                        ..perf_atlas::Shape::default()
+                    })
+                })
             },
         );
     }
@@ -1593,10 +1738,11 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
         Contour2::try_new(segments).ok()
     }
     let full = |points: &Vec<P>| {
-        let contour = contour(points)?;
-        guarded(|| contour.straight_skeleton())
-            .filter(|r| r.skeleton().is_some())
-            .map(|r| r.event_count())
+        counted(contour(points).and_then(|contour| {
+            guarded(|| contour.straight_skeleton())
+                .filter(|r| r.skeleton().is_some())
+                .map(|r| r.event_count())
+        }))
     };
     let edges = powers_of_two(3, 9);
     atlas.sweep(
@@ -1604,8 +1750,9 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
         &edges,
         |n, _| comb(((n as i64) - 4) / 4),
         |points| {
-            let contour = contour(points)?;
-            guarded(|| contour.straight_skeleton_vertex_trajectories()).map(|t| t.len())
+            counted(contour(points).and_then(|contour| {
+                guarded(|| contour.straight_skeleton_vertex_trajectories()).map(|t| t.len())
+            }))
         },
     );
     atlas.sweep(
@@ -1613,8 +1760,9 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
         &edges,
         |n, _| comb(((n as i64) - 4) / 4),
         |points| {
-            let contour = contour(points)?;
-            guarded(|| contour.straight_skeleton_global_contact_events()).map(|t| t.len())
+            counted(contour(points).and_then(|contour| {
+                guarded(|| contour.straight_skeleton_global_contact_events()).map(|t| t.len())
+            }))
         },
     );
     atlas.sweep(
@@ -1660,9 +1808,7 @@ fn regions(atlas: &mut Atlas, segments: &[f64]) {
                 (axis.clone(), axis, values)
             },
             |(x, y, values)| {
-                marching_squares(&MarchingSquaresGrid { x, y, values })
-                    .ok()
-                    .map(|r| r.boundary_loops().len())
+                region_shaped(marching_squares(&MarchingSquaresGrid { x, y, values }).ok())
             },
         );
     }
@@ -1711,7 +1857,7 @@ fn weights(atlas: &mut Atlas) {
             kind,
             &exponents,
             |k, rng| make(kind, k as i32, rng),
-            |(curve, t)| curve.point_at(&parameter(t)).ok().and_then(|p| force(&p)),
+            |(curve, t)| point_shaped(curve.point_at(&parameter(t)).ok()),
         );
     }
 
@@ -1791,12 +1937,16 @@ fn splines(atlas: &mut Atlas, degrees: &[f64]) {
                 };
                 (shape, Embed::rational(16, rng), unit_parameter(rng))
             },
-            |(shape, embed, knot)| match shape.geometry(&embed.frame())? {
-                CurveGeometry2::Nurbs(n) => n.insert_knot(real(knot)).ok().map(|n| n.degree()),
-                CurveGeometry2::PolynomialBSpline(s) => {
-                    s.insert_knot(real(knot)).ok().map(|s| s.degree())
-                }
-                _ => None,
+            |(shape, embed, knot)| {
+                spline_shaped(match shape.geometry(&embed.frame()) {
+                    Some(CurveGeometry2::Nurbs(n)) => {
+                        n.insert_knot(real(knot)).ok().map(Spline::Nurbs)
+                    }
+                    Some(CurveGeometry2::PolynomialBSpline(s)) => {
+                        s.insert_knot(real(knot)).ok().map(Spline::Polynomial)
+                    }
+                    _ => None,
+                })
             },
         );
     }
@@ -1823,8 +1973,12 @@ fn splines(atlas: &mut Atlas, degrees: &[f64]) {
                 (shape, Embed::rational(16, rng), d)
             },
             |(shape, embed, d)| {
-                let nurbs = shape.nurbs(&embed.frame())?;
-                nurbs.elevated_to_degree(d + 1).ok().map(|n| n.degree())
+                spline_shaped(
+                    shape
+                        .nurbs(&embed.frame())
+                        .and_then(|nurbs| nurbs.elevated_to_degree(d + 1).ok())
+                        .map(Spline::Nurbs),
+                )
             },
         );
     }
@@ -1845,7 +1999,9 @@ fn splines(atlas: &mut Atlas, degrees: &[f64]) {
             },
             |(data, embed)| {
                 let points = embed.frame().points(data);
-                guarded(|| NurbsCurve2::interpolate_uniform(3, points)).map(|n| n.degree())
+                spline_shaped(
+                    guarded(|| NurbsCurve2::interpolate_uniform(3, points)).map(Spline::Nurbs),
+                )
             },
         );
     }
@@ -1870,8 +2026,11 @@ fn splines(atlas: &mut Atlas, degrees: &[f64]) {
                 (shape, Embed::rational(16, rng))
             },
             |(shape, embed)| {
-                let curve = shape.curve(&embed.frame())?;
-                curve.native_bezier_fragments().ok().map(|f| f.len())
+                counted(
+                    shape
+                        .curve(&embed.frame())
+                        .and_then(|curve| curve.native_bezier_fragments().ok().map(|f| f.len())),
+                )
             },
         );
     }
@@ -1891,26 +2050,28 @@ fn projection(atlas: &mut Atlas) {
             &tolerances,
             |k, rng| (pow2(-(k as i32)), Embed::rational(16, rng)),
             |(tolerance, embed)| {
-                let options = BezierFlatteningOptions::try_new(real(tolerance), 64).ok()?;
-                let f = embed.frame();
-                if kind.starts_with("quadratic") {
-                    QuadraticBezier2::new(
-                        f.point(&pt(-2, 4)),
-                        f.point(&pt(0, -4)),
-                        f.point(&pt(2, 4)),
-                    )
-                    .flatten_certified(&options)
-                    .ok()
-                    .map(|p| p.points().len())
-                } else {
-                    let Shape::Cubic([a, b, c, d]) = s_cubic() else {
-                        return None;
-                    };
-                    CubicBezier2::new(f.point(&a), f.point(&b), f.point(&c), f.point(&d))
+                counted((|| {
+                    let options = BezierFlatteningOptions::try_new(real(tolerance), 64).ok()?;
+                    let f = embed.frame();
+                    if kind.starts_with("quadratic") {
+                        QuadraticBezier2::new(
+                            f.point(&pt(-2, 4)),
+                            f.point(&pt(0, -4)),
+                            f.point(&pt(2, 4)),
+                        )
                         .flatten_certified(&options)
                         .ok()
                         .map(|p| p.points().len())
-                }
+                    } else {
+                        let Shape::Cubic([a, b, c, d]) = s_cubic() else {
+                            return None;
+                        };
+                        CubicBezier2::new(f.point(&a), f.point(&b), f.point(&c), f.point(&d))
+                            .flatten_certified(&options)
+                            .ok()
+                            .map(|p| p.points().len())
+                    }
+                })())
             },
         );
     }
@@ -1928,11 +2089,13 @@ fn projection(atlas: &mut Atlas) {
             &tolerances,
             |k, rng| (2f64.powi(-(k as i32)), Embed::rational(16, rng)),
             |(tolerance, embed)| {
-                let options = FiniteProjectionOptions::try_new(*tolerance).ok()?;
-                let path = path_from(std::slice::from_ref(&shape), &embed.frame())?;
-                path.project_to_finite_polyline(&options)
-                    .ok()
-                    .map(|p| p.points().len())
+                counted((|| {
+                    let options = FiniteProjectionOptions::try_new(*tolerance).ok()?;
+                    let path = path_from(std::slice::from_ref(&shape), &embed.frame())?;
+                    path.project_to_finite_polyline(&options)
+                        .ok()
+                        .map(|p| p.points().len())
+                })())
             },
         );
     }
@@ -2041,7 +2204,7 @@ fn svg(atlas: &mut Atlas, segments: &[f64]) {
             kind,
             segments,
             |n, rng| path_data(command, n as usize, 0, rng),
-            |d| parse_svg_path_data(d).ok().map(|s| s.len()),
+            |d| counted(parse_svg_path_data(d).ok().map(|s| s.len())),
         );
     }
     atlas.fuzz(
@@ -2052,7 +2215,7 @@ fn svg(atlas: &mut Atlas, segments: &[f64]) {
             let digits = rng.below(24) as u32;
             path_data(command, n as usize, digits, rng)
         },
-        |d| parse_svg_path_data(d).ok().map(|s| s.len()),
+        |d| counted(parse_svg_path_data(d).ok().map(|s| s.len())),
     );
 
     atlas.operation(
@@ -2066,7 +2229,7 @@ fn svg(atlas: &mut Atlas, segments: &[f64]) {
             kind,
             &powers_of_two(0, 8),
             |digits, rng| path_data(command, 16, digits as u32, rng),
-            |d| parse_svg_path_data(d).ok().map(|s| s.len()),
+            |d| counted(parse_svg_path_data(d).ok().map(|s| s.len())),
         );
     }
 
@@ -2087,7 +2250,20 @@ fn svg(atlas: &mut Atlas, segments: &[f64]) {
             kind,
             segments,
             |n, _| closed_document(command, n as usize),
-            |doc| guarded(|| import_svg_document(doc)).map(|g| g.region().boundary_loops().len()),
+            |doc| {
+                let geometry = guarded(|| import_svg_document(doc));
+                Shaped::new(geometry, |g| {
+                    g.as_ref().map(|g| perf_atlas::Shape {
+                        nodes: g
+                            .region()
+                            .boundary_loops()
+                            .iter()
+                            .map(|l| l.len() as u64)
+                            .sum(),
+                        ..perf_atlas::Shape::default()
+                    })
+                })
+            },
         );
     }
 
