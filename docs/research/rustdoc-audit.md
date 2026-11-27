@@ -8386,6 +8386,123 @@ These are temporary audit artifacts, not a durable performance archive. Remainin
 Hyperlattice implementations, integration tests, benchmarks and support prose,
 and most of the wider repository, still require their own review records.
 
+## Hyperlattice complex arithmetic core and diagnostic tests (27 November 2026)
+
+Whole-file review at `350f5452d` covered `crates/hyperlattice/src/complex.rs`
+(563 → 709 lines), `tests/complex.rs` (89 → 101), and
+`tests/diagnostic_display.rs` (89 → 102), with test paths relative to the crate.
+Documented all 66 core declarations, including module declarations, private helpers,
+operator methods and associated output types, plus both public component fields.
+Documented seven declarations in the arithmetic test file and three in the display
+file, including their test functions and private unresolved-zero fixture.
+Implementation, scalar-call order, trace labels, assertions, fixtures, and display
+strings remain unchanged.
+
+Owning layer: complex carriers and operation scheduling above native scalar
+arithmetic; diagnostic display is a presentation boundary. Relevant contracts are
+P1 (exact components), P3 (structural facts/equality), P4/P10 (reuse evidence and
+call order), P5 (resource scope), P6 (native typed errors), P9/P30 (no implied
+certainty receipt), and P36/P37 (evidence and precise coverage). The domain is
+native Real component pairs, all provided owned/borrowed arithmetic forms, signed
+i64 powers, and ordinary/alternate diagnostic formatting. Missing private docs and
+incomplete public descriptions of zero powers, checked rational specialization,
+reuse scheduling, and formatting flags were the acceptance gap. Before edits,
+the eight original tests and bounded exact/trace probes passed on the target
+revision, reproducing the documented behavior rather than assuming older reviews.
+
+Clarified contracts:
+
+- Complex stores editable re/im expressions. Construction does not normalize,
+  refine, or validate a geometric carrier. Derived equality compares scalar
+  structure, not arbitrary expression values; Clone preserves native sharing and
+  cache semantics. Result aliases retain Problem without adding predicate policy,
+  certainty/provenance, total-work, or independent cancellation guarantees.
+- Multiplication is (ac-bd)+(ad+bc)i. It observes reuse evidence for all four
+  components in lhs.re, lhs.im, rhs.re, rhs.im order. All Some(true) selects the
+  three-product formula; all exact but not fully reused selects the fused rational
+  kernel; otherwise active signed-product reducers form the components. Evidence
+  can record an isolated rational's first observation. It is advisory scheduling,
+  not a numerical approximation or mathematical-equality test.
+- Division classifies all four components in the same fixed order. Exact-rational
+  quotient construction directly owns its zero-denominator check even in checked
+  mode. The general path constructs the rhs squared modulus, applies the optional
+  cheap nonzero guard, inverts before forming the two numerators, then shares that
+  inverse. The public norm query's fused sum intentionally differs from inline
+  reciprocal/division denominator construction. No calls were consolidated or
+  reordered to make documentation simpler.
+- Exponent zero requires cheap proof that at least one component is nonzero.
+  Known zero returns NotANumber; unresolved knowledge returns UnknownZero. The
+  real exact-rational shortcut and remaining real/imaginary fact order are explicit.
+  Positive exponents admit zero. Exponent -1 calls the reciprocal directly; other
+  negative exponents invert their already-computed positive power. Checked powers
+  use the corresponding checked inverse at that point. unsigned_abs admits
+  i64::MIN without signed-negation overflow. Small powers and binary squaring keep
+  their exact clone/multiply schedules; logarithmic multiplication count is not a
+  bound on expression/coefficient growth. The private squaring helper requires
+  a nonzero exponent and would panic on zero; public methods handle it first.
+- Every owned/borrowed operator and Output type has documentation of its carrier,
+  operand use, shared scheduler, or native failure behavior. Cached scalar adapters
+  describe borrowing/reuse, not a guaranteed cache hit. BitXor is the integer-power
+  alias and retains powi's domain semantics.
+- Display retains literal parentheses/plus/i spelling, including `+ -2i` for a
+  negative imaginary coefficient. Alternate mode uses diagnostic_decimal(-256)
+  per component and may emit nonnumeric failure markers. It does not forward
+  outer width/precision/sign flags to nested formatting. This is presentation,
+  not exact interchange or a complete time bound.
+- The display test's sin(e)^2+cos(e)^2-1 is mathematically zero; its name denotes
+  unavailable cheap knowledge. Its unprepared/prepared passes reuse scalar state,
+  and the -512 interval preparation result is discarded. Marker-count assertions
+  are not independent cold/warm measurements, a full-string oracle for every
+  output, or numeric-error bounds. The arithmetic tests' formula expectations
+  remain limited to their rational fixtures and selected ownership/domain cases.
+
+Read the 61-line elementary child and 161-line Jacobi child as context for module
+roles, plus scalar guards, rational reuse/product/quotient primitives, diagnostic
+formatting, shared test fixtures, and selected API-surface assertions. The two
+child files still need their dedicated branch/continuation and documentation
+review before receiving completion credit. Other excerpts receive no additional
+whole-file credit. No mathematical kernel or approximation policy was changed.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only/blank lines
+  leaves identical source in all three files against `350f5452d`.
+- The actual all-feature library built. Direct rustc harnesses compiled and ran
+  all six existing complex tests and both diagnostic tests against that library,
+  then repeated all eight against the no-default-feature build. The original
+  assertions and inputs were unchanged; each process had a 30-second external
+  containment timeout rather than an inferred internal resource guarantee.
+- A bounded public-API probe checked independently specified rational product,
+  quotient, reciprocal and norm results; integer powers 1..8, -2 and i64::MIN;
+  ordinary/checked zero-exponent UnknownZero; a known nonzero imaginary component
+  overriding an unknown real component; 0^0; and negative-imaginary/outer-precision
+  formatting. Both feature configurations passed. Before/after all-feature probe
+  stdout matched exactly.
+- Exact trace assertions before/after observed one cold fused-rational product,
+  one repeated three-product rational path, and one mixed-symbolic path. Each
+  required its named count to equal one. This supports these specific scheduling
+  witnesses, not every possible dispatch path or a performance equivalence claim.
+- All-feature and no-default-feature private library Rustdoc passed with warnings
+  and broken/private links denied. In each configuration, complete text of all
+  69 core documentation groups (50 distinct texts) matched 12 HTML pages. Four
+  further module/helper groups from the edited test files matched their private
+  docs; the eight #[test] functions are source-reviewed and executed but omitted
+  by Rustdoc. Repeated Output prose is not counted as unique rendered text.
+- Hyperlimit downstream library checks passed under all features and no default
+  features. Cargo used the repository lockfile, offline resolution, two workers,
+  disabled incremental compilation, and the shared target. Full workflow checks
+  remain owner-waived; no benchmark, full symbolic/transcendental corpus, sanitizer,
+  or release-size measurement ran. These docs-only edits make no speed/memory claim.
+- Removed the three temporary test/probe executables after validation. Shared target
+  storage remains approximately 2.4 GiB; no duplicate Cargo target tree was created.
+
+Evidence: `/tmp/csgrs-rustdoc-complex-{before,after,build,doc,render,downstream}.log`,
+`/tmp/csgrs-rustdoc-complex-minimal-{build,test,doc,render,downstream}.log`, build JSON,
+and `/tmp/csgrs-complex-audit/` retain the probe/checkers and generated test docs.
+These are temporary review artifacts, not a durable performance archive. The
+remaining complex continuation files, other library implementations/tests,
+benchmarks/support material, and most of the wider repository remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

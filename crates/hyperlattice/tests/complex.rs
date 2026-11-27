@@ -1,13 +1,21 @@
+//! Finite exact-rational complex arithmetic and display regressions.
+//!
+//! Expectations use scalar formulas or exact literal values; these checks cover the
+//! listed fixtures and ownership forms, not every symbolic representation or domain.
+
+/// Shared exact-rational fixture constructors used by these tests.
 mod common;
 
 use common::{frac, r};
 use hyperlattice::{Complex, Problem, Real};
 
+/// Check the BitXor power alias sends i squared to exact -1+0i.
 #[test]
 fn complex_i_squared() {
     assert_eq!((Complex::i() ^ 2).unwrap(), Complex::new(r(-1), r(0)));
 }
 
+/// Check all four ownership forms against the scalar ac-bd/ad+bc formulas for one rational fixture; structural equality suffices for these exact components.
 #[test]
 fn complex_multiplication_preserves_exact_components_for_all_ownership_forms() {
     let lhs = Complex::new(frac(3, 7), frac(-5, 11));
@@ -23,6 +31,7 @@ fn complex_multiplication_preserves_exact_components_for_all_ownership_forms() {
     assert_eq!(&lhs * &rhs, expected);
 }
 
+/// Check four division ownership forms and checked division against the conjugate/norm scalar formulas for one nonzero rational divisor.
 #[test]
 fn complex_division_preserves_exact_components_for_all_ownership_forms() {
     let lhs = Complex::new(frac(3, 7), frac(-5, 11));
@@ -40,6 +49,7 @@ fn complex_division_preserves_exact_components_for_all_ownership_forms() {
     assert_eq!(lhs.div_checked(rhs).unwrap(), expected);
 }
 
+/// Compare exponent -1 with reciprocal on 3+4i; this consistency assertion does not independently check the reciprocal formula or trace path.
 #[test]
 fn complex_negative_one_power_uses_reciprocal_semantics() {
     let value = Complex::new(r(3), r(4));
@@ -47,6 +57,7 @@ fn complex_negative_one_power_uses_reciprocal_semantics() {
     assert_eq!(value.clone().powi(-1).unwrap(), value.reciprocal().unwrap());
 }
 
+/// Check default rational and alternate decimal spelling for 1/2+2i; does not establish forwarding of outer width/precision flags.
 #[test]
 fn complex_display_forwards_real_formatting() {
     let value = Complex::new(frac(1, 2), r(2));
@@ -55,6 +66,7 @@ fn complex_display_forwards_real_formatting() {
     assert_eq!(format!("{value:#}"), "(0.5 + 2i)");
 }
 
+/// Check selected ordinary/checked zero-divisor errors, checked zero-to-zero power, and exact division by real two; unknown-zero cases are not covered here.
 #[test]
 fn checked_complex_operations_reject_zero_denominators() {
     let value = Complex::new(r(3), r(4));
