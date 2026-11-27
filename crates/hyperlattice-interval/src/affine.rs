@@ -1,5 +1,15 @@
+//! Retained point maps and statically nested affine images of exact sources.
+//!
+//! Construction keeps source parameters and map coefficients without projecting
+//! intermediate images. Enclosure composes coefficient bounds from the outer map
+//! toward the source, then delegates evaluation to the existing Cartesian layer.
+//! Restrictions act on the source parameters, preserving every retained map.
+//! Backend contexts account for scalar operations and explicit owned copies, not
+//! a general bound on nesting depth, traversal stack, cloning or serialization.
+
 use crate::{IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVector};
 
+/// Runtime-length affine composition with a fixed inline map capacity.
 mod chain;
 mod translated;
 pub use chain::AffineChain;
@@ -7,9 +17,20 @@ pub use translated::TranslatedBox;
 
 // One internal traversal. Coefficients may acquire outward bounds during
 // pullback, but those temporary bounds never replace the stored point maps.
+/// Internal traversal contract that seals source implementations and shares pullback.
 mod sealed {
     use super::*;
+    /// Enclose an outer affine map by transporting its coefficient bounds to a source.
+    ///
+    /// Callers supply bounds arising from validated point-map composition. These
+    /// temporary bounds may be nonsingleton after rounding; they are not admitted
+    /// as a new exact family of authored maps. Implementations retain the source
+    /// definition and use the same context throughout recursive evaluation.
     pub trait Pullback<I: IntervalArithmetic, const N: usize> {
+        /// Return an R-coordinate enclosure of `linear * self + translation`.
+        /// Preserve source parameter dependence through composition before final
+        /// Cartesian projection. Backend errors propagate without partial output;
+        /// no midpoint, sampled point or intermediate image box replaces the source.
         fn enclose_affine<const R: usize>(
             &self,
             linear: &IntervalMatrix<I, R, N>,
@@ -23,6 +44,9 @@ mod sealed {
 ///
 /// `Parameters` is always the original source box's type. Restriction acts in
 /// that parameter space; it does not intersect the output with an output box.
+/// For [`TranslatedBox`], that domain contains offsets from the retained center.
+/// The private pullback supertrait prevents downstream source implementations
+/// from introducing a different projection or composition authority.
 pub trait AffineSource<I: IntervalArithmetic, const N: usize>: sealed::Pullback<I, N> {
     /// Original parameter-box type, unchanged by subsequent maps.
     type Parameters;
@@ -77,13 +101,19 @@ pub trait AffineSource<I: IntervalArithmetic, const N: usize>: sealed::Pullback<
 /// ```
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct AffineMap<I: IntervalArithmetic, const R: usize, const C: usize> {
+    /// Validated singleton R-by-C coefficient matrix, retained in its scalar family.
     linear: IntervalMatrix<I, R, C>,
+    /// Validated singleton R-coordinate translation, independent of any later source.
     translation: IntervalVector<I, R>,
 }
 
+/// Validate and retain point coefficients, inspect them, or attach an exact source.
 impl<I: IntervalArithmetic, const R: usize, const C: usize> AffineMap<I, R, C> {
     /// Validates that both carriers contain exactly one point matrix/vector.
     /// Zero-sized unit products are valid; explicit empty carriers are not.
+    /// Matrix validation precedes translation validation. Inputs are consumed,
+    /// including on failure; no scalar arithmetic or source-dependent shortcut
+    /// participates in admission.
     pub fn new(
         linear: IntervalMatrix<I, R, C>,
         translation: IntervalVector<I, R>,
@@ -122,6 +152,12 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> AffineMap<I, R, C> {
         AffineImage { source, map: self }
     }
 
+    /// Make a budget-accounted owned copy, matrix first and translation second.
+    ///
+    /// Each hull against empty delegates to carrier copying in its established
+    /// entry order. The immutable source already proves singleton invariants,
+    /// so no new point-map validation is needed. First-error return drops any
+    /// completed prefix without refunding work or changing the source map.
     fn copy(&self, context: &mut I::Context) -> Result<Self, IntervalLatticeError> {
         // Hull with empty is the existing exact, budget-accounted owned copy.
         Ok(Self {
@@ -146,13 +182,16 @@ impl<I: IntervalArithmetic, const R: usize, const C: usize> AffineMap<I, R, C> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct AffineImage<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usize>
 {
+    /// Immediate exact source, retaining original parameters through nested images.
     source: S,
+    /// Last applied point map; it is not overwritten by temporary composed bounds.
     map: AffineMap<I, R, C>,
 }
 
 /// Exact affine image of a Cartesian box, before any further retained maps.
 pub type AffineBox<I, const R: usize, const C: usize> = AffineImage<I, IntervalVector<I, C>, R, C>;
 
+/// Immutable definition access, parameter restriction and explicit Cartesian enclosure.
 impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usize>
     AffineImage<I, S, R, C>
 {
@@ -184,6 +223,9 @@ impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usiz
     /// Intersects in original parameter space, retaining the complete definition.
     /// Budgeted copies are made only for the returned object; failure does not
     /// mutate this image or cache exhaustion as a permanent result.
+    /// Restrict the immediate source first, then copy this last map. Recursion
+    /// therefore copies inner maps before outer maps. Copies still occur when
+    /// the restricted domain is empty, so empty results can require resources.
     pub fn restrict_parameters(
         &self,
         restriction: &S::Parameters,
@@ -203,6 +245,8 @@ impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usiz
     /// The caller's context covers the entire pullback and final evaluation.
     /// No partial output is returned on exhaustion. The retained definition is
     /// unchanged even if its current projection overflows or exhausts resources.
+    /// Even an exact coordinate hull can lose dependence between output lanes;
+    /// further maps on the retained image continue to use its shared parameters.
     pub fn enclosure(
         &self,
         context: &mut I::Context,
@@ -212,20 +256,28 @@ impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usiz
     }
 }
 
+/// Treat a Cartesian vector product as its own parameterized affine source.
 impl<I: IntervalArithmetic, const N: usize> AffineSource<I, N> for IntervalVector<I, N> {
+    /// The original vector box, with the same scalar family and dimension.
     type Parameters = Self;
+    /// Borrow this box directly as the parameter domain.
     fn parameter_domain(&self) -> &Self {
         self
     }
+    /// Use the carrier's canonical empty state without numerical evaluation.
     fn is_empty(&self) -> bool {
         self.is_empty()
     }
+    /// Copy the box through hull-against-empty with backend accounting.
+    /// This identity projection can require dyadic work for nonempty coordinates;
+    /// it is not an unbudgeted Clone and does not change the represented box.
     fn enclosure(
         &self,
         context: &mut I::Context,
     ) -> Result<IntervalVector<I, N>, IntervalLatticeError> {
         self.hull(&Self::empty()?, context)
     }
+    /// Delegate parameter restriction to native Cartesian intersection.
     fn restrict_parameters(
         &self,
         restriction: &Self,
@@ -235,7 +287,10 @@ impl<I: IntervalArithmetic, const N: usize> AffineSource<I, N> for IntervalVecto
     }
 }
 
+/// End coefficient pullback at a Cartesian parameter domain.
 impl<I: IntervalArithmetic, const N: usize> sealed::Pullback<I, N> for IntervalVector<I, N> {
+    /// Delegate the final affine enclosure to the existing matrix/vector kernel.
+    /// Its empty handling, ordered products/additions and scalar errors remain intact.
     fn enclose_affine<const R: usize>(
         &self,
         linear: &IntervalMatrix<I, R, N>,
@@ -246,22 +301,28 @@ impl<I: IntervalArithmetic, const N: usize> sealed::Pullback<I, N> for IntervalV
     }
 }
 
+/// Preserve the original parameter type while exposing a nested image as a source.
 impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usize>
     AffineSource<I, R> for AffineImage<I, S, R, C>
 {
+    /// Source parameters, whose dimension need not equal the image dimension R.
     type Parameters = S::Parameters;
+    /// Delegate to the retained source's parameter domain through the inherent API.
     fn parameter_domain(&self) -> &Self::Parameters {
         self.parameter_domain()
     }
+    /// Delegate source emptiness; a singular total map does not create an empty set.
     fn is_empty(&self) -> bool {
         self.is_empty()
     }
+    /// Delegate the same explicit projection and shared-context traversal.
     fn enclosure(
         &self,
         context: &mut I::Context,
     ) -> Result<IntervalVector<I, R>, IntervalLatticeError> {
         self.enclosure(context)
     }
+    /// Delegate source restriction and ordered map copying without altering semantics.
     fn restrict_parameters(
         &self,
         restriction: &Self::Parameters,
@@ -271,9 +332,17 @@ impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usiz
     }
 }
 
+/// Transport an outer affine map through one retained point map toward the source.
 impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usize>
     sealed::Pullback<I, R> for AffineImage<I, S, R, C>
 {
+    /// Apply `B*(A*x+b)+c = (B*A)*x+(B*b+c)` to temporary coefficient bounds.
+    ///
+    /// Empty source returns empty before arithmetic. Otherwise compute the entire
+    /// combined matrix first, then the combined translation, then recurse into
+    /// the immediate source. Both coefficients and all nested calls share context.
+    /// Failure drops temporaries without refunding charges; stored point maps are
+    /// never replaced by rounded bounds or by a failed projection.
     fn enclose_affine<const K: usize>(
         &self,
         linear: &IntervalMatrix<I, K, R>,

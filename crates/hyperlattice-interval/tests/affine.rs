@@ -1,3 +1,9 @@
+//! Finite qualification of retained affine composition and explicit projection.
+//!
+//! Independent integer-corner evaluation supplies coordinate extrema for the small
+//! linear fixtures. Further cases exercise lost correlations after boxing, off-grid
+//! definitions, singular maps, empty/unit domains and shared dyadic resource limits.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -8,6 +14,9 @@ use hyperlattice_interval::{
     AffineMap, AffineSource, IntervalArithmetic, IntervalMatrix, IntervalVector,
 };
 
+/// Build a point map from small integer coefficients using a fixture scalar constructor.
+/// Both carriers and singleton-map validation must succeed; malformed or unavailable
+/// fixture values panic. No interval coefficient composition supplies oracle values.
 fn map<I: IntervalArithmetic, const R: usize, const C: usize>(
     coefficients: [[i32; C]; R],
     translation: [i32; R],
@@ -22,6 +31,12 @@ fn map<I: IntervalArithmetic, const R: usize, const C: usize>(
 
 // Independent oracle: evaluate point maps at each source-box corner with i64
 // integers. Do not compose interval coefficients or call any production kernel.
+/// Evaluate two point maps at all four corners of an ordered two-coordinate box.
+///
+/// Coordinatewise affine extrema occur at corners, so these min/max values are
+/// independent exact hull expectations for the bounded integer corpus. Intermediate
+/// calculations use i64 and final bounds must fit i32; this helper does not provide
+/// checked arbitrary-coefficient arithmetic or support nonlinear extrema.
 fn corners(
     a: [[i32; 2]; 2],
     b: [[i32; 2]; 2],
@@ -46,6 +61,13 @@ fn corners(
     bounds.map(|(lo, hi)| (lo.try_into().unwrap(), hi.try_into().unwrap()))
 }
 
+/// Check all 6,561 pairs of 2-by-2 matrices with entries -1, 0 or 1.
+///
+/// Translations come from selected matrix entries; the fixed source box and direct
+/// corner oracle determine independent endpoint expectations. Additional fixtures
+/// contrast retained cancellation with premature boxing, apply inverse shears,
+/// restrict original parameters, preserve empty results and rebuild owned parts.
+/// Each query uses a fresh context; shared-budget behavior is tested separately.
 fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     scalar: impl Fn(i32, i32) -> I,
     mut context: impl FnMut() -> I::Context,
@@ -112,6 +134,9 @@ fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     assert!(empty.is_empty() && empty.enclosure(&mut context()).unwrap().is_empty());
 
     // Exercise the sealed generic source API separately from inherent methods.
+    /// Exercise parameter access, emptiness and restriction through the sealed generic trait.
+    /// The fixture supplies a nonempty source and adequate context; violation or a
+    /// restriction error panics. The parameter type is inherited from that source.
     fn restrict<I: IntervalArithmetic, S: AffineSource<I, 2>>(
         s: &S,
         r: &S::Parameters,
@@ -133,6 +158,7 @@ fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Run the finite integer matrix-pair corpus on whole-unit i32 and i64 backends.
 fn exhaustive_fixed_affine_chains() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
     qualify(|a, b| FixedInterval::<i32, 0>::new(a, b).unwrap(), || ());
@@ -144,6 +170,7 @@ fn exhaustive_fixed_affine_chains() {
 
 #[cfg(feature = "rational")]
 #[test]
+/// Run the finite matrix-pair corpus with exact rational interval arithmetic.
 fn exhaustive_rational_affine_chains() {
     use hyperlattice_interval::hyperinterval::RationalInterval;
     qualify(
@@ -154,6 +181,7 @@ fn exhaustive_rational_affine_chains() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Run the finite matrix-pair corpus with exact dyadic values and fresh ample budgets.
 fn exhaustive_dyadic_affine_chains() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval};
     qualify(
@@ -164,6 +192,8 @@ fn exhaustive_dyadic_affine_chains() {
 
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Run both IEEE backends on small integer fixtures with exactly representable results.
+/// Enabled tests require a supported floating environment; errors are not skipped.
 fn exhaustive_strict_float_affine_chains() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
     qualify(|a, b| F32Enclosure::new(a as f32, b as f32).unwrap(), || ());
@@ -172,9 +202,14 @@ fn exhaustive_strict_float_affine_chains() {
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Recover exact values by composing before projecting unrepresentable intermediates.
+/// An exact quarter lies between fixed half-grid points, yet subsequent doubling
+/// returns the original half. A doubled maximum i32 point overflows on projection,
+/// but a later zero map collapses the retained definition to exact zero.
 fn off_grid_definitions_and_overflow_remain_consumable() {
     use hyperlattice_interval::IntervalLatticeError;
     use hyperlattice_interval::hyperinterval::{FixedInterval, IntervalError};
+    /// Half-unit fixed grid whose exact quarter-point image requires outward projection.
     type I = FixedInterval<i32, 1>;
     let point = |n| I::point(n).unwrap();
     let source = IntervalVector::new([point(1)]).unwrap(); // exact 1/2
@@ -195,6 +230,7 @@ fn off_grid_definitions_and_overflow_remain_consumable() {
     );
     assert_eq!(twice.image(quarter).enclosure(&mut ()).unwrap(), source);
 
+    /// Whole-unit fixed grid for overflowing projection followed by a zero map.
     type J = FixedInterval<i32, 0>;
     let j = |a, b| J::new(a, b).unwrap();
     let large = map([[2]], [0], &j).image(IntervalVector::new([j(i32::MAX, i32::MAX)]).unwrap());
@@ -211,8 +247,14 @@ fn off_grid_definitions_and_overflow_remain_consumable() {
 
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Keep half of the least positive IEEE subnormal as an exact retained definition.
+/// Its projection widens to include zero, while later doubling restores the original
+/// point. Optional Serde roundtrip preserves the definition before that next map.
 fn exact_subnormal_definitions_survive_projection_underflow() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+    /// Instantiate subnormal projection/reuse assertions for matching IEEE interval/float types.
+    /// Use the least positive subnormal and exact half/two coefficients; no rounded
+    /// intermediate enclosure is adopted as the source of the next retained operation.
     macro_rules! case {
         ($ty:ty,$float:ty) => {{
             let p = |x| <$ty>::point(x).unwrap();
@@ -250,10 +292,15 @@ fn exact_subnormal_definitions_survive_projection_underflow() {
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Check typed map validation and nonempty images under dimension-changing/singular maps.
+/// Empty and nonsingleton coefficients fail with explicit messages and no nested
+/// cause. Unit-domain constant maps, maps to dimension zero, empty restriction and
+/// rank-one cancellation exercise distinct set semantics with literal expectations.
 fn invalid_maps_empty_units_and_singular_outputs_are_distinct() {
     use core::error::Error;
     use hyperlattice_interval::IntervalLatticeError;
     use hyperlattice_interval::hyperinterval::FixedInterval;
+    /// Whole-unit fixed backend for validation, dimension-change and rank-one fixtures.
     type I = FixedInterval<i32, 0>;
     let p = |a, b| I::new(a, b).unwrap();
     let zero = IntervalVector::new([p(0, 0)]).unwrap();
@@ -319,6 +366,11 @@ fn invalid_maps_empty_units_and_singular_outputs_are_distinct() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Check the retained map 30*x+42, ordered restriction copies and shared dyadic budgets.
+/// Literal full/selected bounds supply independent expectations. One fewer work
+/// unit fails, the measured allowance succeeds and a one-bit size cap fails distinctly.
+/// Queries leave the original domain reusable; an already restricted empty image
+/// projects without work. Measured admission is not an independent geometry oracle.
 fn nested_queries_and_owned_restrictions_share_budget_and_retry() {
     use hyperlattice_interval::IntervalLatticeError;
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval, IntervalError};

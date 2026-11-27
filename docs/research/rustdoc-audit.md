@@ -14060,6 +14060,116 @@ target. No focused check remains blocked. Remaining companion implementations,
 conformance clients and the repository-wide audit remain open; these scoped counts
 do not establish repository-wide coverage.
 
+## Hyperlattice-interval static affine definitions and qualification witnesses (2026-11-27)
+
+Whole-file review on target revision 4b02acae6ff3d2baebb07ebdbaa705fa35820116:
+
+- crates/hyperlattice-interval/src/affine.rs (294 -> 363 lines).
+- crates/hyperlattice-interval/tests/affine.rs (384 -> 436 lines).
+- crates/hyperlattice-interval/tests/affine_exact.rs (98 -> 117 lines).
+- crates/hyperlattice-interval/tests/affine_replay.rs (130 -> 155 lines).
+
+The owning layer retains point maps and shared source parameters while delegating
+numerical operations to existing Cartesian/scalar kernels. P1/P5/P6/P18/P20/P26/
+P27/P37 and the admission protocol govern exact definition retention, explicit
+projection, typed admission, call order, composition, resource limits and replay.
+The domain includes admitted scalar families, rectangular and singular point maps,
+empty/unit products, statically nested images, off-grid exact points and sources
+whose intermediate projections overflow or exhaust size/work budgets. Before edits,
+the sealed traversal, fields, impls, copy helper and test support lacked Rustdoc.
+Fourteen focused tests passed on the target revision with the replay marker cleared.
+The acceptance gap was documentation and rendered private/test coverage; no production
+behavior, policy, fixture, signature, assertion or operation order changed.
+
+The 83 authored Rustdoc blocks cover 47 function declarations and the associated
+modules, traits, fields, impls, aliases, test macro and replay marker. Review records:
+
+- A point map validates its matrix before its translation, consuming both inputs.
+  Empty or nonsingleton coefficient carriers fail independently of future source
+  emptiness. Image construction moves retained definitions without projecting or
+  multiplying coefficients. Type nesting/storage and explicit Clone remain outside
+  any claim that a scalar context bounds all stack, memory or serialization work.
+- The private Pullback supertrait seals source admission and carries temporary
+  coefficient enclosures. Rounded nonsingleton bounds are not newly authored exact
+  map families. Each image composes the complete matrix first, then translation,
+  then recurses toward the source; empty source bypasses that arithmetic. Original
+  point maps remain authoritative after successful, widened or failed projection.
+- An exact coordinate hull can discard dependence between output coordinates even
+  when its marginal bounds are exact. Subsequent maps on the retained image use
+  shared source parameters; substituting the boxed projection changes that model.
+  Restrictions act on original parameters, including translated-source offsets,
+  rather than intersecting an output box in its own coordinate space.
+- Map copying uses matrix hull-against-empty before translation copying. Restriction
+  processes the immediate source before its last map, so nested inner maps are copied
+  before outer maps. Those copies still happen after an empty intersection and can
+  fail on resources. Failure does not refund work, replace the definition or cache
+  exhaustion as a permanent result. A plain Cartesian source's identity projection
+  is likewise an accounted owned copy, not unbudgeted Clone.
+- The small integer corpus evaluates all 6,561 pairs of 2-by-2 matrices with entries
+  -1, 0 and 1. Its independent oracle evaluates four source corners using i64 and
+  checked final i32 conversion; callers supply small ordered fixtures, not arbitrary
+  coefficients with a general overflow-safe oracle. Additional fixtures cover boxed
+  versus retained cancellation, inverse shear, source restriction, owned reconstruction,
+  invalid coefficients, dimension changes, singular maps and empty results.
+- Exact regressions separate large rational parameter numerators from small fractional
+  map coefficients. Dyadic inverse composition avoids materializing a large-grid
+  intermediate. Fixed half-grid and IEEE subnormal fixtures retain unrepresentable
+  intermediate points for the next operation. The maximum i64/F63 coefficient remains
+  its exact binary value through replay. IEEE tests require a supported environment.
+- The replay parent sends a retained exact quarter-point image to one selected child
+  test; the child checks source encoding identity, applies another map, then round-trips
+  that derived image locally before a further map. A readable marker bypasses spawn;
+  there is no internal timeout. Invalid nested maps fail despite empty sources, and
+  structurally different images under a constant zero map show equal projections without equal
+  definitions. The typed parameter domain remains unchanged by output dimension.
+
+Context included Cartesian products/copies, runtime-chain pullback, existing translated
+sources, actual Hyperlattice reexports and the shared Serde implementation. Serde was
+read for admission/replay context but its undocumented visitors and runtime-chain
+support remain for their own complete documentation batch; context reading is not
+credited as completed implementation coverage. No shared serializer code was changed.
+
+Validation after final edits:
+
+- Locked/offline Cargo, j2, incremental disabled, reused target. Eight affine tests,
+  three exact regressions, three affine replay tests, seven runtime-chain tests,
+  six centered-affine consumers and the allocation sentinel passed (28 local tests).
+  HYPERLATTICE_AFFINE_REPLAY and HYPERLATTICE_TRANSLATED_REPLAY were unset. All seven
+  actual Hyperlattice interval_surface tests and both existing static/runtime affine
+  doctests passed. Original doctest source and every test assertion remain unchanged.
+- A warnings-denied temporary probe checked matrix-first validation, budgeted Cartesian
+  identity projection, matrix-before-translation copies and inner-before-outer copies
+  after empty restriction. Distinct WorkExhausted/SizeExhausted cases established the
+  documented order, including pullback's matrix phase before its larger translation.
+  Spent work, exact retries, retained map/source encodings, successful zero-work empty
+  projection and retained-versus-boxed correlation expectations were also verified.
+  An external 30-second execution timeout bounds the probe, not the underlying APIs.
+- Independent Python Fraction arithmetic confirmed the fractional inverse matrix and
+  cancelling translation, reciprocal dyadic scales/translation, intermediate endpoint
+  numerator lengths of 350/351 bits and the literal full/restricted bounds of 30*x+42.
+  These finite derivations do not establish general complexity or performance bounds.
+- Private cargo doc passed with all features and no default features, denying warnings,
+  broken links and private-link violations. All 49 implementation doc blocks rendered
+  in both configurations. Actual test Rustdoc omits 14 test functions; temporary copies
+  removed exactly those test attributes and rendered 24 test-file blocks, preserving
+  all bodies/assertions. Ten function-local function/macro/type/constant blocks were
+  checked at source attachment and rendered separately as Markdown; no ordinary
+  standalone API-page claim is made for those local items.
+- Removing only whole comment/blank lines leaves identical remaining source bytes
+  in all four files. All 47 function declarations have attached Rustdoc. Selected-file
+  rustfmt and git diff --check passed. AGENTS.md retains the 100% public/private/generated
+  documentation mandate. Full workflow checks remain owner-waived for this docs-only
+  session; no new general performance, allocation, cancellation or closure claim is made.
+
+Evidence: /tmp/csgrs-rustdoc-interval-affine-{before,tests,build,doc-all,doc-min,
+doctest,probe,math,validation,render-min,downstream}.log and
+/tmp/csgrs-interval-affine-audit/ (matching artifacts, scripts, probe source, temporary
+source copies and full-text match records). Owned executable and duplicate temporary
+HTML were removed. The reused Cargo target is approximately 4.0 GiB, with no second
+target. No focused check remains blocked. Runtime-chain internals, shared serialization,
+remaining support/conformance files and the repository-wide audit remain open; scoped
+block counts do not establish repository-wide coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
