@@ -1,3 +1,12 @@
+//! Fixed scalar regressions for structural equality, fact consistency and domain boundaries.
+//!
+//! Repeated-query stability is checked separately before and after warming attempts;
+//! facts may legitimately strengthen between those snapshots. Equality of lossy
+//! conversion Results is supplemental evidence, not an exact-value oracle. The tests
+//! use selected symbolic identities and finite binary64 imports, not every scalar
+//! representation, cache transition or invalid floating-point encoding.
+
+/// Shared exact rational, scalar-status and abort fixtures used by this integration target.
 mod common;
 
 use common::{frac, r, unknown_zero};
@@ -6,6 +15,11 @@ use hyperlattice::{
     reciprocal_ref_checked,
 };
 
+/// Takes one fact snapshot and checks eight subsequent queries against it within the current state.
+///
+/// Also checks zero predicates and zero/nonzero sign consistency. A caller may invoke
+/// this again after warming with a new snapshot; it does not compare those snapshots
+/// or require a magnitude certificate for every nonzero value.
 fn assert_stable_facts(value: &Real) {
     let facts = value.structural_facts();
 
@@ -23,6 +37,11 @@ fn assert_stable_facts(value: &Real) {
     }
 }
 
+/// Compares structural equality, zero status, full facts, sign-query results and lossy conversion Results.
+///
+/// Uses refine_sign_until(-64) after the fact comparisons. Equal optional/error
+/// results do not prove a successful sign or numerical evaluation; the leading
+/// structural equality is the exact representation check for these chosen pairs.
 fn assert_same_semantics(left: Real, right: Real) {
     assert_eq!(left, right);
     assert_eq!(left.zero_status(), right.zero_status());
@@ -31,6 +50,10 @@ fn assert_same_semantics(left: Real, right: Real) {
     assert_eq!(left.to_f64_lossy(), right.to_f64_lossy());
 }
 
+/// Checks per-state query stability on eleven rational/symbolic/unknown fixtures before and after warming attempts.
+///
+/// Lossy conversion and refine_sign_until(-128) Results are discarded. Each helper
+/// call takes a fresh snapshot, so stronger facts after warming are not forbidden.
 #[test]
 fn scalar_fact_queries_survive_repeated_cache_warming() {
     let values = [
@@ -55,6 +78,7 @@ fn scalar_fact_queries_survive_repeated_cache_warming() {
     }
 }
 
+/// Compares selected π scaling, trigonometric constants, logarithms and multiplicative cancellations through the shared semantics helper.
 #[test]
 fn structural_equivalents_built_by_different_histories_agree() {
     assert_same_semantics((Real::pi() / r(2)).unwrap(), frac(1, 2) * Real::pi());
@@ -69,6 +93,9 @@ fn structural_equivalents_built_by_different_histories_agree() {
     assert_same_semantics(Real::ln(r(1024)).unwrap(), r(10) * Real::ln(r(2)).unwrap());
 }
 
+/// Checks selected inverse-trig constants, sin(7π/6) and atan(tan(5π/4))=π/4.
+///
+/// The last case tests the principal atan value rather than recovery of the original angle.
 #[test]
 fn exact_special_forms_and_principal_branches_are_guarded() {
     assert_same_semantics(
@@ -94,6 +121,9 @@ fn exact_special_forms_and_principal_branches_are_guarded() {
     );
 }
 
+/// Asserts specific sqrt/log/inverse-function errors, then checks fact stability on separate valid boundary-neighbor values.
+///
+/// Does not reuse an invalid operand's cache or assert an eviction/policy transition.
 #[test]
 fn domain_boundary_errors_do_not_stale_cache_valid_neighbors() {
     assert_eq!(Real::sqrt(r(-1)), Err(Problem::SqrtNegative));
@@ -115,6 +145,7 @@ fn domain_boundary_errors_do_not_stale_cache_valid_neighbors() {
     }
 }
 
+/// Requires DivideByZero for zero, exact 1/4 for a borrowed four, and UnknownZero for a fresh opaque sine difference.
 #[test]
 fn checked_reciprocal_distinguishes_zero_nonzero_and_unknown_zero() {
     assert_eq!(reciprocal_checked(Real::zero()), Err(Problem::DivideByZero));
@@ -125,6 +156,11 @@ fn checked_reciprocal_distinguishes_zero_nonzero_and_unknown_zero() {
     );
 }
 
+/// Checks successful finite binary64 imports, repeated fact stability and zero/nonzero status on twelve values.
+///
+/// Includes signed zeros, a normal minimum, the smallest subnormal and decimal-looking
+/// binary values. It does not assert exact rational coordinates, float roundtrip bits,
+/// NaN/infinity rejection or equality to the corresponding decimal fractions.
 #[test]
 fn float_import_regressions_cover_zero_subnormals_decimals_and_large_values() {
     let cases = [
@@ -153,6 +189,11 @@ fn float_import_regressions_cover_zero_subnormals_decimals_and_large_values() {
     }
 }
 
+/// Copies all returned fact fields into a new packet and checks per-state stability on five expressions.
+///
+/// The copied packet is not an independent expected-facts oracle. Inputs include
+/// recognized cancellations, rational approximants to π/sqrt(2), and an exact small
+/// residual from large rational terms.
 #[test]
 fn fact_api_invariants_are_self_consistent_for_adversarial_forms() {
     let cases = [

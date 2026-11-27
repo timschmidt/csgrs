@@ -1,3 +1,11 @@
+//! Fixed regressions for domain checks, exact cancellation and homogeneous incidence.
+//!
+//! Some singular inverse checks permit either DivideByZero or UnknownZero; that is
+//! rejection evidence rather than a complete singularity classification. Warming and
+//! wrapper comparisons use shared implementation paths. The algebraic incidence test
+//! reconstructs a plane expression in-process; it performs no serialized replay.
+
+/// Shared exact rational, scalar-status and abort fixtures used by this integration target.
 mod common;
 
 use common::{frac, r, unknown_zero};
@@ -6,6 +14,10 @@ use hyperlattice::{
     Vector4, ZeroKnowledge,
 };
 
+/// Checks known-zero and unknown complex-divisor errors and unknown-base rejection at exponent zero.
+///
+/// Both ordinary and checked complex powi(0) require a known nonzero base, unlike
+/// the matrix zero-power convention exercised below.
 #[test]
 fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {
     let zero = Complex::zero();
@@ -24,6 +36,9 @@ fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {
     assert_eq!(unknown.powi_checked(0), Err(Problem::UnknownZero));
 }
 
+/// Checks a singular matrix's zero power is identity while negative powers reject it.
+///
+/// Either DivideByZero or UnknownZero is accepted for the negative-power failures.
 #[test]
 fn matrix_power_edges_do_not_hide_domain_errors() {
     let singular = Matrix3::new([[r(1), r(2), r(3)], [r(1), r(2), r(3)], [r(0), r(0), r(1)]]);
@@ -39,6 +54,9 @@ fn matrix_power_edges_do_not_hide_domain_errors() {
     ));
 }
 
+/// Uses the recognized π-π cancellation to construct duplicate rows, then checks zero determinant knowledge and inverse rejection.
+///
+/// The inverse may report zero or unknown; this is not a general symbolic-zero decision test.
 #[test]
 fn hidden_singular_matrix_by_symbolic_cancellation_is_detected() {
     let pi_minus_pi = Real::pi() - Real::pi();
@@ -55,6 +73,10 @@ fn hidden_singular_matrix_by_symbolic_cancellation_is_detected() {
     ));
 }
 
+/// Checks inverse composition and self-division after attempting a determinant's lossy evaluation.
+///
+/// The rational matrix is fixed. The conversion Result and cache reuse are not
+/// asserted, and there is no separate cold-result comparison.
 #[test]
 fn matrix_division_and_inverse_are_consistent_under_cached_determinant_warming() {
     let matrix = Matrix4::new([
@@ -76,6 +98,10 @@ fn matrix_division_and_inverse_are_consistent_under_cached_determinant_warming()
     );
 }
 
+/// Compares assumed-weight helpers with multiplication on a translated diagonal affine fixture.
+///
+/// Inputs satisfy w=1 or w=0; the direction result must retain known-zero weight.
+/// These are related-path comparisons, not independent coordinate expectations.
 #[test]
 fn homogeneous_transform_helpers_match_direct_multiplication_for_points_and_directions() {
     let transform = Matrix4::new([
@@ -101,6 +127,7 @@ fn homogeneous_transform_helpers_match_direct_multiplication_for_points_and_dire
     );
 }
 
+/// Requires UnknownZero for an opaque axis norm and exact preservation of the rational unit vector (3/5,4/5,0).
 #[test]
 fn normalization_checked_rejects_unknown_zero_norm_but_preserves_exact_unit_vectors() {
     let unknown = Vector3::new([unknown_zero(), r(0), r(0)]);
@@ -110,6 +137,11 @@ fn normalization_checked_rejects_unknown_zero_norm_but_preserves_exact_unit_vect
     assert_eq!(exact.normalize_checked().unwrap(), exact);
 }
 
+/// Checks known-zero plane incidence for 36 radical directions through the origin.
+///
+/// Uses normal (sqrt(2),1,1), offset -1 and direction (sqrt(i),j*sqrt(j),3) for
+/// i,j in {1,2,3,5,31,32}. Only the reconstructed homogeneous plane expression's
+/// zero status is asserted; there is no Cartesian conversion or serialized replay.
 #[test]
 fn algebraic_line_plane_intersections_replay_exact_incidence() {
     let sqrt_two = r(2).sqrt().unwrap();

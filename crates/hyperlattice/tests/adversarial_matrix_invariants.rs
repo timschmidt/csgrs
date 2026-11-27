@@ -1,8 +1,21 @@
+//! Fixed matrix/vector regressions for exact algebra, rejection and retained zero facts.
+//!
+//! Matrix identities compare related library operations on selected rational fixtures;
+//! they are composition checks, not an independent inverse oracle or universal proof.
+//! Symbolic transform assertions inspect zero knowledge, while the named 3×3
+//! exact-and-symbolic inverse test currently supplies only a dyadic matrix.
+
+/// Shared exact rational, scalar-status and abort fixtures used by this integration target.
 mod common;
 
 use common::{frac, r, unknown_zero};
 use hyperlattice::{Matrix3, Matrix4, Problem, Real, Vector3, Vector4, ZeroKnowledge};
 
+/// Checks identity products, transpose involution, two-sided inverse, self-division and powers 0/1/-1.
+///
+/// Requires the supplied fixture's ordinary inverse to succeed; unwrap panics on
+/// failure. The computed inverse and other matrix paths share implementation, so
+/// these 3×3 composition checks are not an independent literal inverse oracle.
 fn assert_matrix3_inverse_invariants(matrix: Matrix3) {
     let inverse = matrix.clone().inverse().unwrap();
     assert_eq!(matrix.clone() * Matrix3::identity(), matrix);
@@ -19,6 +32,10 @@ fn assert_matrix3_inverse_invariants(matrix: Matrix3) {
     assert_eq!(matrix.clone().powi(-1).unwrap(), matrix.inverse().unwrap());
 }
 
+/// Checks the same identity, inverse, self-division and power relations for a 4×4 fixture.
+///
+/// Requires successful ordinary inversion. Both left/right inverse products are
+/// asserted, while the -1 power is compared with a newly computed inverse.
 fn assert_matrix4_inverse_invariants(matrix: Matrix4) {
     let inverse = matrix.clone().inverse().unwrap();
     assert_eq!(matrix.clone() * Matrix4::identity(), matrix);
@@ -35,6 +52,9 @@ fn assert_matrix4_inverse_invariants(matrix: Matrix4) {
     assert_eq!(matrix.clone().powi(-1).unwrap(), matrix.inverse().unwrap());
 }
 
+/// Runs the 3×3 invariant helper on one dense dyadic-rational matrix.
+///
+/// Despite the test name, this fixture contains no symbolic coefficients.
 #[test]
 fn matrix3_adversarial_exact_and_symbolic_kernels_obey_algebra() {
     assert_matrix3_inverse_invariants(Matrix3::new([
@@ -44,6 +64,7 @@ fn matrix3_adversarial_exact_and_symbolic_kernels_obey_algebra() {
     ]));
 }
 
+/// Runs 4×4 composition invariants on a dense mixed-denominator matrix and a sparse integer matrix.
 #[test]
 fn matrix4_adversarial_exact_kernels_obey_algebra() {
     assert_matrix4_inverse_invariants(Matrix4::new([
@@ -60,6 +81,9 @@ fn matrix4_adversarial_exact_kernels_obey_algebra() {
     ]));
 }
 
+/// Checks det(A*B)=det(A)*det(B) for one diagonal rational pair in each dimension.
+///
+/// All four operands are diagonal; this does not exercise a general dense product identity.
 #[test]
 fn determinant_product_identity_holds_for_mixed_matrices() {
     let a = Matrix3::new([[r(2), r(0), r(0)], [r(0), r(3), r(0)], [r(0), r(0), r(5)]]);
@@ -91,6 +115,10 @@ fn determinant_product_identity_holds_for_mixed_matrices() {
     );
 }
 
+/// Accepts zero-or-unknown rejection for a dependent-row matrix and requires UnknownZero for an opaque pivot.
+///
+/// The fresh sine-difference pivot is mathematically nonzero; its cheap status is
+/// unknown. The first assertion does not require a definite singularity proof.
 #[test]
 fn singular_and_unknown_pivot_cases_remain_rejected_by_checked_paths() {
     let singular = Matrix3::new([[r(1), r(2), r(3)], [r(2), r(4), r(6)], [r(0), r(0), r(1)]]);
@@ -107,6 +135,10 @@ fn singular_and_unknown_pivot_cases_remain_rejected_by_checked_paths() {
     assert_eq!(unknown_pivot.inverse_checked(), Err(Problem::UnknownZero));
 }
 
+/// Checks zero/nonzero status of the four coordinates of a sparse π/e direction transform.
+///
+/// The e coefficient multiplies zero. Despite the name, no sign or coordinate-value
+/// assertion is made; the retained facts must be nonzero, zero, nonzero, zero.
 #[test]
 fn sparse_symbolic_transform_preserves_zero_and_sign_facts() {
     let matrix = Matrix4::new([
@@ -124,6 +156,10 @@ fn sparse_symbolic_transform_preserves_zero_and_sign_facts() {
     assert_eq!(transformed[3].zero_status(), ZeroKnowledge::Zero);
 }
 
+/// Checks unit squared norm for (6,8,0) and exact arithmetic cancellation of 1000001-1000000.
+///
+/// The latter difference is expressed through a rational product before a dot sum;
+/// this is arithmetic cancellation, not a cooperative abort test.
 #[test]
 fn vector_normalize_and_dot_invariants_cover_cancellation_and_huge_tiny_mix() {
     let v = Vector3::new([r(6), r(8), r(0)]);

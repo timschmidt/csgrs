@@ -10961,6 +10961,111 @@ Evidence: `/tmp/csgrs-rustdoc-matrix-surface-*.log`, Cargo artifact JSON and
 `/tmp/csgrs-matrix-surface-audit/` checkers, exact fixture derivations and private
 docs. Continue remaining Hyperlattice tests/modules and the repository audit.
 
+## 2026-11-27: six Hyperlattice adversarial test files
+
+Scope and acceptance witness:
+
+- Read every line of six integration files on `478ea5f0d`, including private
+  helpers, strategy closures, macro-generated tests and all assertions.
+  Original/current line counts are:
+
+  | File in crates/hyperlattice/tests | Before | After |
+  | --- | ---: | ---: |
+  | adversarial_matrix_invariants.rs | 139 | 175 |
+  | adversarial_borrowed_owned.rs | 121 | 149 |
+  | adversarial_constraint_props.rs | 80 | 108 |
+  | adversarial_props.rs | 182 | 229 |
+  | adversarial_regressions.rs | 130 | 162 |
+  | adversarial_scalar_semantics.rs | 177 | 218 |
+
+- Added 64 Rustdoc groups across those 829 original lines: six file overviews,
+  five common-module declarations, fifteen private helpers and 38 ordinary or
+  macro-generated test functions. Each authored function is covered; these files
+  declare no separate authored types, fields or variants.
+- Owner: Hyperlattice's regression/property-test evidence and its Hyperreal scalar
+  consumers. P1/P2 govern exact fixture meaning, P3/P4 scope fact and warming
+  assertions, P6 describes zero/unknown errors, and P37 prevents test names or
+  related-path agreement from overstating verified support.
+- Missing acceptance witness: these items lacked Rustdoc, while names implied
+  symbolic, sign, cache, cancellation or replay coverage beyond their assertions.
+  Reproduced all 38 tests on the starting all-feature build before repository edits.
+  Read shared fixtures, complex zero-power guards, homogeneous incidence carriers,
+  and the locked Proptest configuration/macro code as context.
+
+Contracts clarified:
+
+- Matrix inverse helpers check two-sided composition, identity, transpose,
+  self-division and powers; they do not supply an independent inverse oracle.
+  The named 3×3 exact-and-symbolic test actually supplies one dyadic matrix,
+  determinant-product fixtures are diagonal, and the symbolic transform test
+  checks zero knowledge without asserting signs or exact coordinates.
+- Borrowed/owned tests compare related implementations. Some attempt lossy
+  evaluations first, but do not assert conversion success, cache hits, performance
+  or a separate cold result. The abort flag used for matrix equality is unset.
+- Constraint strategies use integer Vector3 coordinates in [-128,128], with
+  perpendicular-pair coordinates in [-64,64]. Projection axes are filtered by
+  known nonzero squared norm rather than normalized; midpoint/projection operations
+  can produce rationals. Docs give the exact residual formulas and zero assertions.
+- General property strategies distinguish rational-only inputs from the selected
+  π/e/sqrt(2) vocabulary. Upper-triangular matrices have nonzero signed integer
+  diagonals; docs preserve the exact coordinate bounds and conditional division
+  preconditions. Both suites still request 256 cases per property.
+- Complex exponent zero requires a known nonzero base; matrix exponent zero
+  returns identity even for singular input. Either zero or unknown inverse errors
+  are accepted by several singular fixtures. The π-π regression uses a recognized
+  cancellation rather than a general symbolic-zero decision procedure.
+- The radical line/plane test checks zero incidence for 36 direction pairs through
+  the origin. It performs neither serialized replay nor Cartesian conversion.
+- Scalar stability helpers snapshot once per call, checking eight repeated reads.
+  The warming test takes a fresh snapshot afterward, allowing legitimate fact
+  strengthening between stages. Structural equality, optional sign results and
+  lossy conversion Results are separate comparisons, not a universal equality oracle.
+- Float-import fixtures check finite import success, zero knowledge and fact
+  stability, not exact decimal values, bit roundtrips or NaN/infinity rejection.
+  The fact-packet reconstruction copies returned fields and is not an independent
+  expected-facts oracle. Domain-error tests use separate subsequent valid values;
+  no invalid-cache eviction or policy-transition assertion is present.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and
+  blank lines leaves all six files' executable source identical to `478ea5f0d`.
+  Attributes, every assertion, generator bounds, filters, case counts, predicate
+  order and macro configuration remain unchanged.
+- All 38 tests passed on the baseline and again with all features and no defaults
+  after final edits. Direct rustc harnesses used matching Cargo artifacts; tests
+  ran in separate processes with 60-second limits. Set PROPTEST_RNG_SEED=20261127
+  for repeatability; no case-count override was present and no case count was
+  reduced. Thirteen generated properties retained their configured 256 cases
+  each; twenty-five tests use fixed fixtures. This is finite corpus evidence.
+- The initial `cargo build -p proptest --lib` attempt panicked in Cargo feature
+  resolution. Built the same proptest 1.11.0 through a temporary dependency-only
+  manifest instead, using the shared target and a copy of the repository lock.
+  Every isolated registry package version/source/checksum was checked against
+  Cargo.lock. Repository manifests/lockfile and Proptest's configuration were
+  unchanged. The resolver-panic log is retained; the workaround completed.
+- The locked Proptest macro forwards test attributes, including inserted docs.
+  Private integration-target Rustdoc passed for all six files with warnings and
+  broken/private links denied under both configurations. Complete rendered text
+  matched six file overviews, five shared-module docs and fifteen helper pages.
+  All 38 test docs were source-verified and their generated/ordinary test functions
+  executed; Rustdoc omits test functions. Two initially unescaped [1,64] ranges
+  were fixed as code spans; no documentation lint was weakened.
+- Hyperlattice library builds, private library docs and Cargo checks for all six
+  integration targets passed in both configurations with --locked --offline -j 2
+  and CARGO_INCREMENTAL=0. No production downstream source changed. Full workflows
+  and unrelated runtime downstream checks remain owner-waived; no focused check
+  remains blocked and no new performance or resource-bound claim is made.
+- Removed the one owned test executable, reusing its path across targets rather
+  than retaining six binaries. The shared target, including reusable Proptest
+  dependencies, is near 2.6 GiB. No second Cargo target tree was created.
+- These six files now have whole-file documentation review records. The AGENTS.md
+  100% public/private mandate remains active and the repository audit is incomplete.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-adversarial-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-lattice-adversarial-audit/` scripts, temporary dependency manifest/lock
+and rendered private docs. Continue the remaining Hyperlattice tests and modules.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

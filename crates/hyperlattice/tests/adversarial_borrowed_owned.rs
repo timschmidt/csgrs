@@ -1,8 +1,20 @@
+//! Ownership-path comparisons on fixed exact scalar, complex, vector and matrix inputs.
+//!
+//! Equality checks compare owned and borrowed implementations, with selected checked
+//! paths and an unset abort flag. Lossy evaluations are attempted before some checks,
+//! but their Results and cache-hit effects are not asserted. These tests do not
+//! measure performance or prove behavior under every cache state.
+
+/// Shared exact rational, scalar-status and abort fixtures used by this integration target.
 mod common;
 
 use common::{frac, r};
 use hyperlattice::{Complex, Matrix3, Matrix4, Real, Vector3, Vector4};
 
+/// Compares arithmetic ownership forms on five exact integer/rational/binary64-derived pairs.
+///
+/// Division is checked only when the right scalar has known nonzero status.
+/// The binary64 fixtures 0.125 and -0.25 are exactly representable dyadics.
 #[test]
 fn scalar_owned_and_borrowed_paths_match_for_adversarial_values() {
     let cases: [(Real, Real); 5] = [
@@ -29,6 +41,10 @@ fn scalar_owned_and_borrowed_paths_match_for_adversarial_values() {
     }
 }
 
+/// Compares complex arithmetic and scalar-division ownership forms on rational fixtures.
+///
+/// Attempts lossy squared-norm evaluation first, but does not assert its success,
+/// cache effects or equality with a separate cold run.
 #[test]
 fn complex_owned_and_borrowed_division_paths_match_after_cache_warming() {
     let lhs = Complex::new(frac(11, 7), frac(-13, 5));
@@ -45,6 +61,10 @@ fn complex_owned_and_borrowed_division_paths_match_after_cache_warming() {
     assert_eq!((lhs.clone() / &scalar).unwrap(), (lhs / scalar).unwrap());
 }
 
+/// Compares Vector4 arithmetic ownership forms after attempting lossy evaluation of one dot product.
+///
+/// Uses rational coordinates with a shared zero lane. Cache hits, execution cost
+/// and the warming conversion's Result are not asserted by this equivalence test.
 #[test]
 fn vector_owned_borrowed_and_cached_paths_are_semantically_flat() {
     let lhs = Vector4::new([frac(11, 7), frac(1, 3), r(0), frac(-13, 5)]);
@@ -62,6 +82,10 @@ fn vector_owned_borrowed_and_cached_paths_are_semantically_flat() {
     assert_eq!((lhs.clone() / &scalar).unwrap(), (lhs / scalar).unwrap());
 }
 
+/// Compares 3×3 matrix/scalar ownership forms and checked division on rational matrices.
+///
+/// The transformed vector includes π. A determinant conversion is attempted first;
+/// results are compared across library paths, not to an independent matrix oracle.
 #[test]
 fn matrix_owned_borrowed_and_checked_paths_match_on_mixed_forms() {
     let lhs = Matrix3::new([
@@ -93,6 +117,10 @@ fn matrix_owned_borrowed_and_checked_paths_match_on_mixed_forms() {
     );
 }
 
+/// Compares checked inverse and negative-square results with and without an unset abort flag.
+///
+/// Also checks signal-accepting self-division gives identity. The flag is never set,
+/// so this verifies successful cooperative APIs rather than cancellation behavior.
 #[test]
 fn matrix4_checked_abort_paths_match_non_abort_paths() {
     let matrix = Matrix4::new([
