@@ -11550,6 +11550,88 @@ Authored items in these two files now have whole-file review records; generated
 Criterion docs and the larger repository audit remain incomplete. Next review
 regression_sentinels.rs and the remaining benchmark/mathbench/support files.
 
+## Hyperlattice fixed regression-sentinel benchmark (2026-11-27)
+
+Read all 324 baseline lines of `crates/hyperlattice/benches/regression_sentinels.rs`
+on `e9b221f1d`; the documented file is 417 lines. Owner: the benchmark harness and
+its fixed scalar/vector/matrix fixtures. Relevant contracts are P3/P4/P5/P6 and
+P36/P37, especially matching timing boundaries and distinguishing mathematical
+expectations from measured correctness. The domain is 27 fixed named Criterion
+workloads, retained or freshly constructed exact inputs, and the existing report
+callback. The missing acceptance witness was attached private documentation of
+the fixture helpers, timed operations and evidence limits. The all-feature target
+compiled before edits.
+
+Added six documentation groups: the crate overview, report-module declaration,
+integer/rational/dyadic-vector helpers and suite function. The latter includes all
+27 exact row suffixes in registration order, with input and operation semantics.
+This whole-file record does not re-credit the previously reviewed report helper,
+vector implementation, matrix implementation or native sign API; relevant portions
+were read as caller/callee context. Also inspected the locked Criterion 0.7.0
+iteration implementations and group/main macros.
+
+Contracts clarified:
+
+- These rows make no value-oracle or dispatch-count assertions. Unwrapped Results
+  and the owned shared-scale expectation panic on failure, but the sign Option and
+  borrowed view Option are returned unchecked. No Hyperlimit policy/receipt is
+  selected, and names alone do not establish which internal dispatch path ran.
+- Retained fixtures permit evidence reuse. Clones in closures remain timed. Four
+  SmallInput batched rows construct fresh inputs outside the measured routine;
+  this does not promise global cache eviction or allocation-free behavior. In the
+  locked implementation, ordinary iter includes output destruction, while batched
+  output destruction follows its measured interval. Consumed input destruction can
+  still occur inside the routine. Precision -128 does not bound total work.
+- The dyadic vector has three nonzero odd numerators and distinct reduced
+  denominators 2^50, 2^49, 2^48. Its squared norm is positive. The equal/distinct
+  dot row constructs two separate vectors; the shared-scale rows instead use four
+  fractions with already equal reduced denominator seven.
+- The sign fixture is negative because (99/70)^2=2+1/4900. The cancellation and
+  sparse-symbolic-dot expectations are mathematical descriptions, not assertions
+  performed by the benchmark. Dense inverse/right-division fixtures are nonsingular.
+- Translated direction/point batch rows use the general homogeneous batch API;
+  untranslated specialized rows use their respective direction/point batch APIs.
+  Each batch returns four vectors, and no Cartesian perspective division occurs.
+  The diagonal_unknown row contains known exact weights 1/2,1/3,1/5,1/7; its name
+  does not signify undecided scalar values.
+- Default Criterion configuration is adjusted by argv without local timing/sample
+  overrides. The subsequent callback can rewrite benchmarks.md from stored rows,
+  including older results. Its skip variable suppresses that report write, not the
+  measurements or Criterion's own result output; report errors only log.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and blank
+  lines leaves the executable source identical to `e9b221f1d`; all fixtures,
+  closures, unwraps, registrations, macro invocations and report behavior remain.
+- Cargo check and private benchmark Rustdoc passed with all features and with no
+  defaults, locked/offline, j2 and incremental compilation disabled. Rustdoc denied
+  warnings and broken/private links, using matching Cargo-built rmeta dependencies.
+  Complete text of all six authored groups rendered on six pages in both modes;
+  the table's 27 row names match the executable registrations exactly and in order.
+- Independent Python Fraction/permutation arithmetic on the source matrix literals
+  found determinants -7197/1024 and 75933/5000 for the inverse/division fixtures.
+  It also checked the dyadic denominators and positive squared norm, the rational
+  sign comparison and equal sevenths. This supports fixture descriptions, not a
+  claim that Rust operations were executed or certified by this batch.
+- The first temporary table-name checker incorrectly included the Markdown separator
+  as a row. Corrected its extraction to require operation-path syntax; retained the
+  initial log. No source assertion or validation policy was weakened.
+- Generated benches/main pages still have no attached item docs, as confirmed in
+  both renderings. Describing their behavior in the overview does not close that
+  coverage gap. No dependency or macro implementation was changed.
+- No benchmark, test, report writer or timing probe ran; no stored performance
+  artifacts were refreshed. Full workflows and unrelated runtime checks remain
+  owner-waived for this docs-only session. No focused check remains blocked.
+  Reused the approximately 2.7 GiB target; temporary scripts/command records use
+  about 48 KiB, with no new executable or duplicate target tree.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-sentinels-*` baseline/check/doc/render/math
+logs and `/tmp/csgrs-lattice-sentinels-audit/` scripts and exact doc commands.
+Authored items in this file now have a whole-file record; generated-item coverage
+and the repository audit remain incomplete. Continue with api_dispatch_trace.rs
+and the remaining mathbench modules before claiming benchmark coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
