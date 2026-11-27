@@ -1,7 +1,10 @@
 #[cfg(test)]
+/// Common-factor zero proofs, perturbations, domain obligations and late-retry limits.
 mod ring_product_sum_tests {
     use super::*;
 
+    /// Create an unsimplified recipe with invalid bound/sign facts and no stop signal.
+    /// The fresh node has no numerical sample, so fixtures expose recovery's own work.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,31 +16,46 @@ mod ring_product_sum_tests {
         }
     }
 
+    /// Represent an i64 exactly as a raw Ratio node without constructor simplification.
     fn number(value: i64) -> Computable {
         raw(Approximation::Ratio(Rational::from(value)))
     }
 
+    /// Build a raw sum sharing the supplied operand nodes in left-to-right order.
     fn add(a: &Computable, b: &Computable) -> Computable {
         raw(Approximation::Add(a.clone(), b.clone()))
     }
 
+    /// Wrap a shared operand in raw negation without simplifying its sign or recipe.
     fn neg(a: &Computable) -> Computable {
         raw(Approximation::Negate(a.clone()))
     }
 
+    /// Build a raw product sharing operands, retaining their order and domain obligations.
     fn mul(a: &Computable, b: &Computable) -> Computable {
         raw(Approximation::Multiply(a.clone(), b.clone()))
     }
 
+    /// Build the large cancelling fixture with zero perturbation and an optional factor.
+    /// The expected zero requires that optional factor to denote a defined real value.
     fn identity(extra_factor: Option<Computable>) -> Computable {
         perturbed_identity(extra_factor, Rational::zero())
     }
 
+    /// Combine fixture parts as left+12*right after perturbing the inner sum.
+    /// With optional extra factor E (one if absent), the value is -residual*z*h²*E;
+    /// perturbation tests must therefore distinguish a tiny nonzero value from zero.
     fn perturbed_identity(extra_factor: Option<Computable>, residual: Rational) -> Computable {
         let (left, right) = identity_parts(extra_factor, residual);
         add(&left, &mul(&number(12), &right))
     }
 
+    /// Construct opposite product expressions over four distinct sine atoms.
+    /// Use sixth-step affine interpolants z and y to form h, and s=(6-u)hx+xh(u+6).
+    /// Without perturbation s=12xh, giving left=-12*right; each complete product has
+    /// 145 expanded terms before their cancellation. Add the exact residual to s and
+    /// include any supplied extra factor on both sides. Raw wrappers preserve sharing
+    /// and the large intermediate representation that recovery is intended to avoid.
     fn identity_parts(
         extra_factor: Option<Computable>,
         residual: Rational,
@@ -79,6 +97,8 @@ mod ring_product_sum_tests {
         )
     }
 
+    /// Require the queried node to retain an invalid exact sign and no numerical sample.
+    /// This does not assert that child nodes or every other kind of cached fact are empty.
     fn assert_unproved(value: &Computable) {
         assert!(matches!(
             value.internal.facts.exact_sign(),
@@ -88,6 +108,8 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Recover the large common-factor identity plus zero or an exact ±10^-12 displacement.
+    /// The returned rational must retain that displacement and require no root sample.
     fn shared_products_cancel_before_large_polynomial_expansion() {
         for displacement in [0, -1, 1] {
             let epsilon = Rational::fraction(displacement, 1_000_000_000_000).unwrap();
@@ -98,6 +120,8 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Decline zero/unproved inverse factors and an ordinary degree-nine summand.
+    /// Even a shared factor cannot evade domain admission or the ordinary degree cap.
     fn shared_product_cancellation_preserves_operand_domains_and_degree() {
         for divisor in [number(0), raw(Approximation::PrescaledSin(number(1)))] {
             let value = identity(Some(raw(Approximation::Inverse(divisor))));
@@ -112,6 +136,9 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Perturb the inner sum by ±10^-12 and prohibit a false zero certificate.
+    /// Independent sine bounds give z>0 and h≠0, so -epsilon*z*h² has the opposite sign;
+    /// refinement must confirm that sign for each perturbed raw graph.
     fn shared_product_cancellation_rejects_a_nonzero_residual() {
         // x-x^3/6 < sin(x) < x for these positive inputs gives 6 < z < 7
         // and -1 < h < -1/2. Perturbing s changes the result to
@@ -132,6 +159,9 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Check 3*(left+5*right)+7*(left+15*right)=0 when left=-12*right.
+    /// Each inner sum exceeds ordinary term expansion; scalar distribution must preserve
+    /// the common-factor proof and avoid numerical sampling of the completed root.
     fn common_factors_survive_scaled_nested_product_sums() {
         let (left, right) = identity_parts(None, Rational::zero());
         // left = -12*right, so 3*(left+5*right)+7*(left+15*right)=0.
@@ -145,6 +175,8 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Decline a sixteen-charge attempt and a stopped query without publishing a root proof.
+    /// Clearing cancellation must permit a fresh ordinary quotient proof of the identity.
     fn shared_product_cancellation_preserves_budgets_and_recovers_after_cancel() {
         let mut value = identity(None);
         let mut recognition = RingRecognition::new(&value);
@@ -164,6 +196,9 @@ mod ring_product_sum_tests {
         assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
     }
 
+    /// Subtract forward and reversed products of count positive quadratic sine factors.
+    /// Each factor is 1+sin(1/(3+i))². Append an optional shared factor to exercise
+    /// inverse admission. The count parameter controls formal degree before cancellation.
     fn high_degree_opposite_products(count: usize, extra: Option<Computable>) -> Computable {
         let mut factors: Vec<_> = (0..count)
             .map(|index| {
@@ -183,6 +218,8 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Recover seven or twelve quadratic factors only through the late extended retry.
+    /// Thirteen retained factors must still decline, and successful roots need no sample.
     fn late_product_cancellation_bounds_factors_without_expanding_their_total_degree() {
         for count in [7, 12] {
             let value = high_degree_opposite_products(count, None);
@@ -200,6 +237,8 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Check that late cancellation admits 1/2 but rejects zero or unproved inverse factors.
+    /// Adding either exact ±10^-12 displacement to the large identity must not prove zero.
     fn late_product_cancellation_keeps_domains_and_nonzero_residuals() {
         for divisor in [number(0), raw(Approximation::PrescaledSin(number(1)))] {
             let value =
@@ -227,6 +266,10 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Measure the successful late retry's charge count, then test its exact work boundary.
+    /// The measured allowance must succeed and one fewer charge must fail; zero work,
+    /// node or depth allowances and cancellation also decline. Clearing the signal permits
+    /// a fresh complete query. These dynamic checks are not fixed dispatch-count assertions.
     fn late_product_cancellation_preserves_remaining_work_depth_nodes_and_cancel() {
         let mut value = high_degree_opposite_products(7, None);
         let attempt = |value: &Computable, budget: usize, nodes: usize, depth: usize| {
@@ -304,10 +347,16 @@ mod ring_product_sum_tests {
         );
     }
 
+    /// Build C*(sin(1/3)²+cos(1/3)²)-C with a degree-twelve common factor C.
+    /// An optional extra factor remains a domain obligation even though C cancels.
     fn high_degree_unit_circle_product(extra: Option<Computable>) -> Computable {
         high_degree_circle_product(extra, 3)
     }
 
+    /// Build C*(sin(1/3)²+cos(1/d)²)-C, with C=1+sin(1/7)^12 times an optional factor.
+    /// Use a nonzero cosine denominator d. Equal angles give the unit-circle identity;
+    /// d=5 yields a positive residual and tests that unmatched angles cannot share proof.
+    /// Raw wrappers keep the high-degree common factor and optional inverse visible.
     fn high_degree_circle_product(
         extra: Option<Computable>,
         cosine_denominator: u64,
@@ -333,6 +382,9 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Require a registered equal-angle relation to prove the factored residual zero.
+    /// Reject zero/unproved inverse factors, admit 1/2, and distinguish the positive
+    /// sin(1/3)²-sin(1/5)² residual by both nonpublication and numerical sign refinement.
     fn late_factor_residual_uses_only_proved_unit_circle_relations() {
         let value = high_degree_unit_circle_product(None);
         assert_eq!(value.bounded_quotient_rational(), None);
@@ -361,6 +413,10 @@ mod ring_product_sum_tests {
     }
 
     #[test]
+    /// Include failed initial expansion in the measured late-recovery work allowance.
+    /// The exact measured budget succeeds and one fewer charge declines. Set cancellation
+    /// after expansion but before recovery to verify the remaining path observes it;
+    /// a fresh uncancelled query must still recover the unit-circle identity.
     fn late_factor_residual_charges_all_work_and_observes_mid_attempt_cancel() {
         let mut value = high_degree_unit_circle_product(None);
         let attempt = |value: &Computable, budget| {

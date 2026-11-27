@@ -20189,6 +20189,114 @@ the approximately 6.6 GiB shared nonincremental Cargo target was reused.
 AGENTS.md's existing 100% public/private Rustdoc mandate remains in force.
 Repository-wide line review and all-configuration coverage remain unfinished.
 
+## Hyperreal product-sum recovery and late factor limits (27 November 2026)
+
+Baseline: `ccf263ec7ce92a09f23861face6df5d63df8366e` on `rustdoc`.
+Reviewed every line of `crates/hyperreal/src/computable/node/ring_product_sum.rs`
+(310 baseline lines, 390 after documentation) and
+`crates/hyperreal/src/computable/node/ring_product_sum_tests.rs` (419 baseline
+lines, 475 after documentation): 729 baseline lines in total. Contextual reads
+of ordinary quotient recovery and the final extended-relation caller do not
+add whole-file review credit for those files.
+
+Ownership is Hyperreal's exact product-sum recovery, P2–P6, consumed by the
+normal-form and predicate cascade (P8–P11). Inputs are compatible query-local
+polynomials, rational scales and operand domain evidence; opaque native atoms
+must already denote defined reals. The missing acceptance witness was private
+item documentation of the factorized carrier, the distinction between ordinary
+degree limits and late factor-count limits, partial mutation on decline, and
+the final publication boundary. The baseline all-feature ring suite passed 87
+tests before edits; no runtime algorithm, fixture or assertion was changed.
+
+Documented and verified rendering of 36 blocks: one struct, three fields, two
+impls, seven production methods, one test module and 22 fixture/test functions.
+Thirteen blocks rendered in ordinary private library HTML; the other 23 rendered
+in a disposable source copy with the selected test module's cfg(test)/test
+attributes removed. The function inventory matches every named function in
+both files. There are no selected derived traits or named local functions to
+render separately; closure locals remain part of the enclosing reviewed bodies.
+This is scoped coverage, not a repository-wide or ghost/Verus coverage claim.
+
+The Rustdoc now records these actual contracts:
+
+- RingProduct retains a rational scale, nonconstant admitted factor polynomials
+  and a collection-time degree tally. A zero scale does not erase subsequent
+  operand-domain obligations. The tally can advance before a failed append and
+  is not updated after common-factor removal; residual expansion does not use it.
+- Product collection revisits and charges peeled wrappers, including both
+  visits to a squared child, using the same remaining work/node allowance.
+  Quotients with explicit denominators must project to rationals to become
+  scale factors. Native opaque leaves retain quotient admission's defined-real
+  precondition; the original broad domain-checking comment was qualified.
+- Ordinary collection limits total factor degree. The late retry instead
+  permits twelve individually bounded factors before common cancellation;
+  it does not reset or raise the polynomial/work limits. Partial products and
+  collections must be discarded after None; their state is not transactional.
+- Sum collection distributes Add and scalar wrappers. Only direct One, Int
+  and Ratio children trigger scalar-Multiply distribution, preferring the left
+  child. Nonconstant products of sums remain factored; no Cartesian expansion
+  is introduced. At most 64 collected products are retained by this path.
+- Recovery first tries the distributed form, then only in the late mode tries
+  preserving each summand's whole Add factors. Both attempts share budgets and
+  completed child proofs. Failed first-route work is not refunded.
+- Common-factor matching uses stored polynomial equality and multiplicities.
+  swap_remove can change residual multiplication order; this order was preserved.
+  The certificate is C*0=0, so C need not be nonzero, but all factors must have
+  admitted domains. No common factor or a residual not proved zero declines.
+  Only the late retry applies recorded unit-circle relations to the residual.
+- An empty residual product performs a coefficient guard without an entry work
+  debit or cancellation poll. Factoring itself does not publish the queried
+  root fact or perform its final completion poll; the outer query does that.
+  None combines unsuccessful proof search, limits and cancellation, rather
+  than certifying nonzero. Count/degree caps do not bound every temporary byte
+  or the internals of coefficient arithmetic.
+
+Independent exact expectations were checked outside repository arithmetic.
+A sparse Python Fraction polynomial oracle expanded the four-sine fixture and
+confirmed s=12*x*h, 145 monomials in each complete opposing product, exact zero
+of their sum, and the perturbed value -epsilon*z*h² for both signs of 10^-12.
+Using the elementary strict bounds t-t³/6 < sin(t) < t for the four positive
+arguments, interval evaluation of the reduced polynomials gave
+`200824/30375 < z < 298/45` and
+`-2069597/2806650 < h < -984493/1509354`. These imply the documented 6<z<7,
+-1<h<-1/2 and nonzero perturbation signs without relying on numerical sampling
+or agreement between repository wrappers. This checks the concrete fixtures,
+not a universal theorem about every recovery input.
+
+Disposable private probes ran on baseline and final sources with identical
+output. They checked 49 three-summand common-factor zero identities and all 49
+unit-perturbed residual refusals; unchanged scale after failed charging or
+oversized multiplication; zero-work identity residual expansion; no-common-
+factor refusal; twelve quadratic factors versus thirteen in late mode; ordinary
+degree eight versus ten; the advanced degree tally after a rejected append;
+zero times an invalid inverse; the 64-product boundary; and cancellation during
+operand collection versus an unpolled empty residual. No root fact was published
+by those local operations. Probe subprocesses used external limits of 1 GiB
+address space, 10 CPU seconds, 15 seconds wall time and disabled core dumps.
+Those harness limits do not establish a production total-resource contract.
+
+After the final edit, focused checks passed:
+
+- Locked/offline Hyperreal library `computable::node::ring_`: 84 tests without
+  default features and 87 with all features, including the ten product-sum tests.
+- Both private library Rustdoc builds, denying warnings, broken intra-doc links
+  and private intra-doc links; temporary test/helper Rustdoc and all 36 rendered
+  block checks also passed.
+- All-feature `serde_graph_domains` (4), `serde_opaque_operand_domains` (5), and
+  downstream Hyperlimit `resolve::tests` (5).
+- Selected Rustfmt and git diff --check. Both files have identical raw
+  non-comment tokens; independent Rustfmt normalization also agrees.
+
+No focused check remains blocked. Full workflows and performance measurements
+remain owner-waived for the documentation-only session; no performance claim
+is made. Evidence under `/tmp/csgrs-hyperreal-product-sum-audit/` retains the
+commands/logs, exact fixture oracle, disposable probe sources/results and
+item/render/token inventory. Owned probe binaries/rlib, temporary HTML and shadow
+sources were removed after inspection, while the approximately 6.6 GiB shared
+nonincremental Cargo target was reused. AGENTS.md's existing 100% public/private
+Rustdoc mandate remains in force. Repository-wide line review and coverage
+across all applicable configurations remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

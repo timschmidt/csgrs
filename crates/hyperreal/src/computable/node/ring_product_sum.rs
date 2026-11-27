@@ -1,12 +1,26 @@
-// Keep common factors out of an opposite product sum after ordinary expansion
-// has declined. All factors are still expanded and domain-checked individually.
+/// One admitted summand kept as a rational scale times bounded polynomial factors.
+/// Retaining this factorization lets recovery prove C*0=0 without expanding C.
+/// Factors use one recognition attempt's opaque-atom numbering and domain evidence;
+/// quotient admission checks encountered inverse guards but assumes native opaque
+/// leaves are defined. The carrier does not validate that precondition itself.
 struct RingProduct {
+    /// Exact accumulated constant multiplier, including folded signs and dyadic shifts.
+    /// Zero does not permit skipping the domain checks on remaining factors.
     scale: Rational,
+    /// Nonconstant, individually admitted factors in collection order, with repeats.
+    /// Common-factor removal may reorder them; they are not a canonical factorization.
     factors: Vec<RingPolynomial>,
+    /// Sum of maximum monomial degrees accumulated during factor collection.
+    /// Ordinary recovery uses this admission bound; late recovery limits factor count
+    /// instead. It can advance on failed admission and is stale after factor removal.
     degree: usize,
 }
 
+/// Initialize a factorized summand before collecting its admitted operands.
 impl RingProduct {
+    /// Create the multiplicative identity: rational scale one and no factors.
+    /// The initial degree tally is zero. This constructor does not debit work, poll
+    /// cancellation, allocate factor elements or establish any operand domain.
     fn new() -> Self {
         Self {
             scale: Rational::one(),
@@ -16,7 +30,12 @@ impl RingProduct {
     }
 }
 
+/// Recover exact zero product sums using the existing attempt's proofs and budgets.
 impl<'a> RingRecognition<'a> {
+    /// Multiply the accumulated rational scale, charging before exact arithmetic.
+    /// Replace it only if the product fits the stored coefficient cap. Failure leaves
+    /// the old scale intact but may spend work; even zero scale does not exempt later
+    /// factors from domain admission. Temporary arithmetic can exceed the stored cap.
     fn scale_product(&mut self, product: &mut RingProduct, scale: &Rational) -> Option<()> {
         self.charge()?;
         let scale = &product.scale * scale;
@@ -27,6 +46,23 @@ impl<'a> RingRecognition<'a> {
         Some(())
     }
 
+    /// Peel product wrappers into a rational scale and admitted polynomial factors.
+    /// Require positive depth. Multiply, Square, Negate and Offset each spend a work
+    /// charge and node visit, even if ordinary expansion visited them already. Traverse
+    /// both children left-to-right, and visit a squared child twice. Negation/offset
+    /// update the scale before visiting the child; excessive dyadic shifts decline
+    /// before materialization. Other recipes use the local quotient expander: a quotient
+    /// with a denominator must project to a rational, while a polynomial remains a factor.
+    ///
+    /// Zero and rational constants fold into the scale, but remaining operands are
+    /// still checked. Charge every term of a nonconstant polynomial to find its degree.
+    /// Ordinary mode bounds the sum of these degrees by the active degree limit. The
+    /// late EXTENDED_RECOVERY mode instead permits at most EXTENDED_DEGREE factors
+    /// (twelve), each individually admitted; it does not raise polynomial or work caps.
+    /// The caller supplies a valid partial product in the same attempt's atom table.
+    /// On None, scale, degree, factors and local proof state may already be changed;
+    /// discard the partial result. Opaque leaves retain quotient admission's defined-real
+    /// precondition; this traversal is not a general native-function domain validator.
     fn collect_product_factors<const EXTENDED_RECOVERY: bool>(
         &mut self,
         value: &'a Computable,
@@ -109,6 +145,12 @@ impl<'a> RingRecognition<'a> {
         Some(())
     }
 
+    /// Multiply a retained residual's factors in their current order, starting at its scale.
+    /// Every factor must already have been admitted with the same atom IDs and strategy.
+    /// The stored degree tally is unused here: each actual multiplication enforces the
+    /// ordinary active caps and relation rules. No factors means only the constant
+    /// coefficient guard runs; there is no unconditional entry charge or stop poll.
+    /// None reports a declined intermediate expansion, not proof of a nonzero residual.
     fn expand_product_residual(&mut self, product: RingProduct) -> Option<RingPolynomial> {
         let mut result = Self::constant(product.scale)?;
         for factor in product.factors {
@@ -117,6 +159,18 @@ impl<'a> RingRecognition<'a> {
         Some(result)
     }
 
+    /// Collect a sum of scaled products without distributing products of nonconstant sums.
+    /// Require positive depth and an admitted rational incoming scale. Peel Add left
+    /// before right, Negate and Offset, charging a node and work for each. A Multiply
+    /// is treated as scalar distribution only when a child is directly One, Int or Ratio
+    /// (prefer the left child); expand and project that scalar before descending.
+    /// Other representations go through factor collection and append one product,
+    /// provided fewer than MAX_TERMS products (64) are already retained.
+    ///
+    /// A zero scale still requires child admission. Already appended products and spent
+    /// budgets survive a declined later branch; the caller discards partial collections.
+    /// This bounds retained summands and factors, not total temporary bytes or all
+    /// coefficient arithmetic. It does not create a Cartesian product of sum factors.
     fn collect_sum_products<const EXTENDED_RECOVERY: bool>(
         &mut self,
         value: &'a Computable,
@@ -215,6 +269,17 @@ impl<'a> RingRecognition<'a> {
         Some(())
     }
 
+    /// Try to prove a+b=0 by retaining common factors after ordinary expansion declined.
+    /// First distribute additive/scalar wrappers into products and remove common factors.
+    /// Only the late EXTENDED_RECOVERY retry, after that route declines, also tries
+    /// keeping each whole summand's Add factors intact; this can expose a common C in
+    /// C*U-C. Both routes share remaining work, node visits, atom IDs and child projections.
+    /// No allowance is reset and failed first-route work is not refunded.
+    ///
+    /// All retained operands must pass quotient admission, including inverse guards;
+    /// opaque native values still have its defined-real precondition. Success is an
+    /// exact zero quotient and publishes no root fact. None combines no common factor,
+    /// unproved residual/domain, local limits and cancellation, not proof of inequality.
     fn recover_factored_zero<const EXTENDED_RECOVERY: bool>(
         &mut self,
         a: &'a Computable,
@@ -253,6 +318,21 @@ impl<'a> RingRecognition<'a> {
         })
     }
 
+    /// Prove a sum zero by removing formally matching common polynomial factors.
+    /// Require admitted products sharing this attempt's atom table. For each factor of
+    /// the first product, find one equal stored polynomial in every other product;
+    /// remove matches with swap_remove, respecting multiplicity but changing residual
+    /// factor order. Equality checks charge work. The original degree tallies are not
+    /// updated and are not used when expanding the residual. Empty input or no common
+    /// factor declines, even if the sum could be proved zero another way.
+    ///
+    /// Expand and add all scaled residual products under the active polynomial limits.
+    /// Only EXTENDED_RECOVERY may then reduce a nonempty residual with already registered
+    /// unit-circle relations. Return zero exactly when the remaining polynomial is empty.
+    /// The proof is C*0=0 and needs no nonzero assumption on C; it cannot infer a value
+    /// from a residual not proved zero. All factors' domains must be admitted even when
+    /// removed. This helper performs no final stop poll or fact publication; its query
+    /// caller supplies that completion boundary. None is an unsuccessful proof attempt.
     fn cancel_product_sum<const EXTENDED_RECOVERY: bool>(
         &mut self,
         mut products: Vec<RingProduct>,
