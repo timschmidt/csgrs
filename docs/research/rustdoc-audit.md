@@ -21229,6 +21229,100 @@ builds reused the approximately 6.6 GiB shared target with incremental compilati
 disabled. AGENTS.md's verified existing 100% public/private Rustdoc mandate remains
 in force. Repository-wide line review and all-configuration coverage remain unfinished.
 
+## Hyperreal node regressions: opening angle, wide-series and domain-guard fixtures
+
+Baseline: `79aaf11de1ed68fa6f8be23124f776bf63351e4f` on `rustdoc`.
+Reviewed lines 1–428 of `crates/hyperreal/src/computable/node/tests.rs`, ending
+immediately before `check_inverse_series_domain`. This contiguous prefix becomes
+656 lines; the complete file grows from 4042 to 4270 lines. **No whole-file review
+credit is claimed.** The remaining suffix is byte-identical. Continue with
+`check_inverse_series_domain` at final line 657; defer the enclosing test-module
+review/coverage claim until all of its contents have been read.
+
+The owning layer is Hyperreal's native Computable regression suite. P37 requires
+accurate documentation of each witness; P2–P7 supply the structure, conservative
+facts, cache, resource, failure and stable-operation contracts being exercised.
+The reproduced documentation gap was 18 undocumented functions: 17 tests and one
+shared helper. Read their complete bodies, immediate constructors/kernels and
+comparison helpers before writing descriptions. Existing implementation reviews
+are contextual evidence, not additional whole-file credit here.
+
+Added all 18 function Rustdoc blocks. Their domains and actual assertions are:
+
+- acos of +/-1/2 must retain exact pi/3 or 2pi/3 composition, under cold/warm
+  source and result histories. pi/2-acos(x) then cancels +/-pi/6 exactly. This
+  mirrors a plane/circle contact's scalar use without testing BREP topology.
+- Four wide-coefficient fixtures exercise asin/asinh, rational construction/raw
+  prescaled nodes and both signs of 1/16 at 192000 fractional bits. MPFR inputs
+  are exact at 192256 bits; directed function endpoints must both fit within
+  the returned center plus/minus one output unit. This is not correct rounding,
+  an asserted dispatch count or an asserted recurrence iteration count. The
+  helper registers thread-exit MPFR cleanup but has no in-test total-work,
+  memory or time bound.
+- log1p covers eight public residuals, signed half-boundary sample grids,
+  +/-2^-b, 2^-b-1 and 2^b at b=8,64,256,1024, and n/64 for -63<=n<=256 through
+  both checked and opaque inputs. Tests use directed MPFR intervals and exact
+  rational scaling; 624, 224 and 3200 output checks are asserted in the
+  corresponding fixtures. The eight-residual fixture includes +1/2, not -1/2.
+- The estimated-sum log1p fixture builds sqrt(5)/64+n*sqrt(7)/2048 with five
+  counts and both valid signs, excluding negative count 4096 because its
+  argument is below -1. Directed root intervals, exact interval arithmetic,
+  outward conversion and monotonic log1p justify its reference. Its 90 checks
+  establish output enclosure, not a specific planning hint or dispatch trace.
+- The serde log1p fixture compares four same-process JSON replays with native
+  ln(1+x) at five precisions, allowing two output units for two approximations.
+  That comparison is neither an independent oracle nor fresh-process replay,
+  and does not assert canonical serialized bytes.
+- atan fixtures distinguish estimated magnitude from a certificate and require
+  positive sign evidence for the large reciprocal rule. A directed sine interval
+  justifies the injected exact magnitude of 128*sin(100); the result assertion
+  checks only sign. Two other scheduling fixtures assert root tag/sign, not a
+  directed angle error bound. The 291-dyadic boundary grid checks both the
+  small-series precondition and independent directed atan enclosures.
+- Both cancellation fixtures signal before entry, require no result cache, clear
+  the flag and check the retry's sign. Only the log1p case also asserts the
+  source cache stays empty. Neither witnesses interruption during evaluation
+  or an independently bounded retry error.
+
+Independent Python Fraction enumeration found 312 admitted log1p sample choices
+and 601 admitted atan choices, yielding 624 and 2404 output checks respectively.
+Exact integer arithmetic verifies that at n=23171 the recurrence numerator is
+2147488281 and denominator 2147627306, both greater than i32::MAX. The exact
+magnitude of that odd Taylor term at 1/16 exceeds 2^-192000. These facts explain
+the stress fixture's choice; they do not instrument or count kernel iterations.
+
+Validation after the final source edit:
+
+- Selected library fixtures passed: 16 without default features and 17 with all
+  features; the extra case is serde replay. The all-feature baseline also passed
+  all 17 before editing. Each serial run of the four wide fixtures took about
+  42 seconds on this host; no comparative performance claim follows.
+- Both private library Rustdoc configurations passed with warnings and broken/
+  private intra-doc links denied. Temporary shadow-source Rustdoc enabled the
+  enclosing test module and removed test attributes for rendering, and all 18
+  documented function pages were checked against their full descriptions.
+  This temporary rendering gives no review credit to the other enabled items.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five) passed.
+- Scoped Rustfmt and git diff --check passed. Comment-free, independently
+  formatted tokens are identical. Raw tokens differ only by one removed and
+  seven added optional trailing commas, inspected in the diff. No fixture,
+  assertion, predicate order, runtime algorithm or API signature changed.
+
+The first scoped-format harness mistakenly retained the inter-function blank
+line before its synthetic module closing brace; trimming that synthetic boundary
+fixed the harness without changing repository source. No focused check remains
+blocked. Full workflow/performance checks remain owner-waived for this docs-only
+session. The existing AGENTS.md mandate for 100% public/private documentation and
+buildable private docs was verified and remains unchanged.
+
+Evidence in `/tmp/csgrs-hyperreal-node-opening-fixtures-audit/` retains commands,
+logs, edit/render/inventory scripts, exact sample enumeration and documentation
+records. Temporary shadow sources and HTML were removed after inspection. Builds
+reused the approximately 6.7 GiB shared target with incremental compilation off.
+Repository-wide line review and all-configuration documentation coverage remain
+unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -6,6 +6,13 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
+    /// Require acos(1/2)=pi/3 and acos(-1/2)=2pi/3 to remain exactly composable.
+    ///
+    /// Cold sources and sources warmed at -64 must cancel their expected pi multiple
+    /// as an exact rational zero. In the warm branch, result requests -16, -128, -16
+    /// exercise refinement and reuse before each cancellation. The complementary
+    /// plane/circle-contact expression pi/2-acos(x) must likewise cancel +/-pi/6;
+    /// this is a scalar composition witness, not a BREP topology test.
     fn acos_rational_halves_preserve_exact_pi_composition() {
         for (numerator, third_multiple) in [(1, 1), (-1, 2)] {
             let argument = Rational::fraction(numerator, 2).unwrap();
@@ -21,16 +28,18 @@ mod tests {
                         let _ = actual.approx(precision);
                     }
                     assert_eq!(
-                        actual.clone().add(expected.clone().negate()).exact_rational(),
+                        actual
+                            .clone()
+                            .add(expected.clone().negate())
+                            .exact_rational(),
                         Some(Rational::zero()),
                     );
                 }
                 // BREP's plane/circle contact parameter must compose with the
                 // retained angular endpoint without refinement.
                 let contact = Computable::pi().shift_right(1).add(actual.negate());
-                let endpoint = pi_times(
-                    Rational::fraction(if numerator > 0 { 1 } else { -1 }, 6).unwrap(),
-                );
+                let endpoint =
+                    pi_times(Rational::fraction(if numerator > 0 { 1 } else { -1 }, 6).unwrap());
                 assert_eq!(
                     contact.add(endpoint.negate()).exact_rational(),
                     Some(Rational::zero()),
@@ -39,6 +48,18 @@ mod tests {
         }
     }
 
+    /// Check asin or asinh at both signs of 1/16 at 192,000 binary fractional bits.
+    ///
+    /// `asin` chooses the function; `generic` constructs its raw prescaled child
+    /// node instead of using the rational constructor. The precision exercises
+    /// recurrence coefficients beyond the old signed-32-bit product boundary.
+    /// MPFR receives each dyadic input exactly at 192,256 bits and rounds the
+    /// function down and up. Require that entire reference interval to fit within
+    /// one output unit of the returned center; this does not require correct rounding.
+    ///
+    /// Each call runs two expensive high-precision evaluations and arranges MPFR
+    /// thread-cache cleanup. It imposes no in-test time, work or allocation limit,
+    /// and does not directly assert an iteration count or a dispatch trace.
     fn check_inverse_series_wide_coefficients(asin: bool, generic: bool) {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -66,7 +87,11 @@ mod tests {
                     Approximation::PrescaledAsinh(input)
                 };
                 Computable {
-                    internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)),
+                    internal: Arc::new(Node::new(
+                        kind,
+                        BoundCache::Invalid,
+                        ExactSignCache::Invalid,
+                    )),
                     signal: None,
                 }
             } else if asin {
@@ -86,30 +111,62 @@ mod tests {
     }
 
     #[test]
+    /// Exercise the rational asin construction at +/-1/16 beyond the old coefficient width.
+    ///
+    /// Use the shared 192,000-bit directed-enclosure witness, including both signs;
+    /// no dispatch-count assertion is made.
     fn asin_rational_series_wide_coefficients() {
         check_inverse_series_wide_coefficients(true, false);
     }
 
     #[test]
+    /// Exercise raw prescaled asin nodes at +/-1/16 beyond the old coefficient width.
+    ///
+    /// Use the shared 192,000-bit directed-enclosure witness with initially invalid
+    /// sign and bound facts, rather than relying on rational-constructor selection.
     fn asin_computable_series_wide_coefficients() {
         check_inverse_series_wide_coefficients(true, true);
     }
 
     #[test]
+    /// Exercise rational asinh at +/-1/16 beyond the old coefficient width.
+    ///
+    /// The shared 192,000-bit directed-enclosure witness covers alternating series
+    /// magnitudes and the constructor's negative-input symmetry path.
     fn asinh_rational_series_wide_coefficients() {
         check_inverse_series_wide_coefficients(false, false);
     }
 
     #[test]
+    /// Exercise raw prescaled asinh nodes at +/-1/16 beyond the old coefficient width.
+    ///
+    /// The shared 192,000-bit directed-enclosure witness supplies each signed input
+    /// directly to the generic kernel, with no initial sign or bound certificate.
     fn asinh_computable_series_wide_coefficients() {
         check_inverse_series_wide_coefficients(false, true);
     }
 
     #[test]
+    /// Check public ln_1p on eight exact residuals spanning -255/256 through 1000.
+    ///
+    /// These admitted inputs include the 1/2 boundary and values requiring range
+    /// reduction. Each checked Real result is folded and queried at 0, 1, -1, -32,
+    /// -128 and -8. Its center plus/minus 2^p must contain the entire 512-bit directed
+    /// MPFR interval for ln(1+x), including coarse requests and a later coarse reuse.
+    /// The dyadic or integral oracle input is asserted exact.
     fn log1p_domain_guard_covers_public_residuals_outside_the_series_range() {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
-        for q in [Q::from((-255,256)), Q::from((-3,4)), Q::from((1,2)), Q::from((3,4)), Q::from(1), Q::from(2), Q::from(10), Q::from(1000)] {
+        for q in [
+            Q::from((-255, 256)),
+            Q::from((-3, 4)),
+            Q::from((1, 2)),
+            Q::from((3, 4)),
+            Q::from(1),
+            Q::from(2),
+            Q::from(10),
+            Q::from(1000),
+        ] {
             let mut lo = Float::with_val(512, &q);
             assert_eq!(lo.to_rational().unwrap(), q);
             let mut hi = lo.clone();
@@ -117,203 +174,326 @@ mod tests {
             hi.ln_1p_round(Round::Up);
             let lo = lo.to_rational().unwrap();
             let hi = hi.to_rational().unwrap();
-            let value = crate::Real::from(q.to_string().parse::<Rational>().unwrap()).ln_1p().unwrap().fold();
+            let value = crate::Real::from(q.to_string().parse::<Rational>().unwrap())
+                .ln_1p()
+                .unwrap()
+                .fold();
             for p in [0_i32, 1, -1, -32, -128, -8] {
-                let a = Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
-                let unit = if p>0 {Q::from(Integer::from(1)<<p)} else {Q::from((1,Integer::from(1)<<-p))};
-                let center = Q::from(a)*&unit;
-                assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"ln1p({q}) at {p}");
+                let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
+                let unit = if p > 0 {
+                    Q::from(Integer::from(1) << p)
+                } else {
+                    Q::from((1, Integer::from(1) << -p))
+                };
+                let center = Q::from(a) * &unit;
+                assert!(
+                    Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi,
+                    "ln1p({q}) at {p}"
+                );
             }
         }
     }
 
     #[test]
+    /// Check log1p's working-sample guard near both signed half-range boundaries.
+    ///
+    /// For four output/working precision pairs, enumerate 17 quarter-unit offsets
+    /// and three candidate roundings, retaining only samples within one unit of
+    /// the exact residual. Install each on an opaque add-zero child with unknown
+    /// facts, then evaluate ln_1p at the scheduled precision and -256. All 624
+    /// output enclosures must contain a 1024-bit directed MPFR reference interval.
+    /// This finite grid covers the admitted roundings generated here, not every
+    /// possible input, working precision or cache state.
     fn log1p_domain_guard_rechecks_every_working_sample_boundary_rounding() {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
-        for (p, s) in [(0_i32,-12_i32),(-1,-12),(-32,-45),(-128,-143)] {
-            let threshold = Integer::from(1)<<(-s-1);
+        for (p, s) in [(0_i32, -12_i32), (-1, -12), (-32, -45), (-128, -143)] {
+            let threshold = Integer::from(1) << (-s - 1);
             for delta in -8_i32..=8 {
-                for negative in [false,true] {
-                    let q = Q::from((threshold.clone()*4+delta,Integer::from(1)<<(-s+2)));
-                    let q = if negative {-q} else {q};
-                    let base = threshold.clone()+delta.div_euclid(4);
-                    let base = if negative {-base} else {base};
+                for negative in [false, true] {
+                    let q = Q::from((threshold.clone() * 4 + delta, Integer::from(1) << (-s + 2)));
+                    let q = if negative { -q } else { q };
+                    let base = threshold.clone() + delta.div_euclid(4);
+                    let base = if negative { -base } else { base };
                     for rounding in -1..=1 {
-                        let sample: Integer = base.clone()+rounding;
-                        let sample_unit = Q::from((1,Integer::from(1)<<-s));
-                        if (Q::from(sample.clone())*&sample_unit-&q).abs()>sample_unit {continue;}
+                        let sample: Integer = base.clone() + rounding;
+                        let sample_unit = Q::from((1, Integer::from(1) << -s));
+                        if (Q::from(sample.clone()) * &sample_unit - &q).abs() > sample_unit {
+                            continue;
+                        }
                         let input = Computable {
                             internal: Arc::new(Node::new(
-                                Approximation::Add(Computable::rational(q.to_string().parse().unwrap()),Computable::zero()),
-                                BoundCache::Valid(BoundInfo::Unknown),ExactSignCache::Unknown,
-                            )), signal: None,
+                                Approximation::Add(
+                                    Computable::rational(q.to_string().parse().unwrap()),
+                                    Computable::zero(),
+                                ),
+                                BoundCache::Valid(BoundInfo::Unknown),
+                                ExactSignCache::Unknown,
+                            )),
+                            signal: None,
                         };
-                        input.internal.store_cache_value(s,sample.to_string().parse().unwrap());
+                        input
+                            .internal
+                            .store_cache_value(s, sample.to_string().parse().unwrap());
                         let value = input.ln_1p();
-                        let mut lo = Float::with_val(1024,&q);
-                        assert_eq!(lo.to_rational().unwrap(),q);
+                        let mut lo = Float::with_val(1024, &q);
+                        assert_eq!(lo.to_rational().unwrap(), q);
                         let mut hi = lo.clone();
                         lo.ln_1p_round(Round::Down);
                         hi.ln_1p_round(Round::Up);
                         let lo = lo.to_rational().unwrap();
                         let hi = hi.to_rational().unwrap();
-                        for precision in [p,-256] {
-                            let unit = Q::from((1,Integer::from(1)<<-precision));
-                            let a = Integer::from_str_radix(&value.approx(precision).to_string(),10).unwrap();
-                            let center = Q::from(a)*&unit;
-                            assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"q={q}, p={precision}, sample={sample}");
+                        for precision in [p, -256] {
+                            let unit = Q::from((1, Integer::from(1) << -precision));
+                            let a =
+                                Integer::from_str_radix(&value.approx(precision).to_string(), 10)
+                                    .unwrap();
+                            let center = Q::from(a) * &unit;
+                            assert!(
+                                Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi,
+                                "q={q}, p={precision}, sample={sample}"
+                            );
                             checks += 1;
                         }
                     }
                 }
             }
         }
-        assert_eq!(checks,624);
+        assert_eq!(checks, 624);
     }
 
     #[test]
+    /// Check ln_1p for tiny, near-minus-one and large residuals across four scales.
+    ///
+    /// For b=8,64,256,1024, use +/-2^-b, 2^-b-1 and 2^b. Compare cold inputs and
+    /// inputs prewarmed at -256, then query seven coarse/fine/reused precisions
+    /// through -512. Each of the 224 center-plus/minus-unit enclosures must contain
+    /// the 4096-bit directed MPFR interval, whose input is asserted exact.
+    /// These finite scale and history cases do not establish arbitrary-exponent
+    /// resource bounds or exercise the invalid endpoint -1.
     fn log1p_domain_guard_covers_extreme_scales_and_cache_histories() {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
-        for bits in [8_i32,64,256,1024] {
-            let tiny = Q::from((1,Integer::from(1)<<bits));
-            for q in [tiny.clone(),-tiny.clone(),tiny-Q::from(1),Q::from(Integer::from(1)<<bits)] {
-                let mut lo = Float::with_val(4096,&q);
-                assert_eq!(lo.to_rational().unwrap(),q);
+        for bits in [8_i32, 64, 256, 1024] {
+            let tiny = Q::from((1, Integer::from(1) << bits));
+            for q in [
+                tiny.clone(),
+                -tiny.clone(),
+                tiny - Q::from(1),
+                Q::from(Integer::from(1) << bits),
+            ] {
+                let mut lo = Float::with_val(4096, &q);
+                assert_eq!(lo.to_rational().unwrap(), q);
                 let mut hi = lo.clone();
                 lo.ln_1p_round(Round::Down);
                 hi.ln_1p_round(Round::Up);
                 let lo = lo.to_rational().unwrap();
                 let hi = hi.to_rational().unwrap();
-                for warm in [false,true] {
+                for warm in [false, true] {
                     let input = Computable::rational(q.to_string().parse().unwrap());
-                    if warm {let _ = input.approx(-256);}
+                    if warm {
+                        let _ = input.approx(-256);
+                    }
                     let value = input.ln_1p();
-                    for p in [0_i32,1,-1,-32,-128,-512,-8] {
-                        let unit = if p>0 {Q::from(Integer::from(1)<<p)} else {Q::from((1,Integer::from(1)<<-p))};
-                        let a = Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
-                        let center = Q::from(a)*&unit;
-                        assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"q={q}, p={p}, warm={warm}");
+                    for p in [0_i32, 1, -1, -32, -128, -512, -8] {
+                        let unit = if p > 0 {
+                            Q::from(Integer::from(1) << p)
+                        } else {
+                            Q::from((1, Integer::from(1) << -p))
+                        };
+                        let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
+                        let center = Q::from(a) * &unit;
+                        assert!(
+                            Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi,
+                            "q={q}, p={p}, warm={warm}"
+                        );
                         checks += 1;
                     }
                 }
             }
         }
-        assert_eq!(checks,224);
+        assert_eq!(checks, 224);
     }
 
     #[test]
+    /// Keep ln_1p(sqrt(1000)) lazy and its aborted first request unpublished.
+    ///
+    /// Assert that construction and an already-signalled -128 request leave both
+    /// source and result approximation caches empty. Clear the same flag and require
+    /// a positive completed sample. The retry checks its sign, not a directed error
+    /// bound; this is entry cancellation, not an interruption during series work.
     fn log1p_domain_guard_preserves_abort_and_lazy_construction() {
-        use std::sync::atomic::{AtomicBool,Ordering};
+        use std::sync::atomic::{AtomicBool, Ordering};
         let input = Computable::rational(Rational::from(1000)).sqrt();
         assert!(input.cached().is_none());
         let value = input.clone().ln_1p();
         assert!(input.cached().is_none());
         assert!(value.cached().is_none());
         let signal = Arc::new(AtomicBool::new(true));
-        let _ = value.approx_signal(&Some(signal.clone()),-128);
+        let _ = value.approx_signal(&Some(signal.clone()), -128);
         assert!(value.cached().is_none());
         assert!(input.cached().is_none());
-        signal.store(false,Ordering::Relaxed);
-        assert!(value.approx_signal(&Some(signal),-128)>BigInt::zero());
+        signal.store(false, Ordering::Relaxed);
+        assert!(value.approx_signal(&Some(signal), -128) > BigInt::zero());
     }
 
     #[test]
+    /// Compare checked and opaque ln_1p paths on the dyadic grid n/64, -63<=n<=256.
+    ///
+    /// The public Real path and an add-zero node with unknown facts each receive five
+    /// requests, including repeated -8 after -128. Require all 3200 output intervals
+    /// to contain their 512-bit directed MPFR reference. These small dyadic inputs
+    /// are exactly representable at the oracle precision. Agreement with the
+    /// independent enclosure, rather than agreement between the two paths alone,
+    /// is the numerical witness.
     fn log1p_domain_guard_matches_a_public_and_opaque_residual_grid() {
-        use rug::{Float,Integer,Rational as Q,float::Round};
+        use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
         for numerator in -63_i32..=256 {
-            let q = Q::from((numerator,64));
-            let mut lo = Float::with_val(512,&q);
+            let q = Q::from((numerator, 64));
+            let mut lo = Float::with_val(512, &q);
             let mut hi = lo.clone();
             lo.ln_1p_round(Round::Down);
             hi.ln_1p_round(Round::Up);
             let lo = lo.to_rational().unwrap();
             let hi = hi.to_rational().unwrap();
-            for opaque in [false,true] {
+            for opaque in [false, true] {
                 let r: Rational = q.to_string().parse().unwrap();
                 let value = if opaque {
-                    Computable { internal: Arc::new(Node::new(
-                        Approximation::Add(Computable::rational(r),Computable::zero()),
-                        BoundCache::Valid(BoundInfo::Unknown),ExactSignCache::Unknown,
-                    )),signal:None }.ln_1p()
-                } else {crate::Real::from(r).ln_1p().unwrap().fold()};
-                for p in [0_i32,-8,-32,-128,-8] {
-                    let unit = Q::from((1,Integer::from(1)<<-p));
-                    let a = Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
-                    let center = Q::from(a)*&unit;
-                    assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"q={q}, p={p}, opaque={opaque}");
+                    Computable {
+                        internal: Arc::new(Node::new(
+                            Approximation::Add(Computable::rational(r), Computable::zero()),
+                            BoundCache::Valid(BoundInfo::Unknown),
+                            ExactSignCache::Unknown,
+                        )),
+                        signal: None,
+                    }
+                    .ln_1p()
+                } else {
+                    crate::Real::from(r).ln_1p().unwrap().fold()
+                };
+                for p in [0_i32, -8, -32, -128, -8] {
+                    let unit = Q::from((1, Integer::from(1) << -p));
+                    let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
+                    let center = Q::from(a) * &unit;
+                    assert!(
+                        Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi,
+                        "q={q}, p={p}, opaque={opaque}"
+                    );
                     checks += 1;
                 }
             }
         }
-        assert_eq!(checks,3200);
+        assert_eq!(checks, 3200);
     }
 
     #[test]
+    /// Check log1p on sums whose retained planning magnitude can understate their size.
+    ///
+    /// Build sqrt(5)/64 plus n copies of sqrt(7)/2048 for n=0,64,256,740,4096,
+    /// with both signs except the inadmissible negative 4096 case. Directed sqrt
+    /// bounds and rational interval arithmetic enclose each source; assert its
+    /// lower bound exceeds -1 before applying monotone ln_1p with outward rounding.
+    /// Cold and -256-prewarmed inputs give 90 checks at five precisions against
+    /// 2048-bit reference intervals. The test checks output error, not the exact
+    /// planning hint or selected dispatch path.
     fn log1p_domain_guard_does_not_trust_estimated_sum_magnitudes() {
-        use rug::{Float,Integer,Rational as Q,float::Round};
+        use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
         let root = |n| {
-            let mut lo = Float::with_val(2048,n);
+            let mut lo = Float::with_val(2048, n);
             let mut hi = lo.clone();
             lo.sqrt_round(Round::Down);
             hi.sqrt_round(Round::Up);
-            (lo.to_rational().unwrap(),hi.to_rational().unwrap())
+            (lo.to_rational().unwrap(), hi.to_rational().unwrap())
         };
-        let (a,b) = root(5);
-        let (c,d) = root(7);
+        let (a, b) = root(5);
+        let (c, d) = root(7);
         let mut checks = 0;
-        for count in [0,64,256,740,4096] {
-            for negative in [false,true] {
-                if negative && count>740 {continue;}
-                let lo: Q = a.clone()/64+c.clone()*count/2048;
-                let hi: Q = b.clone()/64+d.clone()*count/2048;
-                let (lo,hi) = if negative {(-hi,-lo)} else {(lo,hi)};
-                assert!(lo>-1);
-                let mut lo = Float::with_val_round(2048,lo,Round::Down).0;
-                let mut hi = Float::with_val_round(2048,hi,Round::Up).0;
+        for count in [0, 64, 256, 740, 4096] {
+            for negative in [false, true] {
+                if negative && count > 740 {
+                    continue;
+                }
+                let lo: Q = a.clone() / 64 + c.clone() * count / 2048;
+                let hi: Q = b.clone() / 64 + d.clone() * count / 2048;
+                let (lo, hi) = if negative { (-hi, -lo) } else { (lo, hi) };
+                assert!(lo > -1);
+                let mut lo = Float::with_val_round(2048, lo, Round::Down).0;
+                let mut hi = Float::with_val_round(2048, hi, Round::Up).0;
                 lo.ln_1p_round(Round::Down);
                 hi.ln_1p_round(Round::Up);
                 let lo = lo.to_rational().unwrap();
                 let hi = hi.to_rational().unwrap();
-                for warm in [false,true] {
-                    let mut input = Computable::rational(Rational::from(5)).sqrt().shift_right(6);
-                    let term = Computable::rational(Rational::from(7)).sqrt().shift_right(11);
-                    for _ in 0..count {input=input.add(term.clone());}
-                    if negative {input=input.negate();}
-                    if warm {let _=input.approx(-256);}
-                    let value=input.ln_1p();
-                    for p in [0_i32,-32,-128,-256,-8] {
-                        let unit=Q::from((1,Integer::from(1)<<-p));
-                        let a=Integer::from_str_radix(&value.approx(p).to_string(),10).unwrap();
-                        let center=Q::from(a)*&unit;
-                        assert!(Q::from(&center-&unit)<=lo && Q::from(&center+&unit)>=hi,"terms={count}, negative={negative}, warm={warm}, p={p}");
-                        checks+=1;
+                for warm in [false, true] {
+                    let mut input = Computable::rational(Rational::from(5))
+                        .sqrt()
+                        .shift_right(6);
+                    let term = Computable::rational(Rational::from(7))
+                        .sqrt()
+                        .shift_right(11);
+                    for _ in 0..count {
+                        input = input.add(term.clone());
+                    }
+                    if negative {
+                        input = input.negate();
+                    }
+                    if warm {
+                        let _ = input.approx(-256);
+                    }
+                    let value = input.ln_1p();
+                    for p in [0_i32, -32, -128, -256, -8] {
+                        let unit = Q::from((1, Integer::from(1) << -p));
+                        let a = Integer::from_str_radix(&value.approx(p).to_string(), 10).unwrap();
+                        let center = Q::from(a) * &unit;
+                        assert!(
+                            Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi,
+                            "terms={count}, negative={negative}, warm={warm}, p={p}"
+                        );
+                        checks += 1;
                     }
                 }
             }
         }
-        assert_eq!(checks,90);
+        assert_eq!(checks, 90);
     }
 
     #[test]
     #[cfg(feature = "serde")]
+    /// Replay four admitted log1p residuals through serde JSON and compare with ln(1+x).
+    ///
+    /// For -255/256, -1/2, 1/2 and 1000, decode a fresh Computable graph and compare
+    /// five precision requests with a separately constructed native logarithm.
+    /// Allow a difference of two integer output units, accounting for both
+    /// approximations. This is same-process semantic replay evidence, not an
+    /// independent oracle, a canonical-byte check or a fresh-process cache test.
     fn log1p_domain_guard_survives_serialization() {
-        for q in [Rational::fraction(-255,256).unwrap(),Rational::fraction(-1,2).unwrap(),Rational::fraction(1,2).unwrap(),Rational::from(1000)] {
+        for q in [
+            Rational::fraction(-255, 256).unwrap(),
+            Rational::fraction(-1, 2).unwrap(),
+            Rational::fraction(1, 2).unwrap(),
+            Rational::from(1000),
+        ] {
             let value = Computable::rational(q.clone()).ln_1p();
             let encoded = serde_json::to_string(&value).unwrap();
             let decoded: Computable = serde_json::from_str(&encoded).unwrap();
-            let reference = Computable::rational(q+Rational::one()).ln();
-            for p in [0,1,-32,-128,-8] {assert_close(decoded.clone(),reference.clone(),p,2);}
+            let reference = Computable::rational(q + Rational::one()).ln();
+            for p in [0, 1, -32, -128, -8] {
+                assert_close(decoded.clone(), reference.clone(), p, 2);
+            }
         }
     }
 
     #[test]
+    /// Keep the unknown-sign source 4*sin(100) out of a directly selected atan series.
+    ///
+    /// Check that no exact sign is initially retained, reject a PrescaledAtan root
+    /// before evaluating the historically divergent schedule, and require a negative
+    /// -64 result. This witnesses dispatch shape and sign, not a full error bound
+    /// or a general termination budget.
     fn atan_reduction_rejects_large_negative_rough_inputs() {
         let input = Computable::rational(Rational::from(100))
             .sin()
@@ -321,15 +501,28 @@ mod tests {
         assert_eq!(input.exact_sign(), None);
         let reduced = input.atan_reduced();
         // Fail promptly on the old dispatch instead of running its divergent series.
-        assert!(!matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)));
+        assert!(!matches!(
+            reduced.internal.approximation,
+            Approximation::PrescaledAtan(_)
+        ));
         let value = reduced.approx(-64);
         assert!(value.sign() == Sign::Minus);
     }
 
     #[test]
+    /// Reject an estimated small binade as proof of atan's direct series domain.
+    ///
+    /// The sum sqrt(5)/8+32*sqrt(7)/64 retains a planning exponent below -1 without
+    /// a known magnitude certificate. Require a non-PrescaledAtan root and a positive
+    /// -64 sample. These assertions distinguish an estimate from a certificate;
+    /// they do not compare the computed angle with an independent enclosure.
     fn atan_reduction_does_not_certify_domain_from_an_estimated_magnitude() {
-        let mut input = Computable::rational(Rational::from(5)).sqrt().shift_right(3);
-        let term = Computable::rational(Rational::from(7)).sqrt().shift_right(6);
+        let mut input = Computable::rational(Rational::from(5))
+            .sqrt()
+            .shift_right(3);
+        let term = Computable::rational(Rational::from(7))
+            .sqrt()
+            .shift_right(6);
         for _ in 0..32 {
             input = input.add(term.clone());
         }
@@ -337,11 +530,20 @@ mod tests {
         assert!(bound.planning_msd().flatten().unwrap() < -1);
         assert_eq!(bound.known_msd(), None);
         let reduced = input.atan_reduced();
-        assert!(!matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)));
+        assert!(!matches!(
+            reduced.internal.approximation,
+            Approximation::PrescaledAtan(_)
+        ));
         assert!(reduced.approx(-64).sign() == Sign::Plus);
     }
 
     #[test]
+    /// Require sign evidence in addition to a large magnitude for atan's reciprocal rule.
+    ///
+    /// Directed 256-bit sine bounds prove -65 < 128*sin(100) < -64, justifying
+    /// binary magnitude six. Install that exact magnitude with deliberately unknown
+    /// sign, then require a negative -32 result. The reference certifies the injected
+    /// input bound; the result assertion checks sign only, not the full angle error.
     fn atan_reduction_requires_a_positive_sign_for_large_reciprocal_shortcut() {
         use rug::{Float, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -357,16 +559,30 @@ mod tests {
             .multiply(Computable::rational(Rational::from(128)));
         // This valid magnitude certificate intentionally leaves the sign unknown.
         // -65 < 128*sin(100) < -64, hence its exact binary magnitude is six.
-        input.internal.facts.set_bound(BoundCache::Valid(BoundInfo::NonZero {
-            sign: None,
-            msd: Some(6),
-            exact_msd: true,
-        }));
-        input.internal.facts.replace_exact_sign(ExactSignCache::Unknown);
+        input
+            .internal
+            .facts
+            .set_bound(BoundCache::Valid(BoundInfo::NonZero {
+                sign: None,
+                msd: Some(6),
+                exact_msd: true,
+            }));
+        input
+            .internal
+            .facts
+            .replace_exact_sign(ExactSignCache::Unknown);
         assert!(input.atan_reduced().approx(-32).sign() == Sign::Minus);
     }
 
     #[test]
+    /// Check atan reduction on 291 dyadics around the +/-1/2 scheduling boundary.
+    ///
+    /// For n/256, -145<=n<=145, retain each of three candidate -4 cache integers
+    /// whose error is at most one unit, on an add-zero node with unknown facts.
+    /// A directly selected PrescaledAtan must imply |x|<=1/2. At four requested
+    /// precisions, require the output interval to contain the 512-bit directed
+    /// MPFR atan interval. The finite candidate enumeration includes endpoint error
+    /// bounds; it is not an exhaustive statement about arbitrary cache histories.
     fn atan_reduction_boundary_accepts_every_valid_coarse_cache_rounding() {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -386,7 +602,9 @@ mod tests {
                 let input = Computable {
                     internal: Arc::new(Node::new(
                         Approximation::Add(
-                            Computable::rational(Rational::fraction(i64::from(numerator), 256).unwrap()),
+                            Computable::rational(
+                                Rational::fraction(i64::from(numerator), 256).unwrap(),
+                            ),
                             Computable::zero(),
                         ),
                         BoundCache::Valid(BoundInfo::Unknown),
@@ -397,12 +615,16 @@ mod tests {
                 assert!((Q::from(coarse) - q.clone() * 16_i32).abs() <= 1);
                 input.internal.store_cache_value(-4, BigInt::from(coarse));
                 let reduced = input.atan_reduced();
-                if matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)) {
+                if matches!(
+                    reduced.internal.approximation,
+                    Approximation::PrescaledAtan(_)
+                ) {
                     assert!(q.clone().abs() <= Q::from((1, 2)));
                 }
                 for precision in [0_i32, -32, -128, -8] {
                     let scale = Integer::from(1) << -precision;
-                    let a = Integer::from_str_radix(&reduced.approx(precision).to_string(), 10).unwrap();
+                    let a = Integer::from_str_radix(&reduced.approx(precision).to_string(), 10)
+                        .unwrap();
                     let center = Q::from((a, scale.clone()));
                     let radius = Q::from((1, scale));
                     assert!(Q::from(&center - &radius) <= lower);
@@ -413,6 +635,12 @@ mod tests {
     }
 
     #[test]
+    /// Leave an aborted atan(4*sin(100)) result uncached and permit a later retry.
+    ///
+    /// Start with the explicit flag set, request -128, and assert no result cache
+    /// was published. Clear the flag and require a negative -128 sample. This checks
+    /// entry cancellation and retry sign, without asserting child-cache state,
+    /// in-flight interruption, or an independently bounded angle error.
     fn atan_reduction_aborted_evaluation_does_not_poison_the_cache() {
         use std::sync::atomic::{AtomicBool, Ordering};
         let input = Computable::rational(Rational::from(100))
