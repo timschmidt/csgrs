@@ -4,17 +4,25 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
+/// Independent residual-checked MPFR inverse used by the Jacobi point oracle.
 #[path = "support/inverse_legendre_oracle.rs"]
 mod inverse_oracle;
+/// Independent sine/cosine/positive-root references evaluated at an MPFR amplitude.
 #[path = "support/jacobi_oracle.rs"]
 mod jacobi_oracle;
+/// Development-only forward-series and AGM references, converted to exact binary rationals.
 #[path = "support/legendre_oracle.rs"]
 mod legendre_oracle;
+/// Thread-exit cleanup for backend caches allocated by numerical reference tests.
 #[path = "support/mpfr.rs"]
 mod mpfr;
+/// Shared twenty-two scalar recipes with expected public certificate kinds.
 #[path = "support/representations.rs"]
 mod representations;
 
+/// Require the whole certified residual enclosure inside +/-2^-bits using eight guard bits.
+/// Callers use modest positive bit counts. Missing enclosures or invalid rational
+/// arithmetic fail the test; this is a finite absolute tolerance, not exact equality.
 fn close(actual: &Real, expected: &Real, bits: i32) {
     let [lo, hi] = (actual - expected)
         .certified_rational_interval(-bits - 8)
@@ -26,6 +34,9 @@ fn close(actual: &Real, expected: &Real, bits: i32) {
     );
 }
 
+/// Require four exact square identities, structural positivity of dn and an available inverse.
+/// Rational normal forms prove the selected identities without a numerical
+/// tolerance; public carrier equality alone would not establish these relations.
 fn relations((sn, cn, dn): &(Real, Real, Real), m: &Real) {
     // Public PartialEq compares carriers. Require an exact algebraic
     // certificate here, with no approximation or numerical tolerance.
@@ -61,6 +72,11 @@ fn relations((sn, cn, dn): &(Real, Real, Real), m: &Real) {
     );
 }
 
+/// Check four AGM-derived half-period triplets and 44 fresh forward-series amplitude inputs.
+/// The complements include 1e-160 and 1e160; half-period formulas are compared at
+/// 160 bits. Twenty-two scalar recipes each supply positive/negative parameters
+/// and an exact binary rational forward reference, preventing paired inverse-node
+/// cancellation; sine/cosine are compared at 256 bits. References remain MPFR points.
 #[test]
 fn independent_amplitudes_and_extreme_complements() {
     mpfr::cleanup_on_thread_exit();
@@ -95,6 +111,11 @@ fn independent_amplitudes_and_extreme_complements() {
     }
 }
 
+/// Check normalized 1e-320 offsets, huge signed periods and the circular parameter case.
+/// At m=3/4, compare sn(delta)/delta, cn(K+delta)/delta and dn(K+delta) at 96 bits.
+/// Five integer period residues near 1e320 check exact endpoints and finite residuals;
+/// two signs also check ordinary trig reduction and m=0 at 128 bits. These finite
+/// cases do not impose a uniform resource bound for arbitrary amplitude size.
 #[test]
 fn tiny_offsets_and_huge_periods_remain_distinct() {
     let m: Real = "0.75".parse().unwrap();
@@ -137,6 +158,10 @@ fn tiny_offsets_and_huge_periods_remain_distinct() {
     }
 }
 
+/// Require selected mismatched amplitudes/parameters and two wrong coefficients to remain nonzero.
+/// Four mixed square sums must decline an exact zero normal form and all six
+/// residuals must have a certified nonzero sign by precision -128. This finite
+/// negative corpus is not a completeness claim for symbolic inequality recognition.
 #[test]
 fn mismatched_arguments_parameters_and_coefficients_never_cancel() {
     let m: Real = "0.5".parse().unwrap();
@@ -176,6 +201,10 @@ fn mismatched_arguments_parameters_and_coefficients_never_cancel() {
     }
 }
 
+/// Check overlap after mixed-precision queries, attached-stop rejection/retry and four shared readers.
+/// Apply to all three components at e|-3. Enclosure overlap is weaker than nesting;
+/// stops are attached after construction, so this does not test propagation through
+/// endpoint shortcuts or bound interruption latency. Readers require available enclosures.
 #[test]
 fn precision_order_abort_recovery_and_concurrent_readers() {
     let m: Real = "-3".parse().unwrap();
@@ -204,6 +233,9 @@ fn precision_order_abort_recovery_and_concurrent_readers() {
     }
 }
 
+/// Require an unresolved boundary parameter to fail before the zero shortcut, and an opaque zero to evaluate.
+/// The trig identity supplies an unrecognized zero. Using it as 1-m returns
+/// Exhausted; using it as u at m=1/2 produces a triplet within 2^-128 of (0,1,1).
 #[test]
 fn unresolved_domain_and_unknown_zero_are_honest() {
     let zero = Real::e().sin().powi(2.into()).unwrap() + Real::e().cos().powi(2.into()).unwrap()
@@ -222,6 +254,10 @@ fn unresolved_domain_and_unknown_zero_are_honest() {
     }
 }
 
+/// Check same-process JSON/CBOR replay at rational and symbolic parameters, including exact relations.
+/// JSON requires structural equality, positive dn, evaluable components and byte
+/// stability after warming. CBOR checks 256-bit residuals and retained relations.
+/// This does not clear process caches, admit hostile graphs or prove fresh-process replay.
 #[cfg(feature = "serde")]
 #[test]
 fn json_and_cbor_replay_preserve_values_relations_and_positive_branch() {
@@ -260,6 +296,9 @@ fn json_and_cbor_replay_preserve_values_relations_and_positive_branch() {
     }
 }
 
+/// Reject m=1,2 before a zero shortcut and verify 51 signed quarter-period triplets exactly.
+/// Three valid parameters cover circular, negative and positive cases, each with
+/// n=-8..=8 and expected carrier forms determined by n modulo four.
 #[test]
 fn domain_zero_and_quarter_period_endpoints() {
     for m in [Real::one(), Real::from(2)] {
@@ -284,6 +323,10 @@ fn domain_zero_and_quarter_period_endpoints() {
     }
 }
 
+/// Exercise 22 declared scalar recipes at three parameters with exact shared identities.
+/// Check each recipe's public kind, positive dn and inverse, four square relations,
+/// a common -2.5 weight and a 160-bit elliptic identity. This is the named fixture
+/// catalog, not every possible value or representation graph in each family.
 #[test]
 fn retained_square_relations_cover_every_scalar_family() {
     for case in representations::optimized_certificate_representatives() {
@@ -304,6 +347,9 @@ fn retained_square_relations_cover_every_scalar_family() {
     }
 }
 
+/// Compare eighteen components from six fresh rational argument/parameter pairs to MPFR at 512 bits.
+/// The reference independently inverts F, then evaluates trigonometry and a positive
+/// root. Adopting its exact binary rational does not make that point an exact oracle.
 #[test]
 fn fresh_rational_arguments_match_independent_mpfr_inverse() {
     mpfr::cleanup_on_thread_exit();

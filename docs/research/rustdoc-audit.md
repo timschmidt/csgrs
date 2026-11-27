@@ -18631,6 +18631,152 @@ claim is made. AGENTS.md already contains the future-agent 100% private/public
 Rustdoc mandate and private-build requirement. Repository-wide line review and
 100% coverage remain incomplete.
 
+## Jacobi approximation, public sharing and endpoint controls
+
+On 2026-11-27, reviewed all lines of six files at clean rustdoc baseline
+92506c1e58a7aca02579cc7aca6e5523dd82f428:
+
+| File | Baseline lines | Documented declarations |
+| --- | ---: | ---: |
+| crates/hyperreal/src/computable/approximation/jacobi.rs | 36 | 1 |
+| crates/hyperreal/src/computable/approximation/jacobi_tests.rs | 29 | 1 |
+| crates/hyperreal/src/real/arithmetic/jacobi.rs | 105 | 5 |
+| crates/hyperreal/tests/jacobi.rs | 321 | 16 |
+| crates/hyperreal/tests/jacobi_prepared.rs | 164 | 7 |
+| crates/hyperreal/tests/support/jacobi_oracle.rs | 13 | 1 |
+
+This accounts for 668 baseline lines and 32 Rustdoc blocks: 31 declarations and
+one module overview. Twenty-eight blocks are new, three public descriptions were
+reviewed/extended, and the oracle overview was revised. Hyperreal owns the exact
+component definitions, parameter admission and scalar evaluation (P1–P7), with
+shared identities, next-operation consumption and replay relevant to P19/P20.
+Missing acceptance was private kernel/result-adapter documentation and accurate
+scope for the test helpers, oracle and cancellation claims. The domain remains
+finite real u and m<1, including negative m; dn is the positive real branch.
+No algorithm, predicate order, domain restriction or fixture was changed.
+
+The kernel receives an already constructed amplitude phi and ln(c), c=1-m>0.
+It does not itself invert F. For kinds 0/1/2 it evaluates sin(phi), cos(phi) or
+the positive square root of cos(phi)^2+c*sin(phi)^2. Sampling the exact quotient
+2*phi/pi at precision zero gives an integer with error at most one, so the exact
+residual lies in the closed half-pi chart. The previous strict-error/interior
+comment overstated the consumed API guarantee. Corrected the explanation without
+changing phase selection. Rotation by n modulo four handles negative phases;
+positive weighted squares avoid subtractive cancellation in dn and remain valid
+at both chart endpoints.
+
+An explicit signal is attached to both cloned payload children. Entry, post-phase
+and pre-final polls return a zero placeholder on stop; the caller must reject it.
+The selected component delegates its requested binary precision to the exact
+constructed expression. Invalid kinds panic unless a stop returns first. No new
+cumulative work, heap-byte or latency bound is supplied; finite graph descriptions
+and a precision exponent are not such bounds. Arbitrary invalid imported child
+graphs are not admitted merely by naming the Jacobi tag.
+
+Public tuple constructors validate ln(1-m) before even a known-zero shortcut.
+The ordinary path shares the inverse amplitude across sn/cn/dn; the combined
+path also forms E at that amplitude. With m=0, epsilon retains the input itself;
+with u=0 the combined result likewise keeps it as epsilon. The component helper
+recognizes integer pi/2 amplitudes structurally, uses exact public sine/cosine,
+and chooses dn=1 or sqrt(1-m). Otherwise it constructs tags in component order
+and invokes the shared exact result conversion. This is not numerical angle
+recognition, a second domain proof or a guarantee of uniform cancellation controls.
+
+A contained public probe on the target baseline examined an attached input flag
+at u=0 and u=K(3/4), comparing separate and combined calls. At K, all three tuple
+components had no signal attachment. Combined epsilon retained it and rejected
+a query after the flag was asserted; separate epsilon lost it and still returned
+an enclosure. The original K rejected that query too. This is the prior pi/2
+reconstruction attachment gap exposed through Jacobi consumers, not a numerical
+value mismatch. The public docs now distinguish exact-value agreement from
+cancellation behavior. No implementation repair or universal attachment claim is
+included in this documentation-only batch.
+
+At exact zero, both epsilon paths retained the input flag, while fresh triplet
+constants did not. All returned rational enclosures even with the flag asserted,
+as did the flagged rational source: exact-rational enclosure shortcuts need no
+refinement. An initial exploratory probe incorrectly asserted stopped-query
+rejection for that rational source; the corrected probe records attachments and
+query results separately. Thus query completion alone is not evidence of a lost
+attachment. The process used 1 GiB address-space, ten CPU-second and fifteen
+wall-second caps with core dumps disabled.
+
+The direct-kernel test covers three entry stops and eighteen zero-amplitude
+requests across three log complements and two precisions. It does not exercise
+serialized ingress or stops arriving during work. Public integration tests cover
+four AGM-derived half-period triplets, 44 fresh rational forward-reference inputs,
+normalized tiny offsets, huge signed periods, 51 exact quarter-period triplets,
+66 scalar-family/parameter identity cases and eighteen components from six fresh
+rational inverse-oracle cases. Wrong argument/parameter/coefficients must produce
+certified nonzero residuals, not merely decline a structural identity.
+
+The prepared-output fixtures compare 66 four-output cases with separate calls,
+check 44 symbolic-parameter identities and inverse compositions, and verify 24
+signed/huge quarter-period cases against n*E_complete. JSON definition agreement
+and exact rational residuals are distinct assertions. Precision-order checks
+require enclosure overlap, not nesting. Ordinary shared-input stop/retry and
+concurrency checks do not cover all endpoint shortcuts or bound latency. Replay
+is same-process JSON/CBOR, not hostile-input or fresh-process qualification.
+
+The development oracle uses the previously audited residual-checked inverse of
+F, then 1024-bit MPFR sine/cosine and sqrt(1-m*sn^2). Its inherited rounded-domain
+guards are abs(u)<4 and abs(m)<=3/4; the mathematical radicand is at least 1/4.
+The inverse's 24 safeguarded steps still require its final 2^-800 residual check.
+The outputs are rounded points, not directed error enclosures or native certainty
+receipts. Exact adoption of those binary rationals does not make them exact Jacobi
+values; comparison margins and MPFR cleanup remain the callers' responsibilities.
+
+Independent Fraction checks covered 547 phase choices, 4,125 signed rotations and
+positive-norm identities, 64 half-period squared identities and 15,251 oracle
+radicand bounds. The phase checks include a unit-error endpoint to distinguish a
+closed chart from a strict interior assertion. These are finite consistency checks
+of the documented reasoning, not production execution, complete MPFR rounding
+analysis or universal qualification.
+
+Baseline validation passed the direct kernel test, all nine all-feature Jacobi
+integration tests and all five prepared-output tests before source edits. The
+post-edit batch passed the kernel test in both feature configurations, eight
+no-default and nine all-feature Jacobi tests, and all five prepared-output tests
+in both configurations. Seventeen native ring/Jacobi tests passed. An additional
+filter initially selected zero tests because the file and module names differ;
+rerunning computable::node::jacobi_node_tests exercised and passed both tests.
+A zero-test run is not counted as coverage.
+
+The selected Hyperlattice complex-Jacobi test passed real-axis agreement at three
+parameters plus nonreal conjugation and parity checks. Its epsilon consumer passed
+real-axis agreement and inverse composition for 66 scalar-family/parameter cases.
+These are focused downstream witnesses, not whole-Hyperlattice or geospatial-suite
+qualification. After the final comment clarifications, the no-default direct-kernel
+and exact-endpoint tests passed again. The final rebuilt endpoint probe's output
+was byte-identical to its baseline output. No focused check remains blocked.
+
+Private cargo doc passed both feature configurations with warnings and broken or
+private intra-doc links denied. Six blocks matched actual private library pages.
+Twenty-five integration/support blocks matched temporary private Rustdoc output
+with fourteen test attributes removed and six support paths resolved in copies.
+The single cfg(test) kernel block passed inventory and supplemental Markdown
+rendering; ordinary library Rustdoc does not emit that function. All thirty-two
+blocks are accounted for without equating supplemental rendering to compiler-
+emitted item coverage.
+
+Five files preserve every raw executable/signature token. The approximation
+kernel has only two added optional commas and one removed comma, independently
+reproduced by Rustfmt; all six files match an independently formatted baseline.
+Focused Rustfmt and git diff --check passed. No predicate order, trace call,
+assertion, tolerance, fixture, serialized definition or resource policy changed.
+Full workflows remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-jacobi-audit/ includes baseline/final logs, command
+records, exact arithmetic checks, declaration/token inventories, rendered-block
+matches and the endpoint probe's source and before/after output. Builds reused
+the roughly 6.4 GiB locked/offline nonincremental target. The owned probe executable
+and duplicate HTML were removed after inspection. Native relation helpers, scalar
+signal/enclosure/result adapters and complex/spatial consumers supplied context
+without new whole-file credit. No performance, sanitizer, cancellation-latency or
+universal closure claim was established. AGENTS.md already records the required
+future-agent public/private Rustdoc mandate and private-build requirement. The
+repository-wide line review and 100% Rustdoc coverage remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,6 +1,10 @@
 use super::*;
 use std::sync::{Arc, atomic::AtomicBool};
 
+/// Bypass constructors to check three entry-abort placeholders and eighteen zero-amplitude evaluations.
+/// All three kinds, log complements -10/0/10 and precisions -128/8 must agree
+/// with the expected zero or one to within one approximation unit. These direct
+/// payload calls do not validate serialized input or exercise mid-flight stops.
 #[test]
 fn jacobi_kernel_handles_direct_payloads_and_cancellation() {
     let signal = Some(Arc::new(AtomicBool::new(true)));

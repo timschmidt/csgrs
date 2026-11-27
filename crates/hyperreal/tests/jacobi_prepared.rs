@@ -1,7 +1,12 @@
 use hyperreal::{Rational, Real};
+/// Shared twenty-two scalar recipes for combined-output equivalence and relation checks.
 #[path = "support/representations.rs"]
 mod representations;
 
+/// Compare four combined outputs with separate calls across 22 scalar recipes and three parameters.
+/// Require exact zero residuals and, with serde enabled, identical JSON definitions.
+/// This proves the tested value/representation agreement, not identical cancellation
+/// attachments, allocation counts or performance.
 #[test]
 fn combined_outputs_preserve_separate_values_and_serialized_definitions() {
     for case in representations::optimized_certificate_representatives() {
@@ -34,11 +39,16 @@ fn combined_outputs_preserve_separate_values_and_serialized_definitions() {
     }
 }
 
+/// Unwrap a valid fixture's combined result into sn/cn/dn/epsilon order.
+/// Admission or construction failure panics rather than substituting partial outputs.
 fn outputs(argument: Real, parameter: &Real) -> [Real; 4] {
     let (s, c, d, e) = argument.jacobi_sncndn_epsilon(parameter).unwrap();
     [s, c, d, e]
 }
 
+/// Require shared square identities, positive dn and epsilon-to-inverse-E-to-F recovery for 44 cases.
+/// Each of 22 scalar recipes supplies two signed symbolic parameters; exact rational
+/// normal forms check the retained equations without numerical tolerance.
 #[test]
 fn shared_outputs_keep_exact_relations_with_symbolic_parameters() {
     for case in representations::optimized_certificate_representatives() {
@@ -67,6 +77,9 @@ fn shared_outputs_keep_exact_relations_with_symbolic_parameters() {
     }
 }
 
+/// Check eight signed/huge quarter multiples at three parameters against separate calls and n*E_complete.
+/// All four residuals must reduce exactly to zero, with JSON agreement under serde.
+/// The epsilon relation is checked independently of pairwise wrapper agreement.
 #[test]
 fn zero_and_quarter_points_preserve_existing_endpoint_forms() {
     for m in ["0.5".parse().unwrap(), Real::from(-3), Real::zero()] {
@@ -100,6 +113,9 @@ fn zero_and_quarter_points_preserve_existing_endpoint_forms() {
     }
 }
 
+/// Check invalid/unproved parameter failures before zero shortcuts and four opaque-zero outputs.
+/// Require NotANumber for m=1,2, Exhausted for an unresolved boundary parameter,
+/// and residual enclosures within 2^-128 at m=1/2 for an unrecognized zero input.
 #[test]
 fn shared_validation_precedes_zero_and_retains_unknown_domain_failures() {
     for parameter in [Real::one(), Real::from(2)] {
@@ -128,6 +144,10 @@ fn shared_validation_precedes_zero_and_retains_unknown_domain_failures() {
     }
 }
 
+/// Check mixed-precision overlap and an inherited input flag for all four ordinary shared outputs.
+/// At sin(e)|-3, asserting the input flag rejects -512 requests; clearing it permits
+/// four concurrent readers and later -128 requests. This does not cover exact
+/// endpoint carrier recovery, require nested enclosures or measure stop latency.
 #[test]
 fn shared_amplitude_preserves_precision_order_cancellation_and_concurrency() {
     use std::sync::{
