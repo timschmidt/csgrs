@@ -1,8 +1,14 @@
 // Keep an already admitted parameter quotient as one scalar atom. Expanding
 // its unrelated internal constants (pi, logarithms, etc.) is unnecessary for
-// the Jacobi identities. Every inverse hidden by this compression is checked
-// first; structural equality reuses that exact domain proof on later copies.
+// the Jacobi identities. Inverses in the traversed arithmetic skeleton are
+// checked first; other native leaves must already be admitted. Structural
+// equality reuses that query-local admission on later copies.
+/// Compress selected, already admitted Jacobi parameter arithmetic without expanding unrelated constants.
 impl<'a> RingRecognition<'a> {
+    /// Find a structurally equal parameter already compressed during this recognition attempt.
+    /// Charge each comparison; Some(false) means no match, while None means a work
+    /// or stop check declined. Structural matching has its own cost, not a unit-time
+    /// guarantee. A match reuses admission in this query, not global scalar equality.
     fn is_parameter_atom(&mut self, value: &Computable) -> Option<bool> {
         for index in 0..self.parameter_atoms.len() {
             self.charge()?;
@@ -13,6 +19,14 @@ impl<'a> RingRecognition<'a> {
         Some(false)
     }
 
+    /// Check the arithmetic skeleton before hiding a parameter quotient inside an atom.
+    /// Charge an operation and node per visited recipe, and require a positive depth.
+    /// Every encountered Inverse needs an immediate nonzero sign, then its child is
+    /// checked recursively. Add/Multiply short-circuit left before right; unary
+    /// arithmetic and all three linear-form coefficient nodes recurse. Other recipes
+    /// are accepted as already admitted leaves, without inspecting their descendants.
+    /// This is not whole-graph domain validation. Some(false) is a failed guard; None
+    /// is a visit/depth/work or cancellation limit, with spent counters retained.
     fn guard_parameter_arithmetic(&mut self, value: &Computable, depth: usize) -> Option<bool> {
         self.charge()?;
         if depth == 0 {
@@ -48,6 +62,14 @@ impl<'a> RingRecognition<'a> {
         }
     }
 
+    /// Collect selected quotient subexpressions from a retained log-complement recipe.
+    /// For PrescaledLn, inspect its log1p residual and peel at most eight negations,
+    /// offsets or rational-leaf products. Retain a direct product with an inverse
+    /// factor only after structural deduplication and arithmetic-domain guarding.
+    /// Recurse through sums and rational scaling of logarithms using the supplied
+    /// depth; depth zero is a successful no-op, not a complete scan. At the atom cap
+    /// or on a false domain guard, simply omit that candidate. None reports a charged
+    /// substep declining; earlier collected atoms/counter changes remain query-local.
     fn parameter_from_logarithm(&mut self, log: &Computable, depth: usize) -> Option<()> {
         self.charge()?;
         if depth == 0 {
@@ -95,6 +117,14 @@ impl<'a> RingRecognition<'a> {
         Some(())
     }
 
+    /// Scan the authoritative borrowed DAG for Jacobi log-complement parameters to compress.
+    /// Charge each popped visit before depth/identity checks, then charge a node only
+    /// for a new live Arc identity. Retained rational reductions terminate a branch.
+    /// Arithmetic children are pushed in stored order and therefore scanned in reverse
+    /// by the LIFO stack; Jacobi sn/cn/dn inspect only their log-complement payload.
+    /// Do not insert temporary replay expressions into the identity set. The scan
+    /// shares this attempt's counters and stop handle; its limits do not meter all
+    /// structural-matcher or rational-cache work. None leaves partial local state.
     fn collect_parameter_atoms(&mut self, root: &'a Computable) -> Option<()> {
         let mut pending = vec![(root, Self::MAX_DEPTH)];
         let mut visited = std::collections::HashSet::new();

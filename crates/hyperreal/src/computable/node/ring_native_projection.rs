@@ -1,11 +1,22 @@
 // Candidate generation and sufficient exact-zero proofs; no numeric guesses.
+/// Generate rational candidates and prove sufficient exact-zero obligations using admitted relations.
 impl<'a> RingRecognition<'a> {
+    /// Attempt rational projection after parameter collection and quotient expansion.
+    /// Use the shared query state and MAX_DEPTH throughout, then prove any proposed
+    /// rational with native relations. None leaves local work/state consumed; this
+    /// helper itself publishes no scalar sign or retained reduction.
     fn recognize_native(&mut self, value: &'a Computable) -> Option<Rational> {
         self.collect_parameter_atoms(value)?;
         let quotient = self.expand_quotient(value, Self::MAX_DEPTH)?;
         self.project_native_relations(quotient)
     }
 
+    /// Switch the native attempt to root-branch completion after one charged operation.
+    /// Clear strategy-specific atoms, quotient memo entries, relations, signs and
+    /// Jacobi/parameter choices because their IDs cannot survive decomposition changes.
+    /// Preserve remaining node/operation allowances and the root stop handle. A failed
+    /// charge leaves state unchanged; zero nodes alone does not prevent this handoff,
+    /// although later traversal will decline. No resource allowance is replenished.
     fn begin_root_completion(&mut self) -> Option<()> {
         self.charge()?;
         self.atoms.clear();
@@ -21,6 +32,13 @@ impl<'a> RingRecognition<'a> {
         Some(())
     }
 
+    /// Prove a rational candidate or exact zero from an already admitted native quotient.
+    /// First propose a value by symbolic initial assignment, then require N-cD to
+    /// reduce to zero. Use signed zero completion only in that strategy. Next try
+    /// full quotient reduction; if it succeeds, return its optional rational projection.
+    /// Only when reduction itself declines is the original numerator retried as a
+    /// zero-only obligation, using the same remaining work and atom IDs. Denominator
+    /// nonzero/domain proofs must already exist. No candidate assignment alone is evidence.
     fn project_native_relations(&mut self, value: RingQuotient) -> Option<Rational> {
         let zero_mode = if self.root_completion {
             NativeReduction::SignedZeroResidual
@@ -61,6 +79,11 @@ impl<'a> RingRecognition<'a> {
         self.project_quotient(&reduced).filter(Rational::is_zero)
     }
 
+    /// Propose a rational by assigning Jacobi sn atoms zero and all other atoms one.
+    /// Apply that assignment to numerator/denominator, charge division and enforce
+    /// the coefficient-size cap. A zero assigned denominator or spent work declines.
+    /// This is only a heuristic candidate and must never be published without proving
+    /// the complete original residual zero.
     fn native_projection_candidate(&mut self, value: &RingQuotient) -> Option<Rational> {
         let numerator = self.native_initial_assignment(&value.numerator)?;
         let denominator = match &value.denominator {
@@ -75,6 +98,12 @@ impl<'a> RingRecognition<'a> {
     // P,Q >= 0 and P²=Q² imply P=Q, including P=Q=0. Retained exact
     // signs partition this residual as P-Q; an unresolved term declines.
     // Squaring is only a sufficient zero proof, never a value rewrite.
+    /// Partition an admitted polynomial as P-Q with both P and Q nonnegative at the selected values.
+    /// Combine coefficient signs with query-local atom signs in stored monomial order.
+    /// Drop zero terms, retaining a negative term's monomial with negated coefficient
+    /// in Q; coefficients there need not themselves be positive. Unproved atom signs
+    /// or charged insertion failures decline. Both partitions use the same atom IDs
+    /// and caps. This does not decide whether two nonempty sides are equal.
     fn split_nonnegative_terms(
         &mut self,
         value: &RingPolynomial,
@@ -113,6 +142,13 @@ impl<'a> RingRecognition<'a> {
         Some((positive, negative))
     }
 
+    /// Prove a residual zero by equal squares of its established nonnegative sides.
+    /// When both sides have multiple terms, first try formal polynomial division in
+    /// either direction; equality of the resulting quotient to one suffices even if
+    /// the discarded factor vanishes. Otherwise preserve the original sides. Square
+    /// and subtract using admitted relations in plain zero mode, avoiding recursive
+    /// sign-square attempts. Only the zero implication is returned, never a rewritten
+    /// nonzero value or an inverse certificate. Limits and stop checks share this query.
     fn prove_zero_by_nonnegative_squares(&mut self, value: &RingPolynomial) -> Option<()> {
         let (mut positive, mut negative) = self.split_nonnegative_terms(value)?;
         if positive.terms.len() > 1 && negative.terms.len() > 1 {
@@ -140,6 +176,10 @@ impl<'a> RingRecognition<'a> {
         .map(|_| ())
     }
 
+    /// Evaluate a polynomial at the proposal-only assignment sn=0 and every other atom=1.
+    /// Charge atom visits until a zero factor and each included coefficient addition;
+    /// check coefficient size after addition. The result need not equal the actual
+    /// polynomial value and gives no domain, sign or equality proof.
     fn native_initial_assignment(&mut self, value: &RingPolynomial) -> Option<Rational> {
         let mut result = Rational::zero();
         for (monomial, coefficient) in &value.terms {
@@ -165,6 +205,12 @@ impl<'a> RingRecognition<'a> {
         Some(result)
     }
 
+    /// Remove a common sorted multiset of atom IDs solely to simplify a sufficient zero obligation.
+    /// If the quotient is zero, multiplying back proves the input zero even when the
+    /// discarded monomial can vanish; the converse and nonzero values are not retained.
+    /// Intersect terms, compact each monomial and re-sort the term list because word
+    /// order can change. Charge explicit visits, not every sort comparison. A failed
+    /// charge can leave a partially changed local candidate, which callers must discard.
     fn remove_common_monomial_for_zero_proof(&mut self, value: &mut RingPolynomial) -> Option<()> {
         self.charge()?;
         let Some((first, _)) = value.terms.first() else {
@@ -218,12 +264,30 @@ impl<'a> RingRecognition<'a> {
     }
 }
 
+/// Read or publish completed exact rational reductions while preserving the retained source graph.
 impl Computable {
+    /// Read a retained tower only when both its radical scale and odd part are zero.
+    /// Return the exact rational part without rebuilding the original expression.
+    /// No cache means no such retained reduction, even for an obvious rational leaf.
+    /// Reading clones the stored tower; it does not refine or poll cancellation.
     fn retained_rational_reduction(&self) -> Option<Rational> {
         let tower = self.internal.cache.quadratic_tower()?;
         (tower.even.scale.is_zero() && tower.odd.is_zero()).then_some(tower.even.rational)
     }
 
+    /// Try optional exact native-relation projection, then root completion with remaining work.
+    /// The attempt admits original inverse domains along its recognized arithmetic
+    /// skeleton and relies on defined native function atoms. It is not a full import
+    /// validator. Success returns an exact rational without rewriting the source graph;
+    /// a final root-signal check precedes sign publication and retained rational-tower
+    /// storage, followed by the native-rational-relation dispatch trace. The tower
+    /// cache retains its first successful value rather than replacing arbitrary state.
+    ///
+    /// None means this optional strategy declined (including unsupported forms, unknown
+    /// domains, limits or cancellation), not irrationality or a permanent failure.
+    /// Node/depth/term/degree/coefficient/operation caps bound selected recognition work,
+    /// not total nested matcher work, peak allocation or elapsed time. Temporary proof
+    /// state is owned by the attempt; no numerical approximation is used as a fallback.
     pub(crate) fn bounded_native_relation_rational(&self) -> Option<Rational> {
         let mut recognition = RingRecognition::new(self);
         recognition.native_relations = true;

@@ -1,7 +1,10 @@
 #[cfg(test)]
+/// Qualification of query-local sign replay, root-branch completion and preserved inverse-domain guards.
 mod ring_native_sign_tests {
     use super::*;
 
+    /// Build a native recipe with uninitialized bounds/signs and no stop handle.
+    /// Bypass constructor simplification to expose admission and query-local proof behavior.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -13,18 +16,24 @@ mod ring_native_sign_tests {
         }
     }
 
+    /// Construct an exact rational integer fixture through the ordinary computable constructor.
     fn q(value: i32) -> Computable {
         Computable::rational(Rational::from(value))
     }
 
+    /// Retain an unsimplified sum of two fixtures with fresh unproved parent facts.
     fn add(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Add(a, b))
     }
 
+    /// Retain an unsimplified product of two fixtures with fresh unproved parent facts.
     fn mul(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Multiply(a, b))
     }
 
+    /// Build principal sqrt(n) and sqrt(1/n), optionally certifying their signs first.
+    /// Tests supply positive n; the reciprocal conversion and sign assertions panic
+    /// if those fixture assumptions fail. Their product is independently exactly one.
     fn root_pair(n: i32, certify: bool) -> (Computable, Computable) {
         let a = raw(Approximation::Sqrt(q(n)));
         let b = raw(Approximation::Sqrt(Computable::rational(
@@ -37,6 +46,8 @@ mod ring_native_sign_tests {
         (a, b)
     }
 
+    /// Create a fresh recognition attempt with native relations and root completion enabled.
+    /// Keep the standard limits and borrow the fixture's stop handle.
     fn native(value: &Computable) -> RingRecognition<'_> {
         let mut recognition = RingRecognition::new(value);
         recognition.native_relations = true;
@@ -44,6 +55,9 @@ mod ring_native_sign_tests {
         recognition
     }
 
+    /// Require no exact-sign slot, numeric sample or retained rational reduction on this fixture.
+    /// This does not inspect every cache/fact field or establish that the value is
+    /// mathematically unknown; shared constant samples require separate handling.
     fn unproved(value: &Computable) {
         assert!(matches!(
             value.internal.facts.exact_sign(),
@@ -54,6 +68,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Project twelve shifted reciprocal-root products and six signed-factor zero identities.
+    /// Positive branch certification makes sqrt(n)*sqrt(1/n)=1 for n=2,3,7.
+    /// Require exact rational results and no numeric sample on each composite parent.
     fn signed_projection_replays_positive_root_branches_and_signed_factors() {
         for n in [2, 3, 7] {
             let (a, b) = root_pair(n, true);
@@ -89,6 +106,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Distinguish the positive reciprocal-root product plus one from zero and reject a mismatched root.
+    /// Both signed one-billionth perturbations must project to their exact rational
+    /// value; equal-square reasoning must not discard branch or perturbation information.
     fn equal_squares_do_not_certify_the_opposite_branch_or_a_perturbation() {
         let (a, b) = root_pair(2, true);
         let wrong_branch = add(mul(a.clone(), b), q(1));
@@ -112,6 +132,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Prove sqrt(2)*sqrt(1/2)-1 exactly zero from initially unproved rational root domains.
+    /// The root nodes retain unproved global state while the composite gains its
+    /// completed reduction, with no numeric sample on the composite.
     fn rational_root_domains_replay_without_numeric_root_caches() {
         let (a, b) = root_pair(2, false);
         assert_eq!(a.immediate_sign(), None);
@@ -127,6 +150,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Decline reciprocal roots of an opaque sine until its positive domain is certified.
+    /// Retry the same composite successfully after sign_until supplies that fact;
+    /// root children remain globally unproved and the composite numeric cache stays empty.
     fn unresolved_root_domain_declines_and_recovers_after_domain_certification() {
         let radicand = raw(Approximation::PrescaledSin(Computable::rational(
             Rational::fraction(1, 3).unwrap(),
@@ -152,6 +178,10 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Check the first native attempt declines, then root completion uses its remaining allowance.
+    /// Require one operation charged for handoff, unchanged node count, cleared
+    /// strategy tables and successful query-local rational projection. The root
+    /// receives no global certificate from these direct helper calls.
     fn root_completion_handoff_preserves_remaining_query_budgets() {
         let (a, b) = root_pair(2, false);
         let value = add(mul(a, b), q(-1));
@@ -182,6 +212,10 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Exercise exhausted nodes, exhausted operations and a stop handle across strategy handoff.
+    /// A handoff may succeed with zero nodes but subsequent recognition still declines.
+    /// Require retained counters and no global proof, then a fresh unstopped public
+    /// attempt must complete the original identity without a numeric sample.
     fn root_completion_cannot_reset_exhaustion_or_cancellation() {
         let (a, b) = root_pair(2, false);
         let mut value = add(mul(a, b), q(-1));
@@ -212,6 +246,10 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Check six pi polynomials and the empty polynomial using fixed rational constant bounds.
+    /// The two close convergents remain unresolved while coarse separated cases get
+    /// exact signs. Assert the pi node's own caches/facts stay cold, without assuming
+    /// its process-wide numeric cache is cold under concurrent tests.
     fn fixed_constant_intervals_prove_only_separated_polynomial_signs() {
         let pi = raw(Approximation::Constant(SharedConstant::Pi));
         let mut recognition = native(&pi);
@@ -249,6 +287,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Replay six unit-range rational sine/tangent signs and decline six unsupported or invalid recipes.
+    /// Require no published sign, sample or retained rational reduction on the tested
+    /// root nodes; a decline is not by itself proof of invalidity.
     fn domain_replay_is_conservative_and_never_refines_opaque_atoms() {
         for numerator in [-1, 0, 1] {
             for tangent in [false, true] {
@@ -280,6 +321,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Independently exhaust depth, nodes, operations and cancellation on an unproved rational leaf.
+    /// Reset the stop and require a fresh successful query; also reject a 4097-bit
+    /// integer. Check that all such query-local attempts leave global proof state absent.
     fn domain_replay_obeys_depth_node_work_coefficient_and_cancel_limits() {
         let mut value = raw(Approximation::Ratio(Rational::fraction(1, 3).unwrap()));
         let signal = Arc::new(AtomicBool::new(false));
@@ -309,6 +353,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Reject negative/unproved square-root domains and zero/unproved inverse domains.
+    /// A factor independently equal to zero must not hide the original inverse
+    /// obligation; each failed composite remains globally unproved.
     fn sign_proofs_preserve_root_and_original_inverse_domain_guards() {
         let unknown = raw(Approximation::PrescaledSin(Computable::rational(
             Rational::fraction(1, 3).unwrap(),
@@ -329,6 +376,10 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Decline signed-square proofs on work/stop exhaustion and on degree/coefficient growth.
+    /// Reset scratch limits, prove the original identity locally without publication,
+    /// then require the public projection to return exact zero. Explicit scratch
+    /// resets are test setup, not automatic production budget replenishment.
     fn sign_square_attempt_obeys_work_cancellation_degree_and_coefficient_limits() {
         let (a, b) = root_pair(2, true);
         let mut value = add(mul(a, b), q(-1));
@@ -385,6 +436,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Prove the already-certified zero-root polynomial and the empty polynomial zero.
+    /// The sufficient nonnegative-square argument must include zero sides without
+    /// requiring a nonzero conjugate or numerical division.
     fn zero_sides_need_no_nonzero_conjugate_or_division() {
         let zero_root = raw(Approximation::Sqrt(q(0)));
         assert_eq!(zero_root.sign_until(-32), Some(RealSign::Zero));
@@ -405,6 +459,10 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Check 55 monomial products against exact powers of five nonnegative rational radicands.
+    /// Collapse root pairs before testing the retained degree-12 bound, preserving
+    /// ten unrelated pi factors and root parity. An unrelated thirteenth factor
+    /// must still exceed the cap, including for the zero-radicand fixture.
     fn rational_root_products_collapse_before_the_retained_degree_limit() {
         for (numerator, denominator) in [(0, 1), (1, 3), (2, 1), (3, 1), (7, 5)] {
             let radicand =
@@ -450,6 +508,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Keep negative/unproved roots opaque and enforce retained-degree limits on their powers.
+    /// For a valid zero root, reject excessive coefficients, spent work and a stop
+    /// before accepting its exact zero product after explicit scratch reset.
     fn early_root_products_keep_domain_coefficient_and_work_guards() {
         let good = raw(Approximation::Sqrt(q(2)));
         let unknown = raw(Approximation::PrescaledSin(Computable::rational(
@@ -506,6 +567,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Check a cold unit, nine unary cases and nine products/sums against integer signs.
+    /// Opposite nonzero summands deliberately decline; supported cases must preserve
+    /// unproved global state on each checked parent and operand.
     fn cold_arithmetic_sign_replay_is_exact_and_conservative() {
         let one = raw(Approximation::One);
         assert_eq!(
@@ -550,6 +614,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Decline mixed sine terms and fixed-constant interval arithmetic that exceeds coefficient caps.
+    /// Input coefficients individually fit but products or sums need not; require
+    /// no numeric refinement on the tested sine or pi node.
     fn mixed_nonconstant_signs_and_oversized_interval_coefficients_decline() {
         let sine = raw(Approximation::PrescaledSinRational(
             Rational::fraction(1, 3).unwrap(),
@@ -587,6 +654,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// Admit a principal root of an exactly cancelling sum while rejecting its reciprocal.
+    /// Require a zero root-sign relation, with no global proof published by either
+    /// direct query-local helper.
     fn zero_root_domain_replays_but_does_not_admit_a_zero_inverse() {
         let zero = add(q(1), q(-1));
         let root = raw(Approximation::Sqrt(zero.clone()));
@@ -601,6 +671,9 @@ mod ring_native_sign_tests {
     }
 
     #[test]
+    /// In both native strategies, cancel two equal root terms before inverse-domain admission.
+    /// An exact residual five gives 1/5 while zero rejects inversion; depth zero and
+    /// shift 4096 also decline. Direct helper calls must leave the fixtures unproved.
     fn quotient_replay_preserves_linear_forms_and_inverse_guards() {
         for root_completion in [false, true] {
             for constant in [0, 5] {

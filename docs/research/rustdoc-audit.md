@@ -19676,6 +19676,149 @@ Cargo target with locked/offline, nonincremental settings. AGENTS.md's existing
 100% public/private Rustdoc mandate remains unchanged. Complete repository
 line review and all-configuration coverage remain unfinished.
 
+## Hyperreal native sign replay, parameter admission and rational projection (27 November 2026)
+
+Baseline: c0b743b167de2ee6e3f2389e519fb6a09c9dd109 on rustdoc. Whole-file
+review covered four files in crates/hyperreal/src/computable/node:
+ring_parameter_atoms.rs (137 baseline lines), ring_native_domain.rs (187),
+ring_native_projection.rs (249), and ring_native_sign_tests.rs (641).
+Total: 1214 baseline lines. A scoped paragraph in Real::exact_rational_normal_form
+in real/arithmetic/facts.rs now states the same admission precondition; no
+whole-file review credit is assigned to that 1827-line baseline file. Context
+reads included the recognition state/counters, quotient admission/projection,
+native relation/reduction consumers, immediate_sign, parameter leaf extraction,
+and Jacobi parameter tests. These are contextual reads, not whole-file claims.
+
+The owning layer is hyperreal's optional exact native-relation recognizer,
+covering P2–P6 and downstream P8–P11. Inputs are admitted native real atoms,
+valid query-local atom IDs, normalized rational polynomials/quotients, retained
+root-branch relations and the attempt's remaining budgets. The missing witness
+was complete private documentation of the selected recognition/guard grammar,
+proof scope, publication rules and failures. Before edits, all-feature
+ring_native_sign_tests (eighteen), ring_jacobi_relations_tests (seventeen), and
+ring_native_division_tests (two) passed on the target baseline.
+
+There are 52 whole-file documentation blocks: twenty-two production methods,
+four impl overviews, one test-module overview and twenty-five test/helper
+functions. No new types or generated APIs are introduced. The public paragraph
+is recorded separately from those blocks. Key reviewed behavior:
+
+- Parameter compression scans selected Jacobi log-complement recipes and keeps
+  an admitted quotient as an opaque scalar atom. It checks Inverse nodes in the
+  traversed arithmetic skeleton, requiring immediate nonzero evidence before
+  descending into their children. Other native function shapes are treated as
+  already admitted leaves; it does not inspect every descendant domain. The old
+  blanket comment about every hidden inverse was narrowed to the actual guard
+  behavior, and the public normal-form paragraph now makes that precondition
+  explicit. This documents implementation scope, not a relaxed admission policy.
+- Arithmetic guard recursion visits left before right and short-circuits. The
+  authoritative DAG scan pushes in stored order and therefore pops right before
+  left, charging a visit before identity/depth checks. Live Arc identity is used
+  only for that attempt's visited set. Temporary derived expressions must not
+  enter it. Retained rational reductions stop a branch. The log scanner's depth
+  zero is a successful no-op, whereas a guard/collection depth limit declines.
+  Atom-cap or false-guard candidates are omitted without claiming full discovery.
+- Native sign replay charges before reading an immediate sign, but that sign
+  precedes depth, node and leaf-size checks. Cold replay handles selected
+  arithmetic/rational trig forms; constant/exp shortcuts and cached facts assume
+  defined operands. Query-root cancellation is polled at charged steps, not
+  independently on every child signal. None conflates unsupported, unresolved,
+  limit and stop outcomes. A retained relation root_sign can supply a result
+  after nested replay declines, including a nested work-limit decline.
+- Polynomial sign first partitions signed terms, then handles mixed signs only
+  with fixed rational enclosures of positive shared constants. No atom is
+  numerically refined. Quotient sign presupposes an admitted denominator: a zero
+  numerator returns zero immediately. Completed principal-root relations expand
+  and prove a nonnegative radicand in the same attempt, retaining the branch sign.
+  These helpers are not independent validators for arbitrary malformed recipes.
+- Native projection assigns sn atoms zero and other atoms one solely to propose
+  a rational candidate. It must prove N-cD zero before accepting that proposal.
+  Full quotient reduction follows; only failure of that reduction, rather than
+  failure of its final rational projection, triggers the smaller numerator-only
+  fallback. All original denominator obligations must already be admitted.
+- Signed zero proof partitions a residual as P-Q with P,Q nonnegative at their
+  selected values. Its sufficient square proof includes P=Q=0. Formal division
+  can reduce the equality obligation even when the removed common factor can
+  vanish. Common-monomial removal retains only the implication from a zero
+  quotient back to the original zero residual, never a nonzero value or inverse
+  certificate. Failed in-place work can leave a candidate partially changed;
+  callers discard it. Re-sorting follows monomial removal because lexicographic
+  word order can change.
+- Root-completion handoff clears strategy-specific IDs/tables after one charge,
+  preserving the same remaining counters and stop handle. It does not replenish
+  budgets. A handoff with zero remaining nodes can succeed, but subsequent
+  recognition declines. Query-local proofs alone do not publish global facts.
+  The completed public adapter checks its root signal, publishes an exact sign,
+  attempts first-success rational-tower retention and records the existing trace.
+  It leaves the authoritative expression unchanged. Failure is not cached as
+  irrationality or permanent undecidability. Counters/caps do not meter all
+  structural-matcher work, peak allocation or elapsed time.
+
+A disposable private probe compiled against the baseline and final native-domain
+file produced identical observation logs. It confirmed that a retained immediate
+sign can succeed with zero depth/nodes after one work charge, while a cold leaf
+at depth zero declines without consuming a node. The initial scratch fixture
+incorrectly assumed integer construction had already retained a sign; explicitly
+certifying that scratch leaf before the test corrected the setup. No repository
+fixture or assertion changed for this harness mistake.
+
+The probe confirmed guard boundaries: an unproved arithmetic inverse declines,
+a root treated as a leaf hides that descendant from this particular guard, and
+certifying the inverse operand permits its guard. Empty parameter lookup spends
+no charge; a zero-depth logarithm scan spends its entry charge and does nothing.
+A query-local root relation supplied its positive sign after nested replay had
+no work remaining, without publishing a global sign or sample. An empty
+polynomial sign is available without a work charge. A deliberately unadmitted
+0/0 quotient returned zero through the precondition-dependent sign helper;
+actual zero-inverse expansion declined. That direct-helper probe was not an
+admitted geometry/scalar result and was never published. An opaque sine received
+a proposal of one but full projection declined; common-monomial removal matched
+the expected multiset quotient. These observations qualify the documented helper
+boundaries, not universal completion. Probe containment was one GiB address
+space, ten CPU seconds, fifteen wall seconds and no core dumps, not a production
+resource guarantee.
+
+The eighteen reviewed tests preserve all assertions. They exercise twelve
+shifted reciprocal-root products, six signed-factor zero identities, opposite
+branches and rational perturbations, cold/domain-warmed retries, handoff state,
+separate resource controls, fixed-constant intervals, original inverse guards,
+nonnegative-square completion, zero sides and early root reduction. Fifty-five
+monomial products compare coefficients with exact rational powers while
+preserving unrelated pi factors and parity; the degree cap still rejects
+unrelated extra factors. The cold sign corpus deliberately declines opposite
+nonzero summands. Tests explicitly resetting scratch budgets do not assert that
+production attempts replenish resources.
+
+After the final source edit, the same thirty-seven unit tests passed with no
+default features and with all features. The public Real normal-form opaque-affine
+cancellation test passed (one). All-feature serde_graph_domains (four) and
+serde_opaque_operand_domains (five), and downstream hyperlimit resolve::tests
+(five), passed. Private cargo doc passed both feature configurations with
+warnings and broken/private intra-doc links denied. Twenty-six ordinary blocks
+matched library HTML; twenty-six test/helper blocks matched actual Rustdoc
+from an owned copy with only this test module's cfg(test)/test attributes
+removed. The scoped public paragraph matched the Real page. No local-function
+supplement or new macro/derive expansion was needed in these reviewed files;
+no ghost/Verus configuration coverage is claimed.
+
+All five changed Rust files have identical raw comment-free tokens to baseline;
+no formatting punctuation, signature, predicate, assertion, policy or algorithm
+changed. Rustfmt passed for the four wholly reviewed files, and git diff --check
+passed. A separate Rustfmt file check on the large scoped Real file reports
+pre-existing layout differences outside the paragraph. The same check was
+reproduced on a disposable baseline copy, and reversing only the documentation
+paragraph reproduces that entire baseline file byte-for-byte. Those unrelated
+formatting differences remain in place. Full workflow checks remain owner-waived
+for this docs-only session; no runtime or documentation-build failure remains.
+
+Evidence under /tmp/csgrs-hyperreal-native-sign-audit/ retains commands/logs,
+probe sources/results, the item/render/token inventory, and baseline formatting
+comparison. Owned probe binaries, shadow source and temporary HTML were removed
+after inspection. Locked/offline nonincremental builds reused the approximately
+6.6 GiB target. AGENTS.md already mandates 100% public/private Rustdoc and
+buildable private documentation, and remains unchanged. Repository-wide review
+and all-configuration documentation coverage are still incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

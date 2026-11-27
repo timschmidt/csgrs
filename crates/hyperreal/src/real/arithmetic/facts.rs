@@ -147,7 +147,9 @@ impl Real {
     /// Rational relations clear the same proved-nonzero factor on both sides
     /// of a quotient. A proposed rational constant is accepted only when its
     /// complete residual has an exact zero proof. At most 32 parameter
-    /// quotients may remain opaque after their inverse domains are checked.
+    /// quotients may remain opaque after inverse guards in their traversed
+    /// arithmetic skeleton are checked. Other native function leaves must already
+    /// be defined; this optional normalizer is not a full import-domain validator.
     /// Derived atoms and parameter-basis choices live only for this query;
     /// no refinement occurs and a declined attempt supplies no negative fact.
     /// A completed final-attempt rational proof is retained in the existing
