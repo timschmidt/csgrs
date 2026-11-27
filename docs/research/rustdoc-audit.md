@@ -8635,6 +8635,196 @@ probes/checkers and generated private test docs. Temporary artifacts are review
 evidence, not a durable performance archive. Most of the repository audit remains
 open; declarations counted here do not establish overall 100% coverage.
 
+## Hyperlattice Jacobi continuation, oracle, tests and timing consumers (27 November 2026)
+
+Whole-file review at `86a8dcffa` covered these Hyperlattice files:
+
+| File relative to crates/hyperlattice | Original → documented lines | Declarations |
+| --- | ---: | ---: |
+| src/complex/jacobi.rs | 161 → 210 | 4, plus five fields |
+| tests/complex_jacobi.rs | 370 → 424 | 20 |
+| tests/jacobi_epsilon.rs | 287 → 323 | 16 |
+| tests/support/complex_jacobi_oracle.rs | 223 → 268 | 14, plus two fields |
+| benches/complex_jacobi.rs | 70 → 88 | 3 |
+| benches/jacobi_epsilon.rs | 69 → 87 | 3 |
+| benches/complex_atanh.rs | 72 → 90 | 3 |
+
+All seven files were read in full, including the existing assertion bodies and
+benchmark timing/validation loops. Every authored item in this slice now has
+Rustdoc, including private helpers, imported/nested modules, constants, fields
+and test functions. This completes the remaining Jacobi child of the previously
+reviewed complex core. It is not a repository-wide coverage claim. The root
+AGENTS.md mandate for 100% public/private documentation remains unchanged.
+
+Owning layer: Hyperlattice complex assembly over native Hyperreal amplitudes,
+with a separate development oracle and timing consumers. Relevant properties:
+P1/P2/P3 (exact meaning, retained relations and honest knowledge), P4/P5/P6
+(cache observations, resource scope and native errors), P7 (stable denominator),
+P17/P18/P19 (output relations and replay scope), and P36/P37 (completed-workload
+and coverage evidence). The production domain is finite native Real component
+pairs and an admitted real squared modulus m<1, including negative m; known
+poles fail explicitly. The oracle uses a smaller local analytic domain. Missing
+private contracts and insufficient distinctions between exact identities,
+interval comparisons, cache observations and serialization evidence were the
+documentation acceptance gaps. No implementation, predicate order, assertion,
+fixture, benchmark mode/precision, trace label or dependency was changed.
+
+Clarified mathematical and practical contracts:
+
+- ImaginaryJacobi stores complementary real functions (S,C,D) at y|1-m, not
+  the complex triplet at i*y. It also retains one inverse depending on the
+  real-axis triplet and optionally the epsilon vertical correction. The helper
+  trusts the caller's certified nonzero parameter sign and matching real_sn/
+  real_cn inputs; it does not independently prove their common origin.
+- Positive m uses the complementary parameter h=1-m. Negative m uses r=sqrt(h),
+  argument r*y and parameter 1/h, then maps the reciprocal triplet (s,c,d) to
+  (s/r,d,c), consistent with the
+  [reciprocal-modulus identities](https://dlmf.nist.gov/22.17). The API uses m=k²,
+  whereas DLMF uses modulus k. The stable negative-parameter denominator
+  c²+(-m/h)*real_cn²*s² equals complementary Q=C²+m*real_sn²*S².
+- One shared inverse of Q serves all six triplet components, or both epsilon
+  components. Avoiding a separate divisor C admits finite quarter-period values
+  when C=0 but Q!=0; complex dn can be zero. The
+  [addition formulas](https://dlmf.nist.gov/22.8) explain the assembly. Real
+  evaluation validates the parameter before the triplet's real-axis shortcut.
+  Remaining zero-parameter input uses circular/hyperbolic continuation.
+- Epsilon's real-axis path retains the native unwrapped composition. When
+  imaginary zero is not cheaply known, ln(1-m) precedes sign certification and
+  the m=0 identity. The nonzero path requests a shared real amplitude for triplet
+  plus epsilon, and similarly shares complementary data. The vertical correction
+  is y-epsilon(y|h), or r*(r*y-epsilon(r*y|1/h)) after reciprocal transformation.
+  The [epsilon addition law](https://dlmf.nist.gov/22.16.E27) supplies the two
+  rectangular components without a separate C divisor. The final expect checks
+  the internal with_epsilon invariant, not a user-domain condition.
+- NotANumber, Exhausted, DivideByZero and UnknownZero retain their distinct scalar
+  boundaries. Exact expressions retain native relation/domain obligations without
+  a separately added complex proof node, certainty receipt, or total-work/
+  retained-heap/wall-time bound. Unknown imaginary zero is not a proof of nonzero.
+- The local oracle derives coefficients from the
+  [Jacobi differential system](https://dlmf.nist.gov/22.13.T1), with epsilon'=dn².
+  For A=max(1,|m|), the convolution recurrence bounds degree-n coefficients by A^n;
+  epsilon's positive-degree coefficient is bounded by A^(n-1). Degree 512 and
+  q=A*(|x|+|y|)<=3/4 give geometric tail q^513/(1-q). Directed interval arithmetic
+  bounds coefficients, Horner evaluation and tail for valid finite intervals.
+  The radius sum, denominator, quotient and width differences use borrowed MPFR
+  arithmetic with directed rounding; the preceding atanh oracle's owned-rounding
+  finding was not assumed to apply here.
+- Oracle input bounds still use production native evaluation at -850. It is an
+  independent differential formula, not independent input conversion or global
+  continuation. The helper's local domain does not itself require m<1, while
+  compare first requires production admission. It returns six ordered triplet
+  intervals or two epsilon intervals. O(DEGREE²) interval operations and
+  O(DEGREE) retained coefficient endpoints do not bound native refinement or
+  all MPFR memory/work. Bad domains assert and unavailable bounds unwrap-panic.
+- The triplet relation helper consumes exact rational normal forms for three
+  square-sum expressions; the third is algebraically dependent but tests another
+  expression shape. These identities alone do not select a unique value/branch.
+  Other tests use explicitly documented finite tolerances or independent local
+  enclosure overlap. Shared recipe loops assert public kinds, not distinct
+  private tags or a coverage count. Negative-parameter quarter-period sn/cn
+  assertions test squared magnitudes without independently asserting their signs.
+- Cancellation tests require successive overlap, not nested intervals. Thread
+  checks require interval availability without comparing every reader's value.
+  The triplet retry checks closeness; the epsilon retry checks availability.
+  Serialization independently evaluates original/decoded components before
+  structural cancellation, but remains same-process evidence. Triplet replay
+  additionally checks closeness and exact relations; epsilon replay checks
+  overlap and deterministic text, without an explicit width/equality assertion.
+- Both benchmark programs prepare native/reference data before timing. Each
+  timed batch retains outputs until validation, which is excluded from elapsed_ns.
+  Native construction/cloning can share warmed inputs/global scalar state.
+  --test selects nine rows (three parameters times three modes); normal operation
+  has five trials, five native repeats or one oracle repeat. Every printed row
+  is followed by an accepted==repeats assertion. Precision differences and lack
+  of isolated cold caches preclude an inferred comparative speedup claim.
+
+The atanh benchmark was also read in full as the remaining direct consumer of
+the preceding batch's qualified oracle. Its module, reference import, component
+helper and main loop now document the radius/tail/width limitations explicitly.
+The printed contract and all executable row/acceptance logic remain unchanged;
+accepted overlap is not proof that the reference-rounding gap has been resolved.
+Its local, reciprocal and imaginary-axis regimes use the same timing/validation
+separation as the Jacobi programs, with mpfr_series as the reference mode.
+
+Read the two local admission narratives, shared scalar fixtures/MPFR cleanup,
+real Jacobi evaluator, and scalar logarithm/inversion context. The admission
+narratives' historical sanitizer/coverage/timing reports were not reproduced;
+those references receive no new evidence or whole-file qualification credit.
+No unrelated scalar implementation was edited.
+
+Validation and limits:
+
+- Focused Rustfmt and git diff --check passed. Removing comment-only and blank
+  lines leaves identical source in all seven files against `86a8dcffa`, including
+  all expressions, assertions, literals and call order. A declaration scan found
+  preceding Rustdoc on all 63 declarations; all seven named fields were separately
+  reviewed and rendered. This inventory is limited to these files, not macros or
+  generated APIs elsewhere in the repository.
+- The initial unoptimized all-feature triplet test process passed nine tests
+  before its external 180-second limit expired during serialization. A subsequent
+  300-second-contained process completed all twelve unchanged triplet tests in
+  241.25 seconds. The initial timeout is retained as incomplete evidence, not a
+  native typed-exhaustion result or a passing test. These elapsed times describe
+  development validation, not a benchmark or promised resource envelope.
+- The all-feature epsilon process passed its scalar-family ODE, near-pole,
+  exact quarter-period and huge-quasi-period tests, then reached its external
+  300-second limit during independent_ode_epsilon_enclosures. Its completed tests
+  are recorded separately from the incomplete suite. The seven not-yet-completed
+  tests were selected unchanged in a separate process with a 180-second limit;
+  only the four already-passed names were filtered out.
+  That process passed the ODE, invalid/unknown-error and parity/quasi-addition
+  tests, then timed out during precision_order_cancellation_and_concurrency_preserve_values.
+  Thus seven distinct all-feature epsilon tests completed across the two runs;
+  cache/concurrency, real-axis inverse composition, serde replay and the huge
+  zero-parameter case did not complete in these all-feature runs. The last case
+  did pass in the selected no-default-feature run. No assertion failure was
+  observed, but the complete all-feature epsilon suite is unverified. Source
+  identity and documentation checks support this docs-only patch; they do not
+  turn those timeouts into passed runtime checks.
+- No-default-feature builds compiled both complete test harnesses. Seven selected
+  original tests passed: triplet invalid parameters, unresolved parameter/pole
+  distinctions, quarter periods and the large imaginary zero-parameter case;
+  epsilon invalid/unknown errors, finite quarter periods/poles and huge-argument
+  zero-parameter identity. The full no-default-feature runtime suites were not
+  executed. Each selected test process had an external 30-second timeout.
+- All-feature and no-default-feature private library Rustdoc passed with warnings
+  and broken/private links denied. Explicit private test/benchmark Rustdoc passed
+  under the corresponding serde settings. Full-text checks matched all 54
+  non-test documentation groups across 98 generated HTML pages; repeated reference
+  modules/text are not counted as new unique APIs. All 23 test-function doc groups
+  are source-reviewed, since Rustdoc omits #[test] functions. The atanh bench has
+  no feature-gated item and its explicit private docs were generated against the
+  no-default-feature graph; Cargo checked it in both configurations.
+- The two Jacobi benchmark --test runs each emitted nine rows and required every
+  repeat to be accepted, under a 90-second external limit per program. The atanh
+  benchmark emitted nine accepted rows both before and after its documentation
+  edit under 30-second limits; removing elapsed_ns leaves identical JSON rows.
+  The known atanh oracle qualification remains. Smoke acceptance neither measures
+  performance nor certifies the intended bounds beyond each oracle's contract.
+- Cargo checked both Jacobi integration tests and all three benchmark consumers
+  with all features and no defaults. Hyperspatial downstream library checks passed
+  in both configurations, including their Hyperlimit dependencies. Cargo used
+  --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target directory.
+  Direct rustc harnesses used the actual matching library/Rug/serde artifacts;
+  no repository dependency or lockfile changed.
+- Full workflow checks remain owner-waived. No sanitizer campaign, primitive-cache
+  feature matrix, fresh-process replay proof, statistical timing comparison,
+  release-size measurement, or whole-repository runtime suite was attempted.
+  Documentation and finite witnesses do not establish universal elliptic-function
+  or downstream modeling closure.
+
+- Removed the six temporary test/benchmark executables after the processes
+  terminated. The shared target remains approximately 2.5 GiB; no duplicate Cargo
+  target tree or release build was introduced.
+
+Evidence: `/tmp/csgrs-rustdoc-jacobi-{before,after,epsilon-remaining,build,doc,render,consumers,downstream,smoke}.log`,
+`/tmp/csgrs-rustdoc-jacobi-minimal-{build,test,doc,render,consumers,downstream}.log`,
+`/tmp/csgrs-rustdoc-jacobi-atanh-bench-{before,after,check,all-check}.log`, Cargo
+artifact JSON, and `/tmp/csgrs-jacobi-audit/` retain temporary harness/checker source,
+private docs and smoke JSON. These are review artifacts, not a durable performance
+archive. Vector/matrix implementations, remaining tests/benchmarks/support files
+and most of the wider repository still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

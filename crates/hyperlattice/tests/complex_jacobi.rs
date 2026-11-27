@@ -1,17 +1,29 @@
+//! Complex Jacobi regression witnesses for native relations, continuation and replay.
+//!
+//! Exact rational-normal-form assertions are distinct from finite-tolerance checks
+//! and independent local ODE enclosure comparisons. The finite recipe list and
+//! same-process serialization do not establish exhaustive representation coverage
+//! or fresh-process replay.
+
 use hyperlattice::{Complex, Problem, Rational, Real};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
 };
 
+/// Shared thread-local MPFR cache cleanup for the independent ODE test.
 #[path = "../../hyperreal/tests/support/mpfr.rs"]
 mod mpfr;
+/// Shared labeled scalar recipes; tests assert public kinds, not distinct private tags or a coverage count.
 #[path = "../../hyperreal/tests/support/representations.rs"]
 mod representations;
+/// Development-only reference implementation, separate from production rectangular continuation.
 mod support {
+    /// Local Taylor-ODE interval oracle and component comparison helpers.
     pub mod complex_jacobi_oracle;
 }
 
+/// Require both components to have the specified integer exact rational normal forms; unavailable symbolic proof fails the assertion.
 fn exact(value: &Complex, real: i32, imaginary: i32) {
     assert_eq!(
         value.re.exact_rational_normal_form(),
@@ -23,6 +35,10 @@ fn exact(value: &Complex, real: i32, imaginary: i32) {
     );
 }
 
+/// Enclose each component difference at -bits-8 and require containment in ±2^-bits.
+///
+/// This is a finite absolute tolerance, not exact equality. Unavailable enclosures
+/// or invalid arithmetic panic; callers use small positive bit counts.
 fn close(actual: &Complex, expected: &Complex, bits: i32) {
     let tolerance = Rational::fraction(1, 2).unwrap().powi(bits.into()).unwrap();
     for (a, b) in [(&actual.re, &expected.re), (&actual.im, &expected.im)] {
@@ -34,6 +50,7 @@ fn close(actual: &Complex, expected: &Complex, bits: i32) {
     }
 }
 
+/// Borrow the six scalar components in sn.re, sn.im, cn.re, cn.im, dn.re, dn.im order for evaluation and serialization.
 fn components(values: &(Complex, Complex, Complex)) -> [&Real; 6] {
     [
         &values.0.re,
@@ -45,6 +62,7 @@ fn components(values: &(Complex, Complex, Complex)) -> [&Real; 6] {
     ]
 }
 
+/// Check structural agreement with real evaluation for m=1/2,-3,0, then conjugation and odd-sn/even-cn,dn parity within 2^-160 at one nonreal argument.
 #[test]
 fn real_axis_conjugation_and_parity_preserve_the_native_branch() {
     for text in ["0.5", "-3", "0"] {
@@ -81,6 +99,11 @@ fn real_axis_conjugation_and_parity_preserve_the_native_branch() {
     }
 }
 
+/// Check successive enclosure overlap in a 32→512→64→256 sequence for six components at m=-3.
+///
+/// An already-set abort signal must prevent a -128 enclosure; clearing it restores
+/// 2^-256 closeness. Four reader threads require available intervals, without
+/// cross-reader equality assertions. Finally require exact square-sum relations.
 #[test]
 fn cache_precision_order_abort_recovery_and_concurrent_readers() {
     let values = Complex::new("0.25".parse().unwrap(), "0.125".parse().unwrap())
@@ -110,6 +133,11 @@ fn cache_precision_order_abort_recovery_and_concurrent_readers() {
     relations(&values, &Real::from(-3));
 }
 
+/// Use sin(e)^2+cos(e)^2-1 as mathematically zero with unresolved sign.
+///
+/// Require Exhausted for a nonreal zero-parameter branch and an unresolved m=1
+/// boundary, real-axis admission at m=0, and UnknownZero at an unresolved pole.
+/// Unknown knowledge is not evidence that the fixture is nonzero.
 #[test]
 fn unresolved_parameters_and_poles_keep_distinct_errors() {
     let zero = Real::e().sin().powi(2.into()).unwrap() + Real::e().cos().powi(2.into()).unwrap()
@@ -131,6 +159,11 @@ fn unresolved_parameters_and_poles_keep_distinct_errors() {
     );
 }
 
+/// Translate both coordinates by 10^30 common period cycles for m=1/2 and -3 and compare within 2^-128.
+///
+/// For z=10^-80*(1-i), require sn close to z at 700 bits, cn/dn close to one at
+/// 500 bits, and exact square-sum relations. These fixtures are not uniform bounds
+/// for all translations or small arguments.
 #[test]
 fn large_period_translations_and_small_arguments_remain_consumable() {
     let cycles: Real = "1e30".parse().unwrap();
@@ -167,6 +200,7 @@ fn large_period_translations_and_small_arguments_remain_consumable() {
     }
 }
 
+/// For real offsets 10^-20 and 10^-60 near selected poles at m=1/2 and -3, require six -128 enclosures and exact square-sum relations; no independent value oracle is used here.
 #[test]
 fn exact_near_pole_offsets_do_not_become_poles() {
     for text in ["1e-20", "1e-60"] {
@@ -189,6 +223,7 @@ fn exact_near_pole_offsets_do_not_become_poles() {
     }
 }
 
+/// At z=1000i and m=0 compare sn/cn with exponential formulas at 128 bits, require exact dn=1, and consume all results in exact square-sum relations.
 #[test]
 fn zero_parameter_supports_large_imaginary_arguments() {
     let y = Real::from(1000);
@@ -214,6 +249,12 @@ fn zero_parameter_supports_large_imaginary_arguments() {
     relations(&values, &Real::zero());
 }
 
+/// Round-trip six components for m=1/2,-3,pi/8 through JSON in the same process.
+///
+/// Independently evaluate original and decoded intervals at -256 before any
+/// structural cancellation, require overlap and 2^-256 closeness, then exact
+/// square-sum relations and deterministic text. This does not establish replay
+/// in a fresh process or preserve a separately serialized complex proof receipt.
 #[cfg(feature = "serde")]
 #[test]
 fn serialized_components_replay_values_and_exact_relations() {
@@ -252,6 +293,7 @@ fn serialized_components_replay_values_and_exact_relations() {
     }
 }
 
+/// Require exact unit and elliptic square-sum normal forms for five parameters at z=1/4+i/8.
 #[test]
 fn complex_jacobi_relations_survive_ordinary_arithmetic() {
     for text in ["0.5", "0.75", "-3", "-0.5", "0"] {
@@ -261,6 +303,11 @@ fn complex_jacobi_relations_survive_ordinary_arithmetic() {
     }
 }
 
+/// Require sn²+cn²=1, dn²+m*sn²=1, and dn²-m*cn²-(1-m)=0 through ordinary complex arithmetic.
+///
+/// Each component must reduce to an exact rational normal form. The third identity
+/// is algebraically dependent but exercises a different expression shape. These
+/// relations alone do not select a unique Jacobi value or branch.
 fn relations((sn, cn, dn): &(Complex, Complex, Complex), parameter: &Real) {
     exact(&(sn * sn + cn * cn), 1, 0);
     exact(
@@ -277,6 +324,7 @@ fn relations((sn, cn, dn): &(Complex, Complex, Complex), parameter: &Real) {
     );
 }
 
+/// Visit the shared finite recipes, assert each public kind, and require exact square-sum relations with scaled positive, negative and zero parameters; no distinct-private-tag count is asserted.
 #[test]
 fn native_families_preserve_complex_relations() {
     for case in representations::optimized_certificate_representatives() {
@@ -296,6 +344,7 @@ fn native_families_preserve_complex_relations() {
     }
 }
 
+/// Require NotANumber at the zero complex argument for m=1 and m=2, preserving parameter validation before value shortcuts.
 #[test]
 fn invalid_parameters_are_checked_before_zero_shortcuts() {
     for parameter in [Real::one(), Real::from(2)] {
@@ -306,6 +355,7 @@ fn invalid_parameters_are_checked_before_zero_shortcuts() {
     }
 }
 
+/// Compare all six components against the local ODE oracle at twenty parameter/argument combinations, with both signs, axes and m=0; this is finite enclosure evidence, not exact equality.
 #[test]
 fn independent_complex_ode_enclosures() {
     mpfr::cleanup_on_thread_exit();
@@ -325,6 +375,10 @@ fn independent_complex_ode_enclosures() {
     }
 }
 
+/// Check exact finite quarter-period values, including complex dn=0, and DivideByZero at selected true poles.
+///
+/// Uses m=1/2 and -3. Negative-parameter sn/cn assertions check zero components
+/// and squared magnitudes, not independently their remaining signs.
 #[test]
 fn quarter_periods_distinguish_finite_values_from_poles() {
     let half: Real = "0.5".parse().unwrap();

@@ -1,18 +1,47 @@
+//! Rectangular Jacobi continuation and epsilon over shared exact scalar expressions.
+//!
+//! Hyperreal owns real amplitude/elliptic evaluation and scalar relations. This
+//! module assembles complex values using complementary or reciprocal parameters;
+//! it keeps a common denominator so removable intermediate singularities do not
+//! become poles. The parameter convention is m=k², not the modulus k used in DLMF.
+
 use super::Complex;
 use crate::{BlasResult, Problem, Real, RealKernelExt, RealSign};
 
-// Shared imaginary transformation for the triplet and epsilon. The
-// reciprocal branch keeps every real evaluation inside its admitted m<1
-// domain, and the one denominator includes removable quarter-period points.
+/// Complementary real data and a shared inverse for rectangular continuation.
+///
+/// For original m!=0, m<1, these fields represent (S,C,D) at y|1-m. They are
+/// not the complex triplet at i*y. Negative m requires reciprocal transformation
+/// because the real evaluator admits parameters below one. The common denominator
+/// depends also on the original real-axis triplet; avoiding a separate 1/C keeps
+/// finite quarter-period points available to both complex operations.
 struct ImaginaryJacobi {
+    /// Complementary S=sn(y|1-m), rescaled from sn(sqrt(1-m)*y|1/(1-m)) for m<0.
     sn: Real,
+    /// Complementary C=cn(y|1-m), obtained from the reciprocal triplet's dn for m<0.
     cn: Real,
+    /// Complementary D=dn(y|1-m), obtained from the reciprocal triplet's cn for m<0; may vanish.
     dn: Real,
+    /// Shared exact 1/Q, with Q=C²+m*sn(x|m)²*S², constructed as a nonnegative sum in either branch.
     inverse: Real,
+    /// Some(y-epsilon(y|1-m)) exactly when requested; the reciprocal branch forms the same value as r*(r*y-epsilon(r*y|1/(1-m))).
     epsilon_vertical: Option<Real>,
 }
 
 impl ImaginaryJacobi {
+    /// Build complementary data after the caller validates m<1 and certifies its nonzero sign.
+    ///
+    /// real_sn and real_cn must belong to the same x|m. This helper trusts those
+    /// relations and the supplied sign; it does not recertify them. Positive m uses
+    /// argument y and parameter h=1-m. Negative m uses r=sqrt(h), argument r*y,
+    /// parameter 1/h, then maps (s,c,d) to (s/r,d,c), following the
+    /// [reciprocal-modulus identities](https://dlmf.nist.gov/22.17).
+    /// Its denominator c²+(-m/h)*real_cn²*s² equals Q without subtractive cancellation.
+    ///
+    /// with_epsilon selects the shared four-output real evaluator and stores the
+    /// vertical correction; false avoids constructing epsilon. Scalar square-root,
+    /// division, evaluation and inverse failures propagate. A successful inverse
+    /// retains its native domain obligations; no separate proof receipt is created.
     fn new(
         y: Real,
         parameter: &Real,
@@ -73,9 +102,18 @@ impl Complex {
     /// one denominator. Negative parameters are supported. Complex `dn` can
     /// be zero and does not have the real-axis positivity restriction.
     ///
-    /// Invalid parameters return [`Problem::NotANumber`] before any zero
+    /// Real evaluation at x validates the parameter before the real-axis
+    /// shortcut. If the imaginary component is definitely zero, its triplet is
+    /// returned directly. Otherwise the sign of m is certified at
+    /// [`Real::PARTIAL_CMP_MIN_PRECISION`]; m=0 uses sin/cos continued with
+    /// sinh/cosh and dn=1. Nonzero m uses the
+    /// [addition formulas](https://dlmf.nist.gov/22.8) with complementary real data,
+    /// sharing one inverse across all six output components. Scalar identities
+    /// remain in those expressions; this layer does not add a complex proof node.
+    ///
+    /// Proved invalid parameters return [`Problem::NotANumber`] before any zero
     /// shortcut. Unresolved parameter branches return [`Problem::Exhausted`].
-    /// Poles return [`Problem::DivideByZero`]; an unresolved denominator
+    /// Proved poles return [`Problem::DivideByZero`]; an unresolved denominator
     /// returns [`Problem::UnknownZero`]. Scalar precision and cancellation
     /// contracts apply; this operation adds no total-work or heap-byte bound.
     pub fn jacobi_sncndn(self, parameter: &Real) -> BlasResult<(Self, Self, Self)> {
@@ -128,6 +166,17 @@ impl Complex {
     /// preserves its additive quasi-periods and finite quarter-period values.
     /// The argument is a Jacobi argument, not a Legendre amplitude. Negative
     /// parameters are supported; `epsilon(z|0)=z`.
+    ///
+    /// If imaginary zero is not cheaply known, ln(1-m) validates m<1 before sign
+    /// certification and the zero-parameter identity. The nonzero-parameter branch
+    /// requests the real triplet and epsilon together at x, then shares
+    /// complementary data and one inverse.
+    /// With (s,c,d) at x|m, (S,C,D) at y|1-m and Q=C²+m*s²*S², its components are
+    /// `epsilon(x|m)+m*s*c*d*S²/Q` and `y-epsilon(y|1-m)+d²*S*C*D/Q`.
+    /// The [epsilon addition law](https://dlmf.nist.gov/22.16.E27) permits this
+    /// form without a separate divisor C. The private vertical term is present
+    /// by construction because this path requests epsilon; its expect checks that
+    /// internal invariant, not a user-domain condition.
     ///
     /// Parameter, pole, precision and cancellation errors are those of
     /// [`Self::jacobi_sncndn`]. Values remain exact native expressions; the

@@ -1,14 +1,32 @@
-//! Complete principal atanh enclosures and the independent MPFR series oracle.
+//! Timing harness for native principal atanh bounds and a local/reciprocal series reference.
+//!
+//! Timed batches retain their results until validation, which follows the timer.
+//! Native construction and clone reuse may share warm inputs/global scalar state.
+//! The reference has documented radius, tail and width-rounding limitations:
+//! accepted rows record its overlap/rounded-width checks, not uniformly certified
+//! reference enclosures. The printed contract is not a proof that those limitations
+//! are resolved. Different precisions and cache states imply no comparative speedup.
 use hyperlattice::{Complex, Real};
 use std::{hint::black_box, time::Instant};
+/// Shared series/reciprocal reference with known rounding qualifications; its formula is separate from production log/atan2, but native input refinement is shared.
 #[path = "../tests/support/complex_atanh_oracle.rs"]
 mod oracle;
 
+/// Construct atanh and return real then imaginary native components; branch/domain errors unwrap-panic.
 fn components(argument: &Complex) -> [Real; 2] {
     let value = argument.clone().atanh().unwrap();
     [value.re, value.im]
 }
 
+/// Emit timing and acceptance rows for a local argument, its reciprocal, and a pure imaginary axis argument.
+///
+/// An exact --test argument selects one trial/repeat; otherwise use five trials,
+/// five native repeats and one reference repeat. Prepare the independent-formula
+/// comparison, reference, native outputs and -112 bounds before timing. Time each
+/// batch's construction/evaluation and row storage, then validate with the existing
+/// 2^-96 rounded-width/overlap check. Print each JSON row before asserting every
+/// repeat passed. The reference's rounding qualifications remain; there is no
+/// statistical aggregation, cache isolation, work cap or process timeout here.
 fn main() {
     let smoke = std::env::args().any(|arg| arg == "--test");
     let local = Complex::new("0.125".parse().unwrap(), "0.0625".parse().unwrap());

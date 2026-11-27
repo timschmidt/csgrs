@@ -1,14 +1,32 @@
-//! Complete epsilon enclosures and the independent MPFR differential oracle.
+//! Timing harness for completed native epsilon enclosures and a local MPFR ODE reference.
+//!
+//! Each row includes construction/evaluation and retained row storage; interval
+//! validation follows the timer. Native construction and clone reuse can share
+//! warmed inputs/global scalar state. These labels do not prove independent cold
+//! caches, and different requested precisions do not support a comparative speedup
+//! claim. Failures panic rather than count incomplete work as accepted.
+
 use hyperlattice::{Complex, Real};
 use std::{hint::black_box, time::Instant};
+/// Shared local ODE reference and ordered-width/overlap checks, independent of production rectangular continuation.
 #[path = "../tests/support/complex_jacobi_oracle.rs"]
 mod oracle;
 
+/// Construct the native epsilon and return its 2 scalar components in reference order; native domain errors unwrap-panic.
 fn components(argument: &Complex, m: &Real) -> [Real; 2] {
     let value = argument.clone().jacobi_epsilon(m).unwrap();
     [value.re, value.im]
 }
 
+/// Emit JSON timing/acceptance rows for m=1/2,-3,0 at z=1/8+i/16.
+///
+/// An exact --test argument selects one trial and one repeat; ordinary runs use
+/// five trials, five native repeats and one MPFR repeat. Before timing, compare
+/// production with the oracle and prepare a reference, native outputs and -112
+/// bounds. Each timed row retains all results until validation, using width
+/// threshold 2^-96 and independent overlap for 2 components. Print elapsed_ns
+/// and accepted counts, then assert every repeat passed. No warmup isolation,
+/// statistical aggregation, total-work cap or process timeout is implemented.
 fn main() {
     let smoke = std::env::args().any(|arg| arg == "--test");
     for text in ["0.5", "-3", "0"] {

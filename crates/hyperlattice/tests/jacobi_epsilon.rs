@@ -1,16 +1,26 @@
+//! Jacobi epsilon regression witnesses for native inverse relations and complex continuation.
+//!
+//! Tests separate exact rational-normal-form identities from finite tolerances,
+//! local ODE enclosures and same-process JSON overlap. Neither the shared recipe
+//! list nor these finite cases establishes universal continuation or replay.
+
 use hyperlattice::{Complex, Problem, Rational, Real};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
 };
 
+/// Shared thread-local MPFR cache cleanup for the two ODE reference tests.
 #[path = "../../hyperreal/tests/support/mpfr.rs"]
 mod mpfr;
+/// Shared local Taylor-ODE interval reference, integrating dn² instead of production elliptic-amplitude composition.
 #[path = "support/complex_jacobi_oracle.rs"]
 mod oracle;
+/// Shared finite labeled scalar recipes, checked by advertised public kind rather than private-tag enumeration.
 #[path = "../../hyperreal/tests/support/representations.rs"]
 mod representations;
 
+/// Require both component difference enclosures at -bits-8 to lie inside ±2^-bits; missing bounds or arithmetic failures panic, and closeness is not exact equality.
 fn close(actual: &Complex, expected: &Complex, bits: i32) {
     let tolerance = Rational::fraction(1, 2).unwrap().powi(bits.into()).unwrap();
     for (a, b) in [(&actual.re, &expected.re), (&actual.im, &expected.im)] {
@@ -22,6 +32,7 @@ fn close(actual: &Complex, expected: &Complex, bits: i32) {
     }
 }
 
+/// Subtract complex values and require exact rational zero normal forms for both components; failure to recognize the identity fails this assertion.
 fn exactly_equal(actual: Complex, expected: Complex) {
     let difference = actual - expected;
     assert_eq!(
@@ -34,6 +45,7 @@ fn exactly_equal(actual: Complex, expected: Complex) {
     );
 }
 
+/// For each shared scalar recipe and m=1/2,-3,0, require structural agreement with real epsilon and exact recovery by inverse E followed by F; the list is finite and does not assert distinct private tags.
 #[test]
 fn real_axis_preserves_the_defining_inverse_composition() {
     for case in representations::optimized_certificate_representatives() {
@@ -59,6 +71,7 @@ fn real_axis_preserves_the_defining_inverse_composition() {
     }
 }
 
+/// Compare the two epsilon components against the local ODE reference at twenty parameter/argument combinations spanning both signs, axes and m=0.
 #[test]
 fn independent_ode_epsilon_enclosures() {
     mpfr::cleanup_on_thread_exit();
@@ -78,6 +91,7 @@ fn independent_ode_epsilon_enclosures() {
     }
 }
 
+/// Visit every shared recipe, assert its public kind, scale its argument into the local oracle domain, and compare epsilon at scaled positive, negative and zero parameters; the test does not assert recipe count.
 #[test]
 fn all_scalar_families_reach_independent_epsilon_reference() {
     mpfr::cleanup_on_thread_exit();
@@ -91,6 +105,10 @@ fn all_scalar_families_reach_independent_epsilon_reference() {
     }
 }
 
+/// Check oddness, conjugation and epsilon(u+v)=epsilon(u)+epsilon(v)-m*sn(u)*sn(v)*sn(u+v).
+///
+/// Three parameters and one argument pair use 2^-160 closeness. Expectations share
+/// native scalar and complex operations; this is separate from the ODE oracle.
 #[test]
 fn parity_conjugation_and_quasi_addition_hold() {
     let u = Complex::new("0.125".parse().unwrap(), "0.0625".parse().unwrap());
@@ -118,6 +136,7 @@ fn parity_conjugation_and_quasi_addition_hold() {
     }
 }
 
+/// Require exact epsilon quarter-period formulas in complete K/E at m=1/2 and -3, and DivideByZero at selected true poles; exact equality is consumed through rational normal forms.
 #[test]
 fn finite_quarter_periods_and_true_poles_are_distinct() {
     let half: Real = "0.5".parse().unwrap();
@@ -157,6 +176,7 @@ fn finite_quarter_periods_and_true_poles_are_distinct() {
     );
 }
 
+/// For m=1/2 and -3, compare 10^30 real/imaginary quasi-period translations with their additive increments at 128 bits, then epsilon(z) with z=10^-80*(1-i) at 700 bits; no uniform asymptotic bound is asserted.
 #[test]
 fn huge_quasi_periods_and_tiny_arguments_retain_their_offsets() {
     let cycles: Real = "1e30".parse().unwrap();
@@ -186,6 +206,7 @@ fn huge_quasi_periods_and_tiny_arguments_retain_their_offsets() {
     }
 }
 
+/// Require both -128 component enclosures for offsets 10^-20 and 10^-60 from selected m=1/2 and -3 poles; availability alone is not an independent expected-value test.
 #[test]
 fn exact_near_pole_offsets_remain_finite() {
     for text in ["1e-20", "1e-60"] {
@@ -207,12 +228,17 @@ fn exact_near_pole_offsets_remain_finite() {
     }
 }
 
+/// Require structural identity epsilon(z|0)=z for z=10^320+1000i after parameter validation.
 #[test]
 fn zero_parameter_is_the_identity_at_huge_arguments() {
     let z = Complex::new("1e320".parse().unwrap(), Real::from(1000));
     assert_eq!(z.clone().jacobi_epsilon(&Real::zero()).unwrap(), z);
 }
 
+/// Require NotANumber for m=1,2 at zero, and use an opaque mathematical zero to exercise unresolved branches.
+///
+/// Distinguish nonreal-parameter Exhausted, real-axis zero-parameter success,
+/// unresolved m=1 Exhausted, and UnknownZero at the selected pole.
 #[test]
 fn invalid_parameters_and_unknown_poles_keep_their_errors() {
     for m in [Real::one(), Real::from(2)] {
@@ -234,6 +260,11 @@ fn invalid_parameters_and_unknown_poles_keep_their_errors() {
     );
 }
 
+/// Check successive overlap at 32→512→64→256 bits for two components at m=-3.
+///
+/// An already-set abort signal must prevent a -128 enclosure. Clearing it and
+/// four concurrent readers must yield intervals; this test does not compare all
+/// reader values or compare pre/post-cancellation values independently.
 #[test]
 fn precision_order_cancellation_and_concurrency_preserve_values() {
     let value = Complex::new("0.25".parse().unwrap(), "0.125".parse().unwrap())
@@ -263,6 +294,11 @@ fn precision_order_cancellation_and_concurrency_preserve_values() {
     }
 }
 
+/// Round-trip epsilon components for m=1/2,-3,pi/8 through JSON in the same process.
+///
+/// Independently request original and decoded -256 enclosures and require overlap,
+/// then deterministic serialized text. No explicit width or exact-equality check is
+/// made, and this is not fresh-process replay of the originating complex operation.
 #[cfg(feature = "serde")]
 #[test]
 fn serialized_components_replay_values_and_domain_obligations() {
