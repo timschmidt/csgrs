@@ -16995,6 +16995,106 @@ reused the roughly 5.7 GiB locked/offline nonincremental target. Cache publicati
 word planning, bound transforms and constructor-hint excerpts were supporting context,
 not additional whole-file audit credit. Repository-wide coverage remains incomplete.
 
+## Hyperreal bound metadata and certified-planning witnesses (2026-11-27)
+
+Baseline: 672a5f2b7bcdaccd05adf7257da862d966de317c. Whole-file review of
+computable/node/bounds.rs (678 baseline lines), exact_sign_cache_tests.rs (126)
+and certified_planning_tests.rs (204), totaling 1008 baseline lines. Earlier
+shared-constant-cache comments in bounds.rs were a partial review; this batch
+completes the remaining file rather than crediting those lines twice.
+
+The owning layer is Hyperreal structural bound/sign metadata and its evaluation
+consumers. Relevant properties are P1, P3–P6 and P19: conservative facts, retained
+proofs, resource distinctions and reusable certainty. Domains include signed i32
+exponents, nonzero signs, absent/exact/estimated magnitudes, trusted shared constants,
+concurrent sign publication and numerical planning after cancellation. Missing
+acceptance witnesses were Rustdoc on private metadata variants/fields, transforms,
+projections, sign conversions, cancellation types, ghost definitions and regression
+helpers/tests. The ten tests in the two reviewed suites passed on the baseline
+before editing. No executable behavior or acceptance assertion was changed.
+
+All 61 authored declarations in these files have documentation:
+
+- Precision describes the distinct approximation-exponent and exact-binade roles,
+  without promising that every i32 request is affordable or universally supported.
+  The two default refinement floors are outer query controls, not bounds on nested
+  precision, total work or memory. The atan2 wrapper's unresolved outcome differs
+  from fallible comparison and is described accordingly.
+- BoundCache distinguishes an unvisited slot from a populated Unknown. ExactSignCache
+  distinguishes absent, unresolved and certified sign, with Unknown eligible for
+  later strengthening. These enum values do not validate their own source identity.
+- BoundInfo separates exact zero/nonzero/sign claims from exact binades and inexact
+  planning hints. Missing exponents, including overflow, do not prove zero. Inexact
+  hints can drift arbitrarily under composition and cannot justify error-sensitive
+  precision. Derived equality compares metadata, not represented real values.
+- Each transform describes its retained and lost evidence: checked exponent mapping,
+  sign negation, reciprocal estimate 1-e, one-stage square estimate 2e, exact positive
+  root binade floor(e/2), product exponent sum, and exact-binade sign dominance for
+  opposite-sign sums. Zero annihilation requires already-valid operand domains.
+  Reciprocal metadata passes Zero through and root metadata returns Unknown for
+  negative/unsigned inputs; neither helper is a numeric-domain admission API.
+- Projections distinguish None from Some(None), and preserve the exactness flag when
+  exporting a present magnitude. The ghost specifications describe the same metadata
+  rules; comments do not establish or extend a Verus proof.
+- SharedConstant::bound_info supplies exact binades, not merely coarse estimates.
+  SharedConstant::interval supplies fixed strict rational endpoints to both
+  constant/rational sign checks and native polynomial separation. The earlier
+  comment limiting this to one consumer was corrected. The shared numerical cache
+  remains process-wide, separate from per-node facts, and not bounded in bytes by
+  its fixed slot count.
+- Signal shares a cooperative Boolean flag. should_stop is only a relaxed poll:
+  it neither publishes unrelated memory nor guarantees completed cancellation,
+  response latency or a valid interrupted result. Callers own those obligations.
+- Sign-cache tests enumerate ninety packed-metadata combinations, force one stale
+  reader/publication interleaving for each sign, and reuse a structurally proved
+  sqrt(2)-1 sign without a numerical cache. They do not claim exhaustive schedules.
+- Planning tests distinguish finite expanded MPFR enclosures from correctly rounded
+  integers or universal exact equality. The arbitrary-hint logarithm fixture has
+  sixteen input/hint combinations and warm precision reuse. Long sum/product/root
+  cases use independent compact formulas; the eight reciprocal cases rationalize
+  the reference formula to avoid its source cancellation. The symbolic complementary
+  parameter test exercises ln/exp consumption and a narrow residual interval, not
+  a Jacobi evaluation or an independent symbolic identity proof. Tolerance Equal
+  remains distinct from the exact order for the small perturbation cases.
+
+An independent Python exact-rational oracle read all eighteen interval and binade
+entries from the final source. Alternating atan bounds and the Machin identity
+bound pi; a positive exponential series with a geometric tail bounds e; an atanh
+series with a geometric tail bounds logarithms; integer square roots provide
+100-bit rational enclosures. Monotone logarithm/reciprocal transport and atan
+addition identities cover the remaining constants. All eighteen strict intervals
+and eighteen exact binades passed. No Hyperreal approximation or binary floating
+point supplied these expectations. This finite table validation is not a new
+formal proof of all bound transforms.
+
+After the final comment edit, sixteen selected Hyperreal tests passed with optional
+features disabled and with all features: six planning, four sign-cache, three
+magnitude-boundary, one constant/rational structural-fact, one approximation-bound
+and one cache-preservation test. Five downstream Hyperlimit resolver tests passed.
+Private cargo doc passed in both configurations with warnings and broken/private
+links denied. All 42 runtime documentation blocks matched actual private HTML.
+Five ghost-only blocks and fourteen test/module/helper blocks passed declaration
+inventory and supplemental Markdown rendering; ordinary library Rustdoc does not
+emit their item pages. The initial inventory checker missed three named fields
+because its regex placed a word boundary after a colon; correcting that checker
+resolved the mismatch without dropping any declaration or changing source.
+
+Executable/signature tokens match the baseline except four optional trailing
+commas: two documented tuple fields and two existing formatting deficiencies.
+Rustfmt also reflowed existing statements. No predicate ordering, specification
+logic, fixture, assertion, signature or policy changed. Selected Rustfmt and
+git diff --check passed. Full workflows, including formal verification, remain
+owner-waived for this documentation-only session. No focused check is blocked;
+no performance or universal completeness claim follows from this batch.
+
+Evidence is retained in /tmp/csgrs-hyperreal-bounds-audit/: baseline and final logs,
+commands, exact-rational oracle, declaration/token inventory and rendered-block
+matches. Duplicate supplemental HTML was removed after inspection. Builds reused
+the roughly 5.7 GiB locked/offline nonincremental target. Excerpts from structural
+analysis, packed publication, constructors, native-domain reduction and approximation
+representations supplied context, not additional whole-file audit credit. Full
+repository coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,9 +1,13 @@
 #[cfg(test)]
+/// Qualification of monotone exact-sign publication while preserving other packed node facts.
 mod exact_sign_cache_tests {
     use super::*;
     use std::sync::Barrier;
 
     #[test]
+    /// Across the metadata corpus, publish Unknown after a certificate and preserve every field.
+    /// The full corpus has 90 cases total: three signs, three bound states, two presence
+    /// flags and five demand hints. This checks field preservation, not value evaluation.
     fn unresolved_publications_preserve_certified_signs_and_other_facts() {
         for sign in [Sign::Minus, Sign::NoSign, Sign::Plus] {
             let certified = ExactSignCache::Valid(sign);
@@ -35,6 +39,9 @@ mod exact_sign_cache_tests {
     }
 
     #[test]
+    /// Force a stale reader to publish Unknown after another thread certifies each of three signs.
+    /// Two barriers select this particular interleaving; require the original observation
+    /// and surviving certificate, hint and presence bit. This is not an exhaustive race test.
     fn delayed_unresolved_writer_cannot_erase_a_completed_proof() {
         for sign in [Sign::Minus, Sign::NoSign, Sign::Plus] {
             let facts = AtomicFacts::new(BoundCache::Invalid, ExactSignCache::Invalid, true, 17);
@@ -61,6 +68,9 @@ mod exact_sign_cache_tests {
     }
 
     #[test]
+    /// Prove sqrt(2)-1 positive without a numeric cache, then publish a late Unknown through a shared clone.
+    /// The independent order follows from 2 > 1 and positive roots. Require immediate,
+    /// exact and bounded-sign consumers to retain the proof without numeric refinement.
     fn late_unknown_preserves_a_structurally_proved_quadratic_sign() {
         let value = Computable {
             internal: Arc::new(Node::new(
@@ -99,6 +109,8 @@ mod exact_sign_cache_tests {
     }
 
     #[test]
+    /// For each sign, check Invalid-to-Unknown-to-Valid publication and repeated identical certification.
+    /// Require returned previous states and preservation of bound, hint and presence fields.
     fn unresolved_sign_can_still_be_strengthened_without_changing_metadata() {
         for sign in [Sign::Minus, Sign::NoSign, Sign::Plus] {
             let facts = AtomicFacts::new(BoundCache::Invalid, ExactSignCache::Invalid, false, -19);

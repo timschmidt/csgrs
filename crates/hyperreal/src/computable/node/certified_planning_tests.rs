@@ -1,4 +1,5 @@
 #[cfg(test)]
+/// Regressions separating magnitude hints from certified precision, using independent MPFR enclosures where available.
 mod certified_planning_tests {
     use super::*;
     use rug::{
@@ -7,6 +8,10 @@ mod certified_planning_tests {
         ops::{AddAssignRound, DivAssignRound, MulAssignRound},
     };
 
+    /// Require a fixture approximation integer to lie in the directed MPFR interval expanded by one unit.
+    /// The fixtures fit exactly in the 256-bit conversion of actual. This checks the
+    /// expanded enclosure, not exact distance to an unknown value for arbitrary-width
+    /// reference intervals or a correctly rounded integer. Context labels any failure.
     fn assert_enclosed(actual: BigInt, lower: Float, upper: Float, context: &str) {
         let answer = Float::with_val(
             256,
@@ -20,6 +25,9 @@ mod certified_planning_tests {
         );
     }
 
+    /// Build the sequential sum 16 + terms*pi for nonnegative terms without replacing the chain by a product.
+    /// A negative count executes no additions and returns 16; selected fixtures use
+    /// nonnegative counts. This construction has no independent work or size budget.
     fn pi_sum(terms: i64) -> Computable {
         let mut sum = Computable::rational(Rational::new(16));
         for _ in 0..terms {
@@ -29,6 +37,9 @@ mod certified_planning_tests {
     }
 
     #[test]
+    /// Inject four uncertified planning hints into four exact positive rational values behind a product node.
+    /// At three precision requests including warm reuse, compare logarithms with
+    /// directed 256-bit MPFR bounds. Register thread-exit cleanup for MPFR caches.
     fn logarithm_ignores_inexact_magnitude_hints() {
         crate::mpfr_test::cleanup_on_thread_exit();
         for hint in [-32, -2, 2, 32] {
@@ -62,14 +73,22 @@ mod certified_planning_tests {
                     let mut scaled_upper = upper.clone();
                     scaled_lower <<= -precision;
                     scaled_upper <<= -precision;
-                    assert_enclosed(logarithm.approx(precision), scaled_lower, scaled_upper,
-                        "logarithm with an inexact magnitude hint");
+                    assert_enclosed(
+                        logarithm.approx(precision),
+                        scaled_lower,
+                        scaled_upper,
+                        "logarithm with an inexact magnitude hint",
+                    );
                 }
             }
         }
     }
 
     #[test]
+    /// Preserve the complementary symbolic parameter construction from a spatial failure through ln and exp.
+    /// Require the residual interval to contain zero with width below 2^-60 at request
+    /// -160. This is downstream consumability and finite enclosure evidence, not an
+    /// independent exact equality proof or evaluation of a Jacobi function itself.
     fn symbolic_jacobi_parameter_logarithm_remains_consumable() {
         use crate::Real;
         let pi = Real::pi();
@@ -88,6 +107,9 @@ mod certified_planning_tests {
     }
 
     #[test]
+    /// Check (16+n*pi)*pi for four chain lengths through 1024 at precision zero.
+    /// Directed 256-bit MPFR operations enclose the independent compact formula;
+    /// require the result in its one-unit expansion and clean up MPFR thread caches.
     fn chained_sum_product_uses_certified_precision() {
         crate::mpfr_test::cleanup_on_thread_exit();
         for terms in [32, 128, 512, 1024] {
@@ -107,6 +129,8 @@ mod certified_planning_tests {
     }
 
     #[test]
+    /// Check the precision-three approximation of sqrt(16+512*pi) against directed 256-bit MPFR bounds for its quotient by eight.
+    /// This exercises the square-root planning cutoff after a long sum; register MPFR cleanup.
     fn chained_sum_square_root_does_not_use_a_stale_zero_cutoff() {
         crate::mpfr_test::cleanup_on_thread_exit();
         let actual = pi_sum(512).sqrt().approx(3);
@@ -124,6 +148,10 @@ mod certified_planning_tests {
     }
 
     #[test]
+    /// Exercise three perturbation sizes, both perturbation/base signs and both addition orders.
+    /// At tolerance exponent five, the 16-unit gap may compare Equal while the other
+    /// gaps exceed 32 by the independent bound pi > 3. Check both directions and
+    /// require exact bounded comparison to retain the sign even below the tolerance.
     fn tolerance_comparison_does_not_hide_a_large_perturbation() {
         for terms in [0, 32, 512] {
             for negative in [false, true] {
@@ -157,7 +185,10 @@ mod certified_planning_tests {
                         assert_eq!(value.compare_absolute(&base, 5), expected);
                         assert_eq!(base.compare_absolute(&value, 5), expected.reverse());
                         assert_eq!(value.try_compare_to_until(&base, 5), Some(exact_order));
-                        assert_eq!(base.try_compare_to_until(&value, 5), Some(exact_order.reverse()));
+                        assert_eq!(
+                            base.try_compare_to_until(&value, 5),
+                            Some(exact_order.reverse())
+                        );
                     }
                 }
             }
@@ -165,11 +196,16 @@ mod certified_planning_tests {
     }
 
     #[test]
+    /// Check four near-cancelled reciprocals, with and without division by pi, at precision zero.
+    /// Build independent directed MPFR bounds from the rationalized identity
+    /// `1/(2-sqrt(4-1/d)) = d*(2+sqrt(4-1/d))`, avoiding the original cancellation.
+    /// The eight cases check the expanded enclosure and register MPFR thread cleanup.
     fn near_cancelled_reciprocals_use_certified_precision() {
         crate::mpfr_test::cleanup_on_thread_exit();
         for denominator in [256_u64, 1000, 65_536, 16_777_216] {
             for with_pi in [false, true] {
-                let radicand = Rational::fraction((4 * denominator - 1) as i64, denominator).unwrap();
+                let radicand =
+                    Rational::fraction((4 * denominator - 1) as i64, denominator).unwrap();
                 let inverse = Computable::rational(Rational::new(2))
                     .add(Computable::rational(radicand).sqrt().negate())
                     .inverse();

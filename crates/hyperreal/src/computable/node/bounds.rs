@@ -4,54 +4,98 @@
 use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
+/// Ghost-only result alias for specifications of checked metadata-exponent closures.
 type MaybePrecision = Option<i32>;
 #[cfg(verus_keep_ghost)]
 verus! {
+/// Model conversion of an unbounded mathematical exponent into the finite metadata word.
+/// Out-of-range magnitudes lose their exponent field, not their separate sign/nonzero evidence.
 pub open spec fn checked_metadata_exponent(value: int) -> Option<i32> {
     if i32::MIN <= value <= i32::MAX { Some(value as i32) } else { None }
 }
 }
+/// Signed binary exponent used by approximation requests and magnitude metadata.
+/// An approximation integer at p represents a value scaled by `2^-p`, with the
+/// completed evaluation error contract measured in units of `2^p`; smaller p asks
+/// for finer absolute accuracy. An MSD instead denotes `floor(log2(abs(x)))`.
+/// The shared word type does not make those roles interchangeable or guarantee
+/// that every i32 request is affordable or supported by every arithmetic path.
 pub type Precision = i32;
+/// Default outer sign-refinement floor for the convenience atan2 quadrant decision.
+/// Failure to decide at this floor makes that wrapper panic; the fallible entry point
+/// accepts a caller-selected floor. This is not a total-work or nested-precision bound.
 const ATAN2_SIGN_REFINEMENT_FLOOR: Precision = -4096;
+/// Default outer refinement floor for fallible exact comparison.
+/// Structural proofs can decide below this scale without refinement; unresolved
+/// comparison returns None. Nested evaluation work and precision are not capped here.
 const DEFAULT_COMPARE_REFINEMENT_FLOOR: Precision = -4096;
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 #[cfg_attr(verus_keep_ghost, verus_verify)]
+/// State of the structural bound slot, encoded with other facts in AtomicFacts.
+/// A populated slot may still contain Unknown. These tags carry no node identity
+/// or proof validation themselves; publication and strengthening belong to the cache owner.
 pub(crate) enum BoundCache {
+    /// No bound result has been installed; the default permits a structural walk.
     #[default]
     Invalid,
-    Valid(BoundInfo),
+    /// A structural walk or separated approximation supplied metadata, possibly Unknown.
+    Valid(
+        /// Metadata for the owning immutable node, independent of the numerical approximation slot.
+        BoundInfo,
+    ),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 #[cfg_attr(verus_keep_ghost, verus_verify)]
+/// State of an exact sign query, distinct from both bound metadata and numerical approximations.
+/// Unknown records an unresolved structural route, not zero or mathematical
+/// undecidability. A later separated approximation or another proof may strengthen it.
 pub(crate) enum ExactSignCache {
+    /// No sign-query result has been installed; this is the default.
     #[default]
     Invalid,
+    /// A structural query was attempted without certifying a sign.
     Unknown,
-    Valid(Sign),
+    /// A definite sign, including NoSign for proved zero, which unresolved publication must preserve.
+    Valid(
+        /// Certified sign of the owning node; independent valid proofs must agree.
+        Sign,
+    ),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(verus_keep_ghost, verus_verify)]
+/// Conservative zero/sign evidence with an optional binary-magnitude certificate or planning hint.
+/// For a nonzero x, an exact MSD e asserts `2^e <= abs(x) < 2^(e+1)`.
+/// An inexact MSD is only a scheduling estimate: compositions can drift arbitrarily
+/// far from the true magnitude, especially after cancellation and inversion.
+/// Error-sensitive choices must use known_msd or refine independently.
+///
+/// The record is caller-trusted metadata, not an interval or a domain validator.
+/// Constructors must supply true signs, use only Plus/Minus in NonZero, and justify
+/// any exact exponent. Absent or overflowing exponents do not imply zero. Derived
+/// equality compares these stored claims, not equality of the represented real values.
 pub(crate) enum BoundInfo {
-    // Unknown means the expression may still be zero or either sign; callers
-    // must not use it to short-circuit exact predicates.
+    /// Neither zero nor nonzero/sign is established; exact predicates must continue.
     Unknown,
-    // Exact structural zero, usually from rational leaves or annihilating
-    // products.
+    /// Exact zero, commonly inherited from a rational leaf or an annihilating product.
     Zero,
-    // NonZero may have an unknown sign or inexact MSD. That is still enough for
-    // zero-status fast paths and precision planning.
+    /// Certified nonzero value, even if its sign or representable exponent is unavailable.
     NonZero {
+        /// Known positive/negative sign; None withholds sign while retaining nonzero status.
         sign: Option<Sign>,
+        /// Binary-magnitude exponent or planning estimate; None may mean outside i32.
         msd: Option<Precision>,
+        /// Whether a present exponent is the exact binade; true with no exponent proves no magnitude.
         exact_msd: bool,
     },
 }
 
 #[cfg(verus_keep_ghost)]
 verus! {
+/// Ghost model of square metadata: keep nonzero positivity and double only an exact child exponent.
+/// The resulting exponent is inexact; an overflow or already inexact child drops the estimate.
 pub(crate) open spec fn squared_bound(bound: BoundInfo) -> BoundInfo {
     match bound {
         BoundInfo::Zero => BoundInfo::Zero,
@@ -66,6 +110,8 @@ pub(crate) open spec fn squared_bound(bound: BoundInfo) -> BoundInfo {
     }
 }
 
+/// Ghost model of product metadata with zero annihilation and independent sign multiplication.
+/// Add two exact child exponents when representable, but mark the result as an estimate.
 pub(crate) open spec fn product_bound(left: BoundInfo, right: BoundInfo) -> BoundInfo {
     match (left, right) {
         (BoundInfo::Zero, _) | (_, BoundInfo::Zero) => BoundInfo::Zero,
@@ -86,6 +132,9 @@ pub(crate) open spec fn product_bound(left: BoundInfo, right: BoundInfo) -> Boun
     }
 }
 
+/// Ghost model of sum metadata: zero identity, equal-sign preservation and exact-binade dominance.
+/// Opposite signs without distinct exact magnitudes stay unresolved. A distinct larger
+/// stored exponent may survive as an inexact hint; it does not bound cancellation error.
 pub(crate) open spec fn sum_bound(left: BoundInfo, right: BoundInfo) -> BoundInfo {
     match (left, right) {
         (BoundInfo::Zero, other) | (other, BoundInfo::Zero) => other,
@@ -126,6 +175,9 @@ impl BoundInfo {
             _ => result == Self::NonZero { sign: Some(sign), msd, exact_msd: true },
         },
     ))]
+    /// Construct metadata from a certified sign and an optional exact binade.
+    /// NoSign yields Zero regardless of msd. For a nonzero sign, absent msd leaves
+    /// nonzero/sign evidence intact; the caller must justify any exponent supplied.
     fn with_sign(sign: Sign, msd: Option<Precision>) -> Self {
         Self::with_sign_msd(sign, msd, true)
     }
@@ -137,6 +189,8 @@ impl BoundInfo {
             _ => result == Self::NonZero { sign: Some(sign), msd, exact_msd },
         },
     ))]
+    /// Package caller-established sign and magnitude claims with their exactness flag.
+    /// NoSign becomes Zero; otherwise retain the fields without validating them against a value.
     fn with_sign_msd(sign: Sign, msd: Option<Precision>, exact_msd: bool) -> Self {
         match sign {
             Sign::NoSign => Self::Zero,
@@ -149,6 +203,9 @@ impl BoundInfo {
     }
 
     #[cfg(not(verus_keep_ghost))]
+    /// Read an exact rational sign and, when representable, its exact binary magnitude.
+    /// A missing exponent is not treated as zero. Rational sign/magnitude queries may
+    /// perform normalization; this constructor provides no separate work budget.
     fn from_rational(r: &Rational) -> Self {
         // An absent exponent can mean a nonzero magnitude outside i32. Only
         // the rational's sign can certify that its value is zero.
@@ -174,6 +231,9 @@ impl BoundInfo {
             _ => result == self,
         },
     ))]
+    /// Transform only a present NonZero exponent, invoking f at most once.
+    /// Preserve sign and exactness even if f returns None. The caller is responsible
+    /// for a transformation that justifies retaining the existing exactness flag.
     fn map_msd(self, f: impl FnOnce(Precision) -> Option<Precision>) -> Self {
         match self {
             Self::NonZero {
@@ -199,6 +259,8 @@ impl BoundInfo {
             _ => self,
         },
     ))]
+    /// Flip a known nonzero sign while retaining magnitude and its exactness.
+    /// Zero, Unknown and unsigned NonZero metadata are unchanged.
     fn negate(self) -> Self {
         match self {
             Self::NonZero {
@@ -236,6 +298,9 @@ impl BoundInfo {
             _ => self,
         },
     ))]
+    /// Retain nonzero sign and map any exponent e to the checked estimate `1-e`.
+    /// The result is always inexact for NonZero. Zero and Unknown pass through: this
+    /// is metadata transport for a caller-validated inverse, not admission of reciprocal zero.
     fn inverse(self) -> Self {
         match self {
             Self::NonZero { sign, msd, .. } => Self::NonZero {
@@ -244,7 +309,7 @@ impl BoundInfo {
                     #[cfg_attr(verus_keep_ghost, verus_spec(result: MaybePrecision =>
                         ensures result == checked_metadata_exponent(1 - value as int),
                     ))]
-                    |value| 1_i32.checked_sub(value)
+                    |value| 1_i32.checked_sub(value),
                 ),
                 exact_msd: false,
             },
@@ -256,12 +321,14 @@ impl BoundInfo {
     #[cfg_attr(verus_keep_ghost, verus_spec(result =>
         ensures result == squared_bound(self),
     ))]
+    /// Map proved nonzero inputs to positive and preserve exact zero.
+    /// An exact input binade e yields the checked lower-binade estimate `2*e`;
+    /// the result is inexact and a subsequent square discards that estimate.
+    /// Unknown stays Unknown, so this does not infer nonzero from the operation alone.
     fn square(self) -> Self {
         match self {
             Self::Zero => Self::Zero,
-            Self::NonZero {
-                msd, exact_msd, ..
-            } => Self::NonZero {
+            Self::NonZero { msd, exact_msd, .. } => Self::NonZero {
                 sign: Some(Sign::Plus),
                 // One square can estimate the result within one binade from an
                 // exact child MSD. Do not recursively double an already
@@ -291,6 +358,10 @@ impl BoundInfo {
             _ => Self::Unknown,
         },
     ))]
+    /// Transport metadata for the nonnegative square root of a valid input.
+    /// Keep zero; a known positive input maps exponent e to floor(e/2), preserving
+    /// the exactness flag. Unknown, negative and unsigned nonzero inputs return
+    /// Unknown; this method does not report a typed domain error for negative values.
     fn sqrt(self) -> Self {
         match self {
             Self::Zero => Self::Zero,
@@ -313,6 +384,11 @@ impl BoundInfo {
     #[cfg_attr(verus_keep_ghost, verus_spec(result =>
         ensures result == product_bound(self, other),
     ))]
+    /// Combine metadata for a product, with zero annihilation before all other cases.
+    /// Two nonzero inputs stay nonzero; known signs multiply. Only two exact input
+    /// binades contribute a checked exponent sum, marked inexact because the true
+    /// product binade may be one higher. Other combinations stay unresolved.
+    /// Operand-domain validity must already hold before using the zero shortcut.
     fn multiply(self, other: Self) -> Self {
         match (self, other) {
             (Self::Zero, _) | (_, Self::Zero) => Self::Zero,
@@ -356,6 +432,11 @@ impl BoundInfo {
     #[cfg_attr(verus_keep_ghost, verus_spec(result =>
         ensures result == sum_bound(self, other),
     ))]
+    /// Combine metadata for a sum using zero identity and sign/binade dominance.
+    /// Equal known signs retain that sign; opposite signs require distinct exact
+    /// binades to select the larger-magnitude sign. Otherwise return Unknown.
+    /// A distinct larger stored exponent is retained only as an inexact planning hint,
+    /// which need not be close to the result after near cancellation.
     fn add(self, other: Self) -> Self {
         // Addition can certify sign when operands share a sign or one MSD
         // dominates an opposite-signed operand. Near-cancellation deliberately
@@ -419,6 +500,8 @@ impl BoundInfo {
                 _ => None,
             },
     ))]
+    /// Return a certified binade as Some(Some(e)), proved zero as Some(None), or None.
+    /// None includes a nonzero value with a missing or merely estimated exponent.
     fn known_msd(&self) -> Option<Option<Precision>> {
         // Some(None) certifies zero. A nonzero value without a representable
         // exponent must remain an unresolved magnitude query.
@@ -443,6 +526,9 @@ impl BoundInfo {
                 _ => None,
             },
     ))]
+    /// Expose any stored exponent, including an inexact scheduling estimate.
+    /// Some(None) still means proved zero; outer None means no usable exponent.
+    /// This projection alone cannot justify error-sensitive precision or range decisions.
     fn planning_msd(&self) -> Option<Option<Precision>> {
         match self {
             Self::Unknown => None,
@@ -460,6 +546,8 @@ impl BoundInfo {
             Self::Unknown => None,
         },
     ))]
+    /// Project certified zero or the optional sign of a NonZero record.
+    /// Unknown and unsigned nonzero metadata return None without implying zero.
     fn known_sign(&self) -> Option<Sign> {
         match self {
             Self::Zero => Some(Sign::NoSign),
@@ -481,6 +569,8 @@ impl BoundInfo {
             _ => None,
         },
     ))]
+    /// Project sign and exact-magnitude evidence independently, without exposing an inexact hint.
+    /// Either component can be unresolved; Some(None) in the magnitude component proves zero.
     fn certified_sign_and_msd(&self) -> (Option<Sign>, Option<Option<Precision>>) {
         (self.known_sign(), self.known_msd())
     }
@@ -493,6 +583,9 @@ impl BoundInfo {
             _ => None,
         },
     ))]
+    /// Export a present NonZero exponent together with its exactness flag.
+    /// Zero, Unknown and missing exponents return None. Consumers must inspect
+    /// the flag before treating the exported exponent as a binary-magnitude certificate.
     fn magnitude_bits(&self) -> Option<MagnitudeBits> {
         match self {
             Self::NonZero {
@@ -510,10 +603,10 @@ impl BoundInfo {
 
 #[cfg(not(verus_keep_ghost))]
 impl SharedConstant {
+    /// Return a positive sign and exact binade for each of the eighteen shared constants.
+    /// These fixed mathematical bounds require no numerical approximation or cache
+    /// initialization; they support structural facts and certified range planning.
     fn bound_info(self) -> BoundInfo {
-        // Coarse but exact-enough MSD facts for shared constants. These feed
-        // structural queries and trig/ln reduction planning without forcing a
-        // cached approximation.
         let msd = match self {
             SharedConstant::E | SharedConstant::Pi | SharedConstant::Ln10 => Some(1),
             SharedConstant::InvPi => Some(-2),
@@ -535,10 +628,12 @@ impl SharedConstant {
         BoundInfo::with_sign(Sign::Plus, msd)
     }
 
+    /// Return fixed strict rational bounds (lower, upper) for this positive constant.
+    /// The hand-selected endpoints support constant-plus-rational certificates and
+    /// mixed-sign native polynomial separation. They are independent of approximation
+    /// caches and do not refine with requested precision. Fraction construction uses
+    /// fixed nonzero denominators; the unwraps assert those literal invariants.
     fn interval(self) -> (Rational, Rational) {
-        // Narrow rational intervals used only for constant+rational sign
-        // certificates. They are intentionally cheap and hand-picked, not a
-        // replacement for high-precision approximation.
         match self {
             Self::E => (
                 Rational::fraction(271_828, 100_000).unwrap(),
@@ -619,6 +714,7 @@ impl SharedConstant {
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result == match sign { Sign::Plus => Sign::Minus, Sign::Minus => Sign::Plus, Sign::NoSign => Sign::NoSign },
 ))]
+/// Negate the three-way internal sign, leaving NoSign as exact zero.
 fn negate_sign(sign: Sign) -> Sign {
     match sign {
         Sign::Plus => Sign::Minus,
@@ -634,6 +730,7 @@ fn negate_sign(sign: Sign) -> Sign {
         Sign::Plus => RealSign::Positive,
     },
 ))]
+/// Translate the internal three-way sign into the public RealSign vocabulary without losing zero.
 fn public_sign(sign: Sign) -> RealSign {
     match sign {
         Sign::Minus => RealSign::Negative,
@@ -649,6 +746,7 @@ fn public_sign(sign: Sign) -> RealSign {
         RealSign::Positive => Sign::Plus,
     },
 ))]
+/// Translate a public RealSign back to the internal three-way sign; inverse of public_sign.
 fn private_sign(sign: RealSign) -> Sign {
     match sign {
         RealSign::Negative => Sign::Minus,
@@ -661,9 +759,16 @@ fn private_sign(sign: RealSign) -> Sign {
 use std::sync::atomic::AtomicBool;
 
 #[cfg(not(verus_keep_ghost))]
+/// Shared cooperative stop flag carried by computable wrappers and evaluation calls.
+/// Cloning shares the flag; a true observation asks cooperating kernels to stop.
+/// This is not a result/certainty receipt, cancellation deadline or ownership of
+/// temporary state. Some symbolic or cached paths can finish without polling it.
 pub type Signal = Arc<AtomicBool>;
 
 #[cfg(not(verus_keep_ghost))]
+/// Poll the optional shared stop flag with a relaxed atomic load; absence means false.
+/// This reports only the observed Boolean, not completed cancellation or publication
+/// of any other memory. Callers own polling frequency and interrupted-result handling.
 pub(crate) fn should_stop(signal: &Option<Signal>) -> bool {
     use std::sync::atomic::Ordering::*;
     signal.as_ref().is_some_and(|s| s.load(Relaxed))
