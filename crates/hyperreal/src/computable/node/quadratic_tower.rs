@@ -1,24 +1,43 @@
-// Exact values in `Q(sqrt(d))(sqrt(a + b sqrt(d)))`.
-//
-// Products and inverses reduce by the outer square relation. A node outside
-// this tower, or a third independent radical, returns `None` so the general
-// sign cascade stays authoritative.
-
+/// Retained coefficient `rational + scale*sqrt(disc)` in a real quadratic field.
+///
+/// A nonzero root coefficient requires a positive rational radicand; absent
+/// radicands represent rational coefficients. Arithmetic usually clears the
+/// radicand when the coefficient cancels, but this private carrier does not
+/// enforce a canonical or square-free presentation. In particular, coefficient
+/// zero and scalar zero are different questions for noncanonical input.
+/// Cloning preserves exact rational values and their shared arithmetic evidence.
 #[derive(Clone)]
 struct Quad {
+    /// Rational term, independent of the selected principal square root.
     rational: Rational,
+    /// Signed rational multiplier of the principal root; zero makes it unused.
     scale: Rational,
+    /// Inner root square when used; equality of this retained value controls field compatibility.
     disc: Option<Rational>,
 }
 
+/// Exact `even + odd*sqrt(radicand)` with quadratic coefficients and a principal outer root.
+///
+/// This compact basis represents the admitted part of
+/// `Q(sqrt(d))(sqrt(a + b*sqrt(d)))`. Used coefficient/radicand fields must be
+/// compatible; the constructors and optional operations establish that invariant.
+/// An absent outer radicand requires a zero odd coefficient. It is not a general
+/// algebraic-number carrier or a unique mathematical normal form. Recognition
+/// can decline an equivalent presentation even when its value belongs to a
+/// degree-four field. No numerical approximation replaces a failed reduction.
 #[derive(Clone)]
 struct Tower {
+    /// Coefficient independent of the outer root, possibly using the inner root.
     even: Quad,
+    /// Multiplier of the outer root, possibly using the same inner root.
     odd: Quad,
+    /// Square of the principal outer root; may be absent when its coefficient is unused.
     radicand: Option<Quad>,
 }
 
+/// Exact arithmetic in one retained rational square-root basis.
 impl Quad {
+    /// Embed a rational with zero root coefficient and no inner radicand.
     fn rational(value: Rational) -> Self {
         Self {
             rational: value,
@@ -27,14 +46,20 @@ impl Quad {
         }
     }
 
+    /// Construct the rational additive identity without a retained root.
     fn zero() -> Self {
         Self::rational(Rational::zero())
     }
 
+    /// Test both rational coefficients for zero, without comparing their represented sum.
+    /// A noncanonical expression such as `-2 + sqrt(4)` is not coefficient-zero.
     fn is_zero(&self) -> bool {
         self.rational.sign() == Sign::NoSign && self.scale.sign() == Sign::NoSign
     }
 
+    /// Choose a shared inner radicand by exact Rational equality, treating absence as neutral.
+    /// `Some(None)` means both are rational; `None` means two present radicands differ.
+    /// Different radicands can still generate the same field; no basis conversion is attempted.
     fn same_disc(&self, other: &Self) -> Option<Option<Rational>> {
         match (&self.disc, &other.disc) {
             (Some(left), Some(right)) if left == right => Some(Some(left.clone())),
@@ -44,6 +69,8 @@ impl Quad {
         }
     }
 
+    /// Add coefficients in the same retained inner field, clearing a cancelled root term.
+    /// Decline mismatched present radicands before testing the resulting coefficients.
     fn add(self, other: Self) -> Option<Self> {
         let disc = self.same_disc(&other)?;
         let mut sum = Self {
@@ -57,6 +84,7 @@ impl Quad {
         Some(sum)
     }
 
+    /// Negate both coefficients while retaining the principal-root selection.
     fn neg(self) -> Self {
         Self {
             rational: -self.rational,
@@ -65,6 +93,8 @@ impl Quad {
         }
     }
 
+    /// Multiply in the shared basis using `sqrt(d)^2 = d` and exact product sums.
+    /// Decline incompatible radicands or a missing used square relation; clear a zero root term.
     fn mul(self, other: Self) -> Option<Self> {
         let disc = self.same_disc(&other)?;
         let cross = Rational::signed_product_sum2(
@@ -97,6 +127,7 @@ impl Quad {
         Some(product)
     }
 
+    /// Multiply both coefficients by a rational, collapsing zero and unused radicands.
     fn scale(self, factor: &Rational) -> Self {
         if factor.sign() == Sign::NoSign {
             return Self::zero();
@@ -112,6 +143,9 @@ impl Quad {
         scaled
     }
 
+    /// Divide the conjugate by `rational^2 - scale^2*disc`.
+    /// Decline coefficient-zero, a zero norm or failed rational inversion. With a
+    /// noncanonical square radicand, zero norm alone does not prove the value is zero.
     fn inverse(self) -> Option<Self> {
         if self.is_zero() {
             return None;
@@ -138,6 +172,9 @@ impl Quad {
         })
     }
 
+    /// Decide the sign with rational comparisons and the selected positive inner root.
+    /// Same-sign terms decide directly; opposite signs compare their squared magnitudes.
+    /// An unused root needs no validation; a used absent/nonpositive radicand declines.
     fn sign(&self) -> Option<RealSign> {
         if self.scale.sign() == Sign::NoSign {
             return Some(rational_sign(&self.rational));
@@ -166,7 +203,9 @@ impl Quad {
     }
 }
 
+/// Arithmetic, compatible-basis changes and sign proofs for the retained outer extension.
 impl Tower {
+    /// Embed an inner quadratic coefficient without adjoining an outer root.
     fn quad(even: Quad) -> Self {
         Self {
             even,
@@ -175,14 +214,17 @@ impl Tower {
         }
     }
 
+    /// Embed a rational in the inner field with zero odd coefficient.
     fn rational(value: Rational) -> Self {
         Self::quad(Quad::rational(value))
     }
 
+    /// Construct the additive identity with neither root generator in use.
     fn zero() -> Self {
         Self::rational(Rational::zero())
     }
 
+    /// Scale both outer coefficients exactly; discard an outer radicand whose odd part vanishes.
     fn scale_rational(self, factor: &Rational) -> Self {
         let even = self.even.scale(factor);
         let odd = self.odd.scale(factor);
@@ -193,6 +235,9 @@ impl Tower {
         }
     }
 
+    /// Scale all four rational coefficients by `2^shift`, preserving the root squares.
+    /// Each coefficient uses the explicit-shift expansion guard independently; a declined
+    /// component discards this local result without publishing a partial scaled tower.
     fn scale_power_of_two(mut self, shift: i32) -> Option<Self> {
         for quad in [&mut self.even, &mut self.odd] {
             quad.rational = shifted_coefficient(&quad.rational, shift)?;
@@ -201,6 +246,7 @@ impl Tower {
         Some(self)
     }
 
+    /// Negate both outer coefficients without changing either principal-root selection.
     fn neg(self) -> Self {
         Self {
             even: self.even.neg(),
@@ -209,6 +255,8 @@ impl Tower {
         }
     }
 
+    /// Match retained outer radicands coefficient by coefficient, treating absence as neutral.
+    /// A mismatch is not a proof that the two outer-root images or number fields differ.
     fn match_radicand(&self, other: &Self) -> Option<Option<Quad>> {
         match (&self.radicand, &other.radicand) {
             (Some(left), Some(right)) if quad_eq(left, right) => Some(Some(left.clone())),
@@ -218,6 +266,8 @@ impl Tower {
         }
     }
 
+    /// Add in a common inner/outer basis, attempting an unnested biquadratic rebase on mismatch.
+    /// Clear the outer radicand when the odd coefficient cancels; unsupported rebasing declines.
     fn add(mut self, mut other: Self) -> Option<Self> {
         let mut inner = None;
         let compatible = [&self.even, &self.odd, &other.even, &other.odd]
@@ -247,9 +297,10 @@ impl Tower {
         })
     }
 
-    /// Expand only an unnested quadratic tower into rational square classes.
-    /// The existing representation then holds any two independent classes;
-    /// their product is a basis term, not a third independent extension.
+    /// Expand an unnested tower into three quadratic terms for a compatible-basis attempt.
+    /// Return the even term, the rational odd coefficient times the outer root,
+    /// and the inner-root odd term times the outer root. A nested outer radicand
+    /// declines. Extracted residuals are exact but not guaranteed square-free.
     fn biquadratic_terms(&self) -> Option<[Quad; 3]> {
         let Some(radicand) = &self.radicand else {
             return Some([self.even.clone(), Quad::zero(), Quad::zero()]);
@@ -268,6 +319,12 @@ impl Tower {
         Some([self.even.clone(), rational_term, radical_term])
     }
 
+    /// Rebase two unnested presentations using the first encountered inner square and next distinct outer square.
+    /// Use outer square one if no second radicand is present. For another square
+    /// `e`, extract `sqrt(e/outer)` and require its residual to match
+    /// the chosen inner basis or be rational. Preserve principal-root signs and return
+    /// both converted operands. Partial square extraction and literal basis matching
+    /// make this a recognizer, not a complete field-isomorphism or independence test.
     fn common_biquadratic_field(&self, other: &Self) -> Option<(Self, Self)> {
         let first = self.biquadratic_terms()?;
         let second = other.biquadratic_terms()?;
@@ -317,6 +374,9 @@ impl Tower {
         Some((rebase(&first)?, rebase(&second)?))
     }
 
+    /// Try direct multiplication, then an unnested biquadratic rebase, then pure-root square composition.
+    /// The last path takes a principal root of the product of squares and restores the
+    /// product sign from both operands. Preserve this dispatch order and its proof reuse.
     fn mul(self, other: Self) -> Option<Self> {
         self.multiply_in_tower(&other)
             // Keep an existing biquadratic product in its coefficient field.
@@ -340,6 +400,8 @@ impl Tower {
             })
     }
 
+    /// Expand the product and replace the odd-times-odd term by its outer square relation.
+    /// Require compatible retained outer and inner bases; remove a cancelled outer term.
     fn multiply_in_tower(&self, other: &Self) -> Option<Self> {
         let radicand = self.match_radicand(other)?;
         let mut even = self.even.clone().mul(other.even.clone())?;
@@ -364,8 +426,9 @@ impl Tower {
         })
     }
 
-    /// Square of a value with no sum across the outer quadratic generator.
-    /// A mixed value keeps its two terms and uses the general sign fallback.
+    /// Return the inner-field square when either outer coefficient is coefficient-zero.
+    /// A mixed sum declines even if further semantic cancellation could remove it;
+    /// this helper supplies the last multiplication fallback, not general squaring.
     fn pure_square(&self) -> Option<Quad> {
         if self.odd.is_zero() {
             return self.even.clone().mul(self.even.clone());
@@ -380,6 +443,9 @@ impl Tower {
         None
     }
 
+    /// Multiply the outer conjugate by the inverse inner norm `even^2 - odd^2*radicand`.
+    /// An unused outer root delegates to the inner inverse. Missing relations, incompatible
+    /// fields or an uninvertible retained norm decline without numerical fallback.
     fn inverse(self) -> Option<Self> {
         if self.odd.is_zero() {
             return Some(Self::quad(self.even.inverse()?));
@@ -400,7 +466,11 @@ impl Tower {
         })
     }
 
-    /// Sign of `even + odd * R` with principal `R > 0` and `R^2 = radicand`.
+    /// Sign of `even + odd*R`, using the selected nonnegative root `R^2 = radicand`.
+    /// An unused outer root delegates directly; a zero radicand leaves only even.
+    /// For a positive radicand, equal term signs decide directly and opposite
+    /// signs compare `even^2` with `odd^2*radicand` in the inner field. Negative
+    /// radicands, unavailable signs or incompatible intermediate fields decline.
     fn sign(&self) -> Option<RealSign> {
         if self.odd.is_zero() {
             return self.even.sign();
@@ -433,15 +503,18 @@ impl Tower {
     }
 }
 
+/// Compare the three retained coefficients/radicand fields by exact Rational equality.
+/// Equal presentations represent equal values; differing presentations may still have equal sums.
 fn quad_eq(left: &Quad, right: &Quad) -> bool {
     left.rational == right.rational && left.scale == right.scale && left.disc == right.disc
 }
 
-// Explicit binary shifts can encode enormous allocations in one node.
-// This fast path declines those expansions; ordinary field coefficients and
-// their retained reductions have no size gate.
+/// Maximum newly allocated binary expansion per nonzero coefficient shift after cancellation.
+/// This limits neither preexisting coefficient width nor aggregate work/memory;
+/// a large authored shift can succeed when existing powers of two cancel it.
 const TOWER_SHIFT_ALLOCATION_BITS: u64 = 8_192;
 
+/// Map the exact rational numerator sign into the public three-way sign vocabulary.
 fn rational_sign(value: &Rational) -> RealSign {
     match value.sign() {
         Sign::Minus => RealSign::Negative,
@@ -450,6 +523,10 @@ fn rational_sign(value: &Rational) -> RealSign {
     }
 }
 
+/// Build the principal root of a rational: reject negative, collapse zero and extract rational square factors.
+/// The retained square extractor rationalizes the residual denominator and can reuse
+/// its own evidence. Residual factorization is partial, so this is not a canonical
+/// square-class representation for arbitrary integers.
 fn quad_from_square_root(square: &Rational) -> Option<Quad> {
     match square.sign() {
         Sign::Minus => None,
@@ -469,6 +546,8 @@ fn quad_from_square_root(square: &Rational) -> Option<Quad> {
     }
 }
 
+/// Attach a negative sign only for Minus; otherwise preserve the unsigned magnitude.
+/// NoSign callers must supply zero when a zero result is intended: this helper does not enforce that invariant.
 fn signed_magnitude(sign: Sign, magnitude: BigUint) -> BigInt {
     match sign {
         Sign::Minus => -BigInt::from(magnitude),
@@ -476,6 +555,7 @@ fn signed_magnitude(sign: Sign, magnitude: BigUint) -> BigInt {
     }
 }
 
+/// Divide a signed integer by a nonzero unsigned integer only when the remainder is zero.
 fn exact_quotient(value: &BigInt, divisor: &BigUint) -> Option<BigInt> {
     if divisor.is_zero() {
         return None;
@@ -487,6 +567,9 @@ fn exact_quotient(value: &BigInt, divisor: &BigUint) -> Option<BigInt> {
     Some(value / divisor)
 }
 
+/// Split a nonnegative integer as `square^2 * rest` using retained partial square extraction.
+/// Normalize a zero residual sentinel to one so callers can multiply the relation
+/// uniformly, including zero input; the residual is not promised square-free.
 fn square_parts(magnitude: &BigUint) -> (Rational, Rational) {
     let (square, rest) =
         Rational::from_bigint(BigInt::from(magnitude.clone())).extract_square_reduced_retained();
@@ -498,7 +581,13 @@ fn square_parts(magnitude: &BigUint) -> (Rational, Rational) {
     }
 }
 
-/// `sqrt(k^2 * q) = |k| * sqrt(q)` for one fixed primitive radicand.
+/// Construct the principal root of a positive inner quadratic, extracting shared rational square content.
+/// Zero collapses and negative input declines. Rational input uses ordinary
+/// rational square extraction; a used inner radicand must be a positive integer.
+/// For a nonrational coefficient, clear both denominators, divide their integer
+/// coefficients by their gcd, and separate square content in that gcd and the
+/// common denominator. This preserves `sqrt(k^2*q) = |k|*sqrt(q)` and promotes a
+/// shared outer radicand without general denesting or complete square factorization.
 fn sqrt_quad(quad: Quad) -> Option<Tower> {
     match quad.sign()? {
         RealSign::Negative => return None,
@@ -549,6 +638,10 @@ fn sqrt_quad(quad: Quad) -> Option<Tower> {
     })
 }
 
+/// Multiply by a power of two, cancelling denominator/numerator powers before allocating growth.
+/// Zero and zero shift clone directly. The guard limits each newly expanded side to
+/// 8192 bits, not final bit length or total work; wide retained coefficients remain
+/// eligible. Unsupported host-size conversions and excessive new expansion decline.
 fn shifted_coefficient(value: &Rational, shift: i32) -> Option<Rational> {
     if value.sign() == Sign::NoSign || shift == 0 {
         return Some(value.clone());
@@ -577,12 +670,26 @@ fn shifted_coefficient(value: &Rational, shift: i32) -> Option<Rational> {
     Rational::from_bigint_fraction(signed_magnitude(value.sign(), numerator), denominator).ok()
 }
 
+/// Reduce admitted expression syntax by iterative postorder over the immutable DAG.
+///
+/// Reuse retained towers before exact rational leaves, then recognize sqrt(2) and sqrt(3)
+/// constants, negation, binary shifts, addition, multiplication, inverse, square,
+/// square root (including NthRoot with index two) and three-term rational-weighted
+/// combinations. A new square root requires an inner-only reduced argument.
+/// Zero combination weights do not exempt their coefficients from reduction.
+///
+/// Per-call pointer keys identify shared nodes, not mathematical equality. Memoization
+/// avoids repeated DAG expansion; arbitrary-precision coefficient arithmetic and
+/// square extraction still have input-dependent cost. There is no total-work,
+/// coefficient-size, node-count, allocation or cancellation budget here, and the
+/// explicit-shift guard is not one. Unsupported syntax or arithmetic returns None.
+///
+/// Successful shared nonconstant subnodes retain reductions even if a parent later
+/// declines. Failed reductions are not cached. Local traversal/memo state is dropped
+/// on return; previously published exact evidence remains reusable.
 fn tower_from_computable(value: &Computable) -> Option<Tower> {
-    // Traverse the immutable DAG in postorder. Work is proportional to distinct
-    // nodes, with no recursive descent or arbitrary expression-width cutoff.
-    // Field compatibility controls arithmetic. Successful reductions remain
-    // reusable regardless of coefficient size; only explicit binary shifts
-    // have a preallocation guard.
+    // Postorder visits distinct nodes without recursive DAG descent. Arithmetic
+    // work also depends on coefficient sizes and retained square reductions.
     let key = |value: &Computable| Arc::as_ptr(&value.internal);
     let mut memo = std::collections::HashMap::<*const Node, Tower>::new();
     let mut pending = vec![(value, false)];
@@ -671,7 +778,10 @@ fn tower_from_computable(value: &Computable) -> Option<Tower> {
     memo.remove(&key(value))
 }
 
+/// Projection used to admit a new square root only over the retained inner field.
 impl Tower {
+    /// Consume the tower only when its odd coefficient is structurally zero.
+    /// Do not infer an inner-field presentation from semantic cancellation of a mixed sum.
     fn even_quad(self) -> Option<Quad> {
         if self.odd.is_zero() {
             Some(self.even)
@@ -681,6 +791,8 @@ impl Tower {
     }
 }
 
+/// Expose the two rational coefficients and optional inner square for polynomial construction.
+/// Ignore a stored radicand when its coefficient is zero; require it otherwise.
 fn quad_rational_parts(quad: &Quad) -> Option<(Rational, Rational, Option<Rational>)> {
     if quad.scale.sign() == Sign::NoSign {
         return Some((quad.rational.clone(), Rational::zero(), None));
@@ -692,6 +804,9 @@ fn quad_rational_parts(quad: &Quad) -> Option<(Rational, Rational, Option<Ration
     ))
 }
 
+/// Require positive q and, if q has an inner radical, a negative quadratic conjugate.
+/// This proves that only the selected radicand presentation has real outer roots;
+/// a rational positive q passes directly. Unknown/invalid signs return false here.
 fn one_real_outer_square_root(radicand: &Quad) -> bool {
     if radicand.sign() != Some(RealSign::Positive) {
         return false;
@@ -707,6 +822,10 @@ fn one_real_outer_square_root(radicand: &Quad) -> bool {
     conjugate.sign() == Some(RealSign::Negative)
 }
 
+/// Return rational s for an admitted outer form `s + r*sqrt(q)` with rational `r > 0`.
+/// Require q to pass the one-real-radicand check. This representation-sensitive
+/// center is useful with an annihilator-zero proof and comparison above s; it
+/// is neither an equality certificate by itself nor a general root decomposition.
 fn positive_rational_branch(tower: &Tower) -> Option<Rational> {
     if tower.even.scale.sign() != Sign::NoSign || tower.odd.scale.sign() != Sign::NoSign {
         return None;
@@ -720,6 +839,9 @@ fn positive_rational_branch(tower: &Tower) -> Option<Rational> {
     Some(tower.even.rational.clone())
 }
 
+/// Emit ascending coefficients of the monic linear or quadratic equation for an inner value.
+/// Use `(x-a)^2 - b^2*d` when the radical coefficient is nonzero. This is not
+/// a promise of minimality, square-freeness or selection between conjugates.
 fn quad_annihilator(quad: &Quad) -> Option<Vec<Rational>> {
     let (constant, scale, disc) = quad_rational_parts(quad)?;
     if scale.sign() == Sign::NoSign {
@@ -733,6 +855,12 @@ fn quad_annihilator(quad: &Quad) -> Option<Vec<Rational>> {
     ])
 }
 
+/// Eliminate the outer root, then take the inner quadratic norm to obtain a monic quartic.
+/// Writing `c = even^2 - odd^2*radicand`, expand
+/// `(x^2 - 2*a0*x + c0)^2 - d*(-2*a1*x + c1)^2`.
+/// An unused outer root delegates to the inner annihilator. Coefficients ascend;
+/// incompatible fields or missing relations decline. Multiplicities and unselected
+/// conjugate roots can remain, so the polynomial alone does not select this value.
 fn tower_annihilator(tower: &Tower) -> Option<Vec<Rational>> {
     if tower.odd.is_zero() {
         return quad_annihilator(&tower.even);
@@ -766,15 +894,25 @@ fn tower_annihilator(tower: &Tower) -> Option<Vec<Rational>> {
     ])
 }
 
+/// Connect exact tower reductions to shared graph proofs, reconstruction and selected-root consumers.
 impl Computable {
     /// Reuse an already proved exact reduction when evaluating this node.
     /// This does not discover a tower or change the original expression: a
     /// missing reduction leaves the ordinary approximation kernel in charge.
+    /// Reconstruct a shallow equivalent graph, then ask it for the integer
+    /// approximation scaled by `2^-precision`, under the ordinary enclosure and
+    /// supplied-signal contract. Pointer-equal reconstruction declines to avoid
+    /// self-recursion; pointer inequality is not an algebraic identity test.
+    /// This helper does not publish the original node's numeric cache: its
+    /// approximation caller does. Option distinguishes availability, not typed
+    /// exhaustion or cancellation, and reconstruction has no separate work budget.
     fn cached_quadratic_tower_approximation(
         &self,
         signal: &Option<Signal>,
         precision: Precision,
     ) -> Option<BigInt> {
+        /// Reconstruct one coefficient with its selected principal root, omitting an unused radical.
+        /// Return None for a missing used radicand; ordinary Computable constructors own the exact expression.
         fn quadratic(value: Quad) -> Option<Computable> {
             let rational = Computable::rational(value.rational);
             if value.scale.sign() == Sign::NoSign {
@@ -805,6 +943,9 @@ impl Computable {
         Some(reduced.approx_signal(signal, precision))
     }
 
+    /// Reduce and retain rows for `even + odd*sqrt(radicand)`, each row `[a,b,d]` meaning `a+b*sqrt(d)`.
+    /// Represent absent/unused roots with zero placeholders. These are reconstruction
+    /// parts, not a second public scalar carrier or an independently validated wire format.
     pub(crate) fn quadratic_tower_parts(&self) -> Option<[[Rational; 3]; 3]> {
         let tower = tower_from_computable(self)?;
         // Reuse the same exact reduction for compaction, signs and subsequent
@@ -828,6 +969,9 @@ impl Computable {
     /// Carry a sign across tower reconstruction without evaluating either DAG.
     /// The caller has proved `source = scale * self`, with the supplied scale
     /// sign. A zero scale says nothing about this payload and is ignored.
+    /// Only an immediate certified source sign is consumed; an unknown source
+    /// leaves this node untouched. The algebraic relation is a caller obligation,
+    /// not checked by this function; neither a new basis nor numeric cache is copied.
     pub(crate) fn retain_sign_of_scaled_tower_source(&self, source: &Self, scale_sign: Sign) {
         let Some(sign) = source.immediate_sign() else {
             return;
@@ -842,6 +986,9 @@ impl Computable {
             .replace_exact_sign(ExactSignCache::Valid(sign));
     }
 
+    /// Prove the sign by exact tower reduction and retain both basis and sign on success.
+    /// Successful shared descendants may already have been retained if this root declines.
+    /// None does not alter the exact value or permanently record an undecidable result.
     pub(crate) fn quadratic_tower_sign(&self) -> Option<RealSign> {
         let tower = tower_from_computable(self)?;
         let sign = tower.sign()?;
@@ -855,14 +1002,24 @@ impl Computable {
         Some(sign)
     }
 
+    /// Reduce this graph and recognize a positive rational outer coefficient about a rational center.
+    /// Return the center under the selected-radicand condition, not a stand-alone equality proof.
     pub(crate) fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {
         positive_rational_branch(&tower_from_computable(self)?)
     }
 
+    /// Reduce this graph and return an ascending monic annihilator, without selecting its root.
+    /// None records an unavailable reduction/construction, not mathematical nonalgebraicity.
     pub(crate) fn quadratic_tower_annihilating_polynomial(&self) -> Option<Vec<Rational>> {
         tower_annihilator(&tower_from_computable(self)?)
     }
 
+    /// Prove the sign of ascending coefficients at the principal root of square, or its negative.
+    /// Reject a negative square before reducing coefficients; at zero both branches
+    /// agree. Accumulate exact successive powers, reducing every coefficient even
+    /// when its power is zero, and advance the power after the last coefficient too.
+    /// Empty input gives zero for an admitted nonnegative square. Any unsupported
+    /// coefficient/field operation declines, with no sampled evaluation or total budget.
     pub(crate) fn sign_polynomial_at_rational_square_root(
         coefficients: &[Self],
         square: &Rational,
@@ -890,10 +1047,13 @@ impl Computable {
 }
 
 #[cfg(test)]
+/// Exact field identities, shared-DAG proof retention, approximation reuse and shift-guard regressions.
 mod quadratic_tower_tests {
     use super::*;
 
     #[test]
+    /// Check 121 a+b*sqrt(4) signs, signed 2^-1024 perturbations, and 25 quadratic conjugate norms.
+    /// For each nonzero coefficient pair in sqrt(5), verify its reconstructed inverse multiplies to one.
     fn quadratic_norms_preserve_wide_cancellation_and_products() {
         for a in -5..=5 {
             for b in -5..=5 {
@@ -954,6 +1114,8 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Exercise nine rational coefficient sign branches over sqrt(2), both exact cancellations over sqrt(4),
+    /// and noncanonical inner coefficients whose values vanish despite nonzero stored coefficients.
     fn tower_signs_preserve_equal_opposed_and_zero_coefficient_branches() {
         for (even, odd, expected) in [
             (0, 0, RealSign::Zero),
@@ -1008,6 +1170,9 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Reduce a cold balanced sum of 1024 shifted roots and prove equality to its closed exact sum.
+    /// Require retained signs without a numeric approximation, then preserve an unknown
+    /// three-independent-root decline without allocating the declined root cache.
     fn cold_tower_proofs_replay_wide_dags_without_refinement() {
         let opaque = |approximation| Computable {
             internal: Arc::new(Node::new(
@@ -1058,11 +1223,15 @@ mod quadratic_tower_tests {
         assert!(outside.internal.cache.cell().is_none());
     }
 
+    /// Construct the principal square root of exact two for tower regression fixtures.
     fn sqrt2() -> Computable {
         Computable::rational(Rational::new(2)).sqrt()
     }
 
     #[test]
+    /// Exercise 8192 negations and 32 shared doublings without expanding them as expression trees.
+    /// Extreme shifts decline for a root but succeed for zero; cancelled 16000-bit shifts
+    /// leave accepted 2^8000 factors or reciprocals. Explicit teardown avoids recursive Arc destruction.
     fn tower_replay_handles_deep_and_exponentially_shared_graphs() {
         let opaque = |approximation| Computable {
             internal: Arc::new(Node::new(
@@ -1124,6 +1293,8 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Combine 2048 copies of a retained root through a balanced graph and prove the exact scaled identity.
+    /// This is a functional shared-graph witness, not an instrumented complexity measurement.
     fn retained_forms_preserve_shared_dag_memoization() {
         let root = sqrt2().add(Computable::one());
         assert_eq!(root.quadratic_tower_sign(), Some(RealSign::Positive));
@@ -1152,6 +1323,9 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Retain sqrt(2) through 2048 multiply-by-one nodes and check integer-square enclosure bounds at three precisions.
+    /// Require intermediate numeric caches to remain empty; also compare a pi-multiplied
+    /// parent with a compact reference to within two units. Tear down the chain iteratively.
     fn approximation_reuses_a_retained_tower_without_evaluating_its_history() {
         let opaque = |approximation| Computable {
             internal: Arc::new(Node::new(
@@ -1198,6 +1372,9 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Compare separately constructed nested-radical evaluations and their inverses at four precision requests.
+    /// Require a retained negative sign and at most two units of approximation difference;
+    /// this is agreement of existing evaluation paths, not an independent exact-value oracle.
     fn retained_tower_approximation_preserves_nested_radicals_and_signed_coefficients() {
         let expression = || {
             let root = sqrt2();
@@ -1233,6 +1410,9 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Prove a nested binomial identity with a 5001-bit coefficient and retain its reduced subgraphs.
+    /// Exercise parts/annihilator reuse, both small shift directions and signed 2^-600
+    /// perturbations without numerical approximation of the retained roots.
     fn exact_tower_replay_retains_wide_cancellation_proofs() {
         let opaque = |approximation| Computable {
             internal: Arc::new(Node::new(
@@ -1292,6 +1472,9 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Race four precision requests and exact signs on the same sum of roots.
+    /// Check coarse integer bounds, retention of the finest requested approximation and
+    /// coexistence with a tower reduction; this is one scheduling witness, not an exhaustive race proof.
     fn tower_and_approximation_caches_can_publish_concurrently() {
         let value = sqrt2().add(Computable::sqrt_rational(Rational::new(3)));
         std::thread::scope(|scope| {
@@ -1311,6 +1494,7 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Prove a positive nested radicand times two inverse principal roots equals one.
     fn nested_unit_normal_square_cancels() {
         let alpha = Computable::rational(Rational::fraction(1, 2).unwrap()).sqrt();
         let radicand =
@@ -1322,6 +1506,7 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Require sqrt(4*q) and 2*sqrt(q) to share enough retained structure for exact cancellation.
     fn square_content_uses_one_primitive_radicand() {
         let primitive =
             Computable::one().add(Computable::rational(Rational::new(2)).multiply(sqrt2()));
@@ -1335,6 +1520,7 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Certify sqrt(1+2*sqrt(2))-2 is negative through the retained two-level tower.
     fn nested_radical_below_two_is_negative() {
         let inside =
             Computable::one().add(Computable::rational(Rational::new(2)).multiply(sqrt2()));
@@ -1345,6 +1531,7 @@ mod quadratic_tower_tests {
     }
 
     #[test]
+    /// Require pi to decline this algebraic recognizer without substituting a guessed sign.
     fn transcendental_nodes_stay_undecided() {
         assert_eq!(Computable::pi().quadratic_tower_sign(), None);
     }

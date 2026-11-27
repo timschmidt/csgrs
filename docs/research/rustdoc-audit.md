@@ -16618,6 +16618,96 @@ Quadratic/radical reducer and Hypercurve selected-fiber/parameter excerpts suppl
 context, not additional whole-file review credit. No focused check remains blocked;
 repository-wide documentation coverage remains incomplete.
 
+## Hyperreal quadratic-tower reducer and retained approximation (2026-11-27)
+
+Baseline: cbc436aef26d9429f5eb6810acaffc73b7fcd843. Read all 1351 baseline
+lines of crates/hyperreal/src/computable/node/quadratic_tower.rs, including every
+arithmetic branch, graph traversal, cache adapter, local helper and regression.
+This extends the preceding Real-adapter audit into its owning computable layer;
+it does not claim whole-file review of the other included node slices.
+
+The affected contract is P1–P6, P10 and P19: exact field arithmetic, principal-root
+selection, optional recognition, shared evidence, resource limitations and later
+consumption. Inputs are retained rational/quadratic/two-level towers and the
+admitted immutable expression DAG syntax, with noncanonical coefficient witnesses,
+wide rationals, signed scales/shifts, nested roots and shared/cached subexpressions.
+The missing witness was Rustdoc for private carriers, fields, arithmetic helpers,
+traversal/retention adapters and tests, plus accurate complexity and recognition
+claims. All 13 owning tests passed on the baseline before the documentation edit.
+
+All 76 authored declarations/fields now have Rustdoc. The review distinguishes:
+
+- A coefficient-zero test from an exact scalar-zero proof, and fieldwise retained
+  presentation equality from semantic equality across different presentations.
+  Equal retained forms do prove equal values; a mismatch need not prove inequality.
+  Inner and outer root signs, absent/unused radicands and compatibility obligations
+  are explicit. Noncanonical square radicands can make a conjugate norm zero for
+  a nonzero represented value, so failed inverse recognition is not a zero proof.
+- Direct multiplication, biquadratic rebasing and pure-square composition retain
+  their existing dispatch order. The last fallback restores product sign after
+  taking a principal root. Rebasing uses partial square extraction and exact
+  residual matching, not a complete field-isomorphism or independence algorithm.
+- Rational/root construction preserves defining square relations. Common-denominator
+  and integer-content extraction explain the shared nested radicand. The rational
+  extractor rationalizes residual denominators but does not completely factor all
+  residual integers; neither canonical square classes nor arbitrary denesting are
+  promised. Signed-magnitude and exact-quotient helpers state their real preconditions.
+- Iterative postorder memoizes distinct shared nodes by pointer identity. This avoids
+  repeated DAG expansion, but total arithmetic work also depends on coefficient
+  growth and square extraction; the old unqualified work-proportional-to-nodes
+  comment was corrected. There is no total-work/node/coefficient/memory/cancellation
+  budget in this reducer. The 8192-bit shift guard limits newly expanded bits per
+  coefficient after cancellation, not final size, aggregate allocations or all
+  admitted arithmetic. Existing wide values and large cancelling shifts remain valid.
+- Retained towers precede exact-rational recognition. Supported syntax, the
+  inner-only requirement for an additional square root, and reduction of zero-weight
+  coefficients are documented. Shared completed subnodes may publish reductions
+  before a parent declines; failed reductions are not cached. Pointer identity
+  accelerates reuse and does not define mathematical equality.
+- Reconstruction rows, exact sign transport and annihilator/branch consumers state
+  their proof scope. Sign transport relies on the caller's exact scaled relation.
+  Annihilators retain conjugate roots and possible multiplicities. The selected
+  positive-outer branch requires additional zero/order evidence from consumers.
+  Polynomial sign evaluation reduces coefficients even at zero powers and advances
+  the final unused power; it is not a general bounded algebraic solver.
+- Cached-tower approximation reconstructs a shallow exact graph, forwards precision
+  and signal to ordinary evaluation, and guards pointer-equal self-reconstruction.
+  Its caller owns numeric-cache publication. Availability is not a cancellation or
+  exhaustion receipt. The nested reconstruction function is documented too.
+- Tests retain their exact assertions and original hard cases: 121 noncanonical
+  signs; 25 conjugate norms; tiny signed perturbations; 1024-term wide graphs;
+  8192 negations and 32 shared doublings; 2048-way retained reuse; cancelled large
+  shifts; wide coefficient identities; approximation reuse and concurrent publication.
+  Approximation agreement and one observed thread schedule are described as such,
+  not independent exact-value or exhaustive race proofs.
+
+After the final source edit, all 13 reducer tests, 20 Real quadratic/retention tests
+and five Real radical tests passed both without optional features and with all
+features. Four lazy-certificate replay tests passed with all features. The rebuilt
+public consumer from the preceding batch passed branch-recognition boundaries,
+four exact annihilator substitutions and empty/negative/zero-square polynomial
+cases. No geometric completeness or performance claim is inferred from these checks.
+
+Private cargo doc passed both feature configurations with warnings and broken/private
+links denied. All 60 runtime documentation blocks matched actual private API pages.
+The other 16 blocks (test module/functions and one function-local helper) passed
+source/declaration checks and supplemental Markdown rendering; these do not claim
+ordinary library Rustdoc exposes cfg(test) or function-local item pages. Both derived
+Clone implementations render clone and clone_from with inherited trait documentation.
+An initial generated-doc wording assertion expected "copy"; inspection showed the
+installed standard-library text says "duplicate". The check was corrected to the
+actual inherited text and passed, with no source/API change.
+
+All executable and signature tokens are identical to the baseline, including call
+order, guards and assertions. Selected Rustfmt and git diff --check passed. Evidence
+is in /tmp/csgrs-hyperreal-tower-reducer-audit/: commands, baseline/final logs,
+consumer source/results, token/declaration inventory, full-block matches and generated
+trait-doc checks. Temporary executable and duplicate supplemental HTML were removed;
+builds reused the roughly 5.7 GiB locked/offline nonincremental target. Cache,
+approximation-query and rational square-extraction excerpts were supporting context,
+not whole-file credit. Full workflows remain owner-waived for this docs-only session;
+no focused check is blocked. Repository-wide documentation coverage is incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
