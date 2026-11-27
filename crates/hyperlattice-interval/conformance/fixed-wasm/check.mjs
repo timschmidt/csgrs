@@ -1,20 +1,31 @@
+// Execute the fixed-only guest supplied as argv[2], rejecting every import.
+// Two fresh instances traverse the same finite inputs in opposite orders. Guest
+// assertions check full bounds; this host checks independent formula/corner digests.
+// Unchanged memory size is an observation of these calls, not a proof of no
+// temporary allocation or a universal work/stack bound. A spinning guest requires
+// an external process timeout; this driver supplies no interruption mechanism.
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const module = await WebAssembly.compile(await readFile(process.argv[2]));
 assert.deepEqual(WebAssembly.Module.imports(module), []);
 
-// Affine images attain each coordinate extremum at a source corner. Apply
-// the original point map at each step, independently of the guest's chain.
+// Summarize coordinate extrema over a nonempty finite list of affine-image corners.
+// The callers' bounded integer coordinates and weighted sum are exactly representable
+// as JS Numbers. This digest alone is not an injective encoding of all four bounds.
 function boxDigest(corners) {
   const xs = corners.map(([x]) => x);
   const ys = corners.map(([, y]) => y);
   return Math.min(...xs) + 3 * Math.max(...xs) + 5 * Math.min(...ys) + 7 * Math.max(...ys);
 }
 
+// Include both signed i32 extremes and every integer from -1024 through 1024.
 const inputs = [-(2 ** 31), ...Array.from({ length: 2049 }, (_, i) => i - 1024), 2 ** 31 - 1];
+// Exercise depth reduction at capacity, just above it, and at the u32 maximum.
 const depths = [...Array.from({ length: 34 }, (_, n) => n), 255, 2 ** 32 - 1];
+// Count only successful checked calls; an assertion throws before incrementing.
 let calls = 0;
+// Initial and final memory sizes are compared within each independent instance.
 const memoryBytes = [];
 for (let pass = 0; pass < 2; pass++) {
   const { exports } = await WebAssembly.instantiate(module);
@@ -22,12 +33,15 @@ for (let pass = 0; pass < 2; pass++) {
   for (const input of pass === 0 ? inputs : [...inputs].reverse()) {
     const s = Math.max(-256, Math.min(256, input));
     let corners = [[s, -1], [s + 1, -1], [s, 2], [s + 1, 2]];
+    // Call the named export with the current input, compare its exact integer result,
+    // and count it. Missing exports, guest traps and mismatches fail this process.
     function check(name, expected, ...args) {
       assert.equal(exports[name](input, ...args), expected, `${name}(${[input, ...args]})`);
       calls++;
     }
     check("affine_correlation_probe", 7);
     check("interval_affine_probe", boxDigest(corners.map(([x, y]) => [2 * x - y + 3, x + y - 4])));
+    // Apply the original point map successively to corners, without guest pullback.
     const images = [boxDigest(corners)];
     for (let step = 1; step <= 32; step++) {
       corners = corners.map(([x, y]) => [x + y + 1, y - 1]);

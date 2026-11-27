@@ -14651,6 +14651,136 @@ target. No focused check remains blocked. Remaining platform conformance/support
 files and the repository-wide audit remain open; this batch does not establish
 complete repository coverage or a general performance envelope.
 
+## Hyperlattice-interval WASM boundary clients and launcher (2026-11-27)
+
+Whole-file review on target revision a7c83d8c100aed642c5688b0958c9fdad2942fab:
+
+- crates/hyperlattice-interval/conformance/no_alloc_wasm.rs (221 -> 276 lines).
+- crates/hyperlattice-interval/conformance/centered-wasm/lib.rs (120 -> 167 lines).
+- crates/hyperlattice-interval/conformance/fixed-wasm/check.mjs (51 -> 65 lines).
+- crates/hyperlattice-interval/conformance/run-wasi-test.mjs (30 -> 41 lines).
+- Both fixed-wasm and centered-wasm Cargo.toml files (19 lines each, unchanged),
+  and both Cargo.lock files (21 lines each, unchanged).
+
+The owning layer is conformance ABI/platform support. P1/P5/P6/P18/P20/P26/P28/P30/P37
+and the admission protocol govern exact fixture meaning, failure/status boundaries,
+subsequent consumption and honest resource/qualification claims. The domain includes
+all i32/u32 arguments reduced to bounded fixed fixtures, full signed endpoint inputs
+for authored forms, valid/invalid selectors, and the launcher's finite option grammar.
+Baseline clients built and ran before edits. Missing Rustdoc covered exported probes,
+the private panic/error helpers, macro-generated exports and local scalar aliases;
+JavaScript comments also lacked the drivers' protocol/measurement limits. Executable
+code, ABI signatures, assertions, fixtures, dependencies and manifests are unchanged.
+
+There are 27 authored Rustdoc blocks covering 13 function declarations, two module
+introductions, the vector-export macro and eleven local scalar aliases. Review found:
+
+- The fixed-only no_std client supplies no global allocator. Its panic handler
+  ignores diagnostics and spins indefinitely; these are asserted conformance probes,
+  not a general fallible geometry ABI. Seven exports clamp/reduce inputs, check
+  complete native results and return integer digests. A host must contain hangs.
+  Digest equality alone is not an injective representation of all endpoint bounds.
+- Affine correlation retains one source parameter and gives exactly seven after
+  coordinate subtraction. Cartesian affine action gives bounds (2s+1,2s+6,s-5,s-1)
+  and digest 20s-13. Runtime chains reduce depth modulo 33 and preserve the original
+  source through the independent triangular-map recurrence, including depth zero.
+- Norm/measure probes consume dominance margins in later norms and return 50-44s.
+  Exact widths retain u64::MAX numerators on the 2^-63 grid; failed signed-width
+  projection cannot supply the axis decision. The first-axis tie rule is explicit.
+  Midpoint/radius probes distinguish raw half-grid rounding from retained original
+  bounds and reuse an extreme source after failed radius projection. Contraction
+  probes check I-(I-A), margins and a subsequent box action; negative margins do
+  not establish a contraction certificate.
+- Centered numeric exports use selector zero for status: 1 success, -1 negative
+  radius, -2 native overflow, -99 any other native error. Selectors one/two return
+  full endpoints or the same failure code. Valid endpoints can equal status codes,
+  so callers must check status with the same inputs. There is no cached result or
+  enforced call order. Each call repeats work. JavaScript uses BigInt for i64 results
+  and the i64 vector inputs. Invalid selectors/rows assert and trap on WASM under
+  the manifest's release abort policy; they are not typed status failures.
+- Vector exports preserve authored components even after failed projection. Matrix
+  export projects the complete diagonal matrix, then evaluates both rows on (1,-1)
+  before selecting a row: negating i32::MIN can reject a representable first row.
+  Error flattening intentionally does not preserve native cause/receipt objects.
+- translated_half retains the center/offset definition before an exact half map.
+  Native pullback rounds center and offset contributions separately, producing raw
+  bounds floor(c/2)-ceil(r/2), ceil(c/2)+ceil(r/2) for nonnegative r if representable.
+  This can widen beyond direct rounding of (c±r)/2. At c=r=i32::MAX the exact upper
+  endpoint fits, but the projected upper bound overflows; the export reports -2.
+- The empty/unit export has a separate qualification-bit protocol, not the numeric
+  success code. It returns one only for UnqualifiedEnvironment and zero otherwise.
+  Current wasm32-unknown-unknown ingress is qualified and returns zero. An initial
+  temporary oracle incorrectly expected one; inspecting float.rs's target cfg and
+  point constructor resolved that assumption before the final baseline passed.
+  No repository assertion/fixture was weakened to resolve the temporary mismatch.
+- The fixed JS driver rejects imports, runs opposite input orders in two fresh
+  instances, checks independent corner/formula digests, and compares memory size
+  before/after each instance's calls. Its bounded Number arithmetic is exact; the
+  finite no-growth observation is distinct from a universal allocation/stack claim.
+- The WASI launcher accepts one optional --env NAME VALUE followed by one optional
+  --replay-dir DIRECTORY, then binary/guest arguments. Guest env begins empty; the
+  replay preopen maps to /replay. Remaining argv becomes guest argv including binary
+  at index zero. returnOnExit permits proc_exit status forwarding. Prefix validation,
+  file/instantiation errors and traps propagate; no built-in timeout is supplied.
+
+Context included translated-source pullback, native float target qualification,
+and the existing check_interval_wasm.py orchestration/disassembly helper. These
+reads do not add a new whole-file implementation audit or claim that the entire
+umbrella conformance workflow was executed. The two unchanged manifests establish
+separate workspaces, local dependency closure and release panic/overflow settings;
+publication/MSRV qualification was not attempted.
+
+Validation after the final source edit:
+
+- Locked/offline release builds, j2, incremental disabled and the reused Cargo
+  target: fixed-only clients built for wasm32-unknown-unknown and wasm32-wasip1;
+  the centered client built for wasm32-unknown-unknown, before and after edits.
+- Node was absent. The required sandbox escalation downloaded the official Node
+  v22.16.0 Linux x64 archive into the owned /tmp audit directory; its executable
+  ran all real WASM checks. No repository dependency or system installation changed.
+- The original fixed driver completed 172,284 checked calls on each target/revision,
+  using two instances and 2,051 inputs per instance, with 36 depth choices plus six
+  other probes. Every observed memory size remained 1,114,112 bytes. Binaryen
+  disassembly and the existing floating_operations helper found no floating
+  arithmetic, imports or memory.grow in either fixed module on either revision.
+  Execution had an external 60-second process timeout, not a guest resource budget.
+- An independent BigInt centered driver checked both integer widths, negative radii,
+  signed extrema, status plus both endpoints, matrix whole-result overflow,
+  separately rounded half-map bounds, empty/unit distinction and qualification.
+  It made 1,163 calls per revision, including four expected invalid-selector/row
+  traps in fresh instances. No -99 outcome was accepted. Reports matched exactly
+  between revisions; no general allocator-free claim is made for this std client.
+- A real temporary WASI Preview 1 command tested empty guest environment, one supplied
+  variable, preopened fixture reading, argument forwarding and exit code seven.
+  Both launcher revisions produced the expected stdout/status. Invalid variable
+  names, missing values and missing replay directories failed as specified. Guest
+  execution had an external 30-second timeout. Node syntax checks passed for both
+  edited JavaScript files.
+- cargo doc --document-private-items --no-deps passed for both actual manifests on
+  wasm32-unknown-unknown, denying warnings, broken links and private-link violations.
+  All 16 nonlocal authored Rustdoc blocks rendered in full. Both generated vector
+  exports rendered the complete macro documentation. Eleven authored local aliases
+  were source-checked and rendered separately as Markdown; ordinary Rustdoc pages
+  for function-local aliases are not claimed.
+- Removing only whole comment/blank lines leaves identical remaining Rust/JS bytes.
+  Both manifests and lockfiles remain byte-identical. All 13 authored function
+  declarations have Rustdoc; selected-file rustfmt and git diff --check passed.
+  Binary sizes stayed 67,537, 67,788 and 47,711 bytes respectively, but binary hashes
+  differ; deterministic executable-byte identity is not claimed. Source/behavioral
+  identity and binary-size observations are separate evidence. Full workflow checks
+  remain owner-waived for this docs-only session; the root coverage mandate persists.
+
+Evidence: /tmp/csgrs-rustdoc-interval-wasm-{build-before,before,build-after,after,
+docs,validation}.log and /tmp/csgrs-interval-wasm-audit/ (artifact metadata, binaries,
+disassemblies, before/after reports, binary digests, rendered-text matches, BigInt
+oracle, WASI guest and validation scripts). The downloaded archive and duplicate
+local-doc HTML were removed. One 116 MiB Node executable is retained at
+/tmp/csgrs-interval-wasm-audit/node for subsequent platform checks; the directory
+is approximately 122 MiB. The shared Cargo target is approximately 4.4 GiB, with
+no second target. No focused check remains blocked. Other platform conformance
+clients and the repository-wide audit remain open; these finite witnesses do not
+establish universal geometry/resource closure or full repository documentation.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

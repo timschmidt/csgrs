@@ -1,9 +1,23 @@
-//! Clean no_std cdylib consumer: linking succeeds without a global allocator.
+//! Clean no_std cdylib consumer of fixed-grid interval and retained affine APIs.
+//!
+//! The fixed-wasm manifest links this source with only the fixed feature and no global
+//! allocator. Seven C-ABI exports clamp/reduce arbitrary i32/u32 inputs into bounded
+//! fixtures, assert complete native results and return integer digests for a host oracle.
+//! The digests alone are not independent proofs of all bounds; assertions and the
+//! host's corner/formula expectations supply complementary evidence.
+//!
+//! Unexpected errors/assertions enter a permanent spin in this panic handler. These
+//! exports are conformance probes, not a general fallible geometry ABI. Hosts must
+//! provide external containment if a regression hangs a call. A successful link and
+//! finite no-growth runs do not establish a universal stack/work/memory bound.
 #![no_std]
 use hyperlattice_interval::hyperinterval::FixedInterval;
 use hyperlattice_interval::{AffineChain, AffineMap, IntervalMatrix, IntervalVector};
 
 #[panic_handler]
+/// Keep the allocator-free guest freestanding by spinning forever on panic.
+/// Ignore diagnostic information and perform no formatting, allocation or unwinding.
+/// This supplies no error status or recovery; the embedding runtime must stop a hang.
 fn panic(_: &core::panic::PanicInfo<'_>) -> ! {
     loop {
         core::hint::spin_loop();
@@ -11,7 +25,12 @@ fn panic(_: &core::panic::PanicInfo<'_>) -> ! {
 }
 
 #[unsafe(no_mangle)]
+/// Clamp input to s in `[-256,256]`, retain t in `[s,s+1]`, and map it to
+/// (2t+3,2t-4), then subtract the two coordinates. Assert the exact singleton seven
+/// before returning seven. Composing retained images preserves the common t; boxing
+/// the intermediate image would lose that relation. Unexpected failure spins.
 pub extern "C" fn affine_correlation_probe(input: i32) -> i32 {
+    /// Whole-unit i32 endpoints for the clamped, representable integer fixture.
     type I = FixedInterval<i32, 0>;
     let s = input.clamp(-256, 256);
     let point = |x| I::point(x).unwrap();
@@ -35,7 +54,12 @@ pub extern "C" fn affine_correlation_probe(input: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+/// Enclose (2x-y+3,x+y-4) on `[s,s+1]` by `[-1,2]`, with input clamped to s.
+/// Here s lies in `[-256,256]`. Assert all four bounds (2s+1,2s+6,s-5,s-1), then
+/// return lo_x+3*hi_x+5*lo_y+7*hi_y = 20s-13. This Cartesian enclosure treats
+/// source lanes independently; the bounded fixture fits the whole-unit i32 grid.
 pub extern "C" fn interval_affine_probe(input: i32) -> i32 {
+    /// Whole-unit i32 endpoints for the clamped, representable integer fixture.
     type I = FixedInterval<i32, 0>;
     let s = input.clamp(-256, 256);
     let point = |x| I::point(x).unwrap();
@@ -49,7 +73,13 @@ pub extern "C" fn interval_affine_probe(input: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+/// Reduce depth modulo 33 and clamp input to s in `[-256,256]`.
+/// Build a capacity-32 chain on `[s,s+1]` by `[-1,2]` using (x,y)->(x+y+1,y-1).
+/// For n maps, y_n=y-n and x_n=x+n*y+n-n(n-1)/2. Assert the resulting bounds,
+/// then return their weighted digest. Depth zero exercises the retained source.
+/// The input reduction guarantees capacity admission; scalar work is not metered.
 pub extern "C" fn affine_chain_probe(input: i32, depth: u32) -> i32 {
+    /// Whole-unit i32 endpoints for the clamped, representable integer fixture.
     type I = FixedInterval<i32, 0>;
     let p = |n| I::point(n).unwrap();
     let s = input.clamp(-256, 256);
@@ -83,7 +113,13 @@ pub extern "C" fn affine_chain_probe(input: i32, depth: u32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+/// Clamp input to s in `[2,256]` and query a two-by-two interval matrix.
+/// Its diagonal is (-s-2,-s-1), with off-diagonal intervals `[1,2]` and `[-1,1]`.
+/// Check induced norms, signed logarithmic measures and norms of row/column
+/// strict-dominance margins. Return the weighted norm/measure digest 50-44s.
+/// The margin queries are consumed by subsequent norm queries; failure spins.
 pub extern "C" fn interval_norm_probe(input: i32) -> i32 {
+    /// Whole-unit i32 endpoints for the clamped, representable integer fixture.
     type I = FixedInterval<i32, 0>;
     let s = input.clamp(2, 256);
     let p = |a, b| I::new(a, b).unwrap();
@@ -118,7 +154,13 @@ pub extern "C" fn interval_norm_probe(input: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+/// Clamp input to s in `[0,255]` and compare exact widths on the i64 2^-63 grid.
+/// Raw widths are u64::MAX-s, 2s, u64::MAX-s and u64::MAX. Assert that the widest
+/// width cannot project to an interval of the same signed endpoint family. The
+/// first-axis tie rule selects zero when s=0 and three otherwise; return 1000*axis+s.
+/// No rounded width projection supplies the selection decision.
 pub extern "C" fn interval_width_probe(input: i32) -> i32 {
+    /// Finest admitted i64 grid: raw numerators have spacing 2^-63; widths may need u64.
     type I = FixedInterval<i64, 63>;
     let s = i64::from(input.clamp(0, 255));
     let source = IntervalVector::new([
@@ -140,7 +182,14 @@ pub extern "C" fn interval_width_probe(input: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+/// Clamp input to s in `[-256,256]` and retain raw fixed-grid bounds before projection.
+/// Adjacent numerators have half-grid centers/radii, so their enclosures round outward;
+/// `[-7,9]` has exact raw center one and radius eight. Consume projected radii in a
+/// norm query, reconstruct both vector and matrix bounds, and check that an extreme
+/// radius projection fails while the retained full-range width still succeeds.
+/// Return 2s+31 only after every assertion. These are raw 2^-63-grid numerators.
 pub extern "C" fn midpoint_radius_probe(input: i32) -> i32 {
+    /// Finest admitted i64 grid: raw numerators have spacing 2^-63; widths may need u64.
     type I = FixedInterval<i64, 63>;
     let s = i64::from(input.clamp(-256, 256));
     let a = I::new(s, s + 1).unwrap();
@@ -184,7 +233,13 @@ pub extern "C" fn midpoint_radius_probe(input: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+/// Clamp input to s in `[-256,256]`, form I-A and check the involution I-(I-A)=A.
+/// For the varying diagonal `[-s,1-s]`, independently compute absolute extrema, then
+/// assert both induced contraction-margin enclosures. Consume the remainder in a
+/// box action and check its full output. Return a weighted margin digest; negative
+/// margins remain valid results and are not evidence of a contraction certificate.
 pub extern "C" fn contraction_probe(input: i32) -> i32 {
+    /// Whole-unit i32 endpoints for the clamped, representable integer fixture.
     type I = FixedInterval<i32, 0>;
     let s = input.clamp(-256, 256);
     let zero = I::point(0).unwrap();
