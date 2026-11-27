@@ -6986,6 +6986,20 @@ fn right_divide_matrix4_checked_with_abort(
     ))
 }
 
+/// Multiplies borrowed 3×3 matrices while pruning products with definitely-zero factors.
+///
+/// Scans all left entries, then all right entries, in row-major order using
+/// `!definitely_zero()`. The local nonzero flags mean retained lanes, not proved
+/// nonzero values: unknown lanes remain active. If every lane is retained, each
+/// result cell uses `Real::dot3`; this dense dispatch is weaker than a known-nonzero
+/// certificate and does not imply an invertible or dense result.
+///
+/// Otherwise each cell intersects its row/column flags. Zero active products yield
+/// exact zero, one uses ordinary scalar multiplication, two use an ordered active
+/// signed sum, and three use `dot3`. Selected lanes stay in increasing index order;
+/// result cells are built row-major. Scalar reducers own rational aggregation and
+/// symbolic behavior. No approximation, signal attachment or total-work limit is
+/// introduced by this matrix schedule.
 #[inline]
 fn multiply_arrays3_borrowed(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
     let left_nonzero = [
@@ -7104,6 +7118,12 @@ fn multiply_arrays3_borrowed(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [
     ]
 }
 
+/// Builds nine row-major three-lane dot products without a matrix-level sparsity scan.
+///
+/// Each cell pairs the left row and right column in index order through `Real::dot3`.
+/// The helper does not itself certify density or rationality; scalar dot handling
+/// still applies to zeros and symbolic entries. Callers using a density shortcut
+/// must establish their own scheduling evidence, and the result may contain zeros.
 #[inline]
 fn multiply_arrays3_dense_ref(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
     trace_matrix!("helper", "multiply3-dense-ref");
@@ -7121,6 +7141,13 @@ fn multiply_arrays3_dense_ref(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> 
     ]
 }
 
+/// Checks current dense-support evidence before multiplying two owned 3×3 matrices.
+///
+/// Scans the left matrix for known nonzero status, then the right only if the first
+/// scan succeeds. Both must pass to borrow them into [`multiply_arrays3_dense_ref`];
+/// otherwise uses ordinary owned multiplication. Despite the name, this requires
+/// no rational-representation proof. Unknown rejects the shortcut, not the product.
+/// An input certificate does not certify the product's support for later operations.
 #[inline]
 fn multiply_arrays3_with_exact_dense_certificate(
     left: [[Real; 3]; 3],
@@ -7135,6 +7162,13 @@ fn multiply_arrays3_with_exact_dense_certificate(
     multiply_arrays3(left, right)
 }
 
+/// Checks left-then-right nonzero evidence for an owned/borrowed 3×3 product.
+///
+/// On full support certificates, borrows both operands for the dense dot kernel;
+/// otherwise preserves the ordinary owned-left/borrowed-right dispatch. These are
+/// current known-nonzero checks, not rationality checks. Used after an intermediate
+/// square in cubing, where even a dense source can have become zero; stale source
+/// support must not substitute for inspecting that intermediate.
 #[inline]
 fn multiply_arrays3_rhs_ref_with_exact_dense_certificate(
     left: [[Real; 3]; 3],
@@ -7149,6 +7183,12 @@ fn multiply_arrays3_rhs_ref_with_exact_dense_certificate(
     multiply_arrays3_rhs_ref(left, right)
 }
 
+/// Multiplies two borrowed 3×3 matrices after fresh dense-support checks.
+///
+/// The right scan runs only after every left entry is known nonzero. If both pass,
+/// uses the direct dot kernel; a zero or unknown falls back to ordinary borrowed
+/// multiplication, preserving its identity/diagonal/sparse paths. Does not establish
+/// rationality, invertibility, result density or a scalar-resource bound.
 #[inline]
 fn multiply_arrays3_ref_with_exact_dense_certificate(
     left: &[[Real; 3]; 3],
@@ -7162,6 +7202,20 @@ fn multiply_arrays3_ref_with_exact_dense_certificate(
     multiply_arrays3_ref(left, right)
 }
 
+/// Multiplies borrowed 4×4 matrices using ordered active-product subsets per cell.
+///
+/// Scans all sixteen left entries, then all sixteen right entries, row-major with
+/// `!definitely_zero()`. A retained lane may be unknown. When all are retained,
+/// constructs sixteen four-term active signed sums; the dense label is not a
+/// known-nonzero or rational certificate.
+///
+/// Otherwise each cell intersects row/column flags, returning exact zero for no
+/// products, ordinary multiplication for one, or active signed sums for two,
+/// three or four. Every subset preserves increasing lane order. In particular the
+/// first pair is lanes zero and one, never zero and three. The two-term arm's
+/// unreachable case is excluded by the counted four booleans, not by scalar sign
+/// knowledge. Cells are constructed row-major. Scalar arithmetic may simplify or
+/// aggregate further; this helper adds no refinement policy or resource limit.
 #[inline]
 fn multiply_arrays4_borrowed(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
     let left_nonzero = [
@@ -7310,13 +7364,9 @@ fn multiply_arrays4_borrowed(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [
             2 => {
                 if p0 {
                     if p1 {
-                        // Sparse mat4 multiply is performance-sensitive for
-                        // affine and inverse kernels because exact Real kernels
-                        // avoid constructing zero products. Keep each active
-                        // lane explicit: a previous hand-unrolled branch used
-                        // lane 3 for the `p0 && p1` case, which broke
-                        // upper-triangular inverse products while preserving
-                        // most dense benchmark rows.
+                        // Exactly lanes zero and one are active here. Substituting
+                        // lane three would change sparse products, including those
+                        // used to check triangular inverses.
                         Real::active_signed_product_sum2([true, true], [[l0, r0], [l1, r1]])
                     } else if p2 {
                         Real::active_signed_product_sum2([true, true], [[l0, r0], [l2, r2]])
@@ -7373,6 +7423,12 @@ fn multiply_arrays4_borrowed(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [
     ]
 }
 
+/// Constructs sixteen ordered four-term sums without matrix-level zero pruning.
+///
+/// Borrows each left row/right column and passes all four positive products to the
+/// active scalar reducer in lane order, constructing cells row-major. Does not
+/// validate a dense-support certificate, require rational entries, or prove result
+/// density. Any scalar-level aggregation or simplification remains scalar-owned.
 #[inline]
 fn multiply_arrays4_dense_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
     trace_matrix!("helper", "multiply4-dense-ref");
@@ -7399,6 +7455,16 @@ fn multiply_arrays4_dense_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> 
     ]
 }
 
+/// Constructs a 4×4 product using caller-established exact-rational representations.
+///
+/// Both operands' current entries must expose exact rational values. Each row-major
+/// cell passes all four lane-ordered positive products to the unchecked
+/// known-rational reducer. Zeros are admissible; full support is not required.
+///
+/// No factor-class check or typed mismatch is provided. The scalar reducer reads
+/// stored rational components directly, so using symbolic factors or stale evidence
+/// can change the represented value. Callers must establish or validly transport
+/// the rational-representation proof for these exact operands.
 #[inline]
 fn multiply_arrays4_dense_known_rational_ref(
     left: &[[Real; 4]; 4],
@@ -7428,12 +7494,28 @@ fn multiply_arrays4_dense_known_rational_ref(
     ]
 }
 
+/// Ephemeral structural facts needed by ordinary matrix multiplication.
+///
+/// Omits the full matrix shape/mask report to collect only the predicates consumed
+/// by identity and diagonal shortcuts. Positive fields justify their respective
+/// shortcuts for the inspected matrix state; false fields need not prove the
+/// opposite geometry. Copies are unbound snapshots, not mutation-aware caches.
 #[derive(Clone, Copy)]
 struct MatrixIdentityDiagonalFacts {
+    /// All off-diagonal entries passed definite-zero checks and diagonal entries passed definite-one checks.
     is_identity: bool,
+    /// All off-diagonal entries passed definite-zero checks; diagonal values are unrestricted.
     is_diagonal: bool,
 }
 
+/// Collects only the structural identity/diagonal facts used by one-shot products.
+///
+/// Checks off-diagonal entries row-major for definite zero, short-circuiting at the
+/// first failure and skipping diagonal entries. Only when that succeeds does it
+/// check diagonal entries for definite one in index order. A false result means
+/// this structural test failed, not a proof of mathematical inequality. For `N=0`,
+/// both universal tests are vacuously true; for `N=1`, diagonal is always true.
+/// The returned snapshot is not tied to later mutations and must be recomputed.
 #[inline]
 fn matrix_identity_diagonal_facts<const N: usize>(
     matrix: &[[Real; N]; N],
@@ -7447,6 +7529,14 @@ fn matrix_identity_diagonal_facts<const N: usize>(
     }
 }
 
+/// Consumes two 3×3 operands and selects identity, diagonal or active-cell multiplication.
+///
+/// Collects left identity/diagonal facts and then right facts before any branch.
+/// Priority is left identity, right identity, left diagonal, right diagonal, then
+/// [`multiply_arrays3_borrowed`]. Identity returns the opposite owned array;
+/// diagonal paths scale rows or columns. Only the final path records the
+/// owned-owned specialized event. Shape knowledge does not require invertibility,
+/// and zero or unknown entries remain valid multiplication inputs.
 #[inline]
 fn multiply_arrays3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> [[Real; 3]; 3] {
     // One-shot multiplication consumes only identity and diagonal facts. Full
@@ -7474,6 +7564,13 @@ fn multiply_arrays3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> [[Real; 3]; 
     multiply_arrays3_borrowed(&left, &right)
 }
 
+/// Consumes two 4×4 matrices with left-first identity/diagonal shortcut priority.
+///
+/// Collects both fact snapshots, left then right, before returning either identity
+/// operand's counterpart. Next tries left-diagonal row scaling, right-diagonal
+/// column scaling, and finally [`multiply_arrays4_borrowed`]. The specialized trace
+/// is emitted only on that fallback. Products retain exact scalar semantics but
+/// no input shape or density claim automatically applies to their results.
 #[inline]
 fn multiply_arrays4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> [[Real; 4]; 4] {
     let left_facts = matrix_identity_diagonal_facts(&left);
@@ -7499,6 +7596,13 @@ fn multiply_arrays4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> [[Real; 4]; 
     multiply_arrays4_borrowed(&left, &right)
 }
 
+/// Multiplies an owned left 3×3 matrix by a borrowed right matrix.
+///
+/// Scans left and right identity/diagonal facts before branching, in that order.
+/// Left identity clones the right array; right identity returns the owned left.
+/// Then left/right diagonal scaling precedes borrowed active-cell multiplication.
+/// Only the fallback records the owned-ref specialized event. Borrowing the right
+/// operand does not remove scalar cloning performed by the selected kernel.
 #[inline]
 fn multiply_arrays3_rhs_ref(left: [[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
     let left_facts = matrix_identity_diagonal_facts(&left);
@@ -7524,6 +7628,13 @@ fn multiply_arrays3_rhs_ref(left: [[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[R
     multiply_arrays3_borrowed(&left, right)
 }
 
+/// Multiplies owned/borrowed 4×4 operands using identity and diagonal facts.
+///
+/// Collects both snapshots before choosing left identity, right identity,
+/// left-diagonal row scaling, right-diagonal column scaling or the borrowed
+/// active-cell kernel. Left identity clones the right array; right identity
+/// returns the left. The owned-ref specialized event belongs only to the fallback;
+/// unknown lanes are retained by the selected scalar schedule.
 #[inline]
 fn multiply_arrays4_rhs_ref(left: [[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
     let left_facts = matrix_identity_diagonal_facts(&left);
@@ -7549,12 +7660,16 @@ fn multiply_arrays4_rhs_ref(left: [[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[R
     multiply_arrays4_borrowed(&left, right)
 }
 
+/// Multiplies borrowed 3×3 operands, including borrowed-left/owned-right operator calls.
+///
+/// Records the ref-ref specialized event on entry, even when a shortcut follows.
+/// Then collects left and right identity/diagonal snapshots before choosing left
+/// identity, right identity, left diagonal or right diagonal in order. Identity
+/// clones the opposite array. Otherwise delegates to the borrowed active-cell
+/// kernel, retaining its lane and per-cell scalar reduction order.
 #[inline]
 fn multiply_arrays3_ref(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
-    // Fixed 3x3 multiply avoids the const-generic helper's per-cell "is there
-    // a fourth lane?" branch and intermediate tiny arrays. A row-dot prototype
-    // was traced and rejected because it regressed exact-rational powi despite
-    // fewer reduction events; keep the proven per-cell dot schedule here.
+    // Preserve the fixed three-lane, per-cell reduction schedule and entry trace.
     trace_matrix!("helper", "multiply3-ref-ref-specialized");
 
     let left_facts = matrix_identity_diagonal_facts(left);
@@ -7579,12 +7694,17 @@ fn multiply_arrays3_ref(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real
     multiply_arrays3_borrowed(left, right)
 }
 
+/// Multiplies borrowed 4×4 operands through structural shortcuts and active-cell sums.
+///
+/// The ref-ref specialized trace precedes both fact scans and all shortcuts, so it
+/// also occurs for identity/diagonal products. After left then right snapshots,
+/// priority is left identity, right identity, left diagonal, right diagonal, then
+/// [`multiply_arrays4_borrowed`]. Identity clones the opposite array. The public
+/// borrowed-left/owned-right operator also uses this path; its owned right input
+/// does not select the owned-owned dispatch.
 #[inline]
 fn multiply_arrays4_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
-    // Fixed 4x4 borrowed multiply is similarly unrolled. This is deliberately
-    // duplicated from the generic path because the branchless version wins in
-    // borrowed mat4 multiply benchmarks while keeping per-cell exact-rational
-    // denominator schedules.
+    // Preserve the fixed four-lane, per-cell reduction schedule and entry trace.
     trace_matrix!("helper", "multiply4-ref-ref-specialized");
 
     let left_facts = matrix_identity_diagonal_facts(left);

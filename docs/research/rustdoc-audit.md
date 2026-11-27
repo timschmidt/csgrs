@@ -9738,6 +9738,138 @@ Rustdoc. The next contiguous boundary is `multiply_arrays3_borrowed`, currently
 core.rs line 6990. Multiplication/transform/cofactor kernels, public APIs and
 remaining matrix tests still require audit.
 
+## 2026-11-27: Hyperlattice matrix multiplication and support facts
+
+Base revision: `079719a29`. The preceding goal turn made progress by pushing the
+right-division dispatcher audit. This batch continues at
+`multiply_arrays3_borrowed`. Owning layer: Hyperlattice matrix multiplication
+with Hyperreal structural facts and exact scalar reducers. Relevant contracts:
+P1/P3 for exact arithmetic and conservative zero knowledge, P4/P10 for valid
+retained evidence and unchanged predicate/dispatch order, P5 for honest resource
+claims, and P6 for explicit caller preconditions. The domain is arbitrary Real
+3×3/4×4 matrices, plus a private const-generic structural-fact helper. The
+known-rational specialization additionally requires current rational factor
+representations. Before editing, fifteen functions, a private type and its two
+fields lacked Rustdoc. Original tests and independent mask/product probes passed
+on the target revision. No implementation, API, fixture, assertion or policy changed.
+
+Coverage:
+
+- Read all of core.rs original lines 6989–7611, including the initial attribute:
+  623 lines covering borrowed sparse/dense products, three 3×3 certificate
+  wrappers, the known-rational 4×4 product, identity/diagonal facts, and six
+  ownership dispatchers. The block is now 743 lines. Eighteen Rustdoc groups
+  document fifteen functions, one type and two fields.
+- Read scalar dot/active-sum adapters and the known-rational scalar reducer,
+  public ownership-operator expansion, cubing/division call sites and existing
+  product/inverse/ownership tests as context. These reads do not complete later
+  public APIs or the remaining matrix implementation. No test documentation is
+  newly counted and neither matrix source nor test file receives whole-file credit.
+
+Documented behavior and corrections:
+
+- Ordinary borrowed kernels scan all left entries, then all right entries, in
+  row-major order using `!definitely_zero()`. These flags retain unknown lanes;
+  they are not positive nonzero proofs. The ordinary dense branch means no
+  definitely-zero lane was found, not full support certification or invertibility.
+- Each sparse cell intersects its row/column flags and keeps active lane order.
+  No products gives exact zero; one uses scalar multiplication; two uses an
+  ordered active sum; the 3×3 full cell uses dot3. Four-dimensional cells use
+  active sums for two, three or four terms. All output cells are constructed
+  row-major. The unreachable two-term arm is excluded by the four counted
+  booleans, not by a mathematical sign assumption.
+- The 4×4 two-term case for lanes zero and one uses exactly those lanes. Replaced
+  historical/performance commentary with this invariant and its consequence for
+  sparse inverse-product checks. The finite mask corpus retains all subsets,
+  including the pair singled out by the old comment.
+- Dense kernels do not perform matrix-level sparsity checks; scalar-owned dot or
+  active-sum behavior still applies. The three certificate wrappers instead
+  require current known-nonzero status for every left entry, then every right
+  entry if the left passes. Unknown rejects this shortcut while preserving the
+  product via ordinary dispatch. The names do not imply rationality checks.
+- Product support must be re-established for subsequent operations: dense inputs
+  can multiply to exact zero. The cubing wrapper checks the intermediate square
+  rather than reusing the source's support. None of these schedules proves a
+  scalar-work, expression-growth or cancellation bound.
+- The known-rational 4×4 kernel accepts zero lanes but requires both operands'
+  current factors to expose exact rational representations. Its scalar reducer
+  reads stored rational components without class checks; symbolic factors or
+  stale evidence can change the value rather than return a typed mismatch.
+  Documented this caller obligation without adding a check or broadening a claim.
+- The small fact helper checks off-diagonal zeros row-major and short-circuits,
+  then checks diagonal ones only after diagonal structure succeeds. Its N=0
+  tests are vacuously true; N=1 is always diagonal. The Copy type is an unbound
+  snapshot, so mutation requires recomputation. False means this recognition
+  failed, not necessarily proved mathematical inequality.
+- All six ordinary ownership dispatchers collect left and right fact snapshots
+  before branching. Priority is left identity, right identity, left diagonal,
+  right diagonal, then the borrowed active-cell kernel. Identity returns or
+  clones the opposite array according to ownership; diagonal action scales rows
+  or columns. Borrowed-left/owned-right operators use the same helper as two
+  borrowed operands, as confirmed in the generated public implementations.
+- Borrowed dispatch records its specialized event on entry, even for identity
+  or diagonal products. Owned and owned-left/borrowed-right paths record their
+  specialized event only on fallback. These distinctions and all scalar schedules
+  remain unchanged. Removed unqualified historical benchmark-win commentary;
+  this docs batch makes no new performance claim.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Stripping comment-only and blank
+  lines leaves identical executable source against `079719a29`, preserving all
+  attributes, predicates, reductions, constants, traces and assertions.
+- Actual Hyperlattice builds and nine selected original tests passed with all
+  features and no defaults, as well as on the all-feature baseline. Eight matrix
+  tests cover inverse/product identities, negative powers, fractional fixtures,
+  triangular inverses and division identities; one borrowed-ops test checks
+  ownership agreement. Direct rustc harnesses used matching Cargo artifact graphs.
+- The independent integer triple-sum oracle checked every pair of row/column
+  support masks: 64 for 3×3 and 256 for 4×4, in four ownership forms, for 1280
+  complete product comparisons. Other rows/columns retained nonzero entries so
+  each pair reached the borrowed cell kernels. All-feature assertions required
+  one expected specialized event and one dense/sparse event for each case.
+- Eight identity/diagonal priorities per dimension, including two identities,
+  two diagonals and zero operands, passed in four ownership forms: 64 more exact
+  products with exact branch and specialized-event counts. No count was loosened.
+- An isolated unknown lane survived exactly in a one-product cell in each size.
+  Separate ordinary dense cases retained unknown entries and confirmed route
+  selection; these cases test construction/dispatch, not full symbolic evaluation.
+  Cubing matched an independent integer cube for a dense matrix and exact zero
+  for the dense rank-one fixture whose row is [1,1,-2]. The latter asserted zero
+  uses of the owned-ref dense-certificate branch after the square collapsed.
+- A 3×3 shared-adjugate quotient with all-one dividend and diagonal-five/off-
+  diagonal-one divisor returned exact 1/7 in every cell, exercising owned and
+  borrowed dense-certificate multiplication. Additional final 4×4 quotient probes
+  used a Python Fraction Gauss–Jordan inverse oracle, zero-containing operands,
+  four division modes and exactly one known-rational product event per mode.
+- Extracted the actual private fact type/helper for direct N=0, N=1 identity/zero
+  and mutation checks. These assertions exercise the existing source, not an
+  independently rewritten implementation. The empty dimension is private-helper
+  evidence, not a newly supported public matrix dimension.
+- Before/after all-feature public and private probe stdout matched exactly.
+  No-default mode repeated all semantic checks with traces compiled out; all
+  final probes were warning-free. Original tests had 60-second process limits,
+  probes 30-second limits. The finite corpus is not universal symbolic closure.
+- Private library and integration-target Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full-text checks found
+  all eighteen groups on the individual function pages and the type page,
+  including both fields. The 298 inspected HTML pages are rendering evidence, not completed API audits.
+- Cargo checks passed for matrix and borrowed_ops integration targets, mathbench,
+  and downstream Hyperspatial including Hyperlimit, with all features and no
+  defaults. Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and one shared target.
+- Full workflows remain owner-waived. No full matrix suite, runtime benchmark,
+  sanitizer, code-size or total-resource study was claimed. No focused check
+  remains blocked. Removed five temporary executables; the shared target remains
+  near 2.5 GiB and no second target tree was created.
+- The root AGENTS.md mandate for 100% public/private Rustdoc remains in effect.
+  Repository-wide completion remains unproven and the wider audit remains open.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-multiply-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-multiply-audit/` temporary generators, source extracts, probes,
+checkers and private docs. The next contiguous boundary is
+`transform_vector_rhs_ref`, currently core.rs line 7732. Transform/cofactor
+kernels, public APIs and remaining matrix tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
