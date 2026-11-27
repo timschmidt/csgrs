@@ -865,27 +865,59 @@ pairs. The explicit count and serialized tag checks intentionally fail when
 Hyperreal adds or renames a finite certificate until Hyperlattice adds a
 corresponding recipe.
 
-`scripts/representation_coverage.sh` repeats that oracle with neither optional
-crate feature, with each primitive approximation cache independently, and with
-all Hyperlattice features plus both dependency caches. The
-`hyperreal_representations` fuzz target uses the same finite corpus on every
-execution. Input bytes select rotating pairings, scalar perturbations, powers,
-and bounded variable-depth opaque DAGs, so finite discriminant coverage does
-not depend on corpus discovery.
+`scripts/representation_coverage.sh` runs the integration target in four selected
+configurations: no default features, each Hyperreal primitive approximation cache
+independently with no default features, and all Hyperlattice features plus both
+caches. With the current empty defaults this visits four cache combinations;
+it does not test their Cartesian product with every lattice feature combination.
+The script stops at the first failure and adds no resource bound.
+
+The `hyperreal_representations` fuzz target builds 22 labeled finite recipes and
+four opaque expressions on each execution. It checks eight public structural
+kinds before input-driven integer scaling, but does not assert 22 distinct private
+tags. Bytes select rotating pairings, scalar perturbations, powers, and opaque
+construction depth. Pair reachability is not evidence of campaign coverage, and
+bounded construction depth does not bound evaluation cost. The equality helper's
+interval-overlap fallback does not prove equality; see [`fuzz/README.md`](fuzz/README.md).
 
 The Criterion `real_representations` group provides one composite
 vector/determinant/complex workload per certificate. It is a representation
 cost sweep, complementary to the existing competitive `mathbench` groups that
 compare Hyperlattice with Numerica 128, GMP/MPFR 128 through Rug, and Symbolica.
-`examples/allocation_profile.rs` measures complex multiplication, vector
-dot/cross, Matrix3 determinant, and Matrix4 point transform separately for all
-22 classes. Its counting epoch starts after fixture construction and warm-up;
-the end-live delta intentionally makes lazy cache retention visible.
+`examples/allocation_profile.rs` reports complex multiplication, a vector dot/cross
+tuple, Matrix3 determinant, and Matrix4 point transform for 22 labeled recipes.
+Only the recipe count is asserted, not private class tags. Fixtures and one warm-up
+precede each counting window; counted iterations include result destruction.
+One warm-up does not establish steady state. The shell wrapper uses a release,
+all-feature build and takes its iteration count from
+`HYPERLATTICE_ALLOCATION_ITERATIONS` (unset or empty means 128).
 
-`scripts/coverage.sh` uses Rust's LLVM coverage tools directly. It merges
-no-feature, all-feature, integration-test, example, and benchmark-fixture
-profiles, suppresses generated benchmark-document writes, and emits both an
-annotated source report and HTML under `target/coverage`.
+The process-global allocator wrapper counts successful allocations/reallocations
+and observed frees. Requested-byte traffic includes each realloc's full new size.
+Live balance begins at zero and saturates on subtraction, so freeing pre-window
+storage can hide a negative delta or offset newly retained storage. The printed
+"end live delta" is this nonnegative balance. Peak/end columns cover the whole
+window; only call and traffic columns are averaged per iteration. Counters omit
+allocator overhead, pre-existing live storage, and temporary storage inside
+realloc; they are not RSS or complete-lifetime memory evidence. Relaxed independent
+loads, unchecked counter growth, and overlapping/concurrent windows impose further
+limits described in the example's private Rustdoc. No independent geometry or
+certainty oracle qualifies these allocation rows.
+
+`scripts/coverage.sh` uses Rust's LLVM tools to merge profiles from selected
+no-default/all-feature lib and integration tests, then all-feature Cargo test
+targets. Example test harnesses need not execute example mains. The report
+suppression environment variable is a request to targets that honor it.
+Output defaults to `target/coverage`; the script deletes prior coverage output
+and the selected target's entire `html` contents before building. Relative target
+overrides are interpreted from the crate directory.
+
+Its path filter is not exclusive to this crate's source. The additional production
+line table heuristically stops at a standalone `#[cfg(test)]` followed only by
+blank lines and `mod tests {`; other test-module forms remain counted, and later
+production items after a recognized boundary are excluded. Displayed count fields
+are not a Rust-aware source inventory. No coverage threshold or zero-total guard
+is supplied. Execution coverage does not establish Rustdoc coverage or correctness.
 
 ## Reproduction and validation
 

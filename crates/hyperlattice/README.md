@@ -256,20 +256,23 @@ primitive-cache layouts with:
 scripts/representation_coverage.sh
 ```
 
-The matching fuzz target retains that complete finite corpus on every
-execution, rotates cross-representation pairs from input bytes, and grows
-additional bounded opaque expression DAGs:
+The matching fuzz target builds 22 labeled recipes and four opaque expressions,
+then uses input bytes to scale values and rotate pairings. Construction depth
+is limited, but evaluation work is not bounded by that limit. Its assertions
+and interval-overlap fallback are described in [`fuzz/README.md`](fuzz/README.md):
 
 ```sh
 cargo check --manifest-path fuzz/Cargo.toml --bins
 cargo +nightly fuzz run hyperreal_representations --fuzz-dir fuzz -- -max_total_time=30
 ```
 
-`scripts/coverage.sh` builds isolated no-feature and all-feature coverage,
-executes benchmark fixtures without rewriting checked-in reports, and writes
-an annotated text report plus HTML under `target/coverage`. The allocation
-profile reports calls, bytes, reallocations, and peak live memory for four
-carrier workloads across every certificate:
+`scripts/coverage.sh` collects LLVM execution coverage for selected no-feature
+and all-feature configurations, including all-feature test targets. It requests
+benchmark-report suppression and writes text and HTML under `target/coverage`
+by default. The allocation profile reports allocator calls, requested-byte
+traffic, and window-relative live balances for four workloads over 22 labeled
+recipes. These counters do not measure total live memory; limitations are
+described in [`PERFORMANCE.md`](PERFORMANCE.md#representation-coverage-and-allocation-gates).
 
 ```sh
 scripts/coverage.sh

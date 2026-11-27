@@ -8009,6 +8009,121 @@ probe sources, and temporary fuzz lockfile. These are temporary review artifacts
 not a durable evidence archive. Other Hyperlattice implementations, tests,
 benchmarks, and support files, and most of the wider repository remain open.
 
+## Hyperlattice allocation observer and coverage wrappers (26 November 2026)
+
+Whole-file review on `caf926a6f` covered every line of
+`crates/hyperlattice/examples/allocation_profile.rs` (288 → 409 lines),
+`scripts/allocation_profile.sh` (8 → 15),
+`scripts/representation_coverage.sh` (19 → 23), and `scripts/coverage.sh`
+(201 → 220), with script paths relative to that crate. Added accurate module,
+private allocator/counter/guard/statistics/helper Rustdoc and shell comments.
+The Rust file has 25 authored const/static/struct/function declarations and six
+fields. All have documentation; its 32 documentation groups include the module.
+No implementation, output string, assertion, command, AWK program, or feature
+selection changed.
+
+Owning layer: development allocation instrumentation and execution-coverage
+reporting. Relevant properties are P4 (cache scope), P5 (resource limits),
+P36 (same completed workload and complete-lifetime memory evidence), and P37
+(no overclaiming). The input domain is a positive usize iteration count over
+22 fixed scalar recipes, plus shell environment/toolchain configuration and
+LLVM text reports. The missing acceptance witness was accurate documentation
+of private measurement machinery and the distinction between its counters and
+complete memory evidence. Earlier text asserted steady-state/all-class coverage
+and generalized execution/feature coverage beyond what the source establishes.
+
+Reproduced semantics before editing the example:
+
+- The allocator delegates to System. Successful allocations/reallocations count;
+  realloc traffic adds the full new size, while live bookkeeping adds/subtracts
+  only the size difference. Frees are counted regardless of allocation origin.
+  Live balance resets to zero and saturates on subtraction. It cannot represent
+  negative deltas, account for pre-existing storage, or observe transient storage
+  inside System::realloc. No RSS, allocator-overhead, or total-memory claim follows.
+- Six independent relaxed loads do not form a coherent concurrent snapshot.
+  Reset/enable does not quiesce other threads. Guards are not nestable: dropping
+  an inner guard disables the outer one's gate. Counter growth is unchecked;
+  overflow and concurrent stress were reviewed but not executed in the allocator.
+- Each row warms once, then includes counted result destruction. Closure fixtures
+  precede the window; closure-environment destruction follows the explicit gate
+  drop. One warm-up is not steady-state evidence. The private zero-iteration path
+  still warms; main rejects zero and parses only the first argument.
+- The 22 labels are recipes, not verified private class tags. The example asserts
+  only their count. Four rows per recipe measure complex self-product, combined
+  vector dot/cross, Matrix3 determinant, and Matrix4 affine point transformation.
+  Printed inline type sizes exclude heap referents. There is no independent exact
+  geometric oracle or certainty receipt. Peak/end values are whole-window balances;
+  the other columns are per-iteration averages.
+- The allocation wrapper inherits Cargo/Rust environment, chooses release/all
+  features, reads iterations from an environment variable with unset/empty default
+  128, and ignores positional arguments. The representation wrapper stops at the
+  first failed command and selects four explicit cache/feature configurations;
+  these are not every lattice-feature/cache combination.
+- The coverage wrapper clears previous coverage files and the selected target's
+  html contents before building. Relative target overrides are crate-relative.
+  It selects no-default/all-feature tests and all-feature Cargo test targets;
+  compiling an example harness need not execute main. Its environment variable
+  requests report suppression only from targets that honor it. Its path filter
+  does not exclusively select this crate's source.
+- The production-line table is an AWK heuristic: standalone cfg(test), optional
+  blanks, then mod tests. Intervening docs/attributes and compound cfg forms defeat
+  recognition; later production after a recognized boundary is also excluded.
+  The no-boundary sentinel excludes displayed line 999999 and above. Nonempty
+  displayed count fields contribute, and anything except literal zero counts hit.
+  There is no threshold or total-zero guard. On this host, empty input printed
+  `TOTAL ... -nan%` and exited successfully. This is an existing reporting
+  limitation, not Rustdoc coverage or correctness evidence.
+
+Targeted context corrections in README's validation-tooling section and
+PERFORMANCE's representation/coverage/allocation section now describe these
+limits and the already-reviewed fuzz helper's overlap fallback. Those two files
+receive **partial context review only**, not whole-file credit. Their adjacent
+integration-test and benchmark claims remain for the corresponding full audits.
+Feature-default manifest searches and the relevant property/admission passages
+were context reads, not new whole-file completion claims.
+
+Validation after final edits:
+
+- Focused Rustfmt, individual `bash -n` checks for all three scripts, and
+  `git diff --check` passed. Removing comment/blank lines gives identical remaining
+  Rust and shell source against `caf926a6f`, including the embedded AWK program.
+- Direct rustc compiled the actual example inside a temporary observer module
+  against the previously built all-feature libraries. Before/after probes passed:
+  allocation 8, resize 24, resize 4, free yielded 1 allocation, 2 reallocations,
+  1 free, 36 traffic bytes, 24 peak bytes, zero end balance; freeing a pre-window
+  32-byte allocation counted a free with zero peak/end balance; two measured
+  16-byte allocations/drops plus one uncounted warm-up yielded the expected three
+  calls and measured traffic/balances; nested-guard interference was confirmed.
+- The original main completed all 88 rows at one counted iteration plus warm-up
+  per row. Its complete printed report matched the pre-edit report byte for byte.
+  This bounded debug invocation is neither a release benchmark nor a geometry
+  qualification or proof of behavior at every iteration count.
+- Private Rustdoc generation for the actual example passed with warnings and
+  broken/private links denied. Complete normalized text of all 32 documentation
+  groups matched generated content across 21 pages, including unsafe allocator
+  methods, private statistics fields, helpers, and guard behavior.
+- Actual allocation/representation wrappers ran against a temporary Cargo logging
+  stub: verified crate cwd, default/empty/custom/invalid iteration passthrough,
+  ignored positional arguments, all four exact configuration commands, and
+  second-command fail-fast. This checks orchestration, not those Cargo workloads.
+- The actual extracted AWK program ran against synthetic source/report fixtures:
+  recognized boundary, later-production exclusion, docs/extra-attribute/compound
+  cfg nonrecognition, sentinel exclusion, and empty-input behavior. No full LLVM
+  coverage pipeline, cleanup on the shared target, or report-format compatibility
+  claim was exercised.
+- Full workflow checks remain owner-waived. No release profiler run, full
+  representation matrix, benchmark suite, or coverage pipeline ran. No geometry
+  implementation changed, so downstream geometry checks were not repeated.
+  Reused the shared approximately 2.0 GiB target without new Cargo build trees;
+  removed the temporary observer executable after validation.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-allocation-{before,after,validate}.log`
+and `/tmp/csgrs-lattice-allocation/` contain source probes, before/after report
+text, the checker, synthetic AWK inputs/output, and generated private docs.
+These are temporary evidence, not a durable archive. The other Hyperlattice
+examples, implementations, tests, benchmarks, and support files remain subject
+to their individual review records; most of the wider repository remains open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

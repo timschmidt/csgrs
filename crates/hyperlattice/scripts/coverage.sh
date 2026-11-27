@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Build and report LLVM execution coverage for selected Cargo configurations.
+# This is not Rustdoc coverage or a correctness/completeness gate: no percentage
+# threshold is enforced. Compiler/LLVM/jq tools and Cargo environment are inherited.
+# Relative CARGO_TARGET_DIR values are interpreted from this crate directory.
+# Before builds, delete this target's prior profraw/profdata/text/object-list output
+# and every entry under its html directory; do not point it at unrelated reports.
+# Full tests/targets can be expensive; this script supplies no total resource bound.
+
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 target_dir="${CARGO_TARGET_DIR:-${repo_dir}/target/coverage}"
 if [[ "${target_dir}" != /* ]]; then
@@ -34,6 +42,8 @@ export CARGO_TARGET_DIR="${target_dir}"
 coverage_rustflags="${RUSTFLAGS:+${RUSTFLAGS} }-C instrument-coverage"
 export LLVM_PROFILE_FILE="${profile_dir}/hyperlattice-%p-%m.profraw"
 
+# Append test-profile or bin artifacts having an executable path. This can retain
+# more than one feature build; no source ownership or coverage validation occurs.
 record_test_objects() {
     jq -r '
         select(.reason == "compiler-artifact")
@@ -46,6 +56,8 @@ record_test_objects() {
     ' >>"${object_manifest}"
 }
 
+# Collect no-run artifacts, then execute lib/integration tests with a distinct
+# metadata suffix. This separates symbol namespaces, not all environment/cache state.
 run_configuration() {
     local label="$1"
     local metadata="$2"
@@ -62,16 +74,16 @@ run_configuration() {
     cargo test "${cargo_args[@]}" --lib --tests --quiet
 }
 
-# These builds cover both sides of every Hyperlattice feature gate. The
-# all-feature configuration includes arbitrary constructors, Point2 serde, and
-# dependency dispatch tracing; the no-feature configuration covers the inert
-# trace facade and the crate's published default surface.
+# Select the no-default and all-feature endpoints. These do not exhaust all
+# feature combinations or dependency-only cache configurations. Compiling a branch
+# does not establish that execution covered it or that its result was correct.
 run_configuration "no features" no_features --no-default-features
 run_configuration "all features" all_features --all-features
 
-# Criterion test mode executes every benchmark fixture once. Examples and
-# harness-free trace binaries are included as targets as well. Suppress only
-# generated Markdown writes; fixture assertions and dispatch remain active.
+# Include all-feature targets in Cargo test mode. Actual execution depends on each
+# target's harness: compiling/testing an example need not call its main function.
+# Request benchmark-report suppression through the named environment flag; targets
+# that do not honor it may still perform their own output writes.
 echo "Coverage configuration: all-feature targets and benchmark fixtures"
 cargo test --all-features --all-targets --no-run --message-format=json |
     record_test_objects
@@ -97,6 +109,8 @@ for object in "${test_objects[@]:1}"; do
     object_args+=(--object "${object}")
 done
 
+# This path-pattern filter is not a positive restriction to this crate's src tree;
+# other local workspace dependencies may remain in LLVM's report.
 ignore_regex='/(\.cargo/registry|\.rustup|rustc|hyperreal|target|tests|benches|examples|fuzz)/'
 
 echo "Instrumented Rust source (inline #[cfg(test)] code included):"
@@ -116,10 +130,15 @@ echo "Instrumented Rust source (inline #[cfg(test)] code included):"
     --show-instantiations=false \
     --show-line-counts-or-regions
 
-# LLVM's file table combines production code with trailing inline unit-test
-# modules. Derive a physical executable-line view that stops at an explicit
-# `#[cfg(test)] mod tests` boundary. Test executions still count toward every
-# production line they exercise.
+# Derive a heuristic displayed-line summary from LLVM's text report. Recognize
+# only a standalone cfg(test) attribute followed by blank lines and `mod tests {`;
+# intervening docs/attributes or other test-module forms are not recognized.
+# Everything at/after the first recognized boundary is excluded, including any
+# later production items. Without a boundary, the sentinel is line 999999.
+# Nonempty displayed count fields are counted; any text other than literal "0"
+# counts as hit. This is not unique-line/branch/function coverage or a Rust parser.
+# File headings must be absolute .rs paths. Relative labels assume the crate prefix,
+# and the final total has no zero-denominator guard. No threshold is enforced.
 echo
 echo "Production executable lines (trailing inline test modules excluded):"
 "${llvm_cov}" show \
