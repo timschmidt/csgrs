@@ -7302,6 +7302,115 @@ Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-atlas-tail-{all,minimal}` with
 review records; remaining repository files and generated API gaps still require
 review. Do not infer crate-wide specification compliance from documentation.
 
+## Shared performance-atlas harness (2026-11-26)
+
+Reviewed all 975 lines of `crates/perf-atlas/src/lib.rs` at `9514cf3da` and its
+complete Cargo.toml. The crate is a dependency-free, unpublished workspace utility
+with no feature matrix of its own. This completes authored source review for
+these two files. The owning layer is the shared measurement/report harness, not a
+geometry kernel. Relevant contracts are P37's claim/evidence scope, P5/P6's resource
+and failure distinctions, and P9/P10's receipt/completed-workload requirements for
+performance consumers. Missing witnesses were accurate public timing claims and
+private data, helper, macro, generated method, and test documentation.
+
+Documented 62 authored declarations: seven structs, 47 functions/methods (including
+the generated-method source), one trait, one alias, three constants, one macro,
+one enum, and one test module. Also documented all 41 fields/tuple payloads and
+three variants, with an attached crate introduction. The source adjacency inventory
+has no missing declarations. The always_succeeds macro now supplies documentation
+to all 16 emitted Outcome::succeeded methods. Ordinary derive implementations are
+not counted as separately audited generated source by this inventory.
+
+Only documentation and layout needed to attach tuple/macro member comments changed.
+Comment-stripped source is identical after normalizing the Rng tuple, three
+Measured tuple variants, and one macro-body layout. No algorithm, callback order,
+status, serializer, fixture, assertion, or lint configuration changed. P37 coverage
+is distinguished from complete mathematical/resource compliance throughout.
+
+Timing and resource documentation now states the actual sequence:
+
+- One initial call estimates a fixed batch count; batches are not extended to meet
+  a minimum duration. Counts are capped at MAX_FRESH=4096 in fresh mode, but this
+  is neither a byte limit nor a total work bound. Reuse mode has a much larger cap.
+- Only the initial Outcome is inspected. Repeated result drops occur inside timing;
+  the initial result's inspection/drop and all ordinary input setup/drop occur
+  outside the respective call/batch timer. A fresh factory invocation does not
+  prove independent equal-valued inputs or reset shared caches/external state.
+- The initial ceiling is checked after completion. Its record drops the Outcome
+  status/reason, even for a failed callback. Point budgets are checked between
+  batches; they do not preempt calls or setup. At least one batch runs when samples
+  is positive, even if setup already consumed the budget. Zero samples can panic
+  on the empty statistics vector, then become a caught error record.
+- Ordinary failed probes retain timings and do not stop sweeps/fuzz/grid sampling.
+  Their timings can feed prediction. Ceiling/panic stopping and two-point growth
+  prediction omit later work; grid blocking propagates rightward and into later
+  rows. Fuzz stops after two consecutive magnitudes hit either a ceiling or panic.
+- Unwinding panics are caught around measurement, not all outer registration or
+  output code. Aborts/nontermination are not contained, and external side effects
+  are not rolled back. No aggregate work, memory, or cancellation contract exists.
+
+Outcome docs distinguish shallow carrier status from semantic completion:
+Some(Err(...)), Ok(false), and NaN numeric results succeed. Tuple/vector wrappers
+inspect their child statuses, while their reason selection does not identify which
+child failed. Short messages retain at most 160 UTF-8 prefix bytes plus a three-byte
+ellipsis; prior formatting/allocation is not bounded by that truncation.
+
+RNG docs now describe remainder reduction, zero-bound/seed aliases, reversed-range
+behavior, and the full-i64-range saturation omission of i64::MAX. Limbs and decimal
+requests at width zero mean one bit. Decimal conversion repeatedly divides the
+whole retained limb vector without trimming high zeros. Exact powers/ladder claims
+are bounded by binary64 overflow, underflow, rounding, and endpoint conversion.
+
+The serializer trusts its records, maps nonfinite floats to null, retains coarse
+rather than typed failure information, and assembles the complete document with
+intermediate allocations. finish writes directly to its destination, without
+parent-directory creation or atomic publication. Report metadata omits toolchain,
+hardware, filter, and reuse settings; it is not a complete reproducibility manifest.
+
+Read all 100 baseline lines of `scripts/perf-atlas/README.md` and all 35 lines of
+run.sh for consumer context. Corrected the README's measurement, status, budget,
+seed, and callback guidance to agree with the harness. Renderer chart behavior and
+archived-run claims remain to be checked against their owners; this batch does not
+claim a complete renderer or workflow audit. The shell runner was not executed.
+Searches identified nine crate consumers; the previously audited Hyperlimit example
+is the representative downstream compile check, not a review of the other examples.
+
+Validation after final edits:
+
+- Focused Rustfmt, `git diff --check`, declaration adjacency, and normalized
+  comment-stripped identity passed.
+- `cargo test --locked -p perf-atlas --lib --offline -j2` passed both existing tests.
+  These cover small timing fixtures and do not establish performance envelopes.
+- Direct private Rustdoc passed with warnings, public missing_docs, and broken/
+  private links denied, both ordinarily and with `--cfg test`. This dependency-free
+  crate was documented directly into separate small /tmp directories to avoid
+  overwriting Hyperlimit's same-named example pages in the shared target directory.
+- Full-text render checks verified 103 source doc groups across 22 pages normally,
+  and 104 across 23 pages with cfg(test). All 16 macro-generated method docs render
+  on the Outcome trait page. The local LIMIT and two #[test] functions have source
+  docs but no separate pages, even under cfg(test); the test module itself renders.
+  No test attributes or lint settings were changed to conceal those limits.
+- Hyperlimit's perf_atlas example checks passed with all features and no default
+  features after the final source edits. The shared target remains about 1.7 GiB;
+  the two standalone doc trees are about 2.7 MiB each. No new Cargo target tree,
+  dependency download, release build, or full atlas workload was needed.
+- Eight bounded public-API probe reports parsed successfully. They reproduced
+  ordinary-error continuation, first-probe-only status, caught zero-sample panic,
+  ceiling precedence over failure, fresh/reused factory counts, grid block/error
+  propagation, two-magnitude fuzz panic stopping, and escaped JSON labels. Direct
+  status/RNG assertions covered nested wrappers, NaN, empty vectors, zero seed/
+  width/bound, and reversed ranges. Expected caught panic hooks printed diagnostics;
+  the probe process completed successfully. These are documentation witnesses,
+  not benchmark results, universal distribution proofs, or geometric qualification.
+- Full workflow checks remain owner-waived for this docs-only session.
+
+Evidence: `/tmp/csgrs-rustdoc-perf-atlas-{test,doc,test-doc}.log`, downstream
+`/tmp/csgrs-rustdoc-perf-atlas-downstream-{all,minimal}.log`, and
+`/tmp/csgrs-rustdoc-perf-atlas-probe.log` with eight corresponding JSON fixtures.
+Source/render checkers are `/tmp/csgrs-perf-atlas-{identity,render}.py`. Remaining
+shared-atlas work includes renderer, workflow, and historical artifact validation;
+repository-wide and generated-API coverage remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

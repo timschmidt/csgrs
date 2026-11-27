@@ -1,51 +1,59 @@
-//! Performance atlas sweeps.
+//! Seeded wall-clock probes and JSON report assembly for crate performance atlases.
 //!
-//! A crate's `perf_atlas` example declares its operations. Each operation is
-//! swept across input kinds (representations such as integer, rational or
-//! irrational) and a magnitude axis (bit length, exponent, degree, dimension,
-//! horizon). Two-argument operations can also be swept over a magnitude grid,
-//! and seeded random ("fuzzed") inputs are timed one by one. The atlas writes
-//! one JSON document, which `scripts/perf-atlas/render.py` turns into a
-//! self-contained HTML report of charts.
+//! Call Atlas::operation, then sweep, fuzz, or grid to measure callback-defined
+//! work across magnitude axes and labeled input recipes. The report carries timings
+//! and coarse callback statuses, not independent correctness, certainty, provenance,
+//! or completed-workload evidence. The renderer in scripts/perf-atlas consumes the
+//! perf-atlas/1 schema.
 //!
-//! Timing is wall-clock with calibrated batches: each point repeats the
-//! operation until a batch reaches a target duration, then records the median,
-//! minimum and maximum per-operation time over several batches. Input
-//! construction is outside the timer, and by default every timed call gets
-//! its own freshly built copy of the input, so operand caches are never
-//! reused. A point whose single call exceeds the configured ceiling ends that
-//! series; later magnitudes are recorded as skipped, and a series whose growth
-//! predicts a call far over the ceiling stops before making it.
+//! One initial call estimates a fixed batch size; subsequent batches are not extended
+//! until they reach the target. Only the initial result is checked through Outcome.
+//! Fresh input objects are built outside each timed batch by default, but factories
+//! may share state or caches; no cache reset or input-equivalence proof is provided.
+//! Reuse mode retains one separate input for the repeated batches after the probe.
 //!
-//! These are focused probes on one host, not a cross-library claim. Compare
-//! reports only when they come from the same host, toolchain and settings.
+//! Ceilings are checked after the initial call, and point budgets between batches.
+//! They do not preempt callbacks, bound input generation, or impose aggregate work,
+//! memory, or cancellation limits. Timing-based stopping can change which seeded
+//! samples are reached. Only unwinding panics inside measurement are caught.
+//!
+//! Compare equivalent completed workloads under matched host/toolchain/settings;
+//! report metadata alone does not establish those conditions. Output is assembled
+//! in memory and written directly to a file or stdout, without atomic publication.
 use std::fmt::Write as _;
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 
-/// Sweep effort. `quick` is for smoke runs and CI; the default is for reports.
+/// Timing effort and sample-selection settings, accepted without validation.
+///
+/// Use full or quick for nonzero sample counts. A zero samples value can reach an
+/// empty statistics vector and panic inside measurement. Durations guide calibration
+/// and stopping; they are not hard timeouts or a total resource contract.
 #[derive(Clone, Debug)]
 pub struct Config {
-    /// Shortest batch accepted as a timing sample.
+    /// Target duration used once to estimate calls per batch; not a minimum measured batch duration.
     pub target_batch: Duration,
-    /// Batches recorded per point.
+    /// Maximum repeated timing batches per point; zero is not validated and can cause a statistics panic.
     pub samples: usize,
-    /// Time allowed for one point, including calibration.
+    /// Elapsed-time threshold checked between batches, including input setup; not a preemptive deadline.
     pub point_budget: Duration,
-    /// A single call longer than this ends the series.
+    /// Initial callback duration threshold checked after completion; later calls are not individually checked.
     pub single_ceiling: Duration,
-    /// Fuzzed inputs per magnitude.
+    /// Maximum independently seeded samples attempted at each fuzz magnitude before stopping rules.
     pub fuzz_per_magnitude: usize,
-    /// Seed for every generated input.
+    /// Base state hashed with operation/kind names; reproducibility also depends on generators and stopping decisions.
     pub seed: u64,
-    /// Only operations whose name contains this text run.
+    /// Case-sensitive substring required in operation names; None or an empty string selects every name.
     pub filter: Option<String>,
-    /// Quick mode flag, recorded in the output.
+    /// Reported mode flag; setting it alone does not change any timing settings.
     pub quick: bool,
 }
 
 impl Config {
-    /// Report settings.
+    /// Return report defaults: 2 ms target, seven samples, 250 ms point budget, and 2 s ceiling.
+    ///
+    /// Requests 24 fuzz inputs per magnitude, the fixed base seed, no filter, and quick=false.
+    /// These are effort settings, not guarantees that every sample or magnitude executes.
     pub fn full() -> Self {
         Self {
             target_batch: Duration::from_millis(2),
@@ -59,7 +67,10 @@ impl Config {
         }
     }
 
-    /// Smoke settings: the same sweeps with short batches and few samples.
+    /// Return smoke settings with the same seed/filter defaults and reduced timing effort.
+    ///
+    /// Uses 200 µs target, three samples, 25 ms point budget, 250 ms ceiling, six fuzz
+    /// inputs per magnitude, and quick=true. It does not shorten caller-supplied axes.
     pub fn quick() -> Self {
         Self {
             target_batch: Duration::from_micros(200),
@@ -73,16 +84,23 @@ impl Config {
     }
 }
 
-/// Deterministic xorshift64* generator for fuzzed and swept inputs.
+/// Deterministic xorshift64* stream for fixture generation and reproducible substreams.
+///
+/// Sampling helpers use bit extraction or remainder reduction rather than a general
+/// unbiased-distribution algorithm. Cloning preserves state; zero seeds are mapped
+/// to one. The generator does not validate geometric fixtures built from its output.
 #[derive(Clone, Debug)]
-pub struct Rng(u64);
+pub struct Rng(
+    /// Nonzero xorshift state before output multiplication; Clone copies the exact stream position.
+    u64,
+);
 
 impl Rng {
-    /// A generator from a nonzero seed.
+    /// Start at max(seed,1), making zero and one select the same deterministic stream.
     pub fn new(seed: u64) -> Self {
         Self(seed.max(1))
     }
-    /// Next 64 random bits.
+    /// Advance xorshift state by shifts 12,25,27, then return its wrapping star-multiplied output.
     pub fn next_u64(&mut self) -> u64 {
         let mut x = self.0;
         x ^= x >> 12;
@@ -91,25 +109,36 @@ impl Rng {
         self.0 = x;
         x.wrapping_mul(0x2545_f491_4f6c_dd1d)
     }
-    /// Uniform integer in `0..bound`, for a nonzero bound.
+    /// Return the next word modulo max(bound,1), advancing state even when the result must be zero.
+    ///
+    /// A zero bound behaves like one. Remainder reduction is not an exact-uniformity
+    /// proof for arbitrary bounds; this helper performs no rejection sampling.
     pub fn below(&mut self, bound: u64) -> u64 {
         self.next_u64() % bound.max(1)
     }
-    /// Uniform integer in `lo..=hi`.
+    /// Add a remainder-reduced offset to lo using wrapping signed arithmetic.
+    ///
+    /// For ordered endpoints other than the full i64 range, the span is hi-lo+1 and
+    /// the result lies in that inclusive interval. Reversed endpoints are not rejected;
+    /// the absolute difference still defines a forward span from lo. Full-range span
+    /// addition saturates, excluding i64::MAX. Uniformity is not guaranteed.
     pub fn range(&mut self, lo: i64, hi: i64) -> i64 {
         let span = hi.abs_diff(lo).saturating_add(1);
         lo.wrapping_add(self.below(span) as i64)
     }
-    /// Fair coin.
+    /// Return whether the next generated word has its low bit set, consuming one word.
     pub fn coin(&mut self) -> bool {
         self.next_u64() & 1 == 1
     }
-    /// Uniform float in `[0, 1)`.
+    /// Map the upper 53 bits of the next word to an exactly representable multiple of 2^-53 in [0,1).
     pub fn unit(&mut self) -> f64 {
         (self.next_u64() >> 11) as f64 / (1u64 << 53) as f64
     }
-    /// Little-endian 32-bit limbs of a random integer with exactly `bits` bits
-    /// (top bit set), for building big integers in any representation.
+    /// Generate little-endian u32 limbs of a positive integer with max(bits,1) magnitude bits.
+    ///
+    /// Draws one word per limb, retains its low 32 bits, masks excess top bits, and forces
+    /// the highest requested bit. A request for zero therefore returns the integer one.
+    /// Allocation and generation scale with the requested width without a separate budget.
     pub fn limbs(&mut self, bits: u32) -> Vec<u32> {
         let bits = bits.max(1);
         let count = bits.div_ceil(32) as usize;
@@ -124,7 +153,11 @@ impl Rng {
         *last |= 1u32 << top;
         limbs
     }
-    /// Decimal digits of a random integer with exactly `bits` bits.
+    /// Format a newly generated positive limb integer as decimal ASCII without leading zeros.
+    ///
+    /// Uses limbs(bits), so bits=0 means one bit. Repeatedly divides the entire limb
+    /// vector by ten, collects remainders, then reverses them. It does not trim high zero
+    /// limbs between divisions; no conversion-work or memory bound is enforced.
     pub fn decimal(&mut self, bits: u32) -> String {
         let mut limbs = self.limbs(bits);
         let mut digits = Vec::new();
@@ -142,23 +175,34 @@ impl Rng {
     }
 }
 
-/// Whether a timed call produced its intended result. Points whose first call
-/// fails (an error, `None` or `false`) are kept but marked, because a fast
-/// refusal is not a fast successful operation.
+/// Callback-defined initial-probe status used for atlas error marking.
+///
+/// Only the first result of a measurement is inspected; later repeated results are
+/// black-boxed and dropped. Presence-based implementations do not recursively inspect
+/// payloads: Some(Err(...)) and Ok(false) still succeed. Numeric and String results
+/// always succeed, including nonfinite floats. Choose a callback return contract that
+/// actually checks the intended completion condition and preserves needed evidence.
 pub trait Outcome {
-    /// `true` when the call produced its intended result.
+    /// Report whether this callback result satisfies the caller's completion contract; the harness checks only its first probe.
     fn succeeded(&self) -> bool;
-    /// Why a failed call failed, shown in the report next to the point.
+    /// Default to no failure explanation; implementations may provide one for the initial failed probe.
     fn reason(&self) -> Option<String> {
         None
     }
 }
 
-/// A failure with an explicit reason, for operations whose own status types
-/// are not `Result`s; `Err(reason)` marks the point and names the cause.
+/// Result alias for callbacks that supply a textual failure reason.
+///
+/// Err is marked as failure and its Debug representation is truncated for the report.
+/// Ok succeeds regardless of its payload; this alias does not certify that payload.
 pub type Checked<T> = Result<T, String>;
 
+/// Keep at most 160 initial UTF-8 bytes on a character boundary, appending an ellipsis if truncated.
+///
+/// Returns short input unchanged. The ellipsis adds three bytes, so the returned
+/// string can be 163 bytes. This does not bound the allocation of the original text.
 fn short(text: String) -> String {
+    /// Maximum retained prefix bytes before the three-byte ellipsis is appended.
     const LIMIT: usize = 160;
     if text.len() <= LIMIT {
         return text;
@@ -170,25 +214,33 @@ fn short(text: String) -> String {
     format!("{}…", &text[..end])
 }
 impl<T> Outcome for Option<T> {
+    /// Accept Some without inspecting the contained value; None reports failure.
     fn succeeded(&self) -> bool {
         self.is_some()
     }
 }
 impl<T, E: std::fmt::Debug> Outcome for Result<T, E> {
+    /// Accept Ok without inspecting its payload; Err reports failure.
     fn succeeded(&self) -> bool {
         self.is_ok()
     }
+    /// Return a shortened Debug-formatted Err payload, allocating that formatting before truncation; Ok has no reason.
     fn reason(&self) -> Option<String> {
         self.as_ref().err().map(|e| short(format!("{e:?}")))
     }
 }
 impl Outcome for bool {
+    /// Use the Boolean value itself as the status.
     fn succeeded(&self) -> bool {
         *self
     }
 }
+/// Implement unconditional Outcome success for the listed scalar/string/unit types, without validating their values.
 macro_rules! always_succeeds {
-    ($($t:ty),*) => {$(impl Outcome for $t { fn succeeded(&self) -> bool { true } })*};
+    ($($t:ty),*) => {$(impl Outcome for $t {
+        /// Always accept this value without validation, including nonfinite floats where applicable.
+        fn succeeded(&self) -> bool { true }
+    })*};
 }
 always_succeeds!(
     (),
@@ -209,84 +261,154 @@ always_succeeds!(
     String
 );
 impl<A: Outcome, B: Outcome> Outcome for (A, B) {
+    /// Require both tuple members to succeed, short-circuiting before the second when the first fails.
     fn succeeded(&self) -> bool {
         self.0.succeeded() && self.1.succeeded()
     }
+    /// Return the first available member reason, preferring the left, without checking which member failed.
     fn reason(&self) -> Option<String> {
         self.0.reason().or_else(|| self.1.reason())
     }
 }
 impl<T: Outcome> Outcome for Vec<T> {
+    /// Require every element to succeed, stopping at the first failure; the empty vector succeeds.
     fn succeeded(&self) -> bool {
         self.iter().all(Outcome::succeeded)
     }
+    /// Return the first available element reason, without independently checking that element's status.
     fn reason(&self) -> Option<String> {
         self.iter().find_map(Outcome::reason)
     }
 }
 
+/// One axis sample's timing statistics and coarse first-probe status.
+///
+/// Default is an empty zero-valued record, not a performed measurement. Skipped and
+/// panicked records use NaN timings, serialized as null. This carrier contains no
+/// complete callback output, exactness receipt, or independent correctness witness.
 #[derive(Clone, Debug, Default)]
 struct Point {
+    /// Caller-supplied axis value; nonfinite values become JSON null.
     magnitude: f64,
+    /// Upper median per-call nanoseconds across batches, or the initial-call duration on a single/ceiling path.
     median_ns: f64,
+    /// Smallest batch-average duration, or the initial duration; NaN for unmeasured/panicked records.
     min_ns: f64,
+    /// Largest batch-average duration, or the initial duration; NaN for unmeasured/panicked records.
     max_ns: f64,
+    /// Calls per repeated batch, not total calls; one for initial-only records and zero when skipped/panicked.
     iterations: u64,
+    /// One of ok, single, error, ceiling, predicted, or skipped for emitted records; Default is empty.
     status: &'static str,
+    /// Initial Outcome reason or truncated unwind description when retained; absent for ceiling/skipped records.
     reason: Option<String>,
 }
 
+/// Ordered timing records for one caller-supplied input-kind label; repeated magnitudes are allowed.
 #[derive(Clone, Debug)]
 struct Series {
+    /// Caller label used for display and seeded stream selection.
     kind: String,
+    /// Samples in generation order; fuzz may contain several entries with the same magnitude.
     points: Vec<Point>,
 }
 
+/// Row-major timing and error matrices with copied magnitude axes.
+///
+/// Rows correspond to b and columns to a. Missing cells conflate prediction, prior
+/// blocking, and panics; errors distinguishes panics/failed probes where available.
+/// No per-cell reason, iteration count, or timing spread is retained.
 #[derive(Clone, Debug)]
 struct Grid {
+    /// Caller label for this grid recipe.
     kind: String,
+    /// Display name of the horizontal/column axis.
     a_label: String,
+    /// Display name of the vertical/row axis.
     b_label: String,
+    /// Copied column magnitudes in caller order, without sorting or validation.
     a: Vec<f64>,
+    /// Copied row magnitudes in caller order, without sorting or validation.
     b: Vec<f64>,
+    /// Optional per-call nanoseconds for each row/column; ceiling durations remain present.
     ns: Vec<Vec<Option<f64>>>,
+    /// Parallel matrix marking failed probes or caught panics; skipped/ceiling cells are false.
     errors: Vec<Vec<bool>>,
 }
 
+/// Report metadata plus the sweep, seeded-sample, and grid results registered under one name.
+///
+/// Names need not be unique. Group, descriptions, axis labels, and kind labels are
+/// caller claims; the harness neither validates their mathematical meaning nor
+/// checks that differently labeled series measure equivalent work.
 #[derive(Clone, Debug)]
 struct Operation {
+    /// Operation identifier used for filtering and hashing; duplicates are allowed.
     name: String,
+    /// Caller-defined display group, excluded from RNG hashing.
     group: String,
+    /// Caller-supplied workload explanation, serialized without checking its claims.
     description: String,
+    /// Display label for one-dimensional sweep magnitudes.
     magnitude: String,
+    /// Ordinary sweeps in registration order.
     series: Vec<Series>,
+    /// Independently seeded sample series in registration order.
     fuzz: Vec<Series>,
+    /// Two-axis measurements in registration order.
     grids: Vec<Grid>,
 }
 
-/// Collects sweeps for one crate and writes them as JSON.
+/// Accumulate callback measurements for one crate and serialize their report.
+///
+/// Registration order controls report order. Each measurement method operates on
+/// the most recently declared operation and applies the configured name filter.
+/// Changing reuse affects later measurements only. No thread worker, process-level
+/// timeout, output-size limit, or semantic validator is owned by this collector.
 pub struct Atlas {
+    /// Report crate label; it does not participate in RNG hashing.
     crate_name: String,
+    /// Unvalidated settings used by subsequent measurement calls.
     config: Config,
+    /// Direct output-file destination, or stdout when absent; parent directories are not created.
     output: Option<String>,
+    /// All declarations, including those with no selected measurements.
     operations: Vec<Operation>,
+    /// Construction timestamp used for progress and total elapsed metadata.
     started: Instant,
+    /// Whether repeated batches share one input; the initial probe always uses a separate input.
     reuse: bool,
 }
 
-/// Most fresh inputs built for one timed batch.
+/// Maximum simultaneously constructed inputs in one fresh batch; not a byte or total-work limit.
 const MAX_FRESH: usize = 4096;
 
-/// A predicted single call this many times the ceiling ends a series early.
+/// Multiplier over the initial-call ceiling used by the two-sample growth heuristic.
 const PREDICTED_FACTOR: f64 = 8.0;
 
+/// Internal measurement result separating recorded statistics, an exceeded initial ceiling, and unwind failure.
 enum Measured {
-    Done(Point),
-    TooSlow(f64),
-    /// The input builder or the operation panicked; the message is kept.
-    Panicked(String),
+    /// Completed timing record, which can still have an error status from its initial probe.
+    Done(
+        /// Recorded first-call or batch statistics, before the caller assigns the axis magnitude.
+        Point,
+    ),
+    /// Initial callback completed after the configured single-call ceiling.
+    TooSlow(
+        /// Initial callback duration in nanoseconds; its Outcome status and reason are discarded.
+        f64,
+    ),
+    /// Unwinding panic during measurement; this is not a typed kernel outcome or transactional rollback.
+    Panicked(
+        /// Truncated panic description, including the panic prefix.
+        String,
+    ),
 }
 
+/// Describe an unwind payload as a shortened panic-prefixed string.
+///
+/// Copies str/String payload text; other payloads use a fixed fallback description.
+/// Formatting and the original panic allocation are not bounded by the later truncation.
 fn panic_message(payload: Box<dyn std::any::Any + Send>) -> String {
     let text = payload
         .downcast_ref::<&str>()
@@ -297,8 +419,12 @@ fn panic_message(payload: Box<dyn std::any::Any + Send>) -> String {
 }
 
 impl Atlas {
-    /// Parse `--out PATH`, `--quick`, `--filter TEXT` and `--seed N` from the
-    /// process arguments. Without `--out`, the JSON goes to standard output.
+    /// Parse process arguments into atlas settings and an optional output path.
+    ///
+    /// Recognizes --quick, --out PATH, --filter TEXT, and --seed U64; --bench and
+    /// --nocapture are ignored. Unknown arguments panic. Missing option values become
+    /// None and an invalid seed falls back to the full/quick default. Repeated options
+    /// use their latest parsed value. No report file is opened until finish.
     pub fn from_args(crate_name: &str) -> Self {
         let mut config = Config::full();
         let mut output = None;
@@ -328,7 +454,7 @@ impl Atlas {
         Self::new(crate_name, config, output)
     }
 
-    /// An atlas with explicit settings.
+    /// Create an empty atlas with supplied unvalidated settings, no input reuse, and a fresh elapsed-time origin.
     pub fn new(crate_name: &str, config: Config, output: Option<String>) -> Self {
         Self {
             crate_name: crate_name.to_owned(),
@@ -340,20 +466,27 @@ impl Atlas {
         }
     }
 
-    /// Time repeated calls on one input object instead of a fresh copy per
-    /// call. Only for operations whose inputs keep no caches: a library that
-    /// memoizes results on its operands would otherwise time cache lookups.
-    /// Applies to sweeps, fuzz and grids declared afterwards.
+    /// Choose whether later repeated timing batches share one factory-produced input.
+    ///
+    /// The initial probe always uses a separate input. With reuse=false, each repeated
+    /// call gets a factory invocation outside timing; with true, one further invocation
+    /// supplies all repeated batches. This flag neither resets caches nor verifies that
+    /// the factory creates independent equal-valued inputs. Fuzz/grid inherit it too.
     pub fn reuse_inputs(&mut self, reuse: bool) {
         self.reuse = reuse;
     }
 
-    /// Settings in effect.
+    /// Borrow the settings stored in this atlas; no mutation or validation occurs.
     pub fn config(&self) -> &Config {
         &self.config
     }
 
-    /// A generator for one operation/kind, so sweeps do not depend on order.
+    /// Hash the configured seed with operation bytes, a zero separator, and kind bytes into a stream.
+    ///
+    /// Uses wrapping FNV-style multiplication and maps a final zero state to one.
+    /// Crate/group names are excluded. Matching inputs give matching starting states;
+    /// different labels need not be collision-free, and later sample selection can depend
+    /// on timing-based stops. Repeated calls restart the same labeled stream.
     pub fn rng(&self, operation: &str, kind: &str) -> Rng {
         let mut hash = self.config.seed;
         for byte in operation.bytes().chain([0]).chain(kind.bytes()) {
@@ -362,6 +495,7 @@ impl Atlas {
         Rng::new(hash)
     }
 
+    /// Apply the case-sensitive operation-name substring filter; None and an empty string both select all names.
     fn selected(&self, operation: &str) -> bool {
         self.config
             .filter
@@ -369,8 +503,11 @@ impl Atlas {
             .is_none_or(|filter| operation.contains(filter.as_str()))
     }
 
-    /// Declare an operation. `magnitude` names the swept axis, for example
-    /// "operand bits" or "polynomial degree".
+    /// Append operation metadata and make it current for following measurements.
+    ///
+    /// Copies all labels/descriptions and prints elapsed progress to stderr even when
+    /// the configured filter will reject this name. Duplicate names are accepted and
+    /// share stream seeds for equal kind labels; no prior declaration is replaced.
     pub fn operation(&mut self, group: &str, name: &str, magnitude: &str, description: &str) {
         self.operations.push(Operation {
             name: name.to_owned(),
@@ -387,16 +524,19 @@ impl Atlas {
         );
     }
 
+    /// Borrow the latest operation, panicking if no operation has been declared.
     fn current(&mut self) -> &mut Operation {
         self.operations
             .last_mut()
             .expect("declare an operation before sweeping it")
     }
 
-    /// Time `run` on inputs from `copy`, which returns a new object with the
-    /// same value on every call. Unless `reuse` is set, every timed call gets
-    /// its own copy, built and dropped outside the timer, so results cached on
-    /// an operand by an earlier call are never reused.
+    /// Catch unwinding panics around the complete unguarded measurement attempt.
+    ///
+    /// Includes input construction, callback execution, Outcome inspection, statistics,
+    /// and ordinary drops in the protected scope. It does not catch aborts, interrupt
+    /// nontermination, roll back external effects, or reset shared caches after a panic.
+    /// A second panic during unwinding can still abort. The payload is shortened for reporting.
     fn measure<I, R: Outcome>(
         config: &Config,
         reuse: bool,
@@ -409,6 +549,25 @@ impl Atlas {
         .unwrap_or_else(|payload| Measured::Panicked(panic_message(payload)))
     }
 
+    /// Probe once, estimate a fixed batch size, and collect batch-average wall-clock durations.
+    ///
+    /// The initial input is built before timing. Only run is timed for the probe;
+    /// Outcome inspection and result/input destruction follow. A probe over the ceiling
+    /// returns TooSlow even if its status failed. Otherwise, if twice its duration exceeds
+    /// the point budget, returns a single record with its status and optional reason.
+    ///
+    /// Calls per batch are ceil(target/probe_ns), with probe_ns floored at one and the
+    /// count clamped to 1..MAX_FRESH, or 1..(usize::MAX>>1) in reuse mode. No later
+    /// calibration ensures the target is attained. Fresh batches build all inputs first;
+    /// reuse mode builds one separate shared input after the probe. Repeated timing
+    /// includes loop/black_box overhead and result drops, but excludes input setup/drop.
+    /// Repeated results are not checked with Outcome and can disagree with the probe.
+    ///
+    /// Checks elapsed time, including setup, only between batches; if samples>0, at
+    /// least one batch runs even after setup consumed the point budget. The sorted
+    /// batch means supply min, max, and upper median; iterations records calls per batch,
+    /// not total calls. samples=0 can panic on empty statistics. No call timeout, total
+    /// work/memory bound, cancellation, or independent result validation is supplied.
     fn measure_unguarded<I, R: Outcome>(
         config: &Config,
         reuse: bool,
@@ -478,6 +637,7 @@ impl Atlas {
         })
     }
 
+    /// Create an unmeasured point with NaN timings, zero iterations, the supplied status, and no reason.
     fn skipped(magnitude: f64, status: &'static str) -> Point {
         Point {
             magnitude,
@@ -492,6 +652,11 @@ impl Atlas {
 
     // Growth of the last two timed points predicts the next one; a prediction
     // far over the ceiling skips the call instead of waiting for it.
+    /// Predict excessive next cost from the final two timings, without inspecting magnitudes.
+    ///
+    /// Uses b*max(b/a,1) > 8*single_ceiling and returns false with fewer than two samples.
+    /// It assumes continued cost growth, not a proven complexity bound. Inputs are not
+    /// validated for positivity/finiteness; floating division/comparison rules apply.
     fn predicted_too_slow(config: &Config, previous: &[f64]) -> bool {
         let [.., a, b] = previous else {
             return false;
@@ -500,8 +665,19 @@ impl Atlas {
         b * growth > config.single_ceiling.as_nanos() as f64 * PREDICTED_FACTOR
     }
 
-    /// Sweep one input kind over `magnitudes`. `make` builds an input for a
-    /// magnitude (outside the timer); `run` is the timed operation.
+    /// Measure one labeled recipe at each supplied magnitude until a ceiling, panic, or prediction stops it.
+    ///
+    /// Requires a current operation before applying the name filter. For each reached
+    /// magnitude, seeds a substream and calls make with a cloned state on every factory
+    /// invocation. Equal inputs require make to be deterministic beyond that RNG argument;
+    /// external mutable state is not reset. Magnitudes are used in caller order.
+    ///
+    /// Ordinary failed Outcome probes retain timings and do not stop the series. Their
+    /// finite timings also feed prediction. A ceiling stores the initial duration and
+    /// discards its Outcome status/reason; a panic stores an error and stops. Prediction
+    /// marks its first omitted point predicted; all subsequent points are skipped. An
+    /// empty axis still appends an empty Series. No complete-axis or hard-timeout promise
+    /// is made; measurement's setup, reuse, and resource limitations apply.
     pub fn sweep<I, R>(
         &mut self,
         kind: &str,
@@ -568,10 +744,18 @@ impl Atlas {
         });
     }
 
-    /// Time `fuzz_per_magnitude` random inputs at each magnitude, each with a
-    /// single short calibrated batch, to show the spread hidden by a median.
-    /// A call over the ceiling ends that magnitude; two such magnitudes in a
-    /// row end the fuzz.
+    /// Measure up to fuzz_per_magnitude independently seeded inputs per magnitude.
+    ///
+    /// Requires a current operation before applying the name filter; otherwise panics.
+    /// Uses the fuzz:kind seed namespace, one batch sample, and quarter-sized target and
+    /// point-budget durations. Factories clone each sample's state; this is deterministic
+    /// seeded sampling, not a mutation-based fuzzing engine or correctness oracle.
+    ///
+    /// A ceiling or caught panic ends the current magnitude. Two consecutive magnitudes
+    /// with either event end the series without placeholders for omitted magnitudes;
+    /// an ordinary failed Outcome does not trigger this stop. A magnitude without such
+    /// an event resets the counter. Zero fuzz_per_magnitude appends an empty series.
+    /// Seed consumption depends on reached samples, and no inner call is preempted.
     pub fn fuzz<I, R>(
         &mut self,
         kind: &str,
@@ -643,8 +827,20 @@ impl Atlas {
         });
     }
 
-    /// Sweep a two-argument operation over a magnitude grid. Cells after a
-    /// too-slow cell in its row, and cells above it in later rows, are skipped.
+    /// Measure rows from b and columns from a, propagating a stopping boundary through later rows.
+    ///
+    /// Requires a current operation before applying the name filter; otherwise panics.
+    /// Uses grid:kind seeds, at most three samples, and half the configured point budget.
+    /// Within a row, a prior block, ceiling, panic, or timing prediction stops that cell
+    /// and all columns to its right; those columns stay blocked in subsequent rows.
+    /// This assumes cost grows in caller axis order and does not validate that assumption.
+    ///
+    /// Decided/failed probe durations remain present, with error=true only for failed
+    /// probes. A ceiling retains its duration with error=false, even if its probe failed;
+    /// a caught panic stores None/error=true and discards its message. Skipped cells use
+    /// None/error=false. Per-cell reasons, timing spread, and iteration counts are lost.
+    /// Factories and clocks inherit measure's limitations, including zero-sample panics;
+    /// no full-grid coverage, semantic validation, or hard timeout is established.
     pub fn grid<I, R>(
         &mut self,
         kind: &str,
@@ -723,7 +919,17 @@ impl Atlas {
         });
     }
 
-    /// Write the JSON document to `--out`, or standard output.
+    /// Consume the atlas, assemble one perf-atlas/1 JSON document, and write it to the configured sink.
+    ///
+    /// Serializes operations with at least one series/fuzz/grid record, including empty
+    /// records; declarations with none are omitted. Records OS, architecture, base seed,
+    /// quick flag, elapsed time, and selected timing settings, but not toolchain, hardware,
+    /// filter, or reuse mode. Thus the document alone is not a reproducibility manifest.
+    ///
+    /// Builds the complete JSON and intermediate strings in memory. File output directly
+    /// creates/truncates the destination without creating parent directories or atomic
+    /// replacement; I/O failures panic and can leave partial output. Stdout printing can
+    /// also panic on failure. This is report serialization, not geometry/proof replay.
     pub fn finish(self) {
         let mut json = String::new();
         let quick = self.config.quick;
@@ -785,6 +991,7 @@ impl Atlas {
     }
 }
 
+/// Format finite binary64 values with Rust Display; map every NaN or infinity to JSON null.
 fn number(value: f64) -> String {
     if value.is_finite() {
         format!("{value}")
@@ -793,6 +1000,11 @@ fn number(value: f64) -> String {
     }
 }
 
+/// Encode UTF-8 text as one JSON string, escaping quotes, backslashes, and control characters.
+///
+/// Newlines use the short escape; other characters below U+0020 use four-digit
+/// hexadecimal escapes. Other Unicode characters remain literal. Allocation is not
+/// bounded; the returned JSON literal is not an HTML/script-context escaping contract.
 fn quote(text: &str) -> String {
     let mut out = String::with_capacity(text.len() + 2);
     out.push('"');
@@ -811,6 +1023,11 @@ fn quote(text: &str) -> String {
     out
 }
 
+/// Serialize a series using ordered seven-element point rows.
+///
+/// Row order is magnitude, median_ns, min_ns, max_ns, iterations, status, reason.
+/// Nonfinite numbers and absent reasons become null. Builds per-point strings and
+/// joins them; no schema, status, reason, or timing-consistency validation occurs.
 fn series_json(series: &Series) -> String {
     let points: Vec<String> = series
         .points
@@ -835,6 +1052,11 @@ fn series_json(series: &Series) -> String {
     )
 }
 
+/// Serialize grid axes, row-major optional durations, and the Boolean error matrix.
+///
+/// None and nonfinite durations both become null. Matrix dimensions are trusted;
+/// no reason/status reconstruction or consistency validation occurs. Intermediate
+/// strings are allocated for rows and joined into the returned object.
 fn grid_json(grid: &Grid) -> String {
     let rows: Vec<String> = grid
         .ns
@@ -879,12 +1101,21 @@ fn grid_json(grid: &Grid) -> String {
     )
 }
 
-/// Powers of two from `2^lo` to `2^hi`, as magnitudes.
+/// Return binary64 powers 2^lo through 2^hi in inclusive exponent order.
+///
+/// An inverted range is empty. Extreme exponents can underflow to zero or overflow
+/// to infinity; no range, finiteness, allocation, or output-size check is applied.
 pub fn powers_of_two(lo: i32, hi: i32) -> Vec<f64> {
     (lo..=hi).map(|e| 2f64.powi(e)).collect()
 }
 
-/// A roughly geometric integer ladder from `lo` to `hi` with `steps` points.
+/// Build a rounded binary64 geometric ladder, then remove adjacent equal values.
+///
+/// Clamps both endpoints to at least one and requests at least two samples. Reversed
+/// endpoints produce a descending recipe; equal endpoints deduplicate to one value.
+/// The result can contain fewer than steps entries. Large u64 endpoints lose integer
+/// precision on conversion, so exact endpoint preservation and exact integer ratios
+/// are not promised. No sorting, work limit, or allocation bound is added.
 pub fn ladder(lo: u64, hi: u64, steps: usize) -> Vec<f64> {
     let (lo, hi) = (lo.max(1) as f64, hi.max(1) as f64);
     let mut out: Vec<f64> = (0..steps.max(2))
@@ -894,11 +1125,16 @@ pub fn ladder(lo: u64, hi: u64, steps: usize) -> Vec<f64> {
     out
 }
 
+/// Bounded harness regressions for generation, record assembly, fresh inputs, and unwind reporting.
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
+    /// Check eight seeded limb widths, the one-bit decimal identity, and a 64-bit decimal length floor.
+    ///
+    /// Does not test the zero-width convention, distribution, all decimal digits, or
+    /// resource behavior; the fixed seed and width list are a bounded regression sample.
     fn limbs_have_the_requested_bit_length() {
         let mut rng = Rng::new(7);
         for bits in [1u32, 2, 31, 32, 33, 64, 100, 257] {
@@ -911,6 +1147,13 @@ mod tests {
     }
 
     #[test]
+    /// Exercise small sweep/fuzz/grid records, one JSON quote, fresh inputs, panic stopping, and a ladder.
+    ///
+    /// Asserts selected row counts, no repeated use of each fresh Cell, a formatted panic
+    /// reason and following skipped point, and one four-value ladder. Despite the name,
+    /// it does not call finish or parse a complete JSON document. Uses real clocks and
+    /// quick settings, so severe scheduling delays can affect its stopping assumptions.
+    /// No broader performance, success-receipt, or distribution claim follows.
     fn sweeps_record_points_and_json() {
         let mut atlas = Atlas::new("test", Config::quick(), None);
         atlas.operation("g", "add", "bits", "integer addition");

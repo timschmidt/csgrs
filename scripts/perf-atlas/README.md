@@ -35,27 +35,47 @@ argument exponent, polynomial degree, dimension, horizon, point count or
 distance to degeneracy. Each sweep runs for several input kinds: different
 representations, backends or input shapes. For each point:
 
-- **Construction:** the input is built outside the timer.
-- **Batches:** the call repeats until a batch takes at least the target
-  duration, then the median, minimum and maximum time per call are recorded
-  over several batches.
-- **Failures:** a call that returns an error, `None` or `false` is still
-  timed, but marked. A fast refusal is not a fast success.
-- **Ceiling:** a single call longer than the ceiling ends that series, and
-  larger magnitudes are recorded as skipped.
+- **Construction:** the input factory runs outside the timer. Work performed
+  inside the callback, including rebuilding lazy expressions, is timed. By
+  default the factory is invoked for each call; shared caches and
+  external factory state are not reset.
+- **Batches:** one initial call estimates a fixed number of calls per batch.
+  Batches need not reach the target duration. Their average times per call supply
+  the minimum, maximum, and upper median. The reported iteration count is calls
+  per batch, not the total number of calls.
+- **Failures:** only the initial result is inspected. `None`, `Err`, and `false`
+  mark failures, while `Some(Err(...))`, `Ok(false)`, and numeric results still
+  count as success. Callbacks must check their intended result and required
+  evidence. Ordinary failed probes remain timed and do not stop a sweep.
+- **Ceiling:** an initial call over the ceiling ends the sweep after it returns;
+  its record retains the duration but discards the result's failure status and
+  reason. Remaining magnitudes are skipped. A timing-growth heuristic can also
+  stop a series before attempting a magnitude. Caught unwinding panics stop it
+  with an error record.
 
-Fuzzed inputs are timed one by one, to show the spread hidden by a median.
-Two-argument operations can also be swept over a grid of both operand sizes.
+Fuzz series sample multiple seeded fixtures per magnitude, requesting one timing
+batch per fixture and quarter-sized target/budget settings. A ceiling or panic ends the
+current magnitude; two consecutive such magnitudes end the series. Grid rows use
+at most three samples and half the point budget. Their stopping boundaries block
+the affected column and all columns to its right in subsequent rows.
+
+Point budgets are checked between batches, and later calls are not individually
+checked against the ceiling. These settings do not interrupt a stuck callback or
+bound input generation, total work, or memory.
 
 | Setting | Full | `--quick` |
 | --- | --- | --- |
 | target batch | 2 ms | 200 µs |
-| samples per point | 7 | 3 |
-| time per point | 250 ms | 25 ms |
-| single-call ceiling | 2 s | 250 ms |
-| fuzzed inputs per magnitude | 24 | 6 |
+| maximum samples per point | 7 | 3 |
+| point-budget threshold | 250 ms | 25 ms |
+| initial-call ceiling | 2 s | 250 ms |
+| maximum fuzzed inputs per magnitude | 24 | 6 |
 
-Inputs are seeded, so reruns time the same values; `--seed` changes them.
+Operation and kind labels select seeded streams; `--seed` changes the base seed.
+Matching inputs also require deterministic factories and the same sampling path.
+Timing-based stops can change which samples are reached, particularly in fuzz
+series and grids. Different kind labels use different streams, so comparable
+series do not automatically measure identical inputs.
 
 ## Reading the report
 
@@ -88,8 +108,10 @@ same machine with the same settings, and with nothing else heavy running.
    - For each operation, call `atlas.operation(group, name, axis, description)`,
      then any of `sweep`, `fuzz` and `grid`.
    - Finish with `atlas.finish()`.
-3. Make the timed call do real work. Force lazy values to a fixed precision,
-   and return `Option`, `Result` or `bool` so that failures are marked.
+3. Make the timed call do the work being claimed. Force lazy values to the stated
+   precision or materialization boundary, and return a status that checks the
+   intended result and required evidence. `Option` and `Result` check only their
+   outer variant; the harness does not validate their payloads or certainty.
 4. Add the crate to the default list in `run.sh`.
 
 ## Archived runs
