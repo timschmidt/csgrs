@@ -1,8 +1,14 @@
-//! Exhaustive Hyperreal representation coverage at Hyperlattice's API boundary.
+//! A finite scalar-representation corpus exercised through Hyperlattice carriers.
 //!
-//! Hyperreal intentionally exposes a smaller public structural taxonomy than
-//! its optimized `Real` certificate enum. These tests keep a recipe for every
-//! finite certificate class and send each one through every lattice carrier.
+//! The 22 positive recipes name the current private Hyperreal certificate variants
+//! and cover its eight public structural kinds. Selected carrier operations and all
+//! 484 ordered recipe pairs are exercised, not every value or operation in those
+//! families. Tests use both structural assertions and `assert_same_real`, whose
+//! fallback accepts overlapping enclosures rather than proving equality.
+//!
+//! Feature-gated tests inspect serialized tags and exercise three Arbitrary byte
+//! patterns. These checks do not establish general exact replay, fresh-process
+//! validation, cancellation responsiveness, or exhaustive generator coverage.
 
 use hyperlattice::{
     Complex, HomogeneousPoint3, Matrix3, Matrix4, Point2, Point3, ProjectivePlane3, Rational, Real,
@@ -10,17 +16,33 @@ use hyperlattice::{
 };
 use hyperreal::{CertifiedRealEquality, CertifiedRealSign, RealSign, StructuralKind};
 
+/// One positive scalar recipe with its expected private tag and coarser public kind.
+///
+/// The tag is a test label until the serde-enabled test inspects the serialized class;
+/// public structural kinds alone cannot distinguish every private representation.
 #[derive(Clone)]
 struct RepresentationCase {
+    /// Expected serialized private Class variant name, also used in assertion diagnostics.
     certificate: &'static str,
+    /// Expected coarser symbolic category returned by the scalar fact API.
     public_kind: StructuralKind,
+    /// Exact scalar expression supplied to carrier constructions and pairwise arithmetic.
     value: Real,
 }
 
+/// Construct an exact signed rational Real from an i64 numerator and nonzero u64 denominator.
+///
+/// Panics on a zero denominator; the fixed recipe calls supply two, five, or seven.
 fn fraction(numerator: i64, denominator: u64) -> Real {
     Real::new(Rational::fraction(numerator, denominator).expect("nonzero denominator"))
 }
 
+/// Build 22 positive representatives spanning the current named private certificates.
+///
+/// Recipes include rational 3/2; pi powers, reciprocal, exponential/root products and
+/// pi-3; sqrt(2); exp(2); logarithms and products; base-two/ten powers of 1/7; sin(pi/5),
+/// tan(pi/5); and opaque sin(1). Logarithm/reciprocal constructions expect valid domains.
+/// This finite vocabulary is maintained manually, not generated from the Class enum.
 fn representation_cases() -> Vec<RepresentationCase> {
     let pi = Real::pi();
     let e = Real::e();
@@ -149,6 +171,10 @@ fn representation_cases() -> Vec<RepresentationCase> {
     ]
 }
 
+/// Map each of the eight public structural kinds to one slot of the coverage bitmap.
+///
+/// The exhaustive match forces a source update when a public enum variant is added;
+/// it does not enumerate the private certificate payloads.
 fn structural_kind_index(kind: StructuralKind) -> usize {
     match kind {
         StructuralKind::ExactRational => 0,
@@ -162,6 +188,12 @@ fn structural_kind_index(kind: StructuralKind) -> usize {
     }
 }
 
+/// Check selected invalid-domain facts remain typed errors with either abort-flag state.
+///
+/// Each recipe is scaled by -10, -1, 1, and 10. Only domains already classified Invalid
+/// trigger ln/log10 or asin/acos calls; valid and unknown domains are not tested here.
+/// The caller's flag must retain its initial value. Success does not prove that an
+/// active flag interrupts a valid, expensive computation.
 #[test]
 fn native_scalar_domains_keep_invalid_certificates_across_all_representations() {
     use hyperlattice::DomainStatus;
@@ -211,6 +243,14 @@ fn native_scalar_domains_keep_invalid_certificates_across_all_representations() 
     }
 }
 
+/// Accept an exact equality/zero certificate, otherwise require overlapping rational enclosures.
+///
+/// First tries certified equality at precision -160, then the difference's sign at
+/// that precision. If neither proves equality, requests both rational enclosures at
+/// -160 and asserts nonempty overlap; missing bounds panic with the supplied context.
+/// A NotEqual result or a nonzero difference does not cause immediate rejection.
+/// Thus this helper can accept distinct sufficiently close values. It is a finite
+/// consistency check, not an exact equality oracle or a uniform error tolerance.
 fn assert_same_real(left: &Real, right: &Real, context: &str) {
     if matches!(
         left.certified_eq_until(right, -160),
@@ -237,18 +277,29 @@ fn assert_same_real(left: &Real, right: &Real, context: &str) {
     );
 }
 
+/// Apply assert_same_real to three corresponding lanes, retaining its enclosure-overlap fallback.
+///
+/// No vector-level norm or exact equality certificate is asserted.
 fn assert_vector3(left: &Vector3, right: &Vector3, context: &str) {
     for axis in 0..3 {
         assert_same_real(&left[axis], &right[axis], context);
     }
 }
 
+/// Apply assert_same_real in x, y, z order, retaining its enclosure-overlap fallback.
 fn assert_point3(left: &Point3, right: &Point3, context: &str) {
     assert_same_real(&left.x, &right.x, context);
     assert_same_real(&left.y, &right.y, context);
     assert_same_real(&left.z, &right.z, context);
 }
 
+/// Exercise selected scalar, complex, vector, point, matrix, and projective operations for each recipe.
+///
+/// Assert 22 recipes, each expected public kind, and all eight observed kinds. Check
+/// complex norm/self-division, dot/wedge/cross identities, translations, diagonal
+/// inverse composition, coordinate-plane intersection, and homogeneous normalization.
+/// Several comparisons use the permissive scalar helper. Shared-kernel identities
+/// and carrier consumption do not establish every operation's exact closure.
 #[test]
 fn every_real_certificate_crosses_every_lattice_carrier() {
     let cases = representation_cases();
@@ -394,6 +445,11 @@ fn every_real_certificate_crosses_every_lattice_carrier() {
     assert_eq!(observed_kinds, [true; 8], "missing public Real kind");
 }
 
+/// Exercise all 22×22 ordered pairs through dot/wedge, complex multiplication, and matrix identity.
+///
+/// Vector dot symmetry, wedge antisymmetry, and complex commutativity use the scalar
+/// helper's exact-certificate-or-overlap criterion. Matrix identity uses structural
+/// equality. No pairwise general matrix inversion or projective intersection is tested.
 #[test]
 fn every_ordered_pair_of_real_certificates_crosses_lattice_arithmetic() {
     let cases = representation_cases();
@@ -426,6 +482,12 @@ fn every_ordered_pair_of_real_certificates_crosses_lattice_arithmetic() {
     }
 }
 
+/// Check each recipe's serialized tag, restored public kind, and scalar comparison after JSON reload.
+///
+/// Accept string tags or single-variant objects; an invalid class name must be
+/// rejected with a message containing all 22 expected names. This checks presence,
+/// not absence of extra variants. Restored values use the enclosure-overlap fallback;
+/// serialization byte determinism and fresh-process exact replay are not asserted.
 #[cfg(feature = "serde")]
 #[test]
 fn serialized_certificate_tags_make_the_private_inventory_drift_detecting() {
@@ -496,11 +558,21 @@ fn serialized_certificate_tags_make_the_private_inventory_drift_detecting() {
     }
 }
 
+/// Exercise six aggregate Arbitrary implementations with three fixed byte streams.
+///
+/// The streams target finite zero f64, nonfinite f64 sanitized to zero, and zero i128
+/// imports. Generation must succeed for Complex, Vector2/3/4, and Matrix3/4; norms or
+/// facts are then computed without value assertions. This checks usable construction,
+/// not a distribution, nonzero data, symbolic certificates, or geometric validity.
 #[cfg(feature = "arbitrary")]
 #[test]
 fn every_lattice_arbitrary_implementation_accepts_float_and_integer_storage_paths() {
     use arbitrary::{Arbitrary, Unstructured};
 
+    /// Decode one Arbitrary value from a fresh byte cursor, panicking if generation fails.
+    ///
+    /// The higher-ranked bound permits any cursor lifetime; trailing bytes are not checked
+    /// and no minimum-consumption or output-value assertion is made.
     fn generate<T>(bytes: &[u8]) -> T
     where
         for<'a> T: Arbitrary<'a>,

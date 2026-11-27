@@ -11066,6 +11066,114 @@ Evidence: `/tmp/csgrs-rustdoc-lattice-adversarial-*.log`, Cargo artifact JSON an
 `/tmp/csgrs-lattice-adversarial-audit/` scripts, temporary dependency manifest/lock
 and rendered private docs. Continue the remaining Hyperlattice tests and modules.
 
+## Hyperlattice geometric, representation and interval examples (2026-11-27)
+
+Reviewed every line of these three integration-test files on `d64c94664`,
+including private helpers, the recipe record and fields, feature gates, local
+helper, fixtures and assertions:
+
+| File under `crates/hyperlattice/tests/` | Baseline lines | Current lines |
+| --- | ---: | ---: |
+| `geometric.rs` | 123 | 163 |
+| `real_representations.rs` | 540 | 612 |
+| `interval_surface.rs` | 142 | 175 |
+
+Owning layer: Hyperlattice regression examples and representation/companion-type
+integration tests. Relevant contracts are P1–P6 and P17–P19: exact values,
+conservative evidence, explicit errors and supported composition. The missing
+witness was attached, accurate documentation for private helpers, fields and
+assertions; the representation overview also overstated the strength of its
+coverage. The existing scalar test file already has a complete review record
+and was not changed or counted again.
+
+The batch adds or revises 42 documentation groups: three file overviews, one
+shared-module declaration, one private struct, three fields, twelve helpers
+(including one function-local generic helper), and 22 tests. This bounded source
+inventory is not a repository-wide coverage percentage or a universal proof.
+
+Contracts clarified:
+
+- Geometric fixtures use exact integer/rational data and column-vector transforms.
+  Weight one represents a point, zero a direction; translation acts through the
+  weight. Determinants -15 and -24 are signed area/volume factors. The normalization
+  fixture has norm ten and unit coordinates 3/5,4/5,0. Inverse roundtrips use the
+  same implementation twice and do not independently establish inverse entries.
+- The representation corpus contains 22 positive recipes, covering the current
+  private Class variant names and eight public StructuralKind values. The 484
+  ordered pairs exercise selected identities, not every value, carrier operation,
+  or composition. Public-kind matching alone cannot establish private tags.
+- `assert_same_real` tries equality, then a zero difference sign, at precision
+  -160. Otherwise it requires overlapping certified enclosures. It does not reject
+  a NotEqual certificate or nonzero sign immediately. Reproduced acceptance of
+  distinct values with a temporary test calling the actual helper: pi versus the
+  exact rational midpoint of pi's enclosure at -200. Certified equality reports
+  NotEqual, yet the helper accepts the overlap at -160. This is an existing test
+  oracle limitation, not exact equality evidence; no assertion or implementation
+  was changed. Vector, point, pairwise and JSON comparisons inherit that limitation.
+- Invalid-domain checks run only when domain facts already say Invalid, over each
+  recipe scaled by -10,-1,1,10 and both flag states. They verify typed errors and
+  unchanged caller flags, not interruption of valid expensive evaluation.
+- Serde checks the current recipes' tags and restored public kinds. The invalid-tag
+  diagnostic must contain the expected names but may also contain extra variants;
+  it is not an exhaustive future-private-inventory guard. Roundtrip comparison
+  permits overlap, and neither byte determinism nor fresh-process replay is tested.
+- Arbitrary checks use three byte streams aimed at finite floating zero, sanitized
+  nonfinite float, and integer zero across six aggregate types. Generated values
+  and facts/norms are not compared against independent expected values. This is
+  construction coverage, not a generator distribution or geometric-validity proof.
+- Interval fixtures consume the actual companion carriers. Retained affine
+  dependence makes duplication followed by subtraction give zero; eight applications
+  of 2*x+1 to one give 511. Widths 1 and 13/11 sum to 24/11. Matrix norm/measure
+  ranges and midpoint-radius reconstruction have explicit endpoint expectations.
+  The contraction margins [0,1] and [-1,1] contain zero and do not prove a uniform
+  strict contraction or any solver root property.
+
+Context reads checked the scalar classification enum, public kinds, certified
+comparison/enclosure implementations, Arbitrary decoder and aggregate generators,
+and companion rational interval/norm/contraction implementations. Those reads
+support these statements but do not add new whole-file completion records for
+production dependencies.
+
+Validation after the final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and
+  blank lines leaves all three files identical to `d64c94664`. Fixtures, every
+  assertion, attributes, feature gates and operation order are unchanged.
+- All 22 existing tests passed on the baseline and after edits with all features.
+  With no defaults, all thirteen enabled tests passed; seven interval and two
+  serde/arbitrary tests are disabled by their existing feature gates. Direct rustc
+  harnesses compiled the actual files using matching Cargo artifacts and cfgs;
+  each test ran in its own process with a 60-second limit. No timeout was reached.
+- The distinct-pi/rational overlap witness also passed with both configurations.
+  It was appended only to a temporary copy of the test source; it confirms the
+  documented helper weakness without changing the maintained test suite.
+- Private integration-target Rustdoc passed with warnings and broken/private links
+  denied. Complete rendered text matched nineteen documentation groups with all
+  features and eighteen with no defaults. The disabled interval crate retains
+  its overview page but omits its private helper. The first two temporary checker
+  attempts assumed no crate page, then no overview; corrected the checker to
+  match Rustdoc's behavior, retaining those diagnostic logs. No lint was disabled.
+  All 22 test docs and the function-local helper doc were source-verified; Rustdoc
+  omits those items. Tests were executed under their applicable feature gates.
+- Hyperlattice library builds, private library docs and Cargo checks for all three
+  integration targets passed with all features and no defaults, using locked,
+  offline Cargo, two workers and CARGO_INCREMENTAL=0. A static comparison confirms
+  the 22 reviewed Class names match the recipes on this revision. Neither check
+  is a future completeness guarantee.
+- No production consumer changed. Full workflows and unrelated downstream runtime
+  suites remain owner-waived for this docs-only session. No focused check remains
+  blocked; no new performance, exact replay or uniform resource claim is made.
+- Removed the two owned temporary executables after checks. The shared Cargo target
+  remains near 2.6 GiB; no duplicate Cargo target tree was created. Scripts, rendered
+  private docs and logs remain under /tmp as local evidence.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-representations-*.log`, corresponding Cargo
+artifact JSON and `/tmp/csgrs-lattice-representations-audit/` scripts/manifests/docs.
+These three files now have whole-file review records. The root AGENTS.md mandate
+for 100% public/private Rustdoc remains active; the repository audit is incomplete.
+Continue the remaining API-surface tests, reconcile the whole-file matrix-test
+record, and then proceed through the remaining owning-crate/support files.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
