@@ -11719,6 +11719,112 @@ reports. This file now has complete authored-item documentation and a whole-file
 review record. Continue with mathbench.rs and its modules; the repository-wide
 audit and earlier generated Criterion documentation gaps remain open.
 
+## Hyperlattice mathbench driver and dispatch collector (2026-11-27)
+
+Read every baseline line of `crates/hyperlattice/benches/mathbench.rs` (130 → 199)
+and `benches/mathbench/dispatch_trace.rs` (420 → 549) on `c7008dd99`. Owner: benchmark
+mode selection, engine initialization, diagnostic sampling and report aggregation.
+Relevant contracts are P3/P4/P5/P6 and P36/P37: scope/caches, truthful cost evidence,
+typed-versus-panicking outcomes and declared resource limits. The domain comprises
+argv/environment, the sixteen family registration calls, closure samples, process
+filter/store state and feature-selected behavior. Missing acceptance evidence was
+attached documentation for private state, records, fields, functions and mode
+semantics. The all-feature Cargo target check passed on the starting revision.
+
+Added 47 authored documentation groups: six in the driver and 41 in trace support
+across feature configurations. Trace support includes both enabled/disabled module
+declarations, four statics, two record types, thirteen fields, eighteen functions
+inside the feature-selected modules and two forwarding functions. All authored
+items in these two files are documented; the other textual includes remain
+separate pending reviews, not credited by building this combined crate.
+
+Context reads covered selected vector/matrix trace call sites, local/shared writer
+gates, Hyperreal counter/factor classification, and locked Symbolica 1.5.1 workspace
+and license-check initialization. They do not establish whole-file review of those
+dependencies or the other mathbench includes.
+
+Contracts clarified:
+
+- Exact --update-benchmarks-md takes precedence over engine/Criterion setup, but
+  does not bypass either writer's gate. Diagnostic aliases install Criterion's
+  nonmatching $^ filter and skip normal argv parsing while still initializing
+  Symbolica and invoking all sixteen families. Trace-name filters do not eliminate
+  unrelated fixture setup. A filter without a diagnostic alias does not enable
+  tracing and is still passed through to normal Criterion parsing.
+- License lookup trims the environment value, then falls back to a cwd-relative
+  file for absent/non-Unicode/empty input. File errors become None. Key validation
+  results are ignored by this driver; the commented hobbyist request does not run.
+  Criterion construction precedes the Symbolica workspace/license check, with
+  Plotters selected. The helper does not promise global control of other callers'
+  subprocesses, worker pools or dependency initialization failures.
+- TRACE_FILTER is once-only. An inactive trace_cases call can initialize it to an
+  empty accept-all list before begin_trace_run; later requested filters are then
+  ignored. Repeated begin calls clear stores but cannot change the first filter.
+  TRACE_RUN is never reset here. Store mutexes and relaxed enablement do not define
+  an atomic session boundary across threads.
+- Sampling resets/drains only current-thread trace counters, retaining scalar
+  caches and discarding enclosing trace evidence. Ordinary rows omit snapshots
+  without dispatch labels even when rational counters are nonzero; an empty repeat
+  leaves an existing row untouched. Nonempty repeats replace the key. Matrix
+  profiles instead append duplicates and retain empty samples or zero call counts.
+  Calls is supplied metadata, not a loop count or verified successful-call count.
+- Scalar profiles recognize selected exact hyperlattice labels and expand aggregate
+  hooks into nominal counts. Nested events can double-count; ignored labels are
+  not proof of zero work. Constructor-name matches are not allocations. The report
+  adds those counts to rational temporaries, possibly overlapping. Integer counter
+  arithmetic has no explicit saturation/overflow outcome or work/memory budget.
+- Per-call values round through binary64, with zero calls displaying n/a. Factor
+  buckets classify zero/unit, power-of-two and remaining factors by width. Peak
+  operand bits is not divided by calls. Matrix rows sort stably by matrix/kernel
+  and the from-f64/rational/other rank, retaining insertion order among other labels.
+  Correlation categories are overlapping reporting heuristics, not certificates.
+- The trace writer holds both stores' locks while rendering/writing, returns on
+  a presence-based skip flag or empty stores, and can leave an old report untouched.
+  It overwrites a cwd-relative file without atomic replacement or Markdown label
+  escaping; I/O errors log. It does not clear rows or disable collection. Disabled
+  shims do not call closures or convert names, although caller argument expressions
+  and closure construction/destruction still occur.
+
+Validation after final edits:
+
+- Focused Rustfmt and git diff --check passed. Reproduced one pre-existing Rustfmt
+  failure in the original collector: a four-line iterator header needed one line.
+  Applied only that whitespace fold outside documentation. The source-identity
+  checker allows precisely this fold plus comment-only/blank-line changes and
+  otherwise requires identical executable source; no token, order or policy changed.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 with incremental compilation disabled. Matching dependency rmeta
+  paths were supplied; warnings and broken/private links were denied. Full text of
+  41 active groups rendered on 28 pages with tracing; 14 groups rendered on 14 pages
+  without it, covering all 47 source groups across modes including thirteen fields.
+- The first disabled Rustdoc run rejected unquoted Into<String> as an HTML tag.
+  Corrected it to code markup and retained the initial log; final runs pass without
+  suppressing warnings. A temporary insertion script initially encountered an
+  ambiguous calls field/parameter match before writing; the field insertion was
+  restricted to its first declaration and inspected in the resulting source.
+- Original and final collector sources were compiled with matching Hyperreal rlibs
+  into isolated temporary probes, with warnings denied and 30-second process limits.
+  Fresh-process scenarios reproduced frozen-filter/reinitialization behavior,
+  inactive filter initialization, rejected closures, rational-only omission, empty
+  repeat preservation, zero-call profiles, nominal aggregate counts and stable
+  unknown-input ordering. Disabled probes used panicking closures/name conversion
+  to verify neither ran and no report was created. All probes passed.
+- Three synthetic original/final reports were byte-identical (2,200, 1,287 and
+  1,586 bytes), preserving all recorded counts in those scenarios. SHA-256 digests
+  are in the probe log. These inject known diagnostic labels to check collector
+  semantics; they are not matrix performance measurements or numerical oracles.
+- The full mathbench executable, license helpers, comparison engines and benchmark
+  families were not launched. No repository report/timing data was refreshed.
+  Full workflows and unrelated runtime checks remain owner-waived; no focused
+  check remains blocked. Probe executables were removed; retained scripts/reports
+  use about 180 KiB and the reused Cargo target remains about 2.7 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-mathtrace-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-mathtrace-audit/` scripts, commands and isolated reports.
+The driver and trace collector now have whole-file records; continue with the
+remaining mathbench fixtures, engines, operation families and report generator.
+The repository audit and previously recorded generated-item gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
