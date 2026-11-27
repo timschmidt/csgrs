@@ -1,6 +1,6 @@
-//! [`Arbitrary`](arbitrary::Arbitrary) implementations for lattice types.
+//! [`Arbitrary`] implementations for lattice types.
 //!
-//! The coordinate type is [`Real`](crate::Real). Because `Real` is owned by the
+//! The coordinate type is [`Real`]. Because `Real` is owned by the
 //! `hyperreal` crate, this module generates real components with a local helper
 //! and implements `Arbitrary` only for the local vector, matrix, and complex
 //! types.

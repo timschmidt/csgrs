@@ -1,4 +1,4 @@
-//! Fixed-size row-major matrices over [`Real`](crate::Real).
+//! Fixed-size row-major matrices over [`Real`].
 //!
 //! Implementation map:
 //! - type layout and generic array helpers

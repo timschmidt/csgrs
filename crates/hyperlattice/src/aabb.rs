@@ -1,24 +1,31 @@
-//! Axis-aligned bounding boxes over exact point carriers.
+//! Unvalidated axis-aligned box bounds stored as exact Point3 corners.
+//!
+//! Ordering, emptiness conventions, containment, and boundary semantics belong to
+//! consumers. This carrier performs no comparisons or rounding and has no policy or
+//! certainty receipt. Public corner mutation can invalidate a consumer's bounds facts.
 
 use crate::{Point3, Real};
 
-/// Three-dimensional axis-aligned bounding box.
+/// Raw 3D minimum/maximum corner carrier, without a validated ordering or fill contract.
+///
+/// Derived equality compares stored coordinates; it does not compare represented
+/// sets under a consumer's corner-normalization or empty-box conventions.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Aabb {
-    /// Minimum corner.
+    /// Intended lower corner; componentwise ordering against maxs is not enforced.
     pub mins: Point3,
-    /// Maximum corner.
+    /// Intended upper corner; it may equal or precede mins in the supplied coordinates.
     pub maxs: Point3,
 }
 
 impl Aabb {
-    /// Constructs an axis-aligned bounding box from minimum and maximum corners.
+    /// Store the supplied corners unchanged; does not sort coordinates, prove mins<=maxs, or diagnose an inverted box.
     #[inline]
     pub const fn new(mins: Point3, maxs: Point3) -> Self {
         Self { mins, maxs }
     }
 
-    /// Constructs the degenerate box at the origin.
+    /// Construct coincident exact-zero corners, representing the degenerate origin bounds rather than a canonical empty-set sentinel.
     #[inline]
     pub fn origin() -> Self {
         let zero = Real::zero();

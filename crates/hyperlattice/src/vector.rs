@@ -1,4 +1,4 @@
-//! Fixed-size vectors over [`Real`](crate::Real).
+//! Fixed-size vectors over [`Real`].
 
 use std::array::from_fn;
 use std::fmt;

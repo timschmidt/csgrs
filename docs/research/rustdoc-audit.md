@@ -7524,6 +7524,133 @@ AST/render checker, and runner stub/probes are under `/tmp/csgrs-atlas-*`.
 Historical artifacts, other atlas workload examples, and the broader repository
 remain open; this batch does not establish benchmark or mathematical completeness.
 
+## Hyperlattice projective carriers and scalar guards (2026-11-26)
+
+Reviewed every line of these seven files at baseline `d4522357c`, including
+private helpers, test bodies, attributes, fields, and local constants:
+
+| File under `crates/hyperlattice/` | Baseline lines | Current lines |
+| --- | ---: | ---: |
+| `src/projective.rs` | 559 | 690 |
+| `src/scalar.rs` | 64 | 91 |
+| `src/error.rs` | 18 | 26 |
+| `src/trace.rs` | 13 | 23 |
+| `src/aabb.rs` | 30 | 37 |
+| `tests/common/mod.rs` | 27 | 40 |
+| `tests/scalar.rs` | 264 | 298 |
+
+Owning layer: Hyperlattice coordinate carriers, fixed-dimensional construction
+formulas, scalar-domain guards, native result aliases, and trace forwarding.
+Relevant contracts include P1/P2/P3/P4/P6/P9/P10/P17/P37: exact meaning, explicit
+failure, scalar authority, preserved decision/dispatch order, and non-certifying
+structural metadata. The missing acceptance witness was accurate documentation
+of carrier validity, scale identity, domain checks, and the limits of existing
+regressions; many private/test declarations lacked attached Rustdoc. No geometric
+capability, certainty receipt, or resource bound was added.
+
+The source inventory now finds comments on all 80 authored declarations and ten
+fields in these seven files, including both feature alternatives of the trace
+macro, trait/implementation methods, test helpers, 23 tests, and two function-local
+constants. Imports/re-exports inherit the original API documentation; generated
+compiler/derive items are not counted as authored declarations. This is a bounded
+source inventory and semantic review, not repository-wide coverage.
+
+Contracts clarified:
+
+- Plane/point/line carriers accept degenerate coefficients. Projective points and
+  lines require nonzero tuples; Pluecker lines also require direction·moment=0.
+  Those conditions are not validated by constructors. Coefficientwise Real
+  equality is not equality of geometric images up to a common nonzero scale.
+  Public mutation changes current facts without transporting incidence proofs.
+- Three-plane intersection constructs signed cofactors. Sparse rational and
+  expanded paths retain the same tuple, not just a proportional representative.
+  Rank below three yields the invalid all-zero tuple; rank-three output can have
+  zero weight and represent a point at infinity. Two-plane and line-plane formulas
+  likewise construct algebraic carriers without proving a unique finite result.
+- Homogeneous incidence returns an expression, not a decision. Invalid all-zero
+  inputs also satisfy it. Representative scale affects its sign, so it is not an
+  affine sidedness classification. Coordinate fact sets do not validate geometry.
+- Affine conversion first handles all-rational unit weight, then all-dyadic
+  quotients, then general borrowed division, with x/y/z order unchanged. General
+  division can require scalar nonzero reasoning. Failure propagates before a
+  Point3 is returned; no independent work budget or certainty receipt is supplied.
+- The definite-zero guard admits unknowns, whereas the known-nonzero guard maps
+  Zero to DivideByZero and Unknown to UnknownZero without starting refinement.
+  Native inversion can resolve the near-zero sine fixture that the checked
+  reciprocal rejects. The fixture is mathematically negative/nonzero; its name
+  describes unavailable cheap knowledge rather than mathematical equality to zero.
+- Abort attachment shares a cooperative flag and changes scalar payload/cache
+  state; it neither polls immediately nor preempts all exact shortcuts. Result
+  aliases are the native scalar Result type, not stronger checked/certainty types.
+- Aabb stores unsorted, unvalidated corners. Origin creates coincident zero bounds,
+  not a canonical empty sentinel. Enabled trace arguments are evaluated even when
+  recording is inactive; the disabled macro erases their evaluation entirely.
+- The projective proportionality helper's six mixed minors also vanish for an
+  all-zero tuple against any tuple. Tests requiring validity need a separate
+  nonzero assertion. Existing sparse fixtures supply one where documented; the
+  degenerate fixture explicitly expects zero. The wide dyadic comparison shares
+  the scalar implementation and does not constitute an independent arithmetic or
+  performance proof. The parallel fixture only asserts zero weight and an error.
+
+Context reads followed these claims into Hyperreal's rational/fact, inversion,
+abort, computable zero-knowledge, and dispatch implementations, Hyperlimit's
+homogeneous adapter, and Hypermesh's bounds consumer. Those were targeted excerpts,
+not new whole-file reviews. The complete Hyperlattice manifest and root library
+were read for exports/features; root API claims remain subject to the unreviewed
+implementation modules. Point, README, geometric/API-surface tests, and the trace
+benchmark received context reads only, not whole-file completion credit.
+
+Private Rustdoc initially failed on six existing redundant explicit links across
+`kernels.rs`, `complex.rs`, `vector.rs`, `matrix/core.rs`, and feature-gated
+`arbitrary_impls.rs`. Inspected their module/import context and removed only the
+redundant destinations. The resolved targets remain the same. These five files
+remain open for whole-file semantic review; no lint was disabled.
+
+Validation after documentation edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves identical source in all twelve changed Rust files against the
+  baseline. No executable layout, branch, predicate call, assertion, fixture,
+  feature, visibility, or lint policy changed.
+- Hyperlattice library builds succeeded with no default features and all features,
+  using locked/offline Cargo, two workers, one shared target, and no incremental
+  storage. Private library Rustdoc passed with warnings and broken/private links
+  denied in both configurations. Full normalized text of 56 documentation groups
+  on 31 pages matched the reviewed source in each configuration, including the
+  corresponding trace macro alternative.
+- Separate private `cfg(test)` documentation rendered 15 complete additional
+  groups across 14 pages: test-module documentation, seven projective helpers,
+  scalar-test overview, and common fixtures. Rustdoc omits individual `#[test]`
+  function pages and the two function-local constants: all 25 retain reviewed
+  source comments. Test attributes were not changed to manufacture rendered pages.
+- The seven existing projective tests and sixteen scalar integration tests passed
+  in both feature configurations. A temporary rustc harness includes the actual
+  projective source unchanged and links actual Hyperlattice/Hyperreal libraries;
+  scalar integration tests compile directly from their original source. This
+  avoids unrelated Criterion/Rug/Symbolica development dependencies. The harness
+  is focused validation, not execution of the full crate test suite.
+- Hyperlimit's downstream library checks passed with no default features and all
+  features. No dispatch-count or performance claim is inferred from these tests;
+  executable-source identity preserves the existing dispatch statements.
+- Initial harness-only unused-public-item warnings were removed by exposing the
+  included module in the temporary harness. A subsequent feature-switch attempt
+  found that Cargo's top-level rlib was replaced by the other configuration;
+  rebuilding and testing each configuration sequentially resolved that harness
+  setup issue. Final focused test/build/doc logs have no warnings or failures.
+- Full workflow checks remain owner-waived for this docs-only session. The shared
+  Cargo target is about 1.9 GiB. Temporary test binaries are removed after checks;
+  documentation, source harnesses, and logs remain under /tmp for review.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-{min,all}-{build,doc,tests,render}.log`,
+`/tmp/csgrs-rustdoc-lattice-downstream-{min,all}.log`, and
+`/tmp/csgrs-rustdoc-lattice-test-{docs,render}.log`. Cargo artifact manifests and
+checkers are `/tmp/csgrs-rustdoc-lattice-*-build.json` and
+`/tmp/csgrs-lattice-*.py`; private test docs are under
+`/tmp/csgrs-lattice-harness/doc`. Temporary evidence is not a durable repository
+artifact. Hyperlattice's remaining implementations, tests, benches, support files,
+and the broader codebase remain open. The root AGENTS.md public/private coverage
+mandate remains in force.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

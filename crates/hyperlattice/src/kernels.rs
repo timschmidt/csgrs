@@ -1,4 +1,4 @@
-//! Fixed-arity scalar kernels for [`Real`](hyperreal::Real).
+//! Fixed-arity scalar kernels for [`Real`].
 //!
 //! These helpers are intentionally crate-private. `hyperreal::Real` owns the
 //! arithmetic representation; `hyperlattice` owns the small-vector and

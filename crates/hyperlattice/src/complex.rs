@@ -1,4 +1,4 @@
-//! Complex numbers backed by [`Real`](crate::Real).
+//! Complex numbers backed by [`Real`].
 
 use std::fmt;
 use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};

@@ -1,9 +1,18 @@
-//! Lattice-specific zero guards and cancellation attachment.
+//! Structural zero guards and cooperative signal attachment for lattice operations.
 //!
-//! Scalar arithmetic and structural queries use the native `Real` API.
+//! These helpers keep Hyperreal as the arithmetic/fact authority. A definite-zero
+//! guard admits unknown values, whereas the checked guard rejects them. Neither
+//! helper starts a sign-refinement loop. Existing cached proofs may affect the
+//! facts observed. Abort attachment is not a preemptive deadline or rollback.
 
 use crate::{AbortSignal, BlasResult, CheckedBlasResult, Problem, Real, ZeroKnowledge};
 
+/// Attach a cloned Arc cancellation flag to the owned Real and return it.
+///
+/// Real::abort clears its primitive approximation cache and attaches the flag to a
+/// computable payload, materializing that payload if needed. This helper does not
+/// poll the flag or return a cancellation error; subsequent operations decide which
+/// paths consult it. No independent cache isolation or total-work bound is supplied.
 #[inline(always)]
 pub(crate) fn with_abort(mut value: Real, signal: &AbortSignal) -> Real {
     crate::trace_dispatch!("hyperlattice", "abort", "attach-owned-real");
@@ -11,12 +20,21 @@ pub(crate) fn with_abort(mut value: Real, signal: &AbortSignal) -> Real {
     value
 }
 
+/// Clone the borrowed Real, then attach the shared signal through with_abort.
+///
+/// Records clone-and-attach before the owned attachment trace. Cloning does not imply
+/// independent underlying expression/proof caches; the AtomicBool remains shared.
 #[inline(always)]
 pub(crate) fn clone_with_abort(value: &Real, signal: &AbortSignal) -> Real {
     crate::trace_dispatch!("hyperlattice", "abort", "clone-and-attach");
     with_abort(value.clone(), signal)
 }
 
+/// Reject Real::definitely_zero with DivideByZero, accepting every other result.
+///
+/// At this revision that query checks the scalar's zero rational scale. Ok does not
+/// prove nonzero and can admit an opaque mathematical zero. This guard does not
+/// refine, inspect cancellation, or decide the full scalar domain.
 #[inline(always)]
 pub(crate) fn reject_definite_zero(value: &Real) -> BlasResult<()> {
     if value.definitely_zero() {
@@ -28,6 +46,11 @@ pub(crate) fn reject_definite_zero(value: &Real) -> BlasResult<()> {
     }
 }
 
+/// Accept ZeroKnowledge::NonZero; map Zero to DivideByZero and Unknown to UnknownZero.
+///
+/// Uses zero_status's structural/cached facts without initiating refinement here.
+/// Unknown is not mathematical zero and does not become a successful domain proof.
+/// The helper does not separately poll a cancellation flag.
 #[inline(always)]
 pub(crate) fn require_known_nonzero(value: &Real) -> CheckedBlasResult<()> {
     match value.zero_status() {
@@ -46,18 +69,22 @@ pub(crate) fn require_known_nonzero(value: &Real) -> CheckedBlasResult<()> {
     }
 }
 
-/// Returns the multiplicative inverse after rejecting zero and unknown-zero values.
+/// Require known nonzero status before consuming the Real in its native inverse operation.
 ///
-/// Unlike `Real::inverse`, this requires structural nonzero knowledge and does
-/// not refine an unknown divisor.
+/// The guard rejects Zero and Unknown without refinement, returning DivideByZero or
+/// UnknownZero respectively. Accepted values proceed through Real::inverse and any
+/// scalar construction error propagates. This returns a scalar result, not a
+/// predicate-policy or inherited-certainty receipt.
 pub fn reciprocal_checked(value: Real) -> CheckedBlasResult<Real> {
     require_known_nonzero(&value)?;
     value.inverse()
 }
 
-/// Returns the checked multiplicative inverse without consuming `value`.
+/// Borrowed counterpart of reciprocal_checked using Real::inverse_ref after the same guard.
 ///
-/// Like [`reciprocal_checked`], this rejects unknown-zero values without refinement.
+/// Rejects zero/unknown status before inverse construction and propagates scalar
+/// errors. Does not consume the input or start refinement to resolve the guard;
+/// shared scalar proof/cache state need not be independent of the result.
 pub fn reciprocal_ref_checked(value: &Real) -> CheckedBlasResult<Real> {
     require_known_nonzero(value)?;
     value.inverse_ref()
