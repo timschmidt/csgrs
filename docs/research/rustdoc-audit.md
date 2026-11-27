@@ -11632,6 +11632,93 @@ Authored items in this file now have a whole-file record; generated-item coverag
 and the repository audit remain incomplete. Continue with api_dispatch_trace.rs
 and the remaining mathbench modules before claiming benchmark coverage.
 
+## Hyperlattice public-family trace harness (2026-11-27)
+
+Read every baseline line of `crates/hyperlattice/benches/api_dispatch_trace.rs`
+(220 → 331) on `2b48138f0`. Owner: benchmark trace-window management, four fixed
+API-family workloads and Markdown reporting. Relevant contracts are P1/P3/P4/P6
+and P36/P37: exact fixture meaning, trace/cache boundaries, failure reporting and
+the limits of evidence. The domain is the four current closures, current-thread
+trace state, report rows and environment/working-directory behavior. The missing
+witness was accurate private Rustdoc for the helpers, scope wrapper, entry point
+and report writer. The all-feature Cargo benchmark check passed before edits;
+both feature configurations also produced baseline reports from the original source.
+
+Added eleven attached groups: module overview, marker constant and all nine
+private functions, including the authored main. This file uses no Criterion
+group/main macros and has no corresponding generated-function documentation gap.
+Read relevant Hyperreal recorder/correlation implementations and lattice
+algebra2/point/projective/Aabb consumers as context, without re-crediting their
+whole-file reviews. The first 65 lines of mathbench/dispatch_trace.rs were viewed
+only as prospective context, not a completed review of that 420-line file.
+
+Contracts clarified:
+
+- This harness performs four single-pass traces, not timed Criterion iterations.
+  Its per-case assertion accepts any non-marker dispatch or rational temporary;
+  construction alone can satisfy it. Results are largely black-boxed and discarded,
+  with no exact-value, per-path or exact-count assertion. The report does not prove
+  complete API coverage, certified numerical outcomes or performance.
+- reset clears current-thread counters, not scalar caches or the recording flag.
+  with_recording restores the previous flag; returned-value destruction occurs
+  after that scope and before take_trace drains counters. An already-active outer
+  scope can therefore capture that destruction. Reset/drain discards enclosing
+  trace evidence. Workload panic restores the scope flag but does not take a
+  snapshot; child-thread work is not merged and no work budget is imposed.
+- The planar fixture is the (0,0)/(3,0)/(0,4) triangle, with determinant/orientation
+  12, zero dot, squared norm 9 and squared distance 25. The point fixtures exercise
+  exact finite-float ingress, explicit lossy exports, conversion, aggregation,
+  facts and three retained borrowed subtractions. Weights (1,2) are not normalized:
+  the mathematical sums are (7,10) and (9,12,15). These descriptions are not claims
+  that the harness checks those values.
+- Orthogonal planes x=2, y=3, z=4 define homogeneous point (2,3,4,1). The first two
+  give line direction (0,0,1) and moment (3,-2,0); method/free incidence routes are
+  exercised without equality assertions. The box row stores origin bounds and
+  corners (-1,-2,-3)/(1,2,3), without testing containment or set validity.
+- Dependency Dispatch excludes the marker. Correlation classification receives it:
+  the hyperlattice-prefixed marker counts as linear algebra, and workload names
+  can match additional categories. Categories overlap and are not a cost partition.
+  The reproduced box row has seven dependency dispatches, seven rational temporaries
+  and one linear-algebra event; its detailed rows contain only the marker and Real
+  constructors, demonstrating why that column is not Aabb-operation evidence.
+- Output overwrites api_dispatch_trace.md relative to process cwd, without atomic
+  replacement or locking; file errors panic. Labels are not Markdown-escaped.
+  Rows are sorted by workload key, and recorder snapshots sort dispatch labels.
+  Actual build features, revision, numerical outcomes and timing samples are absent.
+  Presence of the skip variable suppresses only the write. No argv parsing occurs,
+  so --help/list/test or filters do not prevent workloads/reporting.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Comment-only/blank-line removal
+  leaves all executable source identical to `2b48138f0`, including the count
+  assertion, trace/reset order, fixtures, report text and filesystem behavior.
+- Cargo check and private benchmark Rustdoc passed with all features and with
+  no defaults plus hyperreal-dispatch-trace, using locked/offline j2 builds with
+  incremental compilation disabled. The manifest requires tracing, so a featureless
+  target is not an admitted configuration. Rustdoc denied warnings and broken/private
+  links; complete text for all eleven groups rendered on eleven pages in both modes.
+- Built the owning library under each configuration, then compiled original/final
+  harness source with matching Cargo-built rlibs and denied warnings. Ran each
+  executable in isolated temporary working directories with a 30-second external
+  timeout per process. Both baseline/final reports and both feature configurations
+  were byte-identical: 10,703 bytes, SHA-256
+  `1181863fb83403e9284e95d68e8ae1fc86f50096cabfe079ac8e0be975876829`.
+  Thus every reported count and output byte remained identical for this workload.
+- Final --help runs reproduced the same report. Runs with an empty-but-present
+  HYPERLATTICE_SKIP_BENCHMARK_REPORTS completed without creating a report. No tracked
+  report was overwritten. These are trace/report probes, not matched timing runs
+  or independent checks of the numerical coordinates.
+- Full workflows and unrelated runtime consumers remain owner-waived. No focused
+  check is blocked. Removed the directly compiled executables after use; retained
+  about 132 KiB of scripts/reports/commands and reused the roughly 2.7 GiB target.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-api-trace-*` baseline/build/check/doc/render
+logs and `/tmp/csgrs-lattice-api-trace-audit/` source, commands, scripts and isolated
+reports. This file now has complete authored-item documentation and a whole-file
+review record. Continue with mathbench.rs and its modules; the repository-wide
+audit and earlier generated Criterion documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
