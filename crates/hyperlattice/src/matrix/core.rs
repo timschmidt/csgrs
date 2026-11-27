@@ -2268,6 +2268,13 @@ fn multiply_arrays4_rhs_ref_with_dense_certificate(
     multiply_arrays4_rhs_ref(left, right)
 }
 
+/// Inverts a caller-established affine matrix `[D t; 0 1]` with diagonal `D`.
+///
+/// Computes the three diagonal reciprocals in axis order, then returns
+/// `[D⁻¹ -D⁻¹ t; 0 1]`. Shape is not revalidated; off-diagonal and bottom-row
+/// entries are replaced by the required canonical values. Scalar inverse errors
+/// propagate before any result is returned. Unknown-zero diagonals are left to
+/// the ordinary scalar inverse rather than rejected by a separate checked guard.
 #[inline]
 fn invert_matrix4_affine_linear_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     // For diagonal affine linear blocks, invert is three scalar reciprocals and
@@ -2275,8 +2282,6 @@ fn invert_matrix4_affine_linear_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<
     // block affine inverse used in `Matrix4::` transforms.
     // Inexact numeric code can treat this as a per-axis rescaling; exact code
     // avoids the full 3×3 determinant path and keeps reciprocal scheduling flat.
-    // Golub and Van Loan (1977) show that triangular and axis-aligned block
-    // inverses reduce to independent diagonal solves before translation.
     let inv00 = matrix[0][0].clone().inverse()?;
     let inv11 = matrix[1][1].clone().inverse()?;
     let inv22 = matrix[2][2].clone().inverse()?;
@@ -2292,6 +2297,12 @@ fn invert_matrix4_affine_linear_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<
     ])
 }
 
+/// Checks diagonal nonzero knowledge before the diagonal-affine inverse formula.
+///
+/// Requires caller-established `[D t; 0 1]` shape. Guards entries (0,0), (1,1),
+/// then (2,2), stopping at the first `DivideByZero` or `UnknownZero`; all three
+/// guards precede reciprocal construction. Then delegates to
+/// [`invert_matrix4_affine_linear_diagonal`] and propagates scalar errors.
 #[inline]
 fn invert_matrix4_affine_linear_diagonal_checked(
     matrix: &[[Real; 4]; 4],
@@ -2302,6 +2313,13 @@ fn invert_matrix4_affine_linear_diagonal_checked(
     invert_matrix4_affine_linear_diagonal(matrix)
 }
 
+/// Inverts an affine matrix using retained diagonal/translation shape flags.
+///
+/// The caller must establish bottom row `[0, 0, 0, 1]` and the truth of supplied
+/// positive shape flags. Diagonal non-translation selects three reciprocals;
+/// translation-only copies the identity linear block and negates translation;
+/// otherwise the general block inverse is used. No shape predicates are repeated
+/// here, and missing flags do not prove the corresponding structure absent.
 #[inline]
 fn invert_matrix4_affine(
     matrix: &[[Real; 4]; 4],
@@ -2342,6 +2360,13 @@ fn invert_matrix4_affine(
     invert_matrix4_affine_without_translation(matrix)
 }
 
+/// Computes the general affine block inverse `[R⁻¹ -R⁻¹ t; 0 1]`.
+///
+/// The caller must establish affine bottom-row shape. The name refers to bypassing
+/// the translation-only shortcut: translation `t` is still used and need not be
+/// zero. Clones the 3×3 block and translation, inverts the block, then forms three
+/// translation dot products in row order. Scalar inverse errors propagate; the
+/// canonical bottom row is constructed without inspecting the input bottom row.
 #[inline]
 fn invert_matrix4_affine_without_translation(
     matrix: &[[Real; 4]; 4],
@@ -2410,6 +2435,12 @@ fn invert_matrix4_affine_without_translation(
     ])
 }
 
+/// Selects checked diagonal, translation-only, or general affine inversion.
+///
+/// Requires caller-established affine shape and valid retained flags, as in
+/// [`invert_matrix4_affine`]. Translation-only needs no reciprocal guard because
+/// the supplied identity-linear fact implies determinant one. Other branches
+/// propagate checked scalar/block inversion errors without publishing partial output.
 #[inline]
 fn invert_matrix4_affine_checked(
     matrix: &[[Real; 4]; 4],
@@ -2447,6 +2478,12 @@ fn invert_matrix4_affine_checked(
     invert_matrix4_affine_without_translation_checked(matrix)
 }
 
+/// Computes the general affine block inverse using checked 3×3 inversion.
+///
+/// Requires bottom row `[0, 0, 0, 1]`; translation is retained despite the name.
+/// The 3×3 checked inverse completes before `-R⁻¹ t` is formed. Zero/unknown
+/// failures propagate from that inverse; this helper does not validate affine
+/// shape or start an independent decision procedure.
 #[inline]
 fn invert_matrix4_affine_without_translation_checked(
     matrix: &[[Real; 4]; 4],
@@ -2517,6 +2554,13 @@ fn invert_matrix4_affine_without_translation_checked(
     ])
 }
 
+/// Selects affine inverse branches while forwarding the signal only to the general block path.
+///
+/// Affine shape and positive flags are caller-established. The diagonal-linear
+/// branch uses the ordinary checked helper, and the translation-only branch
+/// negates translation: neither branch attaches or polls `signal`. The remaining
+/// branch delegates to abort-aware 3×3 inversion. This is not a deadline or an
+/// unconditional cancellation check; exact shortcuts may succeed with a set flag.
 #[inline]
 fn invert_matrix4_affine_checked_with_abort(
     matrix: &[[Real; 4]; 4],
@@ -2558,6 +2602,12 @@ fn invert_matrix4_affine_checked_with_abort(
     invert_matrix4_affine_without_translation_checked_with_abort(matrix, signal)
 }
 
+/// Forms `[R⁻¹ -R⁻¹ t; 0 1]` after abort-aware checked inversion of `R`.
+///
+/// Requires affine shape; translation need not vanish. Passes `signal` to the 3×3
+/// inverse, then forms translation products without new attachment or explicit
+/// polling. Scalar propagation and exact shortcuts determine which later work
+/// observes the flag. Inversion errors return before constructing the output.
 #[inline]
 fn invert_matrix4_affine_without_translation_checked_with_abort(
     matrix: &[[Real; 4]; 4],
@@ -2629,6 +2679,14 @@ fn invert_matrix4_affine_without_translation_checked_with_abort(
     ])
 }
 
+/// Right-divides any 4×4 dividend by a caller-established `[D t; 0 1]`.
+///
+/// Computes the three reciprocals of diagonal `D`, then `u = -D⁻¹ t`. Each output
+/// row has entries `left[i,j] / D[j,j]` for j<3 and
+/// `left[i,3] + left[i,0]*u[0] + (left[i,1]*u[1] + left[i,2]*u[2])`.
+/// All four rows are updated; the dividend need not be affine. The right shape
+/// is trusted, scalar inverse errors propagate, and owned dividend entries are
+/// still cloned for this fixed schedule.
 #[inline]
 fn divide_matrix4_by_affine_linear_diagonal(
     left: [[Real; 4]; 4],
@@ -2740,6 +2798,11 @@ fn divide_matrix4_by_affine_linear_diagonal(
     ])
 }
 
+/// Guards the three diagonal divisors before diagonal-affine right division.
+///
+/// The caller establishes the right shape; the left matrix is unrestricted.
+/// Queries (0,0), (1,1), (2,2) in order, returning the first zero/unknown error
+/// before any reciprocal, then delegates to the ordinary formula.
 #[inline]
 fn divide_matrix4_by_affine_linear_diagonal_checked(
     left: [[Real; 4]; 4],
@@ -2751,6 +2814,12 @@ fn divide_matrix4_by_affine_linear_diagonal_checked(
     divide_matrix4_by_affine_linear_diagonal(left, right)
 }
 
+/// Borrows both operands for diagonal-affine right division of all four rows.
+///
+/// Uses the reciprocal and translation-correction schedule of
+/// [`divide_matrix4_by_affine_linear_diagonal`], cloning needed entries. The
+/// right operand must already have `[D t; 0 1]` shape; the left is unrestricted.
+/// Scalar inverse errors propagate without an additional known-nonzero guard.
 #[inline]
 fn divide_matrix4_by_affine_linear_diagonal_ref(
     left: &[[Real; 4]; 4],
@@ -2858,6 +2927,11 @@ fn divide_matrix4_by_affine_linear_diagonal_ref(
     ])
 }
 
+/// Routes an affine dividend and diagonal-affine divisor to the all-row formula.
+///
+/// Callers establish both affine shapes and the divisor’s diagonal linear block.
+/// The delegated kernel computes all four rows; it does not hard-code the dividend
+/// bottom row or repeat a shape check. Scalar errors propagate unchanged.
 fn divide_matrix4_affine_by_affine_linear_diagonal(
     left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -2867,6 +2941,10 @@ fn divide_matrix4_affine_by_affine_linear_diagonal(
     divide_matrix4_by_affine_linear_diagonal(left, right)
 }
 
+/// Borrowed affine/diagonal-affine dispatch adapter to the all-row division formula.
+///
+/// Uses [`divide_matrix4_by_affine_linear_diagonal_ref`] without new predicates;
+/// callers retain the affine and diagonal shape evidence for these operands.
 #[inline]
 fn divide_matrix4_affine_by_affine_ref_linear_diagonal(
     left: &[[Real; 4]; 4],
@@ -2875,6 +2953,10 @@ fn divide_matrix4_affine_by_affine_ref_linear_diagonal(
     divide_matrix4_by_affine_linear_diagonal_ref(left, right)
 }
 
+/// Checked affine/diagonal-affine adapter with no additional shape validation.
+///
+/// Forwards to [`divide_matrix4_by_affine_linear_diagonal_checked`], retaining
+/// its diagonal guard order and exact failure result.
 #[inline]
 fn divide_matrix4_affine_by_affine_linear_diagonal_checked(
     left: [[Real; 4]; 4],
@@ -2883,14 +2965,17 @@ fn divide_matrix4_affine_by_affine_linear_diagonal_checked(
     divide_matrix4_by_affine_linear_diagonal_checked(left, right)
 }
 
+/// Adds a supplied inverse-translation dot product to one row’s final entry.
+///
+/// Computes `row[3] + dot(row[0..3], inverse_translation)` through the ordinary
+/// three-term linear-combination adapter. The caller supplies the signed inverse
+/// translation; this helper neither negates it nor validates an affine matrix.
 #[inline]
 fn affine_translation_column_update(row: &[Real; 4], inverse_translation: &[Real; 3]) -> Real {
     // Right division by a translation-only affine matrix updates only the
     // homogeneous column. Route the 3-term dot through `linear_combination3`
     // rather than spelling out three multiplies and two adds so exact Real kernels
     // can delay denominator/canonicalization work inside the short polynomial.
-    // This is the fixed-size form of fraction-free/delayed-normalization
-    // arithmetic (fraction-free elimination// .
     let matrix_terms = [&row[0], &row[1], &row[2]];
     let translation_terms = [
         &inverse_translation[0],
@@ -2900,6 +2985,11 @@ fn affine_translation_column_update(row: &[Real; 4], inverse_translation: &[Real
     row[3].clone() + Real::linear_combination3(matrix_terms, translation_terms)
 }
 
+/// Subtracts the original translation’s dot product from one row’s final entry.
+///
+/// Computes `row[3] - dot(row[0..3], translation)` through
+/// [`affine_translation_dot3`]. Unlike the addition helper, it receives the
+/// unnegated translation and uses the active-term scalar schedule.
 #[inline]
 fn affine_translation_column_subtract_update(row: &[Real; 4], translation: [&Real; 3]) -> Real {
     trace_matrix!("helper", "affine-translation-column-subtract");
@@ -2907,12 +2997,22 @@ fn affine_translation_column_subtract_update(row: &[Real; 4], translation: [&Rea
     row[3].clone() - shifted
 }
 
+/// Forwards three ordered products to the active scalar linear-combination kernel.
+///
+/// This helper adds a trace label but no zero scan, rationality check, or local
+/// normalization. “Active” means retained terms, not known nonzero values. The
+/// trace label’s “exact” wording does not restrict the inputs to rational scalars.
 #[inline]
 fn affine_translation_dot3(coefficients: [&Real; 3], values: [&Real; 3]) -> Real {
     trace_matrix!("helper", "affine-translation-dot3-active-exact");
     Real::active_linear_combination3(coefficients, values)
 }
 
+/// Right-divides an unrestricted dividend by a caller-established affine divisor.
+///
+/// Builds the general affine inverse, including its translation, then multiplies
+/// the full 4×4 matrices. The name excludes the translation-only shortcut, not
+/// the divisor’s translation column. Inversion errors propagate before multiplication.
 #[inline]
 fn divide_matrix4_by_affine_no_translation(
     left: [[Real; 4]; 4],
@@ -2922,6 +3022,13 @@ fn divide_matrix4_by_affine_no_translation(
     Ok(multiply_arrays4(left, inverse))
 }
 
+/// Right-divides two caller-established affine matrices using their 3×3 blocks.
+///
+/// For `[L a; 0 1] / [R b; 0 1]`, computes `R⁻¹`, then `u = -R⁻¹ b`,
+/// `L R⁻¹`, and `a + L u` in that order. Reconstructs bottom row `[0,0,0,1]`
+/// without reading either input bottom row. Translation is retained; the name
+/// refers to the general path beyond the translation-only shortcut. Inverse
+/// errors propagate, and the new linear operands are checked for dense support.
 #[inline]
 fn divide_matrix4_affine_by_affine_no_translation(
     left: [[Real; 4]; 4],
@@ -3013,6 +3120,12 @@ fn divide_matrix4_affine_by_affine_no_translation(
     ])
 }
 
+/// Right-divides any matrix by a caller-established translation `[I t; 0 1]`.
+///
+/// Copies the first three columns and computes the fourth as `left[i,3] - L_i·t`
+/// for all four rows. Returns `Ok` without a reciprocal or domain guard: the
+/// identity-linear precondition implies determinant one. Shape is not validated,
+/// and this algebraic fact supplies no bound on scalar expression work.
 #[inline]
 fn divide_matrix4_by_affine_translation(
     left: [[Real; 4]; 4],
@@ -3049,6 +3162,12 @@ fn divide_matrix4_by_affine_translation(
     ])
 }
 
+/// Multiplies affine linear blocks after checking both for known dense support.
+///
+/// Checks the left block before the right; both must have every entry known
+/// nonzero to select the dense dot kernel. Otherwise uses ordinary multiplication.
+/// The name does not impose a rational-input requirement, and previous density
+/// of a source matrix does not certify its inverse or a product.
 #[inline]
 fn multiply_arrays3_affine_linear_with_exact_dense_certificate(
     left: [[Real; 3]; 3],
@@ -3063,6 +3182,12 @@ fn multiply_arrays3_affine_linear_with_exact_dense_certificate(
     multiply_arrays3(left, right)
 }
 
+/// Right-divides an affine matrix by a caller-established pure translation.
+///
+/// Copies the top-left linear block, subtracts its action on the divisor’s
+/// translation from the top three offsets, and constructs `[0,0,0,1]` as the
+/// bottom row. Both shape preconditions are trusted. No reciprocal is needed;
+/// this differs from the unrestricted helper, which computes all four rows.
 #[inline]
 fn divide_matrix4_affine_by_affine_translation(
     left: [[Real; 4]; 4],
@@ -3093,6 +3218,10 @@ fn divide_matrix4_affine_by_affine_translation(
     ])
 }
 
+/// Dispatch adapter for checked right division by a known affine divisor.
+///
+/// Forwards the unrestricted dividend to the general affine inverse/product
+/// path, without recognizing translation-only shape here.
 #[inline]
 fn divide_matrix4_by_affine_checked(
     left: [[Real; 4]; 4],
@@ -3101,6 +3230,10 @@ fn divide_matrix4_by_affine_checked(
     divide_matrix4_by_affine_no_translation_checked(left, right)
 }
 
+/// Forwards retained translation-only shape to the checked translation dispatcher.
+///
+/// The caller must establish `[I t; 0 1]` for the divisor. No shape or scalar
+/// guard is added by this adapter; the dividend may be any 4×4 matrix.
 #[inline]
 fn divide_matrix4_by_affine_checked_assumed_affine_translation(
     left: [[Real; 4]; 4],
@@ -3110,6 +3243,11 @@ fn divide_matrix4_by_affine_checked_assumed_affine_translation(
     divide_matrix4_by_affine_checked_assuming_affine_translation(left, right)
 }
 
+/// Records the checked translation branch and performs all-row translation division.
+///
+/// Trusts the divisor’s identity-linear affine shape. Since no reciprocal is
+/// required, this delegates directly to the ordinary translation formula without
+/// known-nonzero queries; “checked” does not validate the supplied shape.
 #[inline]
 fn divide_matrix4_by_affine_checked_assuming_affine_translation(
     left: [[Real; 4]; 4],
@@ -3121,6 +3259,10 @@ fn divide_matrix4_by_affine_checked_assuming_affine_translation(
     divide_matrix4_by_affine_translation(left, right)
 }
 
+/// Right-divides any matrix using a checked general affine inverse of the divisor.
+///
+/// Requires the divisor’s affine bottom row. Inversion errors propagate before
+/// the full 4×4 product. Translation is included despite the helper’s name.
 #[inline]
 fn divide_matrix4_by_affine_no_translation_checked(
     left: [[Real; 4]; 4],
@@ -3130,6 +3272,9 @@ fn divide_matrix4_by_affine_no_translation_checked(
     Ok(multiply_arrays4(left, inverse))
 }
 
+/// Routes two known affine operands to checked general block right division.
+///
+/// No shape checks or translation-only recognition are performed by this adapter.
 #[inline]
 fn divide_matrix4_affine_by_affine_checked(
     left: [[Real; 4]; 4],
@@ -3138,6 +3283,10 @@ fn divide_matrix4_affine_by_affine_checked(
     divide_matrix4_affine_by_affine_no_translation_checked(left, right)
 }
 
+/// Forwards known affine/translation shapes to the checked block dispatcher.
+///
+/// The left must be affine and the right translation-only; this adapter adds no
+/// validation or arithmetic to the delegated schedule.
 #[inline]
 fn divide_matrix4_affine_by_affine_checked_assumed_affine_translation(
     left: [[Real; 4]; 4],
@@ -3147,6 +3296,11 @@ fn divide_matrix4_affine_by_affine_checked_assumed_affine_translation(
     divide_matrix4_affine_by_affine_checked_assuming_affine_translation(left, right)
 }
 
+/// Records checked affine-by-translation dispatch and uses the ordinary block formula.
+///
+/// Trusts both shape preconditions, uses no reciprocal, and reconstructs a
+/// canonical affine bottom row. A `CheckedBlasResult` does not certify unvalidated
+/// caller-supplied shape flags.
 fn divide_matrix4_affine_by_affine_checked_assuming_affine_translation(
     left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -3160,6 +3314,11 @@ fn divide_matrix4_affine_by_affine_checked_assuming_affine_translation(
     divide_matrix4_affine_by_affine_translation(left, right)
 }
 
+/// Computes checked affine right division as `[L R⁻¹, a - L R⁻¹ b; 0, 1]`.
+///
+/// Both operands must already be affine. Checked inversion of `R` completes
+/// before inverse-translation, linear-product, and final-translation work.
+/// The bottom row is reconstructed, not checked; translations need not vanish.
 #[inline]
 fn divide_matrix4_affine_by_affine_no_translation_checked(
     left: [[Real; 4]; 4],
@@ -3246,6 +3405,10 @@ fn divide_matrix4_affine_by_affine_no_translation_checked(
     ])
 }
 
+/// Routes an unrestricted dividend to abort-aware checked general affine division.
+///
+/// Requires a known affine divisor; the signal is forwarded to its block inverse,
+/// with no local polling or additional shape recognition.
 #[inline]
 fn divide_matrix4_by_affine_checked_with_abort(
     left: [[Real; 4]; 4],
@@ -3255,6 +3418,10 @@ fn divide_matrix4_by_affine_checked_with_abort(
     divide_matrix4_by_affine_no_translation_checked_with_abort(left, right, signal)
 }
 
+/// Forwards a known translation divisor to the signal-accepting translation adapter.
+///
+/// The delegated translation-only path ignores `signal`; accepting this argument
+/// does not provide a cancellation check or a scalar-work bound.
 #[inline]
 fn divide_matrix4_by_affine_checked_with_abort_assumed_affine_translation(
     left: [[Real; 4]; 4],
@@ -3265,14 +3432,20 @@ fn divide_matrix4_by_affine_checked_with_abort_assumed_affine_translation(
     divide_matrix4_by_affine_checked_with_abort_assuming_affine_translation(left, right, signal)
 }
 
+/// Performs checked-dispatch translation division while explicitly ignoring the signal.
+///
+/// Requires a caller-established translation-only divisor and updates all four
+/// dividend rows. Determinant one removes the reciprocal, but does not bound
+/// translation expression work or justify a general cancellation guarantee.
+/// Neither flag polling nor signal attachment occurs here.
 #[inline]
 fn divide_matrix4_by_affine_checked_with_abort_assuming_affine_translation(
     left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
     _signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    // Abort signal is unused because translation-only affine divisors are
-    // guaranteed nonsingular (determinant = 1), so early abort is never needed.
+    // This shortcut ignores the supplied signal. Determinant one avoids
+    // reciprocal work but does not bound translation-expression work.
     trace_matrix!(
         "helper",
         "right-divide4-checked-abort-by-affine-translation"
@@ -3280,6 +3453,11 @@ fn divide_matrix4_by_affine_checked_with_abort_assuming_affine_translation(
     divide_matrix4_by_affine_translation(left, right)
 }
 
+/// Right-divides any matrix after abort-aware checked affine inversion.
+///
+/// Requires affine divisor shape; translation is included. Forwards `signal` to
+/// the inverse and then multiplies without further attachment or explicit polling.
+/// Scalar work inherits whatever signal dependencies the inverse retained.
 #[inline]
 fn divide_matrix4_by_affine_no_translation_checked_with_abort(
     left: [[Real; 4]; 4],
@@ -3290,6 +3468,10 @@ fn divide_matrix4_by_affine_no_translation_checked_with_abort(
     Ok(multiply_arrays4(left, inverse))
 }
 
+/// Routes two known affine operands to abort-aware checked block right division.
+///
+/// No local polling or shape checks are added; the signal is forwarded to the
+/// right linear-block inverse by the delegated helper.
 #[inline]
 fn divide_matrix4_affine_by_affine_checked_with_abort(
     left: [[Real; 4]; 4],
@@ -3299,6 +3481,10 @@ fn divide_matrix4_affine_by_affine_checked_with_abort(
     divide_matrix4_affine_by_affine_no_translation_checked_with_abort(left, right, signal)
 }
 
+/// Forwards known affine/translation shapes to the signal-accepting block shortcut.
+///
+/// The delegated translation path ignores the supplied signal. Both shape facts
+/// must be valid for these unchanged operands; no validation is added here.
 #[inline]
 fn divide_matrix4_affine_by_affine_checked_with_abort_assumed_affine_translation(
     left: [[Real; 4]; 4],
@@ -3311,14 +3497,19 @@ fn divide_matrix4_affine_by_affine_checked_with_abort_assumed_affine_translation
     )
 }
 
+/// Uses affine-by-translation arithmetic without polling or attaching the signal.
+///
+/// Requires affine left and translation-only right operands. The determinant-one
+/// fact removes reciprocal work but does not bound scalar expressions. Constructs
+/// the canonical affine bottom row and returns the ordinary shortcut’s result.
 #[inline]
 fn divide_matrix4_affine_by_affine_checked_with_abort_assuming_affine_translation(
     left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
     _signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    // Same structural optimization as above; no abort checks are needed when the
-    // right affine divisor is guaranteed to be translation-only.
+    // This translation shortcut does not attach or poll the supplied signal;
+    // nonsingularity alone is not a cancellation or work-bound guarantee.
     trace_matrix!(
         "helper",
         "right-divide4-checked-abort-affine-by-affine-translation"
@@ -3326,6 +3517,12 @@ fn divide_matrix4_affine_by_affine_checked_with_abort_assuming_affine_translatio
     divide_matrix4_affine_by_affine_translation(left, right)
 }
 
+/// Computes affine block right division with signal forwarding to `R⁻¹`.
+///
+/// Requires both affine bottom rows. Abort-aware checked 3×3 inversion precedes
+/// `-R⁻¹ b`, `L R⁻¹`, and `a - L R⁻¹ b`. Later products and sums add no separate
+/// attachment or polling; scalar propagation determines cancellation behavior.
+/// Translations are retained and the result’s bottom row is reconstructed.
 #[inline]
 fn divide_matrix4_affine_by_affine_no_translation_checked_with_abort(
     left: [[Real; 4]; 4],
@@ -3413,6 +3610,10 @@ fn divide_matrix4_affine_by_affine_no_translation_checked_with_abort(
     ])
 }
 
+/// Borrowed dispatch adapter for an already established translation-only divisor.
+///
+/// Adds no shape checks; delegates all four dividend rows to the borrowed
+/// translation-column update schedule.
 fn divide_matrix4_by_affine_ref_assumed_affine_translation(
     left: &[[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -3421,6 +3622,13 @@ fn divide_matrix4_by_affine_ref_assumed_affine_translation(
     divide_matrix4_by_affine_ref_translation(left, right)
 }
 
+/// Right-divides borrowed matrices by a known translation-only divisor.
+///
+/// Negates the three translation scalars once, then adds an ordinary three-term
+/// linear combination to each row’s final entry. The owned path instead subtracts
+/// an active-term combination of the original translation. Both express the same
+/// right product, but their scalar schedules and traces are distinct. The dividend
+/// is unrestricted; divisor shape is trusted and no reciprocal is constructed.
 fn divide_matrix4_by_affine_ref_translation(
     left: &[[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -3428,7 +3636,7 @@ fn divide_matrix4_by_affine_ref_translation(
     // Borrowed special-case for right-division by translation-only affine.
     // Using the prevalidated structural fact avoids rebuilding the full
     // translation column for the non-affine path and keeps this helper on the
-    // same arithmetic schedule as the owned version.
+    // same right-product formula, using a different scalar schedule than the owned version.
     trace_matrix!("helper", "right-divide4-ref-by-affine-translation");
     let inverse_translation = [
         Real::zero() - &right[0][3],
@@ -3463,6 +3671,11 @@ fn divide_matrix4_by_affine_ref_translation(
     ])
 }
 
+/// Right-divides a borrowed arbitrary dividend by a known affine divisor.
+///
+/// Constructs the general affine inverse, including translation, then uses
+/// borrowed full-matrix multiplication. Inverse failures propagate before the
+/// product; shape is not revalidated.
 #[inline]
 fn divide_matrix4_by_affine_ref_no_translation(
     left: &[[Real; 4]; 4],
@@ -3472,6 +3685,12 @@ fn divide_matrix4_by_affine_ref_no_translation(
     Ok(multiply_arrays4_ref(left, &inverse))
 }
 
+/// Borrows two known affine matrices for general block right division.
+///
+/// Clones the linear blocks and right translation, then computes `R⁻¹`,
+/// `-R⁻¹ b`, `L R⁻¹`, and `a - L R⁻¹ b`. Constructs a canonical affine bottom
+/// row. The name excludes only the translation shortcut; translation is retained.
+/// Errors from ordinary block inversion propagate without a partial result.
 #[inline]
 fn divide_matrix4_affine_by_affine_ref_no_translation(
     left: &[[Real; 4]; 4],
@@ -3561,6 +3780,12 @@ fn divide_matrix4_affine_by_affine_ref_no_translation(
     ])
 }
 
+/// Borrows affine/translation operands for the three-row translation shortcut.
+///
+/// Negates the divisor translation once, then uses ordinary linear combinations
+/// to add its inverse contribution to the three affine offsets. Copies the linear
+/// block and constructs `[0,0,0,1]`. Requires both shape facts; unlike the owned
+/// shortcut, this does not subtract an active-term combination of the original t.
 #[inline]
 fn divide_matrix4_affine_by_affine_ref_translation(
     left: &[[Real; 4]; 4],

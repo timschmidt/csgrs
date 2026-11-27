@@ -9237,6 +9237,134 @@ boundary is `invert_matrix4_affine_linear_diagonal`, currently at line 2272 of
 core.rs. Later inverse/division/multiplication/transform kernels, much of the
 public macro, remaining tests and most of the wider repository still need audit.
 
+## 2026-11-27: Hyperlattice 4×4 affine inverse and division helpers
+
+Base revision: `855daaf31`. The previous turn made progress by pushing the
+power/solve batch. This batch continues at its recorded affine-inverse boundary.
+Owning layer: Hyperlattice's exact matrix arithmetic, using Hyperreal scalar
+operations and structural knowledge. Relevant properties: P1/P3/P4 for exact
+values and valid retained shape facts, P6 for zero/unknown failure, P10 for
+unchanged predicate schedules, and P5 for honest resource/cancellation limits.
+Before editing, review found 43 undocumented private helpers and misleading
+comments about translation, arithmetic schedules and cancellation. Existing
+focused tests and an independent rational affine probe passed on this revision.
+No executable source, assertion, fixture, policy, trace call, dependency, or
+signature changed.
+
+Coverage in this batch:
+
+- Read and audited original `src/matrix/core.rs` lines 2271–3598, from
+  `invert_matrix4_affine_linear_diagonal` through
+  `divide_matrix4_affine_by_affine_ref_translation`. All 43 functions now have
+  Rustdoc; the block grew from 1328 to 1553 lines. This includes ordinary,
+  checked, signal-accepting and borrowed adapters, their general/diagonal/
+  translation-only formulas, and the shared translation/dense-product helpers.
+- Read the relevant ordinary/checked/abort inverse and right-division dispatch
+  consumers to establish how their retained shape flags reach these helpers.
+  Those later dispatch functions receive context-only credit, not a completed
+  public-API or whole-file audit.
+- Read and documented four matrix tests:
+  `targeted_fractional_matrix_forms_round_trip_exactly`,
+  `checked_matrix_inverse_rejects_singular_matrices`,
+  `matrix4_known_affine_translation_matches_generic_paths`, and
+  `matrix4_known_affine_orthonormal_matches_generic_paths`.
+  Also documented the shared `assert_singular_error` helper and `common` module
+  declaration. The helper permits both DivideByZero and UnknownZero; its name
+  does not mean the test requires a proved singularity. Other matrix tests remain
+  only partially audited; previously covered tests are not credited again.
+
+Documented formulas, preconditions and limits:
+
+- Affine inversion uses `[R t; 0 1]⁻¹ = [R⁻¹ -R⁻¹ t; 0 1]`. Diagonal-linear
+  helpers compute three reciprocals in axis order; checked helpers finish all
+  three known-nonzero guards before constructing those reciprocals. A first
+  unknown diagonal may return UnknownZero before a later known zero is inspected.
+- The caller must establish affine bottom-row shape and the truth of positive
+  retained diagonal/translation flags. Helpers do not revalidate these facts.
+  General affine inversion and affine-by-affine division reconstruct the bottom
+  row; the unrestricted-dividend helpers compute all four rows. Supplying false
+  shape evidence is outside these helpers' preconditions, not certified input.
+- Names containing `without_translation` or `no_translation` designate the path
+  beyond the translation-only shortcut. They still consume the translation
+  column. General affine right division uses `[L a;0 1]/[R b;0 1]` with linear
+  block `L R⁻¹` and translation `a - L R⁻¹ b`. The block implementation computes
+  the inverse, inverse translation, linear product, and final translation in its
+  existing order. Scalar failures precede publication of completed geometry.
+- For diagonal-affine divisors, the first three output columns are scaled by
+  the diagonal reciprocals and the fourth is corrected by `-D⁻¹ t`. Owned and
+  borrowed variants retain their existing cloning and expression association;
+  ownership does not imply every consumed coordinate is moved without cloning.
+- Pure translations have determinant one, so their shortcuts need no reciprocal.
+  Owned division subtracts an active three-term dot of the original translation.
+  Borrowed division first negates the translation and adds an ordinary three-term
+  linear combination. These are the same algebraic right product with different
+  scalar schedules and traces; corrected the old same-schedule comment.
+- The active-dot helper forwards retained terms without a local zero scan or
+  rationality test. The trace label's "exact" suffix does not restrict inputs
+  to rationals. Similarly, affine linear dense multiplication checks known
+  nonzero support, not rationality, and rechecks both new operands.
+- The signal-accepting affine inverse ignores the signal on diagonal-linear and
+  translation-only branches. General block paths forward it to 3×3 inversion;
+  later products/sums add no local attachment or polling. Both translation-only
+  checked division adapters explicitly ignore the supplied flag. Removed claims
+  that determinant one makes abort checks unnecessary: it removes reciprocal
+  work, not scalar-expression growth or the need for an explicit work contract.
+  No cancellation behavior was changed or promoted into a deadline guarantee.
+- Test documentation distinguishes independent inverse expectations from wrapper
+  agreement, and authored tenths from a shared reduced denominator. Removed an
+  unsupported historical citation and malformed fraction-free attribution from
+  local explanatory comments. Existing performance comments are not newly
+  reproduced benchmark evidence; this batch makes no performance claim.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves identical executable source against `855daaf31` in both edited
+  Rust files, including all existing assertions and predicate/trace calls.
+- Actual Hyperlattice library builds passed with all features and no defaults.
+  Nine selected original matrix tests passed before edits with all features and
+  after edits in both configurations. They cover the four newly documented tests,
+  translated point/direction behavior, 3×3/4×4 division, checked division and
+  unknown-zero rejection. Test processes had 60-second external limits.
+- The 30-second-contained actual-library probe compared general affine,
+  diagonal-affine and translation inverses with explicit rational matrices.
+  General linear block [[1,2,3],[0,1,4],[5,6,0]] used its integer inverse and
+  independent translated offsets [-95,77,-22]. Diagonal [2,4,8] used an explicit
+  denominator-eight inverse; pure translation used negated offsets.
+- For each divisor, affine, non-affine and all-zero dividends were compared with
+  an independent integer-dot/rational-output oracle: 36 quotient checks across
+  owned, borrowed, checked and inactive-signal paths. The probe also checked
+  three inversion modes per divisor. This is finite rational evidence, not a
+  universal symbolic-equality or affine-closure proof.
+- Zero and unknown diagonal failures remained distinct; an all-zero dividend did
+  not bypass a singular divisor. Active flags did not prevent the demonstrated
+  exact diagonal/translation inverse and translation-division results. Four
+  exact trace assertions selected the intended branches once each and observed
+  zero `attach-owned-real` events. Before/after all-feature stdout matched;
+  no-default mode repeated semantic checks with tracing compiled out.
+- Private library and explicit integration-test Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full-text checks verified
+  each of the 43 helper docs on its own private function page, plus the shared
+  test helper/module. The four new #[test] docs are source-reviewed and executed;
+  Rustdoc omits test-function documentation. Inspection of 298 HTML pages was a
+  rendering check, not a claim to have audited all APIs on those pages.
+- Cargo checks passed for the matrix integration target, mathbench and downstream
+  Hyperspatial library (including Hyperlimit), with all features and no defaults.
+  Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target directory.
+- Full workflow checks remain owner-waived. No full matrix test suite, benchmark
+  timing, sanitizer, code-size study, arbitrary symbolic-cost envelope or
+  universal correctness claim was added. No policy or cancellation test weakened.
+- Removed the two temporary test/probe executables. The shared Cargo target
+  remains approximately 2.5 GiB; no duplicate target tree was created. The root
+  AGENTS.md 100% public/private Rustdoc mandate remains unchanged and unmet for
+  the repository as a whole.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-affine-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-affine-audit/` temporary probes/checkers/private docs. Next
+contiguous boundary: `invert_matrix3_by_diagonal`, currently core.rs line 3824.
+The remaining 3×3/triangular helpers, later kernels/public APIs, remaining matrix
+tests and most of the wider repository still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

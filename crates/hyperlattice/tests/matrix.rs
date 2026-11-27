@@ -1,3 +1,4 @@
+/// Shared exact scalar, unknown-status, and cancellation fixtures for these matrix tests.
 mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
@@ -7,6 +8,10 @@ use hyperlattice::{
     ZeroKnowledge,
 };
 
+/// Accepts either a proved zero divisor or an unresolved zero-status error.
+///
+/// This shared assertion does not require the implementation to prove singularity;
+/// it rejects successful geometry and all other error variants.
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
     assert!(matches!(
         result,
@@ -805,6 +810,10 @@ fn matrix4_negative_power_matches_repeated_inverse_product() {
     assert_eq!(matrix.powi(-2).unwrap(), inverse.clone() * inverse);
 }
 
+/// Checks inverse/product identities on dyadic, authored-tenths, and mixed-prime data.
+///
+/// Also compares two negative-square constructions. Authored tenths may reduce to
+/// different denominators; these fixtures do not all certify one shared denominator.
 #[test]
 fn targeted_fractional_matrix_forms_round_trip_exactly() {
     let dyadic3 = Matrix3::new([
@@ -877,6 +886,11 @@ fn matrix_display_forwards_real_formatting() {
     );
 }
 
+/// Exercises singular rejection across inverse, reciprocal, powers and division.
+///
+/// The shared helper permits either DivideByZero or UnknownZero. Scalar division
+/// by exact zero is checked separately, while an invertible fixture exercises
+/// checked/inactive-signal inverse composition and minus-one power agreement.
 #[test]
 fn checked_matrix_inverse_rejects_singular_matrices() {
     let singular = Matrix3::new([[r(1), r(2), r(3)], [r(1), r(2), r(3)], [r(0), r(0), r(1)]]);
@@ -974,6 +988,10 @@ fn matrix4_known_uniform_scale_inverse_matches_matrix_inverse() {
     assert_eq!(Matrix4::uniform_scale_inverse(r(6)).unwrap(), expected);
 }
 
+/// Checks translation inversion against independently negated offsets.
+///
+/// The known-translation division helper is compared with ordinary division on
+/// a non-affine dividend; that comparison alone is not an independent quotient oracle.
 #[test]
 fn matrix4_known_affine_translation_matches_generic_paths() {
     let translation = [r(3), r(-5), r(7)];
@@ -999,6 +1017,10 @@ fn matrix4_known_affine_translation_matches_generic_paths() {
     );
 }
 
+/// Checks a quarter-turn affine inverse against explicit integer entries.
+///
+/// The known-orthonormal division helper is compared with ordinary division;
+/// this fixture does not establish support for unvalidated orthonormal claims.
 #[test]
 fn matrix4_known_affine_orthonormal_matches_generic_paths() {
     let linear = [[r(0), r(-1), r(0)], [r(1), r(0), r(0)], [r(0), r(0), r(1)]];
