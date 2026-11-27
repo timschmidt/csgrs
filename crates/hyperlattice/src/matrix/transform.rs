@@ -1,4 +1,4 @@
-//! Matrix-vector transform support lives in [`super::core`].
+//! Matrix-vector transform support lives in [`crate::matrix::core`].
 //!
 //! This covers ordinary `Matrix * Vector` dispatch, vector batches, and the
 //! `Matrix4` point/direction fast paths that preserve symbolic structure before

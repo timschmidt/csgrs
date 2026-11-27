@@ -1,4 +1,4 @@
-//! Fixed-size row-major matrices over [`Real`].
+//! Fixed-size row-major matrices over [`crate::Real`].
 //!
 //! Implementation map:
 //! - type layout and generic array helpers
@@ -30,6 +30,10 @@ macro_rules! trace_matrix {
     };
 }
 
+/// Constructs the row-major identity with exact zero and one scalars.
+///
+/// Nested array construction visits rows then columns; dimension zero gives an
+/// empty array without scalar construction.
 fn identity_array<const N: usize>() -> [[Real; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
@@ -42,6 +46,10 @@ fn identity_array<const N: usize>() -> [[Real; N]; N] {
     })
 }
 
+/// Transposes an owned 3×3 array by moving scalar handles.
+///
+/// Right-division uses this layout change to express a solve on transposes; no
+/// scalar arithmetic, refinement, or cloning is performed.
 fn transpose_array3(matrix: [[Real; 3]; 3]) -> [[Real; 3]; 3] {
     // Right-division is implemented as a solve on transposes. Fixed-size
     // transposes keep that wrapper from paying generic `Option::take` and
@@ -53,6 +61,10 @@ fn transpose_array3(matrix: [[Real; 3]; 3]) -> [[Real; 3]; 3] {
     [[m00, m10, m20], [m01, m11, m21], [m02, m12, m22]]
 }
 
+/// Transposes a borrowed 3×3 array, cloning handles in output row-major order.
+///
+/// Each input column becomes an output row. Scalar cloning preserves its shared
+/// representation; this helper performs no arithmetic.
 fn transpose_array3_ref(matrix: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
     [
         [
@@ -73,6 +85,10 @@ fn transpose_array3_ref(matrix: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
     ]
 }
 
+/// Transposes an owned 4×4 array by moving scalar handles.
+///
+/// This is the fixed-size layout change used by right-division wrappers, without
+/// scalar arithmetic, refinement, or cloning.
 fn transpose_array4(matrix: [[Real; 4]; 4]) -> [[Real; 4]; 4] {
     // Hand-written 4x4 transpose avoids the generic `Option::take` owned
     // transpose overhead in the right-division wrapper. Retaining this as a
@@ -92,6 +108,10 @@ fn transpose_array4(matrix: [[Real; 4]; 4]) -> [[Real; 4]; 4] {
     ]
 }
 
+/// Transposes a borrowed 4×4 array, cloning handles in output row-major order.
+///
+/// Each input column becomes an output row, preserving scalar sharing without
+/// arithmetic.
 fn transpose_array4_ref(matrix: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
     // Same as `transpose_array_ref`, but fully unrolled because the 4x4
     // borrowed division benchmark is sensitive to generic array construction.
@@ -123,6 +143,10 @@ fn transpose_array4_ref(matrix: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
     ]
 }
 
+/// Returns the low `N * N` bits for a row-major matrix entry mask.
+///
+/// The caller must keep `N * N <= 16`; dimensions three and four are used here.
+/// The full-width case returns `u16::MAX` without a shift by 16. Zero gives zero.
 #[inline]
 fn matrix_mask<const N: usize>() -> u16 {
     debug_assert!(N * N <= u16::BITS as usize);
@@ -133,11 +157,19 @@ fn matrix_mask<const N: usize>() -> u16 {
     }
 }
 
+/// Encodes one entry as bit `row * N + column`.
+///
+/// Callers must supply valid indices with the resulting bit index below 16; this
+/// helper does not validate either the matrix bounds or the shift width.
 #[inline]
 fn matrix_entry_bit<const N: usize>(row: usize, column: usize) -> u16 {
     1_u16 << (row * N + column)
 }
 
+/// Reads a row-major entry bit, returning `None` for either out-of-range index.
+///
+/// The matrix dimension must fit the 16-bit entry mask. `Some(false)` means the
+/// bit is absent; for a knowledge mask it does not prove the opposite fact.
 #[inline]
 fn matrix_entry_mask_value<const N: usize>(mask: u16, row: usize, column: usize) -> Option<bool> {
     if row < N && column < N {
@@ -147,27 +179,51 @@ fn matrix_entry_mask_value<const N: usize>(mask: u16, row: usize, column: usize)
     }
 }
 
+/// Counts only the low `N` known-zero bits of a row or column mask.
+///
+/// Higher bits are ignored. The shift requires `N < 8` (current matrix callers
+/// use three or four); the debug assertion alone also admits eight and does not
+/// enforce this complete precondition. Dimension zero counts no bits.
 #[inline]
 fn matrix_lane_known_zero_count<const N: usize>(mask: u8) -> u32 {
     debug_assert!(N <= u8::BITS as usize);
     (mask & ((1_u8 << N) - 1)).count_ones()
 }
 
+/// Tests whether at most one lane entry lacks a retained zero fact.
+///
+/// An entirely known-zero lane also qualifies. Uses the low `N` bits and the
+/// dimension precondition of [`matrix_lane_known_zero_count`].
 #[inline]
 fn matrix_lane_has_sparse_support<const N: usize>(mask: u8) -> bool {
     matrix_lane_known_zero_count::<N>(mask) >= (N as u32).saturating_sub(1)
 }
 
+/// Tests whether all low `N` lane bits certify zero.
+///
+/// Uses the dimension precondition of [`matrix_lane_known_zero_count`]; the
+/// zero-length lane qualifies vacuously.
 #[inline]
 fn matrix_lane_is_known_zero<const N: usize>(mask: u8) -> bool {
     matrix_lane_known_zero_count::<N>(mask) == N as u32
 }
 
+/// Scans lane masks in order and stops at the first entirely known-zero lane.
+///
+/// The low-bit and dimension rules are those of [`matrix_lane_is_known_zero`].
+/// An empty collection has no zero lane.
 #[inline]
 fn matrix_has_zero_lane<const N: usize>(masks: [u8; N]) -> bool {
     masks.into_iter().any(matrix_lane_is_known_zero::<N>)
 }
 
+/// Chooses a determinant schedule from supplied facts without rechecking entries.
+///
+/// Precedence is zero row, zero column, diagonal, triangular, sparse rows or
+/// columns, shared denominator, dyadic, exact rational, then generic fallback.
+/// Each successful earlier branch skips later checks. Masks use the lane-width
+/// precondition of [`matrix_lane_known_zero_count`]; flags and scalar facts must
+/// describe the same unchanged matrix to carry mathematical meaning.
 #[inline]
 fn matrix_determinant_schedule_hint<const N: usize>(
     exact: RealExactSetFacts,
@@ -207,6 +263,11 @@ fn matrix_determinant_schedule_hint<const N: usize>(
     MatrixDeterminantScheduleHint::GenericRealFallback
 }
 
+/// Collects definite zeros in one row-major scalar scan.
+///
+/// Returns the entry mask, per-row column masks, and per-column row masks.
+/// Only `Real::definitely_zero` is consulted; absent bits are not nonzero proofs.
+/// The dimension must fit the 16-bit entry mask and eight-bit lane masks.
 #[inline]
 fn matrix_zero_masks<const N: usize>(matrix: &[[Real; N]; N]) -> (u16, [u8; N], [u8; N]) {
     let mut entry_mask = 0_u16;
@@ -224,6 +285,10 @@ fn matrix_zero_masks<const N: usize>(matrix: &[[Real; N]; N]) -> (u16, [u8; N], 
     (entry_mask, row_masks, column_masks)
 }
 
+/// Collects definite ones into a row-major entry mask.
+///
+/// Each entry is queried once with `Real::definitely_one`; missing bits carry no
+/// inequality claim. The dimension must fit the 16-bit entry mask.
 #[inline]
 fn matrix_one_mask<const N: usize>(matrix: &[[Real; N]; N]) -> u16 {
     let mut mask = 0_u16;
@@ -237,6 +302,10 @@ fn matrix_one_mask<const N: usize>(matrix: &[[Real; N]; N]) -> u16 {
     mask
 }
 
+/// Unions retained symbolic dependency families in row-major entry order.
+///
+/// Reads each scalar’s detailed facts, starting from the empty dependency mask.
+/// This summarizes recognized families rather than deciding scalar equality.
 #[inline]
 fn matrix_symbolic_dependency_mask<const N: usize>(
     matrix: &[[Real; N]; N],
@@ -249,6 +318,11 @@ fn matrix_symbolic_dependency_mask<const N: usize>(
         })
 }
 
+/// Recognizes one signed unit per row and column from retained scalar statuses.
+///
+/// Rows are recognized in order, stopping at the first failure; column uniqueness
+/// is checked only after all four rows succeed. `None` means recognition failed,
+/// not that an unrecognized symbolic matrix is proved unequal to every permutation.
 #[inline]
 fn matrix4_signed_permutation_rows(matrix: &[[Real; 4]; 4]) -> Option<[SignedAxis4; 4]> {
     // A signed permutation matrix has one exact signed unit in each row and
@@ -273,6 +347,10 @@ fn matrix4_signed_permutation_rows(matrix: &[[Real; 4]; 4]) -> Option<[SignedAxi
     (used_columns == 0b1111).then_some(rows)
 }
 
+/// Recognizes an exact-rational scalar multiple of the 3×3 identity.
+///
+/// Trusts the supplied diagonal flag, then compares exposed rational diagonals;
+/// zero scale is allowed and symbolic equality is not requested.
 #[inline]
 fn matrix3_exact_rational_uniform_scale(matrix: &[[Real; 3]; 3], is_diagonal: bool) -> bool {
     if !is_diagonal {
@@ -281,6 +359,10 @@ fn matrix3_exact_rational_uniform_scale(matrix: &[[Real; 3]; 3], is_diagonal: bo
     exact_rational_diagonal_entries_equal([&matrix[0][0], &matrix[1][1], &matrix[2][2]])
 }
 
+/// Recognizes an exact-rational scalar multiple of the full 4×4 identity.
+///
+/// Trusts the supplied diagonal flag, then compares all four rational diagonals,
+/// including the homogeneous coordinate. Zero scale is allowed.
 #[inline]
 fn matrix4_exact_rational_uniform_scale(matrix: &[[Real; 4]; 4], is_diagonal: bool) -> bool {
     if !is_diagonal {
@@ -294,6 +376,11 @@ fn matrix4_exact_rational_uniform_scale(matrix: &[[Real; 4]; 4], is_diagonal: bo
     ])
 }
 
+/// Compares exposed exact-rational diagonal values without symbolic equality.
+///
+/// Requires a nonempty array: the first element is indexed directly. Every value
+/// must expose the same rational; failure stops the scan. An absent rational view
+/// is a recognition failure, not a proof that the values differ.
 #[inline]
 fn exact_rational_diagonal_entries_equal<const N: usize>(entries: [&Real; N]) -> bool {
     // Conservative uniform-scale detection is deliberately exact-rational only:
@@ -310,11 +397,19 @@ fn exact_rational_diagonal_entries_equal<const N: usize>(entries: [&Real; N]) ->
         .all(|entry| entry.exact_rational_ref() == Some(first))
 }
 
+/// Borrows four row entries for the signed-unit recognition scan.
+///
+/// The result identifies the sole recognized unit’s column and sign, or `None`
+/// when [`matrix4_signed_axis_row_refs`] cannot certify that row.
 #[inline]
 fn matrix4_signed_axis_row(row: &[Real; 4]) -> Option<SignedAxis4> {
     matrix4_signed_axis_row_refs([&row[0], &row[1], &row[2], &row[3]])
 }
 
+/// Recognizes exactly one signed unit and three zeros, in column order.
+///
+/// A second unit, other value, or unknown status rejects the row immediately; an
+/// all-zero row also returns `None`. No approximate comparison is used.
 #[inline]
 fn matrix4_signed_axis_row_refs(row: [&Real; 4]) -> Option<SignedAxis4> {
     let mut axis = None;
@@ -334,6 +429,9 @@ fn matrix4_signed_axis_row_refs(row: [&Real; 4]) -> Option<SignedAxis4> {
     axis
 }
 
+/// Maps column indices zero through three and a sign to X, Y, Z, or W.
+///
+/// Returns `None` for any other index.
 #[inline]
 fn signed_axis4_from_index(index: usize, negative: bool) -> Option<SignedAxis4> {
     match (index, negative) {
@@ -349,14 +447,22 @@ fn signed_axis4_from_index(index: usize, negative: bool) -> Option<SignedAxis4> 
     }
 }
 
-/// Three-by-three row-major matrix.
+/// Three-by-three row-major matrix over exact scalar representations.
+///
+/// Entries are publicly editable. `PartialEq` delegates to scalar structural
+/// equality; it does not decide equality of all represented real values.
+/// Changing entries does not update previously returned structural facts.
 #[derive(Debug, PartialEq)]
 pub struct Matrix3(
     /// Matrix entries in row-major order.
     pub [[Real; 3]; 3],
 );
 
-/// Four-by-four row-major matrix.
+/// Four-by-four row-major matrix over exact scalar representations.
+///
+/// Entries are publicly editable. `PartialEq` delegates to scalar structural
+/// equality; it does not decide equality of all represented real values.
+/// Changing entries does not update previously returned structural facts.
 #[derive(Debug, PartialEq)]
 pub struct Matrix4(
     /// Matrix entries in row-major order.
@@ -364,6 +470,7 @@ pub struct Matrix4(
 );
 
 impl Clone for Matrix3 {
+    /// Clones all nine scalar handles in row-major order, preserving scalar sharing.
     #[inline]
     fn clone(&self) -> Self {
         Self([
@@ -387,6 +494,7 @@ impl Clone for Matrix3 {
 }
 
 impl Clone for Matrix4 {
+    /// Clones all sixteen scalar handles in row-major order, preserving scalar sharing.
     #[inline]
     fn clone(&self) -> Self {
         Self([
@@ -452,9 +560,8 @@ impl MatrixDeterminantScheduleHint {
     /// Returns whether this hint is selected entirely by retained matrix shape.
     ///
     /// Shape-driven hints can be chosen without inspecting scalar denominator
-    /// schedules. This keeps matrix structure in `hyperlattice` and arithmetic
-    /// representation in `hyperreal`, matching the object/arithmetic package
-    /// separation for exact geometric computation; see the exact object-structure policy
+    /// schedules. The first four enum variants are shape-driven; the remaining
+    /// variants depend on scalar representation facts or select the fallback.
     pub fn is_shape_driven(self) -> bool {
         matches!(
             self,
@@ -523,26 +630,31 @@ pub enum Matrix4TransformKind {
     Projective,
 }
 
-/// Public structural facts for a [`Matrix3`].
+/// Conservative structural snapshot for a [`Matrix3`].
 ///
-/// These are conservative object-level facts gathered in one matrix scan. They
-/// let callers choose sparse, triangular, affine, dyadic, or shared-denominator
-/// schedules without re-asking every scalar lane. Carrying geometric object
-/// structure before scalar expansion also supports fixed sparse-kernel
-/// scheduling through the row and column masks.
+/// Matrix collection combines shape checks with separate rational-set, entry-mask,
+/// and symbolic-dependency passes. Retaining this packet lets callers select
+/// schedules without repeating those queries. A missing fact is not a proof of
+/// its opposite, and uniform-scale recognition is restricted to exposed rationals.
+///
+/// Public fields can be edited independently. Queries trust their stored values;
+/// they neither validate consistency nor retain a link to the source matrix.
+/// Mathematical certificates require an unmodified packet for the same unchanged
+/// matrix. Recollect facts after changing matrix entries.
+///
+/// Entry bit `row * 3 + column` uses row-major order. Row-mask bits index columns;
+/// column-mask bits index rows. Lane queries ignore bits above the low 3;
+/// `is_zero` instead compares the whole entry mask with its expected full mask.
+/// Indexed queries return `None` out of bounds. Sparse support means at most one
+/// entry lacks a zero fact, including an entirely known-zero lane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Matrix3StructuralFacts {
     /// Exact-rational representation facts for all entries.
     pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all entries.
     ///
-    /// This gives matrix and transform code a stable
-    /// object-level scheduling fact for recognized symbolic constant families
-    /// without exposing `Real`'s private representation or constructing a
-    /// general expression graph. The abstraction boundary follows the
-    /// separation between expression packages and geometric object packages;
-    /// see the exact object-structure policy *Computational
-    /// Geometry* 7.1-2 (1997).
+    /// Records recognized scalar families for scheduling without exposing scalar
+    /// storage. It does not decide equality, determinant sign, or topology.
     pub symbolic_dependencies: SymbolicDependencyMask,
     /// Bit mask of entries known to be exactly zero, in row-major order.
     pub zero_mask: u16,
@@ -590,7 +702,10 @@ impl Matrix3StructuralFacts {
         matrix_entry_mask_value::<3>(self.zero_mask, row, column)
     }
 
-    /// Returns whether one entry is structurally known to be exactly one.
+    /// Returns whether one entry has a retained exact-one bit.
+    ///
+    /// `None` means an out-of-bounds index; `Some(false)` is not an inequality
+    /// proof. No scalar is queried to validate the stored bit.
     pub fn entry_known_one(self, row: usize, column: usize) -> Option<bool> {
         matrix_entry_mask_value::<3>(self.one_mask, row, column)
     }
@@ -684,9 +799,11 @@ impl Matrix3StructuralFacts {
 
     /// Select an advisory determinant schedule from retained matrix facts.
     ///
-    /// The order is conservative: structural zero and known shape facts win
-    /// before coordinate-set facts. Missing facts only choose a slower schedule;
-    /// they never certify a determinant sign or invertibility decision.
+    /// Precedence is zero row or column, diagonal, triangular, sparse rows or
+    /// columns, shared denominator, dyadic, exact rational, then generic fallback.
+    /// In particular, shared denominator wins when entries are also dyadic.
+    /// Missing facts do not decide invertibility. A valid zero-lane fact does
+    /// prove singularity; queries do not validate edited packets.
     pub fn determinant_schedule_hint(self) -> MatrixDeterminantScheduleHint {
         matrix_determinant_schedule_hint::<3>(
             self.exact,
@@ -699,11 +816,23 @@ impl Matrix3StructuralFacts {
     }
 }
 
-/// Public structural facts for a [`Matrix4`].
+/// Conservative structural snapshot for a [`Matrix4`].
 ///
-/// See [`Matrix3StructuralFacts`] for the ownership and citation rationale. The
-/// 4x4 summary additionally records affine transform facts used by homogeneous
-/// point/direction pipelines.
+/// Matrix collection combines shape checks with separate rational-set, entry-mask,
+/// and symbolic-dependency passes. Retaining this packet lets callers select
+/// schedules without repeating those queries. A missing fact is not a proof of
+/// its opposite, and uniform-scale recognition is restricted to exposed rationals.
+///
+/// Public fields can be edited independently. Queries trust their stored values;
+/// they neither validate consistency nor retain a link to the source matrix.
+/// Mathematical certificates require an unmodified packet for the same unchanged
+/// matrix. Recollect facts after changing matrix entries.
+///
+/// Entry bit `row * 4 + column` uses row-major order. Row-mask bits index columns;
+/// column-mask bits index rows. Lane queries ignore bits above the low 4;
+/// `is_zero` instead compares the whole entry mask with its expected full mask.
+/// Indexed queries return `None` out of bounds. Sparse support means at most one
+/// entry lacks a zero fact, including an entirely known-zero lane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Matrix4StructuralFacts {
     /// Exact-rational representation facts for all entries.
@@ -729,10 +858,9 @@ pub struct Matrix4StructuralFacts {
     pub is_diagonal: bool,
     /// Whether the matrix is a diagonal exact-rational scalar multiple of identity.
     ///
-    /// This avoids the hidden generic equality checks that previously made
-    /// adjacent diagonal paths less flat. Callers with symbolic uniform-scale
-    /// provenance should retain that fact at construction or in a cached
-    /// object instead.
+    /// Compares all four exposed rational diagonal values, including the
+    /// homogeneous entry. Zero scale qualifies. Equal symbolic values without
+    /// rational views do not qualify; no general equality decision is attempted.
     pub is_exact_rational_uniform_scale: bool,
     /// Whether all entries below the diagonal are structurally zero.
     pub is_upper_triangular: bool,
@@ -742,9 +870,12 @@ pub struct Matrix4StructuralFacts {
     pub is_affine: bool,
     /// Whether the affine linear block is structurally diagonal and unit-scaled.
     pub is_affine_translation: bool,
-    /// Whether the 3x3 affine linear block is structurally diagonal.
+    /// Whether the top-left 3×3 block has structurally zero off-diagonal entries.
+    /// This flag alone does not require an affine bottom row.
     pub linear_is_diagonal: bool,
-    /// Whether direction transforms can use the diagonal linear shortcut.
+    /// Whether the top-left 3×3 block is diagonal and the bottom row's xyz
+    /// entries are zero. Translation and the bottom-right entry are unrestricted;
+    /// a direction with homogeneous weight zero ignores them.
     pub direction_linear_is_diagonal: bool,
     /// Row-wise signed-axis certificate for a signed-permutation matrix.
     ///
@@ -779,7 +910,10 @@ impl Matrix4StructuralFacts {
         matrix_entry_mask_value::<4>(self.zero_mask, row, column)
     }
 
-    /// Returns whether one entry is structurally known to be exactly one.
+    /// Returns whether one entry has a retained exact-one bit.
+    ///
+    /// `None` means an out-of-bounds index; `Some(false)` is not an inequality
+    /// proof. No scalar is queried to validate the stored bit.
     pub fn entry_known_one(self, row: usize, column: usize) -> Option<bool> {
         matrix_entry_mask_value::<4>(self.one_mask, row, column)
     }
@@ -840,12 +974,9 @@ impl Matrix4StructuralFacts {
         self.has_known_zero_row() || self.has_known_zero_column()
     }
 
-    /// Returns whether one row has certified sparse support.
+    /// Returns whether at most one row entry lacks a retained zero fact.
     ///
-    /// This helper keeps sparse-kernel selection at the matrix layer. It is a
-    /// conservative row-structure signal in the spirit of sparse-kernel sparse
-    /// matrix multiplication schedules and the object-fact-first exact
-    /// computation model.
+    /// Includes all-zero rows; `None` means the row index is out of bounds.
     pub fn row_has_sparse_support(self, row: usize) -> Option<bool> {
         self.row_zero_mask(row)
             .map(matrix_lane_has_sparse_support::<4>)
@@ -873,10 +1004,9 @@ impl Matrix4StructuralFacts {
 
     /// Select an advisory determinant schedule from retained matrix facts.
     ///
-    /// This is the 4x4 analogue of
-    /// [`Matrix3StructuralFacts::determinant_schedule_hint`]. It is suitable
-    /// for internal transform and division dispatch, but final singularity
-    /// decisions must still inspect the exact determinant.
+    /// Uses the precedence of [`Matrix3StructuralFacts::determinant_schedule_hint`].
+    /// A valid zero-lane fact proves singularity; other schedule names alone do
+    /// not decide invertibility. Edited packets are not independently validated.
     pub fn determinant_schedule_hint(self) -> MatrixDeterminantScheduleHint {
         matrix_determinant_schedule_hint::<4>(
             self.exact,
@@ -889,24 +1019,33 @@ impl Matrix4StructuralFacts {
     }
 }
 
+/// Internal 3×3 dispatch snapshot with directly accessible shape flags.
+///
+/// Collected by [`matrix3_facts`]; it carries no reference or mutation tracking.
 #[derive(Clone, Copy, Debug)]
 struct Matrix3Facts {
+    /// Public snapshot returned by structural-fact queries.
     public: Matrix3StructuralFacts,
+    /// Retained unit-diagonal and zero-off-diagonal fact.
     is_identity: bool,
+    /// Retained zero-off-diagonal fact for the full matrix.
     is_diagonal: bool,
-    // Triangular structure is used to select O(n²) triangular inverse kernels
-    // before heavier affine/cofactor paths. This follows standard triangular
-    // solve scheduling in Golub & Van Loan, *Matrix Computations*.
+    /// Known zeros below the diagonal, used by triangular schedules.
     is_upper_triangular: bool,
+    /// Known zeros above the diagonal, used by triangular schedules.
     is_lower_triangular: bool,
-    // Cached off-diagonal signal for the affine 2×2 block; used to skip full
-    // affine inversion/division schedules when the linear block is axis-aligned.
-    // Retain this cheap structural fact before entering scalar arithmetic.
+    /// Known zeros off the diagonal of the top-left homogeneous linear block.
     linear_is_diagonal: bool,
+    /// Retained canonical homogeneous bottom-row fact.
     is_affine: bool,
+    /// Affine shape with an identity linear block; translation is unrestricted.
     is_affine_translation: bool,
 }
 
+/// Joins two representation classes for an aggregate arithmetic schedule.
+///
+/// `NonRational` dominates `ExactRational`, which dominates `ExactDyadicRational`.
+/// These are representation facts, not a proof of mathematical irrationality.
 #[inline]
 fn combine_exact_rational_kind(
     left: ExactRationalKind,
@@ -920,6 +1059,10 @@ fn combine_exact_rational_kind(
     }
 }
 
+/// Classifies a 3×3 matrix’s exposed rational representations in row-major order.
+///
+/// Starts with the dyadic class and stops at the first `NonRational` entry;
+/// remaining entries need not be inspected.
 #[inline]
 fn matrix3_exact_rational_kind(matrix: &[[Real; 3]; 3]) -> ExactRationalKind {
     let mut kind = ExactRationalKind::ExactDyadicRational;
@@ -934,6 +1077,9 @@ fn matrix3_exact_rational_kind(matrix: &[[Real; 3]; 3]) -> ExactRationalKind {
     kind
 }
 
+/// Classifies a 4×4 matrix’s exposed rational representations in row-major order.
+///
+/// Starts with the dyadic class and stops at the first `NonRational` entry.
 fn matrix4_exact_rational_kind(matrix: &[[Real; 4]; 4]) -> ExactRationalKind {
     let mut kind = ExactRationalKind::ExactDyadicRational;
     for row in matrix {
@@ -947,6 +1093,10 @@ fn matrix4_exact_rational_kind(matrix: &[[Real; 4]; 4]) -> ExactRationalKind {
     kind
 }
 
+/// Tests for exposed exact-rational, nonzero entries throughout a 4×4 matrix.
+///
+/// Visits row-major order, requiring a rational view before testing definite zero,
+/// and stops at the first failure. Dense support does not imply invertibility.
 #[inline]
 fn matrix4_is_dense_exact_rational(matrix: &[[Real; 4]; 4]) -> bool {
     matrix
@@ -955,6 +1105,10 @@ fn matrix4_is_dense_exact_rational(matrix: &[[Real; 4]; 4]) -> bool {
         .all(|value| value.exact_rational_ref().is_some() && !value.definitely_zero())
 }
 
+/// Classifies rational representations of a square array in row-major order.
+///
+/// Joins entry classes until `NonRational` appears. The empty array retains the
+/// initial dyadic class vacuously; this does not certify a nonempty rational set.
 #[inline]
 fn matrix_exact_rational_kind<const N: usize>(matrix: &[[Real; N]; N]) -> ExactRationalKind {
     let mut kind = ExactRationalKind::ExactDyadicRational;
@@ -969,40 +1123,40 @@ fn matrix_exact_rational_kind<const N: usize>(matrix: &[[Real; N]; N]) -> ExactR
     kind
 }
 
+/// Internal 4×4 dispatch snapshot with directly accessible shape flags.
+///
+/// Collected by [`matrix4_facts`]; it carries no reference or mutation tracking.
 #[derive(Clone, Copy, Debug)]
 struct Matrix4Facts {
+    /// Public snapshot returned by structural-fact queries.
     public: Matrix4StructuralFacts,
+    /// Retained unit-diagonal and zero-off-diagonal fact.
     is_identity: bool,
+    /// Retained zero-off-diagonal fact for the full matrix.
     is_diagonal: bool,
+    /// Known zeros below the diagonal, used by triangular schedules.
     is_upper_triangular: bool,
+    /// Known zeros above the diagonal, used by triangular schedules.
     is_lower_triangular: bool,
-    // Cached off-diagonal signal for the affine 3×3 linear block.
-    // Enables direct diagonal right-inverse formulas for scale-only affine
-    // updates common in transform stacks. As with the 3×3 case, retaining this
-    // cheap geometric fact lets later kernels reduce structure before
-    // arithmetic; the exact object-structure policy
+    /// Known zeros off the diagonal of the top-left homogeneous linear block.
     linear_is_diagonal: bool,
-    // Direction transforms ignore the translation column because w = 0, so this
-    // fact deliberately tracks only the 3x3 linear block plus the bottom-row
-    // cross terms. the exact-geometric-computation split between points and
-    // directions is what makes the cheaper predicate valid.
+    /// Diagonal top-left 3×3 block and zero bottom-row xyz cross terms.
     direction_linear_is_diagonal: bool,
-    // Affine-linear diagonal blocks frequently appear in transform stacks; if the
-    // three diagonal scale terms are already known to be nonzero, checked
-    // diagonal paths can avoid re-running per-call zero guards.
+    /// Whether all first three diagonal scalars have `ZeroKnowledge::NonZero`.
+    /// This does not by itself certify affine or diagonal matrix shape.
     affine_linear_diagonal_is_definitely_nonzero: bool,
-    // Matrix4 batch transforms need per-row translation-column zero facts for
-    // point/unknown kernels. The top three facts are already computed while
-    // classifying diagonal structure, so retain them here instead of probing
-    // `m03/m13/m23` again during handle construction. This is the same
-    // "classify cheaply, reuse before arithmetic" principle used in exact
-    // geometric computation; see the exact object-structure policy,
-    // 1997.
+    /// Definite-zero flags for entries (0,3), (1,3), and (2,3).
     translation_xyz_zero: [bool; 3],
+    /// Retained canonical homogeneous bottom-row fact.
     is_affine: bool,
+    /// Affine shape with an identity linear block; translation is unrestricted.
     is_affine_translation: bool,
 }
 
+/// Prioritizes identity, translation, diagonal affine, affine, then fallback.
+///
+/// Consumes supplied structural flags without scalar queries. `Projective` is the
+/// fallback label and does not itself certify non-affinity or invertibility.
 #[inline]
 fn matrix3_transform_kind(
     is_identity: bool,
@@ -1023,6 +1177,10 @@ fn matrix3_transform_kind(
     }
 }
 
+/// Prioritizes identity, signed permutation, translation, diagonal affine, affine.
+///
+/// Returns `Projective` if none qualifies. Supplied flags are trusted; this label
+/// is not a nonsingularity proof or a proof that affine structure is impossible.
 #[inline]
 fn matrix4_transform_kind(
     is_identity: bool,
@@ -1046,6 +1204,13 @@ fn matrix4_transform_kind(
     }
 }
 
+/// Collects a 3×3 structural snapshot for matrix dispatch and public inspection.
+///
+/// A fixed entry scan supplies diagonal and homogeneous shape flags. Separate
+/// passes collect rational-set facts, zero masks, one masks, and symbolic
+/// dependencies; rational diagonal comparison supplies uniform-scale recognition.
+/// These are conservative retained facts, not a general equality decision. The
+/// returned packet is not bound to future mutations of the input.
 #[inline]
 fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
     // Collapse 3×3 structural predicates into one cheap scan so downstream
@@ -1066,12 +1231,8 @@ fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
     let is_diagonal = m01_zero && m02_zero && m10_zero && m12_zero && m20_zero && m21_zero;
     let is_identity = is_diagonal && m00_one && m11_one && m22_one;
     let is_affine = m20_zero && m21_zero && m22_one;
-    // Recompute triangular predicates from the same local structural scan to
-    // avoid extra scalar `definitely_zero` probes. For 3×3 matrices, these
-    // are just fixed index checks and fall naturally out of the retained
-    // local facts.
-    // Golub & Van Loan, *Matrix Computations*, formalizes this as cheap
-    // factored structure detection for fixed-size triangular kernels.
+    // Derive triangular flags from the same local shape facts without adding
+    // scalar probes here; the complete snapshot uses separate passes below.
     let is_upper_triangular = m10_zero && m20_zero && m21_zero;
     let is_lower_triangular = m01_zero && m02_zero && m12_zero;
     // Reuse the retained linear diagonal fact instead of probing m01/m10 a
@@ -1117,11 +1278,18 @@ fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
     }
 }
 
+/// Collects a 4×4 structural snapshot for matrix dispatch and public inspection.
+///
+/// The initial fixed scan supplies shape and translation flags. A short-circuit
+/// `zero_status` scan separately checks the first three diagonal entries for known
+/// nonzero values, even if affine or diagonal shape is absent. Further passes
+/// collect rational-set facts, entry masks, signed-permutation rows, symbolic
+/// dependencies, and rational uniform scale. No single-pass or mutation-tracking
+/// guarantee is made.
 #[inline]
 fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
-    // Collapse 4×4 structural predicates plus homogeneous-column facts into one
-    // scan. The returned struct is designed for cheap cloning along handle and
-    // divide kernels where the same structural facts are queried repeatedly.
+    // Scan entries once for the shape flags below. The complete snapshot also
+    // includes the separate scalar-set, mask, and signed-axis passes below.
     let m00_one = matrix[0][0].definitely_one();
     let m01_zero = matrix[0][1].definitely_zero();
     let m02_zero = matrix[0][2].definitely_zero();
@@ -1152,12 +1320,8 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
         && m30_zero
         && m31_zero
         && m32_zero;
-    // Recompute triangular predicates from this single structural pass.
-    // Re-querying the same zero comparisons inside tiny helper functions adds
-    // branchy call overhead with no extra information for fixed-size 4×4
-    // schedules.
-    // Golub & Van Loan, *Matrix Computations* (4th ed.), §3.6, recommends
-    // this retained-facts style before entering O(n³) fallback kernels.
+    // Derive triangular flags from the initial scan; later mask and scalar-set
+    // collection still makes separate passes over the entries.
     let is_upper_triangular = m10_zero && m20_zero && m30_zero && m21_zero && m31_zero && m32_zero;
     let is_lower_triangular = m01_zero && m02_zero && m03_zero && m12_zero && m13_zero && m23_zero;
     let is_identity = is_diagonal && m00_one && m11_one && m22_one && m33_one;

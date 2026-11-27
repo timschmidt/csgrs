@@ -131,6 +131,10 @@ fn rotation_between_unit_vectors_keeps_structural_forms_and_typed_antipodes() {
     );
 }
 
+/// Checks all-entry exact facts on common thirds and the 4×4 identity.
+///
+/// The identity is both dyadic and shared-denominator; the thirds fixture is
+/// shared-denominator without being dyadic.
 #[test]
 fn matrix_exact_facts_expose_dyadic_and_shared_denominator_schedules() {
     let thirds = Matrix3::new([
@@ -150,6 +154,10 @@ fn matrix_exact_facts_expose_dyadic_and_shared_denominator_schedules() {
     assert!(identity_facts.has_shared_denominator_schedule());
 }
 
+/// Checks exact mask layouts and shape flags for both identities and a translation.
+///
+/// Assertions distinguish entry facts, sparse support, absent zero-lane proofs,
+/// out-of-range indices, and translation-column effects on homogeneous structure.
 #[test]
 fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     let identity3 = Matrix3::identity();
@@ -257,6 +265,9 @@ fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     assert!(!translation_facts.is_signed_permutation());
 }
 
+/// Checks the dispatch labels for projective, affine, diagonal-affine, and signed
+/// permutation fixtures. These examples test classification, not arbitrary-map
+/// invertibility or topological validity.
 #[test]
 fn matrix_structural_facts_expose_transform_kind_provenance() {
     let projective3 = Matrix3::new([[r(1), r(0), r(0)], [r(0), r(1), r(0)], [r(1), r(0), r(1)]]);
@@ -304,6 +315,10 @@ fn matrix_structural_facts_expose_transform_kind_provenance() {
     );
 }
 
+/// Checks a zero row in 3D matrix storage and a zero column in 4D storage.
+///
+/// The expected masks imply a zero determinant; opposite lane queries and invalid
+/// indices distinguish absent certificates from out-of-range access.
 #[test]
 fn matrix_structural_facts_expose_zero_lane_certificates() {
     let zero_row = Matrix3::new([
@@ -342,6 +357,10 @@ fn matrix_structural_facts_expose_zero_lane_certificates() {
     );
 }
 
+/// Checks rational uniform scales, unequal rational diagonals, and a symbolic scale.
+///
+/// The equal π diagonals remain unrecognized by the rational-only uniform-scale
+/// flag, while diagonal shape is still retained.
 #[test]
 fn matrix_structural_facts_certify_exact_rational_uniform_scale_conservatively() {
     let matrix3 = Matrix3::uniform_scale(frac(3, 5));
@@ -365,6 +384,9 @@ fn matrix_structural_facts_certify_exact_rational_uniform_scale_conservatively()
     assert!(!symbolic_facts.is_exact_rational_uniform_scale);
 }
 
+/// Checks retained signed-axis rows and sparse scheduling for a signed permutation.
+///
+/// A second fixture repeats a unit column and must not receive that certificate.
 #[test]
 fn matrix4_structural_facts_certify_signed_permutation_rows() {
     let rows = [
@@ -396,6 +418,8 @@ fn matrix4_structural_facts_certify_signed_permutation_rows() {
     assert!(!duplicate_facts.is_signed_permutation());
 }
 
+/// Checks dependency-family unions for diagonal matrices containing π, log, trig,
+/// and exponential constants; the first fixture also excludes a trig dependency.
 #[test]
 fn matrix_structural_facts_summarize_symbolic_dependencies() {
     let matrix3 = Matrix3::new([
@@ -445,6 +469,10 @@ fn matrix_structural_facts_summarize_symbolic_dependencies() {
     );
 }
 
+/// Exercises all eight determinant hint variants with explicit matrix fixtures.
+///
+/// Assertions check shape-driven, rational-driven, and fallback classification;
+/// these schedule checks do not compare determinant implementations.
 #[test]
 fn matrix_structural_facts_select_advisory_determinant_schedules() {
     let zero_row = Matrix3::new([

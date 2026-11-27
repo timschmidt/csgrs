@@ -8989,6 +8989,118 @@ and private docs. These are review artifacts, not a durable performance archive.
 The remaining matrix code, other tests/benchmarks/support material and most of
 the wider repository still require audit.
 
+## 2026-11-27: Hyperlattice matrix facts and module navigation
+
+Base revision: `a1f226535`. This is a partial matrix-core audit, not a completed
+matrix implementation audit. Owning layer: Hyperlattice's fixed-size matrix
+storage and conservative scalar-fact aggregation, under P1, P3, P4 and P10;
+private documentation availability also supports the P37 distribution boundary.
+The domain reviewed is 3×3/4×4 `Real` matrices, their editable structural-fact
+packets, and the private array/mask helpers used to construct those packets.
+Before editing, source review found missing private-helper/field Rustdoc and an
+inaccurate public single-scan description. The existing eight fact tests and an
+additional temporary snapshot/precedence probe passed on the target revision.
+No implementation, dispatch order, fixture, assertion, policy or dependency changed.
+
+Coverage in this batch:
+
+- Read and audited original `src/matrix/core.rs` lines 1–1217, through the end of
+  `matrix4_facts`, stopping before `Matrix4TransformDispatchFacts`. This prefix is
+  now 1381 lines, with 82 named declarations, 53 fields (including two tuple
+  fields), 19 variants and its module introduction documented. Full-text checks
+  found all 155 documentation groups in private HTML. These counts do not cover
+  the remaining core file, whose original total was 10604 lines.
+- Read all of `src/matrix/mod.rs` and the six navigation-only siblings `types.rs`,
+  `batch.rs`, `determinant.rs`, `inverse.rs`, `ops.rs`, and `transform.rs`. Added
+  documentation for all seven module declarations and made module links absolute.
+  Adding outer module comments initially changed inner-doc link resolution;
+  warnings-as-errors caught the broken links, and the final build passes. These
+  navigation pages do not establish correctness of the later kernels they index.
+- Read and documented the eight fact tests in `tests/matrix.rs`, original lines
+  134–547: `matrix_exact_facts_expose_dyadic_and_shared_denominator_schedules`,
+  the six `matrix_structural_facts_*` tests in that interval, and
+  `matrix4_structural_facts_certify_signed_permutation_rows`. The surrounding
+  public fact accessors and signed-axis mapping were read as consumer context.
+  Neither the entire test file nor later public methods receive whole-file credit.
+
+Documented behavior and limits:
+
+- Matrix entries are public and structural equality delegates to `Real`. Clones
+  preserve scalar sharing. Owned transposes move entries; borrowed transposes
+  clone in output row-major order. Identity array construction admits dimension
+  zero without constructing scalars.
+- Fact packets are independently editable snapshots with no source reference or
+  mutation tracking. Queries trust stored masks/flags. Changing a matrix leaves an
+  older packet unchanged; altering a packet can make its zero-lane hint contradict
+  its identity flag. These observations explain the validity preconditions, not
+  an authorization for callers to consume invented mathematical certificates.
+- Entry masks use row-major bits. Lane counts ignore high bits, while `is_zero`
+  compares the whole entry mask. Indexed queries return `None` out of bounds;
+  absent zero/one facts are not nonzero/inequality proofs. Sparse support permits
+  at most one entry without a zero fact, including all-zero lanes.
+- The determinant hint checks zero rows before zero columns, then diagonal,
+  triangular, sparse rows/columns, shared denominator, dyadic, exact rational,
+  generic fallback. Dense integer ones therefore select shared denominator even
+  though they are also dyadic. Valid zero-lane evidence proves singularity;
+  computing a full determinant is not always necessary to establish it.
+- Transform classification prefers identity over signed permutation in 4D. The
+  `Projective` fallback is not an invertibility proof: an all-zero 4×4 matrix
+  receives that label and a structurally-zero determinant hint. Linear-block
+  diagonal flags do not independently require an affine bottom row. Direction
+  flags also require bottom-row xyz zeros, with translation and bottom-right
+  entries unrestricted for homogeneous weight zero.
+- Shape flags reuse a fixed scan, but complete packets collect rational-set facts,
+  zero/one masks, dependencies and other recognizers in separate passes. The 4×4
+  nonzero-diagonal scan occurs independently of affine/diagonal shape. Uniform
+  scale requires equal exposed rational diagonals, including the homogeneous
+  entry; symbolic equality is not attempted. Zero scale is allowed. Signed-axis
+  recognition stops at a failing row and then checks column uniqueness.
+- Private mask dimensions are preconditions, not typed validation. A temporary
+  probe compiled the unchanged seven mask helpers extracted from this revision:
+  zero/3/4-dimensional cases passed, while `matrix_lane_known_zero_count::<8>`
+  panicked in a debug build despite its `N <= 8` assertion. Current concrete
+  matrix callers use only 3 and 4. This is a latent private generic-bound gap,
+  not evidence of a failing supported 3×3/4×4 operation. Release behavior and
+  arbitrary larger generic instantiations were not tested or repaired.
+
+Validation after the final source edit:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves identical executable source against `a1f226535` in all nine
+  edited Rust files, including every existing test assertion and predicate call.
+- Actual Hyperlattice library builds passed with all features and no defaults.
+  Direct rustc harnesses linked their matching Cargo artifacts and ran all eight
+  original fact tests in both configurations. The all-feature baseline passed
+  the same tests. Each process had a 60-second external timeout.
+- The 30-second-contained probe passed before/after and with no defaults:
+  snapshot mutation, forged masks, ignored lane high bits, whole-mask equality,
+  invalid indices, precedence rules, singular fallback and clones. Before/after
+  all-feature output matched exactly; the extracted-helper boundary probe passed
+  with the expected caught debug panic. These probes are finite witnesses.
+- Private library Rustdoc passed with warnings, broken links and private links
+  denied in both configurations. Explicit private integration-test Rustdoc also
+  passed. Full-text checks verified 155 prefix groups and 14 module/navigation
+  groups across 298 inspected HTML pages. The eight newly documented `#[test]`
+  functions are source-reviewed and executed; Rustdoc omits their function docs.
+- Cargo checks passed for the matrix integration-test target and mathbench, plus
+  the Hyperspatial downstream library (including Hyperlimit), with all features
+  and no defaults. Commands used `--locked --offline -j 2`, `CARGO_INCREMENTAL=0`
+  and the shared `/tmp/csgrs-rustdoc-target`.
+- Full workflow checks remain owner-waived. No full matrix runtime suite,
+  benchmark timing, release-mode generic-bound probe, binary-size measurement,
+  sanitizer or universal matrix correctness/closure claim was added. No runtime
+  performance improvement is claimed from these documentation changes.
+- Removed the temporary matrix test, semantic probe and mask probe executables.
+  The shared Cargo target remains approximately 2.5 GiB; no duplicate target tree
+  was created. The existing root AGENTS.md 100% public/private Rustdoc mandate
+  remains in force; this partial batch does not satisfy the repository-wide goal.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-facts-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-facts-audit/` retain temporary checkers, probes and private test
+docs. The next core boundary is `Matrix4TransformDispatchFacts`; subsequent
+transform dispatch, array mapping, traits, kernels and public operations remain
+open. Most of the wider repository also remains unaudited.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
