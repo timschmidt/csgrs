@@ -2,9 +2,36 @@
 //! elementary functions across representations, operand sizes and argument
 //! magnitudes. Run through `scripts/perf-atlas/run.sh`, or directly:
 //! `cargo run --release -p hyperreal --example perf_atlas -- --out atlas.json`.
+//! With `--resources`, arithmetic results also report their expression-tree
+//! size and depth; with `--counters` (and `dispatch-trace`), dispatch events.
 use hyperreal::{Rational, Real};
 use num::{BigInt, BigUint};
-use perf_atlas::{Atlas, Rng, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shape, Shaped, powers_of_two};
+
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
+/// Stored expression size of a result, for resource atlases.
+fn shaped(value: Option<Real>) -> Shaped<Option<Real>> {
+    Shaped::new(value, |value| {
+        value.as_ref().map(|value| {
+            let size = value.representation_size(1 << 20);
+            Shape {
+                nodes: size.nodes as u64,
+                depth: size.depth as u64,
+                bits: size.max_rational_bits,
+            }
+        })
+    })
+}
+
+#[cfg(feature = "dispatch-trace")]
+fn dispatch_events() -> u64 {
+    hyperreal::dispatch_trace::snapshot()
+        .iter()
+        .map(|count| count.count)
+        .sum()
+}
 
 const KINDS: [&str; 4] = ["integer", "rational", "dyadic", "irrational"];
 
@@ -86,6 +113,12 @@ fn evaluate(value: Result<Real, hyperreal::Problem>) -> Option<String> {
 
 fn main() {
     let mut atlas = Atlas::from_args("hyperreal");
+    // Recording dispatch labels allocates, so it runs only when asked for.
+    #[cfg(feature = "dispatch-trace")]
+    let _recording = atlas.config().counters.then(|| {
+        atlas.counter("dispatch events", dispatch_events);
+        hyperreal::dispatch_trace::recording_scope()
+    });
     let bits = powers_of_two(0, 12);
     let few_bits = powers_of_two(0, 10);
 
@@ -114,7 +147,7 @@ fn main() {
                 kind,
                 &bits,
                 |m, rng| (rational(kind, m as u32, rng), rational(kind, m as u32, rng)),
-                |(a, b)| op(real(kind, a), real(kind, b)),
+                |(a, b)| shaped(op(real(kind, a), real(kind, b))),
             );
         }
         atlas.fuzz(
@@ -125,7 +158,7 @@ fn main() {
                 let (ba, bb) = (rng.range(1, m as i64) as u32, rng.range(1, m as i64) as u32);
                 ((ka, rational(ka, ba, rng)), (kb, rational(kb, bb, rng)))
             },
-            |((ka, a), (kb, b))| op(real(ka, a), real(kb, b)),
+            |((ka, a), (kb, b))| shaped(op(real(ka, a), real(kb, b))),
         );
         for kind in ["integer", "rational"] {
             atlas.grid(
@@ -133,7 +166,7 @@ fn main() {
                 ("left operand bits", &few_bits),
                 ("right operand bits", &few_bits),
                 |x, y, rng| (rational(kind, x as u32, rng), rational(kind, y as u32, rng)),
-                |(a, b)| op(real(kind, a), real(kind, b)),
+                |(a, b)| shaped(op(real(kind, a), real(kind, b))),
             );
         }
     }

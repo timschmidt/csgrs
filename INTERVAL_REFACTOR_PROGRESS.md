@@ -16537,3 +16537,78 @@ Three tests were adjusted, none weakened:
 No other Hyperdynamics expectation, including the `flow_noise` dispatch-count
 fixture, needed changing. The validated-dynamics README records that its
 Hyperdynamics runs now use recurrence coefficients.
+
+## 2026-11-26: memory and depth atlases
+
+The owner asked for memory atlases and evaluation-tree depth atlases
+comparable to the perf atlases, covering representations, operations and
+inputs across the stack, ideally at no production cost. They are a resource
+mode of the existing perf-atlas harness, so every crate atlas
+(`examples/perf_atlas.rs` in nine crates) produces them from its existing
+declarations:
+
+```sh
+scripts/perf-atlas/run.sh --resources [--counters] [--quick] [--crates "..."]
+```
+
+Each point records one warm call, after a discarded warm-up, on a fresh
+input:
+- **Heap** (memory atlas), from `perf_atlas::CountingAllocator`: allocations,
+  reallocations, bytes requested, peak live bytes, bytes retained by the
+  result, and residue (live bytes left after the result is dropped, meaning
+  caches on the input, global caches or leaks).
+- **Stack high-water mark** (depth atlas). The call runs on a private
+  1 GiB-reserved stack, entered through `psm::on_stack`, with a guard page,
+  reset with `MADV_DONTNEED` and read with `mincore`. Transparent huge pages
+  are disabled, and the reading is accurate to one page. Linux x86_64 and
+  aarch64 only.
+- **Result shape** (depth atlas): nodes, depth and largest stored scalar in
+  bits, from operations that return `Shaped::new(value, reader)`.
+  - Hyperreal reports `Real::representation_size` for arithmetic.
+  - Hypersolve reports flat-program size and longest path for compile,
+    replay, Jacobian, composition and Taylor coefficient programs, and Real
+    sizes for exact evaluation.
+- **Counters**, with `--counters`: per-call deltas of registered process
+  counters. Hyperreal registers its dispatch-trace event total, which links
+  this atlas to the existing path-tracing infrastructure.
+
+`render.py` writes one page per measure, with an index, using the existing
+charts, cliff and valley flags, heatmaps and tables. Zero values are drawn at
+the axis floor and printed as 0. The on-demand `perf-atlas` workflow gains a
+`resources` input; zizmor reports no findings.
+
+**Production cost: none.** All new code is in the unpublished `perf-atlas`
+dev crate and in atlas examples. Library builds are unchanged. The allocator
+is installed only in atlas binaries, and its counting stays dormant (one
+relaxed load per allocation) unless a resource run activates it, so timing
+atlases are essentially unaffected.
+
+**Checks.** `perf-atlas` tests cover heap peak and retained bytes, the memory
+ceiling, residue from a growing cache, stack growth with recursion (at least
+1 MiB for 1,024 frames of 1 KiB), shapes, counters and panics. They pass in
+debug and release, 8 of 8 repeated runs. Development exposed and fixed
+several measurement bugs:
+- 2 MiB-quantized depths from transparent huge pages;
+- a warm-up overflowing the ordinary 2 MiB test-thread stack;
+- the probe's own residency buffer counted inside the measured window;
+- signed live accounting across activation;
+- cross-test interference, because the counters are process-wide.
+
+A quick `--resources --counters` run of Hyperreal and Hyperlimit rendered 11
+measure pages. Examples:
+- stack 0.6–5.4 KiB per call;
+- 4–13 dispatch events per Hyperreal call;
+- a 656 KB residue on Hyperlimit's 512-point `insphere3` batch, showing
+  evidence cached on the input.
+
+A hypersolve program run shows the Taylor coefficient program for 1/(1−x)
+growing to 49,594 nodes, depth 165 and a 6.3 MB peak heap at order 16. That is
+the expression swell that the recurrence work removed from `taylor_model`.
+
+**Coverage.** All nine crates that have a perf atlas get memory and stack
+measures with no further code. Result shapes cover Hyperreal and Hypersolve so
+far. Crates without a perf atlas yet (hypermesh, hyperbrep, hyperpath,
+hypergraphics, hyperspatial, hypervoxel, hypersdf, hyperphysics,
+hypercircuit, hyperdrc and the csgrs root) need atlas declarations before
+either kind of atlas covers them.
+

@@ -66,6 +66,55 @@ use num::bigint::Sign;
 use num::{BigInt, BigUint};
 use perf_atlas::{Atlas, Rng, ladder, powers_of_two};
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
+/// Flat program size for resource atlases: nodes, longest input path from an
+/// output to a leaf, and the largest stored constant in bits.
+fn program_shape(program: &ExpressionProgram) -> perf_atlas::Shape {
+    use hypersolve::expression_program::ExpressionNode;
+    let nodes = &program.definition().nodes;
+    let mut depth = vec![0u64; nodes.len()];
+    let mut bits = 0;
+    for (index, node) in nodes.iter().enumerate() {
+        depth[index] = match node {
+            ExpressionNode::Constant(value) => {
+                bits = bits.max(value.representation_size(1 << 16).max_rational_bits);
+                0
+            }
+            ExpressionNode::Variable(_) => 0,
+            ExpressionNode::Unary { input, .. } => depth[*input] + 1,
+            ExpressionNode::Binary { left, right, .. } => depth[*left].max(depth[*right]) + 1,
+        };
+    }
+    perf_atlas::Shape {
+        nodes: nodes.len() as u64,
+        depth: program
+            .definition()
+            .outputs
+            .iter()
+            .map(|&o| depth[o])
+            .max()
+            .unwrap_or(0),
+        bits,
+    }
+}
+
+/// Largest stored representation over exact results.
+fn reals_shape(values: &[Real]) -> perf_atlas::Shape {
+    values
+        .iter()
+        .map(|value| value.representation_size(1 << 20))
+        .fold(perf_atlas::Shape::default(), |shape, size| {
+            perf_atlas::Shape {
+                nodes: shape.nodes.max(size.nodes as u64),
+                depth: shape.depth.max(size.depth as u64),
+                bits: shape.bits.max(size.max_rational_bits),
+            }
+        })
+}
+
 /// The crate's default exact-comparison policy: certified stages first, with
 /// bounded approximate refinement to 512 bits.
 const POLICY: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
@@ -2081,7 +2130,10 @@ fn expression_programs(atlas: &mut Atlas) {
             &sizes,
             |m, _| expression(kind, m as usize),
             |(e, variables)| {
-                ExpressionProgram::compile(std::slice::from_ref(e), variables, &mut graph())
+                perf_atlas::Shaped::new(
+                    ExpressionProgram::compile(std::slice::from_ref(e), variables, &mut graph()),
+                    |r| r.as_ref().ok().map(program_shape),
+                )
             },
         );
     }
@@ -2097,7 +2149,12 @@ fn expression_programs(atlas: &mut Atlas) {
             kind,
             &sizes,
             |m, _| program(kind, m as usize),
-            |p| ExpressionProgram::from_definition(p.definition().clone(), &mut graph()),
+            |p| {
+                perf_atlas::Shaped::new(
+                    ExpressionProgram::from_definition(p.definition().clone(), &mut graph()),
+                    |r| r.as_ref().ok().map(program_shape),
+                )
+            },
         );
     }
 
@@ -2116,7 +2173,11 @@ fn expression_programs(atlas: &mut Atlas) {
                 let v = values(p.definition().variables.len());
                 (p, v)
             },
-            |(p, v)| p.eval_real(v, &mut graph()),
+            |(p, v)| {
+                perf_atlas::Shaped::new(p.eval_real(v, &mut graph()), |r| {
+                    r.as_ref().ok().map(|values| reals_shape(values))
+                })
+            },
         );
     }
     atlas.fuzz(
@@ -2128,7 +2189,11 @@ fn expression_programs(atlas: &mut Atlas) {
             let v = values(p.definition().variables.len());
             (p, v)
         },
-        |(p, v)| p.eval_real(v, &mut graph()),
+        |(p, v)| {
+            perf_atlas::Shaped::new(p.eval_real(v, &mut graph()), |r| {
+                r.as_ref().ok().map(|values| reals_shape(values))
+            })
+        },
     );
 
     atlas.operation(
@@ -2280,7 +2345,11 @@ fn expression_programs(atlas: &mut Atlas) {
                 let variables = p.definition().variables.clone();
                 (p, variables)
             },
-            |(p, variables)| p.jacobian(variables, &mut graph()),
+            |(p, variables)| {
+                perf_atlas::Shaped::new(p.jacobian(variables, &mut graph()), |r| {
+                    r.as_ref().ok().map(|j| program_shape(j.program()))
+                })
+            },
         );
     }
 
@@ -2327,7 +2396,11 @@ fn expression_programs(atlas: &mut Atlas) {
                 .expect("compiles");
                 (outer, inner)
             },
-            |(outer, inner)| outer.compose(inner, &[0], &mut graph()),
+            |(outer, inner)| {
+                perf_atlas::Shaped::new(outer.compose(inner, &[0], &mut graph()), |r| {
+                    r.as_ref().ok().map(|c| program_shape(c.program()))
+                })
+            },
         );
     }
 }
@@ -2361,7 +2434,11 @@ fn taylor_models(atlas: &mut Atlas) {
                     .collect();
                 (taylor_program(kind), requests)
             },
-            |(p, requests)| p.coefficients(requests, &mut graph()),
+            |(p, requests)| {
+                perf_atlas::Shaped::new(p.coefficients(requests, &mut graph()), |r| {
+                    r.as_ref().ok().map(|c| program_shape(c.program()))
+                })
+            },
         );
     }
 

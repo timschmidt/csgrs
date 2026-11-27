@@ -53,6 +53,10 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
 // ---------------------------------------------------------------------------
 // Budgets and the watchdog
 // ---------------------------------------------------------------------------

@@ -5,7 +5,8 @@ name: perf-atlas
 # scripts/perf-atlas/render.py turns the results into one HTML report, kept as
 # a workflow artifact. Hosted runners are shared machines, so treat absolute
 # times as indicative; shapes, cliffs and relative costs are what the report
-# is for.
+# is for. With `resources`, the same sweeps record heap, stack, result-shape
+# and counter use per call instead (memory and depth atlases).
 
 on:
   workflow_dispatch:
@@ -18,6 +19,10 @@ on:
         description: "Space-separated crates (empty for all with an atlas)"
         type: string
         default: ""
+      resources:
+        description: "Memory and depth atlases instead of timing"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -47,8 +52,10 @@ jobs:
         env:
           QUICK: ${{ inputs.quick }}
           CRATES: ${{ inputs.crates }}
+          RESOURCES: ${{ inputs.resources }}
         run: |
           args=(--out target/perf-atlas)
+          if [ "$RESOURCES" = "true" ]; then args=(--out target/perf-atlas --resources --counters); fi
           if [ "$QUICK" = "true" ]; then args+=(--quick); fi
           if [ -n "$CRATES" ]; then args+=(--crates "$CRATES"); fi
           scripts/perf-atlas/run.sh "${args[@]}"

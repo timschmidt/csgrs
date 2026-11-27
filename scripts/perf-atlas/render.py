@@ -3,6 +3,11 @@
 
 Usage: render.py OUTPUT_DIR ATLAS.json [ATLAS.json ...]
 
+Documents from `--resources` runs produce a resource report instead: one page
+per measure (memory: peak, allocations, allocated, retained, residue; depth:
+stack, tree depth, nodes, largest scalar; plus registered counters) and an
+index, all drawn with the same charts, anomaly flags and tables.
+
 The report needs no network access: styles, scripts and SVG charts are inline.
 For each operation it draws time against magnitude (one line per input kind,
 at most four per panel), the spread of fuzzed inputs, and magnitude grids for
@@ -79,7 +84,8 @@ const b=document.createElement('b');b.textContent=r.value;d.appendChild(b);const
 tip.style.display='block';const x=Math.min(e.clientX+14,window.innerWidth-tip.offsetWidth-8),y=Math.min(e.clientY+14,window.innerHeight-tip.offsetHeight-8);
 tip.style.left=x+'px';tip.style.top=y+'px';}
 function hideTip(){tip.style.display='none';}
-function fmt(ns){if(ns==null||!isFinite(ns))return '—';const u=[[1e9,'s'],[1e6,'ms'],[1e3,'µs'],[1,'ns']];for(const [d,s] of u){if(ns>=d||s==='ns'){const v=ns/d;return (v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+' '+s;}}}
+function fmt(ns){if(ns==null||!isFinite(ns))return '—';if(UNIT!=='ns'){if(ns<1)return '0';const u=UNIT==='bytes'?[[1073741824,'GiB'],[1048576,'MiB'],[1024,'KiB'],[1,'B']]:[[1e9,'G'],[1e6,'M'],[1e3,'K'],[1,'']];
+for(const [d,s] of u){if(ns>=d||d===1){const v=ns/d;return ((v>=100||d===1)?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+(s?' '+s:'');}}}const u=[[1e9,'s'],[1e6,'ms'],[1e3,'µs'],[1,'ns']];for(const [d,s] of u){if(ns>=d||s==='ns'){const v=ns/d;return (v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+' '+s;}}}
 function col(v){return getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(v).trim();}
 document.querySelectorAll('svg[data-line]').forEach(svg=>{const d=JSON.parse(svg.dataset.d);const cross=svg.querySelector('.cross');
 const hit=svg.querySelector('.hit');hit.addEventListener('pointermove',e=>{const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());
@@ -90,12 +96,12 @@ function local(svg,e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.client
 document.querySelectorAll('svg[data-f]').forEach(svg=>{const d=JSON.parse(svg.dataset.f);const ring=svg.querySelector('.ring');const hit=svg.querySelector('.hit');
 hit.addEventListener('pointermove',e=>{const p=local(svg,e);let best=null,bd=24*24;for(const q of d.p){const dx=q[0]-p.x,dy=q[1]-p.y,dd=dx*dx+dy*dy;if(dd<bd){bd=dd;best=q;}}
 if(!best){ring.style.display='none';hideTip();return;}ring.setAttribute('cx',best[0]);ring.setAttribute('cy',best[1]);ring.style.display='';
-showTip(e,[{value:fmt(best[2]),name:best[4]||'time per call'}],d.xl+' = '+best[3]+', fuzzed input');});
+showTip(e,[{value:fmt(best[2]),name:best[4]||VALUE}],d.xl+' = '+best[3]+', fuzzed input');});
 hit.addEventListener('pointerleave',()=>{ring.style.display='none';hideTip();});});
 document.querySelectorAll('svg[data-h]').forEach(svg=>{const d=JSON.parse(svg.dataset.h);const hit=svg.querySelector('.hit');
 hit.addEventListener('pointermove',e=>{const p=local(svg,e);const i=Math.floor((p.x-d.x0)/d.w*d.a.length),j=d.b.length-1-Math.floor((p.y-d.y0)/d.h*d.b.length);
 if(i<0||j<0||i>=d.a.length||j>=d.b.length){hideTip();return;}const v=d.ns[j][i];
-showTip(e,[{value:v==null?'skipped':fmt(v),name:d.e[j]&&d.e[j][i]?'error':'time per call'}],d.al+' = '+d.a[i]+', '+d.bl+' = '+d.b[j]);});
+showTip(e,[{value:v==null?'skipped':fmt(v),name:d.e[j]&&d.e[j][i]?'error':VALUE}],d.al+' = '+d.a[i]+', '+d.bl+' = '+d.b[j]);});
 hit.addEventListener('pointerleave',hideTip);});
 document.getElementById('theme').addEventListener('click',()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';});
 const q=document.getElementById('filter');q.addEventListener('input',()=>{const s=q.value.toLowerCase();document.querySelectorAll('.op').forEach(o=>{o.hidden=s&&!o.dataset.name.includes(s);});});
@@ -106,9 +112,27 @@ def esc(text):
     return html.escape(str(text), quote=True)
 
 
+# What the value slot of a point means on the current page.
+UNIT = {"kind": "ns", "value": "time per call", "axis": "time per call (log scale)",
+        "caption": "Median time per call", "grid": "median time per call over both operand sizes (darker is slower)",
+        "column": "Time", "valley": "faster", "title": "Performance atlas"}
+# Zero resource values are drawn at this height and printed as 0.
+ZERO = 0.5
+
+
 def fmt_ns(ns):
     if ns is None or not math.isfinite(ns):
         return "—"
+    if UNIT["kind"] != "ns":
+        if ns < 1:
+            return "0"
+        units = ((1 << 30, "GiB"), (1 << 20, "MiB"), (1 << 10, "KiB"), (1, "B")) if UNIT["kind"] == "bytes" \
+            else ((1e9, "G"), (1e6, "M"), (1e3, "K"), (1, ""))
+        for div, unit in units:
+            if ns >= div or div == 1:
+                v = ns / div
+                text = f"{v:.0f}" if v >= 100 or div == 1 else f"{v:.1f}" if v >= 10 else f"{v:.2f}"
+                return (text + " " + unit).strip()
     for div, unit in ((1e9, "s"), (1e6, "ms"), (1e3, "µs"), (1, "ns")):
         if ns >= div or unit == "ns":
             v = ns / div
@@ -199,7 +223,7 @@ def axes(xs, ys, xticks, yticks, xlabel):
         out.append(f'<line class="axisline" x1="{x:.1f}" x2="{x:.1f}" y1="{MT + PH}" y2="{MT + PH + 4}"/>')
         out.append(f'<text class="ticklabel" x="{x:.1f}" y="{MT + PH + 17}" text-anchor="middle">{esc(fmt_mag(t))}</text>')
     out.append(f'<text class="axistitle" x="{ML + PW / 2}" y="{H - 8}" text-anchor="middle">{esc(xlabel)}{" (log scale)" if xs.log else ""}</text>')
-    out.append(f'<text class="axistitle" x="14" y="{MT + PH / 2}" transform="rotate(-90 14 {MT + PH / 2})" text-anchor="middle">time per call (log scale)</text>')
+    out.append(f'<text class="axistitle" x="14" y="{MT + PH / 2}" transform="rotate(-90 14 {MT + PH / 2})" text-anchor="middle">{esc(UNIT["axis"])}</text>')
     return out
 
 
@@ -221,7 +245,7 @@ def anomalies(points):
     for p in points:
         if p[5] == "error":
             found.append(("error", 0, p, p))
-        if p[5] in ("ceiling", "predicted"):
+        if p[5] in ("ceiling", "predicted", "memory-ceiling"):
             found.append(("ceiling", 0, p, p))
     return found
 
@@ -231,7 +255,7 @@ def line_chart(op, series, xlabel, slots):
     ally = [p[1] for s in series for p in s["points"]]
     xs = Scale(allx, ML, ML + PW)
     ys, yt = time_scale(ally)
-    out = [f'<svg viewBox="0 0 {W} {H}" data-line role="img" aria-label="{esc(op["name"])}: time per call by {esc(xlabel)}" data-d="__DATA__">']
+    out = [f'<svg viewBox="0 0 {W} {H}" data-line role="img" aria-label="{esc(op["name"])}: {esc(UNIT["value"])} by {esc(xlabel)}" data-d="__DATA__">']
     out += axes(xs, ys, x_ticks(allx, xs), yt, xlabel)
     xvals = sorted(set(p[0] for s in series for p in s["points"] if p[0] is not None))
     data = {"xl": xlabel, "xs": [fmt_mag(x) for x in xvals], "px": [round(xs(x), 1) for x in xvals], "series": []}
@@ -403,11 +427,20 @@ def table(op):
     return f'<details><summary>Data table</summary><div class="tbl">{"".join(parts)}</div></details>'
 
 
+TIME_INTRO = f"""<p>Wall-clock time per call for each operation, swept across input kinds, magnitudes and fuzzed inputs. Both axes of the line
+charts are logarithmic where the data spans a wide range, so equal slopes mean equal growth rates and a straight line is a power law.
+A <b>cliff</b> is a rise of at least {CLIFF:.0f}× between adjacent magnitudes; a <b>valley</b> is a point at least {VALLEY:.0f}× faster than
+both neighbours. Hollow markers are calls that returned an error, which are not fast successes. "Ceiling" marks a single call longer than the
+sweep's ceiling, and "predicted" a call the series' own growth put far over it; larger magnitudes of that series were skipped.
+Every timed call gets its own freshly built copy of its input, so results a library caches on its operands are not reused. These are focused probes on one host; compare reports only from the
+same host, toolchain and settings.</p>"""
+
+
 def anchor(crate, op):
     return "op-" + "".join(c if c.isalnum() else "-" for c in f"{crate}-{op['group']}-{op['name']}").lower()
 
 
-def render(docs):
+def render(docs, intro=None, nav=""):
     highlights = []
     body = []
     toc = []
@@ -415,7 +448,12 @@ def render(docs):
         crate = doc["crate"]
         toc.append(f'<a href="#crate-{esc(crate)}"><b>{esc(crate)}</b> — {len(doc["operations"])} operations</a>')
         body.append(f'<h2 id="crate-{esc(crate)}">{esc(crate)}</h2>')
-        body.append(f'<p>{"Quick" if doc["quick"] else "Full"} sweep, {doc["os"]}/{doc["arch"]}, seed {doc["seed"]}, '
+        if doc.get("metric") == "resources":
+            body.append(f'<p>{"Quick" if doc["quick"] else "Full"} resource sweep, {doc["os"]}/{doc["arch"]}, seed {doc["seed"]}, '
+                        f'{doc["elapsed_s"]:.0f} s. One warm call per point on a fresh input; peak-heap ceiling '
+                        f'{fmt_bytes(doc["settings"]["peak_ceiling_bytes"])}; stack {"measured" if doc["settings"]["stack_measured"] else "not measured on this host"}.</p>')
+        else:
+          body.append(f'<p>{"Quick" if doc["quick"] else "Full"} sweep, {doc["os"]}/{doc["arch"]}, seed {doc["seed"]}, '
                     f'{doc["elapsed_s"]:.0f} s. Batches of at least {fmt_ns(doc["settings"]["target_batch_ns"])}, '
                     f'{doc["settings"]["samples"]} samples per point, single-call ceiling {fmt_ns(doc["settings"]["single_ceiling_ns"])}, '
                     f'{doc["settings"]["fuzz_per_magnitude"]} fuzzed inputs per magnitude.</p>')
@@ -432,7 +470,7 @@ def render(docs):
             charts = []
             for start in range(0, len(op["series"]), 4):
                 panel = op["series"][start:start + 4]
-                charts.append(f'<div class="chart"><div class="caption">Median time per call by {esc(op["magnitude"])}</div>'
+                charts.append(f'<div class="chart"><div class="caption">{esc(UNIT["caption"])} by {esc(op["magnitude"])}</div>'
                               f'{legend([s["kind"] for s in panel], slots)}{line_chart(op, panel, op["magnitude"], slots)}</div>')
             for f in op["fuzz"]:
                 if any(p[1] is not None for p in f["points"]):
@@ -440,7 +478,7 @@ def render(docs):
             for g in op["grids"]:
                 h = heatmap(op, g)
                 if h:
-                    charts.append(f'<div class="chart"><div class="caption">{esc(g["kind"])}: median time per call over both operand sizes (darker is slower)</div>{h}</div>')
+                    charts.append(f'<div class="chart"><div class="caption">{esc(g["kind"])}: {esc(UNIT["grid"])}</div>{h}</div>')
             body.append(f'<div class="card op" id="{anchor(crate, op)}" data-name="{esc((crate + " " + op["group"] + " " + op["name"]).lower())}">'
                         f'<h3>{esc(op["name"])}</h3><p>{esc(op["description"])}</p><div class="charts">{"".join(charts)}</div>{table(op)}</div>')
     cliffs = sorted((h for h in highlights if h[0] == "cliff"), key=lambda h: -h[1])
@@ -452,24 +490,19 @@ def render(docs):
         for kind, ratio, crate, op, series, a, b in items[:limit]:
             where = f"{fmt_mag(a[0])} → {fmt_mag(b[0])}" if kind == "cliff" else fmt_mag(a[0])
             detail = (f"×{ratio:.1f}" if kind in ("cliff", "valley") else ("call failed" + (f": {why(a)}" if why(a) else "")) if kind == "error"
-                      else "predicted over ceiling; not run" if a[5] == "predicted" else "single call over ceiling")
+                      else "predicted over ceiling; not run" if a[5] == "predicted"
+                      else "peak heap over the ceiling" if a[5] == "memory-ceiling" else "single call over ceiling")
             out.append(f'<tr><td><a href="#{anchor(crate, op)}">{esc(crate)} · {esc(op["name"])}</a></td><td>{esc(series)}</td>'
                        f'<td>{esc(where)}</td><td>{esc(fmt_ns(a[1]))}</td><td>{esc(fmt_ns(b[1]))}</td><td>{esc(detail)}</td></tr>')
         if not out:
             return f"<p>No {what} found.</p>"
-        return ("<table><tr><th>Operation</th><th>Input kind</th><th>Magnitude</th><th>Time</th><th>Compared with</th><th>Size</th></tr>"
+        return (f"<table><tr><th>Operation</th><th>Input kind</th><th>Magnitude</th><th>{esc(UNIT['column'])}</th><th>Compared with</th><th>Size</th></tr>"
                 + "".join(out) + "</table>" + (f"<p>{len(items) - limit} more not shown.</p>" if len(items) > limit else ""))
 
     head = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Performance atlas</title><style>{CSS}</style></head><body><div class="viz-root"><div id="tip"></div>
-<h1>Performance atlas</h1>
-<p>Wall-clock time per call for each operation, swept across input kinds, magnitudes and fuzzed inputs. Both axes of the line
-charts are logarithmic where the data spans a wide range, so equal slopes mean equal growth rates and a straight line is a power law.
-A <b>cliff</b> is a rise of at least {CLIFF:.0f}× between adjacent magnitudes; a <b>valley</b> is a point at least {VALLEY:.0f}× faster than
-both neighbours. Hollow markers are calls that returned an error, which are not fast successes. "Ceiling" marks a single call longer than the
-sweep's ceiling, and "predicted" a call the series' own growth put far over it; larger magnitudes of that series were skipped.
-Every timed call gets its own freshly built copy of its input, so results a library caches on its operands are not reused. These are focused probes on one host; compare reports only from the
-same host, toolchain and settings.</p>
+<title>{esc(UNIT["title"])}</title><style>{CSS}</style></head><body><div class="viz-root"><div id="tip"></div>
+<h1>{esc(UNIT["title"])}</h1>{nav}
+{intro if intro else TIME_INTRO}
 <div class="toolbar"><input id="filter" placeholder="Filter operations" aria-label="Filter operations"><button id="theme">Toggle dark mode</button>
 <span class="status">{sum(len(d["operations"]) for d in docs)} operations in {len(docs)} crates, {len(cliffs)} cliffs, {len(valleys)} valleys, {len(failures)} failures or ceilings</span></div>
 <div class="card"><h3>Crates</h3><div class="toc">{"".join(toc)}</div></div>
@@ -477,7 +510,112 @@ same host, toolchain and settings.</p>
 <div class="card"><h3>Valleys</h3>{rows(valleys, 20, "valleys")}</div>
 <div class="card"><h3>Failures and ceilings</h3>{rows(failures, 40, "failures or ceilings")}</div>
 """
-    return head + "".join(body) + f"<script>{JS}</script></div></body></html>\n"
+    script = f"const UNIT={json.dumps(UNIT['kind'])},VALUE={json.dumps(UNIT['value'])};" + JS
+    return head + "".join(body) + f"<script>{script}</script></div></body></html>\n"
+
+
+
+
+def fmt_bytes(n):
+    saved = UNIT["kind"]
+    UNIT["kind"] = "bytes"
+    try:
+        return fmt_ns(n)
+    finally:
+        UNIT["kind"] = saved
+
+
+# Resource measures: (page, atlas, unit kind, value name, reader of a resource object).
+MEASURES = [
+    ("memory-peak", "Memory", "bytes", "peak live heap above the call's start", lambda r: r["peak"]),
+    ("memory-allocations", "Memory", "count", "heap allocations", lambda r: r["allocations"]),
+    ("memory-reallocations", "Memory", "count", "heap reallocations", lambda r: r["reallocations"]),
+    ("memory-allocated", "Memory", "bytes", "bytes requested from the heap", lambda r: r["allocated"]),
+    ("memory-retained", "Memory", "bytes", "live bytes held by the result", lambda r: r["retained"]),
+    ("memory-residue", "Memory", "bytes", "live bytes left after the result is dropped", lambda r: r["residue"]),
+    ("depth-stack", "Depth", "bytes", "stack high-water mark", lambda r: r["stack"]),
+    ("depth-tree", "Depth", "count", "result tree depth", lambda r: r["shape"] and r["shape"]["depth"]),
+    ("depth-nodes", "Depth", "count", "result nodes", lambda r: r["shape"] and r["shape"]["nodes"]),
+    ("depth-bits", "Depth", "count", "largest stored scalar (bits)", lambda r: r["shape"] and r["shape"]["bits"]),
+]
+
+RESOURCE_INTRO = """<p>{what} of one warm call per point, on a freshly built input, for each operation swept across input kinds,
+magnitudes and fuzzed inputs. Heap figures come from a counting global allocator installed only in the atlas binaries; the stack
+high-water mark comes from running each call on a private stack whose touched pages are counted (to within one page); tree
+measures come from operations that report the structure of their results. Zero values are drawn at the bottom of the axis and
+printed as 0. A <b>cliff</b> is a rise of at least {cliff:.0f}× between adjacent magnitudes; a <b>valley</b> is a point at least
+{valley:.0f}× smaller than both neighbours. Hollow markers are calls that returned an error. These are single observations on one
+host and toolchain; allocator and stack figures depend on both.</p>"""
+
+
+def project(doc, read):
+    """Copy of `doc` with each point's value slot replaced by one measure."""
+    def value(r):
+        if not r:
+            return None
+        v = read(r)
+        if v is None:
+            return None
+        return ZERO if v == 0 else float(v)
+
+    def points(series):
+        out = []
+        for p in series["points"]:
+            r = p[7] if len(p) > 7 else None
+            v = value(r)
+            status = p[5] if v is not None or p[5] != "ok" else "unmeasured"
+            out.append([p[0], v, v, v, p[4], status, p[6] if len(p) > 6 else None])
+        return {"kind": series["kind"], "points": out}
+
+    copy = dict(doc)
+    copy["operations"] = []
+    for op in doc["operations"]:
+        grids = []
+        for g in op["grids"]:
+            cells = g.get("resources") or [[None] * len(g["a"]) for _ in g["b"]]
+            grids.append(dict(g, ns=[[value(c) for c in row] for row in cells]))
+        copy["operations"].append(dict(op, series=[points(x) for x in op["series"]],
+                                       fuzz=[points(x) for x in op["fuzz"]], grids=grids))
+    return copy
+
+
+def has_values(doc):
+    return any(p[1] is not None for op in doc["operations"] for x in op["series"] + op["fuzz"] for p in x["points"]) \
+        or any(v is not None for op in doc["operations"] for g in op["grids"] for row in g["ns"] for v in row)
+
+
+def render_resources(out, docs):
+    measures = [(page, atlas, kind, value, lambda d, read=read: read) for page, atlas, kind, value, read in MEASURES]
+    for name in sorted({c for d in docs for c in d.get("counters", [])}):
+        def per_doc(d, name=name):
+            j = d.get("counters", []).index(name) if name in d.get("counters", []) else None
+            return lambda r: None if j is None else r["counters"][j]
+        slug = "".join(c if c.isalnum() else "-" for c in name)
+        measures.append((f"counter-{slug}", "Counters", "count", f"change in {name}", per_doc))
+    pages = []
+    for page, atlas, kind, value, reader in measures:
+        projected = [d for d in (project(doc, reader(doc)) for doc in docs) if has_values(d)]
+        if projected:
+            pages.append((page, atlas, kind, value, projected))
+    nav = "<p class=\"status\">" + " · ".join(
+        f'<a href="{p}.html">{esc(a)}: {esc(v)}</a>' for p, a, _, v, _ in pages) + "</p>"
+    for page, atlas, kind, value, projected in pages:
+        UNIT.update(kind=kind, value=value, axis=f"{value} (log scale)", caption=value[0].upper() + value[1:],
+                    grid=f"{value} over both operand sizes (darker is larger)", column=value[0].upper() + value[1:],
+                    valley="smaller", title=f"{atlas} atlas: {value}")
+        intro = RESOURCE_INTRO.format(what=esc(value[0].upper() + value[1:]), cliff=CLIFF, valley=VALLEY)
+        (out / f"{page}.html").write_text(render(projected, intro=intro, nav=nav))
+    index = ["<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+             f"<title>Resource atlas</title><style>{CSS}</style></head><body><div class=\"viz-root\"><h1>Resource atlas</h1>",
+             f"<p>{len(docs)} crates: {esc(', '.join(d['crate'] for d in docs))}. Each page charts one measure for every operation.</p>"]
+    for atlas in ("Memory", "Depth", "Counters"):
+        items = [(p, v) for p, a, _, v, _ in pages if a == atlas]
+        if items:
+            index.append(f"<div class=\"card\"><h3>{atlas} atlas</h3>" + "".join(
+                f'<p><a href="{p}.html">{esc(v[0].upper() + v[1:])}</a></p>' for p, v in items) + "</div>")
+    index.append("</div></body></html>\n")
+    (out / "index.html").write_text("".join(index))
+    print(f"wrote {out / 'index.html'} and {len(pages)} measure pages")
 
 
 def main():
@@ -491,6 +629,11 @@ def main():
         docs.append(doc)
     docs.sort(key=lambda d: d["crate"])
     out.mkdir(parents=True, exist_ok=True)
+    metrics = {d.get("metric", "time") for d in docs}
+    assert len(metrics) == 1, "render time and resource documents separately"
+    if metrics == {"resources"}:
+        render_resources(out, docs)
+        return
     (out / "index.html").write_text(render(docs))
     print(f"wrote {out / 'index.html'}")
 

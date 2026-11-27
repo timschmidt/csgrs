@@ -78,6 +78,63 @@ Every chart has a data table, and hovering shows exact values. Times come
 from one host and toolchain. Compare reports only when they were made on the
 same machine with the same settings, and with nothing else heavy running.
 
+## Resource atlases: memory and depth
+
+The same declarations also produce resource atlases, which audit how much
+memory and how much evaluation depth each operation needs across its inputs
+and intermediate results:
+
+```sh
+scripts/perf-atlas/run.sh --resources            # memory and depth atlases
+scripts/perf-atlas/run.sh --resources --counters # also per-call diagnostic counters
+```
+
+Results go to `target/resource-atlas/`. `index.html` links one page per
+measure, each drawn with the same line charts, fuzz scatters, heatmaps,
+cliff and valley flags and data tables as the timing report. Each point is one
+warm call (after a discarded warm-up call) on a freshly built input:
+
+| Atlas | Measure | Source |
+| --- | --- | --- |
+| Memory | peak live heap above the call's start | counting allocator |
+| Memory | allocations, reallocations, bytes requested | counting allocator |
+| Memory | live bytes still held by the result | counting allocator |
+| Memory | residue: live bytes left after the result is dropped (caches on the input or global caches, or leaks) | counting allocator |
+| Depth | stack high-water mark | private measurement stack |
+| Depth | result tree depth, nodes, largest stored scalar in bits | `Shaped` results |
+| Counters | change in each registered counter, such as dispatch-trace events | `Atlas::counter`, with `--counters` |
+
+How it works, and why it costs production code nothing:
+
+- **Heap.** Each atlas binary installs `perf_atlas::CountingAllocator` as its
+  `#[global_allocator]`. It delegates to the system allocator and keeps atomic
+  counters. Only atlas examples install it; library builds are unchanged.
+- **Stack.** Each measured call runs on a private stack: an anonymous mapping
+  with a guard page, entered through `psm::on_stack`, reset with
+  `MADV_DONTNEED` before the call and inspected with `mincore` afterwards.
+  The deepest touched page, refined to its first nonzero word, gives the
+  high-water mark within one page (4 KiB). Transparent huge pages are disabled
+  on the mapping. The private stack reserves 1 GiB of address space, so calls
+  far deeper than an ordinary 8 MiB thread stack can still be measured; a call
+  beyond that hits the guard page and ends the run. Stack depth is measured
+  on Linux x86_64 and aarch64 only.
+- **Shape.** An operation reports the structure of its result by returning
+  `Shaped::new(value, reader)`. The reader runs only in resource atlases and
+  only after the measured call; in timing runs wrapping costs one function
+  pointer. Hyperreal reports `Real::representation_size` (expression nodes,
+  depth and largest stored rational) for arithmetic results.
+- **Counters.** `Atlas::counter(name, read)` records the change of a process
+  counter across each call. Recording can allocate inside the call, so
+  binaries register counters only when `--counters` is passed. Hyperreal
+  registers its dispatch-trace event total when built with `dispatch-trace`
+  (as `run.sh` does with `--all-features`).
+- **Ceilings.** A call over the time ceiling, or whose peak heap exceeds 4 GiB
+  (1 GiB in `--quick`), ends its series like a timing ceiling.
+
+Heap and stack figures depend on the host's allocator, toolchain and
+optimization settings. Compare resource reports only when they come from the
+same host and settings.
+
 ## Adding a crate
 
 1. Add `perf-atlas = { path = "../perf-atlas" }` to the crate's
@@ -90,7 +147,11 @@ same machine with the same settings, and with nothing else heavy running.
    - Finish with `atlas.finish()`.
 3. Make the timed call do real work. Force lazy values to a fixed precision,
    and return `Option`, `Result` or `bool` so that failures are marked.
-4. Add the crate to the default list in `run.sh`.
+4. Install the counting allocator for resource atlases:
+   `#[global_allocator] static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;`
+5. Optionally wrap results in `Shaped` to report their structure, and
+   register diagnostic counters behind `atlas.config().counters`.
+6. Add the crate to the default list in `run.sh`.
 
 ## Archived runs
 

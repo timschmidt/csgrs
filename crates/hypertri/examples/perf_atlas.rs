@@ -26,6 +26,10 @@ use hypertri::{
 };
 use perf_atlas::{Atlas, Rng, ladder, powers_of_two};
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
 const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 const STRICT: TriangulationContext = TriangulationContext::new(PredicatePolicy::STRICT);
 

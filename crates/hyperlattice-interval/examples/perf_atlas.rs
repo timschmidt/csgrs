@@ -22,6 +22,10 @@ use num_bigint::{BigInt, Sign};
 use perf_atlas::{Atlas, Rng, powers_of_two};
 use std::hint::black_box;
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
 type Q16 = FixedInterval<i32, 16>;
 type Q32 = FixedInterval<i64, 32>;
 type Error = IntervalLatticeError;

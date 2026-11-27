@@ -17,6 +17,10 @@ use hyperlattice::{
 };
 use perf_atlas::{Atlas, Rng, powers_of_two};
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
 const KINDS: [&str; 4] = ["integer", "rational", "dyadic", "irrational"];
 /// Signs are certified to this binary precision before an entry is formatted.
 const SIGN_PRECISION: i32 = -2048;

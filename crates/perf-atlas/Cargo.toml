@@ -7,3 +7,8 @@ description = "Performance atlas sweeps: per-operation timing across input kinds
 publish = false
 
 [dependencies]
+
+# Resource atlases only: private measurement stacks and their page queries.
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2.186"
+psm = "0.1.32"

@@ -26,6 +26,10 @@ use hyperreal::{Rational, Real};
 use num_bigint::{BigInt, BigUint};
 use perf_atlas::{Atlas, Rng, powers_of_two};
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
 type Q32 = FixedInterval<i64, 32>;
 type Extended = ExtendedInterval<DyadicInterval>;
 type Split = IntervalSet2<DyadicInterval>;

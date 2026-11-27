@@ -45,6 +45,10 @@ use hypercurve::{
 use num::{BigInt, BigUint};
 use perf_atlas::{Atlas, Rng, powers_of_two};
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
 // ---------------------------------------------------------------------------
 // Watchdog and budgeted evaluation.
 

@@ -64,6 +64,10 @@ use num::bigint::{BigInt, BigUint};
 use num::{Integer, One, Signed, ToPrimitive, Zero};
 use perf_atlas::{Atlas, Rng, powers_of_two};
 
+/// Heap accounting for `--resources` runs; only this atlas binary installs it.
+#[global_allocator]
+static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
 type Int = BigInt;
 
 const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;

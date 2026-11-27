@@ -19,9 +19,21 @@
 //!
 //! These are focused probes on one host, not a cross-library claim. Compare
 //! reports only when they come from the same host, toolchain and settings.
+//!
+//! `--resources` switches the same declarations to a resource atlas. Each
+//! point then records one warm call on a fresh input: heap allocations, bytes,
+//! peak and retained live bytes (with [`CountingAllocator`] installed), the
+//! bytes still live after the result is dropped, the stack high-water mark,
+//! any registered [`Atlas::counter`] deltas, and the result's structural
+//! [`Shape`] when the operation reports one through [`Shaped`]. All of this
+//! lives in atlas binaries; the measured crates' production code is untouched.
 use std::fmt::Write as _;
 use std::hint::black_box;
 use std::time::{Duration, Instant};
+
+mod memory;
+mod stack;
+pub use memory::{CountingAllocator, Heap};
 
 /// Sweep effort. `quick` is for smoke runs and CI; the default is for reports.
 #[derive(Clone, Debug)]
@@ -42,6 +54,15 @@ pub struct Config {
     pub filter: Option<String>,
     /// Quick mode flag, recorded in the output.
     pub quick: bool,
+    /// Record resource use (heap, stack, shape, counters) instead of timing.
+    pub resources: bool,
+    /// Ask atlas binaries to register their diagnostic counters (`--counters`).
+    /// Recording them can itself allocate inside measured calls.
+    pub counters: bool,
+    /// Address space reserved for the private measurement stack.
+    pub stack_reserve: usize,
+    /// A call whose peak heap exceeds this many bytes ends the series.
+    pub peak_ceiling: u64,
 }
 
 impl Config {
@@ -56,6 +77,10 @@ impl Config {
             seed: 0x5eed_a71a_5000_0001,
             filter: None,
             quick: false,
+            resources: false,
+            counters: false,
+            stack_reserve: 1 << 30,
+            peak_ceiling: 4 << 30,
         }
     }
 
@@ -68,6 +93,7 @@ impl Config {
             single_ceiling: Duration::from_millis(250),
             fuzz_per_magnitude: 6,
             quick: true,
+            peak_ceiling: 1 << 30,
             ..Self::full()
         }
     }
@@ -152,6 +178,59 @@ pub trait Outcome {
     fn reason(&self) -> Option<String> {
         None
     }
+    /// Structural size of the result, for resource atlases. Computed after
+    /// the measured call, never inside a timed batch.
+    fn shape(&self) -> Option<Shape> {
+        None
+    }
+}
+
+/// Structural size of a result: an expression or evaluation tree, a graph,
+/// a polynomial or any other representation a crate can describe.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Shape {
+    /// Distinct nodes (or terms, cells, entries) in the representation.
+    pub nodes: u64,
+    /// Longest path from the root to a leaf.
+    pub depth: u64,
+    /// Largest stored scalar, in bits (for example numerator plus denominator).
+    pub bits: u64,
+}
+impl Shape {
+    fn max(self, other: Self) -> Self {
+        Self {
+            nodes: self.nodes.max(other.nodes),
+            depth: self.depth.max(other.depth),
+            bits: self.bits.max(other.bits),
+        }
+    }
+}
+
+/// A result with a deferred shape reader, so the shape is computed only by
+/// resource atlases and only after the measured call. Wrapping costs one
+/// function pointer, which keeps timed batches unaffected.
+pub struct Shaped<T> {
+    /// The operation's own result.
+    pub value: T,
+    shape: fn(&T) -> Option<Shape>,
+}
+impl<T> Shaped<T> {
+    /// Pair `value` with the function that describes its structure (`None`
+    /// for results without one, such as a failed call).
+    pub fn new(value: T, shape: fn(&T) -> Option<Shape>) -> Self {
+        Self { value, shape }
+    }
+}
+impl<T: Outcome> Outcome for Shaped<T> {
+    fn succeeded(&self) -> bool {
+        self.value.succeeded()
+    }
+    fn reason(&self) -> Option<String> {
+        self.value.reason()
+    }
+    fn shape(&self) -> Option<Shape> {
+        (self.shape)(&self.value)
+    }
 }
 
 /// A failure with an explicit reason, for operations whose own status types
@@ -215,6 +294,9 @@ impl<A: Outcome, B: Outcome> Outcome for (A, B) {
     fn reason(&self) -> Option<String> {
         self.0.reason().or_else(|| self.1.reason())
     }
+    fn shape(&self) -> Option<Shape> {
+        combine([self.0.shape(), self.1.shape()])
+    }
 }
 impl<T: Outcome> Outcome for Vec<T> {
     fn succeeded(&self) -> bool {
@@ -223,6 +305,13 @@ impl<T: Outcome> Outcome for Vec<T> {
     fn reason(&self) -> Option<String> {
         self.iter().find_map(Outcome::reason)
     }
+    fn shape(&self) -> Option<Shape> {
+        combine(self.iter().map(Outcome::shape))
+    }
+}
+// Largest of each field over the parts that report a shape.
+fn combine(shapes: impl IntoIterator<Item = Option<Shape>>) -> Option<Shape> {
+    shapes.into_iter().flatten().reduce(Shape::max)
 }
 
 #[derive(Clone, Debug, Default)]
@@ -234,6 +323,25 @@ struct Point {
     iterations: u64,
     status: &'static str,
     reason: Option<String>,
+    resources: Option<Resources>,
+}
+
+/// Resource use of one measured call.
+#[derive(Clone, Debug, Default)]
+struct Resources {
+    heap: Heap,
+    // Live bytes left after the result is dropped (input still held).
+    residue: u64,
+    stack: Option<usize>,
+    shape: Option<Shape>,
+    counters: Vec<u64>,
+}
+
+/// Resource-atlas state shared by every measurement of one atlas.
+struct ResourceState {
+    probe: Option<stack::Probe>,
+    probe_ready: bool,
+    counters: Vec<(String, fn() -> u64)>,
 }
 
 #[derive(Clone, Debug)]
@@ -251,6 +359,7 @@ struct Grid {
     b: Vec<f64>,
     ns: Vec<Vec<Option<f64>>>,
     errors: Vec<Vec<bool>>,
+    resources: Vec<Vec<Option<Resources>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -272,6 +381,7 @@ pub struct Atlas {
     operations: Vec<Operation>,
     started: Instant,
     reuse: bool,
+    state: ResourceState,
 }
 
 /// Most fresh inputs built for one timed batch.
@@ -282,6 +392,8 @@ const PREDICTED_FACTOR: f64 = 8.0;
 
 enum Measured {
     Done(Point),
+    /// Peak heap above the configured ceiling; the point is kept.
+    TooLarge(Point),
     TooSlow(f64),
     /// The input builder or the operation panicked; the message is kept.
     Panicked(String),
@@ -305,6 +417,8 @@ impl Atlas {
         let mut args = std::env::args().skip(1);
         let mut filter = None;
         let mut seed = None;
+        let mut resources = false;
+        let mut counters = false;
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--quick" => {
@@ -313,6 +427,8 @@ impl Atlas {
                         ..Config::quick()
                     }
                 }
+                "--resources" => resources = true,
+                "--counters" => counters = true,
                 "--out" => output = args.next(),
                 "--filter" => filter = args.next(),
                 "--seed" => seed = args.next().and_then(|s| s.parse().ok()),
@@ -322,6 +438,8 @@ impl Atlas {
             }
         }
         config.filter = filter;
+        config.resources = resources;
+        config.counters = counters;
         if let Some(seed) = seed {
             config.seed = seed;
         }
@@ -337,7 +455,18 @@ impl Atlas {
             operations: Vec::new(),
             started: Instant::now(),
             reuse: false,
+            state: ResourceState {
+                probe: None,
+                probe_ready: false,
+                counters: Vec::new(),
+            },
         }
+    }
+
+    /// Register a monotone process counter (for example a dispatch-trace event
+    /// total). Resource atlases record its change across each measured call.
+    pub fn counter(&mut self, name: &str, read: fn() -> u64) {
+        self.state.counters.push((name.to_owned(), read));
     }
 
     /// Time repeated calls on one input object instead of a fresh copy per
@@ -400,13 +529,100 @@ impl Atlas {
     fn measure<I, R: Outcome>(
         config: &Config,
         reuse: bool,
+        state: &mut ResourceState,
         copy: &mut dyn FnMut() -> I,
         run: &mut dyn FnMut(&I) -> R,
     ) -> Measured {
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            Self::measure_unguarded(config, reuse, copy, run)
+            if config.resources {
+                Self::measure_resources(config, state, copy, run)
+            } else {
+                Self::measure_unguarded(config, reuse, copy, run)
+            }
         }))
         .unwrap_or_else(|payload| Measured::Panicked(panic_message(payload)))
+    }
+
+    /// One warm-up call (which also enforces the time ceiling), then one
+    /// measured call on a fresh input, on the private stack.
+    fn measure_resources<I, R: Outcome>(
+        config: &Config,
+        state: &mut ResourceState,
+        copy: &mut dyn FnMut() -> I,
+        run: &mut dyn FnMut(&I) -> R,
+    ) -> Measured {
+        if !state.probe_ready {
+            assert!(
+                memory::activate(),
+                "resource atlases need `#[global_allocator] static A: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;`"
+            );
+            state.probe = stack::Probe::new(config.stack_reserve);
+            state.probe_ready = true;
+        }
+        // The warm-up also runs on the private stack: deep calls can exceed
+        // the ordinary thread stack that the measurement replaces.
+        let warm = copy();
+        let t = Instant::now();
+        let first = match state.probe.as_mut() {
+            Some(probe) => {
+                probe.run(|| drop(black_box(run(black_box(&warm)))));
+                t.elapsed()
+            }
+            None => {
+                drop(black_box(run(black_box(&warm))));
+                t.elapsed()
+            }
+        };
+        drop(warm);
+        if first > config.single_ceiling {
+            return Measured::TooSlow(first.as_nanos() as f64);
+        }
+        let input = copy();
+        let before: Vec<u64> = state.counters.iter().map(|(_, read)| read()).collect();
+        let start = memory::mark();
+        let t = Instant::now();
+        let (result, stack) = match state.probe.as_mut() {
+            Some(probe) => probe.run(|| run(black_box(&input))),
+            None => (run(black_box(&input)), None),
+        };
+        let ns = t.elapsed().as_nanos() as f64;
+        let heap = memory::since(start);
+        let counters = state
+            .counters
+            .iter()
+            .zip(&before)
+            .map(|((_, read), before)| read().saturating_sub(*before))
+            .collect();
+        let succeeded = result.succeeded();
+        let reason = if succeeded { None } else { result.reason() };
+        let shape = result.shape();
+        drop(result);
+        let residue = memory::residue(start);
+        drop(input);
+        let point = Point {
+            magnitude: 0.0,
+            median_ns: ns,
+            min_ns: ns,
+            max_ns: ns,
+            iterations: 1,
+            status: if succeeded { "ok" } else { "error" },
+            reason,
+            resources: Some(Resources {
+                heap,
+                residue,
+                stack,
+                shape,
+                counters,
+            }),
+        };
+        if heap.peak > config.peak_ceiling {
+            Measured::TooLarge(Point {
+                status: "memory-ceiling",
+                ..point
+            })
+        } else {
+            Measured::Done(point)
+        }
     }
 
     fn measure_unguarded<I, R: Outcome>(
@@ -438,6 +654,7 @@ impl Atlas {
                 iterations: 1,
                 status: if succeeded { "single" } else { "error" },
                 reason,
+                resources: None,
             });
         }
         let first_ns = first.as_nanos().max(1) as f64;
@@ -475,6 +692,7 @@ impl Atlas {
             iterations: calls as u64,
             status,
             reason,
+            resources: None,
         })
     }
 
@@ -487,6 +705,7 @@ impl Atlas {
             iterations: 0,
             status,
             reason: None,
+            resources: None,
         }
     }
 
@@ -533,10 +752,15 @@ impl Atlas {
             let point = match Self::measure(
                 &self.config,
                 self.reuse,
+                &mut self.state,
                 &mut || make(magnitude, &mut state.clone()),
                 &mut run,
             ) {
                 Measured::Done(point) => Point { magnitude, ..point },
+                Measured::TooLarge(point) => {
+                    stopped = true;
+                    Point { magnitude, ..point }
+                }
                 Measured::TooSlow(ns) => {
                     stopped = true;
                     Point {
@@ -547,6 +771,7 @@ impl Atlas {
                         iterations: 1,
                         status: "ceiling",
                         reason: None,
+                        resources: None,
                     }
                 }
                 Measured::Panicked(reason) => {
@@ -604,10 +829,16 @@ impl Atlas {
                 match Self::measure(
                     &config,
                     self.reuse,
+                    &mut self.state,
                     &mut || make(magnitude, &mut state.clone()),
                     &mut run,
                 ) {
                     Measured::Done(point) => points.push(Point { magnitude, ..point }),
+                    Measured::TooLarge(point) => {
+                        points.push(Point { magnitude, ..point });
+                        hit_ceiling = true;
+                        break;
+                    }
                     Measured::TooSlow(ns) => {
                         points.push(Point {
                             magnitude,
@@ -617,6 +848,7 @@ impl Atlas {
                             iterations: 1,
                             status: "ceiling",
                             reason: None,
+                            resources: None,
                         });
                         hit_ceiling = true;
                         break;
@@ -667,12 +899,14 @@ impl Atlas {
         };
         let mut rows = Vec::new();
         let mut errors = Vec::new();
+        let mut used = Vec::new();
         // A column whose cell hit the ceiling (or was skipped) in one row is
         // skipped in the following rows too, assuming cost grows along both axes.
         let mut blocked = vec![false; a.len()];
         for &y in b {
             let mut row = Vec::new();
             let mut failed = Vec::new();
+            let mut cells = Vec::new();
             let mut stopped = false;
             let mut timed: Vec<f64> = Vec::new();
             for (column, &x) in a.iter().enumerate() {
@@ -681,12 +915,14 @@ impl Atlas {
                     blocked[column] = true;
                     row.push(None);
                     failed.push(false);
+                    cells.push(None);
                     continue;
                 }
                 let state = Rng::new(rng.next_u64());
                 match Self::measure(
                     &config,
                     self.reuse,
+                    &mut self.state,
                     &mut || make(x, y, &mut state.clone()),
                     &mut run,
                 ) {
@@ -694,23 +930,34 @@ impl Atlas {
                         row.push(Some(point.median_ns));
                         timed.push(point.median_ns);
                         failed.push(point.status == "error");
+                        cells.push(point.resources);
+                    }
+                    Measured::TooLarge(point) => {
+                        stopped = true;
+                        blocked[column] = true;
+                        row.push(Some(point.median_ns));
+                        failed.push(false);
+                        cells.push(point.resources);
                     }
                     Measured::TooSlow(ns) => {
                         stopped = true;
                         blocked[column] = true;
                         row.push(Some(ns));
                         failed.push(false);
+                        cells.push(None);
                     }
                     Measured::Panicked(_) => {
                         stopped = true;
                         blocked[column] = true;
                         row.push(None);
                         failed.push(true);
+                        cells.push(None);
                     }
                 }
             }
             rows.push(row);
             errors.push(failed);
+            used.push(cells);
         }
         self.current().grids.push(Grid {
             kind: kind.to_owned(),
@@ -720,6 +967,7 @@ impl Atlas {
             b: b.to_vec(),
             ns: rows,
             errors,
+            resources: used,
         });
     }
 
@@ -729,7 +977,18 @@ impl Atlas {
         let quick = self.config.quick;
         let _ = write!(
             json,
-            "{{\"format\":\"perf-atlas/1\",\"crate\":{},\"quick\":{quick},\"seed\":{},\"os\":{},\"arch\":{},\"elapsed_s\":{:.3},\"settings\":{{\"target_batch_ns\":{},\"samples\":{},\"point_budget_ns\":{},\"single_ceiling_ns\":{},\"fuzz_per_magnitude\":{}}},\"operations\":[",
+            "{{\"format\":\"perf-atlas/1\",\"metric\":{},\"counters\":[{}],\"crate\":{},\"quick\":{quick},\"seed\":{},\"os\":{},\"arch\":{},\"elapsed_s\":{:.3},\"settings\":{{\"target_batch_ns\":{},\"samples\":{},\"point_budget_ns\":{},\"single_ceiling_ns\":{},\"fuzz_per_magnitude\":{},\"peak_ceiling_bytes\":{},\"stack_reserve_bytes\":{},\"stack_measured\":{}}},\"operations\":[",
+            quote(if self.config.resources {
+                "resources"
+            } else {
+                "time"
+            }),
+            self.state
+                .counters
+                .iter()
+                .map(|(name, _)| quote(name))
+                .collect::<Vec<_>>()
+                .join(","),
             quote(&self.crate_name),
             self.config.seed,
             quote(std::env::consts::OS),
@@ -740,6 +999,9 @@ impl Atlas {
             self.config.point_budget.as_nanos(),
             self.config.single_ceiling.as_nanos(),
             self.config.fuzz_per_magnitude,
+            self.config.peak_ceiling,
+            self.config.stack_reserve,
+            self.state.probe.is_some(),
         );
         let operations: Vec<_> = self
             .operations
@@ -817,14 +1079,15 @@ fn series_json(series: &Series) -> String {
         .iter()
         .map(|p| {
             format!(
-                "[{},{},{},{},{},{},{}]",
+                "[{},{},{},{},{},{},{},{}]",
                 number(p.magnitude),
                 number(p.median_ns),
                 number(p.min_ns),
                 number(p.max_ns),
                 p.iterations,
                 quote(p.status),
-                p.reason.as_deref().map_or("null".to_owned(), quote)
+                p.reason.as_deref().map_or("null".to_owned(), quote),
+                resources_json(p.resources.as_ref())
             )
         })
         .collect();
@@ -849,8 +1112,21 @@ fn grid_json(grid: &Grid) -> String {
             )
         })
         .collect();
+    let resources: Vec<String> = grid
+        .resources
+        .iter()
+        .map(|row| {
+            format!(
+                "[{}]",
+                row.iter()
+                    .map(|cell| resources_json(cell.as_ref()))
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )
+        })
+        .collect();
     format!(
-        "{{\"kind\":{},\"a_label\":{},\"b_label\":{},\"a\":[{}],\"b\":[{}],\"ns\":[{}],\"errors\":[{}]}}",
+        "{{\"kind\":{},\"a_label\":{},\"b_label\":{},\"a\":[{}],\"b\":[{}],\"ns\":[{}],\"errors\":[{}],\"resources\":[{}]}}",
         quote(&grid.kind),
         quote(&grid.a_label),
         quote(&grid.b_label),
@@ -874,6 +1150,34 @@ fn grid_json(grid: &Grid) -> String {
                     .collect::<Vec<_>>()
                     .join(",")
             ))
+            .collect::<Vec<_>>()
+            .join(","),
+        resources.join(",")
+    )
+}
+
+fn resources_json(resources: Option<&Resources>) -> String {
+    let Some(r) = resources else {
+        return "null".to_owned();
+    };
+    let shape = r.shape.map_or("null".to_owned(), |s| {
+        format!(
+            "{{\"nodes\":{},\"depth\":{},\"bits\":{}}}",
+            s.nodes, s.depth, s.bits
+        )
+    });
+    format!(
+        "{{\"allocations\":{},\"reallocations\":{},\"allocated\":{},\"peak\":{},\"retained\":{},\"residue\":{},\"stack\":{},\"shape\":{shape},\"counters\":[{}]}}",
+        r.heap.allocations,
+        r.heap.reallocations,
+        r.heap.allocated,
+        r.heap.peak,
+        r.heap.retained,
+        r.residue,
+        r.stack.map_or("null".to_owned(), |s| s.to_string()),
+        r.counters
+            .iter()
+            .map(u64::to_string)
             .collect::<Vec<_>>()
             .join(",")
     )
