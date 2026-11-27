@@ -1,3 +1,17 @@
+//! Matrix API exercise coverage over fixed rational and symbolic fixtures.
+//!
+//! Combines successful calls, selected exact identities and specific typed-error
+//! assertions. A discarded Result does not establish success; a discarded value
+//! only exercises construction. The suite does not assert every result, dispatch
+//! route, formatting string or cancellation outcome, and its name is not a claim
+//! of exhaustive mathematical support. Independent value/representation regressions
+//! also live in the matrix integration tests.
+//!
+//! Private helpers retain their exact integer, rational or π-dependent inputs.
+//! The shared unknown_zero fixture is a mathematically nonzero sine difference with
+//! initially unavailable cheap zero knowledge, not an authored exact zero.
+
+/// Shared exact literal, fresh abort-flag and unknown-status scalar fixtures.
 mod common;
 
 use std::sync::atomic::Ordering;
@@ -8,10 +22,20 @@ use hyperlattice::{
     Vector4,
 };
 
+/// Builds the fully nonzero symmetric integer fixture `diag(1,2,3) + 1*1ᵀ`.
+///
+/// Here `1` is the three-entry all-ones column vector.
+/// Its determinant is 17. It supplies a nonsingular nonaffine 3×3 operand for
+/// arithmetic, right-division and structural-fact API exercises.
 fn dense3() -> Matrix3 {
     Matrix3::new([[r(2), r(1), r(1)], [r(1), r(3), r(1)], [r(1), r(1), r(4)]])
 }
 
+/// Builds the fully nonzero symmetric integer fixture `diag(4,5,6,7) + 1*1ᵀ`.
+///
+/// Here `1` is the four-entry all-ones column vector.
+/// Its determinant is 1478. The nonaffine bottom row and nonzero cross terms
+/// exercise general 4×4 arithmetic rather than a homogeneous affine shortcut.
 fn dense4() -> Matrix4 {
     Matrix4::new([
         [r(5), r(1), r(1), r(1)],
@@ -21,6 +45,11 @@ fn dense4() -> Matrix4 {
     ])
 }
 
+/// Builds a fully nonzero symmetric 3×3 fixture with π+5 at entry (0,0).
+///
+/// The remaining entries are integers and its determinant is `175 + 39*π`.
+/// This is a nonsingular symbolic operand; construction does not itself assert
+/// which nonzero proofs or inverse schedules will be recognized.
 fn symbolic_dense3() -> Matrix3 {
     Matrix3::new([
         [Real::pi() + r(5), r(1), r(2)],
@@ -29,6 +58,11 @@ fn symbolic_dense3() -> Matrix3 {
     ])
 }
 
+/// Builds a fully nonzero symmetric 4×4 fixture with π+9 at entry (0,0).
+///
+/// Its determinant is `7416 + 906*π`; the nonaffine matrix supplies symbolic
+/// inverse/division inputs. A caller that discards a fallible result does not
+/// establish completion merely because this mathematical matrix is nonsingular.
 fn symbolic_dense4() -> Matrix4 {
     Matrix4::new([
         [Real::pi() + r(9), r(1), r(2), r(3)],
@@ -38,6 +72,11 @@ fn symbolic_dense4() -> Matrix4 {
     ])
 }
 
+/// Builds a fully nonzero rational 3×3 fixture containing non-dyadic entries.
+///
+/// Positive diagonal entries strictly exceed each row's off-diagonal absolute sum,
+/// so the matrix is nonsingular. The 3/4 diagonal entry is dyadic; the fixture name
+/// means the aggregate is not all dyadic, not that every coefficient is non-dyadic.
 fn non_dyadic_dense3() -> Matrix3 {
     Matrix3::new([
         [frac(2, 3), frac(1, 5), frac(1, 7)],
@@ -46,6 +85,10 @@ fn non_dyadic_dense3() -> Matrix3 {
     ])
 }
 
+/// Builds a fully nonzero rational 4×4 fixture containing non-dyadic entries.
+///
+/// Strict row diagonal dominance makes it nonsingular. Mixed denominators exercise
+/// rational inverse composition; the dyadic 3/4 entry remains part of the fixture.
 fn non_dyadic_dense4() -> Matrix4 {
     Matrix4::new([
         [frac(2, 3), frac(1, 5), frac(1, 7), frac(1, 11)],
@@ -55,14 +98,25 @@ fn non_dyadic_dense4() -> Matrix4 {
     ])
 }
 
+/// Builds an upper-triangular 3×3 integer fixture with diagonal (2,4,5) and determinant 40.
+///
+/// Nonzero upper entries exercise substitution; its bottom-right value 5 makes
+/// it nonaffine in the 2D homogeneous convention.
 fn upper3() -> Matrix3 {
     Matrix3::new([[r(2), r(1), r(3)], [r(0), r(4), r(2)], [r(0), r(0), r(5)]])
 }
 
+/// Transposes upper3 into a lower-triangular fixture with the same diagonal and determinant.
+///
+/// Mirrors the substitution direction without adding an independent set of coefficients.
 fn lower3() -> Matrix3 {
     upper3().transpose()
 }
 
+/// Builds an upper-triangular 4×4 integer fixture with diagonal (2,4,5,6) and determinant 240.
+///
+/// Every strict upper entry is nonzero. The bottom-right value 6 distinguishes
+/// this general triangular operand from an affine homogeneous transform.
 fn upper4() -> Matrix4 {
     Matrix4::new([
         [r(2), r(1), r(3), r(2)],
@@ -72,22 +126,41 @@ fn upper4() -> Matrix4 {
     ])
 }
 
+/// Transposes upper4 into a lower-triangular fixture with determinant 240.
+///
+/// Retains the diagonal while moving nonzero off-diagonal coefficients below it.
 fn lower4() -> Matrix4 {
     upper4().transpose()
 }
 
+/// Builds the 2D affine map `(x,y) -> (2*x+3, 4*y+5)` in homogeneous 3×3 form.
+///
+/// Its linear block is diagonal and determinant 8; the full matrix includes
+/// translation and is not diagonal.
 fn affine3_diagonal() -> Matrix3 {
     Matrix3::new([[r(2), r(0), r(3)], [r(0), r(4), r(5)], [r(0), r(0), r(1)]])
 }
 
+/// Builds a 2D affine fixture with linear block `[[2,1],[1,3]]` and translation (3,4).
+///
+/// The dense linear block has determinant 5. The full homogeneous matrix retains
+/// its zero bottom spatial entries, so dense refers to the linear block.
 fn affine3_dense() -> Matrix3 {
     Matrix3::new([[r(2), r(1), r(3)], [r(1), r(3), r(4)], [r(0), r(0), r(1)]])
 }
 
+/// Builds a 2D affine fixture with upper-triangular linear block `[[2,1],[0,4]]`.
+///
+/// Translation is (3,5), the bottom row is (0,0,1), and determinant is 8.
+/// This separates affine upper-triangular dispatch from diagonal-linear handling.
 fn affine3_upper() -> Matrix3 {
     Matrix3::new([[r(2), r(1), r(3)], [r(0), r(4), r(5)], [r(0), r(0), r(1)]])
 }
 
+/// Embeds dense3 as a 3D affine linear block with translation (3,4,5).
+///
+/// The bottom row is (0,0,0,1) and determinant is 17. Dense describes the linear
+/// block, not the full matrix, whose homogeneous spatial row is exactly zero.
 fn affine4_dense() -> Matrix4 {
     Matrix4::new([
         [r(2), r(1), r(1), r(3)],
@@ -97,6 +170,10 @@ fn affine4_dense() -> Matrix4 {
     ])
 }
 
+/// Builds the affine map `(x,y,z) -> (2*x+3, 3*y+4, 5*z+5)`.
+///
+/// Its diagonal linear block has determinant 30, with unit homogeneous weight.
+/// Nonzero translation distinguishes it from a full diagonal matrix.
 fn affine4_diagonal() -> Matrix4 {
     Matrix4::new([
         [r(2), r(0), r(0), r(3)],
@@ -106,6 +183,13 @@ fn affine4_diagonal() -> Matrix4 {
     ])
 }
 
+/// Exercises twenty-six arithmetic ownership forms for compatible matrix/vector operands.
+///
+/// Evaluates each supplied expression once, binds scalar two, and invokes matrix
+/// addition/subtraction, scalar arithmetic, negation, matrix products and vector
+/// products. Scalar divisions must succeed via unwrap; other outputs are discarded.
+/// There are no value or trace assertions here, and matrix right division is not
+/// part of this macro.
 macro_rules! exercise_matrix_operators {
     ($left:expr, $right:expr, $vector:expr) => {{
         let left = $left;
@@ -143,6 +227,12 @@ macro_rules! exercise_matrix_operators {
     }};
 }
 
+/// Checks that each of the eight named schedule hints belongs to exactly one classifier group.
+///
+/// Also calls structural accessors on selected zero, identity, rational, symbolic
+/// and signed-permutation fixtures, including one out-of-range diagonal index.
+/// Those accessor results are discarded: the test does not verify their values
+/// or exhaust all masks, indices, matrices or determinant algorithms.
 #[test]
 fn structural_fact_accessors_and_schedule_classifiers_are_exhaustive() {
     for hint in [
@@ -228,6 +318,13 @@ fn structural_fact_accessors_and_schedule_classifiers_are_exhaustive() {
     }
 }
 
+/// Exercises operator ownership forms, powers, scalar division, indexing and formatting in both sizes.
+///
+/// Checks transpose involution, selected inverse aliases/negative-one powers,
+/// rational inverse composition, typed scalar errors and indexed writes. Other
+/// successful calls are unwrapped without value assertions; symbolic inverse
+/// Results are discarded. Formatting is invoked without checking strings, and
+/// inactive abort flags do not test cancellation.
 #[test]
 fn common_matrix_surface_covers_powers_scalars_ownership_and_formatting() {
     let m3 = dense3();
@@ -373,6 +470,12 @@ fn common_matrix_surface_covers_powers_scalars_ownership_and_formatting() {
     let _ = m4 * &upper4();
 }
 
+/// Exercises triangular, diagonal, uniform and affine inversion/division entry points in both sizes.
+///
+/// Selected inverse products must equal identity; most remaining fallible calls
+/// are only required to succeed. Fused 4D vector calls include direction, point
+/// and unknown-weight fixtures. This does not validate arbitrary shape evidence,
+/// assert every quotient, or count arithmetic/dispatch work. Abort flags remain unset.
 #[test]
 fn triangular_diagonal_and_uniform_known_shape_apis_cover_both_sizes() {
     let signal = abort_signal();
@@ -507,6 +610,14 @@ fn triangular_diagonal_and_uniform_known_shape_apis_cover_both_sizes() {
     let _ = affine4_dense().inverse_checked_with_abort(&signal).unwrap();
 }
 
+/// Exercises right division across ownership forms and selected affine/projective operand shapes.
+///
+/// Ordinary symbolic-divisor calls must succeed, but their checked Results are
+/// discarded. Rational shape combinations and symbolic dividends with rational
+/// divisors are unwrapped without quotient comparisons. Explicit assertions require
+/// UnknownZero for each spatial pivot of a fresh diagonal-linear affine 4×4 divisor,
+/// with affine and projective dividends. The flag is unset; no route counts or
+/// cancellation guarantees are asserted.
 #[test]
 fn generic_and_affine_right_division_dispatches_cover_owned_borrowed_checked_and_abort() {
     let signal = abort_signal();
@@ -678,6 +789,14 @@ fn generic_and_affine_right_division_dispatches_cover_owned_borrowed_checked_and
     }
 }
 
+/// Exercises object-specific construction, rotations, storage and homogeneous transforms.
+///
+/// Checks translation/orthonormal inverse composition using an identity linear
+/// block, one negative reversed signed permutation's inverse, identity alignment,
+/// zero-axis and unit-antipode errors, and selected row-storage behavior. Most
+/// rotation and transform results are discarded. Literal projective point/vector
+/// expectations check weight scaling; 3D vector wrappers are compared with products.
+/// This is selected API coverage, not exhaustive rotation or transform validation.
 #[test]
 fn affine_rotation_signed_permutation_and_transform_apis_cover_object_routes() {
     let translation = [r(3), r(5), r(7)];
@@ -841,6 +960,13 @@ fn affine_rotation_signed_permutation_and_transform_apis_cover_object_routes() {
         .transform_vec4_batch(std::slice::from_ref(&unknown_vector));
 }
 
+/// Checks selected singular and unknown-pivot errors in ordinary and checked matrix APIs.
+///
+/// Asserts DivideByZero for singular inverses, UnknownZero for unknown diagonal
+/// checked inverses, and UnknownZero at every 4×4 diagonal divisor position.
+/// Several other fallible calls are discarded. In particular, the already-set
+/// abort flag's inverse Results are not asserted, so this test does not establish
+/// cancellation behavior or latency; the final square-root Result is also discarded.
 #[test]
 fn pivot_errors_and_unknown_zero_checked_paths_are_explicit() {
     let signal = abort_signal();

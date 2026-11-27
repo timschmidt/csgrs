@@ -10878,6 +10878,89 @@ Evidence: `/tmp/csgrs-rustdoc-matrix4-final-*.log`, Cargo artifact JSON and
 checks. Next reconcile remaining matrix-test review coverage and continue the
 remaining Hyperlattice modules and repository files; the complete audit is open.
 
+## 2026-11-27: complete matrix API exercise-test file
+
+Scope and acceptance witness:
+
+- Read all 910 original lines of
+  crates/hyperlattice/tests/matrix_api_surface_coverage.rs on `5ea7a9c24`,
+  including every fixture, macro invocation, assertion, discarded Result and
+  local closure. The file is now 1036 lines. Added 24 Rustdoc groups: file
+  overview, shared-fixture module declaration, fifteen private fixture helpers,
+  the operator macro and all six tests.
+- Owner: Hyperlattice's integration-test evidence, not a new matrix kernel.
+  P1/P2 govern exact fixture meaning, P3/P4 distinguish missing cheap knowledge
+  from mathematical zero, P6 scopes error assertions, and P37 separates API
+  exercise coverage from completed correctness/cancellation evidence.
+- Missing acceptance witness: none of these authored items had Rustdoc, and the
+  exhaustive/coverage names did not describe the limited assertions. Reproduced
+  all six original tests on the starting all-feature build before repository edits.
+  Read shared literal/unknown/abort helpers and used the matrix-core contracts
+  audited in preceding records to interpret the exercised entry points.
+
+Documentation added:
+
+- Fully nonzero integer fixtures are diagonal matrices plus an all-ones rank-one
+  matrix, with determinants 17 and 1478. Their bottom rows are nonaffine.
+- Symbolic fixtures have only one π-bearing entry; cofactor expansion gives
+  determinants 175+39π and 7416+906π. Mathematical nonsingularity is distinct
+  from whether a particular inverse path completes or has its Result asserted.
+- Non-dyadic fixtures contain mixed rational coefficients, including dyadic 3/4;
+  they are strictly row diagonally dominant. Triangular fixtures retain diagonal
+  determinants under transpose, and affine helpers distinguish a dense/diagonal
+  linear block from the full translated homogeneous matrix.
+- The macro invokes 26 arithmetic ownership forms, evaluating its supplied
+  expressions once. Scalar division is unwrapped, other outputs are discarded,
+  and there are no value/trace assertions or matrix right-division calls inside it.
+- Schedule-classifier assertions partition the eight explicitly listed hints;
+  the accessor calls themselves discard results. Formatting is invoked without
+  checking strings. Many other calls only require success, while selected
+  symbolic checked inverses/divisions discard even their Result.
+- Test docs identify inverse/product identities, specific scalar/pivot errors,
+  literal projective-weight expectations and wrapper comparisons separately.
+  The already-set abort flag in the final test has no asserted outcome and does
+  not prove cancellation or latency. No tests, names, assertions or fixtures
+  were changed to improve their apparent coverage.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing comment-only and blank
+  lines leaves executable source identical to `5ea7a9c24`, including attributes,
+  macro operation order, every assertion and every discarded Result.
+- All six original tests passed with all features and no defaults, as well as on
+  the all-feature baseline. Direct rustc harnesses used matching Cargo artifact
+  dependencies and a 60-second limit for each separately executed test.
+- A temporary probe reused the actual fifteen private helper bodies and compared
+  exact coefficients with independently specified fixture matrices. Thirteen
+  rational determinants matched Python Fraction permutation expansion. Exact
+  Fraction inequalities verified strict row diagonal dominance of both mixed-
+  denominator fixtures. For the two symbolic fixtures, independent expansion
+  of the constant matrix and the (0,0) cofactor derived the documented linear
+  π polynomial; no numerical π approximation or symbolic matrix-inverse equality
+  claim was substituted. The probe completed within its 30-second limit in both
+  configurations, with matching stdout and no warnings.
+- Library and integration-target private Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Complete rendered text
+  matched the file/module docs, fifteen private helper pages and the private
+  macro page. All six #[test] docs were source-checked and their tests executed;
+  Rustdoc omits those test functions.
+- Source inventory matched 21 functions, one macro and one declared module,
+  with the file-level overview counted separately. This completes this file's
+  line-by-line documentation pass; it does not turn its calls into exhaustive
+  semantic or dispatch coverage. Other matrix tests still need their whole-file
+  review records reconciled.
+- Cargo library builds and checks of matrix_api_surface_coverage passed with
+  --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target in both
+  configurations. No production downstream source changed. Full workflows and
+  unrelated downstream runtime checks remain owner-waived; no focused check is
+  blocked and no new performance or resource-bound claim is made.
+- Removed the two owned temporary executable files; the shared target remains
+  near 2.5 GiB. The AGENTS.md 100% public/private Rustdoc mandate remains active.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-surface-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-surface-audit/` checkers, exact fixture derivations and private
+docs. Continue remaining Hyperlattice tests/modules and the repository audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
