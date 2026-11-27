@@ -1,4 +1,12 @@
-//! Fixed-size vectors over [`Real`].
+//! Fixed-size vectors and shared-scale scheduling facts over exact native [`Real`].
+//!
+//! Vector2/3/4 expose editable coordinates, structural equality and scalar-owned
+//! arithmetic. Fact packets describe the coordinates when queried; they are not
+//! mutation-tracked predicate proofs. Hyperlimit owns topology decisions and policy.
+//! Shared-scale carriers retain equal reduced denominators without exposing scalar
+//! storage, while private dispatch keeps dimension-specific product-sum shapes.
+//! Cancellation is cooperative and path-dependent; precision, total work, retained
+//! memory and deadlines are separate, and no new global resource bound is added.
 
 use std::array::from_fn;
 use std::fmt;
@@ -64,7 +72,7 @@ impl SignedAxis2 {
 }
 
 impl Axis2 {
-    /// Returns the component index for this axis.
+    /// Return component index zero for X and one for Y.
     pub const fn index(self) -> usize {
         match self {
             Self::X => 0,
@@ -87,8 +95,16 @@ impl Axis2 {
 /// `hyperreal::Rational` remains responsible for scalar storage and reduction.
 /// This is the first borrowed common-scale object in the vector layer and
 /// preserves rational object structure before scalar expansion.
+///
+/// Constructed views require a nonempty exact-rational set with equal reduced
+/// denominators, including integers and dyadics. Coordinates are not rescaled to
+/// find a common denominator. The masks have only 128 lanes: N>128 is currently
+/// unhandled and may panic rather than return None. Public facts/masks can be
+/// overwritten; their queries trust the stored values. Arithmetic still uses the
+/// private, originally validated coordinate references.
 #[derive(Clone, Copy, Debug)]
 pub struct VectorSharedScaleView<'a, const N: usize> {
+    /// Original coordinate references; construction certifies their exact-rational shape without rescaling.
     components: [&'a Real; N],
     /// Exact-rational representation facts for all borrowed coordinates.
     pub exact: RealExactSetFacts,
@@ -107,6 +123,12 @@ pub struct VectorSharedScaleView<'a, const N: usize> {
 /// count helpers without exposing rational numerators or denominators. Keeping
 /// this object-level packet separate from scalar storage lets geometric objects
 /// choose arithmetic packages before expanding into big-number operations.
+///
+/// Meaningful certificates require a matching, unmodified packet from a vector
+/// or view. All fields are public: manually inconsistent masks are not validated,
+/// counts include every set bit, and queries do not re-prove coordinate facts.
+/// Mask comparisons require N<=128; zero masks at N=0 make both all-zero and
+/// all-nonzero comparisons true, although shared-scale constructors reject empties.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct VectorSharedScaleFacts<const N: usize> {
     /// Exact-rational representation facts for all coordinates.
@@ -150,8 +172,7 @@ impl<const N: usize> VectorSharedScaleFacts<N> {
         self.exact.has_dyadic_schedule()
     }
 
-    /// Returns true when the retained facts select a non-dyadic shared
-    /// denominator exact schedule.
+    /// Return whether the retained exact-set facts select equal reduced denominators, including integer and dyadic cases; no coordinate rescan occurs.
     pub fn has_shared_denominator_schedule(self) -> bool {
         self.exact.has_shared_denominator_schedule()
     }
@@ -173,6 +194,11 @@ impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
     /// This returns `None` unless every coordinate is an exact rational and all
     /// reduced denominators match. Empty coordinate sets are rejected because no
     /// concrete exact shared-scale schedule can be selected from them.
+    ///
+    /// The mask implementation handles at most 128 coordinates. With larger N,
+    /// matching rational inputs can panic during mask construction rather than return
+    /// None. This is an implementation limitation, not a mathematical dimension bound.
+    /// No rescaling or least-common-denominator conversion is performed.
     pub fn from_components(components: [&'a Real; N]) -> Option<Self> {
         crate::trace_dispatch!(
             "hyperlattice_vector",
@@ -204,6 +230,8 @@ impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
     }
 
     /// Returns whether the view has no coordinates.
+    ///
+    /// Successfully constructed shared-scale views/owners are nonempty; this generic query tests only N.
     pub const fn is_empty(self) -> bool {
         N == 0
     }
@@ -351,14 +379,20 @@ impl<'a> VectorSharedScaleView<'a, 3> {
 /// common denominator. That keeps scalar representation and reduction in
 /// `hyperreal`, while letting matrix, predicate, and triangulation code retain
 /// object structure across API boundaries.
+///
+/// Coordinates and the retained packet are private; returned fact copies may be
+/// edited without changing this owner. Clone follows native Real sharing, and
+/// derived PartialEq compares stored structure/facts, not arbitrary value equality.
+/// Empty input is rejected. Mask storage has 128 lanes; larger N is an open
+/// implementation limit that can panic, not a typed constructor rejection.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SharedScaleVec<const N: usize> {
+    /// Owned original coordinates, with no mutable accessor that could invalidate the retained facts.
     components: [Real; N],
     /// Retained common-scale and sparse-support fact packet.
     ///
-    /// The exact-set summary lives only in this packet. Keeping a second copy
-    /// beside it previously inflated every owned shared-scale vector without
-    /// providing any additional evidence.
+    /// The exact-set summary lives only in this packet; facts and borrowed views
+    /// reuse it without reclassifying the stored coordinates.
     facts: VectorSharedScaleFacts<N>,
 }
 
@@ -369,6 +403,11 @@ impl<const N: usize> SharedScaleVec<N> {
     /// reduced denominators match. The object is a semantic carrier for future
     /// common-denominator kernels; it deliberately does not expose the shared
     /// denominator.
+    ///
+    /// The mask implementation handles at most 128 coordinates. With larger N,
+    /// matching rational inputs can panic during mask construction rather than return
+    /// None. This is an implementation limitation, not a mathematical dimension bound.
+    /// No rescaling or least-common-denominator conversion is performed.
     pub fn from_components(components: [Real; N]) -> Option<Self> {
         crate::trace_dispatch!(
             "hyperlattice_vector",
@@ -414,6 +453,8 @@ impl<const N: usize> SharedScaleVec<N> {
     }
 
     /// Returns whether this vector contains no coordinates.
+    ///
+    /// Successfully constructed shared-scale views/owners are nonempty; this generic query tests only N.
     pub const fn is_empty(&self) -> bool {
         N == 0
     }
@@ -486,6 +527,10 @@ impl SharedScaleVec<3> {
     }
 }
 
+/// Return the lowest N bits set, including all u128 bits at N=128 and zero at N=0.
+///
+/// Requires N<=128; only a debug assertion enforces this before the shift. Larger
+/// sizes are not a typed error and have no supported mask representation.
 #[inline]
 fn vector_mask<const N: usize>() -> u128 {
     debug_assert!(N <= u128::BITS as usize);
@@ -496,6 +541,10 @@ fn vector_mask<const N: usize>() -> u128 {
     }
 }
 
+/// Scan lanes in order and partition their current scalar zero_status into zero, nonzero and unknown masks.
+///
+/// Requires N<=128 so each lane fits in u128. No separate size check or refinement
+/// is added; an oversized shift can panic. Unknown lanes are retained as unknown.
 #[inline]
 fn vector_zero_status_masks<const N: usize>(components: [&Real; N]) -> (u128, u128, u128) {
     let mut known_zero_mask = 0_u128;
@@ -512,6 +561,10 @@ fn vector_zero_status_masks<const N: usize>(components: [&Real; N]) -> (u128, u1
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
 }
 
+/// Pair the supplied exact-set summary with a fresh ordered zero-status mask scan.
+///
+/// The caller must supply exact facts for these same coordinates and N<=128;
+/// this helper does not check that correspondence or rebuild the exact-set facts.
 #[inline]
 fn vector_shared_scale_facts<const N: usize>(
     exact: RealExactSetFacts,
@@ -527,6 +580,7 @@ fn vector_shared_scale_facts<const N: usize>(
     }
 }
 
+/// Scan lanes in order for definitely_one and set their bits; N<=128 is required, and missing structural proof leaves the bit clear.
 #[inline]
 fn vector_one_mask<const N: usize>(components: [&Real; N]) -> u128 {
     let mut mask = 0_u128;
@@ -538,12 +592,14 @@ fn vector_one_mask<const N: usize>(components: [&Real; N]) -> u128 {
     mask
 }
 
+/// Return the trailing-zero count for a mask containing exactly one bit; a debug assertion checks that precondition, without a release-mode typed failure.
 #[inline]
 fn single_bit_index(mask: u128) -> usize {
     debug_assert_eq!(mask.count_ones(), 1);
     mask.trailing_zeros() as usize
 }
 
+/// Query x then y for scalar zero/one/minus-one status and recognize the four signed unit axes; all other or unresolved combinations return None.
 #[inline]
 fn signed_axis2_from_components(values: &[Real; 2]) -> Option<SignedAxis2> {
     // The combined signed-unit query is scalar-owned, so the vector layer can
@@ -562,6 +618,7 @@ fn signed_axis2_from_components(values: &[Real; 2]) -> Option<SignedAxis2> {
     }
 }
 
+/// Union detailed scalar dependency-family masks in coordinate order, starting from NONE; this is a family summary, not an expression graph or equality proof.
 fn vector_symbolic_dependency_mask<const N: usize>(values: [&Real; N]) -> SymbolicDependencyMask {
     values
         .into_iter()
@@ -571,6 +628,10 @@ fn vector_symbolic_dependency_mask<const N: usize>(values: [&Real; N]) -> Symbol
 }
 
 /// Cheap structural facts known for a [`Vector2`].
+///
+/// This is a snapshot from the query, not a live view of a mutable Vector2.
+/// Public fields can be changed or constructed inconsistently; methods trust them
+/// and do not revalidate their relation to any vector. Re-query after mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Vector2Facts {
     /// Zero status for `[x, y]` components.
@@ -705,6 +766,10 @@ impl Vector2Facts {
 /// containment; those combinatorial questions belong in `hyperlimit`. Carrying
 /// the masks at the vector boundary preserves object structure before scalar
 /// expansion and supports sparse exact-kernel scheduling.
+///
+/// This is a snapshot, not a mutation-tracked proof. Public fields can be made
+/// inconsistent; methods trust the retained masks, including bits outside the
+/// three coordinate lanes. Re-query the vector after changing its coordinates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Vector3Facts {
     /// Zero status for `[x, y, z]` components.
@@ -765,6 +830,11 @@ impl Vector3Facts {
 /// exact structural metadata only: `w = 0` is a direction, `w = 1` is a point,
 /// and every other or unknown weight remains [`Vector4HomogeneousKind::Unknown`]
 /// so generic projective algebra is preserved.
+///
+/// This is a snapshot, not a mutation-tracked proof. Public fields can be made
+/// inconsistent; methods trust the retained masks, including bits outside the
+/// four coordinate lanes. Re-query after coordinate mutation. Direction here
+/// includes the all-zero tuple and is not projective validity certification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Vector4Facts {
     /// Zero status for `[x, y, z, w]` components.
@@ -821,6 +891,10 @@ impl Vector4Facts {
 }
 
 /// Two-dimensional vector.
+///
+/// The public array and IndexMut allow coordinate mutation. Clone retains native
+/// scalar sharing; derived PartialEq is structural, not general value equality.
+/// Constructors do not normalize or attach a topology/uncertainty receipt.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector2(
     /// Components stored in `[x, y]` order.
@@ -828,6 +902,10 @@ pub struct Vector2(
 );
 
 /// Three-dimensional vector.
+///
+/// The public array and IndexMut allow coordinate mutation. Clone retains native
+/// scalar sharing; derived PartialEq is structural, not general value equality.
+/// Constructors do not normalize or attach a topology/uncertainty receipt.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector3(
     /// Components stored in `[x, y, z]` order.
@@ -835,6 +913,11 @@ pub struct Vector3(
 );
 
 /// Four-dimensional vector.
+///
+/// The public array and IndexMut allow coordinate mutation. All four lanes enter
+/// Euclidean arithmetic even when interpreted homogeneously. Clone follows native
+/// scalar sharing; PartialEq is structural. Construction does not validate a
+/// nonzero projective representative or normalize its weight.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector4(
     /// Components stored in `[x, y, z, w]` order.
@@ -846,6 +929,10 @@ pub struct Vector4(
 /// This is an object fact for projective transform dispatch: `w = 0` is a
 /// direction, `w = 1` is an affine point, and every other or undecidable value
 /// remains unknown so generic homogeneous algebra is preserved.
+///
+/// Only the stored w lane is classified. Direction includes an all-zero tuple;
+/// Point denotes w=1, not every finite projective representative. This enum does
+/// not validate a projective point or carry a geometric predicate receipt.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Vector4HomogeneousKind {
     /// A vector lies on the implicit vector subspace in homogeneous coordinates.
@@ -856,12 +943,14 @@ pub enum Vector4HomogeneousKind {
     Unknown,
 }
 
+/// Small crate-private snapshot of the w-lane classification used by matrix transform dispatch, without full vector exact-set or dependency scans.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct Vector4GeometricFacts {
     /// Whether this 4-vector is structurally a point, direction, or unknown.
     pub(crate) homogeneous: Vector4HomogeneousKind,
 }
 
+/// Classify only w through zero_one_or_minus_one: zero gives Direction, one gives Point, and minus one or unresolved/neither gives Unknown; the other lanes are not inspected.
 #[inline]
 fn vector4_geometric_facts(values: &[Real; 4]) -> Vector4GeometricFacts {
     // Homogeneous geometry kernels in exact computation benefit from keeping
@@ -878,6 +967,7 @@ fn vector4_geometric_facts(values: &[Real; 4]) -> Vector4GeometricFacts {
     Vector4GeometricFacts { homogeneous }
 }
 
+/// Infer a real sum-of-squares status from consistent counts: any known nonzero dominates, otherwise any unknown gives Unknown, otherwise Zero; count consistency is trusted.
 #[inline(always)]
 fn squared_norm_zero_status_from_counts(known_nonzero: u32, unknown_zero: u32) -> ZeroKnowledge {
     if known_nonzero > 0 {
@@ -889,6 +979,11 @@ fn squared_norm_zero_status_from_counts(known_nonzero: u32, unknown_zero: u32) -
     }
 }
 
+/// Scan scalar zero statuses in lane order for the sum-of-squares domain certificate.
+///
+/// Return immediately at the first known nonzero, even after an earlier unknown.
+/// If no nonzero is found, report Unknown if any lane was unknown, else Zero.
+/// Does not construct products, full structural_facts, or start sign refinement.
 #[inline]
 fn squared_norm_zero_status<const N: usize>(values: &[Real; N]) -> ZeroKnowledge {
     // In an ordered real field, a sum of squares is nonzero exactly when at
@@ -930,6 +1025,7 @@ fn squared_norm_zero_status<const N: usize>(values: &[Real; N]) -> ZeroKnowledge
     }
 }
 
+/// Map Zero to DivideByZero, Unknown to UnknownZero, and NonZero to success without arithmetic or refinement; used before checked normalization builds its norm.
 #[inline(always)]
 fn require_known_nonzero_status(status: ZeroKnowledge) -> CheckedBlasResult<()> {
     match status {
@@ -952,11 +1048,14 @@ fn require_known_nonzero_status(status: ZeroKnowledge) -> CheckedBlasResult<()> 
     }
 }
 
+/// Dimension-specific self-dot dispatch, retaining shared operand identity and scalar-owned reduction for 2D/3D/4D norms.
 trait VectorSelfDot {
+    /// Construct the exact sum of coordinate squares, preserving a dimension-specific scalar expression shape.
     fn self_dot(values: &Self) -> Real;
 }
 
 impl VectorSelfDot for [Real; 2] {
+    /// Use a two-term positive signed product sum for x²+y² with each coordinate reference shared by both factors.
     #[inline]
     fn self_dot(values: &Self) -> Real {
         Real::signed_product_sum2(
@@ -967,6 +1066,7 @@ impl VectorSelfDot for [Real; 2] {
 }
 
 impl VectorSelfDot for [Real; 3] {
+    /// Delegate x²+y²+z² to Real::dot3_same so the scalar owner can reuse self-dot facts and reduction.
     #[inline]
     fn self_dot(values: &Self) -> Real {
         Real::dot3_same([&values[0], &values[1], &values[2]])
@@ -974,12 +1074,17 @@ impl VectorSelfDot for [Real; 3] {
 }
 
 impl VectorSelfDot for [Real; 4] {
+    /// Delegate the four-lane sum of squares to Real::dot4_same, preserving shared operand identity.
     #[inline]
     fn self_dot(values: &Self) -> Real {
         Real::dot4_same([&values[0], &values[1], &values[2], &values[3]])
     }
 }
 
+/// Map an owned left array against borrowed right coordinates in lane order.
+///
+/// The common const length proves that right.next cannot run out; expect checks
+/// that internal invariant. The supplied FnMut determines the scalar operation.
 fn map_array_ref<const N: usize, F>(left: [Real; N], right: &[Real; N], mut op: F) -> [Real; N]
 where
     F: FnMut(Real, &Real) -> Real,
@@ -988,15 +1093,20 @@ where
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
 }
 
+/// Borrowed array negation dispatch for the three vector widths, keeping scalar negation on references.
 trait VectorNegRefs: Sized {
+    /// Negate each borrowed coordinate in array order and return an owned array; native scalar sharing follows borrowed negation.
     fn neg_refs(&self) -> Self;
 }
 
+/// Owned array negation dispatch for the three vector widths, moving each component into scalar negation.
 trait VectorNegOwned: Sized {
+    /// Destructure the owned array and negate each coordinate in lane order without cloning the array.
     fn neg_owned(self) -> Self;
 }
 
 impl VectorNegOwned for [Real; 2] {
+    /// Destructure the owned array and negate each coordinate in lane order without cloning the array.
     #[inline]
     fn neg_owned(self) -> Self {
         let [x, y] = self;
@@ -1005,6 +1115,7 @@ impl VectorNegOwned for [Real; 2] {
 }
 
 impl VectorNegOwned for [Real; 3] {
+    /// Destructure the owned array and negate each coordinate in lane order without cloning the array.
     #[inline]
     fn neg_owned(self) -> Self {
         let [x, y, z] = self;
@@ -1013,6 +1124,7 @@ impl VectorNegOwned for [Real; 3] {
 }
 
 impl VectorNegOwned for [Real; 4] {
+    /// Destructure the owned array and negate each coordinate in lane order without cloning the array.
     #[inline]
     fn neg_owned(self) -> Self {
         let [x, y, z, w] = self;
@@ -1021,6 +1133,7 @@ impl VectorNegOwned for [Real; 4] {
 }
 
 impl VectorNegRefs for [Real; 2] {
+    /// Negate each borrowed coordinate in array order and return an owned array; native scalar sharing follows borrowed negation.
     #[inline]
     fn neg_refs(&self) -> Self {
         [-&self[0], -&self[1]]
@@ -1028,6 +1141,7 @@ impl VectorNegRefs for [Real; 2] {
 }
 
 impl VectorNegRefs for [Real; 3] {
+    /// Negate each borrowed coordinate in array order and return an owned array; native scalar sharing follows borrowed negation.
     #[inline]
     fn neg_refs(&self) -> Self {
         [-&self[0], -&self[1], -&self[2]]
@@ -1035,16 +1149,24 @@ impl VectorNegRefs for [Real; 3] {
 }
 
 impl VectorNegRefs for [Real; 4] {
+    /// Negate each borrowed coordinate in array order and return an owned array; native scalar sharing follows borrowed negation.
     #[inline]
     fn neg_refs(&self) -> Self {
         [-&self[0], -&self[1], -&self[2], -&self[3]]
     }
 }
 
+/// Generate the shared API and owned/borrowed operator implementations for Vector2/3/4.
+///
+/// Expansions preserve per-width norm/negation kernels, scalar ingress/export,
+/// cooperative abort paths and ownership-specific arithmetic schedules. Output
+/// arrays remain native Real values; this macro adds no predicate policy or receipt.
 macro_rules! impl_vector {
     ($name:ident, $n:expr) => {
         impl $name {
             /// Constructs a vector from its component array.
+            ///
+            /// Coordinates are stored directly; no normalization, geometric validation or predicate receipt is added.
             pub fn new(values: [Real; $n]) -> Self {
                 crate::trace_dispatch!("hyperlattice_vector", "constructor", "new");
                 Self(values)
@@ -1060,6 +1182,11 @@ macro_rules! impl_vector {
             /// exact-geometric-computation boundary discipline: finite
             /// coordinates may enter at APIs, but topology-sensitive algebra is
             /// then carried by exact-aware geometric objects.
+            ///
+            /// Finite values enter as their exact binary rationals: 0.1_f64 is not 1/10.
+            /// Use an exact Rational ratio when that decimal value is intended. NaN/infinity
+            /// produce native Problem errors. The array map attempts every lane in order
+            /// before collection returns its first error; no vector is published on failure.
             pub fn try_from_f64_array(values: [f64; $n]) -> BlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "constructor", "from-f64-array");
                 Ok(Self(
@@ -1073,6 +1200,10 @@ macro_rules! impl_vector {
             }
 
             /// Lifts a finite `f32` component array into a hyperreal-backed vector.
+            ///
+            /// Each finite value becomes its exact binary rational; NaN/infinity give native
+            /// Problem errors. All lanes are converted before the first collected error is
+            /// returned. No decimal rounding or approximate authoritative coordinate is used.
             pub fn try_from_f32_array(values: [f32; $n]) -> BlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "constructor", "from-f32-array");
                 Ok(Self(
@@ -1091,6 +1222,10 @@ macro_rules! impl_vector {
             /// finite primitive value. This makes mesh, renderer, and
             /// serialization boundaries explicit while keeping native vector
             /// ownership in hyperreal coordinates.
+            ///
+            /// Scan lanes in order and stop at the first missing or nonfinite conversion.
+            /// Rounding, cancellation and conversion limits are delegated to Real; Some does
+            /// not guarantee an exact round trip, a topology bound, or source fidelity.
             pub fn to_f64_array_lossy(&self) -> Option<[f64; $n]> {
                 crate::trace_dispatch!("hyperlattice_vector", "export", "to-f64-array-lossy");
                 let mut out = [0.0_f64; $n];
@@ -1101,6 +1236,10 @@ macro_rules! impl_vector {
             }
 
             /// Lossily exports this vector to finite `f32` components.
+            ///
+            /// Scan lanes in order and stop at a missing/nonfinite conversion. Real owns
+            /// rounding and conversion limits; finite output alone supplies no exact-value,
+            /// topology or source-fidelity guarantee.
             pub fn to_f32_array_lossy(&self) -> Option<[f32; $n]> {
                 crate::trace_dispatch!("hyperlattice_vector", "export", "to-f32-array-lossy");
                 let mut out = [0.0_f32; $n];
@@ -1121,13 +1260,17 @@ macro_rules! impl_vector {
                 Self::zero()
             }
 
-            /// Returns the Euclidean magnitude.
+            /// Construct the squared Euclidean norm through the self-dot kernel, then take its nonnegative scalar square root; native construction/refinement errors propagate.
             pub fn magnitude(&self) -> BlasResult<Real> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "magnitude");
                 self.magnitude_squared_fast().sqrt()
             }
 
-            /// Returns the Euclidean norm.
+            /// Return magnitude by unwrapping its scalar result.
+            ///
+            /// The mathematical norm exists for real coordinates, but this convenience method
+            /// panics if magnitude returns a Problem. Use magnitude to retain that failure;
+            /// this method supplies neither a resource bound nor an uncertainty receipt.
             pub fn norm(&self) -> Real {
                 self.magnitude()
                     .expect("hyperlattice vector norm should be defined for exact coordinates")
@@ -1138,12 +1281,17 @@ macro_rules! impl_vector {
                 self.magnitude_squared_fast()
             }
 
-            /// Returns the Euclidean magnitude after attaching an abort signal.
+            /// Build an abort-aware self-dot, attach the flag to that result, then take its square root.
+            ///
+            /// The final attachment occurs even if the flag was clear when dot_with_abort
+            /// sampled it. Native scalar shortcuts and cooperative cancellation still govern
+            /// which later work consults the flag; there is no preemptive deadline.
             pub fn magnitude_with_abort(&self, signal: &AbortSignal) -> BlasResult<Real> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "magnitude-with-abort");
                 with_abort(self.dot_with_abort(self, signal), signal).sqrt()
             }
 
+            /// Route the stored array through its dimension-specific self-dot kernel, retaining shared operand identity and avoiding the broader structural-fact scan.
             #[inline]
             fn magnitude_squared_fast(&self) -> Real {
                 // Magnitude is a self-dot, so each structural zero fact is
@@ -1154,11 +1302,13 @@ macro_rules! impl_vector {
                 <[Real; $n] as VectorSelfDot>::self_dot(&self.0)
             }
 
-            /// Returns a unit vector in the same direction.
+            /// Return the exact vector divided by its Euclidean magnitude, preserving native scalar failures.
             ///
-            /// This rejects definite zero magnitudes before division. If the
-            /// Real arithmetic rejects a divisor for another reason, that
-            /// [`Problem`](crate::Problem) is propagated.
+            /// If all coordinates expose exact rational references and at least one is not
+            /// dyadic, use the scalar common-denominator normalization kernel. This does not
+            /// require already equal reduced denominators. Otherwise build magnitude, invert
+            /// it once, then multiply each borrowed component by that inverse. Zero fails at
+            /// the scalar domain boundary; no checked structural-nonzero gate is added here.
             pub fn normalize(&self) -> BlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "normalize");
                 if self
@@ -1186,7 +1336,13 @@ macro_rules! impl_vector {
                 Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
-            /// Returns a unit vector after rejecting zero and unknown-zero magnitudes.
+            /// Require a structural nonzero squared norm before constructing the unit vector.
+            ///
+            /// The ordered zero-status scan returns at the first known nonzero; all zero gives
+            /// DivideByZero and unresolved-only input gives UnknownZero without refinement.
+            /// Then use the same exact-rational/non-dyadic specialization as normalize, or a
+            /// self-dot, square root, shared inverse and direct borrowed lane multiplications.
+            /// Subsequent scalar errors propagate; checked does not add a policy receipt.
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "normalize-checked");
                 let norm_status = squared_norm_zero_status(&self.0);
@@ -1213,7 +1369,11 @@ macro_rules! impl_vector {
                 Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
-            /// Returns a checked unit vector after attaching an abort signal.
+            /// Apply the checked structural norm gate, then build and attach an abort-aware self-dot before square root and inversion.
+            ///
+            /// This path does not use normalize_checked's rational denominator-clearing
+            /// specialization. It multiplies the original coordinates by the shared inverse;
+            /// cooperative cancellation and later scalar failures remain native responsibilities.
             pub fn normalize_checked_with_abort(
                 &self,
                 signal: &AbortSignal,
@@ -1233,19 +1393,23 @@ macro_rules! impl_vector {
                 Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
-            /// Interpolates between two vectors as `self + t * (to - self)`.
+            /// Form self+t*(to-self) with native vector arithmetic; t is not restricted to the unit interval, so extrapolation is allowed.
             pub fn lerp(&self, to: &Self, t: &Real) -> Self {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "lerp");
                 self.clone() + ((to - self) * t)
             }
 
-            /// Steps from this vector by `distance * direction`.
+            /// Form self+distance*direction; direction is not normalized, so distance is a multiplier rather than necessarily a Euclidean travel length.
             pub fn step(&self, direction: &Self, distance: &Real) -> Self {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "step");
                 self.clone() + direction.clone() * distance
             }
 
-            /// Returns the arithmetic mean of a non-empty vector slice.
+            /// Sum a nonempty slice left-to-right from zero and divide by its length.
+            ///
+            /// Return None for empty input, a length that cannot convert to u64, or a scalar
+            /// division failure. Those reasons are collapsed by Option. No streaming/work cap
+            /// or compensated approximation is introduced; components remain native Real.
             pub fn mean(values: &[Self]) -> Option<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "mean");
                 if values.is_empty() {
@@ -1259,11 +1423,11 @@ macro_rules! impl_vector {
                 (sum / count).ok()
             }
 
-            /// Returns a weighted vector sum.
+            /// Accumulate value*weight left-to-right from zero for equally sized, nonempty slices.
             ///
-            /// Weight normalization belongs to the caller. This helper only keeps
-            /// component multiplication and accumulation inside the Real vector
-            /// carrier.
+            /// Return None for mismatched lengths or empty input. Weights need not be positive
+            /// or sum to one; no division/normalization is performed. The result is an exact
+            /// native expression, with no added work bound or predicate receipt.
             pub fn weighted_sum(values: &[Self], weights: &[Real]) -> Option<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "weighted-sum");
                 if values.len() != weights.len() || values.is_empty() {
@@ -1278,7 +1442,11 @@ macro_rules! impl_vector {
                 )
             }
 
-            /// Divides every component by `rhs` after rejecting unknown-zero divisors.
+            /// Reject Zero/Unknown divisor status as DivideByZero/UnknownZero before one native inverse.
+            ///
+            /// Consume the vector and scale lanes in order. Vector3 uses direct borrowed
+            /// multiplication; Vector2/4 use mul_cached. Native inverse failures propagate;
+            /// the checked guard itself starts no refinement.
             pub fn div_scalar_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
@@ -1296,7 +1464,11 @@ macro_rules! impl_vector {
                 }
             }
 
-            /// Divides every component by `rhs` after attaching an abort signal.
+            /// Attach the flag to the owned divisor before the checked zero-status gate and shared inverse.
+            ///
+            /// Coordinates are not independently rewrapped. Scale lanes in order, using direct
+            /// borrowed multiplication for Vector3 and mul_cached for Vector2/4. Zero/Unknown
+            /// status and scalar failures retain their errors; cancellation stays cooperative.
             pub fn div_scalar_checked_with_abort(
                 self,
                 rhs: Real,
@@ -1319,20 +1491,29 @@ macro_rules! impl_vector {
         }
 
         impl Index<usize> for $name {
+            /// Native scalar returned by coordinate indexing.
             type Output = Real;
 
+            /// Borrow the indexed coordinate; out-of-range indices panic through array indexing.
             fn index(&self, index: usize) -> &Self::Output {
                 &self.0[index]
             }
         }
 
         impl IndexMut<usize> for $name {
+            /// Mutably borrow the indexed coordinate; out-of-range indices panic, and any previously copied fact packet becomes the caller’s responsibility.
             fn index_mut(&mut self, index: usize) -> &mut Self::Output {
                 &mut self.0[index]
             }
         }
 
         impl fmt::Display for $name {
+            /// Write bracketed comma-separated coordinates using scalar display.
+            ///
+            /// Alternate formatting calls diagnostic_decimal(-256) on each lane and can
+            /// produce diagnostic markers. Other outer width/precision/sign flags are not
+            /// forwarded to scalar formatting. This is presentation, not exact interchange;
+            /// formatter errors propagate and no total-time guarantee is added.
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 f.write_str("[")?;
                 for i in 0..$n {
@@ -1350,8 +1531,10 @@ macro_rules! impl_vector {
         }
 
         impl Add for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Add owned right coordinates in lane order through assignment on the consumed left vector.
             fn add(mut self, rhs: Self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-owned-owned");
                 for i in 0..$n {
@@ -1362,8 +1545,10 @@ macro_rules! impl_vector {
         }
 
         impl Add<&$name> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Add borrowed right coordinates to the owned left array in lane order through the cached scalar adapter.
             fn add(self, rhs: &$name) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-owned-ref");
                 Self(map_array_ref(self.0, &rhs.0, Real::add_cached))
@@ -1371,8 +1556,10 @@ macro_rules! impl_vector {
         }
 
         impl Add<$name> for &$name {
+            /// Owned native vector carrying the componentwise result.
             type Output = $name;
 
+            /// Add owned right coordinates using borrowed left coordinates in lane order; equal fixed lengths justify the iterator expect.
             fn add(self, rhs: $name) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-ref-owned");
                 let mut left = self.0.iter();
@@ -1384,8 +1571,10 @@ macro_rules! impl_vector {
         }
 
         impl Add<&$name> for &$name {
+            /// Owned native vector carrying the componentwise result.
             type Output = $name;
 
+            /// Add matching borrowed coordinates in lane order and return a new owned vector.
             fn add(self, rhs: &$name) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-ref-ref");
                 $name(from_fn(|i| &self.0[i] + &rhs.0[i]))
@@ -1393,8 +1582,10 @@ macro_rules! impl_vector {
         }
 
         impl Add<Real> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Add the scalar to each consumed coordinate through add_cached; the owned scalar is borrowed across the lane map.
             fn add(self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-scalar-owned");
                 let rhs = &rhs;
@@ -1403,8 +1594,10 @@ macro_rules! impl_vector {
         }
 
         impl Add<&Real> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Add the borrowed scalar to each consumed coordinate through add_cached in lane order.
             fn add(self, rhs: &Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "add-scalar-ref");
                 Self(self.0.map(|value| value.add_cached(rhs)))
@@ -1412,8 +1605,10 @@ macro_rules! impl_vector {
         }
 
         impl Sub for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Subtract owned right coordinates in lane order through assignment on the consumed left vector.
             fn sub(mut self, rhs: Self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-owned-owned");
                 for i in 0..$n {
@@ -1424,8 +1619,10 @@ macro_rules! impl_vector {
         }
 
         impl Sub<&$name> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Subtract borrowed right coordinates from the owned left array in lane order through the cached scalar adapter.
             fn sub(self, rhs: &$name) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-owned-ref");
                 Self(map_array_ref(self.0, &rhs.0, Real::sub_cached))
@@ -1433,8 +1630,10 @@ macro_rules! impl_vector {
         }
 
         impl Sub<$name> for &$name {
+            /// Owned native vector carrying the componentwise result.
             type Output = $name;
 
+            /// Subtract owned right coordinates using borrowed left coordinates in lane order; equal fixed lengths justify the iterator expect.
             fn sub(self, rhs: $name) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-ref-owned");
                 let mut left = self.0.iter();
@@ -1446,8 +1645,10 @@ macro_rules! impl_vector {
         }
 
         impl Sub<&$name> for &$name {
+            /// Owned native vector carrying the componentwise result.
             type Output = $name;
 
+            /// Subtract matching borrowed coordinates in lane order and return a new owned vector.
             fn sub(self, rhs: &$name) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-ref-ref");
                 $name(from_fn(|i| &self.0[i] - &rhs.0[i]))
@@ -1455,8 +1656,10 @@ macro_rules! impl_vector {
         }
 
         impl Sub<Real> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Negate the scalar once, then add it to each owned lane through add_cached; the borrowed scalar form clones before negating.
             fn sub(self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-scalar-owned");
                 let rhs = -rhs;
@@ -1466,8 +1669,10 @@ macro_rules! impl_vector {
         }
 
         impl Sub<&Real> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Negate the scalar once, then add it to each owned lane through add_cached; the borrowed scalar form clones before negating.
             fn sub(self, rhs: &Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-scalar-ref");
                 let rhs = -rhs.clone();
@@ -1476,8 +1681,10 @@ macro_rules! impl_vector {
         }
 
         impl Neg for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Negate every coordinate through the owned array helper.
             fn neg(self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "neg-owned");
                 Self(<[Real; $n] as VectorNegOwned>::neg_owned(self.0))
@@ -1485,8 +1692,10 @@ macro_rules! impl_vector {
         }
 
         impl Neg for &$name {
+            /// Owned native vector carrying the componentwise result.
             type Output = $name;
 
+            /// Negate every borrowed coordinate through the reference array helper and return an owned vector.
             fn neg(self) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "neg-ref");
                 $name(<[Real; $n] as VectorNegRefs>::neg_refs(&self.0))
@@ -1494,8 +1703,10 @@ macro_rules! impl_vector {
         }
 
         impl Mul<Real> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Scale the consumed vector in lane order through scalar multiplication assignment, borrowing the owned scalar across lanes.
             fn mul(mut self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "mul-scalar-owned");
                 for value in &mut self.0 {
@@ -1506,8 +1717,10 @@ macro_rules! impl_vector {
         }
 
         impl Mul<&Real> for $name {
+            /// Owned native vector carrying the componentwise result.
             type Output = Self;
 
+            /// Scale each consumed coordinate by the borrowed scalar through mul_cached and return the owned vector.
             fn mul(self, rhs: &Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "mul-scalar-ref");
                 Self(self.0.map(|value| value.mul_cached(rhs)))
@@ -1517,8 +1730,10 @@ macro_rules! impl_vector {
         // The shared reciprocal is computed once, then applied to every lane.
         #[allow(clippy::suspicious_arithmetic_impl)]
         impl Div<Real> for $name {
+            /// Native vector result or the propagated scalar Problem.
             type Output = BlasResult<Self>;
 
+            /// Reject a definitely-zero divisor, compute its inverse once, then scale all lanes; unknown zero proceeds to native inversion and its errors. Owned scalar division uses multiplication assignment.
             fn div(mut self, rhs: Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
@@ -1532,8 +1747,10 @@ macro_rules! impl_vector {
 
         #[allow(clippy::suspicious_arithmetic_impl)]
         impl Div<&Real> for $name {
+            /// Native vector result or the propagated scalar Problem.
             type Output = BlasResult<Self>;
 
+            /// Reject a definitely-zero divisor, compute its inverse once, then scale all lanes; unknown zero proceeds to native inversion and its errors. Borrowed scalar division uses inverse_ref, direct borrowed multiplication in Vector3, and mul_cached in Vector2/4.
             fn div(self, rhs: &Real) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
@@ -1550,6 +1767,8 @@ macro_rules! impl_vector {
 
 impl Vector2 {
     /// Constructs a vector from x/y components.
+    ///
+    /// This is a direct coordinate constructor, with the same storage semantics as new.
     pub fn from_xy(x: Real, y: Real) -> Self {
         Self::new([x, y])
     }
@@ -1567,6 +1786,8 @@ impl Vector2 {
 
 impl Vector3 {
     /// Constructs a vector from x/y/z components.
+    ///
+    /// This is a direct coordinate constructor, with the same storage semantics as new.
     pub fn from_xyz(x: Real, y: Real, z: Real) -> Self {
         Self::new([x, y, z])
     }
@@ -1589,6 +1810,8 @@ impl Vector3 {
 
 impl Vector4 {
     /// Constructs a vector from x/y/z/w components.
+    ///
+    /// This stores all four coordinates directly without validating a projective representative.
     pub fn from_xyzw(x: Real, y: Real, z: Real, w: Real) -> Self {
         Self::new([x, y, z, w])
     }
@@ -1599,6 +1822,7 @@ impl_vector!(Vector3, 3);
 impl_vector!(Vector4, 4);
 
 impl Vector4 {
+    /// Return a fresh w-only classification for matrix transform dispatch; previously retained snapshots are not updated after mutation.
     #[inline]
     pub(crate) fn geometric_facts(&self) -> Vector4GeometricFacts {
         // Keep geometric classification on the vector object itself so matrix
@@ -1612,6 +1836,8 @@ impl Vector2 {
     ///
     /// This preserves the common-denominator certificate across ownership
     /// boundaries without exposing scalar numerator or denominator storage.
+    ///
+    /// Failure returns None after consuming the input; no fallback vector is returned and no coordinate rescaling is attempted.
     pub fn into_shared_scale(self) -> Option<SharedScaleVec<2>> {
         SharedScaleVec::from_components(self.0)
     }
@@ -1636,6 +1862,8 @@ impl Vector2 {
     /// orientation, incidence, and containment decisions still belong in
     /// `hyperlimit`. It exposes geometric object structure before lower-level
     /// exact arithmetic.
+    ///
+    /// This query constructs a fresh packet. Returned public fields are not mutation-tracked or revalidated; callers must preserve their relation to the coordinates.
     pub fn structural_facts(&self) -> Vector2Facts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector2-structural-facts");
         let component_zero = [self.0[0].zero_status(), self.0[1].zero_status()];
@@ -1662,7 +1890,15 @@ impl Vector2 {
         crate::dot2([&self.0[0], &self.0[1]], [&rhs.0[0], &rhs.0[1]])
     }
 
-    /// Returns the dot product after attaching an abort signal to operands.
+    /// Construct the dot product using an entry-time sample of the shared cancellation flag.
+    ///
+    /// If the relaxed load is false, delegate to ordinary dot without attaching this
+    /// flag; setting it later need not cancel that result. If true, scan lane pairs
+    /// in order with left-then-right, short-circuit definitely_zero tests. Unknown
+    /// factors survive. No surviving products returns exact zero without attachment.
+    /// One surviving product uses attached clones; multiple survivors use one active
+    /// scalar product-sum after attaching each retained operand once. This method
+    /// returns a Real, not a cancellation Result, and exact shortcuts may still finish.
     pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Real {
         crate::trace_dispatch!("hyperlattice_vector", "method", "dot2-with-abort");
         if !signal.load(Ordering::Relaxed) {
@@ -1724,6 +1960,8 @@ impl Vector3 {
     /// The resulting object stores the original [`Real`] coordinates plus
     /// cached exact-set facts, giving downstream exact kernels a stable
     /// common-scale signal without a dependency on rational internals.
+    ///
+    /// Failure returns None after consuming the input; no fallback vector is returned and no coordinate rescaling is attempted.
     pub fn into_shared_scale(self) -> Option<SharedScaleVec<3>> {
         SharedScaleVec::from_components(self.0)
     }
@@ -1745,6 +1983,8 @@ impl Vector3 {
     /// object. Callers can select sparse or shared-denominator algebra kernels
     /// from these facts, but geometric predicates remain the responsibility of
     /// `hyperlimit`.
+    ///
+    /// This query constructs a fresh packet. Returned public fields are not mutation-tracked or revalidated; callers must preserve their relation to the coordinates.
     pub fn structural_facts(&self) -> Vector3Facts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector3-structural-facts");
         let component_zero = [
@@ -1781,6 +2021,8 @@ impl Vector3 {
     /// The facts are intentionally coarse and storage-free. They let higher
     /// crates carry a common-scale signal while keeping exact determinant and
     /// predicate decisions routed through the appropriate kernel layer.
+    ///
+    /// The result is freshly queried metadata, not a live packet maintained after coordinate mutation.
     pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector3-exact-facts");
         crate::kernels::exact_real_set_facts(self.0.iter())
@@ -1812,16 +2054,19 @@ impl Vector3 {
         ])
     }
 
-    /// Returns a checked unit cross product.
+    /// Construct self cross rhs and checked-normalize it; parallel/zero inputs or unresolved norm status keep the native DivideByZero/UnknownZero distinctions.
     pub fn unit_cross_checked(&self, rhs: &Self) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_vector", "method", "unit-cross-checked");
         self.cross(rhs).normalize_checked()
     }
 
-    /// Returns two checked unit vectors perpendicular to this vector.
+    /// Checked-normalize the input, then try positive X, Y, Z seeds in that fixed order.
     ///
-    /// The input vector is normalized first. Candidate coordinate axes are tried
-    /// in a fixed order and the first checked non-parallel cross product is used.
+    /// For each seed, checked-normalize seed cross axis; every error from this first
+    /// candidate is discarded and selection continues. On its first success, normalize
+    /// axis cross first and propagate that second result's error immediately. If no
+    /// first candidate succeeds, return UnknownZero. Success gives a right-handed
+    /// perpendicular pair; this selection is not an optimization over conditioning.
     pub fn orthonormal_basis_checked(&self) -> CheckedBlasResult<(Self, Self)> {
         crate::trace_dispatch!("hyperlattice_vector", "method", "orthonormal-basis-checked");
         let axis = self.normalize_checked()?;
@@ -1834,7 +2079,7 @@ impl Vector3 {
         Err(Problem::UnknownZero)
     }
 
-    /// Returns the angle to `rhs` in radians.
+    /// Checked-normalize self then rhs and apply native acos to their dot product, yielding an angle in radians when successful; no clamping is applied and scalar/domain failures propagate.
     pub fn angle_to(&self, rhs: &Self) -> CheckedBlasResult<Real> {
         crate::trace_dispatch!("hyperlattice_vector", "method", "angle-to");
         let lhs = self.normalize_checked()?;
@@ -1863,7 +2108,15 @@ impl Vector3 {
         delta.dot(&delta)
     }
 
-    /// Returns the dot product after attaching an abort signal to operands.
+    /// Construct the dot product using an entry-time sample of the shared cancellation flag.
+    ///
+    /// If the relaxed load is false, delegate to ordinary dot without attaching this
+    /// flag; setting it later need not cancel that result. If true, scan lane pairs
+    /// in order with left-then-right, short-circuit definitely_zero tests. Unknown
+    /// factors survive. No surviving products returns exact zero without attachment.
+    /// One surviving product uses attached clones; multiple survivors use one active
+    /// scalar product-sum after attaching each retained operand once. This method
+    /// returns a Real, not a cancellation Result, and exact shortcuts may still finish.
     pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Real {
         crate::trace_dispatch!("hyperlattice_vector", "method", "dot3-with-abort");
         if !signal.load(Ordering::Relaxed) {
@@ -1952,6 +2205,7 @@ impl Vector3 {
     }
 }
 
+/// Construct positive X, Y and Z unit vectors in that fixed seed order for checked orthonormal-basis selection.
 fn unit_axes3() -> [Vector3; 3] {
     [
         Vector3::new([Real::one(), Real::zero(), Real::zero()]),
@@ -1965,6 +2219,8 @@ impl Vector4 {
     ///
     /// This is useful for homogeneous transform paths that need to carry an
     /// object-level denominator schedule beyond a borrowed vector lifetime.
+    ///
+    /// Failure returns None after consuming the input; no fallback vector is returned and no coordinate rescaling is attempted.
     pub fn into_shared_scale(self) -> Option<SharedScaleVec<4>> {
         SharedScaleVec::from_components(self.0)
     }
@@ -1986,6 +2242,8 @@ impl Vector4 {
     /// the projective point/direction split used by matrix transform kernels.
     /// This follows the object-fact discipline while keeping all scalar
     /// representation details in `hyperreal`.
+    ///
+    /// This query constructs a fresh packet. Returned public fields are not mutation-tracked or revalidated; callers must preserve their relation to the coordinates.
     pub fn structural_facts(&self) -> Vector4Facts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector4-structural-facts");
         let component_zero = [
@@ -2024,6 +2282,8 @@ impl Vector4 {
     /// This is a retained structural fact for projective and affine pipelines:
     /// callers can detect dyadic grids or shared reduced denominators before
     /// choosing a fixed exact schedule, without exposing scalar storage.
+    ///
+    /// The result is freshly queried metadata, not a live packet maintained after coordinate mutation.
     pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector4-exact-facts");
         crate::kernels::exact_real_set_facts(self.0.iter())
@@ -2038,7 +2298,15 @@ impl Vector4 {
         )
     }
 
-    /// Returns the dot product after attaching an abort signal to operands.
+    /// Construct the dot product using an entry-time sample of the shared cancellation flag.
+    ///
+    /// If the relaxed load is false, delegate to ordinary dot without attaching this
+    /// flag; setting it later need not cancel that result. If true, scan lane pairs
+    /// in order with left-then-right, short-circuit definitely_zero tests. Unknown
+    /// factors survive. No surviving products returns exact zero without attachment.
+    /// One surviving product uses attached clones; multiple survivors use one active
+    /// scalar product-sum after attaching each retained operand once. This method
+    /// returns a Real, not a cancellation Result, and exact shortcuts may still finish.
     pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Real {
         crate::trace_dispatch!("hyperlattice_vector", "method", "dot4-with-abort");
         if !signal.load(Ordering::Relaxed) {

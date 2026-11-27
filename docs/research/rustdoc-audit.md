@@ -8825,6 +8825,170 @@ private docs and smoke JSON. These are review artifacts, not a durable performan
 archive. Vector/matrix implementations, remaining tests/benchmarks/support files
 and most of the wider repository still require audit.
 
+## Hyperlattice vectors, shared-scale facts and ownership tests (27 November 2026)
+
+Whole-file review at `e5779844d` covered `crates/hyperlattice/src/vector.rs`
+(2190 → 2458 lines), `tests/vector.rs` (678 → 715), and
+`tests/borrowed_ops.rs` (62 → 73), with test paths relative to Hyperlattice.
+All source lines, branches, macro arms and existing assertions were read. The
+vector file now documents all 196 named declarations, 40 fields (including three
+tuple fields), nine variants and its module. Counts include the authored macro
+items once; expansion is checked separately. The vector test has 23 declarations
+and three local layout-fixture fields; the ownership test has five declarations.
+The root AGENTS.md public/private Rustdoc mandate remains unchanged.
+
+Owning layer: native vector storage, structural scheduling and dimension-specific
+algebra over Hyperreal. Relevant properties are P1/P2/P3 (exact components and
+honest facts), P4/P10 (snapshot identity and dispatch order), P5/P6 (resource,
+cancellation and error boundaries), P7 (scalar-owned kernels), P9/P19/P30
+(certainty/provenance scope), and P36/P37 (evidence and coverage). Domains include
+mutable 2D/3D/4D Real arrays, generic equal-reduced-denominator carriers, binary
+float ingress/export and scalar/vector ownership forms. Missing private/helper/
+operator Rustdoc and inaccurate cancellation/shared-denominator descriptions
+were the acceptance gaps. Baseline tests and bounded probes reproduced current
+behavior before annotation. No algorithm, call order, assertion, fixture, trace
+label, lint policy, public name or dependency changed.
+
+Clarified contracts and reproduced limitations:
+
+- Ordinary vectors expose mutable coordinate arrays and IndexMut; derived equality
+  is structural. Constructors store coordinates without normalization or projective
+  validity checks. Fact packets are snapshots, not mutation-tracked proofs.
+  Their public fields can be edited or made inconsistent, and methods trust them.
+  Vector3/4 count methods count all stored mask bits without masking to dimension.
+  A future vector mutation requires a fresh query when current facts are needed.
+- Shared-scale construction accepts nonempty exact-rational inputs with identical
+  reduced denominators, including integer and dyadic denominators. It does not
+  rescale disparate denominators. The old has_shared_denominator_schedule wording
+  incorrectly excluded dyadics: quarters satisfy both queries on this revision.
+  Zero and one-third fail admission together because their reduced denominators
+  differ; an all-zero integer grid is admitted. Owned conversion returning None
+  consumes its vector without returning an unchanged fallback.
+- The owner's coordinates and retained fact packet are private. Borrowed views
+  reuse the packet without rescanning; exposed copies do not mutate the owner.
+  A view's public masks can be overwritten while its coordinate references remain
+  private. A probe changed a view of (1,1) to report an all-zero mask: its mask
+  query then reports zero, while its dot product remains exactly two. This
+  demonstrates the trust boundary, not a new geometry or equality certificate.
+- Open generic-dimension limitation: u128 masks have only 128 lanes, without a
+  typed oversized-constructor guard. SharedScaleVec::<0> rejects empty input;
+  128 exact ones construct successfully, count 128 nonzeros and self-dot to 128.
+  SharedScaleVec::<129>::from_components(std::array::from_fn(|_| Real::one()))
+  panics in the debug build during the oversized shift. The probe catches that
+  panic. Release-mode oversized behavior was not tested. Private mask helpers
+  now state their size/precondition limits; this disclosure does not establish
+  safe arbitrary-N support or narrow the mathematical contract. Typed dimension
+  handling or a larger mask representation remains implementation work.
+- Scalar zero/one/signed-unit and dependency queries remain at their owning layer.
+  The 4D geometric helper reads only w: zero is Direction, one is Point, and
+  minus one/other/unresolved is Unknown. Direction includes the all-zero tuple;
+  this classification alone does not admit a nonzero projective representative.
+  The private packet exists so matrix transforms can avoid a full structural scan.
+- The checked norm scan observes lanes in order and returns at the first known
+  nonzero, including after an earlier unknown. Otherwise unknown dominates all
+  known zeros. Checked normalization rejects Zero/Unknown as DivideByZero/
+  UnknownZero before constructing products. The fact-packet norm methods use
+  retained counts instead of this live scalar scan; their docs preserve that
+  distinction. No predicate calls were merged or reordered.
+- Ordinary and checked normalization use scalar denominator clearing when every
+  lane exposes an exact rational and at least one is non-dyadic. This route can
+  combine differing denominators; it is not the narrower shared-scale-carrier
+  admission test. The other route uses dimension-specific self-dot kernels,
+  square root, one inverse, and direct borrowed lane multiplication. The abort
+  normalization route deliberately omits that rational specialization. norm()
+  unwraps magnitude() and can panic on a returned Problem; magnitude preserves
+  the scalar failure. No total-work or retained-memory guarantee was added.
+- dot_with_abort samples the flag with a relaxed load at entry. A clear flag
+  delegates directly to ordinary dot, without attaching that supplied flag for
+  future changes. In the probe, a dot of (e,pi,ln(2)) constructed with a clear
+  flag still supplies a -128 enclosure after that flag is set. With a set flag,
+  definitely-zero pruning is lane-ordered and short-circuits left then right;
+  unknown factors survive. An empty active support returns exact zero without
+  attachment. Retained operands are cloned/attached once each, then grouped into
+  one scalar product-sum. Cancellation is cooperative and exact shortcuts can
+  finish; the method returns Real, not a cancellation Result.
+- magnitude_with_abort additionally attaches the flag to the completed dot
+  expression even when the dot's entry sample was clear. Checked normalization
+  performs its structural norm gate before attachment. Checked scalar division
+  attaches only the divisor before its zero-status gate/inverse. Vector3 scaling
+  uses direct borrowed multiplication where Vector2/4 use mul_cached; owned
+  ordinary division retains its assignment schedule. These differences are
+  documented rather than consolidated.
+- Binary32/binary64 ingress converts every lane through the native exact binary
+  rational boundary before collecting the first error. NaN/infinity retain typed
+  scalar failures. In particular, 0.1_f64 equals 3602879701896397/36028797018963968,
+  not 1/10; exact ratios supply intended decimal rationals. Lossy export stops at
+  a missing/nonfinite conversion and provides no independent topology/fidelity
+  certificate. Display uses bracketed scalar formatting or diagnostic_decimal(-256)
+  in alternate mode, without forwarding other outer format flags. A probe confirms
+  that alternate precision formatting is not forwarded.
+- lerp permits extrapolation; step does not normalize direction. mean sums from
+  zero in slice order and collapses empty/length-conversion/division failures to
+  None. weighted_sum rejects empty or mismatched input without normalizing weights.
+  Orthonormal basis selection tries X/Y/Z seeds after checked input normalization,
+  discards every first-candidate error, then propagates the second normalization's
+  error immediately; exhausted seed selection returns UnknownZero. Angle uses
+  checked normalization followed by acos without clamping.
+- The tests retain independent rational dot/wedge/cross/distance expectations,
+  exact fact assertions and output re-admission. Ownership comparisons remain
+  comparisons between wrappers of the same native kernel, not independent proofs
+  or dispatch/performance equality. The local layout fixture measures current-target
+  inline sizes and bounded padding, not total heap or a stable ABI. Float export
+  checks concern their finite fixtures, not universal exact round-trip guarantees.
+
+Context reads included scalar zero guards/abort attachment, exact-set schedule
+queries, float conversion, rational normalization, shared test helpers, and the
+matrix batch/geometric-dispatch consumers. These do not give the 10604-line matrix
+core whole-file credit; its review remains open. Existing historical performance
+remarks in ordinary implementation comments were not re-benchmarked or promoted
+into new performance claims.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Removing comment-only and blank
+  lines leaves identical executable source in all three files against `e5779844d`,
+  including macro bodies, literals, predicates and assertions.
+- Actual Hyperlattice library builds passed with all features and no defaults.
+  Direct rustc harnesses ran all 21 original vector tests and all four ownership
+  tests in both configurations; all passed. The all-feature baseline passed the
+  same 25 tests before edits. Each test process had a 60-second external limit.
+- The 30-second-contained probe passed in both configurations, reproducing empty/
+  dyadic/mixed-denominator admission, 128-lane success, the 129-lane debug panic,
+  editable public masks, inactive-flag behavior, exact binary ingress and display
+  flag behavior. The panic was an expected observed limitation, not typed success.
+  Before/after all-feature stdout matched exactly; the no-default probe repeated
+  the semantic checks with tracing compiled out.
+- Exact trace assertions covered every surviving-support cardinality for active
+  2D/3D/4D dots: twelve named branches total. Each selected branch occurred exactly
+  once and clone-and-attach counted exactly twice the surviving lane count. No
+  existing count was relaxed. This finite witness does not claim every vector
+  path was profiled or establish a performance improvement.
+- Private library Rustdoc passed with warnings and broken/private links denied in
+  both feature configurations. Explicit private test docs also compiled. Full-text
+  checks matched all 246 vector documentation groups (197 distinct texts) across
+  the generated docs; each of 61 macro-template groups was also required to occur
+  on all three expanded Vector2/3/4 pages. Four test module/helper groups rendered.
+  Across 52 inspected HTML pages, repeated operator/trait text was not counted as
+  unique prose. The 25 test-function doc groups and local layout type/three fields
+  are source-reviewed; Rustdoc omits those function-local/test items.
+- Cargo checks passed for vector/ownership integration tests and the mathbench
+  consumer with all features and no defaults. Hyperspatial downstream library
+  checks passed in both configurations, including Hyperlimit. Cargo used --locked
+  --offline -j 2, CARGO_INCREMENTAL=0 and the shared target directory.
+- Full workflow checks remain owner-waived. No timing benchmark, sanitizer,
+  release-mode oversized-dimension test, binary-size measurement or full repository
+  suite ran. These documentation edits neither repair the generic mask limit nor
+  establish universal predicate/closure support.
+- Removed the three temporary test/probe executables after validation. The shared
+  Cargo target remains approximately 2.5 GiB; no duplicate target tree was created.
+
+Evidence: `/tmp/csgrs-rustdoc-vector-{before,after,build,doc,render,consumers,downstream}.log`,
+`/tmp/csgrs-rustdoc-vector-minimal-{build,test,doc,render,consumers,downstream}.log`,
+Cargo artifact JSON and `/tmp/csgrs-vector-audit/` retain temporary probes/checkers
+and private docs. These are review artifacts, not a durable performance archive.
+The remaining matrix code, other tests/benchmarks/support material and most of
+the wider repository still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,3 +1,11 @@
+//! Vector regression witnesses for exact arithmetic, structural facts and scalar boundaries.
+//!
+//! The tests distinguish known zero from unknown, consume shared-scale outputs,
+//! and compare selected owned layouts. Structural equality assertions are not a
+//! universal scalar-value decision; finite float-export checks concern their named
+//! fixtures, and inline type sizes do not measure retained expression heap.
+
+/// Shared exact literals, cooperative signal and unresolved-zero fixtures used by these tests.
 mod common;
 
 use std::mem::{align_of, size_of};
@@ -10,6 +18,7 @@ use hyperlattice::{
     VectorSharedScaleFacts, ZeroKnowledge,
 };
 
+/// Check exact self-dot and unit normalization of (3,4,0), then ordinary/checked operations with an initially clear signal; this does not test a later cancellation transition.
 #[test]
 fn vector_dot_and_normalize() {
     let v = Vector3::new([r(3), r(4), r(0)]);
@@ -29,6 +38,7 @@ fn vector_dot_and_normalize() {
     );
 }
 
+/// Inspect axis, signed-axis absence, zero masks/counts, dependency and exact-set facts for (5,0) and zero, without treating metadata as a topology predicate.
 #[test]
 fn vector2_structural_facts_expose_zero_mask_without_topology() {
     let x_axis = Vector2::new([r(5), r(0)]);
@@ -78,6 +88,7 @@ fn vector2_structural_facts_expose_zero_mask_without_topology() {
     assert!(zero_facts.known_zero);
 }
 
+/// Check selected PI/LOG/TRIG family bits on 2D/3D/4D fixtures; the dependency mask is not an expression graph or exhaustive representation test.
 #[test]
 fn vector_structural_facts_summarize_symbolic_dependencies() {
     let vector2 = Vector2::new([Real::pi(), frac(1, 5) * Real::pi().sin()]);
@@ -122,6 +133,7 @@ fn vector_structural_facts_summarize_symbolic_dependencies() {
     );
 }
 
+/// Require a known nonzero lane to dominate an earlier unknown, while unknown-only and all-zero vectors retain UnknownZero/DivideByZero checked-normalization errors.
 #[test]
 fn vector_facts_classify_squared_norm_zero_status_without_self_dot() {
     let vector3 = Vector3::new([unknown_zero(), r(4), r(0)]);
@@ -153,6 +165,7 @@ fn vector_facts_classify_squared_norm_zero_status_without_self_dot() {
     assert_eq!(zero_vector.normalize_checked(), Err(Problem::DivideByZero));
 }
 
+/// Certify positive X and negative Y signed unit axes and distinguish the scaled (5,0) axis; this finite selection does not enumerate all four signed axes.
 #[test]
 fn vector2_structural_facts_certify_signed_unit_axes() {
     let pos_x = Vector2::new([Real::one(), Real::zero()]);
@@ -185,6 +198,7 @@ fn vector2_structural_facts_certify_signed_unit_axes() {
     assert_eq!(scaled_facts.known_signed_axis, None);
 }
 
+/// Check thirds, signed quarters and an unresolved symbolic lane for exact counts, sign patterns and denominator schedules; quarters explicitly satisfy both dyadic and shared-denominator queries.
 #[test]
 fn vector_exact_facts_carry_common_scale_without_denominator_access() {
     let vector2 = Vector2::new([frac(1, 3), frac(2, 3)]);
@@ -223,6 +237,7 @@ fn vector_exact_facts_carry_common_scale_without_denominator_access() {
     assert!(!symbolic_facts.has_shared_denominator_schedule());
 }
 
+/// Check sparse support/counts and one bits, plus w=1, w=0 and w=-1 classification; a known axis denotes one nonzero coordinate, not necessarily a unit vector.
 #[test]
 fn vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind() {
     let vector3 = Vector3::new([Real::zero(), r(5), Real::zero()]);
@@ -271,6 +286,7 @@ fn vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind
     assert_eq!(negative_facts.one_mask, 0);
 }
 
+/// Check borrowed equal-denominator metadata, sign/storage classes and coordinate access for thirds, zero, fifths and quarters; reject mixed denominators and an unresolved symbolic coordinate.
 #[test]
 fn vector_shared_scale_views_preserve_borrowed_common_scale_facts() {
     let vector2 = Vector2::new([frac(1, 3), frac(2, 3)]);
@@ -356,6 +372,7 @@ fn vector_shared_scale_views_preserve_borrowed_common_scale_facts() {
     assert!(mixed_denominators.shared_scale_view().is_none());
 }
 
+/// Construct owned rational carriers, borrow fact-preserving views, recover exact coordinates, and reject mixed/symbolic inputs; no serialization or fresh-process lifetime test occurs.
 #[test]
 fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
     let owned = SharedScaleVec::from_components([frac(1, 9), frac(-2, 9), frac(4, 9)])
@@ -416,12 +433,21 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
     );
 }
 
+/// Compare current-target inline sizes against one coordinate array plus one fact packet and a hypothetical duplicated layout.
+///
+/// Allow bounded alignment padding and require at least one exact-set summary's
+/// inline savings. This is not a stable ABI, total-heap, allocation or peak-memory
+/// measurement; the fixture type is not instantiated.
 #[test]
 fn owned_shared_scale_vector_retains_one_fact_packet() {
+    /// Local size-only comparison type containing both a standalone exact summary and a fact packet that already includes that summary.
     #[allow(dead_code)]
     struct DuplicatedSharedScaleVec<const N: usize> {
+        /// Stored coordinates in the hypothetical duplicated layout.
         components: [hyperlattice::Real; N],
+        /// Extra exact-set summary whose inline cost the fixture compares.
         exact: hyperlattice::RealExactSetFacts,
+        /// Combined fact packet, already containing an exact-set summary.
         facts: VectorSharedScaleFacts<N>,
     }
 
@@ -440,6 +466,7 @@ fn owned_shared_scale_vector_retains_one_fact_packet() {
     );
 }
 
+/// Consume owned/borrowed rational carriers in dot and squared norm, with independent -23/60 and 51/36 expectations, zero, and a dyadic comparison to ordinary Vector4 dispatch.
 #[test]
 fn shared_scale_vectors_use_known_exact_dot_products() {
     let left = SharedScaleVec::from_components([frac(1, 6), frac(-5, 6), frac(5, 6)])
@@ -473,6 +500,7 @@ fn shared_scale_vectors_use_known_exact_dot_products() {
     );
 }
 
+/// Compare retained/ordinary 2D wedge paths, require the independent 34/135 determinant, and exercise parallel and dyadic operands.
 #[test]
 fn shared_scale_vectors_use_known_exact_wedge_products() {
     let left = SharedScaleVec::from_components([frac(2, 9), frac(5, 9)])
@@ -503,6 +531,7 @@ fn shared_scale_vectors_use_known_exact_wedge_products() {
     );
 }
 
+/// Compare retained/ordinary 3D cross paths with an independent rational vector, then consume zero and basis-axis cross results in another shared-scale admission.
 #[test]
 fn shared_scale_vectors_use_known_exact_cross_products() {
     let left = SharedScaleVec::from_components([frac(1, 6), frac(5, 6), frac(-7, 6)])
@@ -543,6 +572,7 @@ fn shared_scale_vectors_use_known_exact_cross_products() {
     assert!(axis_cross.into_shared_scale().is_some());
 }
 
+/// Require independently specified integer coordinates after scalar addition and subtraction in Vector4.
 #[test]
 fn vector_scalar_add_and_subtract_are_componentwise() {
     let vector = Vector4::new([r(1), r(2), r(3), r(4)]);
@@ -554,6 +584,7 @@ fn vector_scalar_add_and_subtract_are_componentwise() {
     assert_eq!(vector - r(1), Vector4::new([r(0), r(1), r(2), r(3)]));
 }
 
+/// Check exact ordinary and alternate strings for three simple rational coordinates; the name does not establish forwarding of every outer format flag.
 #[test]
 fn vector_display_forwards_real_formatting() {
     let vector = Vector3::new([frac(1, 2), r(2), frac(3, 4)]);
@@ -562,6 +593,7 @@ fn vector_display_forwards_real_formatting() {
     assert_eq!(format!("{vector:#}"), "[0.5, 2, 0.75]");
 }
 
+/// Check finite binary64/binary32 ingress and selected export values, rejecting NaN and infinity; these exact fixture round trips do not certify arbitrary lossy export fidelity.
 #[test]
 fn finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit() {
     let vector = Vector3::try_from_f64_array([3.0, 4.0, 12.0])
@@ -578,6 +610,7 @@ fn finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit() {
     assert!(Vector2::try_from_f32_array([1.0, f32::NAN]).is_err());
 }
 
+/// Exercise lerp, unnormalized step, mean and weighted sum on integer fixtures using selected lossy exports; also require None for an empty mean and mismatched weights.
 #[test]
 fn vector_affine_aggregate_helpers_keep_components_in_hyperreal_space() {
     let origin = Vector3::zero();
@@ -608,6 +641,7 @@ fn vector_affine_aggregate_helpers_keep_components_in_hyperreal_space() {
     assert!(Vector3::weighted_sum(&[Vector3::zero()], &[]).is_none());
 }
 
+/// Require exact basis orthogonality, unit norms and handedness for the X axis, plus parallel/zero DivideByZero cases; no general conditioning or basis-selection search is tested.
 #[test]
 fn vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers() {
     let x = Vector3::new([Real::one(), Real::zero(), Real::zero()]);
@@ -630,6 +664,7 @@ fn vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers() {
     );
 }
 
+/// Require the independently computed exact squared distance six for two rational 3D vectors.
 #[test]
 fn vector3_squared_distance_stays_in_hyperreal_space() {
     let left = Vector3::new([frac(1, 3), frac(2, 3), r(1)]);
@@ -638,6 +673,7 @@ fn vector3_squared_distance_stays_in_hyperreal_space() {
     assert_eq!(left.squared_distance(&right), r(6));
 }
 
+/// Require DivideByZero for zero normalization and scalar division, and exact halved coordinates for a valid checked divisor.
 #[test]
 fn checked_vector_operations_reject_zero_divisors() {
     let vector = Vector3::new([r(1), r(2), r(3)]);
@@ -656,6 +692,7 @@ fn checked_vector_operations_reject_zero_divisors() {
     );
 }
 
+/// Require UnknownZero from checked scalar division and checked normalization when only unresolved-zero knowledge is available, including initially clear abort-signal variants.
 #[test]
 fn checked_vector_operations_reject_unknown_zero_divisors() {
     let vector = Vector3::new([r(1), r(2), r(3)]);
