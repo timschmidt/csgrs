@@ -1,15 +1,19 @@
-// Stored-representation statistics for one expression graph. This is a
-// growth diagnostic: it reads stored fields only and never approximates,
-// refines, canonicalizes or touches a cache.
+// Graph-growth diagnostics without numeric approximation. Rational payload
+// access may canonicalize lazy ratios and retain the resulting cache; these
+// metrics do not account for all stored bytes or the cost of that reduction.
 
+/// Sum canonical rational-part bit lengths; getters may reduce/cache an internally unreduced value.
 fn rational_storage_bits(value: &Rational) -> u64 {
     value.numerator().bits() + value.denominator().bits()
 }
 
+/// Enumerate graph edges and selected numeric payload widths for representation diagnostics.
 impl Approximation {
     /// Visit the direct operand graphs of this node.
     ///
     /// The match is exhaustive so a new variant must state its operands.
+    /// Visit only explicit Computable children, in the stored match order;
+    /// scalar payloads, retained facts and caches are not graph edges here.
     fn for_each_operand<'a>(&'a self, mut visit: impl FnMut(&'a Computable)) {
         match self {
             Self::Int(_)
@@ -97,7 +101,11 @@ impl Approximation {
         }
     }
 
-    /// Largest exact rational or integer stored in this node itself.
+    /// Largest selected rational/integer payload bit metric in this node, excluding child graphs.
+    /// Rational parts use canonical numerator-plus-denominator widths; integer
+    /// and quantile-seed payloads use magnitude bits. Offset/root-order/exponent
+    /// tags, other metadata and cached approximations are not counted. A default
+    /// zero means no counted payload, not zero allocated storage.
     fn stored_rational_bits(&self) -> u64 {
         match self {
             Self::Int(value) | Self::IntegralAtan(value) => value.bits(),
@@ -133,9 +141,19 @@ impl Approximation {
     }
 }
 
+/// Traverse shared expression structure iteratively for diagnostic size/depth metrics.
 impl Computable {
     /// Distinct nodes, longest path and largest stored rational of this
     /// expression graph, visiting at most `node_limit` distinct nodes.
+    /// Allocation identity deduplicates shared nodes in the valid acyclic graph;
+    /// it is not mathematical equality. An explicit stack performs postorder
+    /// depth calculation. If the limit is reached, return partial node/bit counts
+    /// and the largest depth completed so far, which can still be zero.
+    ///
+    /// Zero limit is incomplete even for a single node. Traversal bookkeeping
+    /// is linear in visited nodes; rational canonicalization and bigint costs
+    /// are additional. The limit does not cap bytes, all work or cancellation
+    /// latency, and this diagnostic has no abort check.
     pub(crate) fn representation_size(&self, node_limit: usize) -> RepresentationSize {
         // Iterative post-order over the shared graph: each node's depth is
         // derived once from its operands, so shared subgraphs stay linear and

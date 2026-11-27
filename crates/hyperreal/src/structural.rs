@@ -235,11 +235,13 @@ impl CertifiedRealEquality {
     }
 }
 
-/// Size of the exact representation a value currently stores.
+/// Selected graph-size and coefficient-width diagnostics for an exact representation.
 ///
 /// This measures growth across repeated constructions. It is not a canonical
 /// form or a cost bound: equal values can have different representations.
-/// Shared expression nodes count once. Reported by
+/// Shared expression nodes count once; named classes exclude materialized payloads.
+/// Rational widths use canonical parts and can trigger lazy reduction/cache population.
+/// This is not raw retained-byte accounting. Reported by
 /// [`Real::representation_size`](crate::Real::representation_size).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RepresentationSize {
@@ -248,8 +250,9 @@ pub struct RepresentationSize {
     pub nodes: usize,
     /// Nodes on the longest path from the value to a leaf.
     pub depth: usize,
-    /// Largest stored rational, as numerator plus denominator bit length.
-    /// Integer leaves count their magnitude bits.
+    /// Maximum canonical numerator-plus-denominator bit length of counted rational payloads.
+    /// Selected integer payloads count magnitude bits. Small tags, allocation overhead
+    /// and cached approximations are excluded; this is not a sum or raw storage width.
     pub max_rational_bits: u64,
     /// False when the node limit stopped the traversal. The other fields are
     /// then lower bounds.
@@ -497,9 +500,13 @@ pub enum RationalStorageClass {
     VeryLarge,
 }
 
-/// Conservative primitive floating-point range classification.
+/// Primitive floating-point exponent-range categories, not a complete conversion certificate.
 ///
-/// These facts are intentionally conservative and opt-in. A previous broad
+/// The current classifier uses exact magnitude exponents only. NormalFinite
+/// includes the entire upper normal binade, where some significands round to
+/// infinity; it must not be used alone to certify finite conversion. Subnormal
+/// classification likewise does not decide rounding to zero. These categories
+/// are opt-in. A previous broad
 /// `to_f64_lossy` preflight regressed dense symbolic conversions, so the facts
 /// are exposed for callers that can amortize the query rather than being used
 /// unconditionally in conversion hot paths.
@@ -508,7 +515,8 @@ pub enum RationalStorageClass {
 pub enum PrimitiveFloatStatus {
     /// The value is structurally zero.
     Zero,
-    /// The value is structurally in the normal finite range.
+    /// The magnitude exponent lies in the normal exponent band, including its upper binade.
+    /// This label does not establish that the rounded primitive value is finite.
     NormalFinite,
     /// The value is structurally finite but may round through the subnormal path.
     SubnormalOrUnderflows,

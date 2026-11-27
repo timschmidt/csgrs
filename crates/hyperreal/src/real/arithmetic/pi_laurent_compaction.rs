@@ -1,3 +1,4 @@
+/// Optional exact reconstruction of recognized pi-Laurent arithmetic, preserving retained evidence.
 impl Real {
     /// Rebuilds a bounded Laurent polynomial in π with rational/radical coefficients.
     ///
@@ -12,6 +13,13 @@ impl Real {
     /// original exact value remains available. The outer rational scale and
     /// any attached abort signal are preserved, along with an already proved
     /// exact sign for subsequent queries at lower precision.
+    ///
+    /// Nonopaque classes return a clone without proving that their family is
+    /// Laurent. Opaque graphs use the lower-layer recognizer's depth entry
+    /// budget of 64 and its node/coefficient limits; those are recognition
+    /// limits, not complete time or memory budgets. Reconstruction can allocate
+    /// and reuse/store exact facts. It does not numerically refine or treat an
+    /// asserted abort flag as a reason to discard a purely symbolic result.
     pub fn compact_pi_laurent(&self) -> Option<Self> {
         if !matches!(self.class, Irrational) {
             return Some(self.clone());
@@ -30,10 +38,14 @@ impl Real {
 }
 
 #[cfg(test)]
+/// Composition, rejection and evidence-retention corpus for the optional exact reducer.
 mod pi_laurent_compaction_tests {
     use super::*;
 
     #[test]
+    /// Check fifty radicand/pi-power/scale combinations against the expanded binomial identity.
+    /// Build Laurent powers explicitly, prove the compact-minus-expected normal form is zero,
+    /// and repeat compaction; this checks semantic preservation, not byte-level idempotence.
     fn compact_pi_laurent_replays_independent_binomial_identities() {
         for radicand in [2, 3, 5, 13, 34] {
             let root = Real::from(radicand).sqrt().unwrap();
@@ -50,12 +62,7 @@ mod pi_laurent_compaction_tests {
                 for scale in [Rational::fraction(-7, 11).unwrap(), Rational::from(3)] {
                     let scale = Real::from(scale);
                     let binomial = &pi + &root;
-                    let expanded = Real::diff_of_products(
-                        &binomial,
-                        &binomial,
-                        &pi,
-                        &pi,
-                    ) * &scale;
+                    let expanded = Real::diff_of_products(&binomial, &binomial, &pi, &pi) * &scale;
                     // (p+r)^2-p^2 = 2pr+r^2, for either sign of the
                     // independent rational scale and positive/negative powers.
                     let expected = (Real::from(2) * &pi * &root + Real::from(radicand)) * scale;
@@ -77,6 +84,8 @@ mod pi_laurent_compaction_tests {
     }
 
     #[test]
+    /// Reduce (pi+sqrt(13))*(pi-sqrt(13))-pi^2 to -13 and preserve the same signal Arc.
+    /// Toggle the flag and require a further symbolic compaction to retain both rational value and abort state.
     fn compact_pi_laurent_retains_rational_results_and_abort_signal() {
         let root = Real::from(13).sqrt().unwrap();
         let a = Real::pi() + &root;
@@ -95,6 +104,7 @@ mod pi_laurent_compaction_tests {
     }
 
     #[test]
+    /// Decline a surviving sine atom, while exact self-subtraction remains a successfully compacted zero.
     fn compact_pi_laurent_declines_opaque_remainders() {
         let value = Real::from(7).sin() + Real::from(3).sqrt().unwrap();
         assert!(value.compact_pi_laurent().is_none());
@@ -106,6 +116,8 @@ mod pi_laurent_compaction_tests {
     }
 
     #[test]
+    /// Retain the original exp/log-spelled negative-power case as an explicit unsupported recognition witness.
+    /// Mathematical Laurent membership does not imply admission of every equivalent stored graph.
     fn compact_pi_laurent_keeps_the_exp_log_power_frontier_explicit() {
         // Preserve the first failed matrix representation. Integer powers
         // spelled through this API can retain exp(log(pi) * exponent), which
@@ -118,6 +130,8 @@ mod pi_laurent_compaction_tests {
     }
 
     #[test]
+    /// Prove a tiny pi-minus-lower-bound positive at fine precision, then square and scale with both signs.
+    /// Require the proved signs to survive compaction, coarse/fine/coarse queries and repeated reconstruction.
     fn compact_pi_laurent_retains_certified_signs_at_lower_precision() {
         let pi = Real::pi();
         let lower = pi.certified_rational_interval(-1024).unwrap()[0].clone();
@@ -133,7 +147,10 @@ mod pi_laurent_compaction_tests {
             let compact = value.compact_pi_laurent().unwrap();
             assert_eq!(compact.immediate_sign(), Some(expected));
             for precision in [0, -512, 0] {
-                assert_eq!(compact.certified_sign_until(precision).sign(), Some(expected));
+                assert_eq!(
+                    compact.certified_sign_until(precision).sign(),
+                    Some(expected)
+                );
             }
             let repeated = compact.compact_pi_laurent().unwrap();
             assert_eq!(repeated.certified_sign_until(0).sign(), Some(expected));

@@ -16339,6 +16339,108 @@ second build tree was created. Full workflows remain owner-waived. No focused ch
 is blocked, no implementation or performance claim changed, and the repository-wide
 Rustdoc audit remains incomplete.
 
+## Hyperreal representation metrics, structural helpers and Laurent compaction (2026-11-27)
+
+Whole-file review at revision 982bc18e588d997b5d8152f7a017bede6fcad641,
+all under crates/hyperreal/src:
+
+- real/arithmetic/representation_size.rs (118 -> 137 lines).
+- real/arithmetic/structural_helpers.rs (306 -> 354 lines).
+- real/arithmetic/pi_laurent_compaction.rs (143 -> 160 lines).
+- computable/node/representation_size.rs (191 -> 209 lines).
+
+Four related comment blocks on RepresentationSize/PrimitiveFloatStatus in
+structural.rs were corrected as partial review, not whole-file credit. The owning
+layers are scalar evidence transport, structural domain/range diagnostics, graph
+metrics and optional exact symbolic reconstruction. P2/P3/P4/P5/P6/P19/P37 and the
+admission protocol require conservative decisions, preserved proof provenance and
+resource claims that match the measured operation. Domains include known/unknown
+signs, exact/inexact magnitude facts, named/opaque classes, shared DAGs and truncated
+traversals, internally unreduced rationals, float exponent boundaries and bounded
+pi-Laurent recognition with rational/radical coefficients.
+
+Missing witnesses were private helper/test Rustdoc and accurate public descriptions
+of canonicalization effects, size accounting and primitive range labels. Baseline
+representation-size tests (three) and compaction tests (six, including the lower-layer
+no-approximation witness) passed. A separate consumer reproduced two documentation
+errors on the named revision before edits:
+
+- Evaluating a six-coefficient polynomial at 1/2 creates an internally unreduced
+  rational. Its first representation_size(0) query recorded exactly one lazy
+  canonicalization; repeating recorded zero. The returned rational bit metric was
+  eleven canonical bits, not a raw-storage or cache-free measurement.
+- Exact integers 2^128-1 and 2^1024-1 receive NormalFinite for f32/f64 respectively,
+  while their conversions produce infinity. The current classifier checks only
+  the exponent band, not the maximum finite significand/rounding boundary. This
+  remains an implementation limitation under the conservative-facts target;
+  documenting it neither fixes the classifier nor establishes safe finite conversion.
+
+All 45 declarations in the four whole files now have Rustdoc. Together with the
+four supporting public comment blocks, 49 complete blocks were reviewed:
+
+- Size metrics distinguish rational numerator-plus-denominator widths from integer
+  magnitude bits, maxima from totals, graph nodes from named certificates, and
+  bookkeeping from allocation bytes. Canonical getters can reduce lazy ratios and
+  retain caches. Materialized named payloads, approximation caches and small tags
+  are excluded. Node limits apply only to opaque traversal: named pi still reports
+  one complete node at limit zero, as independently checked by the consumer.
+- Computable traversal uses allocation identity to deduplicate a valid DAG, not to
+  define mathematical equality. Iterative postorder depth and partial metrics are
+  described; a truncated traversal can report depth zero. Linear bookkeeping does
+  not bound rational reduction, coefficient complexity, all bytes or work. There
+  is no abort check in this diagnostic. The deep-chain test is a regression witness,
+  not a measured universal stack bound.
+- Sign conversions and sign-of-difference certificate adapters preserve exact
+  states and refinement floors. The optional sign product propagates either None
+  before its sign table, even when the other factor is known zero. Structural
+  ordering uses separated signs first, then distinct exact magnitude exponents,
+  reversing the magnitude order for negatives. Equal/inexact exponents decline.
+- Comparisons with one do not infer equality from the unit binade. Domain helpers
+  preserve Unknown and distinguish strict from closed endpoint admission. Primitive
+  range helpers classify zero first and otherwise require exact magnitude; their
+  exponent-only limitations are explicit at both implementation and public enum.
+- Symbolic kind/dependency masks describe retained classes, not minimal semantic
+  dependencies. Opaque graphs remain opaque; zero outer scales are not examined.
+  Named degree Constant means no modeled variable, not algebraic degree of a
+  defining polynomial. Rational facts preserve the caller's exact-rational metadata
+  and omit magnitude for zero or an exponent outside i32.
+- Laurent compaction clones nonopaque classes without proving their Laurent
+  membership. Opaque reconstruction uses the existing depth entry budget 64 and
+  lower-layer node/coefficient restrictions; these are not total resource bounds.
+  None retains the original exact input and is not invalidity/undecidability.
+  Scale, retained exact sign and attached signal survive successful reconstruction,
+  including a symbolic result while the signal is asserted. Tests keep fifty
+  explicit-power binomial cases, repeated consumption, rational collapse, opaque
+  rejection, the exp/log-spelled negative-power frontier and fine-to-coarse sign reuse.
+
+After the final source edit, fourteen selected unit tests passed both without
+optional features and with all features: three size, six compaction and five
+structural-facts/domain/ordering tests. The consumer linked against the rebuilt
+library reproduced the same exact canonicalization counts, canonical bit metric,
+zero-limit named result and upper-binade classification limitation. Actual private
+cargo doc passed in both configurations with warnings and broken/private links
+denied. All 39 production blocks matched generated all-feature pages; ten cfg(test)
+module/function blocks rendered and matched as supplemental Markdown, not claimed
+as ordinary test item pages.
+
+Token comparison found only one optional call trailing-comma deletion from Rustfmt;
+all other noncomment tokens, strings, predicates, call order, assertions and fixture
+values remain unchanged. Selected Rustfmt checks passed for both size files,
+compaction and structural.rs; git diff --check passed. structural_helpers.rs has
+two pre-existing formatting differences (a wrapped condition and a match-arm block).
+The baseline and final Rustfmt checks both report them, with identical formatting
+effects after excluding comments. They were retained to avoid changing executable
+layout in this docs-only worktree; this is not claimed as a clean whole-tree fmt
+check. Full workflows remain owner-waived.
+
+Evidence: /tmp/csgrs-hyperreal-structure-audit/ retains baseline/final tests and probe,
+source/render/token records, format comparison and commands. The temporary consumer
+executable and supplemental rendered HTML were removed. Builds reused the roughly
+5.6 GiB shared nonincremental target with locked/offline dependencies. Supporting
+rational construction/query/polynomial, computable Laurent reducer, trace and public
+fact caller/test excerpts earn no additional whole-file credit. No runtime defect was
+fixed or performance claim made; repository-wide documentation coverage remains open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

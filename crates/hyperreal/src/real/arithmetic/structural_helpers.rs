@@ -1,3 +1,4 @@
+/// Translate all three exact bigint sign states into the public scalar sign vocabulary.
 fn real_sign_from_num(sign: Sign) -> RealSign {
     match sign {
         Sign::Minus => RealSign::Negative,
@@ -6,6 +7,7 @@ fn real_sign_from_num(sign: Sign) -> RealSign {
     }
 }
 
+/// Translate a known public scalar sign into the corresponding bigint sign; no unknown state is admitted.
 fn num_sign_from_real(sign: RealSign) -> Sign {
     match sign {
         RealSign::Negative => Sign::Minus,
@@ -14,6 +16,8 @@ fn num_sign_from_real(sign: RealSign) -> Sign {
     }
 }
 
+/// Multiply two known signs, propagating either missing sign before applying the sign table.
+/// Even a known zero paired with None returns None here; callers needing a zero shortcut must establish it separately.
 fn multiply_public_sign(left: Option<RealSign>, right: Option<RealSign>) -> Option<RealSign> {
     match (left?, right?) {
         (RealSign::Zero, _) | (_, RealSign::Zero) => Some(RealSign::Zero),
@@ -26,6 +30,8 @@ fn multiply_public_sign(left: Option<RealSign>, right: Option<RealSign>) -> Opti
     }
 }
 
+/// Transport a proved sign-of-difference certificate into equality provenance.
+/// Structural facts and exact-zero scale share the difference-structural category; refinement retains its precision floor.
 fn equality_certificate_from_sign_certificate(
     certificate: RealSignCertificate,
 ) -> RealEqualityCertificate {
@@ -39,6 +45,8 @@ fn equality_certificate_from_sign_certificate(
     }
 }
 
+/// Transport sign-of-difference provenance into ordering, retaining bounded-refinement precision.
+/// Structural and exact-zero-scale proofs both become DifferenceStructuralFacts.
 fn ordering_certificate_from_sign_certificate(
     certificate: RealSignCertificate,
 ) -> RealOrderingCertificate {
@@ -52,6 +60,7 @@ fn ordering_certificate_from_sign_certificate(
     }
 }
 
+/// Interpret the known sign of left-minus-right as Less, Equal or Greater.
 fn ordering_from_real_sign(sign: RealSign) -> Ordering {
     match sign {
         RealSign::Negative => Ordering::Less,
@@ -61,6 +70,10 @@ fn ordering_from_real_sign(sign: RealSign) -> Ordering {
 }
 
 #[inline]
+/// Compare consistent operand facts without constructing a difference or refining either value.
+/// Try sign separation and paired zeros first; same nonzero signs need distinct exact
+/// binary magnitude exponents, with ordering reversed for negatives. Missing/inexact
+/// or equal exponents decline, since an overlapping binade does not decide order.
 fn structural_ordering_from_facts(
     left: RealStructuralFacts,
     right: RealStructuralFacts,
@@ -96,6 +109,7 @@ fn structural_ordering_from_facts(
     None
 }
 
+/// Lift an already-decided ordering into the public structural comparison vocabulary.
 fn structural_cmp_from_ordering(ordering: Ordering) -> StructuralComparison {
     match ordering {
         Ordering::Less => StructuralComparison::Less,
@@ -105,6 +119,9 @@ fn structural_cmp_from_ordering(ordering: Ordering) -> StructuralComparison {
 }
 
 #[inline]
+/// Prove comparison with one from consistent sign and exact binary magnitude facts.
+/// Nonpositive values are less; positive exponents above/below zero separate from one.
+/// Exponent zero remains Unknown, including values that might equal one.
 fn structural_cmp_one_from_base(facts: &RealStructuralFacts) -> StructuralComparison {
     match facts.sign {
         Some(RealSign::Negative | RealSign::Zero) => StructuralComparison::Less,
@@ -124,6 +141,8 @@ fn structural_cmp_one_from_base(facts: &RealStructuralFacts) -> StructuralCompar
 }
 
 #[inline]
+/// Prove comparison of absolute value with one using zero or a known nonzero sign and exact magnitude.
+/// Exponent zero and missing/inexact information remain Unknown; equality is not inferred from a binade.
 fn structural_abs_cmp_one_from_base(facts: &RealStructuralFacts) -> StructuralComparison {
     match facts.sign {
         Some(RealSign::Zero) => StructuralComparison::Less,
@@ -142,6 +161,7 @@ fn structural_abs_cmp_one_from_base(facts: &RealStructuralFacts) -> StructuralCo
     }
 }
 
+/// Admit the nonnegative domain (for square roots), reject known negatives and preserve unknown signs.
 fn domain_from_sign_nonnegative(sign: Option<RealSign>) -> DomainStatus {
     match sign {
         Some(RealSign::Positive | RealSign::Zero) => DomainStatus::Valid,
@@ -150,6 +170,7 @@ fn domain_from_sign_nonnegative(sign: Option<RealSign>) -> DomainStatus {
     }
 }
 
+/// Admit strictly positive arguments (for logarithms); zero and negatives are invalid, absent sign is unknown.
 fn domain_from_sign_positive(sign: Option<RealSign>) -> DomainStatus {
     match sign {
         Some(RealSign::Positive) => DomainStatus::Valid,
@@ -158,6 +179,7 @@ fn domain_from_sign_positive(sign: Option<RealSign>) -> DomainStatus {
     }
 }
 
+/// Admit the nonzero domain (for reciprocals), distinguishing known zero from undecided zero status.
 fn domain_from_zero_nonzero(zero: ZeroKnowledge) -> DomainStatus {
     match zero {
         ZeroKnowledge::NonZero => DomainStatus::Valid,
@@ -166,6 +188,8 @@ fn domain_from_zero_nonzero(zero: ZeroKnowledge) -> DomainStatus {
     }
 }
 
+/// Map a proved absolute comparison to the open or closed unit interval domain.
+/// The closed flag controls only equality at the endpoint; unknown comparison remains Unknown.
 fn domain_abs_cmp_one(comparison: StructuralComparison, closed: bool) -> DomainStatus {
     match (comparison, closed) {
         (StructuralComparison::Less, _) => DomainStatus::Valid,
@@ -177,6 +201,7 @@ fn domain_abs_cmp_one(comparison: StructuralComparison, closed: bool) -> DomainS
     }
 }
 
+/// Admit arguments at least one (for acosh), preserving undecided comparison as an unknown domain.
 fn domain_cmp_one_ge(comparison: StructuralComparison) -> DomainStatus {
     match comparison {
         StructuralComparison::Equal | StructuralComparison::Greater => DomainStatus::Valid,
@@ -186,6 +211,9 @@ fn domain_cmp_one_ge(comparison: StructuralComparison) -> DomainStatus {
 }
 
 #[inline]
+/// Classify zero first, otherwise require an exact binary magnitude before assigning float exponent bands.
+/// No float is produced. The upper normal binade is not checked against the maximum
+/// finite significand, so NormalFinite alone does not certify a finite rounded conversion.
 fn primitive_facts_from_base(facts: &RealStructuralFacts) -> PrimitiveFacts {
     if facts.zero == ZeroKnowledge::Zero {
         return PrimitiveFacts {
@@ -213,6 +241,11 @@ fn primitive_facts_from_base(facts: &RealStructuralFacts) -> PrimitiveFacts {
 }
 
 #[inline]
+/// Classify an exact magnitude exponent against the supplied binary-format thresholds.
+/// Both below-underflow and below-normal branches return SubnormalOrUnderflows; they
+/// do not decide a subnormal versus rounded zero. The inclusive upper exponent returns
+/// NormalFinite even when the significand would overflow on rounding. This is an
+/// exponent-band diagnostic, not a complete representability or rounding predicate.
 fn primitive_float_status_from_msd(
     msd: i32,
     underflow_floor: i32,
@@ -230,6 +263,8 @@ fn primitive_float_status_from_msd(
     }
 }
 
+/// Label the retained symbolic storage family without simplifying or inspecting an opaque graph.
+/// The label describes the class, not every mathematically equivalent representation.
 fn structural_kind_for_class(class: &Class) -> StructuralKind {
     match class {
         One => StructuralKind::ExactRational,
@@ -243,6 +278,9 @@ fn structural_kind_for_class(class: &Class) -> StructuralKind {
     }
 }
 
+/// Report named scalar classes as Constant and opaque graphs as Unknown.
+/// Constant means no modeled variable here, not polynomial or algebraic degree zero
+/// of a defining relation; this is not a measure of scalar algebraic complexity.
 fn symbolic_degree_for_class(class: &Class) -> ExpressionDegree {
     match class {
         Irrational => ExpressionDegree::Unknown,
@@ -254,6 +292,10 @@ fn symbolic_degree_for_class(class: &Class) -> ExpressionDegree {
     }
 }
 
+/// Describe retained basis families without traversing opaque graphs or considering the outer scale.
+/// Composite pi/exp tags omit zero exponents; other named families retain their category
+/// bits even if further identities could remove them. Powers of two/ten report EXP and
+/// LOG for their recipe. These flags are not a minimal semantic dependency proof.
 fn symbolic_dependencies_for_class(class: &Class) -> SymbolicDependencyMask {
     match class {
         One => SymbolicDependencyMask::NONE,
@@ -275,6 +317,8 @@ fn symbolic_dependencies_for_class(class: &Class) -> SymbolicDependencyMask {
     }
 }
 
+/// Include PI for a nonzero integer exponent and EXP for a nonzero rational exponent.
+/// Read exact sign metadata; do not construct or approximate the corresponding factors.
 fn pi_exp_dependency_mask(pi_power: i16, exp_power: &Rational) -> SymbolicDependencyMask {
     let mut mask = SymbolicDependencyMask::NONE;
     if pi_power != 0 {
@@ -286,6 +330,10 @@ fn pi_exp_dependency_mask(pi_power: i16, exp_power: &Rational) -> SymbolicDepend
     mask
 }
 
+/// Derive exact sign/zero and, when representable in i32, the absolute binary magnitude.
+/// Zero and out-of-range magnitude exponents have no magnitude entry. The caller
+/// supplies exact_rational to distinguish a unit-basis rational from a zero scale
+/// on another basis; that metadata is not inferred from the numeric value here.
 fn facts_from_rational(rational: &Rational, exact_rational: bool) -> RealStructuralFacts {
     let sign = real_sign_from_num(rational.sign());
     let magnitude = rational.msd_exact().map(|msd| MagnitudeBits {
