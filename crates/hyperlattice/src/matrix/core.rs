@@ -3821,6 +3821,13 @@ fn divide_matrix4_affine_by_affine_ref_translation(
     ])
 }
 
+/// Inverts a caller-certified diagonal 3×3 matrix, reusing a uniform reciprocal when recognized.
+///
+/// Compares diagonal entries with structural `Real` equality, first (0,0) with
+/// (1,1), then (2,2). Equal symbolic representations can qualify; this is not the
+/// rational-only public uniform-scale fact. A match constructs one inverse and
+/// clones it; otherwise constructs three inverses in index order. Scalar errors
+/// propagate. Off-diagonal shape is trusted and the result’s zeros are constructed.
 fn invert_matrix3_by_diagonal(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     // For true diagonal matrices, inversion is n scalar inverses with no extra
     // multiply-add schedule; this avoids the division-heavy elimination and
@@ -3848,6 +3855,11 @@ fn invert_matrix3_by_diagonal(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3];
     ])
 }
 
+/// Guards all three diagonal entries before ordinary diagonal inversion.
+///
+/// Requires caller-certified diagonal shape. Known-nonzero guards run in index
+/// order, stopping at the first zero/unknown error, before uniform-scale equality
+/// checks or any reciprocal construction.
 #[inline]
 fn invert_matrix3_by_diagonal_checked(
     matrix: &[[Real; 3]; 3],
@@ -3858,12 +3870,17 @@ fn invert_matrix3_by_diagonal_checked(
     invert_matrix3_by_diagonal(matrix)
 }
 
+/// Inverts a caller-certified upper-triangular 3×3 matrix by explicit substitution.
+///
+/// Constructs diagonal reciprocals in index order, then inverse entries (0,1),
+/// (1,2), and (0,2). With `B = A⁻¹`, the corner is
+/// `B[0,2] = -(A[0,1]*B[1,2] + A[0,2]*B[2,2])/A[0,0]`.
+/// The lower triangle is constructed as zero without validating input shape.
+/// Ordinary scalar inverse errors propagate; no separate known-nonzero guard runs.
 #[inline]
 fn invert_matrix3_upper_triangular(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
-    // Upper-triangular inversion uses three pivot inverses plus short substitution:
-    // exactly the arithmetic savings expected from specialized triangular kernels
-    // in exact linear algebra. Avoiding minors here aligns with fraction-free
-    // fraction-free goals by minimizing intermediate determinant scaling.
+    // Three pivot reciprocals feed the explicit off-diagonal substitutions.
+    // This path does not construct a general cofactor matrix.
     let inv_a00 = matrix[0][0].clone().inverse()?;
     let inv_a11 = matrix[1][1].clone().inverse()?;
     let inv_a22 = matrix[2][2].clone().inverse()?;
@@ -3882,6 +3899,10 @@ fn invert_matrix3_upper_triangular(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real
     ])
 }
 
+/// Checks the three diagonal pivots before upper-triangular 3×3 inversion.
+///
+/// The caller establishes triangular shape. Guards run from index zero to two
+/// and stop at the first zero/unknown result; all precede reciprocal construction.
 #[inline]
 fn invert_matrix3_upper_triangular_checked(
     matrix: &[[Real; 3]; 3],
@@ -3892,11 +3913,17 @@ fn invert_matrix3_upper_triangular_checked(
     invert_matrix3_upper_triangular(matrix)
 }
 
+/// Inverts a caller-certified lower-triangular 3×3 matrix by explicit substitution.
+///
+/// Constructs diagonal reciprocals, then entries (1,0), (2,0), and (2,1), in that
+/// order. The corner uses `B[2,0] = -(A[2,0]*B[0,0] + A[2,1]*B[1,0])/A[2,2]`.
+/// Upper entries are constructed as zero. Shape is not checked; scalar inverse
+/// errors propagate without a separate known-nonzero guard.
 #[inline]
 fn invert_matrix3_lower_triangular(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     // Lower-triangular inversion is the dual of upper-triangular back-substitution.
-    // Selecting this path preserves the same O(n²) schedule and avoids expensive
-    // cofactor materialization for triangular right-divisor families.
+    // This explicit fixed-size schedule avoids cofactor materialization for
+    // known lower-triangular matrices.
     let inv_a00 = matrix[0][0].clone().inverse()?;
     let inv_a11 = matrix[1][1].clone().inverse()?;
     let inv_a22 = matrix[2][2].clone().inverse()?;
@@ -3915,6 +3942,10 @@ fn invert_matrix3_lower_triangular(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real
     ])
 }
 
+/// Checks the three diagonal pivots before lower-triangular 3×3 inversion.
+///
+/// Requires caller-established lower-triangular shape. Guards run in ascending
+/// index order and complete before delegating to the ordinary formula.
 #[inline]
 fn invert_matrix3_lower_triangular_checked(
     matrix: &[[Real; 3]; 3],
@@ -3925,6 +3956,13 @@ fn invert_matrix3_lower_triangular_checked(
     invert_matrix3_lower_triangular(matrix)
 }
 
+/// Inverts a caller-established 2D affine matrix `[R t; 0 1]`.
+///
+/// A retained diagonal-linear flag selects the two-reciprocal helper. Otherwise
+/// forms the 2×2 determinant `ad-bc`, takes one reciprocal, scales the adjugate,
+/// and computes `-R⁻¹ t`. The bottom row is reconstructed as `[0,0,1]`.
+/// Shape and a positive diagonal flag must be valid; they are not rechecked.
+/// The ordinary determinant inverse supplies any scalar failure.
 #[inline]
 fn invert_matrix3_affine(
     matrix: &[[Real; 3]; 3],
@@ -3932,8 +3970,7 @@ fn invert_matrix3_affine(
 ) -> BlasResult<[[Real; 3]; 3]> {
     // See Golub and Van Loan, *Matrix Computations*: affine composition
     // in homogeneous coordinates is handled by a 2×2 block inverse plus one
-    // rank-one translation correction, which is substantially cheaper than a full
-    // adjugate for repeated geometric kernels.
+    // translation correction -R⁻¹t. The full matrix bottom row is known.
     // The caller supplies `linear_is_diagonal` from `Matrix3Facts`, avoiding a
     // second probe of the same off-diagonal entries after affine dispatch.
     // Reuse the retained object facts.
@@ -3965,12 +4002,15 @@ fn invert_matrix3_affine(
     ])
 }
 
+/// Computes `[D⁻¹ -D⁻¹ t; 0 1]` for a caller-certified diagonal 2D affine block.
+///
+/// Uses two scalar reciprocals, first x then y, and two translation corrections.
+/// The off-diagonal and bottom-row shape is trusted, not validated; ordinary
+/// scalar inverse failures propagate before publishing a result.
 #[inline]
 fn invert_matrix3_affine_linear_diagonal(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
-    // When the affine 2×2 block is diagonal, inversion is two scalar
-    // reciprocals and two multiply-adds for translation.
-    // The same block-triangular structure is emphasized in LAPACK/ScaLAPACK notes
-    // and in Golub & Van Loan's block matrix treatment.
+    // The diagonal 2×2 block needs two reciprocals. Each translation correction
+    // is the corresponding offset multiplied by its reciprocal and negated.
     let inv_a00 = matrix[0][0].clone().inverse()?;
     let inv_a11 = matrix[1][1].clone().inverse()?;
     let inv_tx = Real::zero() - (matrix[0][2].clone() * &inv_a00);
@@ -3983,6 +4023,11 @@ fn invert_matrix3_affine_linear_diagonal(matrix: &[[Real; 3]; 3]) -> BlasResult<
     ])
 }
 
+/// Guards x then y before computing a diagonal 2D affine inverse.
+///
+/// Requires known affine/diagonal shape. Both known-nonzero guards precede the
+/// two reciprocals and translation corrections. Returns the first DivideByZero
+/// or UnknownZero encountered without independently resolving the unknown.
 #[inline]
 fn invert_matrix3_affine_linear_diagonal_checked(
     matrix: &[[Real; 3]; 3],
@@ -4002,6 +4047,13 @@ fn invert_matrix3_affine_linear_diagonal_checked(
     ])
 }
 
+/// Attaches a signal to both diagonal clones before checked 2D affine inversion.
+///
+/// Requires known affine/diagonal shape. Attachment occurs for x and y before
+/// either known-nonzero guard, so both are attached even if the first guard fails.
+/// Guards and reciprocals then run x before y. Translation scalars receive no
+/// separate attachment, and this helper does not explicitly poll the flag.
+/// Signal propagation and cancellation behavior remain scalar-owned.
 #[inline]
 fn invert_matrix3_affine_linear_diagonal_checked_with_abort(
     matrix: &[[Real; 3]; 3],
@@ -4025,14 +4077,20 @@ fn invert_matrix3_affine_linear_diagonal_checked_with_abort(
     ])
 }
 
+/// Right-divides any 3×3 dividend by a known diagonal-linear affine divisor.
+///
+/// For divisor `[D t;0 1]`, computes two reciprocals and `u = -D⁻¹ t`, then
+/// returns each row as `[left[i,0]/D[0,0], left[i,1]/D[1,1],
+/// (left[i,2] + left[i,0]*u[0]) + left[i,1]*u[1]]`. All three rows are updated;
+/// the dividend need not be affine. Shape is trusted and scalar inverse errors
+/// propagate. The owned input’s entries are cloned by this fixed schedule.
 #[inline]
 fn divide_matrix3_by_affine_linear_diagonal(
     left: [[Real; 3]; 3],
     right: &[[Real; 3]; 3],
 ) -> BlasResult<[[Real; 3]; 3]> {
-    // The 2×2 linear diagonal branch is effectively three independent scale
-    // factors plus a column correction; this avoids a 2×2 determinant and two
-    // multiplications from the generic affine formula.
+    // The 2×2 linear diagonal branch uses two reciprocals and a translation
+    // column correction, avoiding formation of a 2×2 determinant.
     // This is the 2D analogue of axis-aligned 4D affine division, and matches
     // the structural savings described in Golub and Van Loan, *Matrix
     // Computations*.
@@ -4096,6 +4154,11 @@ fn divide_matrix3_by_affine_linear_diagonal(
     ])
 }
 
+/// Guards the two nontrivial diagonal divisors before all-row affine division.
+///
+/// Requires the right affine/diagonal shape; the dividend is unrestricted. Checks
+/// x then y, returning the first zero/unknown error before reciprocal work, then
+/// delegates to [`divide_matrix3_by_affine_linear_diagonal`].
 #[inline]
 fn divide_matrix3_by_affine_linear_diagonal_checked(
     left: [[Real; 3]; 3],
@@ -4106,6 +4169,11 @@ fn divide_matrix3_by_affine_linear_diagonal_checked(
     divide_matrix3_by_affine_linear_diagonal(left, right)
 }
 
+/// Borrows both operands for the two-reciprocal diagonal-affine division formula.
+///
+/// Requires a known diagonal-linear affine divisor; updates all three dividend
+/// rows with the same association as the owned helper. Clones required entries
+/// and propagates ordinary inverse errors without an additional zero-status guard.
 #[inline]
 fn divide_matrix3_by_affine_ref_linear_diagonal(
     left: &[[Real; 3]; 3],
@@ -4171,6 +4239,10 @@ fn divide_matrix3_by_affine_ref_linear_diagonal(
     ])
 }
 
+/// Routes known affine/diagonal-affine operands to the unrestricted-row formula.
+///
+/// Adds no shape validation or arithmetic; the delegated helper computes all
+/// three rows rather than replacing the affine bottom row.
 #[inline]
 fn divide_matrix3_affine_by_affine_linear_diagonal(
     left: [[Real; 3]; 3],
@@ -4179,6 +4251,10 @@ fn divide_matrix3_affine_by_affine_linear_diagonal(
     divide_matrix3_by_affine_linear_diagonal(left, right)
 }
 
+/// Borrowed dispatch adapter for known affine/diagonal-affine operands.
+///
+/// Delegates to [`divide_matrix3_by_affine_ref_linear_diagonal`] without new
+/// shape predicates, preserving its scalar order and errors.
 #[inline]
 fn divide_matrix3_affine_by_affine_ref_linear_diagonal(
     left: &[[Real; 3]; 3],
@@ -4187,6 +4263,10 @@ fn divide_matrix3_affine_by_affine_ref_linear_diagonal(
     divide_matrix3_by_affine_ref_linear_diagonal(left, right)
 }
 
+/// Checked adapter for known affine/diagonal-affine operands.
+///
+/// Delegates to the all-row helper with x-then-y known-nonzero guards. Checked
+/// scalar status does not validate the caller’s shape evidence.
 #[inline]
 fn divide_matrix3_affine_by_affine_linear_diagonal_checked(
     left: [[Real; 3]; 3],
@@ -4195,6 +4275,12 @@ fn divide_matrix3_affine_by_affine_linear_diagonal_checked(
     divide_matrix3_by_affine_linear_diagonal_checked(left, right)
 }
 
+/// Inverts a known 2D affine matrix using diagonal guards or a determinant guard.
+///
+/// A valid retained diagonal flag selects the two-pivot checked helper. Otherwise
+/// constructs `ad-bc`, requires its known-nonzero status, then constructs the
+/// reciprocal, adjugate scale and `-R⁻¹ t`. Reconstructs `[0,0,1]` without
+/// validating the input bottom row; zero/unknown errors propagate.
 #[inline]
 fn invert_matrix3_affine_checked(
     matrix: &[[Real; 3]; 3],
@@ -4229,6 +4315,12 @@ fn invert_matrix3_affine_checked(
     ])
 }
 
+/// Selects signal-attached checked inversion for a known 2D affine matrix.
+///
+/// The diagonal branch attaches both pivot clones before their guards. Otherwise
+/// forms `ad-bc`, attaches the signal to that determinant, then guards and inverts
+/// it. Later scaling and translation corrections add no local attachment or flag
+/// polling. Affine shape and positive flags remain caller-established facts.
 #[inline]
 fn invert_matrix3_affine_checked_with_abort(
     matrix: &[[Real; 3]; 3],
@@ -4267,6 +4359,13 @@ fn invert_matrix3_affine_checked_with_abort(
     ])
 }
 
+/// Inverts a caller-certified diagonal 4×4 matrix with structural uniform-scale reuse.
+///
+/// Compares entry (0,0) with (1,1), (2,2), then (3,3), short-circuiting on a
+/// structural mismatch. A match, including equal symbolic representations, uses
+/// one reciprocal and clones it; otherwise takes four reciprocals in order.
+/// Scalar errors propagate. This equality check is distinct from the public
+/// rational-only uniform-scale fact and does not validate off-diagonal zeros.
 #[inline]
 fn invert_matrix4_by_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     // The same diagonal path is the exact analog in 4x4: invert only diagonal
@@ -4288,9 +4387,8 @@ fn invert_matrix4_by_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4];
     let inv33 = matrix[3][3].clone().inverse()?;
     // Hyperreal benefits from emitting the matrix directly: once
     // `Matrix4Facts::is_diagonal` chose this helper, all off-diagonal zeros
-    // are certified object-level facts. Avoiding a second sparsity decision
-    // keeps the symbolic/exact path thinner. This follows the
-    // Keep the structure-first matrix schedule.
+    // are certified object-level facts. No second sparsity decision is needed
+    // when constructing the canonical off-diagonal zeros.
     Ok([
         [inv00, Real::zero(), Real::zero(), Real::zero()],
         [Real::zero(), inv11, Real::zero(), Real::zero()],
@@ -4299,14 +4397,25 @@ fn invert_matrix4_by_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4];
     ])
 }
 
+/// Inverts a known upper-triangular 4×4 matrix by solving rows of `X A = I`.
+///
+/// Constructs four diagonal reciprocals first. Rows increase from zero to three;
+/// within each row, columns increase from the diagonal, and earlier columns are
+/// subtracted in increasing k order before scaling by `1/A[col,col]`. Lower
+/// entries remain zero. There are ten result scalings and ten product/subtraction
+/// updates, with no per-term zero pruning in these loops.
+///
+/// The caller establishes shape; ordinary inverse errors propagate. Generalizing
+/// these three nested indices to dimension n gives cubic scalar-operation work,
+/// not a quadratic full-inverse algorithm. Scalar complexity is not bounded here.
 #[inline]
 #[allow(clippy::needless_range_loop)]
 fn invert_matrix4_by_upper_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     // Invert upper-triangular matrices via explicit fixed-size triangular
     // back-substitution. The inverse is upper-triangular with row-local support
     // `col >= row`, so avoid touching zero columns and zero RHS entries that are
-    // guaranteed by the identity structure. This keeps the inversion path in O(n²)
-    // while reducing inner-loop work versus generic right-division shape.
+    // guaranteed by the identity structure. The three-index schedule would be
+    // cubic in a variable dimension; here its four-dimensional work is explicit.
     // Golub & Van Loan, *Matrix Computations* (4th ed.), §3.6.
     let inv_a00 = matrix[0][0].clone().inverse()?;
     let inv_a11 = matrix[1][1].clone().inverse()?;
@@ -4336,11 +4445,20 @@ fn invert_matrix4_by_upper_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[R
     Ok(result)
 }
 
+/// Inverts a known lower-triangular 4×4 matrix by solving rows of `X A = I`.
+///
+/// Constructs four reciprocals first. Rows increase, columns decrease from each
+/// diagonal, and k increases from col+1 through row for each subtraction. Upper
+/// entries remain zero. Ten result scalings and ten product/subtraction updates
+/// are performed. Shape is trusted; scalar inverse errors propagate.
+///
+/// The variable-dimension form of this three-index schedule is cubic in scalar
+/// operations; fixed dimension does not bound scalar expression or precision work.
 #[inline]
 #[allow(clippy::needless_range_loop)]
 fn invert_matrix4_by_lower_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
-    // Lower-triangular inverse is the mirrored O(n²) triangular solve used by the
-    // upper branch, using the identity support `col <= row` directly.
+    // Lower-triangular inversion uses the mirrored three-index schedule of the
+    // upper branch, with identity support `col <= row` and decreasing columns.
     // This avoids both the general right-division row span and unnecessary zero
     // updates when inverting known lower-triangular divisors. See
     // Golub & Van Loan, *Matrix Computations* (4th ed.), §3.6.
@@ -4372,6 +4490,10 @@ fn invert_matrix4_by_lower_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[R
     Ok(result)
 }
 
+/// Checks four diagonal pivots before known upper-triangular 4×4 inversion.
+///
+/// All guards run in ascending index order before the first reciprocal. The first
+/// zero/unknown error is returned; triangular shape is a caller precondition.
 #[inline]
 fn invert_matrix4_by_upper_triangular_checked(
     matrix: &[[Real; 4]; 4],
@@ -4383,6 +4505,10 @@ fn invert_matrix4_by_upper_triangular_checked(
     invert_matrix4_by_upper_triangular(matrix)
 }
 
+/// Checks four diagonal pivots before known lower-triangular 4×4 inversion.
+///
+/// Uses ascending guard order even though substitution later visits columns in
+/// reverse order. Shape is trusted, and all guards precede reciprocal construction.
 #[inline]
 fn invert_matrix4_by_lower_triangular_checked(
     matrix: &[[Real; 4]; 4],
@@ -4394,6 +4520,11 @@ fn invert_matrix4_by_lower_triangular_checked(
     invert_matrix4_by_lower_triangular(matrix)
 }
 
+/// Checks four diagonal pivots before diagonal 4×4 inversion and uniform-scale reuse.
+///
+/// Requires known diagonal shape; guards run in ascending index order and stop
+/// at the first zero/unknown. Structural equality and reciprocals occur only
+/// after all four guards succeed.
 #[inline]
 fn invert_matrix4_by_diagonal_checked(
     matrix: &[[Real; 4]; 4],
@@ -4405,6 +4536,11 @@ fn invert_matrix4_by_diagonal_checked(
     invert_matrix4_by_diagonal(matrix)
 }
 
+/// Multiplies by a known diagonal left matrix through row scaling.
+///
+/// Clones its three diagonal factors and the right entries, then performs nine
+/// cached scalar multiplications in row-major order. The `inv` local names hold
+/// factors, not reciprocals. No zero pruning or shape validation is performed.
 #[inline]
 fn multiply_matrix3_by_left_diagonal(
     left: &[[Real; 3]; 3],
@@ -4437,6 +4573,11 @@ fn multiply_matrix3_by_left_diagonal(
     ]
 }
 
+/// Multiplies by a known diagonal right matrix through column scaling.
+///
+/// Clones the three factors and left entries, then performs nine row-major
+/// scalar multiplications. Factors are not inverted, and nonzero status is not
+/// required; the caller must establish the right operand’s diagonal shape.
 #[inline]
 fn multiply_matrix3_by_right_diagonal(
     left: &[[Real; 3]; 3],
@@ -4468,6 +4609,11 @@ fn multiply_matrix3_by_right_diagonal(
     ]
 }
 
+/// Multiplies by a known diagonal left matrix through four-row scaling.
+///
+/// Clones diagonal factors and right entries, then performs sixteen row-major
+/// cached multiplications without dot products or per-entry zero pruning. The
+/// factors may be zero; diagonal shape is trusted and no inversion occurs.
 #[inline]
 fn multiply_matrix4_by_left_diagonal(
     left: &[[Real; 4]; 4],
@@ -4513,6 +4659,10 @@ fn multiply_matrix4_by_left_diagonal(
     ]
 }
 
+/// Multiplies by a known diagonal right matrix through four-column scaling.
+///
+/// Clones factors and left entries, then performs sixteen row-major cached scalar
+/// multiplications. No reciprocal, nonzero guard, or shape validation occurs.
 #[inline]
 fn multiply_matrix4_by_right_diagonal(
     left: &[[Real; 4]; 4],
@@ -4559,6 +4709,11 @@ fn multiply_matrix4_by_right_diagonal(
     ]
 }
 
+/// Right-divides by a known diagonal matrix through reciprocal column scaling.
+///
+/// Constructs three reciprocals in index order before updating any row. Mutates
+/// the consumed dividend buffer, cloning each entry for its cached multiplication.
+/// Right shape is trusted; scalar inverse errors return before a result is published.
 #[inline]
 fn divide_matrix3_by_diagonal(
     left: [[Real; 3]; 3],
@@ -4576,6 +4731,13 @@ fn divide_matrix3_by_diagonal(
     Ok(result)
 }
 
+/// Solves each row `x * U = left_row` for a known upper-triangular divisor.
+///
+/// Computes three shared diagonal reciprocals, then x0, x1, x2 in that order for
+/// each row. The last numerator is an active signed sum `left2 - x0*U02 - x1*U12`;
+/// it does not add a local zero-pruning pass. Shape is trusted and ordinary scalar
+/// inverse failures propagate. Each row solve is quadratic in a variable dimension;
+/// solving all n rows would be cubic, with scalar complexity accounted separately.
 #[inline]
 fn divide_matrix3_by_upper_triangular(
     mut left: [[Real; 3]; 3],
@@ -4583,8 +4745,8 @@ fn divide_matrix3_by_upper_triangular(
 ) -> BlasResult<[[Real; 3]; 3]> {
     // Upper-triangular right-division is a fixed-size triangular solve on each row:
     // each row is independent, so we avoid building an explicit inverse and one adjugate.
-    // This is the classic O(n^2) back-substitution path described in Golub & Van Loan,
-    // *Matrix Computations*, when triangular structure is known.
+    // Each row solves increasing columns. Quadratic work per row becomes cubic
+    // for a variable-size square matrix with all rows as right-hand sides.
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
@@ -4603,6 +4765,13 @@ fn divide_matrix3_by_upper_triangular(
     Ok(left)
 }
 
+/// Solves one row against a known upper-triangular 2D affine divisor.
+///
+/// The caller supplies exact reciprocals of `right[0,0]` and `right[1,1]`, plus an
+/// exact scalar one. Computes x0 then x1; the last coordinate is
+/// `row2 - x0*right02 - x1*right12`, using the zero-pruning `mul_sub_add` helper.
+/// No final reciprocal is needed because the homogeneous diagonal is known one.
+/// The supplied shape, reciprocal relations, and constant are not validated.
 #[inline]
 fn divide_matrix3_affine_upper_row(
     row: &[Real; 3],
@@ -4617,6 +4786,11 @@ fn divide_matrix3_affine_upper_row(
     [x0, x1, x2]
 }
 
+/// Right-divides an unrestricted dividend by a known upper-triangular affine matrix.
+///
+/// Constructs two shared diagonal reciprocals and a scalar one, then solves all
+/// three rows through [`divide_matrix3_affine_upper_row`]. The divisor must have
+/// bottom row `[0,0,1]`; ordinary inverse errors propagate without a separate guard.
 #[inline]
 fn divide_matrix3_by_affine_upper_triangular(
     left: [[Real; 3]; 3],
@@ -4637,6 +4811,11 @@ fn divide_matrix3_by_affine_upper_triangular(
     ])
 }
 
+/// Solves only the two nontrivial rows for known affine/upper-affine operands.
+///
+/// Constructs two reciprocals, solves the top rows with the shared row helper,
+/// and supplies canonical bottom row `[0,0,1]`. Both shape facts are caller-owned
+/// preconditions; neither is revalidated before reconstruction.
 #[inline]
 fn divide_matrix3_affine_by_affine_upper_triangular(
     left: [[Real; 3]; 3],
@@ -4656,6 +4835,10 @@ fn divide_matrix3_affine_by_affine_upper_triangular(
     ])
 }
 
+/// Guards x and y pivots before all-row upper-affine right division.
+///
+/// Checks both nontrivial diagonal entries before any reciprocal. The homogeneous
+/// one and triangular shape are caller-established, not separately validated.
 #[inline]
 fn divide_matrix3_by_affine_upper_triangular_checked(
     left: [[Real; 3]; 3],
@@ -4666,6 +4849,10 @@ fn divide_matrix3_by_affine_upper_triangular_checked(
     divide_matrix3_by_affine_upper_triangular(left, right)
 }
 
+/// Guards x and y before affine-by-upper-affine right division.
+///
+/// Checks in ascending order, then delegates to the two-row reconstruction path.
+/// Requires valid affine shape on both operands and upper-triangular right shape.
 #[inline]
 fn divide_matrix3_affine_by_affine_upper_triangular_checked(
     left: [[Real; 3]; 3],
@@ -4676,6 +4863,10 @@ fn divide_matrix3_affine_by_affine_upper_triangular_checked(
     divide_matrix3_affine_by_affine_upper_triangular(left, right)
 }
 
+/// Checks all three diagonal pivots before upper-triangular row solves.
+///
+/// Ascending guards finish before reciprocal construction. The first zero or
+/// unknown result propagates; the divisor’s triangular shape remains a precondition.
 #[inline]
 fn divide_matrix3_by_upper_triangular_checked(
     left: [[Real; 3]; 3],
@@ -4687,14 +4878,21 @@ fn divide_matrix3_by_upper_triangular_checked(
     divide_matrix3_by_upper_triangular(left, right)
 }
 
+/// Solves each row `x * L = left_row` for a known lower-triangular divisor.
+///
+/// Constructs three reciprocals in ascending index order, then solves x2, x1, x0.
+/// The final numerator uses the active signed sum `left0 - x1*L10 - x2*L20`.
+/// Rows are replaced only after their three coordinates are formed. Shape is
+/// trusted and inverse errors propagate. Per-row variable-dimension work is
+/// quadratic; all n rows require cubic scalar-operation work, not a total-work bound.
 #[inline]
 fn divide_matrix3_by_lower_triangular(
     mut left: [[Real; 3]; 3],
     right: &[[Real; 3]; 3],
 ) -> BlasResult<[[Real; 3]; 3]> {
     // Lower-triangular right-division mirrors the transpose scheduling of the upper form.
-    // Solving each row with forward substitution is O(n^2) and avoids the cubic adjugate path
-    // when only triangular predicates are known.
+    // Each row solves decreasing columns; the quadratic per-row schedule is
+    // repeated for all rows. No explicit inverse is constructed.
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
@@ -4713,6 +4911,11 @@ fn divide_matrix3_by_lower_triangular(
     Ok(left)
 }
 
+/// Guards three diagonal pivots before lower-triangular row solves.
+///
+/// Guards ascend from zero to two, although coordinates are solved in reverse
+/// order. All guards precede reciprocals; shape is trusted and zero/unknown
+/// errors propagate without a partial quotient.
 #[inline]
 fn divide_matrix3_by_lower_triangular_checked(
     left: [[Real; 3]; 3],

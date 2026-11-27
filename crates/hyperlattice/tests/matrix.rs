@@ -927,6 +927,9 @@ fn checked_matrix_inverse_rejects_singular_matrices() {
     );
 }
 
+/// Checks diagonal reciprocal entries across ordinary, checked and inactive-signal inversion.
+///
+/// Despite its name, this test compares results and does not count reciprocal calls.
 #[test]
 fn matrix4_diagonal_inverse_uses_only_diagonal_reciprocals() {
     let matrix = Matrix4::new([
@@ -950,6 +953,9 @@ fn matrix4_diagonal_inverse_uses_only_diagonal_reciprocals() {
     );
 }
 
+/// Checks exact sixths for a uniform scale across three inverse entry points.
+///
+/// The assertions establish result semantics, not the number of reciprocal constructions.
 #[test]
 fn matrix4_uniform_scale_inverse_reuses_one_reciprocal_semantics() {
     let matrix = Matrix4::new([
@@ -1229,6 +1235,10 @@ fn matrix4_known_diagonal_div_vector_point_scaled_w() {
     );
 }
 
+/// Checks a triangular inverse by composition with identity and agreement across paths.
+///
+/// The named, checked and inactive-signal results are compared with the ordinary
+/// inverse; this fixture does not supply an independent literal inverse matrix.
 #[test]
 fn matrix4_known_upper_triangular_inverse_matches_matrix_inverse() {
     let matrix = Matrix4::new([
@@ -1252,6 +1262,10 @@ fn matrix4_known_upper_triangular_inverse_matches_matrix_inverse() {
     );
 }
 
+/// Checks a triangular inverse by composition with identity and agreement across paths.
+///
+/// The named, checked and inactive-signal results are compared with the ordinary
+/// inverse; this fixture does not supply an independent literal inverse matrix.
 #[test]
 fn matrix4_known_lower_triangular_inverse_matches_matrix_inverse() {
     let matrix = Matrix4::new([
@@ -1275,6 +1289,10 @@ fn matrix4_known_lower_triangular_inverse_matches_matrix_inverse() {
     );
 }
 
+/// Checks singular triangular rejection through named, ordinary checked and inactive-signal inverses.
+///
+/// The shared assertion permits either DivideByZero or UnknownZero; it does not
+/// require a complete singularity proof.
 #[test]
 fn matrix4_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix4::new([
@@ -1289,6 +1307,10 @@ fn matrix4_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
 
+/// Checks singular triangular rejection through named, ordinary checked and inactive-signal inverses.
+///
+/// The shared assertion permits either DivideByZero or UnknownZero; it does not
+/// require a complete singularity proof.
 #[test]
 fn matrix4_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix4::new([
@@ -1387,6 +1409,7 @@ fn matrix4_known_upper_triangular_div_matrix_checked_matches_ordinary() {
     );
 }
 
+/// Checks the known-scale constructor and ordinary inverse against explicit sixths.
 #[test]
 fn matrix3_known_uniform_scale_inverse_matches_matrix_inverse() {
     let scale = r(6);
@@ -1401,6 +1424,7 @@ fn matrix3_known_uniform_scale_inverse_matches_matrix_inverse() {
     assert_eq!(Matrix3::uniform_scale_inverse(r(6)).unwrap(), expected);
 }
 
+/// Checks known-diagonal and ordinary inverse paths against independent rational reciprocals.
 #[test]
 fn matrix3_known_diagonal_inverse_matches_matrix_inverse() {
     let diagonal = [r(2), r(3), r(5)];
@@ -1418,6 +1442,9 @@ fn matrix3_known_diagonal_inverse_matches_matrix_inverse() {
     );
 }
 
+/// Checks an explicit rational triangular inverse across named and ordinary paths.
+///
+/// Inactive-signal and checked variants must match the same expected entries.
 #[test]
 fn matrix3_known_upper_triangular_inverse_matches_matrix_inverse() {
     let matrix = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(7), r(11)], [r(0), r(0), r(13)]]);
@@ -1440,6 +1467,9 @@ fn matrix3_known_upper_triangular_inverse_matches_matrix_inverse() {
     );
 }
 
+/// Checks an explicit rational triangular inverse across named and ordinary paths.
+///
+/// Inactive-signal and checked variants must match the same expected entries.
 #[test]
 fn matrix3_known_lower_triangular_inverse_matches_matrix_inverse() {
     let matrix = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(5), r(0)], [r(7), r(11), r(13)]]);
@@ -1462,6 +1492,10 @@ fn matrix3_known_lower_triangular_inverse_matches_matrix_inverse() {
     );
 }
 
+/// Checks singular triangular rejection through named, ordinary checked and inactive-signal inverses.
+///
+/// The shared assertion permits either DivideByZero or UnknownZero; it does not
+/// require a complete singularity proof.
 #[test]
 fn matrix3_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(0), r(11)], [r(0), r(0), r(13)]]);
@@ -1471,6 +1505,10 @@ fn matrix3_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
 
+/// Checks singular triangular rejection through named, ordinary checked and inactive-signal inverses.
+///
+/// The shared assertion permits either DivideByZero or UnknownZero; it does not
+/// require a complete singularity proof.
 #[test]
 fn matrix3_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(11), r(0)], [r(5), r(13), r(0)]]);
@@ -1480,6 +1518,9 @@ fn matrix3_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
 
+/// Compares named and ordinary upper-triangular division with multiplication by the computed inverse.
+///
+/// This is agreement between related matrix paths, not an independent quotient oracle.
 #[test]
 fn matrix3_known_upper_triangular_div_matrix_matches_matrix_division() {
     let numerator = Matrix3::new([
@@ -1500,6 +1541,7 @@ fn matrix3_known_upper_triangular_div_matrix_matches_matrix_division() {
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
+/// Compares named and ordinary lower-triangular division with multiplication by the computed inverse.
 #[test]
 fn matrix3_known_lower_triangular_div_matrix_matches_matrix_division() {
     let numerator = Matrix3::new([
@@ -1520,6 +1562,7 @@ fn matrix3_known_lower_triangular_div_matrix_matches_matrix_division() {
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
+/// Checks agreement of ordinary, generic checked and named checked upper-triangular division.
 #[test]
 fn matrix3_known_upper_triangular_div_matrix_checked_matches_ordinary() {
     let numerator = Matrix3::new([[r(3), r(1), r(4)], [r(1), r(5), r(9)], [r(2), r(6), r(5)]]);
@@ -1537,6 +1580,7 @@ fn matrix3_known_upper_triangular_div_matrix_checked_matches_ordinary() {
     );
 }
 
+/// Checks known-diagonal division against ordinary division on the same rational inputs.
 #[test]
 fn matrix3_known_diagonal_division_matches_matrix_division() {
     let numerator = Matrix3::new([

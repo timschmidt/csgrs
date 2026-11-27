@@ -9365,6 +9365,133 @@ contiguous boundary: `invert_matrix3_by_diagonal`, currently core.rs line 3824.
 The remaining 3×3/triangular helpers, later kernels/public APIs, remaining matrix
 tests and most of the wider repository still require audit.
 
+## 2026-11-27: Hyperlattice diagonal and triangular matrix schedules
+
+Base revision: `4e8c5b733`. The previous turn made progress by pushing the 4×4
+affine-helper audit. This batch continues at `invert_matrix3_by_diagonal`.
+Owning layer: Hyperlattice matrix arithmetic with Hyperreal scalar equality,
+knowledge and operations. Relevant contracts: P1/P3 for exact structural facts,
+P4/P10 for retained evidence and predicate/dispatch order, P6 for distinct scalar
+failures, and P5 for accurate work/cancellation claims. Before editing, review
+found 38 undocumented helpers, incorrect full-inverse complexity comments, and
+an incorrect reciprocal count in a 2D affine explanation. Focused original
+tests and the independent rational probe passed on the target revision.
+Implementation, signatures, predicates, trace calls, fixtures and assertions
+remain unchanged.
+
+Coverage:
+
+- Read and audited core.rs original lines 3824–4726, through
+  `divide_matrix3_by_lower_triangular_checked`. The 903-line block is now 1106
+  lines and has 38 documented functions. It covers 3×3 diagonal/triangular/2D
+  affine inverses, diagonal-affine division, 4×4 diagonal/triangular inverses,
+  left/right diagonal multiplication, and 3×3 diagonal/triangular row solves.
+- Read supporting scalar-scale and signed-product helpers plus inverse dispatch
+  as consumer context. Those later definitions do not receive whole-file or
+  completed-public-API credit from this batch.
+- Read and documented sixteen original tests: the 4×4 diagonal and uniform-scale
+  inverse tests; upper/lower triangular inverse agreement and singular-rejection
+  tests in both sizes; and the six 3×3 known-uniform inverse, known-diagonal
+  inverse, upper/lower triangular division, checked-upper division and diagonal
+  division tests. Result-only tests now explicitly avoid claiming that their
+  names establish reciprocal counts. The matrix test file remains partially
+  audited; prior test documentation is not counted again.
+
+Documented behavior and corrections:
+
+- Diagonal inverse helpers trust caller-established off-diagonal zeros. They
+  compare diagonal values structurally, in index order, to reuse a single
+  reciprocal. Equal symbolic representations, including π, can take this route;
+  it is distinct from the public rational-only uniform-scale fact. Otherwise
+  reciprocals are constructed in order. Checked wrappers finish all ascending
+  known-nonzero guards before equality checks or reciprocal construction.
+- The explicit 3×3 upper inverse computes off-diagonal entries (0,1), (1,2),
+  (0,2); the lower computes (1,0), (2,0), (2,1). The documentation records the
+  corner formulas and trusted shape, without changing this arithmetic order.
+- The 4×4 triangular inverse loops solve rows of X*A=I. Upper columns increase;
+  lower columns decrease, with each inner k loop ascending. Each fixed-size
+  helper performs four reciprocal constructions, ten cached result scalings,
+  and ten product/subtraction updates. Generalizing the three-index loop to n
+  gives cubic scalar-operation work, not a quadratic full inverse. Corrected
+  the old O(n²) claims; no scalar bit-complexity or practical-time bound follows.
+- Two-dimensional affine inversion forms `[R⁻¹ -R⁻¹t;0 1]`; the general path
+  shares one inverse of ad-bc, while the diagonal path uses two reciprocals.
+  Positive retained flags and affine shape are caller preconditions. Corrected
+  the old three-scale-factor claim for diagonal-affine division and the
+  inaccurate rank-one wording for the inverse translation vector.
+- Abort-aware 3×3 diagonal-affine inversion attaches both pivot clones before
+  either guard, even when the first guard fails. The general affine path
+  attaches the determinant before guarding/inverting it. These helpers do not
+  explicitly poll the flag or separately attach translations. This differs from
+  the 4×4 shortcut behavior documented in the preceding batch; no paths were
+  unified or reordered to make their behavior match.
+- Left diagonal multiplication scales rows; right multiplication scales columns.
+  The helpers clone factors/entries and perform nine or sixteen row-major
+  cached multiplications. Local names beginning `inv` do not indicate an inverse:
+  factors are used directly and may be zero. Diagonal division constructs
+  reciprocals before mutating the consumed dividend buffer.
+- Right triangular division solves x*U=b in increasing coordinate order and
+  x*L=b in decreasing order. Quadratic work for one variable-size row solve
+  becomes cubic for all n rows. The last 3×3 numerator uses an active signed
+  product sum. The affine-upper row helper instead uses the zero-pruning
+  `mul_sub_add` path and trusts two supplied reciprocal relations and a scalar
+  one. Affine-by-affine division reconstructs the canonical bottom row; arbitrary
+  dividends require the all-row formula.
+- All shape-specific kernels rely on caller-established shape. Checked scalar
+  guards do not revalidate it. The first unknown guard may return UnknownZero
+  before a later known zero is considered; no general sign refinement or partial
+  successful matrix is introduced. Removed misleading fraction-free/dangling
+  local commentary without altering the operations it described.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves identical executable source against `4e8c5b733` in both edited
+  Rust files, including attributes, existing assertions and trace/predicate calls.
+- Actual Hyperlattice builds and all sixteen selected original tests passed with
+  all features and no defaults. The all-feature baseline passed those tests too.
+  Tests ran in direct rustc harnesses linked to matching Cargo artifacts, with
+  60-second process limits; probes had 30-second external limits.
+- A Python standard-library Fraction Gauss–Jordan oracle generated exact expected
+  inverses and products independently of the fixed matrix helpers. Actual public
+  APIs matched it for 3×3/4×4 upper/lower matrices and general/diagonal 2D affine
+  matrices: three inverse modes and four right-division modes per fixture.
+  This is finite rational evidence, not a universal inverse or symbolic proof.
+- Additional actual-library assertions checked row/column scaling against
+  independently formed integer entries, uniform symbolic π inversion, and an
+  unknown x pivot before a zero y pivot. Exact trace assertions counted ten
+  `mul-cached` events for each named 4×4 triangular inverse; one general-affine
+  determinant attachment; two diagonal-affine attachments on success and on
+  first-guard failure; and one symbolic uniform-scale branch in each dimension.
+  The ten inner product/subtraction updates follow from the inspected finite
+  loops, not from a separate runtime counter. No existing count was loosened.
+- Before/after all-feature public-probe stdout matched exactly. No-default mode
+  repeated all semantic checks with tracing compiled out. These witnesses do not
+  cover every shape-specific helper or all cancellation/cache states.
+- Private library and explicit integration-test Rustdoc passed with warnings and
+  broken/private links denied in both configurations. The initial documentation
+  check interpreted two plain matrix indices as links; backtick formatting fixed
+  both without changing code. Full-text verification matched all 38 doc groups
+  on their individual private function pages. The sixteen new #[test] docs were
+  source-reviewed and executed; Rustdoc omits those functions. The 298 inspected
+  HTML pages are rendering evidence, not 298 completed API audits.
+- Cargo checks passed for the matrix integration target, mathbench and downstream
+  Hyperspatial library including Hyperlimit, with all features and no defaults.
+  Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target directory.
+- Full workflow checks remain owner-waived. No full matrix suite, timing benchmark,
+  code-size study, sanitizer, total-work bound or universal closure claim was
+  added. Fixed operation counts do not establish a timing or memory improvement.
+- Removed the two temporary test/probe executables. The shared Cargo target stays
+  near 2.5 GiB; no duplicate target tree was created. The root AGENTS.md mandate
+  for 100% public/private Rustdoc remains active; repository-wide completion is
+  still unproven and most of the wider repository remains open.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-tri-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-tri-audit/` temporary oracle, probes, checkers and private docs.
+The next contiguous boundary is `affine_inverse_translation2`, currently core.rs
+line 4931. Later 2D affine division, 4×4 row solves, multiply/transform/cofactor
+kernels, public APIs and remaining tests still need audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
