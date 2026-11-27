@@ -11350,6 +11350,104 @@ all Hyperlattice support files or the repository audit. Continue reviewing the
 crate root and remaining manifests, benchmark/support files and other crates.
 The AGENTS.md mandate for 100% public/private Rustdoc remains active.
 
+## Hyperlattice crate root and manifest (2026-11-27)
+
+Reviewed every line of `crates/hyperlattice/src/lib.rs` (108 → 173) and
+`crates/hyperlattice/Cargo.toml` (76, unchanged) on `2685bbc7c`. This closes the
+root-library/manifest reading records that earlier batches used only as context.
+Owner: Hyperlattice public exports, crate-level contracts, private module navigation
+and feature declarations. Relevant properties are P1/P3/P6/P9/P17–P20/P26/P37:
+exact scalar ingress, honest facts and errors, qualified composition, explicit
+projection and accurate package documentation. Missing witnesses were precise
+crate-level distinctions, private-module declaration docs and feature-specific
+consumer checks. The original single doctest passed before edits.
+
+The overview now distinguishes native Real expressions and structural equality
+from coordinate facts and geometric validity. It describes selected-divisor guards
+rather than claiming every checked operation follows one guard path. Result aliases
+add no validation/receipt, cancellation is cooperative, and mutable fact packets do
+not automatically become geometry proofs when consumed. Homogeneous/Aabb carriers
+accept degenerate data. These describe implementation boundaries without weakening
+the repository's target acceptance contract.
+
+Added twelve private-module declaration summaries, revised the interval reexport
+doc, and documented the local integer helper in the retained vector example. A new
+runnable exact-ingress example distinguishes imported 0.1_f64 from rational 1/10
+and rejects NaN. The complete feature table matches all nine nondefault manifest
+feature names. Reexports otherwise retain their original definitions and inherited
+API docs; no duplicate arithmetic/types, visibility, feature flags or lint changes
+were introduced.
+
+Feature and dependency observations checked against source and Cargo artifacts:
+
+- No optional features are enabled by default; native Hyperreal is required.
+- Serde enables native Real support and Point2 field derives. It does not implement
+  serialization for every local carrier. Its weak companion forwarding does not
+  activate the optional interval dependency on its own.
+- Arbitrary implementations generate the six complex/vector/matrix carriers from
+  integer or finite floating seeds, sanitizing nonfinite float patterns to zero.
+  This fuzz distribution is distinct from ordinary checked float conversion.
+- Dispatch tracing forwards to the opt-in thread-local native recorder; a build
+  feature alone does not start a recording scope.
+- The bare interval feature exposes the companion carriers without a scalar backend.
+  The five backend feature mappings preserve the companion's behavior and resource
+  qualification; Hyperreal enclosure integration also enables rational and dyadic
+  dependencies. Cartesian enclosures and retained correlated affine images are
+  distinguished in the overview.
+- The interval reexport retains this facade's Real/std dependencies. Primitive
+  allocation-free no_std consumers use the companion directly. This review reads
+  the manifests' compiler-version declarations but does not newly qualify their
+  minimum compilers, target platforms, package publication or resource bounds.
+
+Context reads checked the scalar guards/result aliases/trace macro, carrier
+introductions, Point2 derive, Arbitrary implementations and companion manifests and
+root semantics. Existing whole-file records for these lattice modules are not
+counted again; companion excerpts do not establish new whole-file completion there.
+The unchanged README quick-start source/text received supporting reads only, not
+whole-file README credit.
+
+Validation after the final edit:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and blank
+  lines leaves lib.rs executable source identical to `2685bbc7c`. All original
+  reexports, attributes, module order and feature gates are unchanged. Cargo.toml,
+  lockfile, old example assertions and README synchronization checks are unchanged.
+- Library builds and private library Rustdoc passed with all features, no defaults,
+  Serde only and interval only, using --locked --offline -j 2 and warnings plus
+  broken/private links denied for Rustdoc. Full rendered text of the entire overview
+  (including examples and table) and every enabled private-module summary matched
+  source in each configuration: thirteen groups with all features, twelve otherwise.
+- Rustdoc does not locally render attached comments on this external module
+  reexport. Verified the entire reexport comment in source and its reexport entry
+  in the generated index; the rendered overview carries the corresponding resource
+  and identity distinctions. Initial checker assumptions that the attached comment
+  was rendered were corrected, not hidden with a lint or documentation attribute.
+- Both doctests, both existing README tests and the unchanged runnable quick start
+  passed in all four configurations. Direct rustdoc/rustc harnesses used matching
+  Cargo artifacts/cfgs; each execution had a 60-second limit and none timed out.
+  Point2's rational-field JSON roundtrip also passed with all features and Serde
+  only; this is same-process value evidence, not a general replay/provenance proof.
+- Cargo artifact feature lists confirmed Serde-only has no interval companion, and
+  bare interval leaves both companion and Hyperinterval backend feature sets empty.
+  Static manifest comparison confirmed the feature table is complete for this root.
+- The first temporary direct-rustdoc invocation omitted optional dependency externs
+  and failed setup. Supplied the exact Cargo-built optional libraries and reran the
+  unchanged baseline successfully. Setup/render diagnostic logs are retained; final
+  checks have no warnings or failures. No repository dependency or fixture was changed.
+- Full workflows and unrelated downstream runtime suites remain owner-waived. The
+  documented examples and feature consumers are exercised, but this is not an
+  exhaustive backend/target or release qualification. No focused check remains blocked.
+- Removed three owned temporary executables. Four configurations share the existing
+  target, now about 2.7 GiB; no second target tree was created. Scripts and manifests
+  occupy about 60 KiB; library HTML stays in the shared target.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-root-*.log`, corresponding Cargo artifact JSON,
+and `/tmp/csgrs-lattice-root-audit/`. The crate still has pending whole-file review
+of its README, benchmark entry points/mathbench modules, retained-fuzz support,
+stored reports and other ancillary files. Consult earlier completed records before
+counting supporting files again. The repository-wide audit and AGENTS.md 100%
+public/private Rustdoc mandate remain active.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
