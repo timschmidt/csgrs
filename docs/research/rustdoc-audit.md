@@ -20850,6 +20850,132 @@ compilation disabled. AGENTS.md's existing 100% public/private Rustdoc mandate
 remains in force. Repository-wide line review and all-configuration coverage
 remain unfinished.
 
+## Hyperreal algebra normal forms and reconstruction, scoped review (27 November 2026)
+
+Baseline: `d4fdb6004c8f3959e190b13d5d261a1b81121459` on `rustdoc`.
+Reviewed the opening 854 baseline lines of
+`crates/hyperreal/src/computable/node/algebra.rs`, through the end of
+Computable::compact_pi_laurent, immediately before without_scaled_shared_factor.
+The same section now occupies 1048 lines. **This is not whole-file review credit:**
+the file has 2616 lines after this batch (2423 before); continue its remaining
+review at without_scaled_shared_factor. Later contextual reads of angle consumers
+and earlier scoped normal_quantile work do not establish coverage of the remainder.
+
+The 65 reviewed Rustdoc blocks cover five private structs, 15 fields, five impls,
+two associated constants, one module-level constant, 27 methods, two test modules,
+and eight fixture/test functions (one helper and seven tests). Ordinary private
+Rustdoc rendered 55 blocks; temporary Rustdoc with the two test modules enabled
+rendered the remaining ten. The five derived Clone implementations were checked
+in generated pages and their sharing/copying roles documented. The overarching
+Computable impl continues beyond this scope and receives no complete impl audit
+credit here. Closure bodies in the selected section were read in context.
+
+Ownership is Hyperreal's optional symbolic recognition/reconstruction layer,
+P1–P6, consumed by scalar predicates under P8–P11 and retained-evidence composition
+under P19–P20. The missing witness was accurate item-level documentation of the
+private normal forms, their domain assumptions, limited algebra, proof retention
+and reconstruction. Six quarter-turn tests, eight pi-Laurent tests, the retained
+rational-sign test and the acos-half composition test passed before editing
+(16 tests in total). Contextual reads included the existing Real compaction
+adapter/tests, exact normal-form dispatch, rational square extraction, structural
+argument readers and later angle consumers, without additional whole-file credit.
+
+The documented contracts now make these distinctions explicit:
+
+- PiAtanLinearForm and PiAcosLinearForm retain one recognized inverse-angle
+  argument with rational offset/pi/function coefficients. Zero coefficients may
+  retain an argument; distinct arguments can decline even with zero multipliers.
+  PiAtanTermsForm separately keeps a list for sign/order reasoning. Scaling can
+  leave zero list coefficients, while addition prunes them. These are recognizers,
+  not transcendence bases or general angle-addition algorithms.
+- Acos complements require nonnegative exact rational arguments a,b satisfying
+  a²+b²=1 before substituting acos(b)=pi/2-acos(a). The sign requirements select
+  the principal branches. Quarter-turn extraction requires zero offset, atan
+  multiplier ±1 and a half-integer pi coefficient; its tuple identifies the
+  coordinate swap and the signs multiplying the original atan coordinates.
+- RadicalCoefficient retains a rational summand, partially reduced principal
+  rational roots and structurally matched opaque atoms. Distinct radicals need
+  not be algebraically independent. Eight radical entries are admitted, but
+  opaque atoms have no local count cap. Rational scaling of atoms is supported;
+  atom*atom and atom*radical products decline. A reciprocal requires a nonzero
+  rational or a recognized single-radical conjugate norm. A zero norm alone is
+  not a universal proof that the original value is zero.
+- Laurent powers are sorted distinct i16 values, capped at eight entries, with
+  checked addition/negation of exponents. Empty storage denotes scalar zero.
+  Intermediate insertion limits can decline before a later cancellation; this
+  is a representation restriction, not undefined arithmetic. Failed single
+  insertions leave the receiver unchanged. The one-right-term multiplication
+  path consumes left coefficients while preserving the existing insertion order.
+- A query starts with a depth budget and 512 charged visits. Allocation-keyed
+  shared-node memo hits precede depth/work checks. Mathematical equality alone
+  does not create a memo hit. Unsupported expansion, including some exhausted
+  descendants, can remain an exact opaque atom, so Some(polynomial) need not
+  permit rational projection or reconstruction. Coefficient arithmetic, structural
+  comparisons, allocation, memory and cancellation are not fully accounted by
+  these counters. There is no total-resource guarantee or signal poll here.
+- Rational projection accepts only empty or power-zero purely rational forms,
+  retaining their exact sign on the shared root without rewriting the source or
+  caching the rational value in this method. Compaction uses depth 64, refuses
+  surviving atoms, reconstructs exact root/pi arithmetic and carries the already
+  valid root sign and outer abort signal. An asserted signal does not prevent
+  this purely symbolic work. No numerical approximation is required.
+- Fixture docs distinguish scalar interpolation from a geometric pcurve, and
+  same-process JSON replay from fresh-process replay. The 38 direct quarter-turn
+  cases use exact 3-4-5 coordinates. The diagonal case checks signs and squared
+  values 49/50 and 1/50, not rational leaf representation. Refusal fixtures retain
+  their 10^-12 perturbations and extra angle terms. The local compaction fixture
+  checks admission/root cache state; separate existing consumers check equality,
+  repeated compaction, signs and signal retention.
+
+Temporary probes on both baseline and documented source checked 625 coefficient
+products against integer expansion of (a+b*sqrt(2))*(c+d*sqrt(2)), 48 nonzero
+conjugate inverses against rational expectations and their identity product,
+402 quarter-turn coordinate permutations, eight-entry radical/Laurent limits,
+12 retained opaque atoms, unsupported nonlinear atom products, checked exponent
+overflow, complementary acos branches and shared-node accounting. An initial
+probe incorrectly assumed separate Computable::pi() calls shared an allocation:
+three visits were charged instead of two. The corrected probe preserves that
+case and separately constructs an explicit clone, verifying three versus two
+visits and a zero-budget memo hit. Its initial source/log remain in the evidence.
+No repository test or implementation was changed to resolve that probe assumption.
+
+**Domain-admission limitation reproduced:** a raw inverse-zero node minus itself
+can cancel through bounded_laurent_rational, returning and retaining zero on both
+revisions. This invalid raw expression bypasses constructor/import validation;
+it is not successful exact arithmetic and is not evidence that a validated public
+API admits the expression. The recognizer assumes defined source operands rather
+than independently checking every opaque inverse domain. The method docs now
+state that precondition and this concrete consequence. Runtime behavior remains
+unchanged in the docs-only session; the diagnostic is not counted as a conformance
+success or a proof that upstream admission is universally sufficient.
+
+After the final source edit, focused locked/offline two-job checks passed:
+
+- All 16 selected library/Real consumer tests without default features and all
+  16 with all features, including the seven newly documented tests.
+- Both private library Rustdoc builds with warnings, broken intra-doc links and
+  private intra-doc links denied; temporary fixture Rustdoc with the same
+  diagnostics denied; all 65 rendered-block checks and five Clone anchors.
+- All-feature `serde_graph_domains` (four tests), `serde_opaque_operand_domains`
+  (five tests), and downstream Hyperlimit `resolve::tests` (five tests).
+- Selected Rustfmt and git diff --check. Rustfmt removed one trailing comma and
+  inserted another in the selected fixtures, and rewrapped one later contextual
+  angle-reader line. Other non-comment tokens are identical; independently
+  formatted comment-free token streams are fully identical for the entire file.
+  The suffix beyond the review boundary has identical tokens. No predicate order,
+  signature, assertion, fixture value or runtime algorithm changed.
+
+No focused check remains blocked. Probes used external containment (1 GiB address
+space, ten CPU seconds, fifteen wall seconds, no core dumps), not a claim about
+production resource guarantees. Full workflows and performance measurements
+remain owner-waived for this docs-only session; no performance claim is made.
+Evidence under `/tmp/csgrs-hyperreal-algebra-normal-forms-audit/` retains scripts,
+logs, probe sources and scoped item/render/token inventories. Owned shadow sources,
+probe executable/rlib and temporary HTML were removed after inspection, reusing
+the approximately 6.6 GiB shared Cargo target with incremental compilation disabled.
+AGENTS.md's existing 100% public/private Rustdoc mandate remains in force.
+Repository-wide line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

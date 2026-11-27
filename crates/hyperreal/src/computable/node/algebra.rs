@@ -1,15 +1,31 @@
+/// Recognized constant + pi*pi_coefficient + atan_coefficient*atan(argument).
+/// All coefficients are exact rationals; at most one structurally recognized
+/// principal-atan argument is retained. A zero coefficient may keep its argument.
+/// This query form assumes defined operands and is not a domain validator.
+/// Clone copies coefficients and shares the Computable argument and its facts.
 #[derive(Clone)]
 struct PiAtanLinearForm {
+    /// Exact rational offset, which quarter-turn recognition requires to be zero.
     constant: Rational,
+    /// Exact coefficient of pi, not the represented angle itself.
     pi: Rational,
+    /// Exact multiplier of the retained principal arctangent; it may be zero.
     atan: Rational,
+    /// Retained atan operand; absent only when no operand is needed by the form.
     argument: Option<Computable>,
 }
 
+/// Exact trigonometric composition fixtures for recognized quarter and diagonal rotations.
+/// Raw reconstruction, refusal/retry, and optional same-process serde replay exercise
+/// the retained angle without sampling its root. These tests do not build a geometric
+/// pcurve or establish fresh-process replay or universal recognition completeness.
 #[cfg(test)]
 mod quarter_turn_atan_tests {
     use super::*;
 
+    /// Build an unreduced expression with invalid bound evidence, Unknown exact sign and no signal.
+    /// This exposes the reconstruction path instead of constructor simplifications;
+    /// fixture authors supply defined operands, since the helper does not validate domains.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -21,6 +37,10 @@ mod quarter_turn_atan_tests {
         }
     }
 
+    /// Recover sin=-4/5 and cos=-3/5 from a reconstructed angle a-pi, with a=atan(4/3).
+    /// The raw interpolation uses q=(pi-2*pi)/(2*pi)=-1/2 and must leave both queried
+    /// angle and q unsampled. With serde enabled, an in-process JSON round trip must
+    /// recover the same rational coordinates without sampling the replayed angle.
     #[test]
     fn reconstructed_periodic_interpolation_retains_exact_trigonometry() {
         // Splitting and replaying a periodic pcurve retains this expression:
@@ -74,14 +94,18 @@ mod quarter_turn_atan_tests {
         }
     }
 
+    /// Check atan(±4/3)+k*pi/2 for all integers k from -9 through 9.
+    /// Rotate the independent 3-4-5 coordinates by k modulo four and require exact
+    /// rational sine/cosine values while the angle root stays unsampled (38 cases).
     #[test]
     fn direct_computable_quarter_turns_keep_exact_rational_coordinates() {
         for numerator in [-4, 4] {
             let argument = Computable::rational(Rational::fraction(numerator, 3).unwrap());
             for turns in -9_i64..=9 {
-                let angle = argument.clone().atan().add(
-                    Computable::pi().multiply_rational(Rational::fraction(turns, 2).unwrap()),
-                );
+                let angle = argument
+                    .clone()
+                    .atan()
+                    .add(Computable::pi().multiply_rational(Rational::fraction(turns, 2).unwrap()));
                 let s = Rational::fraction(numerator, 5).unwrap();
                 let c = Rational::fraction(3, 5).unwrap();
                 let (s, c) = match turns.rem_euclid(4) {
@@ -98,6 +122,10 @@ mod quarter_turn_atan_tests {
         }
     }
 
+    /// Require five unsupported quarter-turn forms to decline without sampling the root.
+    /// Cases retain a pi/3 shift, a 10^-12 offset, doubled atan multiplicity, an
+    /// irrational atan scale, or two distinct atan arguments. None is a recognition
+    /// refusal, not proof that the expression lacks exact trigonometric values.
     #[test]
     fn quarter_turn_recognizer_does_not_admit_other_angles_or_discard_offsets() {
         let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
@@ -121,6 +149,10 @@ mod quarter_turn_atan_tests {
         }
     }
 
+    /// Preserve a 10^-12 coefficient perturbation and retry an exact reconstructed quarter turn.
+    /// The perturbed angle must decline; depth-entry budgets zero and one fail on the
+    /// unperturbed form, whose later ordinary recognition succeeds without sampling.
+    /// This checks refusal/retry, not a total-work bound or negative cached evidence.
     #[test]
     fn unrecognized_or_exhausted_coefficients_do_not_invent_quarter_turns() {
         let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
@@ -153,6 +185,10 @@ mod quarter_turn_atan_tests {
         assert!(quarter.cached().is_none());
     }
 
+    /// Recognize atan(4/3)+pi/4 after a zero-budget attempt declines.
+    /// Require positive sine, negative cosine and exact squared values 49/50 and 1/50
+    /// via bounded Laurent proofs. The generated values need not be rational leaves;
+    /// the original angle must remain unsampled.
     #[test]
     fn diagonal_rotation_reuses_exact_coefficients_without_refinement() {
         let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
@@ -176,14 +212,20 @@ mod quarter_turn_atan_tests {
         assert!(angle.cached().is_none());
     }
 
+    /// Decline five forms outside the odd-pi/4, unit-atan recognizer while retaining unsampled roots.
+    /// Keep a 10^-12 offset, doubled atan multiplicity, pi/3 and pi/2 shifts, and a
+    /// second distinct atan argument explicit. A quarter turn belongs to another recognizer.
     #[test]
     fn diagonal_rotation_never_discards_offsets_or_changes_atan_multiplicity() {
         let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
         let diagonal = atan.clone().add(Computable::pi().shift_right(2));
         for value in [
-            diagonal.clone().add(Computable::rational(Rational::fraction(1, 1_000_000_000_000).unwrap())),
+            diagonal.clone().add(Computable::rational(
+                Rational::fraction(1, 1_000_000_000_000).unwrap(),
+            )),
             diagonal.shift_left(1),
-            atan.clone().add(Computable::pi().multiply_rational(Rational::fraction(1, 3).unwrap())),
+            atan.clone()
+                .add(Computable::pi().multiply_rational(Rational::fraction(1, 3).unwrap())),
             atan.clone().add(Computable::pi().shift_right(1)),
             atan.add(Computable::rational(Rational::fraction(5, 12).unwrap()).atan()),
         ] {
@@ -193,10 +235,16 @@ mod quarter_turn_atan_tests {
     }
 }
 
+/// Check optional Laurent reconstruction's success/refusal without sampling the queried root.
+/// This fixture distinguishes a covered radical polynomial from a surviving opaque sine;
+/// semantic equality and evidence-retention consumers have separate tests.
 #[cfg(test)]
 mod pi_laurent_compaction_node_tests {
     use super::*;
 
+    /// Require compaction of (pi+sqrt(13))²-pi² and refusal of sin(7)+sqrt(13).
+    /// Both roots stay unsampled before and after the call. The test checks admission
+    /// and cache state, not the reconstructed value's equality by itself.
     #[test]
     fn compact_pi_laurent_uses_no_approximation_for_success_or_failure() {
         let root = Computable::sqrt_rational(Rational::from(13));
@@ -211,35 +259,63 @@ mod pi_laurent_compaction_node_tests {
     }
 }
 
+/// Recognized rational offset plus rational multiples of pi and one principal acos.
+/// The optional retained argument must already be admitted in [-1,1]. Complementary
+/// nonnegative rational arguments may share this form through their exact unit-circle
+/// relation. Clone copies coefficients and shares the argument; it adds no domain proof.
 #[derive(Clone)]
 struct PiAcosLinearForm {
+    /// Exact rational offset independent of the inverse angle and pi.
     constant: Rational,
+    /// Exact rational coefficient of pi, including complementary-angle adjustments.
     pi: Rational,
+    /// Exact coefficient of the retained principal acos, possibly zero.
     acos: Rational,
+    /// Retained acos operand; zero coefficients may still retain an argument.
     argument: Option<Computable>,
 }
 
+/// Rational offset and pi coefficient with a linear list of principal arctangent terms.
+/// Distinct structurally recognized operands remain separate for sign/order deductions.
+/// This is not a minimal transcendence basis or a general atan addition formula.
+/// Clone copies the list and coefficients while sharing its Computable operands.
 #[derive(Clone)]
 struct PiAtanTermsForm {
+    /// Exact rational offset used by the sign recognizer.
     constant: Rational,
+    /// Exact rational multiplier of pi.
     pi: Rational,
+    /// Pairs of retained atan operand and rational multiplier; scaling may leave zero multipliers.
     terms: Vec<(Computable, Rational)>,
 }
 
 // A bounded recognition form for exact rational combinations of positive
 // rational square roots and opaque linear atoms. Independent radicals retain
 // their identities instead of turning their entire sum into one opaque atom.
+/// Exact rational linear combination of principal rational roots and opaque scalar atoms.
+/// Root entries hold (radicand, multiplier); atom entries hold (value, multiplier).
+/// Operands must already be defined and roots nonnegative. Square extraction is
+/// partial, so distinct stored radicals need not be algebraically independent.
+/// Clone copies vectors and rationals while sharing opaque nodes and retained facts.
 #[derive(Clone)]
 struct RadicalCoefficient {
+    /// Exact root-free and atom-free summand.
     rational: Rational,
+    /// Nonzero coefficients keyed by retained radicands; normally at most eight, without full factorization.
     radicals: Vec<(Rational, Rational)>,
+    /// Opaque value/coefficient pairs merged by structural recognition; no local atom-count cap.
     atoms: Vec<(Computable, Rational)>,
 }
 
+/// Optional exact coefficient arithmetic with restricted nonlinear combinations.
+/// None declines this representation; it is not a typed domain/resource diagnosis.
+/// These helpers neither poll cancellation nor impose a coefficient-bit or total-work limit.
 impl RadicalCoefficient {
     // Bounds optional symbolic recognition, never the underlying exact DAG.
+    /// Maximum distinct retained radical entries accepted by insertion; not a bound on opaque atoms.
     const MAX_RADICAL_TERMS: usize = 8;
 
+    /// Create a coefficient containing only the exact rational summand, including canonical zero.
     fn rational(value: Rational) -> Self {
         Self {
             rational: value,
@@ -248,6 +324,9 @@ impl RadicalCoefficient {
         }
     }
 
+    /// Represent value*sqrt(radicand), requiring a nonnegative rational radicand.
+    /// Reuse retained partial square extraction, absorb its scale and fold residual one
+    /// or a zero multiplier into the rational part. This does not fully factor every radicand.
     fn radical(value: Rational, radicand: Rational) -> Self {
         let (scale, radicand) = radicand.extract_square_reduced_retained();
         let value = value * scale;
@@ -261,6 +340,8 @@ impl RadicalCoefficient {
         }
     }
 
+    /// Retain an already-defined scalar as one opaque atom with coefficient one.
+    /// No rational/zero recognition or domain validation is attempted here.
     fn atom(value: Computable) -> Self {
         Self {
             rational: Rational::zero(),
@@ -269,10 +350,16 @@ impl RadicalCoefficient {
         }
     }
 
+    /// Recognize the empty exact form: zero rational part and no radical or atom entries.
+    /// False means this stored form is not empty, not proof that its scalar value is nonzero.
     fn is_zero(&self) -> bool {
         self.rational.sign() == Sign::NoSign && self.radicals.is_empty() && self.atoms.is_empty()
     }
 
+    /// Merge a normalized radical term by exact radicand equality, dropping zero coefficients.
+    /// Residual one contributes to the rational part; other radicands are not reduced here.
+    /// At eight distinct entries a new key returns None without mutation, while existing
+    /// keys can still cancel. Callers maintain the cap and fold zero radicands beforehand.
     fn insert_radical(&mut self, radicand: Rational, coefficient: Rational) -> Option<()> {
         if coefficient.sign() == Sign::NoSign {
             return Some(());
@@ -299,6 +386,9 @@ impl RadicalCoefficient {
         Some(())
     }
 
+    /// Merge a linear atom by internal structural equality and drop a cancelled coefficient.
+    /// A zero input coefficient is ignored. Distinct but mathematically equal opaque
+    /// values need not merge; this method has no separate atom-count limit.
     fn insert_atom(&mut self, atom: Computable, coefficient: Rational) {
         if coefficient.sign() == Sign::NoSign {
             return;
@@ -317,6 +407,9 @@ impl RadicalCoefficient {
         }
     }
 
+    /// Consume two coefficients, merging rationals, radicals and then opaque atoms in order.
+    /// Decline if an intermediate radical insertion exceeds its cap, even if a later term
+    /// could cancel it. Partial local work is discarded with the consumed value on None.
     fn add(mut self, other: Self) -> Option<Self> {
         self.rational = self.rational + other.rational;
         for (radicand, coefficient) in other.radicals {
@@ -328,6 +421,8 @@ impl RadicalCoefficient {
         Some(self)
     }
 
+    /// Multiply every summand by an exact rational, removing zero radical/atom entries.
+    /// Scaling by zero produces the empty coefficient form. No domain validation is added.
     fn scale_in_place(&mut self, scale: &Rational) {
         self.rational *= scale;
         for (_, coefficient) in &mut self.radicals {
@@ -342,6 +437,10 @@ impl RadicalCoefficient {
             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
     }
 
+    /// Distribute supported products, using equal-root squares and partial square extraction.
+    /// Rational factors may scale opaque atoms, but atom*atom and atom*radical products
+    /// decline before expansion. Intermediate radical-cap failures also decline;
+    /// None does not imply the exact product is undefined or lacks another representation.
     fn multiply(self, other: &Self) -> Option<Self> {
         if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))
             || (!other.atoms.is_empty() && !self.radicals.is_empty())
@@ -375,6 +474,10 @@ impl RadicalCoefficient {
         Some(result)
     }
 
+    /// Invert a nonzero rational or an atom-free single-radical form using its conjugate norm.
+    /// For a+b*sqrt(d), require invertible rational norm a²-b²*d, then return
+    /// (a-b*sqrt(d))/norm. Atoms, multiple radicals and zero norm decline; zero norm
+    /// alone is not a proof that the original value is zero. Caller domain assumptions persist.
     fn inverse(self) -> Option<Self> {
         if !self.atoms.is_empty() {
             return None;
@@ -395,8 +498,14 @@ impl RadicalCoefficient {
     }
 }
 
+/// Sorted finite sum of pi^power times restricted exact RadicalCoefficient values.
+/// Powers are signed i16 and distinct; structurally empty coefficients are omitted.
+/// The empty vector denotes zero. This bounded recognition form does not replace
+/// the source DAG or prove independence of opaque atoms; Clone copies coefficient
+/// storage while retaining shared opaque dependencies.
 #[derive(Clone)]
 struct PiLaurentPolynomial {
+    /// Increasing signed powers paired with nonempty coefficients; normal insertion admits at most eight.
     terms: Vec<(i16, RadicalCoefficient)>,
 }
 
@@ -405,11 +514,21 @@ struct PiLaurentPolynomial {
 // wide, mostly unshared arithmetic DAG before the query returns `None`.
 // Bound aggregate node visits as well; callers retain their ordinary exact
 // representation when this recognition budget is exhausted.
+/// Limit charged uncached node visits in one Laurent recognition query to 512.
+/// Shared-node memo hits bypass the charge; recursive depth is a separate input.
+/// Coefficient arithmetic, allocations and structural comparisons are not fully
+/// metered by this count, and exhaustion can leave an exact opaque remainder.
 const MAX_PI_LAURENT_NORMAL_FORM_NODES: usize = 512;
 
+/// Preserve sorted Laurent terms with checked exponents and restricted coefficient arithmetic.
+/// Optional failure keeps the source DAG authoritative; these helpers do not poll
+/// cancellation or provide total-work, coefficient-growth or memory accounting.
 impl PiLaurentPolynomial {
+    /// Maximum distinct pi powers admitted during insertion, including intermediate expansion.
     const MAX_TERMS: usize = 8;
 
+    /// Create one term at any representable signed power, or the empty polynomial for structural zero.
+    /// The coefficient is trusted to satisfy its own domain/storage invariants.
     fn monomial(power: i16, coefficient: RadicalCoefficient) -> Self {
         Self {
             terms: (!coefficient.is_zero())
@@ -419,6 +538,9 @@ impl PiLaurentPolynomial {
         }
     }
 
+    /// Insert in increasing power order or merge an existing coefficient, removing structural zero.
+    /// Decline a ninth distinct power or failed coefficient addition. The receiver stays
+    /// unchanged on either failure because a matching coefficient is cloned before merging.
     fn insert(&mut self, power: i16, coefficient: RadicalCoefficient) -> Option<()> {
         if coefficient.is_zero() {
             return Some(());
@@ -445,6 +567,9 @@ impl PiLaurentPolynomial {
         Some(())
     }
 
+    /// Consume and merge terms in the right operand's stored order, preserving sorted powers.
+    /// An intermediate term/coefficient cap can decline before later cancellations;
+    /// partial changes are confined to the consumed local value.
     fn add(mut self, other: Self) -> Option<Self> {
         for (power, coefficient) in other.terms {
             self.insert(power, coefficient)?;
@@ -452,6 +577,8 @@ impl PiLaurentPolynomial {
         Some(self)
     }
 
+    /// Scale every coefficient by an exact rational, clearing the polynomial for scale zero.
+    /// For admitted nonzero coefficients, a nonzero rational scale preserves stored powers.
     fn scaled(mut self, scale: Rational) -> Self {
         if scale.sign() == Sign::NoSign {
             self.terms.clear();
@@ -463,6 +590,10 @@ impl PiLaurentPolynomial {
         self
     }
 
+    /// Convolve term pairs with checked i16 exponent sums and restricted coefficient products.
+    /// Decline exponent overflow, unsupported products or intermediate term/radical caps.
+    /// A single right term consumes each left coefficient once, preserving insertion
+    /// order; other products clone it per right term. Empty factors yield empty output.
     fn multiply(self, other: Self) -> Option<Self> {
         let mut product = Self { terms: Vec::new() };
         if let [(right_power, right_coefficient)] = other.terms.as_slice() {
@@ -488,6 +619,9 @@ impl PiLaurentPolynomial {
         Some(product)
     }
 
+    /// Invert exactly one term by checked exponent negation and coefficient inversion.
+    /// Empty or multi-term polynomials, i16::MIN exponents and unrecognized coefficient
+    /// inverses decline; this is not a general rational-function inversion algorithm.
     fn inverse_monomial(mut self) -> Option<Self> {
         if self.terms.len() != 1 {
             return None;
@@ -497,7 +631,11 @@ impl PiLaurentPolynomial {
     }
 }
 
+/// Combine linear atan evidence without evaluating inverse functions or polling cancellation.
+/// Structural matching and rational arithmetic have no independent list-size or work cap.
 impl PiAtanTermsForm {
+    /// Multiply the offset, pi multiplier and every atan coefficient by the rational scale.
+    /// Retain the operand list even when coefficients become zero; add performs pruning.
     fn scaled(mut self, scale: Rational) -> Self {
         self.constant *= &scale;
         self.pi *= &scale;
@@ -507,6 +645,9 @@ impl PiAtanTermsForm {
         self
     }
 
+    /// Merge structurally matching atan operands, add offset/pi coefficients and remove zero terms.
+    /// Preserve existing order, appending new operands. Equality is structural recognition,
+    /// not a decision procedure for all mathematically equal arctangents.
     fn add(mut self, other: Self) -> Self {
         self.constant = self.constant + other.constant;
         self.pi = self.pi + other.pi;
@@ -527,7 +668,10 @@ impl PiAtanTermsForm {
     }
 }
 
+/// Combine a single principal-acos basis with exact rational scaling and complementary angles.
+/// Inputs must already satisfy their real domains; no approximation or cancellation poll occurs.
 impl PiAcosLinearForm {
+    /// Scale all rational coefficients while retaining the optional argument, even at zero scale.
     fn scaled(mut self, scale: Rational) -> Self {
         self.constant *= &scale;
         self.pi *= &scale;
@@ -535,6 +679,11 @@ impl PiAcosLinearForm {
         self
     }
 
+    /// Merge the same structural acos operand or convert a nonnegative rational complement.
+    /// For distinct arguments a,b, require a,b>=0 and a²+b²=1, then substitute
+    /// acos(b)=pi/2-acos(a) and retain a. Signs are essential to select the principal
+    /// branches. Unsupported distinct arguments decline even if a coefficient is zero;
+    /// the result may retain an argument whose final coefficient cancels.
     fn add(self, mut other: Self) -> Option<Self> {
         let argument = match (&self.argument, &other.argument) {
             (Some(left), Some(right)) if !Computable::internal_structural_eq(left, right) => {
@@ -566,7 +715,14 @@ impl PiAcosLinearForm {
     }
 }
 
+/// Combine a single principal-atan basis and extract exact quarter-turn coordinate permutations.
+/// Defined operands are a precondition; these helpers do not refine or poll cancellation.
 impl PiAtanLinearForm {
+    /// Recognize k*pi/2 ± atan(x), returning (swap, sine_sign, cosine_sign, x).
+    /// Require zero rational offset, atan coefficient ±1 and an existing operand.
+    /// For even k, signs multiply sin(atan(x)) and cos(atan(x)); for odd k, swap those
+    /// base coordinates first. Exact parity handles negative turns without reducing x.
+    /// Other coefficients/turns decline, rather than being rounded to a supported angle.
     fn quarter_turn_parts(self) -> Option<(bool, Sign, Sign, Computable)> {
         if self.constant.sign() != Sign::NoSign
             || (!self.atan.is_one() && !self.atan.is_minus_one())
@@ -610,6 +766,7 @@ impl PiAtanLinearForm {
         Some((false, sine_sign, cosine_sign, self.argument?))
     }
 
+    /// Scale the rational offset, pi and atan coefficients without dropping the retained argument.
     fn scaled(mut self, scale: Rational) -> Self {
         self.constant *= &scale;
         self.pi *= &scale;
@@ -617,6 +774,9 @@ impl PiAtanLinearForm {
         self
     }
 
+    /// Add coefficients only when retained atan arguments match structurally or one is absent.
+    /// Different arguments decline even with zero multipliers. Cancellation may leave a
+    /// zero atan coefficient with its original operand still present.
     fn add(self, other: Self) -> Option<Self> {
         let argument = match (&self.argument, &other.argument) {
             (Some(left), Some(right)) if !Computable::internal_structural_eq(left, right) => {
@@ -635,12 +795,30 @@ impl PiAtanLinearForm {
 }
 
 impl Computable {
+    /// Recognize a restricted Laurent form using the supplied depth budget and 512 node charges.
+    /// Start with no shared-node memo; unsupported subexpressions may survive as exact
+    /// opaque atoms. None is a recognition refusal, not a proof of irrationality or
+    /// invalidity. Operands must already be defined; this query is not a domain validator
+    /// and neither approximates nor polls the signal. The counters are not total resource bounds.
     fn pi_laurent_polynomial(&self, budget: usize) -> Option<PiLaurentPolynomial> {
         let mut memo = None;
         let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
         self.pi_laurent_polynomial_with_memo(budget, &mut remaining_work, &mut memo)
     }
 
+    /// Recursively retain exact rational, shared-constant, radical and opaque-atom structure.
+    /// Use a query-local allocation-keyed memo only for shared nodes; a hit returns before
+    /// depth/work checks. Otherwise charge one visit, then descend with depth minus one.
+    /// Inverse trig leaves remain atoms; supported arithmetic expands within coefficient
+    /// and exponent limits. Expansion failure becomes an opaque atom for that whole node,
+    /// so a successful form need not be fully expanded or fit reconstruction's envelope.
+    ///
+    /// Nonnegative rational sqrt arguments can become radical coefficients. Inverses
+    /// expand only for admitted monomials with a recognized coefficient inverse;
+    /// unrecognized inverses can remain opaque. Later structural cancellation assumes
+    /// all original operands are defined, rather than independently validating them.
+    /// Memo entries include the current query's result, potentially an opaque fallback;
+    /// no failed recognition is stored as a persistent negative mathematical fact.
     fn pi_laurent_polynomial_with_memo(
         &self,
         budget: usize,
@@ -785,6 +963,13 @@ impl Computable {
         result
     }
 
+    /// Return a rational only when the optional Laurent form is empty or purely rational at power zero.
+    /// On success retain its exact sign in the shared root facts; do not change the source
+    /// representation or retain the rational value itself here. None leaves no negative
+    /// proof and may reflect limits or a surviving radical/atom/power. Defined input
+    /// operands are required; this recognizer does not certify arbitrary imported domains.
+    /// For example, a raw inverse-zero expression minus itself can cancel here and
+    /// publish zero; callers must validate domains before invoking this proof path.
     pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {
         let polynomial = self.pi_laurent_polynomial(budget)?;
         let rational = match polynomial.terms.as_slice() {
@@ -804,6 +989,15 @@ impl Computable {
         Some(rational)
     }
 
+    /// Reconstruct a depth-64 recognized Laurent form only when no opaque atoms survive.
+    /// Build exact rational/root coefficients and signed pi powers by repeated squaring,
+    /// then add terms. An empty polynomial reconstructs scalar zero. Preserve an already
+    /// valid root sign and the original outer abort signal.
+    ///
+    /// None means recognition or reconstruction eligibility declined, leaving the original
+    /// value available. No numerical refinement or signal poll occurs, but construction
+    /// can allocate and reuse/store exact facts. The depth/node/term limits do not bound
+    /// all coefficient work or retained memory; defined source operands remain a prerequisite.
     pub(crate) fn compact_pi_laurent(&self) -> Option<Self> {
         let polynomial = self.pi_laurent_polynomial(64)?;
         // Rebuild only coefficients in the admitted rational/radical basis.
@@ -975,8 +1169,7 @@ impl Computable {
             && form.atan.is_zero()
             && form.argument.is_none()
         {
-            let (sine_sign, cosine_sign, argument) =
-                AtanPiAnchor::periodic_trig_argument(form.pi)?;
+            let (sine_sign, cosine_sign, argument) = AtanPiAnchor::periodic_trig_argument(form.pi)?;
             return Some((false, sine_sign, cosine_sign, argument));
         }
         form.quarter_turn_parts()
