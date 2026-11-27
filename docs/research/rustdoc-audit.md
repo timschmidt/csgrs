@@ -14170,6 +14170,131 @@ target. No focused check remains blocked. Runtime-chain internals, shared serial
 remaining support/conformance files and the repository-wide audit remain open; scoped
 block counts do not establish repository-wide coverage.
 
+## Hyperlattice-interval runtime chains and native serialization (2026-11-27)
+
+Whole-file review on target revision 5690a13d9b2e265a7f4d4f7d0ab9762b0ec20b1b:
+
+- crates/hyperlattice-interval/src/affine/chain.rs (216 -> 257 lines).
+- crates/hyperlattice-interval/src/serde.rs (255 -> 349 lines).
+- crates/hyperlattice-interval/tests/affine_chain.rs (328 -> 365 lines).
+- crates/hyperlattice-interval/tests/affine_chain_replay.rs (142 -> 164 lines).
+
+The owning layer retains bounded runtime map sequences and native definitions of
+Cartesian/affine products. P1/P5/P6/P18/P20/P26/P27/P37 and the admission protocol
+govern exact source retention, resource distinctions, validation before admission,
+composition and replay. The domain includes arbitrary const dimensions/capacities,
+validated scalar families, nested exact sources, empty/unit products, off-grid
+intermediate definitions and malformed wire data. Twelve focused chain/replay tests
+passed on the target revision before edits. The missing acceptance evidence was
+Rustdoc on private fields/impls, pullback internals, native array adapters and their
+function-local visitors/seeds, together with test support. No algorithm, outcome,
+assertion, fixture, dependency or feature changed.
+
+The 101 authored doc blocks cover 49 function declarations. Review distinguishes:
+
+- Chains own a validated source, an occupied map prefix and unused None slots.
+  Capacity limits retained map count; scalar complexity, input parsing, stack and
+  total work remain separate. Construction initializes CAP slots without arithmetic.
+  Access/ownership iterators expose only the occupied prefix in application order,
+  support reverse traversal, and rely on constructor/push invariants. Consuming
+  iteration retains its inline array until consumed or dropped.
+- Restriction processes the source first, then copies maps in application order,
+  matrix before translation. Copies still occur for an empty restricted domain.
+  Projection borrows the last map and traverses predecessors backward, computing
+  each combined matrix before translation. External maps consume the full prefix.
+  Temporary bounds and errors do not replace stored definitions or refund work.
+- The earlier scratch-space description was too broad: a constant number of
+  matrix/vector carriers does not imply constant exact-scalar storage. The zero-map
+  description now explicitly delegates to the source's enclosure; only a Cartesian
+  source necessarily performs the plain source-copy operation. This preserves nested
+  image/source semantics without inventing identity coefficients or a redundant copy.
+- The shared array visitor reads exactly N typed elements and performs one IgnoredAny
+  lookahead. Missing/extra elements fail; parsing an extra value or decoding one
+  element can exceed any inference based only on the length limit. Partial arrays
+  use the existing array_result cleanup. Vector/matrix decoding completes all scalar
+  entries before native empty canonicalization, so early empty entries cannot hide
+  malformed later entries. Family validation still applies at zero dimensions.
+- Serialization borrows carrier data and emits original map/source definitions.
+  Matrix encoding builds an inline array of row references. Formats and scalar
+  codecs may allocate; no arithmetic budget or total parsing bound is provided.
+  Serializer errors can leave a prefix in the caller's sink. This is not a
+  transactional output contract or a blanket allocation-free serialization claim.
+- Native maps decode both carriers before singleton validation. Images decode the
+  source and last map even for an empty source, then transfer ownership into an image.
+  Runtime wire data contains only source and occupied maps: receiving capacity and
+  unused slots are not encoded. Local seeded visitors decode source first, then maps,
+  enforce the receiving capacity via push, and reject an extra outer tuple element.
+  Each excess map is decoded/validated before capacity rejection, including CAP=0;
+  after an error the visitor requests no subsequent maps. Owned partial definitions
+  drop normally. Constructor failures become Serde errors via custom conversion.
+- The finite runtime corpus checks all 781 words of lengths zero through four over
+  five noncommuting/invertible/singular maps with independent integer-corner extrema.
+  Static/runtime/static consumers, nested zero-map chains, restrictions and empty
+  results remain distinct. Fixed fixtures exercise unavailable scalar one, capacity
+  rebuild, off-grid points and overflowing projection followed by a zero map.
+  Dyadic fixtures distinguish literal endpoint expectations from work admission/retry.
+- Fresh-process replay sends 33 alternating half/two maps with restricted source
+  parameters from capacity 33 into capacity 40. The child checks identical encoding,
+  appends a map and round-trips a further static image locally before projection.
+  A readable marker bypasses spawn; parent runs clear it. The harness checks captured
+  status without an internal timeout. Invalid map positions and receiving capacities
+  are checked for both empty and nonempty sources.
+
+Context included existing array_result cleanup, Cartesian construction and copying,
+static affine pullback, native replay consumers and actual Hyperlattice reexports.
+Those excerpts do not add whole-file review credit beyond prior records. The earlier
+whole-file tests/replay.rs audit remains the authority for that unchanged test file.
+
+Validation after final edits:
+
+- Locked/offline Cargo, j2, incremental disabled, reused target. Seven chain, two chain
+  replay, three Cartesian replay, three static affine replay, two authored replay,
+  six centered-affine and one allocation tests passed (24 local tests). Relevant
+  chain/static/translated/authored replay markers and the authored float companion
+  were unset. All seven Hyperlattice interval_surface tests and both existing affine
+  doctests passed. No assertion or original doctest example text changed.
+- A warnings-denied temporary probe compared native chain bytes with a literal wire
+  definition and replayed into a larger capacity without changing them. A deliberately
+  limited JSON sink retained its expected prefix after failure. With empty source and
+  capacity zero, a valid excess map reported capacity failure while a nonsingleton
+  excess map reported map validation failure first. Array lookahead ignored a valid
+  extra value before length rejection, but malformed JSON still failed syntax; invalid
+  later scalar bounds after an empty entry failed rather than canonicalizing to empty.
+  Zero-sized matrices and 64-element vector replay also passed.
+- The same probe distinguished reverse query traversal from application-order copying
+  using SizeExhausted versus WorkExhausted, then checked exact retry, unchanged source
+  bytes, retained maps on empty restriction and zero-work empty projection. A zero-map
+  chain over an image source matched direct source projection and its work charge.
+  An external 30-second timeout bounds the probe, not the underlying algorithms.
+- Private cargo doc passed with all features and no default features, denying warnings,
+  broken links and private-link violations. All 26 chain blocks and 29 nonlocal Serde
+  blocks rendered with all features; the 26 chain blocks rendered without optional
+  Serde, and the current minimal chain page excludes its serialization methods.
+  Rustdoc omits 25 blocks belonging to function-local visitor/seed types, fields,
+  impls, associated types and methods. Source attachments were checked and their full
+  text rendered separately as Markdown; this is not a claim of ordinary API pages.
+- Actual test Rustdoc omits the nine modified-file test functions. Temporary copies
+  removed exactly those test attributes and rendered 16 test-file blocks, preserving
+  all bodies/assertions. Five test-local aliases/constants were also source-checked
+  and rendered as Markdown, for 30 local blocks total alongside the serializer items.
+- Remaining source bytes are identical after removing comment/blank lines and
+  normalizing exactly four newly wrapped tuple-field declarations, including their
+  formatting commas. Those four declarations were wrapped solely to attach field
+  Rustdoc; field types and executable bodies are unchanged. All 49 function declarations
+  have attached Rustdoc. Selected-file rustfmt and git diff --check passed. AGENTS.md
+  retains the 100% public/private/generated documentation mandate. Full workflow checks
+  remain owner-waived for this docs-only session. No new universal performance,
+  allocation, cancellation or closure claim is made.
+
+Evidence: /tmp/csgrs-rustdoc-interval-chain-{before,tests,build,doc-all,doc-min,
+doctest,probe,validation,render-min,downstream}.log and
+/tmp/csgrs-interval-chain-audit/ (matching artifacts, scripts, probe, normalized-source
+checks, temporary source copies and full-text match records). Owned executable and
+duplicate temporary HTML were removed. The shared Cargo target is approximately
+4.0 GiB, with no second target. No focused check remains blocked. Remaining companion
+support/conformance files and the repository-wide audit remain open; these scoped
+counts do not establish repository-wide coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

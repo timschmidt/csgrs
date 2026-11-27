@@ -1,3 +1,9 @@
+//! Runtime affine composition retaining a bounded inline sequence of point maps.
+//!
+//! Storage follows application order; projection traverses that sequence backward
+//! to compose coefficients before evaluating the original parameter source. Map
+//! capacity is independent of scalar size/work limits and source nesting depth.
+
 use super::{AffineMap, AffineSource, sealed};
 use crate::{IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVector};
 
@@ -12,8 +18,9 @@ use crate::{IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVe
 /// Capacity limits retained maps, not scalar complexity, heap bytes or time.
 /// Primitive storage is inline and queries allocate nothing. Exact backends
 /// keep their scalar work/size contract; explicit clones and serde are caller
-/// work. Query scratch space depends on dimensions, not this chain's map count;
-/// nested source chains still add traversal stack frames. No cache is retained.
+/// work. The number of matrix/vector scratch carriers does not grow with this
+/// chain's map count, but their exact scalar storage can grow. Nested source
+/// chains still add traversal stack frames. No cache is retained.
 ///
 /// ```
 /// # #[cfg(feature = "fixed")] {
@@ -39,15 +46,21 @@ pub struct AffineChain<
     const N: usize,
     const CAP: usize,
 > {
+    /// Exact source before the first retained map, including original parameters.
     source: S,
+    /// Occupied prefix followed by None slots; validated point maps stay in application order.
     maps: [Option<AffineMap<I, N, N>>; CAP],
+    /// Occupied prefix length, always at most CAP; zero does not mean an empty image.
     count: usize,
 }
 
+/// Retain maps, inspect ownership and explicitly project or restrict original parameters.
 impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: usize>
     AffineChain<I, S, N, CAP>
 {
     /// Moves an exact source into an initially zero-map chain without arithmetic.
+    /// Initializes all CAP slots to None; this bookkeeping has no scalar context
+    /// and makes no new identity coefficients or source projection.
     pub fn new(source: S) -> Self {
         Self {
             source,
@@ -84,6 +97,8 @@ impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: us
     }
 
     /// Exact immutable point maps in application order.
+    /// Only the occupied prefix is exposed. The iterator also supports reverse
+    /// traversal and exact length; construction/push preserve its expect invariant.
     pub fn maps(&self) -> impl DoubleEndedIterator<Item = &AffineMap<I, N, N>> + ExactSizeIterator {
         self.maps[..self.count]
             .iter()
@@ -91,6 +106,8 @@ impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: us
     }
 
     /// Transfers the source and maps in application order, without scalar copies.
+    /// The returned iterator owns the inline slot array and its remaining maps.
+    /// Dropping it drops unconsumed maps; no compact heap sequence is constructed.
     pub fn into_parts(
         self,
     ) -> (
@@ -118,6 +135,10 @@ impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: us
 
     /// Intersects the original parameters and retains all maps. Scalar copies
     /// share the context; any failure leaves this chain reusable and unchanged.
+    /// Restrict the source first, then copy maps in application order even if
+    /// the restricted domain is empty. Each map copies its matrix before its
+    /// translation. The result has the same capacity, sufficient for the original
+    /// occupied prefix; previous scalar charges are not refunded on failure.
     pub fn restrict_parameters(
         &self,
         restriction: &S::Parameters,
@@ -132,8 +153,10 @@ impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: us
 
     /// Explicit Cartesian projection, with the same rounding/overflow contract
     /// as [`super::AffineImage::enclosure`]. Exact maps and correlations survive
-    /// failed queries. A zero-map chain copies its source projection through the
-    /// arithmetic context; no artificial identity or unbudgeted clone is used.
+    /// failed queries. A zero-map chain delegates to its source's enclosure; a
+    /// Cartesian source is copied through the arithmetic context. No artificial
+    /// identity or unbudgeted clone is used. Otherwise borrow the last map as
+    /// initial coefficients and pull it through the preceding maps in reverse order.
     pub fn enclosure(
         &self,
         context: &mut I::Context,
@@ -146,6 +169,15 @@ impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: us
         }
     }
 
+    /// Pull external coefficient bounds through a prefix, then evaluate the source.
+    ///
+    /// Internal callers supply count at most map_count; take selects that prefix
+    /// without separate range validation. Empty sources return empty first. Visit
+    /// maps backward, computing each combined matrix before its translation with
+    /// one shared context. The first step borrows incoming bounds; later steps
+    /// retain only the current pair while constructing the next, not all prefixes.
+    /// With no selected maps, pass the incoming bounds directly to the source.
+    /// Scalar errors discard temporaries without changing stored maps or refunding work.
     fn enclose_prefix<const R: usize>(
         &self,
         count: usize,
@@ -177,22 +209,28 @@ impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: us
     }
 }
 
+/// Expose runtime chains through the same exact-source contract as static images.
 impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: usize>
     AffineSource<I, N> for AffineChain<I, S, N, CAP>
 {
+    /// Original source parameter type, unchanged by this chain's maps.
     type Parameters = S::Parameters;
+    /// Delegate immutable parameter access to the retained source.
     fn parameter_domain(&self) -> &Self::Parameters {
         self.parameter_domain()
     }
+    /// Delegate represented-set emptiness, independently of capacity or occupied length.
     fn is_empty(&self) -> bool {
         self.is_empty()
     }
+    /// Delegate projection with the same reverse traversal and context accounting.
     fn enclosure(
         &self,
         context: &mut I::Context,
     ) -> Result<IntervalVector<I, N>, IntervalLatticeError> {
         self.enclosure(context)
     }
+    /// Delegate parameter intersection and application-order map copies.
     fn restrict_parameters(
         &self,
         restriction: &Self::Parameters,
@@ -202,9 +240,12 @@ impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: us
     }
 }
 
+/// Allow outer static or runtime maps to consume the retained chain before projection.
 impl<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: usize>
     sealed::Pullback<I, N> for AffineChain<I, S, N, CAP>
 {
+    /// Pull the incoming bounds through every occupied map, preserving source parameters.
+    /// Rectangular outer maps are allowed even though this chain's stored maps are square.
     fn enclose_affine<const R: usize>(
         &self,
         linear: &IntervalMatrix<I, R, N>,

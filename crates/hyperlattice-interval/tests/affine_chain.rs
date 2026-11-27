@@ -1,3 +1,9 @@
+//! Finite qualification of bounded runtime affine sequences and subsequent consumers.
+//!
+//! An independent integer-corner oracle checks noncommuting, invertible and singular
+//! map words. Capacity, exact definition retention, generic source reuse and shared
+//! resource accounting are tested separately from geometric projection endpoints.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -11,6 +17,9 @@ use hyperlattice_interval::{
 #[cfg(any(feature = "fixed", feature = "dyadic"))]
 use hyperlattice_interval::IntervalLatticeError;
 
+/// Build a point map with a fixture scalar constructor and unwrap validation.
+/// Arguments are small ordered integer fixtures, except callers that deliberately
+/// interpret them as raw fixed numerators. Unavailable/invalid values panic.
 fn map<I: IntervalArithmetic, const R: usize, const C: usize>(
     a: [[i32; C]; R],
     b: [i32; R],
@@ -23,6 +32,14 @@ fn map<I: IntervalArithmetic, const R: usize, const C: usize>(
     .unwrap()
 }
 
+/// Check all 781 words of length zero through four over five explicit affine maps.
+///
+/// Apply each word directly to four integer source corners for independent exact
+/// coordinate extrema; bounded fixture arithmetic remains representable. Inspect
+/// capacity, occupied length and retained source identity. Further rectangular
+/// static/runtime/static compositions cancel a shared parameter to 7+2*depth,
+/// while nested zero-map chains exercise the generic source API and empty restriction.
+/// Each query receives a fresh context; this is a finite corpus, not all affine words.
 fn qualify<I: IntervalArithmetic + std::fmt::Debug + PartialEq>(
     scalar: impl Fn(i32, i32) -> I,
     mut context: impl FnMut() -> I::Context,
@@ -119,6 +136,7 @@ fn qualify<I: IntervalArithmetic + std::fmt::Debug + PartialEq>(
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Run the finite word corpus on whole-unit i32 and i64 interval backends.
 fn fixed_runtime_words() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
     qualify(|a, b| FixedInterval::<i32, 0>::new(a, b).unwrap(), || ());
@@ -129,6 +147,7 @@ fn fixed_runtime_words() {
 }
 #[cfg(feature = "rational")]
 #[test]
+/// Run the word corpus with exact rational arithmetic.
 fn rational_runtime_words() {
     use hyperlattice_interval::hyperinterval::RationalInterval;
     qualify(
@@ -138,6 +157,7 @@ fn rational_runtime_words() {
 }
 #[cfg(feature = "dyadic")]
 #[test]
+/// Run the word corpus with exact dyadic arithmetic and fresh adequate budgets.
 fn dyadic_runtime_words() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval};
     qualify(
@@ -147,6 +167,8 @@ fn dyadic_runtime_words() {
 }
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Run both IEEE backends on small integer words with exactly representable results.
+/// The enabled tests require a supported floating environment and do not skip errors.
 fn float_runtime_words() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
     qualify(|a, b| F32Enclosure::new(a as f32, b as f32).unwrap(), || ());
@@ -155,10 +177,15 @@ fn float_runtime_words() {
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Check zero-map projection without scalar one, typed capacity failure and owned rebuild.
+/// Failed appends preserve count and definition. Moving parts into larger capacities
+/// permits further maps and static reuse. Four zero-dimensional maps preserve the
+/// source distinction between a unit product and empty, regardless of occupied length.
 fn zero_capacity_retains_source_and_failed_append_can_be_rebuilt() {
     use core::error::Error;
     use hyperlattice_interval::hyperinterval::FixedInterval;
     // +1 is unrepresentable; no-map composition must not require it.
+    /// Highest valid i32 scale; real one cannot fit, while raw endpoints -1 and 1 do.
     type I = FixedInterval<i32, 31>;
     let source = IntervalVector::new([I::new(-1, 1).unwrap()]).unwrap();
     let mut chain = AffineChain::<_, _, 1, 0>::new(source);
@@ -215,8 +242,12 @@ fn zero_capacity_retains_source_and_failed_append_can_be_rebuilt() {
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Append further maps after an off-grid or overflowing intermediate projection.
+/// Half of a half-grid point projects outward, then doubling restores the original.
+/// A doubled maximum integer overflows, but a later zero map still gives exact zero.
 fn off_grid_and_failed_projections_preserve_exact_maps() {
     use hyperlattice_interval::hyperinterval::{FixedInterval, IntervalError};
+    /// Half-unit fixed grid for an exact quarter-point intermediate definition.
     type I = FixedInterval<i32, 1>;
     let scalar = |a, b| I::new(a, b).unwrap();
     let source = IntervalVector::new([scalar(1, 1)]).unwrap();
@@ -228,6 +259,7 @@ fn off_grid_and_failed_projections_preserve_exact_maps() {
     );
     chain.push(map([[4]], [0], &scalar)).unwrap(); // double restores 1/2
     assert_eq!(chain.enclosure(&mut ()).unwrap(), source);
+    /// Whole-unit fixed grid for overflow followed by a constant zero map.
     type J = FixedInterval<i32, 0>;
     let scalar = |a, b| J::new(a, b).unwrap();
     let mut chain =
@@ -246,6 +278,11 @@ fn off_grid_and_failed_projections_preserve_exact_maps() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Check literal 30*x+42 bounds, restricted copies and an outer static map under one budget.
+/// Measured work admits exact retry while one fewer unit fails; a one-bit size cap
+/// fails distinctly. Original parameters remain unchanged. Restricted empty projection
+/// needs no work, while a zero-map Cartesian chain still pays for its source copy.
+/// Measured admission is not an independent endpoint oracle or cancellation test.
 fn runtime_budget_is_shared_with_sources_copies_and_outer_maps() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I, IntervalError};
     let scalar = |a: i32, b: i32| I::new(a.into(), b.into(), 0).unwrap();
