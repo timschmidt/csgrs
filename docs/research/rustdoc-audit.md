@@ -20626,6 +20626,125 @@ target was reused with incremental compilation disabled. AGENTS.md's existing
 100% public/private Rustdoc mandate remains unchanged. Repository-wide line
 review and all-configuration coverage remain unfinished.
 
+## Hyperreal cyclotomic zero certificates (27 November 2026)
+
+Baseline: `9bdd41420a91eca23ff032a0711dd03dd2715fd8` on `rustdoc`.
+Reviewed every line of `crates/hyperreal/src/computable/node/cyclotomic_zero.rs`
+(857 baseline lines, 1086 after documentation) and `cyclotomic_zero_tests.rs`
+(207 to 235): 1064 baseline lines in total. The 104 reviewed Rustdoc blocks
+cover five structs, two enums, 12 named fields, 11 variants, 13 tuple payload
+fields, one type alias, four impls, eight associated constants, 19 methods,
+12 free functions, one function-local constant, one test module and 15 fixture/test
+functions. Ordinary private Rustdoc rendered 87 blocks, a temporary test-enabled
+Rustdoc build rendered 16, and supplemental Markdown rendering covered the local
+Miller–Rabin base constant omitted by Rustdoc. Individual tuple-field anchors and
+the three derived Clone implementations were inspected. This is selected-file
+coverage, not repository-wide completion.
+
+Ownership is Hyperreal's bounded exact scalar proof layer, P2–P6, with retained
+sign evidence and downstream predicate/certainty consumers under P8–P11 and
+P19–P20. The missing documentation witness was a complete account of field
+admission, quotient-domain obligations, modular proof, resource accounting and
+fixture scope. Baseline all-feature cyclotomic tests passed (nine tests).
+Contextual reads of callers, pi-turn recognition, square extraction, facts and
+Cargo profiles do not add whole-file review credit to those files.
+
+**Existing incorrect result reproduced on both baseline and documented revision:**
+`CyclotomicGraph::require_order` computes an unchecked u64 LCM before applying
+its order cap. With optimized overflow checks disabled, the exact query
+`sin(pi/(2^62+1))` admits wrapped order four, returns `Some(0)`, and publishes a
+zero sign. Its mathematical value is strictly positive because its angle lies
+strictly between zero and pi. The repository release profile disables overflow
+checks and matches this reproduction. With debug overflow checks, the query
+`sin(pi/(2^63-1))` instead panics in num-integer 0.1.46's LCM multiplication;
+root facts remain invalid. A direct order-admission probe also reproduces that
+panic. These are incorrect/panicking outcomes, not controlled exhaustion or
+successful exact conformance. The existing nine tests do not cover them.
+
+The query, graph-admission and order-admission documentation now records this
+limitation. Runtime behavior remains unchanged under this docs-only session.
+A future implementation change must bound/check the LCM before multiplication,
+preserve both original hard cases as regressions, and verify debug and release
+publication behavior. A doc correction does not repair the false certificate.
+
+Other reviewed contracts and limitations:
+
+- Numerator bounds separately track an integrality denominator and a uniform
+  bound over complex embeddings. Quotient denominator factors are reciprocal
+  operand numerators with nonzero obligations, not that integrality denominator.
+  Zero certification tests every conjugate over distinct splitting primes until
+  their product exceeds the numerator bound; one residue alone is insufficient.
+  The first conjugate filter is repeated in the full conjugate pass.
+- Allocation identity reuses live DAG nodes, without defining scalar equality.
+  Postorder traversal preserves the existing stack/child order. Synthetic
+  linear-combination instructions count toward the 4096-node cap. Node, field,
+  coefficient and modular-work caps are distinct; graph admission, nested
+  recognizers, bound arithmetic and allocations are not fully covered by the
+  modular counter. No total memory/time bound is claimed.
+- Rational-root recognition accepts the supported extracted residuals 1,2,3,6;
+  this is a sufficient, representation-sensitive recognizer. Field inverses
+  carry factor multisets rather than dividing residues directly. An inverse
+  without a witnessed nonzero numerator declines. A rational coefficient whose
+  denominator is divisible by the first selected prime also declines immediately,
+  rather than trying another prime, even when the queried expression is zero.
+- Primitive-root search tries bases 2 through 65; an unsuccessful first modulus
+  can stop the attempt. The nested factor-residue options distinguish failure,
+  an empty multiplicative identity, and a materialized residue vector. Modular
+  zip assumes equal widths and otherwise truncates; addition/subtraction require
+  normalized residues and the admitted prime range. Small-order trial factoring
+  is not a general overflow-safe u64 factorization API.
+- Successful ordinary certification publishes an exact zero sign without a
+  retained field tower or numerical sample. Unsupported, cancelled or incomplete
+  attempts do not publish negative evidence. The overflow defect above is an
+  explicit exception to the intended publication guarantee. Existing fixtures
+  cover nonzero perturbations, unsupported zero expressions, inverse-domain
+  failure, cancellation/retry, sharing and admission caps with their original
+  assertions unchanged.
+- The old comment confused the twelve- and thirteen-base Miller–Rabin thresholds.
+  The documented twelve-base threshold is 318665857834031151167461, already
+  above all u64 values; the runtime bases are unchanged. The exact thresholds
+  were checked against Theorem 1.1 of
+  [Sorenson and Webster's primary paper](https://arxiv.org/html/1509.00864v1).
+
+Temporary private probes ran against both baseline and final source. Independent
+trial division agreed on primality for 20,000 integers; independent gcd counting
+agreed on 1024 totients; 9458 modular operand pairs agreed with elementary
+arithmetic. Sixteen denominator exponent cases checked pointwise maximum,
+missing-factor and additive-product rules, including checked u32 exponent
+exhaustion. A valid zero with the first splitting prime in its rational
+coefficient denominator reproduced the documented normal decline. Separate
+contained debug and optimized probes reproduced the two LCM defects above.
+The probes used a 1 GiB address-space limit, ten CPU seconds and fifteen wall
+seconds with core dumps disabled; these are diagnostic containment limits, not
+production resource guarantees. This finite arithmetic evidence does not prove
+universal field correctness, and does not override the incorrect release result.
+
+After the final source documentation edit, focused locked/offline two-job checks
+passed:
+
+- Nine cyclotomic library tests without default features and nine with all
+  features; both private library Rustdoc builds with warnings, broken intra-doc
+  links and private intra-doc links denied.
+- Temporary test/helper Rustdoc, supplemental local-constant rendering, all
+  104 block checks, individual tuple-field anchors and derived Clone anchors.
+- All-feature `serde_graph_domains` (four tests), `serde_opaque_operand_domains`
+  (five tests), and downstream Hyperlimit `resolve::tests` (five tests).
+- Selected Rustfmt, git diff --check and source-token comparison. Thirteen
+  tuple-field doc attributes were excluded as documentation. Rustfmt added six
+  trailing commas; other non-comment tokens are identical. Independently
+  formatted comment-free token streams are fully identical. No signature,
+  predicate/dispatch order, fixture, assertion or runtime algorithm changed.
+
+No focused check remains blocked, but the reproduced correctness defect remains
+unfixed. Full workflows and performance measurements remain owner-waived for
+this docs-only session; no performance claim is made. Evidence under
+`/tmp/csgrs-hyperreal-cyclotomic-audit/` retains commands/logs, probe sources and
+item/render/token inventories. Owned shadow sources, probe executable/rlib and
+temporary HTML were removed after inspection; builds reused the approximately
+6.6 GiB shared target with incremental compilation disabled. AGENTS.md's existing
+100% public/private Rustdoc mandate remains in force. Repository-wide line review
+and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

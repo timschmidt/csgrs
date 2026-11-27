@@ -1,8 +1,10 @@
 #[cfg(test)]
+/// Cyclotomic zero certificates, exact modular arithmetic, inverse guards and resource regressions.
 mod cyclotomic_zero_tests {
     use super::*;
     use std::sync::atomic::AtomicBool;
 
+    /// Build an unsimplified recipe with invalid bound/sign facts, no sample and no stop signal.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,12 +16,15 @@ mod cyclotomic_zero_tests {
         }
     }
 
+    /// Create an exact raw rational for a nonzero u64 denominator; zero violates the fixture unwrap.
     fn ratio(numerator: i64, denominator: u64) -> Computable {
         raw(Approximation::Ratio(
             Rational::fraction(numerator, denominator).unwrap(),
         ))
     }
 
+    /// Build a raw cosine at exactly numerator*pi/denominator, with denominator nonzero.
+    /// These are symbolic proof inputs, not a certification of prescaled numeric-kernel ranges.
     fn cos_pi(numerator: i64, denominator: u64) -> Computable {
         raw(Approximation::PrescaledCos(raw(Approximation::Multiply(
             Computable::pi(),
@@ -27,15 +32,19 @@ mod cyclotomic_zero_tests {
         ))))
     }
 
+    /// Build a raw sum preserving both operands and source sharing.
     fn add(left: Computable, right: Computable) -> Computable {
         raw(Approximation::Add(left, right))
     }
 
+    /// Build raw negation without cancelling its operand or adding facts.
     fn negate(value: Computable) -> Computable {
         raw(Approximation::Negate(value))
     }
 
     // cos(pi/7) - cos(2 pi/7) + cos(3 pi/7) - 1/2 = 0.
+    /// Build cos(pi/7)-cos(2*pi/7)+cos(3*pi/7)-1/2, an exact zero.
+    /// Its root-of-unity identity needs relations beyond treating the trig terms as opaque atoms.
     fn heptagon() -> Computable {
         add(
             add(add(cos_pi(1, 7), negate(cos_pi(2, 7))), cos_pi(3, 7)),
@@ -44,6 +53,9 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Check selected small/large primes and composites that fool smaller witness sets.
+    /// This finite corpus supports the implementation check; the all-u64 guarantee also
+    /// uses the twelve-base theorem, not this test alone.
     fn miller_rabin_is_exact_on_known_primes_and_strong_pseudoprimes() {
         for prime in [2, 3, 37, 41, (1 << 61) - 1, (1 << 62) - 57, u64::MAX - 58] {
             assert!(cyclotomic_is_prime(prime), "{prime} is prime");
@@ -64,6 +76,8 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Verify four totients and decreasing splitting primes for orders 1,32,288,612.
+    /// Check the root has exact requested order via every prime divisor and obeys the prime floor.
     fn selected_moduli_contain_primitive_roots_of_the_field_order() {
         assert_eq!(cyclotomic_totient(1), 1);
         assert_eq!(cyclotomic_totient(32), 16);
@@ -92,6 +106,7 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Prove the heptagon identity zero, publishing a valid zero sign without a numerical sample.
     fn completed_zero_proof_publishes_only_an_exact_sign() {
         let value = heptagon();
         assert_eq!(value.bounded_cyclotomic_zero(), Some(Rational::zero()));
@@ -103,6 +118,8 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Distinguish a 2^-40 perturbation from an unsupported but mathematically zero sine difference.
+    /// Both return None without publishing a queried sign; None is not proof of nonzero.
     fn nonzero_and_unsupported_graphs_decline_without_publishing() {
         let nonzero = add(heptagon(), ratio(1, 1 << 40));
         assert_eq!(nonzero.bounded_cyclotomic_zero(), None);
@@ -119,6 +136,7 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Reject heptagon*(1/heptagon)-1 because the reciprocal has no nonzero operand witness.
     fn reciprocal_of_a_zero_is_never_admitted() {
         // 1/(heptagon) is undefined: no residue proves its operand nonzero.
         let value = add(
@@ -132,6 +150,8 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Check cancellation leaves shared root facts invalid and clearing it permits exact retry.
+    /// A clone observes the later zero sign through the same owned node.
     fn aborted_cyclotomic_proof_does_not_publish_and_can_recover() {
         let mut value = heptagon();
         let clone = value.clone();
@@ -151,6 +171,9 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Prove a 200-level shared doubling chain without unfolding its exponentially many paths.
+    /// Require fewer than 260 graph instructions and an exact zero result; this is a node-count
+    /// witness, not a complete time or memory benchmark.
     fn shared_subgraphs_are_visited_once() {
         // A doubling chain has 2^depth paths but depth + 1 distinct nodes.
         let mut value = heptagon();
@@ -163,6 +186,9 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Prove (1+cos(pi/5))^8 times its reciprocal eighth power minus one.
+    /// Further repeated squaring must hit exponent or numerator-bound admission limits,
+    /// including a mathematically cancelling final expression whose children are too large.
     fn reciprocal_powers_prove_and_exponent_growth_declines() {
         let base = add(cos_pi(1, 5), ratio(1, 1));
         let reciprocal = raw(Approximation::Inverse(base.clone()));
@@ -196,6 +222,8 @@ mod cyclotomic_zero_tests {
     }
 
     #[test]
+    /// Build a chain exceeding graph/stack admission limits and require a normal decline.
+    /// The test does not distinguish which of those resource guards rejects first.
     fn node_limit_declines() {
         let mut value = ratio(0, 1);
         for index in 0..Computable::CYCLOTOMIC_MAX_NODES as i64 {
