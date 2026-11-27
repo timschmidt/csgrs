@@ -4,6 +4,14 @@
 
 // Floor and ceiling of numerator * 2^shift / denominator. The zero shortcut
 // avoids allocating a huge denominator for a very coarse output request.
+/// Enclose `numerator * 2^shift / denominator` by its exact integer floor and ceiling.
+/// Require a nonzero denominator; only a debug assertion enforces that invariant.
+/// Return `[0,0]` for a zero numerator. For a negative shift at least as large in
+/// magnitude as the numerator's bit length, return `[0,1]` without constructing the
+/// large denominator. Otherwise perform one division with remainder and widen by
+/// one only when necessary. These bounds supply directed rounding to duplication.
+/// Shifts must fit the host allocation/index limits; there is no stop poll, typed
+/// precision failure or local memory budget.
 fn elliptic_quotient(numerator: BigUint, denominator: BigUint, shift: i64) -> [BigUint; 2] {
     debug_assert!(!denominator.is_zero());
     if numerator.is_zero() {
@@ -24,6 +32,22 @@ fn elliptic_quotient(numerator: BigUint, denominator: BigUint, shift: i64) -> [B
 
 // A bound on the whole normalized integral, not a truncated correction.
 // See docs/admission-carlson-mean-enclosure.md for the logarithm-series proof.
+/// Try a whole-integral RF enclosure from nonnegative argument intervals on an even binary grid q.
+/// Each ordered pair encloses one argument in units of `2^q`; output integers
+/// use units of `2^output_grid`. With lower-endpoint sum S, set D_i=abs(3L_i-S),
+/// D=max(D_i), N=sum(D_i^2) and H=4S(S-D). Decline unless D<S and N<H.
+/// These tests establish relative spread below one and G=N/H below one.
+///
+/// The mean-scaled integral RF*sqrt(mean) lies between one and
+/// `1+G/(5*(1-G))`. Use upper input endpoints for the lower
+/// bound and lower endpoints for the upper bound, by monotonicity. Integer root
+/// bounds and directed quotients carry the scale exactly when q is even.
+/// This bounds the entire integral, not a truncated correction polynomial.
+///
+/// None means this sharper bound is unavailable, not that RF is invalid. The
+/// caller may duplicate further or use a coarser monotonicity bound. Ordered
+/// endpoints and even q are caller invariants; output-grid arithmetic is unchecked,
+/// and the helper has no cancellation poll or allocation budget.
 fn elliptic_rf_mean_enclosure(
     bounds: &[[BigUint; 2]; 3],
     q: Precision,
@@ -61,6 +85,32 @@ fn elliptic_rf_mean_enclosure(
     Some([lower, upper])
 }
 
+/// Evaluate retained Carlson RF or RD by interval duplication, returning an integer in `2^p` units.
+/// The payload is `[root_x, log_y, log_z]`, representing nonnegative x=root_x^2
+/// and positive y=exp(log_y), z=exp(log_z). Select RD when second is true and
+/// RF otherwise. Finite, mathematically valid children establish that domain;
+/// a raw enum tag is not validation of malformed child graphs.
+///
+/// Start an even negative grid at `2*(min(p,0)-16)`, widen completed child samples
+/// by one unit, and clamp lower endpoints to zero using known nonnegativity.
+/// Directed square roots form lambda=sqrt(xy)+sqrt(yz)+sqrt(zx), then each new
+/// argument is (v+lambda)/4. RF is unchanged by this transformation; RD adds
+/// `3/(sqrt(z)*(z+lambda))` and retains one quarter of the new RD at each step.
+/// Its positive accumulated terms are enclosed separately on the grid.
+///
+/// Check RF enclosures every fourth iteration, trying the mean/spread bound then
+/// the min/max bound; RD checks its accumulated sum plus remaining-integral bound
+/// every iteration. Return only when the interval in `2^(p-3)` units has width
+/// at most two. Rounding its midpoint contributes at most half an output unit,
+/// and the interval radius at most one eighth, for a total at most five eighths.
+/// No fixed correction polynomial replaces the exact integral.
+///
+/// An unresolved denominator or exhausted iteration schedule restarts at twice
+/// the grid accuracy; neither permits an unproved return or denotes typed resource
+/// exhaustion. Checked grid arithmetic can panic, and operand work, integer sizes
+/// and iteration scheduling have no total-work or heap-byte contract. Poll stops
+/// on entry, at restarts and per iteration, and pass the signal to child sampling.
+/// An interrupted zero is a placeholder the outer caller must not certify.
 fn elliptic_carlson(
     signal: &Option<Signal>,
     arguments: &[Computable; 3],
@@ -112,8 +162,8 @@ fn elliptic_carlson(
             if should_stop(signal) {
                 return BigInt::zero();
             }
-            // RF's mean bound is costlier than one duplication step. Check
-            // every fourth step; each check still bounds the whole integral.
+            // Schedule RF's square-root/division enclosure work every fourth
+            // step; each check still bounds the whole integral.
             // RD keeps its existing per-step accumulated-sum checks.
             let enclosure = if !second && iteration % 4 != 0 {
                 None

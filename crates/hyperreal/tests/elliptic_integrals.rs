@@ -6,10 +6,16 @@ use std::sync::{
 };
 
 #[path = "support/mpfr.rs"]
+/// Register thread-local cleanup for the development-only MPFR oracle backend.
 mod mpfr;
 #[path = "support/representations.rs"]
+/// Supply the shared finite inventory of positive scalar construction recipes.
 mod representations;
 
+/// Round the midpoint of a -896 Real enclosure to a 1024-bit MPFR oracle input.
+/// Transfer numerator, denominator and sign explicitly instead of parsing mixed
+/// fraction Display text. The result is a rounded reference value, not a directed
+/// MPFR enclosure; callers register backend cleanup before using it.
 fn mpfr_value(value: &Real) -> Float {
     let [lo, hi] = value.certified_rational_interval(-896).unwrap();
     let midpoint = (lo + hi) / Rational::new(2);
@@ -26,14 +32,25 @@ fn mpfr_value(value: &Real) -> Float {
     )
 }
 
+/// Adopt a finite MPFR value's exact binary rational as a test reference Real.
+/// This conversion preserves that rounded oracle value, not the exact integral
+/// it approximates. Nonfinite values or invalid rational text fail the fixture.
 fn from_mpfr(value: Float) -> Real {
     value.to_rational().unwrap().to_string().parse().unwrap()
 }
 
-// Independent expansion of the defining integrand after u=1/sqrt(t+z).
-// For our corpus 0 <= A,B <= 3/4, the coefficients of
-// ((1-A*u^2)(1-B*u^2))^(-1/2) are <= (3/4)^n.
-// 2048 terms therefore leave < 2^-840, before MPFR rounding at 1024 bits.
+/// Compute independent RF/RD test references from a transformed defining-integrand series.
+/// Normalize with u=sqrt(z/(t+z)). For the fixtures, z=4 and
+/// A=1-x/z, B=1-y/z lie in `[0,3/4]`. Expand
+/// `((1-A*u^2)*(1-B*u^2))^(-1/2)` using its two-term coefficient recurrence.
+/// Weight 2048 coefficients by 1/(2n+1) for RF or 1/(2n+3) for RD, then apply
+/// 1/sqrt(z) or 3/z^(3/2). This differs from the native duplication algorithm.
+///
+/// The geometric coefficient bound gives an analytic omitted tail below 2^-840
+/// for this corpus. Inputs and arithmetic use nearest-rounded 1024-bit MPFR;
+/// the tail statement alone is not a bound on all rounding error. Return exact
+/// rationals of the final rounded references, never production integral results.
+/// The caller owns the fixture range and MPFR cleanup registration.
 fn integrand_series(x: &Real, y: &Real, z: &Real) -> [Real; 2] {
     let z = mpfr_value(z);
     let a = Float::with_val(1024, 1) - mpfr_value(x) / &z;
@@ -59,6 +76,10 @@ fn integrand_series(x: &Real, y: &Real, z: &Real) -> [Real; 2] {
     ]
 }
 
+/// Require an eight-guard-bit enclosure of actual-expected inside +/-2^(-bits).
+/// Compare exact rational endpoints for absolute-error qualification. This relies
+/// on the scalar enclosure API and does not assert relative accuracy or identical
+/// rounding of the native result and the reference.
 fn close(actual: &Real, expected: &Real, bits: i32) {
     let [lo, hi] = (actual - expected)
         .certified_rational_interval(-bits - 8)
@@ -71,6 +92,9 @@ fn close(actual: &Real, expected: &Real, bits: i32) {
 }
 
 #[test]
+/// Check exact diagonal collapses and 192-bit circular endpoint identities at four positive squares.
+/// Use x=1,4,9,25 for RF/RD diagonal values and RF(0,x,x), RD(0,x,x) formulas
+/// involving pi. Invalid zero diagonals are tested separately before shortcuts.
 fn diagonal_and_complete_circular_values() {
     let zero = Real::zero();
     for integer in [1, 4, 9, 25] {
@@ -95,6 +119,9 @@ fn diagonal_and_complete_circular_values() {
 }
 
 #[test]
+/// Reject seven negative or multiply-zero triples for both integrals and RD's zero third argument.
+/// Require typed NotANumber, including on the all-zero diagonal. This finite
+/// corpus does not cover mixed invalid and unresolved sign-query precedence.
 fn invalid_domains_are_rejected_before_identities() {
     for (x, y, z) in [
         (-1, 1, 1),
@@ -116,6 +143,11 @@ fn invalid_domains_are_rejected_before_identities() {
 }
 
 #[test]
+/// Check structural positivity, supported permutations, homogeneity and the cyclic RD sum.
+/// Start from (2,3,5); compare permutations and cyclic identity at 192 bits and
+/// scales 7,1e-40,1e40 at 160 bits. The cyclic expectation comes from integrating
+/// the derivative of the reciprocal square-root product, independently of duplication.
+/// RF is fully symmetric; RD only exchanges its first two arguments.
 fn symmetric_and_homogeneous_composition() {
     let [x, y, z] = [2, 3, 5].map(Real::from);
     let rf = Real::elliptic_rf(&x, &y, &z).unwrap();
@@ -156,6 +188,11 @@ fn symmetric_and_homogeneous_composition() {
 }
 
 #[test]
+/// Compare RF/RD with independent 2048-term references for all 22 scalar fixture recipes.
+/// Check each public structural category, then map the positive value v to
+/// x=1+v^2/(1+v^2), with y=3 and z=4. Demand 512-bit absolute agreement.
+/// This mapping supplies the series range; the finite recipe inventory does not
+/// cover every value or possible retained expression.
 fn independent_mpfr_integrand_series_all_certificate_families() {
     mpfr::cleanup_on_thread_exit();
     for case in representations::optimized_certificate_representatives() {
@@ -177,6 +214,10 @@ fn independent_mpfr_integrand_series_all_certificate_families() {
 }
 
 #[test]
+/// Compare RF(0,y,1) to pi/(2*AGM(1,sqrt(y))) for six positive y fixtures.
+/// Values span 1e-160 through 1e40, including 0.001,0.5 and 2; require 256-bit
+/// absolute agreement with the 1024-bit MPFR reference. No y=0 divergence is
+/// admitted, and the oracle is independent of duplication. Register backend cleanup.
 fn complete_first_kind_agrees_with_mpfr_agm_near_singular_endpoint() {
     mpfr::cleanup_on_thread_exit();
     for value in ["1e-160", "1e-40", "0.001", "0.5", "2", "1e40"] {
@@ -192,6 +233,10 @@ fn complete_first_kind_agrees_with_mpfr_agm_near_singular_endpoint() {
 }
 
 #[test]
+/// Check normalized RF/RD homogeneity at uniform scales 1e-320 and 1e320.
+/// Use (2,3,5), retaining exact square-root scale compensation before a 96-bit
+/// absolute comparison. This qualifies finite extreme fixtures without claiming
+/// bounded work for arbitrary magnitudes or relative error on unnormalized outputs.
 fn extreme_uniform_scaling_stays_refinable() {
     let [x, y, z] = [2, 3, 5].map(Real::from);
     let rf = Real::elliptic_rf(&x, &y, &z).unwrap();
@@ -215,6 +260,13 @@ fn extreme_uniform_scaling_stays_refinable() {
 }
 
 #[test]
+/// Exercise RF/RD refinement, preexisting abort/retry, four concurrent readers and unresolved domains.
+/// Request 32,512,64,256 fractional bits and require positive, pairwise-overlapping
+/// successive intervals; overlap is weaker than nestedness or an independent oracle.
+/// After clearing the abort flag, compare replay intervals for overlap. Concurrent
+/// readers require positive nondegenerate bounds. A trigonometric opaque zero must
+/// return Exhausted in unresolved domain positions rather than be assumed zero.
+/// This is same-process cache evidence, not mid-evaluation cancellation latency.
 fn precision_sequences_abort_and_concurrent_readers() {
     let [x, y, z] = [2, 3, 4].map(Real::from);
     for value in [
@@ -263,6 +315,11 @@ fn precision_sequences_abort_and_concurrent_readers() {
 
 #[cfg(feature = "serde")]
 #[test]
+/// Check RF/RD JSON and CBOR replay at (2,3,5), including positivity and stable JSON after warming.
+/// Require structural equality, a zero-bit positive sign, and 256-bit agreement
+/// of CBOR replay with the original. These same-process comparisons distinguish
+/// serialization stability from approximation behavior, but do not qualify hostile
+/// payloads, independent mathematical equality or fresh-process cache isolation.
 fn serialization_preserves_expression_sign_and_structural_identity() {
     let [x, y, z] = [2, 3, 5].map(Real::from);
     for value in [

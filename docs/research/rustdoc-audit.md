@@ -18172,6 +18172,147 @@ provided context without new whole-file audit credit. Historical campaign,
 coverage and timing claims in that narrative were not re-established here.
 The repository-wide line audit and 100% Rustdoc mandate remain incomplete.
 
+## Carlson elliptic kernels, admission and oracle documentation
+
+On 2026-11-27, reviewed the complete files at baseline
+ba8c8bf2591b0cbdd3d5ad7a5081a754cd0507b2:
+
+| File | Baseline lines | Documented items |
+| --- | ---: | ---: |
+| crates/hyperreal/src/computable/approximation/elliptic_integrals.rs | 215 | 3 |
+| crates/hyperreal/src/computable/approximation/elliptic_tests.rs | 92 | 4 |
+| crates/hyperreal/src/computable/node/elliptic_integrals.rs | 19 | 2 |
+| crates/hyperreal/src/real/arithmetic/elliptic_integrals.rs | 54 | 4 |
+| crates/hyperreal/tests/elliptic_integrals.rs | 287 | 14 |
+
+All 667 lines were reviewed. The twenty-seven Rustdoc blocks include twenty-five
+new blocks and two existing public operation descriptions. Impl blocks, private
+constructors, kernels, test modules, tests and the local MPFR reference function
+are accounted for. The owning layer is Hyperreal (P1–P7), with replay and
+operation composition relevant to P19/P20. Missing acceptance was accurate
+private documentation of the domain encoding and enclosure algorithm, accompanied
+by qualification of the existing independent oracles and finite fixtures.
+The implementation domain and all existing tests remain unchanged.
+
+RF admits nonnegative x,y,z with at most one zero; RD admits nonnegative x,y
+with at most one zero and positive z. Public admission resolves signs in x,y,z
+order before collective rejection. A failed sign query propagates Exhausted
+before the collective invalid-domain check; it is not an assumed zero. Diagonal
+recognition follows successful validation. Only a proved zero is permuted to the
+first argument; RD's third argument is never swapped. The native payload stores
+[root_x,log_y,log_z], reconstructing [root_x^2,exp(log_y),exp(log_z)]. Its positive
+sign fact relies on finite valid children, not on a raw enum tag validating
+arbitrary imported graphs. The constructor inherits the first present child
+signal rather than merging all signals. Corrected the old comment that called
+every finite deserialized payload valid without qualifying its children.
+
+Documented the directed quotient's exact floor/ceiling role, nonzero-denominator
+precondition, zero shortcut and small-positive quotient shortcut. The latter
+avoids an enormous denominator when the negative shift already exceeds the
+numerator's bit length. Host shift/allocation limits and lack of a stop poll
+remain explicit; debug assertions are not typed domain admission.
+
+For the mean enclosure, ordered nonnegative intervals use an even grid q,
+which can be positive or negative in the helper. Lower-endpoint sum S and
+absolute deviations D_i=abs(3L_i-S) give D=max(D_i), N=sum(D_i^2), H=4S(S-D).
+The strict checks D<S and N<H establish the spread and G=N/H assumptions.
+The mean-scaled integral RF*sqrt(mean) is bounded by one and 1+G/(5(1-G)). Monotonicity selects upper input endpoints
+for the lower bound and lower endpoints for the upper bound. Integer root and
+quotient bounds preserve scale when q is even; the helper does not validate
+that parity or input ordering. None declines this bound, not RF itself.
+
+The duplication kernel starts at q=2*(min(p,0)-16), widens child samples and
+uses known nonnegativity to clamp endpoints. RF is invariant under duplication;
+RD accumulates positive terms while scaling its remainder by successive quarters.
+RF tries the mean bound and then the min/max bound every fourth iteration;
+RD checks its accumulated sum and remainder every iteration. Only an enclosure
+width at most two on the p-3 grid permits return. Its midpoint radius contributes
+at most one eighth of an output unit, and rounding at most one half: the sum is
+five eighths. An unresolved denominator or exhausted iteration schedule restarts
+with twice the grid accuracy, rather than permitting a partial success.
+Checked grid-overflow panics and unbounded child/integer work remain distinct
+from typed resource exhaustion. Stop polls do not interrupt each integer
+operation, and interrupted zeros require rejection by the outer caller.
+
+The three unit regressions retain 3,520 exact rational quotient cases, both
+integrals' maximum coarse/preexisting-stop requests, 972 candidate repeated-
+argument mean-enclosure cases, a near-diagonal spread and three declined domains.
+An independent exact applicability calculation admits 837 of those candidates;
+the retained Rust test asserts only more than 500, not that exact count.
+Repeated-argument references use reciprocal square root, acos or acosh at
+768-bit MPFR precision, followed by even-grid homogeneity. They do not use
+Carlson duplication. Nearest-rounded comparisons are not strict directed MPFR
+enclosures. The near-diagonal test containing one does not assert that the
+slightly spread RF equals its diagonal reference.
+
+The integration oracle normalizes with u=sqrt(z/(t+z)), using z=4 and
+A=1-x/z, B=1-y/z in [0,3/4]. Corrected the old unnormalized substitution
+comment to agree with the coefficient recurrence. Its 2048 coefficients give
+RF/RD weights 1/(2n+1) and 1/(2n+3), followed by 1/sqrt(z) and 3/z^(3/2).
+Exact rational checks confirmed eighty coefficients of the underlying binomial
+convolution identity, the mean correction-factor identity across the finite
+applicability grid, and 4*(3/4)^2048 < 2^-840. The latter is an analytic tail
+bound for the fixture range, not a complete MPFR rounding-error bound. Input
+midpoints and 1024-bit arithmetic remain rounded reference computations; their
+final exact binary rationals are test expectations, not production integrals.
+These finite checks do not prove universal implementation correctness.
+
+Documented the actual scope of diagonal/circular identities, symmetry and
+homogeneity, the independent cyclic RD identity, 22 transformed scalar recipes,
+six AGM endpoint fixtures, and normalized 1e-320/1e320 scale cases. Refinement
+assertions require interval overlap, not nestedness or an independent oracle.
+Cancellation starts with an already asserted flag. Concurrent reader checks
+establish positive nondegenerate intervals. JSON/CBOR replay is within one
+process, with structural equality and deterministic JSON separate from numeric
+agreement; hostile graphs and fresh-process cache isolation are not covered.
+Removed an unmeasured relative-cost assertion while preserving the exact
+four-step RF checking schedule. No performance improvement is claimed.
+
+The baseline passed three kernel unit tests and eight all-feature integration
+tests. The documentation batch passed the same three units in both feature
+configurations, seven no-default-feature and eight all-feature integrations,
+two Legendre kernel consumers and one Jacobi kernel consumer. Hyperspatial's
+two all-feature elliptic_representations tests passed 660 selected workflows:
+176 family/regime/cold-warm combinations and 484 ordered family pairs, including
+Carlson and Legendre identities, strict domain proofs, ellipsoids, ECEF coordinates
+and certainty checks. This completed consumer scope is not the entire geospatial
+API or an exhaustive scalar-domain qualification.
+
+The first private-doc build rejected unescaped numeric pairs as unresolved links;
+inline-code formatting fixed them. A supplemental text comparison also detected
+angle comparisons interpreted as HTML in the test-local reference documentation;
+inline-code formatting restored their text. Owning unit/integration and small
+consumer checks were rerun after the library/integration markup correction; both
+unit feature configurations were rerun after the final test-local correction.
+The completed 660-workflow run preceded those markup-only fixes, with executable
+tokens unchanged. No mathematical assertion or fixture was weakened.
+
+Private cargo doc passed no-default-features and all-features with warnings and
+broken/private links denied. Nine blocks matched actual private library pages;
+fourteen integration blocks matched temporary private Rustdoc pages built with
+eight test attributes removed and support paths resolved in a copy. Four unit-
+and function-local blocks passed inventory and supplemental Markdown rendering.
+Ordinary library Rustdoc does not emit those cfg(test) or local-function pages.
+All twenty-seven blocks are accounted for; no focused check remains blocked.
+
+Four files have identical raw executable/signature tokens to the baseline.
+The public Real wrapper differs only by two optional commas independently
+reproduced by Rustfmt; all five files match an independently formatted baseline.
+Focused Rustfmt and git diff --check passed. Predicate calls, trace scheduling,
+constants, fixtures, tolerances and policies remain unchanged. Full workflow
+checks remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-carlson-audit/ includes baseline/final logs,
+commands, exact arithmetic checks, declaration/token inventories, temporary
+integration documentation source and rendered-block matches. Builds reused the
+locked/offline, nonincremental shared target, roughly 6.3 GiB after the downstream
+consumer build. Duplicate temporary HTML was removed after validation. Legendre
+and Jacobi kernels, the spatial development workflow, sign admission, shared
+fixture support and historical admission narratives supplied context without
+new whole-file audit credit. Historical sanitizer/cost claims were not reproduced
+or promoted into current performance guarantees. The repository-wide line audit
+and 100% Rustdoc mandate remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,3 +1,4 @@
+/// Admit real Carlson domains before preserving a diagonal identity or encoding a native integral.
 impl Real {
     /// Carlson's symmetric elliptic integral of the first kind, `RF(x,y,z)`.
     ///
@@ -23,9 +24,24 @@ impl Real {
         Self::elliptic_carlson(x, y, z, true)
     }
 
+    /// Share RF/RD admission, diagonal simplification and native domain encoding.
+    /// Resolve signs in x,y,z order before collectively rejecting negative or
+    /// divergent inputs; a failed sign query propagates Exhausted before that
+    /// collective check. RD additionally requires positive z. Only then use Real's
+    /// equality shortcut to recognize a diagonal and return its reciprocal-root form.
+    ///
+    /// Move an optional proved zero to x; RF may permute all arguments, whereas RD
+    /// only swaps x and y. Retain sqrt(x), ln(y), ln(z) so finite valid children
+    /// encode the domain in the definition itself. Root/log admission errors remain
+    /// typed. Neither this helper nor the node constructor is arbitrary graph
+    /// validation, and no new work, precision or memory budget is imposed.
     fn elliptic_carlson(x: &Self, y: &Self, z: &Self, second: bool) -> Result<Self, Problem> {
         let mut values = [x, y, z];
-        let signs = [x.operation_sign()?, y.operation_sign()?, z.operation_sign()?];
+        let signs = [
+            x.operation_sign()?,
+            y.operation_sign()?,
+            z.operation_sign()?,
+        ];
         if signs.contains(&Sign::Minus)
             || signs.iter().filter(|&&s| s == Sign::NoSign).count() > 1
             || (second && signs[2] == Sign::NoSign)
@@ -35,13 +51,17 @@ impl Real {
         if x == y && y == z {
             crate::trace_dispatch!("real", "elliptic_carlson", "exact-diagonal");
             let inverse_root = x.clone().sqrt()?.inverse()?;
-            return if second { inverse_root / x } else { Ok(inverse_root) };
+            return if second {
+                inverse_root / x
+            } else {
+                Ok(inverse_root)
+            };
         }
         if let Some(index) = signs.iter().position(|&s| s == Sign::NoSign) {
             values.swap(0, index);
         }
         // Encode the domain in the defining payload itself: square(root_x),
-        // exp(log_y), exp(log_z). Every finite deserialized payload is valid.
+        // exp(log_y), exp(log_z). Finite, valid child expressions encode the domain.
         // The optional zero has been permuted to x; RD never swaps z.
         let arguments = [
             values[0].clone().sqrt()?.fold(),
@@ -49,6 +69,8 @@ impl Real {
             values[2].clone().ln()?.fold(),
         ];
         crate::trace_dispatch!("real", "elliptic_carlson", "certified-duplication");
-        Ok(Self::irrational_from_computable(Computable::elliptic_carlson(arguments, second)))
+        Ok(Self::irrational_from_computable(
+            Computable::elliptic_carlson(arguments, second),
+        ))
     }
 }
