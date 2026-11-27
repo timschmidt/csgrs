@@ -791,10 +791,12 @@ impl Computable {
         }
     }
 
+    /// Wrap a shared constant tag in a fresh node with its known positive sign and bound facts.
+    /// Approximation reuse belongs to the cross-thread SHARED_CONSTANT_CACHES table;
+    /// this wrapper has no abort signal and is distinct from thread-local Real templates.
     fn shared_constant(constant: SharedConstant) -> Computable {
-        // Shared constants start with valid structural facts. Approximation
-        // values are cached globally per thread, but the bound/sign caches can
-        // be initialized directly on each lightweight wrapper.
+        // Initialize per-node facts directly; approximation values live in the
+        // separate shared constant cache rather than in a thread-local table.
         crate::trace_dispatch!("computable", "constructor", "shared-constant-wrapper");
         Self {
             internal: Arc::new(Node::new(Approximation::Constant(constant), BoundCache::Valid(constant.bound_info()), ExactSignCache::Valid(Sign::Plus))),

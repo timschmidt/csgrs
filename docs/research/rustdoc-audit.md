@@ -16087,6 +16087,77 @@ consumer and selected named-certificate test excerpts were supporting context,
 not additional whole-file audit credit. Full workflows remain owner-waived; no
 focused check remains blocked. Repository-wide documentation work remains open.
 
+## Hyperreal canonical constants and cache-scope clarification
+
+Whole-file review: crates/hyperreal/src/real/arithmetic/canonical_constants.rs
+at revision da129bcfbea5c708495d2bad66a88adc2671df50 (313 -> 398 lines).
+The owning layer is exact scalar special-form construction and reusable constant
+state. P1/P2/P3/P4/P5/P19 and the admission protocol require exact retained values,
+conservative recognizers, correct signal inheritance and explicit cache scope.
+The domain is the enumerated rational, integer, pi, root, logarithm, exponential
+and additive constant forms, including unsupported recognizer inputs and signed
+scales. Missing witnesses were Rustdoc for the private modules, macro-authored
+thread-local constants, lazy statics and accessors, plus two misleading lower-layer
+cache-scope comments. Baseline public numeric semantics (nine) and lazy certificate
+replay (four) tests passed before editing.
+
+All four modules, forty statics and sixteen functions in the canonical constants
+file now have Rustdoc (60 complete blocks). Review distinguishes:
+
+- Process-wide independently initialized exact Rational/BigInt/BigUint values,
+  thread-local Real templates, and the separate process-wide computable constant
+  approximation table. First use can allocate; fixed slot count does not bound
+  retained integer bytes. Exact recipes are not requested-precision samples.
+- Rational scale and named basis, including scaled pi, root and logarithm forms;
+  sqrt(6)/3 retains a general rational-root graph while sqrt(2)/sqrt(3) use the
+  dedicated lower-layer table. Product and additive forms retain their graphs.
+  Fixed nonzero denominators and enumerated table entries justify initializer
+  unwraps. The 7/8 rational is the exact endpoint-adjacent atanh branch threshold.
+- Accessors clone templates with independent primitive views while retaining shared
+  computable state. Templates start with empty primitive views and accessors do
+  not fill those views. This matters when scaled_ln replaces the rational scale:
+  it cannot inherit a stale template projection. Zero and negative coefficients
+  are accepted; zero does not canonicalize the retained Ln form to payload-free zero.
+- pi_fraction recognizes only literal tuples (+/-1, 2/3/4/6), not unreduced
+  equivalents. Zero denominators and other tuples decline to caller fallback.
+  sqrt_constant recognizes only two and three; other mathematically valid roots
+  also decline. Unsupported recognizers do not establish invalid mathematics.
+- pi_minus_three always constructs the fixed pi-3 form and reads its argument
+  only to inherit a signal. Caller selection supplies the numeric precondition;
+  attaching that signal to the clone does not mutate the stored template.
+
+Two narrowly scoped supporting edits add one block each: Computable::shared_constant
+in computable/node/primitive_constructors.rs and SHARED_CONSTANT_CACHES in
+computable/node/bounds.rs. The former's old "globally per thread" wording and the
+latter's "lock-free" characterization are corrected: the process-wide slots own
+synchronized evaluation state, separate from per-node structural sign/bound facts.
+These files, selected elementary-function callers, cache representation/lookup
+code and test excerpts are supporting context, not additional whole-file credit.
+
+After the final source edit:
+
+- Public numeric semantics (nine), exact inverse-trigonometric unit tests (two),
+  e/log/cross-thread constant-cache tests (three), and pi-from-warmed-tau cache
+  reuse (one) passed both without optional features and with all features.
+  All four lazy-certificate replay tests also passed with all features. Existing
+  exact identities, graph composition and cross-thread reuse assertions remain.
+- Actual private cargo doc passed without optional features and with all features,
+  denying warnings and broken/private links. All 62 complete documentation blocks
+  matched the generated all-feature pages, including the macro-emitted thread-local
+  constants. No generated documentation was added to the repository.
+- Token comparison against the named baseline found only one optional trailing
+  call comma from Rustfmt in canonical_constants.rs; every other noncomment token
+  is unchanged, including strings. The two supporting files have identical
+  noncomment tokens. Selected Rustfmt and git diff --check passed. No runtime,
+  dispatch, fixture or policy changes, performance claim or expanded mathematical
+  support claim is made.
+
+Evidence: /tmp/csgrs-hyperreal-constants-audit/ retains command records, baseline
+and final logs, and complete source/render matches. Builds reused the approximately
+5.5 GiB shared nonincremental target with locked/offline dependencies; no second
+build tree or probe binary was created. Full workflows remain owner-waived; no
+focused check remains blocked. Repository-wide documentation work remains open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

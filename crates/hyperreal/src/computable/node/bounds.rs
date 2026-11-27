@@ -669,9 +669,10 @@ pub(crate) fn should_stop(signal: &Option<Signal>) -> bool {
     signal.as_ref().is_some_and(|s| s.load(Relaxed))
 }
 
-// Constants are value objects, so separate `Computable::pi()` calls are common.
-// A process-wide lock-free cache lets every worker reuse the finest certified
-// approximation instead of recomputing constants once per thread.
+/// Process-wide approximation slots indexed by SharedConstant, shared across workers.
+/// The array is initialized lazily; each EvaluationCache owns its synchronized
+/// evaluation state. Reuse is precision-qualified, while per-node bound/sign facts
+/// live separately. A fixed number of slots does not bound retained integer bytes.
 #[cfg(not(verus_keep_ghost))]
 static SHARED_CONSTANT_CACHES: LazyLock<[EvaluationCache; SharedConstant::COUNT]> =
     LazyLock::new(|| std::array::from_fn(|_| EvaluationCache::default()));
