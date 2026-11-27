@@ -1,8 +1,10 @@
 #[cfg(test)]
+/// Shared-operand reciprocal/square cancellation witnesses for nonzero evidence, identity and signal preservation.
 mod shared_square_quotient_tests {
     use super::*;
     use std::sync::atomic::Ordering as AtomicOrdering;
 
+    /// Wrap raw syntax with no bound/sign certificate and no signal, preserving the fixture without constructor rewrites.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,6 +16,8 @@ mod shared_square_quotient_tests {
         }
     }
 
+    /// Build either Square(value) or Multiply(value,value), paired with an explicit inverse of the same node.
+    /// Clone the wrappers so all children share node identity while their signal handles can be tested separately.
     fn factors(value: &Computable, square: bool) -> (Computable, Computable) {
         let product = if square {
             Approximation::Square(value.clone())
@@ -24,6 +28,9 @@ mod shared_square_quotient_tests {
     }
 
     #[test]
+    /// Cancel positive and negative ln(2) against their shared inverses in both orders, preserving cache snapshots.
+    /// Decline zero, a positive expression with no immediate sign, and a separately
+    /// allocated equal constant. These refusals test shortcut admission, not numerical inequality.
     fn shared_reciprocal_product_uses_only_the_same_retained_nonzero_value() {
         for value in [Computable::ln2(), Computable::ln2().negate()] {
             let inverse = raw(Approximation::Inverse(value.clone()));
@@ -48,6 +55,10 @@ mod shared_square_quotient_tests {
     }
 
     #[test]
+    /// Carry a descendant stop flag through complete cancellation, or decline a conflicting outer flag.
+    /// Toggle the retained flag to check identity-based reuse. A 32-negation fixture
+    /// also declines the inspection budget without numeric cache creation; the test
+    /// does not locate the exact minimal failing graph size or measure cancellation latency.
     fn shared_reciprocal_product_preserves_descendant_controls_or_declines() {
         for conflict in [false, true] {
             let signal = Arc::new(AtomicBool::new(true));
@@ -88,6 +99,9 @@ mod shared_square_quotient_tests {
     }
 
     #[test]
+    /// Check both signs of ln(2), both square/product shapes and both multiplication orders.
+    /// Require the result to retain the original Arc node and unchanged numeric cache
+    /// snapshot across all eight cases.
     fn both_shared_product_shapes_and_orders_keep_the_entire_value_without_refinement() {
         for value in [Computable::ln2(), Computable::ln2().negate()] {
             assert!(matches!(
@@ -107,6 +121,9 @@ mod shared_square_quotient_tests {
     }
 
     #[test]
+    /// Decline zero/unknown signs, separately allocated equal operands and unsupported product shapes.
+    /// Explicitly distinguish structural equality from Arc identity and preserve empty
+    /// caches in the zero/unknown cases; none of these declines proves inequality.
     fn zero_unknown_and_unshared_operands_do_not_supply_a_cancellation_proof() {
         let unknown = raw(Approximation::Add(Computable::pi(), Computable::one()));
         assert_eq!(unknown.immediate_sign(), None);
@@ -147,6 +164,9 @@ mod shared_square_quotient_tests {
     }
 
     #[test]
+    /// Place a stop flag at each of five removed wrapper positions, with and without an identity conflict.
+    /// For all ten cases, require either decline or retention of the exact flag. After
+    /// clearing a retained flag, a positive approximation witnesses subsequent consumption.
     fn every_removed_wrapper_signal_is_retained_or_causes_a_decline() {
         // Different wrappers can share one mathematical node while carrying
         // different cancellation handles. Exercise each position independently.
@@ -200,6 +220,9 @@ mod shared_square_quotient_tests {
     }
 
     #[test]
+    /// Cancel a shared square of ln(2)+1 while retaining its exact root node and descendant signal.
+    /// The fixture explicitly seeds the independently known positive sign. After
+    /// clearing the common flag, require an approximation greater than one at scale 2^32.
     fn a_common_signal_and_descendant_graph_survive_square_cancellation() {
         let signal = Arc::new(AtomicBool::new(true));
         let mut child = Computable::ln2();

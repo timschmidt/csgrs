@@ -1,6 +1,16 @@
-// Shared nonzero operands admit reciprocal identities without expanding them.
-// Each rewrite preserves the cancellation controls of every removed node.
 impl Computable {
+    /// Recognize a shared nonzero operand times its explicit inverse, in either factor order, and return exact one.
+    /// Require identical node allocations and an already-retained positive/negative
+    /// sign; do not walk or numerically refine to prove nonzero. Equal but independently
+    /// allocated values are outside this shortcut, and zero/unknown signs decline.
+    ///
+    /// Because cancellation removes the entire graph, inspect all operand handles
+    /// with a 32-pop budget, including repeated visits to shared descendants. All
+    /// attached signals must be the same Arc allocation, regardless of their Boolean
+    /// values. Retain that common signal on one; conflicting identities or budget
+    /// failure return None. An asserted common flag is carried rather than polled.
+    /// The explicit stack has eight inline slots and can spill; the pop counter is
+    /// not a total arithmetic/allocation bound or a typed resource outcome.
     fn shared_reciprocal_product(&self, other: &Self) -> Option<Self> {
         for (value, inverse) in [(self, other), (other, self)] {
             let Approximation::Inverse(divisor) = &inverse.internal.approximation else {
@@ -45,8 +55,17 @@ impl Computable {
         None
     }
 
-    // a²/a=a keeps the complete shared descendant graph; only the removed
-    // wrappers need their control identities reconciled.
+    /// Recognize a²/a or (a*a)/a through shared nonzero node identity, in either factor order.
+    /// Both product children and the inverse divisor must share one allocation with
+    /// an immediate positive/negative sign. This optional shortcut does not prove
+    /// equality of independently authored expressions or refine an unresolved sign.
+    ///
+    /// Retain the original operand node and its complete descendant graph. Reconcile
+    /// only the five wrapper handles: product, inverse, both product children and
+    /// divisor. Every attached signal must share one Arc identity; return a clone
+    /// with that signal or decline. Descendant controls remain in the retained graph.
+    /// Signals are not polled, so an asserted compatible flag does not prevent this
+    /// exact rewrite. None is an unmatched/unproved/incompatible case, not inequality.
     fn shared_square_quotient(&self, other: &Self) -> Option<Self> {
         for (product, inverse) in [(self, other), (other, self)] {
             let Approximation::Inverse(divisor) = &inverse.internal.approximation else {

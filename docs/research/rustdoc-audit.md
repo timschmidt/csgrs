@@ -17188,6 +17188,99 @@ roughly 5.7 GiB locked/offline nonincremental target. Supporting structural-equa
 sign-publication and Real import excerpts supplied consumer context, not extra
 whole-file audit credit. Repository-wide coverage remains incomplete.
 
+## Hyperreal retained logarithms, Jacobi relations and shared quotients (2026-11-27)
+
+Baseline: 631e08c8f7d2e9f74f265c359ec5249b4831dfbc. Whole-file review of
+computable/node/log_argument.rs (80 baseline lines), shared_square_quotient.rs (98),
+shared_square_quotient_tests.rs (226), jacobi.rs (103), jacobi_tests.rs (73) and
+log_rational_range_tests.rs (121), totaling 701 baseline lines. The owning layer
+is Hyperreal structural reconstruction and scalar identity recognition. Relevant
+properties are P1–P6, P10 and P19: exact definitions, conservative domain evidence,
+proof reuse, resource distinctions and retained cancellation controls. Missing
+witnesses were private Rustdoc for reconstruction/relation helpers, their local
+functions and the regression modules/oracles. Ten owning tests passed before edits.
+
+All 29 authored declarations have documentation:
+
+- retained_log_argument recovers exp(self) through a restricted logarithm grammar
+  used by Jacobi complement consumers. It requires positive-domain evidence for
+  ln(1+r), including a cached residual lower bound strictly greater than -1 when
+  direct sign recognition declines. The cached route bounds the absolute stored
+  precision exponent by 4096 and requests no new digits. Success publishes a
+  positive sign on the recovered expression for subsequent use.
+- The shared u8 visit counter is consumed before the entry signal poll; there is
+  another poll before return. Failure does not roll back visits or facts strengthened
+  by subqueries. None combines invalid/unproved domain, unknown syntax, size/visit
+  guards and cancellation. Binary exponent limits, integer-power limits and the
+  4096-bit rational guard do not bound all constructor work or temporary storage.
+  In particular, binary-scaled log shifts can allocate before the result-size check.
+  Even zero integer powers first recover a valid positive child argument.
+- Shared reciprocal cancellation requires one retained node allocation and an
+  immediate nonzero sign. It removes the whole graph, so it checks descendant
+  handles under a 32-pop budget, counting repeated shared visits. All signals
+  must have identical Arc identities; their Boolean values are not compared.
+  Square quotient cancellation instead retains the original node/descendants
+  and reconciles five wrapper handles. Both shortcuts carry compatible asserted
+  flags without polling them; neither is a numerical equality solver or a typed
+  resource-exhaustion API.
+- Jacobi payloads store an amplitude phi and ln(c), with c>0 and parameter m=1-c.
+  Components denote sin(phi), cos(phi) and the positive square root of
+  cos(phi)^2+c*sin(phi)^2. The constructor does not invert the elliptic integral
+  or validate arbitrary child graphs. Its previous broad imported-payload comment
+  is now qualified by defined-real input preconditions. The dn zero-log shortcut
+  and square-sum helper describe their actual outer-signal priority, without
+  claiming exhaustive reconciliation of discarded descendant controls.
+- Square extraction limits path depth and follows the left product spine first;
+  it does not bound total sibling visits or nested constructor/comparison work.
+  Sum recognition requires matching amplitude and parameter shapes, reconstructs
+  c before testing guards, then applies the four weighted identities:
+  sn²+cn²=1, c*sn²+cn²=dn², (1-c)*sn²+dn²=1, and (c-1)*cn²+dn²=c.
+  Coefficient matching first uses structural recognition, then a bounded ring
+  zero proof. A false match is not an inequality certificate. Dispatch and guard
+  order remain unchanged.
+- Shared-quotient fixtures distinguish structural equality from allocation
+  identity, exercise both shapes/orders/signs, preserve cache snapshots, inspect
+  all five signal positions and consume resumed outputs after clearing a flag.
+  Their inspection-limit case does not establish a minimal threshold or latency.
+- Log recovery tests check nine independent rational results, six shared logarithms,
+  a square-root relation, zero visits, selected invalid/unrecognized forms, warmed
+  residual reuse and an asserted signal. The Jacobi decline cases establish
+  optional recognition limits, not invalidity of the represented mathematics.
+- The log-kernel oracle uses directed 2048-bit MPFR logarithms and exact GMP
+  rational combinations, including sign-aware bounds for shift*ln(2). The
+  approximation interval must contain the full independent reference enclosure.
+  The 22 residuals in two forms yield 880 fresh/warm assertions; eleven residuals
+  at nine shifts yield 1980. Shift endpoints are logarithmic coefficients, not
+  enormous binary integer allocations. Fresh nodes do not clear global caches,
+  and finite containment is not a correctly-rounded conversion assertion.
+
+Ten owning tests passed with optional features disabled and with all features.
+The public Jacobi integration suite passed all nine tests (132.33 seconds for
+this run), including its independent numerical and replay fixtures. Two native
+ring/Jacobi domain and logarithm-composition tests passed, followed by five
+Hyperlimit resolver tests. These observed checks are not a comparative performance
+measurement. Both final private cargo doc builds passed with warnings and
+broken/private links denied. All seven runtime blocks matched actual private
+HTML; twenty test/module/helper blocks and two function-local helper blocks
+passed source inventory and supplemental Markdown rendering. Ordinary library
+Rustdoc does not emit item pages for those test-only or local declarations.
+Selected Rustfmt and git diff --check passed; no focused check is blocked.
+
+Source tokens exactly match an independently Rustfmt-formatted baseline after
+removing documentation/whitespace. Raw differences consist of Rustfmt's existing
+closure/match-arm braces and optional comma formatting, recorded individually;
+no arithmetic, predicate order, fixture, assertion, signature or policy changed.
+Full workflows remain owner-waived for this docs-only session. No new performance
+or universal closure claim is made.
+
+Evidence is retained in /tmp/csgrs-hyperreal-retained-relations-audit/: baseline
+and final logs, commands, token/declaration inventory and rendered-block matches.
+Duplicate supplemental HTML was removed after inspection. Builds reused the
+roughly 5.7 GiB locked/offline nonincremental target. Public scalar construction,
+approximation, ring recognition, stored-rational classification and sign-query
+excerpts supplied context, not additional whole-file audit credit. Repository-wide
+coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
