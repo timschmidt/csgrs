@@ -20976,6 +20976,118 @@ the approximately 6.6 GiB shared Cargo target with incremental compilation disab
 AGENTS.md's existing 100% public/private Rustdoc mandate remains in force.
 Repository-wide line review and all-configuration coverage remain unfinished.
 
+## Hyperreal retained angle recognizers, scoped algebra review (27 November 2026)
+
+Baseline: `8a613c4f157d49d0a1f06014f75fca5a2d66bc23` on `rustdoc`.
+Reviewed every line of `crates/hyperreal/src/computable/node/algebra.rs` from
+without_scaled_shared_factor through sin_pi_rational_sum_sign: baseline lines
+1049–1704, 656 lines, now lines 1049–1833, 785 lines. The 19 methods each have
+reviewed Rustdoc and verified private HTML anchors/text. No new type, impl,
+constant, test-only item or generated API occurs in this section; closure bodies
+were reviewed with their containing methods. **This is scoped credit, not a
+whole-file audit.** Continue at the documentation for Computable::negate, now
+line 1834. The file has 2745 lines; earlier continuous review covers its opening
+section, but the remaining arithmetic/statistics implementation is unfinished.
+
+Ownership is Hyperreal's structural angle recognition and exact sign layer,
+P2–P6, consumed by scalar trigonometric construction and downstream predicates
+under P8–P11 and retained composition under P19–P20. The missing acceptance witness
+was precise documentation of recognition precedence, principal branches, tuple
+semantics, optional failure, domain assumptions and resource limits. All 33 selected
+baseline tests passed before editing. Contextual reads included direct constant
+and surd readers, AtanPiAnchor recovery, native/Real trig consumers, binary scaling,
+addition's sign publication and existing regression fixtures. Those reads add no
+whole-file review credit to their containing files.
+
+The documentation now records:
+
+- Shared-factor extraction peels negation and binary scaling but only recognizes
+  a direct constant or a product with a direct constant child. It does not search
+  nested products/sums. A returned child carries its own signal; newly built
+  wrappers need not carry the outer signal or become rational leaves. Defined
+  source operands are required. Wrapper recursion has no explicit depth/work cap.
+- Direct atan/acos/list readers follow their existing rational, pi, inverse-angle
+  and arithmetic precedence. Their budget limits recursive depth, not aggregate
+  visits, coefficient size, allocation or nested helper work. Products prefer
+  the left exact-rational scale. None does not establish invalidity or inequality.
+  These paths do not poll cancellation or numerically refine.
+- The unsigned half-pi reader recognizes orientation*pi/2-atan(x) at depth 32.
+  Its signed counterpart additionally requires sign(x)=orientation, proving the
+  principal identity atan(1/x). The acos-shift reader instead returns the
+  coefficient orientation in orientation*(acos(x)-pi/2), not the angle's sign,
+  and imposes no corresponding argument-sign requirement.
+- Quarter-turn tuples describe a coordinate permutation and signs multiplying
+  the original atan coordinates. Diagonal tuples give signs of the rotation's
+  sine/cosine components (each magnitude 1/sqrt(2)) and of the atan multiplier;
+  they are not signs of the final coordinates. Only odd pi/4 turns qualify.
+- Direct forms precede Laurent recovery at depth 64. Fallback happens on failed
+  form construction, not on failed later projection of an already recognized
+  form. Pure-pi recovery is explicitly opt-in through the finite anchor table;
+  the Real-facing quarter-turn entry keeps it disabled. A retained argument with
+  zero coefficient is not treated as the no-argument pure-pi case.
+- Atan-to-acos conversion admits rational or pure-quadratic tangents only when
+  sqrt(t²/(1+t²)) is exactly rational, preserving the principal branch and using
+  positive orientation at t=0. A recognized atan that fails conversion returns
+  immediately. Asin and negative-rational acos use their exact reflected formulas;
+  original real domains must already be admitted. Laurent projection admits only
+  the required rational powers and convertible atoms, not arbitrary radicals.
+- Sign rules use atan monotonicity, coefficient/argument signs and strict principal
+  range bounds. For a nonzero pi coefficient, 2*abs(pi_coefficient) at least the
+  sum of absolute atan coefficients gives a strict sign because finite atan values
+  are strictly inside (-pi/2,pi/2). Acos rules use its principal nonnegative range,
+  the x=1 endpoint and half-pi shifts; that endpoint check alone is not full domain
+  validation. Some missing required argument signs return early. Nested helpers
+  may reuse/retain facts, while this method does not itself publish the root sign.
+- Retained pi-multiple reading declines pure rational zero; Laurent projection
+  admits the empty form as zero. Structural depth and Laurent node accounting
+  remain distinct. Sine-term recognition requires a stored PrescaledSin argument
+  r*pi with 0<r<1/2, not an arbitrary periodic or cosine representation. The open
+  range 0<sin(pi*r)<1 proves strict signs even at zero interval endpoints; an
+  interval crossing zero can decline despite the actual scalar having a definite
+  sign. Addition may retain the proof returned by this bound.
+
+Private probes on both baseline and documented source checked ten signed half-pi
+cases, ten acos-shift cases, ten exact cross-family conversions, 25 atan ordering
+cases, ten strict pi-dominance cases, 45 sine-bound cases (39 certified signs and
+six ordinary declines) and 64 odd-diagonal mappings. Expectations use principal
+monotonicity, rational 3-4-5 triangles, the exact sine of pi/6 and signed quadrant
+arithmetic, rather than approximate evaluations. Additional probes checked anchor
+opt-in, depth refusal/retry, zero projection, unsupported sine turns, shallow
+factor extraction and a nested factor recognized only by the broader pi reader.
+
+An initial probe expected the extracted value -8 to be a rational leaf. The helper
+correctly retained a binary-scale wrapper, so exact_rational returned None. The
+corrected probe asserts that representation and independently requires the
+bounded exact normal form to yield -8. Initial source/logs were retained; no
+repository assertion, fixture or runtime code was changed to accommodate it.
+These finite probes qualify the documented cases and limits, not universal
+recognition completeness or sufficient domain validation of all raw imports.
+
+After the final source edit, focused locked/offline two-job checks passed:
+
+- All 33 selected Hyperreal library/Real consumer tests without default features
+  and all 33 with all features, covering angle reconstruction, inverse-trig
+  composition/branches, retained signs, endpoints, shared factors and replay.
+- Both private Rustdoc builds with warnings, broken intra-doc links and private
+  intra-doc links denied; all 19 method documentation/anchor checks.
+- All-feature `serde_graph_domains` (four tests), `serde_opaque_operand_domains`
+  (five tests), and downstream Hyperlimit `resolve::tests` (five tests).
+- Selected Rustfmt and git diff --check. Raw non-comment tokens and independently
+  formatted comment-free tokens are identical for the entire file. Bytes outside
+  this reviewed section are unchanged. No runtime algorithm, dispatch/predicate
+  order, signature, fixture or assertion changed.
+
+No focused check remains blocked. Probes used external containment (1 GiB address
+space, ten CPU seconds, fifteen wall seconds, no core dumps); these limits are
+not production resource guarantees. Full workflow and performance checks remain
+owner-waived for this docs-only session, and no performance claim is made.
+Evidence under `/tmp/csgrs-hyperreal-angle-recognizers-audit/` retains commands,
+logs, probe sources and scoped item/render/token inventories. Owned shadow sources
+and probe executable/rlib were removed after inspection; builds reused the
+approximately 6.6 GiB shared target with incremental compilation disabled.
+AGENTS.md's existing 100% public/private Rustdoc mandate remains in force.
+Repository-wide line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1046,6 +1046,15 @@ impl Computable {
         Some(result)
     }
 
+    /// Extract one directly retained shared factor through negation and binary scaling.
+    /// Return r only for recognized self=factor*r: a direct constant gives one, and a
+    /// product with a direct constant child gives the other child. Do not search nested
+    /// products or sums. Multiplication uses this to cancel pi with its reciprocal.
+    /// Defined source operands are required; this is not domain validation.
+    /// There is no explicit recursion/work limit or signal poll; offset arithmetic and
+    /// allocation must remain admissible. A directly returned child retains its own
+    /// signal; reconstructed wrappers need not transport the outer signal or become
+    /// rational leaves, even when their exact value is rational.
     fn without_scaled_shared_factor(&self, factor: SharedConstant) -> Option<Computable> {
         if self.shared_constant_kind() == Some(factor) {
             return Some(Self::one());
@@ -1074,6 +1083,14 @@ impl Computable {
         None
     }
 
+    /// Recognize a rational offset plus rational multiples of pi and one principal atan.
+    /// At positive depth, try rational metadata, direct pi and retained atan operands,
+    /// then Add, Negate, Offset and products with an exact-rational child, in that order.
+    /// Distinct atan operands must merge structurally; multiplication prefers the left
+    /// rational scale. Unsupported forms or depth zero decline without refinement.
+    /// Budget limits recursive depth, not aggregate visits, coefficient growth or nested
+    /// helper work. Defined operands and admissible offset shifts are preconditions;
+    /// this optional reader adds no cancellation poll or independent domain validation.
     fn pi_atan_linear_form(&self, budget: usize) -> Option<PiAtanLinearForm> {
         if budget == 0 {
             return None;
@@ -1129,6 +1146,10 @@ impl Computable {
         }
     }
 
+    /// Recognize orientation*pi/2-atan(x), with orientation exactly ±1, at depth 32.
+    /// Require zero rational offset and atan coefficient -1, returning the orientation
+    /// and retained operand. This reader alone does not require x to have that sign
+    /// and does not prove the resulting angle lies on a reciprocal atan's principal branch.
     fn half_pi_minus_atan_argument(&self) -> Option<(Sign, Computable)> {
         let form = self.pi_atan_linear_form(32)?;
         if form.constant.sign() != Sign::NoSign || !form.atan.is_minus_one() {
@@ -1144,11 +1165,21 @@ impl Computable {
         Some((orientation, form.argument?))
     }
 
+    /// Recognize orientation*pi/2-atan(x) only when x has the same proved nonzero sign.
+    /// Return the orientation and retained operand, establishing the principal identity
+    /// atan(1/x) without evaluating the angle. A missing sign or structural form declines;
+    /// the underlying depth-32 reader and exact-sign helpers are not a total-work budget.
     pub(crate) fn signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Computable)> {
         let (orientation, argument) = self.half_pi_minus_atan_argument()?;
         (argument.exact_sign()? == orientation).then_some((orientation, argument))
     }
 
+    /// Recover (swap, sine_sign, cosine_sign, x) for recognized k*pi/2 ± atan(x).
+    /// Signs multiply the original atan(x) coordinates, after swapping them when requested.
+    /// Try direct linear recognition before Laurent recovery, each with depth 64.
+    /// Disable pure-pi anchor recovery on this entry point to retain Real's established
+    /// recognition path; None does not deny an exact trig identity. Defined inputs and
+    /// the underlying resource preconditions remain required; no approximation is used.
     pub(crate) fn quarter_turn_plus_or_minus_atan_argument(
         &self,
     ) -> Option<(bool, Sign, Sign, Computable)> {
@@ -1157,6 +1188,13 @@ impl Computable {
         self.pi_atan_trig_argument(false)
     }
 
+    /// Try the direct atan linear form, then its Laurent recovery, both at depth 64.
+    /// For a recovered form, quarter_turn_parts supplies the signed coordinate mapping.
+    /// If requested, a zero-offset pure-pi form with no retained argument first uses the
+    /// finite AtanPiAnchor table and returns an unswapped mapping. Failure of that anchor
+    /// lookup returns None. A retained zero-coefficient argument does not qualify as pure pi.
+    /// The fallback runs when direct form construction fails, not when later projection
+    /// of an already recognized form fails. No signal poll or numerical refinement occurs.
     fn pi_atan_trig_argument(
         &self,
         recover_pi_anchor: bool,
@@ -1175,10 +1213,14 @@ impl Computable {
         form.quarter_turn_parts()
     }
 
-    /// Exact diagonal rotations `k*pi/4 +/- atan(x)`, for odd integer k.
-    /// The existing quarter-turn recognizer remains preferred. This uses its
-    /// same bounded coefficient proof and rejects nonzero constant offsets,
-    /// other atan coefficients and unrecognized/exhausted forms.
+    /// Recognize k*pi/4 ± atan(x) for odd integer k, returning three signs and x.
+    /// The tuple contains the signs of sin(k*pi/4), cos(k*pi/4), and the atan multiplier;
+    /// the first two diagonal components each have magnitude 1/sqrt(2). Consumers use
+    /// these signs in exact angle-addition formulas, not as signs of the final coordinates.
+    /// Require zero rational offset and atan coefficient ±1; even k belongs to the
+    /// separate quarter-turn recognizer. Try direct then Laurent forms at depth 64.
+    /// None covers unsupported structure or limits, not disproved identities. Defined
+    /// operands, fitting offset arithmetic and nested resource assumptions still apply.
     pub(crate) fn diagonal_turn_plus_or_minus_atan_argument(
         &self,
     ) -> Option<(Sign, Sign, Sign, Computable)> {
@@ -1208,6 +1250,13 @@ impl Computable {
         Some((sine_sign, cosine_sign, form.atan.sign(), form.argument?))
     }
 
+    /// Recover one atan basis after cancelling recognized pi-Laurent arithmetic.
+    /// First require inverse-trig/pi family metadata. Admit rational power-zero terms,
+    /// power-zero atoms readable as atan operands, and atom-free rational pi terms at
+    /// power one. Radical coefficients, other powers and unmergeable atan operands decline.
+    /// The supplied depth reaches the shared node-limited Laurent recognizer; it is not
+    /// a total-work cap. Existing domain assumptions apply to opaque cancellations;
+    /// this reader neither refines nor stores a new root sign.
     fn pi_atan_laurent_form(&self, budget: usize) -> Option<PiAtanLinearForm> {
         if !self.internal.contains_inverse_trig_or_pi() {
             return None;
@@ -1246,6 +1295,19 @@ impl Computable {
         Some(form)
     }
 
+    /// Recognize a rational offset plus rational multiples of pi and one principal acos.
+    /// At positive depth, try rational metadata and pi, then atan, asin, the stored
+    /// negative-rational acos complement, and other acos operands before arithmetic.
+    /// For atan(t), require rational or pure-quadratic t and a rational exact root
+    /// s=sqrt(t²/(1+t²)); use sign(t)*(pi/2-acos(s)), taking positive orientation at zero.
+    /// A recognized atan whose conversion fails declines immediately, without trying
+    /// later families. For asin, use pi/2-acos(x), with the reflected formula for an
+    /// exact negative rational x. The complement tag stores acos(-r)=pi-acos(r).
+    ///
+    /// Recurse through Add, Negate, Offset and exact-rational products; form addition
+    /// may use the nonnegative rational unit-circle complement relation. Principal
+    /// real domains must already be admitted. Depth bounds do not meter aggregate or
+    /// nested work, rational size or allocations, and no signal poll occurs here.
     fn pi_acos_linear_form(&self, budget: usize) -> Option<PiAcosLinearForm> {
         if budget == 0 {
             return None;
@@ -1352,6 +1414,12 @@ impl Computable {
         }
     }
 
+    /// Project recognized Laurent arithmetic back into one principal-acos linear basis.
+    /// Require positive depth and inverse-trig/pi metadata, then admit rational power-zero
+    /// terms, inverse-angle atoms convertible at depth minus one, and atom-free rational
+    /// power-one terms. Decline radicals, other powers or incompatible arguments.
+    /// Atom conversion has its own recursive work within that depth; the outer Laurent
+    /// node counter is not a total budget. Domain validity remains a caller prerequisite.
     fn pi_acos_laurent_form(&self, budget: usize) -> Option<PiAcosLinearForm> {
         if budget == 0 || !self.internal.contains_inverse_trig_or_pi() {
             return None;
@@ -1384,6 +1452,12 @@ impl Computable {
         Some(form)
     }
 
+    /// Collect rational offset/pi terms and a linear list of retained principal-atan operands.
+    /// Follow the direct linear reader's rational/pi/atan precedence and supported
+    /// Add, Negate, Offset and rational-product grammar, but preserve distinct arguments
+    /// for later monotonicity and sign deductions. Addition merges structural matches.
+    /// Depth zero or an unsupported branch declines. Depth does not cap list size,
+    /// aggregate traversal or coefficient work, and this reader does not poll cancellation.
     fn pi_atan_terms_form(&self, budget: usize) -> Option<PiAtanTermsForm> {
         if budget == 0 {
             return None;
@@ -1437,6 +1511,11 @@ impl Computable {
         }
     }
 
+    /// Recognize orientation*(acos(x)-pi/2), with orientation exactly ±1, at depth 32.
+    /// Require a zero rational offset and matching opposite pi/acos coefficients.
+    /// Return the coefficient orientation and operand; orientation is not the sign of
+    /// the resulting angle, and no sign restriction on x is imposed. The principal
+    /// acos domain must already be valid. This entry point uses no Laurent fallback.
     pub(crate) fn signed_acos_minus_half_pi_argument(&self) -> Option<(Sign, Computable)> {
         let form = self.pi_acos_linear_form(32)?;
         if form.constant.sign() != Sign::NoSign {
@@ -1453,6 +1532,12 @@ impl Computable {
         Some((orientation, form.argument?))
     }
 
+    /// Return the rational remainder when two admitted inverse-angle linear forms cancel.
+    /// Require inverse-trig/pi metadata on at least one operand, then try paired direct
+    /// atan forms before paired acos forms, each at depth 32. Success requires both pi
+    /// and inverse-angle coefficients to vanish after merging; no Laurent recovery or
+    /// numerical refinement is attempted. None is recognition failure, not inequality;
+    /// this helper does not independently validate domains or publish a root sign.
     fn collapsed_inverse_trig_linear_sum(&self, other: &Computable) -> Option<Rational> {
         if !self.internal.contains_inverse_trig_or_pi()
             && !other.internal.contains_inverse_trig_or_pi()
@@ -1478,6 +1563,21 @@ impl Computable {
         None
     }
 
+    /// Prove selected signs using principal inverse-angle ranges and retained argument signs.
+    /// For zero-offset forms, try the atan-term list, a single atan basis, then direct
+    /// or Laurent acos bases, using depth 32. Atan cases include exact cancellation,
+    /// monotonicity for opposite equal coefficients, aligned signs, and pi dominance.
+    /// For a nonzero pi coefficient,
+    /// 2*abs(pi_coefficient)>=sum(abs(atan_coefficients)) gives a strict sign because
+    /// abs(atan(x))<pi/2 for every finite x. Acos cases use its nonnegative principal
+    /// range, the endpoint x=1, aligned pi/acos coefficients and signed half-pi shifts.
+    ///
+    /// Return a proved Sign or None, which means this search did not decide. Some
+    /// required missing argument signs end the search early; do not infer that every
+    /// later rule ran. Defined real operands are assumed: the endpoint check alone
+    /// is not validation of the full acos domain. Nested exact-sign/arithmetic helpers
+    /// may reuse or retain facts, but this method does not publish the queried sign
+    /// itself, numerically refine, or impose a total-work/cancellation contract.
     pub(crate) fn inverse_trig_linear_sign(&self) -> Option<Sign> {
         let product_sign = |left: Sign, right: Sign| match (left, right) {
             (Sign::NoSign, _) | (_, Sign::NoSign) => Sign::NoSign,
@@ -1610,11 +1710,20 @@ impl Computable {
         None
     }
 
+    /// Recover an exact rational r for a recognized value r*pi.
+    /// Try retained linear pi structure at depth 32 before depth-48 Laurent projection.
+    /// Zero is admitted by the Laurent path even when the direct reader has no pi leaf.
+    /// None does not prove a non-pi value; defined source operands, admissible shifts
+    /// and the underlying resource restrictions remain required. No refinement occurs.
     pub(crate) fn pi_rational_multiple(&self) -> Option<Rational> {
         self.retained_pi_rational_multiple(32)
             .or_else(|| self.pi_laurent_rational_multiple())
     }
 
+    /// Project a depth-48 Laurent form only if empty or a purely rational coefficient at power one.
+    /// Return zero for an empty form and the pi coefficient otherwise. Surviving atoms,
+    /// radicals or any other powers decline; no new root sign is stored here. Opaque
+    /// cancellation still assumes defined operands and the recognizer's resource contract.
     fn pi_laurent_rational_multiple(&self) -> Option<Rational> {
         let polynomial = self.pi_laurent_polynomial(48)?;
         match polynomial.terms.as_slice() {
@@ -1628,6 +1737,12 @@ impl Computable {
         }
     }
 
+    /// Read direct pi through rational products, negation, binary scaling and addition.
+    /// Require positive remaining depth at every visited node; try the left rational
+    /// factor before the right. Pure rational leaves, including zero, decline this
+    /// route. The returned coefficient is exact for admitted operands and shifts.
+    /// No memo or aggregate-work counter is used, so depth alone does not bound the
+    /// whole traversal, coefficient growth or allocations; no signal poll occurs.
     fn retained_pi_rational_multiple(&self, budget: usize) -> Option<Rational> {
         if budget == 0 {
             return None;
@@ -1658,6 +1773,13 @@ impl Computable {
         }
     }
 
+    /// Recover (r, scale) from a stored scale*sin(pi*r) with 0<r<1/2.
+    /// The base must be PrescaledSin with a recognized rational-pi argument; only
+    /// negation, binary scaling and exact-rational products are peeled. Neither the
+    /// name nor this reader normalizes arbitrary periodic angles or cosine tags.
+    /// The strict interval establishes 0<sin(pi*r)<1 for subsequent sign bounds.
+    /// Wrapper recursion has no explicit depth/work limit or cancellation poll; nested
+    /// pi recognition and power-of-two allocation retain their own restrictions.
     fn canonical_sin_pi_term(&self) -> Option<(Rational, Rational)> {
         match &self.internal.approximation {
             Approximation::PrescaledSin(argument) => {
@@ -1689,6 +1811,13 @@ impl Computable {
         }
     }
 
+    /// Use the strict range 0<sin(pi*r)<1 to sign rational+scale*sin(pi*r).
+    /// Recognize the canonical sine term, then compare its rational interval endpoints
+    /// rational and rational+scale. A nonzero scale can give a strict sign even when
+    /// one endpoint is zero, because the sine range is open; zero scale returns the
+    /// rational sign. Opposite endpoint signs decline. This is a sufficient bound,
+    /// not an exact sine evaluation, and it neither validates arbitrary domains nor
+    /// publishes a sign itself; the addition constructor may retain the returned proof.
     fn sin_pi_rational_sum_sign(&self, rational: &Rational) -> Option<Sign> {
         let (_, scale) = self.canonical_sin_pi_term()?;
         let endpoint = rational + &scale;
