@@ -11174,6 +11174,96 @@ for 100% public/private Rustdoc remains active; the repository audit is incomple
 Continue the remaining API-surface tests, reconcile the whole-file matrix-test
 record, and then proceed through the remaining owning-crate/support files.
 
+## Hyperlattice general API exercise-test file (2026-11-27)
+
+Reviewed all 683 baseline lines of
+`crates/hyperlattice/tests/api_surface_coverage.rs` on `4c1ed4c46`, including its
+six tests, operator macro, feature-independent fixtures, local closures,
+assertions and discarded outputs. The file is now 765 lines. Owning layer:
+Hyperlattice API regression/exercise tests. Relevant contracts are P1/P3/P6,
+P17–P19 and P37: exact values, conservative facts, explicit failures, composition,
+and evidence that does not overclaim. The missing acceptance witness was attached
+documentation explaining what each test and private macro actually establishes.
+No production algorithm or test contract was changed.
+
+Added nine documentation groups: the file overview, shared-module declaration,
+private operator macro and all six test functions. The whole-file reading and
+bounded declaration inventory establish coverage for this file, not every API
+invoked by it or the repository as a whole.
+
+Contracts clarified:
+
+- Product-term knowledge distinguishes Zero, NonZero and Unknown. The 65-term
+  fixture has two zeros, 62 nonzeros and one unknown; masks cover only the first
+  64 entries while counts include the last entry. Collinear (1,1) and (2,2)
+  displacements remain unknown to the support-only orientation facts. Their
+  determinant is mathematically zero; no undecidability claim follows.
+- The fixed 2D coordinate expectations are displacement (3,4), dot 16, wedge -2,
+  squared norm 5, squared distance 25 and orientation -21. Signed/unsigned product
+  sums have explicit zero/eight expectations; two additional fact results are
+  discarded. Public fact packets fabricated by the tests check accessor behavior,
+  not consistency with the supplied exact-set metadata or underlying coordinates.
+- Point/view fixtures check equal reduced denominators, a full 128-coordinate
+  zero mask, selected conversion errors and exact dyadic import/export examples.
+  Point collection checks include an unnormalized weighted sum. Sixteen ownership
+  expressions and other fact queries discard their results; no general float
+  error bound or independent correctness oracle is implied by those calls.
+- The vector macro evaluates both inputs once and invokes eighteen operator forms;
+  it is used for Vector2/3/4. Only its divisions unwrap Results, and every value is
+  discarded. It establishes callable ownership forms and successful division on
+  these inputs, not equality across forms or dispatch counts.
+- Active-flag dot calls cover all 4+8+16 integer support masks in dimensions 2/3/4,
+  but discard their expressions. Inactive magnitude/normalization and checked
+  division calls unwrap success. None of these calls establishes responsiveness,
+  a work bound or a cancellation error merely by attaching an active flag.
+- Shared-scale constructors reject empty inputs and mixed reduced denominators
+  such as (1/2,1/3). The latter has a mathematical common denominator; the API
+  does not perform that rewrite here. Thirds have dot/squared norm 5/9 and wedge
+  zero. The dimension-128 mask check does not test larger dimensions; the
+  three-dimensional self-cross and component extraction discard their values.
+- Complex exponent-zero fixtures distinguish zero, cheaply unknown and known
+  nonzero bases. Powers 1 through 7 and -2 of 2+i assert success only. Symbolic
+  and rational division results are not compared with independent quotients;
+  formatting and the caret-power Result are also discarded. A negative single
+  product term explicitly equals -pi.
+- Active-flag asin/acos/ln calls on the near-zero sine fixture discard their Results.
+  Symbolic homogeneous conversion is compared against three calls to the same
+  scalar division kernel; the rational homogeneous fixture separately has the
+  independent expected point (1/2,1,2). No trace assertion proves the selected
+  conversion dispatch path.
+
+Targeted context reads verified the owning algebra2 fact queries, point/vector
+shared-scale constructors and their schedule/accessor implementations. Those
+excerpts do not add new whole-file production review credit.
+
+Validation after the final edit:
+
+- Focused Rustfmt and git diff --check passed. Removing only comment-only and
+  blank lines leaves source identical to `4c1ed4c46`; all fixtures, assertions,
+  macro arms, calls, attributes and predicate order are unchanged.
+- All six existing tests passed before edits with all features, and after the
+  final edit with all features and no defaults. Direct rustc harnesses compile
+  the actual file with matching Cargo artifacts/cfgs; each test runs in its own
+  process with a 60-second limit. No timeout or focused failure remains.
+- Private integration-target Rustdoc passed with warnings and broken/private
+  links denied in both configurations. Complete rendered text matched the file
+  overview, common-module declaration and private macro. All six test docs were
+  verified attached in source and their tests executed; Rustdoc omits test pages.
+  The checker also confirms eighteen macro result statements and three invocations.
+- Hyperlattice library builds, private library documentation and Cargo checks for
+  this integration target passed with both configurations using --locked --offline,
+  two workers and CARGO_INCREMENTAL=0. No production downstream consumer changed.
+  Full workflows and unrelated downstream runtime checks remain owner-waived.
+  No performance, general cancellation or complete API correctness claim is made.
+- Removed the owned temporary executable. The shared Cargo target remains near
+  2.6 GiB; no additional target tree was created. Temporary scripts, rendered
+  documentation and logs remain as local evidence.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-api-*.log`, corresponding Cargo artifact JSON,
+and `/tmp/csgrs-lattice-api-audit/`. The root AGENTS.md mandate for 100% public and
+private Rustdoc remains active. The repository audit is incomplete; reconcile
+whole-file coverage of matrix tests and continue the remaining source/support files.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,3 +1,16 @@
+//! Selected Hyperlattice API exercises and exact-value/metadata regressions.
+//!
+//! The fixtures cover coordinate algebra, points, vectors, shared-scale views,
+//! complex arithmetic, and homogeneous conversion. Explicit assertions check only
+//! the stated values or statuses; many other outputs are deliberately discarded.
+//! Invoking an operation is not an independent correctness, dispatch, or coverage
+//! proof. In particular, active abort flags do not imply that an error is asserted.
+//!
+//! The common near-zero sine expression is mathematically nonzero but initially
+//! has Unknown cheap zero knowledge. Manually fabricated fact packets test accessors,
+//! not consistency with coordinates. No geometry policy or certainty receipt is used.
+
+/// Shared exact literals, initially unknown nonzero expressions, and abort flags.
 mod common;
 
 use std::array::from_fn;
@@ -13,6 +26,16 @@ use hyperlattice::{
     wedge2,
 };
 
+/// Check product/support fact truth tables, truncated masks, and fixed exact 2D expressions.
+///
+/// A 65-term packet includes two zeros, 62 nonzeros, and one unknown: masks expose
+/// only the first 64 entries while counts include entry 64. Axis and zero-displacement
+/// fixtures have definite orientation facts; collinear `(1,1)` and `(2,2)` remain
+/// unresolved by this support-only query, not mathematically undecidable.
+///
+/// For points `(1,2)`, `(4,6)`, `(7,3)`, assert displacement `(3,4)`, dot 16, wedge -2,
+/// squared norm 5, squared distance 25, and orientation -21. Signed and positive
+/// product sums give zero and eight. Two additional fact-query results are discarded.
 #[test]
 fn algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks() {
     let zero = r(0);
@@ -121,6 +144,17 @@ fn algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks() {
     );
 }
 
+/// Exercise point views, selected conversions, collection operations and ownership forms.
+///
+/// Thirds have equal reduced denominators; a 128-coordinate zero view fills its mask,
+/// and a view containing the unknown sine expression is rejected. A manually edited
+/// fact packet checks mask accessors without validating consistency with its exact facts.
+/// Finite dyadic float examples roundtrip through lossy export, and selected NaN/infinity
+/// slots fail import; no general float error bound or exact decimal conversion is tested.
+///
+/// Assert vector conversion, a 2D midpoint, centroid and unnormalized weighted sum,
+/// plus selected empty/mismatched collection failures. Other fact queries and sixteen
+/// point/vector or point/point ownership expressions discard their results.
 #[test]
 fn point_views_facts_conversions_collections_and_ownership_forms_are_covered() {
     let one_third = frac(1, 3);
@@ -273,6 +307,13 @@ fn point_views_facts_conversions_collections_and_ownership_forms_are_covered() {
     let _ = &q3 - &Point3::origin();
 }
 
+/// Exercise eighteen owned/borrowed vector operator forms using scalar two.
+///
+/// Evaluate each input expression once, then invoke four forms each of vector addition
+/// and subtraction, two each of scalar addition/subtraction, negation, multiplication,
+/// and division. Only the two divisions are unwrapped; every computed value is
+/// discarded. This checks callable ownership forms and division success, without
+/// asserting agreement among forms, exact results, or dispatch counts.
 macro_rules! exercise_vector_operators {
     ($left:expr, $right:expr) => {{
         let left = $left;
@@ -299,6 +340,18 @@ macro_rules! exercise_vector_operators {
     }};
 }
 
+/// Exercise vector constructors, arithmetic, facts, conversions, collections and checked errors.
+///
+/// Assert selected axis, norm, dot/wedge/cross, interpolation, step, mean, weighted-sum,
+/// index/display and signed-axis results. Finite integer float fixtures roundtrip;
+/// Vector4 rejects NaN in each coordinate. Unknown scalar division and normalization,
+/// and zero-vector normalization, have explicit error assertions. Other fact-query
+/// outputs and the operator macro's arithmetic values are discarded.
+///
+/// Inactive-flag magnitude/normalization calls must succeed. Active-flag dot calls
+/// visit all 4+8+16 integer support masks in dimensions two, three and four, but discard
+/// the resulting expressions. They do not assert cancellation, work bounds or path counts;
+/// checked division by two likewise asserts success without checking quotient values.
 #[test]
 fn vector_public_surface_and_all_abort_sparse_masks_are_covered() {
     let v2 = Vector2::from_xy(r(3), r(4));
@@ -531,6 +584,16 @@ fn vector_public_surface_and_all_abort_sparse_masks_are_covered() {
     assert_eq!(mixed_unknown.unknown_zero_mask(), Axis2::Y.bit());
 }
 
+/// Check selected shared-scale eligibility, scheduling facts and two-dimensional arithmetic.
+///
+/// Empty owned/borrowed constructors return None. Thirds give dot and squared norm
+/// 5/9, wedge zero, and an equal-denominator schedule without dyadic/integer/unit
+/// schedules. Manually supplied unknown-mask facts exercise accessors only. A zero
+/// view of dimension 128 uses all mask bits; greater dimensions are not tested here.
+///
+/// The mixed reduced denominators of `(1/2,1/3)` are rejected by this constructor,
+/// although a mathematical common denominator exists. Consuming the owned components
+/// and the three-dimensional self-cross product discard their returned values.
 #[test]
 fn generic_shared_scale_surfaces_cover_empty_wide_and_schedule_queries() {
     assert!(SharedScaleVec::<0>::from_components([]).is_none());
@@ -591,6 +654,17 @@ fn generic_shared_scale_surfaces_cover_empty_wide_and_schedule_queries() {
     assert!(VectorSharedScaleView::from_components([&frac(1, 2), &frac(1, 3)]).is_none());
 }
 
+/// Check exponent-zero domain cases and exercise selected complex arithmetic forms.
+///
+/// Zero to exponent zero is NotANumber; a fresh unknown real component with zero
+/// imaginary part yields UnknownZero. Known nonzero rational, imaginary and pi bases,
+/// or an unknown real component paired with imaginary one, yield one. Powers `1..=7` and
+/// -2 of `2+i` must succeed through ordinary and checked methods, without value assertions.
+///
+/// Owned/borrowed sums, differences, negations, conjugation, norms, formatting and a
+/// caret-power result are discarded. Rational and symbolic divisions are unwrapped,
+/// not compared with independent quotients. A one-term signed product explicitly
+/// checks that a negative pi term remains -pi.
 #[test]
 fn complex_power_status_ownership_and_symbolic_fallbacks_are_covered() {
     let zero = Complex::zero();
@@ -652,6 +726,14 @@ fn complex_power_status_ownership_and_symbolic_fallbacks_are_covered() {
     assert_eq!(negative_first, -Real::pi());
 }
 
+/// Exercise active-flag scalar calls and selected homogeneous-to-affine conversions.
+///
+/// The attached near-zero sine expression retains Unknown cheap zero knowledge;
+/// asin, acos and ln results are discarded, so no particular abort or domain error
+/// is asserted. The symbolic tuple `(pi,sqrt(2),e,pi+1)` is compared with three direct
+/// native divisions, sharing the underlying scalar kernel. The rational tuple
+/// `(1/3,2/3,4/3,2/3)` has the independent expected Cartesian point `(1/2,1,2)`.
+/// No dispatch-count assertion proves which internal conversion path was used.
 #[test]
 fn scalar_unknown_domain_active_abort_and_projective_general_path_are_covered() {
     let mut unknown = unknown_zero();
