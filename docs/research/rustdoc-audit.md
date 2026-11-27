@@ -12638,6 +12638,97 @@ The all-feature rendered-text check was also observed directly in tool output.
 Remaining mathbench engines/matrix-operation files, repository-wide file review
 and previously recorded generated-item documentation gaps remain open.
 
+## Hyperlattice floating numerica-label adapter (2026-11-27)
+
+Target revision: `72326d42efdbdb46be6819b89fe6ac1d58e0cdcd`. Read every line of
+`crates/hyperlattice/benches/mathbench/engines.rs` from 1 through 788, the complete
+numerica_engine module and separator. This reviewed prefix is now 1,029 lines;
+the GMP and symbolic modules beginning at the next line remain byte-identical
+and are not credited as reviewed. Selected scalar/vector/matrix/comparison callers
+were inspected for ownership and context use, without whole-file credit for pending
+matrix_ops.rs. Baseline all-feature mathbench compilation passed.
+
+Owning layer: local floating benchmark adapters, not the authoritative exact kernel.
+Relevant contracts are P1/P2 input and representation meaning, P3 floating-zero
+qualification, P5 precision versus work/cancellation, P6 domain/failure disclosure,
+P9 certainty, P10 completed-work comparison and P37 accurate API claims. Reproduced
+missing acceptance witness: all module/type/field/method descriptions in this adapter
+were absent, including its actual backend and restricted 4-by-4 inverse algorithm.
+
+Added 115 authored Rustdoc groups: one module, six types, twelve fields and ninety-six
+methods. Every authored declaration in the reviewed module has a verified group;
+all complete descriptions render on seven private pages. This is scoped coverage,
+not a claim about generated items or the complete engines.rs file.
+
+Contracts clarified:
+
+- The historical numerica label uses Symbolica Float, not a separate Numerica
+  dependency. Ctx merely stores a public, mutable, unvalidated requested precision;
+  construction uses it, while most arithmetic wrappers operate directly on operand
+  values without consulting it. No explicit conversion of existing operands to a
+  new context's precision occurs here. Float inputs are pre-rounded f64 values.
+- Scalar wrappers delegate numerical/domain behavior. Binary arithmetic clones lhs
+  before combining it with borrowed rhs. Scalar integer power delegates a u64
+  exponent; log10 uses two natural logarithms and division; atan uses atan2(value,1).
+  Constants are numerical backend constructions, not retained Hyperreal symbols.
+  Boolean is_zero is not an exact-source certificate or ZeroKnowledge outcome.
+- There is no wrapper validation of finiteness, compatible precision, domain or
+  zero denominator, nor translation to Hyperreal Problem/Result, certainty receipt,
+  cancellation or total-work/memory budget. Backend exceptional-value/panic behavior
+  is delegated; this review makes no untested claim about which exception occurs.
+- Vec3 dot sums (p0+p1)+p2; Vec4 dot sums (p0+p1)+(p2+p3). Magnitude is sqrt of
+  the self-dot, without scaled-norm handling. Normalization computes it once and
+  divides all lanes unchecked. Vec4's w is an ordinary Euclidean fourth lane,
+  included in dot/magnitude/normalization, not a protected homogeneous weight.
+- Matrices store rows and multiply column vectors. Mat3 determinant expands the
+  first row and inverse uses the adjugate times reciprocal determinant. Mat4
+  determinant expands four cloned Mat3 minors. These numerical formulas add no
+  exact sign, zero or conditioning certificate.
+- Mat4 inverse clones the input beside identity and performs Gauss-Jordan elimination
+  with diagonal pivots in index order. It neither swaps rows nor checks pivots.
+  Nonsingularity alone is insufficient: a coordinate-swap permutation matrix has
+  determinant -1 and is its own inverse, but its first pivot is zero. The routine's
+  usable domain is narrower than all nonsingular matrices. No implementation fix
+  or new typed error is introduced by this documentation batch.
+- Matrix products and vector transforms preserve their explicit sum grouping and
+  compute all entries, including all four homogeneous output lanes. No affine
+  shortcut or perspective division is present. map_scalar clones the full matrix
+  before row-major callbacks with entry first; combine borrows matching entries;
+  neg also clones the full matrix. Right division is self times inverse(rhs).
+- Matrix and complex integer powers start at identity/one and perform exactly the
+  supplied nonnegative usize count of full right multiplications, not repeated
+  squaring. Complex multiplication is the four-real-product formula; reciprocal
+  shares re*re+im*im as denominator and adds no scaled division or zero guard.
+
+Validation after final edits:
+
+- Scoped formatting of the complete module under crates configuration passed.
+  Noncomment source equals Rustfmt of the original prefix. The only nonwhitespace
+  token changes are four optional trailing commas; call order, formulas, fixtures,
+  branches and assertions are unchanged. Both later modules are byte-identical.
+  git diff --check passed.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 and incremental disabled. Warnings and broken/private links were
+  denied. Source-hash-specific empty headers forced regeneration. An exhaustive
+  authored-declaration check and full rendered-text comparison verified all 115
+  groups on all seven pages in both configurations.
+- An independent Python Fraction permutation expansion verified the concrete inverse
+  domain witness: determinant -1, square equal to identity, first pivot zero. The
+  actual reviewed inverse body was retained and checked for unguarded pivot division
+  without row swapping/zero tests. This proves the documented mathematical restriction
+  from the source; backend exceptional behavior was not executed or characterized.
+- No external numerical engine, complete timing row, dispatch report or performance
+  measurement ran. Existing dependency metadata sufficed; no external-library source
+  or linking build was required for this documentation claim. Full workflows remain
+  owner-waived and no focused check remains blocked. Shared target storage remains
+  approximately 2.8 GiB; only small scripts, metadata and text evidence were added.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-numerica-*` baseline/check/doc/render logs and
+`/tmp/csgrs-lattice-numerica-audit/` scripts, command records, formatter token deltas
+and reviewed inverse body. Continue engines.rs with gmp_engine, then symbolica_engine;
+remaining matrix-operation support, repository-wide review and previously recorded
+generated-item documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
