@@ -12361,6 +12361,96 @@ reports. This file now has a whole-file record. Remaining mathbench engine, matr
 and comparison files need review. Repository-wide coverage, nested-item rendering
 limitations and previously recorded generated-item gaps remain open.
 
+## Hyperlattice comparison vectors and Mat3 consumers (2026-11-27)
+
+Base: `74789bd774bb022b3798a3cb926e79810764c3b9`. Sequential review of original
+lines 1–824 of `crates/hyperlattice/benches/mathbench/comparisons.rs`, covering
+bench_blas_vectors, trace_blas_vec4_normalize, bench_vectors, bench_blas_matrix3
+and bench_matrix3 in full. This is a partial-file record: the prefix now occupies
+lines 1–965, and the byte-identical remaining tail starts at bench_blas_matrix4
+on line 966. The Mat4 and trigonometric portions still require sequential review.
+
+The owning layer is Hyperlattice's comparison harness consuming scalar, vector
+and matrix operations. Relevant contracts are P1 exact input/explicit lossy output,
+P3 conservative facts, P4 retained evidence, P5 resource disclosure, P6 failure,
+P9 certainty and P10 measuring the actual requested work. Reproduced witness:
+all five functions lacked Rustdoc, and several inline comments asserted demand/
+dispatch properties without corresponding assertions. The baseline all-features
+mathbench check passed. Added five full groups and corrected those comments.
+Selected shared fixtures, immediate-batch implementation and sign-refinement
+entry points were read as context, without granting additional whole-file credit.
+
+Contracts clarified:
+
+- The vectors group registers fifteen Vec3 timing rows and offers eight native
+  trace hooks. Binary-native/external rows cycle through four retained cases;
+  rational rows use one fixed decimal-authored pair. Native rows borrow, while
+  external rows explicitly clone the left vector before adapter work. Vec4
+  normalization is trace-only, with four binary cases or one fixed rational case.
+- The Mat3 group registers thirty-five timing rows: four binary-native baselines,
+  twelve external baselines, eleven fixed-rational and eight fixed-symbolic rows.
+  Twenty-three native hooks comprise four four-case binary passes and nineteen
+  fixed rational/symbolic consumers. No external hooks or numeric/count assertions
+  establish backend equivalence or the intended dispatch route.
+- Rational matrices use authored tenths and the vector long decimal ratios;
+  symbolic inputs combine pi, e and rationals. They are not the rotating floating
+  corpus under another scalar representation. Native determinants borrow, inverse
+  consumes a clone, ordinary products clone both sides, and external baselines
+  clone the left matrix before borrowed adapter calls. Ordinary iter includes
+  selection where present, explicit clones, consumed work and destruction.
+- Every batch contains four copies of its vector. The immediate batch method
+  creates all four output vectors and shares matrix identity/diagonal facts for
+  that call; there is no persistent batch handle or translation-only Mat3 check.
+  One-coordinate rows request only output[0][0]. Rational batch all-coord converts
+  all twelve coordinates, while symbolic batch all-coord converts only the first
+  nine. Both batch structural-fact rows query sign/zero for only the first nine.
+  The fourth vector is still constructed in every batch.
+- Single-vector all-coord rows request three conversions; rational sign/zero rows
+  query all three coordinates, and symbolic sign refinement calls refine_sign_until(0)
+  on each. Approximation/sign Options and unknown structural facts are black-boxed
+  without success assertions. Native scalar/inverse failures are unwrapped.
+  No cancellation signal, policy receipt or total-work/memory limit is added.
+- Changed inline commentary from claims that diagnostics prove demand isolation
+  or fast-path agreement to descriptions of the actual requests. No fixture,
+  requested coordinate, predicate ordering, assertion or workload was changed.
+
+Validation after final edits:
+
+- Formatted and checked only the reviewed complete-item prefix using crates
+  Rustfmt configuration. Noncomment prefix source equals Rustfmt of the original;
+  every byte from bench_blas_matrix4 onward is unchanged. Beyond whitespace,
+  Rustfmt adds twenty-seven optional commas, removes one and removes five
+  expression-only closure brace pairs. git diff --check passed.
+- Locked/offline j2 Cargo check and private mathbench Rustdoc passed with all
+  features and no defaults, incremental compilation disabled. Warnings and
+  broken/private links were denied; source-hash-specific empty headers forced
+  regeneration. Complete text of all five groups, including the consumer table,
+  rendered on five pages in both modes.
+- Source schedule checks verify each function's timing/hook counts. Parsed both
+  timing and trace closures to assert exact coordinate sequences for rational/
+  symbolic batch all-coord consumers and both structural-fact consumers: twelve
+  versus nine conversion lanes, and nine sign plus nine zero-status requests.
+  These are request counts, not measurements of deferred/internal evaluation.
+- Built the owning library in both configurations and ran standalone probes with
+  matching rlibs, warnings denied and 30-second external process timeouts. Current
+  shared rational fixture helpers were compared with independent Python Fraction
+  determinant/cofactor/product/row-combination expectations. Determinant was
+  -14073/1000; all nine inverse entries, nine product entries, three single-transform
+  coordinates and twelve coordinates across four batch outputs matched exact
+  rational expectations. Full arrays are retained in independent-expectations.json.
+- No complete Criterion row, symbolic refinement workload, external numerical
+  engine, dispatch report or performance measurement ran. These scoped rational
+  results do not prove general demand isolation, matrix closure or timing parity.
+  Full workflows remain owner-waived; no focused check remains blocked. Removed
+  probe executables; retained evidence uses about 120 KiB and the shared target
+  remains approximately 2.8 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-comparison3-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-comparison3-audit/` scripts, commands, formatter deltas
+and independent expectations. Continue this file at bench_blas_matrix4. Remaining
+mathbench engines and matrix-operation files, repository-wide coverage and earlier
+generated-item gaps remain open; this batch does not establish whole-file coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
