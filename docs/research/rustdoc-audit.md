@@ -15228,6 +15228,105 @@ and shared Cargo target (approximately 4.7 GiB) were reused. No focused check re
 blocked. FOC WASM/support files and the repository-wide audit remain open; no new
 firmware deployment, universal resource or complete-coverage claim is made.
 
+## Alumina FOC WASM ABI and independent host oracle (2026-11-27)
+
+Whole-file review on target revision 662659407583c56d34d7b2a5f6c1066d6e2e00b6:
+
+- crates/hyperlattice-interval/conformance/alumina-foc/wasm/lib.rs
+  (57 -> 92 lines), check.mjs (113 -> 130) and oracle.mjs (88 -> 121).
+- The same directory's Cargo.toml (19 lines) and Cargo.lock (42 lines), unchanged.
+
+The owning layer is the conformance ABI, its executable JavaScript consumer and
+independent integer oracle. P1/P5/P6/P26/P27/P28/P30/P36/P37 and the admission
+protocol govern endpoint preservation, failure interpretation, replay and bounded
+claims. The input domain comprises the 165 fixture residue combinations, wrapping
+u32 selectors and signed i32 point inputs to Park. Baseline execution preceded
+editing. Missing documentation concerned private panic behavior, selector reduction,
+signed ABI decoding, error sentinels, staged oracle rounding and replay ownership.
+
+The Rust source now has five authored Rustdoc blocks covering the module and all
+four functions. JavaScript comments explain all named helpers and the top-level
+execution protocol. Source review established:
+
+- This no_std consumer has no allocator and recomputes every call. Its panic
+  handler ignores diagnostics and spins indefinitely; panic=abort does not convert
+  that custom handler into a typed error. The driver has no internal timeout or
+  memory limit, so execution checks use external process containment.
+- conformance_probe constructs the modulo-33/modulo-five fixture, reduces action
+  modulo five, runs native before shared, unwraps both and requires full equality.
+  It returns a tagged-endpoint FNV digest from the shared result. The hash is not
+  injective and does not independently establish the arithmetic result.
+- range_probe reduces the rotation selector modulo five, compares complete native
+  and shared Park Results, then returns zero for success or one for Range. This
+  includes intermediate overflow; it does not expose endpoints or typed causes.
+  Other errors and mismatches panic. No certainty receipt is exported by this ABI.
+- output_word evaluates only the native provider. Selectors modulo four return
+  packed low/high signed endpoint halves or tag 1/2/3; a two-axis output pads its
+  third lane with zero. JavaScript receives an i64-shaped signed BigInt and must
+  sign-extend each 32-bit endpoint independently.
+- Any returned native Err becomes 0x800000007fffffff before word selection, even
+  for a tag request. That reversed (MAX, MIN) pair loses the error kind and is
+  neither a valid ordered interval nor a valid tag. Constructor panics still spin.
+  Documentation discloses this existing boundary limitation rather than claiming
+  typed-error compliance. The successful fixture corpus does not exercise this
+  fallback, and neither fallback nor panic was deliberately fault-injected.
+- The driver checks all full endpoints/tags against staged BigInt formulas in
+  ascending and descending fixture order in two fresh import-free instances.
+  A separate bounded-Number cardinal shortcut is exact on its integer domain.
+  FNV encoding is one tag byte plus six signed little-endian i32 endpoints.
+- Optional replay captures actual call arguments and decimal-string return values.
+  Each pass records 825 digest, 3,315 word and 251 range calls, or 4,391 total.
+  The JSON file is exclusively created only after all assertions pass; an existing
+  file fails after execution without being overwritten. Recording calls does not
+  establish that the Thumb simulator or physical firmware executed them.
+- Oracle helpers require ordered nonempty bounds and positive divisors. BigInt
+  floor division corrects JavaScript's truncation toward zero; product hulls round
+  four exact corner products outward once at the Q30 scale. Root bisection derives
+  strict adjacent brackets for the two irrational Clarke coefficients.
+- Clarke retains wide numerators and assumes fixture balance. Inverse Clarke
+  shares alpha's array and combines a rounded negative half with a radical product.
+  Park/inverse Park round products separately and do not impose correlated exact
+  unit-circle coordinates. The success oracle does not model general balance or
+  intermediate failure. parkRange separately checks all four rounded products and
+  both combined bounds against signed i32 range, without modeling first-error order.
+
+Validation reused the temporary sibling layout, Node v22.16.0 and the thirteen-file
+firmware snapshot at 2d68e82b7341db7b747b20e4ad1455a4c1113a00. Its recorded SHA256
+inventory was checked before both builds. Manifests and lockfiles remained unchanged.
+After the final source edit:
+
+- Locked/offline j2 release WASM builds passed before and after, using the shared
+  target and disabling incremental compilation. The actual Node driver passed 825
+  full transform outputs and 251 range checks in each of two fresh instances on
+  each revision. All 8,782 replay records were byte-identical before/after; their
+  counts and forward/reverse action sequence match the Thumb consumer's grammar.
+- An additional independent endpoint/digest/status consumer passed 528 calls per
+  revision, including indices 0/164/165/u32::MAX-1/u32::MAX, wrapped action/word
+  selectors and signed extreme point inputs with wrapped rotations. Both modules
+  had no imports and memory stayed at 1,114,112 bytes across this finite workload.
+  These are workload observations, not a universal memory or termination bound.
+- A repeat of the actual driver against an existing replay file failed with EEXIST
+  and preserved its bytes. Both JavaScript files passed node --check. Runtime
+  processes had external 60-second timeouts.
+- Private cargo doc for the actual wasm32-unknown-unknown manifest passed with
+  warnings, broken links and private-link violations denied. All five full Rustdoc
+  blocks render, including the private panic handler. A temporary coverage checker
+  initially failed to skip an intervening attribute; correcting that checker
+  confirmed all four declarations without changing source documentation or code.
+- Stripping only whole comment/blank lines leaves byte-identical remaining source
+  in all three changed files. Selected Rustfmt and git diff --check passed. WASM
+  sizes were both 30,968 bytes, but binary hashes differ; binary byte identity is
+  not claimed. Full workflow/performance checks remain owner-waived for this
+  documentation-only session.
+
+Evidence: /tmp/csgrs-interval-foc-wasm-audit/ retains about 864 KiB of baseline/final
+binaries, complete replays, command scripts, build/runtime logs, source comparisons
+and rendered-text matches. The shared Cargo target remains approximately 4.7 GiB;
+no second target directory was created. No focused check remains blocked. The Thumb
+simulator was read as consumer context but not executed or credited as a completed
+support-file audit in this batch. Remaining support files and the repository-wide
+coverage/semantic audit remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

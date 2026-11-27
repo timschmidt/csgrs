@@ -1,3 +1,8 @@
+// Node-only conformance driver: independent full endpoints/tags plus digest and
+// range-status checks in two fresh, import-free Wasm instances. The first optional
+// positional argument selects the binary; the second requests an exclusive-create
+// JSON call log after all assertions pass. No internal timeout or memory bound is
+// imposed; the guest's panic handler can spin indefinitely, so callers contain it.
 import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import { transforms, parkRange } from "./oracle.mjs";
@@ -13,8 +18,10 @@ const min = -(2 ** 31);
 const max = 2 ** 31 - 1;
 const cardinal = [[0, 1], [1, 0], [-1, 0], [0, -1]];
 
-// The ABI returns an endpoint digest. For the cardinal Park transforms,
-// the exact map is a signed permutation of the original two intervals.
+// Independent cardinal shortcut for indices whose rotation residue is 0..3.
+// Park is a signed permutation with one raw unit of radius in each output.
+// These bounded integer Number operations are exact; the fifths case instead
+// uses the staged BigInt oracle and must not call this helper.
 function parkDigest(index) {
   const n = (index % 33) - 16;
   const alpha = n * 2 ** 24;
@@ -25,6 +32,10 @@ function parkDigest(index) {
   return outputDigest(2, [[d - 1, d + 1], [q - 1, q + 1]]);
 }
 
+// Encode one byte of tag and six signed little-endian i32 endpoints, padding an
+// absent third lane with zero. Signed i32 endpoints convert to Number exactly.
+// Fold FNV-1a modulo 2^64 and return the signed i64 view used by the Wasm JS ABI;
+// full endpoint assertions below remain necessary because a digest can collide.
 function outputDigest(tag, lanes) {
   const bytes = Buffer.alloc(25); // Unused third lanes are zero.
   bytes[0] = tag;
@@ -37,7 +48,8 @@ function outputDigest(tag, lanes) {
 }
 
 const previous = [];
-// Capture the exact calls accepted by the integer oracle for replay on Thumb.
+// Capture actual call names, numeric arguments and decimal-string return values
+// for Thumb replay. Calls execute before capture; no guessed result is logged.
 const replayFile = process.argv[3];
 const replay = [];
 for (let pass = 0; pass < 2; pass++) {
@@ -50,7 +62,9 @@ for (let pass = 0; pass < 2; pass++) {
       return value;
     }]),
   ) : instance.exports;
-  // The sample interval centers repeat every 33 indices and the rotations every 5.
+  // All 165 residue combinations, in ascending then descending sample order.
+  // Each pass checks full endpoints/tags independently; the retained digest table
+  // additionally compares instances. Range cases below keep the same order in both.
   for (let i = 0; i < 165; i++) {
     const index = pass === 0 ? i : 164 - i;
     const outputs = transforms(index);
@@ -109,5 +123,8 @@ for (let pass = 0; pass < 2; pass++) {
   }
   if (replayFile) replay.push(calls);
 }
+// Two arrays of 4,391 calls: 825 digest, 3,315 word and 251 range queries each.
+// Existing files fail here after validation rather than being overwritten. File
+// creation/write failures propagate; a replay log is not a firmware execution proof.
 if (replayFile) await writeFile(replayFile, JSON.stringify(replay), { flag: "wx" });
 console.log("825 full transform outputs and 251 range checks passed in each of two fresh instances.");
