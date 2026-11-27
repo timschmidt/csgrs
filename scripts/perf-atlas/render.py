@@ -1,31 +1,46 @@
 #!/usr/bin/env python3
-"""Render perf-atlas JSON documents into one self-contained HTML report.
+"""Render trusted perf-atlas/1 records as a standalone HTML/SVG report.
 
 Usage: render.py OUTPUT_DIR ATLAS.json [ATLAS.json ...]
 
-The report needs no network access: styles, scripts and SVG charts are inline.
-For each operation it draws time against magnitude (one line per input kind,
-at most four per panel), the spread of fuzzed inputs, and magnitude grids for
-two-argument operations. Cliffs (a time rise of at least 4x between adjacent
-magnitudes), valleys (a point at least 2x faster than both neighbours), failed
-calls and series stopped by the single-call ceiling are flagged on the charts
-and listed in the highlights table. Every chart has a data-table view.
-"""
+Charts and interactions are embedded; no network fetch is needed to view them.
+The producer's callback statuses are displayed without checking mathematical
+correctness, certainty, or equivalent workloads. Ordinary-series highlights use
+retained successful records, which may straddle failures or missing timings.
+Fuzz/grid errors do not enter those highlight tables.
+
+Inputs must provide the expected nested keys, finite plotted magnitudes, and
+positive durations where present. The CLI asserts the format tag but performs no
+complete schema, matrix-shape, or HTML-context validation. It is intended for
+trusted harness output, not arbitrary untrusted JSON. Invalid/extreme values can
+raise exceptions. Output construction retains strings and plot data in memory.
+
+Tooltips round timings to three significant figures before browser formatting;
+data tables summarize records and are not lossless exports. Keep the source JSON
+and workload/environment evidence when interpreting measurements."""
 import html
 import json
 import math
 import sys
 from pathlib import Path
 
+# Minimum successful-row duration ratio highlighted as a cliff.
 CLIFF = 4.0
+# Minimum ratio of both retained neighbours to the faster valley row.
 VALLEY = 2.0
+# SVG viewBox size shared by line, scatter, and heatmap panels.
 W, H = 680, 300
+# Plot margins leave room for ticks, titles, and right-side direct labels.
 ML, MR, MT, MB = 70, 120, 18, 46
+# Drawable plot dimensions after subtracting margins.
 PW, PH = W - ML - MR, H - MT - MB
+# Marker shapes cycle every four colour slots.
 SHAPES = ["circle", "square", "triangle", "diamond"]
+# Thirteen-bin palette reference; rendering uses its length, while CSS owns actual fills.
 RAMP = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7", "#3987e5",
         "#2a78d6", "#256abf", "#1c5cab", "#184f95", "#104281", "#0d366b"]
 
+# Embedded layout, light/dark palettes, marker classes, and tooltip styles.
 CSS = """
 :root{color-scheme:light;--surface-1:#fcfcfb;--page:#f9f9f7;--text-primary:#0b0b0b;--text-secondary:#52514e;
 --muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);
@@ -71,42 +86,63 @@ button,input{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(-
 .op[hidden]{display:none}
 """
 
+# Embedded hover, crosshair, theme, and filter behavior; payloads are display summaries.
 JS = r"""
+// Shared floating tooltip element, populated with text nodes rather than markup.
 const tip=document.getElementById('tip');
+// Position a tooltip near the pointer, limiting its right/bottom edges to the viewport.
 function showTip(e,rows,title){tip.textContent='';if(title){const t=document.createElement('div');t.className='name';t.textContent=title;tip.appendChild(t);}
 for(const r of rows){const d=document.createElement('div');d.className='row';if(r.color){const k=document.createElement('span');k.className='key';k.style.borderColor=r.color;d.appendChild(k);}
 const b=document.createElement('b');b.textContent=r.value;d.appendChild(b);const n=document.createElement('span');n.className='name';n.textContent=r.name;d.appendChild(n);tip.appendChild(d);}
 tip.style.display='block';const x=Math.min(e.clientX+14,window.innerWidth-tip.offsetWidth-8),y=Math.min(e.clientY+14,window.innerHeight-tip.offsetHeight-8);
 tip.style.left=x+'px';tip.style.top=y+'px';}
+// Hide the shared tooltip without clearing its retained child nodes.
 function hideTip(){tip.style.display='none';}
+// Round already-quantized nanoseconds to display units; null/nonfinite values show an em dash.
 function fmt(ns){if(ns==null||!isFinite(ns))return '—';const u=[[1e9,'s'],[1e6,'ms'],[1e3,'µs'],[1,'ns']];for(const [d,s] of u){if(ns>=d||s==='ns'){const v=ns/d;return (v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+' '+s;}}}
+// Resolve a series custom property against the current visualization theme.
 function col(v){return getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(v).trim();}
+// Hover chooses the nearest x coordinate, including rows with missing timings/statuses.
 document.querySelectorAll('svg[data-line]').forEach(svg=>{const d=JSON.parse(svg.dataset.d);const cross=svg.querySelector('.cross');
 const hit=svg.querySelector('.hit');hit.addEventListener('pointermove',e=>{const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());
 let best=0,bd=1e9;d.px.forEach((x,i)=>{const dd=Math.abs(x-p.x);if(dd<bd){bd=dd;best=i;}});cross.setAttribute('x1',d.px[best]);cross.setAttribute('x2',d.px[best]);cross.style.display='';
 showTip(e,d.series.map(s=>({color:col(s.c),value:fmt(s.ys[best])+(s.st[best]&&s.st[best]!=='ok'&&s.st[best]!=='single'?' ('+s.st[best]+')':''),name:s.name})),d.xl+' = '+d.xs[best]);});
 hit.addEventListener('pointerleave',()=>{cross.style.display='none';hideTip();});});
+// Convert client coordinates through the inverse SVG screen transform; a valid matrix is assumed.
 function local(svg,e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
+// Fuzz hover chooses the nearest drawn point within 24 SVG units; ties keep the earlier point.
 document.querySelectorAll('svg[data-f]').forEach(svg=>{const d=JSON.parse(svg.dataset.f);const ring=svg.querySelector('.ring');const hit=svg.querySelector('.hit');
 hit.addEventListener('pointermove',e=>{const p=local(svg,e);let best=null,bd=24*24;for(const q of d.p){const dx=q[0]-p.x,dy=q[1]-p.y,dd=dx*dx+dy*dy;if(dd<bd){bd=dd;best=q;}}
 if(!best){ring.style.display='none';hideTip();return;}ring.setAttribute('cx',best[0]);ring.setAttribute('cy',best[1]);ring.style.display='';
 showTip(e,[{value:fmt(best[2]),name:best[4]||'time per call'}],d.xl+' = '+best[3]+', fuzzed input');});
 hit.addEventListener('pointerleave',()=>{ring.style.display='none';hideTip();});});
+// Grid hover selects equal-width cells; None displays skipped even when its error flag records a panic.
 document.querySelectorAll('svg[data-h]').forEach(svg=>{const d=JSON.parse(svg.dataset.h);const hit=svg.querySelector('.hit');
 hit.addEventListener('pointermove',e=>{const p=local(svg,e);const i=Math.floor((p.x-d.x0)/d.w*d.a.length),j=d.b.length-1-Math.floor((p.y-d.y0)/d.h*d.b.length);
 if(i<0||j<0||i>=d.a.length||j>=d.b.length){hideTip();return;}const v=d.ns[j][i];
 showTip(e,[{value:v==null?'skipped':fmt(v),name:d.e[j]&&d.e[j][i]?'error':'time per call'}],d.al+' = '+d.a[i]+', '+d.bl+' = '+d.b[j]);});
 hit.addEventListener('pointerleave',hideTip);});
+// Toggle the root theme attribute from its explicit or system-selected initial theme.
 document.getElementById('theme').addEventListener('click',()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';});
+// Filter operation cards by lowercase crate/group/name; headings and the table of contents remain visible.
 const q=document.getElementById('filter');q.addEventListener('input',()=>{const s=q.value.toLowerCase();document.querySelectorAll('.op').forEach(o=>{o.hidden=s&&!o.dataset.name.includes(s);});});
 """
 
 
 def esc(text):
+    """Convert a value to text and escape it for an HTML text or quoted-attribute context.
+
+    Escapes ampersands, angle brackets, and both quote characters. It does not
+    validate the source value or supply a JavaScript/CSS escaping contract."""
     return html.escape(str(text), quote=True)
 
 
 def fmt_ns(ns):
+    """Format a duration with seconds/ms/µs/ns units and two, one, or zero decimals.
+
+    None and nonfinite values display an em dash. Negative finite values use ns;
+    the helper does not reject them. Formatting rounds, so displayed text is not
+    a lossless representation of the recorded binary64 duration."""
     if ns is None or not math.isfinite(ns):
         return "—"
     for div, unit in ((1e9, "s"), (1e6, "ms"), (1e3, "µs"), (1, "ns")):
@@ -116,6 +152,11 @@ def fmt_ns(ns):
 
 
 def fmt_mag(m):
+    """Format a magnitude, abbreviating exact integer multiples of binary K/M/G units.
+
+    None displays an em dash. Other integers print directly; nonintegers use
+    Python's general floating format. Requires a finite numeric value: NaN/infinity
+    can fail during int conversion. Abbreviations do not change the axis data."""
     if m is None:
         return "—"
     if m == int(m):
@@ -128,12 +169,25 @@ def fmt_mag(m):
 
 
 class Scale:
+    """Map numeric values to pixels in linear or natural-log coordinates.
+
+    Finite non-None construction values choose the domain; an empty set defaults
+    to one. Automatic log selection requires positivity and a max/min ratio of at
+    least sixteen. Calling the object neither filters nor clamps a query, so its
+    domain requirements still apply to every plotted value."""
     def __init__(self, values, lo_px, hi_px, log=None):
+        """Choose transformed data bounds and retain the supplied pixel endpoints.
+
+        An explicit log flag overrides automatic selection and can fail on nonpositive
+        bounds. Equal transformed bounds expand by one on each side. Pixel endpoints
+        can descend, as for vertical time axes; they are not validated."""
         vals = [v for v in values if v is not None and math.isfinite(v)]
         if not vals:
             vals = [1.0]
         positive = all(v > 0 for v in vals)
+        # Explicit flag or positivity/span-based choice of transformed coordinates.
         self.log = (positive and max(vals) / min(vals) >= 16) if log is None else log
+        # lo/hi store transformed data bounds, expanded below for a constant domain.
         if self.log:
             self.lo, self.hi = math.log(min(vals)), math.log(max(vals))
         else:
@@ -141,14 +195,26 @@ class Scale:
         if self.hi == self.lo:
             self.lo -= 1
             self.hi += 1
+        # Pixel endpoints remain in caller order, including reversed vertical axes.
         self.lo_px, self.hi_px = lo_px, hi_px
 
     def __call__(self, v):
+        """Interpolate or extrapolate the query in the selected coordinates without clipping.
+
+        Log mode requires a positive numeric query. None and incompatible types raise;
+        nonfinite values can propagate to coordinates. This is a display mapping,
+        not an enclosure or a numeric-certification step."""
         t = ((math.log(v) if self.log else v) - self.lo) / (self.hi - self.lo)
         return self.lo_px + t * (self.hi_px - self.lo_px)
 
 
 def time_scale(values):
+    """Create an always-logarithmic time axis padded to whole powers of ten.
+
+    Uses finite positive values or a default 1..10 ns domain, and returns every
+    integer-decade tick. Values near floating limits can underflow the padded lower
+    bound or overflow integer-to-float conversion at the upper bound. Filtering here
+    does not validate the values later passed to the returned Scale."""
     vals = [v for v in values if v is not None and math.isfinite(v) and v > 0]
     lo, hi = (min(vals), max(vals)) if vals else (1, 10)
     lo = 10 ** math.floor(math.log10(lo))
@@ -161,6 +227,11 @@ def time_scale(values):
 
 
 def x_ticks(mags, scale):
+    """Sort/deduplicate non-None magnitudes and retain at most nine representative ticks.
+
+    Keeps all values up to nine, otherwise strides by ceil(count/8) and adds the
+    last value if needed. The scale argument is unused; tick density is based on
+    count, not pixel spacing. Numeric finiteness/comparability is assumed."""
     mags = sorted(set(m for m in mags if m is not None))
     if len(mags) <= 9:
         return mags
@@ -169,7 +240,12 @@ def x_ticks(mags, scale):
 
 
 def marker(shape, x, y, var, hollow=False, size=4.5):
-    """A series marker; colour comes from CSS classes (sN filled, hN hollow)."""
+    """Return a filled or hollow SVG marker using a trusted --series-N CSS token.
+
+    Supports square, triangle, and diamond; every other shape selects a circle.
+    Coordinates are formatted to one decimal, while size/radius formatting varies
+    by shape. The token suffix is interpolated into a class without escaping and
+    size/coordinate validity is not checked."""
     slot = var.rsplit("-", 1)[-1]
     cls = f'class="{"h" if hollow else "s"}{slot}"'
     if shape == "square":
@@ -183,11 +259,19 @@ def marker(shape, x, y, var, hollow=False, size=4.5):
 
 
 def sig(v):
-    """Three significant figures, enough for tooltips."""
+    """Round finite values to three significant decimal figures for embedded tooltip data.
+
+    None and nonfinite values become None. This deliberately loses precision before
+    browser formatting and must not be described as an exact-value display."""
     return None if v is None or not math.isfinite(v) else float(f"{v:.3g}")
 
 
 def axes(xs, ys, xticks, yticks, xlabel):
+    """Build tick/grid SVG fragments using the supplied scales and an escaped x-axis label.
+
+    The time-axis title always says log scale; callers provide a logarithmic y scale.
+    Tick values are formatted for display. Coordinates are not clipped, and no
+    independent validation of tick domains or scale consistency occurs."""
     out = []
     for t in yticks:
         y = ys(t)
@@ -204,12 +288,22 @@ def axes(xs, ys, xticks, yticks, xlabel):
 
 
 def why(p):
-    """Failure reason recorded with a point, if any."""
+    """Return a truthy optional seventh point element, otherwise None.
+
+    Accepts older six-element records but does not validate the reason's type.
+    Callers that concatenate it as text assume a string."""
     return p[6] if len(p) > 6 and p[6] else None
 
 
 def anomalies(points):
-    """Cliffs, valleys and failures in one series of [m, median, min, max, iters, status]."""
+    """Find ratio changes among retained successful rows and collect ordinary error/stop statuses.
+
+    Cliffs compare successive non-None ok/single rows in input order, even across
+    intervening failed or missing rows; valleys use successive triples of that same
+    filtered list. Positive-denominator checks guard the ratio tests. Error rows
+    are collected separately; ceiling and predicted share the ceiling category.
+    Skipped rows are ignored. No sorting, finiteness, workload-equivalence, or
+    statistical-significance check is performed."""
     found = []
     ok = [(i, p) for i, p in enumerate(points) if p[1] is not None and p[5] in ("ok", "single")]
     for (i, a), (j, b) in zip(ok, ok[1:]):
@@ -227,6 +321,18 @@ def anomalies(points):
 
 
 def line_chart(op, series, xlabel, slots):
+    """Draw one panel's ordinary series and embed rounded hover data in an escaped attribute.
+
+    Time is logarithmic; magnitude uses Scale's automatic rule. Lines retain source
+    order and connect non-error measured rows across gaps, including ceiling rows.
+    Measured errors get hollow markers; errors with no duration have no marker.
+    Only the two largest detected cliffs get inline annotations. Direct labels can
+    be shifted downward for spacing without clipping to the plot bounds.
+
+    Hover magnitudes are sorted/unique and duplicate rows resolve to the last row,
+    although table uses the first. slots supplies trusted colour indices, and op/name
+    and user-facing labels are escaped. Finite magnitudes and positive timings are
+    caller preconditions; partial filtering here does not validate the whole panel."""
     allx = [p[0] for s in series for p in s["points"]]
     ally = [p[1] for s in series for p in s["points"]]
     xs = Scale(allx, ML, ML + PW)
@@ -280,6 +386,10 @@ def line_chart(op, series, xlabel, slots):
 
 
 def legend(kinds, slots):
+    """Build escaped labels and CSS markers for at least two kinds, otherwise return empty text.
+
+    Uses the supplied kind-to-slot mapping; repeated labels reuse its final slot.
+    Shape cycles every four slots and the caller normally cycles colours every eight."""
     if len(kinds) < 2:
         return ""
     items = []
@@ -291,6 +401,12 @@ def legend(kinds, slots):
 
 
 def fuzz_chart(op, series, xlabel):
+    """Plot all non-None sample durations with deterministic horizontal jitter per magnitude.
+
+    Failed and ceiling timings remain in the plotted data and in each group's upper
+    median; unmeasured panic rows disappear. Errors are hollow. The dashed median
+    path is drawn only with multiple magnitudes. Tooltip timings are rounded and
+    carry coarse error/ceiling labels. No correctness or statistical inference is made."""
     pts = [p for p in series["points"] if p[1] is not None]
     xs = Scale([p[0] for p in pts], ML, ML + PW)
     ys, yt = time_scale([p[1] for p in pts])
@@ -324,6 +440,17 @@ def fuzz_chart(op, series, xlabel):
 
 
 def heatmap(op, grid):
+    """Draw row-major durations with equal-sized cells and logarithmic colour bins.
+
+    Returns empty text if every duration is None, even if error flags are set.
+    Requires nonempty axes, matching matrix shapes, and positive finite durations
+    where present; these preconditions are not validated. Missing/empty error data
+    defaults to false. Non-None errors get crosses, but a None/error cell only gets
+    an empty outline, so missing cells are not necessarily skipped calls.
+
+    Rows increase upward. Colour classes use the count of RAMP entries, not their
+    stored colour strings; CSS reverses the palette in dark mode. Hover data rounds
+    durations, and the data table separately omits error flags."""
     a, b, ns = grid["a"], grid["b"], grid["ns"]
     errors = grid.get("errors") or [[False] * len(a) for _ in b]
     vals = [v for row in ns for v in row if v is not None]
@@ -373,6 +500,13 @@ def heatmap(op, grid):
 
 
 def table(op):
+    """Build one operation's collapsible summary table collection.
+
+    Ordinary series use sorted unique magnitudes and the first matching row, unlike
+    hover's last-row selection. They show formatted median/status, not min/max or
+    iteration counts; a missing-duration error omits its reason. Fuzz tables aggregate
+    all measured durations, including errors/ceilings, without their statuses. Grid
+    tables show durations and omit error flags. These summaries are not raw-data exports."""
     parts = []
     if op["series"]:
         mags = sorted(set(p[0] for s in op["series"] for p in s["points"] if p[0] is not None))
@@ -404,10 +538,25 @@ def table(op):
 
 
 def anchor(crate, op):
+    """Make a lowercase operation id from crate, group, and name, replacing nonalphanumerics with hyphens.
+
+    Unicode alphanumerics survive. Distinct inputs can collide after replacement or
+    case folding; no uniqueness check or disambiguating suffix is added."""
     return "op-" + "".join(c if c.isalnum() else "-" for c in f"{crate}-{op['group']}-{op['name']}").lower()
 
 
 def render(docs):
+    """Assemble a complete report from trusted document mappings in their supplied order.
+
+    Uses four ordinary kinds per chart panel and cycles eight colour slots. Only
+    ordinary series contribute highlights: the largest forty cliffs, twenty valleys,
+    and first forty errors/ceilings are listed, with counts for omitted rows. Fuzz and
+    grid summaries are rendered separately. Duplicate names can generate duplicate ids.
+
+    Most labels are escaped, but some top-level harness metadata is interpolated
+    without escaping; this is not a safe renderer for arbitrary untrusted documents.
+    No cross-document hardware, settings, schema, or semantic-equivalence validation
+    occurs. Assembly retains the complete report and intermediate strings in memory."""
     highlights = []
     body = []
     toc = []
@@ -416,9 +565,9 @@ def render(docs):
         toc.append(f'<a href="#crate-{esc(crate)}"><b>{esc(crate)}</b> — {len(doc["operations"])} operations</a>')
         body.append(f'<h2 id="crate-{esc(crate)}">{esc(crate)}</h2>')
         body.append(f'<p>{"Quick" if doc["quick"] else "Full"} sweep, {doc["os"]}/{doc["arch"]}, seed {doc["seed"]}, '
-                    f'{doc["elapsed_s"]:.0f} s. Batches of at least {fmt_ns(doc["settings"]["target_batch_ns"])}, '
-                    f'{doc["settings"]["samples"]} samples per point, single-call ceiling {fmt_ns(doc["settings"]["single_ceiling_ns"])}, '
-                    f'{doc["settings"]["fuzz_per_magnitude"]} fuzzed inputs per magnitude.</p>')
+                    f'{doc["elapsed_s"]:.0f} s. Target batch duration {fmt_ns(doc["settings"]["target_batch_ns"])}, '
+                    f'{doc["settings"]["samples"]} maximum samples per ordinary point, initial-call ceiling {fmt_ns(doc["settings"]["single_ceiling_ns"])}, '
+                    f'{doc["settings"]["fuzz_per_magnitude"]} maximum fuzzed inputs per magnitude.</p>')
         group = None
         for op in doc["operations"]:
             if op["group"] != group:
@@ -440,7 +589,7 @@ def render(docs):
             for g in op["grids"]:
                 h = heatmap(op, g)
                 if h:
-                    charts.append(f'<div class="chart"><div class="caption">{esc(g["kind"])}: median time per call over both operand sizes (darker is slower)</div>{h}</div>')
+                    charts.append(f'<div class="chart"><div class="caption">{esc(g["kind"])}: median time per call over both operand sizes (colour shows relative cost)</div>{h}</div>')
             body.append(f'<div class="card op" id="{anchor(crate, op)}" data-name="{esc((crate + " " + op["group"] + " " + op["name"]).lower())}">'
                         f'<h3>{esc(op["name"])}</h3><p>{esc(op["description"])}</p><div class="charts">{"".join(charts)}</div>{table(op)}</div>')
     cliffs = sorted((h for h in highlights if h[0] == "cliff"), key=lambda h: -h[1])
@@ -448,6 +597,11 @@ def render(docs):
     failures = [h for h in highlights if h[0] in ("error", "ceiling")]
 
     def rows(items, limit, what):
+        """Format at most limit supplied highlight records, retaining their caller-selected order.
+
+        Uses anomaly-specific magnitude/detail wording and escaped text, with a summary
+        when further entries are omitted. Empty input gets a no-findings paragraph.
+        Does not independently rank or verify the anomaly records."""
         out = []
         for kind, ratio, crate, op, series, a, b in items[:limit]:
             where = f"{fmt_mag(a[0])} → {fmt_mag(b[0])}" if kind == "cliff" else fmt_mag(a[0])
@@ -463,13 +617,17 @@ def render(docs):
     head = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Performance atlas</title><style>{CSS}</style></head><body><div class="viz-root"><div id="tip"></div>
 <h1>Performance atlas</h1>
-<p>Wall-clock time per call for each operation, swept across input kinds, magnitudes and fuzzed inputs. Both axes of the line
-charts are logarithmic where the data spans a wide range, so equal slopes mean equal growth rates and a straight line is a power law.
-A <b>cliff</b> is a rise of at least {CLIFF:.0f}× between adjacent magnitudes; a <b>valley</b> is a point at least {VALLEY:.0f}× faster than
-both neighbours. Hollow markers are calls that returned an error, which are not fast successes. "Ceiling" marks a single call longer than the
-sweep's ceiling, and "predicted" a call the series' own growth put far over it; larger magnitudes of that series were skipped.
-Every timed call gets its own freshly built copy of its input, so results a library caches on its operands are not reused. These are focused probes on one host; compare reports only from the
-same host, toolchain and settings.</p>
+<p>Wall-clock time per call across input recipes and magnitudes. Line charts always use logarithmic time;
+magnitude is logarithmic when all finite values are positive and span at least 16×. A straight line on log-log axes can
+suggest a power law over the measured range, but does not prove an algorithm's complexity.</p>
+<p>A <b>cliff</b> is a rise of at least {CLIFF:.0f}× between successive retained successful rows; a <b>valley</b>
+is at least {VALLEY:.0f}× faster than both such neighbours. These comparisons can cross failed or missing rows.
+Highlight tables cover ordinary series only. Hollow markers show measured error rows; missing-duration failures have no marker.
+"Ceiling" records an initial call that finished over its threshold; "predicted" means the magnitude was not run.</p>
+<p>Statuses describe the initial probe, not every repeated call or an independent correctness check.
+Input factories, cache reuse, and required output materialization depend on the producing workload.
+Hover timings are rounded; tables are summaries. Retain the JSON and compare equivalent completed work
+under matched host, toolchain, and settings.</p>
 <div class="toolbar"><input id="filter" placeholder="Filter operations" aria-label="Filter operations"><button id="theme">Toggle dark mode</button>
 <span class="status">{sum(len(d["operations"]) for d in docs)} operations in {len(docs)} crates, {len(cliffs)} cliffs, {len(valleys)} valleys, {len(failures)} failures or ceilings</span></div>
 <div class="card"><h3>Crates</h3><div class="toc">{"".join(toc)}</div></div>
@@ -481,6 +639,14 @@ same host, toolchain and settings.</p>
 
 
 def main():
+    """Load command-line JSON files, sort by crate label, and write OUTPUT_DIR/index.html.
+
+    Requires an output directory plus at least one input; otherwise exits with the
+    module usage text. Asserts perf-atlas/1 tags (assertions can be disabled), but
+    other fields are trusted. File/JSON/render failures propagate. Creates parent
+    directories and writes directly after rendering, without atomic replacement;
+    write failure can leave partial output and an earlier render failure leaves any
+    existing index untouched. Duplicate input files are not rejected."""
     if len(sys.argv) < 3:
         sys.exit(__doc__)
     out = Path(sys.argv[1])

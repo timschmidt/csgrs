@@ -7411,6 +7411,119 @@ Source/render checkers are `/tmp/csgrs-perf-atlas-{identity,render}.py`. Remaini
 shared-atlas work includes renderer, workflow, and historical artifact validation;
 repository-wide and generated-API coverage remain open.
 
+## Performance atlas renderer and runner (2026-11-26)
+
+Reviewed every line of `scripts/perf-atlas/render.py` (499 baseline lines), run.sh
+(35), README.md (122), and `.github/workflows/perf-atlas.yml` (61), at `8770db430`.
+The owning layer is performance-report presentation and orchestration, with P37's
+scope/evidence rules and P5/P6/P9's resource, failure, and qualification distinctions.
+The input domain is trusted perf-atlas/1 harness documents with the nested records
+expected by the renderer. Missing witnesses were helper documentation and accurate
+claims about axis transforms, data reduction, failure displays, highlighted scope,
+runner behavior, and archived evidence. The workflow was reviewed but not changed.
+
+Added or corrected all 23 Python documentation bodies: module, Scale class, and
+21 functions/methods including the nested rows helper. Added comments explaining
+constants, scale attributes, five embedded JavaScript helpers and the chart/theme/
+filter handlers. Read all embedded CSS/JavaScript and all report templates. The
+runner now describes its fixed crate list, sequential invocation, skipped examples,
+fail-fast behavior, stale outputs, option failures, and lack of a local call timeout.
+
+Only docstrings, comments, and explicitly enumerated explanatory HTML literals
+changed. Python ASTs are identical after removing docstrings, normalizing added
+JavaScript comment lines, and applying the recorded prose replacements to the
+baseline. Embedded executable JavaScript, CSS, shell commands, chart calculations,
+classification, data payloads, and file-selection logic are unchanged. The report
+introduction/captions intentionally change to correct claims; full HTML byte identity
+is therefore not asserted. Chart-specific output identity is checked separately.
+
+The renderer now documents these source-derived distinctions:
+
+- Time axes are always logarithmic. Magnitude axes automatically use logs only
+  for positive finite values with max/min >=16. Tick sampling is count-based;
+  the x_ticks scale parameter is unused. Padded time decades can still fail at
+  floating extremes even when the original duration is finite and positive.
+- Ordinary lines connect retained non-error measurements across gaps. Cliffs and
+  valleys compare successive retained ok/single rows, not necessarily adjacent
+  original magnitudes. Only ordinary series contribute highlights; fuzz/grid
+  failures are excluded from the displayed totals. Lists cap at forty cliffs,
+  twenty valleys, and forty errors/ceilings, in their documented sort/order.
+- Tooltip timings are rounded to three significant figures before browser
+  formatting. Duplicate magnitudes select the last row for line hover but the
+  first row for the ordinary table. Summary tables are not lossless exports:
+  ordinary min/max/iteration counts and grid error flags are omitted.
+- Fuzz medians include measured failures and ceilings; unmeasured panic rows have
+  no dot. A missing-duration heatmap error has an empty outline without a cross,
+  and its hover still says skipped alongside the error flag. All-None grids have
+  no heatmap. These presentation limitations remain in the implementation.
+- Heatmap colours reverse in dark mode, so the old universal darker-is-slower
+  statement was incorrect. RAMP's length controls bin count; its colour strings
+  do not supply the actual CSS fills. Equal cells represent array indices rather
+  than metric axis spacing.
+- IDs can collide after name normalization; duplicate documents/names are not
+  rejected. Only the format tag is asserted at CLI load, and Python optimization
+  can disable that assertion. Shapes, numeric domains, metadata, and semantic
+  workload comparability are not fully validated. Some top-level metadata is
+  interpolated without escaping, so the trusted-input restriction is material.
+- Rendering assembles complete strings/data in memory before direct file output.
+  Render failures leave an earlier index intact; I/O failures can leave a partial
+  new file. No atomic publication or aggregate resource limit was added.
+
+Updated the README and generated explanatory text to match these behaviors. The
+existing workflow sets a six-hour job timeout, uses the runner, installs moving
+stable Rust, and attempts artifact upload even after failure. Its fixed action
+references and arguments were inspected for consistency. Hosted execution, action
+implementation, retention enforcement, browser behavior, and hardware conditions
+were not qualified here. No CI configuration changed and no CI commands were run.
+
+Historical archive claim retained for provenance, not adopted as measurement:
+the prior README described a first full run on 24 November 2026 with 442 operations,
+about 110 minutes on a 40-thread Xeon E5-2680 v2, and cited
+`docs/evidence/2026-11-24-perf-atlas` in `timschmidt/csgrs-evidence`. The current
+local evidence manifest/index search has no matching entry. Read-only GitHub
+connector queries confirmed the public repository's default branch is main; that
+exact path returned 404 there, and the returned docs/evidence directory listing
+had 200 entries with no matching atlas/date name. No archive payload was cloned
+or downloaded. Other branches/commits were not exhaustively searched, so this is
+an unverified citation, not proof that the artifact never existed. The README now
+links here for historical verification status instead of presenting those figures
+as established evidence. The large evidence index was consulted only by targeted
+search/context reads; it does not receive whole-file review credit in this batch.
+
+Validation after final edits:
+
+- Python syntax/AST checks, complete docstring inventory, shell comment-stripped
+  identity, `bash -n`, and `git diff --check` passed.
+- Pydoc rendered 22 complete module/class/function docstrings. Function-local rows
+  retains its attached source docstring and has no separately reflected Pydoc item.
+  This is Python documentation evidence, not additional Rustdoc coverage.
+- Bounded probes confirmed anomaly comparisons across failed/missing rows, the
+  16x scale threshold, rounded hover data, duplicate first/last selection, fuzz
+  aggregate behavior, heatmap missing-error behavior, and ID collision examples.
+  Zero-duration heatmaps, tiny decade padding, and huge decade padding reproduced
+  their retained ValueError/OverflowError restrictions. No failure was suppressed
+  or relabeled as completed support.
+- Baseline/current line, fuzz, heatmap, and table output matched byte-for-byte for
+  the retained fixture. Complete report output matched after exactly the intended
+  explanatory copy and JavaScript comments. No measured data was changed.
+- End-to-end runner probes used a temporary cargo stub and the real renderer.
+  They checked sequential crate order, release/locked/all-feature flags, forwarded
+  quick/filter options, missing examples, unknown/missing options, empty selection,
+  fail-fast behavior, retained stale files, and CLI crate sorting. No actual Cargo
+  build, benchmark workload, or hosted workflow ran in those probes.
+- No browser execution was performed; Node was unavailable. Executable embedded
+  JavaScript remained text-identical after removing new comment-only lines. This
+  is syntax/source preservation evidence, not a browser interaction test.
+- Full workflow checks remain owner-waived for this docs-only session. Shared
+  Cargo storage remains about 1.7 GiB; runner fixtures use about 52 KiB under /tmp.
+
+Evidence: `/tmp/csgrs-rustdoc-atlas-renderer-check.log`,
+`/tmp/csgrs-rustdoc-atlas-runner-check.log`, and
+`/tmp/csgrs-rustdoc-atlas-archive-check.json`. The Pydoc page, synthetic input/report,
+AST/render checker, and runner stub/probes are under `/tmp/csgrs-atlas-*`.
+Historical artifacts, other atlas workload examples, and the broader repository
+remain open; this batch does not establish benchmark or mathematical completeness.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

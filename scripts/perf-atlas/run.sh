@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-# Build and run every crate's perf_atlas example, then render one HTML report.
+# Build selected perf_atlas examples sequentially, then render one HTML report.
 #
 #   scripts/perf-atlas/run.sh [--quick] [--out DIR] [--crates "a b c"] [--filter TEXT]
 #
 # Results land in DIR (default target/perf-atlas): one JSON document per crate and
 # index.html. The sweeps time wall-clock calls; avoid other heavy work while they run.
+# The default crate list is explicit, not discovered. Missing examples are skipped;
+# failed commands stop the run and existing output files are not cleared. An empty
+# selected set reaches the renderer's missing-input error. --seed is available only
+# through direct example invocation, not this wrapper. Missing option values fail
+# under nounset; unknown options exit with status 2. Relative output paths are based
+# on the repository root after cd. No timeout encloses an individual local run.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 OUT=target/perf-atlas

@@ -10,13 +10,17 @@ combines their results into one self-contained HTML report.
 ## Running it
 
 ```sh
-scripts/perf-atlas/run.sh            # full sweep of every crate with an atlas
+scripts/perf-atlas/run.sh            # full settings for the runner's default crate list
 scripts/perf-atlas/run.sh --quick    # short batches and fewer samples
 scripts/perf-atlas/run.sh --crates "hyperreal hypersolve" --filter sin
 ```
 
 Results go to `target/perf-atlas/`: one JSON document per crate and
 `index.html`. Open the HTML file in a browser; it needs no network access.
+The runner builds selected examples sequentially in release mode with all
+features. It skips missing examples and stops at the first failing command.
+Existing output files are not cleared, so a failed run can leave an older report
+alongside newly written JSON. Use a new `--out DIR` when keeping runs separate.
 One crate can also be run directly:
 
 ```sh
@@ -79,24 +83,37 @@ series do not automatically measure identical inputs.
 
 ## Reading the report
 
-- **Line charts** plot median time per call against the magnitude. When the
-  data spans a wide range, both axes are logarithmic. Then a straight line is a
-  power law, and its slope is the exponent: slope 1 is linear and 2 is
-  quadratic. Each input kind has its own line, colour and marker shape, with at
-  most four kinds per panel.
-- **Fuzz scatters** show one dot per random input; the dashed line is their
-  median. A tall spread at one magnitude means cost depends on the value, not
-  only its size.
-- **Heatmaps** show two-argument operations over both operand sizes. Darker
-  cells are slower; × marks failed calls, and empty cells were skipped.
-- **Highlight tables** at the top list the largest cliffs, valleys, failures
-  and ceilings across all crates. Each row links to its chart.
-  - A **cliff** is a rise of at least 4× between adjacent magnitudes.
-  - A **valley** is a point at least 2× faster than both neighbours.
+- **Line charts** always use logarithmic time. Magnitude is logarithmic when
+  its finite values are positive and span at least 16×. A straight line on
+  log-log axes can suggest a power law over the measured range; it does not prove
+  algorithmic complexity. Lines connect retained non-error measurements across
+  gaps. Each panel has at most four kinds; colours cycle after eight kinds.
+- **Fuzz scatters** show measured samples with horizontal jitter. Their dashed
+  path uses the upper median at each magnitude, including measured errors and
+  ceilings. Missing-duration failures have no dot. Spread can reflect input cost,
+  scheduling, or other measurement variation.
+- **Heatmaps** use logarithmic colour bins and equal-sized cells. Consult the
+  colour key: the palette reverses in dark mode. A measured error gets ×, but an
+  empty cell can represent a skipped call or a panic without a duration. A grid
+  with no durations has no heatmap.
+- **Highlight tables** inspect ordinary series only, across all input documents.
+  They list the largest 40 cliffs, largest 20 valleys, and first 40 errors or
+  ceilings. Fuzz/grid failures are not included in these totals.
+  - A **cliff** is a rise of at least 4× between successive retained `ok`/`single`
+    rows, which can have failed or missing rows between them.
+  - A **valley** is at least 2× faster than both neighbours in that filtered list.
 
-Every chart has a data table, and hovering shows exact values. Times come
-from one host and toolchain. Compare reports only when they were made on the
-same machine with the same settings, and with nothing else heavy running.
+Hover timings are rounded to three significant figures before browser formatting.
+Data tables are summaries: ordinary series omit min/max and iteration counts,
+fuzz tables aggregate measured durations, and grid tables omit error flags. Keep
+the source JSON for recorded details. Duplicate magnitudes use the last row for
+line-chart hover but the first row in the ordinary table.
+
+The renderer expects trusted harness documents with finite plotted magnitudes,
+positive durations where present, and consistent matrix shapes. Its format-tag
+assertion is not full input validation. Compare equivalent completed workloads
+under matched host, toolchain, and settings; labels and report metadata alone do
+not establish those conditions.
 
 ## Adding a crate
 
@@ -114,9 +131,10 @@ same machine with the same settings, and with nothing else heavy running.
    outer variant; the harness does not validate their payloads or certainty.
 4. Add the crate to the default list in `run.sh`.
 
-## Archived runs
+## Evidence
 
-The first full run (24 November 2026, 442 operations, about 110 minutes on a
-40-thread Xeon E5-2680 v2) is archived with its rendered report at
-`docs/evidence/2026-11-24-perf-atlas` in the
-[evidence repository](../../docs/evidence-archive.md).
+Retain the JSON, source revision, toolchain, host, and workload settings with a
+report. Historical run claims and their verification status are recorded in the
+[renderer audit](../../docs/research/rustdoc-audit.md#performance-atlas-renderer-and-runner-2026-11-26).
+The separate [evidence archive](../../docs/evidence-archive.md) holds published
+records; a cited path without a verified artifact is not performance evidence.
