@@ -9101,6 +9101,142 @@ docs. The next core boundary is `Matrix4TransformDispatchFacts`; subsequent
 transform dispatch, array mapping, traits, kernels and public operations remain
 open. Most of the wider repository also remains unaudited.
 
+## 2026-11-27: Hyperlattice matrix dispatch, powers and generated solves
+
+Base revision: `0f2c988d0`. The previous turn made progress by committing and
+pushing the matrix-facts prefix; this batch continues from its recorded boundary.
+Owning layer: Hyperlattice's matrix arithmetic and structural dispatch, using
+Hyperreal's scalar operations and knowledge. Relevant contracts are P1/P3/P4
+(exact arithmetic and scoped conservative facts), P6 (distinct zero/unknown
+failures), P10 (predicate/dispatch order), and private documentation availability.
+Before editing, review found undocumented dispatch packets, mapping/negation
+helpers, power and pivot schedules, generated solve functions, and density
+recognizers. Existing tests and the actual-library power/ownership probe passed
+on the target revision. This remains documentation-only: no arithmetic, trace
+call, predicate order, assertion, fixture, policy, dependency or public signature
+changed.
+
+Coverage in this batch:
+
+- Read and audited `src/matrix/core.rs` original lines 1382–2087, from
+  `Matrix4TransformDispatchFacts` through
+  `multiply_arrays4_rhs_ref_with_dense_certificate`, stopping before
+  `invert_matrix4_affine_linear_diagonal`. The block grew from 706 to 889 lines.
+  Its 40 named declarations include three macro-generated function templates;
+  six fields and three variants also have Rustdoc. All 49 doc groups rendered.
+- Read and documented the three `impl_matrix!` power-method templates (`powi`,
+  `powi_checked`, `powi_checked_with_abort`) and verified each on both generated
+  Matrix3/Matrix4 pages. Consumer context included transform dispatch, transpose
+  solve routing, density rechecks and operator hooks. This does not credit the
+  entire public API macro, inverse implementation or remaining matrix core.
+- Read and documented eleven original matrix tests: `matrix3_inverse_and_power`,
+  both `matrix{3,4}_negative_power_matches_repeated_inverse_product` tests,
+  `matrix4_identity_and_vector_multiply`,
+  `matrix4_translated_diagonal_affine_preserves_point_direction_semantics`,
+  `matrix4_negative_homogeneous_weight_stays_on_generic_projective_path`,
+  both `matrix{3,4}_division_solves_right_division` tests,
+  `checked_matrix3_division_matches_ordinary_right_division`,
+  `checked_matrix_inverse_rejects_unknown_zero_pivots`, and
+  `ordinary_matrix_inverse_prefers_known_nonzero_pivots`.
+  The existing borrowed-matrix test was also used as a consumer witness; its
+  earlier whole-file audit is not counted again. The matrix test file remains
+  only partially audited.
+
+Documented behavior and evidence:
+
+- Immediate transform dispatch gathers only the needed shape/translation flags.
+  Its generic signature requires dimension four, guarded only by a debug assert.
+  Predicate groups short-circuit in their existing order. Direction-diagonal
+  shape ignores translation and the bottom-right scalar for homogeneous weight
+  zero; affine-diagonal shape additionally requires the canonical unit bottom
+  row. Neither diagonal recognition nor an absent fact proves invertibility.
+- Mapping helpers preserve row-major callback order and left/right ownership.
+  Array sizes justify iterator `expect` calls. Empty arrays make no callbacks.
+  Negation uses the explicit owned/borrowed row schedules, with scalar authority
+  retained in Real.
+- Binary powers special-case zero/one/four, and fixed-size wrappers specialize
+  two/three. For positive e, the generic helper invokes multiplication
+  floor(log2(e)) + popcount(e) - 1 times. This bounds callback count, not scalar
+  work or coefficient/expression growth. A temporary extraction of the unchanged
+  control flow verified e=0..16,31,32,33 and u32::MAX using empty arrays; it did
+  not materialize huge scalar powers. Actual public J matrices (all ones)
+  matched independent J^e = n^(e-1) J expectations for e=1..8 and identity at zero.
+  Identity at i32::MIN verified unsigned-magnitude handling without scalar growth.
+- Dense multiplication requires every entry known nonzero; it does not require
+  rationality or imply nonsingularity. Products must be rechecked: the dense
+  3×3 matrix with identical rows [1,1,-2] and dense 4×4 matrix with identical rows
+  [1,1,-1,-1] both square to zero. Powers two through five matched exact zero.
+  Trace assertions verified each dense square/cube branch once and exactly one
+  dense dot kernel per nilpotent square/cube, preserving the sparse second step.
+- The inverse helpers named "dense" only inspect three nonzero entries to exclude
+  triangular/affine shortcuts. They do not establish full support. The
+  shared-adjugate heuristic inspects the divisor first: rational 4×4 divisors
+  and non-dyadic rational 3×3 divisors can skip the dividend's representation
+  scan. This is neither a shared-denominator certificate nor a singularity proof.
+  Replaced an obsolete dyadic-only explanation with the actual branch contract.
+- Ordinary pivot selection prefers a later known nonzero over an earlier unknown,
+  retaining the first unknown only if no known nonzero exists. Checked selection
+  instead reports UnknownZero or DivideByZero. It does not start refinement.
+  The ordinary selector requires col<N; the checked selector's empty candidate
+  range returns DivideByZero, not a separate index error.
+- Generated solvers implement coefficients * X = rhs with row swaps, pivot
+  normalization and elimination, publishing only the final right buffer. Mutations
+  are local to consumed inputs. The pivot slot receives one, not zero; corrected
+  the old explanatory comment. Scalar errors propagate without partial success.
+  The abort variant checks pivot knowledge before attaching the signal to its
+  reciprocal. It does not poll at each row or attach to every matrix entry.
+- Public nonnegative `powi_checked_with_abort` does not attach or poll its signal.
+  Negative exponents use abort-aware inversion before ordinary power scheduling.
+  Corrected the public claim of unconditional attachment. An active-signal
+  identity power succeeded with zero `attach-owned-real` trace events. This
+  records the implementation's cancellation limitation rather than fixing it or
+  promising a deadline. Historical timing comments are not newly reproduced
+  performance evidence; no speedup claim is made by this batch.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves identical executable source against `0f2c988d0` in both edited
+  Rust files, including all macro bodies, literal values and test assertions.
+- Actual Hyperlattice library builds and twelve selected original tests (eleven
+  matrix tests plus borrowed-matrix ownership) passed with all features and no
+  defaults. The all-feature baseline passed the same tests. Test processes had
+  60-second external limits; semantic probes had 30-second limits.
+- The public-library power/ownership probe passed before and after edits with
+  identical stdout and exact trace assertions. The no-default build repeated
+  semantic assertions with tracing compiled out. Independent expected integer
+  matrices covered mixed ownership add/subtract and owned/borrowed negation.
+- A temporary probe compiled unchanged extracted mapping/power/pivot/solve
+  functions and the original scalar attachment functions, using the actual
+  kernels.rs/trace.rs modules and shared test fixtures. Its initial import of
+  the crate-private RealKernelExt through the public library failed; corrected
+  the probe to include the owning module without changing repository visibility.
+  Final all-feature/no-default probes passed callback ordering, empty mapping,
+  pivot preference, all six generated solves on permutation systems with
+  independent row-order expectations, and UnknownZero before signal attachment.
+  These direct helper witnesses do not prove every public division dispatch path.
+- Private library Rustdoc and explicit integration-test Rustdoc passed with
+  warnings and broken/private links denied in both configurations. Full-text
+  verification matched the 49 block groups, each solve template on both generated
+  solver pages, and the three public power templates on both matrix pages.
+  The eleven new test-function docs are source-reviewed and executed; Rustdoc
+  omits #[test] functions. The 298 HTML pages inspected are not 298 audited APIs.
+- Cargo checks passed for matrix/borrowed integration targets, mathbench, and the
+  downstream Hyperspatial library including Hyperlimit, with all features and no
+  defaults. Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target.
+- Full workflow checks remain owner-waived. No full matrix runtime suite,
+  benchmark timing, sanitizer, release-mode resource study or code-size
+  measurement was run. No universal matrix correctness/composition claim follows.
+- Removed four temporary test/probe executables. Shared target storage remains
+  about 2.5 GiB, with no second target tree. Root AGENTS.md's 100% public/private
+  Rustdoc mandate remains; this batch leaves the repository-wide goal open.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-solve-*.log`, artifact JSON and temporary
+`/tmp/csgrs-matrix-solve-audit/` scripts/probes/private docs. The next contiguous
+boundary is `invert_matrix4_affine_linear_diagonal`, currently at line 2272 of
+core.rs. Later inverse/division/multiplication/transform kernels, much of the
+public macro, remaining tests and most of the wider repository still need audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

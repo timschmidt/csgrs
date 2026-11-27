@@ -14,6 +14,7 @@ fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
     ));
 }
 
+/// Checks a unit-determinant rational inverse and the exact zero/one power identities.
 #[test]
 fn matrix3_inverse_and_power() {
     let matrix = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(1), r(4)], [r(5), r(6), r(0)]]);
@@ -573,6 +574,9 @@ fn matrix_structural_facts_select_advisory_determinant_schedules() {
     );
 }
 
+/// Checks the inverse-first negative-square result against two copies of the inverse.
+///
+/// This is a composition check on a rational fixture, not an independent inverse oracle.
 #[test]
 fn matrix3_negative_power_matches_repeated_inverse_product() {
     let matrix = Matrix3::new([[r(2), r(1), r(0)], [r(0), r(3), r(1)], [r(1), r(0), r(2)]]);
@@ -581,12 +585,17 @@ fn matrix3_negative_power_matches_repeated_inverse_product() {
     assert_eq!(matrix.powi(-2).unwrap(), inverse.clone() * inverse);
 }
 
+/// Checks that 4×4 identity multiplication preserves a concrete homogeneous vector.
 #[test]
 fn matrix4_identity_and_vector_multiply() {
     let vector = Vector4::new([r(1), r(2), r(3), r(4)]);
     assert_eq!(Matrix4::identity() * vector.clone(), vector);
 }
 
+/// Checks exact independent point/direction results under diagonal scaling and translation.
+///
+/// Ordinary multiplication, named transforms, and homogeneous batches must agree;
+/// directions omit translation while points include it.
 #[test]
 fn matrix4_translated_diagonal_affine_preserves_point_direction_semantics() {
     let transform = Matrix4::new([
@@ -626,6 +635,10 @@ fn matrix4_translated_diagonal_affine_preserves_point_direction_semantics() {
     );
 }
 
+/// Checks the full homogeneous contribution of weight minus one.
+///
+/// Independent integer expectations distinguish it from weights zero and one,
+/// including a mixed batch containing both negative-weight and ordinary points.
 #[test]
 fn matrix4_negative_homogeneous_weight_stays_on_generic_projective_path() {
     let transform = Matrix4::new([
@@ -778,6 +791,7 @@ fn matrix4_dense_fractional_determinant_uses_exact_value() {
     assert_eq!(matrix.determinant(), frac(75_933, 5_000));
 }
 
+/// Checks a rational 4×4 negative square against the product of two computed inverses.
 #[test]
 fn matrix4_negative_power_matches_repeated_inverse_product() {
     let matrix = Matrix4::new([
@@ -1534,6 +1548,7 @@ fn matrix3_known_diagonal_div_vector_matches_matrix_division() {
     );
 }
 
+/// Checks the right-division identity `quotient * divisor = numerator` on rational data.
 #[test]
 fn matrix3_division_solves_right_division() {
     let numerator = Matrix3::new([[r(3), r(1), r(4)], [r(1), r(5), r(9)], [r(2), r(6), r(5)]]);
@@ -1544,6 +1559,9 @@ fn matrix3_division_solves_right_division() {
     assert_eq!(quotient * divisor, numerator);
 }
 
+/// Compares ordinary, checked, and inactive-signal 3×3 division on rational inputs.
+///
+/// This is wrapper agreement; the false flag does not test cancellation.
 #[test]
 fn checked_matrix3_division_matches_ordinary_right_division() {
     let numerator = Matrix3::new([[r(4), r(2), r(7)], [r(0), r(3), r(1)], [r(5), r(8), r(6)]]);
@@ -1567,6 +1585,7 @@ fn checked_matrix3_division_matches_ordinary_right_division() {
     );
 }
 
+/// Checks the 4×4 right-division identity on an explicitly invertible rational divisor.
 #[test]
 fn matrix4_division_solves_right_division() {
     let numerator = Matrix4::new([
@@ -1587,6 +1606,10 @@ fn matrix4_division_solves_right_division() {
     assert_eq!(quotient * divisor, numerator);
 }
 
+/// Checks typed `UnknownZero` from checked inverse and abort-aware inverse/division.
+///
+/// The near-zero sine difference has unknown cheap status; this fixture does not
+/// assert that its represented value is mathematically zero.
 #[test]
 fn checked_matrix_inverse_rejects_unknown_zero_pivots() {
     let matrix = Matrix3::new([
@@ -1622,6 +1645,8 @@ fn checked_matrix_scalar_division_accepts_abort_signal() {
     );
 }
 
+/// Checks that ordinary inversion can complete with an unknown diagonal and later
+/// known-nonzero pivot candidates; success alone does not independently verify the inverse.
 #[test]
 fn ordinary_matrix_inverse_prefers_known_nonzero_pivots() {
     let matrix = Matrix3::new([

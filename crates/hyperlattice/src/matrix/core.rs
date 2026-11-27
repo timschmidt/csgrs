@@ -1379,16 +1379,33 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
     }
 }
 
+/// Minimal retained shape packet for an immediate 4D matrix-vector product.
+///
+/// Carries only facts consumed by that dispatch, with no matrix reference,
+/// mutation tracking, rational-set facts, or signed-permutation recognition.
 #[derive(Clone, Copy)]
 struct Matrix4TransformDispatchFacts {
+    /// Whether all off-diagonals are definite zeros and all diagonal entries ones.
     is_identity: bool,
+    /// Whether the entire 4×4 off-diagonal is definitely zero.
     is_diagonal: bool,
+    /// Whether the bottom row is definitely `[0, 0, 0, 1]`.
     is_affine: bool,
+    /// Whether the top-left 3×3 off-diagonal is definitely zero, regardless of bottom row.
     linear_is_diagonal: bool,
+    /// Whether the linear block is diagonal and bottom-row xyz entries vanish.
     direction_linear_is_diagonal: bool,
+    /// Definite-zero flags for the top three entries of the final column.
     translation_xyz_zero: [bool; 3],
 }
 
+/// Collects only the shape facts used by immediate homogeneous-vector dispatch.
+///
+/// Requires `N == 4`; the debug assertion is not a typed dimension check. Probes
+/// linear off-diagonals, bottom-row xyz, then all three translation entries, with
+/// short-circuiting within the first two groups. Identity and affine tests then
+/// query diagonal ones as needed. No rational-set or dependency summary is built.
+/// False flags mean missing structural knowledge, not proofs of the opposite.
 #[inline]
 fn matrix4_transform_dispatch_facts<const N: usize>(
     matrix: &[[Real; N]; N],
@@ -1426,6 +1443,11 @@ fn matrix4_transform_dispatch_facts<const N: usize>(
     }
 }
 
+/// Applies an owned-left/borrowed-right scalar operation in ascending lane order.
+///
+/// Equal lengths follow from the array types, justifying the iterator `expect`.
+/// The callback runs exactly `N` times, with no calls for an empty array. This
+/// helper adds no cloning, arithmetic, or validation beyond the supplied callback.
 fn map_array_ref<const N: usize, F>(left: [Real; N], right: &[Real; N], mut op: F) -> [Real; N]
 where
     F: FnMut(Real, &Real) -> Real,
@@ -1434,6 +1456,11 @@ where
     left.map(|lhs| op(lhs, right.next().expect("arrays have equal length")))
 }
 
+/// Maps corresponding entries in row-major order, consuming only the left matrix.
+///
+/// The same mutable callback is reused across rows and receives each right entry
+/// by reference. Const-generic array sizes guarantee equal row and lane counts;
+/// empty matrices make no callback calls.
 fn map_matrix_ref<const N: usize, F>(
     left: [[Real; N]; N],
     right: &[[Real; N]; N],
@@ -1452,6 +1479,11 @@ where
     })
 }
 
+/// Maps corresponding entries in row-major order, consuming only the right matrix.
+///
+/// Preserves operand order for noncommutative callbacks such as subtraction.
+/// Matching array sizes justify the iterator `expect` calls; no entries are cloned
+/// by this helper and an empty matrix makes no callback calls.
 fn map_matrix_left_ref<const N: usize, F>(
     left: &[[Real; N]; N],
     right: [[Real; N]; N],
@@ -1467,31 +1499,43 @@ where
     })
 }
 
+/// Fixed-size dispatch hook for entrywise negation of owned matrix arrays.
+///
+/// Keeps public matrix operators on the explicit 3×3/4×4 row schedules.
 trait MatrixNegOwned: Sized {
+    /// Negates entries in row-major order, consuming the input matrix.
     fn neg_owned(self) -> Self;
 }
 
+/// Fixed-size dispatch hook for entrywise negation of borrowed matrix arrays.
+///
+/// Keeps public matrix operators on the explicit 3×3/4×4 row schedules.
 trait MatrixNegRefs: Sized {
+    /// Negates entries in row-major order, borrowing the input matrix.
     fn neg_refs(&self) -> Self;
 }
 
+/// Negates three owned scalars from left to right, moving each into scalar negation.
 #[inline]
 fn neg_row3_owned(row: [Real; 3]) -> [Real; 3] {
     let [x, y, z] = row;
     [-x, -y, -z]
 }
 
+/// Negates three borrowed scalars from left to right through borrowed scalar negation.
 #[inline]
 fn neg_row3_refs(row: &[Real; 3]) -> [Real; 3] {
     [-&row[0], -&row[1], -&row[2]]
 }
 
+/// Negates four owned scalars from left to right, moving each into scalar negation.
 #[inline]
 fn neg_row4_owned(row: [Real; 4]) -> [Real; 4] {
     let [x, y, z, w] = row;
     [-x, -y, -z, -w]
 }
 
+/// Negates four borrowed scalars from left to right through borrowed scalar negation.
 #[inline]
 fn neg_row4_refs(row: &[Real; 4]) -> [Real; 4] {
     [-&row[0], -&row[1], -&row[2], -&row[3]]
@@ -1499,6 +1543,7 @@ fn neg_row4_refs(row: &[Real; 4]) -> [Real; 4] {
 
 impl MatrixNegOwned for [[Real; 3]; 3] {
     #[inline]
+    /// Negates entries in row-major order, consuming the input matrix.
     fn neg_owned(self) -> Self {
         let [x, y, z] = self;
         [neg_row3_owned(x), neg_row3_owned(y), neg_row3_owned(z)]
@@ -1507,6 +1552,7 @@ impl MatrixNegOwned for [[Real; 3]; 3] {
 
 impl MatrixNegRefs for [[Real; 3]; 3] {
     #[inline]
+    /// Negates entries in row-major order, borrowing the input matrix.
     fn neg_refs(&self) -> Self {
         [
             neg_row3_refs(&self[0]),
@@ -1518,6 +1564,7 @@ impl MatrixNegRefs for [[Real; 3]; 3] {
 
 impl MatrixNegOwned for [[Real; 4]; 4] {
     #[inline]
+    /// Negates entries in row-major order, consuming the input matrix.
     fn neg_owned(self) -> Self {
         let [x, y, z, w] = self;
         [
@@ -1531,6 +1578,7 @@ impl MatrixNegOwned for [[Real; 4]; 4] {
 
 impl MatrixNegRefs for [[Real; 4]; 4] {
     #[inline]
+    /// Negates entries in row-major order, borrowing the input matrix.
     fn neg_refs(&self) -> Self {
         [
             neg_row4_refs(&self[0]),
@@ -1541,6 +1589,17 @@ impl MatrixNegRefs for [[Real; 4]; 4] {
     }
 }
 
+/// Raises a square array to a nonnegative power using the supplied multiplication.
+///
+/// The callback must implement associative matrix multiplication compatible with
+/// the exact identity array. Exponents zero and one return identity and the base
+/// without multiplying; four squares twice. Other exponents use binary squaring,
+/// seeding the accumulator at the first set bit instead of multiplying by identity.
+/// For positive `e`, callback count is `floor(log2(e)) + popcount(e) - 1`.
+///
+/// The positive-exponent invariant justifies the final `expect`. Scalar handles
+/// are cloned to reuse factors; no inversion, cancellation polling, or scalar-work
+/// budget is supplied here. A logarithmic callback count is not a total-work bound.
 #[inline]
 fn matrix_power_with<const N: usize, F>(
     base: [[Real; N]; N],
@@ -1598,6 +1657,13 @@ where
     result.expect("positive exponent sets at least one result bit")
 }
 
+/// Dispatches nonnegative 3×3 powers to borrowed square/cube or binary squaring.
+///
+/// For two and three, checks every base entry for known nonzero status before
+/// choosing a dense dot-product kernel. A cube rechecks the newly computed square
+/// before its final multiplication: a dense base can have a sparse or zero square.
+/// Other exponents use [`matrix_power_with`] with the ordinary owned kernel.
+/// Dense recognition does not require rational entries or imply invertibility.
 #[inline]
 fn matrix_power3(base: [[Real; 3]; 3], exponent: u32) -> [[Real; 3]; 3] {
     trace_matrix!("helper", "matrix-power3-fixed-mul");
@@ -1625,6 +1691,11 @@ fn matrix_power3(base: [[Real; 3]; 3], exponent: u32) -> [[Real; 3]; 3] {
     matrix_power_with(base, exponent, multiply_arrays3)
 }
 
+/// Dispatches nonnegative 4×4 powers to borrowed square/cube or binary squaring.
+///
+/// Known-nonzero entries select the dense square path. Cubing rechecks both operands
+/// after squaring instead of inheriting density from the base. Other exponents use
+/// [`matrix_power_with`]; negative powers must be inverted by the caller first.
 #[inline]
 fn matrix_power4(base: [[Real; 4]; 4], exponent: u32) -> [[Real; 4]; 4] {
     trace_matrix!("helper", "matrix-power4-fixed-mul");
@@ -1652,6 +1723,13 @@ fn matrix_power4(base: [[Real; 4]; 4], exponent: u32) -> [[Real; 4]; 4] {
     matrix_power_with(base, exponent, multiply_arrays4)
 }
 
+/// Selects a pivot from rows `col..N`, preferring known nonzero over unknown.
+///
+/// The caller must supply `col < N`. The diagonal is queried first, then lower
+/// rows in order. Returns immediately on the first known nonzero; otherwise keeps
+/// the first unknown candidate and returns `None` only when all candidates are
+/// known zero. Selection itself neither refines a sign nor proves an unknown
+/// pivot safe to invert; the subsequent scalar inverse retains that responsibility.
 fn ordinary_pivot<const N: usize>(left: &[[Real; N]; N], col: usize) -> Option<usize> {
     let mut unknown = None;
     match Real::zero_status(&left[col][col]) {
@@ -1671,6 +1749,13 @@ fn ordinary_pivot<const N: usize>(left: &[[Real; N]; N], col: usize) -> Option<u
     unknown
 }
 
+/// Selects the first known-nonzero entry in column `col`, scanning rows `col..N`.
+///
+/// An earlier unknown does not prevent a later known-nonzero pivot. If none is
+/// known nonzero, returns `UnknownZero` when any candidate is unknown, otherwise
+/// `DivideByZero`. This helper performs no refinement or cancellation polling.
+/// Solve callers use `col < N`; an out-of-range column has no candidate rows and
+/// also returns `DivideByZero`, rather than a separate index-validation error.
 fn checked_pivot<const N: usize>(left: &[[Real; N]; N], col: usize) -> CheckedBlasResult<usize> {
     let mut has_unknown = false;
     for (row, values) in left.iter().enumerate().skip(col) {
@@ -1688,11 +1773,21 @@ fn checked_pivot<const N: usize>(left: &[[Real; N]; N], col: usize) -> CheckedBl
     }
 }
 
+/// Moves an entry into cached scalar multiplication by a borrowed factor.
+///
+/// Temporarily replaces the slot with exact zero, then stores the product; this
+/// is an ownership operation, not a proof that the entry is zero. It supplies no
+/// rollback guarantee if scalar arithmetic panics.
 fn scale_entry_in_place(value: &mut Real, factor: &Real) {
     let current = mem::replace(value, Real::zero());
     *value = current.mul_cached(factor);
 }
 
+/// Updates an entry as `value - pivot * factor`, borrowing both multiplier inputs.
+///
+/// Moves the old value out through a temporary exact-zero slot, then stores the
+/// scalar result. Elimination owns these buffers; this helper is not transactional
+/// and introduces no separate scalar error or cancellation boundary.
 fn subtract_scaled_entry_in_place(value: &mut Real, pivot: &Real, factor: &Real) {
     let current = mem::replace(value, Real::zero());
     // Keep both `pivot` and `factor` borrowed. The old form cloned `pivot`
@@ -1700,6 +1795,19 @@ fn subtract_scaled_entry_in_place(value: &mut Real, pivot: &Real, factor: &Real)
     *value = current - pivot * factor;
 }
 
+/// Generates fixed-size Gauss–Jordan solvers for `coefficients * X = rhs`.
+///
+/// Instantiated for three and four right-hand sides in dimensions three and four.
+/// Each step chooses a pivot row, swaps both buffers, normalizes the pivot row,
+/// then eliminates that column from every other row unless its factor is a
+/// definite zero. Only the right buffer is returned; errors publish no partial
+/// solution. All row mutations are local to the consumed arrays.
+///
+/// Ordinary selection may attempt an unknown pivot; checked selection requires
+/// known nonzero status. The abort-aware checked variant attaches the supplied
+/// signal to each pivot reciprocal, without polling at loop boundaries. Scalar
+/// work and cancellation remain delegated to `Real`; fixed loop sizes do not
+/// bound coefficient growth, expression size, refinement, or total work.
 macro_rules! impl_solve_left_system_fixed {
     (
         $solve_fn:ident,
@@ -1707,6 +1815,11 @@ macro_rules! impl_solve_left_system_fixed {
         $solve_abort_fn:ident,
         $n:expr
     ) => {
+        /// Solves `coefficients * X = rhs` with ordinary pivot selection.
+        ///
+        /// Prefers the first known-nonzero pivot, otherwise tries the first unknown
+        /// candidate. An all-known-zero column returns `DivideByZero`; scalar inverse
+        /// errors propagate. Unknown pivots are not silently treated as zeros.
         fn $solve_fn(
             coefficients: [[Real; $n]; $n],
             rhs: [[Real; $n]; $n],
@@ -1723,8 +1836,8 @@ macro_rules! impl_solve_left_system_fixed {
                     right.swap(col, pivot);
                 }
 
-                // Move the pivot out once so the same matrix slot is already
-                // zeroed for row-elimination and we avoid an extra clone for
+                // Move the pivot out once and install the normalized unit
+                // diagonal before row elimination, avoiding an extra clone for
                 // the inverse path. A structural unit-pivot bypass was tested
                 // here and reverted: the extra `definitely_one` query regressed
                 // mat3/mat4 right-division rows more than it saved in skipped
@@ -1766,6 +1879,11 @@ macro_rules! impl_solve_left_system_fixed {
             Ok(right)
         }
 
+        /// Solves `coefficients * X = rhs`, requiring known-nonzero pivots.
+        ///
+        /// Without a known pivot, an unknown candidate returns `UnknownZero`; an
+        /// all-known-zero column returns `DivideByZero`. Scalar inverse errors also
+        /// propagate, and only a completed right-hand-side buffer is returned.
         fn $solve_checked_fn(
             coefficients: [[Real; $n]; $n],
             rhs: [[Real; $n]; $n],
@@ -1820,6 +1938,13 @@ macro_rules! impl_solve_left_system_fixed {
             Ok(right)
         }
 
+        /// Solves `coefficients * X = rhs` with checked pivots and reciprocal signal attachment.
+        ///
+        /// Pivot selection occurs before cloning and attaching the signal to that
+        /// pivot for inversion. The helper does not explicitly poll the flag per row
+        /// or attach it to every input/output entry. Exact shortcuts may finish
+        /// without consulting the flag; this is cooperative cancellation, not a
+        /// deadline or a guarantee that an already-set flag prevents success.
         fn $solve_abort_fn(
             coefficients: [[Real; $n]; $n],
             rhs: [[Real; $n]; $n],
@@ -1888,22 +2013,22 @@ impl_solve_left_system_fixed!(
     4
 );
 
+/// Selects shared-adjugate arithmetic from exposed rational representation classes.
+///
+/// Classifies the divisor first and rejects `NonRational`. For 4×4, any rational
+/// divisor qualifies without inspecting the dividend. For 3×3, a non-dyadic rational
+/// divisor also skips the dividend scan; a dyadic divisor requires rational entries
+/// in both operands. Other dimensions use the combined-class rule.
+///
+/// This is a schedule heuristic, not an invertibility or common-denominator proof.
+/// The selected arithmetic path must still handle a zero or unresolved determinant.
 fn prefer_shared_adjugate_right_division<const N: usize>(
     left: &[[Real; N]; N],
     right: &[[Real; N]; N],
 ) -> bool {
-    // Shared adjugate division trades fewer inverses for more products. That
-    // wins for dyadic hyperreal inputs because reduction is shift-only. Modern
-    // hyperreal exact-rational reducers also handle some non-dyadic matrix
-    // forms with one shared denominator, so keep dyadic as the hot first
-    // predicate and isolate the broader exact-rational fallback below.
-    // This is the same "delay the common scale" idea as fraction-free exact
-    // linear algebra (fraction-free elimination// , but applied only when traces show the
-    // extra products are cheaper than repeated inverses.
-    // Check the divisor first. The shared-adjugate branch is only useful when
-    // `det(right)` and all adjugate cofactors stay dyadic; decimal divisors can
-    // reject the path before scanning the dividend. This preserves the exact
-    // same predicate but moves the cheapest likely rejection earlier.
+    // Inspect the divisor first. Exact-rational divisors can select this
+    // schedule without requiring a rational dividend on the branches below.
+    // Determinant validation remains the selected arithmetic path's job.
     let right_kind = matrix_exact_rational_kind(right);
     if right_kind == ExactRationalKind::NonRational {
         return false;
@@ -1923,6 +2048,11 @@ fn prefer_shared_adjugate_right_division<const N: usize>(
     )
 }
 
+/// Selects the borrowed 3×3 shared-adjugate schedule, inspecting the divisor first.
+///
+/// A non-rational representation rejects the schedule; a non-dyadic rational
+/// divisor accepts without scanning the dividend. Dyadic divisors require a rational
+/// dividend too. No determinant or singularity decision is made here.
 fn prefer_shared_adjugate_right_division_ref3(
     left: &[[Real; 3]; 3],
     right: &[[Real; 3]; 3],
@@ -1942,6 +2072,12 @@ fn prefer_shared_adjugate_right_division_ref3(
     )
 }
 
+/// Recognizes diagonal action on vectors with homogeneous weight zero.
+///
+/// Checks the six off-diagonal entries of the top-left 3×3 block, then the three
+/// bottom-row xyz entries, stopping on the first missing definite-zero fact.
+/// The translation column and bottom-right value are unrestricted because their
+/// contributions are multiplied by zero; affine shape is not required.
 #[inline]
 fn matrix4_direction_linear_is_diagonal(matrix: &[[Real; 4]; 4]) -> bool {
     // Direction vectors have w = 0, so the translation column cannot contribute
@@ -1961,13 +2097,25 @@ fn matrix4_direction_linear_is_diagonal(matrix: &[[Real; 4]; 4]) -> bool {
         && matrix[3][2].definitely_zero()
 }
 
+/// Conservative schedule for the action on homogeneous vectors with weight zero.
+///
+/// Translation and the bottom-right scalar do not participate in this classification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Matrix4DirectionLinearKind {
+    /// Known unit top-left diagonal, zero cross terms, and zero bottom-row xyz.
     Identity,
+    /// Known diagonal direction action, without a complete unit-diagonal certificate.
     Diagonal,
+    /// Direction-diagonal shape was not certified; use the general action.
     General,
 }
 
+/// Classifies the action on homogeneous directions without inspecting translation.
+///
+/// Checks direction-diagonal shape first, then the first three diagonal entries
+/// for definite ones. Unknown shape selects `General`; missing unit facts select
+/// `Diagonal` once the zero pattern is known. No non-affinity or invertibility
+/// claim follows from these fallback labels.
 #[inline]
 fn matrix4_direction_linear_kind(matrix: &[[Real; 4]; 4]) -> Matrix4DirectionLinearKind {
     // Narrow one-shot direction predicate: translations do not affect
@@ -1988,6 +2136,11 @@ fn matrix4_direction_linear_kind(matrix: &[[Real; 4]; 4]) -> Matrix4DirectionLin
     }
 }
 
+/// Recognizes an affine matrix with a diagonal top-left 3×3 linear block.
+///
+/// Checks six linear off-diagonals and bottom-row xyz for definite zeros, then
+/// requires a definite one at (3,3). Translation is unrestricted and the linear
+/// diagonal may contain zeros, so this fact does not establish invertibility.
 #[inline]
 fn matrix4_affine_linear_is_diagonal(matrix: &[[Real; 4]; 4]) -> bool {
     // Narrow one-shot point predicate: this is cheaper than `matrix4_facts`
@@ -2008,6 +2161,12 @@ fn matrix4_affine_linear_is_diagonal(matrix: &[[Real; 4]; 4]) -> bool {
         && matrix[3][3].definitely_one()
 }
 
+/// Recognizes three nonzero witnesses that exclude the 3×3 shape shortcuts.
+///
+/// Queries (1,0), (0,1), then (2,0), stopping unless each has known nonzero status.
+/// Together they exclude upper/lower triangular and affine shapes, hence identity
+/// and diagonal shapes too. Despite the name, not every entry is tested for density,
+/// and determinant nonzero is not established. Unknown falls back to shape scans.
 #[inline]
 fn matrix3_is_definitely_dense_for_inverse(matrix: &[[Real; 3]; 3]) -> bool {
     // Dense inverse benchmarks regressed after broad retained-fact scans were
@@ -2024,6 +2183,11 @@ fn matrix3_is_definitely_dense_for_inverse(matrix: &[[Real; 3]; 3]) -> bool {
         && matches!(matrix[2][0].zero_status(), ZeroKnowledge::NonZero)
 }
 
+/// Recognizes three nonzero witnesses that exclude the 4×4 shape shortcuts.
+///
+/// Queries (1,0), (0,1), then (3,0) in that order. These exclude upper/lower
+/// triangular and affine shapes, but do not prove full entry density or
+/// invertibility. A missing nonzero fact rejects this shortcut conservatively.
 #[inline]
 fn matrix4_is_definitely_dense_for_inverse(matrix: &[[Real; 4]; 4]) -> bool {
     // Same dense-first guard as the 3x3 path. `m10 != 0` rejects upper
@@ -2038,6 +2202,11 @@ fn matrix4_is_definitely_dense_for_inverse(matrix: &[[Real; 4]; 4]) -> bool {
         && matches!(matrix[3][0].zero_status(), ZeroKnowledge::NonZero)
 }
 
+/// Checks every 3×3 entry for known nonzero status in row-major order.
+///
+/// Stops at the first zero or unknown. This is full support certification for the
+/// dense multiplication kernel, independent of rationality or invertibility; it
+/// must be re-established for products that can acquire exact zeros.
 #[inline]
 fn matrix3_has_dense_multiply_certificate(matrix: &[[Real; 3]; 3]) -> bool {
     // The direct reducer is valid only for matrices that are actually dense.
@@ -2050,6 +2219,10 @@ fn matrix3_has_dense_multiply_certificate(matrix: &[[Real; 3]; 3]) -> bool {
         .all(|value| matches!(value.zero_status(), ZeroKnowledge::NonZero))
 }
 
+/// Checks every 4×4 entry for known nonzero status in row-major order.
+///
+/// Stops at the first zero or unknown. No rationality, determinant, or density of
+/// a later product is implied by a successful scan.
 #[inline]
 fn matrix4_has_dense_multiply_certificate(matrix: &[[Real; 4]; 4]) -> bool {
     matrix
@@ -2058,6 +2231,11 @@ fn matrix4_has_dense_multiply_certificate(matrix: &[[Real; 4]; 4]) -> bool {
         .all(|value| matches!(value.zero_status(), ZeroKnowledge::NonZero))
 }
 
+/// Multiplies borrowed matrices after checking left, then right, for dense support.
+///
+/// Both scans must succeed to use the dense dot-product kernel. Otherwise the
+/// ordinary borrowed kernel retains its structural and zero-pruning shortcuts.
+/// The right scan is skipped if the left fails.
 #[inline]
 fn multiply_arrays4_ref_with_dense_certificate(
     left: &[[Real; 4]; 4],
@@ -2071,6 +2249,11 @@ fn multiply_arrays4_ref_with_dense_certificate(
     multiply_arrays4_ref(left, right)
 }
 
+/// Multiplies an owned left and borrowed right matrix with fresh density checks.
+///
+/// Checks the left operand first; only if it succeeds is the right checked. Dense
+/// inputs are borrowed for dot products; failure falls back to the ordinary
+/// owned-left/borrowed-right kernel. A prior dense base does not certify its square.
 #[inline]
 fn multiply_arrays4_rhs_ref_with_dense_certificate(
     left: [[Real; 4]; 4],
@@ -8961,9 +9144,13 @@ macro_rules! impl_matrix {
                 self.inverse_checked()
             }
 
-            /// Raises the matrix to an integer power.
+            /// Raises the matrix to an integer power, inverting first for negative exponents.
             ///
-            /// Negative exponents invert the matrix first.
+            /// Zero returns identity even for a singular base; one returns the base.
+            /// Minus one returns its inverse directly. Other magnitudes use borrowed
+            /// square/cube specializations or binary squaring. `i32::MIN` is handled
+            /// through its unsigned magnitude, without signed negation overflow.
+            /// Scalar inversion errors propagate; no general scalar-work bound is supplied.
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
                 trace_matrix!("method", "powi");
                 if exponent == -1 {
@@ -8985,7 +9172,11 @@ macro_rules! impl_matrix {
                 Ok(Self($power_fn(base, exponent.unsigned_abs())))
             }
 
-            /// Raises the matrix to an integer power using checked inversion.
+            /// Raises the matrix to an integer power using checked inversion when negative.
+            ///
+            /// Nonnegative exponents use the same multiplication paths as [`Self::powi`]
+            /// without an invertibility guard. Negative exponents first require the
+            /// checked inverse; zero/unknown pivot or determinant errors propagate.
             pub fn powi_checked(self, exponent: i32) -> CheckedBlasResult<Self> {
                 trace_matrix!("method", "powi-checked");
                 if exponent == -1 {
@@ -9000,7 +9191,14 @@ macro_rules! impl_matrix {
                 Ok(Self($power_fn(base, exponent.unsigned_abs())))
             }
 
-            /// Raises the matrix to an integer power after attaching an abort signal.
+            /// Raises the matrix to an integer power, using abort-aware inversion when negative.
+            ///
+            /// For nonnegative exponents this method neither attaches nor polls `signal`;
+            /// it follows the ordinary power path. Negative exponents first invoke
+            /// [`Self::inverse_checked_with_abort`], then multiply the returned entries.
+            /// Minus one returns that inverse directly. No new signal attachment or
+            /// polling occurs in the subsequent exponentiation loop, and exact paths
+            /// need not stop merely because the flag is set.
             pub fn powi_checked_with_abort(
                 self,
                 exponent: i32,
