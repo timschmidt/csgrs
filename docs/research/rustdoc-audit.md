@@ -13327,6 +13327,107 @@ temporary probes and rendered guide. Owned executables were removed after checks
 the shared target remains about 2.8 GiB. Other crate reports, historical records,
 the wider repository and generated-item Rustdoc gaps remain open.
 
+## Hyperlattice performance narrative and small retained reports (2026-11-27)
+
+Target revision: `f632b8cd58b11a2d437cef10c64a21228cf8c42f` on `rustdoc`.
+Read all 944 original lines of crates/hyperlattice/PERFORMANCE.md (now 995),
+including every historical table, reference mapping, resource qualification and
+reproduction command. Also read every line of api_dispatch_trace.md (115) and
+promoted_slow_offenders.txt (104). The latter two generated artifacts are preserved
+byte-for-byte. They define no additional Rust APIs. This is narrative/data review,
+not a rerun or independent qualification of every historical optimization.
+
+Owning layer is benchmark/test evidence documentation. Relevant properties are
+P36/P37/P38: matched completed contracts, exact scope of evidence and selection
+pressure. Inputs are historical estimates, raw diagnostic labels/counters, and the
+retained callback's target/seed records. Missing acceptance witnesses were explicit
+historical scope, documented differences between external-engine workloads, and
+accurate representation/trace assertion limits. Reproduced two arithmetic gaps:
+1.5012→1.4390 implies 4.14335%, alongside the recorded 6.4%; 228.10→221.13 implies
+3.05568%, alongside the recorded 2.78%. Endpoints alone do not reconstruct those
+reported statistics. No replacement measurement or significance claim is invented.
+
+The file now distinguishes experiment-specific "current" claims, test counts and
+source/layout sizes from the reader's revision. The reference map covers five
+README background references, not every citation in the crate. Every original
+timing-table row and numeric historical result is retained. The two endpoint
+discrepancies are explained in their sections; the Bareiss row points to the
+qualified determinant record. Existing hypotheses, rejected experiments and
+unfavorable results remain visible.
+
+Current code/consumer relationships clarified:
+
+- SymbolicaFloat under the numerica128 label, Rug MPFR and symbolic Atom do not
+  supply identical domains, inputs, ownership/setup, cancellation, cache state or
+  output consumption. Matching names or final primitive exports do not certify a
+  common exact completed contract. Earlier whole-file benchmark/adapter records and
+  current source excerpts support these qualifications; no external engine was timed.
+- Stored estimates are not fresh executions. Diagnostic closures differ from timing
+  registrations. Counter reset is not scalar-cache reset; matrix profile calls is
+  caller normalization metadata. The four-family trace's assertion can be satisfied
+  by construction alone. Linear Algebra includes the synthetic marker whereas
+  Dependency Dispatch excludes it, and correlation categories can overlap.
+- Representation tests exercise 22 recipes/eight public kinds and selected 484-pair
+  identities. The serialized-tag test requires expected names but allows extras, so
+  a new private variant need not fail it. The exhaustive public-kind match is a
+  different guard. Equality and JSON comparison may accept interval overlap even
+  after NotEqual; the recipe timing group has no private-tag or exact-value oracle.
+- Retained offender seeds identify benchmark-specific callbacks rather than raw
+  libFuzzer corpus inputs. Probe/history values lack revision/machine/success receipts.
+  The returned promotion set is bounded by 100 but may be shorter. Its score is an
+  integer mean of best-of-five probes and the derivative is a difference of score
+  deltas; changing sets and absent elapsed-time normalization limit comparisons.
+- Reproduction commands are crate-relative and can rewrite reports or delete prior
+  coverage output. Their source text is unchanged. Recreating historical timing also
+  requires the original build, revision, fixture, hardware and measurement conditions.
+
+The small stored API trace has four summary rows and 98 detail rows. Every detail
+row was read; arithmetic checks confirm each workload's non-marker count sum and
+single marker. Aabb's seven dependency events are scalar constructors; its one
+Linear Algebra event is the marker. The promotion file has 100 distinct matrix_ops
+target/seed identities, valid u64/u128 fields, matching saved names, and descending
+times from 9029 to 8320 ns. Its header's guaranteed-size/replayable wording is not
+an enforcement mechanism; the new narrative and existing helper Rustdoc qualify it.
+
+Larger benchmarks.md, dispatch_trace.md and slow_performers.txt received only header,
+selected-row or checksum inspection; their remaining rows are not credited as read.
+Likewise, the linked Hypercurve 2026-09-05 checkpoint received context inspection only:
+the oversized initial output was truncated and no whole-file review is claimed.
+The small current determinant and tag-test source excerpts, report writers, promotion
+parser and trace classifier were reread against previous implementation review records.
+
+Validation after final narrative edits:
+
+- Locked/offline all-feature library build reused the shared target, j2, incremental
+  disabled. Compiled the actual four-family trace driver with warnings denied and
+  ran it in an owned temporary working directory under a 30-second timeout. Its
+  10,703-byte report exactly matches the tracked artifact; no repository report was
+  overwritten. This establishes this fixed diagnostic result, not full API coverage.
+- Compiled the actual matrix and representation test sources with matching all-feature
+  artifacts and warnings denied. The documented determinant test and serialized-tag
+  test passed separately under 60-second external limits. An independent 24-permutation
+  Fraction calculation gives 75933/5000 for the source-authored determinant fixture.
+  Decimal arithmetic reproduces both percentage discrepancies without binary rounding.
+- Parsed every small trace/promotion record and checked counts, identities, numeric
+  domains, current registered target names, sort order and saved Criterion labels.
+  No retained callback, score refresh, libFuzzer campaign or timing loop was executed.
+- Rustdoc's Markdown renderer passed with warnings denied; full text of all twelve
+  new/changed prose paragraphs rendered and local links/anchors resolved. All original
+  historical timing-table rows and command blocks are unchanged. Five generated
+  report files match their target-revision bytes; their SHA-256 digests are in the
+  validation log. Only PERFORMANCE.md and this Markdown ledger changed.
+- git diff --check passed. Full workflow checks remain owner-waived; no fresh size,
+  memory, performance, cancellation, full mathbench trace or four-cache result is
+  claimed. Original sample/estimator reconciliation remains open. No required focused
+  check is blocked. Owned executables were removed; local evidence uses about 152 KiB
+  and the reused target remains approximately 2.8 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-evidence-{build,validation}.log` and
+`/tmp/csgrs-lattice-evidence-audit/` matching artifact metadata, executable commands,
+independent arithmetic, report comparison and Markdown rendering. The root AGENTS.md
+100% public/private/generated Rustdoc mandate remains intact. The repository-wide
+audit, larger retained reports, historical records and generated-item gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

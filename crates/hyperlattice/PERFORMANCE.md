@@ -1,10 +1,38 @@
 # Performance and Reference Audit
 
-This record maps every paper cited by `hyperlattice` to the implementation and records
-the optimization experiments performed during the audit. The audit retained a
-dense exact-rational 4x4 determinant dispatch and rejected a zero-mask multiplication
-experiment. It also retained focused exact-rational sentinels and regenerated the
-complete dispatch trace so future changes have a reproducible guardrail.
+This ledger preserves selected historical optimization experiments and maps the
+five linear-algebra references in the README to implementation choices. It records
+retained and rejected experiments, including a dense exact-rational determinant
+dispatch and a rejected zero-mask multiplication schedule.
+
+## Reading the evidence
+
+Measurements, test counts, source/layout sizes, and words such as "current" or
+"now" in the experiment sections refer to those experiments' revisions and
+conditions. They are not results from the reader's checkout. Scalar facade and
+prepared-matrix names in older sections may no longer exist. Consult the current
+[API guide](README.md) and generated Rustdoc for supported entry points; use the
+linked checkpoints for historical build, input, and measurement provenance.
+
+Cross-engine row names do not establish equal completed contracts. The current
+`numerica128` adapter uses SymbolicaFloat; GMP/MPFR uses Rug and `symbolica` uses
+symbolic expressions. Input construction, checked-domain handling, cancellation,
+ownership/setup costs, retained caches, and output materialization can differ.
+Even a common primitive export does not by itself establish identical exact inputs,
+certainty, or error guarantees. Historical timing ratios are retained below, but
+do not certify interchangeable arithmetic or an end-to-end geometry speedup.
+
+| Artifact | What it records | Limits when interpreting it |
+| --- | --- | --- |
+| [`benchmarks.md`](benchmarks.md) | Stored Criterion estimates and retained-case score sections. | Regeneration does not run every workload or prove stored rows share a revision, machine, policy, or completion contract. |
+| [`dispatch_trace.md`](dispatch_trace.md) | Selected unmeasured diagnostic closures and caller-normalized matrix profiles. | Trace and timing registrations differ; category labels and counts are not value or performance proofs. |
+| [`api_dispatch_trace.md`](api_dispatch_trace.md) | Four fixed public-family workloads, including construction and explicit lossy point exports. | Non-marker dispatch or a rational temporary suffices; no exact output or per-path count oracle is enforced. |
+| [`slow_performers.txt`](slow_performers.txt), [`promoted_slow_offenders.txt`](promoted_slow_offenders.txt) | History and selected target/seed identities for the benchmark's own callback recipes. | Seeds are not serialized libFuzzer inputs. Best-of-five wall-clock probes and historical maxima have no stored revision/machine or exact-success receipt; the returned promotion set need not contain 100 cases. |
+
+The promoted score is an integer arithmetic mean of fresh best-of-five probes.
+Its "derivative" is a difference of successive score deltas, without division by
+elapsed time; promoted sets can change between scores. These measurements do not
+establish mathematical replay fidelity or equivalent selection pressure across runs.
 
 ## Native scalar API ownership (2026-09-05)
 
@@ -96,7 +124,7 @@ describe the current public API.
 
 | Reference | Applicable idea | Result in `hyperlattice` |
 | --- | --- | --- |
-| Bareiss (1968) | Fraction-free elimination controls intermediate growth and avoids rounding in determinant computation. | Not adopted for the fixed 3x3 and 4x4 determinant-only kernels. Bareiss needs pivot selection, exact division, and a singular-pivot policy; the current explicit cofactor schedules are division-free, infallible, and share minors with adjugate/inverse paths. Measurement instead found a 6.4% win by selecting the existing fused exact-rational reducer for dense public 4x4 determinants, retaining the fixed schedule without elimination machinery. |
+| Bareiss (1968) | Fraction-free elimination controls intermediate growth and avoids rounding in determinant computation. | Not adopted for the fixed 3x3 and 4x4 determinant-only kernels. Bareiss needs pivot selection, exact division, and a singular-pivot policy; the explicit cofactor schedules are division-free and share minors with adjugate/inverse paths. A historical experiment reported a 6.4% improvement from selecting the fused exact-rational reducer for dense public 4x4 determinants; the [recorded point estimates](#retained-dense-exact-rational-determinant-dispatch) imply a different percentage. |
 | Berkowitz (1984) | A division-free characteristic-polynomial algorithm over arbitrary commutative rings, expressed as a balanced product of lower-triangular Toeplitz matrices for low parallel depth. | Not adopted. The crate has only fixed 3x3/4x4 determinant and power APIs, not a characteristic-polynomial API. At these sizes the required submatrix powers and Toeplitz products do substantially more sequential work than the existing explicit determinant schedules. Its asymptotic parallel-depth advantage does not apply to these scalar kernels. |
 | Gustavson (1978) | Sparse multiplication should schedule work from known nonzero structure instead of forming every nominal product. | Already represented by exact zero probing, per-cell active-lane counts, unrolled 0-4-term reducers, and identity/diagonal/affine shortcuts. Reusing the public structural zero masks was tested and rejected because mask indexing cost more than the scalar's cached zero query. The new sparse sentinels cover this decision. |
 | Hou (1998) | The Leverrier-Faddeev recurrence derives characteristic-polynomial coefficients from matrix products and traces, and can produce adjugate/inverse information. | Not adopted for determinant-only or small-power operations. It requires repeated full matrix multiplications plus traces and division by the recurrence index. The source already records benchmark rejection of Cayley-Hamilton/Faddeev-LeVerrier and Berkowitz-style power routes in favor of direct small exponents and exponentiation by squaring. Reconsider only if a caller needs the characteristic polynomial and adjugate together. |
@@ -125,10 +153,13 @@ all sixteen entries are nonzero exact rationals, then reuses the known-rational
 minor and final product-sum kernels. Sparse and symbolic matrices keep the original
 path, and the determinant remains division-free and infallible.
 
-Criterion measured the dense fractional sentinel at 1.5012 us before and 1.4390 us
-after, a 6.4% median improvement. Its reported 95% change interval was 5.38% to
-7.46% faster (`p < 0.01`). An exact-value regression independently checks the
-fractional result `75933 / 5000`.
+The historical record lists the dense fractional sentinel at 1.5012 us before and
+1.4390 us after, alongside a reported 6.4% improvement and a 95% change interval of
+5.38% to 7.46% faster (`p < 0.01`). The two listed point estimates imply a 4.14%
+decrease, not 6.4%; reconciling those statistics requires the original sample and
+estimator provenance. The recorded numbers are preserved here without treating
+them as one consistent percentage calculation. A separate exact-value regression
+checks the fractional determinant `75933 / 5000`.
 
 ## Retained canonical acosh domain ownership
 
@@ -818,10 +849,13 @@ packet. On the 64-bit validation target, `SharedScaleVec<3>` shrank from 384 to
 test reconstructs the former duplicated shape and requires the consolidated
 carrier to save at least one complete exact-set summary.
 
-The focused fresh-construction sentinel measured the duplicated baseline at
-228.10 ns and the consolidated carrier at 221.13 ns, a 2.78% mean improvement
-with Criterion's 95% change interval of -4.71% to -0.60%. The scalar fact scan
-and retained scheduling behavior are unchanged. Hyperlattice also reexports
+The historical fresh-construction sentinel lists the duplicated baseline at
+228.10 ns and the consolidated carrier at 221.13 ns, alongside a reported 2.78%
+mean improvement and Criterion's 95% change interval of -4.71% to -0.60%. The
+listed endpoints imply a 3.06% decrease; the 2.78% statistic cannot be reconstructed
+from those endpoints alone. Both records are retained pending their original
+sample/estimator provenance. The experiment retained the scalar fact scan and
+scheduling behavior. Hyperlattice also reexports
 Hyperreal's canonical `RealExactSetFacts` directly rather than maintaining a
 second compatibility type name.
 
@@ -840,30 +874,41 @@ rejected and repeated.
 
 ## Trace evidence
 
-`dispatch_trace.md` was regenerated from the diagnostic build. It confirms that dense
+The stored `dispatch_trace.md` records a diagnostic build in which dense
 exact-rational public determinant workloads enter
 `matrix4-factors-dense-exact-known-rational` and
 `determinant4-from-factors-known-rational`, while sparse rational determinant rows
 retain `matrix4-factors` and zero pruning. Dense and sparse multiplication, inverse,
 affine, diagonal, batch, and transform paths remain separately observable.
 The trace is diagnostic rather than timing evidence because tracing hooks are compiled
-into that build.
+into that build. Recording resets counters, not all scalar caches; preceding diagnostic
+passes can warm later calls. Matrix profile `calls` values are caller-supplied
+normalization metadata, not an enforced repetition count. Neither stored traces nor
+registration names prove that the current revision follows the same paths.
 
 `api_dispatch_trace.md` complements the Criterion-integrated matrix report with
 single-run workloads for the public algebra2, point, projective, and AABB families.
-Each row fails if it records only its benchmark marker, preventing a syntactically
-present workload from being mistaken for executed lattice/dependency work.
+Each workload requires non-marker dispatch or a rational temporary, which can be
+satisfied by fixture construction alone. It does not require every intended operation
+to run, succeed, or return the expected value. The correlation categories overlap;
+unlike Dependency Dispatch, Linear Algebra includes the synthetic workload marker.
 
 ## Representation, coverage, and allocation gates
 
-`tests/real_representations.rs` is the finite representation oracle at the
-Hyperlattice boundary. It constructs all 22 current optimized Hyperreal
-certificate classes, checks their serialized private tags when `serde` is
-enabled, covers all 8 public `StructuralKind` variants, sends every class
-through every lattice carrier family, and exercises all 484 ordered class
-pairs. The explicit count and serialized tag checks intentionally fail when
-Hyperreal adds or renames a finite certificate until Hyperlattice adds a
-corresponding recipe.
+`tests/real_representations.rs` exercises 22 named positive recipes at the
+Hyperlattice boundary, checking eight public `StructuralKind` variants and selected
+operations across scalar, complex, vector, point, matrix, and projective carriers.
+All 484 ordered recipe pairs exercise selected arithmetic identities. With `serde`,
+each recipe's private serialized tag is checked and an invalid-tag diagnostic must
+contain the expected names. Extra private variants in that diagnostic are allowed;
+adding a new private class need not fail the suite. The expected public-kind match
+is exhaustive for that public enum, which is a separate inventory.
+
+The scalar comparison helper first seeks an exact equality or zero-difference
+certificate, then accepts overlapping rational enclosures even after a NotEqual
+result. Passing is therefore a finite consistency check, not a general equality
+oracle. Serialized round trips use that same fallback and do not prove
+fresh-process exact replay or deterministic bytes.
 
 `scripts/representation_coverage.sh` runs the integration target in four selected
 configurations: no default features, each Hyperreal primitive approximation cache
@@ -881,9 +926,9 @@ bounded construction depth does not bound evaluation cost. The equality helper's
 interval-overlap fallback does not prove equality; see [`fuzz/README.md`](fuzz/README.md).
 
 The Criterion `real_representations` group provides one composite
-vector/determinant/complex workload per certificate. It is a representation
-cost sweep, complementary to the existing competitive `mathbench` groups that
-compare Hyperlattice with Numerica 128, GMP/MPFR 128 through Rug, and Symbolica.
+vector/determinant/complex workload per labeled recipe. It asserts the recipe count,
+not runtime private tags or exact output values. It complements the external-engine
+rows in `mathbench`, subject to the comparison limits above.
 `examples/allocation_profile.rs` reports complex multiplication, a vector dot/cross
 tuple, Matrix3 determinant, and Matrix4 point transform for 22 labeled recipes.
 Only the recipe count is asserted, not private class tags. Fixtures and one warm-up
@@ -920,6 +965,12 @@ are not a Rust-aware source inventory. No coverage threshold or zero-total guard
 is supplied. Execution coverage does not establish Rustdoc coverage or correctness.
 
 ## Reproduction and validation
+
+Run these commands from `crates/hyperlattice`. They exercise current sources;
+reproducing a historical timing comparison additionally requires its recorded
+revisions, fixtures, build configuration, hardware and measurement protocol.
+Timing and trace commands can rewrite reports; the coverage script deletes prior
+coverage output as described above.
 
 ```sh
 cargo bench --bench regression_sentinels -- 'sentinel/matrix3/sparse_mask_product'
