@@ -1,9 +1,18 @@
 //! Keep a shared source parameter through two exact affine maps.
+//!
+//! On the line (t,2t+1), t in `[1,3]`, the relation 2x-y is identically -1.
+//! Its Cartesian hull admits independent coordinates and gives `[-5,3]` instead.
+//! Both projections are checked on an integer fixed grid with exact endpoints;
+//! an enclosure does not replace the retained affine definition.
 
 use hyperlattice_interval::hyperinterval::FixedInterval;
 use hyperlattice_interval::{AffineMap, IntervalLatticeError, IntervalMatrix, IntervalVector};
 
+/// Construct the line image, check its hull, compose the relation, and compare
+/// with applying that relation to the hull. Native construction/arithmetic errors
+/// propagate; a wrong literal expectation panics. Print the comparison on success.
 fn main() -> Result<(), IntervalLatticeError> {
+    /// Whole-unit i32 intervals; every coefficient and expected endpoint here fits exactly.
     type I = FixedInterval<i32, 0>;
     let parameter = IntervalVector::new([I::new(1, 3)?])?;
     let line = AffineMap::new(

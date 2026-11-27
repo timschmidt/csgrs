@@ -14407,6 +14407,127 @@ duplicate temporary HTML were removed. The shared Cargo target is approximately
 conformance/examples and the repository-wide audit stay open; these item/file counts
 do not establish repository-wide Rustdoc coverage or universal arithmetic closure.
 
+## Hyperlattice-interval examples and performance atlas (2026-11-27)
+
+Whole-file review on target revision 6358491a33c21f3b4bb92367f7232df06f615e9c:
+
+- crates/hyperlattice-interval/examples/affine_image.rs (29 -> 38 lines).
+- crates/hyperlattice-interval/examples/fixed_affine.rs (12 -> 22 lines).
+- crates/hyperlattice-interval/examples/perf_atlas.rs (1216 -> 1434 lines).
+
+The owning layer is executable examples and benchmark fixture/measurement adapters,
+not interval arithmetic. P1/P5/P6/P18/P26/P36/P37 and the admission protocol require
+truthful source meaning, composition, failure/resource distinctions and measured-work
+claims. The domain is the two integer-grid affine examples plus finite configured
+atlas recipes across fixed i32/i64, qualified f64, dyadic and rational intervals.
+Both small examples ran successfully and the atlas passed all-feature cargo check
+before edits. Missing Rustdoc covered private fields/variants, fixture converters,
+traits, macro templates, generated workload types, sweep helpers and entry points.
+No algorithm, signature, macro matching/expansion code, assertion, measurement label,
+output string, feature, dependency or lockfile changed.
+
+There are 98 authored doc blocks and 39 function declarations across the three files.
+The atlas now explains each of its 30 generated operations in a workload catalog,
+linked from their private marker pages, alongside Bisect and Regrid. Review found:
+
+- The affine-image example preserves t in (t,2t+1), t in [1,3], so 2x-y is -1;
+  projecting first to the independent box gives [-5,3]. The ordinary affine example
+  has independent x in [1,3], y in [4,5], hence 2x-y+7 in [4,9]. These fixtures fit
+  the integer lattice exactly; the examples do not promise that arbitrary fixed
+  products avoid rounding or overflow. Errors propagate; assertions can panic.
+- The atlas Pair is a recipe, not one common exact operand across all backends.
+  Fixed nonpoint bounds round outward; fixed point recipes floor to one lattice
+  point. Floating conversion directs integer truncation only, then uses an ordinary
+  f64 cast and chunked scaling, which do not certify recipe containment. Dyadic
+  conversion preserves unperturbed mantissas and exponent. Rational conversion
+  adds positive fractional perturbations and applies the same power-of-two scale;
+  the earlier Pair comment omitted that final scale.
+- Source width is clamped to two, and RNG remainder reduction is not exact-uniform
+  sampling. Shape overrides precede recipe shape; Straddle crosses zero even with
+  the nonnegative flag. Rational perturbation draws occur for every backend, even
+  if ignored. The label "narrow (1 ulp)" describes a source-mantissa step, not a
+  guaranteed destination ulp. Settings use f64 axes containing configured integers;
+  arbitrary Spec/axis values have no validation or preparation resource contract.
+- Fixture arrays allocate a temporary Vec and discard partial prefixes on failure.
+  Map generation constructs matrix before translation. Dispatch accepts only its
+  declared labels/dimensions and panics otherwise. Preparation errors become a
+  constant-false closure; the typed cause and preparation cost are not preserved
+  in that callback. done black-boxes/drops Results and retains only is_ok, including
+  Ok(false), Ok(None) and nonpositive margins. Bisect separately requires Ok(Some).
+- Callback timing includes fresh arithmetic contexts and any explicit clones,
+  validation and dependent operations inside the closure. Midpoint/radius callbacks
+  share a context and skip radius after a midpoint failure. Authored center/radius
+  callbacks clone and validate inside timing. Retained affine images and runtime
+  chains are prepared outside timing; restriction uses a containing hull and does
+  not shrink its source. Source-preserving construction is not charged as projection.
+- The Krawczyk callback computes the full arithmetic tuple, including interior
+  inclusion and a contraction margin, then accepts any Ok tuple. It does not require
+  inclusion or a positive margin and establishes no root theorem. Explicit point/
+  narrow overrides mean its by-shape labels do not control the box/coefficients.
+  Signed point radii are hulled about the center. These behavior/label limitations
+  are documented; existing report strings were preserved, not silently relabeled.
+- Only dyadic arithmetic receives a fresh 2^24-bit/u64::MAX-work context. This is
+  separate from fixture preparation, total process resources and cancellation.
+  The shared runner checks initial outcome and timing ceilings after execution;
+  repeated timed calls are not independently outcome-validated. Panic catching
+  cannot preempt a hung call or handle aborting allocation failure. No new cost,
+  stack, memory, backend-equivalence or completed-benchmark claim follows.
+
+Context reads covered the manifest's example gates, shared Rng generation, Atlas
+argument parsing, callback timing, sweep/randomized sampling, filtering and JSON
+output, plus previously audited interval/affine consumers. These excerpts do not
+claim a new whole-file audit of the shared driver or other manifests. The full
+atlas registration body and every operation closure were read, including all axes,
+series descriptions, explicit shape overrides and chain-capacity settings.
+
+Validation after final source edits:
+
+- Locked/offline Cargo, j2 and incremental disabled reused the shared target. Both
+  small examples ran with no default features and fixed only, preserving their
+  original assertions and output. Atlas cargo check passed with all features and
+  with only its four required features: fixed,rational,dyadic,float-enclosure.
+  The full default atlas campaign/release benchmark was not run and no comparative
+  timing, shipped-size or full-lifetime memory result is claimed.
+- A temporary probe compiled baseline and edited atlas source copies with unchanged
+  bodies against matching actual libraries. All 30 generated jobs completed twice
+  at N=2 on each of five backends (300 calls per revision). Bisect point/nonpoint,
+  Regrid, capacity-65 rejection and actual dispatch preparation failure were also
+  checked. This is finite functional qualification, not all dimensions/settings.
+- The same probe checked signed exact shifting, fixed point quantization, exact
+  dyadic/rational recipe interpretation, zero-length/failed array construction and
+  shape overrides. Concrete float witnesses show up=true maps 2^53+1 to 2^53, and
+  up=false maps 2^53+3 to 2^53+4. These disprove a general directed-rounding reading
+  of the helper without changing conversion behavior. Independent Fraction/corner
+  calculations also checked the small example extrema and conversion inequalities.
+- A retained inspection of the Krawczyk computation at bits=8, exp=3, N=2, seed=1
+  produced false interior inclusion; the actual corresponding callback still
+  succeeded. Baseline and edited probe stdout were byte-identical. Probe execution
+  has an external 60-second timeout. Temporary compilation allowed dead_code solely
+  for the unchanged but uncalled full atlas main/other paths; repository lints and
+  documentation coverage were not suppressed. Executables were removed after use.
+- Private Rustdoc denied warnings, broken links and private-link violations. All
+  95 nonlocal authored blocks rendered in full. All 30 generated marker pages
+  contain build documentation and link to the existing catalog anchor; their
+  named catalog entries are present. Both fixed adapter implementations and both
+  generated methods per implementation rendered their complete template docs.
+  Public catalog text uses code names to avoid public-to-private broken links.
+- Rustdoc omits the two main-local scalar aliases and dispatcher-local dims macro;
+  their source attachment was checked and their three blocks rendered separately
+  as Markdown. This is not a claim that Rustdoc creates ordinary pages for locals.
+- Removing only comment/blank lines leaves identical remaining source bytes in all
+  three files. All 39 function declarations have attached Rustdoc. Selected-file
+  rustfmt and git diff --check passed. The root 100% public/private/generated mandate
+  remains in force; full workflow checks remain owner-waived for this docs-only turn.
+
+Evidence: /tmp/csgrs-rustdoc-interval-example-{affine-before,fixed-before,atlas-before,
+affine,fixed,check,check-min,validation,generated,probe}.log and
+/tmp/csgrs-interval-example-audit/ (source copies, baseline/edited stdout, artifact
+arguments, full-text render matches, scripts and probe). Owned duplicate HTML and
+probe executables were removed. The reused Cargo target remains approximately
+4.2 GiB with no second target. No focused check remains blocked. Remaining companion
+conformance/support files and the repository-wide audit remain open; this record
+is neither complete repository coverage nor universal arithmetic qualification.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
