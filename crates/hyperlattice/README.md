@@ -47,7 +47,7 @@ belongs to an exact or explicitly uncertain predicate.
 | `Matrix3`, `Matrix4` | Fixed-size exact matrices, transforms, determinants, and checked inverses. |
 | `ProjectivePlane3` | Plane coefficients for projective intersection construction. |
 | `HomogeneousPoint3`, `HomogeneousLine3` | Exact projective results that delay affine division. |
-| `SharedScaleVec`, shared-scale views | Factored coordinate carriers for common rational scales. |
+| `SharedScaleVec`, shared-scale views | Original rational coordinates with retained common-denominator facts; no rescaling is performed. |
 | `*Facts`, transform-kind, and schedule types | Reusable zero, support, homogeneous, exact-set, and determinant metadata. |
 | `BlasResult<T>`, `Problem`, `AbortSignal` | Checked failures and cooperative cancellation. |
 
@@ -57,14 +57,15 @@ Hyperreal for convenience.
 The workspace's `Complex::jacobi_sncndn(&m)` continues native real Jacobi
 functions to complex arguments, including negative real parameters. Known
 poles fail with `DivideByZero`; an unproved denominator fails with `UnknownZero`.
-The components retain `Real` expressions and exact norm relations. Complex dn
-can be zero or negative. See the [admission](docs/admission-complex-jacobi.md)
-for the domain and verification contract. It is new in 0.7.0.
+The components retain `Real` expressions and their scalar relations. Complex dn
+can vanish and has no real-axis positivity restriction. See the
+[admission](docs/admission-complex-jacobi.md) for the domain and verification
+contract. These APIs are included in the checkout's unreleased 0.7.0 changes.
 
 ## Quick start
 
-Add hyperlattice 0.7.0 to a project with `cargo add hyperlattice`; it requires Rust
-1.95 or newer. The examples below are checked in; from the root of a
+This checkout declares hyperlattice 0.7.0 and requires Rust 1.95 or newer.
+The examples below are checked in; from the root of a
 [CSGRS source checkout](../../readme.md), run:
 
 ```sh
@@ -148,16 +149,23 @@ reciprocal functions reject unknown-zero divisors without refinement, unlike
 
 ### Vectors
 
+The following lists operations across the vector family; dimension-specific
+methods are identified where they differ.
+
 | Task | API |
 | --- | --- |
 | Construct | `Vector2::from_xy`, `Vector3::new`/`from_xyz`, `Vector4::new`/`from_xyzw`, `zero`/`zeros` |
 | Import/export | `try_from_f32_array`, `try_from_f64_array`, `to_f32_array_lossy`, `to_f64_array_lossy` |
-| Read components | `x`, `y`, `z`, the public component array; `SharedScaleVec::components`, `into_components` |
-| Measure | `dot`, `norm_squared`, `magnitude`/`norm`, `squared_distance`, `wedge`, `cross`; `SharedScaleVec::squared_norm` |
+| Read components | Array indexing or the public `.0` array; `SharedScaleVec::components`, `into_components` |
+| Construct basis vectors | `Vector2::x/y`, `Vector3::x/y/z` |
+| Measure | `dot`, `norm_squared`, `magnitude`, `norm`; `Vector2/3::squared_distance`, `Vector2::wedge`, `Vector3::cross`; `SharedScaleVec::squared_norm` |
 | Normalize and divide | `normalize`, `normalize_checked`, abort-aware checked variants, `div_scalar_checked` |
 | Combine | `lerp`, `step`, `mean`, `weighted_sum` |
 | 3D frames | `unit_cross_checked`, `orthonormal_basis_checked`, `angle_to` |
-| Retain structure | `structural_facts`, `exact_facts`, `into_shared_scale`, `shared_scale_view` |
+| Retain structure | `structural_facts`, `Vector3/4::exact_facts`, `into_shared_scale`, `shared_scale_view` |
+
+`magnitude` returns a fallible Euclidean norm. `norm` unwraps that result and
+can panic on a scalar error; `norm_squared` avoids the square root.
 
 `Vector4HomogeneousKind`, `Axis2`, `SignedAxis2`, and `SignedAxis4` describe
 common exact shapes without asking users to decode coordinate patterns.
@@ -175,6 +183,8 @@ common exact shapes without asking users to decode coordinate patterns.
 
 Point/vector arithmetic follows affine semantics: subtracting points yields a
 vector, while translating a point by a vector yields a point.
+`Aabb` stores raw corners without validating their ordering. `Aabb::origin`
+has coincident zero corners and is not a canonical empty-set sentinel.
 
 ### Exact 2D algebra
 
@@ -198,48 +208,64 @@ policy that turns an orientation expression into a certified classification.
 | Evaluate incidence | `homogeneous_point_plane_expression`, `HomogeneousPoint3::plane_expression` |
 | Convert a finite point | `HomogeneousPoint3::to_affine_point` |
 
-Homogeneous results intentionally postpone division. `to_affine_point` is the
-checked boundary at which a nonzero homogeneous scale is required.
+Homogeneous results intentionally postpone division. `to_affine_point` divides
+by the homogeneous weight and propagates scalar failures; unlike the structural
+checked reciprocal, it can use native scalar nonzero reasoning. Raw plane, line,
+and point constructors accept degenerate coefficients and do not establish
+unique intersections or incidence proofs.
 
 ### Matrices and transforms
 
 Both matrix types provide `new`, `zero`, `identity`, `transpose`, `determinant`,
 `inverse`, `inverse_checked`, `powi`, checked scalar/matrix division, and
-`structural_facts`.
+`structural_facts`. Storage is row-major; transforms act on column vectors.
 
 | Task | API |
 | --- | --- |
 | Construct `Matrix3` structure | `diagonal`, `uniform_scale` |
-| Construct `Matrix4` transforms | `from_row_major`, `from_row_slice`, `affine_translation`, `affine_nonuniform_scale`, `uniform_scale` |
-| Construct rotations | `rotation_x`, `rotation_y`, `rotation_z`, `rotation_axis_angle`, `rotation_between_vectors`, `rotation_between_unit_vectors`, `affine_orthonormal` |
-| Construct signed permutations | `signed_permutation` |
+| Construct `Matrix4` transforms | `from_row_major`, `from_row_slice`, `affine_translation`, `affine_nonuniform_scale`, `affine_orthonormal` |
+| Scale all homogeneous coordinates | `Matrix3/4::uniform_scale` (including the weight coordinate) |
+| Construct `Matrix4` rotations | `rotation_x`, `rotation_y`, `rotation_z`, `rotation_axis_angle`, `rotation_between_vectors`, `rotation_between_unit_vectors` |
+| Construct `Matrix4` signed permutations | `signed_permutation` |
 | Use specialized inverses | `diagonal_inverse`, triangular inverse methods, `affine_translation_inverse`, `affine_orthonormal_inverse`, `signed_permutation_inverse`, `uniform_scale_inverse` |
 | Transform values | `transform_vec3`, `transform_vec4`, `transform_point3`, `transform_direction3` and corresponding batch methods |
 | Inspect scheduling | `exact_facts`, `structural_facts` and its `determinant_schedule_hint` |
 
-Specialized division and inverse methods have checked variants that reject
-unresolved divisors or pivots. General matrix operations provide
-`inverse_checked_with_abort` and `div_matrix_checked_with_abort` for cancellable
-refinement; structural zero queries do not need an abort-specific API.
+Specialized methods retain their stated shape preconditions. For example,
+`affine_orthonormal` embeds the supplied block without proving orthonormality,
+and `rotation_between_unit_vectors` requires caller-certified unit inputs.
+Checked variants reject zero or unresolved selected divisors where their
+structural guards run. General matrix operations provide
+`inverse_checked_with_abort` and `div_matrix_checked_with_abort` with
+path-dependent signal attachment; exact shortcuts can complete with a set flag.
 
 ### Facts and cancellation
 
 Point, vector, matrix, displacement, product, and orientation fact objects
 expose known-zero/nonzero/unknown masks and counts, sparse-support tests,
 shared-denominator and dyadic schedule tests, transform kinds, and determinant
-schedule hints. They are reusable metadata, not proof that an unresolved
-coordinate is zero.
+schedule hints. These describe the queried coordinates. Detached packets do not
+track later coordinate mutation; recollect them after changing the source.
+Many fact fields are public and queries trust their stored contents. An unknown
+zero fact is not a proof of zero.
 
 Create an `AbortSignal` with `Arc<AtomicBool>` and pass it to `*_with_abort`
-methods when long exact refinement must be cancellable.
+methods for cooperative cancellation. Attachment and polling depend on the
+operation's path; the signal is not a deadline or total-work bound.
 
 ## Features
 
 | Feature | Default | Effect |
 | --- | --- | --- |
-| `arbitrary` | no | Implements `arbitrary::Arbitrary` for lattice-owned types. |
+| `arbitrary` | no | Implements `arbitrary::Arbitrary` for `Complex`, `Vector2/3/4`, and `Matrix3/4`, using finite binary64 or integer seeds. |
 | `hyperreal-dispatch-trace` | no | Enables Hyperreal dispatch instrumentation for development and benchmarks. |
-| `serde` | no | Serializes the shared exact `Point2` carrier. |
+| `serde` | no | Enables native `Real` serialization and `Point2` derives; forwards Serde to the interval companion when enabled. |
+| `interval` | no | Reexports generic interval and affine carriers without selecting a scalar backend. |
+| `interval-fixed` | no | Enables `interval` with the fixed-point backend. |
+| `interval-dyadic` | no | Enables `interval` with budgeted dyadic arithmetic. |
+| `interval-rational` | no | Enables `interval` with exact rational interval arithmetic. |
+| `interval-hyperreal` | no | Enables `interval` with Hyperreal enclosure integration and its rational/dyadic dependencies. |
+| `interval-float-enclosure` | no | Enables `interval` with primitive floating enclosures, subject to scalar environment qualification. |
 
 Hyperlattice has no default features.
 
@@ -247,23 +273,32 @@ Hyperlattice has no default features.
 
 - Native coordinates and matrix entries are `Real`; no primitive float is used
   as an internal algebra fallback.
-- Finite `f32`/`f64` imports preserve the exact represented binary value.
+- Finite `f32`/`f64` imports preserve the exact represented binary value; NaN and
+  infinity are rejected. `0.1_f64` is not one tenth; use `Rational::fraction`
+  for an exact ratio.
 - Lossy exports are named and return `None` if a coordinate cannot produce a
   finite primitive value.
-- Checked division, normalization, and inversion reject definite-zero and
-  unresolved-zero divisors or pivots.
-- Structural facts are conservative and remain attached to their owning
-  point, vector, matrix, or projective object.
+- Checked guards reject known-zero and unknown-zero divisors without refinement
+  at that guard. Exact shortcuts and subsequent native scalar operations retain
+  their own failure and cancellation contracts.
+- Collected structural facts are conservative for unchanged source coordinates;
+  mutable or detached fact packets are not self-validating certificates.
+- Native coordinate equality is structural. Distinct representations need not
+  mean distinct mathematical values, and carrier results add no predicate-policy
+  or inherited-certainty receipt.
 - Hyperlattice constructs expressions and carriers. Hyperlimit owns predicate
   escalation and classifications; geometry crates own curves and topology.
 
 ## Validation and performance tooling
 
-The deterministic representation suite constructs all 22 optimized finite
-`Real` certificate classes, verifies all 8 public structural kinds, crosses all
-ordered class pairs, and runs every class through scalar, complex, vector,
-point, matrix, and projective carriers. It is repeated under Hyperreal's four
-primitive-cache layouts with:
+The deterministic representation suite constructs 22 named positive recipes,
+checks all eight public structural kinds, and exercises selected operations
+across scalar, complex, vector, point, matrix, and projective carriers. All 484
+ordered recipe pairs pass through selected arithmetic identities; the
+Serde-enabled test also checks their serialized private tags. Its comparison
+helper accepts overlapping enclosures when exact equality is not established,
+so passing is not a general exact-equality or replay certificate. Four selected
+feature/cache configurations are available from the crate directory with:
 
 ```sh
 scripts/representation_coverage.sh
@@ -343,10 +378,9 @@ To include private library items and all feature-gated APIs, use
   Geometry*, vol. 7, 1997, pp. 3–23.
   [doi:10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721(95)00040-2).
 
-Bareiss and Berkowitz motivate exact determinant schedules; Gustavson motivates
-sparse-support dispatch; Hou covers a small-matrix characteristic-polynomial
-route; Yap establishes the exact-computation boundary used by downstream
-geometry.
+These references provide background on exact elimination and determinants,
+sparse multiplication, characteristic polynomials, and exact geometric
+computation. Individual API documentation describes the implemented schedules.
 
 ## Acknowledgements
 
@@ -375,15 +409,18 @@ requirements shared by the Hyper crates.
 
 ## Interval algebra
 
-Enable `interval-fixed`, `interval-dyadic`, `interval-rational`, or
-`interval-float-enclosure` for `IntervalVector`, `IntervalMatrix` and `BoxN`.
+Enable `interval` for generic `IntervalVector`, `IntervalMatrix` and `BoxN`
+carriers, or select a backend with `interval-fixed`, `interval-dyadic`,
+`interval-rational`, or `interval-float-enclosure`.
 `interval-hyperreal` additionally exposes certified exact-Real-to-dyadic
 conversion through the same scalar re-export.
-These are Cartesian enclosures with explicit empty sets, checked scalar
-arithmetic and shared dyadic budgets. Scalar backends are available under
-`hyperlattice::interval::hyperinterval`. The same implementation is available
-in `hyperlattice-interval` for Rust 1.88 `no_std` firmware; the existing
-Hyperreal-backed Hyperlattice API still requires Rust 1.95.
+These are Cartesian enclosures with explicit empty sets and checked scalar
+arithmetic. Dyadic operations share a caller-owned budget across lanes; rational
+arithmetic has no internal work/heap bound. Scalar backends are available under
+`hyperlattice::interval::hyperinterval`. The companion `hyperlattice-interval`
+declares Rust 1.88 and offers a primitive allocation-free `no_std` build.
+Hyperreal-backed configurations retain the Rust 1.95 requirement; enabling an
+interval feature on Hyperlattice does not remove its required Hyperreal dependency.
 
 `AffineMap::image` retains exact affine definitions and shared source parameters.
 Further maps, parameter restrictions and validated replay preserve correlations;

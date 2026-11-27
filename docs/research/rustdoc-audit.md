@@ -13222,6 +13222,111 @@ Evidence: `/tmp/csgrs-rustdoc-lattice-parity-{before,after,readme,validation}.lo
 rendered pages. This closes the parity-test file, not the remaining README semantic
 review, repository-wide audit or previously recorded generated-item coverage gaps.
 
+## Hyperlattice README API contract reconciliation (2026-11-27)
+
+Target revision: `ca6743ea77ff3a3551d2c6155035b6896ab5b18d` on `rustdoc`.
+Read every line of the crate README again (390 original lines, now 427), checking
+its architecture, API tables, feature list, guarantees, tooling, references and
+interval description against the owning sources and prior whole-file records.
+This completes its source-checkout API review, superseding the earlier partial
+README records. It does not certify a published package, all mathematical claims
+of cited papers, or implementation closure. No Rust implementation changed.
+
+Owning layer is user-facing documentation for the scalar/lattice boundary and
+interval reexports. Relevant properties are P1/P3/P4/P6/P8/P9/P36/P37: exact ingress,
+conservative facts, invalidation, typed failure, retained certainty and accurate
+completed-work claims. The input domains are native Real coordinates, mutable
+coordinate/fact packets, feature-selected APIs and the fixed representation corpus.
+Missing witnesses were accurate guide descriptions: x/y/z were presented as component
+accessors, facts as remaining attached, cancellation as covering long refinement,
+and the representation suite as establishing blanket class coverage. The feature
+table also omitted six interval selections. These discrepancies were reproduced
+directly in current vector, matrix, scalar, projective and manifest source.
+
+Clarifications retained:
+
+- Vector2/3 basis constructors are separate from indexing and the public coordinate
+  array. Dimension-specific wedge/cross/distance/exact-fact methods are labeled.
+  magnitude is fallible; norm unwraps it and can panic; squared norm avoids sqrt.
+- SharedScaleVec retains original rational coordinates and common-denominator facts,
+  without rescaling. Detached fact packets do not track coordinate changes, public
+  fields can be edited, and facts must be recollected after mutation. Native equality
+  is structural and results add no policy/provenance receipt.
+- Raw Aabb corners are unvalidated and origin is a degenerate bound, not canonical
+  empty geometry. Homogeneous-to-affine conversion uses scalar division and its
+  domain reasoning, rather than the stricter structural-only reciprocal guard.
+  Raw projective coefficients do not establish unique intersections or incidence.
+- Matrices are row-major and act on column vectors. Uniform scaling includes the
+  homogeneous weight; affine spatial scaling preserves it. Matrix4 rotations and
+  signed permutations are dimension-labeled. Orthonormal embedding and unit-vector
+  rotation retain caller preconditions; exact inverse shortcuts can ignore a set
+  cancellation flag. Checked guards and later native arithmetic have distinct roles.
+- The feature table now covers all nine optional features. Arbitrary generation is
+  restricted to the six implemented aggregate types; Serde's Point2/native-Real and
+  optional companion forwarding are explicit. Generic interval carriers need not
+  select a scalar backend. Primitive companion no_std/MSRV claims are separated from
+  Hyperreal dependencies, and dyadic budgets from unbounded rational arithmetic.
+- Finite binary floats retain their exact represented values; 0.1_f64 differs from
+  1/10 and nonfinite imports fail. The local version/MSRV come from the manifest and
+  unreleased changelog; an unverified cargo-add publication claim was removed.
+- The representation suite has 22 positive recipes, eight public kinds, 484 selected
+  ordered pairs and a gated serialized-tag check. Its overlap fallback is disclosed;
+  neither broad mathematical equality nor fresh-process replay follows from passing.
+  The cache wrapper selects four configurations, not every feature/cache combination.
+- Mathematical references are background, not claims that every named algorithm is
+  implemented. Publisher/research metadata was checked where accessible: [Berkowitz](https://www.sciencedirect.com/science/article/pii/0020019084900188),
+  [Gustavson](https://research.ibm.com/publications/two-fast-algorithms-for-sparse-matrices-multiplication-and-permuted-transposition),
+  [Hou](https://epubs.siam.org/doi/10.1137/S003614459732076X), and [Yap](https://www.sciencedirect.com/science/article/pii/0925772195000402).
+  Direct DOI/AMS/ACM retrieval had access failures; no full-paper or every-page
+  verification is claimed. Existing bibliographic entries were preserved.
+
+The entire 107-line changelog was read as version/history context, not credited as
+a completed historical-regression audit. Scalar inversion/fact and companion affine
+source excerpts support the boundary descriptions without claiming whole-file reviews
+for those dependencies. Git history confirms the named contributor TimTheBig (for
+example 3d3017549); local author/license declarations were checked. The README mascot
+was viewed in full: a raccoon holding a lattice. Its PNG remains unchanged, 1254×1254,
+1,304,437 bytes, SHA-256
+`022a7d5fc7d8731ccbe6d62d8731b9415a82d4e7ec443977e91bb87a2b45ad76`.
+This is a visual asset review, not a geometric or generated-source claim.
+
+Validation after the substantive edits:
+
+- Matching-library probes passed with all features and no defaults: exact basis and
+  component access, magnitude/norm/squared norm, zero checked normalization, unchanged
+  common-denominator coordinates and rejection of unequal denominators, stale/edited
+  facts, literal 4×4 uniform/affine scales, identity inverse success with a set flag,
+  raw bounds, homogeneous division/zero weight, and finite/nonfinite float ingress.
+  Initial temporary probe compilation used incorrect ratio integer types and separate
+  scale arguments; those probe-only mistakes were corrected to the actual signatures.
+- The unchanged runnable quick start passed in both configurations. Actual integration
+  sources passed 14 all-feature tests (2 README, 5 representation, 7 interval) and five
+  no-default tests (2 README, 3 representation; interval is gated off). Each test ran
+  separately with a 60-second external timeout; executable examples/probes used 30
+  seconds. No timeout was reached and no maintained assertion was changed.
+- Locked/offline library builds and the documented public no-default/all-feature
+  private library doc builds passed with two workers and incremental disabled. Docs
+  denied warnings and broken/private links. Checked 43 method anchors across nine
+  relevant API pages. Browser opening and published-package installation were not run.
+- Rustdoc's standalone Markdown renderer requires a leading Markdown title and rejects
+  the README's valid HTML title. A temporary copy prepended only a rendering title;
+  every table cell and eleven complete revised paragraphs rendered. This workaround
+  does not change the repository README. All nine feature rows match Cargo.toml and
+  every local Markdown link resolves in the source checkout. Packaged relative assets
+  are not certified by this check; the manifest's include policy remains unchanged.
+- All fenced blocks, including the synchronized quick start, are byte-identical.
+  After the final table wording edits, rendering and both README tests passed again.
+  git diff --check passed. Only Markdown files changed; runtime source, manifests,
+  tests, policies and generated reports are untouched. Full workflows remain waived
+  by the owner. No benchmark, fuzz campaign, four-cache sweep, interruption-latency
+  experiment or compiler-1.88/1.95 matrix was rerun, and none is claimed as passing.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-readme-*.log` and
+`/tmp/csgrs-lattice-readme-audit/` artifact metadata, validation/rendering scripts,
+temporary probes and rendered guide. Owned executables were removed after checks;
+the shared target remains about 2.8 GiB. Other crate reports, historical records,
+the wider repository and generated-item Rustdoc gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
