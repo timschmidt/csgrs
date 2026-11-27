@@ -14891,6 +14891,121 @@ No focused check remains blocked. Remaining platform drivers, other conformance
 packages and the repository-wide review remain open. These finite checks do not
 establish universal arithmetic closure or full repository documentation coverage.
 
+## Primitive interval layout probe drivers and WASM ABI (2026-11-27)
+
+Whole-file review on target revision 732eaf68c73c33f38b7ab4fd9c065a9f4180a41e:
+
+- crates/hyperlattice-interval/conformance/primitive-layouts/src/probe.rs
+  (26 -> 41 lines).
+- Its src/bin/native-probe.rs and src/bin/soa-probe.rs (5 -> 7 lines each).
+- Its src/bin/cost.rs (149 -> 179 lines).
+- Its wasm/src/lib.rs (87 -> 129 lines), wasm/Cargo.toml (22 lines, unchanged)
+  and wasm/Cargo.lock (310 lines, unchanged).
+
+The owning layer is conformance executable/ABI support. P1/P5/P6/P18/P26/P28/P30/P37
+and the admission protocol govern exact fixture values, visible failure boundaries,
+subsequent consumption, qualification and measurement claims. The domain comprises
+u32 seeds reduced modulo 17, explicit layout/width/endpoint selectors, nine allowed
+dimensions, four primitive scalar families and CLI parsing failures. Missing Rustdoc
+covered private runners, timer/counter scopes, shared diagnostic behavior, local
+instantiation macros and the qualification protocol. All baseline consumers ran
+before editing. Only comments changed; code, ABI, assertions and reports are intact.
+
+The five Rust files contain 19 authored Rustdoc blocks covering eleven function
+declarations, module roles and three local macros. Review established:
+
+- Each native diagnostic executable parses the first argument as u32 and ignores
+  later arguments. Missing/malformed/out-of-range input panics. It prints eight
+  complete Debug Result rows, with each scalar family at dimensions four and 64.
+  A returned chain Err is printed rather than converted to a failing exit status;
+  fixture construction itself unwraps failures. Output is not canonical replay or
+  a qualification receipt. Both programs share the same kernels and fixtures.
+- The cost probe reports inline sizes separately from sample rows. Operations
+  zero through seven distinguish round trip/copy, arithmetic/set operations, dot,
+  imported chain and retained chain. SoA operations zero through six import both
+  operands inside the closure; vector outputs zero through four also materialize
+  native results. The retained path starts with existing SoA storage. Both native
+  chain modes execute the same path. Full outputs are compared before timing.
+- Sixteen warmup pairs precede twelve samples with alternating provider order.
+  Each timed sample performs max(256/(N+1),4) calls. Timer initialization/elapsed
+  queries are inside allocation observation; counter setup/teardown and reporting
+  are outside the timer. CSV duration is total nanoseconds, not per-call latency.
+  Requested allocation bytes are not live/peak memory. Finite zero-request samples
+  do not prove an arbitrary-workload no-allocation guarantee or a speedup.
+- The standard-library WASM cdylib is an asserted fixture consumer. Each endpoint
+  query reconstructs and evaluates the full chain, without a cached status/result.
+  Invalid selectors and failed ingress/evaluation panic under release panic=abort;
+  the exercised targets trap rather than return typed errors or certainty receipts.
+- Selector dimension is an actual dimension from 0,1,2,3,4,16,64,256,1024. Fixed
+  width selects Q8/i32 or Q32/i64; the result is a signed raw numerator returned to
+  JavaScript as BigInt. Floating width selects binary32/64 and returns full bits,
+  with binary32 zero-extended. JavaScript must reinterpret the signed i64 return
+  with BigInt.asUintN before consuming a binary64 sign bit.
+- Qualification bits denote rejection: bit zero for binary32, bit one for binary64.
+  The probe recognizes only UnqualifiedEnvironment; it does not encode other
+  failures, store state or certify another query. Unknown-target WASM is qualified;
+  ordinary Preview 1 requires the opt-in float feature. Even a dimension-zero float
+  chain must construct a qualified scalar zero. Fixed chains remain usable without
+  float qualification. No host timeout or memory/stack budget is added by this ABI.
+
+Context included the previously audited workload/carrier and allocation counter,
+Hyperinterval target qualification, and the existing wasm-float check.mjs,
+instantiate.mjs and lattice-oracle section. Those contextual reads are not credited
+as new completed documentation audits of the shared JS/Python support files. The
+full umbrella WASM workflow and its unrelated clients were not executed.
+
+Validation after the final comment edit:
+
+- Locked/offline j2 builds reused the shared target with incremental compilation
+  disabled. Native binaries built in debug; WASM clients built in release for
+  wasm32-unknown-unknown, wasm32-wasip1 with float-enclosure-wasip1, and Preview 1
+  without that feature. The first opt-in build lacked locked target-tuple 1.0.2;
+  approved escalation fetched it, and final builds/docs passed offline without
+  dependency or lockfile changes.
+- Per revision, both native drivers ran twenty valid argument cases each (all
+  seventeen reduced seeds, u32::MAX, +7 and an ignored extra argument), producing
+  320 full result rows. Eight malformed/missing/negative/overflow cases failed as
+  expected. Valid stdout matched between providers and before/after edits.
+  Panic source-location text was not required to remain byte-identical.
+- The full debug cost executable completed 36 size rows and 6,912 sample rows per
+  revision, comprising 469,248 timed workload calls, excluding warmups/preflight.
+  Every allocation count/requested-byte pair was zero. All non-time CSV fields
+  matched exactly. This is a completed-workload smoke check, not a release speed
+  comparison. External timeouts were 180 seconds for cost and 60 for other runs.
+- A Python integer/Fraction oracle produced 324 width/dimension/seed fixture rows,
+  verifying exact IEEE encoding of the rational endpoint extrema. The existing
+  repository JS lattice verifier consumed this corpus on both qualified targets,
+  checking 648 fixed and 648 floating chains through both endpoint exports per
+  target/revision. A second real Node driver also checked 2,592 endpoint calls on
+  each qualified target and 1,296 fixed calls on unqualified Preview 1.
+- Node v22.16.0 reused the existing executable. Qualification returned 0/0/3 for
+  unknown, opt-in Preview 1 and default Preview 1. Twenty-six fresh-instance trap
+  cases per revision checked invalid layout, width, dimension and endpoint selectors
+  in both exports, plus unqualified dimension-zero/one float queries. The custom
+  driver's memory observation remained 1,114,112 bytes in all three configurations.
+  These finite observations do not establish allocator/stack bounds for the std ABI.
+- cargo doc --no-deps --document-private-items passed for all three native binaries
+  and all three WASM configurations with warnings, broken links and private-link
+  violations denied. One interval literal initially parsed as a link; marking it
+  as code resolved the issue before the final validation. All sixteen nonlocal
+  authored blocks rendered fully, including shared probe docs in both binaries and
+  WASM helpers/exports on both targets. Three local macro blocks were source-checked
+  and rendered as Markdown; no ordinary function-local API pages are claimed.
+  All twelve existing allocation-counter blocks also render in the cost consumer.
+- Removing whole comments/blank lines leaves identical executable source bytes.
+  The WASM manifest/lockfile remain byte-identical; selected-file rustfmt and
+  git diff --check passed. WASM byte sizes remained 582,612, 619,329 and 501,720
+  respectively, but hashes differ; no deterministic binary identity is claimed.
+  Full workflow checks remain owner-waived for this docs-only session.
+
+Evidence: /tmp/csgrs-interval-layout-driver-audit/ retains build metadata, before/after
+CSV and CLI results, actual WASM binaries, exact corpus, boundary reports, rendered
+text matches and scripts. Duplicate local-doc HTML was removed. The existing Node
+executable and one shared Cargo target (approximately 4.6 GiB) were reused. No focused
+check remains blocked. Other conformance packages, shared support documentation and
+the repository-wide audit remain open; this batch does not establish full coverage,
+universal resource bounds, release/MSRV qualification or a layout-adoption decision.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

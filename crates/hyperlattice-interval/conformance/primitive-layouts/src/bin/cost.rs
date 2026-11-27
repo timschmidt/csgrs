@@ -1,3 +1,10 @@
+//! Compare inline sizes and completed operations for two primitive interval layouts.
+//!
+//! The providers share scalar kernels; full-result preflight agreement checks the
+//! layout adapter, not independent arithmetic correctness. Timing includes the
+//! stated ingress/materialization work. Allocation observations are cumulative
+//! requests through the shared counter, not peak memory or a general no-allocation
+//! proof. Results describe these fixed fixtures on the executing build/target.
 #[path = "../../../allocations.rs"]
 mod allocations;
 use hyperlattice_interval::IntervalVector;
@@ -6,6 +13,25 @@ use interval_layout_conformance::Soa;
 use interval_layout_conformance::workload::{Fixture, inputs, native_chain, soa_chain};
 use std::{fmt::Debug, hint::black_box, mem::size_of, time::Instant};
 
+/// Compare one family's seed-seven fixtures at dimension N, then emit CSV samples.
+///
+/// The size row reports inline native/SoA byte sizes, not whole-call stack peaks.
+/// Operations 0..7 are copy/round trip, add, subtract, hull, intersection, dot,
+/// imported chain and retained chain. SoA operations 0..6 construct both inputs
+/// from native vectors inside the measured closure; 0..4 also materialize the
+/// native vector result. Operation 7 uses previously constructed SoA inputs.
+/// Both chain modes return a scalar; native operations 6/7 execute the same path.
+///
+/// Full outputs are compared before timing. After sixteen warmup pairs, take
+/// twelve samples with alternating provider order and max(256/(N+1),4) calls
+/// per provider/sample. black_box discourages elision. The timer is inside the
+/// allocation scope: reset/enable/disable/counter reads are outside the timer,
+/// while clock calls are inside the allocation scope. Printing and zero-request
+/// assertions happen afterward. Each sample reports total nanoseconds, not time
+/// per call, followed by allocation count and cumulative requested bytes.
+///
+/// Constructor/operation failures, unequal preflight results or any observed
+/// allocation panic. There is no timeout, statistical decision or speedup claim.
 fn run<I: Fixture + Eq + Debug, const N: usize>(name: &str) {
     let (a, b) = inputs::<I, N>(7);
     let x = Soa::from_vector(&a);
@@ -128,7 +154,11 @@ fn run<I: Fixture + Eq + Debug, const N: usize>(name: &str) {
     }
 }
 
+/// Emit size and eight-operation samples for four families at nine fixed dimensions.
+/// Q8/Q32 precede binary32/binary64; all use the same bounded sixteenth-grid seed.
+/// Float ingress must be qualified. No command-line configuration is consumed.
 fn main() {
+    /// Instantiate dimensions 0, 1, 2, 3, 4, 16, 64, 256 and 1024 for one family label.
     macro_rules! family {
         ($i:ty, $name:literal) => {
             run::<$i, 0>($name);
