@@ -18923,6 +18923,136 @@ completion claim is made. AGENTS.md already mandates future-agent public/private
 Rustdoc coverage and private builds. Repository-wide review and 100% coverage
 remain incomplete.
 
+## Approximation recipes, private payload fields and wire distinctions
+
+On 2026-11-27, reviewed all 269 baseline lines of
+crates/hyperreal/src/computable/approximation/representation.rs at clean rustdoc
+revision 4c09e07574d21d25c370b8a51df9c0ed0e8ff8a8. The file now documents all
+197 authored items, including tuple fields rather than relying only on variant
+summaries:
+
+| Item kind | Count |
+| --- | ---: |
+| Shared exact threshold statics | 23 |
+| Structs and enums | 4 |
+| Approximation variants | 70 |
+| SharedConstant variants | 18 |
+| Named payload fields | 11 |
+| Tuple payload fields | 70 |
+| Serde degree decoder | 1 |
+
+The owner is Hyperreal's exact recipe/evaluation boundary (P1–P7), with retained
+identity and native replay relevant to P19/P20. Missing acceptance was Rustdoc
+for the stored definitions, individual fields, domain assumptions and generated
+serialization surface. Constructors and kernels, Node's decode checks and cached
+facts, constant dispatch, selected replay consumers and the locked Ciborium
+serializer supplied context. Their containing files do not receive new whole-file
+credit here. Each stored family keeps its original exact meaning and grammar.
+
+The main enum now distinguishes a recipe from a completed integer approximation,
+a mathematical domain from a local series schedule, and a tag from a proof of
+either. PrescaledExp, logarithms and several inverse functions certify a local
+range or reduce further when evaluated; trig kernels have different scheduling
+obligations and existing coarse-result limitations. Raw field storage does not
+promise successful evaluation for all precisions, coefficient sizes or controls.
+Node replay performs bounded domain/range rejection, but an inconclusive check
+is not universal arbitrary-graph admission. No validation was weakened or new
+support envelope certified by these comments.
+
+Payload documentation makes explicit that PrescaledLn stores the additive
+residual for ln(1+c), BinaryScaledLnRational stores a coefficient of ln(2),
+IntegralAtan stores the denominator of atan(1/n), and negative-endpoint acos
+stores a nonnegative magnitude. Half-pi rational variants store r for pi/2-r,
+not an exact rational residual. NthRoot stores a nonnegative radicand even at
+odd degrees; signed-root assembly belongs outside it. The degree decoder accepts
+3..=9 and rejects malformed/unsupported degrees through Serde errors, without
+proving the radicand domain or a universal algebraic-degree/resource limit.
+
+Other roles include fixed computable-coefficient/rational-weight sums, analytic
+small-angle quotients with removable zero values, the unnormalized erf auxiliary
+series, oriented CDF differences and a quantile probability with a raw dyadic
+starting hint. Seeds are not result certificates, zero weights do not validate
+undefined children, and mathematical positivity is conditional on defined inputs.
+Ellipsoid inverses encode ln(b/a); Carlson roots/logs preserve distinguished
+argument positions; Legendre inverses preserve unwrapped values. Jacobi component
+payloads contain the already computed amplitude phi, not the original u.
+A finite log child encodes a positive complement; arbitrary imported child graphs
+are not made valid merely by selecting the enclosing variant.
+
+The exact threshold statics describe their actual guard/table role. Seven is
+owned by the earlier fixed-multiple-four branch; the written 17/2 comparison is
+further restricted by the magnitude guard to values below eight, with reflected
+negative behavior. The integer 128 compares a precision -8 residual sample and
+is not exact equality to a half-radian threshold. Existing comparison and trace
+order is unchanged. SharedConstant names have separate cache-index and wire
+roles; their mathematical values are documented individually, including atan(2)
+as distinct from the two-argument atan2 operation.
+
+Replaced broad binary-index comments with the concrete encoding distinction.
+Serde derives receive declaration-order indices, whereas the locked Ciborium
+0.2.2 serializer ignores the index and writes names for unit, newtype, tuple and
+struct variants. Its four serializer methods were inspected locally. A fresh
+contained probe serialized one Computable of each shape to CBOR and decoded it
+as generic JSON data, requiring equality with the named input shape. JSON's
+70-node/18-constant inventory fixture also verifies the declared names and order.
+This does not claim that every possible Serde backend uses names or that wire
+identity alone proves equal scalar values. Variant order, fields, attributes and
+constant values remain unchanged.
+
+The enum/type descriptions cover Clone's sharing/copying roles, Debug's structural
+nature and equality of SharedConstant keys. All four generated type pages expose
+their expected Clone/Debug/Serialize/Deserialize implementations; SharedConstant
+also exposes Copy/Eq/PartialEq. This generated-surface inspection is recorded
+separately from authored-item coverage, not as a repository-wide macro audit.
+Removed the unmeasured fixed-byte layout narrative in favor of the actual reason
+for boxed uncommon payloads; this batch makes no new size or allocation claim.
+
+The current-build probe also reproduced the previously recorded cold p=1 errors
+for tan(7/5), tan(3/2), tan(39/5) and imported cot(1/64), followed by changed warm
+samples after -64 refinement. Independent exact rational sine/cosine bounds,
+using ten-term alternating Machin bounds for pi, again prove each represented
+value exceeds two: cold zero is outside the one-unit error allowance. Four fixed
+sector residual bounds were rechecked, and probes retained the expected dispatch
+counts for +/-701/100, 7 and 8. These facts justify the variant descriptions'
+existing-limit qualifications on this revision; no kernel was repaired or
+universally requalified. Probe limits were 1 GiB address space, ten CPU seconds,
+fifteen wall seconds and no core dumps.
+
+Before edits, the all-variant JSON evaluation test, forged-degree test and four
+native graph-domain tests passed. After the final markup correction, all six
+passed again. Four no-default and five all-feature linear-demand tests passed,
+as did three serde-only trig range-proof tests. An initial no-default selection
+of those serde-only tests exercised zero cases and is not counted as coverage.
+The variant fixture covers 70 nodes and 18 constants with numerical replay and
+subsequent opaque Real consumption; it is a finite example per recipe, not all
+payloads or every composition. Domain tests exercise JSON and CBOR rejection,
+valid replay and downstream consumption. No focused check remains blocked.
+
+Private cargo doc passed no-default and all features with warnings and broken or
+private intra-doc links denied. The first build caught two interval literals
+parsed as links; these and the other literal payload brackets now use code
+formatting. All 197 blocks, including the 81 fields, matched actual private
+library HTML under all features. No supplemental pseudo-item rendering or
+visibility suppression was needed. The Serde-only decoder is absent from the
+no-default configuration as intended.
+
+Executable/signature tokens differ only by 67 optional trailing commas introduced
+when Rustfmt laid out documented fields. After stripping comments and formatting
+both baseline and final source independently, their tokens are identical. The
+ordered enum inventories, tuple field counts and named-field documentation were
+checked separately. Selected Rustfmt and git diff --check passed. No arithmetic,
+predicate order, fixture, tolerance, assertion or serialization attribute changed.
+Full workflow checks remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-approximation-representation-audit/ includes
+baseline/final logs, commands, declaration/token and rendered-block inventories,
+derived-implementation anchors, contained probe source/output and exact rational
+expectations. Locked/offline nonincremental builds reused the roughly 6.5 GiB
+shared target. The owned probe executable was removed after inspection; no
+second private-doc tree was generated. AGENTS.md already contains the future-agent
+100% public/private Rustdoc mandate and private-build requirement. Repository-wide
+line review and full coverage remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
