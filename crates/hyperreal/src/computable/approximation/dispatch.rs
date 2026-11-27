@@ -1,6 +1,11 @@
 impl SharedConstant {
+    /// Number of process-wide constant-approximation slots, matching the eighteen cache indices.
+    /// This bounds the number of slots, not the bytes retained by their integers.
     pub(super) const COUNT: usize = 18;
 
+    /// Map a shared constant to its distinct dense approximation-cache slot.
+    /// Keep this exhaustive mapping synchronized with COUNT and the shared table.
+    /// It is an internal table key; this method does not encode serialized enum tags.
     pub(super) fn cache_index(self) -> usize {
         match self {
             Self::E => 0,
@@ -26,12 +31,26 @@ impl SharedConstant {
 }
 
 impl Approximation {
+    /// Dispatch one retained node kind to its integer approximation kernel at precision `p`.
+    ///
+    /// Return units of `2^p`, retaining authored payloads and kernel selectors.
+    /// Constructors own simplification; Computable's evaluation entry point owns
+    /// cache lookup/publication and flattens selected linear chains before reaching
+    /// this dispatcher. This method itself does not consult or populate a cache.
+    ///
+    /// The graph must satisfy each operation's mathematical domain. Some kernels
+    /// recheck local series ranges or use intrinsically admitted payloads; dispatch
+    /// alone does not validate them. Forward `signal` where the kernel accepts it,
+    /// but exact leaves and e have no local poll. Abort placeholders or partial
+    /// sums carry no typed status in this return value. The caller must suppress
+    /// interrupted publication; no uniform precision, work or allocation bound is
+    /// introduced by this match.
     pub fn approximate(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         use Approximation::*;
 
-        // This is intentionally a thin dispatcher. Algebraic simplification and
-        // cache selection live in `Computable` constructors so kernels can assume
-        // their documented preconditions and avoid repeated shape checks.
+        // Constructors simplify graphs; the Computable evaluation entry point
+        // selects caches. Kernels retain their own documented domain obligations
+        // and local range checks after this dispatch.
         match self {
             Int(i) => scale_at_precision(i.clone(), p),
             One => scale_at_precision(signed::ONE.deref().clone(), p),
@@ -92,18 +111,13 @@ impl Approximation {
             LogPnorm(c) => log_pnorm(signal, c, p),
             LogNormalSf(c) => log_normal_sf(signal, c, p),
             LogDnorm(c) => log_dnorm(signal, c, p),
-            NormalQuantile(data) => normal_quantile(
-                signal,
-                &data.p,
-                &data.seed,
-                data.seed_prec,
-                p,
-            ),
+            NormalQuantile(data) => normal_quantile(signal, &data.p, &data.seed, data.seed_prec, p),
             SincSmall(c) => sinc_small(signal, c, p),
             CoscSmall(c) => cosc_small(signal, c, p),
-            InverseIsometricLatitude { psi, log_axis_ratio } => {
-                inverse_isometric_latitude(signal, psi, log_axis_ratio, p)
-            }
+            InverseIsometricLatitude {
+                psi,
+                log_axis_ratio,
+            } => inverse_isometric_latitude(signal, psi, log_axis_ratio, p),
             EllipticRf(arguments) => elliptic_carlson(signal, arguments, false, p),
             EllipticRd(arguments) => elliptic_carlson(signal, arguments, true, p),
             EllipticF(arguments) => elliptic_legendre(signal, arguments, false, p),
@@ -118,11 +132,19 @@ impl Approximation {
 }
 
 impl SharedConstant {
+    /// Evaluate a shared constant's recipe; its process-wide cache is managed by the outer evaluator.
+    ///
+    /// The enum selects exact series or identities. Tau requests pi at `p - 1`;
+    /// that subtraction is unchecked. Calling the pi kernel here does not itself
+    /// populate the separate pi slot. Cross-constant cache reuse happens before
+    /// this routine in the outer cache lookup.
+    ///
+    /// Pass `signal` to kernels that accept it. The e kernel has no signal and may
+    /// finish after a stop, so the caller remains responsible for publication.
+    /// This routine provides neither a cache lock nor a total-work/resource budget.
     fn approximate(self, signal: &Option<Signal>, p: Precision) -> BigInt {
-        // Every shared constant routes through the same enum so cloned public
-        // constants share approximation caches. Some constants are still built
-        // from series identities here, but the cache prevents redoing that work
-        // for repeated scalar and matrix operations.
+        // The outer evaluator keys shared caches by this enum. These recipes
+        // compute on a cache miss; finer requests can still need new work.
         match self {
             Self::E => e(p),
             Self::Pi => pi(signal, p),
@@ -146,6 +168,13 @@ impl SharedConstant {
     }
 }
 
+/// Wrap an internal recipe in a fresh node with default facts and no attached signal.
+///
+/// Bypass constructor recognition when forming shared log/root identities, so
+/// those constructors cannot simplify back to the constant currently being
+/// filled. This helper does not validate the node's domain or supply a proof;
+/// its callers must establish the recipe's invariants. Evaluation later receives
+/// the explicit signal. The new Arc owns the node; there is no global raw-node cache.
 fn raw(kind: Approximation) -> Computable {
     // Build a node with no constructor-level simplification. This is used only
     // for internal constant identities where adding public simplification would

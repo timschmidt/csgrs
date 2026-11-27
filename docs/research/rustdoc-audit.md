@@ -17822,6 +17822,121 @@ constructors, checked Real paths, shared constants and other consumer-test
 excerpts supplied context only. The repository-wide line audit and 100% Rustdoc
 coverage target remain incomplete.
 
+## Shared-constant kernels, dispatch and e/pi qualification
+
+On baseline 7a82b3407da77accfa95bf4231d2acae132aedd4, read every line of
+crates/hyperreal/src/computable/approximation/constants.rs (233 lines),
+approximation/dispatch.rs (161), approximation/e_plan_tests.rs (113), and
+computable/approximation.rs (97). These 604 lines are new whole-file review
+credit. The owning layer is Hyperreal's retained-expression evaluation, under
+P1–P7 and P19: exact recipes, justified approximations, shared-cache reuse,
+explicit cancellation/resource limits and downstream consumption. Mathematical
+inputs include valid retained nodes and constant identities; binary-split
+helpers additionally require nonempty intervals (and a positive starting index
+for the factorial series). Precision representability is not a total-work bound.
+
+All thirty-seven declarations lacked Rustdoc. Added thirty-nine blocks covering
+constants, functions/methods, test modules and two file/module overviews. Missing
+witnesses were complete source documentation and private rendering. Baseline
+checks passed nineteen selected unit tests and five named-certificate replay
+tests. Supporting reads located cache lookup/publication in the outer Computable
+evaluator, not in these recipes or only in constructors. Dispatch keeps every
+payload and selector, including the Carlson/Legendre choices and Jacobi component
+indices; no arm, evaluation order, predicate or test was changed.
+
+The shared table has eighteen dense slots. That count does not bound integer
+bytes, and cache_index is not itself a wire-format serializer. SharedConstant's
+approximation routine evaluates a recipe; its own cache lookup is outside it.
+Tau directly calls the pi kernel at p-1 after outer lookup, and that call alone
+does not populate pi's separate slot. Cross-constant reuse and abort-aware
+publication belong to the outer layer. Raw internal nodes bypass recognition
+when the same shared log/root constant is being filled; they do not validate
+an arbitrary payload or supply an independent domain proof.
+
+Chudnovsky handles fractional pi requests first, using 64 guard bits and
+ceil(work_bits/43)+2 terms; coarse or declined requests use the exact Machin
+identity. Binary splitting checks the stop flag on recursive entry and once
+after splitting, but its integer products and the later root/division work
+have no local interruption guarantee. The Option result combines conversion
+or arithmetic decline with cancellation, not typed resource exhaustion.
+Positive p and i32::MIN decline in pi_chudnovsky before splitting; pi's Machin
+fallback still has unchecked working arithmetic. Balanced recursion is a depth
+property, not a work or memory budget.
+
+Independent exact Fraction arithmetic checked 640320^3/24, the stated
+Chudnovsky consecutive-term bound (the k=0 ratio and the uniform k>=1 upper
+bound 27648/640320^3 < 2^-43), the ln2 rational-product identity, and the
+rational atan anchor identity. The documented e-split recurrence agreed with
+direct rational summation on 198 finite intervals in a separate mathematical
+check. This last comparison verifies the described recurrence, not execution
+of the Rust helper; the native direct-e regressions exercise its implementation.
+These checks are not a complete proof of every fixed-point kernel error bound.
+
+The e planner keeps a downward-rounded factorial lower bound using u128
+multiplication and a 64-bit mantissa. Returning n excludes the threshold-crossing
+(n+1)th term; the exact truncated sum is rounded only after adding its initial
+one. Its tail is still an approximation error, not an exactly represented e.
+Nonnegative precision requests currently select three terms. A source-extracted
+Rust probe reproduced that result at 0, 1 and i32::MAX, and a debug panic at
+i32::MIN before large work. The observation was identical before and after edits;
+the probe was contained to 1 GiB address space, ten CPU seconds, fifteen wall
+seconds and no core dumps. That unsupported precision and the lack of an inner
+e cancellation poll remain implementation limits, not target-contract changes.
+
+The e tests retain 4,151 distinct factorial-threshold requests and a finite
+at-most-one-extra-term sentinel, which is not a universal optimality claim.
+Ninety-three direct evaluations through precision -262144 use strict directed
+MPFR enclosures. Shared refinement checks seven nonmonotone requests through
+retained and new handles plus exp(1); it does not assume a cold process cache.
+The stop/retry test discards its first result and checks the later enclosure,
+without asserting that inner computation stopped or inspecting the aborted
+cache. Its serde section checks four same-process replay precisions.
+
+The pi test retains thirty-two direct requests from one to 120,700 fractional
+bits. It permits one integer unit of difference from a nearest-rounded MPFR
+reference at 192 extra bits, then checks dispatcher agreement. This differs
+from the strict directed e enclosures and is not a universal rounding proof.
+The pi abort test starts with an already asserted flag; it does not exercise a
+mid-computation stop, publication or retry. Module documentation keeps these
+qualification claims distinct from those of neighboring included kernels.
+
+Replaced unverified timing comparisons with the actual Chudnovsky/Machin
+selection and balanced arithmetic. Corrected the claim that constructor code
+owns cache selection, the suggestion that a warm atan anchor leaves only series
+work on every later call, and wording that treated the truncated factorial sum
+as the whole infinite tail or rounding as the sole source of cache stability.
+No new performance, memory bound, universal precision or completeness claim is
+made. The implementation and its branch choices remain intact.
+
+After the final source edits, nineteen selected unit tests passed both without
+default features and with all features, five named-certificate replay tests
+passed with all features, and five downstream Hyperlimit resolver tests passed.
+The selected unit checks include direct e/pi, shared cache reuse across handles
+and threads, pi/tau transport and inverse-function consumers. This is focused
+validation of the documentation batch, not a rerun of every kernel reached by
+the dispatcher. Private cargo doc passed both configurations with warnings and
+broken/private links denied. Twenty-three blocks matched actual private library
+pages; sixteen test-only blocks passed source inventory and supplemental
+Markdown rendering. Ordinary library Rustdoc does not emit those cfg(test)
+pages. No focused check remains blocked.
+
+The e test and module-composition files have identical raw executable/signature
+tokens. Constants differ only by one optional tuple comma removed by Rustfmt;
+dispatch has only independently reproduced Rustfmt commas and expression-arm
+braces. All four match an independently formatted baseline. Selected Rustfmt
+(with child traversal disabled for the composition file) and git diff --check
+passed. Full workflow checks remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-constant-kernels-audit/ includes commands,
+baseline/final logs, exact arithmetic checks, the contained planner source,
+token/declaration inventories and rendered-block matches. Builds reused the
+roughly 6.0 GiB locked/offline nonincremental target; the probe executable and
+duplicate supplemental HTML were removed after inspection. Outer cache code,
+constructors, logarithm recognition, selected consumers and neighboring test
+module excerpts supplied context only. Reviewing the include declarations does
+not credit all included files as reviewed. The repository-wide line audit and
+100% Rustdoc coverage target remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

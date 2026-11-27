@@ -1,8 +1,17 @@
+//! Qualification of the e term planner, direct enclosures, shared refinement and replay.
+//! These finite requests do not establish a global resource or cancellation-latency bound.
+
 use super::{BigInt, BigUint, Computable, One, Rational, e, e_terms_for_precision};
 use rug::{Float, Integer, float::Round};
 use std::collections::BTreeSet;
 use std::sync::{Arc, atomic::AtomicBool, atomic::Ordering};
 
+/// Require the one-unit interval around actual to strictly contain directed MPFR bounds for scaled e.
+///
+/// The selected fixtures fit their integer endpoints exactly in the chosen
+/// precision (at least 256 bits, otherwise abs(p)+192). Compute exp(1) with
+/// both directed roundings, apply the binary scale, and register MPFR thread
+/// cleanup. This fixture helper has no allocation limit for arbitrary p.
 fn assert_e_enclosure(actual: &BigInt, p: i32) {
     crate::mpfr_test::cleanup_on_thread_exit();
     let precision = p.unsigned_abs().max(64) + 192;
@@ -24,6 +33,12 @@ fn assert_e_enclosure(actual: &BigInt, p: i32) {
 }
 
 #[test]
+/// Compare planner outputs against exact factorial bit thresholds over 4,151 distinct requests.
+///
+/// Combine the dense -4096..=16 range, selected factorial-boundary neighbors,
+/// and larger requests through -262144. Require no early truncation; allowing
+/// at most one extra term is a finite-corpus cost sentinel, not a universal
+/// minimality theorem or a measured runtime bound.
 fn term_planner_preserves_exact_factorial_thresholds() {
     let mut requests: BTreeSet<i32> = (-4_096..=16).collect();
     let selected: BTreeSet<u32> = [
@@ -68,6 +83,10 @@ fn term_planner_preserves_exact_factorial_thresholds() {
 }
 
 #[test]
+/// Check 93 direct e evaluations against strict directed MPFR enclosures.
+/// The requests span -262144 through 8 with dense coarse and selected fine
+/// boundaries. Direct calls bypass the shared constant cache, so a warm cache
+/// cannot substitute for exercising this kernel.
 fn direct_e_kernel_has_strict_directed_enclosures() {
     let mut requests: BTreeSet<i32> = (-64..=8).collect();
     for p in [
@@ -82,6 +101,9 @@ fn direct_e_kernel_has_strict_directed_enclosures() {
 }
 
 #[test]
+/// Check seven nonmonotone requests through one shared e handle and freshly constructed handles.
+/// Also check exp(1) at -16384. Require directed enclosures without assuming
+/// that other tests left the process-wide cache cold or isolated.
 fn shared_e_refines_and_coarsens_within_its_enclosure() {
     // Other tests may already have warmed the process-wide constant cache.
     // This checks the public contract without assuming exclusive cold state.
@@ -95,6 +117,11 @@ fn shared_e_refines_and_coarsens_within_its_enclosure() {
 }
 
 #[test]
+/// Verify a stopped shared-e handle can later produce an enclosure after clearing the signal.
+/// Discard the stopped result; this test does not assert that inner work ceased
+/// or inspect the cache immediately after abort. With serde, replay JSON and
+/// check four further precisions in this process. This is recovery/enclosure
+/// evidence, not an interruption-latency or fresh-process replay test.
 fn shared_e_recovers_from_cancellation_and_serialization() {
     let stop = Arc::new(AtomicBool::new(true));
     let mut shared = Computable::e();
