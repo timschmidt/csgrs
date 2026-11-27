@@ -7203,6 +7203,105 @@ with `-check.log` and `-doc.log` suffixes. Bounded arithmetic observations are i
 `/tmp/csgrs-rustdoc-hyperlimit-atlas-composites-witnesses.log`; render inspection
 uses `/tmp/csgrs-atlas-composite-render.py`. Continue at Scalar and Pair.
 
+## Hyperlimit atlas scalar, polygon, construction, and batch workloads (2026-11-26)
+
+Reviewed every remaining line of `crates/hyperlimit/examples/perf_atlas.rs`,
+from Scalar through main (baseline `1266fcc0b` lines 3040–3644). Together with
+the three preceding atlas records this completes line-by-line review of this
+entire authored file, originally 3090 lines at `fe61cfa4e`. The owning layer is
+Hyperlimit's performance example. Relevant contracts are P1's conversion edge,
+P8–P11's policy/receipt/decision semantics, and P5/P6's work/failure distinctions.
+The domain is the named scalar recipes, rounded lattice rings, integer halfspaces,
+widened constructions, and generated orientation/sphere batches. Missing witnesses
+were attached private docs and accurate explanations of generation, transformations,
+validation, success criteria, and timing. No kernel behavior or support claim changed.
+
+Added docs for 19 authored declarations, all six Pair fields, and all five Scalar
+variants. This includes both feature branches of BATCH_MODES and the function-local
+Run/RingRun aliases. Reviewed relevant shared atlas RNG, Outcome, argument, timing,
+and output code and Hyperlimit filter, reciprocal, homogeneous, line-construction,
+segment-plane, halfspace, and support-DOP entry points. These are context reads,
+not a completed audit of the shared perf-atlas crate. No generated output string,
+fixture, callback, arithmetic, or policy changed. Exact comment-stripped source
+matches the baseline without normalization.
+
+Scalar docs now distinguish the rational source gap from the transformed root/log
+gap and rounded binary64 arithmetic. A 40-bit positive numerator gives rational
+x in [3/2,2), while 1+unit can round to binary64 2. A private request at k=53 can
+collapse the floating separation, although the F64 sweep stops at 52. Equality
+fixtures retain the positive-domain square-root/product and logarithm/sum
+identities, without promising that a selected policy proves them. Roots/logarithms
+are rebuilt inside timing. Only SqrtStrict selects STRICT; other recipes permit
+the approximate terminal. The certified_interval_sign callback discards a receipt
+that may be approximate; reciprocal callbacks collapse scalar errors and Unknown
+to None. Nominal reciprocal operand widths span 8..8192 and may shrink on reduction.
+
+Polygon generation uses rounded binary64 trigonometry, so the integer vertices
+are the model tested by exact predicates. They are not exact circle sites or a
+certified approximation with an error/topology receipt. There is no convexity or
+distinctness validation in generation; the helper also accepts n=0,1,2. The atlas
+sweeps 4..16384 vertices. Its convexity row checks LocallyConvex; the other rows
+check only presence of a decision, not an expected sign or containment relation.
+
+Halfspace offsets use L=floor(sqrt(n·n))+1, giving the retained center strictly
+negative residual and a supporting-plane distance greater than 2^40 before
+framing. This proves feasibility, not the boundedness asserted by the emitted
+feasibility description. Repeated allowed positive normals admit the unbounded
+ray center-s*(1,1,1), s>=0. Feasibility callbacks ignore the known center and
+accept any returned report without inspecting its witness or relation. The DOP
+row reconstructs thirteen unnormalized axes inside timing and does not validate
+extrema or receipts. Repeated timing loops include destruction of returned DOP
+carriers; the initial probe stops timing before that destruction.
+
+Line construction does not exclude degenerate/parallel inputs, nor replay returned
+incidence. Three-plane construction unconditionally wraps the homogeneous carrier
+in Some without validating rank, finite affine existence, or nonzero coordinates.
+Segment/plane generation does establish a strict crossing: writing |t|=q*n2+r
+with 0<=r<n2, the other residual is sign(t)*(r-2*n2), hence strictly opposite.
+The callback checks ProperCrossing but does not inspect the point, parameter, or
+construction evidence. No chain-closure completion claim follows from these rows.
+
+Batches use approximate policy, already-built F64/Rational geometry, and fresh
+input vectors under the default atlas harness. Orientation counts span 1..16384,
+sphere counts 1..4096. Level selection uses remainder reduction rather than a
+proven uniform draw. Output allocation, scanning, and destruction occur in the
+callback. All values must be present for the first probe to succeed, but no signs
+or receipts are checked. Sequential and parallel labels seed different streams;
+these rows do not establish agreement on identical cases. Main delegates argument
+handling and direct, non-atomic report output to Atlas, without a total timeout.
+
+Validation after final source edits:
+
+- Focused Rustfmt, `git diff --check`, and exact comment-stripped identity passed.
+- Offline locked example checks and private Rustdoc passed with all features and
+  no default features, with warnings and broken/private links denied.
+- Full-text rendering found all 27 active renderable groups across 12 pages in this
+  batch for each configuration. Run/RingRun are documented in source but Rustdoc
+  emits no separate local-alias pages. Both BATCH_MODES definitions were checked
+  in their applicable configurations.
+- Rechecked all three preceding sections. The complete authored file has attached
+  docs on 149 declarations (110 functions/methods, 14 constants, six aliases, three
+  local statics, five enums, ten structs, one trait), plus 53 fields/payloads and
+  23 variants. The declaration adjacency scan has no missing entries. There are
+  220 distinct rendered doc groups across 108 pages per configuration, after
+  deduplicating the module introduction. Five local items remain source-only;
+  one of the two documented BATCH_MODES definitions is inactive in each build.
+  This inventory/render evidence covers authored items, not every generated
+  derive implementation or an assertion of repository-wide coverage.
+- Bounded arithmetic checks reproduced the scalar bounds/rounding examples, the
+  unbounded-halfspace witness, and 16 crossing-displacement cases with parameters
+  strictly between zero and one. These are not runtime predicate/atlas tests.
+- No benchmark, fuzz campaign, atlas report, or unbounded fixture search ran.
+  Full workflow checks remain owner-waived. Shared target storage is reused with
+  incremental compilation off; no new build tree or release artifacts were created.
+
+Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-atlas-tail-{all,minimal}` with
+`-check.log` and `-doc.log` suffixes. Bounded observations are in
+`/tmp/csgrs-rustdoc-hyperlimit-atlas-tail-witnesses.log`; render inspection uses
+`/tmp/csgrs-atlas-tail-render.py`. All Hyperlimit Rust files now have whole-file
+review records; remaining repository files and generated API gaps still require
+review. Do not infer crate-wide specification compliance from documentation.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

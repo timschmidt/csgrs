@@ -3040,16 +3040,25 @@ fn near_cospherical3_small(rng: &mut Rng) -> ([Int; 3], Int) {
 // ---------------------------------------------------------------------------
 // Scalar predicates.
 
+/// Choose a scalar-pair recipe and its visible policy for atlas comparisons.
+///
+/// These are construction recipes, not a complete inventory of Real variants.
 #[derive(Clone, Copy, PartialEq)]
 enum Scalar {
+    /// Import stored binary64 values exactly; the preceding arithmetic used binary64 rounding.
     F64,
+    /// Use the stored rational x,y directly under APPROX.
     Rational,
+    /// Construct square-root expressions inside timing under APPROX.
     Sqrt,
+    /// Construct the same square-root forms but require STRICT decisions.
     SqrtStrict,
+    /// Construct natural-logarithm expressions inside timing under APPROX.
     Ln,
 }
 
 impl Scalar {
+    /// Return the stable report label, also used to derive this series's RNG stream.
     fn label(self) -> &'static str {
         match self {
             Scalar::F64 => "f64",
@@ -3059,6 +3068,7 @@ impl Scalar {
             Scalar::Ln => "ln",
         }
     }
+    /// Select STRICT only for SqrtStrict; every other recipe permits the approximate terminal.
     fn policy(self) -> PredicatePolicy {
         if self == Scalar::SqrtStrict {
             STRICT
@@ -3068,6 +3078,7 @@ impl Scalar {
     }
 }
 
+/// Scalar recipes in report order, with separate approximate and strict square-root rows.
 const SCALARS: [Scalar; 5] = [
     Scalar::F64,
     Scalar::Rational,
@@ -3076,20 +3087,39 @@ const SCALARS: [Scalar; 5] = [
     Scalar::Ln,
 ];
 
-/// Two values `a < b` with `b / a - 1 ≈ 2^-k`, or equal values written as
-/// different expressions when degenerate: `(sqrt(x) sqrt(y), sqrt(x y))` and
-/// `(ln x + ln y, ln(x y))`. Roots and logarithms are built inside the timed
-/// call.
+/// Retain rational and binary64 ingredients for constructing a scalar comparison inside timing.
+///
+/// Nondegenerate recipes increase y relative to x or b relative to a; square root
+/// and logarithm change that relative gap. At the sentinel, rational/binary64 values
+/// are identical, while root/log recipes use equal-valued expression identities.
+/// Equality or ordering is mathematical intent, not a promise of a decided predicate.
 struct Pair {
+    /// Recipe and policy selector used when materializing and comparing values.
     kind: Scalar,
+    /// Exact positive rational base, generated in [3/2,2).
     x: Rational,
+    /// Perturbed rational, equal copy, or independent positive factor for an equality identity.
     y: Rational,
+    /// Binary64 base 1+unit; rounding permits 2 as well as values in [1,2).
     a: f64,
+    /// Binary64 perturbed value, or exactly a at the equality sentinel.
     b: f64,
+    /// Select root/log equality identities instead of applying each function separately.
     degenerate: bool,
 }
 
 impl Pair {
+    /// Draw both rational and binary64 ingredients for the selected comparison recipe.
+    ///
+    /// Sets x=1+m*2^-40 for a 40-bit positive m, so x is in [3/2,2).
+    /// For Some(k), y=x*(1+bump), with bump=q*2^-(k+7) and 8-bit q;
+    /// a=1+unit and b=a*(1+2^-k) use rounded binary64 arithmetic instead.
+    /// F64 sweeps cap k at 52; larger private requests can round b back to a.
+    /// Extreme k also reaches a narrowing i32 cast and unchecked negation in powi.
+    ///
+    /// None clones x for Rational, otherwise draws a separate 30-bit-part y in
+    /// [3/2,2); it sets b=a in every case. Even unused ingredients consume RNG
+    /// values. This setup does not construct roots/logarithms or test decisions.
     fn make(kind: Scalar, k: Option<u32>, rng: &mut Rng) -> Self {
         // x in [1, 2) with 40-bit parts.
         let x = &dyadic(&big(rng, 40), -40) + &Rational::one();
@@ -3122,6 +3152,14 @@ impl Pair {
         }
     }
 
+    /// Materialize this pair's Real operands, constructing roots/logarithms on each call.
+    ///
+    /// F64 imports a,b exactly and panics on invalid imports. Rational wraps x,y.
+    /// Ordinary root/log rows apply that function to each rational independently;
+    /// degenerate rows instead use sqrt(x)*sqrt(y) versus sqrt(x*y), or ln(x)+ln(y)
+    /// versus ln(x*y). Positive generated x,y justify both identities and unwraps;
+    /// this method does not validate arbitrarily replaced fields or certify a later
+    /// comparison. Fresh expression construction does not reset shared/global caches.
     fn values(&self) -> (Real, Real) {
         let x = || Real::new(self.x.clone());
         let y = || Real::new(self.y.clone());
@@ -3145,9 +3183,30 @@ impl Pair {
     }
 }
 
+/// Sweep scalar comparison, sign, enclosure, interval, and reciprocal recipes.
+///
+/// Five pair-based operations use all SCALARS, levels 0..52 for F64 or 0..96 for
+/// other kinds in steps of four, followed by the equality sentinel. Pair::values
+/// builds the Reals inside each timed callback. The first four callbacks return
+/// whether a decision exists; the interval-sign filter returns its optional sign.
+/// Neither checks the expected order/sign/location or retains the certainty receipt.
+/// At exact equality the ball `[b-a,b+a]` and interval `[b-a,b]` touch zero and have
+/// no uniform sign; a declined filter is recorded as a failed atlas probe.
+///
+/// The certified_interval_sign name and report string do not promise a certified
+/// receipt: that API can consume approximation under its policy, and this callback
+/// discards the qualification. Source x/y relative gaps are transformed nonlinearly
+/// by square root or logarithm rather than imposing the report's exact output ratio.
+///
+/// Reciprocal series use rational, square-root, and ln(1+x) operands with numerator
+/// and denominator bit widths 8,16,...,8192. The positive rational ratio lies strictly
+/// between 1/2 and 2, but reduction can shrink its parts. Scalar construction is timed;
+/// APPROX is used for every reciprocal, with errors and Unknown both mapped to None
+/// and successful receipts dropped. No inverse identity or source replay is checked.
 fn scalar_predicates(atlas: &mut Atlas) {
     let axis = degeneracy_axis(96);
     let f64_axis = degeneracy_axis(52);
+    /// Timed scalar callback whose Boolean reports decision presence, not the expected answer.
     type Run = fn(&Real, &Real, PredicatePolicy) -> bool;
     let ops: [(&str, &str, Run); 4] = [
         (
@@ -3250,8 +3309,16 @@ fn scalar_predicates(atlas: &mut Atlas) {
 // ---------------------------------------------------------------------------
 // Polygons and point sets.
 
-/// A strictly convex counterclockwise polygon with `n` vertices on a circle
-/// of radius ≈2^40 around a 44-bit center (rounded to the lattice).
+/// Generate a circle-inspired lattice ring and its integer center using rounded binary64 trigonometry.
+///
+/// Uses a signed 44-bit center, radius 2^40*(1+unit), a random phase, and one
+/// jittered angle per equal angular sector. Rounds each sine/cosine displacement to
+/// an integer before adding the center. These rounded vertices are the model passed
+/// to exact predicates; they are not exact analytic-circle sites or certified
+/// approximations to that circle. No convexity, simplicity, or distinctness check
+/// occurs. The swept sizes are 4..16384; the helper itself also accepts n=0,1,2,
+/// which cannot define the advertised strictly convex polygon. Large n has no
+/// allocation bound and its conversion to binary64 need not preserve every index.
 fn convex_polygon(rng: &mut Rng, n: usize) -> (Vec<[Int; 2]>, [Int; 2]) {
     let center: [Int; 2] = rand_vec(rng, 44);
     let radius = 2f64.powi(40) * (1.0 + rng.unit());
@@ -3268,6 +3335,12 @@ fn convex_polygon(rng: &mut Rng, n: usize) -> (Vec<[Int; 2]>, [Int; 2]) {
     (points, center)
 }
 
+/// Frame the generated lattice ring followed by its center as the final point.
+///
+/// Uses an unwidened nominal 46-bit frame and decodes all coordinate pairs into Geo.
+/// The final center is the query used by polygon callbacks; n=0 still produces one
+/// point. Geometry validity and trig-rounding fidelity are not checked. Ready/symbolic
+/// construction and kind restrictions follow Frame and Input.
 fn polygon_input(kind: Kind, n: usize, rng: &mut Rng) -> In2 {
     let (mut points, center) = convex_polygon(rng, n);
     points.push(center);
@@ -3278,8 +3351,15 @@ fn polygon_input(kind: Kind, n: usize, rng: &mut Rng) -> In2 {
     })
 }
 
-/// `n` planes tangent-ish to a sphere of radius ≈2^40 (16-bit normals) and
-/// the sphere's center, which is strictly inside all of them.
+/// Build n closed halfspaces with a common strict interior point and exact lattice offsets.
+///
+/// For each signed 16-bit normal n, sets L=floor(sqrt(n·n))+1 and offset
+/// -n·center-L*2^40. Thus the center's residual is strictly negative, and its
+/// supporting-plane distance exceeds 2^40 before framing, including when n·n is a
+/// perfect square. The shared nominal 46-bit frame preserves these inequalities.
+/// No check ensures distinct planes, bounded intersection, or a particular shape;
+/// n=0 yields an empty system. Serializes the center then normal/offset tuples,
+/// and decodes their counts from the flat vector. Allocation has no separate bound.
 fn convex_planes(kind: Kind, n: usize, rng: &mut Rng) -> In3 {
     let center: [Int; 3] = rand_vec(rng, 44);
     let frame = Frame::new(kind, 46, 0, rng);
@@ -3296,9 +3376,31 @@ fn convex_planes(kind: Kind, n: usize, rng: &mut Rng) -> In3 {
     })
 }
 
+/// Register ring, halfspace, and support-envelope size sweeps for F64, Rational, and Transcendental.
+///
+/// Four ring operations use powers of two from 4 to 16384 vertices. Area sign and
+/// both membership rows check only decision presence; ring_convexity alone checks
+/// LocallyConvex. Each row gets its own label/operation-derived input stream, not
+/// one shared polygon. Rounded-lattice geometry is authoritative, and no independent
+/// exact convexity, containment, area, or analytic-circle fidelity test is made.
+///
+/// Point/halfspace uses 4..4096 planes and feasibility uses 4..256. Both reuse
+/// convex_planes, whose center proves nonempty intersection but not boundedness as
+/// the feasibility report string claims. The feasibility callback ignores that known
+/// center and accepts any returned report, without checking feasibility or its witness.
+/// No scalar-inclusive polynomial running-time bound is established here.
+///
+/// Support DOP rows use 4..8192 random spatial points and thirteen fixed unnormalized
+/// integer axes (three coordinate, four body-diagonal, six face-diagonal directions).
+/// Axes and their Vec allocation are rebuilt inside the timed callback. Repeated
+/// timing loops also include dropping the returned carrier; the initial probe stops
+/// timing before that drop. Only Option presence is checked,
+/// not support extrema, source incidence, or certainty. Input regeneration, symbolic
+/// reconstruction, and atlas stopping limitations apply to every series.
 fn polygons(atlas: &mut Atlas) {
     let sizes = powers_of_two(2, 14);
     let kinds = [Kind::F64, Kind::Rational, Kind::Transcendental];
+    /// Ring/query callback reporting a decision or the explicit local-convexity expectation.
     type RingRun = fn(&[Point2], &Point2, PredicatePolicy) -> bool;
     let ops: [(&str, &str, RingRun); 4] = [
         (
@@ -3427,6 +3529,27 @@ fn polygons(atlas: &mut Atlas) {
 // ---------------------------------------------------------------------------
 // Exact constructions.
 
+/// Sweep three construction paths at nominal widths 64,128,...,4096 across four non-F64 kinds.
+///
+/// Line/line uses four independent signed 48-bit lattice sites widened by Frame.
+/// It does not reject collapsed, parallel, or coincident supports in generation;
+/// the Option-returning API marks only presence as success and supplies no receipt.
+/// The example does not recheck that the returned point lies on either support.
+///
+/// Three-plane construction generates each plane through a separately drawn point,
+/// then widens their offsets consistently. No rank or homogeneous-carrier validity
+/// check occurs: the result is unconditionally wrapped in Some, so all-zero or
+/// infinite carriers also count as successful probes. Policy is unused in that call.
+///
+/// Segment/plane starts with nonzero residual t and n2=n·n, then displaces the other
+/// endpoint by -sign(t)*(floor(|t|/n2)+2)*n. Its residual has the opposite strict
+/// sign, proving a source crossing. The callback checks ProperCrossing only; it does
+/// not inspect/replay the returned point, parameter, or construction evidence.
+///
+/// Integer, Rational, Algebraic, and Transcendental recipes all use their ordinary
+/// APPROX policy where needed. Widening sizes are nominal, not enforced output-bit
+/// bounds. Exact-input construction and symbolic reconstruction follow Input's timing
+/// rules; report labels do not establish certified construction or completed closure.
 fn constructions(atlas: &mut Atlas) {
     let bits: Vec<f64> = [64, 128, 256, 512, 1024, 2048, 4096]
         .map(f64::from)
@@ -3526,6 +3649,25 @@ fn constructions(atlas: &mut Atlas) {
 // ---------------------------------------------------------------------------
 // Batches.
 
+/// Measure whole orientation and in-sphere batches for F64 and Rational inputs under APPROX.
+///
+/// Orientation counts are powers of two 1..16384; in-sphere counts are 1..4096.
+/// Each orientation level is drawn by remainder reduction into 0..=96 and each
+/// sphere level into 0..=92, without the exact-degeneracy sentinel. The report's
+/// uniform wording is not a distribution proof. Source generation can search
+/// without an iteration bound, and frame width assertions still apply.
+///
+/// Extracts Ready geometry during setup; warm here means Input retained already-built
+/// values, not that predicates have run or all global caches have been reset. The
+/// atlas regenerates the vector outside each call with default settings. Timed work
+/// includes batch output allocation, scanning for decision presence, and dropping
+/// that output. Every outcome must have a value for the initial probe to succeed;
+/// values and receipts are not compared with independent expected results.
+///
+/// BATCH_MODES selects sequential and feature-gated parallel APIs. Different labels
+/// produce separate RNG streams, so these rows do not compare identical batches or
+/// prove sequential/parallel agreement. Later timing-loop results are not revalidated
+/// by Atlas, and timing ceilings do not interrupt an individual call.
 fn batches(atlas: &mut Atlas) {
     let sizes = powers_of_two(0, 14);
     atlas.operation(
@@ -3623,13 +3765,21 @@ fn batches(atlas: &mut Atlas) {
     }
 }
 
-/// Batch modes to sweep: the rayon-parallel batches exist only with the
-/// `parallel` feature, which `scripts/perf-atlas/run.sh` enables.
+/// Run sequential then parallel batch series when parallel APIs are compiled.
 #[cfg(feature = "parallel")]
 const BATCH_MODES: [bool; 2] = [false, true];
+/// Run only sequential batch series when the parallel feature is disabled.
 #[cfg(not(feature = "parallel"))]
 const BATCH_MODES: [bool; 1] = [false];
 
+/// Run the eight atlas registration groups in source order and emit the shared JSON report.
+///
+/// Delegates CLI handling to Atlas::from_args: --quick, --filter, --seed, and --out
+/// select the harness configuration and output, with JSON otherwise sent to stdout.
+/// Unknown arguments panic; output-file write failures panic. finish writes directly
+/// to the destination rather than publishing atomically. Registered series remain
+/// subject to filters/stopping rules, and no total timeout encloses fixture searches.
+/// Does not call reuse_inputs or run a correctness/receipt/replay verification pass.
 fn main() {
     let mut atlas = Atlas::from_args("hyperlimit");
     determinant_predicates(&mut atlas);
