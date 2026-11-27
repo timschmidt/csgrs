@@ -1,9 +1,16 @@
 #[cfg(test)]
+/// Rational-root and reciprocal proofs, captured regressions and retained failure boundaries.
 mod ring_relations_tests {
     use super::*;
 
     #[cfg(feature = "serde")]
     #[test]
+    /// Replay the captured cone graphs and require exact zero within ordinary attempt limits.
+    /// Deserialize each stored Computable payload, enable root/trig relations, then expand
+    /// and project locally without a query-level relation-use gate or sign publication.
+    /// On failure, report row name and remaining resources/registered relation counts.
+    /// This tests the captured zero claims, not an independent reconstruction of the
+    /// original cone geometry or a guarantee for every serialized native domain.
     fn captured_cone_projections_fit_the_existing_attempt_limits() {
         let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
             "../../../tests/fixtures/cone-continuation-zeros.json"
@@ -36,6 +43,8 @@ mod ring_relations_tests {
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
 
+    /// Construct a raw recipe with invalid bound/sign facts, no sample and no stop signal.
+    /// Bypass simplifying constructors so tests exercise the selected relation path.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -46,26 +55,37 @@ mod ring_relations_tests {
             signal: None,
         }
     }
+    /// Create an exact i32 rational as a raw Ratio node with no cached sign.
     fn number(n: i32) -> Computable {
         raw(Approximation::Ratio(Rational::from(n)))
     }
+    /// Build an unsimplified sum, preserving the supplied operand order.
     fn add(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Add(a, b))
     }
+    /// Build an unsimplified product, preserving both operand domain obligations.
     fn mul(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Multiply(a, b))
     }
+    /// Wrap the supplied value in raw negation without simplifying its recipe.
     fn neg(a: Computable) -> Computable {
         raw(Approximation::Negate(a))
     }
+    /// Build a raw principal-root recipe without prevalidating the radicand.
+    /// Negative and undefined fixtures rely on the recognizer to decline admission.
     fn sqrt(a: Computable) -> Computable {
         raw(Approximation::Sqrt(a))
     }
+    /// Represent atan(3/4) exactly as a raw rational-angle recipe.
+    /// Its sine and cosine are 3/5 and 4/5, which independently determine trig expectations.
     fn angle() -> Computable {
         raw(Approximation::AtanRational(
             Rational::fraction(3, 4).unwrap(),
         ))
     }
+    /// Build angle*sqrt(radicand)²-angle*square without simplifying either product.
+    /// The expected zero requires a defined nonnegative radicand equal to square;
+    /// invalid domains and wrong squares are deliberately supplied by rejection tests.
     fn root_identity(radicand: Computable, square: Computable) -> Computable {
         let root = sqrt(radicand);
         add(
@@ -73,6 +93,8 @@ mod ring_relations_tests {
             neg(mul(angle(), square)),
         )
     }
+    /// Build pi*atan(3/4)*sqrt(5)*InvPi*sqrt(5)/5-atan(3/4).
+    /// The exact zero uses both sqrt(5)²=5 and pi*InvPi=1 across interleaved factors.
     fn cone_identity() -> Computable {
         let a = angle();
         let root = sqrt(number(5));
@@ -92,6 +114,9 @@ mod ring_relations_tests {
     }
 
     #[test]
+    /// Exercise roots of zero, five and 7/11 with residuals -7, zero and eleven.
+    /// Also require the interleaved reciprocal identity to outgrow the earlier trig-only
+    /// route, and admit sqrt(sqrt(25))²=5. Successful projections need no root sample.
     fn rational_root_squares_and_builtin_reciprocals_are_exact() {
         for square in [
             Rational::zero(),
@@ -122,6 +147,9 @@ mod ring_relations_tests {
     }
 
     #[test]
+    /// Decline negative/undefined radicands, zero or unproved divisors, and wrong relations.
+    /// All failed roots retain invalid exact-sign facts. An arithmetic radicand 8-3
+    /// must still admit the correct square-five identity.
     fn domain_failures_and_unproved_relations_remain_unresolved() {
         let inverse = |x| raw(Approximation::Inverse(x));
         for value in [
@@ -147,6 +175,9 @@ mod ring_relations_tests {
     }
 
     #[test]
+    /// Preserve exact ±10^-12 offsets and prove trig argument congruence through a zero identity.
+    /// Equal sine functions cancel; sine versus cosine at atan(3/4) instead gives -1/5,
+    /// using their distinct 3/5 and 4/5 values rather than merging function identities.
     fn relations_preserve_nearby_values_and_function_identity() {
         let epsilon = Rational::fraction(1, 1_000_000_000_000_u64).unwrap();
         for sign in [-1, 1] {
@@ -169,6 +200,9 @@ mod ring_relations_tests {
     }
 
     #[test]
+    /// Check small node/work/depth budgets, oversized integers and an extreme dyadic shift.
+    /// A stopped query must publish no root sign; clearing its signal permits a fresh
+    /// exact proof of the interleaved root/reciprocal identity.
     fn relation_limits_and_cancellation_allow_a_fresh_retry() {
         let mut value = cone_identity();
         for (nodes, work, depth) in [(2, 8192, 64), (512, 2, 64), (512, 8192, 2)] {

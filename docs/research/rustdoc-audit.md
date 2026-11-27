@@ -20297,6 +20297,119 @@ nonincremental Cargo target was reused. AGENTS.md's existing 100% public/private
 Rustdoc mandate remains in force. Repository-wide line review and coverage
 across all applicable configurations remain unfinished.
 
+## Hyperreal additional roots, reciprocal relations and proof-use gates (27 November 2026)
+
+Baseline: `8218836d4183f13e6c5f0baa25feb70cbc449aa9` on `rustdoc`.
+This documentation-only batch reviewed every line of three files, totaling 474
+baseline lines:
+
+| Whole-file review | Baseline lines | Lines after documentation |
+| --- | ---: | ---: |
+| `crates/hyperreal/src/computable/node/ring_relations.rs` | 154 | 207 |
+| `crates/hyperreal/src/computable/node/ring_relations_tests.rs` | 202 | 236 |
+| `crates/hyperreal/src/computable/node/ring_root_square_tests.rs` | 118 | 139 |
+
+Ownership is Hyperreal's bounded scalar relation recognition, P2–P6, consumed by
+normal-form queries and the P8–P11 predicate cascade. The domain is a compatible
+query-local quotient representation over defined native inputs, with principal
+roots admitted from nonnegative rational radicand projections and built-in pi
+constants retaining their exact definitions. The missing acceptance witness was
+item-level documentation of root/table preconditions, usage flags, partial
+mutation, and the differing ordinary/extended completion gates. The baseline
+all-feature ring suite passed 87 tests before edits.
+
+Contextual reads covered polynomial dispatch, trig projection and unit-circle
+flag writes, perfect rational root extraction, and the Real extended normal-form
+consumer. These are not additional whole-file reviews. The captured cone fixture
+was inspected for its consumer schema and 23 row names, not granted a complete
+line-by-line review of its 370,609 bytes or an independent geometric proof of
+those imported zero claims. That distinction is now explicit in the test's docs.
+
+The batch documents 33 blocks: two impls, four production methods, two test
+modules and 25 fixture/test functions. Six blocks were verified in ordinary
+private library HTML and 27 in temporary private test/helper HTML. Every named
+function, including crate-visible methods, matches a rendered block in the
+inventory. There are no selected derived traits or named local functions needing
+separate review. Closure locals were read with their enclosing bodies. Coverage
+is scoped to these files; it does not establish repository-wide or ghost/Verus
+configuration coverage.
+
+The reviewed contracts now distinguish:
+
+- rational_sqrt_atom requires the caller's actual Sqrt/radicand correspondence,
+  an enabled square table and compatible ordinary atom admission. It projects
+  the radicand before accepting q≥0. Perfect squares fold to nonnegative roots
+  and mark additional relation use. Registering or reusing a nonsquare root's
+  square relation does not mark use until a later reduction consumes it. Opaque
+  radicand dependencies retain the defined-real precondition; this helper is
+  not an arbitrary native-domain validator.
+- Square reduction scans sorted adjacent IDs and guards both the incoming and
+  resulting coefficients. Oversized incoming coefficients can decline even
+  if multiplication by a small square would shrink them. A failed product can
+  already have changed the coefficient; compacted prefixes and usage flags are
+  also local partial state, not transactional outputs.
+- Built-in Pi and InvPi are found by repeated full monomial scans, so their IDs
+  need not be adjacent. Removing a pair changes no coefficient. The pi-only
+  route relies on the caller's later coefficient guard; an empty monomial
+  has no work charge or cancellation poll.
+- Ordinary relation queries enable shared-root squares, rational root admission,
+  trig argument congruence, exact rational trig projection and unit-circle
+  reductions, but require additional_relation_used before publishing. A shared
+  sqrt(2)/sqrt(3) square alone does not satisfy that gate. Extended queries use
+  degree twelve and 32,768 charges without requiring a relation-use flag.
+- Late factored-zero recovery runs only after quotient expansion declines at an
+  Add root, using the same remaining work and child proofs. Projection failure
+  after successful expansion does not invoke that fallback. Neither query runs
+  earlier proof strategies on its own.
+- Final cancellation checks precede exact root-sign publication and the distinct
+  dispatch events. No numerical sample or retained rational tower is created;
+  failure supplies no negative fact and a fresh attempt can retry. Counters and
+  size limits are distinct from total arithmetic, elapsed time and memory bounds.
+
+Disposable probes ran against baseline and final sources with identical output.
+They checked exact folds of sqrt(0), sqrt(4), sqrt(9/16), nonsquare sqrt(5)
+registration/reuse and subsequent pair reduction, and rejection of a negative
+radicand before atom insertion. For 192 sorted monomials within degree eight,
+independent exponent/parity and integer-fraction expectations verified all
+combinations of sqrt(5), sqrt(7/11), Pi and InvPi under the probe's finite bounds,
+including separated pi pairs and the usage flag. Additional probes checked an
+oversized coefficient left by a failed square multiplication, unaltered oversized
+coefficients on the pi-only path, zero-work empty-term handling, and the ordinary
+versus extended query gate on a raw rational seven with sign-only publication.
+The oversized pi-only probe inspects an intermediate product before the caller's
+stored-coefficient guard; it does not claim that an oversized coefficient can be
+published by a completed query. Processes had external 1 GiB
+address-space, 10 CPU-second and 15 wall-second limits with core dumps disabled;
+these are harness containment, not production resource guarantees.
+
+After the final edit, locked/offline two-job validation passed:
+
+- Hyperreal library `computable::node::ring_`: 84 tests without default features
+  and 87 with all features, including the reviewed eight tests and the captured
+  fixture's 23 local zero projections.
+- Both `cargo doc --no-deps --document-private-items` builds, denying warnings,
+  broken intra-doc links and private intra-doc links.
+- All-feature `serde_graph_domains` (4 tests), `serde_opaque_operand_domains`
+  (5 tests), and downstream Hyperlimit `resolve::tests` (5 tests).
+- Temporary test/helper Rustdoc, all 33 rendered blocks, selected Rustfmt, and
+  git diff --check. All three files have identical raw non-comment tokens;
+  independently normalized comment-free source also agrees.
+
+The temporary renderer initially lacked the include_str fixture at its relative
+path; copying the unchanged fixture into the disposable tree resolved that setup
+failure. The inventory's scratch function matcher was extended to recognize
+pub(crate) methods before it could verify the complete rendered function list.
+Neither adjustment changed repository tests, data or validation requirements.
+No focused check remains blocked. Full workflows and performance measurements
+remain owner-waived for this documentation-only session; no performance claim
+is made. Evidence under `/tmp/csgrs-hyperreal-additional-relations-audit/` retains
+commands/logs, probe sources/results, fixture metadata and item/render/token
+inventories. Owned shadow sources, temporary fixture copy/HTML and probe binary/
+rlib were removed after inspection; the approximately 6.6 GiB shared Cargo target
+was reused with incremental builds disabled. AGENTS.md's existing 100% public/
+private Rustdoc mandate remains unchanged. Repository-wide line review and
+all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,7 +1,22 @@
-// Additional exact relations over the existing domain-checked quotient ring.
-// The principal square root satisfies sqrt(q)^2=q only for admitted q>=0.
-// Pi is nonzero, and its built-in reciprocal denotes exactly 1/pi.
+/// Extend a query's guarded quotient arithmetic with selected exact scalar identities.
+/// Admit sqrt(q)²=q only after establishing rational q≥0, and pi*InvPi=1 from
+/// the built-in constants' definitions. Opaque native dependencies still require
+/// prior defined-real admission; this is not a general domain-validation kernel.
 impl<'a> RingRecognition<'a> {
+    /// Admit a principal square root whose radicand has an exact nonnegative rational projection.
+    /// Expand the radicand under the same quotient budget and reject negative or unproved
+    /// values. After a charge, fold a perfect rational square to its nonnegative root
+    /// and mark additional_relation_used. Otherwise obtain an opaque root atom, then
+    /// reuse or append its (atom ID, rational square) entry; registering the entry alone
+    /// does not mark the relation used. Later multiplication must actually reduce it.
+    ///
+    /// The caller supplies value=Sqrt(radicand), an enabled rational_squares table and
+    /// compatible ordinary atom admission returning one degree-one monomial. This helper
+    /// does not verify the recipe/argument correspondence or validate arbitrary opaque
+    /// radicand dependencies. None combines domain/projection failure and spent limits;
+    /// local atoms, child projections or usage state may already have changed. No root
+    /// sample or global fact is published, and perfect-root arithmetic has no separate
+    /// internal cancellation poll supplied by this method.
     fn rational_sqrt_atom(
         &mut self,
         value: &'a Computable,
@@ -31,6 +46,20 @@ impl<'a> RingRecognition<'a> {
         Some(atom)
     }
 
+    /// Reduce registered rational root squares and exact built-in pi/inverse-pi pairs.
+    /// The caller supplies a sorted monomial, valid IDs and a compatible rational_squares
+    /// table. Scan adjacent equal IDs for a registered square, checking the incoming
+    /// coefficient before multiplying by that square and checking the result afterwards.
+    /// Thus an oversized incoming coefficient declines even when the square would shrink
+    /// it. A completed pair sets additional_relation_used and is removed from the term.
+    ///
+    /// Then repeatedly scan the whole remaining monomial for built-in Pi and InvPi,
+    /// which need not be adjacent, removing one pair per scan because pi*(1/pi)=1.
+    /// This cancellation changes no coefficient and needs no approximate nonzero test.
+    /// Scans and square products are charged. On None the coefficient, compacted prefix,
+    /// monomial or usage flag may already be changed; discard that candidate. An empty
+    /// term has no charge or stop poll. Successful pair removal does not replace the
+    /// caller's final stored-coefficient guard; the pi-only path does not check it.
     fn reduce_additional_relations(
         &mut self,
         monomial: &mut Vec<u8>,
@@ -97,7 +126,22 @@ impl<'a> RingRecognition<'a> {
     }
 }
 
+/// Run ordinary or extended exact relation attempts with distinct completion gates.
 impl Computable {
+    /// Try a rational quotient proof using admitted roots, built-in reciprocals and trig relations.
+    /// Start a fresh ordinary-limit attempt with shared sqrt(2)/sqrt(3) squares, rational
+    /// root admission and trig argument recognition enabled. The latter also supplies
+    /// exact rational trig values and certified unit-circle relations. A completed
+    /// projection succeeds only if additional_relation_used was set; merely registering
+    /// a nonsquare root, or using only a shared-root square, is insufficient for this
+    /// strategy. The flag can be set by rational root folding, additional square/pi
+    /// reduction, rational trig projection or unit-circle reduction.
+    ///
+    /// Defined native inputs and compatible inherited facts are preconditions. After
+    /// the final cancellation check, store the exact root sign and emit the
+    /// rational-root-reciprocal dispatch event. No numerical sample or retained rational
+    /// tower is created. None supplies no negative fact: unsupported proof shapes,
+    /// unproved domains, limits and cancellation all permit a later fresh retry.
     pub(crate) fn bounded_relation_rational(&self) -> Option<Rational> {
         let mut recognition = RingRecognition::new(self);
         recognition.root_squares = true;
@@ -115,12 +159,21 @@ impl Computable {
         Some(rational)
     }
 
-    /// The relation attempt above with degree 12 and 32,768 work charges.
+    /// Retry the relation strategy with degree twelve and 32,768 work charges.
+    /// Keep the node, depth, atom, term and coefficient limits unchanged. Unlike the
+    /// ordinary relation query, any completed rational projection is accepted without
+    /// a relation-use flag. After quotient expansion (including its normal recoveries)
+    /// declines, an Add root may try late factored-zero recovery with the same remaining
+    /// work and child proofs. Projection failure after successful expansion does not
+    /// invoke this fallback. The caller chooses when to attempt this more expensive
+    /// strategy after cheaper exact proof routes; it does not run those routes itself.
     ///
-    /// A completed projection is a proof whether or not one of the additional
-    /// relations was needed: the earlier attempts may have declined only at
-    /// their degree or work limit. Callers run this after every cheaper exact
-    /// stage, because a decline can now cost four times the work.
+    /// Require defined native inputs. A final stop check precedes exact sign publication
+    /// and the extended-relation dispatch event; no numerical sample or rational tower
+    /// is retained. Query-local state is dropped and failure is not cached. None combines
+    /// unsuccessful recognition, unproved domains and limits. These size/work counters
+    /// are not a total arithmetic, elapsed-time or allocation bound, and no approximation
+    /// policy is consumed.
     pub(crate) fn bounded_extended_relation_rational(&self) -> Option<Rational> {
         let mut recognition = RingRecognition::new(self);
         recognition.root_squares = true;
