@@ -14528,6 +14528,129 @@ probe executables were removed. The reused Cargo target remains approximately
 conformance/support files and the repository-wide audit remain open; this record
 is neither complete repository coverage nor universal arithmetic qualification.
 
+## Hyperlattice-interval cost/conformance programs (2026-11-27)
+
+Whole-file review on target revision fb492999695a3160d2cefd7aa18afecb8b2bba52:
+
+- crates/hyperlattice-interval/conformance/linear_cost.rs (119 -> 157 lines).
+- crates/hyperlattice-interval/conformance/width_cost.rs (87 -> 113 lines).
+- crates/hyperlattice-interval/conformance/norm_cost.rs (178 -> 208 lines).
+- crates/hyperlattice-interval/conformance/midpoint_radius_cost.rs (116 -> 148 lines).
+- crates/hyperlattice-interval/conformance/affine_cost.rs (125 -> 158 lines).
+- crates/hyperlattice-interval/conformance/affine_chain_cost.rs (126 -> 162 lines).
+- crates/hyperlattice-interval/conformance/centered_cost.rs (187 -> 227 lines).
+
+The owning layer is executable conformance/cost support. P1/P5/P6/P18/P20/P36/P37
+and the admission protocol govern exact expectations, subsequent consumption,
+resource/failure distinctions and honest completed-work reporting. The domain is
+these finite deterministic fixtures across fixed, qualified IEEE, rational and
+dyadic backends, with configured shapes and affine depths. All seven programs
+built and ran on the target revision before edits. Missing acceptance evidence
+was Rustdoc for private helpers, aliases, allocation-module declarations, entry
+points and measurement boundaries. Only comments changed; every assertion,
+operation order, scalar/context factory, report label, output string and fixture
+is unchanged. No implementation, feature, manifest or lockfile was modified.
+
+The 35 authored blocks cover all 19 function declarations, seven module introductions,
+seven allocation-module declarations and two type aliases. Review distinguishes:
+
+- Linear multiplication has native and scalar-loop paths behind the same function
+  pointer signature, warming both and alternating their order by sample. The
+  control initializes all four zeros before its loops, uses the same scalar
+  arithmetic, and assumes nonempty operands; it is not an independent general
+  kernel oracle. Aliasing input references does not establish correlated squaring.
+  Fixed/f64/dyadic use quarter-scaled ranges; small_rational uses unscaled ranges,
+  and wide_rational uses a different large positive interval. Cross-family timings
+  therefore do not all describe identical mathematical operands.
+- Widths are 10,20,16,0, with widest axis one. Preflight constructs expected widths
+  through the same backend API, while selection remains asserted inside timing.
+  Other timed width results are required to succeed and are dropped without a
+  repeated full comparison. Width-array/source sizes are inline carrier sizes.
+- Norm fixtures have vector ranges [6,13] and [3,5], matrix induced norms [7,14],
+  signed measures [-8,-1], dominance margins [1,8] and contraction margins
+  [-13,-6]. A completed negative margin is not a contraction certificate. Eleven
+  action labels distinguish the queries; I-A is preflight-checked entrywise.
+- Midpoint/radius forms retain original bounds with literal centers 2,4,1,0 and
+  radii 5,1,2,0 in vector and matrix layouts. Two measured actions move the same
+  source into a retained form and back, without cloning/projection; zero requests
+  are required for every backend. Four separate projection actions create contexts
+  and drop their results, requiring zero allocation requests only for primitives.
+  Source ownership is checked after sampling; setup clones remain outside timing.
+- Static affine depths are one, two and four; runtime depths are zero, one, four,
+  sixteen and 32 at capacity 32. The independent recurrence is y_n=y-n and
+  x_n=x+n*y+n-n(n-1)/2 over [-2,1] by [-1,3]. Restriction targets original parameters
+  (0,0). Preflight projects the restricted definition, but timed restriction only
+  constructs and drops it. Capacity bounds map count, not scalar heap storage or
+  total arithmetic work. Zero-depth chains still consume their Cartesian source.
+- Authored vectors use center i-3 and radius i mod 3 at N=4/64, across six scalar
+  families. The six actions separately cover ownership/validation, direct projection,
+  explicit subtract/add/hull, a fixed 2x3 matrix projection, translated-source
+  construction and translated-source projection. Reported N is the vector size;
+  the matrix action stays 2x3. Explicit arithmetic shares the kernel and is not
+  an independent oracle by itself; literal endpoint expectations are also checked.
+- Six programs time around the allocation wrapper, including reset/read overhead.
+  Centered-form timing begins inside the wrapper: counter setup/reads are excluded
+  from elapsed time, while clock calls lie inside the allocation scope. Context
+  creation and action output destruction are included; retained ownership-cycle
+  components survive. Printing, setup and preflight occur outside measured batches.
+  Most actions warm 64 times; centered actions warm 32. All sample 20 batches of
+  128 workload invocations. These counts are not counts of primitive scalar calls.
+- Main supplies fresh 256-bit/1,000,000-work dyadic contexts. Counter observations
+  are cumulative allocation requests/bytes, not peak/live memory or a budget.
+  Primitive zero-allocation assertions apply to these completed measured fixtures.
+  Panics stop reporting rather than becoming qualified failure rows; there is no
+  built-in timeout or cancellation contract. Prior successful rows may already exist.
+
+The previously audited allocations.rs was re-read unchanged for its global scope,
+relaxed counters, requested-byte accounting and unwind limitation. Its prior record
+remains the whole-file audit authority. Additional context included authored-form
+validation/projection, width ordering and the manifest's required example features;
+those excerpts do not add new whole-file coverage claims for implementations.
+
+Validation after final edits:
+
+- Locked/offline Cargo, j2, incremental disabled, reused target. All seven examples
+  built with all features and ran to completion in debug mode before and after.
+  Each process had an external 180-second timeout, which is not an API guarantee.
+  There were 4,440 data rows and 568,320 timed workload invocations per revision,
+  excluding warmups/preflight. Row counts were linear 200, width 160, norm 880,
+  midpoint/radius 480, static affine 480, runtime affine 800 and authored 1,440.
+- Every non-timing CSV field matched between revisions, including counts, action/
+  depth/dimension metadata and allocated bytes. All stderr bytes matched, including
+  materialized linear outputs, affine enclosures and inline sizes. Required zero
+  allocation assertions passed, including retained midpoint/radius ownership cycles
+  for rational/dyadic cases. Timing fields were deliberately excluded from equality;
+  these debug runs do not establish a release-performance or peak-memory claim.
+- Independent Python Fraction arithmetic decoded actual fixed, IEEE bit-pattern,
+  rational and dyadic diagnostic endpoints. All five linear outputs and all 32
+  static/runtime affine diagnostics matched exact expectations on each revision.
+  The unscaled matrix product has row-major bounds [-3,11], [-10,11], [-8,6],
+  [-3,18]; scaled families divide these by 16. Wide rational entries give
+  [2*lower^2,2*upper^2]. Iterating source corners independently checked every affine
+  recurrence and selected point. Width, midpoint/radius, signed norm/margin and
+  authored-form expectations were also derived independently of the kernels.
+- All seven examples passed cargo check with no default features and only the four
+  required features fixed,rational,dyadic,float-enclosure. Private Rustdoc denied
+  warnings, broken links and private-link violations. All 34 nonlocal authored
+  blocks rendered in full, along with all 12 existing allocator blocks in each
+  inclusion. The one function-local Operation alias has no ordinary Rustdoc page;
+  its source attachment was checked and its prose rendered separately as Markdown.
+- Removing only comments and blank lines leaves identical remaining source bytes
+  in all seven files, with digests recorded. All 19 function declarations have
+  attached Rustdoc. Selected-file rustfmt and git diff --check passed. The root
+  100% public/private/generated mandate remains active. Full workflow checks remain
+  owner-waived for this docs-only session; no new universal arithmetic, allocation,
+  cancellation, size or performance claim is made.
+
+Evidence: /tmp/csgrs-rustdoc-interval-cost-{build-before,before,build-after,after,
+validation,compare,math,check-min}.log and /tmp/csgrs-interval-cost-audit/ (actual
+artifact paths, all before/after CSV and stderr, non-timing comparison digests,
+exact calculations, rendered-text matches and validation scripts). Owned duplicate
+HTML was removed; the shared Cargo target is approximately 4.3 GiB, with no second
+target. No focused check remains blocked. Remaining platform conformance/support
+files and the repository-wide audit remain open; this batch does not establish
+complete repository coverage or a general performance envelope.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

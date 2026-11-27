@@ -1,4 +1,13 @@
 //! Retained authored definitions and complete endpoint projections.
+//!
+//! Fixtures and preflight checks precede sampling. Results are materialized and
+//! consumed/dropped in each action, except explicit ownership cycles that retain the
+//! same source. Reported bytes count cumulative allocator requests, not live/peak
+//! memory; inline sizes exclude heap payloads. The global counter assumes no nested
+//! measurement or unrelated concurrent allocations. Errors and failed assertions
+//! panic rather than becoming successful or failed timing rows. Printed rows cover
+//! completed batches only; the program installs no timeout or cancellation bound.
+
 use hyperlattice_interval::hyperinterval::{
     DyadicBudget, DyadicInterval, F32Enclosure, F64Enclosure, FixedInterval, RationalInterval,
 };
@@ -6,8 +15,33 @@ use hyperlattice_interval::{
     CenteredMatrix, CenteredVector, IntervalArithmetic, IntervalMatrix, IntervalVector,
 };
 use std::{hint::black_box, time::Instant};
+/// Process-global allocation-request observer shared by the conformance executables.
+/// Requires a single nonnested scope; cumulative requested bytes are not peak memory.
 mod allocations;
 
+/// Check authored boxes with center i-3 and radius i mod 3 for lanes i=0..N.
+/// Literal endpoints are center±radius. Also check a 2x3 authored matrix whose every
+/// entry has center three, radius one and enclosure `[2,4]`. The explicit subtract/add/
+/// hull path shares native arithmetic; agreement alone is not an independent oracle.
+/// Configured N=4 or 64 keeps index casts and fixture endpoint arithmetic representable.
+/// Print inline sizes for carriers, component pairs and translated definitions;
+/// these omit any backend heap payloads.
+///
+/// Six numeric action labels identify completed workloads:
+/// - 0: move the same owned center/radius pair into a validated definition and back.
+/// - 1: project the retained authored vector to endpoint intervals.
+/// - 2: explicitly compute center-radius, center+radius and their hull in one context.
+/// - 3: project the fixed 2x3 authored matrix, independent of the reported vector N.
+/// - 4: construct and drop an exact translated affine source from the authored form.
+/// - 5: project the already prepared translated source.
+///
+/// Each action warms 32 times, then records 20 batches of 128 calls. Unlike the other
+/// cost programs, the timer starts inside allocations::measure, so counter reset/
+/// enable/read overhead is excluded from elapsed time, while clock calls lie inside
+/// the allocation scope. Context construction and output drops remain inside the
+/// action. Owned components survive action zero and are checked after all samples;
+/// no clone occurs inside that ownership cycle. Primitive cases assert zero requests
+/// for every action. Printing and setup clones are outside measurement.
 fn family<I: IntervalArithmetic + PartialEq + core::fmt::Debug, const N: usize>(
     name: &str,
     scalar: impl Fn(i32, i32) -> I,
@@ -110,6 +144,12 @@ fn family<I: IntervalArithmetic + PartialEq + core::fmt::Debug, const N: usize>(
     assert_eq!(owned.unwrap(), form.into_parts().unwrap());
 }
 
+/// Emit the centered-cost CSV header and run N=4 and 64 for six scalar families.
+/// The four primitive families are i32 Q16, i64 Q32, f32 and f64; all fixture integers
+/// are exactly representable. Rational and dyadic cases retain exact integer inputs;
+/// each dyadic query receives a fresh 256-bit/1,000,000-work context. Unsupported
+/// floating environments, failed native operations or assertions panic. Reported N
+/// selects vector size; each matrix action still uses the same 2x3 shape.
 fn main() {
     println!("family,dimension,action,sample,repetitions,nanoseconds,allocations,bytes");
     family::<_, 4>(

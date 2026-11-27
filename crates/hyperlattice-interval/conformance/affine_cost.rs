@@ -1,4 +1,13 @@
 //! Completed exact affine queries/restrictions, with retained definitions.
+//!
+//! Fixtures and preflight checks precede sampling. Results are materialized and
+//! consumed/dropped in each action, except explicit ownership cycles that retain the
+//! same source. Reported bytes count cumulative allocator requests, not live/peak
+//! memory; inline sizes exclude heap payloads. The global counter assumes no nested
+//! measurement or unrelated concurrent allocations. Errors and failed assertions
+//! panic rather than becoming successful or failed timing rows. Printed rows cover
+//! completed batches only; the program installs no timeout or cancellation bound.
+
 use hyperlattice_interval::hyperinterval::{
     DyadicBudget, DyadicInterval, F64Enclosure, FixedInterval, RationalInterval,
 };
@@ -6,8 +15,23 @@ use hyperlattice_interval::{
     AffineImage, AffineMap, AffineSource, IntervalArithmetic, IntervalMatrix, IntervalVector,
 };
 use std::{hint::black_box, time::Instant};
+/// Process-global allocation-request observer shared by the conformance executables.
+/// Requires a single nonnested scope; cumulative requested bytes are not peak memory.
 mod allocations;
 
+/// Check the independent recurrence, then time projection and owned restriction.
+/// For n repeated maps (x,y)->(x+y+1,y-1), y_n=y-n and
+/// x_n=x+n*y+n-n(n-1)/2. The fixture source is `[-2,1]` by `[-1,3]`;
+/// restricting its original parameters to (0,0) gives (n-n(n-1)/2,-n).
+/// Depth is caller-supplied fixture metadata, paired with the constructed definition;
+/// arbitrary depths/inputs are not validated by this helper.
+///
+/// Preflight checks both full and restricted projections. Timed restriction constructs
+/// and drops the restricted definition without projecting it. Each action calls the
+/// context factory, warms 64 times, then completes 20 batches of 128 calls. Timing
+/// includes counter setup/reads, context construction and output destruction, but
+/// excludes fixture setup, preflight and printing. Primitive batches require zero
+/// allocation requests. Inline image size excludes retained heap payloads.
 fn measure<I, S>(
     name: &str,
     depth: i32,
@@ -71,6 +95,10 @@ fn measure<I, S>(
     }
 }
 
+/// Build nested exact images of one source under (x,y)->(x+y+1,y-1).
+/// Measure depths one, two and four; the depth-four definition wraps two additional
+/// maps around the retained depth-two image. Source/map construction is outside each
+/// measurement. Subsequent maps consume retained definitions, not projected boxes.
 fn family<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     name: &str,
     scalar: impl Fn(i32, i32) -> I,
@@ -94,6 +122,11 @@ fn family<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     measure(name, 4, &four, &scalar, &mut context, primitive);
 }
 
+/// Emit the CSV header, then run fixed Q16, qualified f64, rational and dyadic cases.
+/// The small integer endpoints are exactly representable in every selected family.
+/// Primitive cases assert zero allocation requests; dyadic queries receive fresh
+/// 256-bit/1,000,000-work contexts. Unsupported float environments or any unexpected
+/// native failure panic. CSV goes to stdout and fixture/inline-size evidence to stderr.
 fn main() {
     println!(
         "backend,depth,action,sample,completed_operations,elapsed_ns,allocation_calls,allocated_bytes"

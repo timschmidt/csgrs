@@ -1,11 +1,27 @@
 //! Completed retained decompositions and explicit center/radius projections.
+//!
+//! Fixtures and preflight checks precede sampling. Results are materialized and
+//! consumed/dropped in each action, except explicit ownership cycles that retain the
+//! same source. Reported bytes count cumulative allocator requests, not live/peak
+//! memory; inline sizes exclude heap payloads. The global counter assumes no nested
+//! measurement or unrelated concurrent allocations. Errors and failed assertions
+//! panic rather than becoming successful or failed timing rows. Printed rows cover
+//! completed batches only; the program installs no timeout or cancellation bound.
+
 use hyperlattice_interval::hyperinterval::{
     DyadicBudget, DyadicInterval, F64Enclosure, FixedInterval, RationalInterval,
 };
 use hyperlattice_interval::{IntervalArithmetic, IntervalMatrix, IntervalVector};
 use std::{hint::black_box, time::Instant};
+/// Process-global allocation-request observer shared by the conformance executables.
+/// Requires a single nonnested scope; cumulative requested bytes are not peak memory.
 mod allocations;
 
+/// Warm an action 64 times, then print 20 samples of 128 completed invocations.
+/// Timing surrounds the allocation wrapper, including its reset/read overhead.
+/// The closure determines whether an invocation projects/drops a result or moves a
+/// retained definition through an ownership cycle. zero_alloc asserts both counters
+/// are zero after the timer; printing occurs afterward. Panics propagate.
 fn measure(name: &str, action: &str, zero_alloc: bool, mut operation: impl FnMut()) {
     for _ in 0..64 {
         operation();
@@ -24,6 +40,17 @@ fn measure(name: &str, action: &str, zero_alloc: bool, mut operation: impl FnMut
         println!("{name},{action},{sample},128,{elapsed},{calls},{bytes}");
     }
 }
+/// Retain four interval lanes and the same entries as a 2x2 matrix.
+/// Literal midpoint values are 2,4,1,0 and radii 5,1,2,0, all exactly representable
+/// in these fixtures. Check both projections before measuring, and report inline
+/// source/form sizes without interpreting those sizes as total memory.
+///
+/// Two actions repeatedly move source bounds into a decomposition and back through
+/// Option, with no clone or projection inside the ownership cycle. They assert zero
+/// allocation requests for every backend and verify the returned source afterward.
+/// Four projection actions query vector/matrix midpoint/radius separately, create a
+/// context per query and drop results; only primitive projections require zero
+/// allocations. The setup clones and final ownership checks occur outside measurement.
 fn family<I: IntervalArithmetic + PartialEq + core::fmt::Debug>(
     name: &str,
     scalar: impl Fn(i32, i32) -> I,
@@ -85,6 +112,11 @@ fn family<I: IntervalArithmetic + PartialEq + core::fmt::Debug>(
         black_box(black_box(&m).radius_enclosure(&mut context()).unwrap());
     });
 }
+/// Emit the CSV header, then run fixed Q16, qualified f64, rational and dyadic cases.
+/// The small integer endpoints are exactly representable in every selected family.
+/// Primitive cases assert zero allocation requests; dyadic queries receive fresh
+/// 256-bit/1,000,000-work contexts. Unsupported float environments or any unexpected
+/// native failure panic. CSV goes to stdout and fixture/inline-size evidence to stderr.
 fn main() {
     println!(
         "backend,action,sample,completed_operations,elapsed_ns,allocation_calls,allocated_bytes"
