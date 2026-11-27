@@ -1492,6 +1492,16 @@ impl Computable {
         self.cheap_bound().certified_sign_and_msd()
     }
 
+    /// Recover a rational inverse from exact one-half or a fully matching retained CDF graph.
+    /// First recognize rational 1/2 as zero. Otherwise the Offset/Add/Multiply/
+    /// ErfSeries shape suggests an erf argument; a pure quadratic projection and
+    /// a perfect square root of twice its radicand suggest a rational inverse.
+    /// Reconstruct the entire native CDF and require structural equality before
+    /// accepting it. The embedded argument alone is insufficient, as a changed
+    /// additive constant demonstrates. No numerical tail probability is evaluated.
+    /// None means this optional recognition declined, not an invalid probability
+    /// or a proof that its inverse is irrational. This helper assumes defined
+    /// children and adds no total-work, memory or cancellation contract.
     pub(crate) fn exact_normal_quantile(&self) -> Option<Rational> {
         if self.exact_rational().as_ref() == Some(&*HALF_RATIONAL) {
             return Some(Rational::zero());

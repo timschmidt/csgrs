@@ -18777,6 +18777,152 @@ universal closure claim was established. AGENTS.md already records the required
 future-agent public/private Rustdoc mandate and private-build requirement. The
 repository-wide line review and 100% Rustdoc coverage remain incomplete.
 
+## Statistical approximation and retained normal-quantile evidence
+
+On 2026-11-27, reviewed the following whole files at clean rustdoc baseline
+00f02d0a053879f74d4edf7e8e1c324e3a0da9c8:
+
+| File | Baseline lines | Documented declarations |
+| --- | ---: | ---: |
+| crates/hyperreal/src/computable/approximation/statistics.rs | 258 | 11 |
+| crates/hyperreal/tests/normal_quantile_evidence.rs | 294 | 10 |
+
+The 552-line whole-file review is supplemented by two named-item reviews:
+Computable::normal_quantile in computable/node/algebra.rs and
+Computable::exact_normal_quantile in computable/node/structural_analysis.rs.
+Only those items receive scoped credit; neither large containing file is claimed
+complete. Twenty-four Rustdoc blocks cover twenty-three declarations and the
+integration crate overview: twenty-three new blocks and one extended public
+constructor description.
+Hyperreal owns this contract (P1–P7, with retained composition/replay relevant to
+P19/P20). The missing acceptance was documentation of the auxiliary series,
+CDF-certified inverse search, exact reconstruction and actual reference scope.
+
+For defined finite x, the auxiliary series is S(x)=sqrt(pi)*exp(x^2)*erf(x)/2,
+not erf itself. The enclosing constructor supplies the Gaussian and normalization.
+Terms begin at x and advance by 2*x^2/(2*n+3). A coarse sample at -10 estimates
+squared magnitude and guard demand; the working operand receives eight additional
+bits. A zero next term or a decreasing rounded-term geometric-tail criterion
+stops summation before adding that next term. The exact term ratios eventually
+decrease, but the implementation uses rounded terms and planning guards, not a
+separately returned accumulated-error interval. Finite sample checks do not
+establish that rounding/truncation bound for every magnitude and precision.
+A stop in the loop returns a partial sum for the caller to reject; initial
+planning precedes that poll. Growth can be exponential in x squared, with no
+cumulative work or heap-byte budget.
+
+The erfc, survival, interval and logarithmic wrappers construct exact expressions
+and delegate refinement. They do not subtract independently rounded point values.
+Nor do they implement separate asymptotic tail formulas. The interval kernel is
+an oriented CDF difference and accepts reversed endpoints as a negative result;
+public Real admission owns the ordered-interval rule. Log density instead uses
+-x^2/2-ln(2*pi)/2 analytically, avoiding an exponentially small intermediate.
+Public Real's practical input windows are distinct from these native definitions.
+
+The quantile probe uses samples of the probability and CDF at trial-2/trial+2
+working units, then the center when necessary. A sampled difference greater than
+two units separates the two one-unit enclosures. Equal means a strictly enclosing
+neighborhood, not exact trial/root equality; Greater/Less certify order. The
+center permits progress when a neighborhood endpoint equals the root. Magnitude
+only plans guard bits. Refinement saturates in sixteen-bit steps, with no
+iteration cap; MIN is not a typed exhaustion terminal and can be retried forever
+or encounter child arithmetic limits. Valid interior probability is a precondition,
+not something this helper proves for arbitrary imported graphs.
+
+Bisection trusts an inclusive input bracket at a grid four times finer than the
+output. A successful neighborhood probe permits rounding trial/4; a final width
+of at most four permits rounding (lower+upper)/8. Half-width plus nearest rounding
+is at most one output unit, conditional on valid child enclosures. Positive output
+precisions rescale a precision-zero result. Finer requests recursively obtain a
+coarser certified bracket and propose one Newton correction; only a fresh CDF
+neighborhood witness permits accepting the proposal. Otherwise they bisect the
+old bracket. Coarse requests guard seed materialization using exponent plus bit
+count, then expand from -1/+1 until strict CDF orders bracket the root. Neither
+seed quality nor Newton convergence is accepted as a certificate.
+
+The exact recognizer first handles rational one half. Otherwise a retained
+Offset/Add/Multiply/ErfSeries shape suggests an argument, a quadratic projection
+and perfect square root suggest a rational inverse, and complete native CDF
+reconstruction must structurally match. A nearby-looking graph is insufficient:
+the altered-CDF fixture changes its constant and requires a different result.
+None declines optional recognition rather than deciding domain validity or
+irrationality. The native constructor assumes (0,1), retains the raw seed and
+exponent without adopting them as the quantile, and starts its outer signal unset.
+It supplies no typed probability admission or new total resource bound.
+
+A contained debug probe reproduced three existing kernel overflow paths on the
+baseline and final source: a directly imported ErfSeries at x=65536,p=0 overflows
+the to_prec MAX fallback plus two; the series at x=1,p=MIN overflows -p; an ordinary three-quarter
+quantile at output precision MIN overflows prec-2. The first two use the retained
+series payload directly, not a claim about every public Real::erf dispatch path.
+The probe catches the panics and records them; its successful process exit is
+not successful library evaluation. Before/after result text is byte-identical,
+with source-line movement in separate stderr logs. These remain P5/P6 follow-up
+rather than typed exhaustion or an intentional domain migration. No release-
+overflow behavior or huge-allocation completion claim is made. The process caps
+were 1 GiB address space, ten CPU seconds and fifteen wall seconds, with core
+dumps disabled. Executable behavior is unchanged.
+
+The quantile fixture's MPFR CDF is a nearest-rounded 384-bit point reference,
+not a directed interval. Endpoint comparison uses strict monotonicity as its
+mathematical motivation but does not certify exact CDF inequalities through
+unbounded rounding assumptions. Corrected the previous overstrong plain comment
+and documented this limit. No assertion or precision was weakened. This test file
+does not register the shared backend-cache cleanup helper; no memory-lifetime
+qualification is claimed for it.
+
+The fixture covers five half-probability seeds, thirty probability/seed pairs
+with native and optional JSON/CBOR forms, sixteen concurrent queries, entry
+stop/retry, eighteen exact CDF compositions and changed/imported graph scenarios. More precisely, composition replay uses six dyadic
+arguments and three seeds, and half-quantile replay uses three seeds and twelve
+scaled Real wrappers. Extreme seed exponents are not extreme output-precision
+requests. Exact downstream rational values, inverse errors and serialization
+stability are distinct from MPFR comparisons. Replay is same-process, not a
+fresh-process or arbitrary-hostile-graph qualification.
+
+Independent Fraction checks exercised 3,025 two-sample order cases, 7,722
+neighborhood cases, 1,485 bracket-rounding cases, 975 probe-rounding cases,
+64 series coefficient identities and 344 exact-term geometric-tail comparisons.
+These support the described algebra and conditional error allowances, not the
+rounded series' complete error proof or universal implementation correctness.
+
+Before editing, all seven all-feature quantile evidence tests and four named
+kernel tests passed. Final checks passed five no-default and seven all-feature
+evidence tests, plus the same four kernel tests in both configurations. Four
+public Real consumer tests passed: normal_exact_cases, normal_known_values,
+normal_round_trips_and_symmetry and normal_domain_errors. Initial consumer filters
+selected zero tests because real::tests contains a nested tests module; the
+corrected fully qualified filters each exercised one test. Zero-test runs are
+not counted as evidence. This is focused scalar/public consumption, not full
+repository or downstream geometry qualification.
+
+After the final documentation edits, both evidence configurations and both
+private doc builds passed again. The doc builds denied warnings and broken or
+private intra-doc links. Thirteen blocks matched actual private library pages;
+eleven integration blocks, including the crate overview, matched temporary
+private Rustdoc pages with seven test attributes removed in a copy. No source
+fixture or assertion was removed. All twenty-four blocks were accounted for.
+No focused check remains blocked; the documented overflow paths remain unfixed.
+
+All four changed Rust files preserve raw executable/signature tokens exactly.
+Selected Rustfmt passed for the two whole-file reviews and git diff --check
+passed. Only comments changed in the two scoped large files; they were not
+wholesale reformatted or credited as fully reviewed. Construction, predicate
+order, dispatch calls, policies, numerical tolerances and serialized definitions
+are unchanged. Full workflow checks remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-statistics-audit/ includes baseline/final logs,
+commands, exact arithmetic checks, declaration/token inventories, rendered-block
+matches and the contained probe's source and before/after output. Locked/offline
+nonincremental builds reused the shared target, roughly 6.5 GiB. The owned probe
+executable and duplicate temporary HTML were removed after inspection. CDF/erf
+constructors, Real admission and consumer excerpts supplied context without
+additional whole-file credit; the large normal-reference fixture was not audited
+in this batch. No performance, complete roundoff, memory-lifetime or universal
+completion claim is made. AGENTS.md already mandates future-agent public/private
+Rustdoc coverage and private builds. Repository-wide review and 100% coverage
+remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

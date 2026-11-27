@@ -2393,6 +2393,15 @@ impl Computable {
     /// The seed is an evaluation hint. A retained CDF identity or numerical
     /// enclosures certify the result; safeguarded Newton iteration and monotone
     /// search repair inaccurate seeds.
+    /// This native constructor assumes the probability domain; it does not return
+    /// a typed validation error for endpoints or invalid imported graphs. A
+    /// recognized rational CDF inverse returns immediately; otherwise retain p,
+    /// the raw seed integer and its binary exponent in a boxed payload. The outer
+    /// signal starts unset, including
+    /// on exact shortcuts; retaining a child is not automatic abort inheritance.
+    /// Numerical evaluation has no new total-work or heap-byte limit, and extreme
+    /// output precision can encounter unchecked integer overflow. Public Real
+    /// entry points apply their own admission and practical-window rules.
     pub fn normal_quantile(p: Computable, seed: BigInt, seed_prec: Precision) -> Computable {
         if let Some(exact) = p.exact_normal_quantile() {
             return Self::rational(exact);
