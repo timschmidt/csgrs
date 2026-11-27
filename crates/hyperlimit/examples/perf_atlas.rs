@@ -9,9 +9,11 @@
 //! Frame converts integer lattices into binary64-backed, integer, fractional, or
 //! symbolic scale/translation recipes; separate trigonometric recipes use rational
 //! angles in radians. Input rebuilds non-ready terms with fresh local atom cells on
-//! each call, while ready geometry is retained. This includes construction cost in
-//! symbolic timings but does not prove all kernel/shared caches are cold. Selecting
-//! a policy and obtaining a value do not establish a certified receipt or an
+//! each call, while ready geometry is retained within its Input. The default atlas
+//! harness regenerates those Input objects outside timing for each call; symbolic
+//! reconstruction remains inside timing. Neither strategy proves all kernel/shared
+//! caches are cold. Selecting a policy and obtaining a value do not establish
+//! a certified receipt or an
 //! independently correct geometric answer.
 //!
 //! Atlas success flags depend on each callback's return contract. For example,
@@ -1352,49 +1354,88 @@ type In3 = Input<Geo<Point3>>;
 // ---------------------------------------------------------------------------
 // The four determinant predicates.
 
-/// Lattice bits used for each determinant construction so that f64 views
-/// stay exact.
+/// Nominal planar orientation lattice width; actual f64 coordinates still pass Frame width assertions.
 const ORIENT2_BITS: u32 = 48;
+/// Nominal spatial orientation lattice width before unimodular mixing and conversion checks.
 const ORIENT3_BITS: u32 = 44;
+/// Circle frame scaling width; the generator separately chooses its fixed center/rotation widths.
 const CIRCLE_BITS: u32 = 52;
+/// Sphere frame scaling width; the generator separately chooses quaternion and center widths.
 const SPHERE_BITS: u32 = 52;
 
-/// Builds lattice points at a degeneracy level (`None`: exactly degenerate).
+/// Callback producing ordered D-dimensional sites for a finite level or exact-degeneracy sentinel None.
 type Lattice<const D: usize> = fn(&mut Rng, Option<u32>) -> Vec<[Int; D]>;
 
+/// One named determinant workload's dimensional generator, decoder metadata, and value-only callbacks.
+///
+/// The private registry is trusted: names choose decoders, generator preference is
+/// planar-first, and inactive callbacks panic. This record validates none of those
+/// relationships and carries no independent expected sign or certainty assertion.
 struct Det {
+    /// Exact dispatch/report name; also selects decoder point count and specialized registration paths.
     name: &'static str,
+    /// Human-readable operation description interpolated into emitted atlas descriptions.
     what: &'static str,
+    /// Nominal lattice bit width supplied to Frame; not an enforced coordinate bound.
     base: u32,
+    /// Family finite-level limit, further capped by standard axis/fuzz helpers.
     kmax: u32,
+    /// Optional planar generator, preferred when present even if make3 is also present.
     make2: Option<Lattice<2>>,
+    /// Optional spatial generator used only when make2 is absent.
     make3: Option<Lattice<3>>,
+    /// Planar callback returning a decided sign or None, without the original certainty/reason.
     run2: fn(&Geo<Point2>, PredicatePolicy) -> Option<hyperlimit::Sign>,
+    /// Spatial callback returning a decided sign or None, without the original certainty/reason.
     run3: fn(&Geo<Point3>, PredicatePolicy) -> Option<hyperlimit::Sign>,
 }
 
+/// Build three 48-bit-base planar determinant sites and discard the returned source direction.
+///
+/// Inherits near_collinear2's exact determinant/degenerate branches, input
+/// preconditions, and unbounded coprime search; no predicate result is checked here.
 fn orient2_points(rng: &mut Rng, k: Option<u32>) -> Vec<[Int; 2]> {
     near_collinear2(rng, ORIENT2_BITS, k).0.to_vec()
 }
+/// Build the Generic 44-bit-base tetrahedron and retain only its four sites.
+///
+/// Inherits near_coplanar3's determinant construction and search preconditions;
+/// apex and in-plane auxiliary displacements are discarded.
 fn orient3_points(rng: &mut Rng, k: Option<u32>) -> Vec<[Int; 3]> {
     near_coplanar3(rng, ORIENT3_BITS, k, Coplanar::Generic)
         .points
         .to_vec()
 }
+/// Return three circle sites and query from the exact lattice-circle generator.
+///
+/// Discards center/radius metadata and inherits the unbounded candidate search;
+/// this wrapper does not independently test radial relations or predicate signs.
 fn incircle_points(rng: &mut Rng, k: Option<u32>) -> Vec<[Int; 2]> {
     near_cocircular2(rng, k).points.to_vec()
 }
+/// Return four sphere sites and query from the lattice-sphere generator.
+///
+/// Discards center/radius metadata and inherits noncoplanarity/decomposition searches;
+/// no independent predicate or receipt assertion occurs.
 fn insphere_points(rng: &mut Rng, k: Option<u32>) -> Vec<[Int; 3]> {
     near_cospherical3(rng, k).points.to_vec()
 }
 
+/// Panic if an inactive planar callback is invoked; a Det record must select the spatial generator instead.
 fn no2(_: &Geo<Point2>, _: PredicatePolicy) -> Option<hyperlimit::Sign> {
     unreachable!()
 }
+/// Panic if an inactive spatial callback is invoked; a Det record must select the planar generator instead.
 fn no3(_: &Geo<Point3>, _: PredicatePolicy) -> Option<hyperlimit::Sign> {
     unreachable!()
 }
 
+/// Return the four determinant registry entries in orientation/circle/sphere order.
+///
+/// Each selects exactly one dimensional generator; the other callback panics.
+/// Callbacks index the required point count and return only the outcome value,
+/// dropping certainty and Unknown reasons. kmax is 96,132,92,92 respectively;
+/// standard finite axes later cap it at 96. No record-consistency validation occurs.
 fn dets() -> [Det; 4] {
     [
         Det {
@@ -1441,8 +1482,14 @@ fn dets() -> [Det; 4] {
 }
 
 impl Det {
-    /// Sweep one kind/frame family over an axis, building the lattice
-    /// configuration at degeneracy `k(m)` in the frame `frame(m)`.
+    /// Register a dimensional sweep with lattice level k(m) and the supplied frame constructor.
+    ///
+    /// Prefers make2 if both generators are present; does nothing if neither exists.
+    /// Builds sites before drawing frame parameters. Atlas seeds by operation and label,
+    /// regenerates inputs outside timing by default, then times Input::run; symbolic
+    /// reconstruction happens inside that call. Option presence marks only the initial
+    /// probe's success, without a sign/receipt assertion. Builder/callback consistency
+    /// and valid levels are caller obligations; no local resource limit is imposed.
     fn sweep(
         &self,
         atlas: &mut Atlas,
@@ -1479,7 +1526,9 @@ impl Det {
         }
     }
 
-    /// Builder for this predicate's 2D points (3 for orient2, 4 for incircle2).
+    /// Choose the three-point decoder only for the exact name orient2, otherwise the four-point decoder.
+    ///
+    /// Does not check make2 or reject other names; registry consistency is assumed.
     fn build2(&self) -> fn(Vec<Real>) -> Geo<Point2> {
         if self.name == "orient2" {
             geo2_3
@@ -1488,7 +1537,9 @@ impl Det {
         }
     }
 
-    /// Builder for this predicate's 3D points (4 for orient3, 5 for insphere3).
+    /// Choose the four-point decoder only for the exact name orient3, otherwise the five-point decoder.
+    ///
+    /// Does not check make3 or reject other names; registry consistency is assumed.
     fn build3(&self) -> fn(Vec<Real>) -> Geo<Point3> {
         if self.name == "orient3" {
             geo3_4
@@ -1497,6 +1548,12 @@ impl Det {
         }
     }
 
+    /// Register degeneracy versus a second frame axis using the selected dimensional generator.
+    ///
+    /// Prefers make2; neither generator means no registration. Sites are generated
+    /// before frame parameters. Atlas seeds separately from ordinary sweeps and may
+    /// block later cells based on observed/predicted cost; this is not guaranteed full
+    /// grid completion. Callbacks retain values only and no expected result is asserted.
     fn grid(
         &self,
         atlas: &mut Atlas,
@@ -1535,6 +1592,14 @@ impl Det {
         }
     }
 
+    /// Register seeded randomized atlas samples, jittering finite levels upward by 0..=7.
+    ///
+    /// Clamps finite k to min(kmax,96); values at least 112 select exact degeneracy.
+    /// This differs from level for NaN, which follows the finite cast path here.
+    /// Intended axes are bounded nonnegative values; cast/add arithmetic is not general
+    /// input validation. Draws k, then lattice sites, then frame parameters in that order.
+    /// Dimensional preference and unvalidated callback assumptions match sweep. The
+    /// shared harness can stop after ceiling/panic observations; this is not libFuzzer.
     fn fuzz(
         &self,
         atlas: &mut Atlas,
@@ -1580,8 +1645,13 @@ impl Det {
         }
     }
 
-    /// Shewchuk's adaptive f64 predicate (`robust` crate) on the same f64
-    /// inputs, for reference.
+    /// Register robust's adaptive binary64 determinant using this family's lattice/frame recipe.
+    ///
+    /// Dispatches only the four known names, panicking otherwise. It constructs the
+    /// frame before sites, unlike the Hyperlimit sweep; the reference label also selects
+    /// a different RNG stream. Thus it does not run on the exact same sampled inputs.
+    /// Raw numeric outcomes always count as success in the shared atlas, without a
+    /// cross-library sign comparison, finiteness check, or certainty receipt.
     fn reference(&self, atlas: &mut Atlas, axis: &[f64]) {
         let base = self.base;
         let frame = move |rng: &mut Rng| Frame::new(Kind::F64, base, 0, rng);
@@ -1615,8 +1685,12 @@ impl Det {
         }
     }
 
-    /// Points on a circle or sphere given by cosines and sines, so exact
-    /// degeneracy hides `cos^2 + sin^2 = 1`.
+    /// Register approximate and strict trigonometric circle/sphere sweeps; ignore other names.
+    ///
+    /// Source sites use rational-angle sine/cosine identities. Both series rebuild terms
+    /// within the timed callback, but their labels yield different sampled inputs.
+    /// Only value presence is recorded; the method does not assert which policy decides
+    /// an identity, whether a decision is approximate, or agreement between series.
     fn trig(&self, atlas: &mut Atlas, axis: &[f64]) {
         for kind in [Kind::Trig, Kind::TrigStrict] {
             match self.name {
@@ -1637,8 +1711,18 @@ impl Det {
         }
     }
 
-    /// The predicate with evidence prepared from the fixed points outside the
-    /// timer, next to the direct call on the same inputs.
+    /// Register direct and prepared-evidence series for f64 and rational inputs.
+    ///
+    /// Prepared builders derive line orientation, plane evidence, or lifted-circle/sphere
+    /// evidence outside the measured callback. Orientation preparation is consumed by
+    /// line/plane sidedness APIs, so its output type differs from the direct Sign result.
+    /// Both sides retain value presence only and never assert corresponding results.
+    ///
+    /// Direct and prepared labels select different RNG streams; they are not paired
+    /// queries on identical source geometry. Under the default harness, each timed call
+    /// receives regenerated ready geometry/evidence rather than repeatedly reusing one
+    /// object. Unknown names panic in prepared dispatch; malformed registry data or
+    /// fixture generation can also panic or run without a per-call timeout.
     fn prepared(&self, atlas: &mut Atlas, axis: &[f64]) {
         for kind in [Kind::F64, Kind::Rational] {
             let base = self.base;
@@ -1731,24 +1815,36 @@ impl Det {
     }
 }
 
+/// Decode three planar points, no planes, and any leftover scalars; panic if fewer than six values remain.
 fn geo2_3(v: Vec<Real>) -> Geo<Point2> {
     geo(v, 3, 0)
 }
+/// Decode four planar points, no planes, and leftover scalars; panic if fewer than eight values remain.
 fn geo2_4(v: Vec<Real>) -> Geo<Point2> {
     geo(v, 4, 0)
 }
+/// Decode four spatial points, no planes, and leftover scalars; panic if fewer than twelve values remain.
 fn geo3_4(v: Vec<Real>) -> Geo<Point3> {
     geo(v, 4, 0)
 }
+/// Decode five spatial points, no planes, and leftover scalars; panic if fewer than fifteen values remain.
 fn geo3_5(v: Vec<Real>) -> Geo<Point3> {
     geo(v, 5, 0)
 }
 
+/// Apply Frame::f64 coordinatewise to planar lattice points for reference predicates.
+///
+/// Preserves point/coordinate order and inherits width/lower-shift assertions.
+/// Does not import to Real or independently reject a nonfinite conversion result.
 fn raw2(frame: &Frame, pts: &[[Int; 2]]) -> Vec<[f64; 2]> {
     pts.iter()
         .map(|p| [frame.f64(0, &p[0]), frame.f64(1, &p[1])])
         .collect()
 }
+/// Apply Frame::f64 in x,y,z order to every spatial lattice point.
+///
+/// Inherits the frame's coordinate assertions and unchecked upper-overflow behavior;
+/// returns raw binary64 arrays without predicate or finiteness validation.
 fn raw3(frame: &Frame, pts: &[[Int; 3]]) -> Vec<[f64; 3]> {
     pts.iter()
         .map(|p| {
@@ -1760,9 +1856,11 @@ fn raw3(frame: &Frame, pts: &[[Int; 3]]) -> Vec<[f64; 3]> {
         })
         .collect()
 }
+/// Copy a binary64 pair into robust::Coord without arithmetic or validation.
 fn c2(p: [f64; 2]) -> robust::Coord<f64> {
     robust::Coord { x: p[0], y: p[1] }
 }
+/// Copy a binary64 triple into robust::Coord3D without arithmetic or validation.
 fn c3(p: [f64; 3]) -> robust::Coord3D<f64> {
     robust::Coord3D {
         x: p[0],
@@ -1771,6 +1869,27 @@ fn c3(p: [f64; 3]) -> robust::Coord3D<f64> {
     }
 }
 
+/// Register four determinant families across degeneracy, preparation, exponent, and bit-width workloads.
+///
+/// For each family, nominal degeneracy sweeps five framed kinds plus the robust
+/// reference; circle/sphere also add approximate and strict trig recipes. Fuzz
+/// samples vary finite k within an eight-level band and use f64 exponents -300..=300
+/// or rational widths 64..=1024. This is seeded sampling, not a cargo-fuzz target.
+/// Grids combine degeneracy with f64 exponents or integer/transcendental widths.
+///
+/// Exponent sweeps request -1000..=960 in steps of 40; grids request -1000..=1000
+/// in steps of 125. Bit sweeps use thirteen sizes from 64 through 4096, integer
+/// grids use powers 64..4096, and transcendental grids stop at 512. Prepared/direct
+/// series use separate label-derived RNG streams and do not compare identical inputs
+/// or assert equivalent outputs. Integer framing ignores magnitude scaling, so the
+/// shared near-one prose does not apply to its raw lattice coordinates.
+///
+/// The emitted description strings retain qualitative timing/refusal claims such as
+/// a cliff near k≈50 and STRICT refusing trig degeneracy. This registration does
+/// not measure/assert those claims or certify the receipts behind decided values.
+/// Atlas may stop or skip later samples; None/error statuses do not preserve all
+/// kernel reasons, and success flags inspect only the initial probe. No complete
+/// geometric qualification or uniform practical bound follows from registration.
 fn determinant_predicates(atlas: &mut Atlas) {
     let exponents: Vec<f64> = (-1000..=960).step_by(40).map(f64::from).collect();
     let grid_exponents: Vec<f64> = (-1000..=1000).step_by(125).map(f64::from).collect();
@@ -1924,6 +2043,11 @@ fn determinant_predicates(atlas: &mut Atlas) {
 // ---------------------------------------------------------------------------
 // d-dimensional predicates.
 
+/// Infer the smallest positive d with d²+d≥input length and partition into d+1 rows of at most d scalars.
+///
+/// Intended inputs contain exactly d(d+1) entries. No equality or shape validation
+/// occurs: short/malformed input produces ragged or empty rows, and empty input
+/// returns two empty rows. Dimension search and allocations have no separate bound.
 fn nd_build(v: Vec<Real>) -> Vec<Vec<Real>> {
     // (d + 1) points of dimension d: d^2 + d terms.
     let d = (1..).find(|d| d * d + d >= v.len()).unwrap();
@@ -1931,6 +2055,12 @@ fn nd_build(v: Vec<Real>) -> Vec<Vec<Real>> {
     (0..=d).map(|_| it.by_ref().take(d).collect()).collect()
 }
 
+/// Infer the smallest positive d with d²+2d≥input length, then decode simplex rows and a leftover query.
+///
+/// Consumes up to d values for each of d+1 rows; all leftovers form the query.
+/// The intended exact count is d(d+2), but malformed/short input yields ragged rows
+/// or a short/empty query without validation. Empty input gives two empty simplex
+/// rows and an empty query. No independent dimension/allocation budget is enforced.
 fn nd_sphere_build(v: Vec<Real>) -> (Vec<Vec<Real>>, Vec<Real>) {
     // (d + 1) simplex points and a query: d^2 + 2d terms.
     let d = (1..).find(|d| d * d + 2 * d >= v.len()).unwrap();
@@ -1939,8 +2069,14 @@ fn nd_sphere_build(v: Vec<Real>) -> (Vec<Vec<Real>>, Vec<Real>) {
     (simplex, it.collect())
 }
 
-/// `d + 1` points in `R^d`: the last is an integer affine combination of the
-/// others plus `delta` along the last axis (`None`: a random point).
+/// Build d random 44-bit coordinate rows and a final row controlling affine dependence.
+///
+/// None adds another independently generated row. Some(delta) forms an integer
+/// affine combination of the first d rows, then adds delta to the last coordinate.
+/// Delta zero therefore gives an exact affine dependency; nonzero delta does not
+/// prove nondegeneracy if the base is dependent or that axis lies in its affine
+/// span. Some requires d≥1 or indexing panics; None permits d=0 and returns one
+/// empty point. Coefficient accumulation and allocation are not separately bounded.
 fn nd_points(rng: &mut Rng, d: usize, delta: Option<i64>) -> Vec<Vec<Int>> {
     let bits = 44;
     let mut pts: Vec<Vec<Int>> = (0..d)
@@ -1962,6 +2098,11 @@ fn nd_points(rng: &mut Rng, d: usize, delta: Option<i64>) -> Vec<Vec<Int>> {
     pts
 }
 
+/// Flatten arbitrary-dimensional lattice rows through one frame, reusing axis two for all later axes.
+///
+/// Each coordinate at index≥2 shares the third translation parameters. This still
+/// applies a common scale and a fixed translation vector, but does not supply
+/// independent random translations in every dimension. Row shape is not validated.
 fn nd_terms(frame: &Frame, pts: &[Vec<Int>]) -> Vec<Term> {
     pts.iter()
         .flat_map(|p| {
@@ -1972,6 +2113,20 @@ fn nd_terms(frame: &Frame, pts: &[Vec<Int>]) -> Vec<Term> {
         .collect()
 }
 
+/// Sweep dimensions 2 through 9 for seven orientation and seven in-sphere recipe series.
+///
+/// Orientation rows cover generic, exact affine dependence, and a one-unit last-axis
+/// perturbation of 44-bit bases. An extra f64 series returns affine_independent_d's
+/// `Option<bool>`; Some(false) counts as atlas success. Every callback discards certainty
+/// and Unknown reasons, and no expected sign or independence value is asserted.
+///
+/// Sphere fixtures use a 44-bit center and positive odd 40-bit radius with a full
+/// axis simplex. Queries lie inside at the negative half-radius rounded toward the
+/// center, exactly on the sphere, or one unit outside. The reused near-series label
+/// k≈44 describes the orientation base, not this radius-relative sphere gap, which
+/// is on the scale of 2^-40. Frame inputs are built outside the timer; symbolic
+/// terms are rebuilt by Input::run during timing. Atlas's sampling/stopping rules
+/// can omit later dimensions and do not enforce a timeout within a call.
 fn nd_predicates(atlas: &mut Atlas) {
     let dims: Vec<f64> = (2..=9).map(f64::from).collect();
     let series: [(&str, Kind, Option<i64>); 7] = [

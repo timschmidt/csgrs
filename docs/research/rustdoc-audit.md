@@ -7020,6 +7020,107 @@ is `/tmp/csgrs-atlas-foundation-render.py`. Continue with the determinant regist
 and workload methods after In2/In3, then all remaining example sections. This
 batch does not complete the perf-atlas example or the wider repository goal.
 
+## Hyperlimit atlas determinant and N-dimensional workloads
+
+Audited baseline lines 1353–2057 of
+`crates/hyperlimit/examples/perf_atlas.rs` at `4f3844611`, from the determinant
+registry through nd_predicates. This follows the foundation batch and still
+does not complete the composite, scalar, polygon, construction, batch, or main
+sections. Ownership is atlas workload assembly and predicate-consumer measurement;
+relevant contracts are P1, P4, P5, P8/P9 and the admission protocol's equivalent-
+workload/evidence requirements. The domain is the four lattice determinant
+families and dimensions 2–9 with framed scalar inputs. Missing witnesses were
+private registry/field documentation and accurate claims about paired inputs,
+timing boundaries, outcome checking, and generated degeneracy.
+
+Documented 35 declarations (29 functions/methods, four constants, a lattice
+callback alias, and Det) plus all eight Det fields. Clarified the module's timing
+description using the shared harness implementation. Exact comment-stripped
+source is identical; no layout normalization is needed in this batch. All
+generators, callbacks, strings emitted into atlas reports, policy choices,
+registration order, and result conversions remain unchanged.
+
+Read shared perf-atlas lib.rs context for configuration/argument construction,
+RNG stream hashing, operation registration, measurement, sweep/fuzz/grid behavior,
+and powers_of_two (roughly lines 1–66, 300–723, 883–885). These are contextual
+reads, not a completed shared-library documentation audit. The example does not
+call reuse_inputs; default measurement constructs new input objects from a
+cloned per-point RNG state outside each timed call. Thus ready geometry/evidence
+is retained within Input but regenerated for each call by the surrounding
+harness. Symbolic Input::run still reconstructs terms inside timing. No global
+cache reset follows from either strategy. The first probe alone sets success;
+later timed-loop results are black-boxed without rechecking Outcome. Timing
+ceilings and point budgets are checked after calls or between batches, not by
+preempting a stuck generator/predicate.
+
+Direct/prepared labels hash to different RNG seeds. The robust reference has its
+own label and also draws frame parameters before lattice sites, reversing the
+ordinary sweep's construction order. These are comparable recipe families, not
+paired measurements on identical samples. Source-level seed reproduction with
+the default seed confirmed different streams for f64 direct/prepared under
+`orient2 prepared evidence`, and f64/robust under `orient2 by degeneracy`.
+Prepared orientation queries use line/plane sidedness APIs rather than the direct
+Sign return type, and no corresponding outputs or certainty receipts are asserted.
+Numeric robust returns always satisfy the shared Outcome implementation, including
+the absence of a finiteness/sign comparison in this example.
+
+Det trusts its private registry: make2 wins when both generators exist, neither
+means no sweep/grid/fuzz registration, decoder size comes from exact name checks,
+and inactive callbacks panic. Callbacks keep only Option<Sign>, dropping receipts
+and Unknown reasons. Family kmax values are capped further by axis/fuzz helpers.
+Fuzz is seeded atlas sampling with 0–7 upward level jitter, not a libFuzzer target.
+The documented axes distinguish full exponent/bit ladders from smaller grids,
+including the transcendental grid's 512-bit endpoint. Atlas stopping/prediction
+can omit later samples/cells, so registration does not prove complete sweeps.
+The emitted report strings still make unconditional timing/refusal statements
+such as a cliff near k≈50, microsecond costs, and STRICT refusing trig degeneracy.
+Rustdoc now explicitly identifies these as unverified here; the strings were not
+altered in this comment-only batch, and no such claims are adopted as evidence.
+
+N-dimensional decoders infer a dimension using an inequality rather than exact
+length validation. Bounded arithmetic inspection confirms seven orientation
+scalars produce inferred d=3 with row lengths 3,3,1,0; nine sphere scalars give
+3,3,3,0 and an empty query. These malformed private inputs are not described as
+validated geometry. Affine-combination delta zero gives an exact dependence,
+but delta one is not a universal nondegeneracy witness: two 44-bit points sharing
+x and a further unit change along y remain collinear. The fixture docs now make
+that distinction. Coordinates after axis two reuse the third frame translation,
+still a fixed translation vector but not independent random shifts in all axes.
+
+The dimension sweep uses 2–9. Its affine-independent series returns Option<bool>,
+so Some(false) counts as atlas success. Sphere fixtures use an odd 40-bit radius
+around a 44-bit center, with interior, on-sphere, and one-unit-outside queries.
+Their reused k≈44 label does not describe the radius-relative one-unit gap,
+which is on the scale of 2^-40. No expected sign, relation, or receipt is asserted.
+These are source-derived limitations and bounded arithmetic observations, not
+runtime failures or performance measurements of the intended atlas workloads.
+
+Validation after final edits:
+
+- Focused Rustfmt, `git diff --check`, declaration/field review, and exact
+  comment-stripped source comparison passed.
+- `cargo check --locked -p hyperlimit --example perf_atlas --offline -j2`
+  passed with all features and no default features.
+- Private example Rustdoc passed for both configurations with warnings and
+  broken/private intra-doc links denied. A generic type initially parsed as HTML
+  was changed to a code span. An earlier successful Cargo invocation reused stale
+  rendered pages; full-text inspection caught that. Regeneration with the additional
+  `-D rustdoc::invalid_codeblock_attributes` flag produced the current comments.
+- Verified all 44 groups across 28 pages for this section plus the changed module
+  introduction, in each configuration. Rechecked all 137 rendered foundation
+  groups too; its three documented local statics remain source-only. No claim is
+  made for unaudited sections or generated/derived items outside these counts.
+- No atlas measurement, benchmark, fuzz campaign, report write, or unbounded
+  fixture search ran. No new completed-workload, performance, or certainty claim
+  was established. Full workflow checks remain owner-waived for this docs-only
+  session, and incremental compilation remains disabled.
+
+Evidence prefix: `/tmp/csgrs-rustdoc-hyperlimit-atlas-determinants-{all,minimal}`
+with `-check.log` and `-doc.log` suffixes. Bounded seed/shape observations are in
+`/tmp/csgrs-rustdoc-hyperlimit-atlas-determinants-witnesses.log`; the render checker
+is `/tmp/csgrs-atlas-determinant-render.py`. Continue at the composite-predicate
+section, retaining the distinction between complete item review and context reads.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
