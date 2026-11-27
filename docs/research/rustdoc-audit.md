@@ -15327,6 +15327,119 @@ simulator was read as consumer context but not executed or credited as a complet
 support-file audit in this batch. Remaining support files and the repository-wide
 coverage/semantic audit remain open.
 
+## Alumina FOC Thumb replay harness and client instructions (2026-11-27)
+
+Whole-file review on target revision 891ba85ebaeb5832c59649155eec922c448d9178:
+
+- crates/hyperlattice-interval/conformance/alumina-foc/check-thumb.py
+  (165 -> 215 lines) and README.md (65 -> 92).
+- Its Cargo.toml (25 lines) and Cargo.lock (34 lines), unchanged.
+
+The owning layer is host conformance tooling and its build/use instructions.
+P5/P6/P26/P27/P28/P36/P37 and the admission protocol govern resource interpretation,
+ABI checks, retained replay and precise qualification. Inputs are the trusted
+linked fixture and actual two-order Wasm call log, using the script's pinned Rust
+1.88.0 compiler and Python packages. Baseline execution preceded editing. Missing
+support comments concerned all four private functions, the memory/register model,
+stack observation limits, corpus validation, subprocess budgets and file lifetimes.
+The README also needed a private-library Rustdoc command and explicit local-source
+requirements. No Rust code or Python executable statement changed.
+
+Source review and focused reproduction established:
+
+- uv consumes the inline Python dependency pins; plain Python does not install or
+  enforce them. The script fixes Rust 1.88.0, obtains its host rust-lld, builds the
+  actual Wasm guest, runs the integer oracle, builds a Thumb static archive and
+  links all three exports as roots. Strip-debug preserves the required symbol table.
+  Cargo.lock does not pin local path source contents, and incompatible older
+  firmware graphs fail locked resolution rather than becoming valid fixtures.
+- GUEST resolves the real script location. Invoking through a symlink cannot move
+  that location's required firmware sibling. Cargo artifacts use CARGO_TARGET_DIR
+  or wasm/target and survive either output mode. TemporaryDirectory removes its
+  ELF/replay files; an explicit output directory must be new and can retain partial
+  artifacts after a failure. The README now explains these practical prerequisites.
+- Only the Node subprocess has an internal 60-second timeout. Emulator calls have
+  a million-instruction limit, not a whole-run wall-clock budget. Cargo and linking
+  have no internal timeout in this script. External containment remains necessary
+  for a bounded overall invocation.
+- The fixture loader checks ARM32 little-endian executable/hard-float metadata,
+  load segments within the first 48 KiB of the flash slot, no writable or zero-fill
+  segment, and a unique odd STT_FUNC address for each export. It is not a general
+  adversarial ELF validator; overlaps and all symbol extents/permissions are not
+  independently established by these checks.
+- Each simulator has a 64 KiB executable/read-only flash slot and only the upper
+  4 KiB of an 8 KiB stack mapped read/write. Arguments enter r0..r2 modulo 2^32;
+  unused argument registers are not reset. Return bits are compared as unsigned
+  32/64-bit values, preserving signed Wasm BigInt encodings. Each call must reach
+  the stop address and restore SP and r4..r11. Floating-point saved registers,
+  interrupts, board peripherals and all other ABI state are not covered.
+- Each order runs with two fill patterns on four fresh CPUs in total, each with
+  a second pass on retained CPU state after refilling stack memory. The reported
+  span extends from the lowest changed fill byte to stack top, including gaps.
+  It is neither the minimum observed SP nor a universal maximum stack claim;
+  unwritten reservations, equal-fill writes or restored bytes can be invisible.
+- The run-level gate validates call-name totals and ascending/descending digest
+  argument order. Other arguments/results are trusted output of check.mjs, not
+  independently authenticated by run. Linked load extent includes address gaps;
+  the printed SHA256 covers the whole ELF, not only loaded bytes.
+- README coverage wording now distinguishes selected signed extremes/seeded
+  intervals from exhaustive i32 interval coverage and native/shared agreement
+  from independent integer expectations. It discloses the fixture ABI's spinning
+  panic, flattened range status and reversed-endpoint error sentinel, and supplies
+  a cargo doc command for public and private library APIs.
+
+Validation used installed Rust 1.88.0 (6b00bc388, LLVM 20.1.5), its existing Wasm
+and Thumb targets, Node v22.16.0, Python 3.13.5, pyelftools 0.32 and Unicorn 2.1.4.
+The two pinned Python packages were installed into an owned temporary environment
+after approved cache/network access. The firmware snapshot remained revision
+2d68e82b7341db7b747b20e4ad1455a4c1113a00; all thirteen source hashes were rechecked.
+
+The physical /mnt/models/alumina-firmware sibling is absent. A temporary invoker
+loaded the actual unmodified script functions and changed only the GUEST location
+to the already documented sibling alias. This ran the real build, loader, replay
+and report functions with unchanged manifests, lockfiles and source. It does not
+claim the documented uv CLI completed end-to-end in the original checkout layout.
+CLI help and rejection of an existing output directory were exercised separately.
+
+After the final source edit:
+
+- The full build/oracle/link/replay pipeline passed with offline Cargo, two build
+  jobs, incremental compilation disabled and the shared target. Each run checked
+  8,782 Wasm calls, then 35,128 Thumb calls across orders/fills/passes. All eight
+  simulated passes observed 704 touched stack bytes. Baseline/final reports, ELF
+  bytes and replay JSON were identical. The load extent was 23,900 bytes; the ELF
+  was 41,672 bytes with SHA256
+  e7a4db4e0e67681d3e9fce4b3d4f834c92c452a9dd7b6ec788d31e4252a1a161.
+  An external 180-second deadline contained each complete invocation. These are
+  fixture observations, not physical timing, interrupt stack or deployment claims.
+- Temporary negative probes exercised wrong returned bits, changed saved register,
+  unrestored SP, instruction-limit exhaustion, unmapped reserve access and guest
+  writes to read-only flash. Six mutated copies of the accepted ELF exercised
+  wrong machine/hard-float flag, writable/zero-fill/out-of-slot segments and an
+  even entry address. Three malformed replay copies failed order-count, call-count
+  and digest-order gates before emulation. Repository fixtures were not changed.
+- Tiny synthetic Thumb stubs independently confirmed the watermark limitation:
+  reserving/releasing 64 bytes without writes reported zero; a four-byte store
+  matching 0x55 reported zero under that fill and four under 0xaa. These probe the
+  measurement semantics, not the production guest's maximum stack depth.
+- CLI help text was unchanged after normalizing only the temporary script basename.
+  An existing output directory failed before building and preserved the recorded
+  ELF/replay. Python compilation passed; the complete AST and all noncomment source
+  bytes equal baseline, including CLI text, metadata pins and report strings.
+- The added private-library documentation command passed on Rust 1.88.0 through
+  the same sibling alias, with warnings and broken/private links denied. The other
+  README native test/Clippy/cost commands were not rerun as a full 1.88 qualification.
+  git diff --check passed. Full workflow/performance checks remain owner-waived.
+
+Evidence: /tmp/csgrs-interval-foc-thumb-audit/ retains approximately 1.3 MiB of
+commands, source snapshots, compiler/dependency versions, raw reports, ELF/replay
+artifacts and focused probes. The temporary simulator environment and download
+cache were removed after validation (about 58 MiB reclaimed). The shared target
+is approximately 4.6 GiB. All seventeen currently tracked files in this conformance
+client now have whole-file review records across the four FOC batches; this does
+not imply complete coverage of its external dependencies or the repository.
+The remaining repository-wide source, support-file and documentation audit is open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

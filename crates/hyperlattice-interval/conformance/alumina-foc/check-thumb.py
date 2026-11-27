@@ -4,6 +4,13 @@
 # dependencies = ["pyelftools==0.32", "unicorn==2.1.4"]
 # ///
 """Execute the oracle-checked FOC corpus on a simulated Cortex-M4."""
+# Host-only acceptance tool, not a board image or a general ARM ELF loader. uv
+# consumes the pinned dependency metadata above; ordinary Python does not install
+# or enforce those versions. The guest and its path dependencies must already fit
+# the checked-in lockfile. Rust 1.88.0 supplies both targets and the host linker.
+# Only Node execution has a subprocess timeout; Cargo/linking and the complete
+# replay have no internal wall-clock budget. Contain the whole command externally
+# when an overall deadline is required.
 
 import argparse
 from collections import Counter
@@ -26,9 +33,13 @@ from unicorn.arm_const import (
 )
 
 
+# Resolve the real script location, not the invoking symlink's sibling layout.
 GUEST = Path(__file__).resolve().parent / "wasm"
 THUMB = "thumbv7em-none-eabihf"
 WASM = "wasm32-unknown-unknown"
+# A 64 KiB simulated executable/read-only slot; the loader reserves its last
+# 16 KiB and calls return to a stop address at the slot's end. Of the nominal
+# 8 KiB RAM stack, only the upper 4 KiB is mapped read/write (not executable).
 FLASH = 0x08000000
 FLASH_BYTES = 64 * 1024
 RAM = 0x20000000
@@ -36,13 +47,23 @@ STACK_BYTES = 8 * 1024
 STACK_RESERVE = 4 * 1024
 STACK_TOP = RAM + STACK_BYTES
 RETURN = FLASH + FLASH_BYTES - 2
+# The three exports take at most three integer arguments. Preservation checks
+# cover r4..r11 and SP, not floating-point registers or every item of ARM ABI state.
 ARGUMENTS = (UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2)
 SAVED = (UC_ARM_REG_R4, UC_ARM_REG_R5, UC_ARM_REG_R6, UC_ARM_REG_R7,
          UC_ARM_REG_R8, UC_ARM_REG_R9, UC_ARM_REG_R10, UC_ARM_REG_R11)
 SAVED_VALUES = tuple(0x44440000 + n for n in range(len(SAVED)))
+# Per order: 165 fixtures x five actions, endpoint/tag/wrap queries and range cases.
 CALLS = {"conformance_probe": 825, "output_word": 3315, "range_probe": 251}
 
 
+# Build the actual guest twice and obtain expectations from its independent Wasm
+# host oracle before linking Thumb. directory must exist with no calls.json;
+# target is a reusable Cargo artifact directory. Linking retains all three exports
+# from the static archive via entry/root symbols and discards unreachable sections.
+# --strip-debug still leaves the symbol table needed by load_image. Return the
+# linked ELF path and parsed replay; propagate build, timeout, I/O and JSON errors.
+# A lockfile pins dependency resolution, not the contents of local path sources.
 def build(directory, target):
     common = ["--manifest-path", GUEST / "Cargo.toml", "--release", "--locked",
               "--lib", "--target-dir", target]
@@ -68,6 +89,12 @@ def build(directory, target):
     return image, json.loads(replay.read_text())
 
 
+# Read this harness's linked, trusted fixture: ARM32 little-endian executable,
+# hard-float flag, load segments wholly within the first 48 KiB, no writable or
+# zero-fill load segment, and exactly one odd-address STT_FUNC for each export.
+# Return load bytes and Thumb entry addresses after closing the ELF file. These
+# checks are not a general ELF validator: overlapping segments and every symbol
+# extent/permission are not checked here; execution can still fault in replay.
 def load_image(image):
     with image.open("rb") as file:
         elf = ELFFile(file)
@@ -93,6 +120,18 @@ def load_image(image):
         return segments, entries
 
 
+# Execute one trusted oracle call list twice on a fresh Cortex-M4 simulator.
+# Arguments enter r0..r2 modulo 2^32; unused argument registers are not cleared.
+# Returns are compared as unsigned r0 (range) or r0:r1 bits (64-bit exports), so
+# decimal signed Wasm BigInts keep the same bit pattern. Each call must reach the
+# stop address within a million instructions and restore SP and r4..r11.
+#
+# The second pass reuses CPU state but refills mapped stack memory. Each reported
+# byte count is the span from the lowest changed sentinel byte to STACK_TOP,
+# including gaps, not a measured minimum SP. Untouched reservations, writes equal
+# to the fill or later-restored bytes can be invisible. Two caller-chosen patterns
+# reduce that ambiguity; they do not prove a universal stack maximum. No interrupts,
+# board peripherals, physical timing or complete ABI state are modeled/checked.
 def replay_order(segments, entries, calls, pattern):
     cpu = Uc(UC_ARCH_ARM, UC_MODE_THUMB | UC_MODE_MCLASS)
     cpu.ctl_set_cpu_model(UC_CPU_ARM_CORTEX_M4)
@@ -132,6 +171,13 @@ def replay_order(segments, entries, calls, pattern):
     return peaks
 
 
+# Build/validate two replay orders and run each with two fills, on four fresh CPUs
+# with two passes apiece: 35,128 simulated calls. Validate call-name counts and the
+# forward/reverse digest argument sequence; other arguments/results are trusted
+# output from check.mjs, not independently authenticated by this function.
+# Print observed touched spans, linked load extent (including address gaps), and
+# SHA256 of the whole ELF. A successful report concerns this compiled fixture and
+# corpus, not deployment fit or a new mathematical proof of the transform domain.
 def run(directory, target):
     image, orders = build(directory, target)
     segments, entries = load_image(image)
@@ -153,6 +199,10 @@ def run(directory, target):
 
 
 if __name__ == "__main__":
+    # Without --output only ELF/replay files are temporary; Cargo artifacts remain
+    # in CARGO_TARGET_DIR or wasm/target. An explicit output directory must be new;
+    # it and any partial files remain after failure. Existing directories fail
+    # before building, so reruns need another name rather than overwriting evidence.
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="retain the linked ELF and checked calls in a new directory")
     options = parser.parse_args()
