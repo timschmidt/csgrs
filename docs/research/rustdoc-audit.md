@@ -16441,6 +16441,97 @@ rational construction/query/polynomial, computable Laurent reducer, trace and pu
 fact caller/test excerpts earn no additional whole-file credit. No runtime defect was
 fixed or performance claim made; repository-wide documentation coverage remains open.
 
+## Hyperreal public structural fact and decision carriers (2026-11-27)
+
+Whole-file review: crates/hyperreal/src/structural.rs at revision
+8db2f15ca632f35fa8a4b8f4bfc922dac1e85e11 (638 -> 733 lines). This completes
+whole-file review beyond the preceding batch's four selected comment blocks.
+The owning layer is public scalar fact snapshots, decision receipts and dispatch
+metadata. P3/P4/P5/P6/P19/P30/P37 and the admission protocol require exact meanings,
+visible uncertainty/provenance and resource descriptions matched to the producing
+queries. The domain includes known/unknown sign, equality and order; rational and
+named/opaque metadata; raw dependency bits; lazy rational canonicalization; payload
+materialization; and conditional ghost specifications.
+
+Missing witnesses were module/impl/variant/field/private tuple/ghost Rustdoc and
+accurate descriptions of several existing metadata flags. The baseline rational
+storage/primitive status integration test passed. A separate consumer reproduced
+these interpretations before editing, and passed again against the rebuilt library:
+
+- All 65,536 u16 masks round-trip raw bits and report emptiness correctly. For each,
+  six selected masks exercise contains/union, including empty, combined, unnamed
+  and high bits. Contains is a subset test; every mask contains NONE. This is all
+  raw inputs with six operation partners, not exhaustive enumeration of every pair.
+- Known/Unknown sign and order projections, all three equality outcomes and their
+  is_known predicates retain the intended distinctions. Two reports with the same
+  sign but different certificate tags compare unequal as report data.
+- Native pi reports computable_required, a lazy admitted pi certificate does not,
+  and materializing the latter's payload by attaching a signal makes the flag true.
+  It describes retained payload/opaque-class state, not mathematical necessity.
+- i64::MIN has exact_small_integer_i64 false because the producer uses a conservative
+  63-bit magnitude test. Negative eight has power_of_two true because that flag
+  describes the nonzero absolute value, not a positive-sign restriction.
+- A polynomial producing an unreduced rational equal to one reports raw storage
+  MultiLimb. Detailed facts canonicalize once, report WordSized and recognize one;
+  the original immutable raw storage still reports MultiLimb. Dispatch tracing
+  observed exactly one canonicalization in the detailed query.
+
+All 170 authored declarations/fields/variants now have Rustdoc, plus the module
+comment (171 full blocks). The audit covers existing comments as well as additions:
+
+- Reports are copyable snapshots, not source-bound proof objects or validators of
+  caller-written fields. Derived equality compares metadata, and snapshots do not
+  update as caches learn facts. Known outcomes preserve proof routes; convenience
+  Option/bool projections intentionally omit receipts without mapping unknown to
+  false. NeitherOrUnknown deliberately combines known-other and undecided cases.
+- Requested precision floors are not observed iteration counts, finest consumed
+  cache precision or total resource bounds. Structural routes can reuse previously
+  certified numerical evidence. BoundedRefinement identifies the computable decision
+  route, which may succeed through cached facts/filters; it does not prove a new
+  arbitrary-precision iteration occurred. Unknown carries no distinct failure cause.
+- Magnitude exactness must be checked before using a binade as an exact comparison.
+  Rational availability is positive evidence, not a proof of irrationality when
+  absent. Public invariants describe producer output, not enforced construction
+  invariants of editable carrier fields.
+- StructuralKind covers all eight retained families, and ExpressionDegree is
+  Constant/Unknown relative to modeled variables, not algebraic defining degree.
+  Dependency masks retain all bits, including unnamed bits; default is empty.
+  Family flags concern the retained unscaled basis rather than minimal semantic
+  dependency after cancellation or a zero outer scale.
+- Storage buckets use fixed 64-bit-per-part and 4096-combined-bit thresholds,
+  independent of pointer width. Direct raw storage and canonical detailed-rational
+  queries differ in both meaning and possible cache work. Non-unit-basis Real
+  reports use false rational flags and VeryLarge as a conservative placeholder.
+  Boolean identity/rational flags are positive evidence, not complete negations.
+- Every domain field states its actual interval. In particular, unit_interval_open
+  and unit_interval_closed mean (-1,1) and [-1,1], not the unsigned unit interval.
+  Domain reports do not evaluate the requested function and preserve Unknown.
+- Primitive categories retain the previously documented upper-binade limitation.
+  Detailed-facts queries may canonicalize and update caches; the old broad
+  no-canonicalization description was removed. No runtime classification changed.
+- The private mask word and ghost-only model_bits view document the same raw-bit
+  contract; conditional Verus specifications and runtime implementations are unchanged.
+
+After the final edit, seven selected structural/domain/receipt unit tests and two
+representation integration tests passed both without optional features and with
+all features. The representation corpus exercises 22 named/private representatives
+and all public kinds; its arithmetic helper can fall back to interval overlap, so
+passing it is not claimed as independent semantic-equality proof for every pair.
+Actual private cargo doc passed both configurations with warnings and broken/private
+links denied. All 169 runtime blocks matched generated pages, including the private
+mask field. Two ghost-only blocks rendered and matched as supplemental Markdown;
+Verus was not rerun and no new formal verification claim is made.
+
+A token comparison verified all executable/signature/specification tokens unchanged
+apart from one optional tuple-field trailing comma introduced with field Rustdoc.
+Selected Rustfmt and git diff --check passed. Evidence is retained in
+/tmp/csgrs-hyperreal-structural-types-audit/: commands, baseline/final tests and probe,
+render/token/item matches and the probe source. The temporary executable and duplicate
+ghost HTML were removed; builds reused the roughly 5.7 GiB shared nonincremental
+locked/offline target. Producer and representation-test excerpts were context, not
+additional whole-file credit. Full workflows remain owner-waived; no focused check
+is blocked. Repository-wide documentation coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
