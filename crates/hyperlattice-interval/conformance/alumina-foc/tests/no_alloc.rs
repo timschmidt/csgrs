@@ -1,8 +1,17 @@
+//! Allocation-request observation across completed FOC paths and selected typed failures.
+//!
+//! The shared process-global counter records calls and requested bytes, not peak
+//! memory, stack use or arbitrary workloads. This binary has one measured test;
+//! its success is a finite observation, not a firmware resource bound.
 use interval_foc_conformance::samples::{self, ACTIONS};
 #[path = "../../allocations.rs"]
 mod allocations;
 
 #[test]
+/// Include fixture/rotation construction, overflow and balance failures, then all five actions at 64 indices.
+/// Compare every native/shared successful wrapper before digesting it. The allocation
+/// scope includes comparisons and hashing; final digest/counter assertions occur after
+/// recording stops. A matching checksum supplements rather than replaces full equality.
 fn both_complete_transform_clients_allocate_nothing() {
     let ((native, shared), calls, bytes) = allocations::measure(|| {
         use alumina_foc::{

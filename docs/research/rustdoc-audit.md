@@ -15119,6 +15119,115 @@ No focused check remains blocked. This is finite qualification against the named
 firmware revision, not release/MSRV or whole-controller certification. Remaining
 conformance files and the complete repository-wide Rustdoc audit remain open.
 
+## Alumina FOC acceptance tests and native probe programs (2026-11-27)
+
+Whole-file review on target revision 1cd6ca641a9b820f9deea9fc79cd5d82a6fe1bb2:
+
+- crates/hyperlattice-interval/conformance/alumina-foc/tests/transforms.rs
+  (410 -> 480 lines) and tests/no_alloc.rs (75 -> 84 lines).
+- Its src/bin/cost.rs (47 -> 66 lines), native_probe.rs and shared_probe.rs
+  (2 -> 4 lines each), and probe_body.inc (19 -> 28 lines).
+
+The owning layer is conformance acceptance, measurement and executable comparison.
+P1/P5/P6/P18/P26/P27/P36/P37 and the admission protocol govern exact expectations,
+separate outcome categories, subsequent consumption and measurement interpretation.
+Domains include ordered Q30 endpoint pairs, validated rotation boxes, selected
+signed extremes, seeded full-width samples, wrapping u32 probe seeds and parser
+failures. Baseline tests/programs ran before editing. Missing Rustdoc covered every
+private oracle/helper, outcome fields, test purpose, function-local declarations,
+timing boundaries and the entry point generated into both probe binaries by include!.
+
+The six files now contain 37 authored Rustdoc blocks and 23 function declarations.
+Source review and focused execution established:
+
+- Transform oracles compute ideal multi-affine expressions in i128 and check
+  enclosure at all relevant Cartesian corners. They establish containment on
+  fixture boxes, not tightness, source correlation or independently correct native
+  rejection. Primitive product/division oracles additionally require exact rounded
+  endpoints or independently derived Range/DivideByZero failures.
+- The rational containment helper requires a positive denominator and fitting
+  cross-products. Raw endpoints are sign-extended without rounding. Radical
+  coefficients come from authored brackets, with their integer square inequalities
+  independently checked in the hard-case regression.
+- Forty-five intervals come from nine selected numerators; eleven rotations combine
+  five sample choices with six broad component boxes. The broad boxes satisfy the
+  wrapper's norm-enclosure contract but do not make every component pair unit length.
+  The fixture matrices are finite boundary coverage, not enumeration of all i32 pairs.
+- Outcome accounting first requires complete Result equality, then separates
+  success, Range and UnbalancedPhases. Only success enters the corner oracle;
+  other unexpected errors panic rather than becoming accepted exclusions.
+- Forward/inverse Park each compare 22,275 cases; inverse Clarke compares 2,025;
+  Clarke compares 273,375 across negative, zero and maximum balance bounds. The
+  seeded transform test has 80,000 comparisons. Primitive products/quotients use
+  2,025 boundary and 10,000 seeded pairs with sign-normalized rational corner order.
+  The xorshift sampler consumes two draws without rejection; it is not uniform
+  over intervals, and zero state stays zero.
+- Hard cases retain changed intermediate-overflow behavior under dense Park,
+  extra width from pre-rounded Clarke coefficients and a representable result
+  from a wide b-c difference. The five-step chain compares every intermediate
+  and checks source containment for 64 sample indices, not exact inversion.
+- The allocation test includes fixture/rotation construction, selected typed
+  failures, full output equality and digest work inside the process-global scope.
+  Final digest/counter assertions occur after recording stops. The observation
+  concerns requests/bytes, not live memory, stack usage or arbitrary workloads.
+- Cost preflight compares all 320 full action outputs per provider. Each action
+  runs native before shared, with 64 warmup calls and twenty 512-call samples per
+  provider. Chain counts as one action despite five internal transforms. Inputs
+  are precomputed; digest work is inside timing/allocation observation. The timer
+  surrounds the counter, so its setup/teardown/read overhead is timed, while clock
+  calls and CSV output are outside allocation recording. There is no provider-order
+  alternation or statistical speedup decision.
+- Both executable-comparison probes include the identical entry-point source.
+  The optional u32 seed defaults to zero, later arguments are ignored, and invalid
+  seed text panics. Sixty-four indices advance with wrapping_add; each feeds all
+  five actions and all results into one FNV-1a digest. The sixteen-digit digest
+  supplements full-output evidence elsewhere and is not itself an equality proof.
+
+Validation reused the prior batch's temporary sibling layout and external firmware
+revision 2d68e82b7341db7b747b20e4ad1455a4c1113a00. All thirteen retained dependency
+files were checked against their SHA256 inventory before each run. No external
+checkout, manifest, lockfile, test assertion or fixture changed.
+
+After the final source edit:
+
+- Locked/offline j2 native tests passed all seven cases before and after editing;
+  all four printed outcome/statistic lines matched exactly. Incremental compilation
+  was disabled and the existing Cargo target was reused.
+- Both actual probe binaries completed nine valid argument cases each, including
+  default/explicit zero, +1, an ignored extra argument, period boundaries and seeds
+  crossing u32::MAX. Six negative/overflow/malformed cases failed as expected.
+  All successful stdout matched between providers and before/after edits. Parsing
+  panic source locations were not required to remain byte-identical.
+- The actual debug cost executable completed 200 samples and 102,400 timed action
+  calls per revision, excluding warmups/preflight. All allocation count/byte pairs
+  were zero and all non-time CSV fields matched. This is a completed-workload smoke
+  check, not a release performance comparison. External timeouts were 30 seconds
+  for CLI probes and 180 seconds for cost/build/test processes.
+- An independent host digest check used the existing staged BigInt transform oracle
+  plus explicit 25-byte tag/endpoint encoding. All eighteen probe digests and 200
+  cost checksums matched on each revision, including wrapping seed progression.
+  This checks the digest/reporting protocol; full-result and enclosure claims remain
+  supported by the separate assertions/oracles, not by checksum equality alone.
+- Private cargo doc builds passed for all three actual binaries with warnings,
+  broken links and private-link violations denied. The included main's complete
+  contract appears in both probe pages. Actual cfg(test) documentation omits the
+  seven test functions; rendering-only copies with just their test attributes
+  removed rendered those functions and all other nonlocal test documentation.
+  All 31 nonlocal authored blocks render. Six function-local aliases/helpers were
+  source-checked and rendered as Markdown, not claimed as ordinary Rustdoc API pages.
+  All twelve existing allocator blocks render in both cost and no_alloc consumers.
+- Stripping only whole comment/blank lines leaves identical remaining source bytes
+  in all six files, including probe_body.inc. Selected-file rustfmt and git diff
+  --check passed. Full workflow, release and performance gates remain owner-waived
+  for this documentation-only session; the root coverage mandate remains in force.
+
+Evidence: /tmp/csgrs-interval-foc-test-audit/ retains before/after build/test records,
+raw CSV/CLI results, independent digest checks, rendering matches and scripts.
+Duplicate generated HTML was removed. The existing firmware snapshot, Node executable
+and shared Cargo target (approximately 4.7 GiB) were reused. No focused check remains
+blocked. FOC WASM/support files and the repository-wide audit remain open; no new
+firmware deployment, universal resource or complete-coverage claim is made.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
