@@ -12089,6 +12089,89 @@ This file now has a whole-file record. Remaining mathbench engine, scalar/matrix
 borrowed, comparison and report files still need review; the repository-wide audit
 and earlier generated-item documentation gaps remain open.
 
+## Hyperlattice mathbench borrowed-operation comparisons (2026-11-27)
+
+Base: `b490f633b99d9f2ba996ce2f113e042d0dc13ff8`. Whole-file review of
+`crates/hyperlattice/benches/mathbench/borrowed_ops.rs`, all 796 original lines
+(944 after documentation and Rustfmt). The owning layer is Hyperlattice's
+benchmark harness, consuming Hyperreal arithmetic, native linear/complex operators
+and three external adapters. Relevant contracts are P1 input meaning, P4 retained
+source/evidence reuse, P5 resource disclosure, P6 division failure, P9 certainty
+qualification and P10 measurement scope. No geometry domain, implementation,
+policy, fixture, predicate order or acceptance assertion changes.
+
+Reproduced witness before editing: all five functions and four macro definitions
+lacked attached Rustdoc. The baseline all-features mathbench check passed. Added
+nine groups, including both native local macros and the local vector macro inside
+the external expansion. Selected adapter implementations and Criterion 0.7's
+ordinary/batched timing loops were read as context, without claiming additional
+whole-file coverage for those files.
+
+Contracts clarified:
+
+- Each backend registers sixty rows: twenty scalar ownership/operation mixes,
+  fourteen vector operations, eighteen matrix operations, two matrix-vector
+  products and six complex operations. Two native converters and three external
+  adapters yield 300 registrations. These are timing rows, not correctness tests.
+- Four retained cases per family are constructed outside timing. Native s and qr
+  preserve binary-float values or author displayed-decimal rationals respectively;
+  an arbitrary converter can change nonzero/invertibility assumptions. Matrix
+  division is a right quotient, scalar linear arithmetic is componentwise, and
+  four-dimensional products retain all lanes without projective division.
+- Native scalar owned_ref/ref_owned use SmallInput batching: case selection,
+  cursor advancement and the owned clone occur in setup; returned output drops
+  after the measured interval. The with_clone variants and refs use ordinary iter.
+  Their differences include selection and output-destruction boundaries, not only
+  cloning. Native vector/matrix scalar rows and complex real division clone their
+  left operand inside timing despite the scalar_ref/div_real_ref names.
+- External owned_ref/ref_owned/refs all call identical borrowed adapter signatures
+  through ordinary iter. Only with_clone explicitly clones the designated scalar
+  side first. Linear scalar operations and complex real division borrow receivers;
+  adapters can still clone internally (matrix scalar mapping does). External rows
+  have no native division guards, typed Results, policy receipts or cancellation.
+- Native tracing expands to thirty rows per converter: four scalar, eight vector,
+  twelve matrix, two matrix-vector and four complex. Add/subtract hooks execute
+  each of four cases three times; other hooks once. These repetitions do not
+  belong to timed iterations. External registration emits no such trace hooks.
+- Numerica labels use the local Symbolica Float adapter with requested precision
+  128; GMP uses Rug/MPFR at that precision. Symbolica Atom operations do not use
+  the stored context field as a 128-bit arithmetic setting. Matching names do not
+  prove equivalent ownership, measured work, exactness or completed contracts.
+
+Validation after final edits:
+
+- Focused Rustfmt and git diff --check passed. Noncomment source equals Rustfmt
+  of the original with crates configuration. Beyond whitespace/reindentation,
+  Rustfmt adds thirteen optional trailing commas, removes one, and encloses three
+  expression-only match arms in braces in place of their optional arm commas.
+  All operations, fixtures, timing boundaries, dispatch order and row names remain.
+- Locked/offline j2 Cargo check and private mathbench Rustdoc passed with all
+  features and no defaults, incremental compilation disabled; warnings and
+  broken/private links were denied. Complete text of six root groups rendered on
+  six pages in each mode. Three local macro groups were source-verified; Rustdoc
+  does not emit standalone pages for them even with private items enabled.
+- Static expansion checks verify identical sixty-name native/external registration
+  sets, both vector dimensions, both native matrix dimensions, four-operation
+  loops, thirty native trace rows per converter and absence of external tracing
+  or batching. This is source schedule evidence, not numerical completion evidence.
+- Initial doc generation rejected a forward textual-macro link; replaced it with
+  code markup and reran successfully. The temporary source checker was corrected
+  to account for Rustfmt's expression-only braces and to compare registration sets:
+  its extraction grouped native matrix macro rows differently from explicit
+  external matrix rows. No repository assertion or implementation was weakened.
+- No runtime benchmark, external engine workload, Symbolica initialization or
+  report writer ran; stored performance data is unchanged. Full workflows and
+  unrelated runtime checks remain owner-waived; no focused check remains blocked.
+  No new executable artifacts were retained. Audit scripts/commands occupy about
+  100 KiB; the reused target remains approximately 2.7 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-borrowedbench-*` baseline/check/doc/render logs
+and `/tmp/csgrs-lattice-borrowedbench-audit/` scripts, formatter deltas and expanded
+registration suffixes. This file now has a whole-file record. Remaining mathbench
+engine, scalar/matrix, comparison and report files still require review. The
+repository-wide audit, automated private-item coverage and earlier generated-item
+Rustdoc gaps remain open; this batch does not establish complete coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
