@@ -17937,6 +17937,119 @@ module excerpts supplied context only. Reviewing the include declarations does
 not credit all included files as reviewed. The repository-wide line audit and
 100% Rustdoc coverage target remain incomplete.
 
+## Trigonometric approximation kernels and coarse-result gaps
+
+On 2026-11-27, reviewed all 995 baseline lines of
+crates/hyperreal/src/computable/approximation/trig.rs at
+f0d53a8431d8b6cdda532f8ba3a4401b311def21. All thirty-one functions lacked
+Rustdoc. Added thirty-one blocks describing their mathematical roles, exact
+source relationships, sample units, range assumptions, cancellation behavior
+and limits. The owning layer is Hyperreal's scalar approximation implementation
+(P1–P7), with cache/refinement and replay implications for P4 and P19. The
+missing acceptance witness was private rendered documentation of these kernels;
+additional probes reproduced existing numerical gaps on the target revision.
+This is a documentation change, not a repair or certification of those gaps.
+
+The domain includes caller-reduced Computable arguments, exact rational leaves,
+retained pi/rational differences and equally scaled integer component samples.
+Sinc and cosc continue analytically through zero with values one and one half,
+under the constructor's magnitude-at-most-three-quarters certificate. Imported
+tags alone do not establish local Taylor ranges. Generic sine/cosine/tangent
+kernels nominally consume magnitude below one, while native tangent scheduling
+can pass magnitude below two. Those are distinct facts, not a proof that every
+scheduled request meets every local error argument.
+
+Reproduced incorrect coarse tangent/cotangent results with a public native probe:
+
+| Expression | Cold approx(1) | approx(1) after approx(-64) |
+| --- | ---: | ---: |
+| tan(7/5) | 0 | 3 |
+| tan(3/2) | 0 | 7 |
+| tan(39/5) | 0 | 9 |
+| Imported PrescaledCot(1/64) | 0 | 32 |
+
+These are integer approximations in units of two. Independent exact Fraction
+bounds show all four mathematical values exceed two, so each cold zero lies
+outside even a one-unit error allowance. For the first two, positive cosine
+and alternating sine/cosine bounds yield tangent lower bounds 14140/2701 and
+120/11. For 39/5, a Machin-series pi enclosure bounds the positive complement
+5*pi/2-39/5 below 2/35, giving a cotangent lower bound above two. The last
+lower bound is 8191/128. Thus the failure claim does not rely solely on warm
+and cold wrappers disagreeing. It concerns the magnitude-free p>=1 shortcuts
+in the medium-rational complement, generic tangent, large-rational tangent and
+generic cotangent kernels. The rational tangent helper's admitted magnitude
+below one does justify its coarse zero; it is not the same domain.
+
+The probe's output was identical before and after documentation edits, including
+fine results and fixed-sector dispatch counts. Each run was contained to 1 GiB
+address space, ten CPU seconds, fifteen wall seconds and no core dumps. The
+initial trace probe omitted the recording scope and failed its count assertion;
+adding that scope corrected the probe, without loosening the expected count of
+one. No production test, fixture, trace order or implementation was changed.
+The coarse errors remain implementation gaps relevant to P1/P4/P6, requiring
+future executable regressions and a code fix outside this docs-only batch.
+Existing passing fine-precision tests do not certify these coarse requests.
+
+Corrected the fixed half-pi sector description: positive multiples are two on
+[7/2,39/10], three on [79/20,27/5], four on [11/2,7], and five on (7,8).
+Negative arguments reflect those choices. Earlier branches own endpoints;
+the magnitude-exponent-two guard excludes [8,17/2] despite the last written
+comparison. Exact Machin-series rational bounds verify residual magnitude below
+one on all four enclosing intervals. The probe confirms that 701/100 chooses
+five, -701/100 chooses minus five, seven chooses four, and eight misses the
+fixed table. Four is independently nearer for 701/100; nearest-multiple wording
+was incorrect, but choosing five still leaves an admitted small residual.
+Neither observation alone establishes a reduction bug.
+
+Documented the quotient estimator's one-step correction, large-exponent guard
+request, and signal distinction between attached estimator/fallback graphs and
+explicit residual evaluation. Direct residuals retain r-m*pi/2 or r-m*pi/4;
+they are generally irrational, not exact rational residuals. Their integer
+samples do not replace the exact source. The quarter-pi shortcut tests a guarded
+sample against +/-128 at precision -8, rather than deciding exact equality at
+a half-radian threshold. Its selected quotient identities and additional guard
+bits differ from the adaptive division path.
+
+The integer divider rounds the supplied rational quotient with ties away from
+zero, requires nonpositive precision whose negation fits, and panics on a zero
+denominator. It does not itself propagate component errors or prove a nonpole.
+Adaptive division assumes bounded trig components: denominator magnitude controls
+twice as many additional source bits; a zero sample requests eight more. A ready
+quotient returns before the stop and 16384-extra-bit guard checks. That guard
+is neither a total-work budget nor a proof of a pole. Component work, leading-bit
+casts, precision arithmetic and series counter products retain unchecked limits;
+entry-stop placeholders and interrupted partial sums require caller rejection.
+No universal precision, cancellation or memory bound is claimed.
+
+Replaced unverified timing assertions with concrete scheduling and arithmetic.
+Corrected two pseudocode factorial denominators, and removed an orphan trailing
+log1p comment. Preserved all executable choices. The baseline selected suite
+passed eighteen unit tests and six replay/composition integration tests with all
+features. After the final source edits, eighteen selected unit tests passed in
+each of the no-default-features and all-features configurations; the same six
+integration tests and five downstream Hyperlimit resolver tests passed. Selected
+coverage includes ordinary and huge rational reductions, small-angle quotients,
+owned rational paths, imported cotangent domains and certificate composition.
+The many-digits regression checks numerical expectations, despite a name referring
+to one high-precision pi pass; it does not assert that pass count. Numeric oracle
+tolerances remain unchanged and do not constitute universal kernel error proofs.
+
+Private cargo doc passed both configurations with warnings and broken/private
+links denied. All thirty-one blocks matched their actual private library pages;
+no supplemental test-only rendering was needed for this file. Independent token
+comparison found only three optional commas removed by Rustfmt, and identical
+executable/signature tokens against an independently formatted baseline. Focused
+Rustfmt and git diff --check passed. No focused validation remains blocked;
+full workflow checks remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-trig-kernels-audit/ includes baseline/final logs,
+commands, public probe source and outputs, exact rational checks, declaration
+inventory and rendered-block matches. Builds reused the roughly 6.0 GiB locked,
+offline, nonincremental shared target. The temporary probe executable was removed
+after comparison. Constructor, trace, constant-table and test excerpts supplied
+context only, without new whole-file review credit. The repository-wide line
+audit and 100% Rustdoc target remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
