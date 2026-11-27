@@ -2,16 +2,33 @@
 
 use hyperreal::{Rational, Real, StructuralKind};
 
+/// One constructed Real, a diagnostic certificate label and its expected public structural category.
+/// Consumers may assert the category before exercising an operation. The label
+/// is fixture metadata, not a serialized proof or a validated private enum tag.
 pub(crate) struct RepresentationCase {
+    /// Diagnostic name of the intended construction family, used in test/fuzz failure messages.
     pub(crate) certificate: &'static str,
+    /// Expected public StructuralKind for the freshly constructed fixture; consumers validate it when needed.
     pub(crate) public_kind: StructuralKind,
+    /// Exact Real expression produced by the fixture recipe; all current representatives are positive.
     pub(crate) value: Real,
 }
 
+/// Construct an exact rational Real, assuming a nonzero denominator.
+/// Panic on a violated fixture invariant rather than silently changing the value.
 pub(crate) fn fraction(numerator: i64, denominator: u64) -> Real {
     Real::new(Rational::fraction(numerator, denominator).expect("nonzero denominator"))
 }
 
+/// Build 22 positive examples of named rational/symbolic/opaque construction families in stable order.
+/// Include powers/products/offsets of constants, radicals, logs, exponential
+/// bases and exact trig forms; SinPi and TanPi here mean pi/5, not one fifth
+/// of a full revolution. Irrational uses sin(1) to exercise the opaque category.
+///
+/// Recipes keep exact ratios and use expect only for their known domains.
+/// Shared constants/caches may already be warm. This finite fixture catalog is
+/// not an exhaustive scalar domain, an enum-variant proof, or a performance
+/// measurement; each caller owns its assertions on the resulting values.
 pub(crate) fn optimized_certificate_representatives() -> Vec<RepresentationCase> {
     let pi = Real::pi();
     let e = Real::e();

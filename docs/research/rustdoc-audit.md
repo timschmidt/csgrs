@@ -17528,6 +17528,95 @@ reused the roughly 5.8 GiB locked/offline nonincremental target. Shared constant
 import validation, sign resolution, inverse-hyperbolic consumers and previously
 audited range tests supplied context only. Repository-wide coverage remains open.
 
+## Hyperreal exponential/root kernels and negative-tail corpus (2026-11-27)
+
+Baseline: e6743c8718ad2d7c2e8bf74e65817b7e9f0505ff. Whole-file review of
+computable/approximation/exp_sqrt.rs (276 baseline lines),
+computable/approximation/exp_tail_tests.rs (39), tests/negative_exp_tail.rs (139)
+and tests/support/representations.rs (141): 595 lines. Hyperreal owns the
+one-unit approximation, mathematical domain, cancellation, source retention
+and fixture/replay contracts (P1–P7, P19). Missing witnesses were Rustdoc for
+all 22 named declarations, including the function-local guard constant and
+three fixture fields, and accurate descriptions of the finite test evidence.
+Twenty selected unit tests, six negative-tail integration tests and eleven
+representation/replay consumer tests passed on the baseline before edits.
+
+The documentation now separates the kernel paths and their preconditions:
+
+- A sufficiently negative exponential can return a zero integer at a requested
+  precision while retaining its strictly positive exact source. The BigInt
+  tail threshold handles both i32 endpoints; this does not establish full
+  endpoint support for the ordinary series, other kernels or interval APIs.
+  The small exp/expm1 series use certified ranges and guard estimates rather
+  than treating a term estimate as a total-work bound.
+- The square-root kernel consumes a retained Square child through absolute
+  value's 1-Lipschitz identity. Otherwise it uses magnitude facts/refinement,
+  an integer seed when planned msd/2-p <= 59, and recursive Newton refinement
+  above that threshold. Rust division truncates negative odd exponents toward
+  zero; the estimate is not an exact root binade. The usual four-guard-bit
+  seed and older even-precision fallback both use integer arithmetic.
+- The nth-root kernel checks degrees 3..=9, retains a nonnegative-radicand
+  precondition, and encloses the guarded root between floor_root(A-1) and
+  ceil_root(A+1). Its local constant describes the four-bit midpoint guard.
+  A checked precision-product failure delegates to exp/ln, whose own domain
+  and resource limits remain. That fallback does not prove total behavior
+  at extreme precisions or independently handle zero through logarithms.
+- Cancellation behavior is path-specific: exp can return zero/partial sums,
+  expm1 has no initial poll, sqrt can discover magnitude before its explicit
+  one-placeholder poll, and nth_root does not poll around integer root/power
+  arithmetic. Partial integers are not completion receipts. The sqrt magnitude
+  helper uses the operand's attached signal, not the separately passed signal.
+
+Corrected the Newton comment's denominator from last_appr/2 to 2*last_appr,
+matching both the implementation and the Newton formula. Replaced the stale
+fixed-size/crossover narrative with the actual request-sized seed dispatch,
+removed the unsupported extreme-precision totality claim and an orphan cosine
+comment. No algorithm or threshold changed, and no new performance claim is made.
+
+Test descriptions distinguish 315 dyadic argument/precision pairs with 630
+strict directed-MPFR endpoint assertions from the eight-request extreme-tail
+shortcut test. Integration smallness permits zero; positivity is checked
+separately. The two-order refinement test does not explicitly demand a coarse
+zero integer. The 164 exact integer-log identities accept no approximation.
+Cancellation is pre-stopped, followed by clearing/retry and then four workers;
+it is not an in-flight cancellation race. JSON bytes are compared before/after
+warming, while CBOR is replayed without a byte-equality assertion. No fresh
+process or reset shared caches are claimed. RUST_MIN_STACK was unset and these
+checks set no enlarged stack; completion is not a measured stack bound.
+
+The shared fixture defines 22 positive construction recipes with expected public
+StructuralKind values. Its diagnostic labels are not proof of private variant
+identity or enum completeness. Pi-scaled trig examples are pi/5, not a fifth
+of a full revolution. Tests and fuzz consumers retain their original recipes,
+order and assertions. Other consumers of the unchanged fixture implementation
+were not rerun in this batch.
+
+After the final edits, all twenty selected unit tests passed in both feature
+configurations. Negative-tail integration passed five tests without optional
+features and six with all features. Six representation and five named-certificate
+replay consumer tests passed with all features, as did five downstream Hyperlimit
+resolver tests. Existing seed tests use directed MPFR bounds; the selected
+nth-root test compares against rounded MPFR values with its existing one-unit
+tolerance, not a newly proved universal error theorem. Private cargo doc passed
+both configurations with warnings and broken/private links denied.
+
+All four kernel blocks and seventeen integration/support blocks matched actual
+private Rustdoc pages. The integration copy removed only six #[test] attributes
+and resolved its support path to the original file. Three unit-test/module
+blocks and the function-local constant passed source inventory and supplemental
+Markdown rendering; ordinary library Rustdoc does not emit those four pages.
+No focused check remains blocked. Raw executable/signature tokens are identical
+in all four files, and selected Rustfmt plus git diff --check passed. Full
+workflow checks remain owner-waived for this docs-only session.
+
+Evidence in /tmp/csgrs-hyperreal-exp-root-audit/ contains commands, baseline/final
+logs, token/declaration inventories, rendered-block matches and the temporary
+integration source. Duplicate HTML was removed after inspection. Builds reused
+the roughly 5.9 GiB locked/offline nonincremental target. Root constructors,
+checked Real domain handling, magnitude helpers, degree deserialization and
+other unit-test excerpts supplied context only. The repository-wide audit and
+100% Rustdoc coverage target remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

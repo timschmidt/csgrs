@@ -1,3 +1,18 @@
+/// Approximate exp(c) at binary precision p for a defined real operand.
+/// Completed, uninterrupted evaluation with representable internal precisions
+/// returns an integer a with |a*2^p-exp(c)| < 2^p. A sufficiently negative
+/// precision -4 sample proves exp(c) < 2^p and permits a zero approximation
+/// without replacing the strictly positive represented value. Its BigInt
+/// threshold works at both i32 endpoints; that does not make every other
+/// precision path endpoint-safe.
+///
+/// Otherwise require |c| < 9/16 (or a cached exact |c| < 1/2 proof) before the
+/// small Taylor series and its coarse-zero shortcut. Larger arguments first
+/// try ln(2) reduction, then binary scaling and repeated squares. The term-count
+/// estimate sizes guard precision; it is not a loop or total-work budget.
+/// Cancellation polls can return zero or a partial series sum, so this bare
+/// integer is not a completion receipt. Precision arithmetic elsewhere is
+/// unchecked, and fallback construction/evaluation has no total resource bound.
 fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     if should_stop(signal) {
         return Zero::zero();
@@ -80,6 +95,19 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(sum, calc_precision - p)
 }
 
+/// Approximate exp(c)-1 while retaining small residuals without subtracting rounded near-one values.
+/// Assume c denotes a defined real. On completed evaluation with representable
+/// internal precisions, the integer has error below one unit of 2^p.
+/// At p >= 1 a retained nonpositive
+/// sign, or a coarse upper-range proof, permits zero. Otherwise use a series
+/// starting at c when the coarse sample establishes |c| < 9/16; larger
+/// magnitudes fall back to an exact exp(c)-1 graph.
+///
+/// There is no initial stop poll: sign shortcuts may return immediately and
+/// operand sampling may run before the series checks cancellation. A stopped
+/// series can return a partial sum; publication belongs to the enclosing
+/// approximation machinery. Guard precision is not a total-work bound, and
+/// unchecked precision arithmetic does not support every i32 endpoint.
 fn expm1(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // For x <= 0, -1 < exp(x) - 1 <= 0. Use a retained sign proof without
     // evaluating the operand or walking its expression graph.
@@ -129,6 +157,27 @@ fn expm1(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(sum, calc_precision - p)
 }
 
+/// Approximate the nonnegative square root of an admitted nonnegative real c.
+/// On completed evaluation with representable internal precisions, the error
+/// is below one unit of 2^p. A retained Square child uses |child.approx(p)|
+/// directly, by the 1-Lipschitz absolute-value identity, without evaluating the
+/// square. Otherwise obtain a magnitude from certified facts or a refined
+/// nonzero sample and use coarse-zero bounds before choosing a numeric path.
+///
+/// Use an integer-root seed when the planned msd/2-p is at most 59, and recursive
+/// Newton refinement above that threshold. The usual seed samples at 2*(p-4),
+/// takes an integer square root and rounds off four guard bits. If that checked
+/// precision calculation fails, use the older even-precision integer seed with
+/// 150 extra operand bits. Neither path introduces hardware floating point.
+/// The result-size estimate uses Rust's truncating msd/2, not a claim of an
+/// exact square-root binade for negative odd exponents.
+///
+/// Magnitude discovery can precede the explicit stop poll; c.msd uses c's own
+/// signal rather than the separate signal argument. That poll returns one as
+/// an interruption placeholder, while other paths delegate cancellation to
+/// children. No partial integer is a success receipt. Saturating/checked setup
+/// does not protect every later precision expression, recursion or allocation;
+/// negative raw radicands are not a typed domain error at this kernel boundary.
 fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // sqrt(x^2) is |x| even when x's sign is unresolved. Absolute value is
     // 1-Lipschitz, so applying it to one p-precision integer approximation
@@ -137,12 +186,9 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         return child.approx_signal(signal, p).abs();
     }
 
-    // Sqrt uses a fixed-size integer sqrt for moderate precision and recursive
-    // Newton refinement for deeper requests. This avoids pulling in floating
-    // approximations while keeping high-precision sqrt from scaling quadratically.
-    // Newton sqrt/reciprocal-sqrt refinement is the standard arbitrary-precision strategy.
-    // Larger integer seeds cost more than one extra Newton refinement near
-    // the machine-word boundary; the measured crossover is 59 result bits.
+    // Use a request-sized integer sqrt for moderate precision and recursive
+    // Newton refinement when the planned msd/2-p exceeds 59. Both paths use
+    // integer arithmetic.
     let fp_prec: i32 = 59;
     let fp_op_prec: i32 = 150;
 
@@ -187,9 +233,8 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 
         let op_appr = c.approx_signal(signal, prod_prec);
 
-        // Slightly fewer might be enough;
-        // Compute (last_appr * last_appr + op_appr)/(last_appr/2)
-        // while adjusting the scaling to make everything work
+        // Compute (last_appr * last_appr + op_appr)/(2 * last_appr),
+        // adjusting the scale before division and rounding the final halving.
 
         let prod_prec_scaled_numerator = (&last_appr * &last_appr) + op_appr;
         let scaled_numerator = scale(prod_prec_scaled_numerator, appr_prec - p);
@@ -222,6 +267,20 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     }
 }
 
+/// Approximate the nonnegative degree-th root of an admitted nonnegative radicand.
+/// Assert degree in 3..=9 even in release builds; invalid degrees panic. For a
+/// representable degree*(p-4), sample c at that precision. Samples at most one
+/// permit zero; otherwise floor_root(A-1) and ceil_root(A+1) enclose the root
+/// at the guarded scale. Round their midpoint after removing four guard bits
+/// to achieve error below one unit of 2^p on completed evaluation.
+///
+/// If the precision product cannot be represented, delegate to exp(ln(c)/degree).
+/// That fallback inherits logarithm's positive-domain requirement and the
+/// callees' precision/resource limits; it is not a proof of total behavior at
+/// extreme precisions. Negative odd roots belong to the checked Real symmetry
+/// wrapper, not this nonnegative kernel. There are no explicit stop polls
+/// around integer root/power arithmetic; child calls alone receive the signal,
+/// and a returned integer does not certify completion.
 fn nth_root(signal: &Option<Signal>, c: &Computable, degree: u32, p: Precision) -> BigInt {
     // The only construction and deserialization paths validate this range.
     // Retain a release-mode guard because approximation kernels are the final
@@ -237,14 +296,16 @@ fn nth_root(signal: &Option<Signal>, c: &Computable, degree: u32, p: Precision) 
     // ceil_root(A + 1) enclose z. An integer interval of width two crosses at
     // most two nonnegative perfect powers, so rounding its midpoint after the
     // guard-bit shift stays strictly within one unit of t.
+    /// Extra root-result bits used to round the enclosing integer-root interval's midpoint.
+    /// Child precision scales this guard by degree; it is not a work or memory budget.
     const GUARD_BITS: Precision = 4;
     let Some(child_precision) = p
         .checked_sub(GUARD_BITS)
         .and_then(|precision| precision.checked_mul(Precision::try_from(degree).ok()?))
     else {
         // The public bounded-degree constructor makes this reachable only for
-        // an extreme precision request. Preserve total behavior through the
-        // established exp/ln kernel rather than wrapping precision arithmetic.
+        // an extreme precision request. Avoid wrapping this precision product
+        // by delegating to exp/ln, which retains its own domain/resource limits.
         return c
             .clone()
             .ln()
@@ -271,6 +332,3 @@ fn nth_root(signal: &Option<Signal>, c: &Computable, degree: u32, p: Precision) 
     let rounding = BigUint::one() << usize::try_from(GUARD_BITS).unwrap();
     BigInt::from((lower + upper + rounding) >> usize::try_from(GUARD_BITS + 1).unwrap())
 }
-
-// Compute cosine of |c| < 1
-// uses a Taylor series expansion.
