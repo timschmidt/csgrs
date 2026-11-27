@@ -13032,6 +13032,123 @@ with the large native bench_matrix_operations_for declaration (lines 1–3244), 
 first 570 lines were read without editing. Remaining repository-wide file review
 and previously recorded generated-item documentation gaps remain open.
 
+## Hyperlattice native matrix registrar and whole-file closure (2026-11-27)
+
+Target revision: `f3559317a0d422af40de79c2aa4ffdfa13c899a8`. Continued reading every
+line of `crates/hyperlattice/benches/mathbench/matrix_ops.rs` from 571 through 3244,
+completing the large bench_matrix_operations_for declaration. Its initial 570 lines
+were read in the preceding record, and its fixture setup was reread here. A byte
+comparison confirms the entire pre-edit 3,244-line block still matches that earlier
+reading revision. With the completed tail record, this closes whole-file sequential
+review. The native block is now 3,316 lines and the whole file 4,130; the tail remains
+byte-identical. Context reads covered profile collection and the consumed direction,
+point, signed-permutation and diagonal-action contracts in the owning matrix layer.
+
+Owning layer: native mathbench workload registration, consuming Hyperlattice matrix
+operations and Hyperreal fixture converters. Relevant contracts are P1/P2 input
+meaning, P4 retained evidence, P5 resources/cancellation, P6 failure, P9 certainty,
+P10 completed-work measurement and P37 accurate claims. Reproduced missing witness:
+the registrar had no Rustdoc and four inline comments claimed validation of a shared
+triangular dispatch branch/asymptotic cost without assertions or cost evidence.
+Baseline all-feature mathbench compilation passed. Added its complete description
+and qualified those comments without changing any noncomment source bytes.
+
+The file now has eight authored functions with eight complete rendered descriptions
+on eight private pages. This closes the file's authored coverage and sequential
+review, not repository-wide coverage or previously recorded generated-item gaps.
+Contracts clarified:
+
+- Each native invocation registers 131 timings (45 Mat3, 86 Mat4), 119 ordinary
+  dispatch hooks (40/79), and 111 matrix-profile hooks (36/75). Profiles are attempted
+  first, ordinary hooks next, timings last. Only hyperreal/hyperreal-rational labels
+  enable profiles, mapping to from-f64/rational metadata; no converter-origin proof
+  is supplied by the label. Other labels still get ordinary hooks/timing rows.
+- Selected diagnostics run a closure once, commonly looping over four cases.
+  Profile calls is caller normalization metadata, not repetitions or a uniform
+  scalar-operation count. General loops report four, fixed calls one, ordinary
+  four-vector batch profiles four, but the signed-permutation batch profile one.
+  Separate diagnostic passes share retained fixture/evidence state; no cache reset
+  or dispatch/count assertion establishes cold behavior or schedule equality.
+- Thirteen ordinary hooks lack timing counterparts: six Mat3 direct inverse/reciprocal
+  variants; Mat3 direct/batch vector transforms; Mat4 affine inverse/division;
+  untranslated diagonal direction/point batches; and the specialized translated
+  diagonal point transform. Twenty-five construction/transpose/elementwise/scalar-
+  division timing rows have no ordinary hook. Profiles add owned matrix-vector
+  products and use different affine inverse/division names. Presence in one output
+  does not establish presence in the other schedules.
+- General/affine cases cycle four fixtures; paired operands/scalars share the index.
+  Direct division fixes rhs case zero and cycles lhs; direct inverse/reciprocal/power
+  diagnostic loops repeat that same divisor four times. Timed Mat4 direct inverse
+  rows use it once per iter. Direct division and its checked spelling both call
+  div_matrix_checked; direct_div_matrix_exact_left adds no conversion. Direct
+  reciprocal_checked_abort calls inverse_checked_with_abort. Cubes/bitxor use three;
+  negative-power rows use -2 or -1 as named.
+- make_scalar authors most fixtures and owns their exact meaning and side effects;
+  Copy/Fn does not prove purity or preservation of zeros/ones/structural assumptions.
+  Canonical zero/identity constructors and signed selectors bypass it for their
+  constants. Current s/qr converters preserve the integer structure of the fixed
+  fixtures, while arbitrary converters can violate assumed-weight/known-shape rules.
+- Fixed structures include 2*I in both dimensions, nonzero diagonal/triangular
+  matrices, translation (3,-5,7), an orthonormal xy quarter-turn, and signed rows
+  (Y,-X,W,-Z). The latter mixes spatial/weight coordinates and is not an affine
+  point map. Uniform Mat4 scaling includes w. The translated diagonal fixture scales
+  xyz by (2,3,4), translates by (100,200,300), and uses four distinct point/direction
+  triples with weights one/zero. Identity and untranslated variants are separate.
+- All transform outputs remain homogeneous, without perspective division. Generic
+  and assumed-weight methods are distinct routes. The direction-only diagonal
+  quotient omits the fourth divisor. Public-assumed/direct batch labels call the
+  same immediate method with differently placed borrowed bindings; no retained
+  BatchTransform handle is prepared outside iter. Batches construct four outputs.
+- Ordinary iter measures cursor/modulo work where present, owned clones, operation,
+  unwrap and destruction. Transpose/immediate transforms borrow matrices. Mat3 new
+  converts inside iter; zero/identity construct inside iter; there is no Mat4 new
+  row. Other fixtures/divisor setup precede timing. No explicit float export or
+  separate scalar sign/zero refinement consumer defines a common evaluation target.
+- One initially clear abort signal is shared and never set: attachment does not test
+  interruption/cleanup. Fallible calls unwrap without a value/equality/topology or
+  certainty oracle. There is no added precision/refinement, total-work or allocation
+  budget. Registration names and comments do not certify kernel paths or cost bounds.
+
+Validation after final edits:
+
+- Whole-file noncomment bytes are identical to the target revision, including all
+  attributes, expressions, closures and ordering. The already-reviewed tail is also
+  byte-identical. git diff --check and formatting of the new Rustdoc block passed.
+  Rustfmt-rendered before/after copies have identical noncomment code. Existing native
+  body layout differs from current Rustfmt output on both revisions; it was left
+  untouched to keep this batch strictly comments-only. No full-file formatting pass
+  is claimed, and full workflow/format checks remain owner-waived for this session.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 with incremental disabled; warnings and broken/private links were
+  denied. Source-hash-specific empty headers forced regeneration. Complete text of
+  all eight descriptions, including the schedule table, rendered on eight pages in
+  each configuration.
+- Parsed every profile, ordinary hook and timing registration, retaining names,
+  bodies, order and profile normalization arguments. Exact ordered closures are
+  unchanged. Asserted 111/119/131 counts, 13/25 schedule differences, batch metadata,
+  fixed direct operands, checked aliases, clear-signal attachment and absence of
+  explicit output consumers. These are source request counts, not runtime dispatch
+  counts, timings or proof that every requested scalar predicate resolves.
+- Matching-library probes used the current fixed declaration bodies with both s and
+  qr under each feature configuration. Independent Fraction permutation/cofactor
+  expectations matched all fifty triangular inverse entries for ordinary and checked
+  variants and determinants 182, 130, 12122, 12122. Diagonal/uniform inverses, the
+  orthonormal affine inverse, translation inverse and signed inverse matched exact
+  expectations. Single and four-vector generic/assumed/identity/diagonal transforms
+  matched independent homogeneous coordinates. Signed point-batch output was
+  (y,-x,1,-z), confirming that output w is not a preserved point weight.
+- Probes compiled with warnings denied and ran under 30-second external timeouts.
+  No complete Criterion row, general/affine rotating workload, dispatch report,
+  cancellation interruption or external engine ran. No performance/cold-cache claim
+  is made. Full workflows remain owner-waived; no required focused check is blocked.
+  Probe executables were removed and the reused target remains approximately 2.8 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-matrix-native-*` baseline/check/doc/render/probe
+and schedule logs; `/tmp/csgrs-lattice-matrix-native-audit/` inventory/validation/probe
+scripts, ordered call bodies, commands and independent expectations. matrix_ops.rs
+now has a whole-file record. Remaining crate support/non-Rust artifacts, other
+repository files and previously recorded generated-item gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

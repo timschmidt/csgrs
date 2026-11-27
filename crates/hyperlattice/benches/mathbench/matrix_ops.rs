@@ -1,3 +1,79 @@
+/// Registers 131 native matrix timing rows and two distinct diagnostic schedules.
+///
+/// The supplied converter authors retained general, affine, translated-affine and
+/// fixed structured fixtures before any diagnostic or timing row runs. Copy/Fn does
+/// not prove purity or preservation of the supplied zeros, ones or integer values.
+/// Known-structure/assumed-weight methods rely on those meanings; callers must supply
+/// a compatible converter. The driver uses s for exact binary-float input and qr for
+/// exact ratios parsed from displayed decimals. Canonical zero/identity constructors
+/// and signed-axis selectors do not pass their built-in constants through make_scalar.
+///
+/// | Schedule per invocation | Mat3 | Mat4 | Selection |
+/// | --- | ---: | ---: | --- |
+/// | Criterion timing registrations | 45 | 86 | All labels; inherited Criterion settings |
+/// | Ordinary dispatch hooks | 40 | 79 | Trace enablement and name filter |
+/// | Matrix-profile hooks | 36 | 75 | Recognized label plus trace enablement/filter |
+///
+/// Profile hooks run first, ordinary dispatch hooks next, then timing registration.
+/// Only label hyperreal maps to profile input from-f64 and hyperreal-rational to
+/// rational; another label omits profiles without changing the ordinary schedule.
+/// Those input strings are name-based metadata, not validation of converter semantics.
+/// Each selected diagnostic closure runs once, often looping over four cases. The
+/// profile calls argument is normalization metadata: most case loops report four,
+/// fixed calls report one, ordinary four-vector batches report four, but the known
+/// signed-permutation four-vector batch reports one. It is not a request to repeat
+/// the closure or a uniform count of scalar operations. Neither schedule asserts a
+/// path/count, and retained scalar caches are not reset between diagnostic passes
+/// and timing. The same fixture can therefore arrive with previously acquired evidence.
+///
+/// The schedules are not identical. Thirteen ordinary hooks have no timed counterpart:
+/// six Mat3 direct inverse/reciprocal variants, Mat3 direct/batch vector transforms,
+/// Mat4 affine inverse/division, untranslated diagonal direction/point batches, and
+/// the specialized translated-diagonal point transform. Conversely, twenty-five timed
+/// construction/transpose/elementwise/scalar-division rows have no ordinary hook.
+/// Profiles additionally include owned Mat3/Mat4 matrix-vector products and name affine
+/// inverse/division differently. Diagnostic presence does not imply a Criterion row.
+///
+/// General/affine rows cycle four fixtures with cursor initialization outside iter;
+/// paired operands/scalars use the same index. Fixed known-structure rows use retained
+/// integer fixtures or the first general operand. Direct division retains rhs case
+/// zero as divisor and cycles lhs; direct inverse/reciprocal/power diagnostics repeat
+/// that divisor four times, while the timed Mat4 counterparts use it once per iter.
+/// Direct division and direct_div_matrix_checked both call div_matrix_checked;
+/// Mat4 direct_div_matrix_exact_left is the same operation/inputs, not a conversion.
+/// Direct reciprocal_checked_abort calls inverse_checked_with_abort. Positive power
+/// and bitxor rows use exponent three; negative powers use -2 or -1 as named.
+///
+/// Structured inputs include 2*I in both dimensions (all four homogeneous lanes for
+/// Mat4), nonzero diagonal/triangular matrices, translation (3,-5,7), a quarter-turn
+/// orthonormal xy block, and signed rows (Y,-X,W,-Z). The signed permutation mixes
+/// spatial and weight coordinates; it is not an affine point/direction map. The fixed
+/// translated diagonal affine matrix scales xyz by (2,3,4) and translates by
+/// (100,200,300). Its point/direction fixtures share xyz and have weights one/zero;
+/// the four-vector batches use four different xyz triples. The current s/qr converters
+/// preserve these integer preconditions, but an arbitrary callback need not do so.
+///
+/// Transform rows return all homogeneous lanes without perspective division. Generic
+/// and assumed point/direction routes are distinct calls. The direction-only diagonal
+/// quotient omits the fourth divisor under the direction contract. Direct versus
+/// public-assumed batch labels call the same immediate public method with different
+/// placement of a borrowed matrix binding; no retained BatchTransform handle is built
+/// outside iter. Batch methods create four outputs per invocation, not a lazy proxy.
+///
+/// Ordinary iter includes cursor/index work where present, owned-operand clones,
+/// operations, Result unwrap and output destruction. Transpose and immediate transform
+/// routes borrow matrices. Mat3 new invokes the converter inside iter; zero/identity
+/// construct inside iter; no Mat4 new row is registered. Fixed divisor setup and all
+/// other fixtures precede timing. No output float conversion or separate sign/zero
+/// refinement consumer is requested, so timings do not measure an independently
+/// specified approximation accuracy or universally complete scalar evaluation.
+///
+/// The one shared abort flag is initially clear and never set here: abort rows attach
+/// a signal but do not test interruption or cleanup. Fallible calls unwrap; no value,
+/// topology, equality, certainty-receipt or dispatch-count oracle is present. The
+/// registrar adds no precision/refinement, total-work or allocation budget. Its names
+/// and source comments are workload descriptions, not correctness, asymptotic-cost
+/// or performance guarantees for the called matrix kernels.
 #[allow(clippy::needless_range_loop)]
 fn bench_matrix_operations_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
@@ -151,10 +227,8 @@ fn bench_matrix_operations_for<F>(
         trace_matrix_profile_row("mat3", "known_lower_triangular_inverse", input, 1, || {
             black_box(black_box(lower_triangular_matrix3.clone()).lower_triangular_inverse().unwrap());
         });
-        // Keep checked triangular inverse rows in the same structural dispatch family
-        // so we can validate the O(n²) branch under error-aware APIs.
-        // See Golub and Van Loan, *Matrix Computations*; Yap, "Towards Exact
-        // Geometric Computation", 1997.
+        // Exercise the checked triangular entry points for profile comparison.
+        // This registrar asserts neither their dispatch branch nor an asymptotic cost.
         trace_matrix_profile_row("mat3", "known_upper_triangular_inverse_checked", input, 1, || {
             black_box(
                 black_box(upper_triangular_matrix3.clone())
@@ -519,10 +593,8 @@ fn bench_matrix_operations_for<F>(
         trace_matrix_profile_row("mat4", "known_lower_triangular_inverse", input, 1, || {
             black_box(black_box(lower_triangular_matrix4.clone()).lower_triangular_inverse().unwrap());
         });
-        // Keep checked triangular inverse rows in the same structural dispatch family
-        // so we can validate the O(n²) branch under error-aware APIs.
-        // See Golub and Van Loan, *Matrix Computations*; Yap, "Towards Exact
-        // Geometric Computation", 1997.
+        // Exercise the checked triangular entry points for profile comparison.
+        // This registrar asserts neither their dispatch branch nor an asymptotic cost.
         trace_matrix_profile_row("mat4", "known_upper_triangular_inverse_checked", input, 1, || {
             black_box(
                 black_box(upper_triangular_matrix4.clone())
@@ -1175,8 +1247,8 @@ fn bench_matrix_operations_for<F>(
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_lower_triangular_inverse"), || {
         black_box(black_box(lower_triangular_matrix3.clone()).lower_triangular_inverse().unwrap());
     });
-    // Keep checked triangular inverse rows in the trace profile to validate the same
-    // dispatch branch under `inverse_checked` semantics.
+    // Capture checked triangular calls; matching dispatch requires separate evidence.
+    // No equality of branches or count assertion is made by this registrar.
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse_checked"), || {
         black_box(black_box(upper_triangular_matrix3.clone()).upper_triangular_inverse_checked().unwrap());
     });
@@ -1515,8 +1587,8 @@ fn bench_matrix_operations_for<F>(
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_lower_triangular_inverse"), || {
         black_box(black_box(lower_triangular_matrix4.clone()).lower_triangular_inverse().unwrap());
     });
-    // Keep checked triangular inverse rows in the trace profile to validate the same
-    // dispatch branch under `inverse_checked` semantics.
+    // Capture checked triangular calls; matching dispatch requires separate evidence.
+    // No equality of branches or count assertion is made by this registrar.
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse_checked"), || {
         black_box(black_box(upper_triangular_matrix4.clone()).upper_triangular_inverse_checked().unwrap());
     });
