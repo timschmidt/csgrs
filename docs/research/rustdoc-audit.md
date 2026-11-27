@@ -8124,6 +8124,135 @@ These are temporary evidence, not a durable archive. The other Hyperlattice
 examples, implementations, tests, benchmarks, and support files remain subject
 to their individual review records; most of the wider repository remains open.
 
+## Hyperlattice quick start and stored benchmark report (26 November 2026)
+
+Reviewed every line at `c749b8f4a` of these files under `crates/hyperlattice/`:
+
+| File | Baseline lines | Current lines |
+| --- | ---: | ---: |
+| `examples/readme_quickstart.rs` | 16 | 29 |
+| `examples/write_benchmarks_md.rs` | 15 | 29 |
+| `tests/readme.rs` | 41 | 56 |
+| `benches/support/benchmark_report.rs` | 473 | 635 |
+
+Added all missing module/declaration/field Rustdoc: 41 authored declarations
+including test modules/functions, 17 fields, and four module introductions.
+The README's marked quick-start block was synchronized with the entire example,
+including its documentation, as required by its unchanged byte-comparison test.
+That README block is partial context review, not whole-file README completion.
+No implementation, output string, assertion, predicate order, lint attribute,
+feature selection, or benchmark result changed.
+
+Owning layers and acceptance witnesses:
+
+- Quick start: exact scalar ingress and lattice arithmetic demonstration, P1/P2,
+  P3's structural-versus-semantic equality distinction, P6's native error path,
+  and P37's documented consumer. The domain is the fixed integer vector (3,4,0)
+  and 3x3 identity matrix. Missing private helper/main docs and README synchronization
+  were the acceptance gap. The original example and both README tests passed before
+  edits. The assertions check self-dot 25, principal square root 5, identity action,
+  and identity inversion, using structural PartialEq for exact rational results.
+  BlasResult propagates native scalar errors and adds no certainty receipt.
+- Reporting: stored development measurements and manifest/source inventory, P5's
+  resource-scope distinction, P27's output determinism, and P36/P37's equivalent
+  completed workload and no-overclaiming requirements. Input is stored Criterion
+  JSON, directories, environment/argv, a line-scanned manifest, and Markdown.
+  Missing private parsing/grouping/replacement docs and their rendered coverage
+  were the gap. Two original helper tests and an actual-source synthetic probe
+  passed before editing. The writer records stored evidence, not completed or
+  semantically equivalent current-revision workloads.
+
+Report behavior documented from the target revision:
+
+- CRITERION_HOME is used verbatim, including relative paths; a relative
+  CARGO_TARGET_DIR is joined to the compile-time crate root. Otherwise executable
+  ancestry selects an existing criterion directory, with a crate-target fallback.
+  Recursive directory traversal follows symlink directory tests and lacks
+  crate/revision filters, cycle detection, and work/depth/memory limits.
+  Duplicate full IDs replace earlier visits; filesystem enumeration determines
+  the winner even though output IDs are sorted.
+- Missing required files/fields skip rows; required read/JSON errors propagate.
+  Optional change-file errors are suppressed. Mean confidence bounds and median
+  default to the mean, while the table always labels intervals 95% without reading
+  their confidence level. Invalid throughput counts become zero; throughput text
+  is workload size, not rate. These are existing reporting semantics, not statistical
+  validation or approval of the underlying performance claims.
+- Explicit bench inventory is a line scan, not TOML parsing or automatic target
+  discovery. Features before the name are missed; # stripping ignores string
+  context; multiline arrays, custom source paths, and general escaping are not
+  supported. Conventional source substring detection can classify a comment as
+  Criterion. This manifest currently has seven explicit benches. The existing
+  inventory test checks seven, two names, and some non-Criterion classification,
+  not every name/feature/source classification.
+- Comparisons require distinct nonempty function IDs sharing exact group/input
+  strings, with nonempty input or a competitive/comparison group-name substring.
+  Participating-row count is not a count of pairs or groups. Ratios have no
+  positive-time check or proof of equivalent semantics. A zero fastest row yielded
+  `infx` and `NaNx` in the bounded synthetic probe. Duration/change/Markdown helpers
+  format their inputs rather than validate measurements or sanitize arbitrary text.
+- Automatic callbacks inspect exact argv strings and skip-variable presence,
+  ignore the supplied Criterion object, and log write failures without failing
+  the benchmark. The standalone example bypasses that gate and propagates I/O
+  errors. It writes directly to the compile-time crate's benchmarks.md; failure
+  to read existing Markdown substitutes a new header. Replacement affects the
+  first marker pair, appends when no opening marker exists, and discards the old
+  tail when its closing marker is absent. No atomic/concurrent-write protocol is
+  provided. The original replacement test does not establish general idempotence.
+
+Read the full crate manifest as context for its feature defaults, package example
+selection, dev dependencies, and seven bench declarations. Read the three shared
+writer call sites and Matrix3 inverse/error-alias excerpts. These receive no new
+whole-file implementation/benchmark credit. The already-reviewed Hyperlimit
+writer was reread as a documentation source; comment-stripped comparison showed
+only crate constants, the fixed trace-report row, and manifest-test expectations
+vary. Reused its applicable prose with those differences explicitly adapted;
+no shared implementation refactor or mathematical authority was introduced.
+
+Validation after final edits:
+
+- Focused Rustfmt, `git diff --check`, declaration/field inventory, and exact
+  comment/blank-line-stripped source identity passed for all four Rust files.
+- The actual quick-start binary ran against the built all-feature lattice library.
+  Both original README tests passed, including the unchanged full-block equality
+  assertion. Their version/heading test is substring validation, not publication
+  or semantic README validation.
+- Both original report tests and a temporary probe appended to the unchanged
+  actual module passed before/after. The probe exercised missing input, malformed
+  required versus optional JSON, mean/median fallback, invalid throughput count,
+  zero-time ratios, grouping eligibility/order, manifest feature order, comment
+  classification, absent source, unterminated section replacement, and formatting.
+  The synthetic rendered report matched byte for byte before/after. Probe files
+  live only in /tmp; no checked-in report writer or timing workload was executed.
+- Private Rustdoc with warnings and broken/private links denied passed for both
+  examples and the README-test source. Complete text of 57 documentation groups
+  matched 42 generated HTML pages. A cfg(test) doc build also rendered the helper's
+  test-module prose. Rustdoc omits the four #[test] functions; their docs were
+  source-reviewed and their bodies compiled/executed without modifying attributes.
+- Cargo check passed for all three direct benchmark consumers (mathbench,
+  regression_sentinels, retained_fuzz), both examples, and the README test, under
+  all features and no default features. Commands used locked/offline resolution,
+  two workers, the shared target, and disabled incremental compilation.
+- Directly selecting Criterion for a workspace dependency-only build first hit
+  version ambiguity, then a Cargo feature-resolver panic. A temporary external
+  dependency crate pinned Criterion 0.7.0 and serde_json 1.0.149 and built offline
+  into the same target for executable probes. Its initial unused-dependency
+  warning was resolved by explicit re-exports; its final locked build passed.
+  No repository dependency/lockfile changed. The normal consumer checks above
+  use the repository manifest and lockfile and passed independently.
+- Full workflows remain owner-waived. No timing/dispatch benchmark, general
+  geometry qualification, symlink-cycle traversal, concurrent writer, or failure
+  injection against repository reports ran. Temporary binaries are removed after
+  validation; shared build storage is approximately 2.4 GiB, retained for reuse.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-quickstart-{before,after}.log`,
+`/tmp/csgrs-rustdoc-lattice-report-{before,after,render,consumers,consumers-minimal}.log`,
+`/tmp/csgrs-rustdoc-lattice-report-deps-final.log`, and
+`/tmp/csgrs-lattice-report/` retain checkers, probe source/fixtures, rendered sample,
+dependency metadata/lockfile, and private docs. They are temporary evidence, not
+an archival benchmark record. Hyperlattice's perf_atlas example remains open,
+as do other unrecorded implementation/test/benchmark/support files and most of
+the wider repository. This batch does not establish repository-wide coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
