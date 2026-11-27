@@ -20526,6 +20526,106 @@ disabled. AGENTS.md's existing 100% public/private Rustdoc mandate remains in
 force. Repository-wide line review and all-configuration coverage remain
 unfinished.
 
+## Hyperreal native Jacobi regression and composition fixtures (27 November 2026)
+
+Baseline: `4e79bc037214c405d441489580dfc7c74b09b44a` on `rustdoc`.
+Reviewed every line of
+`crates/hyperreal/src/computable/node/ring_jacobi_relations_tests.rs`: 677
+baseline lines, 779 after documentation and selected-file Rustfmt. The batch
+covers its module and all 29 named functions (12 helpers and 17 tests), for
+30 reviewed Rustdoc blocks. All 30 rendered in a temporary private-documentation
+build with only this module's cfg(test)/test attributes removed. Ordinary
+library docs omit these test-only items; successful ordinary cargo doc alone
+would not establish their coverage. No selected derived traits or named local
+items require separate rendering. Closure bodies were reviewed in context.
+
+Ownership is Hyperreal's native relation qualification corpus, P2–P6, with
+scalar consumers exercising retained-evidence/resource composition (P19–P20)
+and downstream predicate use under P8–P11. The missing acceptance witness was
+accurate item-level documentation of each fixture's mathematical expectation,
+preconditions, assertion scope and limits. The baseline all-feature ring suite
+passed 87 tests before edits. Contextual reads of the Jacobi component
+constructor, native relation/basis selection and projection/retention paths do
+not add whole-file review credit to those already separately tracked files.
+
+The documentation now makes these distinctions explicit:
+
+- Raw builders deliberately bypass simplification and may contain unproved
+  domains. The ordinary rational helper can carry constructor facts. The shared
+  sine amplitude starts unsigned and unsampled, but bounded exact positivity
+  can later establish the original logarithm-domain fixture without sampling.
+- Candidate assignments are proposals rather than rational proofs. Discarding
+  a common factor for a sufficient zero proof does not establish that factor
+  nonzero or permit its inversion. Jacobi amplitude and log-complement identity
+  are separate required inputs to the square relations.
+- Root, logarithm, original inverse and exponential-pairing fixtures test both
+  admitted cases and unknown/invalid domains. The preserved sin(1/3) case admits
+  h=1+sin(1/3) and dn²=1+sin(1/3)*sn². Dyadic exponential pairs require exact
+  log cancellation, not generic numerical closeness.
+- The resource/retry test checks retained rational reuse under zero work,
+  cancellation and four scoped readers. It is a finite concurrency witness,
+  not a race-freedom proof. Cold-first and warm-first basis tests require one
+  consistent choice per attempt, not identical choices between those attempts.
+- Parameter compression checks inverse obligations through arithmetic wrappers
+  before accepting a reusable atom. Formal storage probes intentionally use
+  synthetic IDs to isolate term/degree/coefficient guards; these are not
+  completed geometry admissions. Raw integer-angle sine atoms are not numerically
+  evaluated to certify these limits.
+- Owned replay's exact expectation is 3*2+2*3²+(-4)/2=22. Other fixtures exercise
+  retained norm reuse, local inverse admission, zero/oversized/depth failures,
+  and shared-root square relations without claiming every declined input invalid.
+- The rectangular helper constructs sn=a+i*b, cn=f-i*g and dn=h-i*j, then the
+  real parts of sn²+cn², dn²+m*sn², and dn²-m*cn²-(1-m), expected as 1,1,0.
+  A proved negative parameter uses the reciprocal-complement transform with
+  sqrt(1-m). Required roots, Jacobi calls and denominators are fixture-domain
+  preconditions; unwrap failures are not returned typed outcomes. An unknown
+  sign follows the nonnegative branch. The helper alone asserts no identity.
+- The ellipsoid-axis test consumes scalar norm evidence through addition, hypot
+  and division to obtain position four. It does not build or certify an entire
+  ellipsoid. Endpoint tests separately consume an exact zero in sine/cosine.
+- Quadratic reciprocal tests require a nonzero conjugate norm as a sufficient
+  recognizer condition. The nonzero value 1+sqrt(1)=2 deliberately declines that
+  route because its norm is zero; that refusal is not a nonexistence proof.
+
+An independent sparse integer-polynomial oracle checked the rectangular
+expectations without invoking repository arithmetic or numerical Jacobi values.
+With x=sn², y=Sn², cn²=1-x, dn²=1-m*x, Cn²=1-y and
+Dn²=1-(1-m)*y, expanding the three returned numerators after clearing
+D², where D=1-y+m*x*y, gave zero residuals against 1,1,0. For m<0, set
+h=1-m and t=sn(y_argument*sqrt(h),1/h)². The transformed fixture has
+Sn²=t/h, Cn²=1-t/h and Dn²=1-t; clearing h also proved its implemented
+addition denominator equals D under y=t/h. These are conditional algebraic
+expectations under the admitted branches and nonzero denominators, not a
+universal domain/closure proof. The same independent check confirmed the five
+reciprocal norms [7,7,-2,-8,9], the zero-norm exclusion and the replay value 22.
+
+After the final documentation edit, focused locked/offline two-job checks passed:
+
+- Hyperreal library `computable::node::ring_`: 84 tests without default features
+  and 87 with all features, including all 17 reviewed native Jacobi tests.
+- Both private library Rustdoc builds with warnings, broken intra-doc links and
+  private intra-doc links denied, plus temporary test/helper Rustdoc and all
+  30 rendered block checks.
+- All-feature `serde_graph_domains` (4 tests), `serde_opaque_operand_domains`
+  (5 tests), and downstream Hyperlimit `resolve::tests` (5 tests).
+- Selected Rustfmt, git diff --check and source-token comparison. Rustfmt moved
+  one trailing comma from the inner PrescaledSin call to its containing raw call;
+  raw tokens are otherwise identical after excluding commas. Independently
+  formatted comment-free token streams are fully identical. No assertion,
+  signature, predicate/dispatch order, fixture input or runtime algorithm changed.
+
+The inventory initially flagged that comma relocation; it was inspected in the
+diff and verified by the two source comparisons above, rather than treating the
+raw-token mismatch as an implementation change. No focused check remains
+blocked. Full workflows and performance measurements remain owner-waived for
+this docs-only session, and no performance claim is made. Evidence under
+`/tmp/csgrs-hyperreal-jacobi-fixtures-audit/` retains commands/logs, the independent
+polynomial oracle and item/render/token inventory. Owned shadow sources and
+temporary HTML were removed after review; the approximately 6.6 GiB shared Cargo
+target was reused with incremental compilation disabled. AGENTS.md's existing
+100% public/private Rustdoc mandate remains unchanged. Repository-wide line
+review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

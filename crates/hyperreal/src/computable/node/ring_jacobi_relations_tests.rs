@@ -1,8 +1,11 @@
 #[cfg(test)]
+/// Native Jacobi proof obligations, retained scalar composition and resource regressions.
 mod ring_jacobi_relations_tests {
     use super::*;
     use crate::Real;
 
+    /// Build an unsimplified node with invalid bound/sign facts, no sample and no stop signal.
+    /// Fixtures may deliberately contain unproved domains; no validation occurs here.
     fn raw(approximation: Approximation) -> Computable {
         Computable {
             internal: Arc::new(Node::new(
@@ -14,32 +17,45 @@ mod ring_jacobi_relations_tests {
         }
     }
 
+    /// Build a raw sum preserving operand order and shared child nodes.
     fn add(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Add(a, b))
     }
+    /// Build a raw product without simplifying factors or erasing domain obligations.
     fn mul(a: Computable, b: Computable) -> Computable {
         raw(Approximation::Multiply(a, b))
     }
+    /// Wrap an operand in raw negation without canonicalization.
     fn neg(a: Computable) -> Computable {
         raw(Approximation::Negate(a))
     }
+    /// Wrap a shared operand in a raw square recipe without publishing its sign.
     fn sq(a: Computable) -> Computable {
         raw(Approximation::Square(a))
     }
+    /// Create an exact rational i32 through the normal Computable rational constructor.
+    /// Unlike raw Ratio fixtures, this may carry the constructor's exact facts.
     fn q(n: i32) -> Computable {
         Computable::rational(Rational::from(n))
     }
+    /// Build an unsampled sine of exactly 1/3 for use as a retained Jacobi amplitude.
+    /// The raw wrapper initially has no sign proof, although its positivity can be proved
+    /// later by the bounded exact small-angle rules without a numerical sample.
     fn fresh_angle() -> Computable {
         raw(Approximation::PrescaledSin(Computable::rational(
             Rational::fraction(1, 3).unwrap(),
         )))
     }
+    /// Start a query-local recognizer with native relations enabled and default budgets.
+    /// This helper does not itself run parameter collection or enable root completion.
     fn native(value: &Computable) -> RingRecognition<'_> {
         let mut recognition = RingRecognition::new(value);
         recognition.native_relations = true;
         recognition
     }
 
+    /// Build sn²+cn² from the same retained amplitude and log-complement payloads.
+    /// For defined real payloads this equals one; the helper does not admit their domains.
     fn unit_relation(angle: &Computable, log: &Computable) -> Computable {
         add(
             sq(angle.clone().jacobi_component(log.clone(), 0)),
@@ -47,6 +63,8 @@ mod ring_jacobi_relations_tests {
         )
     }
 
+    /// Require an invalid queried exact sign and no numerical approximation sample.
+    /// This is not an inventory of every other cache entry or descendant fact.
     fn assert_unproved(value: &Computable) {
         assert!(matches!(
             value.internal.facts.exact_sign(),
@@ -56,6 +74,9 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Reject candidate-only rational values for individual components and misleading sums.
+    /// Prove sn²+cn²=1 only with its relation, then prove cn*(sn²+cn²-1)=0 without
+    /// assuming cn nonzero. The shared amplitude must remain numerically unsampled.
     fn candidate_assignments_never_replace_a_relation_proof() {
         let angle = fresh_angle();
         let log = Computable::ln2();
@@ -88,6 +109,8 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Decline sn²+cn² mixtures with a changed amplitude or log-complement parameter.
+    /// A shared component name alone must not justify importing another component's relation.
     fn amplitude_and_parameter_identity_are_both_required() {
         let angle = fresh_angle();
         let log = Computable::ln2();
@@ -106,6 +129,11 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Check immediate radicand evidence and retained-logarithm domain admission.
+    /// Reject negative/unproved roots and invalid/unproved logarithm recipes, but admit
+    /// zero's square relation. Preserve the original sin(1/3) logarithm case: exact
+    /// positivity admits h=1+sin(1/3), yielding dn²=1+sin(1/3)*sn² without sampling.
+    /// A separately proved positive sqrt(2) may then be consumed by its reciprocal.
     fn root_and_logarithm_rules_require_domain_evidence() {
         let angle = fresh_angle();
         let mut recognition = native(&angle);
@@ -124,9 +152,9 @@ mod ring_jacobi_relations_tests {
         );
         for log in [
             raw(Approximation::PrescaledLnRational(Rational::from(-2))),
-            raw(Approximation::PrescaledLn(raw(Approximation::PrescaledSin(
-                Computable::e_constant(),
-            )))),
+            raw(Approximation::PrescaledLn(raw(
+                Approximation::PrescaledSin(Computable::e_constant()),
+            ))),
         ] {
             let dn = angle.clone().jacobi_component(log, 2);
             assert!(recognition.native_square_relation(&dn, 64).is_none());
@@ -147,7 +175,10 @@ mod ring_jacobi_relations_tests {
         let sn = angle.clone().jacobi_component(log, 0);
         // h=exp(log)=1+residual and dn²=1-(1-h)sn².
         let identity = add(add(sq(dn), q(-1)), neg(mul(residual.clone(), sq(sn))));
-        assert_eq!(identity.bounded_native_relation_rational(), Some(Rational::zero()));
+        assert_eq!(
+            identity.bounded_native_relation_rational(),
+            Some(Rational::zero())
+        );
         assert!(residual.cached().is_none());
         let root = raw(Approximation::Sqrt(q(2)));
         assert_eq!(root.sign_until(-32), Some(RealSign::Positive));
@@ -160,6 +191,9 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Prove exp(a)*exp(-a+k*ln(2))=2^k for k=-3,0,3 through expanded products.
+    /// The (exp(a)+1)*b-b form exposes both exponential atoms. An unmatched -2*a
+    /// exponent must decline without a root proof or amplitude sample.
     fn inverse_exponential_rules_admit_only_exact_log_sums() {
         for shift in [-3, 0, 3] {
             let angle = fresh_angle();
@@ -184,6 +218,9 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Keep original inverse guards even when multiplying by a proved Jacobi norm.
+    /// Literal zero, an unproved sine and a cancelled zero divisor all prevent d/d
+    /// from yielding a completed native proof.
     fn native_relations_never_discharge_unproved_original_inverses() {
         let angle = fresh_angle();
         let norm = unit_relation(&angle, &Computable::ln2());
@@ -199,6 +236,11 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Check node/work/depth refusal, cancellation, retained rational reuse and four readers.
+    /// After retry proves the norm one, verify its retained rational reduction, then
+    /// require zero-work and stopped attempts to decline despite that cache. Four
+    /// scoped threads may subsequently recover the same value without numerical samples;
+    /// this finite concurrency check is not a general race-freedom proof.
     fn native_limits_and_abort_leave_no_false_fact_and_allow_recovery() {
         let angle = fresh_angle();
         let mut value = unit_relation(&angle, &Computable::ln2());
@@ -242,6 +284,10 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Keep one basis choice per structurally equal log parameter within each attempt.
+    /// Test cold-first and warm-first insertion separately, requiring one table entry
+    /// and reuse within each. The test does not require both attempts to choose the
+    /// same basis; warming may change the first choice while preserving its consistency.
     fn native_basis_is_stable_across_differently_warmed_equal_parameters() {
         let a = raw(Approximation::PrescaledLn(q(1)));
         let b = raw(Approximation::PrescaledLn(q(1)));
@@ -259,6 +305,11 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Discover parameter atoms only after hidden arithmetic inverse guards are discharged.
+    /// Exercise zero, initially unproved sine and shifted-sine divisors; later positive
+    /// sign proofs may admit a compressed identity and copies must reuse one entry.
+    /// Also check shallow arithmetic rejection and a 64-negation prepass depth failure.
+    /// The amplitude sample remains absent; not every valid-domain attempt must compress.
     fn parameter_compression_checks_hidden_inverse_domains_and_depth() {
         let angle = fresh_angle();
         for denominator in [q(0), fresh_angle(), add(q(4), fresh_angle())] {
@@ -305,6 +356,11 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Exercise separate capacities: 32 atoms/bases, 64 terms, degree twelve and coefficient bits.
+    /// Reject each next entry, degree-thirteen multiplication/powers, an oversized exact
+    /// integer and both extreme dyadic shifts. Formal insertion probes use synthetic
+    /// atom IDs to isolate storage guards; they are not completed geometric admissions.
+    /// Raw sine atoms at integer inputs are not numerically evaluated by this test.
     fn native_atom_term_degree_and_coefficient_limits_remain_independent() {
         let root = fresh_angle();
         let mut recognition = native(&root);
@@ -377,6 +433,11 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Replay derived coefficient arithmetic to 3*2+2*3²+(-4)/2=22 exactly.
+    /// Reuse a retained unit norm, reject three zero inverse forms, and admit inverse
+    /// (1+1) by a local proof. Check oversized/shifted inputs, depth-zero declines,
+    /// scalar-product shape refusal and the built-in sqrt(2)/sqrt(3) square relations.
+    /// No numerical sample is needed for the replayed root or rejected inverse recipes.
     fn owned_coefficient_replay_preserves_values_domains_and_limits() {
         let root = fresh_angle();
         let value = Computable::linear_combination3(
@@ -450,6 +511,10 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Traverse square/negation/offset/linear-form wrappers before compressing a quotient.
+    /// Denominator four is admitted and zero is not. A depth-zero log prepass records
+    /// nothing; scanning a containing Jacobi linear form records only the valid parameter
+    /// atom. The consumer remains without a numerical sample.
     fn parameter_prepass_checks_inverse_domains_through_linear_combinations() {
         for denominator in [0, 4] {
             let denominator = q(denominator);
@@ -481,6 +546,9 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Reject an uncancelled rational exponent offset and the dyadic scale 2^4096.
+    /// Neither failed inverse-exponential relation may publish a sign or sample on its
+    /// candidate; the shared amplitude must also remain unsampled.
     fn exponential_pairing_declines_unmatched_and_oversized_log_scales() {
         let root = fresh_angle();
         let exponential = raw(Approximation::PrescaledExp(root.clone()));
@@ -498,10 +566,26 @@ mod ring_jacobi_relations_tests {
         assert!(root.cached().is_none());
     }
 
+    /// Evaluate the rectangular Jacobi identity fixture at x=pi and y=abs(parameter).
+    /// Delegate to the explicit-coordinate helper; its domain and inverse requirements
+    /// are fixture preconditions, not checked construction outcomes returned to callers.
     fn rectangular_relations(parameter: &Real) -> [Real; 3] {
         rectangular_relations_at(Real::pi(), parameter.abs(), parameter)
     }
 
+    /// Build three real-part identities for rectangular complex Jacobi addition formulas.
+    /// Let sn(x), cn(x), dn(x) use parameter m. Combine them with complementary-parameter
+    /// values at y to obtain sn=a+i*b, cn=f-i*g and dn=h-i*j.
+    /// Return a²-b²+f²-g², h²-j²+m*(a²-b²), and
+    /// h²-j²-m*(f²-g²)-(1-m), expected to be one, one and zero.
+    ///
+    /// For a proved negative m, transform the complementary evaluations using
+    /// sqrt(1-m) and parameter 1/(1-m); otherwise evaluate at 1-m directly. The tested
+    /// parameters and coordinates must admit all Jacobi calls, roots, quotients and the
+    /// nonzero addition denominator: failures panic through unwrap. Unknown sign takes
+    /// the nonnegative branch, so callers must select fixtures with an appropriate
+    /// available sign decision. This helper constructs symbolic expressions; it does
+    /// not itself assert the identities, measure cost or prove arbitrary input domains.
     fn rectangular_relations_at(x: Real, y: Real, parameter: &Real) -> [Real; 3] {
         let (s, c, d) = x.jacobi_sncndn(parameter).unwrap();
         let complement = Real::one() - parameter;
@@ -537,6 +621,9 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Prove all three rectangular identities with m=±v/(4*(v+1)).
+    /// Use v=pi and pi-3, then fold each result and require exact native projections
+    /// one, one and zero. This exercises generated symbolic parameter expressions as inputs.
     fn symbolic_jacobi_parameter_survives_rational_composition() {
         for v in [Real::pi(), Real::pi() - Real::from(3)] {
             let parameter = (&v / (Real::from(4) * (&v + Real::one()))).unwrap();
@@ -552,6 +639,10 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Consume a proved rectangular norm through axis arithmetic, hypot and division.
+    /// For m=1/2 and -3, norm=1 gives axis=3, hypot(axis,0)=3 and final position four.
+    /// Require the final difference to project to exact zero; this is a scalar consumer
+    /// chain, not construction or validation of an entire ellipsoid surface.
     fn proved_norm_remains_consumable_as_an_ellipsoid_axis() {
         for m in [
             Real::from(Rational::fraction(1, 2).unwrap()),
@@ -571,6 +662,9 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Publish zero for a+a-2*a and require sin(0)=0 and cos(0)=1 to consume that fact.
+    /// The shared raw sine amplitude stays unsampled; the endpoint queries need no
+    /// additional numerical refinement of its cancelling expression.
     fn proved_zero_is_consumed_by_trigonometric_endpoints_without_refinement() {
         let angle = fresh_angle();
         let zero = add(
@@ -585,6 +679,9 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Prove the rectangular identities with rational x and quadratic y and m.
+    /// Use x=3/2, m=±x/(4*(x+sqrt(2))) and y=sqrt(2)/(8*(sqrt(2)+1));
+    /// folded native projections must preserve one, one and zero for both parameter signs.
     fn quadratic_parameter_preserves_rectangular_norms() {
         let x = Real::from(Rational::fraction(3, 2).unwrap());
         let root = Real::from(2).sqrt().unwrap();
@@ -605,6 +702,11 @@ mod ring_jacobi_relations_tests {
     }
 
     #[test]
+    /// Check five (a+b*sqrt(q)) reciprocals against exact product-one reduction.
+    /// Include signs, a zero rational part and q=0, all without sampling the root.
+    /// Decline 1+sqrt(1) despite its nonzero value because its conjugate norm vanishes;
+    /// also reject an oversized norm and a zero-work attempt. These are sufficient
+    /// recognizer conditions, not a complete reciprocal-existence test.
     fn quadratic_reciprocals_require_a_nonzero_rational_norm() {
         for (radicand, a, b) in [(2, 3, 1), (2, -3, 1), (2, 0, 1), (3, 2, 2), (0, 3, 1)] {
             let input = q(radicand);
