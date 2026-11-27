@@ -19053,6 +19053,122 @@ second private-doc tree was generated. AGENTS.md already contains the future-age
 100% public/private Rustdoc mandate and private-build requirement. Repository-wide
 line review and full coverage remain incomplete.
 
+## Hyperreal primitive constructors and structural recognition audit
+
+Baseline: 9740ca5859ffedf0058beae7f90d4afbc2e65816, branch rustdoc. Reviewed
+all 833 baseline lines of
+crates/hyperreal/src/computable/node/primitive_constructors.rs, including the
+function-local comparison enum, its tuple fields and both nested functions.
+The earlier constant-cache batch covered only scoped comments in this file;
+this entry supplies whole-file review credit. Read the relevant callers in
+exp_trig.rs, roots_inverse_hyperbolic.rs, algebra.rs, approximation_queries.rs,
+structural_analysis.rs and Real elementary_functions.rs, and the consumed
+approximation payloads/kernels and selected tests. Those surrounding files
+receive no additional whole-file credit here.
+
+The owning layer is hyperreal's exact expression construction and conservative
+recognition, principally P1–P6 with downstream P8–P11 predicate consumption.
+The admitted domains are defined finite expression DAGs, exact rational leaves,
+named constants and the individual elementary real domains/reduced intervals.
+The missing documentation witness was 43 of 50 methods lacking Rustdoc, plus
+undocumented function-local declarations; existing pi/tau/e text incorrectly
+called the constructors approximations. The changes supply 63 reviewed blocks:
+50 methods, one impl overview, two local functions, one local enum, four variants
+and five tuple fields. This is a documentation correction, not an extension of
+scalar or geometric support, a performance claim or closure qualification.
+
+The descriptions distinguish:
+
+- Exact named recipes from requested samples; fresh constant wrappers from the
+  process-wide approximation caches and thread-local Real templates. The half
+  rational is shared, but half() still constructs a fresh wrapper. Log/sqrt
+  catalog misses are optional recognition failures, not domain decisions.
+- Structural recognition from scalar equality. Ordered children and exact
+  payloads participate; allocation identity shortcuts matching nodes. A false
+  result cannot establish unequal values. Different quantile seed hints fail
+  recognition, and separately allocated LinearCombination3 nodes have no match
+  arm. The initial 64 charged comparisons bound only the recursive phase;
+  iterative restart, identity-pair storage and bigint comparison have no global
+  work/memory/cancellation contract here.
+- Exact shared-perturbation order from tolerance Equal. The perturbation's
+  certified sign determines the difference independently of the base's sign;
+  only a certified magnitude below the tolerance permits tolerance equality.
+- Nominal local trigonometric ranges from unchecked constructor tags, and the
+  exact rational r from an irrational pi/2-r residual. Prescaled inverse-series
+  tags schedule evaluation whose kernels independently check the series range.
+  Existing tangent coarse-zero limitations remain explicitly qualified.
+- Mathematical endpoint domains from constructor sign obligations. The generic
+  positive-acos helper leaves its sign unknown, permitting a zero result at one.
+  The rational positive-acos and both acosh constructors initialize Plus, so
+  their callers must handle the zero-result endpoint first. These stricter
+  constructor preconditions do not narrow the underlying operation's domain.
+- Wrapper control from retained child control. Ordinary deferred wrappers attach
+  no outer signal. Small-angle certification calls approx_signal with None;
+  a successful sample of magnitude at most two at precision -2 proves
+  abs(x)<=3/4 using the one-unit error allowance. Sinc/cosc retain the original
+  signal only after that proof. Failure of this sufficient test does not prove
+  the input lies outside the interval. Their removable zero values avoid a
+  nonzero-denominator decision.
+
+A disposable copy of the source exposed only a temporary observation harness;
+no runtime probe was added to the repository. It was compiled once with the
+baseline constructor file and once with the final file, producing identical
+observation logs. Both builds confirmed the missing LinearCombination3 match
+arm (a clone matches, an independently allocated identical payload does not),
+quantile seed sensitivity at exact probability one half, One versus raw Int(1)
+nonrecognition, and log/sqrt catalog misses. Identical retained expressions and
+the exact identity Phi^-1(1/2)=0 supply the semantic expectations; equal numerical
+samples alone are not treated as equality proofs.
+
+The same probe attached an already-asserted abort flag to pi/8: small-angle
+certification still warmed the input cache, both quotient wrappers retained the
+flag, and ordinary raw trig wrappers had none. It also deliberately bypassed
+caller normalization to observe initial Plus facts alongside zero samples for
+rational acos(1) and both acosh(1) constructors; generic acos(1) did not start
+with Plus. This demonstrates why the private preconditions matter, not a new
+claim that checked public entry points admit those invalid constructor uses.
+All observations used 1 GiB address-space, ten CPU-second and fifteen wall-second
+limits with core dumps disabled. These external limits do not establish native
+resource bounds. No documented runtime limitation was fixed by this batch.
+
+Before edits, seven focused all-feature unit tests passed: shared-DAG structural
+recognition, two exact signed-perturbation cases, rational zero/one construction,
+small-angle quotients, owned-rational trig composition and cross-thread constants.
+After the final source edit, those seven and six additional inverse-series domain,
+abort-publication and medium/large/huge trig tests passed in each of the
+no-default and all-feature configurations: thirteen tests per configuration.
+Five downstream hyperlimit resolve tests passed, including exact rational/sign
+shortcuts and policy-qualified terminal receipts. An initial downstream command
+named a nonexistent hyperlimit successive_operations test target; it executed
+no tests and is not counted. The corrected resolve selection passed. No focused
+check remains blocked; full workflow validation remains owner-waived for this
+docs-only session.
+
+Private cargo doc passed both configurations with warnings and broken/private
+intra-doc links denied. All fifty method blocks and the impl overview matched
+actual private library HTML. The twelve function-local declaration blocks are
+omitted by ordinary Rustdoc even with document-private-items; their source
+inventory and supplemental Markdown rendering were checked separately and are
+not counted as library-page coverage. No doc(hidden), lint allowance or visibility
+change was introduced. There are no new derives or generated API declarations
+in this file; existing dispatch macro invocations remain unchanged.
+
+Independent formatting of comment-free baseline and final sources produced
+identical executable/signature tokens. Raw differences are Rustfmt punctuation
+only: 35 added/four removed optional commas and two added/one removed brace pairs
+around existing match-arm/closure expressions. Selected Rustfmt and git diff
+--check passed. No value, predicate order, signature, fixture, assertion, policy
+or serialization attribute changed.
+
+Evidence: /tmp/csgrs-hyperreal-primitive-constructors-audit/ contains command and
+test logs, the source/rendered-item inventory, supplemental local documentation,
+and temporary-probe source/build commands/output. The disposable source copy,
+rlib, executable and supplemental HTML were removed after verification; scripts
+retain their regeneration inputs. Locked/offline nonincremental Cargo builds
+reused the roughly 6.5 GiB shared target. The existing AGENTS.md mandate already
+requires future agents to maintain 100% public/private Rustdoc and private builds.
+Repository-wide line review and full coverage remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
