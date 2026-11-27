@@ -1126,6 +1126,9 @@ fn matrix4_known_diagonal_inverse_matches_matrix_inverse() {
     );
 }
 
+/// Checks known-diagonal division against ordinary division on fixed rational operands.
+///
+/// This is path agreement and does not independently count reciprocal or scaling work.
 #[test]
 fn matrix4_known_diagonal_division_matches_matrix_division() {
     let numerator = Matrix4::new([
@@ -1325,6 +1328,10 @@ fn matrix4_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
 
+/// Compares known and ordinary upper-triangular division with multiplication by a computed inverse.
+///
+/// The expected quotient shares matrix kernels with the tested paths; it is a
+/// composition witness rather than an independent rational oracle.
 #[test]
 fn matrix4_known_upper_triangular_div_matrix_matches_matrix_division() {
     let numerator = Matrix4::new([
@@ -1351,6 +1358,7 @@ fn matrix4_known_upper_triangular_div_matrix_matches_matrix_division() {
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
+/// Compares known and ordinary lower-triangular division with multiplication by a computed inverse.
 #[test]
 fn matrix4_known_lower_triangular_div_matrix_matches_matrix_division() {
     let numerator = Matrix4::new([
@@ -1377,6 +1385,9 @@ fn matrix4_known_lower_triangular_div_matrix_matches_matrix_division() {
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
+/// Checks checked and inactive-signal division against ordinary triangular division.
+///
+/// The false flag exercises signal-accepting dispatch, not cancellation behavior.
 #[test]
 fn matrix4_known_upper_triangular_div_matrix_checked_matches_ordinary() {
     let numerator = Matrix4::new([

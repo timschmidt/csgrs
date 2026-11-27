@@ -9492,6 +9492,123 @@ The next contiguous boundary is `affine_inverse_translation2`, currently core.rs
 line 4931. Later 2D affine division, 4×4 row solves, multiply/transform/cofactor
 kernels, public APIs and remaining tests still need audit.
 
+## 2026-11-27: Hyperlattice affine and triangular right division
+
+Base revision: `8482c599d`. This batch continues at
+`affine_inverse_translation2`. Owning layer: Hyperlattice matrix arithmetic,
+with Hyperreal scalar arithmetic and structural knowledge. Relevant contracts:
+P1/P3 for exact values and conservative facts, P4/P10 for preserved predicate
+and dispatch order, P6 for zero/unknown failures, and P5 for work and signal
+claims. The domain is exact 3×3/4×4 matrices, with caller-established affine,
+diagonal or triangular shape for specialized helpers; dividends may be singular.
+Before editing, the target revision had 28 undocumented helpers and incorrect
+whole-matrix complexity/row-dependency commentary. Nine selected original tests
+and an independent rational probe passed on that revision. Implementation,
+signatures, fixtures, assertions, predicates and trace calls remain unchanged.
+
+Coverage:
+
+- Read the contiguous core.rs block originally at lines 4930–5850, from the
+  2D inverse-translation helper through
+  `divide_matrix4_by_lower_triangular_checked`. The 921-line block is now 1075
+  lines, including Rustdoc for all 28 private functions. Neither this matrix
+  implementation nor its test file receives whole-file credit yet.
+- Read the later checked right-division dispatcher, `mul_add`, and scalar adapter
+  context to verify callers, structural-zero pruning, and signal attachment.
+  These contextual reads do not complete the later definitions' own audit.
+- Read and documented four original tests: known-diagonal 4×4 division,
+  upper/lower triangular 4×4 division agreement, and checked upper-triangular
+  division agreement. Their docs distinguish shared-kernel expectations and
+  inactive-signal dispatch from independent evidence and cancellation tests.
+
+Documented behavior and corrections:
+
+- The small 2D helpers distinguish original translation t from inverse
+  translation -R⁻¹t, retain the ordered two-product `mul_add` schedule, and do
+  not establish shape or inverse relations themselves. Unknown zero status
+  retains a product; structural-zero knowledge can omit it.
+- Pure-translation division copies the first two columns and subtracts their
+  action on t from the final column. Arbitrary dividends require all three
+  rows; known affine dividends update two offsets and reconstruct `[0,0,1]`.
+  Owned and borrowed 3×3 paths use the same subtraction helper. No reciprocal
+  is needed, but determinant one does not bound expression work. Corrected a
+  comment that inaccurately described changes to the third row and column.
+- General 2D affine division forms ad-bc once, shares its reciprocal across the
+  adjugate, and constructs inverse translation before row products. Borrowed
+  helper names ending `no_translation` exclude the translation-only shortcut;
+  they still handle nonzero translations. Affine-by-affine paths reconstruct
+  the canonical bottom row, while unrestricted paths compute every row.
+- Checked affine division guards the determinant before inverting it. Signal
+  variants attach the determinant before the guard, including guard failures;
+  later products do not explicitly poll or add attachments. Scalar propagation
+  determines cancellation. Shape remains a precondition, and a checked scalar
+  guard is not a shape proof or a total-work bound.
+- Four-dimensional diagonal division constructs four reciprocals in index order
+  and then uses sixteen row-major cached multiplications. Upper/lower row solves
+  share four reciprocals across all rows and solve increasing/decreasing
+  coordinates respectively. Each row is independent of other dividend rows.
+  Their final two numerators use three/four-term active signed sums without a
+  local pruning pass. Corrected old whole-matrix O(n²), one-inverse-per-row and
+  inter-row dependency claims: generalized work is quadratic per row and cubic
+  for n rows, without a scalar bit-complexity or elapsed-time guarantee.
+- Upper-affine 4×4 division shares three reciprocals. The unrestricted path uses
+  twelve cached scalings; the affine dividend uses nine and reconstructs its
+  bottom row. The final homogeneous coordinate needs no scaling by a reciprocal
+  of one. The row helper trusts supplied reciprocals and the supplied scalar one.
+- Checked diagonal/triangular wrappers finish ascending known-nonzero guards
+  before reciprocal construction, even when the subsequent solve descends.
+  First zero/unknown errors propagate without a partial successful quotient.
+  No predicates, guards, arithmetic order or dispatch paths were changed.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Stripping comment-only and blank
+  lines leaves identical executable source in both edited Rust files against
+  `8482c599d`, including attributes, assertions, trace calls and scalar schedules.
+- Hyperlattice builds and all nine selected original tests passed with all
+  features and no defaults; the all-feature baseline passed the same tests.
+  Direct rustc harnesses used matching Cargo artifact graphs, with 60-second
+  per-test and 30-second public-probe external limits.
+- A Python standard-library Fraction Gauss–Jordan oracle independently generated
+  expected quotients for seven rational divisors: general affine, translation
+  and upper-affine 3×3 matrices, and upper/lower/upper-affine/diagonal 4×4 matrices.
+  Two dividend shapes and four modes (owned, borrowed, checked, inactive-signal
+  checked) produced 56 exact quotient comparisons in each configuration. These
+  are finite rational witnesses, not a universal symbolic or cancellation proof.
+- Additional actual-library checks preserved DivideByZero for a singular affine
+  divisor even with a zero dividend, and UnknownZero for an unproved determinant.
+  Exact all-feature trace assertions counted sixteen `mul-cached` events for
+  full 4×4 upper/lower/diagonal division, twelve for full upper-affine division,
+  and nine for affine-by-upper-affine division. Translation division recorded
+  two or three column updates for affine or unrestricted dividends, in both
+  ownership forms. General 2D signal-aware affine division recorded exactly one
+  determinant attachment for both successful dividend shapes and zero/unknown
+  determinant failures. No existing count assertion was loosened.
+- Before/after all-feature probe stdout matched exactly. No-default mode repeated
+  semantic checks with trace assertions compiled out. Both final probe builds
+  were warning-free; temporary trace-only bindings were scoped to that feature.
+- Private library and integration-target Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full-text checks found
+  all 28 new function docs on their individual private pages. Four newly
+  documented #[test] functions were source-reviewed and executed; Rustdoc omits
+  them. Shared test module/helper rendering was rechecked without new coverage
+  credit. The 298 inspected HTML pages do not imply 298 completed API audits.
+- Cargo checks passed for the matrix integration target, mathbench and downstream
+  Hyperspatial library, including Hyperlimit, with all features and no defaults.
+  Commands used --locked --offline -j 2, CARGO_INCREMENTAL=0 and one shared target.
+- Full workflow checks remain owner-waived. No full matrix-suite, benchmark,
+  sanitizer, code-size, total-work or universal-closure claim is made. No focused
+  check remains blocked. Removed the two temporary harness/probe executables;
+  the shared target remains near 2.5 GiB and no duplicate target tree was created.
+- The root AGENTS.md 100% public/private Rustdoc mandate remains active.
+  Repository-wide completion is still unproven; most wider repository work is open.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-div-*.log`, matching Cargo artifact JSON,
+and `/tmp/csgrs-matrix-div-audit/` temporary oracle, probe source, checkers and
+private docs. The next contiguous boundary is `right_divide_matrix3`, currently
+core.rs line 6005. Remaining dispatch, multiplication, transforms, cofactors,
+public APIs and tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

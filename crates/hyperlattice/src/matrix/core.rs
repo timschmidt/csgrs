@@ -4927,6 +4927,11 @@ fn divide_matrix3_by_lower_triangular_checked(
     divide_matrix3_by_lower_triangular(left, right)
 }
 
+/// Computes the negated action of a supplied 2×2 block on a translation vector.
+///
+/// Returns `-linear * [tx, ty]` in row order through the zero-pruning `mul_add`
+/// helper. For an affine inverse the caller supplies `R⁻¹`, not the original R;
+/// this helper neither inverts the block nor validates that relation.
 #[inline]
 fn affine_inverse_translation2(linear: &[[Real; 2]; 2], tx: &Real, ty: &Real) -> [Real; 2] {
     [
@@ -4935,11 +4940,21 @@ fn affine_inverse_translation2(linear: &[[Real; 2]; 2], tx: &Real, ty: &Real) ->
     ]
 }
 
+/// Forms the ordered two-product sum `left_a*right_a + left_b*right_b`.
+///
+/// Delegates to `mul_add`, whose structural-zero gates can omit products before
+/// selecting scalar arithmetic. Missing zero knowledge retains a term; no
+/// independent affine, rationality, or nonzero certificate is established here.
 #[inline]
 fn affine_linear_dot2(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real {
     mul_add(left_a, right_a, left_b, right_b)
 }
 
+/// Adds the contribution of a supplied inverse translation to a homogeneous row.
+///
+/// Computes `row[2] + row[0]*translation[0] + row[1]*translation[1]`, with the
+/// two products grouped through `mul_add`. For division by `[R t;0 1]`, the caller
+/// supplies `translation = -R⁻¹t`. No inverse or relation validation occurs here.
 #[inline]
 fn affine_translation_column_update_from_inverse2(
     row: &[Real; 3],
@@ -4948,6 +4963,11 @@ fn affine_translation_column_update_from_inverse2(
     row[2].clone() + mul_add(&row[0], &translation[0], &row[1], &translation[1])
 }
 
+/// Subtracts a pure translation’s action from a row’s final coordinate.
+///
+/// Computes `row[2] - (row[0]*t[0] + row[1]*t[1])` through the zero-pruning
+/// two-product helper. Receives the original translation, not its negation;
+/// records one column-update event without validating a surrounding matrix.
 #[inline]
 fn affine_translation_column_subtract_update2(row: &[Real; 3], translation: [&Real; 2]) -> Real {
     trace_matrix!("helper", "affine-translation-column-subtract2");
@@ -4955,6 +4975,12 @@ fn affine_translation_column_subtract_update2(row: &[Real; 3], translation: [&Re
     row[2].clone() - shifted
 }
 
+/// Right-divides an arbitrary 3×3 matrix by a known pure translation `[I t;0 1]`.
+///
+/// Clones the first two columns and subtracts their action on t from each of
+/// three final-column entries. Returns `Ok` without a reciprocal or scalar guard,
+/// relying on the caller’s translation-only shape proof. The determinant-one
+/// fact supplies no bound on translation-expression work.
 #[inline]
 fn divide_matrix3_by_affine_translation(
     left: [[Real; 3]; 3],
@@ -4981,6 +5007,11 @@ fn divide_matrix3_by_affine_translation(
     ])
 }
 
+/// Right-divides a known affine matrix by a known pure translation.
+///
+/// Copies the 2×2 linear block and subtracts its action on the original translation
+/// from the two offsets. Reconstructs bottom row `[0,0,1]` rather than inspecting
+/// it. Both shape facts are preconditions; no reciprocal or shape check runs.
 #[inline]
 fn divide_matrix3_affine_by_affine_translation(
     left: [[Real; 3]; 3],
@@ -5003,6 +5034,11 @@ fn divide_matrix3_affine_by_affine_translation(
     ])
 }
 
+/// Borrows both operands for all-row division by a known pure translation.
+///
+/// Clones the first two columns and applies the same subtract-update helper as
+/// the owned 3×3 path to all three rows. The dividend is unrestricted; the right
+/// operand’s `[I t;0 1]` shape is trusted. No reciprocal is constructed.
 #[inline]
 fn divide_matrix3_by_affine_ref_translation(
     left: &[[Real; 3]; 3],
@@ -5031,14 +5067,18 @@ fn divide_matrix3_by_affine_ref_translation(
     ])
 }
 
+/// Borrows known affine/translation operands for the two-offset division shortcut.
+///
+/// Updates only the top two entries of the final column, copies the linear block,
+/// and constructs `[0,0,1]`. Uses the same original-translation subtraction
+/// schedule as the owned 3×3 helper, without revalidating either shape.
 #[inline]
 fn divide_matrix3_affine_by_affine_ref_translation(
     left: &[[Real; 3]; 3],
     right: &[[Real; 3]; 3],
 ) -> BlasResult<[[Real; 3]; 3]> {
-    // Borrowed affine-by-affine translation update. As with the translated-only
-    // branch, this keeps all linear components unchanged and updates only the
-    // third row/col terms touched by the translation.
+    // Borrowed affine-by-affine translation update: preserve the linear block,
+    // update the two offsets in the final column, and reconstruct the bottom row.
     let translation = [&right[0][2], &right[1][2]];
     Ok([
         [
@@ -5055,6 +5095,13 @@ fn divide_matrix3_affine_by_affine_ref_translation(
     ])
 }
 
+/// Right-divides a borrowed arbitrary matrix by a caller-established affine divisor.
+///
+/// For `[R t;0 1]`, forms `det(R)=ad-bc`, shares one reciprocal across the 2×2
+/// adjugate, then computes `u=-R⁻¹t`. Each output row is `[left_xy*R⁻¹,
+/// left_last + left_xy*u]`. All rows are computed. The name excludes the
+/// translation-only shortcut, not translation itself. Scalar inverse errors
+/// propagate before result construction; affine shape is trusted.
 #[inline]
 fn divide_matrix3_by_affine_ref_no_translation(
     left: &[[Real; 3]; 3],
@@ -5133,6 +5180,12 @@ fn divide_matrix3_by_affine_ref_no_translation(
     ])
 }
 
+/// Right-divides two borrowed known affine matrices through a 2×2 inverse.
+///
+/// Computes `[L R⁻¹, a - L R⁻¹t;0 1]`, sharing one ordinary determinant reciprocal.
+/// Only the top two rows are evaluated and the bottom row is reconstructed; both
+/// input shapes must already be established. Translation is retained despite
+/// the name, and scalar inverse errors return without a partial quotient.
 #[inline]
 fn divide_matrix3_affine_by_affine_ref_no_translation(
     left: &[[Real; 3]; 3],
@@ -5196,6 +5249,12 @@ fn divide_matrix3_affine_by_affine_ref_no_translation(
     ])
 }
 
+/// Right-divides an unrestricted owned dividend by a known 2D affine divisor.
+///
+/// Forms the divisor’s 2×2 determinant, takes one reciprocal, scales the adjugate,
+/// and computes inverse translation before constructing all three result rows.
+/// Uses two-term linear combinations for columns and offsets rather than a full
+/// 3×3 product. The right bottom row is trusted; ordinary inverse errors propagate.
 #[inline]
 fn divide_matrix3_by_affine(
     left: [[Real; 3]; 3],
@@ -5271,6 +5330,12 @@ fn divide_matrix3_by_affine(
     ])
 }
 
+/// Right-divides known 2D affine operands with one shared determinant reciprocal.
+///
+/// Returns `[L R⁻¹, a - L R⁻¹t;0 1]`, using the explicit 2×2 adjugate and
+/// zero-pruning two-term sums. Computes only the top two rows and constructs the
+/// canonical bottom row. Consuming the dividend does not avoid per-entry clones.
+/// Both affine shapes are preconditions; scalar inverse errors propagate.
 #[inline]
 fn divide_matrix3_affine_by_affine(
     left: [[Real; 3]; 3],
@@ -5332,6 +5397,11 @@ fn divide_matrix3_affine_by_affine(
     ])
 }
 
+/// Checks three diagonal divisors before reciprocal column scaling.
+///
+/// The caller establishes diagonal shape. Ascending known-nonzero guards stop
+/// at the first zero/unknown error and all precede reciprocal construction;
+/// then [`divide_matrix3_by_diagonal`] updates the consumed dividend.
 #[inline]
 fn divide_matrix3_by_diagonal_checked(
     left: [[Real; 3]; 3],
@@ -5343,6 +5413,12 @@ fn divide_matrix3_by_diagonal_checked(
     divide_matrix3_by_diagonal(left, right)
 }
 
+/// Checks the 2×2 determinant before right-dividing by a known affine divisor.
+///
+/// The dividend is unrestricted. Forms ad-bc and requires known nonzero status
+/// before its reciprocal, adjugate scaling and inverse-translation products.
+/// All three result rows are computed. Shape is not validated and zero/unknown
+/// errors propagate without starting a separate refinement procedure.
 #[inline]
 fn divide_matrix3_by_affine_checked(
     left: [[Real; 3]; 3],
@@ -5418,6 +5494,12 @@ fn divide_matrix3_by_affine_checked(
     ])
 }
 
+/// Attaches the signal to the affine divisor’s determinant before checked division.
+///
+/// Requires known right affine shape, with an unrestricted dividend. Computes
+/// ad-bc, attaches, guards, then inverts that determinant. Later adjugate, offset
+/// and row products add no local attachment or explicit polling. Scalar signal
+/// propagation determines cancellation; no deadline or total-work bound is supplied.
 #[inline]
 fn divide_matrix3_by_affine_checked_with_abort(
     left: [[Real; 3]; 3],
@@ -5494,6 +5576,11 @@ fn divide_matrix3_by_affine_checked_with_abort(
     ])
 }
 
+/// Checks the right linear determinant before known affine-by-affine division.
+///
+/// After ad-bc is known nonzero, computes the inverse linear block and translation,
+/// then only the two nontrivial result rows. Reconstructs `[0,0,1]` under the
+/// caller’s shape evidence; checked scalar status does not validate either shape.
 #[inline]
 fn divide_matrix3_affine_by_affine_checked(
     left: [[Real; 3]; 3],
@@ -5555,6 +5642,12 @@ fn divide_matrix3_affine_by_affine_checked(
     ])
 }
 
+/// Divides known affine operands after attaching the signal to the right determinant.
+///
+/// Attachment precedes the known-nonzero guard and inverse. The two-row block
+/// formula and canonical bottom row then follow without new local polling or
+/// attachment. Shape remains caller-established; scalar errors propagate before
+/// a completed result, and signal acceptance is not a preemptive work bound.
 #[inline]
 fn divide_matrix3_affine_by_affine_checked_with_abort(
     left: [[Real; 3]; 3],
@@ -5617,6 +5710,12 @@ fn divide_matrix3_affine_by_affine_checked_with_abort(
     ])
 }
 
+/// Right-divides by a known diagonal 4×4 matrix through reciprocal column scaling.
+///
+/// Constructs four reciprocals in index order before mutating any row. Reuses
+/// them across sixteen cached multiplications in row-major order, cloning each
+/// old entry into the operation. Shape is trusted; inverse errors return before
+/// a completed quotient, and the dividend need not be invertible or affine.
 #[inline]
 fn divide_matrix4_by_diagonal(
     left: [[Real; 4]; 4],
@@ -5636,6 +5735,10 @@ fn divide_matrix4_by_diagonal(
     Ok(result)
 }
 
+/// Guards four diagonal values before 4×4 reciprocal column scaling.
+///
+/// Ascending guards all precede reciprocal construction and stop at the first
+/// zero/unknown error. Diagonal shape is a caller precondition, not revalidated.
 #[inline]
 fn divide_matrix4_by_diagonal_checked(
     left: [[Real; 4]; 4],
@@ -5648,18 +5751,25 @@ fn divide_matrix4_by_diagonal_checked(
     divide_matrix4_by_diagonal(left, right)
 }
 
+/// Solves each row `x*U=left_row` for a known upper-triangular 4×4 divisor.
+///
+/// Constructs four diagonal reciprocals once, then visits rows in order and solves
+/// x0, x1, x2, x3. The final two numerators use active signed sums with three and
+/// four terms, without local zero pruning. Replaces a row after all four values
+/// are formed. Sixteen result scalings share the reciprocals; ordinary inverse
+/// errors propagate and shape is trusted.
+///
+/// For a variable dimension, one row is quadratic in scalar operations and all
+/// n rows are cubic. This fixed-size schedule supplies no scalar-work bound.
 #[inline]
 #[allow(clippy::needless_range_loop)]
 fn divide_matrix4_by_upper_triangular(
     mut left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
 ) -> BlasResult<[[Real; 4]; 4]> {
-    // Fixed-size upper-triangular right-division is row-wise back-substitution.
-    // Each row is independent and needs one diagonal inversion plus at most
-    // three fused updates per column element, so this is O(n²) versus O(n³)
-    // cofactor scheduling. Each column solves a scalar recurrence that reuses
-    // already-computed lower rows (Golub & Van Loan, *Matrix Computations*,
-    // 4th ed., §3.6).
+    // Each independent row solves increasing coordinates of x*U=b. The four
+    // diagonal reciprocals are constructed once and shared across every row.
+    // Variable-size work is quadratic per row and cubic for all n rows.
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
@@ -5693,6 +5803,13 @@ fn divide_matrix4_by_upper_triangular(
     Ok(left)
 }
 
+/// Solves one row against a known upper-triangular 3D affine divisor.
+///
+/// The caller supplies exact reciprocals of the first three diagonal entries and
+/// a scalar one. Solves x0, x1, x2 with three cached scalings; x3 is the four-term
+/// active numerator with no scaling because the homogeneous diagonal is one.
+/// No local zero-pruning pass or validation of shape, reciprocals, or the constant
+/// is performed. The row itself need not be an affine bottom row or a point.
 #[inline]
 fn divide_matrix4_affine_upper_row(
     row: &[Real; 4],
@@ -5721,6 +5838,12 @@ fn divide_matrix4_affine_upper_row(
     [x0, x1, x2, x3]
 }
 
+/// Right-divides any matrix by a known upper-triangular 3D affine divisor.
+///
+/// Constructs three shared reciprocals, then applies the affine row helper to
+/// all four rows: twelve result scalings and four unscaled offset updates. The
+/// caller establishes the unit homogeneous diagonal and bottom-row zeros.
+/// Ordinary scalar inverse errors propagate before publishing the result.
 #[inline]
 fn divide_matrix4_by_affine_upper_triangular(
     left: [[Real; 4]; 4],
@@ -5742,6 +5865,11 @@ fn divide_matrix4_by_affine_upper_triangular(
     ])
 }
 
+/// Solves the top three rows for known affine/upper-affine operands.
+///
+/// Shares three reciprocal pivots across nine result scalings and three offset
+/// updates, then constructs bottom row `[0,0,0,1]`. Both affine shapes and the
+/// right triangular structure are caller preconditions, not rechecked here.
 #[inline]
 fn divide_matrix4_affine_by_affine_upper_triangular(
     left: [[Real; 4]; 4],
@@ -5763,6 +5891,11 @@ fn divide_matrix4_affine_by_affine_upper_triangular(
     ])
 }
 
+/// Guards three nontrivial pivots before all-row upper-affine 4×4 division.
+///
+/// Checks indices zero through two before any reciprocal. The unit homogeneous
+/// diagonal and triangular/affine shape are trusted, with zero/unknown failures
+/// propagated from the guards.
 #[inline]
 fn divide_matrix4_by_affine_upper_triangular_checked(
     left: [[Real; 4]; 4],
@@ -5774,6 +5907,10 @@ fn divide_matrix4_by_affine_upper_triangular_checked(
     divide_matrix4_by_affine_upper_triangular(left, right)
 }
 
+/// Guards three pivots before the affine-by-upper-affine reconstruction path.
+///
+/// Ascending guards precede reciprocal construction. Both affine shapes and the
+/// right triangular pattern must be valid before calling this helper.
 #[inline]
 fn divide_matrix4_affine_by_affine_upper_triangular_checked(
     left: [[Real; 4]; 4],
@@ -5785,6 +5922,10 @@ fn divide_matrix4_affine_by_affine_upper_triangular_checked(
     divide_matrix4_affine_by_affine_upper_triangular(left, right)
 }
 
+/// Checks all four diagonal pivots before upper-triangular row division.
+///
+/// Guards run in ascending order, stopping at the first zero/unknown, then
+/// delegate without extra predicates. The right triangular shape is trusted.
 #[inline]
 fn divide_matrix4_by_upper_triangular_checked(
     left: [[Real; 4]; 4],
@@ -5797,16 +5938,24 @@ fn divide_matrix4_by_upper_triangular_checked(
     divide_matrix4_by_upper_triangular(left, right)
 }
 
+/// Solves each row `x*L=left_row` for a known lower-triangular 4×4 divisor.
+///
+/// Constructs four reciprocals in ascending index order; coordinates are then
+/// solved x3, x2, x1, x0. The final two numerators use active signed sums with
+/// three and four terms. Replaces each row after all values are formed, using
+/// sixteen result scalings overall. No shape validation or local zero pruning
+/// is added. Ordinary inverse errors propagate.
+///
+/// Quadratic scalar-operation work per variable-size row becomes cubic for all
+/// n rows; neither count bounds scalar expression growth or cancellation latency.
 #[inline]
 #[allow(clippy::needless_range_loop)]
 fn divide_matrix4_by_lower_triangular(
     mut left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
 ) -> BlasResult<[[Real; 4]; 4]> {
-    // Fixed-size lower-triangular right-division is row-wise forward substitution.
-    // The same structural complexity win used for upper triangular applies
-    // symmetrically. Solve each column with the strict row-order recurrence.
-    // Golub & Van Loan, *Matrix Computations* (4th ed.), §3.6.
+    // Each independent row solves decreasing coordinates of x*L=b, sharing
+    // four reciprocals across all rows. No other dividend row is consulted.
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
@@ -5836,6 +5985,11 @@ fn divide_matrix4_by_lower_triangular(
     Ok(left)
 }
 
+/// Guards four diagonal pivots before lower-triangular row division.
+///
+/// Guards ascend from zero to three even though coordinates are later solved
+/// in reverse order. All precede reciprocals; shape is a caller precondition
+/// and zero/unknown errors propagate without a partial quotient.
 #[inline]
 fn divide_matrix4_by_lower_triangular_checked(
     left: [[Real; 4]; 4],
