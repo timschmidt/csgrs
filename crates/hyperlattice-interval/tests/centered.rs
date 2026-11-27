@@ -1,3 +1,9 @@
+//! Authored center/radius validation, explicit projection and subsequent-use witnesses.
+//!
+//! Small integer constructions have independently written endpoint and linear-image
+//! expectations for every enabled scalar family. Extreme fixtures distinguish an
+//! exact retained definition from the availability or tightness of its projection.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -9,6 +15,14 @@ use hyperlattice_interval::{
     IntervalMatrix, IntervalVector,
 };
 
+/// Check 4,284 center/radius combinations for two-coordinate and 2-by-3 products.
+///
+/// Each family supplies exact small integer intervals and fresh query contexts.
+/// Checks cover component access/ownership, explicit bounds, midpoint/radius
+/// recovery where exactly representable, signed linear images, intersection,
+/// inclusion and transpose. Malformed center/radius cases fix validation order;
+/// canonical empties and zero-dimensional units remain distinct. These fixtures
+/// do not imply that every primitive projection is exact.
 fn corpus<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     scalar: impl Fn(i32, i32) -> I,
     mut context: impl FnMut() -> I::Context,
@@ -178,6 +192,7 @@ fn corpus<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Run the small integer corpus on i32/F8 and i64/F32 fixed-point backends.
 fn fixed_oracles() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
     corpus(
@@ -192,6 +207,7 @@ fn fixed_oracles() {
 
 #[cfg(feature = "rational")]
 #[test]
+/// Run the corpus with exact rational endpoint arithmetic.
 fn rational_oracle() {
     use hyperlattice_interval::hyperinterval::RationalInterval;
     corpus(
@@ -202,6 +218,10 @@ fn rational_oracle() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Run exact dyadic fixtures, then exhaust every insufficient work allowance.
+/// The unit product projects with zero work. A fractional two-lane definition
+/// remains unchanged after each failure; the measured sufficient budget retries
+/// to independently stated bounds. This tests work admission, not cancellation.
 fn dyadic_oracle_and_budget_retry() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I, IntervalError};
     corpus(
@@ -259,6 +279,10 @@ fn dyadic_oracle_and_budget_retry() {
 
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Check exactly representable integer fixtures and IEEE projection boundaries.
+/// Both precisions retain definitions after overflow, preserve least-subnormal
+/// widths, round tiny radii around one outward and accept signed zero. Enabled
+/// IEEE tests require a supported floating environment rather than skipping errors.
 fn ieee_oracles_and_extremes() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure, IntervalError};
     corpus(|a, b| F32Enclosure::new(a as f32, b as f32).unwrap(), || ());
@@ -266,6 +290,9 @@ fn ieee_oracles_and_extremes() {
         |a, b| F64Enclosure::new(f64::from(a), f64::from(b)).unwrap(),
         || (),
     );
+    /// Instantiate the same IEEE endpoint assertions with matching interval/scalar types.
+    /// Adjacent representable values independently describe tiny-radius enclosures;
+    /// retained center/radius components are checked after an overflowing projection.
     macro_rules! extremes {
         ($i:ty, $f:ty) => {{
             let p = |v| IntervalVector::new([<$i>::point(v).unwrap()]).unwrap();
@@ -304,11 +331,20 @@ fn ieee_oracles_and_extremes() {
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Check fixed extremes against i128 endpoint arithmetic and retain authored components.
+/// Four endpoint/scale pairs exercise representable projections and typed overflow.
+/// A failed i32 definition promotes its original components to i64 and then projects;
+/// invalid type-level scales still fail for canonical empty zero-dimensional forms.
 fn retained_overflow_and_invalid_scales() {
     use hyperlattice_interval::hyperinterval::{FixedInterval, IntervalError};
+    /// Whole-unit i32 backend for the overflow-then-exact-promotion fixture.
     type I = FixedInterval<i32, 0>;
+    /// Instantiate seven centers and three nonnegative radii for one fixed endpoint/scale.
+    /// Independent i128 sums/differences decide whether the endpoint family can hold
+    /// the exact projection; every case preserves the original authored components.
     macro_rules! extremes {
         ($endpoint:ty, $fraction:literal) => {{
+            /// Fixed backend selected by this extreme-case macro invocation.
             type F = FixedInterval<$endpoint, $fraction>;
             for c in [
                 <$endpoint>::MIN,
@@ -373,6 +409,7 @@ fn retained_overflow_and_invalid_scales() {
 }
 
 #[test]
+/// Check the three authored-validation error messages and absence of nested causes.
 fn authored_validation_errors_remain_typed() {
     use std::error::Error;
     for (error, message) in [

@@ -1,11 +1,28 @@
+//! Primitive Cartesian and retained-affine allocation-request sentinel.
+//!
+//! A single measured scope combines construction, arithmetic, projection,
+//! restrictions, errors and later reuse. Zero requests for these fixtures do not
+//! establish stack bounds or allocation behavior of arbitrary scalar families.
+
 #![cfg(feature = "fixed")]
 use hyperlattice_interval::hyperinterval::FixedInterval;
 use hyperlattice_interval::{AffineChain, AffineMap, IntervalMatrix, IntervalVector};
 #[path = "../conformance/allocations.rs"]
+/// Shared process-global counter; this executable runs one isolated measurement.
 mod allocations;
 
 #[test]
+/// Require zero allocation requests/bytes across fixed Cartesian and retained operations.
+///
+/// The measured sequence consumes matrix/vector arithmetic, set relations, static
+/// affine cancellation, restrictions, a full bounded chain and its capacity error,
+/// norm/measure/margin queries, exact widths and midpoint/radius reconstruction.
+/// Optional IEEE cases cover contraction arithmetic and distinct tiny widths.
+/// Numerical assertions accompany the allocation check, but neither establish a
+/// universal no-allocation claim nor count peak heap or stack use. Counter setup
+/// is outside the scope and all workloads share the same global measurement.
 fn primitive_construction_composition_and_errors_do_not_allocate() {
+    /// Fixed i64 backend with sixteen fractional bits for exactly representable fixtures.
     type I = FixedInterval<i64, 16>;
     let ((subset, interior), count, bytes) = allocations::measure(|| {
         let p = I::point(1 << 16).unwrap();
@@ -99,6 +116,9 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
         #[cfg(feature = "float-enclosure")]
         {
             use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+            /// Run a small IEEE identity-remainder and norm-margin workload in the measured scope.
+            /// The matching interval family supplies quarter/half endpoints; results are
+            /// consumed by black_box without interpreting them as solver decisions.
             macro_rules! contraction {
                 ($i:ty) => {{
                     let m = IntervalMatrix::new([[<$i>::new(-0.25, 0.5).unwrap(); 2]; 2]).unwrap();

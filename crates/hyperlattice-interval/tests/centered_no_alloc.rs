@@ -1,10 +1,20 @@
+//! Allocation-request sentinel for primitive authored forms and translated-source conversion.
+//!
+//! The counter is process-global and requires an isolated, nonnested measured scope.
+//! This finite zero-request assertion does not measure stack use or general heap bounds.
+
 #![cfg(feature = "fixed")]
 #[path = "../conformance/allocations.rs"]
+/// Shared System allocator wrapper counting requests during the measured closure.
 mod allocations;
 use hyperlattice_interval::{
     CenteredMatrix, CenteredVector, IntervalArithmetic, IntervalMatrix, IntervalVector,
 };
 
+/// Exercise a 64-lane form, a 2-by-3 form, invalid radii and an empty projection.
+/// The supplied copyable primitive point is nonnegative and its doubled value fits;
+/// the second point is negative. Projection, translated conversion and ownership
+/// extraction execute inside the caller's measurement; black_box consumes results.
 fn check<I: IntervalArithmetic<Context = ()> + Copy>(point: I, negative: I) {
     let center = IntervalVector::new([point; 64]).unwrap();
     let form = CenteredVector::new(center, center).unwrap();
@@ -27,6 +37,10 @@ fn check<I: IntervalArithmetic<Context = ()> + Copy>(point: I, negative: I) {
 }
 
 #[test]
+/// Require zero allocation requests/bytes for both fixed families and optional IEEE families.
+/// The entire sequence runs within one counter scope; integer fixed inputs are raw
+/// units while IEEE inputs are halves. This sentinel does not establish allocation
+/// behavior for rational/dyadic coefficients or concurrent calls.
 fn primitive_authored_forms_allocate_nothing() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
     let (_, count, bytes) = allocations::measure(|| {

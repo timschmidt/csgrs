@@ -13939,6 +13939,127 @@ No focused check remains blocked. Remaining companion implementations, support f
 and the repository-wide audit remain open; these scoped counts do not establish
 repository-wide coverage.
 
+## Hyperlattice-interval authored forms, translated sources and allocation support (2026-11-27)
+
+Whole-file review on target revision 75c31278a24cbfeed25e0fc79e6e34b49d2d9f44:
+
+- crates/hyperlattice-interval/src/centered.rs (143 -> 184 lines).
+- crates/hyperlattice-interval/src/affine/translated.rs (157 -> 210 lines).
+- crates/hyperlattice-interval/tests/centered.rs (395 -> 432 lines).
+- crates/hyperlattice-interval/tests/centered_affine.rs (425 -> 463 lines).
+- crates/hyperlattice-interval/tests/centered_replay.rs (159 -> 177 lines).
+- crates/hyperlattice-interval/tests/centered_no_alloc.rs (55 -> 69 lines).
+- crates/hyperlattice-interval/tests/no_alloc.rs (139 -> 159 lines).
+- crates/hyperlattice-interval/conformance/allocations.rs (44 -> 77 lines).
+
+The owning layer retains authored singleton centers/radii and translated offset
+sources, delegating projection to existing Cartesian/scalar operations. P1/P5/P6/
+P18/P20/P26/P27/P37 and the admission protocol govern exact definitions, explicit
+projection, typed validation, preserved resource order and source replay. The input
+domain includes all admitted scalar families, nonnegative singleton radii, overflowing
+absolute bounds, empty/unit products, restricted offset boxes and extreme dyadic grids.
+Before editing, the private radius validator, component alias, macro-generated fields
+and serialization methods, translated-source internals, and test/allocator support
+lacked Rustdoc. Sixteen focused tests passed on the target revision with all replay
+markers cleared. Missing source/rendered coverage was the acceptance gap, not a
+failing geometry algorithm. All retained changes are comments or Markdown.
+
+The 97 authored doc blocks include 48 function declarations. Generated vector and
+matrix forms were inspected separately rather than crediting only the macro template:
+
+- Center/radius construction consumes ownership and validates center singleton,
+  radius singleton, then nonnegative signs in component order. Validation has no
+  arithmetic context. Some retains unit products while None is canonical empty.
+  Exact native sign facts avoid numerical sign approximation; projection availability
+  is not a construction prerequisite. Clone/conditional Copy follow the carriers.
+- Projection finishes the complete lower-bound product, then the upper-bound
+  product, then their hull. Each pass follows lane or row-major order. Empty/unit
+  products invoke no scalar arithmetic; errors drop partial work without changing
+  the retained definition or refunding previous charges. Serde stores components
+  directly and validates through native product and authored-form constructors.
+- Affine-source conversion first copies the center with budgeted hull-against-empty,
+  then negates radii, then constructs the symmetric offset box. It never computes
+  absolute bounds or an identity matrix and requires no representable scalar one.
+- Translated replay validates the current center/domain definition, not an unstored
+  original radius or restriction history. Nonsymmetric offset boxes are valid. An
+  absent center requires empty parameters; a present center must be singleton even
+  with empty parameters. Retained-center and centerless empty definitions differ
+  structurally while projecting to the same empty set.
+- Restriction intersects offset parameters before copying the retained center.
+  Even an empty intersection may fail on that copy's resources. Enclosure of either
+  valid empty form performs no scalar work. Pullback checks emptiness before computing
+  the shifted translation and then applying coefficient bounds to offsets, sharing
+  one context. Temporary rounded bounds never replace the authoritative source.
+- The 4,284-case authored corpus checks vector/matrix projections, component recovery,
+  signed linear images and subsequent set/transpose operations per instantiated family.
+  Fixed extremes use independent i128 endpoint expectations. The 153-case translated
+  corpus checks offset restriction, static cancellation and three-map chain reuse.
+  IEEE tests require a supported floating environment; dyadic fixtures distinguish
+  exact expectations from measured work admission and retry at extreme exponents.
+- Both process harnesses send source definitions to exactly selected child tests and
+  check encoding identity. Authored replay additionally checks optional rational
+  promotion and an IEEE matrix payload. Translated replay round-trips a derived nested
+  image inside the child before cancellation. Readable marker payloads bypass spawning;
+  parent validation clears them, and the harnesses have no internal child timeout.
+- The allocation helper wraps System and records attempted allocation/reallocation
+  requests and full requested sizes before delegation. Deallocation does not reduce
+  counts; they are neither live/peak bytes nor a successful-allocation-only tally.
+  Relaxed process-global counters do not isolate concurrent/nested scopes and wrap
+  on overflow. There is no unwind guard: a panicking measured closure leaves recording
+  enabled. Returned-value destruction lies outside the measurement. These limitations
+  are documented, not changed or hidden behind a broader memory-performance claim.
+
+Context review included affine pullback/composition, native dyadic/rational signs,
+Cartesian traversal/copy helpers, feature configuration and actual Hyperlattice
+reexports. Allocation-helper consumers were located; unreviewed conformance clients
+remain pending. Context excerpts are not credited as completed whole-file audits.
+
+Validation after final edits:
+
+- Locked/offline Cargo, j2, incremental disabled, reused target. Six centered tests,
+  six translated-affine tests, two authored replay tests and both allocation sentinels
+  passed (16 total). HYPERLATTICE_TRANSLATED_REPLAY, HYPERLATTICE_AUTHORED_CENTER_RADIUS
+  and its _FLOAT companion were unset. All seven actual Hyperlattice interval_surface
+  tests and both existing affine/static-chain doctests passed. No assertions changed.
+- A warnings-denied temporary probe distinguished a complete lower pass from per-lane
+  lower/upper interleaving using SizeExhausted versus WorkExhausted. It also verified
+  center-copy-before-negation order, empty restriction copy failures, spent work,
+  unchanged source encodings, exact retries, nonsymmetric replay and structural versus
+  set equality for empties. A zero-budget constant image of retained empty stayed
+  empty. An explicit 8-byte allocation followed by 16-byte reallocation reported two
+  requests and 24 cumulative bytes, with deallocation inside the measured scope.
+- A separate warnings-denied probe linked the actual Hyperlattice artifact. It checked
+  authored replay, typed projection overflow, companion/reexport type identity,
+  translated affine rescaling and parameter restriction at a scale without scalar
+  one, plus a zero-row matrix unit. External 30-second execution timeouts bounded
+  both probes; no internal operation timeout or universal resource bound is claimed.
+- Private cargo doc passed with all features and no default features, denying warnings,
+  broken links and private-link violations. Full text of 44 implementation blocks
+  rendered with all features and 35 without optional Serde. Both generated centered
+  type pages contain every applicable template block (14/10 respectively), their
+  distinct shape descriptions and private fields; minimal pages omit Serde methods.
+- Actual test Rustdoc omits all 16 test functions. Temporary mirrored source copies
+  removed exactly those test attributes, preserving bodies, relative support paths
+  and assertions, and rendered 27 test-file blocks. All 12 allocation-support blocks
+  rendered within the actual included module. Fourteen function-local macro/type/
+  constant blocks were checked at source attachment and rendered separately as
+  Markdown; no ordinary standalone API-page claim is made for those local items.
+- Removing only whole comment/blank lines leaves identical remaining source bytes in
+  all eight files. All 48 function declarations have attached Rustdoc. Selected-file
+  rustfmt and git diff --check passed. AGENTS.md retains the 100% public/private/
+  generated documentation mandate. Full workflow checks remain owner-waived for this
+  docs-only session; no new general allocation, timing, cancellation or closure claim
+  is made from these finite observations.
+
+Evidence: /tmp/csgrs-rustdoc-interval-centered-{before,tests,build,doc-all,doc-min,
+doctest,probe,facade,validation,render-min,downstream}.log and
+/tmp/csgrs-interval-centered-audit/ (matching artifacts, scripts, source copies,
+probe sources and full-text match records). Owned executables and duplicate rendered
+HTML were removed. The reused Cargo target is approximately 3.9 GiB, with no second
+target. No focused check remains blocked. Remaining companion implementations,
+conformance clients and the repository-wide audit remain open; these scoped counts
+do not establish repository-wide coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

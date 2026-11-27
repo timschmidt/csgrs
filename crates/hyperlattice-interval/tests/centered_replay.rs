@@ -1,12 +1,24 @@
+//! Fresh-process authored-definition replay and malformed native encoding witnesses.
+//!
+//! The source components, not projected endpoints, cross the process boundary.
+//! Optional rational promotion and IEEE projections exercise reuse after decoding.
+
 #![cfg(all(feature = "fixed", feature = "serde"))]
 use hyperlattice_interval::{
     CenteredMatrix, CenteredVector, IntervalLatticeError, IntervalVector,
     hyperinterval::{FixedInterval, IntervalError},
 };
+/// Whole-unit i64 endpoints for the retained overflowing source and JSON fixtures.
 type I = FixedInterval<i64, 0>;
 
 #[test]
+/// Check exact source encoding identity and retain components after projection overflow.
+/// The child optionally promotes fixed components to rational endpoints and checks
+/// intersection, and replays an IEEE matrix with subnormal radii before transpose.
+/// The parent invokes this exact test and checks captured status without an internal
+/// timeout. Clear the marker and companion float payload to exercise parent setup.
 fn authored_definition_replays_in_fresh_process() {
+    /// Mandatory fixed-source JSON payload and child selector; readable values bypass spawn.
     const KEY: &str = "HYPERLATTICE_AUTHORED_CENTER_RADIUS";
     if let Ok(text) = std::env::var(KEY) {
         let form: CenteredVector<I, 2> = serde_json::from_str(&text).unwrap();
@@ -110,7 +122,12 @@ fn authored_definition_replays_in_fresh_process() {
 }
 
 #[test]
+/// Reject malformed products, nonsingletons, negative radii and fabricated validity data.
+/// Native decoding distinguishes null empty from unit products, rejects invalid
+/// scalar scales even for empty, and round-trips a 64-lane authored source before
+/// checking all explicit projected bounds.
 fn malformed_components_and_zero_dimensions() {
+    /// One-coordinate authored vector used to reject malformed center/radius payloads.
     type V = CenteredVector<I, 1>;
     for text in [
         "[null,[[0,0]]]",
@@ -131,6 +148,7 @@ fn malformed_components_and_zero_dimensions() {
     assert!(unit.enclosure(&mut ()).unwrap().is_singleton());
     assert_eq!(serde_json::to_string(&unit).unwrap(), "[[],[]]");
     assert!(serde_json::from_str::<CenteredVector<FixedInterval<i32, 32>, 0>>("null").is_err());
+    /// One-row authored matrix used to reject invalid component and sign payloads.
     type M = CenteredMatrix<I, 1, 2>;
     for text in [
         "[null,null]",

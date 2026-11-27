@@ -1,3 +1,8 @@
+//! Translated offset sources composed before projection through static and bounded chains.
+//!
+//! Explicit expectations cover cancellation, offset-space restriction, zero-dimensional
+//! sources, extreme scalar representations and shared dyadic resource accounting.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -13,9 +18,17 @@ use hyperlattice_interval::{
 
 #[cfg(all(feature = "fixed", feature = "serde"))]
 #[test]
+/// Replay an overflowing translated source in a fresh process, then cancel its image.
+/// The child checks source encoding identity, builds duplicate/difference maps and
+/// round-trips that nested image locally before projecting exact zero. The parent
+/// checks malformed center/domain encodings, both empty representations and units.
+/// A readable marker bypasses spawn; clear it for a parent run. Captured exit status
+/// is checked, but this harness has no internal child timeout.
 fn translated_replay_revalidates_and_preserves_cancellation() {
     use hyperlattice_interval::{TranslatedBox, hyperinterval::FixedInterval};
+    /// Whole-unit i64 backend whose maximum-centered radius-one source cannot project.
     type I = FixedInterval<i64, 0>;
+    /// Translated-source JSON payload and child-branch marker, not cached projection data.
     const KEY: &str = "HYPERLATTICE_TRANSLATED_REPLAY";
     let p = |v| I::point(v).unwrap();
     if let Ok(text) = std::env::var(KEY) {
@@ -104,6 +117,12 @@ fn translated_replay_revalidates_and_preserves_cancellation() {
     );
 }
 
+/// Check 153 integer center/radius sources with independent affine expectations.
+/// Validate offset bounds and restriction to `[0,1]`, then duplicate with unequal
+/// translations and subtract to get one. Three retained maps `x -> 2*x+1` give 15,
+/// including after nonempty parameter restriction; empty restriction stays empty.
+/// Also check centerless empty sources and maps from a zero-dimensional unit.
+/// Each query obtains a fresh context; budget composition has separate witnesses.
 fn corpus<I: IntervalArithmetic + PartialEq + core::fmt::Debug>(
     scalar: impl Fn(i32, i32) -> I,
     mut context: impl FnMut() -> I::Context,
@@ -217,6 +236,10 @@ fn corpus<I: IntervalArithmetic + PartialEq + core::fmt::Debug>(
 
 #[cfg(feature = "fixed")]
 #[test]
+/// Run both fixed corpora and rescale definitions whose absolute endpoint one cannot fit.
+/// Highest valid fixed scales admit half-centered, half-radius definitions and
+/// translated offsets without constructing one. Multiplication by one half makes
+/// the final projection representable although the original projection overflows.
 fn fixed_sources_and_overflowing_original_bounds() {
     use hyperlattice_interval::hyperinterval::{FixedInterval, IntervalError};
     corpus(
@@ -227,8 +250,11 @@ fn fixed_sources_and_overflowing_original_bounds() {
         |a, b| FixedInterval::<i64, 32>::new(i64::from(a) << 32, i64::from(b) << 32).unwrap(),
         || (),
     );
+    /// Instantiate the no-representable-one witness for one signed endpoint/scale pair.
+    /// The raw half value represents 1/2, and the exact final image is `[0,1/2]`.
     macro_rules! narrow {
         ($int:ty,$frac:literal) => {{
+            /// Fixed family selected by the enclosing highest-scale macro invocation.
             type I = FixedInterval<$int, $frac>;
             let half = 1 << ($frac - 1);
             let form = CenteredVector::new(
@@ -261,6 +287,7 @@ fn fixed_sources_and_overflowing_original_bounds() {
 
 #[cfg(feature = "rational")]
 #[test]
+/// Run the translated-source corpus with exact rational arithmetic.
 fn rational_sources() {
     use hyperlattice_interval::hyperinterval::RationalInterval;
     corpus(
@@ -271,6 +298,9 @@ fn rational_sources() {
 
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Run both IEEE corpora, then cancel a duplicated overflowing f64 source to zero.
+/// The source and intermediate image cannot project, but their retained point maps
+/// compose before endpoint evaluation. The final literal zero checks that reuse.
 fn ieee_sources_and_cancelled_overflow() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
     corpus(|a, b| F32Enclosure::new(a as f32, b as f32).unwrap(), || ());
@@ -278,6 +308,7 @@ fn ieee_sources_and_cancelled_overflow() {
         |a, b| F64Enclosure::new(f64::from(a), f64::from(b)).unwrap(),
         || (),
     );
+    /// Binary64 enclosure backend for maximum-magnitude retained cancellation.
     type I = F64Enclosure;
     let p = |x| I::point(x).unwrap();
     let form = CenteredVector::new(
@@ -308,6 +339,10 @@ fn ieee_sources_and_cancelled_overflow() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Exercise offset construction at the minimum exponent and mapped-image budget retry.
+/// For each measured workload, every smaller work allowance fails without changing
+/// the source, while exact measured work succeeds. Literal offset and image bounds
+/// supply the geometry expectations independently of the measured work count.
 fn dyadic_sources_and_shared_retry() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I, IntervalError};
     corpus(
@@ -386,6 +421,9 @@ fn dyadic_sources_and_shared_retry() {
 
 #[cfg(feature = "dyadic")]
 #[test]
+/// Check zero-centered radius transport at five exponents, including both i32 limits.
+/// Authored projection, translated projection, retained identity and subsequent sum
+/// must preserve exact literal scaled bounds without unnecessary zero alignment.
 fn dyadic_zero_centers_and_extreme_scale_accumulators() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I};
     let point = |v: i32, e| I::point(v.into(), e).unwrap();
