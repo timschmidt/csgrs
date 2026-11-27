@@ -1,4 +1,8 @@
 impl Computable {
+    /// Build e raised to a nonnegative integer by binary exponentiation of the shared e constant.
+    /// The exp constructor uses this only for exponents 2 through 256 to retain a
+    /// compact multiplication/square graph. Zero would return one. The number of
+    /// loop steps is bounded by the u32 width, not the cost of later evaluation.
     fn exp_bounded_positive_integer_power(mut remaining: u32) -> Self {
         let mut base = Self::e_constant();
         let mut result = Self::one();
@@ -16,6 +20,13 @@ impl Computable {
         result
     }
 
+    /// Choose an integer n with |self/divisor - n| < 1 on completed, uninterrupted evaluation.
+    /// Callers supply the positive shared divisor pi, pi/2 or ln(2). A guarded
+    /// quotient of separate precision -4 approximations preserves the established
+    /// selection; otherwise approximate the combined quotient at precision zero.
+    /// Despite the name, this does not promise nearest-integer rounding or a unique
+    /// answer. It may refine arbitrarily far and returns no cancellation receipt;
+    /// an interrupted approximation cannot establish the stated error bound.
     fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
         // A strict-error near-integer quotient: |self/divisor - n| < 1.
         // All callers use a positive shared divisor (pi, pi/2 or ln(2)).
@@ -51,6 +62,13 @@ impl Computable {
             .approx_signal(&self.signal, 0)
     }
 
+    /// Try to express self as reduced + multiple*divisor with a small certified residual.
+    /// For the positive divisors used by callers, adjust an initial near-integer
+    /// quotient by one per attempt until the precision-low_prec residual integer
+    /// lies in [-8,8]. Completed evaluation then gives |reduced| < 9*2^low_prec.
+    /// Return None if no attempt accepts, including max_attempts=0; even that case
+    /// computes the initial quotient first. The attempt count does not bound nested
+    /// refinement, coefficient size or allocation, and is not a cancellation check.
     fn reduce_by_divisor(
         &self,
         divisor: &Self,
@@ -81,8 +99,10 @@ impl Computable {
         None
     }
 
-    /// A retained exact magnitude can certify |x| < 1/2 without evaluating x.
-    /// Inexact planning bounds and missing facts must use the numeric guard.
+    /// Test whether a cached exact nonzero binade proves |self| < 1/2 without evaluation.
+    /// Accept an exact most-significant-bit exponent at most -2. Missing or inexact
+    /// bounds, and even a cached exact zero, return false and leave the numeric
+    /// kernel guard responsible for the range check. False is not a proof of largeness.
     pub(crate) fn exp_argument_is_known_small(&self) -> bool {
         self.cached_bound()
             .and_then(|bound| bound.known_msd())
@@ -90,16 +110,29 @@ impl Computable {
             .is_some_and(|msd| msd <= -2)
     }
 
-    /// Try ln(2) reduction with a checked small residual. The approximation
-    /// kernel also uses this when construction deferred the reduction work.
+    /// Try exp(self) = exp(reduced)*2^k using subtraction of k*ln(2).
+    /// Allow 64 residual-correction attempts at precision -4, giving
+    /// |reduced| < 9/16 after completed evaluation. Return None if correction fails
+    /// or k does not fit the i32 binary-shift representation; neither means the
+    /// mathematical exponential is undefined. Construction and the deferred kernel
+    /// share this optional path. The attempt limit is not a total-work bound.
     pub(crate) fn reduced_exp(&self) -> Option<Self> {
         let (reduced, multiple) = self.reduce_by_divisor(&Self::ln2(), -4, 64)?;
         // Reduction is optional: a finite exact exponent can require a
         // binary scale larger than the node's i32 representation permits.
         // Retain the lazy exponential instead of panicking at construction.
-        Some(reduced.prescaled_exp().shift_left(multiple.try_into().ok()?))
+        Some(
+            reduced
+                .prescaled_exp()
+                .shift_left(multiple.try_into().ok()?),
+        )
     }
 
+    /// Retain an exponential node with a strict positive sign for a defined real operand.
+    /// The name does not require a reduced argument: evaluation rechecks the range
+    /// before using the small Taylor kernel. Do not approximate here. The new node
+    /// starts without a numeric/magnitude cache or outer signal; its child retains
+    /// its own handle. This helper does not validate malformed operand graphs.
     fn prescaled_exp(self) -> Self {
         // Preserve structural form while deferring the expensive approximation of
         // exp to the requested precision. This node may also hold an unreduced
@@ -116,7 +149,16 @@ impl Computable {
         }
     }
 
-    /// Natural Exponential function, raise Euler's Number to this number.
+    /// Construct the natural exponential e^self, retaining exact source structure.
+    /// Recognized zero and one reuse constants; positive integers 2 through 256 use
+    /// a shared-e power graph. Other inputs use a deferred exponential or ln(2)
+    /// reduction with an exact binary scale. Planning bounds choose construction
+    /// paths only; the approximation kernel checks its own valid range.
+    ///
+    /// The result denotes a positive real for every defined real input. Construction
+    /// may approximate the argument to select a reduction, and an unrepresentable
+    /// binary scale leaves a deferred node. Neither lazy construction nor the finite
+    /// correction loop guarantees bounded evaluation work or memory.
     pub fn exp(self) -> Computable {
         let exact_rational = self.exact_rational();
         if exact_rational.as_ref().is_some_and(Rational::is_one) {
@@ -184,7 +226,13 @@ impl Computable {
         self.prescaled_exp()
     }
 
-    /// `exp(x) - 1`, retaining the small-argument intent until approximation.
+    /// Construct exp(self) - 1 with a dedicated small-argument representation.
+    /// Recognized exact zero returns zero. Otherwise retain the operand and reuse
+    /// its exact sign when available, since exp(x)-1 has the sign of real x.
+    /// The kernel can evaluate near zero without subtracting rounded near-one
+    /// values, and checks the range before choosing its series or general fallback.
+    /// The new wrapper has no outer signal and starts without a magnitude cache;
+    /// this is not a total-work or cancellation-outcome API.
     pub fn expm1(self) -> Computable {
         if self
             .exact_rational()
@@ -206,10 +254,14 @@ impl Computable {
         }
     }
 
-    /// Calculate nearby multiple of pi.
+    /// Select an integer pi multiple for tangent reduction, with one residual correction.
+    /// Start with integer_ratio_nearest(pi), approximate the residual at precision
+    /// -1 and move one period when that integer reaches +6 or -6. This preserves
+    /// the established reduction choice; it does not promise the uniquely nearest
+    /// multiple, and its nested approximations have no total-work limit.
     fn pi_multiple(&self) -> BigInt {
-        // Use one low-precision quotient and a cheap correction instead of a full
-        // high-precision division. Trig reduction calls this on hot paths; the
+        // Try a low-precision quotient before combined quotient refinement, then
+        // apply a residual correction. Trig reduction calls this on hot paths; the
         // quotient/residual structure is the same problem addressed by
         // Payne-Hanek range reduction.
         let mut multiple = self.integer_ratio_nearest(Self::pi());
@@ -226,9 +278,14 @@ impl Computable {
         multiple
     }
 
-    /// Calculate nearby multiple of pi/2.
+    /// Select a half-pi multiple for sine/cosine reduction with one residual correction.
+    /// Try the exact-rational quotient estimate first; otherwise use the combined
+    /// near-integer quotient. At precision -1, residual integers at least 2 or at
+    /// most -2 move the multiple by one. The result selects a small residual for
+    /// the kernels, not a certified nearest-integer rounding of 2*self/pi.
+    /// The mathematical reduction assumes completed, uninterrupted approximations.
     pub(super) fn half_pi_multiple(&self) -> BigInt {
-        // Same nearest-multiple trick as `pi_multiple`, specialized for the quadrant
+        // Same near-integer reduction as `pi_multiple`, specialized for the quadrant
         // reductions used by sin/cos. Exact-rational inputs first try an integer
         // quotient against cached pi so huge arguments avoid constructing
         // x*(pi/2)^-1, then the residual correction validates the quadrant.
@@ -250,10 +307,25 @@ impl Computable {
         multiple
     }
 
+    /// Estimate the half-pi quotient of an exact rational using sixteen guard bits.
+    /// Delegate to the guarded estimator; callers must still apply their residual
+    /// correction. None requests the generic path rather than asserting a small
+    /// value or a failed mathematical reduction.
     pub(super) fn half_pi_multiple_exact_rational(rational: &Rational) -> Option<BigInt> {
         Self::half_pi_multiple_exact_rational_with_guard(rational, 16)
     }
 
+    /// Estimate round(2*rational/pi) using cached pi and integer arithmetic.
+    /// Require a nonzero rational with exact binade exponent at least 3. Approximate
+    /// pi with max(16, quotient_guard_bits) extra bits beyond that exponent, round
+    /// the nonnegative quotient by adding half the integer denominator, then restore
+    /// the rational's sign. This is an estimate, not a proof of correct rounding;
+    /// callers correct the residual before selecting a kernel quadrant.
+    ///
+    /// Return None for an inapplicable magnitude, precision overflow/conversion
+    /// failure, nonpositive pi approximation or zero denominator. The guard argument
+    /// is a precision choice, not a total-work or memory budget. The helper has no
+    /// explicit signal polling and can request a large pi approximation/allocation.
     pub(super) fn half_pi_multiple_exact_rational_with_guard(
         rational: &Rational,
         quotient_guard_bits: Precision,
@@ -281,6 +353,11 @@ impl Computable {
         Some(BigInt::from_biguint(rational.sign(), rounded))
     }
 
+    /// Choose a signed half-pi multiple from an already available precision -1 approximation.
+    /// Callers restrict its magnitude to 2 through 5: magnitudes below 5 select one
+    /// half-pi, and 5 selects two, with the rough sign restored. This table avoids
+    /// another quotient approximation; it is not a general range reducer and does
+    /// not validate that caller range.
     fn medium_half_pi_multiple(rough_appr: &BigInt) -> BigInt {
         // For medium arguments the rough approximation already distinguishes the only
         // useful half-pi multiples, avoiding a second approximation of x/(pi/2).
@@ -295,6 +372,13 @@ impl Computable {
         if positive { multiple } else { -multiple }
     }
 
+    /// Read an exact binade for trig dispatch without numerically approximating self.
+    /// Return Some(Some(e)) for a known nonzero magnitude, Some(None) for exact zero,
+    /// and None when this path lacks an exact magnitude. Inspect native integers,
+    /// rationals and constants directly; use cheap child bounds for negation/shift
+    /// and cheap bounds for other nodes. A shift translates the exponent.
+    /// The integer bit-count cast and shifted-exponent addition are unchecked;
+    /// this helper does not establish safety for every extreme representation.
     fn known_msd_for_trig_reduction(&self) -> Option<Option<Precision>> {
         // Trig construction used to call `approx(-1)` before deciding whether
         // an argument was already small or definitely huge. Exact rationals and
@@ -319,10 +403,14 @@ impl Computable {
         }
     }
 
+    /// Extract a known nonzero binade for the small/large trig dispatch tests.
+    /// Flatten both an unknown magnitude and exact zero to None; zero handling
+    /// belongs to the constructors' earlier identity branches.
     fn trig_reduction_msd(&self) -> Option<Precision> {
         self.known_msd_for_trig_reduction().flatten()
     }
 
+    /// Return the exact nonnegative magnitude of an owned rational, negating only negative values.
     fn rational_magnitude(value: Rational) -> Rational {
         if value.sign() == Sign::Minus {
             value.neg()
@@ -331,14 +419,17 @@ impl Computable {
         }
     }
 
-    /// Return a conservative exact upper bound for `|self| / pi` when the
-    /// expression has a cheap, recognizable form.
+    /// Return a rational upper bound on |self|/pi for recognized, admitted real graphs.
+    /// Use principal inverse-trig ranges, rational magnitudes, pi/tau/inverse-pi,
+    /// negation, binary shifts in [-128,128], sums and multiplication by an exact
+    /// rational. The triangle inequality may make the bound loose. Inverse-trig
+    /// tags rely on their admission preconditions; this is not a domain validator
+    /// for arbitrary raw syntax. Unknown forms or exhausted depth return None.
     ///
-    /// This deliberately proves only the small subset needed by trig
-    /// construction. In particular, inverse-trig ranges, rational scaling,
-    /// binary scaling, and sums can certify that an argument is already inside
-    /// the prescaled kernel without approximating that argument first. Unknown
-    /// forms return `None` instead of making a heuristic magnitude claim.
+    /// budget limits recursive depth, not total visits: each branch receives the
+    /// remaining depth independently. Rational arithmetic and exact-rational
+    /// recognition have no coefficient-size or total-work bound here. No numerical
+    /// approximation of self is needed to establish a successful bound.
     fn trig_pi_magnitude_upper_bound(&self, budget: usize) -> Option<Rational> {
         if budget == 0 {
             return None;
@@ -346,7 +437,7 @@ impl Computable {
         let next_budget = budget - 1;
 
         match &self.internal.approximation {
-            // pi > 1, so every exact rational r satisfies |r| < |r| * pi.
+            // pi > 1, so every exact rational r satisfies |r| <= |r| * pi.
             Approximation::One => Some(Rational::one()),
             Approximation::Int(value) => Some(Self::rational_magnitude(Rational::from_bigint(
                 value.clone(),
@@ -399,6 +490,10 @@ impl Computable {
         }
     }
 
+    /// Return |rational| exactly when 1 <= |rational| < 3/2; otherwise decline.
+    /// This medium window permits a dedicated pi/2-|rational| residual for sine,
+    /// cosine or cotangent, avoiding a generic subtraction/reduction graph. The
+    /// lower boundary is included, and the upper boundary is excluded.
     fn exact_rational_half_pi_shortcut_magnitude(rational: &Rational) -> Option<Rational> {
         // Exact rationals with 1 <= |x| < 3/2 are the awkward medium trig rows:
         // not small enough for direct sin/cos, but close enough to pi/2 that a
@@ -419,13 +514,18 @@ impl Computable {
         }
     }
 
+    /// Reconstruct cosine from residual self - multiplier*pi/2 and exact quadrant symmetry.
+    /// For multiplier modulo four, select cos, -sin, -cos or sin of the residual.
+    /// Try a retained pi/arctangent identity before allocating a prescaled kernel.
+    /// The caller selects a multiplier giving a valid small kernel argument; this
+    /// helper neither proves that range nor checks a supplied multiplier.
     fn cos_reduced_by_half_pi(self, multiplier: BigInt) -> Computable {
         let adjustment = Self::pi()
             .shift_right(1)
             .multiply(Self::rational(Rational::from_bigint(multiplier.clone())).negate());
         let reduced = self.add(adjustment);
-        // Reduce the nearest half-pi multiple modulo four and dispatch by the
-        // exact sin/cos symmetry. This keeps the residual kernel below one radian.
+        // Reduce the selected half-pi multiple modulo four and dispatch by the
+        // exact sin/cos symmetry. The caller owns the small-residual precondition.
         let quadrant =
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
@@ -452,6 +552,11 @@ impl Computable {
         }
     }
 
+    /// Reconstruct sine from residual self - multiplier*pi/2 and exact quadrant symmetry.
+    /// For multiplier modulo four, select sin, cos, -sin or -cos of the residual.
+    /// Prefer a retained pi/arctangent identity, then a prescaled kernel. As for
+    /// cos_reduced_by_half_pi, the caller owns the residual-range precondition;
+    /// negative multipliers use the same nonnegative modulo-four quadrant.
     fn sin_reduced_by_half_pi(self, multiplier: BigInt) -> Computable {
         let adjustment = Self::pi()
             .shift_right(1)
@@ -483,6 +588,11 @@ impl Computable {
         }
     }
 
+    /// Recover the retained principal arctangent operand from native rational or generic atan tags.
+    /// IntegralAtan stores atan(1/n), so invert its nonzero integer parameter.
+    /// Prescaled/deferred tags return the shared child. Decline other shapes,
+    /// including an outer negation or an angle already normalized to a pi multiple;
+    /// None does not disprove that the value is an arctangent.
     fn atan_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
             Approximation::AtanRational(argument) => Some(Self::rational(argument.clone())),
@@ -494,6 +604,11 @@ impl Computable {
         }
     }
 
+    /// Recover a rational x from retained atan(x), including recursively negated forms.
+    /// Read AtanRational directly and IntegralAtan(n) as 1/n, preserving its sign;
+    /// a zero n declines through checked rational inversion. Negation uses atan's
+    /// odd symmetry. Other representations decline. This recursive reader has no
+    /// explicit depth or coefficient-work limit.
     pub(crate) fn atan_rational_argument(&self) -> Option<Rational> {
         match &self.internal.approximation {
             Approximation::AtanRational(argument) => Some(argument.clone()),
@@ -507,10 +622,18 @@ impl Computable {
         }
     }
 
+    /// Recover (scale, radicand) when a native atan operand is recognized as scale*sqrt(radicand).
+    /// Use atan_argument followed by the shared exact pure-surd projection, which
+    /// requires no additive rational part. This does not recover every equivalent
+    /// angle, prove irrationality, or impose a canonical squarefree radicand.
     pub(crate) fn atan_pure_quadratic_surd_argument(&self) -> Option<(Rational, Rational)> {
         self.atan_argument()?.exact_pure_quadratic_surd()
     }
 
+    /// Recover the retained principal arcsine operand from rational, prescaled or deferred asin tags.
+    /// Return a rational node or clone the existing child. Other shapes decline.
+    /// The inverse identity assumes an admitted argument in [-1,1]; this reader
+    /// does not revalidate the domain or normalize arbitrary equivalent angles.
     pub(crate) fn asin_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
             Approximation::AsinRational(argument) => Some(Self::rational(argument.clone())),
@@ -521,6 +644,11 @@ impl Computable {
         }
     }
 
+    /// Recover the retained principal arccosine operand from its three native acos tags.
+    /// The negative-rational tag stores a positive magnitude, so negate it to
+    /// recover the authored argument; positive tags preserve their operand.
+    /// Domain admission is a caller invariant, not checked here. Other forms,
+    /// including a pi/2-minus-asin encoding, decline.
     pub(crate) fn acos_argument(&self) -> Option<Computable> {
         match &self.internal.approximation {
             Approximation::AcosPositive(argument) => Some(argument.clone()),
@@ -532,14 +660,26 @@ impl Computable {
         }
     }
 
+    /// Construct the positive sqrt(1+argument²) used by atan sine/cosine identities.
+    /// For a defined real argument this is at least one, so its inverse is defined.
+    /// The exact square graph retains the operand relation for later proofs.
     fn unit_hypotenuse(argument: &Computable) -> Computable {
         Self::one().add(argument.clone().square()).sqrt()
     }
 
+    /// Construct the nonnegative sqrt(1-argument²) for principal asin/acos complements.
+    /// Callers must establish |argument| <= 1. This helper performs no typed domain
+    /// check; selecting the nonnegative root is essential to the principal-angle
+    /// identity, including zero at either endpoint.
     fn unit_complement(argument: &Computable) -> Computable {
         Self::one().add(argument.clone().square().negate()).sqrt()
     }
 
+    /// Return exact sine/cosine expressions for recognized half-pi rotations of a principal arctangent.
+    /// Enable recovery of the three normalized rational-pi anchors as well. Use
+    /// x/sqrt(1+x²) and 1/sqrt(1+x²), exchanging them for odd half-pi rotations and
+    /// applying the recognizer's signs. The inverse hypotenuse is shared between
+    /// outputs. None is a structural-recognition decline, not a numerical result.
     fn pi_atan_sin_cos(&self) -> Option<(Computable, Computable)> {
         let (swap, sine_sign, cosine_sign, argument) = self.pi_atan_trig_argument(true)?;
         let inverse_hypotenuse = Self::unit_hypotenuse(&argument).inverse();
@@ -566,11 +706,20 @@ impl Computable {
         ))
     }
 
+    /// Apply angle addition for a recognized odd k*pi/4 plus or minus atan(x).
+    /// The recognizer supplies the diagonal sine/cosine signs and the atan sign.
+    /// Build both numerators over the shared positive sqrt(2*(1+x²)); this retains
+    /// exact dependence on x instead of numerically evaluating the angle. Decline
+    /// when the structural recognizer cannot establish that form.
     fn diagonal_turn_atan_sin_cos(&self) -> Option<(Computable, Computable)> {
         let (sine_sign, cosine_sign, atan_sign, argument) =
             self.diagonal_turn_plus_or_minus_atan_argument()?;
         let signed = |value: Computable, sign| {
-            if sign == Sign::Minus { value.negate() } else { value }
+            if sign == Sign::Minus {
+                value.negate()
+            } else {
+                value
+            }
         };
         // For theta=+/-atan(x), cos(theta)=1/h and sin(theta)=+/-x/h,
         // h=sqrt(1+x*x)>0. A diagonal rotation has components +/-1/sqrt(2).
@@ -590,7 +739,15 @@ impl Computable {
         Some((sine, cosine))
     }
 
-    /// Cosine of this number.
+    /// Construct cosine of a defined real angle measured in radians.
+    /// Reuse retained zero, even symmetry and recognized principal inverse-trig
+    /// relations before choosing rational residuals or half-pi range reduction.
+    /// Preserve the original argument in deferred kernels when a shortcut does not
+    /// apply; numerical approximation remains a separate request.
+    ///
+    /// Construction itself may approximate the argument to choose a quadrant.
+    /// Structural recognition is intentionally partial, and neither a small range
+    /// proof nor a deferred node supplies a total-work or memory bound.
     pub fn cos(self) -> Computable {
         if self.immediate_sign() == Some(RealSign::Zero) {
             crate::trace_dispatch!("computable", "cos", "retained-zero-one");
@@ -695,7 +852,15 @@ impl Computable {
         self.cos_reduced_by_half_pi(multiplier)
     }
 
-    /// Sine of this number.
+    /// Construct sine of a defined real angle measured in radians.
+    /// Reuse retained zero, odd symmetry and recognized principal inverse-trig
+    /// relations before rational residuals or half-pi reduction. Exact quadrant
+    /// symmetries select sine/cosine kernels while retaining source relations.
+    /// Large rational arguments can defer reduction until evaluation.
+    ///
+    /// Construction may approximate other arguments to choose a reduction. A
+    /// successful construction does not imply bounded evaluation work, and a
+    /// failed structural match does not mean the corresponding identity is false.
     pub fn sin(self) -> Computable {
         if self.immediate_sign() == Some(RealSign::Zero) {
             crate::trace_dispatch!("computable", "sin", "retained-zero");
@@ -811,7 +976,15 @@ impl Computable {
         self.sin_reduced_by_half_pi(multiplier)
     }
 
-    /// Tangent of this number.
+    /// Construct tangent of a real radian angle for which cosine is nonzero.
+    /// Use rational residuals, exact integer-pi periodicity and odd symmetry before
+    /// small tangent, near-half-pi cotangent, or general pi-reduction paths.
+    /// Construction can evaluate the argument and recursively retry a reduced form.
+    ///
+    /// This low-level constructor returns no typed pole error and does not prove
+    /// its non-pole precondition. Use [crate::Real::tan] for checked domain handling.
+    /// In particular, a small magnitude alone does not exclude a half-pi pole,
+    /// and lazy construction is not a promise of completed evaluation.
     pub fn tan(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
@@ -909,6 +1082,11 @@ impl Computable {
         self.add(adjustment).tan()
     }
 
+    /// Construct sine directly from an owned rational for checked-Real consumers.
+    /// Avoid allocating a Ratio leaf merely to rediscover its exact rational.
+    /// Handle zero, |x| >= 8, the [1,3/2) magnitude window and nonzero |x| < 1
+    /// before the generic constructor. These thresholds preserve this entry
+    /// point's established dispatch; they need not equal Computable::sin's table.
     pub(crate) fn sin_rational(rational: Rational) -> Computable {
         // Real-level rational trig already owns the Rational. Classify it here
         // so hot scalar constructors skip Ratio allocation followed by the same
@@ -938,10 +1116,15 @@ impl Computable {
         Self::rational(rational).sin()
     }
 
+    /// Construct cosine directly from an owned rational for checked-Real consumers.
+    /// Use one at zero, deferred large-rational handling for |x| >= 8, the medium
+    /// half-pi complement and the nonzero |x| < 1 rational kernel before falling
+    /// back to cos. Sharing kernels does not imply identical allocation or dispatch
+    /// to constructing a generic rational node first.
     pub(crate) fn cos_rational(rational: Rational) -> Computable {
-        // Owned rational cosine mirrors sin_rational. Keeping the branch table
-        // shared at this level removes a constructor-only Ratio node from every
-        // plain Real::cos(rational) call without changing approximation kernels.
+        // Owned rational cosine mirrors sin_rational's entry strategy. Its direct
+        // branches avoid a constructor-only Ratio node, while the generic fallback
+        // still constructs one. Both paths use the existing approximation kernels.
         if rational.sign() == Sign::NoSign {
             crate::trace_dispatch!("computable", "cos", "exact-zero-one");
             return Self::one();
@@ -962,6 +1145,11 @@ impl Computable {
         Self::rational(rational).cos()
     }
 
+    /// Construct tangent directly from an owned rational, avoiding a redundant Ratio leaf.
+    /// Try zero, the [1,3/2) magnitude complement, |x| >= 4 deferral and nonzero
+    /// |x| < 1 before the generic path. Finite rational angles cannot be odd
+    /// half-pi poles because pi is transcendental, but their evaluation costs are
+    /// not bounded by these classification thresholds.
     pub(crate) fn tan_rational(rational: Rational) -> Computable {
         // Tangent benefits most from classifying before Ratio construction: the
         // generic path probes sign/MSD and may build symmetry wrappers before it

@@ -17370,6 +17370,83 @@ nonincremental target. Angle-constructor/reader, structural-sign, range-reductio
 and shared MPFR support excerpts supplied context, not additional whole-file
 audit credit. Repository-wide coverage remains incomplete.
 
+## Hyperreal exponential/trig construction and rotated-angle witnesses (2026-11-27)
+
+Baseline: 6f9a868195233295a3eab741ffe64d627434acaf. Whole-file review of
+computable/node/exp_trig.rs (993 baseline lines), tests/atan_eighth_turns.rs (81)
+and tests/atan_quarter_turns.rs (66): 1140 lines. Hyperreal owns these scalar
+construction, reduction and exact-relation contracts (P1–P7, P19). Missing
+acceptance witnesses were Rustdoc on 25 of 35 methods and every declaration in
+the two integration files; ten existing method descriptions needed expansion.
+Before editing the constructor file, 66 distinct selected unit tests passed
+(67 executions because two filters overlap). All seven rotation integration
+tests also passed before editing their files.
+
+All 46 named declarations and two integration module overviews now explain their
+purpose, domain and consumed evidence. The 35 methods cover exact e powers,
+optional ln(2) reduction, stable expm1, near-integer pi/half-pi selection,
+structural magnitude bounds, principal inverse-trig readers, quadrant/diagonal
+reconstruction and owned-rational entry points. Documentation distinguishes:
+
+- A completed near-integer quotient has error below one; it is not necessarily
+  uniquely nearest. Accepted residual integers in [-8,8] at precision p imply
+  |residual| < 9*2^p, including 9/16 for reduced_exp. The 64-attempt correction
+  limit does not bound nested refinement, coefficient size or memory. A scale
+  outside i32 declines optional reduction without making exp undefined.
+- Exponential planning hints select construction paths; the kernel rechecks
+  its range. The cached-small predicate accepts only an exact nonzero binade
+  at most -2, and even cached zero takes the numeric guard. Expm1 preserves
+  the operand/sign relation and avoids near-one subtraction in its small kernel.
+- The pi-relative magnitude recognizer assumes admitted inverse-trig tags.
+  Its budget limits depth, with a separate remainder for each child, rather
+  than total visits. The half-pi guard controls requested precision, not total
+  work. Native bit-count casts and shifted-binade addition are unchecked;
+  no extreme-representation safety or cancellation-completion claim is added.
+- Principal complement roots select the nonnegative branch. Structural readers
+  may decline equivalent angles; zero IntegralAtan denominators decline checked
+  inversion. Native tangent assumes a non-pole and returns no typed domain
+  outcome; the documentation links to checked Real::tan. Owned-rational
+  thresholds differ from generic dispatch and do not imply identical allocation.
+- The diagonal corpus has 64 rotated Pythagorean angles and 128 exact coordinate
+  assertions, plus reconstruction, signed sqrt(2), a perturbed recognition
+  decline and JSON replay. The half-pi corpus has 114 rational and 38 quadratic
+  angles with coordinate/cotangent assertions, plus 19 replayed parameter maps.
+  Difference-to-rational-zero certificates, Real equality, projection decline
+  and serialization replay remain distinct claims. None of these tests proves
+  universal closure, nonalgebraicity on a decline, or fresh-process replay.
+
+Existing inline comments were also corrected: the rational/pi magnitude bound
+includes equality at zero, reduction selects a near-integer rather than a proved
+nearest multiple, the residual range remains the caller's precondition, and
+owned-rational direct branches do not eliminate the generic fallback's Ratio
+allocation. No arithmetic or dispatch sequence changed.
+
+After the final edits, 64 distinct selected unit tests passed without optional
+features and 66 with all features (65 and 67 executions respectively). The two
+rotation suites passed five tests without optional features and seven with all
+features. Two serde anchor replay tests and five downstream Hyperlimit resolver
+tests passed. Private cargo doc passed both configurations with warnings and
+broken/private links denied. All 35 method blocks matched their actual private
+library Rustdoc pages. Both integration files were rendered separately from
+copies removing only #[test], retaining their other source and feature guards;
+all thirteen overview/helper/test blocks matched the resulting private pages.
+No focused check remains blocked.
+
+Raw executable/signature tokens in both integration files are identical. The
+constructor file differs only by one optional trailing comma added by Rustfmt;
+independently formatting the baseline yields identical final tokens. Selected
+Rustfmt and git diff --check passed. Fixtures, assertions, dependencies, policy
+and public signatures are unchanged. Full workflows remain owner-waived for
+this docs-only session; this batch makes no new performance claim.
+
+Evidence in /tmp/csgrs-hyperreal-exp-trig-audit/ records commands, baseline/final
+logs, declaration/token inventories, temporary integration sources and rendered
+matches. Duplicate integration HTML was removed after inspection. Builds reused
+the roughly 5.8 GiB locked/offline nonincremental target. Approximation kernels,
+primitive constructors, algebra/structural readers, checked-Real dispatch and
+other unit-test excerpts supplied context only, not further whole-file credit.
+Repository-wide Rustdoc coverage and the complete-file audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
