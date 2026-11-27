@@ -157,14 +157,18 @@
 ### Fixed
 
 - Interned small rationals (word-sized arithmetic results, unit values and
-  the small integer, dyadic and fraction pools) no longer cache results on
-  themselves. They live for the whole process, and each cached result held
-  its own cached successors, so one interned early state could pin a whole
-  computation's history: a 1024-step exact spring integration left 3.8 MB
-  live after every value was dropped, growing faster than linearly with the
-  step count. Their cache slots are now filled with inert entries when they
-  are interned; their partners still cache as before. The same probe now
-  leaves 944 B and runs about 30% faster.
+  the small integer, dyadic and fraction pools) now cache only results that
+  live as long as they do. They live for the whole process, and each cached
+  result held cached successors of its own. So one interned early state
+  could pin a whole computation's history: a 1024-step exact spring
+  integration left 3.8 MB live after every value was dropped, and that grew
+  faster than linearly with the step count.
+  - An interned value now keeps a result only if the result is interned or
+    fits in a machine word.
+  - A kept word-sized result becomes process-lifetime itself, so the same
+    rule applies to it and no chain can start.
+  - The probe now leaves at most 2.4 KB, bounded, and runs about 25% faster.
+  - Warm evaluation keeps its cache hits and dispatch counts.
 - The final extended relation attempt can prove common-factor cancellations
   after expansion declines, including the zeros that blocked the binary64
   four-angle cube rotation union. Every factor's inverse obligations remain

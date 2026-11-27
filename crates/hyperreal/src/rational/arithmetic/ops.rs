@@ -811,6 +811,7 @@ impl Rational {
 
     fn retain_product_pair(&self, other: &Self, result: &Self) {
         if !self.is_internally_unreduced()
+            && Self::may_retain(self, result)
             && self
                 .product_cache
                 .set(CachedRationalProduct {
@@ -822,6 +823,7 @@ impl Rational {
             return;
         }
         if !other.is_internally_unreduced()
+            && Self::may_retain(other, result)
             && other
                 .product_cache
                 .set(CachedRationalProduct {
@@ -908,6 +910,9 @@ impl Rational {
         kind: CachedRationalLinearKind,
         result: &Self,
     ) -> bool {
+        if !Self::may_retain(owner, result) {
+            return false;
+        }
         if let Some(cached) = owner.linear_cache.get() {
             let primary_placeholder = cached.primary.kind.is_primary_placeholder();
             // Avoid cloning the result and touching both Arc counters when
@@ -1133,6 +1138,11 @@ impl Rational {
     }
 
     fn retain_negation_entry(&self, negation: CachedRationalUnary) -> bool {
+        if let CachedRationalUnary::Strong(negation) = &negation
+            && !Self::may_retain(self, negation)
+        {
+            return false;
+        }
         if let Some(cached) = self.linear_cache.get() {
             if cached.primary.kind.is_negation_placeholder() {
                 return false;

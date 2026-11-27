@@ -144,6 +144,12 @@ fn wide_values_and_replaced_operands_keep_independent_exact_answers() {
     }
 }
 
+/// `numerator · 2^80 / denominator`, wider than a machine word.
+fn wide(numerator: i64, denominator: u64) -> Rational {
+    &Rational::fraction(numerator, denominator).unwrap()
+        * &Rational::from_bigint(BigInt::from(1_u8) << 80_u32)
+}
+
 #[test]
 fn interned_constants_do_not_pin_results_computed_with_them() {
     // Word-sized arithmetic results come from the interned pools, which live
@@ -164,11 +170,12 @@ fn interned_constants_do_not_pin_results_computed_with_them() {
     ];
     for constant in &constants {
         let pooled = Arc::downgrade(&constant.0);
-        let value = Rational::fraction(5_000_000_011_i64, 1_000_000_007).unwrap();
+        // Wider than a word, so the interned owner may not keep the results.
+        let value = wide(5_000_000_011, 1_000_000_007);
         // Fill the value's own write-once slots, so later results can only be
         // retained on the interned partner.
         for partner in 0..3_i64 {
-            let partner = Rational::fraction(17 + partner, 1_000_000_009).unwrap();
+            let partner = wide(17 + partner, 1_000_000_009);
             let _ = &value * &partner;
             let _ = &value + &partner;
             let _ = &value - &partner;
@@ -195,4 +202,38 @@ fn interned_constants_do_not_pin_results_computed_with_them() {
         );
         assert!(pooled.upgrade().is_some());
     }
+}
+
+#[test]
+fn small_results_kept_by_interned_constants_start_no_chain() {
+    let pooled = &Rational::fraction(3, 2).unwrap() * &Rational::new(2);
+    let again = &Rational::fraction(3, 2).unwrap() * &Rational::new(2);
+    assert!(Arc::ptr_eq(&pooled.0, &again.0), "3 is interned");
+    // A word-sized result that the interned value may keep, and so lives as
+    // long as the pool.
+    let small = Rational::fraction(1_000_000_007, 1_000_000_009).unwrap();
+    for partner in 0..3_i64 {
+        let partner = Rational::fraction(1_000_000_011 + partner, 1_000_000_013).unwrap();
+        let _ = &small * &partner;
+        let _ = &small + &partner;
+    }
+    let kept = &small * &pooled;
+    // Results computed from the kept value must not stay alive through it.
+    let value = wide(5_000_000_011, 1_000_000_007);
+    for partner in 0..3_i64 {
+        let partner = wide(17 + partner, 1_000_000_009);
+        let _ = &value * &partner;
+        let _ = &value + &partner;
+        let _ = &value - &partner;
+    }
+    let product = &value * &kept;
+    let sum = &value + &kept;
+    let products = Arc::downgrade(&product.0);
+    let sums = Arc::downgrade(&sum.0);
+    drop((product, sum, value, small, kept));
+    assert!(
+        products.upgrade().is_none(),
+        "a kept small result pinned a product"
+    );
+    assert!(sums.upgrade().is_none(), "a kept small result pinned a sum");
 }

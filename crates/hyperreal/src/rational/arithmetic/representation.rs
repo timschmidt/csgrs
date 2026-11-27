@@ -195,8 +195,11 @@ const RETAINED_REUSE_MASK: u32 = RETAINED_LINEAR_REUSE_SEEN
     | RETAINED_SELF_DOT_CONFLICT_ATTEMPTED;
 const RETAINED_DYADIC_SHIFT_OFFSET: u32 = 8;
 const RETAINED_RELATIVE_F64_FILTER_VIEW: u32 = 1 << 31;
+/// The value lives for the whole process: it belongs to an interned pool or
+/// is held by such a value (see `Rational::may_retain`).
+const RETAINED_INTERNED: u32 = 1 << 30;
 const RETAINED_DYADIC_SHIFT_MASK: u32 =
-    (RETAINED_RELATIVE_F64_FILTER_VIEW - 1) & !((1 << RETAINED_DYADIC_SHIFT_OFFSET) - 1);
+    (RETAINED_INTERNED - 1) & !((1 << RETAINED_DYADIC_SHIFT_OFFSET) - 1);
 const RETAINED_DYADIC_SHIFT_MAX: u64 =
     ((RETAINED_DYADIC_SHIFT_MASK >> RETAINED_DYADIC_SHIFT_OFFSET) - 1) as u64;
 
@@ -294,11 +297,7 @@ static RATIONAL_ONE: LazyLock<Rational> =
     LazyLock::new(|| Rational::interned(Plus, BigUint::one(), BigUint::one()));
 static RATIONAL_MINUS_ONE: LazyLock<Rational> =
     LazyLock::new(|| Rational::interned(Minus, BigUint::one(), BigUint::one()));
-// Result slot of the inert entries that seal interned values. It is never
-// handed out, so nothing is ever cached on it.
-static SEALED_PLACEHOLDER: LazyLock<Rational> = LazyLock::new(|| {
-    Rational::from_parts_raw(NoSign, BigUint::ZERO, BigUint::one())
-});
+
 static SMALL_POSITIVE_RATIONALS: [OnceLock<Rational>; 63] =
     [const { OnceLock::new() }; 63];
 static SMALL_NEGATIVE_RATIONALS: [OnceLock<Rational>; 63] =
@@ -330,6 +329,29 @@ impl Rational {
             .load(std::sync::atomic::Ordering::Relaxed)
             & fact
             != 0
+    }
+
+    /// Whether `owner` may hold `result` in one of its caches.
+    ///
+    /// Interned values live for the whole process, and cached results carry
+    /// caches of their own. An interned owner holding an ordinary result
+    /// would pin the whole chain of results computed after it, for example
+    /// every state of a simulation that starts from small values.
+    ///
+    /// Interned owners therefore keep only process-lifetime results: interned
+    /// ones, or word-sized ones, which become process-lifetime themselves
+    /// once they are kept. Each slot pins at most one small value and starts
+    /// no chain.
+    #[inline]
+    pub(super) fn may_retain(owner: &Self, result: &Self) -> bool {
+        if !owner.retained_fact(RETAINED_INTERNED) || result.retained_fact(RETAINED_INTERNED) {
+            return true;
+        }
+        if result.numerator.bits() <= 64 && result.denominator.bits() <= 64 {
+            result.retain_fact(RETAINED_INTERNED);
+            return true;
+        }
+        false
     }
 
     #[inline]

@@ -126,23 +126,38 @@ retention. "Shipped" sizes are linked release or deployed images.
   unavailable in practice.
 
 
-### Sealed interned rationals (27 November 2026)
+### Interned rationals keep only process-lifetime results (27 November 2026)
 
-- **Capability:** none new; removes process-lifetime retention found by the
-  hyperphysics resource atlas (spring residue about equal to peak heap).
+- **Capability:** none new. It removes the process-lifetime retention found
+  by the hyperphysics resource atlas, where spring residue was about equal to
+  the peak heap.
+- **Rule:** an interned value keeps a result only if the result is interned
+  or word-sized. A kept word-sized result becomes process-lifetime and obeys
+  the same rule, so each slot pins at most one small value.
 - **Memory:** a 1024-step exact spring integration that starts from interned
-  states leaves 944 B instead of 3.8 MB after all values are dropped; the
-  pinned amount grew about n^1.75 with the step count.
-- **Performance:** 151 Hyperreal rational micro benchmarks, two alternating
-  passes per side, geometric mean 1.0006 (neutral). The spring probe is about
-  30% faster (65 ms to 45 ms). Repeated arithmetic on the same small values
-  loses cross-call cache hits: `rational_matmul_8` (8×8 of small fractions)
-  +5% and `tanh_rational_one` +10%, both confirmed in reruns.
-  `rational_clone_pair` +13% is code layout: it clones large non-interned
-  values and never reaches the changed code.
-- **Code size:** one constructor (about 30 lines) and one retention test.
-- **Reconsider:** if repeated small-constant workloads matter more than
-  retention, let sealed owners keep results that are themselves interned.
+  states leaves 2.4 KB and then 1.9 KB on two runs, and nothing more after
+  that. It used to leave 3.8 MB per run; the pinned amount grew about n^1.75
+  with the step count.
+- **Performance:**
+  - Hyperreal rational micro benchmarks: 151 benchmarks, two alternating
+    passes per side, geometric mean 1.0001 (neutral). The largest slowdown on
+    a reachable path is `exact_rational_sparse_homogeneous_plane_intersection3`
+    at +4.6%. `rational_clone_pair` at +13% is code layout: it clones large
+    non-interned values and never reaches the changed code.
+  - The spring probe is about 25% faster (65 ms to 46–50 ms).
+  - The pinned Hypersolve dispatch traces (polynomial import, Jacobian rules)
+    are unchanged.
+- **Rejected designs:**
+  - Sealing every slot on interned values lost warm hits:
+    `rational_matmul_8` +5%, `tanh_rational_one` +10%, and the polynomial
+    dispatch count went from 11 to 15 events.
+  - Keeping only interned results lost the warm retained inverse, negation,
+    product and square-reduction hits in the Jacobian trace.
+- **Code size:** one fact bit, which narrows the dyadic shift cache from 23
+  to 22 bits; one predicate on the five cold retention paths; two retention
+  tests.
+- **Reconsider:** if pooled values become per-thread or reclaimable, or if
+  cached results gain a weak-only mode.
 
 ### QR frame proposal backoff (25 November 2026)
 

@@ -11,38 +11,17 @@ impl Rational {
         }))
     }
 
-    /// A process-lifetime value for the interned constant pools.
-    ///
-    /// Every cache slot is filled with an inert entry first. Cached results
-    /// are held strongly and carry caches of their own, so a slot on a value
-    /// that is never dropped would pin the whole chain of results computed
-    /// after it (for example every state of a simulation stepped by an
-    /// interned `dt`). Sealed values cache nothing; their partners still do.
+    /// A process-lifetime value for the interned constant pools; see
+    /// [`Rational::may_retain`].
     fn interned(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
-        let value = Self::from_parts_raw(sign, numerator, denominator);
-        let inert = || CachedRationalLinearEntry {
-            other: std::sync::Weak::new(),
-            kind: CachedRationalLinearKind::Product,
-            result: SEALED_PLACEHOLDER.clone(),
-        };
-        let sealed = |entry| {
-            let slot = OnceLock::new();
-            let _ = slot.set(entry);
-            slot
-        };
-        let _ = value.product_cache.set(CachedRationalProduct {
-            other: Some(std::sync::Weak::new()),
-            result: SEALED_PLACEHOLDER.clone(),
-        });
-        let _ = value.linear_cache.set(Box::new(CachedRationalArithmetic {
-            primary: inert(),
-            secondary: sealed(inert()),
-            tertiary: sealed(inert()),
-            quaternary: sealed(inert()),
-            quinary: sealed(inert()),
-            square_reduction: OnceLock::new(),
-        }));
-        value
+        Self(Arc::new(RationalData {
+            sign,
+            numerator,
+            denominator,
+            product_cache: OnceLock::new(),
+            linear_cache: CompactOnceBox::new(),
+            retained_facts: std::sync::atomic::AtomicU32::new(RETAINED_INTERNED),
+        }))
     }
 
     #[inline]
@@ -151,6 +130,11 @@ impl Rational {
     }
 
     fn retain_inverse_entry(&self, inverse: CachedRationalUnary) -> bool {
+        if let CachedRationalUnary::Strong(inverse) = &inverse
+            && !Self::may_retain(self, inverse)
+        {
+            return false;
+        }
         if let Some(cached) = self.linear_cache.get() {
             if cached.primary.kind.is_inverse_placeholder() {
                 return false;

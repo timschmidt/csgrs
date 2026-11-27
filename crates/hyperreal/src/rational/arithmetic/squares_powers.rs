@@ -251,6 +251,9 @@ impl Rational {
 
     #[cold]
     fn retain_square_reduction(&self, square: &Self, rest: &Self) {
+        if !Self::may_retain(self, square) || !Self::may_retain(self, rest) {
+            return;
+        }
         let reduction = CachedRationalSquareReduction {
             square: square.clone(),
             rest: rest.clone(),
