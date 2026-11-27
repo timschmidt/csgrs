@@ -11920,6 +11920,93 @@ Both files now have whole-file records. Remaining mathbench engines, comparison 
 operation families, and report generation still need review; the repository-wide
 audit and previously recorded generated-item documentation gaps remain open.
 
+## Hyperlattice mathbench complex-operation comparisons (2026-11-27)
+
+Read every original line of `crates/hyperlattice/benches/mathbench/complex_ops.rs`
+(509 → 619) on `26ec1ab54`. Owner: complex benchmark registration, native/external
+workload selection and varying-input construction. Relevant contracts are P1/P3/P4,
+P6 and P36/P37: input meaning, retained evidence, errors and same-completed-work
+comparisons. The domain is four retained complex/real fixture sets, five backend
+labels, native trace hooks and the u64-indexed binary64 generator. Missing acceptance
+evidence was attached private documentation for the eight functions and local macro.
+The all-feature mathbench Cargo check passed on the starting revision.
+
+Added nine groups covering every authored function and macro in this file. Read
+the native reciprocal/power/division implementations and the three local engine
+contexts/complex adapters as caller/callee context. Those excerpts do not establish
+whole-file review of engines.rs. The macro expands a statement block with closures,
+not new named API items requiring a separate generated-function record.
+
+Contracts clarified:
+
+- Each backend registers 21 operation names, giving 105 rows for complex_ops. Native
+  hyperreal uses exact binary64 ingress, while hyperreal-rational parses displayed
+  decimals. Rounded pi/e-related fixtures remain float-origin values. Arbitrary
+  converters may violate nonzero assumptions and reach existing unwrap panics.
+  No value-oracle, exact-count or checked-path comparison is performed.
+- Native rows rotate retained fixtures with per-callback cursors; selection, clones,
+  operations and ordinary iter result destruction are timed. Seven native trace
+  hooks separately traverse four inputs once, including clones but excluding fixture
+  setup. They do not represent all measured rows or a cold cache guarantee.
+- free_i is a second name for the i constructor in both native/external schedules.
+  External _checked rows invoke ordinary adapter methods without native structural
+  guards or typed Results. Their negative-one rows calculate powi(1) then reciprocal;
+  external positive powers multiply repeatedly from one, unlike native fixed/signed
+  schedules. Shared names therefore do not establish identical work or semantics.
+- The numerica128 label uses the local adapter over Symbolica's Float backend;
+  gmp_mpfr128 uses Rug/GMP/MPFR. Both request precision 128. The Atom adapter stores
+  the same context argument but does not use it as a precision control in the complex
+  path, which constructs Atom::num(f64) and applies Atom arithmetic. Higher precision
+  does not recover authored decimal/symbolic values from the supplied floats.
+- Varying components use delta=(index as f64)*2^-40 and four affine expressions in
+  binary64. The step itself is exact, but casts/arithmetic can round. Indices 2^53
+  and 2^53+1 collide. All u64 inputs give finite components, without promising unique
+  values or cache keys. Batched sequence increments have no explicit overflow limit.
+- Cold rows construct new inputs in untimed SmallInput setup; no global or hardware
+  cache is cleared. Each callback starts its sequence at zero. Native multiplication
+  consumes operands while external adapters borrow rhs; construction/allocation and
+  arithmetic contracts need not match. Returned-output destruction follows the
+  batched measurement interval. The two native trace samples use only index 1,000,003
+  and include generation/construction inside recording, a different work boundary.
+- Group timing settings are inherited; row count, fixed precision and batching are
+  not total-work or memory limits. Context/group/label behavior and possible repeated
+  macro-argument evaluation are documented. No cross-backend exactness or performance
+  claim is inferred from the registration surface.
+
+Validation after final source edits:
+
+- Focused Rustfmt and git diff --check passed. Noncomment source matches formatting
+  of the original with the crates config. Besides whitespace, Rustfmt removes one
+  expression-closure brace pair, adds another, and changes three optional trailing
+  call commas. Inspected those exact punctuation changes and their expression-only
+  scopes; no fixture value, evaluation order, assertion, hook or operation changed.
+  The temporary validator initially assumed only comma changes; it now checks the
+  exact seven punctuation edits as well as equivalence to formatted original source.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 with incremental compilation disabled. Warnings and broken/private
+  links were denied. Complete text of all nine groups rendered on nine pages in
+  each configuration, including the private macro.
+- A source schedule check enumerated native rows and expanded the external macro's
+  static name lists: both have the same 21 suffixes, and seven native operation trace
+  hooks are present. This checks documented registration counts, not runtime workload
+  equivalence or numerical results.
+- Compiled the original and final varying-input helper in isolated standalone probes
+  with warnings denied. Independent Fraction-derived bit expectations passed at
+  indices 0, 1 and 1,000,003. Reproduced the 2^53/2^53+1 collision and finite components
+  at u64::MAX. Original/final output matched byte-for-byte; each process had a
+  30-second external timeout. No comparison-engine arithmetic or timing loop ran.
+- Full driver/Symbolica initialization, Criterion timing and report writers were
+  not launched; stored results remain unchanged. Full workflows and unrelated
+  runtime consumers remain owner-waived, with no focused check blocked. Removed
+  probe executables; scripts/commands occupy about 88 KiB and the shared target
+  remains approximately 2.7 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-complexbench-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-complexbench-audit/` scripts, commands and bit outputs.
+This file now has a whole-file record; remaining mathbench engines, scalar/vector/
+matrix/borrowed operation families, comparisons and report generation remain open,
+alongside the larger repository audit and earlier generated-item documentation gaps.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
