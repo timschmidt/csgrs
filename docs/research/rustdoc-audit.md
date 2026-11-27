@@ -16532,6 +16532,92 @@ locked/offline target. Producer and representation-test excerpts were context, n
 additional whole-file credit. Full workflows remain owner-waived; no focused check
 is blocked. Repository-wide documentation coverage remains incomplete.
 
+## Hyperreal retained tower adapters and proof-retention tests (2026-11-27)
+
+Baseline: 7085e31c8c0792665536356436232bcd7e97a74b. Whole-file review:
+
+- crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs (422 baseline lines).
+- crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs
+  (267 baseline lines).
+
+The owner is Hyperreal's scaled Real adapter over the computable quadratic and
+iterated-radical reducers. Relevant properties are P1–P6, P10 and P19: exact
+construction, supported symbolic structure, conservative recognition, retained
+signs, resource limits, failure distinctions and reuse by selected-root consumers.
+Inputs include rational/named/opaque representations, signed outer scales, nested
+and independent radicals, retained source signs, attached signals and coefficient
+vectors evaluated at either selected rational square root. The missing acceptance
+witness was complete private/test Rustdoc plus accurate descriptions of recognizer
+boundaries and proof transport. Twenty owning quadratic/retention tests passed on
+the baseline, and a separate public consumer reproduced boundary behavior before
+editing. Runtime algorithms and existing assertions are unchanged.
+
+All 39 authored declarations now have documentation, plus the retention module's
+inner comment (40 blocks). Existing comments were reviewed as well as additions:
+
+- Compaction reconstructs even + odd*sqrt(radicand), with quadratic components,
+  skips an unused outer radicand, proves the used radicand before the public sqrt
+  domain check, corrects retained sign transport for the reconstructed scale,
+  applies the original scale and restores its signal. Rational representations
+  clone directly. Pure symbolic success with an asserted signal is not a
+  cancellation receipt; exact reconstruction can populate reduction/sign caches.
+- Quadratic sign queries use only the outer scale's sign, retaining successful
+  payload reductions and signs. Declines are representation-sensitive and do not
+  establish that no equivalent quadratic presentation exists. Failed quadratic
+  reductions are retryable. The broader radical recognizer instead memoizes
+  declined queries on shared nodes; its Option combines syntax/domain/guard
+  failures. Its separate node/generator/term/coefficient guards are not a total
+  work budget, and there is no caller policy/precision control for those guards.
+  These are existing implementation limitations, not completed resource-contract
+  claims or changes to the target admission requirements.
+- Branch recognition requires rational center and positive outer coefficient,
+  a positive selected radicand and, when present, a negative conjugate radicand.
+  A returned center alone is not equality evidence: the curve consumer also
+  proves annihilator zero and position above the center. Recognition can decline
+  simple inner-field roots, negative outer coefficients and two positive
+  conjugate radicands. The full Real scale participates.
+- Annihilator coefficients are ascending and monic linear/quadratic/quartic
+  output is not promised minimal, square-free, irreducible or root-selecting.
+  Polynomial evaluation folds every coefficient's scale, rejects a negative
+  square and reduces even coefficients multiplied by zero. Unsupported input
+  can therefore decline at square zero; an empty polynomial at an admitted
+  nonnegative square is exactly zero. No total allocation/work bound is supplied.
+- Each test/helper states its actual witness. Six retention wrappers exercise
+  48 direction/scale/squaring cases, checking immediate and coarse/fine/coarse
+  signs before equality queries can strengthen caches. Additional tests retain
+  original negative-source representations, reconstructed scale changes, signal
+  identity and tracing assertions against numerical approximation. Scalar
+  unit-normal identities are not advertised as full geometric topology tests.
+  The radical comparison test can warm evidence through its first query and
+  compares Options without separately asserting known results. The test named
+  negative_radicands_and_non_radicals_decline currently tests pi and a positive
+  integer only; its documentation does not invent a negative-radicand witness.
+
+After the final source edit, 20 quadratic/retention and five radical tests passed
+both without optional features and with all features. All four lazy-certificate
+replay integration tests passed with all features. The rebuilt public consumer
+again verified positive-outer branch selection and its decline boundaries, four
+exact annihilator substitutions, empty/negative/zero-square cases and unsupported
+coefficients at zero. These witnesses do not claim arbitrary tower completeness.
+
+Private cargo doc passed both feature configurations with warnings and broken/private
+links denied. All eight runtime blocks matched actual private API pages, including
+the private tower_computable helper and impl documentation. The remaining 32
+cfg(test)/module blocks passed declaration/source checks and supplemental Markdown
+rendering; ordinary library Rustdoc does not expose cfg(test) item pages. Executable
+and signature tokens are identical except one optional call comma added and one
+removed by Rustfmt. Selected Rustfmt and git diff --check passed. Full workflows,
+whole-workspace lints and benchmark reruns remain owner-waived for this docs-only
+session; no performance claim or implementation fix is made.
+
+Evidence is retained in /tmp/csgrs-hyperreal-tower-api-audit/: baseline/final test
+logs, commands, consumer source/results, token/declaration inventory and full-block
+render matches. The temporary executable and duplicate test Markdown HTML were
+removed. Builds reused the roughly 5.7 GiB locked/offline nonincremental target.
+Quadratic/radical reducer and Hypercurve selected-fiber/parameter excerpts supplied
+context, not additional whole-file review credit. No focused check remains blocked;
+repository-wide documentation coverage remains incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,6 +1,8 @@
 #[cfg(test)]
+/// Fine-to-coarse sign and signal retention regressions across exact tower reconstruction.
 mod quadratic_tower_sign_retention_tests;
 
+/// Exact optional adapters from scaled Real representations to retained square-root tower reducers.
 impl Real {
     /// Rebuild this value from its exact quadratic-tower reduction.
     ///
@@ -13,6 +15,18 @@ impl Real {
     ///
     /// `None` means this reduction did not cover the expression. It
     /// does not limit the original exact value or its subsequent operations.
+    /// Rational representations return a clone directly. Otherwise the payload
+    /// is reduced to `even + odd*sqrt(radicand)`, each component being a quadratic
+    /// `a+b*sqrt(d)`. A zero odd part skips reconstruction of its radicand.
+    ///
+    /// Reconstruction first proves the outer radicand's sign before the public
+    /// square-root domain check. Sign transport corrects for the reconstructed
+    /// payload's own rational scale before applying this value's outer scale;
+    /// the final result inherits the same abort signal when present. Pure symbolic
+    /// work can succeed with that flag asserted; this is not an abort receipt.
+    /// Reduction/sign caches can change even though the exact source is unchanged.
+    /// Field/representation restrictions and explicit-shift guards can decline;
+    /// there is no total-work, coefficient-growth or allocation budget here.
     pub fn compact_quadratic_tower(&self) -> Option<Self> {
         if self.exact_rational_ref().is_some() {
             return Some(self.clone());
@@ -39,9 +53,10 @@ impl Real {
             // Before applying our outer scale, the reconstructed Real equals
             // our computable payload. Its own rational scale can have either
             // sign, so transfer the proof to its payload with that correction.
-            compact
-                .computable_ref()
-                .retain_sign_of_scaled_tower_source(&self.computable_ref(), compact.rational.sign());
+            compact.computable_ref().retain_sign_of_scaled_tower_source(
+                &self.computable_ref(),
+                compact.rational.sign(),
+            );
         }
         compact *= Self::new(self.rational.clone());
         if let Some(signal) = self.abort_signal() {
@@ -50,6 +65,11 @@ impl Real {
         Some(compact)
     }
 
+    /// Include the outer scale in a graph for branch, annihilator and polynomial queries.
+    /// Prefer a canonical exact-rational leaf, then collapse a zero outer scale;
+    /// otherwise reuse the basis payload and multiply only a nonunit scale.
+    /// The rational shortcut creates a fresh leaf rather than preserving a signal
+    /// attachment; these algebraic queries do not provide cancellation receipts.
     fn tower_computable(&self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             return Computable::rational(rational);
@@ -67,8 +87,16 @@ impl Real {
 
     /// Sign proved by reduction in `Q(sqrt(d))(sqrt(a + b sqrt(d)))`.
     ///
-    /// `None` means this value is outside that tower or its square relations do
-    /// not decide the sign. The original value is unchanged.
+    /// Zero scale and unit-basis rationals return their exact sign immediately.
+    /// Otherwise reduce the shared unscaled payload and combine its proved sign
+    /// with the rational scale. Success retains the reduction and exact sign on
+    /// that payload for clones and later operations; no numeric refinement is used.
+    ///
+    /// `None` means the current graph/field recognition, a square relation or an
+    /// explicit-shift guard declined, not that the value is mathematically outside
+    /// every equivalent tower presentation. Quadratic failures are not retained
+    /// as permanent failed reductions. The exact value is unchanged, but caches
+    /// can be populated. There is no caller-supplied total resource bound.
     pub fn quadratic_tower_sign(&self) -> Option<RealSign> {
         let scale_sign = real_sign_from_num(self.rational.sign());
         if scale_sign == RealSign::Zero || matches!(self.class, One) {
@@ -91,19 +119,38 @@ impl Real {
     /// leaves through their selected half-angle roots. `None` means the
     /// expression leaves that supported tower or exceeds this query's size
     /// guards; the value and its symbolic representation are unchanged.
+    /// As with [`Self::quadratic_tower_sign`], zero/rational cases return directly and the
+    /// outer scale is handled only through its sign. The general payload path
+    /// currently limits recognized nodes, generators, terms and coefficient bits;
+    /// those separate guards do not constitute a complete total-work bound.
+    ///
+    /// Successful payload signs are retained. Unlike the quadratic path, a
+    /// declined radical reduction is memoized on the shared node, so later calls
+    /// on that node can return `None` without traversal. This `Option` does not
+    /// distinguish unsupported syntax, invalid radicands and guard exhaustion,
+    /// nor certify universal undecidability. No precision/policy argument changes
+    /// these recognizer limits, and no cancellation receipt is returned.
     pub fn radical_tower_sign(&self) -> Option<RealSign> {
         let scale_sign = real_sign_from_num(self.rational.sign());
         if scale_sign == RealSign::Zero || matches!(self.class, One) {
             return Some(scale_sign);
         }
-        multiply_public_sign(
-            Some(scale_sign),
-            self.computable_ref().radical_tower_sign(),
-        )
+        multiply_public_sign(Some(scale_sign), self.computable_ref().radical_tower_sign())
     }
 
-    /// Rational center `s` when this value is `s + r√q` with `r > 0` and only
-    /// one real choice of `q`. The conjugate `s - r√q` is the other real root.
+    /// Recognize a retained outer-root form `s + r*sqrt(q)` and return its rational center `s`.
+    ///
+    /// Require rational `s` and `r`, `r > 0`, and a positive outer radicand `q`. If `q`
+    /// has an inner quadratic radical, its conjugate must be negative, leaving
+    /// only the selected `q` with real outer roots; a rational positive `q` also
+    /// passes that guard. The two real branches are then `s +/- r*sqrt(q)`.
+    ///
+    /// This is a representation-sensitive recognizer, not a general shifted-root
+    /// decomposition: a simple `sqrt(2)` reduced into the inner quadratic field
+    /// can decline, as can a negative outer coefficient or two positive conjugate
+    /// radicands. The outer Real scale participates in recognition. Consumers
+    /// must combine an annihilator-zero proof with `value > s` to select the
+    /// positive branch; the returned center alone does not prove equality.
     pub fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {
         self.tower_computable()
             .quadratic_tower_positive_rational_branch()
@@ -111,8 +158,12 @@ impl Real {
 
     /// Rational polynomial satisfied by a value in the quadratic tower.
     ///
-    /// Coefficients run from low degree to high. `None` means the value is
-    /// outside the supported tower reduction.
+    /// Coefficients run from low degree to high and include the outer scale.
+    /// The reducer emits a monic linear, quadratic or quartic equation using
+    /// the retained square relations. It does not promise the minimal polynomial,
+    /// square-free output, irreducibility or selection among conjugate roots.
+    /// `None` means this representation was not admitted by the reducer, not
+    /// proof that the mathematical value has no such rational polynomial.
     pub fn quadratic_tower_annihilating_polynomial(&self) -> Option<Vec<Rational>> {
         self.tower_computable()
             .quadratic_tower_annihilating_polynomial()
@@ -120,8 +171,18 @@ impl Real {
 
     /// Evaluate `coefficients[0] + coefficients[1] t + ...` at `t = ±sqrt(square)`.
     ///
-    /// The root is the principal square root when `positive_root` is set.
-    /// `None` leaves the value to the general algebraic cascade.
+    /// The root is principal when `positive_root` is true and its negative otherwise;
+    /// both choices agree for square zero. A negative square returns `None`.
+    /// Empty coefficients give zero for an admitted nonnegative square.
+    ///
+    /// Every coefficient is folded with its own rational scale before the
+    /// lower-layer query. All coefficient reductions and successive root powers
+    /// must fit its compatible tower arithmetic; even a coefficient multiplied
+    /// by zero is still reduced. Unsupported coefficients can therefore decline
+    /// at square zero. This is exact power accumulation, not sampled evaluation,
+    /// and `None` leaves the caller's general algebraic cascade authoritative.
+    /// The coefficient-vector allocation and symbolic arithmetic have no total
+    /// caller resource budget or cancellation receipt in this interface.
     pub fn sign_polynomial_at_rational_square_root(
         coefficients: &[Self],
         square: &Rational,
@@ -136,10 +197,13 @@ impl Real {
 }
 
 #[cfg(test)]
+/// Quadratic-field composition, selected-root polynomial and optional-compaction witnesses.
 mod quadratic_tower_real_tests {
     use super::*;
 
     #[test]
+    /// Apply eight exact add/multiply/subtract/divide cycles in a nested-root field, then compact both scale signs.
+    /// Prove reconstruction and repeated compaction equal the original expression by exact zero reduction.
     fn compact_towers_preserve_nested_roots_after_repeated_arithmetic() {
         let inner = Real::from(5).sqrt().unwrap();
         let outer = (Real::from(3) + &inner).sqrt().unwrap();
@@ -169,6 +233,8 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// Require rational ten and zero after radical cancellation, while a third independent root and pi decline.
+    /// The declined three-root value still retains its known positive sign through ordinary queries.
     fn compact_towers_promote_proven_rationals_and_leave_other_fields_available() {
         let a = Real::from(3).sqrt().unwrap();
         let b = Real::from(7).sqrt().unwrap();
@@ -189,6 +255,8 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// Prove a scaled binomial square identity zero and require its preexisting clone to expose that sign.
+    /// Exercise both scale signs and shifted nonzero results on the retained shared payload.
     fn scaled_tower_sign_retains_the_shared_payload_proof() {
         let root = Real::from(3).sqrt().unwrap() + Real::from(7).sqrt().unwrap();
         let expanded = Real::from(10) + Real::from(2) * Real::from(21).sqrt().unwrap();
@@ -209,6 +277,8 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// For three radicand pairs and both operand orders, prove sum/product/factorization/inverse identities.
+    /// Check signed unit perturbations and retain a three-independent-root decline as the narrower-field frontier.
     fn biquadratic_bases_share_sums_products_and_inverses() {
         for (a, b) in [(3, 7), (2, 5), (11, 13)] {
             let x = Real::from(a).sqrt().unwrap();
@@ -248,6 +318,8 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// Build normals from two equivalent squared-speed expressions for three rational radicand pairs.
+    /// Prove component equality, squared component and unit-norm identities, then separate signed 2^-20 perturbations.
     fn independently_normalized_chord_normals_replay_exactly() {
         let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
         for (a, b) in [(11, 13), (3, 7), (2, 5)] {
@@ -280,6 +352,7 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// Require t^2-1/2 to reduce exactly to zero at both selected square-root branches.
     fn polynomial_vanishes_at_both_square_roots_of_one_half() {
         let half = Rational::fraction(1, 2).unwrap();
         let coefficients = [Real::from(half.clone().neg()), Real::zero(), Real::one()];
@@ -294,6 +367,7 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// Require the sign of t to follow the selected positive/negative root of 1/2.
     fn polynomial_linear_term_follows_the_selected_square_root() {
         let half = Rational::fraction(1, 2).unwrap();
         let coefficients = [Real::zero(), Real::one()];
@@ -308,6 +382,8 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// Check the rational center and exact coefficient vectors for 2+(1/2)^(1/4) and its unshifted root.
+    /// These are annihilator/branch-recognizer expectations, not claims of a generic minimal-polynomial algorithm.
     fn shifted_fourth_root_has_a_rational_annihilator() {
         let beta = Real::from(Rational::fraction(1, 2).unwrap())
             .sqrt()
@@ -342,6 +418,7 @@ mod quadratic_tower_real_tests {
     }
 
     #[test]
+    /// Prove that a positive nested radicand divided by the square of its reconstructed principal root is one.
     fn scaled_nested_normal_square_cancels() {
         let alpha = Real::from(Rational::fraction(1, 2).unwrap())
             .sqrt()
@@ -355,19 +432,25 @@ mod quadratic_tower_real_tests {
 }
 
 #[cfg(test)]
+/// Iterated-radical identity examples and comparison with the existing sign cascade.
 mod radical_tower_real_tests {
     use super::*;
 
+    /// Construct the principal root of a positive integer fixture; invalid fixture domains panic.
     fn root(value: i64) -> Real {
         Real::from(value).sqrt().unwrap()
     }
 
     #[test]
+    /// Check nested/sum equivalence, a radical product and reordered cancellation across independent generators.
     fn independent_radicals_cancel_exactly() {
         let sum = root(2) + root(3);
         let nested = (Real::from(5) + Real::from(2) * root(6)).sqrt().unwrap();
         assert_eq!((&sum - &nested).radical_tower_sign(), Some(RealSign::Zero));
-        assert_eq!((root(5) * root(7) - root(35)).radical_tower_sign(), Some(RealSign::Zero));
+        assert_eq!(
+            (root(5) * root(7) - root(35)).radical_tower_sign(),
+            Some(RealSign::Zero)
+        );
         assert_eq!(
             (root(2) + root(3) + root(5) - root(2) - root(5) - root(3)).radical_tower_sign(),
             Some(RealSign::Zero)
@@ -375,16 +458,22 @@ mod radical_tower_real_tests {
     }
 
     #[test]
+    /// Prove sqrt(3+sqrt(5)) equals (sqrt(10)+sqrt(2))/2, then check a positive rational perturbation.
     fn nested_radicals_denest_exactly() {
         // sqrt(3 + sqrt(5)) = (sqrt(10) + sqrt(2)) / 2.
         let nested = (Real::from(3) + root(5)).sqrt().unwrap();
         let denested = ((root(10) + root(2)) / Real::from(2)).unwrap();
-        assert_eq!((&nested - &denested).radical_tower_sign(), Some(RealSign::Zero));
+        assert_eq!(
+            (&nested - &denested).radical_tower_sign(),
+            Some(RealSign::Zero)
+        );
         let shifted = &nested - &denested + (Real::from(1) / Real::from(1_000_000_i64)).unwrap();
         assert_eq!(shifted.radical_tower_sign(), Some(RealSign::Positive));
     }
 
     #[test]
+    /// Prove distributive and rationalized forms of two scalar unit-normal offset components agree.
+    /// This is a scalar identity witness, not a complete geometric offset/topology test.
     fn unit_normal_offsets_meet_exactly() {
         // A corner offset by d along two unit normals, reached by two
         // different expression orders, is one exact point.
@@ -393,18 +482,29 @@ mod radical_tower_real_tests {
         let n2 = (Real::from(3) / root(10)).unwrap();
         let first = &d * &n1 + &d * &n2;
         let second = &d * (&n2 + &n1);
-        assert_eq!((&first - &second).radical_tower_sign(), Some(RealSign::Zero));
+        assert_eq!(
+            (&first - &second).radical_tower_sign(),
+            Some(RealSign::Zero)
+        );
         let rationalized = &d * ((Real::from(4) * root(17)) / Real::from(17)).unwrap()
             + &d * ((Real::from(3) * root(10)) / Real::from(10)).unwrap();
-        assert_eq!((&first - &rationalized).radical_tower_sign(), Some(RealSign::Zero));
+        assert_eq!(
+            (&first - &rationalized).radical_tower_sign(),
+            Some(RealSign::Zero)
+        );
     }
 
     #[test]
+    /// Compare radical recognition with the existing certified sign query on five expressions.
+    /// The reference query runs first and can warm shared evidence; equality of Options
+    /// does not separately assert that every result is known or supply an independent oracle.
     fn nonzero_signs_match_refinement() {
         let values = [
             root(2) + root(3) - root(10),
             root(7) - root(2) - root(3),
-            (Real::from(2) + root(3)).sqrt().unwrap() - root(2) - (Real::from(1) / Real::from(5)).unwrap(),
+            (Real::from(2) + root(3)).sqrt().unwrap()
+                - root(2)
+                - (Real::from(1) / Real::from(5)).unwrap(),
             root(11) * root(13) - Real::from(12),
             (root(5) - Real::from(2)).sqrt().unwrap() - (Real::from(1) / Real::from(2)).unwrap(),
         ];
@@ -415,6 +515,8 @@ mod radical_tower_real_tests {
     }
 
     #[test]
+    /// Check pi declines and an exact positive integer succeeds. Despite the test name,
+    /// this body contains no negative-radicand construction and establishes no such rejection.
     fn negative_radicands_and_non_radicals_decline() {
         assert_eq!(Real::pi().radical_tower_sign(), None);
         assert_eq!(Real::from(3).radical_tower_sign(), Some(RealSign::Positive));

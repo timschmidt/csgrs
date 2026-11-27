@@ -1,6 +1,14 @@
+//! Proof transport across tower compaction, scaling, cloning and signal inheritance.
+//!
+//! Check retained signs before equality reduction can warm the reconstructed graph.
+//! Exact identities and original hard representations remain alongside simpler cases;
+//! no approximate agreement substitutes for the asserted zero/sign certificates.
+
 use super::*;
 use std::sync::{Arc, atomic::AtomicBool};
 
+/// Choose sqrt(2), sqrt(3+sqrt(5)) or sqrt(2)+sqrt(3) for fixture indices 0, 1 or 2.
+/// Other indices are an internal test error and reach unreachable.
 fn root(family: u8) -> Real {
     match family {
         0 => Real::from(2).sqrt().unwrap(),
@@ -12,6 +20,11 @@ fn root(family: u8) -> Real {
     }
 }
 
+/// Establish a tiny signed difference from a fine rational lower enclosure, optionally square it,
+/// and apply four signed rational scales in both subtraction orders. Require immediate
+/// and coarse/fine/coarse signs on compact, cloned and repeated results before equality
+/// queries can strengthen them. Finally prove both reconstructions equal the original.
+/// The expected sign follows from subtraction direction, squaring and scale sign.
 fn retained_signs(family: u8, square: bool) {
     let root = root(family);
     let lower = root.certified_rational_interval(-1024).unwrap()[0].clone();
@@ -77,36 +90,44 @@ fn retained_signs(family: u8, square: bool) {
 }
 
 #[test]
+/// Run the eight direction/scale linear-retention cases for sqrt(2).
 fn quadratic_linear_retains_sign() {
     retained_signs(0, false);
 }
 
 #[test]
+/// Run the eight direction/scale squared-retention cases for sqrt(2).
 fn quadratic_square_retains_sign() {
     retained_signs(0, true);
 }
 
 #[test]
+/// Run the eight linear-retention cases for the nested principal-root family.
 fn nested_linear_retains_sign() {
     retained_signs(1, false);
 }
 
 #[test]
+/// Run the eight squared-retention cases for the nested principal-root family.
 fn nested_square_retains_sign() {
     retained_signs(1, true);
 }
 
 #[test]
+/// Run the eight linear-retention cases for the sum of two independent roots.
 fn biquadratic_linear_retains_sign() {
     retained_signs(2, false);
 }
 
 #[test]
+/// Run the eight squared-retention cases for the sum of two independent roots.
 fn biquadratic_square_retains_sign() {
     retained_signs(2, true);
 }
 
 #[test]
+/// Check rational five, exact zero and a named root under both rational scale signs.
+/// Then check shared one/sqrt(2) signs were not corrupted by transporting a zero proof.
 fn rational_zero_and_symbolic_compactions_preserve_signs() {
     let sum = root(2);
     let rational = &sum * &sum - Real::from(2) * Real::from(6).sqrt().unwrap();
@@ -139,6 +160,8 @@ fn rational_zero_and_symbolic_compactions_preserve_signs() {
 }
 
 #[test]
+/// Require the same signal Arc after compaction, then assert the flag and repeat symbolic reconstruction.
+/// This checks signal inheritance while algebra succeeds, not a numerical cancellation receipt.
 fn compaction_preserves_final_abort_signal() {
     let mut value = root(1) - Real::from(2);
     assert_eq!(value.quadratic_tower_sign(), Some(RealSign::Positive));
@@ -155,6 +178,9 @@ fn compaction_preserves_final_abort_signal() {
 }
 
 #[test]
+/// Compare an initially unknown supported difference with an unsupported pi mixture.
+/// With tracing enabled, require no computable approximation calls; permit supported
+/// Unknown to strengthen only to the correct positive sign and prove exact reconstruction.
 fn compaction_keeps_unknown_and_unsupported_sources_honest() {
     let root = root(1);
     let lower = root.certified_rational_interval(-1024).unwrap()[0].clone();
@@ -189,6 +215,9 @@ fn compaction_keeps_unknown_and_unsupported_sources_honest() {
 }
 
 #[test]
+/// Keep the original denested negative source with positive outer scale and negative payload.
+/// Under both scale signs, require reconstruction to preserve that payload sign and exact value,
+/// then ensure the shared positive root remains positive.
 fn denested_negative_tower_preserves_payload_sign() {
     let outer = root(1);
     // The existing sqrt fold denests sqrt(3 + sqrt(5)) into a sum.
@@ -227,6 +256,9 @@ fn denested_negative_tower_preserves_payload_sign() {
 }
 
 #[test]
+/// Keep a negative source whose reconstruction flips the outer scale and makes its payload positive.
+/// Under both scale signs, check both representation signs, full-value signs and exact equality
+/// without corrupting the positive shared source.
 fn normalized_negative_tower_scale_preserves_payload_sign() {
     let outer = (Real::from(3) + Real::from(2).sqrt().unwrap())
         .sqrt()
