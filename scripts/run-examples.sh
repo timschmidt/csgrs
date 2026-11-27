@@ -31,7 +31,13 @@ for source in examples/*.rs; do
   for known in "${known_failures[@]}"; do
     [[ "${name}" == "${known}" ]] && expected=fail
   done
-  if (cd "${work}" && "${examples_dir}/${name}" >"${work}/${name}.log" 2>&1); then
+  args=()
+  # The perf atlas is a measurement harness run by scripts/perf-atlas/run.sh;
+  # here it only has to start, parse its arguments and write an empty report.
+  if [[ "${name}" == perf_atlas ]]; then
+    args=(--quick --filter "no operation has this name" --out "${work}/perf_atlas.json")
+  fi
+  if (cd "${work}" && "${examples_dir}/${name}" "${args[@]}" >"${work}/${name}.log" 2>&1); then
     actual=pass
   else
     actual=fail

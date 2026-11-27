@@ -151,7 +151,14 @@ same host and settings.
    `#[global_allocator] static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;`
 5. Optionally wrap results in `Shaped` to report their structure, and
    register diagnostic counters behind `atlas.config().counters`.
-6. Add the crate to the default list in `run.sh`.
+6. Add the crate to the default list in `run.sh`. The root `csgrs` package
+   keeps its atlas at `examples/perf_atlas.rs`. `hypervoxel` is a nested
+   workspace with its own lockfile, so `run.sh` builds it from its own
+   directory.
+
+Every workspace crate has an atlas except `perf-atlas` itself, `csgrs-ffi` (a
+C ABI over the root crate, whose operations the root atlas covers) and
+`comparisons` (which needs the external exactCorelib C++ oracle).
 
 ## Archived runs
 

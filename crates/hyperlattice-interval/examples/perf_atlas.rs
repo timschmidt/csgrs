@@ -11,6 +11,12 @@
 //! exhaustion) marks the point as failed. An input that the backend cannot
 //! represent at all, such as a fixed-point endpoint outside `i64`, is recorded
 //! as an immediately failed call.
+//!
+//! Resource runs (`--resources`) report result shapes: `nodes` counts interval
+//! entries, `bits` is the largest endpoint (dyadic mantissa bits, rational
+//! numerator plus denominator; 0 for fixed-point and binary64 backends). The
+//! timed job is unchanged; the shape reader reruns the same deterministic
+//! operation after the measured call to read its result.
 use hyperlattice_interval::hyperinterval::{
     DyadicBudget, DyadicInterval, F64Enclosure, FixedInterval, IntervalError, RationalInterval,
 };
@@ -19,8 +25,9 @@ use hyperlattice_interval::{
     IntervalLatticeError, IntervalMatrix, IntervalVector,
 };
 use num_bigint::{BigInt, Sign};
-use perf_atlas::{Atlas, Rng, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shaped, powers_of_two};
 use std::hint::black_box;
+use std::rc::Rc;
 
 /// Heap accounting for `--resources` runs; only this atlas binary installs it.
 #[global_allocator]
@@ -179,9 +186,87 @@ fn to_f64(m: &BigInt, scale: i64, up: bool) -> f64 {
     ldexp(top as f64, scale + extra)
 }
 
-trait Backend: IntervalArithmetic + 'static {
+trait Backend: IntervalArithmetic + Measure + 'static {
     fn context() -> Self::Context;
     fn from_pair(p: &Pair) -> Result<Self, IntervalError>;
+    /// Largest stored endpoint, in bits: mantissa bits for dyadic intervals,
+    /// numerator plus denominator for rationals, 0 for fixed-size backends.
+    fn bits(&self) -> u64 {
+        0
+    }
+}
+
+/// Structure of a result, for resource atlases: `nodes` counts interval
+/// entries, `bits` is the largest stored endpoint.
+trait Measure {
+    fn measure(&self) -> perf_atlas::Shape;
+}
+
+fn entries<'a, B: Backend>(lanes: impl IntoIterator<Item = &'a B>) -> perf_atlas::Shape {
+    lanes
+        .into_iter()
+        .fold(perf_atlas::Shape::default(), |shape, x| perf_atlas::Shape {
+            nodes: shape.nodes + 1,
+            depth: 0,
+            bits: shape.bits.max(x.bits()),
+        })
+}
+
+fn either(a: perf_atlas::Shape, b: perf_atlas::Shape) -> perf_atlas::Shape {
+    perf_atlas::Shape {
+        nodes: a.nodes + b.nodes,
+        depth: a.depth.max(b.depth),
+        bits: a.bits.max(b.bits),
+    }
+}
+
+macro_rules! scalar_measure {
+    ($($t:ty),*) => {$(
+        impl Measure for $t {
+            fn measure(&self) -> perf_atlas::Shape {
+                entries([self])
+            }
+        }
+    )*};
+}
+scalar_measure!(Q16, Q32, F64Enclosure, DyadicInterval, RationalInterval);
+
+impl<B: Backend, const N: usize> Measure for IntervalVector<B, N> {
+    fn measure(&self) -> perf_atlas::Shape {
+        self.lanes()
+            .map_or(perf_atlas::Shape::default(), |l| entries(l))
+    }
+}
+impl<B: Backend, const R: usize, const C: usize> Measure for IntervalMatrix<B, R, C> {
+    fn measure(&self) -> perf_atlas::Shape {
+        self.rows().map_or(perf_atlas::Shape::default(), |r| {
+            entries(r.iter().flatten())
+        })
+    }
+}
+impl<T: Measure> Measure for Option<T> {
+    fn measure(&self) -> perf_atlas::Shape {
+        self.as_ref()
+            .map_or(perf_atlas::Shape::default(), T::measure)
+    }
+}
+impl<T: Measure, const K: usize> Measure for [T; K] {
+    fn measure(&self) -> perf_atlas::Shape {
+        self.iter()
+            .map(T::measure)
+            .fold(perf_atlas::Shape::default(), either)
+    }
+}
+impl<A: Measure, C: Measure> Measure for (A, C) {
+    fn measure(&self) -> perf_atlas::Shape {
+        either(self.0.measure(), self.1.measure())
+    }
+}
+/// Answers without interval entries.
+impl Measure for bool {
+    fn measure(&self) -> perf_atlas::Shape {
+        perf_atlas::Shape::default()
+    }
 }
 
 macro_rules! fixed_backend {
@@ -225,6 +310,10 @@ impl Backend for DyadicInterval {
         let scale = i32::try_from(p.scale).map_err(|_| IntervalError::Overflow)?;
         Self::new(p.lo.clone(), p.hi.clone(), scale)
     }
+    fn bits(&self) -> u64 {
+        self.bounds()
+            .map_or(0, |(lo, hi, _)| lo.bits().max(hi.bits()))
+    }
 }
 
 impl Backend for RationalInterval {
@@ -243,6 +332,12 @@ impl Backend for RationalInterval {
             format!("{lo}/{den}").parse().expect("generated rational"),
             format!("{hi}/{den}").parse().expect("generated rational"),
         )
+    }
+    fn bits(&self) -> u64 {
+        self.bounds().map_or(0, |(lo, hi)| {
+            (lo.numerator().bits() + lo.denominator().bits())
+                .max(hi.numerator().bits() + hi.denominator().bits())
+        })
     }
 }
 
@@ -296,12 +391,65 @@ fn point_map<B: Backend, const N: usize>(
     )
 }
 
-type Job = Box<dyn Fn() -> bool>;
+type Job = Box<dyn Fn() -> Shaped<Ran>>;
 
 fn done<T>(result: Result<T, Error>) -> bool {
     let ok = result.is_ok();
     let _ = black_box(result);
     ok
+}
+
+/// Rederives a job's result after the measured call and reads its shape.
+type Reshape = Rc<dyn Fn() -> Option<perf_atlas::Shape>>;
+
+/// One timed call: whether it succeeded, and a handle that reruns the same
+/// deterministic operation for the shape reader. The timed call still drops
+/// its result inside the call, so time, heap and residue are unchanged; the
+/// handle costs one reference-count increment.
+struct Ran {
+    ok: bool,
+    reshape: Option<Reshape>,
+}
+impl perf_atlas::Outcome for Ran {
+    fn succeeded(&self) -> bool {
+        self.ok
+    }
+}
+
+/// A job from a timed body and the rerun that reads its result's shape.
+fn job_with(run: impl Fn() -> bool + 'static, reshape: Reshape) -> Job {
+    Box::new(move || {
+        Shaped::new(
+            Ran {
+                ok: run(),
+                reshape: Some(reshape.clone()),
+            },
+            |ran| ran.reshape.as_ref().and_then(|reshape| reshape()),
+        )
+    })
+}
+
+/// A job that times `done(f())`; the shape reader reruns `f`.
+fn timed<T: Measure>(f: impl Fn() -> Result<T, Error> + 'static) -> Result<Job, Error> {
+    let f = Rc::new(f);
+    let again = f.clone();
+    Ok(job_with(
+        move || done(f()),
+        Rc::new(move || again().ok().map(|r| r.measure())),
+    ))
+}
+
+/// An input the backend cannot represent: an immediately failed call.
+fn failed() -> Job {
+    Box::new(|| {
+        Shaped::new(
+            Ran {
+                ok: false,
+                reshape: None,
+            },
+            |_| None,
+        )
+    })
 }
 
 /// An operation instantiated per backend and dimension.
@@ -353,10 +501,10 @@ fn job<O: Op>(op: &O, backend: &str, n: usize, spec: &Spec, rng: &mut Rng) -> Jo
         other => unreachable!("unknown backend {other}"),
     };
     // An input the backend cannot represent is an immediately failed call.
-    built.unwrap_or_else(|_| Box::new(|| false))
+    built.unwrap_or_else(|_| failed())
 }
 
-fn run(job: &Job) -> bool {
+fn run(job: &Job) -> Shaped<Ran> {
     job()
 }
 
@@ -510,26 +658,26 @@ op!(VectorAdd, |spec, rng| {
         vector::<B, N>(spec, None, rng)?,
         vector::<B, N>(spec, None, rng)?,
     );
-    Ok(Box::new(move || done(a.add(&b, &mut B::context()))))
+    timed(move || a.add(&b, &mut B::context()))
 });
 op!(VectorScale, |spec, rng| {
     let a = vector::<B, N>(spec, None, rng)?;
     let s = scalar::<B>(spec, None, false, rng)?;
-    Ok(Box::new(move || done(a.scale(&s, &mut B::context()))))
+    timed(move || a.scale(&s, &mut B::context()))
 });
 op!(Dot, |spec, rng| {
     let (a, b) = (
         vector::<B, N>(spec, None, rng)?,
         vector::<B, N>(spec, None, rng)?,
     );
-    Ok(Box::new(move || done(a.dot(&b, &mut B::context()))))
+    timed(move || a.dot(&b, &mut B::context()))
 });
 op!(Hull, |spec, rng| {
     let (a, b) = (
         vector::<B, N>(spec, None, rng)?,
         vector::<B, N>(spec, None, rng)?,
     );
-    Ok(Box::new(move || done(a.hull(&b, &mut B::context()))))
+    timed(move || a.hull(&b, &mut B::context()))
 });
 op!(Intersection, |spec, rng| {
     let (a, b) = (
@@ -537,9 +685,7 @@ op!(Intersection, |spec, rng| {
         vector::<B, N>(spec, None, rng)?,
     );
     let c = a.hull(&b, &mut B::context())?;
-    Ok(Box::new(move || {
-        done(a.intersection(&c, &mut B::context()))
-    }))
+    timed(move || a.intersection(&c, &mut B::context()))
 });
 op!(Subset, |spec, rng| {
     let (a, b) = (
@@ -547,131 +693,148 @@ op!(Subset, |spec, rng| {
         vector::<B, N>(spec, None, rng)?,
     );
     let c = a.hull(&b, &mut B::context())?;
-    Ok(Box::new(move || done(a.subset_of(&c, &mut B::context()))))
+    timed(move || a.subset_of(&c, &mut B::context()))
 });
 op!(VectorNormOne, |spec, rng| {
     let a = vector::<B, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.norm_one(&mut B::context()))))
+    timed(move || a.norm_one(&mut B::context()))
 });
 op!(VectorNormInfinity, |spec, rng| {
     let a = vector::<B, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.norm_infinity(&mut B::context()))))
+    timed(move || a.norm_infinity(&mut B::context()))
 });
 op!(Widths, |spec, rng| {
     let a = vector::<B, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.widths(&mut B::context()))))
+    // Widths have no stored endpoints to measure.
+    Ok(job_with(
+        move || done(a.widths(&mut B::context())),
+        Rc::new(|| None),
+    ))
 });
 op!(WidestAxis, |spec, rng| {
     let a = vector::<B, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.widest_axis(&mut B::context()))))
+    Ok(job_with(
+        move || done(a.widest_axis(&mut B::context())),
+        Rc::new(|| None),
+    ))
 });
 op!(VectorMidpointRadius, |spec, rng| {
     let form = vector::<B, N>(spec, None, rng)?.midpoint_radius();
-    Ok(Box::new(move || {
-        let mut context = B::context();
-        done(form.midpoint_enclosure(&mut context)) && done(form.radius_enclosure(&mut context))
-    }))
+    let form = Rc::new(form);
+    let again = form.clone();
+    Ok(job_with(
+        move || {
+            let mut context = B::context();
+            done(form.midpoint_enclosure(&mut context)) && done(form.radius_enclosure(&mut context))
+        },
+        Rc::new(move || {
+            let mut context = B::context();
+            let midpoint = again.midpoint_enclosure(&mut context).ok()?;
+            let radius = again.radius_enclosure(&mut context).ok()?;
+            Some(either(midpoint.measure(), radius.measure()))
+        }),
+    ))
 });
 op!(CenteredVectorEnclosure, |spec, rng| {
     let center = vector::<B, N>(spec, Some(Shape::Point), rng)?;
     let radius = radius_vector::<B, N>(spec, rng)?;
-    Ok(Box::new(move || {
+    timed(move || {
         let centered = CenteredVector::new(center.clone(), radius.clone());
-        done(centered.and_then(|c| c.enclosure(&mut B::context())))
-    }))
+        centered.and_then(|c| c.enclosure(&mut B::context()))
+    })
 });
 op!(MatrixAdd, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
     let b = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.add(&b, &mut B::context()))))
+    timed(move || a.add(&b, &mut B::context()))
 });
 op!(MatrixVector, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
     let x = vector::<B, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.mul_vector(&x, &mut B::context()))))
+    timed(move || a.mul_vector(&x, &mut B::context()))
 });
 op!(MatrixMatrix, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
     let b = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.mul_matrix(&b, &mut B::context()))))
+    timed(move || a.mul_matrix(&b, &mut B::context()))
 });
 op!(AffineEnclosure, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
     let x = vector::<B, N>(spec, None, rng)?;
     let t = vector::<B, N>(spec, None, rng)?;
-    Ok(Box::new(move || {
-        done(a.affine_enclosure(&x, &t, &mut B::context()))
-    }))
+    timed(move || a.affine_enclosure(&x, &t, &mut B::context()))
 });
 op!(Transpose, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.transpose(&mut B::context()))))
+    timed(move || a.transpose(&mut B::context()))
 });
 op!(MatrixNormOne, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.norm_one(&mut B::context()))))
+    timed(move || a.norm_one(&mut B::context()))
 });
 op!(MatrixNormInfinity, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.norm_infinity(&mut B::context()))))
+    timed(move || a.norm_infinity(&mut B::context()))
 });
 op!(MeasureInfinity, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || {
-        done(a.measure_infinity(&mut B::context()))
-    }))
+    timed(move || a.measure_infinity(&mut B::context()))
 });
 op!(RowDominance, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || {
-        done(a.row_dominance_margins(&mut B::context()))
-    }))
+    timed(move || a.row_dominance_margins(&mut B::context()))
 });
 op!(IdentityMinus, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || done(a.identity_minus(&mut B::context()))))
+    timed(move || a.identity_minus(&mut B::context()))
 });
 op!(ContractionMargin, |spec, rng| {
     let a = matrix::<B, N, N>(spec, None, rng)?;
-    Ok(Box::new(move || {
-        done(a.contraction_margin_infinity(&mut B::context()))
-    }))
+    timed(move || a.contraction_margin_infinity(&mut B::context()))
 });
 op!(MatrixMidpointRadius, |spec, rng| {
     let form = matrix::<B, N, N>(spec, None, rng)?.midpoint_radius();
-    Ok(Box::new(move || {
-        let mut context = B::context();
-        done(form.midpoint_enclosure(&mut context)) && done(form.radius_enclosure(&mut context))
-    }))
+    let form = Rc::new(form);
+    let again = form.clone();
+    Ok(job_with(
+        move || {
+            let mut context = B::context();
+            done(form.midpoint_enclosure(&mut context)) && done(form.radius_enclosure(&mut context))
+        },
+        Rc::new(move || {
+            let mut context = B::context();
+            let midpoint = again.midpoint_enclosure(&mut context).ok()?;
+            let radius = again.radius_enclosure(&mut context).ok()?;
+            Some(either(midpoint.measure(), radius.measure()))
+        }),
+    ))
 });
 op!(CenteredMatrixEnclosure, |spec, rng| {
     let center = matrix::<B, N, N>(spec, Some(Shape::Point), rng)?;
     let radius = IntervalMatrix::<B, N, N>::new(array(|| {
         array(|| scalar(spec, Some(Shape::Point), true, rng))
     })?)?;
-    Ok(Box::new(move || {
+    timed(move || {
         let centered = CenteredMatrix::new(center.clone(), radius.clone());
-        done(centered.and_then(|c| c.enclosure(&mut B::context())))
-    }))
+        centered.and_then(|c| c.enclosure(&mut B::context()))
+    })
 });
 op!(AffineImageEnclosure, |spec, rng| {
     let map = point_map::<B, N>(spec, spec.exp, rng)?;
     let image = map.image(vector::<B, N>(spec, None, rng)?);
-    Ok(Box::new(move || done(image.enclosure(&mut B::context()))))
+    timed(move || image.enclosure(&mut B::context()))
 });
 op!(AffineImageRestrict, |spec, rng| {
     let map = point_map::<B, N>(spec, spec.exp, rng)?;
     let source = vector::<B, N>(spec, None, rng)?;
     let restriction = source.hull(&vector::<B, N>(spec, None, rng)?, &mut B::context())?;
     let image = map.image(source);
-    Ok(Box::new(move || {
+    timed(move || {
         let mut context = B::context();
-        done(
-            image
-                .restrict_parameters(&restriction, &mut context)
-                .and_then(|r| r.enclosure(&mut context)),
-        )
-    }))
+        image
+            .restrict_parameters(&restriction, &mut context)
+            .and_then(|r| r.enclosure(&mut context))
+    })
 });
 op!(TranslatedBoxImage, |spec, rng| {
     let map = point_map::<B, N>(spec, spec.exp, rng)?;
@@ -680,7 +843,7 @@ op!(TranslatedBoxImage, |spec, rng| {
         radius_vector::<B, N>(spec, rng)?,
     )?;
     let image = map.image(centered.affine_source(&mut B::context())?);
-    Ok(Box::new(move || done(image.enclosure(&mut B::context()))))
+    timed(move || image.enclosure(&mut B::context()))
 });
 op!(Chain, |spec, rng| {
     // Map entries near 1/4 keep row sums near 1 at small dimensions.
@@ -689,7 +852,7 @@ op!(Chain, |spec, rng| {
     for _ in 0..spec.count {
         chain.push(point_map::<B, N>(spec, spec.exp - 2, rng)?)?;
     }
-    Ok(Box::new(move || done(chain.enclosure(&mut B::context()))))
+    timed(move || chain.enclosure(&mut B::context()))
 });
 op!(Krawczyk, |spec, rng| {
     // Linear system A x = b with A = I + E, |E| small and slightly uncertain,
@@ -721,20 +884,17 @@ op!(Krawczyk, |spec, rng| {
     let x = c
         .sub(&radius, &mut B::context())?
         .hull(&c.add(&radius, &mut B::context())?, &mut B::context())?;
-    Ok(Box::new(move || {
+    timed(move || {
         let ctx = &mut B::context();
-        let step = (|| {
-            // K(X) = c - Y (A c - b) + (I - Y A)(X - c), accepted if K ⊂ int X.
-            let residual = a.mul_vector(&c, ctx)?.sub(&b, ctx)?;
-            let correction = y.mul_vector(&residual, ctx)?;
-            let remainder = y.mul_matrix(&a, ctx)?.identity_minus(ctx)?;
-            let margin = remainder.contraction_margin_infinity(ctx)?;
-            let spread = remainder.mul_vector(&x.sub(&c, ctx)?, ctx)?;
-            let k = c.sub(&correction, ctx)?.add(&spread, ctx)?;
-            Ok::<_, Error>((k.interior_subset_of(&x, ctx)?, margin))
-        })();
-        done(step)
-    }))
+        // K(X) = c - Y (A c - b) + (I - Y A)(X - c), accepted if K ⊂ int X.
+        let residual = a.mul_vector(&c, ctx)?.sub(&b, ctx)?;
+        let correction = y.mul_vector(&residual, ctx)?;
+        let remainder = y.mul_matrix(&a, ctx)?.identity_minus(ctx)?;
+        let margin = remainder.contraction_margin_infinity(ctx)?;
+        let spread = remainder.mul_vector(&x.sub(&c, ctx)?, ctx)?;
+        let k = c.sub(&correction, ctx)?.add(&spread, ctx)?;
+        Ok((k.interior_subset_of(&x, ctx)?, margin))
+    })
 });
 
 /// Dyadic-only partition helpers, by dimension.
@@ -756,7 +916,7 @@ fn dyadic_job<O: DyadicOp>(op: &O, n: usize, spec: &Spec, rng: &mut Rng) -> Job 
         32 => op.build::<32>(spec, rng),
         other => unreachable!("dimension {other} is not instantiated"),
     };
-    built.unwrap_or_else(|_| Box::new(|| false))
+    built.unwrap_or_else(|_| failed())
 }
 
 struct Bisect;
@@ -768,11 +928,19 @@ impl DyadicOp for Bisect {
             .unwrap_or_else(|| SHAPES[1 + rng.below(3) as usize].1);
         let a = vector::<DyadicInterval, N>(spec, Some(shape), rng)?;
         let axis = a.widest_axis(&mut DyadicInterval::context())?.unwrap_or(0);
-        Ok(Box::new(move || {
-            let halves = a.bisect_axis(axis, &mut DyadicInterval::context());
-            // A singleton axis cannot be split: not a successful bisection.
-            matches!(halves, Ok(Some(_))) && done(halves)
-        }))
+        let a = Rc::new(a);
+        let again = a.clone();
+        Ok(job_with(
+            move || {
+                let halves = a.bisect_axis(axis, &mut DyadicInterval::context());
+                // A singleton axis cannot be split: not a successful bisection.
+                matches!(halves, Ok(Some(_))) && done(halves)
+            },
+            Rc::new(move || {
+                let halves = again.bisect_axis(axis, &mut DyadicInterval::context());
+                halves.ok().flatten().map(|halves| halves.measure())
+            }),
+        ))
     }
 }
 
@@ -782,9 +950,7 @@ impl DyadicOp for Regrid {
         let a = vector::<DyadicInterval, N>(spec, None, rng)?;
         // Keep 16 bits below the leading bit.
         let precision = spec.exp - 16;
-        Ok(Box::new(move || {
-            done(a.regrid(precision, &mut DyadicInterval::context()))
-        }))
+        timed(move || a.regrid(precision, &mut DyadicInterval::context()))
     }
 }
 

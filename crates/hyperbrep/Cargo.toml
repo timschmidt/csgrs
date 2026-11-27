@@ -33,6 +33,7 @@ serde_stacker = "0.1.14"
 stacker = "0.1.25"
 
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 
 [[example]]

@@ -10,7 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 OUT=
-CRATES="hyperreal hyperinterval hyperlimit hyperlattice hyperlattice-interval hypersolve hyperdynamics hypercurve hypertri"
+CRATES="hyperreal hyperinterval hyperlimit hyperlattice hyperlattice-interval hypersolve hyperdynamics hypercurve hypertri hypermesh hyperbrep hyperbrep-io hyperparts hyperpath hypersdf hypervoxel hyperspatial hyperphysics hyperevolution hypergraphics hypercircuit hyperdrc hyperpack csgrs"
 ARGS=()
 RESOURCES=
 while (($#)); do
@@ -31,13 +31,22 @@ fi
 mkdir -p "$OUT"
 DOCS=()
 for crate in $CRATES; do
-  if [ ! -f "crates/$crate/examples/perf_atlas.rs" ]; then
+  # The root package lives at the top level; hypervoxel is a nested workspace
+  # with its own lockfile, so it is built from its own directory.
+  if [ "$crate" = csgrs ]; then dir=.; else dir="crates/$crate"; fi
+  if [ ! -f "$dir/examples/perf_atlas.rs" ]; then
     echo "skipping $crate: no examples/perf_atlas.rs" >&2
     continue
   fi
   echo "== $crate" >&2
-  cargo run --locked --release -q -p "$crate" --all-features --example perf_atlas -- \
-    --out "$OUT/$crate.json" "${ARGS[@]}"
-  DOCS+=("$OUT/$crate.json")
+  out="$(cd "$OUT" && pwd)/$crate.json"
+  if [ "$crate" = hypervoxel ]; then
+    (cd "$dir" && cargo run --locked --release -q --all-features --example perf_atlas -- \
+      --out "$out" "${ARGS[@]}")
+  else
+    cargo run --locked --release -q -p "$crate" --all-features --example perf_atlas -- \
+      --out "$out" "${ARGS[@]}"
+  fi
+  DOCS+=("$out")
 done
 python3 scripts/perf-atlas/render.py "$OUT" "${DOCS[@]}"

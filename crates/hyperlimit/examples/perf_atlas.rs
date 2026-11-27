@@ -31,9 +31,20 @@
 //! once. Every kind except `strict` uses `PredicatePolicy::APPROXIMATE_512`.
 //! A call that returns `PredicateOutcome::Unknown` (or `None`) is flagged as
 //! an error; every flagged point in a report is a genuine refusal.
+//!
+//! Resource runs (`--resources`) report the escalation stage that decided
+//! each predicate as the shape's `depth` (0 structural, 1 filter, 2 exact,
+//! 3 refined, 4 undecided); batches report their size as `nodes`.
+//! Constructions and `reciprocal_real` report the stored expression size of
+//! their exact coordinates (`Real::representation_size`).
 use std::cell::OnceCell;
 use std::sync::OnceLock;
 
+use hyperlimit::{
+    Escalation, PredicateOutcome, RefinementNeed, SegmentPlaneRelation,
+    classify_homogeneous_point_plane, classify_point_segment3, classify_triangle3_degeneracy,
+    compare_point3_lexicographic, insphere3_batch,
+};
 use hyperlimit::{
     Plane3, Point2, Point3, PredicatePolicy, Real, affine_independent_d, certified_interval_sign,
     classify_aabb3_intersection, classify_ball_sign, classify_circle_line2,
@@ -53,20 +64,140 @@ use hyperlimit::{
     orient2_batch, orient3, oriented_plane3_evidence, reciprocal_real, ring_area_sign,
     ring_convexity, support_dop3_from_points,
 };
-use hyperlimit::{
-    SegmentPlaneRelation, classify_homogeneous_point_plane, classify_point_segment3,
-    classify_triangle3_degeneracy, compare_point3_lexicographic, insphere3_batch,
-};
 #[cfg(feature = "parallel")]
 use hyperlimit::{insphere3_batch_parallel, orient2_batch_parallel};
 use hyperreal::Rational;
 use num::bigint::{BigInt, BigUint};
 use num::{Integer, One, Signed, ToPrimitive, Zero};
-use perf_atlas::{Atlas, Rng, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shaped, powers_of_two};
 
 /// Heap accounting for `--resources` runs; only this atlas binary installs it.
 #[global_allocator]
 static ALLOCATOR: perf_atlas::CountingAllocator = perf_atlas::CountingAllocator;
+
+/// Why a timed call did not produce its intended result.
+#[derive(Debug)]
+#[allow(
+    dead_code,
+    reason = "fields are read through Debug as the point's failure reason"
+)]
+enum Unsettled {
+    /// The predicate returned `PredicateOutcome::Unknown`.
+    Unknown {
+        needed: RefinementNeed,
+        stage: Escalation,
+    },
+    /// A call without a `PredicateOutcome` missed its expected answer.
+    Missed(&'static str),
+}
+
+/// A predicate result with the escalation stage that decided it.
+type Staged<T> = Shaped<Result<(T, Option<Escalation>), Unsettled>>;
+
+/// Escalation stage as a depth: 0 structural, 1 filter, 2 exact, 3 refined,
+/// 4 undecided.
+fn stage_shape(stage: Option<Escalation>) -> Option<perf_atlas::Shape> {
+    let depth = match stage? {
+        Escalation::Structural => 0,
+        Escalation::Filter => 1,
+        Escalation::Exact => 2,
+        Escalation::Refined => 3,
+        Escalation::Undecided => 4,
+    };
+    Some(perf_atlas::Shape {
+        nodes: 1,
+        depth,
+        bits: 0,
+    })
+}
+
+trait Stage<T> {
+    /// The outcome with its deciding stage, for the resource atlas.
+    fn staged(self) -> Staged<T>;
+    /// As `staged`, dropping the value for uniform signatures.
+    fn decided(self) -> Staged<()>;
+}
+impl<T> Stage<T> for PredicateOutcome<T> {
+    fn staged(self) -> Staged<T> {
+        let result = match self {
+            PredicateOutcome::Decided { value, stage, .. } => Ok((value, Some(stage))),
+            PredicateOutcome::Unknown { needed, stage } => {
+                Err(Unsettled::Unknown { needed, stage })
+            }
+        };
+        Shaped::new(result, |r| match r {
+            Ok((_, stage)) => stage_shape(*stage),
+            Err(Unsettled::Unknown { stage, .. }) => stage_shape(Some(*stage)),
+            Err(Unsettled::Missed(_)) => None,
+        })
+    }
+    fn decided(self) -> Staged<()> {
+        let result = match self {
+            PredicateOutcome::Decided { stage, .. } => Ok(((), Some(stage))),
+            PredicateOutcome::Unknown { needed, stage } => {
+                Err(Unsettled::Unknown { needed, stage })
+            }
+        };
+        Shaped::new(result, |r| match r {
+            Ok((_, stage)) => stage_shape(*stage),
+            Err(Unsettled::Unknown { stage, .. }) => stage_shape(Some(*stage)),
+            Err(Unsettled::Missed(_)) => None,
+        })
+    }
+}
+
+/// A plain check without a stage: `expected` names the answer it missed.
+fn plain(ok: bool, expected: &'static str) -> Staged<()> {
+    let result = if ok {
+        Ok(((), None))
+    } else {
+        Err(Unsettled::Missed(expected))
+    };
+    Shaped::new(result, |_| None)
+}
+
+/// A batch of outcomes: `nodes` is the batch size, `depth` the latest stage.
+/// Success is checked inside the timed call, as a caller would.
+fn batch(
+    out: Vec<PredicateOutcome<hyperlimit::Sign>>,
+) -> Shaped<Result<Vec<PredicateOutcome<hyperlimit::Sign>>, Unsettled>> {
+    let result = if out.iter().all(|o| o.value().is_some()) {
+        Ok(out)
+    } else {
+        Err(Unsettled::Missed("every case decided"))
+    };
+    Shaped::new(result, |r| {
+        let out = r.as_ref().ok()?;
+        let depth = out
+            .iter()
+            .filter_map(|o| match *o {
+                PredicateOutcome::Decided { stage, .. }
+                | PredicateOutcome::Unknown { stage, .. } => stage_shape(Some(stage)),
+            })
+            .map(|shape| shape.depth)
+            .max()
+            .unwrap_or(0);
+        Some(perf_atlas::Shape {
+            nodes: out.len() as u64,
+            depth,
+            bits: 0,
+        })
+    })
+}
+
+/// Largest stored expression over exact values, as the hyperreal atlas reads it.
+fn reals_shape<'a>(values: impl IntoIterator<Item = &'a Real>) -> perf_atlas::Shape {
+    values
+        .into_iter()
+        .map(|value| value.representation_size(1 << 20))
+        .fold(perf_atlas::Shape::default(), |shape, size| {
+            perf_atlas::Shape {
+                nodes: shape.nodes.max(size.nodes as u64),
+                depth: shape.depth.max(size.depth as u64),
+                bits: shape.bits.max(size.max_rational_bits),
+            }
+        })
+}
 
 type Int = BigInt;
 
@@ -1095,8 +1226,8 @@ struct Det {
     kmax: u32,
     make2: Option<Lattice<2>>,
     make3: Option<Lattice<3>>,
-    run2: fn(&Geo<Point2>, PredicatePolicy) -> Option<hyperlimit::Sign>,
-    run3: fn(&Geo<Point3>, PredicatePolicy) -> Option<hyperlimit::Sign>,
+    run2: fn(&Geo<Point2>, PredicatePolicy) -> Staged<hyperlimit::Sign>,
+    run3: fn(&Geo<Point3>, PredicatePolicy) -> Staged<hyperlimit::Sign>,
 }
 
 fn orient2_points(rng: &mut Rng, k: Option<u32>) -> Vec<[Int; 2]> {
@@ -1114,10 +1245,10 @@ fn insphere_points(rng: &mut Rng, k: Option<u32>) -> Vec<[Int; 3]> {
     near_cospherical3(rng, k).points.to_vec()
 }
 
-fn no2(_: &Geo<Point2>, _: PredicatePolicy) -> Option<hyperlimit::Sign> {
+fn no2(_: &Geo<Point2>, _: PredicatePolicy) -> Staged<hyperlimit::Sign> {
     unreachable!()
 }
-fn no3(_: &Geo<Point3>, _: PredicatePolicy) -> Option<hyperlimit::Sign> {
+fn no3(_: &Geo<Point3>, _: PredicatePolicy) -> Staged<hyperlimit::Sign> {
     unreachable!()
 }
 
@@ -1130,7 +1261,7 @@ fn dets() -> [Det; 4] {
             kmax: 2 * ORIENT2_BITS,
             make2: Some(orient2_points),
             make3: None,
-            run2: |g, pol| orient2(&g.p[0], &g.p[1], &g.p[2], pol).value(),
+            run2: |g, pol| orient2(&g.p[0], &g.p[1], &g.p[2], pol).staged(),
             run3: no3,
         },
         Det {
@@ -1141,7 +1272,7 @@ fn dets() -> [Det; 4] {
             make2: None,
             make3: Some(orient3_points),
             run2: no2,
-            run3: |g, pol| orient3(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).value(),
+            run3: |g, pol| orient3(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).staged(),
         },
         Det {
             name: "incircle2",
@@ -1150,7 +1281,7 @@ fn dets() -> [Det; 4] {
             kmax: 92,
             make2: Some(incircle_points),
             make3: None,
-            run2: |g, pol| incircle2(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).value(),
+            run2: |g, pol| incircle2(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).staged(),
             run3: no3,
         },
         Det {
@@ -1161,7 +1292,7 @@ fn dets() -> [Det; 4] {
             make2: None,
             make3: Some(insphere_points),
             run2: no2,
-            run3: |g, pol| insphere3(&g.p[0], &g.p[1], &g.p[2], &g.p[3], &g.p[4], pol).value(),
+            run3: |g, pol| insphere3(&g.p[0], &g.p[1], &g.p[2], &g.p[3], &g.p[4], pol).staged(),
         },
     ]
 }
@@ -1393,7 +1524,7 @@ impl Det {
                     |input| {
                         input.run(|(g, o), pol| {
                             classify_point_line_with_orientation(&g.p[0], &g.p[1], &g.p[2], o, pol)
-                                .value()
+                                .staged()
                         })
                     },
                 ),
@@ -1410,7 +1541,7 @@ impl Det {
                     },
                     |input| {
                         input.run(|(g, e), pol| {
-                            classify_point_oriented_plane_with_evidence(&g.p[3], e, pol).value()
+                            classify_point_oriented_plane_with_evidence(&g.p[3], e, pol).staged()
                         })
                     },
                 ),
@@ -1428,7 +1559,7 @@ impl Det {
                     |input| {
                         input.run(|(g, e), pol| {
                             incircle2_with_evidence(&g.p[0], &g.p[1], &g.p[2], &g.p[3], e, pol)
-                                .value()
+                                .staged()
                         })
                     },
                 ),
@@ -1447,7 +1578,7 @@ impl Det {
                         input.run(|(g, e), pol| {
                             let p = &g.p;
                             insphere3_with_evidence(&p[0], &p[1], &p[2], &p[3], &p[4], e, pol)
-                                .value()
+                                .staged()
                         })
                     },
                 ),
@@ -1727,7 +1858,7 @@ fn nd_predicates(atlas: &mut Atlas) {
                     nd_build,
                 )
             },
-            |input| input.run(|pts, pol| orient_d(pts, pol).value()),
+            |input| input.run(|pts, pol| orient_d(pts, pol).staged()),
         );
     }
     atlas.sweep(
@@ -1741,7 +1872,7 @@ fn nd_predicates(atlas: &mut Atlas) {
                 nd_build,
             )
         },
-        |input| input.run(|pts, pol| affine_independent_d(pts, pol).value()),
+        |input| input.run(|pts, pol| affine_independent_d(pts, pol).staged()),
     );
 
     atlas.operation(
@@ -1775,7 +1906,7 @@ fn nd_predicates(atlas: &mut Atlas) {
                     nd_sphere_build,
                 )
             },
-            |input| input.run(|(simplex, q), pol| insphere_d(simplex, q, pol).value()),
+            |input| input.run(|(simplex, q), pol| insphere_d(simplex, q, pol).staged()),
         );
     }
 }
@@ -1852,7 +1983,7 @@ fn composite_2d(atlas: &mut Atlas) {
         ORIENT2_BITS,
         |rng, k| Shape::points(near_collinear2(rng, ORIENT2_BITS, k).0.to_vec()),
         |v| geo::<Point2>(v, 3, 0),
-        |g, pol| classify_point_segment(&g.p[0], &g.p[1], &g.p[2], pol).value(),
+        |g, pol| classify_point_segment(&g.p[0], &g.p[1], &g.p[2], pol).staged(),
     );
 
     atlas.operation(
@@ -1872,7 +2003,7 @@ fn composite_2d(atlas: &mut Atlas) {
             Shape::points(vec![a, b, c, d])
         },
         |v| geo::<Point2>(v, 4, 0),
-        |g, pol| classify_segment_intersection(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).value(),
+        |g, pol| classify_segment_intersection(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).staged(),
     );
 
     atlas.operation(
@@ -1892,7 +2023,7 @@ fn composite_2d(atlas: &mut Atlas) {
             Shape::points(vec![a, b, e, c])
         },
         |v| geo::<Point2>(v, 4, 0),
-        |g, pol| classify_point_triangle(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).value(),
+        |g, pol| classify_point_triangle(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).staged(),
     );
 
     atlas.operation(
@@ -1915,7 +2046,7 @@ fn composite_2d(atlas: &mut Atlas) {
             Shape::points(vec![c.center, c.points[0].clone(), c.points[3].clone()])
         },
         |v| geo::<Point2>(v, 3, 0),
-        |g, pol| compare_point2_distance_squared(&g.p[0], &g.p[1], &g.p[2], pol).value(),
+        |g, pol| compare_point2_distance_squared(&g.p[0], &g.p[1], &g.p[2], pol).staged(),
     );
 
     for (name, segment) in [
@@ -1950,7 +2081,7 @@ fn composite_2d(atlas: &mut Atlas) {
                 CIRCLE_BITS,
                 make,
                 |v| geo::<Point2>(v, 3, 0),
-                |g, pol| classify_circle_segment2(&g.p[0], &g.s[0], &g.p[1], &g.p[2], pol).value(),
+                |g, pol| classify_circle_segment2(&g.p[0], &g.s[0], &g.p[1], &g.p[2], pol).staged(),
             );
         } else {
             derived(
@@ -1960,7 +2091,7 @@ fn composite_2d(atlas: &mut Atlas) {
                 CIRCLE_BITS,
                 make,
                 |v| geo::<Point2>(v, 3, 0),
-                |g, pol| classify_circle_line2(&g.p[0], &g.s[0], &g.p[1], &g.p[2], pol).value(),
+                |g, pol| classify_circle_line2(&g.p[0], &g.s[0], &g.p[1], &g.p[2], pol).staged(),
             );
         }
     }
@@ -1988,7 +2119,7 @@ fn composite_3d(atlas: &mut Atlas) {
             }
         },
         |v| geo::<Point3>(v, 1, 1),
-        |g, pol| classify_point_plane(&g.p[0], &g.planes[0], pol).value(),
+        |g, pol| classify_point_plane(&g.p[0], &g.planes[0], pol).staged(),
     );
 
     atlas.operation(
@@ -2010,7 +2141,7 @@ fn composite_3d(atlas: &mut Atlas) {
             )
         },
         |v| geo::<Point3>(v, 4, 0),
-        |g, pol| classify_point_triangle3(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).value(),
+        |g, pol| classify_point_triangle3(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).staged(),
     );
 
     let with_apex: fn(&mut Rng, Option<u32>) -> Shape<3> = |rng, k| {
@@ -2036,7 +2167,7 @@ fn composite_3d(atlas: &mut Atlas) {
         |v| geo::<Point3>(v, 6, 0),
         |g, pol| {
             let p = &g.p;
-            classify_point_tetrahedron(&p[0], &p[1], &p[2], &p[4], &p[3], pol).value()
+            classify_point_tetrahedron(&p[0], &p[1], &p[2], &p[4], &p[3], pol).staged()
         },
     );
 
@@ -2055,7 +2186,7 @@ fn composite_3d(atlas: &mut Atlas) {
         |v| geo::<Point3>(v, 6, 0),
         |g, pol| {
             let p = &g.p;
-            classify_segment_triangle3_intersection(&p[3], &p[4], &p[0], &p[1], &p[2], pol).value()
+            classify_segment_triangle3_intersection(&p[3], &p[4], &p[0], &p[1], &p[2], pol).staged()
         },
     );
 
@@ -2080,7 +2211,8 @@ fn composite_3d(atlas: &mut Atlas) {
         |g, pol| {
             let p = &g.p;
             let direction = Point3::new(g.s[0].clone(), g.s[1].clone(), g.s[2].clone());
-            classify_ray_triangle3_intersection(&p[3], &direction, &p[0], &p[1], &p[2], pol).value()
+            classify_ray_triangle3_intersection(&p[3], &direction, &p[0], &p[1], &p[2], pol)
+                .staged()
         },
     );
 
@@ -2099,7 +2231,7 @@ fn composite_3d(atlas: &mut Atlas) {
         |v| geo::<Point3>(v, 6, 0),
         |g, pol| {
             let p = &g.p;
-            classify_triangle_triangle3(&p[0], &p[1], &p[2], &p[3], &p[4], &p[5], pol).value()
+            classify_triangle_triangle3(&p[0], &p[1], &p[2], &p[3], &p[4], &p[5], pol).staged()
         },
     );
 
@@ -2122,7 +2254,7 @@ fn composite_3d(atlas: &mut Atlas) {
             )
         },
         |v| geo::<Point3>(v, 4, 0),
-        |g, pol| classify_segment3_intersection(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).value(),
+        |g, pol| classify_segment3_intersection(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).staged(),
     );
 
     atlas.operation(
@@ -2141,7 +2273,7 @@ fn composite_3d(atlas: &mut Atlas) {
             Shape::points(vec![s.center, s.points[0].clone(), s.points[4].clone()])
         },
         |v| geo::<Point3>(v, 3, 0),
-        |g, pol| compare_point3_distance_squared(&g.p[0], &g.p[1], &g.p[2], pol).value(),
+        |g, pol| compare_point3_distance_squared(&g.p[0], &g.p[1], &g.p[2], pol).staged(),
     );
 
     atlas.operation(
@@ -2167,7 +2299,7 @@ fn composite_3d(atlas: &mut Atlas) {
             }
         },
         |v| geo::<Point3>(v, 2, 0),
-        |g, pol| classify_point_sphere3(&g.p[0], &g.s[0], &g.p[1], pol).value(),
+        |g, pol| classify_point_sphere3(&g.p[0], &g.s[0], &g.p[1], pol).staged(),
     );
 
     atlas.operation(
@@ -2194,7 +2326,7 @@ fn composite_3d(atlas: &mut Atlas) {
             }
         },
         |v| geo::<Point3>(v, 2, 0),
-        |g, pol| classify_sphere3_intersection(&g.p[0], &g.s[0], &g.p[1], &g.s[1], pol).value(),
+        |g, pol| classify_sphere3_intersection(&g.p[0], &g.s[0], &g.p[1], &g.s[1], pol).staged(),
     );
 
     atlas.operation(
@@ -2227,7 +2359,8 @@ fn composite_3d(atlas: &mut Atlas) {
         },
         |v| geo::<Point3>(v, 3, 0),
         |g, pol| {
-            compare_point_segment3_distance_squared(&g.p[0], &g.p[1], &g.p[2], &g.s[0], pol).value()
+            compare_point_segment3_distance_squared(&g.p[0], &g.p[1], &g.p[2], &g.s[0], pol)
+                .staged()
         },
     );
 
@@ -2261,7 +2394,7 @@ fn composite_3d(atlas: &mut Atlas) {
             }
         },
         |v| geo::<Point3>(v, 1, 1),
-        |g, pol| compare_point_plane_distance_squared(&g.p[0], &g.planes[0], &g.s[0], pol).value(),
+        |g, pol| compare_point_plane_distance_squared(&g.p[0], &g.planes[0], &g.s[0], pol).staged(),
     );
 
     atlas.operation(
@@ -2277,7 +2410,7 @@ fn composite_3d(atlas: &mut Atlas) {
         ORIENT2_BITS,
         |rng, k| Shape::points(near_collinear3(rng, k).to_vec()),
         |v| geo::<Point3>(v, 3, 0),
-        |g, pol| classify_triangle3_degeneracy(&g.p[0], &g.p[1], &g.p[2], pol).value(),
+        |g, pol| classify_triangle3_degeneracy(&g.p[0], &g.p[1], &g.p[2], pol).staged(),
     );
 
     atlas.operation(
@@ -2293,7 +2426,7 @@ fn composite_3d(atlas: &mut Atlas) {
         ORIENT2_BITS,
         |rng, k| Shape::points(near_collinear3(rng, k).to_vec()),
         |v| geo::<Point3>(v, 3, 0),
-        |g, pol| classify_point_segment3(&g.p[0], &g.p[1], &g.p[2], pol).value(),
+        |g, pol| classify_point_segment3(&g.p[0], &g.p[1], &g.p[2], pol).staged(),
     );
 
     atlas.operation(
@@ -2316,7 +2449,7 @@ fn composite_3d(atlas: &mut Atlas) {
             Shape::points(vec![a, b])
         },
         |v| geo::<Point3>(v, 2, 0),
-        |g, pol| compare_point3_lexicographic(&g.p[0], &g.p[1], pol).value(),
+        |g, pol| compare_point3_lexicographic(&g.p[0], &g.p[1], pol).staged(),
     );
 
     atlas.operation(
@@ -2353,7 +2486,7 @@ fn composite_3d(atlas: &mut Atlas) {
             },
             |input| {
                 input.run(|(g, point), pol| {
-                    classify_homogeneous_point_plane(point, &g.planes[3], pol).value()
+                    classify_homogeneous_point_plane(point, &g.planes[3], pol).staged()
                 })
             },
         );
@@ -2388,7 +2521,7 @@ fn composite_3d(atlas: &mut Atlas) {
         48,
         boxes,
         |v| geo::<Point3>(v, 4, 0),
-        |g, pol| classify_aabb3_intersection(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).value(),
+        |g, pol| classify_aabb3_intersection(&g.p[0], &g.p[1], &g.p[2], &g.p[3], pol).staged(),
     );
 
     atlas.operation(
@@ -2404,7 +2537,7 @@ fn composite_3d(atlas: &mut Atlas) {
         48,
         boxes,
         |v| geo::<Point3>(v, 4, 0),
-        |g, pol| classify_point_aabb3(&g.p[0], &g.p[1], &g.p[2], pol).value(),
+        |g, pol| classify_point_aabb3(&g.p[0], &g.p[1], &g.p[2], pol).staged(),
     );
 
     atlas.operation(
@@ -2436,7 +2569,7 @@ fn composite_3d(atlas: &mut Atlas) {
             }
         },
         |v| geo::<Point3>(v, 2, 1),
-        |g, pol| classify_plane_aabb3(&g.planes[0], &g.p[0], &g.p[1], pol).value(),
+        |g, pol| classify_plane_aabb3(&g.planes[0], &g.p[0], &g.p[1], pol).staged(),
     );
 }
 
@@ -2598,31 +2731,29 @@ impl Pair {
 fn scalar_predicates(atlas: &mut Atlas) {
     let axis = degeneracy_axis(96);
     let f64_axis = degeneracy_axis(52);
-    type Run = fn(&Real, &Real, PredicatePolicy) -> bool;
+    type Run = fn(&Real, &Real, PredicatePolicy) -> Staged<()>;
     let ops: [(&str, &str, Run); 4] = [
         (
             "compare_reals",
             "Order of a and b = a(1 + 2^-k); degenerate pairs are equal values written differently (sqrt(x)sqrt(y) vs sqrt(xy), ln x + ln y vs ln xy). Roots and logarithms are built in the call.",
-            |a, b, pol| compare_reals(a, b, pol).value().is_some(),
+            |a, b, pol| compare_reals(a, b, pol).decided(),
         ),
         (
             "classify_real_sign",
             "Sign of b - a for the same pairs, the difference built in the call.",
-            |a, b, pol| classify_real_sign(&(b - a), pol).value().is_some(),
+            |a, b, pol| classify_real_sign(&(b - a), pol).decided(),
         ),
         (
             "classify_ball_sign",
             "Sign of the ball with center b and radius a, whose lower end b - a is ≈2^-k (relative) above zero; degenerate balls touch zero, so their sign is undecidable.",
-            |a, b, pol| classify_ball_sign(b, a, pol).value().is_some(),
+            |a, b, pol| classify_ball_sign(b, a, pol).decided(),
         ),
         (
             "classify_real_closed_interval",
             "Location of b relative to the closed interval [a/2, a] whose endpoint a is ≈2^-k (relative) away.",
             |a, b, pol| {
                 let half = a * &Real::new(Rational::fraction(1, 2).unwrap());
-                classify_real_closed_interval(b, &half, a, pol)
-                    .value()
-                    .is_some()
+                classify_real_closed_interval(b, &half, a, pol).decided()
             },
         ),
     ];
@@ -2664,7 +2795,10 @@ fn scalar_predicates(atlas: &mut Atlas) {
             |m, rng| Pair::make(kind, level(m), rng),
             |pair| {
                 let (a, b) = pair.values();
-                certified_interval_sign(&(&b - &a), &b, pair.kind.policy()).and_then(|o| o.value())
+                match certified_interval_sign(&(&b - &a), &b, pair.kind.policy()) {
+                    Some(outcome) => outcome.staged(),
+                    None => Shaped::new(Err(Unsettled::Missed("a certified sign")), |_| None),
+                }
             },
         );
     }
@@ -2691,7 +2825,10 @@ fn scalar_predicates(atlas: &mut Atlas) {
                     Scalar::Ln => (&x + &Real::one()).ln().unwrap(),
                     _ => x,
                 };
-                reciprocal_real(&x, APPROX).ok().and_then(|o| o.value())
+                Shaped::new(
+                    reciprocal_real(&x, APPROX).ok().and_then(|o| o.value()),
+                    |r| r.as_ref().map(|r| reals_shape([r])),
+                )
             },
         );
     }
@@ -2749,31 +2886,32 @@ fn convex_planes(kind: Kind, n: usize, rng: &mut Rng) -> In3 {
 fn polygons(atlas: &mut Atlas) {
     let sizes = powers_of_two(2, 14);
     let kinds = [Kind::F64, Kind::Rational, Kind::Transcendental];
-    type RingRun = fn(&[Point2], &Point2, PredicatePolicy) -> bool;
+    type RingRun = fn(&[Point2], &Point2, PredicatePolicy) -> Staged<()>;
     let ops: [(&str, &str, RingRun); 4] = [
         (
             "ring_area_sign",
             "Sign of the area of a strictly convex n-gon with 46-bit lattice vertices.",
-            |ring, _, pol| ring_area_sign(ring, pol).value().is_some(),
+            |ring, _, pol| ring_area_sign(ring, pol).decided(),
         ),
         (
             "ring_convexity",
             "Local convexity of the same n-gon (one orientation per vertex).",
-            |ring, _, pol| ring_convexity(ring, pol) == hyperlimit::RingConvexity::LocallyConvex,
+            |ring, _, pol| {
+                plain(
+                    ring_convexity(ring, pol) == hyperlimit::RingConvexity::LocallyConvex,
+                    "locally convex",
+                )
+            },
         ),
         (
             "classify_point_ring_even_odd",
             "Even-odd location of the polygon's center against the n-gon.",
-            |ring, p, pol| classify_point_ring_even_odd(ring, p, pol).value().is_some(),
+            |ring, p, pol| classify_point_ring_even_odd(ring, p, pol).decided(),
         ),
         (
             "classify_point_convex_polygon2",
             "Location of the center against the n-gon as a convex polygon.",
-            |ring, p, pol| {
-                classify_point_convex_polygon2(ring, p, pol)
-                    .value()
-                    .is_some()
-            },
+            |ring, p, pol| classify_point_convex_polygon2(ring, p, pol).decided(),
         ),
     ];
     for (name, description, run) in ops {
@@ -2805,11 +2943,7 @@ fn polygons(atlas: &mut Atlas) {
             &powers_of_two(2, 12),
             |n, rng| convex_planes(kind, n as usize, rng),
             |input| {
-                input.run(|g, pol| {
-                    classify_point_convex_planes3(&g.planes, &g.p[0], pol)
-                        .value()
-                        .is_some()
-                })
+                input.run(|g, pol| classify_point_convex_planes3(&g.planes, &g.p[0], pol).decided())
             },
         );
     }
@@ -2825,7 +2959,7 @@ fn polygons(atlas: &mut Atlas) {
             kind.label(),
             &powers_of_two(2, 8),
             |n, rng| convex_planes(kind, n as usize, rng),
-            |input| input.run(|g, pol| classify_halfspace_feasibility3(&g.planes, pol).value()),
+            |input| input.run(|g, pol| classify_halfspace_feasibility3(&g.planes, pol).staged()),
         );
     }
 
@@ -2868,7 +3002,7 @@ fn polygons(atlas: &mut Atlas) {
                     Point3::new(Real::from(a[0]), Real::from(a[1]), Real::from(a[2]))
                 })
                 .collect();
-                input.run(|g, pol| support_dop3_from_points(&axes, &g.p, pol).value())
+                input.run(|g, pol| support_dop3_from_points(&axes, &g.p, pol).staged())
             },
         );
     }
@@ -2906,7 +3040,12 @@ fn constructions(atlas: &mut Atlas) {
             |input| {
                 input.run(|g, pol| {
                     let p = &g.p;
-                    construct_line_intersection_point_with_policy(&p[0], &p[1], &p[2], &p[3], pol)
+                    Shaped::new(
+                        construct_line_intersection_point_with_policy(
+                            &p[0], &p[1], &p[2], &p[3], pol,
+                        ),
+                        |r| r.as_ref().map(|p| reals_shape([&p.x, &p.y])),
+                    )
                 })
             },
         );
@@ -2933,11 +3072,14 @@ fn constructions(atlas: &mut Atlas) {
             },
             |input| {
                 input.run(|g, _| {
-                    Some(intersect_three_planes(
-                        &g.planes[0],
-                        &g.planes[1],
-                        &g.planes[2],
-                    ))
+                    Shaped::new(
+                        Some(intersect_three_planes(
+                            &g.planes[0],
+                            &g.planes[1],
+                            &g.planes[2],
+                        )),
+                        |r| r.as_ref().map(|p| reals_shape([&p.x, &p.y, &p.z, &p.w])),
+                    )
                 })
             },
         );
@@ -2965,8 +3107,17 @@ fn constructions(atlas: &mut Atlas) {
             },
             |input| {
                 input.run(|g, pol| {
-                    intersect_segment_with_plane(&g.planes[0], &g.p[0], &g.p[1], pol).relation
-                        == SegmentPlaneRelation::ProperCrossing
+                    let crossing =
+                        intersect_segment_with_plane(&g.planes[0], &g.p[0], &g.p[1], pol);
+                    let result = if crossing.relation == SegmentPlaneRelation::ProperCrossing {
+                        Ok(crossing)
+                    } else {
+                        Err(Unsettled::Missed("a proper crossing"))
+                    };
+                    Shaped::new(result, |r| {
+                        let p = r.as_ref().ok()?.point.as_ref()?;
+                        Some(reals_shape([&p.x, &p.y, &p.z]))
+                    })
                 })
             },
         );
@@ -3016,7 +3167,7 @@ fn batches(atlas: &mut Atlas) {
                         true => orient2_batch_parallel(cases, APPROX),
                         _ => orient2_batch(cases, APPROX),
                     };
-                    out.iter().all(|o| o.value().is_some())
+                    batch(out)
                 },
             );
         }
@@ -3066,7 +3217,7 @@ fn batches(atlas: &mut Atlas) {
                         true => insphere3_batch_parallel(cases, APPROX),
                         _ => insphere3_batch(cases, APPROX),
                     };
-                    out.iter().all(|o| o.value().is_some())
+                    batch(out)
                 },
             );
         }

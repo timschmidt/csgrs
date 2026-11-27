@@ -368,6 +368,23 @@ name = "scalar_adapter"
 [[example]]
 name = "assembly_manual"
 
+[[example]]
+name = "perf_atlas"
+required-features = [
+  "curve",
+  "stl-io",
+  "dxf-io",
+  "obj-io",
+  "ply-io",
+  "amf-io",
+  "gltf-io",
+  "gerber-io",
+  "svg-io",
+  "metaballs",
+  "sdf",
+  "hershey-text",
+]
+
 [[test]]
 name = "adversarial"
 path = "tests/adversarial.rs"
@@ -415,6 +432,7 @@ required-features = ["sdf"]
 
 [dev-dependencies]
 boolmesh = "=0.1.9"
+perf-atlas = { path = "crates/perf-atlas" }
 hypersolve = { version = "0.4.0", path = "crates/hypersolve" }
 # The README render example encodes its images as PNG.
 image = { version = "0.25", default-features = false, features = ["png"] }

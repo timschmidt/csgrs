@@ -39,6 +39,7 @@ glow = "0.16"
 nalgebra = { version = "0.34", optional = true }
 
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 criterion = "0.5"
 
 [[bench]]
@@ -48,6 +49,10 @@ required-features = ["exact"]
 
 [[example]]
 name = "readme_quickstart"
+required-features = ["exact"]
+
+[[example]]
+name = "perf_atlas"
 required-features = ["exact"]
 
 [package.metadata.docs.rs]

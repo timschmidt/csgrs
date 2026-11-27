@@ -16612,3 +16612,86 @@ hypergraphics, hyperspatial, hypervoxel, hypersdf, hyperphysics,
 hypercircuit, hyperdrc and the csgrs root) need atlas declarations before
 either kind of atlas covers them.
 
+
+## 2026-11-27: atlases for every crate, and the first findings
+
+Every workspace crate now has a perf atlas, and so memory, stack and result
+shape atlases from the same declarations. The exceptions are `perf-atlas`
+itself, `csgrs-ffi` (a C ABI over the root crate) and `comparisons` (which
+needs the external exactCorelib oracle).
+
+**New atlases.** Fifteen crates gained an atlas:
+
+| Crate | Operations |
+| --- | --- |
+| hypermesh | 39 |
+| csgrs | 37 |
+| hyperbrep | 36 |
+| hyperdrc | 36 |
+| hypercircuit | 33 |
+| hyperpath | 33 |
+| hypervoxel | 22 |
+| hyperpack | 56 |
+| hypersdf | 16 |
+| hyperspatial | 16 |
+| hyperphysics | 16 |
+| hyperbrep-io | 15 |
+| hypergraphics | 13 |
+| hyperevolution | 12 |
+| hyperparts | 11 |
+
+**Result shapes.** The seven older atlases without result shapes now report
+them: interval endpoint bits, hyperlimit escalation stage, matrix entry bits,
+spline control points, Taylor orders and triangle counts.
+
+**Script and CI changes.**
+- `run.sh` lists all crates. It builds the root package from the top level
+  and builds nested hypervoxel from its own directory.
+- `run-examples.sh` only smoke-starts the root `perf_atlas` example (with a
+  filter that matches no operation). It does not run a full debug sweep.
+
+**First findings.** The quick runs were made on a loaded host, so the absolute
+times are indicative only. Targets they suggest:
+
+- **Hyperreal retention (fixed on `interned-seal`).** Interned small
+  rationals cached results, and through those results the whole history of a
+  computation. A 1024-step spring kept 3.8 MB alive after every value was
+  dropped. Sealed interned values cache nothing. See the ledger entry
+  "Sealed interned rationals".
+- **Exact trigonometric primitive coordinates dominate csgrs costs.**
+  - A plate with one 16-segment cylinder hole costs about 1000× a plate with
+    a square pocket (2.19 s against 2.2 ms).
+  - Sphere(6) ∪ cylinder(6) costs 60× the 4-segment version.
+  - In hypermesh, rotated boxes cost 60× axis-aligned ones.
+- **hyperbrep: union and difference cost 100–300× intersection.**
+  - Two 4-sided prisms take 1.2–2.2 s to union.
+  - Extrude, sweep and planar face grow quadratically in vertex count.
+  - The archive decoder's default limits reject a 1024-face archive that the
+    encoder wrote.
+- **hyperdrc:**
+  - A violation costs about 1000× a pass.
+  - `annular_ring` is O(n²).
+  - `paste_aperture_spacing` has no bounding-box prefilter.
+  - `solder_mask_expansion` grows about 4.5× per doubling when violating.
+- **hypersdf:**
+  - The gradient on left-deep CSG chains is quadratic.
+  - Queries recurse with 1.4–4.7 KiB of stack per level, so `Sdf::new`
+    overflows an 8 MiB stack at 4096 levels.
+- **hypervoxel:** voxelization visits every cell, with no octree pruning.
+  A 64-plane prism costs about 300 µs per cell.
+- **Exact state growth in simulation:**
+  - Rational transient steps grow the state about 30 bits per step in
+    hyperphysics and about 10× in cost per doubling in hypercircuit.
+  - Stiff circuits reach more than 2000 bits in 32 steps.
+- **Exponential or quadratic searches:**
+  - piecewise-linear DC search (11 devices take 1.6 s);
+  - event agenda with shuffled events;
+  - Skyline packing (about cubic);
+  - 3D corner and extreme point heuristics (ceiling at 128 parts).
+- **Earcut:** convex 2048 → 4096 vertices is a 500–870× cliff.
+- **Capability gaps the atlases exposed:**
+  - hyperpath trace clearance decides only axis-aligned pairs.
+  - hypercircuit `solve_exact` refuses sqrt-valued conductances.
+  - The MOSFET cascade DC fails.
+  - The KiCad schematic round trip fails on mesh netlists.
+  - `gyroid_solid` at 16³ returns an empty mesh, while 8³ does not.

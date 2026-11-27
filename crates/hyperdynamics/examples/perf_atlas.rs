@@ -13,42 +13,52 @@
 //! A watchdog cancels any single call that runs well past the atlas ceiling, so
 //! one pathological input cannot stall a run; such points are recorded as
 //! ceiling hits and end their series.
+//!
+//! Resource runs (`--resources`) report result shapes: `nodes` counts
+//! segments, frame windows, reachability cells, noise columns or graph nodes,
+//! `depth` is the Taylor order (the highest one an adaptive run selected), the
+//! deepest reachability cell or the deepest prepared stage graph, and `bits`
+//! the largest end-enclosure mantissa. The timed job is unchanged; the shape
+//! reader reruns the same deterministic operation after the measured call.
 use hyperdynamics::field::{
     EnclosedVectorField, EnclosureBudget, EnclosurePolicy, ExpressionField, FieldDefinition,
-    clock::ClockStatus,
+    clock::{ClockEvolution, ClockStatus},
     coordinates::{
         CoordinateField,
-        qr_evolution::{QrEvolutionOptions, QrEvolutionStatus, QrProposalPolicy},
+        qr_evolution::{QrEvolution, QrEvolutionOptions, QrEvolutionStatus, QrProposalPolicy},
     },
-    evolution::{EvolutionOptions, EvolutionRequest, EvolutionStatus},
-    picard::{PicardProposal, PicardStatus},
+    evolution::{EvolutionOptions, EvolutionReport, EvolutionRequest, EvolutionStatus},
+    picard::{PicardProposal, PicardReport, PicardStatus},
     proposal::Rk4Options,
-    reachability::{ReachabilityPolicy, ReachabilityRequest, ReachabilityStatus},
+    reachability::{
+        ReachabilityPolicy, ReachabilityReport, ReachabilityRequest, ReachabilityStatus,
+    },
     sensitivity::SensitivityOptions,
-    taylor::FieldTaylorRequest,
+    taylor::{FieldTaylorModel, FieldTaylorRequest},
     taylor_flow::{
-        FlowTaylorProgram, FlowTaylorStatus,
-        adaptive::{AdaptiveTaylorOptions, AdaptiveTaylorStatus},
-        evolution::FlowTaylorEvolutionStatus,
+        FlowTaylorProgram, FlowTaylorReport, FlowTaylorStatus,
+        adaptive::{AdaptiveTaylorEvolution, AdaptiveTaylorOptions, AdaptiveTaylorStatus},
+        evolution::{FlowTaylorEvolution, FlowTaylorEvolutionStatus},
         noise::{
-            FlowNoiseRequest, FlowNoiseState, FlowNoiseStatus,
-            evolution::{FlowNoiseEvolutionOptions, FlowNoiseEvolutionStatus},
+            FlowNoiseReport, FlowNoiseRequest, FlowNoiseState, FlowNoiseStatus,
+            evolution::{FlowNoiseEvolution, FlowNoiseEvolutionOptions, FlowNoiseEvolutionStatus},
         },
     },
 };
 use hyperinterval::DyadicInterval;
-use hyperlattice_interval::BoxN;
+use hyperlattice_interval::{BoxN, IntervalMatrix, IntervalVector};
 use hyperreal::{Rational, Real};
 use hypersolve::{
     Expr, SymbolId,
     expression_program::{CoordinateChange, ExpressionBudget, ExpressionProgram},
     work_budget::CancellationToken,
 };
-use perf_atlas::{Atlas, Rng, powers_of_two};
+use perf_atlas::{Atlas, Rng, Shaped, powers_of_two};
 use std::{
     any::Any,
     cell::RefCell,
     collections::HashMap,
+    rc::Rc,
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
@@ -521,8 +531,284 @@ macro_rules! done {
     };
 }
 
+// ---------------------------------------------------------------------------
+// Result shapes for resource atlases
+// ---------------------------------------------------------------------------
+
+/// Structure of a result: `nodes` counts pieces (segments, windows, cells,
+/// graph nodes), `depth` a Taylor order, subdivision depth or graph depth, and
+/// `bits` the largest endpoint mantissa of the reported enclosure.
+trait Measure {
+    fn measure(&self) -> Option<perf_atlas::Shape>;
+}
+
+fn interval_bits(x: &DyadicInterval) -> u64 {
+    x.bounds().map_or(0, |(lo, hi, _)| lo.bits().max(hi.bits()))
+}
+
+fn box_bits<const N: usize>(b: &BoxN<DyadicInterval, N>) -> u64 {
+    b.lanes().map_or(0, |lanes| {
+        lanes.iter().map(interval_bits).max().unwrap_or(0)
+    })
+}
+
+fn shape(nodes: usize, depth: usize, bits: u64) -> Option<perf_atlas::Shape> {
+    Some(perf_atlas::Shape {
+        nodes: nodes as u64,
+        depth: depth as u64,
+        bits,
+    })
+}
+
+/// Expression graph: `nodes`, longest output path and largest constant.
+fn definition_shape(
+    definition: &hypersolve::expression_program::ExpressionDefinition,
+) -> perf_atlas::Shape {
+    use hypersolve::expression_program::ExpressionNode;
+    let mut depth = vec![0u64; definition.nodes.len()];
+    let mut bits = 0;
+    for (index, node) in definition.nodes.iter().enumerate() {
+        depth[index] = match node {
+            ExpressionNode::Constant(value) => {
+                bits = bits.max(value.representation_size(1 << 16).max_rational_bits);
+                0
+            }
+            ExpressionNode::Variable(_) => 0,
+            ExpressionNode::Unary { input, .. } => depth[*input] + 1,
+            ExpressionNode::Binary { left, right, .. } => depth[*left].max(depth[*right]) + 1,
+        };
+    }
+    perf_atlas::Shape {
+        nodes: definition.nodes.len() as u64,
+        depth: definition
+            .outputs
+            .iter()
+            .map(|&o| depth[o])
+            .max()
+            .unwrap_or(0),
+        bits,
+    }
+}
+
+impl<T: Measure, E> Measure for Result<T, E> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        self.as_ref().ok()?.measure()
+    }
+}
+impl<const N: usize> Measure for IntervalVector<DyadicInterval, N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(N, 0, box_bits(self))
+    }
+}
+impl<const N: usize> Measure for IntervalMatrix<DyadicInterval, N, N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        let bits = self.rows().map_or(0, |rows| {
+            rows.iter().flatten().map(interval_bits).max().unwrap_or(0)
+        });
+        shape(N * N, 0, bits)
+    }
+}
+impl<const N: usize> Measure for ExpressionField<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        Some(definition_shape(self.identity().source()))
+    }
+}
+impl<const N: usize> Measure for CoordinateField<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        self.transformed_field().measure()
+    }
+}
+impl<const N: usize> Measure for FieldTaylorModel<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(N, self.request().order, box_bits(self.image()))
+    }
+}
+/// `nodes`: graph nodes over every stage; `depth`: the deepest stage graph.
+impl<const N: usize> Measure for FlowTaylorProgram<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        Some(
+            self.stages()
+                .iter()
+                .map(|stage| definition_shape(stage.program().definition()))
+                .fold(perf_atlas::Shape::default(), |a, b| perf_atlas::Shape {
+                    nodes: a.nodes + b.nodes,
+                    depth: a.depth.max(b.depth),
+                    bits: a.bits.max(b.bits),
+                }),
+        )
+    }
+}
+impl<const N: usize> Measure for PicardReport<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(1, 1, self.end_enclosure().map_or(0, box_bits))
+    }
+}
+impl<const N: usize> Measure for FlowTaylorReport<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(
+            1,
+            self.program().order(),
+            self.end_enclosure().map_or(0, box_bits),
+        )
+    }
+}
+/// `nodes`: affine noise columns of the end state.
+impl<const N: usize> Measure for FlowNoiseReport<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        let end = self.end_state()?;
+        shape(
+            end.columns().map_or(0, <[_]>::len),
+            0,
+            box_bits(end.enclosure()),
+        )
+    }
+}
+impl<const N: usize> Measure for EvolutionReport<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(
+            self.segments().len(),
+            1,
+            self.end_enclosure().map_or(0, box_bits),
+        )
+    }
+}
+impl<const N: usize> Measure for FlowTaylorEvolution<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(
+            self.segments().len(),
+            self.program().order(),
+            self.end_enclosure().map_or(0, box_bits),
+        )
+    }
+}
+impl<const N: usize> Measure for FlowNoiseEvolution<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(
+            self.segments().len(),
+            self.program().order(),
+            self.end_state().map_or(0, |end| box_bits(end.enclosure())),
+        )
+    }
+}
+/// `nodes`: completed frame windows.
+impl<const N: usize> Measure for QrEvolution<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(
+            self.completed_windows().len(),
+            self.options().taylor_order.unwrap_or(1),
+            self.source_end_enclosure().map_or(0, box_bits),
+        )
+    }
+}
+/// `depth`: the highest Taylor order any segment selected.
+impl<const N: usize> Measure for AdaptiveTaylorEvolution<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(
+            self.segments().len(),
+            self.segments()
+                .map(|s| s.program().order())
+                .max()
+                .unwrap_or(0),
+            self.end_enclosure().map_or(0, box_bits),
+        )
+    }
+}
+/// `nodes`: subdivision cells; `depth`: the deepest cell.
+impl<const N: usize> Measure for ReachabilityReport<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        let bits = self
+            .end_cover()
+            .map_or(0, |cover| cover.boxes().map(box_bits).max().unwrap_or(0));
+        shape(
+            self.cells().len(),
+            self.cells()
+                .iter()
+                .map(|c| c.depth() as usize)
+                .max()
+                .unwrap_or(0),
+            bits,
+        )
+    }
+}
+impl<const N: usize> Measure for ClockEvolution<N> {
+    fn measure(&self) -> Option<perf_atlas::Shape> {
+        shape(
+            self.segments().len(),
+            1,
+            self.end_enclosure().map_or(0, box_bits),
+        )
+    }
+}
+
+/// Rederives a job's result after the measured call and reads its shape.
+type Reshape = Rc<dyn Fn() -> Option<perf_atlas::Shape>>;
+
+/// One timed call: whether it succeeded, and a handle that reruns the same
+/// deterministic operation for the shape reader. The timed call still drops
+/// its result inside the call, so time, heap and residue are unchanged; the
+/// handle costs one reference-count increment.
+struct Ran {
+    ok: bool,
+    reshape: Option<Reshape>,
+    /// Rerun under the default per-stage scalar bit limit.
+    default_bits: bool,
+}
+impl perf_atlas::Outcome for Ran {
+    fn succeeded(&self) -> bool {
+        self.ok
+    }
+}
+
+fn read_shape(ran: &Ran) -> Option<perf_atlas::Shape> {
+    let reshape = ran.reshape.as_ref()?;
+    if !ran.default_bits {
+        return reshape();
+    }
+    let atlas_bits = SCALAR_BITS.swap(
+        EnclosurePolicy::default().scalar_bits,
+        std::sync::atomic::Ordering::Relaxed,
+    );
+    let shape = reshape();
+    SCALAR_BITS.store(atlas_bits, std::sync::atomic::Ordering::Relaxed);
+    shape
+}
+
 /// The timed call: everything it needs is prepared outside the timer.
-type Job = Box<dyn Fn() -> bool>;
+type Job = Box<dyn Fn() -> Shaped<Ran>>;
+
+/// A job that times `ok(&run())`; the shape reader reruns `run`.
+fn measured<T: Measure + 'static>(
+    run: impl Fn() -> T + 'static,
+    ok: impl Fn(&T) -> bool + 'static,
+) -> Job {
+    let run = Rc::new(run);
+    let again = run.clone();
+    let reshape: Reshape = Rc::new(move || again().measure());
+    Box::new(move || {
+        Shaped::new(
+            Ran {
+                ok: ok(&run()),
+                reshape: Some(reshape.clone()),
+                default_bits: false,
+            },
+            read_shape,
+        )
+    })
+}
+
+/// A job without a result shape.
+fn unmeasured(run: impl Fn() -> bool + 'static) -> Job {
+    Box::new(move || {
+        Shaped::new(
+            Ran {
+                ok: run(),
+                reshape: None,
+                default_bits: false,
+            },
+            read_shape,
+        )
+    })
+}
 
 /// Run a job under the default per-stage scalar bit limit.
 fn default_bits(job: Job) -> Job {
@@ -531,13 +817,14 @@ fn default_bits(job: Job) -> Job {
             EnclosurePolicy::default().scalar_bits,
             std::sync::atomic::Ordering::Relaxed,
         );
-        let ok = job();
+        let mut ran = job();
         SCALAR_BITS.store(atlas_bits, std::sync::atomic::Ordering::Relaxed);
-        ok
+        ran.value.default_bits = true;
+        ran
     })
 }
 
-fn call(job: &Job) -> bool {
+fn call(job: &Job) -> Shaped<Ran> {
     job()
 }
 
@@ -638,17 +925,24 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
     match op {
         Op::FromDefinition => {
             let definition = spec.definition();
-            Box::new(move || {
-                ExpressionField::<N>::from_definition(definition.clone(), &mut budget()).is_ok()
-            })
+            measured(
+                move || ExpressionField::<N>::from_definition(definition.clone(), &mut budget()),
+                Result::is_ok,
+            )
         }
         Op::Image(width) => {
             let (f, b) = (field::<N>(spec), initial::<N>(spec, width));
-            Box::new(move || f.image(&time(0, 0), &b, &mut budget()).is_ok())
+            measured(
+                move || f.image(&time(0, 0), &b, &mut budget()),
+                Result::is_ok,
+            )
         }
         Op::Jacobian(width) => {
             let (f, b) = (field::<N>(spec), initial::<N>(spec, width));
-            Box::new(move || f.jacobian(&time(0, 0), &b, &mut budget()).is_ok())
+            measured(
+                move || f.jacobian(&time(0, 0), &b, &mut budget()),
+                Result::is_ok,
+            )
         }
         Op::TaylorModel { order, width } => {
             let f = field::<N>(spec);
@@ -657,35 +951,34 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
                 state: initial::<N>(spec, width),
                 order,
             };
-            Box::new(move || f.taylor_model(request.clone(), &mut budget()).is_ok())
+            measured(
+                move || f.taylor_model(request.clone(), &mut budget()),
+                Result::is_ok,
+            )
         }
         Op::Prepare(order) => {
             let f = field::<N>(spec);
-            Box::new(move || f.flow_taylor(order, &mut budget()).is_ok())
+            measured(move || f.flow_taylor(order, &mut budget()), Result::is_ok)
         }
         Op::Restrict { from, to } => {
             let p = program::<N>(spec, from);
-            Box::new(move || p.restrict_order(to, &mut budget()).is_ok())
+            measured(move || p.restrict_order(to, &mut budget()), Result::is_ok)
         }
         Op::Picard { step, width } => {
             let f = field::<N>(spec);
             let p = proposal(&f, initial(spec, width), step);
-            Box::new(move || {
-                done!(
-                    f.certify_step(p.clone(), &mut budget()).status(),
-                    PicardStatus::Certified
-                )
-            })
+            measured(
+                move || f.certify_step(p.clone(), &mut budget()),
+                |r| done!(r.status(), PicardStatus::Certified),
+            )
         }
         Op::TaylorStep { order, step, width } => {
             let program = program::<N>(spec, order);
             let p = proposal(&field::<N>(spec), initial(spec, width), step);
-            Box::new(move || {
-                done!(
-                    program.certify_step(p.clone(), &mut budget()).status(),
-                    FlowTaylorStatus::Certified
-                )
-            })
+            measured(
+                move || program.certify_step(p.clone(), &mut budget()),
+                |r| done!(r.status(), FlowTaylorStatus::Certified),
+            )
         }
         Op::NoiseStep {
             order,
@@ -707,14 +1000,10 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
                 round_coefficients: true,
                 column_cutoff_bits: Some(16),
             };
-            Box::new(move || {
-                done!(
-                    program
-                        .certify_noise_step(state.clone(), request.clone(), &mut budget())
-                        .status(),
-                    FlowNoiseStatus::Certified
-                )
-            })
+            measured(
+                move || program.certify_noise_step(state.clone(), request.clone(), &mut budget()),
+                |r| done!(r.status(), FlowNoiseStatus::Certified),
+            )
         }
         Op::Rk4 {
             step,
@@ -724,7 +1013,7 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
             let f = field::<N>(spec);
             let proposer = f.rk4_proposer(&mut EnclosureBudget::new(policy())).unwrap();
             let request = request::<N>(spec, width, 1, step);
-            Box::new(move || {
+            unmeasured(move || {
                 let mut b = budget();
                 match proposer.propose(request.clone(), Rk4Options::default(), &mut b) {
                     Ok(p) if certify => {
@@ -762,13 +1051,10 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
                 evolution: options(steps, step),
                 ..ReachabilityPolicy::default()
             };
-            Box::new(move || {
-                done!(
-                    f.reach(request.clone(), policy.clone(), &mut budget())
-                        .status(),
-                    ReachabilityStatus::Completed
-                )
-            })
+            measured(
+                move || f.reach(request.clone(), policy.clone(), &mut budget()),
+                |r| done!(r.status(), ReachabilityStatus::Completed),
+            )
         }
         Op::RationalTime { steps } => {
             // Physical span [0, steps/3]; tau steps keep physical steps <= 2^picard_step.
@@ -783,19 +1069,18 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
             let tau = -(((steps as f64 / 3.0).log2().ceil() as i32) - spec.picard_step);
             let start = initial::<N>(spec, Some(-20));
             let opts = options(steps, tau);
-            Box::new(move || {
-                done!(
-                    clock
-                        .integrate(start.clone(), opts.clone(), &mut budget())
-                        .status(),
-                    ClockStatus::Completed
-                )
-            })
+            measured(
+                move || clock.integrate(start.clone(), opts.clone(), &mut budget()),
+                |r| done!(r.status(), ClockStatus::Completed),
+            )
         }
         Op::InCoordinates => {
             let f = field::<N>(spec);
             let change = bidiagonal_change(spec);
-            Box::new(move || f.in_coordinates(change.clone(), &mut budget()).is_ok())
+            measured(
+                move || f.in_coordinates(change.clone(), &mut budget()),
+                Result::is_ok,
+            )
         }
         Op::InQr => {
             // Lower-triangular all-ones basis: orthonormalization needs square roots.
@@ -804,7 +1089,7 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
                 .map(|i| (0..N).map(|j| Real::from(i64::from(j <= i))).collect())
                 .collect();
             let origin = bidiagonal_change(spec).origin;
-            Box::new(move || {
+            unmeasured(move || {
                 f.in_qr_coordinates(basis.clone(), origin.clone(), &mut budget())
                     .is_ok()
             })
@@ -819,9 +1104,9 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
                     .transition_to(&to, &mut EnclosureBudget::new(policy()))
                     .unwrap();
                 let b = initial::<N>(spec, Some(-8));
-                Box::new(move || transition.enclose(b.clone(), &mut budget()).is_ok())
+                unmeasured(move || transition.enclose(b.clone(), &mut budget()).is_ok())
             } else {
-                Box::new(move || from.transition_to(&to, &mut budget()).is_ok())
+                unmeasured(move || from.transition_to(&to, &mut budget()).is_ok())
             }
         }
     }
@@ -844,23 +1129,17 @@ fn integrate<const N: usize>(
     match method {
         Method::Picard => {
             let f = field::<N>(spec);
-            Box::new(move || {
-                done!(
-                    f.integrate(request.clone(), opts.clone(), &mut budget())
-                        .status(),
-                    EvolutionStatus::Completed
-                )
-            })
+            measured(
+                move || f.integrate(request.clone(), opts.clone(), &mut budget()),
+                |r| done!(r.status(), EvolutionStatus::Completed),
+            )
         }
         Method::Taylor(order) => {
             let p = program::<N>(spec, order);
-            Box::new(move || {
-                done!(
-                    p.integrate(request.clone(), opts.clone(), &mut budget())
-                        .status(),
-                    FlowTaylorEvolutionStatus::Completed
-                )
-            })
+            measured(
+                move || p.integrate(request.clone(), opts.clone(), &mut budget()),
+                |r| done!(r.status(), FlowTaylorEvolutionStatus::Completed),
+            )
         }
         Method::Noise(order, noise) => {
             let p = program::<N>(spec, order);
@@ -878,13 +1157,12 @@ fn integrate<const N: usize>(
                 ..FlowNoiseEvolutionOptions::default()
             };
             let end = request.end;
-            Box::new(move || {
-                done!(
+            measured(
+                move || {
                     p.integrate_noise(state.clone(), end.clone(), options.clone(), &mut budget())
-                        .status(),
-                    FlowNoiseEvolutionStatus::Completed
-                )
-            })
+                },
+                |r| done!(r.status(), FlowNoiseEvolutionStatus::Completed),
+            )
         }
         Method::Qr(order, proposals) => {
             let chart = identity_chart::<N>(spec);
@@ -897,14 +1175,10 @@ fn integrate<const N: usize>(
                 native: opts,
                 proposals,
             };
-            Box::new(move || {
-                done!(
-                    chart
-                        .integrate_qr(request.clone(), options.clone(), &mut budget())
-                        .status(),
-                    QrEvolutionStatus::Completed
-                )
-            })
+            measured(
+                move || chart.integrate_qr(request.clone(), options.clone(), &mut budget()),
+                |r| done!(r.status(), QrEvolutionStatus::Completed),
+            )
         }
         Method::Adaptive(maximum_order, limit) => {
             let controller = field::<N>(spec).adaptive_taylor(AdaptiveTaylorOptions {
@@ -914,14 +1188,10 @@ fn integrate<const N: usize>(
                 maximum_quality_halvings: 16,
                 native: opts,
             });
-            Box::new(move || {
-                done!(
-                    controller
-                        .integrate(request.clone(), &mut budget())
-                        .status(),
-                    AdaptiveTaylorStatus::Completed
-                )
-            })
+            measured(
+                move || controller.integrate(request.clone(), &mut budget()),
+                |r| done!(r.status(), AdaptiveTaylorStatus::Completed),
+            )
         }
     }
 }
@@ -948,7 +1218,7 @@ fn sensitivity<const N: usize>(
     macro_rules! timed {
         ($source:expr, $completed:pat) => {{
             let source = Arc::new($source);
-            Box::new(move || match source.sensitivity(options, &mut budget()) {
+            unmeasured(move || match source.sensitivity(options, &mut budget()) {
                 Ok(s) => done!(s.source().status(), $completed),
                 Err(error) => {
                     if debug() {

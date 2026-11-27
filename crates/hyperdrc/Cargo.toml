@@ -43,6 +43,7 @@ quick-xml = "0.42"
 rusqlite = { version = "0.39.0", features = ["bundled"] }
 
 [dev-dependencies]
+perf-atlas = { path = "../perf-atlas" }
 proptest = "1.6"
 
 [[bench]]
