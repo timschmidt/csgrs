@@ -34,7 +34,7 @@ pub struct QrEvolutionOptions {
     /// Existing native search controls within each selected frame.
     pub native: EvolutionOptions,
     /// Which windows pay for a proposed frame and a second complete branch.
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[cfg_attr(feature = "serde", serde(default = "every_window"))]
     pub proposals: QrProposalPolicy,
 }
 impl Default for QrEvolutionOptions {
@@ -44,18 +44,18 @@ impl Default for QrEvolutionOptions {
             maximum_windows: 256,
             taylor_order: Some(3),
             native: EvolutionOptions::default(),
-            proposals: QrProposalPolicy::EveryWindow,
+            proposals: QrProposalPolicy::default(),
         }
     }
 }
 
 /// Schedule of frame proposals. Every branch is certified, so a schedule
-/// changes cost and widths, never soundness.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+/// changes cost and widths, never soundness. The default is
+/// `Backoff { maximum_interval: 16 }`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum QrProposalPolicy {
     /// Propose a frame and compare both complete branches in every window.
-    #[default]
     EveryWindow,
     /// Defer proposals after the incoming chart wins. Each consecutive
     /// retained win doubles the number of following windows that run only the
@@ -65,6 +65,19 @@ pub enum QrProposalPolicy {
         /// Largest run of deferred windows between two proposals.
         maximum_interval: usize,
     },
+}
+impl Default for QrProposalPolicy {
+    // Long runs of retained wins make per-window comparison mostly wasted work.
+    fn default() -> Self {
+        Self::Backoff {
+            maximum_interval: 16,
+        }
+    }
+}
+// Options serialized before the schedule existed compared every window.
+#[cfg(feature = "serde")]
+fn every_window() -> QrProposalPolicy {
+    QrProposalPolicy::EveryWindow
 }
 
 /// A selection, construction, transport or original native failure.

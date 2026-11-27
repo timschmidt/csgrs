@@ -113,12 +113,12 @@ pub struct FlowTaylorProgram<const N: usize> {
 /// later step choices, can differ.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum FlowTaylorCoefficients {
-    /// Natural interval evaluation of each prepared stage formula (default).
-    #[default]
+    /// Natural interval evaluation of each prepared stage formula.
     Formulas,
     /// Hypersolve's Taylor-mode ODE recurrence `x_(k+1) = [F(t, x)]_k / (k+1)`
     /// on the original field, falling back to the stage formulas whenever a
-    /// recurrence is unavailable on the step's boxes.
+    /// recurrence is unavailable on the step's boxes (default).
+    #[default]
     Recurrence,
 }
 impl<const N: usize> ExpressionField<N> {
@@ -284,7 +284,7 @@ impl<const N: usize> ExpressionField<N> {
             field: self.clone(),
             order,
             stages: stages.into(),
-            coefficients: FlowTaylorCoefficients::Formulas,
+            coefficients: FlowTaylorCoefficients::default(),
         };
         budget.graph.charge(0)?;
         Ok(result)

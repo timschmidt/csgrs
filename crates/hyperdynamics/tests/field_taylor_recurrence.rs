@@ -62,7 +62,9 @@ fn agree<const N: usize>(
     order: usize,
     widths: Widths,
 ) {
-    let formulas = f.flow_taylor(order, &mut budget()).unwrap();
+    let prepared = f.flow_taylor(order, &mut budget()).unwrap();
+    assert_eq!(prepared.coefficients(), FlowTaylorCoefficients::Recurrence);
+    let formulas = prepared.with_coefficients(FlowTaylorCoefficients::Formulas);
     assert_eq!(formulas.coefficients(), FlowTaylorCoefficients::Formulas);
     let recurrence = formulas
         .clone()

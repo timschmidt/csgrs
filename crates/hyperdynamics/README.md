@@ -274,7 +274,11 @@ constructs source-bound normalized Lie coefficients through the next order. Its
 `certify_step(proposal, budget)` first proves Picard existence/uniqueness, then
 requires the original Taylor layer's analytic-domain proof over the complete
 time/tube product. Initial coefficients and the whole next-order remainder give
-certified trajectory and endpoint enclosures. Every contribution and both source
+certified trajectory and endpoint enclosures. By default each step encloses
+those coefficients with Hypersolve's Taylor-mode ODE recurrence, falling back
+to the prepared Lie formulas where a recurrence is unavailable;
+`with_coefficients(FlowTaylorCoefficients::Formulas)` evaluates the formulas
+throughout. Every contribution and both source
 proofs remain inspectable; generated endpoints can seed later steps. Replay the
 field definition, order and proposal. This is a forward-step verifier, not an
 automatic order/step controller or adaptive wrapping algorithm.
@@ -303,7 +307,8 @@ and a proposed win restores comparison in every window. On a probe corpus with
 both Picard and order-3 windows, it was 1.0–5.1× faster with identical endpoint
 widths in 11 of 12 runs, and 4% wider in one where a proposal won one window
 later. Deferred windows report `deferred()` and `Retained` from `choice()`. The
-default, `EveryWindow`, compares every window. Only whole-request success
+default is `Backoff { maximum_interval: 16 }`; `EveryWindow` compares every
+window. Only whole-request success
 exposes `source_end_enclosure`; stopped windows and certified prefixes are separate.
 Replay the original chart, request, options and policy. Frame changes can increase
 cost or enclosure width, and a singular Euler-basis proposal stops explicitly.

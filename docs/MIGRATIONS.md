@@ -1,5 +1,24 @@
 # Migrations
 
+## Hyperdynamics trajectory Taylor and QR defaults (2026-11-26)
+
+Two Hyperdynamics defaults changed. Both alternatives remain available, and
+every result is still certified, but exact enclosures and frame choices can
+differ from earlier runs.
+
+- `FlowTaylorCoefficients::default()` is now `Recurrence`. Programs from
+  `flow_taylor`, including those prepared by the adaptive controller and QR
+  evolution, enclose step coefficients with Hypersolve's Taylor-mode ODE
+  recurrence. To reproduce earlier exact outputs, call
+  `program.with_coefficients(FlowTaylorCoefficients::Formulas)`.
+- `QrProposalPolicy::default()`, and therefore
+  `QrEvolutionOptions::default().proposals`, is now
+  `Backoff { maximum_interval: 16 }`. Deferred windows report `deferred()`
+  and have no `comparison()`; read `choice()` instead. Set
+  `proposals: QrProposalPolicy::EveryWindow` to compare every window as
+  before. Serialized options without a `proposals` field still deserialize as
+  `EveryWindow`, so stored runs replay unchanged.
+
 ## Exact work-budget receipts (2026-11-23)
 
 `hypersolve::work_budget::BudgetExceeded` (re-exported by Hyperbrep and

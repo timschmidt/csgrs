@@ -36,7 +36,9 @@ at `t=1/8`; the uncertain three-dimensional field has an algebraic interior
 minimum. Their tubes must cover those extrema. Every actual endpoint and tube
 width is recorded.
 
-Hyperdynamics uses prepared order 3 with the existing default enclosure policy.
+Hyperdynamics uses prepared order 3 with the existing default enclosure policy
+and the default Taylor-mode recurrence step coefficients (since 26 November;
+the 15 November record used the stage formulas).
 The original sixteen cases use Cartesian whole-horizon evolution. The long tier
 uses correlated affine-noise evolution with `FlowNoiseEvolutionOptions::default()`:
 up to 16 noise columns, policy-grid rounding and a 16-bit relative column cutoff.

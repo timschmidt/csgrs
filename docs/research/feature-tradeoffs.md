@@ -120,7 +120,23 @@ retention. "Shipped" sizes are linked release or deployed images.
 - **Code size:** not measured separately; no shipped image enables Taylor
   features.
 - **Evidence:** `docs/evidence/2026-11-26-interval-ode-taylor-recurrence`.
-- **Reconsider:** as the default once owners accept changed exact outputs;
-  then for the adaptive controller and QR programs; drop the formula
-  evaluation path if the recurrence is never unavailable in practice.
+- **Decision (26 November 2026):** made the default, including adaptive and
+  QR programs, under the owner's fluid-API, CAD/CAM/Sim-first guidance.
+- **Reconsider:** drop the formula evaluation path if the recurrence is never
+  unavailable in practice.
 
+
+### QR frame proposal backoff (25 November 2026)
+
+- **Capability:** none new; a cheaper frame-proposal schedule.
+- **Performance:** probe corpus 1.0–5.1× faster; perf-atlas QR integrate
+  sweep reaches one more horizon per series before the quick-mode ceiling.
+- **Widths:** identical endpoint diameters in 11 of 12 probe runs; 4% wider in
+  the sheared order-3 pendulum, where a proposal won one window later.
+- **Code size:** all-feature release perf atlas +11,456 B text, including the
+  new series.
+- **Evidence:** `docs/evidence/2026-11-25-interval-qr-proposal-backoff`.
+- **Decision (26 November 2026):** `Backoff { maximum_interval: 16 }` is the
+  default under the owner's fluid-API, CAD/CAM/Sim-first guidance; serialized
+  options without the field keep `EveryWindow`.
+- **Reconsider:** with adaptive intervals or cost-predicted proposals.

@@ -922,7 +922,9 @@ fn qr_options(
         maximum_windows,
         taylor_order,
         native: step(-4),
-        ..Default::default()
+        // These cases pin every window's comparison to exercise each
+        // transition pattern; backoff's own sensitivity test covers deferral.
+        proposals: hyperdynamics::field::coordinates::qr_evolution::QrProposalPolicy::EveryWindow,
     }
 }
 

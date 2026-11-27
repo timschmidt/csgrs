@@ -687,7 +687,7 @@ fn uncertain_rotating_line_contains_the_entire_independent_analytic_image() {
             q.width().unwrap().to_f64_enclosure(),
             r.windows()
                 .iter()
-                .map(|w| w.comparison().unwrap().choice())
+                .map(|w| w.choice().unwrap())
                 .collect::<Vec<_>>()
         );
         assert!(q.width().unwrap() < Rational::from(10));
