@@ -1,3 +1,8 @@
+//! Layout conformance through native comparison, independent fixed arithmetic and replay.
+//!
+//! Comparisons include full values/errors and subsequent consumption. Only the
+//! bounded fixed oracle derives its arithmetic independently; native agreement
+//! elsewhere shares scalar kernels and cannot alone prove those kernels correct.
 use hyperlattice_interval::hyperinterval::{
     F32Enclosure, F64Enclosure, FixedInterval, IntervalError,
 };
@@ -5,6 +10,9 @@ use hyperlattice_interval::{IntervalLatticeError, IntervalVector};
 use interval_layout_conformance::{Primitive, Soa};
 use std::fmt::Debug;
 
+/// Compare round trips and five operations, then consume intersection/hull in a dot.
+/// Arithmetic Result equality includes scalar errors; composition's set operations
+/// are expected to succeed on the validated fixtures and are unwrapped separately.
 fn compare<I: Primitive + Eq + Debug, const N: usize>(
     a: IntervalVector<I, N>,
     b: IntervalVector<I, N>,
@@ -33,7 +41,13 @@ fn compare<I: Primitive + Eq + Debug, const N: usize>(
 }
 
 #[test]
+/// Exhaust all 23,409 ordered interval pairs with raw endpoints in -8..=8.
+/// Independent integer corner extrema and floor/ceiling division certify Q3 dot
+/// bounds; separate endpoint formulas check sums, differences, intersection and
+/// hull. Two lanes include a reflected interval, then native comparison exercises
+/// subsequent consumption without replacing the independent expectations.
 fn independent_fixed_oracle_and_composition() {
+    /// Three fractional bits make raw product bounds require outward division by eight.
     type I = FixedInterval<i32, 3>;
     for al in -8..=8 {
         for au in al..=8 {
@@ -85,7 +99,10 @@ fn independent_fixed_oracle_and_composition() {
     }
 }
 
+/// Exercise two nonempty products, empty/nonempty and empty/empty at nine dimensions.
+/// Explicitly distinguish the zero-dimensional unit product and its zero dot image.
 fn dimensions<I: Primitive + Eq + Debug>(a: I, b: I) {
+    /// Instantiate the same full-value/composition comparisons at each literal dimension.
     macro_rules! check {
         ($($n:literal),*) => { $(
             compare(IntervalVector::<_, $n>::new([a; $n]).unwrap(), IntervalVector::new([b; $n]).unwrap());
@@ -104,6 +121,7 @@ fn dimensions<I: Primitive + Eq + Debug>(a: I, b: I) {
 }
 
 #[test]
+/// Apply the dimension matrix to Q8, Q32, binary32 and binary64 sixteenth-grid inputs.
 fn all_families_and_dimensions() {
     dimensions(
         FixedInterval::<i32, 8>::new(-16, 32).unwrap(),
@@ -124,9 +142,14 @@ fn all_families_and_dimensions() {
 }
 
 #[test]
+/// Compare selected signed extremes at coarsest/finest valid scales, then reject bad scales.
+/// This is a boundary corpus, not enumeration of every endpoint in the full domain.
+/// A two-term dot separately checks that later cancellation cannot hide first-product overflow.
 fn full_domain_extremes_and_failure_order() {
+    /// Generate all ordered pairs from seven extreme numerators for one width/scale.
     macro_rules! fixed {
         ($int:ty, $frac:literal) => {{
+            /// Selected fixed family; boundary numerators keep their exact scale.
             type I = FixedInterval<$int, $frac>;
             let extremes = [
                 <$int>::MIN,
@@ -170,6 +193,7 @@ fn full_domain_extremes_and_failure_order() {
         Err(IntervalLatticeError::Scalar(IntervalError::InvalidScale))
     );
     // An overflowing first product cannot be hidden by a later cancellation.
+    /// Whole-unit grid on which MAX times two fails before the negative term is visited.
     type I = FixedInterval<i32, 0>;
     let a =
         IntervalVector::new([I::point(i32::MAX).unwrap(), I::point(-i32::MAX).unwrap()]).unwrap();
@@ -181,7 +205,12 @@ fn full_domain_extremes_and_failure_order() {
 }
 
 #[test]
+/// Check subnormal outward rounding, overflow, signed-zero normalization and invalid ingress.
+/// Each IEEE family also gets 2,000 deterministic finite-bit fixtures, full native
+/// comparisons and canonical JSON replay. Random filtering has no internal retry
+/// budget; these fixed-seed runs are finite evidence, not exhaustive IEEE coverage.
 fn ieee_bits_subnormals_rounding_and_overflow() {
+    /// Instantiate the same edge cases and wrapping-LCG finite-bit stream for one IEEE width.
     macro_rules! floats {
         ($interval:ty, $float:ty, $bits:ty) => {{
             let point = |v| IntervalVector::new([<$interval>::point(v).unwrap()]).unwrap();
@@ -240,7 +269,11 @@ fn ieee_bits_subnormals_rounding_and_overflow() {
 }
 
 #[test]
+/// Replay native JSON through SoA, consume it, and reject invalid order/dimensions.
+/// An empty earlier lane must not conceal a later reversed scalar. Canonical output
+/// is validated again; accepted noncanonical input text need not be reproduced verbatim.
 fn canonical_replay_revalidates_and_consumes() {
+    /// Two-lane Q32 carrier whose wire endpoints are signed i64 numerators.
     type V = IntervalVector<FixedInterval<i64, 32>, 2>;
     for wire in [
         "null",

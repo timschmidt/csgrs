@@ -14781,6 +14781,116 @@ no second target. No focused check remains blocked. Other platform conformance
 clients and the repository-wide audit remain open; these finite witnesses do not
 establish universal geometry/resource closure or full repository documentation.
 
+## Primitive interval layout carrier, fixtures and tests (2026-11-27)
+
+Whole-file review on target revision 58e8fa9bfc5207eddcf8baab60b6568438661e5c:
+
+- crates/hyperlattice-interval/conformance/primitive-layouts/src/lib.rs
+  (192 -> 267 lines).
+- crates/hyperlattice-interval/conformance/primitive-layouts/src/workload.rs
+  (67 -> 109 lines).
+- crates/hyperlattice-interval/conformance/primitive-layouts/tests/layouts.rs
+  (260 -> 293 lines).
+- The package Cargo.toml (18 lines), Cargo.lock (296 lines), and README.md
+  (38 lines), read in full and unchanged.
+
+The owning layer is the unpublished Cartesian layout conformance adapter.
+P1/P5/P6/P18/P26/P27/P37 and the admission protocol govern exact endpoint meaning,
+explicit failures, subsequent consumption, canonical replay and qualified claims.
+The domain is i32/i64 fixed intervals, qualified binary32/binary64 enclosures,
+canonical empty/unit products and finite const dimensions; workload constructors
+use bounded sixteenth-grid fixtures. Missing documentation covered the private
+zip/storage helpers, generated endpoint adapters, public fixture limits and test
+oracles. Baseline tests and native consumers ran before editing. This changes
+comments only; no algorithms, signatures, dependencies, assertions or fixtures changed.
+
+The three Rust files now contain 59 authored Rustdoc blocks and 30 documented
+function declarations, including macro templates, private items and tests.
+Implementation and consumer review established:
+
+- Primitive extracts exact stored endpoints and restores through native scalar
+  constructors. Fixed reconstruction validates scale before endpoint order;
+  floating reconstruction rechecks target qualification and finite ingress.
+  No new scalar arithmetic or predicate policy is introduced.
+- Soa retains one canonical empty tag or two complete endpoint arrays. Some of
+  zero-length arrays is a unit product. Clone/Copy duplicate inline data; storage
+  and temporary work scale with dimension, without an adapter allocation or
+  total-work budget. Borrowed lanes cannot be provided without different storage.
+- Import copies validated native lanes without fresh scalar validation. Export
+  constructs an empty scalar scratch value even at dimension zero, restores
+  lanes in order and validates the native product. Empty/unit reconstruction
+  alone does not certify the floating environment for nonempty ingress.
+- zip restores left then right before each callback. Existing empty operands
+  bypass callbacks after family validation. An empty callback result does not
+  hide a later error; successful traversal validates the family before canonical
+  publication. Scratch defaults never replace failed or empty results.
+- Hull reconstructs both native operands when either is empty, preserving native
+  copy behavior. Otherwise it takes lane hulls. It returns a containing box, not
+  the general set union. Dot starts from scalar zero, then restores, multiplies
+  and adds in index order. Later cancellation cannot undo earlier overflow.
+- Fixture methods are assertion-based builders, not general fallible ingress.
+  i32 Q8 multiplies numerators by sixteen; i64 Q32 widens before shifting by 28,
+  but n+w is still computed in i32. Large binary32 casts can round before ingress.
+  The bounded inputs function avoids those cases by reducing seeds modulo 17;
+  dimension zero calls no lane builder. Arbitrary dimensions have no stack budget.
+- Both chains consume four add/subtract pairs, intersection with a, hull with b
+  and dot with a. Retained storage does not retain operand correlations; subtract
+  does not invert a nonsingleton add. Scalar failures remain typed and operands
+  remain available. Soa hull can internally reconstruct native vectors.
+- Tests distinguish independent integer corner/floor/ceiling expectations from
+  native comparisons sharing scalar kernels. Extreme-value fixtures do not
+  enumerate the full endpoint domain. IEEE finite-bit filtering has no internal
+  retry budget. Canonical replay validates later lanes even after an empty lane;
+  accepting noncanonical input does not promise identical input text on output.
+
+The native/cost drivers and WASM client were read as consumer context; their own
+missing documentation remains for the next batch. README commands were checked
+against those sources and the manifests, but MSRV, release timing and the archived
+layout-adoption evidence were not requalified. No performance, deployment or
+package-publication claim follows from this batch.
+
+Validation after the final source edit:
+
+- cargo test --locked --offline -j2 --manifest-path <package>/Cargo.toml passed
+  all six tests before and after edits. The independent fixed oracle covers
+  23,409 ordered interval pairs; the IEEE test covers 2,000 finite-bit fixtures
+  per width, in addition to explicit edge cases. No doctests are authored here.
+- Both actual native probe binaries ran for seeds 0..16 and u32::MAX: 36 process
+  executions and 288 full result rows per revision. Providers agreed, and edited
+  stdout matched baseline byte-for-byte. External process timeouts were 30 seconds.
+- A temporary consumer checked 1,296 complete endpoint pairs for both chains,
+  four families, nine dimensions and 18 seeds. Independent Python Fraction
+  expectations derive that fixture widening contains a, intersection restores a,
+  then hull/dot use endpoint extrema. IEEE results were decoded from bits rather
+  than compared through rounded decimal strings. This fixture-specific identity
+  is not a general inversion rule for interval arithmetic.
+- The same consumer checked direct fixture panics for integer intermediates and
+  reversed bounds, binary32 cast rounding versus binary64 exact conversion,
+  invalid-scale precedence, nonfinite ingress and signed-zero normalization.
+  Execution used external 30-second containment, not a library resource bound.
+- The real downstream WASM manifest passed locked/offline cargo check for
+  wasm32-unknown-unknown. This is compilation evidence; this batch did not execute
+  its ABI or claim a new host/platform qualification.
+- cargo doc --lib --no-deps --document-private-items passed with warnings, broken
+  links and private-link violations denied. All 41 non-test library/workload
+  blocks rendered in full, including both fixed and both IEEE generated impls.
+  Rendering-only copies with six test attributes removed preserved all bodies
+  and rendered the test functions/modules. Together all 51 nonlocal blocks render;
+  eight local aliases/macros were source-checked and rendered separately as Markdown.
+  Ordinary Rustdoc API pages for those function-local items are not claimed.
+- Removing only whole comments and blank lines gives identical remaining source
+  bytes in all three Rust files. The manifest, lockfile and README remain byte-identical.
+  Selected-file rustfmt and git diff --check passed. Full workflow/performance gates
+  remain owner-waived for this docs-only session; the root coverage mandate persists.
+
+Evidence: /tmp/csgrs-interval-layout-audit/ holds before/after build metadata, test
+logs, native output reports, exact chain rows, rendering matches and validation
+scripts. Temporary executables and duplicate test/local HTML were removed; the
+shared Cargo target was reused (approximately 4.5 GiB), without a second target.
+No focused check remains blocked. Remaining platform drivers, other conformance
+packages and the repository-wide review remain open. These finite checks do not
+establish universal arithmetic closure or full repository documentation coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
