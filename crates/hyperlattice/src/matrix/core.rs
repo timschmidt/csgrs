@@ -6002,6 +6002,21 @@ fn divide_matrix4_by_lower_triangular_checked(
     divide_matrix4_by_lower_triangular(left, right)
 }
 
+/// Computes the right quotient X satisfying `X * right = left` by structural dispatch.
+///
+/// Collects right facts first, then tries identity, diagonal, pure translation,
+/// upper-affine with a nondiagonal linear block, other upper triangular, lower
+/// triangular, and remaining affine shapes, in that order. Upper-triangular
+/// handling excludes affine divisors with diagonal linear blocks so their
+/// translation-aware specialization remains reachable. Left shape facts are
+/// collected only inside affine cases, where an affine dividend permits bottom-row
+/// reconstruction; the dividend need not be invertible.
+///
+/// The remaining schedule uses a shared adjugate for a non-dyadic rational divisor,
+/// or a dyadic divisor with a rational dividend. Otherwise it solves
+/// `rightᵀ * Xᵀ = leftᵀ`. The adjugate route takes one determinant reciprocal before
+/// forming and scaling `left * adj(right)`. Ordinary scalar errors propagate;
+/// structural recognition and rational-class selection do not prove nonsingularity.
 fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     let right_facts = matrix3_facts(&right);
 
@@ -6037,9 +6052,7 @@ fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResu
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
         trace_matrix!("helper", "right-divide3-upper-triangular");
-        // Exact triangular dispatch is cheaper than generic cofactor/Gauss-Jordan
-        // for structurally triangular divisors. This is the same structural-first
-        // principle used by triangular solve kernels in direct methods.
+        // Solve rows against the known triangular divisor with shared reciprocals.
         return divide_matrix3_by_upper_triangular(left, &right);
     }
     if right_facts.is_lower_triangular {
@@ -6047,18 +6060,12 @@ fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResu
         return divide_matrix3_by_lower_triangular(left, &right);
     }
     if right_facts.is_affine {
-        // Left-side structural facts are only needed for affine dispatch, so
-        // delay collecting them until after non-affine branches have been
-        // eliminated.
-        // This preserves structural short-circuiting in common dense matrix
-        // workloads and aligns with the "defer expensive queries" policy in
-        // exact geometric computation .
+        // This remaining affine case needs left shape facts for bottom-row reconstruction.
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         trace_matrix!("helper", "right-divide3-affine");
-        // Reuse the known structural fact for both left- and right-signed
-        // branches to avoid rescanning the same affine predicate.
+        // Reuse the collected left-affine and right-linear-diagonal flags.
         if left_is_affine {
             if right_linear_is_diagonal {
                 trace_matrix!("helper", "right-divide3-affine-left-affine-linear-diagonal");
@@ -6082,12 +6089,7 @@ fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResu
     }
 
     trace_matrix!("helper", "right-divide3-shared-adjugate");
-    // Shared-scale prototype: compute `left * adj(right)` and distribute
-    // `1/det(right)` only after the matrix product. Exact Real kernels pay heavily
-    // for each pivot inverse in Gauss-Jordan division, so this branch compares
-    // one shared scalar inverse plus more multiplies against repeated pivot
-    // normalization. Keep it only while matrix profile traces and Criterion
-    // timings show wins.
+    // Construct one determinant reciprocal, then scale the adjugate product last.
     let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
     let inv_det = det.inverse()?;
     Ok(scale_matrix3(
@@ -6096,6 +6098,18 @@ fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResu
     ))
 }
 
+/// Borrows both matrices for right division with the owned path's shape priority.
+///
+/// Uses the ordered structural cases of [`right_divide_matrix3`], cloning the
+/// identity result and working storage required by diagonal/triangular helpers.
+/// Borrowed affine helpers retain the inputs through row construction. The
+/// rational-class selector checks the divisor first: non-dyadic rational data
+/// qualifies directly; a dyadic divisor also requires a rational dividend.
+///
+/// The fallback clones directly into transposed solve buffers. The shared-adjugate
+/// route builds the divisor's adjugate, takes its determinant reciprocal and
+/// borrows the dividend through multiplication. It does not eliminate all scalar
+/// cloning, impose a scalar-work bound or require the dividend to be nonsingular.
 fn right_divide_matrix3_ref(
     left: &[[Real; 3]; 3],
     right: &[[Real; 3]; 3],
@@ -6178,10 +6192,7 @@ fn right_divide_matrix3_ref(
     }
 
     trace_matrix!("helper", "right-divide3-ref-shared-adjugate");
-    // Borrowed division keeps the left matrix borrowed through the product and
-    // materializes only the divisor adjugate. This is the same shared-scale
-    // experiment as the owned path, but avoids cloning both inputs before
-    // transposed Gauss-Jordan elimination.
+    // Keep the dividend borrowed through multiplication by the constructed adjugate.
     let (adjugate, det) = matrix3_adjugate_and_determinant(right);
     let inv_det = det.inverse()?;
     Ok(scale_matrix3(
@@ -6190,6 +6201,15 @@ fn right_divide_matrix3_ref(
     ))
 }
 
+/// Right-divides with known-nonzero guards on the selected reciprocal schedule.
+///
+/// Preserves [`right_divide_matrix3`]'s structural and rational-class dispatch.
+/// Identity returns the dividend and translation needs no reciprocal. Diagonal,
+/// triangular and affine cases use their checked guards; other divisors use checked
+/// transposed Gauss–Jordan or a shared adjugate whose determinant is guarded before
+/// inversion. The first zero/unknown guard error propagates without a partial
+/// quotient. Checked scalar knowledge is not a universal singularity decision or
+/// a separate refinement policy.
 fn right_divide_matrix3_checked(
     left: [[Real; 3]; 3],
     right: [[Real; 3]; 3],
@@ -6238,17 +6258,12 @@ fn right_divide_matrix3_checked(
         return divide_matrix3_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
-        // Delay left-side structural facts until needed by affine right-divisor
-        // handling so strict non-affine checked rows stay on a single fact-scan.
-        // This structural laziness is consistent with deferred simplification
-        // and sparse-path guidance in exact geometric computing literature.
+        // Inspect left shape only when choosing this affine specialization.
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         trace_matrix!("helper", "right-divide3-checked-affine");
-        // Keep branch classification shared across checked and checked-abort paths;
-        // this is the cheapest way to reduce redundant structural queries on
-        // large affine-matrix workloads.
+        // Reuse these flags without repeating affine predicates in the subbranches.
         if left_is_affine {
             if right_linear_is_diagonal {
                 trace_matrix!(
@@ -6284,6 +6299,18 @@ fn right_divide_matrix3_checked(
     ))
 }
 
+/// Dispatches checked right division with branch-dependent signal attachment.
+///
+/// Uses the same branch order as [`right_divide_matrix3_checked`]. Identity,
+/// diagonal, translation, triangular and diagonal-linear affine cases neither
+/// attach nor poll this signal. General affine division attaches the 2×2
+/// determinant before guarding it; the shared-adjugate route does likewise after
+/// forming the adjugate and determinant. The transposed solve forwards the flag
+/// to its checked pivot routine.
+///
+/// Later scalar work inherits the selected routine's signal dependencies. An
+/// accepted signal is not an unconditional cancellation check, deadline or bound
+/// on work performed before attachment. Zero/unknown guards retain their order.
 fn right_divide_matrix3_checked_with_abort(
     left: [[Real; 3]; 3],
     right: [[Real; 3]; 3],
@@ -6345,8 +6372,7 @@ fn right_divide_matrix3_checked_with_abort(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         trace_matrix!("helper", "right-divide3-checked-abort-affine");
-        // Cache the left structural fact once, because this branch remains hot in
-        // iterative symbolic constraint pipelines.
+        // Reuse the left-affine flag for the two possible linear-block shapes.
         if left_is_affine {
             if right_linear_is_diagonal {
                 trace_matrix!(
@@ -6387,6 +6413,23 @@ fn right_divide_matrix3_checked_with_abort(
     ))
 }
 
+/// Computes `left * right⁻¹`, preferring an early rational cofactor schedule.
+///
+/// Before collecting right shape facts, tests three nonzero witnesses and exposed
+/// rational representation via [`can_use_dense_exact_shared_adjugate4`]. Otherwise
+/// tries identity, diagonal, translation, nondiagonal-linear upper affine, other
+/// upper triangular, lower triangular and remaining affine cases, in that order.
+/// Affine divisors with diagonal linear blocks bypass the general upper-triangular
+/// case. Left shape facts are collected only for affine cases.
+///
+/// For a non-affine dividend and diagonal-linear affine divisor, known nonzero
+/// linear diagonals select ordinary division; missing knowledge selects checked
+/// guards even on this ordinary API. The affine-dividend branch instead calls
+/// its ordinary specialized helper. The final selector uses shared adjugate
+/// arithmetic for any rational divisor, without requiring a rational dividend;
+/// otherwise it solves the transposed left system. The ordinary shared route
+/// inverts the determinant before constructing the adjugate and product. No route
+/// requires an invertible dividend or treats a zero dividend as a singularity bypass.
 fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     if can_use_dense_exact_shared_adjugate4(&right) {
         trace_matrix!("helper", "right-divide4-dense-exact-shared-adjugate");
@@ -6424,11 +6467,8 @@ fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResu
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        // Right-dividing by an upper-triangular matrix is a collection of
-        // triangular solves, with O(n²) complexity versus O(n³) for
-        // adjugate-based cofactor routes. This is the exact same dispatch
-        // policy used in triangular dense linear algebra kernels
-        // (Golub & Van Loan, *Matrix Computations*, 4th ed., §4.2).
+        // Each row solves against the triangular divisor independently. Variable-size
+        // scalar-operation work is quadratic per row, cubic for all n rows.
         trace_matrix!("helper", "right-divide4-upper-triangular");
         return divide_matrix4_by_upper_triangular(left, &right);
     }
@@ -6439,18 +6479,12 @@ fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResu
         return divide_matrix4_by_lower_triangular(left, &right);
     }
     if right_facts.is_affine {
-        // Left-side facts are only required for affine dispatch; keeping the
-        // non-affine path down to a single right-fact scan avoids unnecessary
-        // structural work and mirrors the deferred-symbolic strategy promoted in
-        // the exact geometric computation model.
+        // Only affine specialization needs the dividend's affine shape flag.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         trace_matrix!("helper", "right-divide4-affine");
-        // Reusing both affine flags cuts duplicate structural scans in mixed
-        // geometric workloads. This follows the standard dispatcher pattern:
-        // preserve expensive checks for once and reuse them across nearby
-        // specializations (Golub & Van Loan, *Matrix Computations*).
+        // Reuse both shape flags across the affine subbranches.
         if left_is_affine {
             trace_matrix!("helper", "right-divide4-affine-left-affine");
             if right_linear_is_diagonal {
@@ -6491,12 +6525,29 @@ fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResu
     ))
 }
 
+/// Recognizes the early rational cofactor route without collecting full matrix facts.
+///
+/// First requires known nonzero entries (1,0), (0,1), (3,0), in that order, through
+/// [`matrix4_is_definitely_dense_for_inverse`]. Only then classifies all exposed
+/// scalar representations as rational. The three witnesses exclude triangular
+/// and affine shortcuts; they do not certify full entry density or invertibility.
+/// A missing witness or rational representation returns false, leaving later
+/// structural dispatch to choose a schedule.
 #[inline]
 fn can_use_dense_exact_shared_adjugate4(right: &[[Real; 4]; 4]) -> bool {
     matrix4_is_definitely_dense_for_inverse(right)
         && matrix4_exact_rational_kind(right) != ExactRationalKind::NonRational
 }
 
+/// Right-divides borrowed operands using rational minors and one determinant reciprocal.
+///
+/// Called after the early rational-divisor guard; the known-rational scalar
+/// kernels require rational right entries, including any zeros. Forms two sets
+/// of six 2×2 minors, their determinant, its reciprocal, then the adjugate. A
+/// rational dividend selects the known-rational product kernel; other dividends
+/// use fresh density checks and the ordinary multiplication fallback as needed.
+/// Scales the product last. Ordinary inverse errors propagate before the adjugate
+/// and product, and neither operand is assumed fully dense merely by this name.
 #[inline]
 fn right_divide_matrix4_dense_exact_shared(
     left: &[[Real; 4]; 4],
@@ -6514,6 +6565,14 @@ fn right_divide_matrix4_dense_exact_shared(
     Ok(scale_matrix4(product, &inv_det))
 }
 
+/// Guards the determinant in the early known-rational 4×4 cofactor schedule.
+///
+/// Requires the same rational-divisor precondition as
+/// [`right_divide_matrix4_dense_exact_shared`]. Constructs minors and determinant,
+/// requires known nonzero status, then inverts, constructs the adjugate, selects
+/// the product kernel from dividend rationality and scales. A guard failure stops
+/// before inverse/product work; the early nonzero-entry witnesses alone do not
+/// establish this determinant condition.
 #[inline]
 fn right_divide_matrix4_dense_exact_shared_checked(
     left: &[[Real; 4]; 4],
@@ -6532,6 +6591,13 @@ fn right_divide_matrix4_dense_exact_shared_checked(
     Ok(scale_matrix4(product, &inv_det))
 }
 
+/// Attaches a signal to the rational determinant before checked shared division.
+///
+/// Requires the early route's rational-divisor precondition. Minor and determinant
+/// construction precedes attachment; the known-nonzero guard and inverse follow
+/// it. Adjugate construction, dividend classification, product and final scaling
+/// add no explicit polling or attachment. Scalar propagation determines subsequent
+/// cancellation, so this does not bound the pre-attachment or total work.
 #[inline]
 fn right_divide_matrix4_dense_exact_shared_checked_with_abort(
     left: &[[Real; 4]; 4],
@@ -6551,6 +6617,21 @@ fn right_divide_matrix4_dense_exact_shared_checked_with_abort(
     Ok(scale_matrix4(product, &inv_det))
 }
 
+/// Borrows both operands for 4×4 right division, retaining the dense-first priority.
+///
+/// Uses the early rational-divisor guard and ordered shape cases of
+/// [`right_divide_matrix4`]. Identity clones the dividend; diagonal/triangular
+/// cases clone required working storage, while borrowed affine kernels construct
+/// the output from references. The unrestricted diagonal-linear affine branch
+/// uses ordinary scalar reciprocals, without the owned dispatcher's extra
+/// known-nonzero guard fallback. Borrowing therefore does not imply identical
+/// predicate or failure schedules. Scalar work can strengthen cached knowledge;
+/// a later checked call may then succeed where a cold call returned unknown.
+///
+/// The final shared-adjugate selector admits every exposed rational divisor,
+/// including non-dyadic values and symbolic dividends. Other cases clone directly
+/// into transposed Gauss–Jordan buffers. Shared division takes one determinant
+/// reciprocal before adjugate construction, product and final scaling.
 fn right_divide_matrix4_ref(
     left: &[[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -6599,10 +6680,7 @@ fn right_divide_matrix4_ref(
         return divide_matrix4_by_lower_triangular(left.clone(), right);
     }
     if right_facts.is_affine {
-        // Defer structural inspection of `left` to keep non-affine fast paths free of an
-        // extra matrix scan; this avoids unnecessary work and follows standard "avoid wasted
-        // work for structurally-typed dispatch" guidance (Golub and Van Loan, Matrix
-        // Computations, 2013).
+        // Collect dividend shape facts only for this affine specialization.
         let left_facts = matrix4_facts(left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
@@ -6626,8 +6704,8 @@ fn right_divide_matrix4_ref(
     }
     if !prefer_shared_adjugate_right_division(left, right) {
         trace_matrix!("helper", "right-divide4-ref-gauss-jordan");
-        // Same borrowed right-division shortcut as 3x3, with unrolled 4x4
-        // transposes. The adjugate route is kept only for dyadic inputs.
+        // Clone directly into transposed solve buffers. The rejected shared route
+        // admits any rational divisor, not just dyadic values.
         return Ok(transpose_array4(solve_left_system4(
             transpose_array4_ref(right),
             transpose_array4_ref(left),
@@ -6635,10 +6713,7 @@ fn right_divide_matrix4_ref(
     }
 
     trace_matrix!("helper", "right-divide4-ref-shared-adjugate");
-    // The 4x4 cofactor route does substantially more scalar multiplication
-    // than Gauss-Jordan, but it carries one shared determinant inverse. This
-    // branch is intentionally isolated so trace rows can decide whether exact
-    // rational normalization or scalar op count dominates.
+    // Share the determinant reciprocal across the final product scaling.
     let (s, c) = matrix4_factors(right);
     let det = determinant4_from_factors(&s, &c);
     let inv_det = det.inverse()?;
@@ -6649,6 +6724,18 @@ fn right_divide_matrix4_ref(
     ))
 }
 
+/// Applies checked right division with early rational and structural specializations.
+///
+/// The early cofactor route guards its determinant. Remaining shape priority
+/// matches [`right_divide_matrix4`]; identity and translation need no reciprocal.
+/// Diagonal and triangular paths guard their pivots. Within diagonal-linear affine
+/// cases, retained known-nonzero facts permit ordinary helpers; otherwise ascending
+/// checked guards run. General affine cases use checked block inversion.
+///
+/// Other divisors use checked transposed Gauss–Jordan or a shared adjugate with
+/// its determinant guarded before inversion and adjugate construction. Failure
+/// propagates without a partial quotient. These local guards neither prove all
+/// symbolic singularities nor supply a total-resource limit.
 fn right_divide_matrix4_checked(
     left: [[Real; 4]; 4],
     right: [[Real; 4]; 4],
@@ -6705,9 +6792,7 @@ fn right_divide_matrix4_checked(
         return divide_matrix4_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
-        // Defer left-side structural probe until the affine branch to preserve object-structure fast
-        // pathing and avoid materializing facts for matrix divisions that dispatch through
-        // cheaper triangular/cofactor routes.
+        // Collect dividend shape facts for affine bottom-row reconstruction.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
@@ -6763,6 +6848,18 @@ fn right_divide_matrix4_checked(
     ))
 }
 
+/// Routes checked 4×4 right division with the selected kernel's signal behavior.
+///
+/// Preserves the early rational route and shape ordering of
+/// [`right_divide_matrix4_checked`]. Early and final shared-adjugate routes attach
+/// the determinant after its construction and before its guard/inverse. General
+/// affine and transposed-solve branches forward the flag to their inverse/pivot
+/// routines. Their internal specializations determine actual attachments.
+///
+/// Identity, diagonal, triangular and diagonal-linear affine cases do not consume
+/// the signal; translation adapters accept it but ignore it. Thus an already-set
+/// flag need not reject the operation. No dispatcher-level polling, deadline or
+/// work bound is added, and all checked scalar failures propagate normally.
 fn right_divide_matrix4_checked_with_abort(
     left: [[Real; 4]; 4],
     right: [[Real; 4]; 4],
@@ -6828,9 +6925,7 @@ fn right_divide_matrix4_checked_with_abort(
         return divide_matrix4_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
-        // Defer left-structure extraction until affine handling is required so short-circuit
-        // branches preserve exactness-cost predictability and skip unnecessary probes.
-        // See: Golub and Van Loan, Matrix Computations, 4th ed.
+        // Inspect dividend shape only when this affine branch needs it.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;

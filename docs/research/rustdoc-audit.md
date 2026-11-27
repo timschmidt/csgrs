@@ -9609,6 +9609,135 @@ private docs. The next contiguous boundary is `right_divide_matrix3`, currently
 core.rs line 6005. Remaining dispatch, multiplication, transforms, cofactors,
 public APIs and tests still require audit.
 
+## 2026-11-27: Hyperlattice right-division dispatch and shared adjugates
+
+Base revision: `de2ce251c`. The preceding goal turn made progress by committing
+and pushing affine/triangular row-helper documentation. This batch starts at
+`right_divide_matrix3`. Owning layer: Hyperlattice matrix dispatch over Hyperreal
+scalar facts/arithmetic. Relevant contracts: P1/P3 for exact representation and
+conservative structural knowledge, P4/P10 for cache state and dispatch/predicate
+order, P5 for cancellation/work limits, and P6 for typed scalar failures. Inputs
+are arbitrary exact 3×3/4×4 matrices; specialized shape/rational paths establish
+their prerequisites through the existing selectors. The dividend need not be
+invertible. Before editing, twelve helpers lacked Rustdoc, a 4×4 comment still
+restricted shared adjugates to dyadics, and a triangular comment incorrectly
+assigned quadratic work to a whole matrix quotient. The original tests and
+independent baseline probes reproduced the current paths before source edits.
+
+Coverage:
+
+- Read core.rs original lines 6005–6893, all 889 lines of the eight owned,
+  borrowed, checked and signal-aware dispatchers, the early 4×4 rational-route
+  predicate, and three shared-adjugate helpers. The block is now 984 lines;
+  all twelve functions have Rustdoc. The matrix core remains partially audited.
+- Re-read rational-class selectors, three-entry density witnesses, borrowed
+  multiplication certificate handling, affine guard/translation/signal helpers,
+  and the rational-minor/product kernels as supporting context. These reads do
+  not complete later kernels' own documentation audit.
+- Re-read the 3×3/4×4 quotient-identity tests, checked-division agreement and
+  unknown-pivot fixtures. They were already documented; this batch changes no
+  test files and claims no additional whole-file or test-documentation coverage.
+
+Documented behavior and corrections:
+
+- Right division solves X*B=A. Non-specialized Gauss–Jordan works on Bᵀ*Xᵀ=Aᵀ;
+  shared-adjugate paths construct one determinant reciprocal and scale the
+  adjugate product last. The 3×3 path forms its adjugate with the determinant;
+  4×4 paths invert the determinant before building the adjugate.
+- Shape priority is identity, diagonal, translation, upper affine with
+  nondiagonal linear block, other upper triangular, lower triangular, and
+  remaining affine. Affine diagonal-linear divisors deliberately bypass general
+  upper-triangular division. Left shape facts are requested only for affine
+  specialization; rational-class inspection is a separate operation.
+- The 4×4 early route first tests entries (1,0), (0,1), (3,0) for known nonzero
+  status, then requires rational exposed representations. Those witnesses
+  exclude shape shortcuts but do not prove full entry density or invertibility.
+  The known-rational minor kernels accept zeros elsewhere. Rational dividends
+  select a known-rational product; symbolic dividends use fresh product-density
+  certification and the ordinary fallback as needed.
+- Remaining 4×4 shared-adjugate selection accepts any rational divisor, including
+  non-dyadics and symbolic dividends. For 3×3, non-dyadic rational divisors qualify
+  directly; dyadic divisors also require a rational dividend. Corrected the old
+  dyadic-only statement. Unsupported timing comparisons and generic literature
+  attributions were replaced with the local scheduling facts they described.
+- Corrected whole-matrix triangular complexity: the variable-size schedule is
+  quadratic in scalar operations per row and cubic across n rows. No scalar
+  bit-complexity, timing or memory improvement follows from these fixed schedules.
+- Checked paths guard pivots/determinants unless existing nonzero facts select
+  an ordinary specialization. Zero/unknown failures propagate without a partial
+  successful quotient. A zero dividend does not bypass divisor validation.
+- Owned ordinary 4×4 division of an unrestricted dividend by a diagonal-linear
+  affine divisor uses checked guards when nonzero diagonal knowledge is missing.
+  Borrowed ordinary division and the ordinary affine-dividend branch do not add
+  those guards. The documentation preserves this existing behavioral distinction.
+- Cold-process probes with the shared near-zero sine fixture reproduced
+  UnknownZero for owned unrestricted, checked unrestricted, checked affine, and
+  signal-aware checked division. Borrowed unrestricted and ordinary affine-left
+  division constructed results. In a separate warm sequence, borrowed arithmetic
+  strengthened shared scalar knowledge and a subsequent checked call succeeded.
+  This is knowledge-dependent dispatch, not proof that the cold unknown was zero.
+- An initial combined temporary probe incorrectly expected the checked call to
+  remain UnknownZero after borrowed arithmetic had warmed the shared data. Kept
+  its source as `edge-initial.rs`, separated cold cases into fresh processes,
+  and added an explicit warm-case assertion. No repository fixture or assertion
+  was weakened. These probes check construction/error behavior; they do not claim
+  full evaluation or a general completion bound for arbitrary symbolic inverses.
+- Identity, diagonal, translation, triangular and diagonal-linear affine
+  signal-aware shortcuts do not consume the flag (translation adapters may
+  accept and ignore it). General affine/solve branches forward to their scalar
+  routines; shared adjugates attach the determinant after construction and before
+  guarding/inverting it. Accepting a flag does not promise immediate rejection,
+  preemptive cancellation, or a bound on pre-attachment work.
+
+Validation after final source edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing comment-only and blank
+  lines leaves identical executable source against `de2ce251c`; all attributes,
+  scalar calls, guards and dispatch traces remain unchanged.
+- Hyperlattice built with all features and no defaults. Ten selected original
+  integration tests passed in both configurations and on the all-feature
+  baseline, using direct rustc harnesses linked to matching Cargo artifacts.
+- An independent Python Fraction Gauss–Jordan oracle supplied 176 exact rational
+  quotient expectations: eleven divisor families, two dimensions, two dividend
+  shapes and four ownership/checking modes. Every all-feature case asserted one
+  event for its expected selected route. Both final feature configurations passed
+  the semantic cases; all-feature baseline/final probe stdout matched exactly.
+- Symbolic monomial divisors returned identity under four Gauss–Jordan modes in
+  both dimensions. Rational all-ones singular divisors returned DivideByZero for
+  zero dividends in all four modes. Additional edge probes checked sixteen exact
+  symbolic-dividend quotients against independently formed rational coefficients
+  times π, including dyadic/non-dyadic 3×3 selection and both 4×4 adjugate routes.
+  All-feature edge cases also asserted their expected route count; no-default
+  mode repeated semantics with tracing compiled out.
+- For the 44 rational signal-aware cases, trace assertions counted zero
+  attachments on 28 shape shortcuts and one on sixteen general-affine/shared
+  routes. The 28 shortcuts also returned the exact oracle quotient with an
+  already-set flag. This validates the documented limited signal behavior,
+  not cancellation of arbitrary scalar work. No existing count was loosened.
+- Seven fresh-process edge invocations per configuration covered the six cold
+  outcomes and one deliberately warm sequence above. External limits were
+  60 seconds per original test and 30 seconds per probe invocation. The final
+  temporary probes compiled warning-free after removing redundant parentheses.
+- Private library and integration-target Rustdoc passed with warnings and
+  broken/private links denied in both configurations. Full-text checks located
+  all twelve new doc groups on their individual private function pages. The
+  298 inspected HTML pages are rendering evidence, not completed API audits.
+- Cargo checks passed for the matrix integration target, mathbench and downstream
+  Hyperspatial library including Hyperlimit, with all features and no defaults.
+  Used --locked --offline -j 2, CARGO_INCREMENTAL=0 and the shared target directory.
+- Full workflows remain owner-waived. No full matrix suite, benchmark, sanitizer,
+  binary-size, total-work or universal closure claim was added. No focused check
+  remains blocked. Removed three temporary executables; the shared target remains
+  near 2.5 GiB and no duplicate target directory was created.
+- The root AGENTS.md mandate still requires 100% public/private Rustdoc. This
+  batch extends demonstrated coverage; repository-wide completion remains unproven.
+
+Evidence: `/tmp/csgrs-rustdoc-matrix-routing-*.log`, Cargo artifact JSON and
+`/tmp/csgrs-matrix-routing-audit/` temporary sources, oracles, checkers and private
+Rustdoc. The next contiguous boundary is `multiply_arrays3_borrowed`, currently
+core.rs line 6990. Multiplication/transform/cofactor kernels, public APIs and
+remaining matrix tests still require audit.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
