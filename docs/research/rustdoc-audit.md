@@ -6689,6 +6689,116 @@ generated-item coverage and the wider repository audit remain open. Remaining
 Hyperlimit work includes predicates.rs workloads, the perf-atlas example, fuzz
 targets, and support/documentation artifacts.
 
+## Hyperlimit fuzz targets and workspace documentation
+
+Read every baseline line of both fuzz targets at `d110cd03f`:
+`predicate_invariants.rs` (848) and `hyperreal_representations.rs` (187).
+Also read the entire fuzz README, Cargo.toml, and 310-line Cargo.lock. This
+completes whole-file reading of the five tracked files under Hyperlimit's fuzz
+directory, not proof that the fuzz assertions pass or that generated-item
+documentation is complete. Ownership is the predicate qualification harness;
+relevant contracts are P5 and P8–P11, with P4 for retained evidence. The domain
+is byte-derived bounded rational coordinates, fixed scalar recipes, and short
+opaque graph constructions under explicit policies. Missing acceptance witnesses
+were private-item/field documentation and accurate descriptions of asserted
+coverage, uncertainty, and generated harness behavior.
+
+Documented all 18 authored declarations (including two conversion methods and
+one function-local helper), 26 fields, and both module introductions. Executable
+source is identical after removing comment-only and blank lines. No generator,
+assertion, policy, macro invocation, dependency, manifest flag, or lock entry
+changed. The README now distinguishes actual target coverage from integration
+coverage and includes verified commands for explicitly documenting doc=false bins.
+
+The invariant target decodes four planar and five spatial points with i16
+numerators and denominator-byte modulo 16 plus one. Its shared-scale helper maps
+each numerator into 1–16 over prime denominator 17; the nested nonzero_mod17 name
+does not describe its actual modulo-16 calculation. Most predicates use
+APPROXIMATE_512; planar orientation separately compares STRICT if the former
+decides. Orientation/point-line sequential and parallel batches compare complete
+outcomes, while most remaining assertions compare values only. Several reversal,
+boundary-zero, and report branches accept uncertainty by skipping assertions.
+
+Documented the actual geometric fixtures: ring queries at source vertices,
+repeated circle/sphere sites, rational coefficient facts, interval/ball signs,
+coordinate-plane point recovery, segment symmetry, endpoint zero distances,
+point-sized sphere/AABB contacts, and segment/ray triangles sharing their origin
+with a triangle vertex. That last relation does not state a general ray/segment
+equivalence. Segment/plane and coplanar records require validation; lifted
+triangle pairs are planar, and relation/report checks do not independently prove
+the validators' geometric sufficiency. Fixed half-parameter, circle, square/cube,
+support-DOP, and feasible/infeasible halfspace cases supplement generated inputs.
+Source-derived expectations are documented without claiming a newly executed run.
+
+The representation target has 20 fixed recipes spanning eight public structural
+kinds, plus four opaque recipes, not 22 fixed certificate recipes. Public-kind
+assertions precede nonzero rational scaling and do not check each scaled class.
+The scale helper receives denominator byte one, so even the zero-substituted
+scale numerator is divided by two. Offset denominators range 1–256; signed step
+numerators range 1–7 with denominators 1–5. Rational offsets enter edge deltas,
+not every carrier. The stride byte jointly controls policy, partner rotation
+modulo 24, and recursive depth modulo eight; shear also supplies graph opcodes.
+All pair rotations are selectable across inputs, but no particular fuzz run is
+proved to visit all pairs. Orientation/batch comparisons accept matching Unknown;
+the source point must classify On, while sign and ordering results are discarded.
+Certainty receipts are not asserted. Graph updates are limited to 1–8 rounds;
+this does not bound the complete target's work, memory, or elapsed time.
+
+Revisited relevant excerpts of the already reviewed representation integration
+test: it contains the additional Pow10/Pow2 recipes and serde-gated inventories
+of 70 node tags and 18 shared-constant tags. Corrected the README's conflation
+with fuzz-target coverage and stale 57-node count. Its retained-performance
+section now reflects the preceding benchmark audit: independent generators,
+20,000 total initial cases, at most 100 promotions, arithmetic-mean timing score,
+unchecked predicate outcomes, and best-effort nontransactional writes. This
+corrects documentation, not the target coverage, runtime behavior, or report text.
+
+The fuzz manifest is an isolated workspace enabling Hyperlimit std/parallel with
+two test=false/doc=false bins. Read all 35 lockfile package records and dependency
+edges; the lock selects libfuzzer-sys 0.4.12. Inspected that cached version's typed
+macro arms at lib.rs lines 298–374 (also initially viewed equivalent 0.4.13
+context before checking the lock). The initializer calls library initialization;
+the input function rejects insufficient/undecodable bytes or writes debug input
+and rejects it in diagnostic mode; otherwise the inner runner executes the body.
+All three functions are nested in an anonymous constant. Only the initializer
+has a short generated doc comment; the input and runner lack attached docs.
+Module prose describes their behavior, but this remains a generated-item coverage
+gap. No dependency or macro expansion was rewritten. Derived traits likewise
+are not counted as authored declarations or asserted fully audited here.
+
+Validation after final source edits:
+
+- `git diff --check`, comment-stripped source identity, authored-item/field scans,
+  and local README link resolution passed. Focused Rustfmt passes for the
+  invariant target. The representation target has one pre-existing assertion
+  formatting difference: baseline and current Rustfmt checks both exit 1 and
+  request exactly the same changed lines. It was left untouched in this docs-only
+  worktree; this is a recorded baseline finding, not a passing format claim.
+- The first offline check lacked locked cc 1.2.62. After authorized dependency
+  retrieval, compilation passed; the final offline command also passed:
+  `cargo check --locked --manifest-path crates/hyperlimit/fuzz/Cargo.toml
+  --bins --offline -j2`.
+- `cargo rustdoc --locked --manifest-path crates/hyperlimit/fuzz/Cargo.toml
+  --bin TARGET --offline -j2 -- --document-private-items -D warnings
+  -D rustdoc::broken_intra_doc_links -D rustdoc::private_intra_doc_links`
+  passed for both targets. Verified 45 complete doc groups across 17 rendered
+  pages: 13 representation groups and 32 invariant groups, including all fields.
+  The nested nonzero_mod17 helper has attached source Rustdoc but no item page;
+  the three macro-generated functions also have no standalone pages. Rendering
+  therefore does not demonstrate their item-documentation coverage.
+- No fuzz campaign, test, benchmark, or report writer ran. No completion,
+  certification, timing, or resource-bound claim was newly established. Shared
+  build storage is about 1.7 GiB with incremental compilation disabled. Full
+  workflow validation remains owner-waived for this docs-only session.
+
+Evidence: `/tmp/csgrs-rustdoc-hyperlimit-fuzz-check-final.log`,
+`/tmp/csgrs-rustdoc-hyperlimit-fuzz-{invariants,representations}-doc.log`,
+`/tmp/csgrs-rustdoc-fuzz-format-{baseline,current}.log`, and the render checker
+`/tmp/csgrs-fuzz-render.py`. The whole-file reading and authored documentation
+are complete for these targets; generated-item coverage and the wider audit
+remain open. Hyperlimit's predicates benchmark workloads, perf-atlas example,
+and other support/documentation artifacts still require review.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

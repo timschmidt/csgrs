@@ -1,4 +1,24 @@
-//! Cross every Hyperreal representation through exact predicate entry points.
+//! Fuzz predicate consumption of 20 fixed scalar recipes and four opaque graph recipes.
+//!
+//! The fixed recipes assert all eight public structural kinds before nonzero
+//! rational scaling. They do not enumerate every private certificate or arbitrary
+//! composition. Each decoded input visits 24 carriers and one rotated partner per
+//! carrier, under STRICT or APPROXIMATE_512 selected by the stride byte's high bit.
+//! Translation/shear fixtures compare orientation reversal and scalar/sequential/
+//! parallel batch values, and require a source point to classify On its line.
+//! Sign and ordering are called without checking their results; certainty receipts
+//! are not compared. Matching Unknown values can satisfy the orientation assertions.
+//!
+//! The typed libFuzzer macro rejects short/undecodable bytes before these checks.
+//! Its generated initializer configures libFuzzer; its input function can instead
+//! write decoded-input diagnostics when RUST_LIBFUZZER_DEBUG_PATH is set, then
+//! reject the input. The generated inner runner contains the body below. Those
+//! functions are inside an anonymous constant; source module documentation does
+//! not provide attached Rustdoc for every generated item.
+//!
+//! Graph depth is limited to 1–8 update rounds, but no independent total work,
+//! memory, cancellation, or execution-time budget is enforced here. External fuzz
+//! containment is needed; policy precision alone does not bound the whole target.
 
 #![no_main]
 
@@ -10,14 +30,25 @@ use hyperlimit::{
 use hyperreal::{Rational, Real, StructuralKind};
 use libfuzzer_sys::fuzz_target;
 
+/// Byte-derived controls for carrier scale, edge deltas, pairing, policy, and graph shape.
+///
+/// The same stride byte selects policy, pairing, and recursive depth; these choices
+/// are correlated. Signed shear is also reinterpreted as u8 for graph opcodes.
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct Input {
+    /// Signed numerator for the rational offset added only to edge y deltas.
     offset_numerator: i16,
+    /// Offset denominator minus one, admitting denominators 1..=256.
     offset_denominator: u8,
+    /// Signed scale numerator; zero is replaced by one, then divided by two.
     scale: i8,
+    /// Selects a positive rational x step with magnitude numerator 1..=7.
     x_step: u8,
+    /// Selects a negative rational y step with magnitude numerator 1..=7.
     y_step: u8,
+    /// Integer shear in triangle deltas and, cast to u8, opaque update selector.
     shear: i8,
+    /// Partner rotation modulo 24, policy high bit, and graph depth modulo eight.
     representation_stride: u8,
 }
 
@@ -25,10 +56,9 @@ fuzz_target!(|input: Input| {
     let scale = if input.scale == 0 { 1 } else { input.scale };
     let scale = rational(i16::from(scale), 1);
     let offset = rational(input.offset_numerator, input.offset_denominator);
-    // Rational scaling preserves each optimized certificate family. Keep the
-    // arbitrary offset in the edge deltas instead of adding it to every carrier:
-    // adding a rational can intentionally change a certificate into ConstOffset
-    // or Irrational and would make this target only appear representation-complete.
+    // Nonzero rational scaling is intended to retain each recipe's certificate
+    // family, though kinds are asserted only before scaling. Keep the arbitrary
+    // offset in edge deltas: adding it to carriers can change certificate families.
     let mut representatives = representative_values();
     representatives.extend(opaque_graph_values(
         input.representation_stride,
@@ -49,9 +79,9 @@ fuzz_target!(|input: Input| {
 
     let stride = usize::from(input.representation_stride) % values.len();
     for (index, left) in values.iter().enumerate() {
-        // Rotating the right-hand representation keeps every certificate in
-        // every fuzz execution while allowing the fuzzer to explore all
-        // cross-representation pairs without an O(n^2) inner loop.
+        // Visit each recipe with one rotated partner per input. Across possible
+        // strides every recipe pair is selectable without a quadratic inner loop;
+        // this does not assert that a particular fuzz run visits every pair.
         let right = &values[(index + stride) % values.len()];
         let a = Point2::new(left.clone(), right.clone());
         let b = Point2::new(left + &x_step, right + &shear + &offset);
@@ -82,6 +112,10 @@ fuzz_target!(|input: Input| {
     }
 });
 
+/// Construct numerator / (denominator + 1) exactly, with denominator in 1..=256.
+///
+/// Unlike the invariant target's helper, this does not reduce the input byte modulo
+/// 16. The positive denominator justifies the constructor expect.
 fn rational(numerator: i16, denominator: u8) -> Real {
     Real::new(
         Rational::fraction(i64::from(numerator), u64::from(denominator) + 1)
@@ -89,11 +123,24 @@ fn rational(numerator: i16, denominator: u8) -> Real {
     )
 }
 
+/// Construct a nonzero signed step using numerator 1..=7 and denominator 1..=5.
+///
+/// Both are derived from the same raw byte; negative chooses the numerator sign.
 fn signed_step(raw: u8, negative: bool) -> Real {
     let magnitude = i16::from(raw % 7) + 1;
     rational(if negative { -magnitude } else { magnitude }, raw % 5)
 }
 
+/// Build 20 fixed recipes and assert their ordered public structural kinds.
+///
+/// Includes rational, pi powers/inverse, constant products/offsets, roots,
+/// exponential/logarithmic, rational-angle trig, and opaque sin(1) values. The
+/// expected kind list covers eight public kinds, not all private class tags: the
+/// separate integration corpus also contains Pow10 and Pow2 recipes. Assertions
+/// precede fuzzed scaling and do not check the resulting scaled representation.
+///
+/// Expects fixed valid domains for roots, logarithms, inverse/division, and tangent;
+/// panics if construction fails or a recipe's public kind changes.
 fn representative_values() -> Vec<Real> {
     let pi = Real::pi();
     let e = Real::e();
@@ -158,6 +205,14 @@ fn representative_values() -> Vec<Real> {
     values
 }
 
+/// Construct sin(e), cos(e), their squared-norm-minus-one identity, and a recursive graph.
+///
+/// The identity is mathematically zero but is required to remain ComputableOpaque;
+/// its sign is not asserted here. The fourth recipe starts at sin(e)+cos(e), then
+/// applies 1–8 updates chosen cyclically among sine, cosine, squaring-plus-sine,
+/// and addition of cosine. Squaring uses two references to the same predecessor.
+/// All four public kinds must be opaque or this helper panics. The depth bound
+/// limits recipe construction rounds, not total evaluation work or memory.
 fn opaque_graph_values(depth_seed: u8, opcode_seed: u8) -> Vec<Real> {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();

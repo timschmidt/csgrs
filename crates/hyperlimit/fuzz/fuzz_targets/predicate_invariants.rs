@@ -1,12 +1,25 @@
-//! Fuzz exact predicate invariants over small rational coordinate sets.
+//! Fuzz selected predicate laws and report replay over bounded rational coordinates.
 //!
-//! The generated inputs stay in `hyperreal::Real` and never use primitive-float
-//! topology. The checks focus on metamorphic laws that should survive every
-//! exact kernel and fallback route: orientation reversal/cyclicity, batch/scalar
-//! agreement, retained-evidence agreement, and
-//! circle/sphere boundary behavior.
+//! Inputs decode four planar and five spatial points with i16 numerators and
+//! denominators 1..=16. Most calls use APPROXIMATE_512; a separate planar
+//! orientation call checks STRICT agreement when the approximate-policy call
+//! decides. Exact rational construction does not itself assert certified receipts.
+//! Most comparisons consume values only. Several laws and report checks run only
+//! when a result decides, so matching uncertainty or a skipped branch is not a
+//! completion witness. Sequential/parallel orientation and point-line batches also
+//! compare complete outcomes. Fixed boundary/separation fixtures supplement the
+//! generated configurations; this is not exhaustive public-API or input coverage.
 //!
-//! Run with: `cargo fuzz run predicate_invariants` from `hyperlimit/fuzz/`.
+//! The typed libFuzzer macro rejects short/undecodable bytes, or writes diagnostics
+//! and rejects input in RUST_LIBFUZZER_DEBUG_PATH mode. Otherwise its generated
+//! inner runner calls predicate_invariants. The macro's initializer/input/runner
+//! functions live inside an anonymous constant and do not all have attached docs.
+//! The authored helper docs do not establish generated-item coverage.
+//!
+//! No independent whole-target work, memory, cancellation, or time limit is
+//! enforced here. Run with external fuzz containment, for example the commands
+//! in this fuzz workspace's README. This target asserts invariants and may panic
+//! on a mismatch; merely compiling it does not demonstrate that the laws pass.
 
 #![no_main]
 
@@ -42,17 +55,24 @@ use hyperlimit::{
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
 
+/// Policy permitting the approximate terminal for most target calls, including rational fixtures.
 const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
+/// Two independently encoded rational coordinates for planar predicate fixtures.
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawPoint {
+    /// Signed i16 numerator of the x coordinate.
     x_num: i16,
+    /// Byte reduced modulo 16, then incremented, to give the x denominator.
     x_den: u8,
+    /// Signed i16 numerator of the y coordinate.
     y_num: i16,
+    /// Byte reduced modulo 16, then incremented, to give the y denominator.
     y_den: u8,
 }
 
 impl RawPoint {
+    /// Convert both components exactly using the target's positive-denominator recipe.
     fn into_point(self) -> Point2 {
         Point2::new(
             rational(self.x_num, self.x_den),
@@ -61,21 +81,28 @@ impl RawPoint {
     }
 }
 
-/// Generated 3D rational point.
+/// Three independently encoded rational coordinates for spatial predicate fixtures.
 ///
-/// Rational inputs ensure fuzzing exercises exact predicate packages and
-/// retained-evidence reuse, not primitive-float filters.
+/// Conversion uses i16 numerators and positive denominators 1..=16 without
+/// primitive-float ingress. This specifies inputs, not the selected proof path.
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawPoint3 {
+    /// Signed i16 numerator of the x coordinate.
     x_num: i16,
+    /// Byte reduced modulo 16, then incremented, to give the x denominator.
     x_den: u8,
+    /// Signed i16 numerator of the y coordinate.
     y_num: i16,
+    /// Byte reduced modulo 16, then incremented, to give the y denominator.
     y_den: u8,
+    /// Signed i16 numerator of the z coordinate.
     z_num: i16,
+    /// Byte reduced modulo 16, then incremented, to give the z denominator.
     z_den: u8,
 }
 
 impl RawPoint3 {
+    /// Convert all three components exactly using the target's positive-denominator recipe.
     fn into_point(self) -> Point3 {
         Point3::new(
             rational(self.x_num, self.x_den),
@@ -85,16 +112,26 @@ impl RawPoint3 {
     }
 }
 
+/// Four planar and five spatial byte-derived points, reused across the invariant families.
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct Input {
+    /// Planar orientation/circle site, ring vertex and query, and center of fixed translated contacts.
     a: RawPoint,
+    /// Second planar orientation/circle site, line endpoint, and ring vertex.
     b: RawPoint,
+    /// Third planar orientation/circle site, sidedness query, and ring vertex.
     c: RawPoint,
+    /// Planar circle query, second line query, ring vertex, and lifted-triangle site.
     d: RawPoint,
+    /// First spatial site; shared segment/ray origin, triangle vertex, and pinned halfspace point.
     p: RawPoint3,
+    /// Second spatial site and segment endpoint; sets the ray direction from p.
     q: RawPoint3,
+    /// Third spatial site, second segment start, and oriented-plane/triangle vertex.
     r: RawPoint3,
+    /// Fourth spatial site, second segment end, and oriented-plane/triangle vertex.
     s: RawPoint3,
+    /// Sphere query, third oriented-plane vertex, and fifth support-DOP witness.
     t: RawPoint3,
 }
 
@@ -102,6 +139,30 @@ fuzz_target!(|input: Input| {
     predicate_invariants(input);
 });
 
+/// Exercise value symmetries, retained evidence, report replay, and selected exact fixtures.
+///
+/// Orientation uses cyclic/swapped triples, scalar and batch paths, and a strict
+/// cross-check. Ring reversal queries an existing vertex. Repeated circle/sphere
+/// sites must yield zero whenever decided; lifted coefficient metadata must be
+/// rational with known zero statuses. Interval/ball signs use rational bounds.
+///
+/// Spatial checks recover coordinate-plane intersections, exchange/reverse segment
+/// inputs, and verify endpoint zero distances and point-sized sphere/AABB contacts.
+/// Segment/ray triangle fixtures share the origin with a triangle vertex: their
+/// incidence assertion is not a general segment-versus-ray equivalence. Reports
+/// are compared/replayed when available. Degeneracy must decide; segment/plane and
+/// coplanar records must validate, with crossing candidates checked where applicable.
+/// Lifted triangle pairs lie in z=0, and swapped relations are compared if decided.
+///
+/// Fixed fixtures check half parameters, zero-radius circle contacts, square/cube
+/// boundary points, unit-DOP boundary/separation, and feasible/infeasible coordinate
+/// halfspaces. Generated support DOPs must contain their source points and replay
+/// stored extrema when construction decides. Validator agreement is not an
+/// independent proof that every validator enforces its intended geometry.
+///
+/// Many branches permit Unknown by skipping checks; most compare values without
+/// certainty receipts. Panics on failed expectations/assertions or an underlying
+/// invariant failure. There is no target-wide resource/cancellation budget.
 fn predicate_invariants(input: Input) {
     let a = input.a.into_point();
     let b = input.b.into_point();
@@ -797,6 +858,9 @@ fn predicate_invariants(input: Input) {
     }
 }
 
+/// Convert an i16 numerator and byte-modulo-16-plus-one denominator to an exact Real.
+///
+/// The denominator is always in 1..=16, justifying the constructor expect.
 fn rational(numerator: i16, denominator_byte: u8) -> Real {
     let denominator = u64::from(denominator_byte % 16) + 1;
     Rational::fraction(i64::from(numerator), denominator)
@@ -804,7 +868,15 @@ fn rational(numerator: i16, denominator_byte: u8) -> Real {
         .into()
 }
 
+/// Map three i16 values to fractions with numerators 1..=16 and common denominator 17.
+///
+/// Each numerator is coprime to the prime denominator, preserving denominator 17
+/// in reduced form and exercising shared rational scale in spatial orientation.
 fn common_scale_point3(x: i16, y: i16, z: i16) -> Point3 {
+    /// Map any i16 to 1..=16 using Euclidean remainder modulo 16, then adding one.
+    ///
+    /// Despite the name, this is not remainder modulo 17; it selects a nonzero
+    /// residue for the separately fixed denominator 17.
     fn nonzero_mod17(value: i16) -> i64 {
         i64::from(value).rem_euclid(16) + 1
     }
@@ -822,6 +894,10 @@ fn common_scale_point3(x: i16, y: i16, z: i16) -> Point3 {
     )
 }
 
+/// Construct the plane x_axis = coordinate with a positive unit coordinate normal.
+///
+/// The stored offset is minus coordinate, so the plane equation is normal dot
+/// point + offset = 0. Panics for an axis outside 0..=2; call sites use fixed axes.
 fn coordinate_plane(axis: usize, coordinate: &Real) -> Plane3 {
     let normal = match axis {
         0 => Point3::new(1.into(), 0.into(), 0.into()),
@@ -832,12 +908,17 @@ fn coordinate_plane(axis: usize, coordinate: &Real) -> Plane3 {
     Plane3::new(normal, -coordinate)
 }
 
+/// Require Zero if the outcome decides; accept Unknown without asserting completion or certainty.
 fn assert_decided_zero(outcome: PredicateOutcome<Sign>) {
     if let Some(sign) = outcome.value() {
         assert_eq!(sign, Sign::Zero);
     }
 }
 
+/// Map the guaranteed structural sign of a rational to the predicate sign enum.
+///
+/// Panics if structural facts lack a sign; all callers pass exactly constructed
+/// rational coordinates, for which that absence would violate the fixture premise.
 fn sign_of_rational(value: &Real) -> Sign {
     match value.structural_facts().sign {
         Some(hyperreal::RealSign::Negative) => Sign::Negative,
