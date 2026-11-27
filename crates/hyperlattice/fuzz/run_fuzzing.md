@@ -1,6 +1,5 @@
-Use `cargo +nightly fuzz run <fuzz_target>`.
-
-`scalar_ops`, `complex_ops`, `vector_ops`, and `matrix_ops` cover the major
-algebraic surfaces. `hyperreal_representations` additionally crosses every pair
-of the eight public Hyperreal structural kinds through scalar, vector, and
-matrix kernels.
+From `crates/hyperlattice`, use
+`cargo +nightly fuzz run <fuzz_target> --fuzz-dir fuzz` with the desired libFuzzer
+resource options. See [README.md](README.md) for targets, build/private-doc
+commands, input domains, and oracle limitations. Reachable representation pairings
+are not evidence that a fuzz campaign exercised every pair.

@@ -1,9 +1,20 @@
-//! In-depth fuzz testing of scalar operations and algebraic laws.
+//! Fuzz selected scalar operations and algebraic identities from exact dyadic seeds.
 //!
-//! Covers native `Real` operations across every ownership variant, structural
-//! checked reciprocals, and algebraic invariants for hyperreal-backed scalars.
+//! Local generation selects sanitized finite f64 or i128 values. Calls all four
+//! ownership combinations of binary arithmetic, selected unary/transcendental APIs,
+//! checked reciprocals, integer powers, and structural/lossy queries. General powers
+//! use half-integer exponents from -4 to 4; the integer-power list also includes an
+//! input i8 exponent. Seeds can span the finite binary64 range, so input magnitudes
+//! and nested evaluation cost are not small merely because exponents are bounded.
 //!
-//! Run with: `cargo +nightly fuzz run scalar_ops` from the `fuzz/` directory.
+//! Most discarded Result values exercise panic resistance, not successful completion
+//! or correctness of the returned error/value. Assertions compare exact Real carriers
+//! or structural statuses. A check against NonZero also accepts Unknown and is not a
+//! zero proof or a numerical error bound. No independent total-work/memory limit is
+//! enforced; magnitude/exponent/recipe limits are not a completed-workload guarantee.
+//! The typed libFuzzer macro uses Arbitrary input decoding before the callback; manual
+//! Input implementations retain its default zero lower size hint. Macro-generated
+//! entry functions are not individually authored/documented Rust items here.
 
 #![no_main]
 
@@ -11,15 +22,22 @@ use arbitrary::{Arbitrary, Error, Unstructured};
 use hyperlattice::{Real, ZeroKnowledge, reciprocal_checked, reciprocal_ref_checked};
 use libfuzzer_sys::fuzz_target;
 
+/// Decoded controls for this target; field order determines input consumption and the generated fixtures.
 #[derive(Debug)]
 struct Input {
+    /// First exact dyadic/integer seed, decoded before b.
     a: Real,
+    /// Second exact dyadic/integer seed; zero and large finite magnitudes are permitted.
     b: Real,
-    /// Bounded exponent so powi computation stays tractable.
+    /// Full i8 exponent (-128..=127); also selects half-integer general-power exponents via remainder modulo 17.
     exp: i8,
 }
 
 impl<'a> Arbitrary<'a> for Input {
+    /// Generate fields in declaration order from one cursor, propagating the first error.
+    ///
+    /// No custom size hint is supplied; current primitive decoding can zero-pad short
+    /// input, including synthesizing all-zero operands from an empty byte slice.
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             a: arbitrary_real(u)?,
@@ -29,12 +47,24 @@ impl<'a> Arbitrary<'a> for Input {
     }
 }
 
+/// Decode a u64 bit pattern as f64, retaining finite values and replacing every NaN/infinity with +0.0.
+///
+/// Finite subnormals and negative zero are reachable at this primitive stage. This
+/// is a fuzz-input sanitization rule, not a valid Real conversion of a nonfinite
+/// number. Arbitrary 1.4.2 zero-pads short integer input; missing bytes need not fail.
 fn finite_f64(u: &mut Unstructured<'_>) -> arbitrary::Result<f64> {
     let bits = u64::arbitrary(u)?;
     let f = f64::from_bits(bits);
     if f.is_finite() { Ok(f) } else { Ok(0.0) }
 }
 
+/// Choose a finite binary64 import or an i128 integer with ratio(1,2), then construct an exact Real.
+///
+/// The two routes produce dyadic rationals/integers, not arbitrary symbolic or
+/// non-dyadic rational data. Selection follows input bytes rather than a uniform
+/// mathematical-value distribution. Native float-conversion errors map to
+/// IncorrectFormat. Current primitive decoding zero-pads missing bytes, so even
+/// empty input can produce zero; this helper does not enforce a minimum input size.
 fn arbitrary_real(u: &mut Unstructured<'_>) -> arbitrary::Result<Real> {
     if u.ratio(1, 2)? {
         Real::try_from(finite_f64(u)?).map_err(|_| Error::IncorrectFormat)
@@ -47,6 +77,12 @@ fuzz_target!(|input: Input| {
     scalar_fuzz(input);
 });
 
+/// Run the listed scalar calls, then exact identities and conservative structural consistency assertions.
+///
+/// Most fallible outcomes are discarded. Cancellation a+(-a) is checked only to be
+/// not NonZero; powers 1 and 2 must succeed and match the input/product, while the
+/// power-zero assertion runs only for structurally NonZero input. Lossy exports and
+/// sign refinement at precision arguments 0 and 53 are not checked for accuracy.
 fn scalar_fuzz(input: Input) {
     let Input { a, b, exp } = input;
 
@@ -116,7 +152,7 @@ fn scalar_fuzz(input: Input) {
     // ── Invariant: double negation is exact identity ─────────────────────────
     assert_eq!(-(-a.clone()), a, "double negation must be identity");
 
-    // ── Invariant: a + (−a) is within error bounds of zero ──────────────────
+    // ── Invariant: cancellation must not classify NonZero (Unknown passes) ──
     assert_ne!(
         (a.clone() + (-a.clone())).zero_status(),
         ZeroKnowledge::NonZero,
@@ -136,7 +172,7 @@ fn scalar_fuzz(input: Input) {
     );
 
     // ── Invariant: owned and borrowed operators agree ────────────────────────
-    // Both paths delegate to add_refs / mul_refs so results must be identical.
+    // These ownership forms are compared through the same scalar arithmetic API.
     assert_eq!(
         a.clone() + b.clone(),
         a.clone() + &b,
@@ -159,7 +195,7 @@ fn scalar_fuzz(input: Input) {
     assert_eq!(one.clone() * a.clone(), a, "1 * a must equal a");
 
     // ── Invariant: zero annihilator ──────────────────────────────────────────
-    // a * 0 produces value=0.0 and epsilon=0.0 exactly (all cross terms vanish).
+    // Multiplication by exact zero must yield a structurally definite zero.
     assert!(
         (a.clone() * zero.clone()).definitely_zero(),
         "a * 0 must be exactly zero"
@@ -188,7 +224,7 @@ fn scalar_fuzz(input: Input) {
 
     // ── Invariant: Real::powi_i64(a, 2) equals a * a ──────────────────────────────────
     // Both paths route through mul_refs on identical operands so results must
-    // be bit-identical, not merely within error bounds.
+    // compare equal as Real values; this is not a serialized-bit comparison.
     let a_squared = a.clone() * a.clone();
     match Real::powi_i64(a.clone(), 2) {
         Ok(result) => assert_eq!(result, a_squared, "Real::powi_i64(a, 2) must equal a * a"),

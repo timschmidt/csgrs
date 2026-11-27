@@ -1,4 +1,24 @@
-//! Cross every finite optimized Hyperreal certificate through lattice carriers.
+//! Fuzz lattice consumption of 22 fixed scalar recipes and four opaque graph recipes.
+//!
+//! The fixed recipe list asserts its ordered eight public StructuralKind categories;
+//! it does not inspect distinct private class tags or prove an exhaustive inventory.
+//! Four opaque recipes are appended, then all 26 values are multiplied by a nonzero
+//! input integer. Kind assertions occur before scaling. Each iteration selects one
+//! partner by a stride modulo 26; varying stride makes ordered pairs reachable but
+//! does not establish that a campaign visits every pair.
+//!
+//! The callback covers scalar, complex, vector, point, matrix, and homogeneous-plane
+//! constructions. Some outcomes are discarded. Equality helpers first accept a
+//! certified Equal result, otherwise accept overlapping -128 rational enclosures;
+//! overlap is compatible with inequality and is not an exact equality certificate.
+//! Thus a passing target does not establish exact operation closure or source fidelity.
+//!
+//! Recursive graph updates are limited to 1–8, but exponential/square compositions
+//! can grow rapidly. No total-work, coefficient-size, memory, or cancellation budget
+//! is enforced. Expect calls can panic on construction/enclosure failure. The derived
+//! Input decoder has an eight-byte lower size hint at this dependency revision; the
+//! typed libFuzzer macro rejects shorter inputs before calling the body. Generated
+//! entry functions have no individually authored Rustdoc in this source.
 
 #![no_main]
 
@@ -10,14 +30,22 @@ use hyperlattice::{
 use hyperreal::{CertifiedRealEquality, Rational, Real, StructuralKind};
 use libfuzzer_sys::fuzz_target;
 
+/// Decoded controls for this target; field order determines input consumption and the generated fixtures.
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct Input {
+    /// Integer scale in -128..=127, with zero replaced by one.
     scale: i8,
+    /// Signed numerator for the exact offset rational.
     offset_numerator: i16,
+    /// Denominator minus one, giving a positive denominator in 1..=256.
     offset_denominator: u8,
+    /// Rotating partner index reduced modulo 26; all partners are reachable across inputs.
     representation_stride: u8,
+    /// Selects one through eight graph updates via remainder modulo eight.
     graph_depth: u8,
+    /// Starting opcode for a six-operation cyclic update sequence.
     graph_opcode: u8,
+    /// Selects a positive complex integer power in 1..=9.
     exponent: u8,
 }
 
@@ -34,8 +62,8 @@ fuzz_target!(|input: Input| {
     let exponent = i64::from(input.exponent % 9) + 1;
 
     for (index, left) in values.iter().enumerate() {
-        // Every execution visits all finite classes. The stride lets the fuzzer
-        // reach every ordered cross-class pair without an O(n^2) hot loop.
+        // Each decoded execution visits all scaled recipes and one partner per recipe.
+        // Varying the stride makes every ordered pair reachable; coverage is not asserted.
         let right = &values[(index + stride) % values.len()];
 
         let scalar_sum = left + right;
@@ -137,6 +165,7 @@ fuzz_target!(|input: Input| {
     }
 });
 
+/// Construct numerator/(denominator+1) exactly, with denominator in 1..=256; the positive denominator justifies the expect.
 fn rational(numerator: i16, denominator: u8) -> Real {
     Real::new(
         Rational::fraction(i64::from(numerator), u64::from(denominator) + 1)
@@ -144,6 +173,12 @@ fn rational(numerator: i16, denominator: u8) -> Real {
     )
 }
 
+/// Construct 22 fixed scalar recipes and assert their ordered public structural kinds.
+///
+/// Recipes span rational, pi powers/inverse, products/offsets, roots, exponentials,
+/// logarithms, rational-angle trig, and opaque sin(1), covering eight public kinds.
+/// The assertions do not inspect unique private classes. Fixed-domain expects can
+/// panic on regressions. Scaling happens later and its resulting kind is not asserted.
 fn representative_values() -> Vec<Real> {
     let pi = Real::pi();
     let e = Real::e();
@@ -217,15 +252,21 @@ fn representative_values() -> Vec<Real> {
     values
 }
 
+/// Build sin(e), cos(e), their norm-minus-one identity, and a recursive shared expression.
+///
+/// The identity is mathematically zero but must still report ComputableOpaque here.
+/// The recursive recipe starts at sin(e)+cos(e) and applies 1–8 cyclic updates among
+/// sin, cos, exp, square-plus-sine, plus-cosine, and multiply-sine-minus-cosine. All
+/// four outputs must report ComputableOpaque. Construction depth does not bound
+/// subsequent evaluation cost; exponential expects are not resource certificates.
 fn opaque_graph_values(depth_seed: u8, opcode_seed: u8) -> Vec<Real> {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let identity_residual = &sine * &sine + &cosine * &cosine - Real::one();
     let mut recursive = &sine + &cosine;
 
-    // Irrational graphs have no finite exhaustive inventory. Vary a bounded
-    // DAG so libFuzzer explores depth, node sharing, unary kernels, and binary
-    // composition in addition to the finite 22-class corpus above.
+    // Vary a finite-depth shared graph; this bounds recipe rounds, not evaluation
+    // work. The 22 fixed recipes do not enumerate arbitrary opaque expressions.
     for level in 0..=usize::from(depth_seed % 8) {
         recursive = match (usize::from(opcode_seed) + level) % 6 {
             0 => recursive.sin(),
@@ -247,17 +288,25 @@ fn opaque_graph_values(depth_seed: u8, opcode_seed: u8) -> Vec<Real> {
     values
 }
 
+/// Apply assert_real_equal to real then imaginary components; its interval-overlap fallback does not certify complex equality.
 fn assert_complex_equal(left: &Complex, right: &Complex) {
     assert_real_equal(&left.re, &right.re);
     assert_real_equal(&left.im, &right.im);
 }
 
+/// Apply assert_real_equal to x,y,z in order; successful overlap checks alone do not certify point identity or incidence.
 fn assert_point3_equal(left: &Point3, right: &Point3) {
     assert_real_equal(&left.x, &right.x);
     assert_real_equal(&left.y, &right.y);
     assert_real_equal(&left.z, &right.z);
 }
 
+/// Accept certified equality at precision -128, otherwise require overlapping rational enclosures at -128.
+///
+/// Every non-Equal classification takes the fallback, including a proved unequal
+/// result if returned. Overlap does not prove equality; distinct close values can
+/// have overlapping enclosures. Missing enclosures panic via expect, and disjoint
+/// ones fail the assertion. No fallback certainty receipt or error bound is returned.
 fn assert_real_equal(left: &Real, right: &Real) {
     if matches!(
         left.certified_eq_until(right, -128),

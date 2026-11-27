@@ -7881,6 +7881,134 @@ private test docs remain in `/tmp/csgrs-algebra-harness`. Temporary evidence is
 not a durable archive. Remaining implementations, tests, and support files across
 Hyperlattice and the repository still require review.
 
+## Hyperlattice generators and fuzz-target contracts (2026-11-26)
+
+Reviewed every line of the following Rust files at `4582c67ca`, including input
+fields, manual/derived generators, complete callbacks, discarded operations,
+assertions, helpers, and existing explanatory comments:
+
+| File under `crates/hyperlattice/` | Baseline lines | Current lines |
+| --- | ---: | ---: |
+| `src/arbitrary_impls.rs` | 103 | 143 |
+| `fuzz/fuzz_targets/scalar_ops.rs` | 205 | 241 |
+| `fuzz/fuzz_targets/complex_ops.rs` | 193 | 213 |
+| `fuzz/fuzz_targets/vector_ops.rs` | 225 | 249 |
+| `fuzz/fuzz_targets/matrix_ops.rs` | 462 | 497 |
+| `fuzz/fuzz_targets/hyperreal_representations.rs` | 275 | 324 |
+
+Also read the complete fuzz Cargo manifest (48 lines), README (41), run guide (6),
+and .gitignore (6). Manifest and ignore rules remain unchanged. Rewrote the README
+and short run guide around the demonstrated input/oracle scope and explicit
+monorepo commands. The earlier arbitrary_impls module-link-only record is now
+superseded by whole-file review.
+
+Owning layers: feature-gated lattice seed generation and downstream fuzz consumers.
+Relevant contracts are P1/P3/P6/P8/P9/P10/P17/P37: exact scalar ingress, conservative
+knowledge, honest failure/equality claims, retained certainty, and reproducible
+consumer documentation. Missing witnesses were undocumented private inputs/helpers
+and inaccurate statements about interval arithmetic, private-class coverage,
+equality oracles, cancellation, and resource bounds. The change documents current
+behavior; it does not implement stronger oracles or resource enforcement.
+
+The six Rust files now document all 31 authored declarations and 22 fields.
+Fuzz callback bodies are described by their enclosing module documentation.
+LibFuzzer entry functions and derive-generated methods are not independently
+attached authored items and are not counted toward this source inventory.
+
+Findings and preserved limitations:
+
+- Each library coordinate generator selects a sanitized finite binary64 or i128.
+  The former maps nonfinite bit patterns to positive zero before exact Real
+  import. Seeds are dyadic rationals/integers, including finite-float extremes,
+  not general symbolic/algebraic or non-dyadic sources. This sanitization is a
+  fuzz distribution, not the public scalar conversion policy. Mathematical
+  floating zero remains scalar zero, regardless of its primitive sign bit.
+- The six aggregate Arbitrary implementations have default (0,None) size hints.
+  With arbitrary 1.4.2's zero-padding integer decoder, empty input yields zero
+  complex/vector/matrix values. The four manual fuzz Input decoders likewise
+  have a zero lower size hint. The derived representation Input has lower hint
+  eight, which libfuzzer-sys checks before invoking its callback. Neither shape
+  implies uniform sampling or a total downstream work bound.
+- Scalar powers use a fixed list plus the full input i8, and general powers use
+  half-integers from -4 to 4. Vector/matrix abort flags remain false. Many Results
+  are discarded; executing those calls would check panic resistance rather than
+  successful computation or the correctness of every returned error.
+- Cancellation assertions that reject only NonZero accept Unknown. Complex
+  exponent-zero assertions can skip errors. Matrix schedule-helper equivalences
+  do not independently prove the shape-driven and exact-rational-driven classes
+  disjoint. Fact helper assertions test internal consistency, not coefficients
+  against an independent classification oracle. Legacy assertion diagnostic
+  strings remain unchanged; misleading ordinary comments and module claims were
+  corrected without editing the assertions themselves.
+- The representation target creates 22 fixed recipes with an ordered public-kind
+  assertion spanning eight categories, then four opaque recipes. It does not
+  assert 22 distinct private classes or exhaust arbitrary expressions. Nonzero
+  scaling occurs after kind assertions. Stride modulo 26 makes all ordered recipe
+  pairs reachable across inputs, not covered in every execution or campaign.
+- Opaque construction performs one to eight updates, including exp and squaring.
+  Finite recipe depth does not bound evaluation work, coefficient size, expression
+  cost, memory, or cancellation latency. Existing expect messages describing
+  bounded values are not resource certificates and were not altered.
+- assert_real_equal returns on CertifiedRealEquality::Equal; every other result
+  falls through to interval overlap at precision -128. Overlap is not equality.
+  A bounded probe confirmed the helper accepts pi and pi+2^-256 after a non-Equal
+  equality result, while a separate certified equality proves their difference
+  equals the positive exact step. This is an existing oracle limitation, not an
+  exact success or a newly introduced approximation policy. Complex/point helper
+  calls inherit it. No fixture or assertion was weakened to obtain this result.
+- The old Apache-2.0 README reference contradicted Hyperlattice's manifest and
+  local MIT LICENSE; the README now links the actual license. Retained benchmarks
+  run separately implemented target/seed recipes, not raw corpus or full fuzz
+  callbacks. Their measurements and campaign coverage were not certified here.
+
+Context reads included arbitrary's integer, ratio, zero-padding, and default
+size-hint implementation; libfuzzer-sys's typed minimum-length gate; scalar exact
+conversion/enclosure behavior; and retained_fuzz.rs lines 1–90 showing its separate
+recipes. These dependency/consumer excerpts and the LICENSE header receive no
+additional whole-file completion credit. No external source or benchmark result
+was substituted for target-revision evidence.
+
+Validation after final edits:
+
+- Comment/blank-line removal leaves identical remaining source in all six Rust
+  files against `4582c67ca`. Assertions, diagnostic strings, input distributions,
+  exponents, operations, feature configuration, and predicate order are unchanged.
+  Focused Rustfmt and `git diff --check` passed.
+- The all-feature Hyperlattice library built and generated private Rustdoc with
+  warnings and broken/private links denied. The actual fuzz dependency configuration
+  (no lattice defaults plus arbitrary) compiled all five bins. Explicit per-bin
+  cargo rustdoc commands succeeded despite ordinary manifest doc=false selection.
+  Full text of 59 source documentation groups matched 33 item pages, including
+  private inputs/helpers and aggregate trait implementation docs. Generated macro
+  entry items are not claimed as independently documented by that count.
+- Generator probes checked six empty-input zero aggregates and default hints,
+  eight primitive float classes/extremes, four i128 cases, matrix row-major order,
+  and vector lane order. They link the real library and arbitrary dependency.
+- A temporary probe copied the actual representation Input and four helper bodies
+  unchanged. It checked the eight-byte lower hint, all 22 ordered public-kind
+  assertions, one four-opaque-value graph fixture, the rational denominator endpoint,
+  and the unequal-overlap example above. An initial probe mistakenly compared
+  the difference using Real structural PartialEq; it exposed distinct computable
+  and rational carriers. The final probe uses certified equality for that value
+  claim, preserving the distinction between structural and mathematical equality.
+- No libFuzzer campaign, complete callback execution, sanitizer campaign, benchmark,
+  or extreme graph-evaluation stress run occurred. Compilation/rendering and the
+  bounded probes do not establish fuzz completion or general operation closure.
+- Full workflow checks remain owner-waived. Used locked/offline Cargo, two workers,
+  shared storage, and disabled incremental compilation. The absent standalone
+  fuzz lockfile was generated offline for validation (arbitrary 1.4.2,
+  libfuzzer-sys 0.4.12), copied to /tmp as evidence, then removed from the worktree.
+  No dependency manifest or lockfile is committed. Temporary probe binaries are
+  removed after validation; the shared target is about 2.0 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-generators-{build,doc,probe}.log`,
+`/tmp/csgrs-rustdoc-lattice-fuzz-{check,render,representation-probe}.log`, and
+`/tmp/csgrs-rustdoc-lattice-fuzz-{scalar,complex,vector,matrix,representations}-doc.log`.
+Generator build metadata and `/tmp/csgrs-lattice-generators/` retain the checker,
+probe sources, and temporary fuzz lockfile. These are temporary review artifacts,
+not a durable evidence archive. Other Hyperlattice implementations, tests,
+benchmarks, and support files, and most of the wider repository remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

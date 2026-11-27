@@ -1,10 +1,19 @@
-//! In-depth fuzz testing of Vector3 and Vector4 operations and algebraic laws.
+//! Fuzz selected Vector3/Vector4 arithmetic and structural laws over dyadic seeds.
 //!
-//! All arithmetic operators across every ownership variant are exercised,
-//! including scalar-broadcast operators, abort-aware division and normalization,
-//! and a suite of algebraic invariants that hold for interval arithmetic.
+//! Exercises vector addition/subtraction ownership forms, owned-left scalar broadcast,
+//! dot/magnitude/normalization/division, and shared-scale views. Abort-aware calls use
+//! a fresh false flag that is never toggled, so active cancellation is not tested.
+//! Checks component identities, dot symmetry, zero annihilation, and one ownership
+//! agreement form; no claim of every vector API or operand-ownership path is made.
 //!
-//! Run with: `cargo fuzz run vector_ops` from the `fuzz/` directory.
+//! Most discarded Result values exercise panic resistance, not successful completion
+//! or correctness of the returned error/value. Assertions compare exact Real carriers
+//! or structural statuses. A check against NonZero also accepts Unknown and is not a
+//! zero proof or a numerical error bound. No independent total-work/memory limit is
+//! enforced; magnitude/exponent/recipe limits are not a completed-workload guarantee.
+//! The typed libFuzzer macro uses Arbitrary input decoding before the callback; manual
+//! Input implementations retain its default zero lower size hint. Macro-generated
+//! entry functions are not individually authored/documented Rust items here.
 
 #![no_main]
 
@@ -14,15 +23,24 @@ use arbitrary::Arbitrary;
 use hyperlattice::{Real, Vector3, Vector4, ZeroKnowledge};
 use libfuzzer_sys::fuzz_target;
 
+/// Decoded controls for this target; field order determines input consumption and the generated fixtures.
 #[derive(Debug)]
 struct Input {
+    /// Generated v3 operand in field order; zero, dense, and extreme dyadic coordinates are permitted.
     v3a: Vector3,
+    /// Generated v3 operand in field order; zero, dense, and extreme dyadic coordinates are permitted.
     v3b: Vector3,
+    /// Generated v4 operand in field order; zero, dense, and extreme dyadic coordinates are permitted.
     v4a: Vector4,
+    /// Generated v4 operand in field order; zero, dense, and extreme dyadic coordinates are permitted.
     v4b: Vector4,
 }
 
 impl<'a> Arbitrary<'a> for Input {
+    /// Generate fields in declaration order from one cursor, propagating the first error.
+    ///
+    /// No custom size hint is supplied; current primitive decoding can zero-pad short
+    /// input, including synthesizing all-zero operands from an empty byte slice.
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             v3a: Arbitrary::arbitrary(u)?,
@@ -37,6 +55,12 @@ fuzz_target!(|input: Input| {
     vector_fuzz(input);
 });
 
+/// Run the listed 3D/4D calls with an inactive abort flag, then selected identities.
+///
+/// Each additive-cancellation component may be Zero or Unknown. Multiplication by
+/// exact zero must be definitely_zero. Ownership and dot symmetry comparisons use
+/// the same arithmetic kernel, not an independent oracle; discarded normalization
+/// and division Results do not establish successful geometry.
 fn vector_fuzz(input: Input) {
     let Input { v3a, v3b, v4a, v4b } = input;
 
@@ -125,7 +149,7 @@ fn vector_fuzz(input: Input) {
         "Vector3 double negation must be identity"
     );
 
-    // Each component of v + (−v) must be within error bounds of zero.
+    // Each cancellation component must not classify NonZero; Unknown is accepted.
     let zero3 = v3a.clone() + (-v3a.clone());
     for i in 0..3 {
         assert_ne!(

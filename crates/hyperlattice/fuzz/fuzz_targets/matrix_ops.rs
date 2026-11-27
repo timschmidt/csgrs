@@ -1,11 +1,20 @@
-//! In-depth fuzz testing of Matrix3 and Matrix4 operations and algebraic laws.
+//! Fuzz selected Matrix3/Matrix4 operations and facts over unconstrained dyadic seeds.
 //!
-//! All arithmetic operators across every ownership variant, matrix-vector
-//! products, `powi` / `powi_checked_with_abort`, division operators, and the
-//! `^` operator are exercised. Algebraic invariants including identity-matrix
-//! laws, determinant properties, and powi structural laws are checked.
+//! Exercises matrix arithmetic ownership forms, owned-left scalar broadcast, matrix-
+//! vector products, determinant/inverse/power/division, and one-element batch
+//! transforms. Abort-aware calls use a false flag that is never toggled. Singular,
+//! non-affine, and otherwise unstructured inputs are admitted. Fact helpers check
+//! internal consistency, not an independent classification oracle; inverse success
+//! and inverse-product recovery are not generally asserted.
 //!
-//! Run with: `cargo fuzz run matrix_ops` from the `fuzz/` directory.
+//! Most discarded Result values exercise panic resistance, not successful completion
+//! or correctness of the returned error/value. Assertions compare exact Real carriers
+//! or structural statuses. A check against NonZero also accepts Unknown and is not a
+//! zero proof or a numerical error bound. No independent total-work/memory limit is
+//! enforced; magnitude/exponent/recipe limits are not a completed-workload guarantee.
+//! The typed libFuzzer macro uses Arbitrary input decoding before the callback; manual
+//! Input implementations retain its default zero lower size hint. Macro-generated
+//! entry functions are not individually authored/documented Rust items here.
 
 #![no_main]
 
@@ -18,17 +27,28 @@ use hyperlattice::{
 };
 use libfuzzer_sys::fuzz_target;
 
+/// Decoded controls for this target; field order determines input consumption and the generated fixtures.
 #[derive(Debug)]
 struct Input {
+    /// Unconstrained m3 matrix seed; no invertibility or affine constraint.
     m3a: Matrix3,
+    /// Unconstrained m3 matrix seed; no invertibility or affine constraint.
     m3b: Matrix3,
+    /// Unconstrained m4 matrix seed; no invertibility or affine constraint.
     m4a: Matrix4,
+    /// Unconstrained m4 matrix seed; no invertibility or affine constraint.
     m4b: Matrix4,
+    /// Generated vector for immediate multiplication/batch comparisons.
     v3: Vector3,
+    /// Generated vector for immediate multiplication/batch comparisons.
     v4: Vector4,
 }
 
 impl<'a> Arbitrary<'a> for Input {
+    /// Generate fields in declaration order from one cursor, propagating the first error.
+    ///
+    /// No custom size hint is supplied; current primitive decoding can zero-pad short
+    /// input, including synthesizing all-zero operands from an empty byte slice.
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             m3a: Arbitrary::arbitrary(u)?,
@@ -45,6 +65,12 @@ fuzz_target!(|input: Input| {
     matrix_fuzz(input);
 });
 
+/// Check generated fact consistency, execute the listed matrix calls, then selected exact identities.
+///
+/// Powers 0/1/2 must succeed and match identity/input/product. Immediate one-element
+/// batch transforms match multiplication. Additive cancellation accepts Unknown;
+/// zero-vector products must be definitely_zero. General inverse/division Results
+/// are discarded, and the abort flag remains false throughout.
 fn matrix_fuzz(input: Input) {
     let Input {
         m3a,
@@ -212,7 +238,7 @@ fn matrix_fuzz(input: Input) {
         "Matrix3 transpose must be an involution"
     );
 
-    // M + (−M): every entry must be within error bounds of zero.
+    // Each cancellation entry must not classify NonZero; Unknown is accepted.
     let zero3 = m3a.clone() + (-m3a.clone());
     for row in 0..3 {
         for col in 0..3 {
@@ -263,8 +289,7 @@ fn matrix_fuzz(input: Input) {
         Err(e) => panic!("Matrix3 powi(M, 2) must succeed; got {e:?}"),
     }
 
-    // determinant(I) == 1: all integer arithmetic on exact scalars, so the
-    // computed value is 1.0 and PartialEq (interval) trivially holds.
+    // Compare the exact identity determinant with the scalar multiplicative identity.
     let one = Real::one();
     assert_eq!(
         i3.clone().determinant(),
@@ -272,8 +297,7 @@ fn matrix_fuzz(input: Input) {
         "det(I₃) must equal 1"
     );
 
-    // M · 0_vector == 0_vector: every dot product with a zero right-hand side
-    // produces value=0.0, epsilon=0.0 exactly (all cross terms vanish).
+    // Every component of M times the exact zero vector must be definitely_zero.
     let zero_v3 = Vector3::zero();
     let mv_zero3 = m3a.clone() * zero_v3.clone();
     for i in 0..3 {
@@ -380,6 +404,12 @@ fn matrix_fuzz(input: Input) {
     );
 }
 
+/// Check 3D fact accessors agree internally on zero rows/columns, schedule fallback, and transform flags.
+///
+/// The fallback equivalence does not independently prove shape-driven and
+/// exact-rational-driven categories disjoint. Row/column index 3 must return None.
+/// Transform assertions test implications from the returned tag, not geometric
+/// classification against original matrix coefficients.
 fn assert_matrix3_fact_helpers(facts: Matrix3StructuralFacts) {
     let hint = facts.determinant_schedule_hint();
     assert_eq!(
@@ -417,6 +447,11 @@ fn assert_matrix3_fact_helpers(facts: Matrix3StructuralFacts) {
     }
 }
 
+/// Check 4D zero-row/column accessors, schedule fallback, and transform-tag implications.
+///
+/// Index 4 must return None. Signed-permutation and affine-diagonal tags imply their
+/// stored helper flags; the original coefficients are not independently checked.
+/// The fallback equivalence alone does not prove the other schedule categories disjoint.
 fn assert_matrix4_fact_helpers(facts: Matrix4StructuralFacts) {
     let hint = facts.determinant_schedule_hint();
     assert_eq!(

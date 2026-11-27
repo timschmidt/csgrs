@@ -1,11 +1,19 @@
-//! In-depth fuzz testing of complex number operations and algebraic laws.
+//! Fuzz selected Complex arithmetic and algebraic laws over dyadic coordinate seeds.
 //!
-//! Every arithmetic operator, all ownership variants, `powi` / `powi_checked`
-//! across multiple exponents, and the `^` operator are exercised. Algebraic
-//! invariants that hold exactly or by interval-arithmetic bounds are checked
-//! as secondary guards.
+//! The feature-gated aggregate generator supplies z then w. Calls four ownership
+//! forms of complex arithmetic, owned-left scalar division, reciprocal/domain-checked
+//! methods, conjugation/norms, powers at a fixed exponent list, and selected ^ forms.
+//! Does not cover every complex API. Exact identities and ownership-result agreement
+//! supplement calls whose Results are discarded; neither is an independent kernel.
 //!
-//! Run with: `cargo fuzz run complex_ops` from the `fuzz/` directory.
+//! Most discarded Result values exercise panic resistance, not successful completion
+//! or correctness of the returned error/value. Assertions compare exact Real carriers
+//! or structural statuses. A check against NonZero also accepts Unknown and is not a
+//! zero proof or a numerical error bound. No independent total-work/memory limit is
+//! enforced; magnitude/exponent/recipe limits are not a completed-workload guarantee.
+//! The typed libFuzzer macro uses Arbitrary input decoding before the callback; manual
+//! Input implementations retain its default zero lower size hint. Macro-generated
+//! entry functions are not individually authored/documented Rust items here.
 
 #![no_main]
 
@@ -13,13 +21,20 @@ use arbitrary::Arbitrary;
 use hyperlattice::{Complex, ZeroKnowledge};
 use libfuzzer_sys::fuzz_target;
 
+/// Decoded controls for this target; field order determines input consumption and the generated fixtures.
 #[derive(Debug)]
 struct Input {
+    /// First complex seed, with independently generated dyadic real/imaginary coordinates.
     z: Complex,
+    /// Second complex seed, also used as a complex divisor and as the source of a real divisor.
     w: Complex,
 }
 
 impl<'a> Arbitrary<'a> for Input {
+    /// Generate fields in declaration order from one cursor, propagating the first error.
+    ///
+    /// No custom size hint is supplied; current primitive decoding can zero-pad short
+    /// input, including synthesizing all-zero operands from an empty byte slice.
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             z: Arbitrary::arbitrary(u)?,
@@ -32,6 +47,12 @@ fuzz_target!(|input: Input| {
     complex_fuzz(input);
 });
 
+/// Run the selected complex operations and assertions using the two decoded seeds.
+///
+/// Norm/conjugate and ownership comparisons share the same scalar implementation.
+/// Imaginary cancellation only needs status other than NonZero. The exponent-zero
+/// identity is asserted only when not both components are known zero and powi returns
+/// Ok; an error skips that assertion. This is not a completeness check for inversion.
 fn complex_fuzz(input: Input) {
     let Input { z, w } = input;
 
@@ -95,7 +116,7 @@ fn complex_fuzz(input: Input) {
         "conjugate must be an involution"
     );
 
-    // ── Invariant: z + (−z) components are within error bounds of zero ───────
+    // ── Invariant: cancellation components must not classify NonZero ────────
     let zero_candidate = z.clone() + (-z.clone());
     assert_ne!(
         zero_candidate.re.zero_status(),
@@ -131,7 +152,7 @@ fn complex_fuzz(input: Input) {
     assert_eq!(complex_one * z.clone(), z, "1 * z must equal z");
 
     // ── Invariant: z · conj(z) equals norm_squared ───────────────────────────
-    // re(z·conj(z)) = re²+im² (product_epsilon is symmetric) == norm_squared.
+    // The real component is compared with the same scalar norm-squared arithmetic.
     let z_times_conj = z.clone() * z.clone().conjugate();
     assert_eq!(
         z_times_conj.re,
@@ -139,7 +160,7 @@ fn complex_fuzz(input: Input) {
         "real part of z·conj(z) must equal norm_squared"
     );
 
-    // im(z·conj(z)) = re·(−im) + im·re = 0 exactly in IEEE 754 (a + (−a) = 0).
+    // Imaginary cancellation is required only not to classify NonZero; Unknown passes.
     assert_ne!(
         z_times_conj.im.zero_status(),
         ZeroKnowledge::NonZero,
@@ -184,8 +205,7 @@ fn complex_fuzz(input: Input) {
     );
 
     // ── Invariant: zero complex number has zero norm ──────────────────────────
-    // norm_squared = 0·0 + 0·0 = 0 exactly (every cross term in product_epsilon
-    // vanishes when both value and epsilon are 0.0).
+    // The norm-squared expression for exact complex zero must be definitely_zero.
     assert!(
         Complex::zero().norm_squared().definitely_zero(),
         "norm_squared of Complex::zero() must be exactly zero"
