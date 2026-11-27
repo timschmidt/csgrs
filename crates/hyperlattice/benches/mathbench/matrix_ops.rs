@@ -3242,13 +3242,21 @@ fn bench_matrix_operations_for<F>(
     });
 }
 
+/// Registers the matrix_ops comparison group for two native models and three adapters.
+///
+/// Calls the native registrar first with s (exact import of binary-float values),
+/// then with qr (rational parsing of each float's displayed decimal string). The
+/// second model can therefore denote a different input; neither recovers an intended
+/// symbolic pi from a floating constant. External registrars follow in Numerica-label,
+/// GMP and Atom order, each adding forty rows under the inherited Criterion settings.
+///
+/// The Numerica label uses Symbolica Float, GMP uses Rug/MPFR, and both request 128
+/// at construction; the Atom context stores 128 without using it. This wrapper closes
+/// the group but asserts no shared numerical accuracy, output-materialization contract,
+/// certainty receipt or dispatch schedule across those differently implemented models.
 fn bench_matrix_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_ops");
-    bench_matrix_operations_for::<_>(
-        &mut group,
-        "hyperreal",
-        s,
-    );
+    bench_matrix_operations_for::<_>(&mut group, "hyperreal", s);
     bench_matrix_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_matrix_operations(&mut group, "numerica128");
     bench_gmp_matrix_operations(&mut group, "gmp_mpfr128");
@@ -3256,6 +3264,26 @@ fn bench_matrix_operations(c: &mut Criterion) {
     group.finish();
 }
 
+/// Registers twenty-four fixed-form timing rows and matching native diagnostic hooks.
+///
+/// Builds all four TargetedMatrixForm fixtures once through make_ratio, then processes
+/// dyadic_dense, equal_decimal_den, mixed_prime_den and sparse_integer in that order.
+/// Copy/Fn does not prove converter purity or preservation of zeros, ratios or labels;
+/// conversion owns input meaning and failures. Labels describe authored coefficient
+/// patterns, not actual reduced/intermediate denominators or guaranteed dispatch.
+///
+/// Each form contributes reciprocal, power -2 and right matrix division for both
+/// sizes. Six enabled/selected hooks precede the form's six timing registrations,
+/// requesting one operation each on the same retained inputs. There is no cursor or
+/// cache reset; earlier hooks or measurements may affect reusable scalar evidence.
+/// Ordinary iter includes input clones, operation, Result unwrap and output destruction.
+/// Fixture construction is outside timing, and no lossy coordinate export is requested.
+///
+/// No value, count, nonsingularity or reducer-path assertion is made. Invalid callback
+/// outputs or operation failures can panic at unwrap. There is no policy/certainty
+/// receipt, cancellation input or total work/memory bound. This separate matrix_forms
+/// group studies intended coefficient patterns without adding external comparison rows;
+/// historical timing notes are not a current-revision completion/performance guarantee.
 fn bench_targeted_matrix_forms_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -3273,50 +3301,47 @@ fn bench_targeted_matrix_forms_for<F>(
             rhs4,
         } = form;
 
-        // These fixtures deliberately split the signed-product reducer into
-        // structural cases:
-        //
-        // - `dyadic_dense`: f64-origin and binary rationals should use the
-        //   shift-only dyadic denominator path.
-        // - `equal_decimal_den`: decimal exact rationals should use the
-        //   equal-product-denominator shortcut.
-        // - `mixed_prime_den`: varied prime denominators force the LCM path.
-        // - `sparse_integer`: zero cofactors test term skipping and the
-        //   integer/no-denominator path.
-        //
-        // The group is intentionally separate from `matrix_ops`; it exists to
-        // trace and benchmark reduction machinery choices without changing the
-        // stable comparison table.
-        //
-        // 2026-05-09 targeted Criterion, 150 samples/6s:
-        // hyperreal-rational mat4 reciprocal was dyadic 10.83 us, equal-den
-        // 26.61 us, mixed-prime 54.64 us, sparse-integer 7.21 us; mat4
-        // div_matrix was 16.08 us, 53.94 us, 102.48 us, and 10.47 us. The
-        // approximate guard stayed flat by shape, roughly 79-80 ns for mat3
-        // reciprocal and 145-146 ns for mat4 reciprocal, confirming the
-        // product-sum reducer remains gated away from compact scalars.
-        // Dispatch trace confirmed dyadic/sparse use `dyadic-shared-denominator`,
-        // mixed-prime uses `lcm-shared-denominator`, and decimal denominators
-        // mostly fall through to LCM after intermediate cofactors alter the
-        // exact product denominators.
-        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat3 reciprocal"), || {
-            black_box(black_box(lhs3.clone()).reciprocal().unwrap());
-        });
-        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat3 powi_negative"), || {
-            black_box(black_box(lhs3.clone()).powi(-2).unwrap());
-        });
-        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat3 div_matrix"), || {
-            black_box((black_box(lhs3.clone()) / black_box(rhs3.clone())).unwrap());
-        });
-        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat4 reciprocal"), || {
-            black_box(black_box(lhs4.clone()).reciprocal().unwrap());
-        });
-        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat4 powi_negative"), || {
-            black_box(black_box(lhs4.clone()).powi(-2).unwrap());
-        });
-        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat4 div_matrix"), || {
-            black_box((black_box(lhs4.clone()) / black_box(rhs4.clone())).unwrap());
-        });
+        // Pattern labels describe the authored ratio tables, not guaranteed reducer paths.
+        // Conversion, fraction reduction and intermediate cofactors can change denominators.
+        // This separate group records selected diagnostic work without asserting its counts.
+        // The former 2026-05-09 timing/dispatch narrative is retained, with its unverified
+        // current-revision status, in the Rustdoc audit ledger's matrix-helper record.
+        trace_dispatch_row(
+            format!("matrix_forms/{label}/{name}/mat3 reciprocal"),
+            || {
+                black_box(black_box(lhs3.clone()).reciprocal().unwrap());
+            },
+        );
+        trace_dispatch_row(
+            format!("matrix_forms/{label}/{name}/mat3 powi_negative"),
+            || {
+                black_box(black_box(lhs3.clone()).powi(-2).unwrap());
+            },
+        );
+        trace_dispatch_row(
+            format!("matrix_forms/{label}/{name}/mat3 div_matrix"),
+            || {
+                black_box((black_box(lhs3.clone()) / black_box(rhs3.clone())).unwrap());
+            },
+        );
+        trace_dispatch_row(
+            format!("matrix_forms/{label}/{name}/mat4 reciprocal"),
+            || {
+                black_box(black_box(lhs4.clone()).reciprocal().unwrap());
+            },
+        );
+        trace_dispatch_row(
+            format!("matrix_forms/{label}/{name}/mat4 powi_negative"),
+            || {
+                black_box(black_box(lhs4.clone()).powi(-2).unwrap());
+            },
+        );
+        trace_dispatch_row(
+            format!("matrix_forms/{label}/{name}/mat4 div_matrix"),
+            || {
+                black_box((black_box(lhs4.clone()) / black_box(rhs4.clone())).unwrap());
+            },
+        );
 
         group.bench_function(format!("{label}/{name}/mat3 reciprocal"), |b| {
             b.iter(|| black_box(black_box(lhs3.clone()).reciprocal().unwrap()))
@@ -3339,25 +3364,57 @@ fn bench_targeted_matrix_forms_for<F>(
     }
 }
 
+/// Rounds an integer ratio through f64, then imports that finite binary value exactly.
+///
+/// Both integer casts and the division occur before Real::try_from; the result need
+/// not equal numerator/denominator as an exact rational. Large integers can lose bits
+/// at the casts, and a non-dyadic quotient is rounded by floating division. Every
+/// nonzero u64 denominator gives a finite quotient over this integer input range.
+/// A zero denominator produces infinity or NaN and panics at unwrap. The dyadic name
+/// describes the imported finite float, not a promise that the authored ratio was dyadic.
 fn dyadic_from_f64_ratio(numerator: i64, denominator: u64) -> Real {
     Real::try_from(numerator as f64 / denominator as f64).unwrap()
 }
 
+/// Registers forty-eight targeted native rows, with forty-eight available trace hooks.
+///
+/// The hyperreal label uses dyadic_from_f64_ratio, rounding casts/division before exact
+/// float import. The hyperreal-rational label uses q for exact integer ratios, not qr's
+/// float-to-decimal route used by matrix_ops. Current small dyadic/integer tables agree
+/// between these models; decimal/prime tables can differ. Each model contributes four
+/// forms times six operations under inherited Criterion settings. No cross-model value,
+/// reducer-count, output-accuracy or performance assertion is made before group finish.
 fn bench_targeted_matrix_forms(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_forms");
-    bench_targeted_matrix_forms_for::<_>(
-        &mut group,
-        "hyperreal",
-        dyadic_from_f64_ratio,
-    );
-    bench_targeted_matrix_forms_for::<_>(
-        &mut group,
-        "hyperreal-rational",
-        q,
-    );
+    bench_targeted_matrix_forms_for::<_>(&mut group, "hyperreal", dyadic_from_f64_ratio);
+    bench_targeted_matrix_forms_for::<_>(&mut group, "hyperreal-rational", q);
     group.finish();
 }
 
+/// Registers forty floating matrix rows under the historical Numerica comparison label.
+///
+/// Uses the local Symbolica Float adapter with requested construction precision 128,
+/// not a separate Numerica library. Ordinary scalar/matrix adapter work supplies the
+/// numerical behavior; shared row names do not establish equivalence to native exact
+/// operations or an independently certified accuracy contract.
+///
+/// Registers twenty-four Mat3 rows and sixteen Mat4 rows. Mat3 has construction,
+/// zero, identity, transpose, four inverse labels, four cube labels, three scalar-
+/// division labels, three right-division labels and six elementwise/scalar operations.
+/// Mat4 has zero/identity/transpose, two inverse labels, three cube labels and eight
+/// other operations; it has no construction row here. Every power/bitxor label calls
+/// powi(3), and checked/abort variants call the same ordinary adapter methods without
+/// native guards, typed Results or cancellation signals. Matrix division is lhs times
+/// inverse(rhs); scalar division maps over every entry.
+///
+/// Retains four paired matrix cases and four scalar values outside timing. Scalars
+/// are imported from 2, 1e-9, -1e9 and floating PI. Each cycling row initializes its
+/// cursor outside iter, then measures selection/index advancement and borrowed adapter
+/// calls, including internal cloning and result destruction. The Mat3 new row instead
+/// imports a rotating raw case inside iter; zero/identity construct inside iter. There
+/// is no explicit output float conversion, numerical oracle, dispatch hook/count check,
+/// certainty receipt or total-work/memory limit. Adapter domain failures are not given
+/// an independent wrapper here; Mat4 inverse retains its no-pivoting restriction.
 fn bench_numerica_matrix_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -3452,13 +3509,21 @@ fn bench_numerica_matrix_operations(
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs3_cases.len());
                 black_box(match name {
-                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_engine::Ctx::add),
+                    "add" => lhs3_cases[index].combine(
+                        &rhs3_cases[index],
+                        &ctx,
+                        numerica_engine::Ctx::add,
+                    ),
                     "add_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
                         numerica_engine::Ctx::add,
                     ),
-                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_engine::Ctx::sub),
+                    "sub" => lhs3_cases[index].combine(
+                        &rhs3_cases[index],
+                        &ctx,
+                        numerica_engine::Ctx::sub,
+                    ),
                     "sub_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
@@ -3518,13 +3583,21 @@ fn bench_numerica_matrix_operations(
                         &ctx,
                         numerica_engine::Ctx::div,
                     ),
-                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_engine::Ctx::add),
+                    "add" => lhs4_cases[index].combine(
+                        &rhs4_cases[index],
+                        &ctx,
+                        numerica_engine::Ctx::add,
+                    ),
                     "add_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
                         numerica_engine::Ctx::add,
                     ),
-                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_engine::Ctx::sub),
+                    "sub" => lhs4_cases[index].combine(
+                        &rhs4_cases[index],
+                        &ctx,
+                        numerica_engine::Ctx::sub,
+                    ),
                     "sub_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
@@ -3543,6 +3616,29 @@ fn bench_numerica_matrix_operations(
     }
 }
 
+/// Registers forty matrix rows through the local Rug/MPFR adapter at requested precision 128.
+///
+/// Backend scalar operations clone their inputs internally, and composite adapter
+/// formulas add their own work. These costs remain inside the timed call; shared
+/// native/external row names do not establish identical guards or completed work.
+///
+/// Registers twenty-four Mat3 rows and sixteen Mat4 rows. Mat3 has construction,
+/// zero, identity, transpose, four inverse labels, four cube labels, three scalar-
+/// division labels, three right-division labels and six elementwise/scalar operations.
+/// Mat4 has zero/identity/transpose, two inverse labels, three cube labels and eight
+/// other operations; it has no construction row here. Every power/bitxor label calls
+/// powi(3), and checked/abort variants call the same ordinary adapter methods without
+/// native guards, typed Results or cancellation signals. Matrix division is lhs times
+/// inverse(rhs); scalar division maps over every entry.
+///
+/// Retains four paired matrix cases and four scalar values outside timing. Scalars
+/// are imported from 2, 1e-9, -1e9 and floating PI. Each cycling row initializes its
+/// cursor outside iter, then measures selection/index advancement and borrowed adapter
+/// calls, including internal cloning and result destruction. The Mat3 new row instead
+/// imports a rotating raw case inside iter; zero/identity construct inside iter. There
+/// is no explicit output float conversion, numerical oracle, dispatch hook/count check,
+/// certainty receipt or total-work/memory limit. Adapter domain failures are not given
+/// an independent wrapper here; Mat4 inverse retains its no-pivoting restriction.
 fn bench_gmp_matrix_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -3637,13 +3733,17 @@ fn bench_gmp_matrix_operations(
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs3_cases.len());
                 black_box(match name {
-                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, gmp_engine::Ctx::add),
+                    "add" => {
+                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, gmp_engine::Ctx::add)
+                    }
                     "add_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
                         gmp_engine::Ctx::add,
                     ),
-                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, gmp_engine::Ctx::sub),
+                    "sub" => {
+                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, gmp_engine::Ctx::sub)
+                    }
                     "sub_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
@@ -3703,13 +3803,17 @@ fn bench_gmp_matrix_operations(
                         &ctx,
                         gmp_engine::Ctx::div,
                     ),
-                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, gmp_engine::Ctx::add),
+                    "add" => {
+                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, gmp_engine::Ctx::add)
+                    }
                     "add_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
                         gmp_engine::Ctx::add,
                     ),
-                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, gmp_engine::Ctx::sub),
+                    "sub" => {
+                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, gmp_engine::Ctx::sub)
+                    }
                     "sub_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
@@ -3728,6 +3832,30 @@ fn bench_gmp_matrix_operations(
     }
 }
 
+/// Registers forty Atom matrix rows, constructing expressions without requesting numerical output.
+///
+/// The local context stores 128 but never uses it to set precision. Fixtures import
+/// precomputed f64 values; they are not recovered exact decimal or symbolic-constant
+/// sources. Atom simplification may occur during construction, but these rows do not
+/// request evaluation to the accuracy of either floating adapter or the native model.
+///
+/// Registers twenty-four Mat3 rows and sixteen Mat4 rows. Mat3 has construction,
+/// zero, identity, transpose, four inverse labels, four cube labels, three scalar-
+/// division labels, three right-division labels and six elementwise/scalar operations.
+/// Mat4 has zero/identity/transpose, two inverse labels, three cube labels and eight
+/// other operations; it has no construction row here. Every power/bitxor label calls
+/// powi(3), and checked/abort variants call the same ordinary adapter methods without
+/// native guards, typed Results or cancellation signals. Matrix division is lhs times
+/// inverse(rhs); scalar division maps over every entry.
+///
+/// Retains four paired matrix cases and four scalar values outside timing. Scalars
+/// are imported from 2, 1e-9, -1e9 and floating PI. Each cycling row initializes its
+/// cursor outside iter, then measures selection/index advancement and borrowed adapter
+/// calls, including internal cloning and result destruction. The Mat3 new row instead
+/// imports a rotating raw case inside iter; zero/identity construct inside iter. There
+/// is no explicit output float conversion, numerical oracle, dispatch hook/count check,
+/// certainty receipt or total-work/memory limit. Adapter domain failures are not given
+/// an independent wrapper here; Mat4 inverse retains its no-pivoting restriction.
 fn bench_symbolica_matrix_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
@@ -3822,13 +3950,21 @@ fn bench_symbolica_matrix_operations(
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs3_cases.len());
                 black_box(match name {
-                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_engine::Ctx::add),
+                    "add" => lhs3_cases[index].combine(
+                        &rhs3_cases[index],
+                        &ctx,
+                        symbolica_engine::Ctx::add,
+                    ),
                     "add_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
                         symbolica_engine::Ctx::add,
                     ),
-                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_engine::Ctx::sub),
+                    "sub" => lhs3_cases[index].combine(
+                        &rhs3_cases[index],
+                        &ctx,
+                        symbolica_engine::Ctx::sub,
+                    ),
                     "sub_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
@@ -3888,13 +4024,21 @@ fn bench_symbolica_matrix_operations(
                         &ctx,
                         symbolica_engine::Ctx::div,
                     ),
-                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_engine::Ctx::add),
+                    "add" => lhs4_cases[index].combine(
+                        &rhs4_cases[index],
+                        &ctx,
+                        symbolica_engine::Ctx::add,
+                    ),
                     "add_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
                         symbolica_engine::Ctx::add,
                     ),
-                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_engine::Ctx::sub),
+                    "sub" => lhs4_cases[index].combine(
+                        &rhs4_cases[index],
+                        &ctx,
+                        symbolica_engine::Ctx::sub,
+                    ),
                     "sub_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,

@@ -12922,6 +12922,116 @@ inverse body. engines.rs now has a whole-file review record. Remaining mathbench
 matrix_ops.rs, other crate support/non-Rust files, repository-wide review and
 previously recorded generated-item documentation gaps remain open.
 
+## Hyperlattice matrix helper groups and external rows (2026-11-27)
+
+Target revision: `360dacad1a28af8b70b7db194d97698c0efc70af`. Read every line of
+`crates/hyperlattice/benches/mathbench/matrix_ops.rs` from 3245 through 3914: the
+comparison driver, targeted-form registrar/converter/driver and all three external
+registrars. That 670-line tail is now 814 lines, starting at the same line 3245.
+The first 3,244 lines are byte-identical. Lines 1–570 of the large native registrar
+were also read as initial context, but its complete declaration has not been reviewed
+or documented; no whole-file credit is claimed. The ratio/targeted fixture helpers
+and trace behavior were reread for context. Baseline all-feature compilation passed.
+
+Owning layer: mathbench registration and fixture conversion, consuming native matrix
+APIs and the separately reviewed floating/Atom adapters. Relevant contracts are P1/P2
+input meaning and source fidelity, P4 evidence reuse, P5 timing/resources, P6 failure,
+P9 certainty, P10 measurement scope and P37 accurate claims. Reproduced missing
+acceptance witness: seven complete tail functions lacked Rustdoc, including conversion
+rounding, misleading checked/abort labels and historical reducer/performance claims
+that were not assertions or demonstrated behavior on this revision.
+
+Added seven complete descriptions on seven private pages. The earlier native
+registration function remains pending. Contracts clarified:
+
+- matrix_ops registers native s and qr models, followed by Numerica-label, GMP and
+  Atom adapters. s imports exact finite binary values; qr parses displayed decimal
+  strings, so it can describe different inputs and does not recover symbolic pi.
+  Numerica uses Symbolica Float, GMP uses Rug/MPFR, and both request precision 128;
+  Atom stores 128 without applying it. This wrapper establishes no common accuracy
+  or completed-output contract across those models.
+- Each external registrar contributes forty rows: twenty-four Mat3 and sixteen Mat4.
+  Mat3 has construction/zero/identity/transpose, four inverse labels, four cube labels,
+  three scalar-division and three matrix-division labels, and six other operations.
+  Mat4 has zero/identity/transpose, two inverse labels, three cube labels and eight
+  others, with no Mat4 construction row. The three schedules agree after renaming
+  the backend; they contain no trace hooks.
+- Every external power/bitxor label calls powi(3). Checked/abort names call ordinary
+  adapter methods without native Results, guards or signals. Matrix division is
+  lhs times rhs inverse; scalar division maps every entry. Mat4 inverse retains
+  the adapters' no-pivoting limitation. Names do not establish native equivalence.
+- Four paired matrix cases and four scalars are imported outside timing. Each
+  cycling row starts a cursor outside iter; selection, modulo advancement, borrowed
+  adapter calls/internal clones and output destruction are measured. Mat3 construction
+  imports raw rotating fixtures inside iter; zero/identity construct inside iter.
+  No output-float conversion, oracle, policy receipt or total-work bound is requested.
+- Targeted forms build four fixture sets once using the supplied ratio converter.
+  Copy/Fn does not establish purity or exact-ratio preservation. Names identify
+  authored tables, not guaranteed reduced/cofactor denominators or reducer branches.
+  Per form, reciprocal, power -2 and right matrix division are registered for both
+  sizes. Six selected/enabled hooks precede six timing rows on the retained fixtures.
+  Ordinary iter includes clones, operations, unwrap and destruction without float
+  export. There is no cursor, cache reset, numerical/path-count oracle or cancellation.
+- Each targeted model contributes twenty-four rows/hooks; the group has forty-eight
+  of each available. The hyperreal label rounds integer casts and division through
+  f64 before exact float import; hyperreal-rational uses exact q, not qr. Current
+  dyadic/integer coefficients agree between these models; decimal/prime ones can differ.
+- dyadic_from_f64_ratio does not author an exact integer ratio in general. Either
+  cast can round and the quotient can round again. Every positive u64 denominator
+  gives a finite quotient over the i64 numerator domain, while zero yields NaN or
+  infinity and panics at import unwrap. Its name describes the finite float's dyadic
+  value, not the authored denominator or preserved source ratio.
+
+Historical comment retained as evidence history, not current validation:
+
+The removed inline narrative labeled measurements as 2026-05-09 targeted Criterion,
+150 samples/6 seconds. In dyadic/equal-den/mixed-prime/sparse order, it reported
+hyperreal-rational Mat4 reciprocal as 10.83/26.61/54.64/7.21 microseconds and matrix
+division as 16.08/53.94/102.48/10.47 microseconds. It described an "approximate guard"
+as approximately 79–80 ns for Mat3 reciprocal and 145–146 ns for Mat4 reciprocal,
+and claimed the product-sum reducer stayed gated away from compact scalars. It also
+claimed dyadic/sparse dispatch used dyadic-shared-denominator, mixed-prime used
+lcm-shared-denominator, and decimal cases mostly reached LCM after cofactors altered
+product denominators. These statements have not been remeasured or qualified on the
+target revision. They remain preserved here and in the original Git revision; source
+comments now describe fixture intent and the absence of path/count assertions.
+
+Validation after final edits:
+
+- Scoped formatting of the complete tail under crates configuration and git diff
+  --check passed. Noncomment source equals Rustfmt of the original tail; the prefix
+  is byte-identical. Formatting adds fourteen optional commas, removes seven and
+  wraps four expression-only GMP match arms in braces. Calls, predicates, fixtures,
+  assertions and registration order are unchanged. The temporary checker was adjusted
+  to enumerate these exact formatting changes and compare pre-format adapter bodies,
+  rather than mistaking backend-name-dependent formatting for semantic differences.
+- Cargo check and private mathbench Rustdoc passed with all features and no defaults,
+  locked/offline j2 and incremental disabled. Warnings and broken/private links were
+  denied; source-hash-specific empty headers forced regeneration. Complete text of
+  all seven descriptions rendered on seven pages in both configurations.
+- Static enumeration expanded all eight name loops and fixed rows per external
+  adapter: forty unique names each, 120 total, with no hooks. Targeted trace/timing
+  operation sequences agree, with four forms times six operations times two models
+  giving forty-eight registrations each. These are registrations, not measured
+  dispatch counts, completed timing runs or numerical equivalence assertions.
+- Matching-library probes passed in both configurations under external 30-second
+  process timeouts, compiled with warnings denied. Actual fixture/converter bodies
+  matched 400 exact coefficient expectations produced with Python Fraction for 200
+  authored ratios and their binary quotients. Differences per form were 0, 42, 50, 0.
+  Additional checks covered exact 1/8, rounded 1/10, loss of the low bit in 2^53+1,
+  finite endpoint-range examples and zero-denominator panics for zero/positive/negative
+  numerators. No inverse, power, division workload or external engine was executed.
+- Full workflows remain owner-waived; no focused check remains blocked. No Criterion
+  timings, dispatch report, scalar policy chain or performance claims were measured.
+  Probe executables were removed; the shared target remains approximately 2.8 GiB.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-matrix-tail-*` baseline/check/doc/render/probe
+logs and `/tmp/csgrs-lattice-matrix-tail-audit/` scripts, commands, source token deltas,
+row enumerations, coefficient expectations and archived historical comment. Continue
+with the large native bench_matrix_operations_for declaration (lines 1–3244), whose
+first 570 lines were read without editing. Remaining repository-wide file review
+and previously recorded generated-item documentation gaps remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
