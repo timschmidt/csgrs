@@ -13635,6 +13635,107 @@ is approximately 3.7 GiB after building the actual downstream test's development
 dependencies; no second Cargo target was created. No focused check remains blocked.
 Remaining companion implementations, support files and the broader audit remain open.
 
+## Hyperlattice-interval widths and dyadic partitioning (2026-11-27)
+
+Target revision: 5fbf8c8351b33a764305c67172f0afc374f44bd1, on rustdoc.
+Whole-file review and documentation cover five companion files:
+
+| File in crates/hyperlattice-interval | Original lines | Final lines | Doc blocks |
+| --- | ---: | ---: | ---: |
+| src/widths.rs | 62 | 82 | 4 |
+| src/subdivision.rs | 66 | 95 | 5 |
+| tests/widths.rs | 242 | 282 | 10 |
+| tests/dyadic_subdivision.rs | 85 | 112 | 8 |
+| tests/width_replay.rs | 67 | 83 | 4 |
+
+The owning layer is Cartesian width selection and dyadic box partition/transport,
+delegating scalar authority to Hyperinterval. P1/P5/P6/P18/P20/P26/P27/P37 and the
+admission protocol require exact measurements, explicit outward projections, typed
+failures, consumable results, shared resource accounting and qualified replay claims.
+The domain includes fixed/rational/dyadic/IEEE widths, zero/empty/unit cases, ties,
+full endpoint ranges, dyadic exponent extremes and finite resource limits. On the
+target revision, implementation blocks, test helpers, a local macro/type/constant
+and most test bodies lacked Rustdoc. Before editing, all six width tests, five
+subdivision tests and the width-replay test passed. No implementation was changed.
+
+The 31 doc blocks account for five modules, three impls, 19 function declarations,
+two scalar aliases, the local IEEE case macro and the replay environment constant.
+Descriptions distinguish the following contracts:
+
+- Width arrays retain exact endpoint distances, including unsigned full fixed ranges
+  and IEEE differences whose finite projections overflow or coincide after rounding.
+  The nonempty-lane constructor invariant justifies scalar Some extraction. Array
+  construction visits increasing indices, aborts on the first error and returns no
+  partial widths or budget refund; empty/unit queries invoke no scalar work.
+- Widest-axis selection installs the first candidate without comparison, then replaces
+  the maximum only on exact Greater. This preserves earliest ties, including index
+  zero for all-point nonempty boxes. Maximum plus current candidate is constant-count
+  retention, not a bound on arbitrary-precision scalar size or total work. Selecting
+  an axis supplies no solver exclusion, existence or termination certificate.
+- Bisection validates the axis before empty/singleton shortcuts. It constructs exact
+  radius first, then the left/right translated intersections, then copies other lanes
+  into left and right arrays in that order. Selected lanes move once; other lanes use
+  the scalar power-one copy path. Closed children share a midpoint slice even with
+  other degenerate coordinates. Resource errors may precede unrepresentable-half
+  overflow; an enclosure projection is never substituted for the exact split.
+- Regridding explicitly rounds outward on a coarser grid, while finer grids preserve
+  the scalar set. Stored exponents normalize and need not equal requested precision.
+  The result does not retain the pre-rounding source definition. Exact finer-grid
+  copying can still exhaust resources; failed attempts leave inputs available to retry.
+- The width corpus enumerates 15^3 small three-lane boxes with independent integer
+  differences. Extra expectations include rational sum 35/11, dyadic widths 10/20/16
+  and sum 46, subnormal-tail ordering, unprojectable widths and measured work limits.
+  The subdivision retry test only requires an error from combined size/work limits;
+  its documentation does not invent a particular exhausted resource.
+- The replay parent sends source vectors, not width arrays, to the child. Width arrays
+  round-trip inside that child. Fixed source byte identity is asserted; float byte
+  identity is not. A preexisting readable environment marker can bypass spawning,
+  and the harness has no internal timeout. This condition is explicit in the docs.
+
+Context reads included relevant native width/half/regrid/copy and exact IEEE ordering
+implementations, earlier carrier invariants, and the perf-atlas bisection/regrid
+consumer excerpts. Those files received contextual inspection, not a new whole-file
+documentation completion claim.
+
+Validation after final edits:
+
+- Locked/offline j2 with incremental disabled and the shared target. Cleared both
+  replay markers for the test command so the actual parent launches its child.
+  Six width, five subdivision, one fresh-process replay and one primitive-allocation
+  test passed (13 total). The unchanged width doctest executed with all features.
+  All seven actual Hyperlattice interval_surface downstream tests also passed.
+- A warnings-denied temporary probe chained exact width selection, bisection, explicit
+  outward regrid, JSON replay and a further width/selection query through one budget.
+  Literal endpoints checked both children and the enlarged regridded box. Other
+  probes checked normalization of a fine-grid copy, typed failure of a more expensive
+  exact copy, first-candidate width-only work cost, earliest zero ties, zero-work
+  shortcut outcomes, and SizeExhausted/WorkExhausted/Overflow precedence at the
+  minimum exponent. A 30-second external timeout bounded that probe, not the APIs.
+- All-feature/private and no-default/private cargo doc builds passed with warnings,
+  broken links and private-link violations denied. Full text of all nine active
+  source blocks rendered with all features, and all four width blocks rendered
+  without defaults. The current minimal public vector page excludes dyadic methods.
+  Existing doctest text, including hidden feature setup, is byte-for-byte unchanged.
+- Actual test-source Rustdoc omits the twelve test functions and their local items.
+  Rendering-only copies removed exactly those test attributes, preserving assertions,
+  and rendered 19 of the 22 test-file blocks as item docs. Rustdoc does not emit
+  standalone pages for the function-local macro, alias and constant: their source
+  attachment was inspected and full prose separately rendered as Markdown. No
+  normal API-page coverage is claimed for those three local items.
+- Removing only comment and blank lines yields identical remaining source bytes in
+  all five files. All 19 function declarations have attached Rustdoc. Selected-file
+  rustfmt and git diff --check passed. AGENTS.md's public/private/generated coverage
+  mandate is unchanged. Full workflow checks remain owner-waived for this docs-only
+  session; no new timing, general allocation, cancellation or completeness claim is made.
+
+Evidence: /tmp/csgrs-rustdoc-interval-widths-{before,tests,build,doc-all,doc-min,
+doctest,probe,validation,render-min,downstream}.log and
+/tmp/csgrs-interval-widths-audit/ (verification scripts, matching metadata, probe,
+source copies and full-text match records). Removed the owned executable and duplicate
+temporary HTML; retained batch evidence uses 124 KiB. The single reused target remains
+approximately 3.7 GiB. No focused check remains blocked. Other companion files and the
+repository-wide line-by-line/documentation audit remain open.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

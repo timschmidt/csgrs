@@ -1,11 +1,27 @@
+//! Process-boundary source replay followed by exact width reconstruction and selection.
+//!
+//! The parent sends JSON source vectors to a child running this same test. Width arrays
+//! are then serialized/reloaded within the child; they are not the process payload.
+//! A readable preexisting marker selects child assertions directly. The harness captures
+//! child output and checks exit success, with no internal timeout or sandbox.
+
 #![cfg(all(feature = "fixed", feature = "serde"))]
 use hyperlattice_interval::{
     IntervalVector,
     hyperinterval::{FixedInterval, FixedWidth},
 };
+/// Signed 64-bit endpoints at 63 fractional bits for the process payload.
 type I = FixedInterval<i64, 63>;
 #[test]
+/// Launch a child when the marker is absent, otherwise validate the supplied source JSON.
+/// The fixed source must re-encode identically and select its full-range second lane;
+/// reloaded unsigned widths preserve order and fail signed projection when too large.
+/// With float-enclosure, a second environment payload supplies f64 endpoint definitions:
+/// exact widths remain ordered even though their rounded enclosures are equal. Float
+/// encoding byte identity is not asserted. The parent reports captured output on failure;
+/// external environment setup determines whether a new process is actually launched.
 fn fresh_process_replay_preserves_exact_widths_and_selection() {
+    /// Environment marker and exact fixed-vector payload selecting the child branch.
     const KEY: &str = "HYPERLATTICE_WIDTH_REPLAY";
     if let Ok(text) = std::env::var(KEY) {
         let source: IntervalVector<I, 2> = serde_json::from_str(&text).unwrap();

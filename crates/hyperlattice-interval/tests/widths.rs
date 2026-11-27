@@ -1,3 +1,10 @@
+//! Finite exact-width and axis-selection witnesses across all admitted scalar families.
+//!
+//! Integer endpoint differences give independent expectations on a small three-lane
+//! corpus. Separate cases exercise retained widths beyond endpoint representability,
+//! exact ties, output reuse and deterministic dyadic work limits. No test establishes
+//! a solver result, universal completion envelope or timing/allocation bound.
+
 #![cfg(any(
     feature = "fixed",
     feature = "rational",
@@ -6,6 +13,13 @@
 ))]
 use hyperlattice_interval::{IntervalArithmetic, IntervalVector};
 
+/// Enumerate all 15^3 three-lane boxes with integer endpoints in -2..=2.
+///
+/// The scalar callback represents inclusive integer bounds exactly; check compares a
+/// backend width to the independent integer difference. A strict greater-than update
+/// computes the expected earliest maximum, including all-zero widths. Each query gets
+/// fresh context; shared accounting within one query is tested separately. Empty and
+/// unit products distinguish None from an empty width array and have no selected axis.
 fn qualify<I: IntervalArithmetic>(
     scalar: impl Fn(i32, i32) -> I,
     check: impl Fn(&I::Width, i32),
@@ -45,6 +59,9 @@ fn qualify<I: IntervalArithmetic>(
 }
 #[cfg(feature = "fixed")]
 #[test]
+/// Check both signed fixed families on a four-fractional-bit grid.
+/// Integer endpoints are scaled by 16, and exact unsigned width numerators must equal
+/// 16 times the independent difference; no signed endpoint projection is used.
 fn fixed_widths_and_ties() {
     use hyperlattice_interval::hyperinterval::FixedInterval as I;
     qualify(
@@ -60,6 +77,10 @@ fn fixed_widths_and_ties() {
 }
 #[cfg(feature = "rational")]
 #[test]
+/// Check the finite rational corpus, fractional widths and nonsingleton rejection.
+/// The extra widths are 1, 1 and 13/11, selecting axis two and summing to 35/11 through
+/// vector norm reduction. Empty/nonsingleton width comparisons reject in either order;
+/// this does not assert that arbitrary singleton comparison validates width provenance.
 fn rational_widths_and_ties() {
     use hyperlattice_interval::hyperinterval::RationalInterval as I;
     qualify(
@@ -93,6 +114,8 @@ fn rational_widths_and_ties() {
 }
 #[cfg(feature = "dyadic")]
 #[test]
+/// Check exact dyadic singleton widths and earliest ties on the finite corpus.
+/// Every query gets a fresh 256-bit / 1,000,000-work-unit budget shared by its scalar calls.
 fn dyadic_widths_and_ties() {
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I};
     qualify(
@@ -103,6 +126,10 @@ fn dyadic_widths_and_ties() {
 }
 #[cfg(feature = "float-enclosure")]
 #[test]
+/// Check both IEEE width families on exact small integers and nonprojectable differences.
+/// Requires qualified floating backends. The local macro checks ordering that rounded
+/// width enclosures cannot distinguish, and a width exceeding the largest finite float.
+/// Those retained exact values must remain usable even when interval projection fails.
 fn float_widths_and_ties() {
     use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
     qualify(
@@ -125,6 +152,9 @@ fn float_widths_and_ties() {
         },
         || (),
     );
+    /// Instantiate exact-width projection/order witnesses for one IEEE precision.
+    /// Subnormal endpoint tails distinguish two widths with equal enclosures;
+    /// the full finite span has an exact width whose finite projection overflows.
     macro_rules! case {
         ($i:ty,$f:ty) => {{
             let small = <$i>::new(<$f>::from_bits(2), 1.0).unwrap();
@@ -153,8 +183,12 @@ fn float_widths_and_ties() {
 }
 #[cfg(feature = "fixed")]
 #[test]
+/// Retain the full signed-i64 distance as u64::MAX at 63 fractional bits.
+/// Its signed interval projection fails, but exact widest-axis selection succeeds.
+/// An intersection changes the widest axis of the result while preserving the source.
 fn full_range_widths_remain_ordered() {
     use hyperlattice_interval::hyperinterval::FixedInterval;
+    /// Signed endpoints on the 2^-63 grid, whose full width needs all 64 unsigned bits.
     type I = FixedInterval<i64, 63>;
     let x =
         IntervalVector::new([I::new(i64::MIN, i64::MAX).unwrap(), I::new(0, 1).unwrap()]).unwrap();
@@ -173,6 +207,12 @@ fn full_range_widths_remain_ordered() {
 }
 #[cfg(feature = "dyadic")]
 #[test]
+/// Check exact dyadic work boundaries, size errors and downstream width consumption.
+/// The fixture has widths 10, 20 and 16: axis one wins and their norm-one sum is 46.
+/// Measured work completes exactly, one fewer unit fails, and unchanged operands retry.
+/// An extreme exponent gap orders under a small bit cap without materializing alignment;
+/// empty/unit queries also succeed with zero budgets. These are accounting witnesses,
+/// not CPU, heap-byte or cancellation measurements.
 fn widths_and_selection_share_budget_and_retry() {
     use hyperlattice_interval::IntervalLatticeError;
     use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I, IntervalError};
