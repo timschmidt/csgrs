@@ -769,6 +769,10 @@ fn matrix4_assumed_homogeneous_batches_match_single_lane_transforms() {
     );
 }
 
+/// Checks determinant -198, inverse/product composition and three inverse modes.
+///
+/// The zero at (1,0) bypasses the early three-witness inverse route; this
+/// nontriangular, nonaffine fixture exercises the general cofactor fallback.
 #[test]
 fn matrix4_inverse_and_determinant_cover_general_integer_matrix() {
     let matrix = Matrix4::new([
@@ -788,6 +792,10 @@ fn matrix4_inverse_and_determinant_cover_general_integer_matrix() {
     );
 }
 
+/// Checks a fully nonzero rational determinant against the literal 75933/5000.
+///
+/// Authored tenths include reduced integer and dyadic entries; the matrix as a
+/// whole exercises the known-rational six-minor determinant path.
 #[test]
 fn matrix4_dense_fractional_determinant_uses_exact_value() {
     let matrix = Matrix4::new([

@@ -9510,14 +9510,18 @@ fn invert_matrix3_checked_with_abort(
     Ok(scale_matrix3(adjugate, &inv_det))
 }
 
+/// Constructs the twelve 2×2 minors shared by the 4×4 determinant and adjugate.
+///
+/// Returns `(s, c)` for row pairs (0,1) and (2,3), respectively. Each array uses
+/// column pairs (0,1), (0,2), (0,3), (1,2), (1,3), (2,3), in that order, with
+/// minor `m[r][i] * m[r+1][j] - m[r+1][i] * m[r][j]`. Builds all of `s` before
+/// `c`, using [`mul_sub`] to prune definitely-zero products while retaining
+/// unknown factors. No division, rational representation or nonsingularity is
+/// required. These arrays are values, not certificates bound to the source;
+/// callers must keep them consistent with any matrix used for an adjugate.
 #[inline]
 fn matrix4_factors(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
     trace_matrix!("helper", "matrix4-factors");
-    // Keep the cofactor inverse helpers inline across crate boundaries. The
-    // full suite exposed a mat4 reciprocal layout regression; after inlining
-    // the fixed inverse/cofactor layers, 200-sample/8s targeted reruns improved
-    // hyperreal mat4 reciprocal by ~3.99%, with astro128/numerica128 reciprocal
-    // staying inside noise.
     let s = [
         mul_sub(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
         mul_sub(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
@@ -9537,6 +9541,12 @@ fn matrix4_factors(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
     (s, c)
 }
 
+/// Builds the same ordered minors as [`matrix4_factors`] without local zero pruning.
+///
+/// Each two-product difference uses the active scalar reducer, which selects
+/// rational aggregation when available and otherwise uses ordinary Real
+/// arithmetic. Despite the name, symbolic entries and zeros are admissible;
+/// neither entry density nor invertibility is assumed.
 #[inline(never)]
 fn matrix4_factors_dense_exact(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
     trace_matrix!("helper", "matrix4-factors-dense-exact");
@@ -9559,6 +9569,13 @@ fn matrix4_factors_dense_exact(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
     (s, c)
 }
 
+/// Builds the ordered 4×4 minors with unchecked known-rational scalar reducers.
+///
+/// Uses the layout of [`matrix4_factors`]. Every entry must currently expose an
+/// exact-rational representation; zeros and singular matrices remain valid.
+/// The caller supplies this evidence: the helper neither rechecks it nor
+/// returns a typed mismatch. Invalid or stale evidence can cause scalar
+/// reducers to use only stored rational components and change the value.
 #[inline(never)]
 fn matrix4_factors_dense_exact_known_rational(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
     trace_matrix!("helper", "matrix4-factors-dense-exact-known-rational");
@@ -9581,6 +9598,14 @@ fn matrix4_factors_dense_exact_known_rational(m: &[[Real; 4]; 4]) -> ([Real; 6],
     (s, c)
 }
 
+/// Evaluates `s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0`.
+///
+/// This is the Laplace expansion along the first two rows when `s` and `c`
+/// have the layout of [`matrix4_factors`] for the same matrix. Otherwise it
+/// still evaluates that polynomial; no source consistency is checked. Uses
+/// one signed-product-sum adapter, whose definite-zero pruning retains unknown
+/// factors and whose active reducer can aggregate rational terms. No reciprocal
+/// or nonzero test on the determinant is needed.
 fn determinant4_from_factors(s: &[Real; 6], c: &[Real; 6]) -> Real {
     trace_matrix!("helper", "determinant4-from-factors");
     // This is the fixed six-minor determinant polynomial
@@ -9601,6 +9626,13 @@ fn determinant4_from_factors(s: &[Real; 6], c: &[Real; 6]) -> Real {
     )
 }
 
+/// Evaluates the six-minor determinant polynomial with a known-rational aggregate.
+///
+/// Uses the signs and pairing of [`determinant4_from_factors`] without local
+/// pruning or representation checks. All twelve supplied values must currently
+/// be exact rationals, including any zeros; a determinant interpretation also
+/// requires consistent source minors. Incorrect representation evidence is not
+/// guaranteed to produce a typed error.
 fn determinant4_from_factors_known_rational(s: &[Real; 6], c: &[Real; 6]) -> Real {
     trace_matrix!("helper", "determinant4-from-factors-known-rational");
     Real::active_signed_product_sum2_known_exact_rational(
@@ -9616,16 +9648,16 @@ fn determinant4_from_factors_known_rational(s: &[Real; 6], c: &[Real; 6]) -> Rea
     )
 }
 
+/// Computes a 4×4 determinant from twelve 2×2 minors without division or pivots.
+///
+/// First scans for exposed nonzero rational entries throughout the matrix.
+/// Only that fully dense rational case uses the known-rational minor and
+/// determinant reducers. Any zero or missing rational view selects the
+/// ordinary pruning helpers. Singular matrices remain valid determinant
+/// inputs; this function neither proves invertibility nor refines a sign.
 #[inline]
 fn determinant4(m: &[[Real; 4]; 4]) -> Real {
     trace_matrix!("helper", "determinant4");
-    // The six-minor formula shares the same division-free rationale as 3x3.
-    // It is also reused by the cofactor inverse path, so determinant and
-    // inverse stay aligned with the trace counters used for regression checks.
-    // Fraction-free elimination/Gauss-Jordan alternatives remain useful for
-    // larger or purely integer systems, but this 4x4 public API can retain the
-    // division-free minor schedule and skip repeated rational discovery when
-    // all sixteen entries certify the dense exact-rational path.
     if matrix4_is_dense_exact_rational(m) {
         let (s, c) = matrix4_factors_dense_exact_known_rational(m);
         determinant4_from_factors_known_rational(&s, &c)
@@ -9635,6 +9667,15 @@ fn determinant4(m: &[[Real; 4]; 4]) -> Real {
     }
 }
 
+/// Constructs the transposed cofactors of `m`, scaling each by `inv_det`.
+///
+/// Requires `s` and `c` to be the current minors of `m` in [`matrix4_factors`]
+/// order. Visits the sixteen output entries row-major, expanding each cofactor
+/// into three products and immediately applying [`scale_by_shared_factor`].
+/// Cofactor helpers prune definitely-zero products and retain unknown factors.
+/// Any scale is accepted, including zero; this is an inverse only when the
+/// caller has supplied `1/det(m)` for a nonzero determinant. No reciprocal,
+/// determinant guard or source-consistency check occurs here.
 #[inline]
 fn matrix4_scaled_adjugate_from_factors(
     m: &[[Real; 4]; 4],
@@ -9718,6 +9759,13 @@ fn matrix4_scaled_adjugate_from_factors(
     ]
 }
 
+/// Scales the 4×4 adjugate using active three-product reducers without local pruning.
+///
+/// Has the source-minor and scale contract of
+/// [`matrix4_scaled_adjugate_from_factors`], including sixteen row-major scaling
+/// calls. Active reducers still select their scalar arithmetic from the inputs;
+/// symbolic values and zeros are supported without a rationality or full-density
+/// precondition. This helper does not construct or validate the reciprocal.
 #[inline(never)]
 fn matrix4_scaled_adjugate_from_factors_dense_exact(
     m: &[[Real; 4]; 4],
@@ -9802,6 +9850,16 @@ fn matrix4_scaled_adjugate_from_factors_dense_exact(
     ]
 }
 
+/// Attempts a 3×3 inverse entirely through the scalar rational aggregate.
+///
+/// Classifies current representations row-major, stopping at the first missing
+/// rational view. That case returns `None`, allowing a symbolic fallback; it
+/// does not prove irrationality. Otherwise selects the dyadic aggregate only
+/// if every denominator is a power of two, and the general rational aggregate
+/// for other rational matrices. Returns `Some(result)`, including
+/// `Some(Err(Problem::DivideByZero))` for a singular matrix, which callers must
+/// not mistake for a request to fall back. Zero entries are valid: full density
+/// is not required. No cancellation flag is accepted or attached here.
 #[inline]
 fn matrix3_dense_exact_rational_inverse(
     matrix: &[[Real; 3]; 3],
@@ -9822,6 +9880,14 @@ fn matrix3_dense_exact_rational_inverse(
     })
 }
 
+/// Attempts a 4×4 inverse through the scalar rational or dyadic aggregate.
+///
+/// Applies the representation and `Option<Result<...>>` contract of
+/// [`matrix3_dense_exact_rational_inverse`] to sixteen entries. Classification
+/// checks current storage before calling unchecked scalar entry points;
+/// symbolic storage returns `None`, while rational singularity returns
+/// `Some(Err(Problem::DivideByZero))`. Zeros are admissible, and no signal is
+/// attached even when a signal-aware inverse dispatcher calls this helper.
 #[inline]
 fn matrix4_dense_exact_rational_inverse(
     matrix: &[[Real; 4]; 4],
@@ -9843,6 +9909,20 @@ fn matrix4_dense_exact_rational_inverse(
     })
 }
 
+/// Inverts an owned 4×4 matrix using structure before a shared cofactor reciprocal.
+///
+/// First tries the three nonzero witnesses excluding shape shortcuts, not a
+/// full-density or nonsingularity certificate. That route tries the rational
+/// aggregate, returning its success or error directly; symbolic inputs use
+/// unpruned active minors and scaled cofactors. Otherwise collects shape facts
+/// and tries identity, diagonal, upper triangular, lower triangular, then
+/// affine, in order. Upper handling excludes affine diagonal-linear matrices.
+/// The remaining general path uses zero-pruned minors and cofactors.
+///
+/// Both cofactor paths construct one ordinary determinant reciprocal before
+/// assembling the scaled adjugate. Scalar errors propagate; unknown determinant
+/// status alone is not rejected by an explicit checked guard. This schedule
+/// performs no Gauss–Jordan pivot search.
 #[inline]
 fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
@@ -9882,10 +9962,6 @@ fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
             facts.is_affine_translation,
         );
     }
-    // The fixed cofactor formula also wins for 4x4 inverse despite doing more
-    // arithmetic than elimination. It creates one shared determinant inverse,
-    // while the solve prototype repeatedly normalized pivot rows and regressed
-    // both dyadic and decimal-rational benchmark rows.
     let (s, c) = matrix4_factors(&matrix);
     let det = determinant4_from_factors(&s, &c);
     let inv_det = det.inverse()?;
@@ -9894,6 +9970,15 @@ fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     ))
 }
 
+/// Uses the 4×4 inverse dispatch order with known-nonzero divisor guards.
+///
+/// Shares the early witnesses, rational aggregate and shape priority of
+/// [`invert_matrix4`]. Rational aggregate results, including singular errors,
+/// are final. Other cofactor paths require known nonzero determinant status
+/// before constructing its reciprocal and scaled adjugate: zero returns
+/// `DivideByZero`, unknown returns `UnknownZero`, without refinement by this
+/// guard. Identity returns unchanged; remaining shape shortcuts delegate to
+/// their checked divisor schedules. No signal is attached here.
 #[inline]
 fn invert_matrix4_checked(matrix: [[Real; 4]; 4]) -> CheckedBlasResult<[[Real; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
@@ -9943,6 +10028,20 @@ fn invert_matrix4_checked(matrix: [[Real; 4]; 4]) -> CheckedBlasResult<[[Real; 4
     ))
 }
 
+/// Performs checked 4×4 inversion with branch-specific cooperative signal attachment.
+///
+/// Retains the order of [`invert_matrix4_checked`]. The early rational aggregate
+/// returns directly without consuming `signal`, even if it is already set.
+/// For the symbolic dense fallback and general cofactor path, constructs minors
+/// and determinant first, attaches the signal to that determinant, then guards
+/// it, takes its reciprocal and constructs scaled cofactors. Attachment alone
+/// does not poll the flag or bound work performed before it.
+///
+/// Identity, diagonal and triangular shortcuts do not use the signal. Affine
+/// handling forwards it to its own dispatcher, whose diagonal-linear and
+/// translation shortcuts also bypass attachment. General affine handling
+/// delegates to the signal-aware 3×3 linear inverse. Scalar propagation governs
+/// later cancellation; this is not a uniform preemptive cancellation contract.
 #[inline]
 fn invert_matrix4_checked_with_abort(
     matrix: [[Real; 4]; 4],
@@ -10004,6 +10103,14 @@ fn invert_matrix4_checked_with_abort(
     ))
 }
 
+/// Builds the unscaled 4×4 adjugate for division that delays a shared reciprocal.
+///
+/// Requires current source minors in [`matrix4_factors`] order. Constructs all
+/// sixteen transposed cofactors row-major, using definite-zero pruning while
+/// retaining unknown factors. Singular matrices still have an adjugate; this
+/// helper neither inverts nor tests the determinant. Right-division callers
+/// can multiply their dividend by this matrix before applying the common scale.
+/// Source/minor consistency is a caller invariant, not checked here.
 #[inline]
 fn matrix4_adjugate_from_factors(
     m: &[[Real; 4]; 4],
@@ -10011,12 +10118,6 @@ fn matrix4_adjugate_from_factors(
     c: &[Real; 6],
 ) -> [[Real; 4]; 4] {
     trace_matrix!("helper", "matrix4-unscaled-adjugate-from-factors");
-    // Shared-scale division needs the 4x4 adjugate without multiplying each
-    // cofactor by `1/det`. This deliberately duplicates the scaled inverse
-    // formula above: refactoring the hot inverse path through an unscaled
-    // temporary would add an extra matrix pass and previously made these rows
-    // sensitive to code layout. Keep the duplicate only while right-division
-    // benchmarks prove that delaying the common scalar is worthwhile.
     [
         [
             mul_add_sub(&m[1][1], &c[5], &m[1][3], &c[3], &m[1][2], &c[4]),
@@ -10045,6 +10146,14 @@ fn matrix4_adjugate_from_factors(
     ]
 }
 
+/// Builds the unscaled 4×4 adjugate with unchecked known-rational reducers.
+///
+/// Requires the same source/minor consistency as [`matrix4_adjugate_from_factors`],
+/// plus current exact-rational representations for every matrix entry and minor.
+/// Uses unpruned three-product reducers for the same row-major transposed
+/// cofactors. Zeros and singular matrices are valid; no reciprocal is taken.
+/// Incorrect representation evidence is not guaranteed to yield a typed error,
+/// since the scalar reducers read stored rational components directly.
 #[inline(never)]
 fn matrix4_adjugate_from_factors_dense_exact_known_rational(
     m: &[[Real; 4]; 4],
