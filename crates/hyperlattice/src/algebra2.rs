@@ -1,133 +1,135 @@
-//! Two-dimensional scalar algebra helpers.
+//! Exact 2D coordinate expressions and conservative structural support snapshots.
 //!
-//! These helpers produce exact scalar expressions and deliberately do not
-//! classify topology. Callers that need sidedness, intersection, or containment
-//! decisions should pass the resulting scalar to `hyperlimit` so predicate
-//! policy and provenance stay at the predicate layer.
+//! Coordinates are ordered x,y; displacement is to-from and the orientation determinant
+//! is the exterior product of b-a and c-a. Expressions retain Real arithmetic without
+//! rounding, a predicate policy, a certainty receipt, or source-incidence evidence.
+//! The predicate layer must decide any sign, equality, sidedness, or topology claim.
+//!
+//! Fact producers inspect scalar zero knowledge without starting refinement. Unknown
+//! is not false, and two nonzero products can cancel. Public packet fields may be
+//! fabricated or changed; methods trust them without binding them to coordinates or
+//! revalidating consistency. Recompute facts after changing the represented inputs.
+//! Existing scalar cached proofs can strengthen later queries.
+//!
+//! Product-sum masks expose only the first 64 terms. Counts scan every term but cast
+//! to u32; neither mask nor count is an unlimited-size certificate. Fixed array shapes
+//! do not bound nested scalar work, coefficient growth, or retained memory. Expression
+//! construction uses the lattice RealKernelExt path, whose definite-zero pruning is
+//! narrower than the zero_status queries used by the fact producers.
 
 use crate::{Axis2, Real, RealKernelExt, ZeroKnowledge};
 
-/// Cheap structural facts known about a 2D displacement.
+/// Snapshot of zero knowledge for two displacement components and their support axis.
 ///
-/// These facts describe coordinate differences, not geometry topology. A
-/// known-zero displacement can help a caller skip work or choose an
-/// axis-specialized exact kernel, but final duplicate, incidence, sidedness,
-/// or containment decisions should still be certified by `hyperlimit`.
+/// Producer-created axis information requires one known-nonzero component and one
+/// known-zero component, without a sign or unit-length requirement. This can select
+/// axis-specialized algebra; it is not a topology or incidence receipt. Public fields
+/// are independently editable, and equality compares packets rather than coordinates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Displacement2Facts {
-    /// Zero status for `[dx, dy]`.
+    /// Zero-status snapshot for dx,dy in that order; does not certify a later edited component array.
     pub component_zero: [ZeroKnowledge; 2],
-    /// Axis occupied by a known nonzero component when the other component is
-    /// known zero.
+    /// Sole nonzero support axis in a producer-created packet; public edits need not agree with component_zero.
     pub known_axis: Option<Axis2>,
-    /// Whether both displacement components are known zero.
+    /// True when both producer-queried components were Zero; false is absence of that proof, not proof of a nonzero displacement. Public edits are not validated.
     pub known_zero: bool,
 }
 
-/// Cheap zero facts for one pairwise product `left * right`.
+/// Structural zero knowledge for two factors and their product, without multiplying.
 ///
-/// This records only structural zero knowledge for the product term. It does
-/// not simplify symbolic expressions, compare magnitudes, or decide signs.
+/// A known-zero factor dominates; two known-nonzero factors prove a nonzero product;
+/// all other combinations remain Unknown. Both factor queries run in left/right
+/// order even when the first is zero. Public fields can contradict one another after
+/// construction; query methods inspect term_zero only and do not revalidate it.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ProductTerm2Facts {
-    /// Zero status for the two product factors.
+    /// Left/right scalar zero knowledge as queried, even if the first factor is already known zero.
     pub factor_zero: [ZeroKnowledge; 2],
-    /// Zero status for the product term itself.
+    /// Stored product zero status; queries trust it without rechecking factor_zero.
     pub term_zero: ZeroKnowledge,
 }
 
 impl ProductTerm2Facts {
-    /// Return whether the product term is known to be exactly zero.
+    /// Test whether the stored term_zero is Zero; factor statuses are not rechecked.
     pub const fn known_zero(self) -> bool {
         matches!(self.term_zero, ZeroKnowledge::Zero)
     }
 
-    /// Return whether the product term is known not to be zero.
+    /// Test whether the stored term_zero is NonZero; factor statuses are not rechecked.
     pub const fn known_nonzero(self) -> bool {
         matches!(self.term_zero, ZeroKnowledge::NonZero)
     }
 
-    /// Return whether the product term zero status is unknown.
+    /// Test whether the stored term_zero is Unknown; factor fields are not inspected.
     pub const fn unknown_zero(self) -> bool {
         matches!(self.term_zero, ZeroKnowledge::Unknown)
     }
 }
 
-/// Cheap zero facts for a short sum of pairwise products.
+/// Array of pairwise-product zero statuses, independent of product signs and cancellation.
 ///
-/// These facts are useful next to [`signed_product_sum2`] and
-/// [`positive_product_sum2`]. They describe which product terms are
-/// structurally zero, not whether the whole sum cancels to zero.
+/// All-zero terms imply a zero sum, but nonzero terms may cancel. Fields and new()
+/// accept caller-provided statuses without binding them to factors or checking proofs.
+/// Masks truncate to the first 64 terms. Counts scan all TERMS statuses and cast to
+/// u32, truncating counts above u32::MAX; all_terms_known_zero inherits that limit.
+/// An empty packet has zero masks/counts and reports all terms known zero.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ProductSum2Facts<const TERMS: usize> {
-    /// Zero status for each pairwise product term.
+    /// One status per product in original order; all TERMS entries are retained even though masks expose at most 64.
     pub term_zero: [ZeroKnowledge; TERMS],
 }
 
-/// Cheap structural facts for a 2D orientation determinant.
+/// Support snapshot for the determinant `(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)`.
 ///
-/// The determinant itself is
-/// `(b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)`.
-/// This type records the displacement and product-term zero structure behind
-/// that expression without deciding the determinant sign. It is intended for
-/// predicate layers that want to select sparse or axis-specialized exact
-/// kernels before constructing every scalar term. The retained determinant
-/// shape keeps object facts separate from predicate decisions.
+/// Records two displacements and two product statuses without constructing the full
+/// determinant or deciding its sign. Producers recognize zero when both terms are
+/// known zero, and nonzero when exactly one is known zero and the other nonzero.
+/// Two nonzero terms remain undecided even if their cancellation is easy by another
+/// method. Public fields are editable; accessors do not validate mutual consistency,
+/// source identity, or geometric validity.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Orient2Facts {
-    /// Structural facts for `b - a`.
+    /// Snapshot for b-a, or the first displacement explicitly supplied by the caller.
     pub ab: Displacement2Facts,
-    /// Structural facts for `c - a`.
+    /// Snapshot for c-a, or the second displacement explicitly supplied by the caller.
     pub ac: Displacement2Facts,
-    /// Zero status of the two determinant product terms.
+    /// Statuses of ab.x*ac.y and ab.y*ac.x in that order; the subtraction sign does not affect individual zero statuses.
     pub determinant_terms: ProductSum2Facts<2>,
-    /// Whether zero/nonzero determinant status is known from structural facts.
-    ///
-    /// `Some(true)` means the determinant is known to be exactly zero.
-    /// `Some(false)` means cancellation cannot make the determinant zero
-    /// because exactly one signed product term is structurally nonzero.
+    /// Some(true) means known zero, Some(false) means known nonzero, and None means unresolved by support; publicly editable without revalidation.
     pub known_zero: Option<bool>,
 }
 
 impl<const TERMS: usize> ProductSum2Facts<TERMS> {
-    /// Build product-sum facts from term facts.
+    /// Store the supplied term statuses unchanged, including empty arrays; does not verify underlying factor proofs.
     pub const fn new(term_zero: [ZeroKnowledge; TERMS]) -> Self {
         Self { term_zero }
     }
 
-    /// Return the zero status for one product term.
+    /// Return the stored status at index.
     ///
     /// # Panics
     ///
-    /// Panics when `index >= TERMS`.
+    /// Panics when index>=TERMS, including every index for an empty packet.
     pub const fn term_zero(self, index: usize) -> ZeroKnowledge {
         self.term_zero[index]
     }
 
-    /// Return a bit mask of product terms known to be zero.
-    ///
-    /// Bits above 63 are not represented. This is sufficient for the fixed
-    /// short determinant, distance, and cofactor expressions this module is
-    /// meant to expose.
+    /// Return bits for stored Zero statuses, only at term indices 0..min(TERMS,64); later terms are omitted.
     pub fn known_zero_mask(self) -> u64 {
         term_mask(self.term_zero, ZeroKnowledge::Zero)
     }
 
-    /// Return a bit mask of product terms known to be nonzero.
-    ///
-    /// Bits above 63 are not represented.
+    /// Return bits for stored NonZero statuses, only at term indices 0..min(TERMS,64); later terms are omitted.
     pub fn known_nonzero_mask(self) -> u64 {
         term_mask(self.term_zero, ZeroKnowledge::NonZero)
     }
 
-    /// Return a bit mask of product terms with unknown zero status.
-    ///
-    /// Bits above 63 are not represented.
+    /// Return bits for stored Unknown statuses, only at term indices 0..min(TERMS,64); later terms are omitted.
     pub fn unknown_zero_mask(self) -> u64 {
         term_mask(self.term_zero, ZeroKnowledge::Unknown)
     }
 
-    /// Count product terms known to be exactly zero.
+    /// Count stored Zero statuses across all TERMS entries, then cast usize to u32; counts above u32::MAX truncate, unlike the first-64-term masks.
     pub fn known_zero_count(self) -> u32 {
         self.term_zero
             .into_iter()
@@ -135,7 +137,7 @@ impl<const TERMS: usize> ProductSum2Facts<TERMS> {
             .count() as u32
     }
 
-    /// Count product terms known to be nonzero.
+    /// Count stored NonZero statuses across all TERMS entries, then cast usize to u32; counts above u32::MAX truncate, unlike the first-64-term masks.
     pub fn known_nonzero_count(self) -> u32 {
         self.term_zero
             .into_iter()
@@ -143,7 +145,7 @@ impl<const TERMS: usize> ProductSum2Facts<TERMS> {
             .count() as u32
     }
 
-    /// Count product terms with unknown zero status.
+    /// Count stored Unknown statuses across all TERMS entries, then cast usize to u32; counts above u32::MAX truncate, unlike the first-64-term masks.
     pub fn unknown_zero_count(self) -> u32 {
         self.term_zero
             .into_iter()
@@ -151,19 +153,23 @@ impl<const TERMS: usize> ProductSum2Facts<TERMS> {
             .count() as u32
     }
 
-    /// Return whether every product term is known to be zero.
+    /// Compare the u32-truncated zero count, converted to usize, with TERMS.
+    ///
+    /// True for an empty array. For TERMS<=u32::MAX this tests every status; larger
+    /// all-zero arrays cannot be recognized by this count-based implementation. This
+    /// method does not detect cancellation among terms that are not individually zero.
     pub fn all_terms_known_zero(self) -> bool {
         self.known_zero_count() as usize == TERMS
     }
 }
 
 impl Orient2Facts {
-    /// Build orientation determinant facts from already-computed displacements.
+    /// Query first-displacement facts, second-displacement facts, then both determinant product terms.
     ///
-    /// Callers that already materialized `b - a` and `c - a` can use this form
-    /// to avoid recomputing displacement scalars while still preserving the
-    /// compact two-term determinant shape. This is the fixed-size analogue of
-    /// scheduling a sparse product from known support.
+    /// Coordinates are already-computed dx,dy pairs. Reuses these scalars instead of
+    /// rebuilding differences, but product-term queries revisit their zero knowledge.
+    /// The retained fact order is intentional. Derives zero/nonzero only from the two
+    /// term statuses; no determinant construction, sign refinement, or policy occurs.
     pub fn from_displacements(ab: [&Real; 2], ac: [&Real; 2]) -> Self {
         let ab_facts = Displacement2Facts::from_components(ab);
         let ac_facts = Displacement2Facts::from_components(ac);
@@ -178,13 +184,12 @@ impl Orient2Facts {
         }
     }
 
-    /// Return whether the orientation determinant is structurally known to be
-    /// zero or nonzero.
+    /// Return the stored known_zero option unchanged, without reconstructing or validating the determinant.
     pub const fn known_zero(self) -> Option<bool> {
         self.known_zero
     }
 
-    /// Return whether the determinant is known to be nonzero.
+    /// Negate the stored known_zero boolean inside Some, preserving None; no new scalar proof is computed.
     pub const fn known_nonzero(self) -> Option<bool> {
         match self.known_zero {
             Some(true) => Some(false),
@@ -193,8 +198,7 @@ impl Orient2Facts {
         }
     }
 
-    /// Return the known support-axis pair for `b - a` and `c - a`, if both
-    /// displacements are axis-certified and non-degenerate.
+    /// Return the two stored Some axis fields when present; does not require different axes or validate them against components.
     pub const fn known_axis_pair(self) -> Option<(Axis2, Axis2)> {
         match (self.ab.known_axis, self.ac.known_axis) {
             (Some(ab), Some(ac)) => Some((ab, ac)),
@@ -204,13 +208,11 @@ impl Orient2Facts {
 }
 
 impl Displacement2Facts {
-    /// Build displacement facts from already-computed `[dx, dy]` components.
+    /// Query dx.zero_status then dy.zero_status without rebuilding a displacement.
     ///
-    /// This constructor exists so higher crates can cache exact displacements
-    /// once and reuse their structural facts without rebuilding scalar
-    /// differences. The retained-object strategy exploits cheap object
-    /// structure before lower-level scalar evaluation while keeping final
-    /// predicate decisions separate.
+    /// Both known zero set known_zero. Exactly one NonZero and one Zero set the support
+    /// axis, regardless of sign/magnitude. Unknown yields no axis proof. These queries
+    /// consume structural/cached knowledge without starting a sign-refinement loop.
     pub fn from_components(components: [&Real; 2]) -> Self {
         let component_zero = [components[0].zero_status(), components[1].zero_status()];
         let known_zero = matches!(component_zero, [ZeroKnowledge::Zero, ZeroKnowledge::Zero]);
@@ -227,14 +229,12 @@ impl Displacement2Facts {
         }
     }
 
-    /// Return the zero status for one displacement component.
+    /// Index the stored component status with Axis2::index (X=0, Y=1), without querying a scalar.
     pub fn component_zero(self, axis: Axis2) -> ZeroKnowledge {
         self.component_zero[axis.index()]
     }
 
-    /// Return a bit mask of components known to be exactly zero.
-    ///
-    /// Bit 0 is `dx` and bit 1 is `dy`.
+    /// Return bits for stored Zero statuses, with dx at bit 0 and dy at bit 1; known_axis/known_zero fields are not consulted.
     pub fn known_zero_mask(self) -> u8 {
         let mut mask = 0;
         if matches!(self.component_zero[0], ZeroKnowledge::Zero) {
@@ -246,7 +246,7 @@ impl Displacement2Facts {
         mask
     }
 
-    /// Return a bit mask of components known to be nonzero.
+    /// Return bits for stored NonZero statuses, with dx at bit 0 and dy at bit 1; known_axis/known_zero fields are not consulted.
     pub fn known_nonzero_mask(self) -> u8 {
         let mut mask = 0;
         if matches!(self.component_zero[0], ZeroKnowledge::NonZero) {
@@ -258,7 +258,7 @@ impl Displacement2Facts {
         mask
     }
 
-    /// Return a bit mask of components whose zero status is unknown.
+    /// Return bits for stored Unknown statuses, with dx at bit 0 and dy at bit 1; known_axis/known_zero fields are not consulted.
     pub fn unknown_zero_mask(self) -> u8 {
         let mut mask = 0;
         if matches!(self.component_zero[0], ZeroKnowledge::Unknown) {
@@ -270,26 +270,26 @@ impl Displacement2Facts {
         mask
     }
 
-    /// Count components known to be exactly zero.
+    /// Count stored Zero statuses from the corresponding two-bit component mask; the result is between zero and two.
     pub fn known_zero_count(self) -> u32 {
         self.known_zero_mask().count_ones()
     }
 
-    /// Count components known to be nonzero.
+    /// Count stored NonZero statuses from the corresponding two-bit component mask; the result is between zero and two.
     pub fn known_nonzero_count(self) -> u32 {
         self.known_nonzero_mask().count_ones()
     }
 
-    /// Count components whose zero status is unknown.
-    ///
-    /// Structural-dispatch note: count helpers let triangulation and curve
-    /// layers pick sparse exact kernels without depending on this crate's mask
-    /// layout and select sparse exact product-sum paths from stable metadata.
+    /// Count stored Unknown statuses from the corresponding two-bit component mask; the result is between zero and two.
     pub fn unknown_zero_count(self) -> u32 {
         self.unknown_zero_mask().count_ones()
     }
 }
 
+/// Scan only indices below min(TERMS,64), setting bit i when its stored status equals needle.
+///
+/// No shifts beyond u64 width occur. Later terms are deliberately absent from the
+/// mask, so a zero mask is not an all-terms statement for arrays longer than 64.
 fn term_mask<const TERMS: usize>(statuses: [ZeroKnowledge; TERMS], needle: ZeroKnowledge) -> u64 {
     let mut mask = 0;
     let limit = TERMS.min(64);
@@ -301,6 +301,11 @@ fn term_mask<const TERMS: usize>(statuses: [ZeroKnowledge; TERMS], needle: ZeroK
     mask
 }
 
+/// Return Some(true) for two known-zero terms, Some(false) for one zero and one nonzero, otherwise None.
+///
+/// Tests all-zero before the one-zero/one-nonzero branch and retains the count-query
+/// order. Two nonzero products may cancel, so their difference is not classified.
+/// This trusts the supplied status packet and provides no determinant sign.
 fn determinant_zero_from_terms(terms: ProductSum2Facts<2>) -> Option<bool> {
     if terms.all_terms_known_zero() {
         Some(true)
@@ -311,29 +316,31 @@ fn determinant_zero_from_terms(terms: ProductSum2Facts<2>) -> Option<bool> {
     }
 }
 
-/// Returns the 2D displacement vector `to - from` as `[dx, dy]`.
+/// Construct `[to.x-from.x, to.y-from.y]` with borrowed Real subtraction in axis order.
 ///
-/// This is pure coordinate algebra: it constructs reusable exact scalar
-/// differences without deciding whether the displacement is zero, horizontal,
-/// or otherwise geometrically special. Callers that need a certified equality
-/// or incidence decision should ask `hyperlimit`.
+/// Retains exact expressions for reuse by distance/orientation callers. No zero,
+/// axis, point-identity, incidence, or topology decision is made here.
 pub fn displacement2(from: [&Real; 2], to: [&Real; 2]) -> [Real; 2] {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "displacement2");
     [to[0] - from[0], to[1] - from[1]]
 }
 
-/// Return structural facts about the 2D displacement `to - from`.
+/// Construct to-from once, query its component zero facts, then discard the temporary scalars.
 ///
-/// This helper computes the exact coordinate differences only to query their
-/// cheap zero facts. Use [`displacement2`] when the caller also needs the
-/// scalar differences themselves.
+/// Use displacement2 and Displacement2Facts::from_components when differences must
+/// also be retained. This returns a detached structural snapshot without refinement
+/// or a policy-qualified geometric decision.
 pub fn displacement2_facts(from: [&Real; 2], to: [&Real; 2]) -> Displacement2Facts {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "displacement2-facts");
     let delta = displacement2(from, to);
     Displacement2Facts::from_components([&delta[0], &delta[1]])
 }
 
-/// Return structural zero facts for one pairwise product term.
+/// Query both factor zero statuses in left/right order without constructing their product.
+///
+/// Either Zero makes the term Zero; two NonZero statuses make it NonZero; otherwise
+/// it is Unknown. Does not short-circuit the second query when the first is zero,
+/// compare signs, or refine an unknown. Cached scalar proofs can affect the result.
 pub fn product_term2_facts(term: [&Real; 2]) -> ProductTerm2Facts {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "product-term2-facts");
     let factor_zero = [term[0].zero_status(), term[1].zero_status()];
@@ -356,11 +363,11 @@ pub fn product_term2_facts(term: [&Real; 2]) -> ProductTerm2Facts {
     }
 }
 
-/// Return structural zero facts for a short sum of pairwise products.
+/// Map terms in array order through product_term2_facts, retaining each product status.
 ///
-/// Product-sum facts let callers choose sparse exact kernels without expanding
-/// every product first while preserving delayed normalization for the surviving
-/// exact product sum.
+/// No products or sum are constructed. This is support metadata for choosing algebra
+/// paths, not a test for cancellation or the sign of a sum. Empty input returns an
+/// empty packet; masks/counts retain the limits documented on ProductSum2Facts.
 pub fn product_sum2_facts<const TERMS: usize>(
     terms: [[&Real; 2]; TERMS],
 ) -> ProductSum2Facts<TERMS> {
@@ -368,14 +375,12 @@ pub fn product_sum2_facts<const TERMS: usize>(
     ProductSum2Facts::new(terms.map(|term| product_term2_facts(term).term_zero))
 }
 
-/// Return structural facts for the orientation determinant of `a`, `b`, `c`.
+/// Construct b-a first and c-a second, then query their determinant support snapshot.
 ///
-/// This helper computes the two anchored displacement vectors once and records
-/// the zero structure of the two signed product terms. The result can identify
-/// duplicate-anchor and axis-collinear cases structurally, and can identify
-/// perpendicular axis cases as nonzero, but it deliberately leaves sidedness to
-/// `hyperlimit`. The determinant expression itself is still available through
-/// [`orient2_expr`].
+/// Can identify zero terms in duplicate-anchor/axis-collinear cases and a nonzero
+/// single term for perpendicular axes. Does not decide cancellation between two
+/// nonzero products or sidedness. Use orient2_expr separately for the determinant;
+/// the returned packet does not retain the temporary displacement scalars.
 pub fn orient2_expr_facts(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Orient2Facts {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "orient2-expr-facts");
     let [abx, aby] = displacement2(a, b);
@@ -383,18 +388,17 @@ pub fn orient2_expr_facts(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Orient
     Orient2Facts::from_displacements([&abx, &aby], [&acx, &acy])
 }
 
-/// Returns a short signed sum of pairwise products.
+/// Construct the sum of `terms[i][0]*terms[i][1]`, adding for true and subtracting for false.
 ///
-/// Each term is `terms[i][0] * terms[i][1]`; `positive_terms[i]` selects
-/// whether that product is added or subtracted. This exposes the exact reducer
-/// used by small determinants and cofactors without exposing kernel internals.
-/// Real kernels can prune structurally zero factors and share exact-rational
-/// denominator work through delayed normalization.
+/// Delegates to the lattice RealKernelExt implementation, not Hyperreal's generic
+/// signed_product_sum recognizer. It scans definite-zero factors in order; zero,
+/// one, or two retained terms use specialized routes. With three or more it forwards
+/// the original array, including skipped zero terms, to the active reducer. Empty
+/// input returns exact zero. Nonzero term counts here include unknown factors.
 ///
-/// Structural-dispatch note: callers that already carry zero masks or
-/// exact-rational/dyadic facts can use this helper to preserve the compact
-/// product-sum shape instead of materializing independent products and a
-/// left-deep addition tree.
+/// The active reducer tries exact-rational aggregation before ordered generic
+/// multiplication/addition. No zero-status packet is accepted or consumed, and no
+/// policy, sign decision, total-work budget, or certainty receipt is added.
 pub fn signed_product_sum2<const TERMS: usize>(
     positive_terms: [bool; TERMS],
     terms: [[&Real; 2]; TERMS],
@@ -403,68 +407,62 @@ pub fn signed_product_sum2<const TERMS: usize>(
     Real::signed_product_sum2(positive_terms, terms)
 }
 
-/// Returns a short positive sum of pairwise products.
+/// Add every pairwise product by passing all-true signs to signed_product_sum2.
 ///
-/// This is a convenience wrapper around [`signed_product_sum2`] for dot-like
-/// and squared-length expressions.
+/// Positive refers to addition signs, not factor or result nonnegativity. This is
+/// useful for dot products and squared lengths; empty input returns exact zero.
 pub fn positive_product_sum2<const TERMS: usize>(terms: [[&Real; 2]; TERMS]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "positive-product-sum2");
     signed_product_sum2([true; TERMS], terms)
 }
 
-/// Returns the 2D exterior product `left.x * right.y - left.y * right.x`.
+/// Construct `left.x*right.y-left.y*right.x` through the signed pairwise-product reducer.
 ///
-/// This is the scalar expression behind planar orientation and signed area.
-/// It is kept in `hyperlattice` because it is pure algebra over two vectors,
-/// not a predicate decision. The implementation routes the short determinant
-/// through the Real signed-product reducer so exact rationals can share
-/// denominator work through delayed normalization.
+/// This exterior product is oriented parallelogram area in Cartesian coordinates.
+/// It is a scalar expression, not a sign or sidedness decision; swapping operands
+/// negates the mathematical value. No normalized vectors or unit scale are required.
 pub fn wedge2(left: [&Real; 2], right: [&Real; 2]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "wedge2");
     signed_product_sum2([true, false], [[left[0], right[1]], [left[1], right[0]]])
 }
 
-/// Returns the 2D dot product `left.x * right.x + left.y * right.y`.
+/// Construct `left.x*right.x+left.y*right.y` from borrowed coordinate pairs.
 ///
-/// This helper is useful for curve, solver, and projection code that only owns
-/// coordinates, not a [`Vector2`](crate::Vector2). It preserves exact scalar
-/// structure and prunes structurally zero lanes before calling the Real kernel
-/// reducer.
+/// Provides the dot expression without requiring Vector2 carriers. Delegates to
+/// positive_product_sum2 and its definite-zero scan/exact-rational reducer; does
+/// not classify orthogonality, magnitude, or the sign of the result.
 pub fn dot2(left: [&Real; 2], right: [&Real; 2]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "dot2");
     positive_product_sum2([[left[0], right[0]], [left[1], right[1]]])
 }
 
-/// Returns the squared 2D norm `x * x + y * y`.
+/// Construct `x*x+y*y` from an existing coordinate pair without taking a square root.
 ///
-/// This helper exists for callers that already cached a displacement vector
-/// and want to compare lengths without rebuilding coordinate differences or
-/// constructing a square root. It is pure algebra; nearest-candidate and
-/// topology decisions still belong in `hyperlimit` predicate helpers.
+/// Allows reuse of displacement scalars for distance/solver expressions. The exact
+/// mathematical result is nonnegative, but this API returns the expression without
+/// a sign, zero, or topology receipt and does not imply an external cache hit.
 pub fn squared_norm2(vector: [&Real; 2]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "squared-norm2");
     positive_product_sum2([[vector[0], vector[0]], [vector[1], vector[1]]])
 }
 
-/// Returns the squared 2D distance between two points.
+/// Construct b-a, then its squared norm, preserving the exact polynomial expression.
 ///
-/// No square root is taken. Keeping this as a polynomial lets exact callers
-/// compare squared distances or feed residuals into solvers without forcing
-/// approximation.
+/// No square root or distance comparison occurs. Callers comparing distances still
+/// need the appropriate predicate decision; this expression carries no tolerance,
+/// point-identity proof, or approximation guarantee.
 pub fn squared_distance2(a: [&Real; 2], b: [&Real; 2]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "squared-distance2");
     let [dx, dy] = displacement2(a, b);
     squared_norm2([&dx, &dy])
 }
 
-/// Builds the exact scalar expression for the orientation determinant of
-/// points `a`, `b`, and `c`.
+/// Construct the exterior product of b-a and c-a, in that displacement order.
 ///
-/// The return value is the determinant
-/// `(b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)`.
-/// `hyperlattice` stops at expression construction; `hyperlimit` owns the
-/// exact sign decision. Algebraic objects may carry structure, while geometric
-/// decisions live in a predicate layer.
+/// The mathematical value is twice the signed triangle area: positive for a
+/// counterclockwise nondegenerate triple in the usual x-right/y-up convention.
+/// Construction does not determine that sign or classify degeneracy; hyperlimit
+/// owns predicate-policy decisions and their evidence.
 pub fn orient2_expr(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "orient2-expr");
     let [abx, aby] = displacement2(a, b);
@@ -472,16 +470,20 @@ pub fn orient2_expr(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Real {
     wedge2([&abx, &aby], [&acx, &acy])
 }
 
+/// Finite exact arithmetic/support regressions; do not establish general symbolic decisiveness, resource bounds, or dispatch counts.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Local test alias for the actual exact scalar carrier; no alternative arithmetic implementation is used.
     type S = Real;
 
+    /// Lift an i32 fixture coefficient exactly into the local Real alias.
     fn s(value: i32) -> S {
         value.into()
     }
 
+    /// Assert the exact wedge of (3,4) and (5,6) is -2.
     #[test]
     fn wedge2_builds_signed_area_expression() {
         let left = [s(3), s(4)];
@@ -490,6 +492,7 @@ mod tests {
         assert_eq!(wedge2([&left[0], &left[1]], [&right[0], &right[1]]), s(-2));
     }
 
+    /// Assert the exact displacement from (1,2) to (4,6) is (3,4).
     #[test]
     fn displacement2_builds_coordinate_difference() {
         let from = [s(1), s(2)];
@@ -501,6 +504,7 @@ mod tests {
         );
     }
 
+    /// Check a horizontal displacement has X support and complementary masks, and a duplicate point has two zero components.
     #[test]
     fn displacement2_facts_expose_axis_and_zero_masks() {
         let from = [s(1), s(2)];
@@ -518,6 +522,7 @@ mod tests {
         assert_eq!(same_facts.known_zero_count(), 2);
     }
 
+    /// Check two positive products sum to 41 and an ordered two-product difference is -1 using exact integer expectations.
     #[test]
     fn product_sum_helpers_preserve_short_exact_expressions() {
         let a = s(2);
@@ -532,6 +537,7 @@ mod tests {
         );
     }
 
+    /// Check one zero and one nonzero product yield the expected statuses/masks and no unknown terms; does not decide cancellation.
     #[test]
     fn product_sum_facts_track_structurally_zero_terms() {
         let zero = s(0);
@@ -548,6 +554,7 @@ mod tests {
         assert!(!facts.all_terms_known_zero());
     }
 
+    /// Check same-axis displacements give known zero, perpendicular axes give known nonzero, and a dense fixture remains unclassified by support alone.
     #[test]
     fn orient2_expr_facts_track_axis_collinear_and_perpendicular_cases() {
         let a = [s(0), s(0)];
@@ -585,6 +592,7 @@ mod tests {
         assert_eq!(dense_case.known_zero(), None);
     }
 
+    /// Check the exact squared norm of supplied (3,4) components is 25; the test does not measure or assert cache reuse.
     #[test]
     fn squared_norm2_reuses_cached_displacement() {
         let dx = s(3);
@@ -593,6 +601,7 @@ mod tests {
         assert_eq!(squared_norm2([&dx, &dy]), s(25));
     }
 
+    /// Assert the exact determinant of (0,0),(4,0),(0,3) is +12, independently of any sign-policy wrapper.
     #[test]
     fn orient2_expr_matches_counter_clockwise_triangle() {
         let a = [s(0), s(0)];
@@ -605,6 +614,7 @@ mod tests {
         );
     }
 
+    /// Assert the squared distance between (1,2) and (4,6) is exactly 25; no dispatch count is asserted.
     #[test]
     fn squared_distance2_avoids_square_root() {
         let a = [s(1), s(2)];

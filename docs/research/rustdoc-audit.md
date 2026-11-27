@@ -7757,6 +7757,130 @@ these logs. Scripts are `/tmp/csgrs-point-*.py`, the exact probe source is
 archive. Remaining Hyperlattice modules/tests/support files and the wider
 repository still require review; this entry does not claim complete crate coverage.
 
+## Hyperlattice 2D algebra and private scalar adapters (2026-11-26)
+
+Reviewed every baseline line of `crates/hyperlattice/src/algebra2.rs` (615) and
+`crates/hyperlattice/src/kernels.rs` (250) at `fab9b68b3`. Current lengths are 625
+and 368. This includes public fact fields, all arithmetic formulas, trait and
+implementation methods, private helpers, enum variants, test alias/helper, and
+all nine unit tests. These two whole-file reviews supersede the earlier
+module-link-only context record for kernels.rs.
+
+Owning layer: lattice coordinate algebra and scalar scheduling adapters, with
+Hyperreal retaining scalar authority. Relevant properties include P1/P2/P3/P4/P6/
+P9/P10/P17/P37: exact construction, conservative facts, cache/proof scope, explicit
+failure and certainty boundaries, preserved call order, and consumable docs.
+Missing acceptance evidence was attached private/implementation/test documentation
+and precise distinctions between zero knowledge, expression construction, masks,
+counts, and unchecked representation assumptions. No implementation or public
+contract was changed to resolve the documented limitations.
+
+Source inventory: algebra2 has 54 authored declarations (48 functions/methods,
+four structs, one test module, one alias) and ten fields. Kernels has 33 authored
+declarations (31 functions/methods, one enum, one trait) and three enum variants.
+All have attached comments. Compiler-generated items are not counted as authored
+source. Scope is these files, not the entire crate.
+
+Contracts documented and checked against the target revision:
+
+- Displacement uses to-from in x/y order. Wedge is the oriented parallelogram
+  determinant, orientation is wedge(b-a,c-a), and squared distances/norms avoid a
+  square root. These functions construct Real expressions, not sign decisions,
+  topology/incidence certificates, or predicate certainty receipts. Positive sum
+  means all addition signs, not necessarily a nonnegative scalar value.
+- Product facts query both factor zero_status values, in left/right order, even
+  when the first factor is zero. Zero dominates, two NonZero factors imply a
+  NonZero product, and the other cases stay Unknown. No product is constructed.
+  Existing scalar proof caches can affect later snapshots without a new local
+  refinement loop. Orientation facts query displacement facts first, then revisit
+  component knowledge for the determinant terms.
+- Two zero determinant terms imply zero; one zero and one nonzero imply nonzero;
+  two nonzero terms remain unclassified by support alone. A dense rational
+  collinear example produces known_zero=None while its exact wedge is zero.
+  Unknown is not a false classification, and known-nonzero gives no orientation
+  sign. Axis pairs need not be different.
+- All fact fields are public. Query methods trust their stored flags/statuses
+  and do not bind them to original coordinates or validate consistency. Edited
+  product/determinant flags can contradict the underlying factor packet. This
+  metadata carrier is not itself a validator of caller-provided evidence.
+- Product-sum masks inspect only indices below min(TERMS,64). Counts inspect the
+  full array but cast usize to u32; beyond u32::MAX the count truncates, and the
+  all-zero method cannot recognize a larger all-zero array. Empty packets report
+  all terms zero. The 65-term mask/count distinction was exercised; counts above
+  u32::MAX were established from the source conversion, not by allocating a
+  multi-billion-entry fixture. This restriction is not a completeness claim.
+- The pairwise expression builder uses definitely_zero, a narrower structural
+  query than zero_status. It short-circuits the right-factor query when the left
+  is definitely zero, yet scans all supplied terms. Its retained count includes
+  unknown/unrecognized zeros. Zero/one/two retained terms get specialized paths;
+  three or more forward the original array, including skipped zero terms.
+- The active pairwise reducer tries the exact-rational aggregate, then performs
+  products and signed accumulation in original order. It has no separate local
+  pruning or identity search. It is not Hyperreal's generic signed_product_sum
+  recognizer. Individual scalar operations may still simplify their inputs.
+- Active means retained for arithmetic, not certified nonzero. Known-exact and
+  known-dyadic adapters require current representation evidence; they bypass
+  factor-class validation and forward to routines that consume stored rational
+  components. Incorrect or stale evidence is not reported as a typed mismatch.
+  No invalid-precondition probe was treated as supported operation success.
+- Cached arithmetic methods reuse a borrowed operand but maintain no lattice
+  cache. Dot and linear-combination wrappers delegate directly to Hyperreal.
+  Self-dot wrappers pass identical references, permitting scalar-owned reuse but
+  guaranteeing neither a hit nor a measured speedup. NonRational means no
+  recognized rational representation, not proved mathematical irrationality.
+
+Context reads followed the scalar zero_status/definitely_zero implementations,
+exact-rational aggregate/unchecked entry points, dot/linear-combination delegation,
+trace recorder, Axis2 index/bit mapping, and consumer references. Those excerpts
+receive no whole-file completion credit. Read the complete algebra-specific
+API-surface test and relevant imports, but the rest of that file remains open.
+Existing performance commentary encountered in scalar context is not adopted as
+new measurement evidence here.
+
+Validation after documentation edits:
+
+- Removing comment-only/blank lines leaves identical executable source in both
+  files against `fab9b68b3`. Focused Rustfmt and `git diff --check` passed. No
+  predicate ordering, expressions, branch conditions, assertions, visibility,
+  features, fixtures, or lint policies changed.
+- Hyperlattice library builds and private Rustdoc passed with no default features
+  and all features, with warnings and broken/private intra-doc links denied.
+  Full text from 90 source comment groups matched 23 item pages. Fifteen trait
+  and implementation method comments share identical text: these are 75 distinct
+  rendered texts, not 90 independently rendered items. The trait page renders a
+  representative repeated method summary once; implementation comments also
+  remain attached in source. Normal-source coverage is not inferred merely from
+  Rustdoc's public missing_docs lint.
+- Separate private cfg(test) docs rendered three additional groups: test module,
+  scalar alias, and fixture helper. Nine #[test] functions retain source comments
+  but no individual Rustdoc item pages. No attributes were changed to alter this.
+- Nine original unit tests, one selected original API-surface integration test,
+  and a separate bounded contract probe passed at baseline and after edits.
+  Final runs passed in both feature configurations. The temporary harness
+  includes the original algebra/kernel source unchanged and links actual scalar
+  libraries; the integration test compiles directly from its original source.
+- The probe checks all nine factor-status combinations, empty and 65-term facts,
+  dense cancellation, edited metadata, signed/positive sums, each private kernel
+  wrapper, and rational/dyadic/unrecognized representation tags using exact
+  expectations. With tracing enabled, a zero-left product fact records two Real
+  zero_status calls while a zero-left one-term expression records one
+  definitely_zero call. The same assertions passed before and after edits; this
+  is a bounded call-order witness, not the entire dispatch matrix or a benchmark.
+- Hyperlimit downstream library checks passed with no default features and all
+  features. Full workflow checks remain owner-waived for this docs-only session.
+  Used locked/offline Cargo, two workers, one shared target, and no incremental
+  storage. Temporary test executables are removed after checks; no performance
+  improvement or arbitrary-degree/resource completeness is claimed.
+
+Evidence: `/tmp/csgrs-rustdoc-algebra-baseline.log`,
+`/tmp/csgrs-rustdoc-algebra-{min,all}-{build,doc,tests,render}.log`,
+`/tmp/csgrs-rustdoc-algebra-downstream-{min,all}.log`, and
+`/tmp/csgrs-rustdoc-algebra-test-docs.log`. Cargo artifact manifests and
+`/tmp/csgrs-algebra-*.py` scripts support those checks; harness/probe source and
+private test docs remain in `/tmp/csgrs-algebra-harness`. Temporary evidence is
+not a durable archive. Remaining implementations, tests, and support files across
+Hyperlattice and the repository still require review.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
