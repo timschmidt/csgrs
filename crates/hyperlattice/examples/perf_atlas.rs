@@ -1,65 +1,108 @@
-//! Performance atlas for Hyperlattice: exact vectors, matrices, transforms,
-//! complex scalars and projective constructions over Hyperreal entries, swept
-//! across entry representations, entry sizes, dimensions, structure and
-//! conditioning. Run through `scripts/perf-atlas/run.sh`, or directly:
-//! `cargo run --release -p hyperlattice --example perf_atlas -- --out atlas.json`.
+//! Performance-atlas workloads over exact lattice carriers and generated entry recipes.
 //!
-//! Every timed call rebuilds its operands from exact rationals (irrational
-//! entries take a square root inside the call, so no approximation cached by an
-//! earlier call is reused) and forces every output entry to 17 significant
-//! digits. Before formatting, an entry's sign is certified down to
-//! `2^-2048`; an entry whose sign stays undecided is reported as a failed call
-//! rather than refined forever, because formatting an unproven zero does not
-//! terminate.
+//! Run through scripts/perf-atlas/run.sh, or from the workspace root with
+//! `cargo run --release -p hyperlattice --example perf_atlas -- --out atlas.json`.
+//! This example registers 44 operations; the shared harness selects names and may
+//! stop/skip points using observed timing. Its fuzz series are deterministic seeded
+//! samples, not a correctness-directed fuzzing campaign.
+//!
+//! Factories build rational recipe data outside timed callbacks. Callbacks rebuild
+//! Real operands, including square roots, and ordinarily force outputs through a
+//! sign precheck and scientific formatting. This does not reset global caches or
+//! prove every call is cold. Certified zeros return a length token without formatting;
+//! structural-fact and orientation rows return a Boolean/sign token instead. Tokens
+//! are not exact-output checksums, topology evidence, or independent mathematical
+//! oracles. The harness checks completion only on its first probe, not every repeat.
+//!
+//! Native Problem errors and undecided output signs collapse to None. A successful
+//! Option only means this callback reached its terminal, not that an independent
+//! expectation or certainty receipt was checked. The sign precision is not a total
+//! work/time/memory limit; construction and subsequent formatting have no local
+//! resource guard. The shared harness catches ordinary unwinding but cannot preempt
+//! a stuck call. External containment is needed for expensive experiments.
+//!
+//! Names describe generator recipes, not guaranteed resulting representations:
+//! rational reductions can shrink sizes, and the irrational recipe can be a square.
+//! Some retained human-readable operation labels overstate ranges/error detail;
+//! the generator and workload docs below give the actual contracts.
 use hyperlattice::{
     Complex, Matrix3, Matrix4, Point3, Problem, ProjectivePlane3, Rational, Real, RealSign,
     Vector2, Vector3, Vector4, intersect_three_planes, intersect_two_planes, orient2_expr,
 };
 use perf_atlas::{Atlas, Rng, powers_of_two};
 
+/// Four generator recipe labels; these neither enumerate Real storage classes nor guarantee the resulting structural kind.
 const KINDS: [&str; 4] = ["integer", "rational", "dyadic", "irrational"];
-/// Signs are certified to this binary precision before an entry is formatted.
+/// Minimum binary refinement precision passed to sign queries; not an error tolerance, total work bound, or formatting limit.
 const SIGN_PRECISION: i32 = -2048;
-/// Perturbation exponent that stands for an exactly singular input.
+/// Sentinel 512 omitting perturbations in authored sweeps; it denotes zero noise, not the nonzero number 2^-512.
 const SINGULAR: f64 = 512.0;
 
-/// An exact recipe for one entry, turned into a [`Real`] inside timed calls.
+/// Recursive exact-entry recipe rebuilt into Real for each callback.
+///
+/// Keeps rational seeds outside timed work, with ordered sums/scales and optional
+/// square roots inside. Recursive evaluation does not memoize shared subexpressions
+/// or bound depth/work. Variants express recipes, not guaranteed Real classes.
 #[derive(Clone, Debug)]
 enum E {
-    Exact(Rational),
-    /// `±sqrt(q)` for a positive rational `q` that is not a square.
-    Root(Rational, bool),
-    Sum(Vec<E>),
-    Scaled(Box<E>, Rational),
+    /// An exact rational seed, cloned when evaluated.
+    Exact(#[doc = "Exact rational payload."] Rational),
+    /// Principal sqrt(q), optionally negated; q is positive for generated fixtures but is not required to be a nonsquare.
+    Root(
+        #[doc = "Principal-root radicand; generated values are positive."] Rational,
+        #[doc = "Whether to negate the principal root."] bool,
+    ),
+    /// Ordered sum of child recipes; an empty list evaluates to exact zero.
+    Sum(#[doc = "Terms evaluated and reduced in stored order."] Vec<E>),
+    /// A child recipe multiplied by an exact rational factor after recursive evaluation.
+    Scaled(
+        #[doc = "Child recipe evaluated before scaling."] Box<E>,
+        #[doc = "Exact multiplicative factor."] Rational,
+    ),
 }
 
+/// Parse an exact rational fixture string, panicking if the generated text is invalid; performs no floating-point ingress.
 fn parse(text: &str) -> Rational {
     text.parse().expect("generated rational")
 }
 
-/// Make a decimal string odd without changing its bit length.
+/// Set the last decimal digit's low bit, making a nonempty unsigned decimal integer odd.
+///
+/// For positive decimal ASCII integers this preserves bit length: an even integer increases by
+/// one and an odd integer stays unchanged. Assumes a nonempty valid digit string;
+/// malformed input is not validated. Used on Rng-generated positive integers.
 fn odd(mut digits: String) -> String {
     let last = digits.pop().expect("nonempty digits") as u8 - b'0';
     digits.push(char::from(b'0' + (last | 1)));
     digits
 }
 
+/// Construct exact 2^exponent through rational integer power, including reciprocal powers; expect panics on a returned arithmetic error.
 fn pow2(exponent: i64) -> Rational {
     Rational::new(2)
         .powi(exponent.into())
         .expect("power of two")
 }
 
-/// One entry of `kind` whose numerator and denominator have about `bits` bits.
+/// Consume a random sign, then construct a signed recipe with the requested pre-reduction size; delegates kind validation to signed_entry.
 fn entry(kind: &str, bits: u32, rng: &mut Rng) -> E {
     let negative = rng.coin();
     signed_entry(kind, bits, negative, rng)
 }
 
+/// Construct the nonnegative-sign recipe for kind without drawing a sign coin; current generators produce strictly positive values.
 fn positive(kind: &str, bits: u32, rng: &mut Rng) -> E {
     signed_entry(kind, bits, false, rng)
 }
 
+/// Construct an integer, ratio, dyadic, or signed-square-root recipe from positive random integers.
+///
+/// Clamp bits to at least one. Integer magnitude has that width; ratio numerator and
+/// denominator start with bits and max(bits,2), then reduce. Dyadics use an odd
+/// bits-wide numerator over 2^bits. Root radicands use an odd numerator over a
+/// positive denominator, without excluding rational squares. Thus irrational is a
+/// recipe label, not a proof. Unknown kinds panic via unreachable; no size budget
+/// or unbiased-distribution guarantee is added to Rng.
 fn signed_entry(kind: &str, bits: u32, negative: bool, rng: &mut Rng) -> E {
     let bits = bits.max(1);
     let sign = if negative { "-" } else { "" };
@@ -86,14 +129,14 @@ fn signed_entry(kind: &str, bits: u32, negative: bool, rng: &mut Rng) -> E {
     }
 }
 
-/// An entry of a random kind with a random size up to `max_bits`.
+/// Draw one of four kind labels and a width in 1..=max(max_bits,1), then a signed recipe; uses the shared remainder-based RNG.
 fn mixed(max_bits: u32, rng: &mut Rng) -> E {
     let kind = KINDS[rng.below(4) as usize];
     let bits = rng.range(1, i64::from(max_bits.max(1))) as u32;
     entry(kind, bits, rng)
 }
 
-/// `kind` is `None` for fuzzed inputs with a random kind and size per entry.
+/// Build count independent recipes of a fixed kind/width, or draw kind/width per entry when None; allocates without a count/size bound.
 fn entries(kind: Option<&str>, count: usize, bits: u32, rng: &mut Rng) -> Vec<E> {
     (0..count)
         .map(|_| match kind {
@@ -103,6 +146,12 @@ fn entries(kind: Option<&str>, count: usize, bits: u32, rng: &mut Rng) -> Vec<E>
         .collect()
 }
 
+/// Recursively evaluate one recipe into an exact Real expression.
+///
+/// Clone exact rational data; take the principal root and then optionally negate;
+/// reduce Sum left-to-right (empty means zero); evaluate Scaled before multiplying
+/// by its rational factor. A root-domain error panics. Separate visits rebuild Real
+/// expressions rather than memoizing recipe identity; later display is approximate.
 fn real(e: &E) -> Real {
     match e {
         E::Exact(q) => Real::new(q.clone()),
@@ -119,15 +168,23 @@ fn real(e: &E) -> Real {
     }
 }
 
+/// Return an exact rational-zero recipe, used for structural masks and omitted perturbations.
 fn zero() -> E {
     E::Exact(Rational::zero())
 }
 
+/// Return an exact rational-one recipe, used for affine homogeneous entries and shifted arguments.
 fn one() -> E {
     E::Exact(Rational::one())
 }
 
-/// Approximate to 17 significant digits after certifying the sign.
+/// Return a display-length token after an exact sign query at SIGN_PRECISION.
+///
+/// Undecided sign returns None; certified zero returns Some(1) without formatting.
+/// Otherwise format .16e (one leading digit plus 16 fractional digits) and return
+/// its byte length. The formatted approximation is discarded; length is not an
+/// exact-value checksum. The sign cap does not bound subsequent formatting or the
+/// total work of constructing/refining an expression.
 fn digits(value: &Real) -> Option<usize> {
     match value.refine_sign_until(SIGN_PRECISION)? {
         RealSign::Zero => Some(1),
@@ -135,68 +192,98 @@ fn digits(value: &Real) -> Option<usize> {
     }
 }
 
+/// Sum display-length tokens in iterator order, returning None at the first undecided sign.
+///
+/// Empty input returns Some(0). Later entries are not forced after failure. The usize
+/// sum has no overflow guard or retained exact-output certificate.
 fn force<'a>(values: impl IntoIterator<Item = &'a Real>) -> Option<usize> {
     values.into_iter().map(digits).sum()
 }
 
+/// Build a 3D point from the first three recipes; panics on a short slice and ignores trailing entries.
 fn point3(e: &[E]) -> Point3 {
     Point3::new(real(&e[0]), real(&e[1]), real(&e[2]))
 }
 
+/// Force x, y, z in that order and sum their display-length tokens; stops at the first undecided sign.
 fn force_point(p: &Point3) -> Option<usize> {
     force([&p.x, &p.y, &p.z])
 }
 
+/// Discard every native Problem into None; on Ok only, invoke the terminal callback and preserve its Option. No typed failure reason survives.
 fn ok<T>(value: Result<T, Problem>, f: impl FnOnce(T) -> Option<usize>) -> Option<usize> {
     value.ok().and_then(f)
 }
 
+/// Private adapter routing the same workload closures to Vector2/3/4 native operations; it adds no geometry, policy, or independent validation.
 trait Vector: Sized {
+    /// Evaluate the first carrier-dimension recipes into lane order; short slices panic and extra recipes are ignored.
     fn build(e: &[E]) -> Self;
+    /// Borrow the stored lanes in coordinate order without forcing their values.
     fn parts(&self) -> &[Real];
+    /// Delegate borrowed componentwise addition to the native carrier.
     fn plus(&self, rhs: &Self) -> Self;
+    /// Delegate owned vector-times-scalar multiplication to the native carrier.
     fn scaled(self, s: Real) -> Self;
+    /// Delegate the exact dot expression to the native dimension-specific method.
     fn dot_with(&self, rhs: &Self) -> Real;
+    /// Delegate the exact squared Euclidean norm expression.
     fn norm2(&self) -> Real;
+    /// Delegate magnitude, retaining native square-root/domain errors until the caller erases them.
     fn length(&self) -> Result<Real, Problem>;
+    /// Delegate ordinary normalization without adding an independent unit-length check.
     fn unit(&self) -> Result<Self, Problem>;
+    /// Delegate structural nonzero-checked normalization, retaining its native rejection until the caller erases it.
     fn unit_checked(&self) -> Result<Self, Problem>;
+    /// Delegate a+t*(rhs-a) interpolation/extrapolation; does not restrict t to the unit interval.
     fn interpolate(&self, rhs: &Self, t: &Real) -> Self;
+    /// Force lanes in stored order, summing display lengths or stopping at the first undecided sign.
     fn force(&self) -> Option<usize> {
         force(self.parts())
     }
 }
 
+/// Implement the private Vector adapter by direct delegation for each listed tuple carrier; caller-provided slices must have enough lanes.
 macro_rules! vector {
     ($($v:ident),*) => {$(
         impl Vector for $v {
+            /// Evaluate the first carrier-dimension recipes into lane order; short slices panic and extra recipes are ignored.
             fn build(e: &[E]) -> Self {
                 $v(std::array::from_fn(|i| real(&e[i])))
             }
+            /// Borrow the stored lanes in coordinate order without forcing their values.
             fn parts(&self) -> &[Real] {
                 &self.0
             }
+            /// Delegate borrowed componentwise addition to the native carrier.
             fn plus(&self, rhs: &Self) -> Self {
                 self + rhs
             }
+            /// Delegate owned vector-times-scalar multiplication to the native carrier.
             fn scaled(self, s: Real) -> Self {
                 self * s
             }
+            /// Delegate the exact dot expression to the native dimension-specific method.
             fn dot_with(&self, rhs: &Self) -> Real {
                 self.dot(rhs)
             }
+            /// Delegate the exact squared Euclidean norm expression.
             fn norm2(&self) -> Real {
                 self.norm_squared()
             }
+            /// Delegate magnitude, retaining native square-root/domain errors until the caller erases them.
             fn length(&self) -> Result<Real, Problem> {
                 self.magnitude()
             }
+            /// Delegate ordinary normalization without adding an independent unit-length check.
             fn unit(&self) -> Result<Self, Problem> {
                 self.normalize()
             }
+            /// Delegate structural nonzero-checked normalization, retaining its native rejection until the caller erases it.
             fn unit_checked(&self) -> Result<Self, Problem> {
                 self.normalize_checked()
             }
+            /// Delegate a+t*(rhs-a) interpolation/extrapolation; does not restrict t to the unit interval.
             fn interpolate(&self, rhs: &Self, t: &Real) -> Self {
                 self.lerp(rhs, t)
             }
@@ -205,58 +292,85 @@ macro_rules! vector {
 }
 vector!(Vector2, Vector3, Vector4);
 
+/// Private adapter routing workload closures to Matrix3/4 and their matching vector carrier; does not add inversion/solve validation or certainty.
 trait Matrix: Sized + Clone {
+    /// Native vector carrier matching this matrix dimension.
     type V: Vector;
+    /// Evaluate the first n*n recipes in row-major order; short slices panic and extra recipes are ignored.
     fn build(e: &[E]) -> Self;
+    /// Borrow all stored entries as a row-major iterator without evaluating them.
     fn parts(&self) -> impl Iterator<Item = &Real>;
+    /// Delegate borrowed entrywise addition to the native matrix carrier.
     fn plus(&self, rhs: &Self) -> Self;
+    /// Delegate owned matrix-times-scalar multiplication.
     fn scaled(self, s: Real) -> Self;
+    /// Delegate borrowed exact matrix multiplication.
     fn times(&self, rhs: &Self) -> Self;
+    /// Delegate multiplication by the matching native vector carrier.
     fn apply(&self, v: &Self::V) -> Self::V;
+    /// Delegate the exact determinant expression without an independent determinant oracle.
     fn det(&self) -> Real;
+    /// Delegate ordinary consuming inversion; preserve its native Result until the caller erases it.
     fn inv(self) -> Result<Self, Problem>;
+    /// Delegate consuming inversion with native structural nonzero checks; adds no independent inverse proof.
     fn inv_checked(self) -> Result<Self, Problem>;
+    /// Delegate borrowed A/B to the native right-division solver; preserve its Result until the caller erases it.
     fn right_divide(&self, rhs: &Self) -> Result<Self, Problem>;
+    /// Delegate native consuming signed integer power; this adapter adds no exponent validation or output oracle.
     fn power(self, exponent: i32) -> Result<Self, Problem>;
+    /// Force entries in row-major order, summing display lengths or stopping at the first undecided sign.
     fn force(&self) -> Option<usize> {
         force(self.parts())
     }
 }
 
+/// Implement the private Matrix adapter by direct delegation for listed matrix/vector/dimension triples; row-major indexing is unchecked beyond normal slice bounds.
 macro_rules! matrix {
     ($($m:ident $v:ident $n:literal),*) => {$(
         impl Matrix for $m {
+            /// Native vector carrier matching this matrix dimension.
             type V = $v;
+            /// Evaluate the first n*n recipes in row-major order; short slices panic and extra recipes are ignored.
             fn build(e: &[E]) -> Self {
                 $m(std::array::from_fn(|r| std::array::from_fn(|c| real(&e[r * $n + c]))))
             }
+            /// Borrow all stored entries as a row-major iterator without evaluating them.
             fn parts(&self) -> impl Iterator<Item = &Real> {
                 self.0.iter().flatten()
             }
+            /// Delegate borrowed entrywise addition to the native matrix carrier.
             fn plus(&self, rhs: &Self) -> Self {
                 self + rhs
             }
+            /// Delegate owned matrix-times-scalar multiplication.
             fn scaled(self, s: Real) -> Self {
                 self * s
             }
+            /// Delegate borrowed exact matrix multiplication.
             fn times(&self, rhs: &Self) -> Self {
                 self * rhs
             }
+            /// Delegate multiplication by the matching native vector carrier.
             fn apply(&self, v: &$v) -> $v {
                 self * v
             }
+            /// Delegate the exact determinant expression without an independent determinant oracle.
             fn det(&self) -> Real {
                 self.determinant()
             }
+            /// Delegate ordinary consuming inversion; preserve its native Result until the caller erases it.
             fn inv(self) -> Result<Self, Problem> {
                 self.inverse()
             }
+            /// Delegate consuming inversion with native structural nonzero checks; adds no independent inverse proof.
             fn inv_checked(self) -> Result<Self, Problem> {
                 self.inverse_checked()
             }
+            /// Delegate borrowed A/B to the native right-division solver; preserve its Result until the caller erases it.
             fn right_divide(&self, rhs: &Self) -> Result<Self, Problem> {
                 self / rhs
             }
+            /// Delegate native consuming signed integer power; this adapter adds no exponent validation or output oracle.
             fn power(self, exponent: i32) -> Result<Self, Problem> {
                 self.powi(exponent)
             }
@@ -265,18 +379,22 @@ macro_rules! matrix {
 }
 matrix!(Matrix3 Vector3 3, Matrix4 Vector4 4);
 
+/// Dispatch 2 to Vector2, 3 to Vector3, and every other dimension to Vector4; this is a private fallback, not validation of arbitrary dimensions.
 macro_rules! by_vector {
     ($n:expr, $v:ident => $body:expr) => {
         match $n {
             2 => {
+                /// Local carrier alias selected by this macro branch; unsupported dimensions take the fallback branch.
                 type $v = Vector2;
                 $body
             }
             3 => {
+                /// Local carrier alias selected by this macro branch; unsupported dimensions take the fallback branch.
                 type $v = Vector3;
                 $body
             }
             _ => {
+                /// Local carrier alias selected by this macro branch; unsupported dimensions take the fallback branch.
                 type $v = Vector4;
                 $body
             }
@@ -284,24 +402,32 @@ macro_rules! by_vector {
     };
 }
 
+/// Dispatch 3 to Matrix3 and every other dimension to Matrix4; callers supply supported dimensions, but the macro does not enforce that precondition.
 macro_rules! by_matrix {
     ($n:expr, $m:ident => $body:expr) => {
         if $n == 3 {
+            /// Local carrier alias selected by this macro branch; unsupported dimensions take the fallback branch.
             type $m = Matrix3;
             $body
         } else {
+            /// Local carrier alias selected by this macro branch; unsupported dimensions take the fallback branch.
             type $m = Matrix4;
             $body
         }
     };
 }
 
+/// Owned exact recipes for two vector/complex operands and a scalar parameter; factories prepare these outside timed evaluation.
 struct VecIn {
+    /// First operand recipes in coordinate order.
     a: Vec<E>,
+    /// Second operand recipes, even for callbacks that do not consume them.
     b: Vec<E>,
+    /// Scalar recipe used for scaling or lerp; not clamped to `[0,1]`.
     t: E,
 }
 
+/// Generate two dim-lane recipe vectors and one scalar; individual callbacks may leave the second vector or scalar unused.
 fn vec_in(kind: Option<&str>, dim: usize, bits: u32, rng: &mut Rng) -> VecIn {
     VecIn {
         a: entries(kind, dim, bits, rng),
@@ -310,11 +436,21 @@ fn vec_in(kind: Option<&str>, dim: usize, bits: u32, rng: &mut Rng) -> VecIn {
     }
 }
 
+/// Caller-supplied f64 axes interpreted as bit counts by workload factories; values are cast rather than validated as positive integers.
 struct Settings {
+    /// Main bit-count axis, normally powers of two from 1 through 4096.
     bits: Vec<f64>,
+    /// Grid/mixed bit-count axis, normally powers of two from 1 through 1024.
     few_bits: Vec<f64>,
 }
 
+/// Register vector sweeps, optional dimension grids, and mixed seeded samples.
+///
+/// Requires nonempty dims. Prefer dimension 3 for four-kind bit sweeps, otherwise
+/// use `dims[0]`. Multiple dimensions add rational/root bit-by-dimension grids.
+/// Mixed sampling chooses one supplied dimension per fixture and independently
+/// mixes lane kinds/sizes. Axis casts and callback semantics are not validated;
+/// the shared harness controls filtering, timing stops, and first-probe status.
 fn vector_operation(
     atlas: &mut Atlas,
     settings: &Settings,
@@ -355,14 +491,21 @@ fn vector_operation(
     );
 }
 
+/// Owned row-major matrix recipes plus vector/scalar operands; some workload variants deliberately leave unused fields empty or zero.
 struct MatIn {
+    /// Selected matrix dimension, supplied as 3 or 4 by current factories.
     n: usize,
+    /// First matrix recipes in row-major order, sometimes structured or row-dependent.
     a: Vec<E>,
+    /// Second matrix recipes in row-major order, unused by unary callbacks.
     b: Vec<E>,
+    /// Vector recipes for matrix-vector multiplication; may be empty in other workloads.
     v: Vec<E>,
+    /// Scalar recipe for scaling; may be an unused zero recipe.
     s: E,
 }
 
+/// Generate two n*n matrices, an n-lane vector, and one scalar recipe; n/product size and allocation are not separately bounded.
 fn mat_in(kind: Option<&str>, n: usize, bits: u32, rng: &mut Rng) -> MatIn {
     MatIn {
         n,
@@ -373,6 +516,11 @@ fn mat_in(kind: Option<&str>, n: usize, bits: u32, rng: &mut Rng) -> MatIn {
     }
 }
 
+/// Register four-kind 3x3 bit sweeps, rational/root 3x3/4x4 grids, and mixed samples.
+///
+/// Factories build both matrices, a vector, and a scalar even when the callback only
+/// uses some fields. Random dense matrices are not certified nonsingular. Callback
+/// Options erase native errors; shared-harness timing and selection limits apply.
 fn matrix_operation(
     atlas: &mut Atlas,
     settings: &Settings,
@@ -408,7 +556,12 @@ fn matrix_operation(
     );
 }
 
-/// A dense matrix shaped into `structure`, from rational entries.
+/// Generate a rational matrix, then overwrite entries according to a structural mask.
+///
+/// Recognizes dense, upper triangular, diagonal, and affine; affine sets the last row
+/// to (0,...,0,1). Unknown strings zero the last row but do not restore its final one.
+/// Used with n=4; no shape validation or nonsingularity assertion is performed.
+/// All original random entries are generated before applying the mask.
 fn structured(structure: &str, n: usize, bits: u32, rng: &mut Rng) -> Vec<E> {
     let mut e = entries(Some("rational"), n * n, bits, rng);
     for r in 0..n {
@@ -431,8 +584,13 @@ fn structured(structure: &str, n: usize, bits: u32, rng: &mut Rng) -> Vec<E> {
     e
 }
 
-/// Rows 0..n-1 are random; the last row is the sum of the others plus
-/// `2^-k` times small integers, so `k = SINGULAR` is exactly singular.
+/// Make the last row the sum of n-1 independently generated 64-bit recipe rows, plus optional noise.
+///
+/// For k<SINGULAR, add positive integer noise in 1..=7 times exact 2^-(k as i64)
+/// per column. At the authored sentinel, omit noise, giving an exactly dependent
+/// last row. A finite perturbation is not a nonsingularity or condition-number proof.
+/// Used for n=3/4 and finite nonnegative integral k; no validation of other dimensions,
+/// float casts, rank, or resource growth is supplied.
 fn near_singular(kind: &str, n: usize, k: f64, rng: &mut Rng) -> Vec<E> {
     let mut e = entries(Some(kind), n * (n - 1), 64, rng);
     for c in 0..n {
@@ -446,6 +604,15 @@ fn near_singular(kind: &str, n: usize, k: f64, rng: &mut Rng) -> Vec<E> {
     e
 }
 
+/// Register 13 vector/point workload families over the configured bit axes.
+///
+/// Covers addition, scaling, dot/norm/length, ordinary/checked normalization, lerp,
+/// 3D cross/angle/frame, 2D wedge, and 3D centroid. Lerp parameters are not restricted
+/// to `[0,1]`. Angle/frame use checked native paths and can refuse inputs; no residual,
+/// unit-length, or orthogonality oracle is added. Only the two returned frame vectors
+/// are forced. Centroid sweeps use counts 1..4096 with 32-bit recipes; mixed samples
+/// use counts 1..256 and widths up to 64. Point construction and centroid-owned work
+/// occur inside the callback; unused recipe fields remain outside timed Real work.
 fn vectors(atlas: &mut Atlas, s: &Settings) {
     vector_operation(
         atlas,
@@ -592,6 +759,17 @@ fn vectors(atlas: &mut Atlas, s: &Settings) {
     );
 }
 
+/// Register 17 matrix workload families: eight generic, four structure, four conditioning, and power.
+///
+/// Generic callbacks force entries or determinant output after native operations.
+/// Structure sweeps use 4x4 rational masks; right division is dense B divided by
+/// structured A. Structural facts only return has_known_zero_lane as a token, not
+/// formatted entries or an expected-fact assertion. Conditioning sweeps/grids omit
+/// noise at k=512; mixed samples choose one kind for the whole matrix, not per lane.
+/// Failures lose their native reason through ok. Power series use positive exponents
+/// 1..1024 (no zero/negative case), 3x3 8-bit recipes, an integer bit grid, and mixed
+/// 3x3/4x4 recipes up to 16 bits. No determinant, inverse, solve, or power oracle is
+/// checked; singular random fixtures can remain failures.
 fn matrices(atlas: &mut Atlas, s: &Settings) {
     matrix_operation(
         atlas,
@@ -700,6 +878,7 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
         .map(|i| f64::from(i * 32))
         .chain([SINGULAR])
         .collect();
+    /// Function pointer for a conditioning callback returning only a terminal token or erased failure.
     type Conditioned = fn(&MatIn) -> Option<usize>;
     let conditioned: [(&str, &str, Conditioned); 4] = [
         (
@@ -794,6 +973,18 @@ fn matrices(atlas: &mut Atlas, s: &Settings) {
     );
 }
 
+/// Register batch point transformation, axis-angle rotation, and rotation-between-vector workloads.
+///
+/// Batch sweeps force all returned coordinates of 1..4096 points under an affine
+/// matrix with 32-bit recipes; mixed samples use unrestricted projective matrices,
+/// 1..256 points, and widths up to 64. Failure of native transformation or forcing
+/// returns None, without an independent transform equation check.
+///
+/// The angle recipe is an odd 53-bit integer divided by 2^54, hence [1/4,1/2)
+/// radians, despite the retained description saying [1/2,1). Axis-angle timing
+/// constructs the axis, angle, point, matrix, and transformed point, forcing only
+/// the point output. Between-vector timing forces the returned matrix; no rotation
+/// orthogonality or mapping oracle is asserted.
 fn transforms(atlas: &mut Atlas, s: &Settings) {
     atlas.operation(
         "transform",
@@ -908,9 +1099,25 @@ fn transforms(atlas: &mut Atlas, s: &Settings) {
     );
 }
 
+/// Register eight complex workload families with terminal component forcing.
+///
+/// Four binary callbacks include reciprocal, which still builds its unused second
+/// operand. Power uses positive 1..1024 in sweeps and either sign in mixed samples.
+/// Atanh and Jacobi sn/cn/dn (m=1/2) use separately generated positive fractions plus
+/// one, scaled by 2^k. Only dyadic fractions guarantee shifted values in [1.5,2);
+/// 53-bit rational fractions lie in (1/2,2), and root fractions in (sqrt(1/2),sqrt(2)).
+/// Thus the retained general u,v in [1,2) description is too narrow. The argument
+/// exponent is a scale recipe, not a certified |z| or conditioning measurement.
+///
+/// Near-cut atanh uses x=1+positive recipe and signed shrinking imaginary part,
+/// omitted at k=512. Always x>1, but x need not be <=2. Native cut errors and
+/// undecided signs become None; the report cannot distinguish NotANumber from
+/// Exhausted as its description suggests. No branch identity or Jacobi residual
+/// oracle is checked. Each mixed unary sample picks one kind for both components.
 fn complex(atlas: &mut Atlas, s: &Settings) {
     let c = |e: &[E]| Complex::new(real(&e[0]), real(&e[1]));
     let force_c = |z: &Complex| force([&z.re, &z.im]);
+    /// Complex binary operation pointer preserving Problem until the outer ok adapter erases it.
     type Binary = fn(Complex, Complex) -> Result<Complex, Problem>;
     let binary: [(&str, &str, Binary); 4] = [
         ("complex add", "Exact complex sum.", |a, b| Ok(a + b)),
@@ -982,7 +1189,8 @@ fn complex(atlas: &mut Atlas, s: &Settings) {
         power,
     );
 
-    // z = 2^k (u + i v) with 53-bit dyadic u, v in [1, 2).
+    // z = 2^k * ((1 + positive recipe) + i*(1 + positive recipe)).
+    // Rational/root recipes need not keep either shifted part below two.
     let scaled = |kind: &str, k: i32, rng: &mut Rng| -> Vec<E> {
         (0..2)
             .map(|_| {
@@ -991,7 +1199,9 @@ fn complex(atlas: &mut Atlas, s: &Settings) {
             })
             .collect()
     };
+    /// Complex unary callback pointer returning a forced-output length token or erased failure.
     type Unary = fn(Complex) -> Option<usize>;
+    /// Force real then imaginary components of an owned complex result and return their summed display lengths.
     fn force_parts(z: Complex) -> Option<usize> {
         force([&z.re, &z.im])
     }
@@ -1062,6 +1272,21 @@ fn complex(atlas: &mut Atlas, s: &Settings) {
     }
 }
 
+/// Register two homogeneous plane-intersection workloads and one orientation-sign family.
+///
+/// Three-plane timing constructs the homogeneous point, converts to affine, then
+/// forces four homogeneous and three affine coordinates; failed conversion skips
+/// forcing. Two-plane timing forces direction and moment but does not check a
+/// nonzero line, Pluecker relation, or incidence residual. Rank-deficient inputs
+/// are not excluded or independently classified.
+///
+/// Orientation constructs c=(2a+b)/3 + epsilon*left_perp(b-a) with epsilon=2^-k,
+/// omitting perturbation at k=512. Mathematically its determinant is
+///  epsilon*|b-a|^2; coincident a,b also give zero before the sentinel. The callback
+/// returns a certified RealSign cast to u8, not a formatted scalar or proof-route
+/// receipt, and does not assert the expected sign. Mixed samples choose one kind
+/// for all coordinates and a width in 1..=256. These are expression/forcing timings,
+/// not a region/topology or general predicate-policy qualification.
 fn geometry(atlas: &mut Atlas, s: &Settings) {
     let plane = |e: &[E]| ProjectivePlane3::new(point3(e), real(&e[3]));
     atlas.operation(
@@ -1175,6 +1400,14 @@ fn geometry(atlas: &mut Atlas, s: &Settings) {
     );
 }
 
+/// Parse shared atlas CLI options, register all workload families, and serialize the report.
+///
+/// Bit axes are powers of two from 1..4096 and 1..1024, with other count/exponent
+/// axes declared by each family. Calls vectors, matrices, transforms, complex, then
+/// geometry in that order. Filters and --quick affect the shared harness, not the
+/// mathematical recipe definitions. finish writes stdout or creates/truncates the
+/// requested output path and can panic on I/O failure; no completed-workload or
+/// exact replay certificate is produced.
 fn main() {
     let mut atlas = Atlas::from_args("hyperlattice");
     let settings = Settings {

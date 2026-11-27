@@ -8253,6 +8253,139 @@ an archival benchmark record. Hyperlattice's perf_atlas example remains open,
 as do other unrecorded implementation/test/benchmark/support files and most of
 the wider repository. This batch does not establish repository-wide coverage.
 
+## Hyperlattice performance-atlas workload example (27 November 2026)
+
+Reviewed all 1190 baseline lines of
+`crates/hyperlattice/examples/perf_atlas.rs` at `7d125a8a4`; current length is
+1423 lines. This completes whole-file review records for all four currently
+tracked Hyperlattice Rust examples, not the crate or wider repository.
+Documented 96 authored declarations including private traits, macro definitions
+and methods, associated types, local aliases, and a nested helper; also documented
+ten named fields, four enum variants, six tuple fields, and the module contract.
+Macro-generated instances inherit their template documentation. No fixture,
+operation, assertion, typed API, output description string, or dispatch order changed.
+
+Ownership: development workload generation and timing, with scalar construction,
+terminal formatting, and lattice/projective operations delegated to their existing
+owners. Relevant contracts are P1/P3 (exact ingress and meaning of facts), P4
+(cache scope), P5 (precision versus total resources), P6/P9 (failure/certainty
+preservation), P27 (unchanged output contract), and P36/P37 (completed-workload
+and no-overclaiming evidence). The domain is seeded finite recipe trees, fixed
+2D/3D/4D carriers, bit/count/exponent axes, optional CLI selection, and the shared
+atlas harness. Missing acceptance witnesses were full private docs and accurate
+statements of generated representations, ranges, completion tokens, and timing
+scope. Read the source and ran bounded actual-source probes before editing.
+
+Findings and documented mathematical/operational scope:
+
+- E holds rational seeds, signed principal roots, ordered sums, and rational scales.
+  Real values are reconstructed in callbacks; recipe factories and their rational
+  work occur outside timing. This does not reset global caches or establish cold
+  execution. Sums rebuild each child visit without graph memoization. Reduced
+  rational sizes can shrink; the root recipe does not exclude square radicands.
+  At seed 1 and width 2, its generated radicand is exactly one. Labels therefore
+  describe recipes rather than guaranteed irrational values or storage classes.
+- The odd-decimal helper preserves positive integer bit width. Root signs are
+  applied after taking the principal root. Empty sums produce exact zero; invalid
+  root domains panic through expect. There is no recipe depth/size/work budget.
+  Native adapters simply delegate operations; short input slices panic, longer
+  slices are ignored beyond the carrier width. Dimension dispatch falls back to
+  Vector4 for dimensions other than 2/3, and Matrix4 for dimensions other than 3.
+- Output forcing first asks for an exact sign at binary precision -2048. An
+  undecided sign returns None, a certified zero returns length token one without
+  formatting, and a nonzero value is formatted with one leading plus sixteen
+  fractional digits. Formatting is an approximate terminal and its string is
+  discarded. Length sums are not value checksums; empty forcing returns zero and
+  failure short-circuits later lanes. The sign precision does not bound total
+  arithmetic work or subsequent formatting. Structural-facts rows return a Boolean
+  token and orientation rows a sign discriminant, bypassing the blanket formatting
+  claim in the previous module introduction.
+- Every Problem passed through ok becomes None, losing its typed reason. Callbacks
+  do not return policy/certainty receipts or independently check expected values,
+  inverses, rotation equations, unit frames, branch identities, or incidence.
+  The shared harness checks only the first probe's Outcome and does not preempt
+  a stuck call. Its seeded fuzz series are timing samples, not correctness-directed
+  fuzzing. Failed probes and timing stops have the already-documented shared-harness
+  semantics; this audit adds no claim of a completed performance envelope.
+- Thirteen vector/point families include unbounded-in-t lerp and a two-vector frame
+  result; centroid factories/timing boundaries are explicit. Seventeen matrix
+  families distinguish generic operations, four rational masks, four conditioning
+  callbacks, and positive power exponents. Structural masks retain their exact
+  behavior, including the unknown-string last-row-zero fallback. The near-singular
+  last row is an exact sum at sentinel 512; finite noise need not prove nonsingularity
+  or a condition number. Mixed conditioning chooses one kind for a whole matrix.
+- The three transform families distinguish affine batch sweeps from projective
+  mixed samples. The actual angle is an odd 53-bit integer divided by 2^54, hence
+  in [1/4,1/2), contrary to the unchanged report description's [1/2,1). Sixty-four
+  exact-rational fixtures confirmed that range; the width formula supplies the
+  general argument. Axis-angle forces the point output, while between-vector
+  rotation forces the matrix. No independent rotation oracle is present.
+- Eight complex families include reciprocal, which still constructs its unused
+  second operand. Unary shifted inputs are 1+positive recipe, scaled by 2^k.
+  Dyadic shifted parts lie in [1.5,2), but rational/root parts can exceed two;
+  among 64 seeded 53-bit cases, 30 rational and 30 root radicands exceeded one,
+  establishing shifted values above two. The unchanged general [1,2) label is
+  therefore too narrow. Near-cut x is greater than one but not bounded above by
+  two; its callback cannot report the distinct error categories named in the
+  retained description because ok erases them. Rustdoc explicitly records these
+  existing report-label limitations without changing serialized descriptions.
+- The three geometry families force homogeneous/affine intersection coordinates
+  or raw line direction/moment without a rank/incidence oracle. Orientation uses
+  c=(2a+b)/3 + epsilon*left_perp(b-a), so its determinant is epsilon*|b-a|^2.
+  Coincident a,b can give zero before the zero-noise sentinel. The callback only
+  returns a sign cast and does not assert that independent identity. These are
+  expression/forcing workloads, not general region or topology qualification.
+
+Context reads revisited shared perf-atlas RNG, first/repeated-probe timing,
+selection, stopping, and serialization code; Hyperreal sign/LowerExp formatting;
+and vector normalization, angle, and frame delegates. These excerpts receive no
+new whole-file credit. Their owning sources and existing whole-file records
+remain separate from this example's review.
+
+Validation after final edits:
+
+- Focused Rustfmt and `git diff --check` passed. Removing doc attributes and
+  comment-only lines, then applying canonical Rustfmt, produces identical source
+  against `7d125a8a4`. Tuple-field docs required only formatting/trailing-comma
+  normalization. All executable expressions and operation-description strings
+  are unchanged. No output fixture or assertion was weakened.
+- Direct rustc compiled the actual whole example plus a temporary probe before
+  and after. Bounded probes checked odd conversion, square-root collapse, empty
+  sum/force, scaling, zero/nonzero formatting tokens, Problem erasure without
+  invoking its terminal closure, vector/matrix dispatch fallbacks, row-major
+  identity, all structural masks, and exact zero determinants of four generated
+  singular 3x3 matrices (one per kind). The root/angle/range probes above also
+  passed. Probe stdout matched byte for byte; these are finite witnesses, not
+  universal operation closure or benchmark measurements.
+- The complete main ran with an unmatched filter. It registered the same 44
+  operation names in the same order and wrote a valid empty-operation JSON report.
+  finish omits unmeasured operations, so this is CLI/registration smoke evidence,
+  not serialized coverage of all descriptions or any timed workload execution.
+  Invocation timeouts were external (25 seconds for probes, 15 for main).
+- Private Rustdoc generated with warnings and broken/private links denied. Three
+  bracket expressions initially parsed as links were corrected to code spans.
+  Complete text of 102 source doc groups (80 distinct texts) and all six tuple-field
+  docs matched 47 generated HTML pages. Nine function-local/template-local groups
+  are source-reviewed and compiled but absent as independent item docs: five
+  dimension aliases, three callback type aliases, and nested force_parts. Duplicate
+  trait/impl prose is not counted as unique rendered text.
+- Cargo check of the actual example passed under all features and no default
+  features. The shared perf-atlas library built with the repository lockfile;
+  checks used offline resolution, two workers, shared target storage, and disabled
+  incremental compilation. The example has no feature-gated local declarations.
+- No full atlas timing run, release measurement, competitive comparison, forced
+  expensive transcendental workload, or broad geometry tests ran. Full workflow
+  checks remain owner-waived. Temporary probe/example executables were removed;
+  shared target storage remains approximately 2.4 GiB for reuse.
+
+Evidence: `/tmp/csgrs-rustdoc-lattice-atlas-{before,after,render,check,minimal-check,deps}.log`,
+`/tmp/csgrs-rustdoc-lattice-atlas-deps.json`, and
+`/tmp/csgrs-lattice-atlas/` retain sources/checkers, canonical source comparison,
+probe output, empty JSON smoke reports, registration logs, and private docs.
+These are temporary audit artifacts, not a durable performance archive. Remaining
+Hyperlattice implementations, integration tests, benchmarks and support prose,
+and most of the wider repository, still require their own review records.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
