@@ -13428,6 +13428,106 @@ independent arithmetic, report comparison and Markdown rendering. The root AGENT
 100% public/private/generated Rustdoc mandate remains intact. The repository-wide
 audit, larger retained reports, historical records and generated-item gaps remain open.
 
+## Hyperlattice-interval foundation, scalar adapters and cleanup witnesses (2026-11-27)
+
+Target revision: b48e834ac8947acb583d363ccf651886b75ec372, on rustdoc.
+Whole-file review covers src/lib.rs (144 original / 220 final lines), src/backend.rs
+(345 / 463), src/tests.rs (82 / 102), and the unchanged 81-line Cargo.toml in
+crates/hyperlattice-interval. The three Rust files contain 147 source documentation
+blocks after this batch; this is a scoped source/rendering count, not repository
+coverage or a count of distinct expanded methods. No implementation, signature,
+feature selection, dependency, assertion or scalar dispatch sequence changed.
+
+The owning layer is the Cartesian interval companion and its sealed Hyperinterval
+adapter, under P1/P3/P5/P6/P17/P18/P20/P37 and the admission protocol. The domain is
+fixed-dimension products of the admitted scalar interval families, including empty
+sets, zero-dimensional units, invalid fixed scales, overflow and shared dyadic
+resource failures. At the target revision, the private array builder, ordered dot
+helper, sealed/macro-generated backend adapters and cleanup fixtures lacked Rustdoc.
+The existing two root cleanup tests passed before editing. Public missing_docs did
+not establish documentation coverage of these private and generated items.
+
+Documented and checked:
+
+- The fallible array builder attempts ascending indices once, moves successful
+  values without cloning, drops an initialized prefix on error, and drops a failing
+  inner prefix before completed outer arrays. Zero length invokes no callback.
+  Callback effects and consumed budget are not rolled back; helper-owned inline
+  storage does not bound callback work, owned element allocations or panic behavior.
+- Dot accumulation constructs zero, then multiplies and adds in iterator order.
+  It returns the first scalar error and shares one context without reset. Empty
+  iterators produce scalar zero; callers handle empty Cartesian operands separately.
+  Independent interval arithmetic does not recover repeated-variable correlations.
+- Root modules, BoxN, every error variant/payload, From/Display/Error implementations,
+  and the cleanup fixture's type, fields, Drop and tests now describe their roles.
+  Scalar causes remain typed; local failures have no nested source or partial result.
+- Six concrete adapter families forward scalar authority: i32/i64 fixed, rational,
+  dyadic, and f32/f64 enclosures. Default features select none. Sealing, both macros'
+  instantiations, relation generation, associated contexts/widths and method bodies
+  were inspected. Native Real and other interval families acquire no new adapter.
+  Exact width measurements are distinct from midpoint/radius enclosure projections.
+- Rational singleton width comparisons accept negative values and do not prove width
+  provenance. Dyadic empty comparison fails before reservation, but nonempty
+  nonsingletons can exhaust work before singleton validation. Constants and Clone
+  use no caller budget; accounted copy delegates to hull and can fail independently.
+- A temporary probe initially assumed dyadic enclosure projection would fail at
+  the minimum exponent. It instead returned the tight outward interval. Rereading
+  half_measure_enclosure distinguished this from exact midpoint/radius queries;
+  final adapter docs and explicit expectations preserve that distinction. No scalar
+  code or existing test was changed to satisfy the probe.
+- The manifest's eight optional features, no_std dependency qualifications and
+  declared primitive MSRV are explained. Hyperreal's manifest requires Rust 1.95;
+  no historical-compiler or cross-target build was performed. The private-doc command
+  is included at the crate root.
+
+Context review included all of cartesian.rs and the vector/subdivision consumers,
+selected matrix/width/midpoint-radius consumers, scalar implementations and feature
+manifests. Those reads are not credited as completed item-documentation audits of
+the other files. Oversized initially truncated tool output was reread in bounded
+sections for the selected files and relevant Cartesian witnesses.
+
+Validation after final Rustdoc edits:
+
+- Locked/offline j2, incremental disabled, reused /tmp/csgrs-rustdoc-target. All-feature
+  tests passed: two root cleanup tests, 13 Cartesian tests, five midpoint/radius
+  tests, six width tests and the primitive allocation test (27 total). Cartesian
+  tests include independent corner oracles, output reuse, typed overflow, unit/empty
+  distinctions and shared-budget exhaustion/retry. Both root tests also passed with
+  no default features. Allocation evidence applies to that existing finite fixture.
+- A warnings-denied temporary probe against matching all-feature artifacts checked
+  budget/error precedence, exact retained work, fresh-budget retry, negative singleton
+  comparisons, finest-grid outward midpoint/radius enclosures versus exact midpoint
+  overflow, and every error Display/source branch. A three-term fixed dot product
+  fails at MAX+1 before a later cancellation; moving the cancellation earlier gives
+  one. This verifies the documented ordering, not an alternative arithmetic policy.
+- Private cargo doc builds passed for all features and no default features with
+  warnings, broken links and private-link violations denied. Complete normalized
+  prose of 138 all-feature blocks rendered across 23 pages, including all six trait
+  implementations; the minimal configuration rendered 57 blocks across 18 pages and
+  listed no concrete implementation. This checks full text, not just headings.
+- Direct private Rustdoc with cfg(test) rendered the test module, Owned, both fields
+  and Drop. Rustdoc omits the two test functions. A temporary rendering-only copy
+  removed exactly their test attributes and rendered all eight fixture doc blocks;
+  the actual attributes/assertions remain unchanged and actual tests were executed.
+- Source comparison against the target revision preserves all implementation bytes
+  after removing comment/blank lines and normalizing the sole Scalar tuple-field
+  wrapping/trailing comma needed for its payload doc. Selected-file rustfmt checks
+  and git diff --check passed. Manifest and root AGENTS.md are unchanged, including
+  the 100% public/private/generated Rustdoc mandate. Full workflow checks are waived
+  by the owner for this documentation session. No performance, size, general memory,
+  cancellation, full topology or universal interval-completeness claim is made.
+
+Evidence: /tmp/csgrs-rustdoc-interval-foundation-{before,tests,tests-min,build,probe,
+doc-all,doc-min,render-all,render-min,source}.log and
+/tmp/csgrs-interval-foundation-audit/ (source/render verification scripts, matching
+artifact metadata, full-text match records and the temporary probe). Owned probe
+executables and duplicate temporary HTML trees were removed after verification.
+The shared target is approximately 3.0 GiB; retained batch evidence uses 156 KiB.
+No additional Cargo target was created.
+No focused check remains blocked. The remaining companion files and repository-wide
+audit remain open; neither the scoped block count nor passing tests establish 100%
+repository coverage.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
