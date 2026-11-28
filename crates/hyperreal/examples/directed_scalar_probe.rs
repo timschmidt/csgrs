@@ -1,22 +1,49 @@
-//! Development-only process probe for representation-bucketed adversarial search.
+//! Development process probe for adversarial search over exact scalar recipes.
+//!
+//! Build with serde and dispatch-trace. `--list` reports the finite representation
+//! and query inventories; a JSON input path runs all six queries, three times each.
+//! Each sample constructs and inspects its own Real before resetting trace counters
+//! and timing the instrumented query. Shared constants and earlier samples can warm
+//! caches: fresh objects do not mean fresh-process or universally cold execution.
+//! The median is search fitness, not an uninstrumented competitive benchmark.
+//!
+//! A fixed directed MPFR reference supplies a nonzero sign and contradiction checks.
+//! Rational answers must lie in the reference, signs must agree when known, and
+//! intervals must overlap it in valid endpoint order. These checks do not independently
+//! prove exact-value containment. Unknown answers remain JSON null. A final ordered
+//! cache exercise rejects loss of a definite fact for that sequence; it is not an
+//! exhaustive cache, concurrency, eviction or policy-transition test.
+//!
+//! Query precision floors and the pre-read 4096-byte metadata check are not hard
+//! work, read-size, memory or cancellation bounds. The external campaign owns process
+//! timeouts. String failures become error JSON/status 2; invariant panics are not
+//! caught. Successful output retains exact fraction text, traces and every sample,
+//! but simplifies rich sign receipts to sign values for this diagnostic protocol.
 
 use hyperreal::{CertifiedRealSign, Rational, Real, RealSign, dispatch_trace};
 use serde_json::{Value, json};
 use std::{path::Path, time::Instant};
 
 #[path = "../tests/support/representations.rs"]
+/// Shared finite certificate fixtures for --list and regression tests; labels do not prove constructed classes.
 mod inventory;
 #[path = "../tests/support/mpfr.rs"]
+/// Register test-thread MPFR cache cleanup; main separately frees local/shared caches on normal return.
 mod mpfr;
 #[path = "directed_scalar_probe/oracle.rs"]
+/// Directed 1024-bit MPFR recipe evaluation, independent of Hyperreal arithmetic.
 mod oracle;
 #[path = "directed_scalar_probe/recipe.rs"]
+/// Deterministic eight-byte input expansion and exact Real construction shared with the benchmark.
 mod recipe;
 #[path = "directed_scalar_probe/wire.rs"]
+/// Exact signed numerator/positive denominator output; avoids human mixed-number Display syntax.
 mod wire;
 
 use recipe::{Input, Recipe};
 
+/// Fixed query order used for samples, cache-sensitive execution history and the external evidence schema.
+/// Normal form precedes affine sign, sign floors 0/-256, and interval precisions -64/-256.
 const QUERIES: [&str; 6] = [
     "normal_form",
     "affine_det3",
@@ -26,12 +53,30 @@ const QUERIES: [&str; 6] = [
     "interval_256",
 ];
 
+/// Diagnostic projection of a query result before reference checking and JSON encoding.
+/// Sign results omit their richer certainty/proof details; None records unresolved
+/// normal-form or sign queries rather than a false or zero answer.
 enum Answer {
-    Normal(Option<Rational>),
-    Sign(Option<RealSign>),
-    Interval([Rational; 2]),
+    /// Optional exact rational normal form recognized by the scalar layer.
+    Normal(
+        /// Recognized rational value, or None when this query does not produce a normal form.
+        Option<Rational>,
+    ),
+    /// Optional certified sign, without the original sign-query receipt.
+    Sign(
+        /// Known sign or None for an unresolved query; no guessed sign is substituted.
+        Option<RealSign>,
+    ),
+    /// Closed interval endpoints returned by the certified scalar enclosure query.
+    Interval(
+        /// Intended lower/upper bounds, whose ordering and reference overlap are checked later.
+        [Rational; 2],
+    ),
 }
 
+/// Request a certified sign down to the supplied dyadic precision floor and retain
+/// only its sign or unresolved None. The richer Known receipt is intentionally
+/// projected away for diagnostic JSON. The floor is not a total-work bound.
 fn sign(value: &Real, floor: i32) -> Option<RealSign> {
     match value.certified_sign_until(floor) {
         CertifiedRealSign::Known { sign, .. } => Some(sign),
@@ -39,6 +84,10 @@ fn sign(value: &Real, floor: i32) -> Option<RealSign> {
     }
 }
 
+/// Embed value as the first diagonal entry of an affine 3D determinant: the other
+/// two diagonal entries are one and the fourth point is the origin. Its exact
+/// determinant is value. Return the specialized certified sign or None, exercising
+/// that predicate path without numerical perturbation or a general matrix workload.
 fn affine(value: &Real) -> Option<RealSign> {
     let zero = Real::zero();
     let one = Real::one();
@@ -50,6 +99,11 @@ fn affine(value: &Real) -> Option<RealSign> {
     )
 }
 
+/// Dispatch one of the six names to normal-form, affine-sign, bounded-sign or
+/// certified-interval queries. Unknown names return a string error. Interval None
+/// is reported with the existing exhausted-message text, although the underlying
+/// API returns None on abortion; this wrapper supplies no independent total-resource
+/// budget or proof that one was exhausted. Normal/sign uncertainty remains None.
 fn query(value: &Real, name: &str) -> Result<Answer, String> {
     Ok(match name {
         "normal_form" => Answer::Normal(value.exact_rational_normal_form()),
@@ -65,6 +119,12 @@ fn query(value: &Real, name: &str) -> Result<Answer, String> {
     })
 }
 
+/// Encode an answer after checking it against the supplied reference and sign.
+/// A recognized rational must lie inside the reference; a known sign must match;
+/// interval endpoints must be ordered and overlap the reference. Unknown normal/sign
+/// answers pass as JSON null. Assume the caller supplied a valid ordered reference
+/// and its correct sign; these are not cross-validated here. Overlap or rational
+/// membership is a contradiction check, not proof of equality to the exact source.
 fn checked_answer(
     answer: Answer,
     reference: &[Rational; 2],
@@ -97,6 +157,17 @@ fn checked_answer(
     }
 }
 
+/// Construct a Real, query normal form/affine sign/sign at floor zero, then a
+/// -256 interval and sign before repeating the three initial queries. Require an
+/// available normal/affine fact to survive, and definite signs to survive each
+/// cold-to-fine-to-warm transition. Validate the interval and final answers against
+/// the reference, then return snapshots for external inspection.
+///
+/// Cold names the initial queries on this object, not empty process caches; construction
+/// and earlier queries can already refine it. Normal form equality here is exact
+/// rational equality. Unknown may strengthen. This ordered sequence does not cover
+/// all cache states or compare full proof receipts; query/constructor failures
+/// propagate as strings and invariant panics remain uncaught.
 fn check_cache(
     recipe: &Recipe,
     reference: &[Rational; 2],
@@ -137,6 +208,19 @@ fn check_cache(
     Ok(record)
 }
 
+/// Expand the input, compute a separately timed 1024-bit reference and its nonzero
+/// sign, then run three instrumented samples of each query in fixed order. Before
+/// each sample, construct a Real and verify its serialized private class. Reset
+/// trace counters, time with_recording(query), then take/clear traces and validate
+/// the answer outside the timer. Construction, class inspection, reference work,
+/// answer encoding and value destruction are excluded from query-body timings.
+///
+/// Keep all answers/traces and choose the median of three u64 elapsed-nanosecond
+/// values; an elapsed value not representable as u64 panics rather than enforcing
+/// a time limit. Run the cache sequence after all samples. A failure aborts this
+/// request without publishing the partially collected rows. Test-thread cleanup is
+/// registered, but caches remain shared during the request. Debug builds are accepted;
+/// this is diagnostic search, with trace overhead inside the timer.
 fn probe(input: Input) -> Result<Value, String> {
     mpfr::cleanup_on_thread_exit();
     let recipe = Recipe::new(input);
@@ -190,6 +274,12 @@ fn probe(input: Input) -> Result<Value, String> {
     }))
 }
 
+/// Accept exactly --list or one input path. Listing constructs the finite inventory
+/// and reports expected public kinds plus actual serialized private labels; it does
+/// not assert they agree. Input mode checks metadata length <=4096 before an uncapped
+/// UTF-8 read and serde decoding, then runs the probe. Return string errors for
+/// usage, filesystem, decoding or probe failures. There is no release-only gate,
+/// atomic file snapshot, preemptive timeout or enforced maximum read allocation.
 fn run() -> Result<Value, String> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     if args == ["--list"] {
@@ -212,6 +302,10 @@ fn run() -> Result<Value, String> {
     probe(input)
 }
 
+/// Run one request and free local/shared MPFR caches after normal return in this
+/// single-threaded executable. Print returned JSON on success, or schema-1 error
+/// JSON and exit 2 on failure. Listing has its own inventory object shape. Uncaught
+/// panics bypass this cleanup/error conversion; stdout failures can also panic.
 fn main() {
     let result = run();
     // This standalone process is single-threaded; all oracle Float values have
@@ -230,10 +324,16 @@ fn main() {
 }
 
 #[cfg(test)]
+/// Finite regression corpus for exact transport, recipe classes, query contradictions and cache transitions.
+/// These in-process tests do not establish cold-process performance or universal scalar support.
 mod tests {
     use super::*;
 
     #[test]
+    /// Retain the original eight-byte input and historical mixed-number response.
+    /// Run the probe, then compare zipped old/new reference endpoints using independent
+    /// Rug fraction arithmetic, including negative mixed-number subtraction. Require
+    /// new text to contain / and no spaces; this is not full-response or array-length equality.
     fn original_mixed_number_failure_uses_exact_fraction_wire_output() {
         mpfr::cleanup_on_thread_exit();
         let input: Input = serde_json::from_str(include_str!(
@@ -267,6 +367,10 @@ mod tests {
         }
     }
 
+    /// Construct the supplied recipe and assert its private class, then obtain the
+    /// reference sign, check all six queries sequentially on one value and exercise
+    /// the separate cache sequence. Panics on failures. This helper does not time
+    /// queries or assert dispatch counts, and callers register MPFR cleanup.
     fn check_recipe(recipe: &Recipe, expected_class: &str) {
         let value = recipe.real().unwrap();
         assert_eq!(
@@ -283,6 +387,10 @@ mod tests {
     }
 
     #[test]
+    /// Keep the fixture's original ConstOffset label and all-zero genome assertions,
+    /// then deliberately select Irrational for the same historical near-pi expression.
+    /// Require offset 31/10, scale one and the near-pi branch, and check pi-31/10 through
+    /// all queries. The current ConstOffset generator has distinct positive-offset rules.
     fn original_near_pi_failure_is_preserved_with_its_actual_class() {
         mpfr::cleanup_on_thread_exit();
         let mut input: Input = serde_json::from_str(include_str!(
@@ -302,6 +410,10 @@ mod tests {
     }
 
     #[test]
+    /// Check 156 near-pi recipes (78 decimal depths from both sides) and sixteen
+    /// constant-offset recipes (four families times four fixed genomes). Preserve low
+    /// three selector bits while assigning each offset family. Assert class, all query
+    /// contradiction checks and the cache sequence; this is finite deterministic coverage.
     fn both_sides_of_all_near_pi_depths_and_all_offset_families_are_checked() {
         mpfr::cleanup_on_thread_exit();
         for depth in 0..78 {
@@ -338,6 +450,10 @@ mod tests {
     }
 
     #[test]
+    /// Require the 22-entry inventory, then check private class and public structural
+    /// kind for each of four fixed genomes per label. Compare all six sequential
+    /// queries against directed MPFR and exercise cache preservation for all 88 recipes.
+    /// These selected parameter extremes are not exhaustive over eight-byte inputs.
     fn parameter_extremes_keep_every_private_class_and_agree_with_mpfr() {
         mpfr::cleanup_on_thread_exit();
         let cases = inventory::optimized_certificate_representatives();
@@ -371,6 +487,9 @@ mod tests {
     }
 
     #[test]
+    /// Require an unknown bucket to fail Real construction, and serde to reject an empty
+    /// genome, an out-of-range byte and an extra field. Does not exercise file-size
+    /// checks, every malformed JSON form or manually inconsistent expanded recipes.
     fn unknown_representations_and_malformed_genomes_are_rejected() {
         assert!(
             Recipe::new(Input {
@@ -390,6 +509,9 @@ mod tests {
     }
 
     #[test]
+    /// Against reference `[1,2]` and Positive, reject a negative sign, rational three and
+    /// interval `[3,4]`, while accepting an unresolved sign. Uses exact literals rather
+    /// than MPFR evaluation; does not assert that overlapping intervals prove containment.
     fn independent_oracle_rejects_opposite_sign_and_disjoint_intervals() {
         let bounds = [Rational::new(1), Rational::new(2)];
         assert!(

@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/examples/directed_scalar_probe.rs` | Entire process probe, six tests and helper; documented query order, receipt projection, timing/trace scope, cache checks and finite validation. | Private/test docs, 42-block render inventory, focused tests and before/after semantic/trace checks passed; concrete generator witnesses retained. See probe/atlas batch. |
+| `crates/hyperreal/examples/perf_atlas.rs` | Entire atlas example; documented source generators, actual scalar domains, timing/status limitations and both local callback aliases. | Private/test docs, 42-block render inventory, focused tests and before/after semantic/trace checks passed; concrete generator witnesses retained. See probe/atlas batch. |
 | `crates/hyperreal/examples/directed_scalar_bench.rs` | Entire executable and local tests; documented timed scope, adaptive precision/width, overlap checks, CLI and cleanup. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
 | `crates/hyperreal/examples/directed_scalar_bench/mpfr.rs` | Entire adapter; documented directed operations, endpoint domains, precision and shared-reference limitations. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
 | `crates/hyperreal/examples/directed_scalar_probe/recipe.rs` | Entire generator; documented exact byte mapping, correlated fields, construction domains and derived serde/diagnostic APIs. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
@@ -22414,6 +22416,119 @@ Temporary shadow sources and rendered HTML are removed after inspection. The
 shared Cargo target is about 7.2 GiB; its release directory grew from about 18 MiB
 to 309 MiB to exercise the actual documented release entry point. Repository-wide
 line review and configuration coverage remain unfinished.
+
+## Hyperreal directed probe and performance-atlas example audit
+
+Baseline: `b7c48af18799d46a193c39e8ddd0ef56a8c0b2f3`. Read all 421 existing
+lines of `crates/hyperreal/examples/directed_scalar_probe.rs` (now 543) and all
+243 of `crates/hyperreal/examples/perf_atlas.rs` (now 324). The 664-line review
+covers complete files, including the probe's six test functions and helper and
+the atlas's two function-local aliases. Read their shared recipe/oracle/encoder,
+trace recording, affine-sign use, scientific formatting, Atlas generation and
+measurement paths, script and Python response validator as context. Included
+sources retain their separate whole-file audit records.
+
+Ownership is Hyperreal development tooling, under P1, P3–P6, P36 and P37. The
+probe domain is the fixed recipe/query grammar; the atlas domain is its seeded
+integer/rational/radical generators and selected operations. Missing acceptance
+witnesses were private/test Rustdoc and accurate generation, timing, cache and
+validation descriptions. Baseline executable outputs were captured before
+editing. The atlas's former comment claiming rebuilt roots avoid cached
+approximation was stronger than its construction behavior supports. The existing
+asin report description also overstates the lower bound for one-bit rationals.
+No runtime string, algorithm, query order, fixture or assertion was changed.
+
+Documented and rendered 42 blocks: two executable overviews, six modules, two
+constants, one enum, three variants, three tuple fields, sixteen ordinary
+functions, six tests, one test helper and two function-local types. Forty blocks
+are present in ordinary/private or test-enabled Rustdoc; the two local callback
+aliases use supplemental rendered Markdown. There are no authored derives in
+these two files. The shared included modules remain separately accounted.
+Atlas's raw non-comment tokens are identical to baseline. The only probe token
+differences are three optional tuple-field commas introduced by Rustfmt when
+individual field documentation was added.
+
+The probe checks class before tracing/timing each query, resets/takes counters
+around that query, retains all three samples and uses their median as search
+fitness. Construction, class serialization, fixed reference, answer validation,
+JSON work and final value destruction are excluded from the query-body timer.
+Instrumented query/recording overhead is included. Fresh objects and the nominal
+cold cache snapshot do not imply fresh-process caches. The affine embedding has
+exact determinant equal to the source scalar. Sign queries project away their
+richer receipts for diagnostic JSON; None is retained as unresolved. The interval
+wrapper's existing exhausted-message string does not prove resource exhaustion:
+the underlying interval API returns None on abortion and this wrapper installs
+no total-work budget. Reference membership/overlap checks detect contradictions
+without independently proving exact-value containment. Cache validation covers
+one fixed cold-to-fine-to-warm query order, not every cache or policy state.
+
+The probe's fixtures preserve the original mixed-number response and near-pi
+input. The historical near-pi fixture is deliberately relabeled Irrational in
+the test before constructing pi-31/10; the current ConstOffset grammar differs.
+The mixed-number assertion compares zipped reference endpoints, not complete
+responses or array lengths. Other tests cover 156 near-pi recipes, sixteen
+constant-offset recipes, 88 fixed extreme recipes, malformed inputs and selected
+contradictory answers. The file metadata check precedes an uncapped read. Normal
+return frees MPFR caches and emits JSON; uncaught panics bypass that path.
+
+Atlas kind labels are generator choices, not runtime class assertions. Source
+bit widths can shrink through canonical reduction, and the irrational numerator
+construction adds a magnitude bit. Rational setup occurs outside timing; scalar
+construction, selected operations and requested approximate scientific formatting
+occur inside. Construction itself can refine or share caches. Only the initial
+Outcome is inspected; Option presence and String success are not numeric accuracy
+proofs, and Problem categories are discarded by these adapters. Atlas's ceilings
+and predictions can omit work and do not preempt calls. powi uses positive
+power-of-two exponents, and the irrational sqrt row roots an already rooted input.
+
+Two concrete generator witnesses were reproduced before and after documentation:
+
+- `rational("irrational", 3, Rng::new(5))` yields 9/4, and real converts its
+  square root to the exact rational 3/2. An odd numerator is not a nonsquare proof.
+- `scaled("rational", -2, 1, Rng::new(1))` yields 1/3, below the report string's
+  advertised 3/8 lower endpoint; the asin operation succeeds. Rustdoc gives the
+  actual one-bit and larger-bit ranges. The inaccurate emitted description is
+  explicitly recorded and remains unchanged in this docs-only batch.
+
+Focused locked/offline, two-job validation passed with incremental compilation
+disabled:
+
+- Seven probe example tests with minimal required serde/dispatch-trace features
+  and with all features. Repeated after the final test-comment markup correction.
+- Private library and both example docs in those feature configurations; atlas
+  docs also passed with no default features. Warnings and broken/private intra-doc
+  links were denied. Final probe docs were rebuilt after the markup correction.
+- Test-enabled shadow render, all 42 description/variant/field checks, and two
+  supplemental alias renders. The first shadow render exposed unescaped [1,2]
+  and [3,4] literals as broken links; code markup fixed both before final checks.
+  Neither source test attributes nor warning policy was weakened.
+- Four fresh process requests (wide original fixture, near-pi, negative TanPi and
+  exact one), each with six queries and three samples: all 72 answers, complete
+  dispatch/rational counters, recipe fields and cache observations match the
+  baseline after excluding only elapsed time/median fields. The existing Python
+  evidence.validate_response accepts all four final responses; --list inventory
+  output is byte-identical with 22 entries.
+- Before/after atlas debug smoke runs with --quick --filter evaluate: one selected
+  operation, four kinds, thirteen widths each, all 52 points with ok status.
+  Timings and calibrated iteration counts are not compared as deterministic data
+  and this is not a release performance measurement.
+- The temporary generator witness executable passed on baseline and final source
+  against independent rational expectations 9/4 -> 3/2 and 1/3 < 3/8. Its first
+  build needed the Rustdoc-only crate-version argument removed when adapting the
+  captured compiler command; no source algorithm or check was weakened.
+- Scoped Rustfmt, reviewed token differences and git diff --check passed.
+
+No focused check remains blocked. Full workflows remain waived by the repository
+owner for this docs-only session. No competitive timing, universal correctness,
+resource-bound or whole-repository coverage claim is made. At this revision all
+12 Rust source files physically under crates/hyperreal/examples now have complete
+file review records. That does not complete their transitive included modules
+(notably benches/support/benchmark_report.rs), JSON fixtures, other crate sources
+or all repository configurations. The standing AGENTS.md mandate remains intact.
+
+Evidence is retained under `/tmp/csgrs-hyperreal-probe-atlas-audit/`; temporary
+shadow sources, generator executable and rendered HTML are removed after checking.
+The shared target is about 7.3 GiB. The broader repository audit remains active.
 
 ## Next work
 
