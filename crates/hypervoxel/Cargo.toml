@@ -40,6 +40,10 @@ criterion = "0.5"
 perf-atlas = { path = "../perf-atlas" }
 proptest = "1.7.0"
 
+[package.metadata.docs.rs]
+# Document every feature-gated API.
+all-features = true
+
 [features]
 default = []
 interval-enclosure = ["hyperlattice/interval-hyperreal"]
