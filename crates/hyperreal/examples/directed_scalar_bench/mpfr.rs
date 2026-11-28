@@ -1,4 +1,14 @@
-//! Native MPFR enclosure adapter with an explicit significand precision.
+//! Directed MPFR comparison adapter with caller-selected significand precision.
+//!
+//! Evaluate the shared recipe with outward-rounded interval operations, then
+//! materialize finite endpoints as exact GMP rationals. Intended inputs come from
+//! Recipe::new; its public fields are not revalidated here. The fixed reference
+//! uses the same backend and corresponding formulas, so agreement with it is not
+//! an independent check of MPFR or recipe interpretation.
+//!
+//! Precision controls rounding width, not a total-work, memory or cancellation
+//! budget. Invalid generated invariants panic rather than producing typed domain
+//! outcomes. This development adapter is not a general interval arithmetic API.
 
 use super::recipe::{OffsetFamily, Recipe};
 use rug::{
@@ -7,12 +17,20 @@ use rug::{
 };
 use std::cmp::Ordering;
 
+/// Closed outward-rounded endpoint pair for finite generated expressions.
+/// Internal callers maintain ordered endpoints at one common precision; the struct
+/// does not validate those invariants at construction.
 struct Interval {
+    /// Lower endpoint rounded toward negative infinity.
     lo: Float,
+    /// Upper endpoint rounded toward positive infinity.
     hi: Float,
 }
 
+/// Directed arithmetic used by the finite recipe grammar; domain assumptions remain with callers.
 impl Interval {
+    /// Parse exact rational text and round separately down/up into an enclosing pair.
+    /// Panics on malformed text. The supplied significand precision must be valid for Rug.
     fn rational(text: &str, precision: u32) -> Self {
         let value = text.parse::<Mpq>().expect("exact generated rational");
         Self {
@@ -21,6 +39,7 @@ impl Interval {
         }
     }
 
+    /// Enclose pi using MPFR's directed constant rounding at the supplied precision.
     fn pi(precision: u32) -> Self {
         Self {
             lo: Float::with_val_round(precision, Constant::Pi, Round::Down).0,
@@ -28,6 +47,8 @@ impl Interval {
         }
     }
 
+    /// Subtract intervals using lo-other.hi and hi-other.lo with outward rounding.
+    /// Assert equal lower-endpoint precisions; upper-endpoint precision/order remain internal invariants.
     fn sub(self, other: Self) -> Self {
         let precision = self.lo.prec();
         assert_eq!(other.lo.prec(), precision);
@@ -37,6 +58,8 @@ impl Interval {
         }
     }
 
+    /// Add corresponding endpoints with outward rounding.
+    /// Assert equal lower-endpoint precisions; upper-endpoint precision/order remain internal invariants.
     fn add(self, other: Self) -> Self {
         let precision = self.lo.prec();
         assert_eq!(other.lo.prec(), precision);
@@ -46,6 +69,10 @@ impl Interval {
         }
     }
 
+    /// Bound a product of either sign by all four endpoint products: take the minimum
+    /// of downward-rounded corners and maximum of upward-rounded corners. Correlation
+    /// between operands is discarded, which may widen the enclosure. Assert equal
+    /// lower-endpoint precisions. Assume valid finite inputs; NaN corner comparison panics.
     fn mul(self, other: Self) -> Self {
         let precision = self.lo.prec();
         assert_eq!(other.lo.prec(), precision);
@@ -68,6 +95,9 @@ impl Interval {
         Self { lo, hi }
     }
 
+    /// Require an ordered input interval strictly on one side of zero, then enclose
+    /// its reciprocal as `[1/hi, 1/lo]` with outward rounding. Panic if the interval
+    /// contains zero; no splitting or symbolic nonzero proof is attempted.
     fn inverse(self) -> Self {
         let precision = self.lo.prec();
         assert!(
@@ -84,6 +114,10 @@ impl Interval {
     // All selected transcendental functions are increasing on their generated
     // domains. Trigonometric inputs are checked below against an independent
     // directed lower bound for pi/2 before this method is used.
+    /// Apply a caller-selected increasing function down at lo and up at hi; discard
+    /// its returned rounding-order indicators and assert finite ordered results.
+    /// The caller must prove monotonicity and domain validity over the entire interval;
+    /// these endpoint assertions alone do not establish either precondition.
     fn increasing(mut self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
         operation(&mut self.lo, Round::Down);
         operation(&mut self.hi, Round::Up);
@@ -91,6 +125,11 @@ impl Interval {
         self
     }
 
+    /// Require the whole interval strictly inside (0, pi/2), using a directed lower
+    /// bound for pi/2, then apply the supplied increasing operation. Intended callbacks
+    /// are sin and tan; an arbitrary function pointer is not validated for monotonicity.
+    /// A boundary-touching or out-of-range enclosure panics even if its exact source
+    /// value could be proved admissible with tighter bounds.
     fn positive_trig(self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
         let half_pi = Self::pi(self.lo.prec()).mul(Self::rational("1/2", self.lo.prec()));
         assert!(
@@ -100,11 +139,23 @@ impl Interval {
         self.increasing(operation)
     }
 
+    /// Convert each finite MPFR endpoint to its exact GMP rational; panic for a nonfinite endpoint.
     fn rational_bounds(self) -> [Mpq; 2] {
         [self.lo, self.hi].map(|x| x.to_rational().expect("finite MPFR endpoint"))
     }
 }
 
+/// Require a significand precision in 64..=4096, then evaluate the selected recipe
+/// using directed interval arithmetic and apply its exact signed rational scale.
+/// Return string errors for out-of-range precision or an unknown representation.
+///
+/// Assumes the fields and domains produced by Recipe::new: positive primes/exponents,
+/// angle strictly between zero and one half, positive constant-offset inner forms,
+/// and well-formed nonzero scale. Near-pi subtraction keeps the authored decimal
+/// rational offset. Reciprocal, monotonic-function and endpoint-conversion guards
+/// can panic for invalid manually changed fields. Repeated pi factors are evaluated
+/// as written; this is not Hyperreal's symbolic normalization or a private-class check.
+/// No total-work limit or cancellation hook is installed.
 pub fn bounds(recipe: &Recipe, precision: u32) -> Result<[Mpq; 2], String> {
     if !(64..=4096).contains(&precision) {
         return Err("MPFR precision is outside the declared 64..4096-bit domain".into());

@@ -34,6 +34,11 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/examples/directed_scalar_bench.rs` | Entire executable and local tests; documented timed scope, adaptive precision/width, overlap checks, CLI and cleanup. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
+| `crates/hyperreal/examples/directed_scalar_bench/mpfr.rs` | Entire adapter; documented directed operations, endpoint domains, precision and shared-reference limitations. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
+| `crates/hyperreal/examples/directed_scalar_probe/recipe.rs` | Entire generator; documented exact byte mapping, correlated fields, construction domains and derived serde/diagnostic APIs. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
+| `crates/hyperreal/examples/directed_scalar_probe/oracle.rs` | Entire fixed reference; documented directed arithmetic, monotonicity obligations and sign/independence limits. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
+| `crates/hyperreal/examples/directed_scalar_probe/wire.rs` | Entire encoder and fixture; documented exact improper-fraction transport and eight-case coverage. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
 | `crates/hyperreal/examples/allocation_profile.rs` | Entire example; documented System allocator accounting, all private records/variants, recipe mathematics, partial warm-up and measurement limits. | Private docs passed in both feature modes; tokens unchanged. See utility-example batch for rendered coverage and focused execution evidence. |
 | `crates/hyperreal/examples/readme_quickstart.rs` | Entire example; documented exact rational/root claims, errors and explicit lossy display; synchronized the README fixture. | Private docs passed in both feature modes; tokens unchanged. See utility-example batch for rendered coverage and focused execution evidence. |
 | `crates/hyperreal/examples/write_benchmarks_md.rs` | Entire facade; documented included-helper authority, file effects, discovery and output-count semantics. Included helper remains a separate audit unit. | Private docs passed in both feature modes; tokens unchanged. See utility-example batch for rendered coverage and focused execution evidence. |
@@ -22285,6 +22290,130 @@ Evidence scripts, baseline/final outputs, commands and the rendered inventory
 are retained under `/tmp/csgrs-hyperreal-utility-examples-audit/` (about 156 KiB).
 No shadow crate or extra release target was created; the shared target is about
 6.8 GiB. Repository-wide line review and all-configuration coverage remain open.
+
+## Hyperreal directed-enclosure benchmark and shared recipe audit
+
+Baseline: `83ba22a7c7ce1911316e78f76b57bb212b29e191`. Read every line of five
+files, 795 existing lines in total:
+
+| File under crates/hyperreal/examples/ | Before | After |
+| --- | ---: | ---: |
+| directed_scalar_bench.rs | 251 | 342 |
+| directed_scalar_bench/mpfr.rs | 167 | 218 |
+| directed_scalar_probe/recipe.rs | 172 | 244 |
+| directed_scalar_probe/oracle.rs | 168 | 226 |
+| directed_scalar_probe/wire.rs | 37 | 51 |
+
+Read their probe consumer, finite representation inventory, MPFR cleanup helper,
+regression inputs and competitive runner validation/timing paths as context.
+Those dependencies do not receive additional whole-file completion credit here.
+The remaining probe entry point and performance-atlas example still need their
+own documentation passes. This batch owns development scalar generation,
+enclosure comparison and exact fraction transport, under P1, P3–P6, P36 and P37.
+The domain is the finite eight-byte recipe grammar and its caller-selected bucket,
+not arbitrary scalar expressions or manually inconsistent Recipe fields.
+
+The missing acceptance witness was private, test and generated-API documentation
+with accurate timing, precision, independence and validation boundaries. Baseline
+benchmark tests passed before editing (three tests). Four release inputs were
+run through both backends before editing: original wide-scale ConstOffset,
+78-place near-pi subtraction, negative TanPi and exact rational one. Runtime
+implementations, fixture inputs and all assertions remain unchanged. Four files
+have identical raw non-comment tokens; Rustfmt added only two optional commas
+when tuple fields in Bounds received separate documentation. No predicate order
+or operation was changed.
+
+Documented and reconciled 91 blocks: five file overviews, eight module facades,
+five structs, two enums, six variants, 21 named and two tuple fields, twelve
+functions, three test functions, three impl blocks, twenty methods, one module
+constant and three function-local constants. Private/test Rustdoc contains 88
+blocks; the three local constants require supplemental rendered Markdown because
+Rustdoc does not expose body-local items. Inspected all eleven derived trait
+anchors: Input Clone/Debug/Deserialize/Serialize, Recipe Clone/Debug/Serialize,
+and OffsetFamily Clone/Copy/Debug/Serialize. Serde shape validation, unknown-field
+rejection, absent Recipe deserialization and public-field mutation obligations
+are documented. The inventory initially counted multiline function parameters
+as fields; restricting its field scan to struct bodies resolved that scratch
+script error without changing any source or coverage requirement.
+
+The benchmark measures one request per process. The external runner owns sample
+ordering, affinity and timeout. Timed work includes backend construction,
+materialized rational endpoints, width checks and retained intermediate steps;
+recipe decoding, target construction, private-class inspection, fixed reference,
+JSON encoding and final step disposal are outside the timer. Hyperreal reuses
+one Real across stages, while MPFR reconstructs its expression at each precision.
+Both can warm constant caches. The fifteen settings 256, 384, ..., 2048 denote
+absolute dyadic precision magnitudes for Hyperreal but significand bits for MPFR.
+They limit requests/stages, not total work, memory or cancellation. The file-size
+check observes metadata before an uncapped read; it is not a hard read bound.
+
+checked_steps verifies ordered intervals, reference overlap and first-sufficient
+width. It does not verify containment of the exact value, interval nesting,
+precision labels or recipe class. run and the external competitive validator
+perform their separate checks. The fixed reference avoids Hyperreal evaluation,
+but uses the same MPFR backend and corresponding formulas as the variable adapter;
+agreement of those two paths is not independent evidence about MPFR or recipe
+interpretation. Directed arithmetic relies on valid ordered finite inputs and
+monotone generated domains. Sign extraction assumes ordered bounds and cannot
+certify zero. Invariant panics are not converted to error JSON. Cache cleanup
+runs after normal return, not after an uncaught panic.
+
+Recipe documentation preserves correlated byte uses, signed exact scaling, prime
+and angle selection, pi powers, four positive inner offset families and all
+78 decimal cancellation depths. Requested labels are not proof of private class.
+The exact wire encoder includes /1 for integers and avoids mixed-number Display.
+The benchmark fixture checks 22 labels times four genomes, but its class/kind
+assertions apply to the inventory representatives; the downstream probe tests
+separately check generated classes. Neither finite corpus establishes closure
+for all exact scalar inputs.
+
+Final focused validation passed with locked/offline, two-job builds and
+incremental compilation disabled:
+
+- Benchmark example tests with serde alone and with all features: three each,
+  including both adaptive backends over 88 cases, the original wide-scale fixture,
+  out-of-range MPFR precision checks and eight fraction-transport fixtures.
+- Downstream directed_scalar_probe example tests with all features: seven,
+  including original mixed-number and near-pi cases, all 78 cancellation depths
+  from both sides, four offset families, fixed parameter extremes, malformed
+  requests and contradictory sign/interval responses.
+- Private library/benchmark docs in both feature configurations, and private
+  consumer probe docs with all features, denying warnings and broken/private
+  intra-doc links. A temporary copy exposes cfg(test) items for rendered review;
+  ordinary source tests/attributes remain intact. All 91 descriptions and relevant
+  field/method/variant/derived-trait anchors reconcile.
+- Release benchmark build with serde and no dispatch-trace. All eight successful
+  replays preserve full response data except elapsed_ns relative to the baseline;
+  exact rational one has the independent endpoint expectation [1,1]. The wide
+  case requires two Hyperreal stages and three MPFR stages, near-pi and negative
+  trig require two each, and rational one requires one each. These are completion
+  observations, not a performance comparison.
+- Independent Fraction arithmetic: alternating Machin atan series enclose pi
+  and all 78 exact decimal prefix/next-unit pairs. The selected near-pi expression
+  follows from that enclosure; a positive Taylor series with geometric tail
+  bounds exp(1/15) in the original wide inverse-product-offset expression.
+  Exact rational scaling preserves those enclosures, and both backends' final
+  intervals contain them. This supplies stronger independent evidence for those
+  two inputs than interval overlap alone.
+- Six release CLI errors (usage, backend, unknown bucket, extra field, malformed
+  byte range and oversized metadata) return error JSON/status 2. The existing
+  competitive.validate consumer accepts all eight successful responses.
+- Scoped Rustfmt, item inventory, reviewed token differences and git diff --check.
+
+No focused check is blocked. Full workflows remain owner-waived for this docs-only
+session; no sanitizer qualification, controlled benchmark campaign, performance
+ranking, general arithmetic proof or repository-wide coverage claim is made.
+AGENTS.md's public/private 100% mandate remains unchanged. Scripts, commands,
+responses and rendered inventory live under
+`/tmp/csgrs-hyperreal-directed-bench-audit/`. Initial before/after equivalence was
+checked before the independent oracle extension; the script's before-labelled
+responses were subsequently refreshed from the equivalent documented executable
+while adding that oracle. Their elapsed_ns fields are not retained baseline timing
+evidence. The initial baseline test log and source snapshots remain available.
+Temporary shadow sources and rendered HTML are removed after inspection. The
+shared Cargo target is about 7.2 GiB; its release directory grew from about 18 MiB
+to 309 MiB to exercise the actual documented release entry point. Repository-wide
+line review and configuration coverage remain unfinished.
 
 ## Next work
 
