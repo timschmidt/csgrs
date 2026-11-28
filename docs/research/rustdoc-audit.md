@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/ops.rs` | Entire exact operator, integer shortcut, mean, retention and balanced-product implementation reviewed; all 48 functions, 17 impls, ten associated outputs and chunk constant documented. | Both-mode private docs and focused tests pass; all 76 descriptions render, 1,215 records match before/after and independent expectations pass. See rational-operator batch. |
 | `crates/hyperreal/src/rational/arithmetic/queries_conversion.rs` | Entire exact query/scaling/rounding/enclosure/fact implementation reviewed; all 53 functions, impl role and local constant documented. | Both-mode private docs, six doctests, focused conversions/filters and independent exact probes pass; 54 ordinary descriptions plus one supplemental local constant checked. See rational-query/conversion batch. |
 | `crates/hyperreal/src/rational/arithmetic/squares_powers.rs` | Entire root, partial-factor extraction, power recognition, retained reduction and exponentiation implementation reviewed; all 22 functions and five constants documented. | Both-mode private docs/focused tests and three doctests pass; 28 descriptions render, exact independent probes pass and outputs/traces remain unchanged. See rational-roots/powers batch. |
 | `crates/hyperreal/src/rational/arithmetic/construction.rs` | Entire constructor/reduction/cache/query implementation reviewed; all 42 functions documented, including signed inputs, validation ownership, hint proofs and lifetime/resource limits. | Both-mode private docs/focused tests and four doctests pass; all 43 blocks render and 673 unchanged probe records have independent exact expectations. See rational-construction batch. |
@@ -24948,6 +24949,125 @@ HTML build artifacts are removed after validation; shared Cargo output is reused
 with incremental compilation disabled. AGENTS.md already retains the future-agent
 100% public/private/generated Rustdoc mandate. The complete repository review and
 previously recorded generated-item gaps remain unfinished.
+
+## Rational operators, retained relations and iterator products batch
+
+Reviewed every baseline line of crates/hyperreal/src/rational/arithmetic/ops.rs
+(1,643 lines at 3e0f2c60e), its owning construction/reduction/cache definitions,
+relevant rational tests and the Real mean, reused self-dot and Hypersolve Bareiss
+consumers. The final file is 1,978 lines. All 76 authored API descriptions are
+present: 48 functions, seventeen impl blocks, ten associated Output types and
+one chunk-size constant. Owner: Hyperreal exact rational arithmetic, with P1–P6
+and P37. Missing private/operator contracts and undocumented panic, ownership,
+cache-state and iterator-consumption behavior supplied the acceptance witnesses.
+
+The domain remains valid reduced and marked-unreduced rationals, exact-integer
+shortcut operands, nonzero private multiplication operands and arbitrary finite
+factor iterators. The docs describe current behavior and implementation limits;
+they do not weaken the normative typed-failure or resource requirements.
+
+Findings and clarified contracts:
+
+- Integer quotient/cross-difference shortcuts canonicalize and validate all
+  required operands before zero results. Fractional operands, zero divisors and
+  nondivisibility return None. Scaled difference requires both operands integer
+  even for scale zero; i64::MIN uses unsigned magnitude without overflow. A zero
+  scaled term returns the original self handle, which can still be marked lazy
+  after its canonical value was used for validation.
+- The mean canonicalizes inputs, reuses an equal canonical left value, attempts
+  checked word totals and otherwise aligns arbitrary-width magnitudes. For
+  reduced denominators b,d and g=gcd(b,d), only 2g can cancel from the mean's
+  numerator over 2*lcm(b,d); sums/differences similarly restrict cancellation to
+  g. The low-level already-reduced word-sum constructor trusts its caller's
+  coprimality proof. Word overflow means fallback ineligibility, not exhaustion.
+- Nonzero reduced dyadic helpers cancel powers of two before wider products or
+  sums. Their zero/metadata assumptions are now explicit. The cheap word-parts
+  predicate proves only selected coprime forms; false can be an unrecognized
+  coprime pair such as 3/5. General arithmetic remains exact when specialized
+  schedules decline. No fixed word width becomes a mathematical support bound.
+- Borrowed addition/subtraction handle zero identities before canonicalization,
+  then units, retained relations and increasingly general exact kernels in the
+  existing order. Multiplication similarly preserves sign/unit/reciprocal and
+  cache scheduling. The division operator asserts nonzero divisor numerator
+  before its zero-dividend shortcut: both 0/0 and 1/0 panic in the reproduced
+  implementation. This remains a documented typed-failure gap rather than a
+  newly sanctioned contract change; executable handling was not repaired here.
+- Cache keys are owner/other allocation identities tied to previously established
+  arithmetic relations, not definitions of mathematical equality. Product lookup
+  checks its primary slot then eligible linear slots; sum/difference retain their
+  direction and owner order. Installation is write-once, layout-sensitive and
+  best effort. Weak operand keys avoid owning the other value, but strong result
+  handles require caller-managed acyclic relations and can retain large graphs.
+  Slot limits do not bound retained bytes or total work.
+- Arithmetic-reuse observation reads then sets a bit and can let racing first
+  observers both return false. The separate conflicted-self-dot admission uses
+  atomic observation and admits once per uncleared state. Primary-square state
+  distinguishes no primary, a matching self-key and another primary; units are
+  trivial positives. These scheduling facts are not numerical predicates and
+  missing cache evidence is not a proof that an operation is impossible.
+- Borrowed lazy negation keeps raw magnitudes and the lazy marker. Owned negation
+  performs unit recognition first and can mutate only when Arc::get_mut admits
+  exclusive storage, including absence of weak aliases. In-place negation drops
+  product/linear caches and clears reuse flags before the new sign is consumed;
+  sign-independent facts remain. Retained negation tries a weak backlink before
+  the strong forward link, and lookup skips expired candidates in its allowed
+  slots. The probe verifies unique pointer reuse, cache invalidation and weak
+  owner expiration for completed ordinary arithmetic fixtures.
+- Product reduction skips positive one, preserves a lone non-one handle, balances
+  chunks of at most 512 factors and carries full chunks through binary partial
+  slots. Final low-to-high merging has a specific operand order even though the
+  exact product is commutative. Zero clears pending arithmetic but still consumes
+  subsequent iterator items; a nine-item witness visits all nine, and a later
+  producer panic remains observable. An infinite iterator cannot finish merely
+  because it yielded zero. Count-bounded vectors do not bound retained bytes.
+- A deliberately fabricated private product relation returns the supplied wrong
+  value seven on lookup/multiplication, confirming that the installer does not
+  validate equations. This is an invalid internal call, not a valid public-input
+  regression or an authorization to trust serialized/external cache flags.
+
+Executed after the final source edit:
+
+- Locked/offline focused Hyperreal library checks pass: 31 test executions with
+  no default features and 34 with all features. Filters overlap, so these are
+  execution counts rather than unique tests. They cover integer shortcuts,
+  average/Real mean consumers, iterator products, dyadic and unreduced arithmetic,
+  retained product/linear/unary layouts, unique negation, self-dot and repeated
+  powers. All original assertions remain intact; no numerical tolerance changed.
+- Both-mode cargo doc --lib --no-deps --document-private-items passes with
+  warnings and broken/private intra-doc links denied. HTML inspection finds all
+  76 complete descriptions, including all ten separate associated Output
+  descriptions and the four free product helpers/constant. The file contains no
+  doctest examples; zero-match doctest invocations are not acceptance coverage.
+- Three no-default-feature Hypersolve Bareiss checks pass against the final
+  Hyperreal source: determinant swaps/exact value, exact solution replay and
+  general-rational determinant fallback. This validates selected integer-kernel
+  consumers, not every solver, feature combination or policy workload.
+- An isolated exact source copy appends one private probe. Before/final bodies
+  produce 1,215 byte-identical records, including twelve cold/warm/reused operator
+  traces and eleven aggregate-product trace snapshots. The corpus contains 684
+  rational binary-operation cases, 495 signed integer shortcuts, eleven products
+  with lengths through 4,097, three wide/lazy combinations, twelve retained
+  operations, one unique-negation state, eight partial-product layouts and one
+  deliberately invalid retained relation.
+- Independent Python integers/Fraction expectations check signed arithmetic,
+  canonical output parts, exact divisibility, i64::MIN-scaled differences, means
+  and negation. Telescoping factors give independently known product n+1 across
+  the 511/512/513 and 1,023/1,024/1,025 boundaries; partial-slot products match
+  factorials. Before/after agreement is separate from these exact expectations.
+  Rust assertions also exercise owned/borrowed/assignment equivalence, preserved
+  lazy handles, input validation before annihilation, full iterator consumption,
+  cache-state transitions, pointer reuse and weak lifetime expiration.
+- Declaration/render inventory, noncomment-token equality and git diff --check
+  pass. This adds only documentation. Full workflows, formatting and performance
+  measurement remain owner-waived; no universal cycle-freedom, concurrency,
+  closure, performance or resource-bound claim follows from these finite probes.
+
+Evidence and repeatable scripts remain under /tmp/csgrs-hyperreal-ops-audit/.
+Owned source-copy/probe build artifacts are removed after validation and record
+JSON is compressed; shared Cargo output is reused with incremental compilation
+disabled. AGENTS.md already retains the future-agent mandate for 100% public,
+private and generated Rustdoc. The repository-wide review, remaining arithmetic
+fragments and previously recorded generated-item gaps remain unfinished.
 
 ## Next work
 

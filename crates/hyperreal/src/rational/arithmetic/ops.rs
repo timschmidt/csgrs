@@ -1,12 +1,21 @@
 use core::ops::*;
 
+/// Exact integer shortcuts, specialized rational arithmetic and retained relations.
+///
+/// Private kernels distinguish schedule ineligibility from arithmetic failure;
+/// cache installers trust caller-proved relations. None of these paths supplies
+/// a universal work, retained-memory or cancellation bound.
 impl Rational {
-    /// Evaluate an exactly divisible integer cross difference.
+    /// Evaluate `(self * right - subtract_left * subtract_right) / divisor` exactly.
     ///
-    /// Computes `(self * right - subtract_left * subtract_right) / divisor`
-    /// without constructing intermediate rationals. Returns `None` unless all
-    /// five operands are exact integers, the divisor is nonzero, and the
-    /// resulting integer numerator is exactly divisible by it.
+    /// Canonicalizes all five operands in argument order before requiring integer
+    /// parts and a nonzero divisor. Returns `None` for noninteger input, zero
+    /// divisor or nondivisibility, including when a shortcut might otherwise
+    /// annihilate an invalid operand. Successful zero is `Some(0)`.
+    ///
+    /// Signed magnitude products avoid intermediate rationals; exact division
+    /// supports fraction-free elimination. Normalization, products and division
+    /// can allocate without a total work/memory budget; `None` is not exhaustion.
     pub fn checked_exact_integer_cross_difference_quotient(
         &self,
         right: &Self,
@@ -90,11 +99,14 @@ impl Rational {
         Some(Self::from_integer_magnitude(sign, quotient))
     }
 
-    /// Subtract an integer scaled by a signed machine word.
+    /// Evaluate `self - subtractand * scale` on exact integer magnitudes.
     ///
-    /// Computes `self - subtractand * scale` directly on integer magnitudes,
-    /// without constructing and reducing an intermediate rational product.
-    /// Returns `None` unless both rational operands are exact integers.
+    /// Both rational operands canonicalize and must be integers, even when scale
+    /// is zero. Otherwise return `None`. The unsigned absolute scale handles
+    /// `i64::MIN` without overflow. A zero scaled term clones the original self
+    /// handle, which can still carry lazy storage despite the validation step.
+    /// Other paths construct the signed integer difference without an intermediate
+    /// rational product. Allocation/work is not budgeted by this shortcut.
     pub fn checked_exact_integer_scaled_difference(
         &self,
         subtractand: &Self,
@@ -137,12 +149,13 @@ impl Rational {
         Some(Self::from_integer_magnitude(sign, numerator))
     }
 
-    /// Divide two integers when their quotient is also an integer.
+    /// Divide exact integers only when the result is also an integer.
     ///
-    /// Returns `None` for fractional inputs, a zero divisor, or a nonzero
-    /// remainder. This avoids constructing and reducing an intermediate
-    /// rational in fraction-free elimination and other exactly-divisible
-    /// integer recurrences.
+    /// Canonicalize dividend then divisor. Fractional operands, a zero divisor
+    /// or nonzero remainder return `None`; zero dividend succeeds only after
+    /// those operand checks. This shortcut avoids an intermediate rational in
+    /// fraction-free elimination. Success is exact, but normalization and division
+    /// have no total resource bound or typed exhaustion outcome.
     pub fn checked_exact_integer_quotient(&self, divisor: &Self) -> Option<Self> {
         let dividend = self.canonicalized_ref();
         let divisor = divisor.canonicalized_ref();
@@ -169,11 +182,17 @@ impl Rational {
         Some(Self::from_integer_magnitude(sign, quotient))
     }
 
-    /// Return the exact arithmetic mean of two rationals.
+    /// Return the exact mean `(left + right) / 2` without an intermediate sum rational.
     ///
-    /// This delays canonical reduction until after both the addition and the
-    /// division by two. It is equivalent to `(left + right) / 2`, but avoids
-    /// materializing and reducing the intermediate sum.
+    /// Canonicalize both inputs first. Equal values clone the canonical left
+    /// handle. Checked word arithmetic handles eligible inputs; overflow falls
+    /// back to arbitrary-width signed totals over twice the common denominator.
+    ///
+    /// For reduced a/b and c/d with g=gcd(b,d), only factors of 2g can cancel
+    /// from the numerator over 2*lcm(b,d). The fallback uses that restricted
+    /// reduction proof. Zero, negative and lazy inputs are supported; no rounding
+    /// or predicate policy participates. Work, allocation and retained operand
+    /// caches have no total budget here.
     pub fn average_pair(left: &Self, right: &Self) -> Self {
         // The restricted final GCD below requires coprime input parts.
         let left = left.canonicalized_ref();
@@ -296,6 +315,13 @@ impl Rational {
             .reduce_with_possible_divisor(&possible_divisor)
     }
 
+    /// Combine two signed word magnitudes over a caller-proved reduced denominator.
+    ///
+    /// The denominator must be positive and the nonzero resulting numerator must
+    /// be coprime to it. Integer-plus-fraction callers establish that invariant;
+    /// this helper does not reduce the result. NoSign entries are ignored and
+    /// exact cancellation returns canonical zero. A same-sign total exceeding
+    /// u128 returns `None` to request the wider arithmetic path.
     fn from_reduced_word_sum(
         left_sign: Sign,
         left: u128,
@@ -327,6 +353,13 @@ impl Rational {
         }
     }
 
+    /// Attempt reduced rational addition or subtraction entirely within u128 parts.
+    ///
+    /// Callers supply canonical valid operands. Integer-side shortcuts preserve
+    /// the other denominator; general inputs align by dyadic shifts or denominator
+    /// GCD and reduce the signed totals. `subtract` reverses the second sign.
+    /// Unrepresentable parts, products or same-sign sums return `None`, not an
+    /// arithmetic failure. This helper does not canonicalize or retain a pair.
     fn add_sub_words(&self, other: &Self, subtract: bool) -> Option<Self> {
         let left_denominator = self.denominator.to_u128()?;
         let right_denominator = other.denominator.to_u128()?;
@@ -399,6 +432,16 @@ impl Rational {
         ))
     }
 
+    /// Add or subtract nonzero reduced dyadics using exact power-of-two alignment.
+    ///
+    /// The caller handles zero operands first. Marked unreduced or nondyadic
+    /// inputs and unrepresentable shift metadata return `None`. Equal scales
+    /// can expose powers of two to cancel; unequal reduced scales leave an odd
+    /// sum numerator. Exact cancellation returns zero, otherwise construct the
+    /// reduced result using word storage when possible.
+    ///
+    /// Magnitude clones/shifts can allocate without a local resource bound.
+    /// Calling this helper directly on two zeros violates its nonzero invariant.
     fn add_sub_wide_dyadic(&self, other: &Self, subtract: bool) -> Option<Self> {
         let left_shift = self.dyadic_denominator_shift_if_reduced()?;
         let right_shift = other.dyadic_denominator_shift_if_reduced()?;
@@ -462,6 +505,12 @@ impl Rational {
         Some(Self::from_parts_raw(sign, numerator, denominator))
     }
 
+    /// Recognize simple coprimality proofs for a word numerator and positive denominator.
+    ///
+    /// Unit numerator/denominator or a power of two paired with an odd magnitude
+    /// proves reducedness. False means this cheap test did not prove it, not
+    /// that a common factor exists. The denominator validity precondition is
+    /// trusted; this is not a general GCD or ratio validator.
     #[inline]
     fn word_parts_provably_reduced(numerator: u128, denominator: u128) -> bool {
         denominator == 1
@@ -470,6 +519,19 @@ impl Rational {
             || (numerator.is_power_of_two() && denominator & 1 == 1)
     }
 
+    /// Attempt an exact nonzero product or quotient using checked u128 magnitudes.
+    ///
+    /// Both valid operands must be nonzero with positive denominators; division
+    /// swaps the right magnitudes. Dyadic paths cancel powers of two, mixed paths
+    /// reduce internal parts and cross-cancel, and the general path cross-cancels
+    /// before multiplying. A recognized coprimality proof skips final reduction;
+    /// otherwise the final word ratio is reduced. Valid unreduced parts can be
+    /// handled here, although public operators canonicalize marked storage first.
+    ///
+    /// None means a part, shift or product does not fit this schedule. It is not
+    /// resource exhaustion or a zero-divisor error; callers must reject zero
+    /// before entry. Arithmetic dispatch may be traced and constructors may intern
+    /// results, but this helper does not retain a binary operand pair.
     fn mul_div_words(&self, other: &Self, divide: bool) -> Option<Self> {
         let mut left_numerator = self.numerator.to_u128()?;
         let mut left_denominator = self.denominator.to_u128()?;
@@ -605,6 +667,17 @@ impl Rational {
         ))
     }
 
+    /// Multiply nonzero rational magnitudes when at least one denominator is dyadic.
+    ///
+    /// Marked unreduced inputs decline before shape queries; public multiplication
+    /// canonicalizes them first. If neither denominator is dyadic, or shift
+    /// metadata is ineligible, return `None`. Two dyadic operands cancel powers of two before
+    /// multiplication. A mixed pair reduces internal parts and cross-cancels the
+    /// remaining numerator/denominator pair before forming wide results.
+    ///
+    /// Successful results are exact and reduced. Shape queries can retain dyadic
+    /// facts and products are traced. The fallback may allocate large magnitudes;
+    /// None is schedule ineligibility, not a total work or memory limit.
     fn mul_wide_with_dyadic_denominator(&self, other: &Self) -> Option<Self> {
         if self.is_internally_unreduced() || other.is_internally_unreduced() {
             return None;
@@ -697,6 +770,16 @@ impl Rational {
         ))
     }
 
+    /// Multiply nonzero reduced dyadics whose numerator product fits u128.
+    ///
+    /// Both denominator exponents must be available without promoting lazy input.
+    /// Cancel numerator powers of two against their combined exponent before
+    /// checked word multiplication. A small remaining exponent uses word parts;
+    /// a wide exponent materializes a power-of-two BigUint denominator.
+    ///
+    /// Ineligible shape, exponent conversion or word product returns `None` for
+    /// fallback. Zero operands must be handled earlier: a zero word's trailing
+    /// zero count can make the shift invalid. The wide allocation has no budget.
     fn mul_wide_dyadic_with_word_numerators(&self, other: &Self) -> Option<Self> {
         let mut denominator_shift = self
             .dyadic_denominator_shift_if_reduced()?
@@ -732,6 +815,12 @@ impl Rational {
         ))
     }
 
+    /// Look up this owner's exact product with the same other payload.
+    ///
+    /// The primary product slot is checked first, then eligible linear-cache
+    /// product slots. Keys are weak allocation identities rather than numeric
+    /// equality, and a hit clones the retained result and emits its path trace.
+    /// The installer is trusted to have supplied the exact relation.
     #[inline]
     fn retained_product(&self, other: &Self) -> Option<Self> {
         if let Some(cached) = self.product_cache.get()
@@ -745,6 +834,12 @@ impl Rational {
         self.retained_secondary_product(other)
     }
 
+    /// Find a product relation in the primary, secondary or tertiary linear slot.
+    ///
+    /// Each candidate must have Product kind and the other payload's address.
+    /// Missing/mismatched entries return `None`; quaternary/quinary slots are
+    /// reserved for other roles and are not searched. A hit clones the strong
+    /// result without retaining the keyed operand or recomputing multiplication.
     #[cold]
     #[inline(never)]
     fn retained_secondary_product(&self, other: &Self) -> Option<Self> {
@@ -765,6 +860,13 @@ impl Rational {
         Some(entry.result.clone())
     }
 
+    /// Classify primary-square availability for self-dot scheduling.
+    ///
+    /// Both units return `Some(true)` because their square is trivial; that
+    /// identity check can canonicalize lazy input. Otherwise no primary product
+    /// slot gives `None`, a key matching this owner gives `Some(true)`, and any
+    /// other primary entry gives `Some(false)`. Secondary square entries are
+    /// not inspected. This is cache state, not a numeric or completeness predicate.
     #[inline]
     pub(crate) fn retained_primary_self_product_state(&self) -> Option<bool> {
         if self.is_one() || self.is_minus_one() {
@@ -776,6 +878,12 @@ impl Rational {
         }))
     }
 
+    /// Recognize a trivial unit square or a retained product keyed by this owner.
+    ///
+    /// After the unit shortcut, a primary product slot must exist. Check its
+    /// self-key, then Product entries in the linear primary/secondary/tertiary
+    /// slots. False can mean missing/unrecognized evidence and does not deny the
+    /// mathematical square. Lazy unit recognition may canonicalize.
     #[inline]
     pub(crate) fn has_retained_self_product(&self) -> bool {
         if self.is_one() || self.is_minus_one() {
@@ -804,11 +912,28 @@ impl Rational {
             || cached.tertiary.get().is_some_and(matches)
     }
 
+    /// Admit one self-dot retry while the owner's conflict-attempt bit is unset.
+    ///
+    /// The atomic observation sets that bit and returns true only for the first
+    /// observer of this state. Later calls decline until a valid owner-state
+    /// transition clears reuse flags. This schedules work; it proves neither
+    /// that a square is cached nor that the attempted construction will fit.
     #[inline]
     pub(crate) fn admit_conflicted_self_dot_once(&self) -> bool {
         !self.observe_retained_fact(RETAINED_SELF_DOT_CONFLICT_ATTEMPTED)
     }
 
+    /// Attempt to retain the caller-proved product on one of its operand owners.
+    ///
+    /// Try the left primary slot, then the right, skipping primary installation
+    /// on marked unreduced payloads because that slot serves canonicalization.
+    /// If neither succeeds, try the left then right linear Product slots.
+    /// Keys are weak operands and results are strong handles; installation
+    /// requires an exact relation and acyclic result ownership from the caller.
+    ///
+    /// This is best-effort write-once retention with no returned success flag,
+    /// replacement or relation validation. Bounded slots do not bound retained
+    /// magnitude/graph bytes or allocation failures.
     fn retain_product_pair(&self, other: &Self, result: &Self) {
         if !self.is_internally_unreduced()
             && self
@@ -843,6 +968,12 @@ impl Rational {
         }
     }
 
+    /// Lookup a directed arithmetic relation by owner, other identity and kind.
+    ///
+    /// Check linear primary, secondary then tertiary; a missing secondary or
+    /// tertiary ends the scan. A matching entry clones the result and emits the
+    /// supplied trace-path label. Only those slots are eligible. No numeric
+    /// comparison or relation validation replaces the installer's proof.
     #[inline(always)]
     fn retained_linear(
         owner: &Self,
@@ -870,6 +1001,10 @@ impl Rational {
         })
     }
 
+    /// Look up a sum first on self, then on the other operand by commutativity.
+    ///
+    /// Each lookup requires the same operand identities and Sum kind. Cache
+    /// misses do not construct the sum or imply mathematical uncertainty.
     #[inline]
     fn retained_sum(&self, other: &Self) -> Option<Self> {
         Self::retained_linear(self, other, CachedRationalLinearKind::Sum, "retained-sum")
@@ -883,6 +1018,11 @@ impl Rational {
             })
     }
 
+    /// Look up self minus other with the correct direction on either owner.
+    ///
+    /// First try OwnerMinusOther on self, then OtherMinusOwner on other. A hit
+    /// preserves the requested sign; matching values alone do not establish a
+    /// cache correspondence. Misses leave arithmetic to the caller.
     #[inline]
     fn retained_difference(&self, other: &Self) -> Option<Self> {
         Self::retained_linear(
@@ -901,6 +1041,17 @@ impl Rational {
         })
     }
 
+    /// Attempt to install a caller-proved binary relation in eligible linear slots.
+    ///
+    /// With no cache, install a primary entry. An existing ordinary primary admits
+    /// only a secondary; a placeholder primary admits secondary then tertiary.
+    /// Occupied slots are not replaced or deduplicated. A lost outer-cache race
+    /// returns false without retrying inside the winning cache.
+    ///
+    /// The other operand is weakly keyed and the result strongly retained. The
+    /// caller owns kind/direction correctness and acyclic ownership. False reports
+    /// slot/publication ineligibility, not invalid arithmetic or exhaustion.
+    /// No equation verification or retained-byte limit is implemented here.
     #[inline]
     fn retain_linear(
         owner: &Self,
@@ -948,6 +1099,13 @@ impl Rational {
             .is_ok()
     }
 
+    /// Observe whether an owner has enough arithmetic history to admit retention.
+    ///
+    /// Any product cache, linear cache or previous linear-observation bit returns
+    /// true. Otherwise emit first-observation, set that bit, and return false.
+    /// The separate read/set can let concurrent first callers both return false;
+    /// it is not a one-winner admission primitive. Existing cache presence is
+    /// scheduling evidence, not a numeric theorem or a strong-reference count.
     #[inline]
     pub(crate) fn has_arithmetic_reuse_evidence(&self) -> bool {
         // A shared value may have been cloned only for ownership. Admit a
@@ -964,11 +1122,21 @@ impl Rational {
         false
     }
 
+    /// Forward to the arithmetic-history observation used for linear retention.
+    ///
+    /// This can record a first observation and return false. It neither checks
+    /// sharing counts nor independently proves that the requested result is cached.
     #[inline]
     fn has_linear_reuse_evidence(&self) -> bool {
         self.has_arithmetic_reuse_evidence()
     }
 
+    /// Retain a proved sum after arithmetic reuse has been observed on either operand.
+    ///
+    /// Observe self then other even if the first already qualifies. Prefer the
+    /// eligible self owner, then try other. Cold operands merely learn observation
+    /// bits. Installation is best effort and requires the correct exact relation
+    /// and ownership discipline of the linear-cache helper.
     #[cold]
     #[inline(never)]
     fn retain_sum_pair(&self, other: &Self, result: &Self) {
@@ -987,6 +1155,12 @@ impl Rational {
         }
     }
 
+    /// Retain a proved directed difference after observing both operands in order.
+    ///
+    /// Observe self then other; try OwnerMinusOther on eligible self before
+    /// OtherMinusOwner on eligible other. Cold operands only learn reuse bits.
+    /// The supplied result must have exactly that direction; retention does not
+    /// recompute it or enforce a total retained-memory bound.
     #[cold]
     #[inline(never)]
     fn retain_difference_pair(&self, other: &Self, result: &Self) {
@@ -1016,8 +1190,20 @@ impl Rational {
     }
 }
 
+/// Shared exact addition core used by owned and borrowed operator adapters.
 impl Rational {
     // Keep generic operator adapters from cloning this exact core into every consumer.
+    /// Compute an exact sum through the shared nongeneric borrowed kernel.
+    ///
+    /// Zero identities precede canonicalization and can return original lazy
+    /// handles. Other inputs canonicalize before one shortcuts, retained sums,
+    /// checked words, wide dyadics, then general denominator-GCD alignment.
+    /// For reduced inputs only the denominator GCD can cancel from the final
+    /// cross-sum, permitting restricted reduction. Eligible results are offered
+    /// for retention without changing value or operand order.
+    ///
+    /// No caller-supplied work, allocation or cancellation budget applies; word
+    /// ineligibility falls through to wider exact arithmetic.
     #[inline(never)]
     fn add_ref(&self, other: &Self) -> Self {
         use std::cmp::Ordering::*;
@@ -1086,23 +1272,35 @@ impl Rational {
     }
 }
 
+/// Borrowed exact addition accepting any right operand exposing a rational reference.
 impl<T: AsRef<Rational>> Add<T> for &Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Rational;
 
+    /// Borrow the right operand and delegate to the shared exact addition kernel.
     fn add(self, other: T) -> Self::Output {
         self.add_ref(other.as_ref())
     }
 }
 
+/// Owned-left exact addition using the same borrowed kernel and retention order.
 impl<T: AsRef<Rational>> Add<T> for Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Self;
 
+    /// Borrow the consumed left and right operands for exact addition; return an owned result.
     fn add(self, other: T) -> Self {
         &self + other.as_ref()
     }
 }
 
+/// Negation relation lookup and best-effort acyclic unary retention.
 impl Rational {
+    /// Extract a retained negation from the entry's strong or weak unary variant.
+    ///
+    /// Strong placeholders clone their result; weak placeholders upgrade their
+    /// target and return None after expiry. Other kinds do not match. The caller
+    /// trusts that this entry was installed as the owner's exact negative.
     #[inline]
     fn negation_from_entry(entry: &CachedRationalLinearEntry) -> Option<Self> {
         match entry.kind {
@@ -1112,6 +1310,11 @@ impl Rational {
         }
     }
 
+    /// Search negation evidence in primary, tertiary, quaternary then quinary slots.
+    ///
+    /// Expired weak entries are skipped so later candidates can still succeed;
+    /// secondary is not a unary slot. A hit returns a handle without constructing
+    /// new magnitudes. This helper does not emit the operator's hit trace itself.
     #[inline]
     fn retained_negation(&self) -> Option<Self> {
         let cached = self.linear_cache.get()?;
@@ -1132,6 +1335,16 @@ impl Rational {
             .or_else(|| cached.quinary.get().and_then(Self::negation_from_entry))
     }
 
+    /// Attempt write-once installation of a caller-proved strong or weak negative.
+    ///
+    /// An existing negation primary declines immediately. Other primary
+    /// placeholders admit quaternary then quinary; ordinary primaries admit
+    /// tertiary, quaternary then quinary. A new cache uses its primary slot.
+    /// Weak entries carry an inert zero result; strong entries carry the target.
+    ///
+    /// False reports occupancy/publication failure, without replacement or outer
+    /// race retry. The caller must establish the negative relation and prevent
+    /// strong ownership cycles; slot count is not a retained-byte budget.
     fn retain_negation_entry(&self, negation: CachedRationalUnary) -> bool {
         if let Some(cached) = self.linear_cache.get() {
             if cached.primary.kind.is_negation_placeholder() {
@@ -1192,6 +1405,12 @@ impl Rational {
             .is_ok()
     }
 
+    /// Install a weak backlink on a fresh negative before a strong forward link.
+    ///
+    /// The caller supplies the exact newly constructed negative. This order
+    /// permits repeated negation to recover the original owner without making a
+    /// two-way strong cycle. Each write is independently best effort; existing
+    /// cache layouts can decline either link without changing the value.
     #[cold]
     fn retain_negation_pair(&self, negation: &Self) {
         let _ = negation
@@ -1200,9 +1419,17 @@ impl Rational {
     }
 }
 
+/// Exact borrowed negation with shared unary-result retention.
 impl Neg for &Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Rational;
 
+    /// Preserve zero identity; clone lazy magnitudes with the sign reversed.
+    ///
+    /// Canonical units use shared opposite units. Other canonical values reuse
+    /// a retained negative or allocate one and attempt a weak-back/strong-forward
+    /// pair. Lazy input is not reduced here and does not install a negative pair.
+    /// The source remains exact; there is no total allocation/work budget.
     #[inline]
     fn neg(self) -> Self::Output {
         if self.sign == NoSign {
@@ -1236,9 +1463,18 @@ impl Neg for &Rational {
     }
 }
 
+/// Exact owned negation, reusing uniquely owned storage only after cache invalidation.
 impl Neg for Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Self;
 
+    /// Negate the value, preferring zero/unit and retained-negative shortcuts.
+    ///
+    /// Unit checks can canonicalize lazy input. If Arc::get_mut succeeds, flip
+    /// the sign in place, discard product/linear caches and clear reuse bits;
+    /// sign-independent facts and the lazy marker remain. Outstanding strong or
+    /// weak aliases prevent that mutation and route through borrowed negation.
+    /// No arithmetic evidence for the old sign survives the in-place path.
     #[inline]
     fn neg(mut self) -> Self {
         if self.sign == NoSign {
@@ -1271,8 +1507,19 @@ impl Neg for Rational {
     }
 }
 
+/// Shared exact subtraction core preserving directed arithmetic and cache order.
 impl Rational {
     // Keep generic operator adapters from cloning this exact core into every consumer.
+    /// Compute an exact directed difference through the shared borrowed kernel.
+    ///
+    /// Zero identities precede lazy canonicalization. Unit shortcuts precede
+    /// retained differences, word arithmetic, wide dyadics and general alignment.
+    /// For canonical inputs, only the denominator GCD can cancel from the final
+    /// cross-difference. Cancellation yields exact zero; eligible results retain
+    /// their directed relation on an operand owner.
+    ///
+    /// No rounding, predicate policy or total work/memory limit participates;
+    /// an ineligible fast path falls back to wider exact arithmetic.
     #[inline(never)]
     fn subtract_ref(&self, other: &Self) -> Self {
         use std::cmp::Ordering::*;
@@ -1336,25 +1583,40 @@ impl Rational {
     }
 }
 
+/// Borrowed exact subtraction with a directed result and shared arithmetic authority.
 impl<T: AsRef<Rational>> Sub<T> for &Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Rational;
 
+    /// Borrow the right operand and delegate to the exact directed subtraction kernel.
     fn sub(self, other: T) -> Self::Output {
         self.subtract_ref(other.as_ref())
     }
 }
 
+/// Owned-left exact subtraction using the borrowed directed kernel.
 impl<T: AsRef<Rational>> Sub<T> for Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Self;
 
+    /// Borrow both operand views for subtraction without changing their requested order.
     fn sub(self, other: T) -> Self {
         &self - other.as_ref()
     }
 }
 
+/// Borrowed exact multiplication with shape-specialized kernels and relation reuse.
 impl<T: AsRef<Rational>> Mul<T> for &Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Rational;
 
+    /// Multiply after zero, lazy-canonicalization and signed-unit shortcuts.
+    ///
+    /// Then try retained products in left/right order, reciprocal identity,
+    /// word cross-cancellation, wide dyadic word numerators and wide dyadic/mixed
+    /// arithmetic. The general fallback forms magnitude products and reduces.
+    /// Eligible results retain the exact product on one owner. No rounding or
+    /// total work/memory budget replaces an ineligible specialized path.
     fn mul(self, other: T) -> Self::Output {
         let other = other.as_ref();
         let sign = self.sign * other.sign;
@@ -1423,22 +1685,37 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
     }
 }
 
+/// Owned-left exact multiplication through the same borrowed arithmetic schedule.
 impl<T: AsRef<Rational>> Mul<T> for Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Self;
 
+    /// Borrow both operand views and use exact multiplication, including its retention effects.
     fn mul(self, other: T) -> Self {
         &self * other.as_ref()
     }
 }
 
+/// Exact multiplication assignment by replacing the left handle with its product.
 impl<T: AsRef<Rational>> MulAssign<T> for Rational {
+    /// Compute the borrowed exact product before replacing self; existing aliases keep their old value.
     fn mul_assign(&mut self, other: T) {
         *self = &*self * other.as_ref();
     }
 }
 
+/// Maximum number of original nontrivial factors in one pairwise product chunk.
+///
+/// This bounds vector occupancy, not factor bytes, intermediate products or
+/// dependency graphs retained by arithmetic caches. Binary partials add O(log n)
+/// slots beyond this chunk; no total resource limit is enforced here.
 const BALANCED_PRODUCT_CHUNK: usize = 512;
 
+/// Multiply one pair and emit the aggregate-product trace at most once.
+///
+/// The caller shares `traced` across a reduction. Its first false value
+/// records balanced-pairwise and becomes true; every call still uses the
+/// ordinary exact multiplication kernel, including its caches and traces.
 #[inline]
 fn balanced_product_pair(left: &Rational, right: &Rational, traced: &mut bool) -> Rational {
     if !*traced {
@@ -1448,6 +1725,13 @@ fn balanced_product_pair(left: &Rational, right: &Rational, traced: &mut bool) -
     left * right
 }
 
+/// Consume a factor vector by in-place adjacent pairwise reduction.
+///
+/// Each pass writes products to the front, carries an odd last factor and
+/// truncates obsolete handles; the final pop leaves the vector empty while
+/// retaining its capacity. Empty input returns None, singleton input returns
+/// its original handle. Length strictly decreases each nontrivial pass.
+/// This helper does not itself enforce the caller's 512-factor chunk size.
 fn reduce_rational_product_chunk(
     factors: &mut Vec<Rational>,
     traced: &mut bool,
@@ -1473,6 +1757,12 @@ fn reduce_rational_product_chunk(
     factors.pop()
 }
 
+/// Carry one completed chunk product through occupied binary partial levels.
+///
+/// Slot n represents a product of 2^n full chunks. Take occupied slots and
+/// multiply their earlier left block by the incoming later block until an
+/// empty slot or a new top slot can retain the carry. The caller establishes
+/// that block invariant. Vector/result allocations have no byte/work budget.
 fn push_rational_product_partial(
     partials: &mut Vec<Option<Rational>>,
     mut product: Rational,
@@ -1494,6 +1784,23 @@ fn push_rational_product_partial(
     }
 }
 
+/// Consume an iterator into an exact product using bounded-count chunks.
+///
+/// Skip ones, hold one nontrivial pending factor before allocating a vector,
+/// and reduce groups of at most 512 factors pairwise. Binary partial slots
+/// combine full chunks; low-to-high final merging places the accumulated
+/// trailing block on the left. Multiplication is commutative in value, but
+/// this schedule determines cache probes and dispatch traces.
+///
+/// Empty/all-one input returns one; a lone factor other than one keeps its handle.
+/// Zero clears accumulated factors and prevents further arithmetic, but the
+/// iterator is still fully consumed, so later producer side effects or panics
+/// remain observable and an infinite iterator does not complete.
+///
+/// The wrapper retains O(log n) partial products and at most 512 original
+/// factor slots, not bounded bytes or construction graphs. Arithmetic caches
+/// can retain dependencies. No total work, cancellation or typed exhaustion
+/// contract is added by this reduction.
 fn balanced_rational_product<I>(iter: I) -> Rational
 where
     I: Iterator<Item = Rational>,
@@ -1561,21 +1868,46 @@ where
     result.unwrap_or_else(Rational::one)
 }
 
+/// Exact owned iterator products using pairwise chunks and binary partials.
 impl std::iter::Product for Rational {
+    /// Consume all factors through the shared balanced reduction.
+    ///
+    /// Empty input returns one. Zero yields zero after the remaining iterator is
+    /// consumed; producer effects and panics still occur. Factor-count chunking
+    /// does not bound magnitude sizes or retained arithmetic graphs.
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         balanced_rational_product(iter)
     }
 }
 
+/// Exact borrowed iterator products sharing the owned reduction schedule.
 impl<'a> std::iter::Product<&'a Rational> for Rational {
+    /// Clone each borrowed handle into the shared balanced product reducer.
+    ///
+    /// Source magnitudes are not cloned merely to iterate. Empty input returns
+    /// one, and a zero factor does not stop consumption of later iterator items.
+    /// The source and any retained arithmetic evidence keep their exact values.
     fn product<I: Iterator<Item = &'a Rational>>(iter: I) -> Self {
         balanced_rational_product(iter.cloned())
     }
 }
 
+/// Exact borrowed rational division; zero divisors panic at this operator boundary.
 impl<T: AsRef<Rational>> Div<T> for &Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Rational;
 
+    /// Divide by a nonzero rational exactly, with no typed error result.
+    ///
+    /// Assert a nonzero divisor numerator before the zero-dividend shortcut,
+    /// so both 0/0 and nonzero/0 panic. Then canonicalize lazy operands and try
+    /// signed-unit/equal-magnitude identities, checked word cross-cancellation,
+    /// reciprocal squaring and general cross-products with reduction.
+    ///
+    /// Unlike multiplication this operator installs no binary result relation.
+    /// It can still canonicalize/cache operand evidence. Wide arithmetic has no
+    /// total work, allocation or cancellation budget; use a checked integer
+    /// shortcut only when its narrower integer contract is appropriate.
     fn div(self, other: T) -> Self::Output {
         let other = other.as_ref();
         assert_ne!(other.numerator, BigUint::ZERO);
@@ -1634,9 +1966,12 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
     }
 }
 
+/// Owned-left exact division using the borrowed kernel and its zero-divisor panic contract.
 impl<T: AsRef<Rational>> Div<T> for Rational {
+    /// Owned exact rational result, possibly sharing an existing immutable payload.
     type Output = Self;
 
+    /// Borrow both operands for exact division; a zero right operand panics, including for zero self.
     fn div(self, other: T) -> Self {
         &self / other.as_ref()
     }
