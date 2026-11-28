@@ -26235,6 +26235,89 @@ Continue at binary_word_gcd_matches_euclidean_reference, whose attribute is now
 line 2347. This 7,202-line file, generated APIs and the repository-wide review
 remain unfinished.
 
+## Rational test audit: GCD schedules and matrix witnesses (28 November 2026)
+
+Owning layer: Hyperreal's rational GCD test fixtures, verified word/fixed/Lehmer
+kernels and retained numerator queries. P37 governs claims about evidence; P1,
+P3 and P5 govern exact values, admitted facts and capacity/resource distinctions.
+At d2a644042, fifteen consecutive fixtures, seven local helpers and one local
+constant lacked Rustdoc explaining their actual reference, domain and outcome.
+
+Reviewed arithmetic/tests.rs baseline lines 2347–3082, now 2347–3238, together
+with the corresponding GCD dispatch, fixed admission, matrix application,
+half-GCD stop/reconstruction and numerator-query contracts. Added 23 descriptions.
+All 156 added source lines are Rustdoc; existing executable tokens, assertions,
+fixture sizes, matrix bounds and trace counts are unchanged. This is another
+partial test-file review, not whole-file or repository-wide completion.
+
+The documented witnesses distinguish:
+
+- The independent native Euclidean remainder oracle from the binary-word
+  implementation. Directed cases, small pairs, all pairs of u128 shift positions
+  and 20000 deterministic inputs retain exact expected values, including zero.
+- Four/eight-limb fixed-tier admission from general GCD existence. The fixture
+  named fixed_512 also contains extensive 256-bit coverage, common-power
+  restoration and a single 513-bit rejection. None means tier ineligibility;
+  no resource exhaustion was requested or demonstrated by this case.
+- Exact mixed-width values from dispatch labels. One fixture checks zero, unit,
+  equality, powers of two and fixed/wide values; another discards its results
+  while requiring exactly one event for each of eight named routes. It does
+  not count internal reductions or assert that no other event exists.
+- Reduced numerator content from rational sign/denominator values. Constructed
+  expectations use a shared odd factor. The dyadic-difference fixture checks
+  unsigned results, equality and nondyadic decline, but its two nonzero results
+  are already odd; it does not force nontrivial binary-factor cancellation.
+- Accepted leading-word unimodular matrices from permitted batch declines.
+  The boundary fixture checks determinant magnitude one, u64 coefficient bounds
+  and leading-row progress, then applies matrices to wider inputs with unequal
+  low parts and checks GCD preservation. It requires more than seventy accepted
+  Fibonacci batches; deterministic extra pairs have no acceptance quota.
+- Unsigned row evaluation/progress from unimodularity. The 625-matrix fixture
+  compares with signed BigInt row magnitudes, including arbitrary matrices that
+  need not preserve GCD. Its zero matrix can pass local progress with zero rows.
+  The reference does not impose production coefficient bounds; oversized cases
+  are separately required to decline. Coefficient sign agreement treats zero
+  as nonnegative, exactly as the kernel does.
+- Half-GCD reconstruction and determinant one from a smaller-operand assertion.
+  Four successful reductions must reconstruct both inputs and preserve backend
+  GCD; both returned values stay above the stop width while their difference
+  meets it. The three wide candidate/baseline comparisons share lower machinery
+  and do not independently establish that recursion ran in every call.
+- A selected route label from internal iteration count. Threshold trace fixtures
+  keep exact result checks and one named event per scope. Fibonacci expectations
+  use coprimality and remainder invariance, while the half-GCD reference is
+  computed outside the recording scope. None of these are performance claims.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal library tests pass: twelve applicable fixtures without
+  default features and all fifteen with all features. The same fifteen passed
+  on the all-feature baseline. Exact test-name inventories confirm the set, and
+  all existing exact/lower-bound acceptance and trace assertions remain intact.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. In isolated source copies, only the fifteen reviewed test markers are
+  removed; feature guards remain. Unchanged local helper/constant definitions
+  are additionally rendered in their original private context. Nineteen complete
+  descriptions render without default features and all 23 with all features;
+  the trace-only Fibonacci helper follows its parent's feature guard.
+- Source-line preservation outside added Rustdoc, executable-token equality,
+  source/render inventories and git diff --check pass. These finite fixtures
+  give distinct independent identities, backend comparisons and shared-path
+  agreement; they do not prove universal closure or a total resource contract.
+- Full workflows, performance, cross-target qualification and formal-verification
+  runs remain owner-waived for this docs-only session. Production algorithms are
+  unchanged; affected helper/query/candidate consumers are exercised within the
+  selected tests. No geometric or performance capability is newly claimed.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-gcd-audit/: source
+baseline, scripts, commands, logs, source/render inventories, hashes and compressed
+selected HTML. Owned source copies and duplicate documentation output are removed
+after validation; shared Cargo artifacts are reused without incremental builds.
+AGENTS.md already records the 100% public/private/generated Rustdoc mandate.
+Continue at clear_common_denominator_preserves_one_positive_shared_scale, whose
+attribute is now line 3239. This 7,358-line file and the complete repository audit
+remain unfinished; generated API review remains a separate obligation.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

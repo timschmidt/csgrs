@@ -2344,8 +2344,20 @@ mod tests {
         );
     }
 
+    /// Compare the native binary GCD with an independent remainder-based Euclidean loop.
+    ///
+    /// Covers directed zero/identity/quotient boundaries, all pairs in 0..64,
+    /// every pair of trailing-zero positions in a u128 with and without a high bit,
+    /// and 20000 deterministic wide pairs. Exact equality includes gcd(0,0)=0.
+    /// The reference uses native remainder rather than the production binary kernel;
+    /// this finite corpus does not enumerate every native operand or measure cost.
     #[test]
     fn binary_word_gcd_matches_euclidean_reference() {
+        /// Return the exact u128 GCD by Euclidean remainders, including zero for two zeros.
+        ///
+        /// Each nonzero divisor becomes the next left operand and the smaller remainder
+        /// becomes the next divisor. No multiplication or growing intermediate is used.
+        /// This test oracle deliberately avoids the production binary GCD routine.
         fn reference(mut left: u128, mut right: u128) -> u128 {
             while right != 0 {
                 (left, right) = (right, left % right);
@@ -2418,6 +2430,15 @@ mod tests {
         }
     }
 
+    /// Check both four- and eight-limb GCD tiers against exact values and backend GCD.
+    ///
+    /// Includes zero and maximal-width cases, all 512 shift positions in both operand
+    /// orders, equal odd parts with common shifts, 20000 generated four-limb pairs,
+    /// and directed 257/384/511/512-bit inputs. Equality cases explicitly check
+    /// restoration of common whole-limb and intra-limb powers of two. One 513-bit
+    /// input must decline the eight-limb tier with None. Despite the name, much of
+    /// the corpus exercises 256-bit storage; decline is width ineligibility, not
+    /// resource exhaustion or a claim that the mathematical GCD is unavailable.
     #[test]
     fn fixed_512_gcd_matches_biguint_reference() {
         let max_512 = (BigUint::one() << 512_usize) - BigUint::one();
@@ -2524,6 +2545,12 @@ mod tests {
         );
     }
 
+    /// Check three exact wide-GCD identities using constructed common factors.
+    ///
+    /// A balanced pair has coprime multipliers 17 and 19, a wide/word pair contains
+    /// 15 exactly, and a zero operand must return the wide counterpart. These
+    /// explicit expectations check returned values, without asserting which wide
+    /// algorithm ran or exercising both operand orders for every case.
     #[test]
     fn wide_magnitude_gcd_handles_balanced_and_wide_word_operands() {
         let common = (BigUint::one() << 192_usize) + BigUint::one();
@@ -2541,6 +2568,13 @@ mod tests {
         );
     }
 
+    /// Check exact values across the mixed-width rational-operation GCD entry point.
+    ///
+    /// Exercises native words, wide/word pairs in both orders, zero, one, equal wide
+    /// values and native/wide powers of two. Three further pairs compare with
+    /// BigUint GCD across fixed and wider sizes. These fixtures cover value and
+    /// shortcut semantics; a separate trace test pins selected labels. No budget,
+    /// cancellation or universal dispatch-coverage contract is established here.
     #[test]
     fn rational_operation_gcd_dispatch_handles_mixed_width_and_zero_operands() {
         let left_word = BigUint::from((1_u128 << 127) + (1_u128 << 63));
@@ -2627,6 +2661,12 @@ mod tests {
         );
     }
 
+    /// Check integer content of reduced numerator magnitudes despite different signs and scales.
+    ///
+    /// Uses a shared odd factor C=2^192+1 in -15C/8 and 21C/32; the expected integer
+    /// content is 3C. Pairing zero with the second value must return 21C. Denominators
+    /// and signs are deliberately irrelevant to these expectations. The fixture
+    /// does not inspect cache state, lazy canonicalization or retained provenance.
     #[test]
     fn numerator_magnitude_gcd_ignores_signs_and_denominators() {
         let common = (BigUint::one() << 192_usize) + BigUint::one();
@@ -2643,6 +2683,13 @@ mod tests {
         );
     }
 
+    /// Check unsigned numerator values, equality and nondyadic decline for one dyadic pair.
+    ///
+    /// For C=2^192+1, compares 9C/32 with 3C/8 and then negates the first operand;
+    /// expected numerator magnitudes are 3C and 21C. Equality returns Some(zero),
+    /// while a 1/3 operand returns None. The nonzero numerators in this fixture are
+    /// already odd, so it does not force nontrivial binary-factor cancellation or
+    /// exercise shift-capacity failure.
     #[test]
     fn dyadic_difference_numerator_query_is_reduced_and_unsigned() {
         let wide = (BigUint::one() << 192_usize) + BigUint::one();
@@ -2666,6 +2713,13 @@ mod tests {
         );
     }
 
+    /// Require one event for each of eight mixed-width GCD routes in a fixed sequence.
+    ///
+    /// The calls target binary-word, identity-wide, power-of-two-wide, equal-wide,
+    /// euclidean-wide-word, binary-fixed-256, binary-fixed-512 and lehmer-leading-limb.
+    /// Each named rational_algorithm/gcd path must appear exactly once. Results are
+    /// discarded; neighboring value tests provide numeric expectations. The fixture
+    /// does not assert absence of every other event or count internal reduction steps.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rational_operation_gcd_trace_reports_selected_algorithm() {
@@ -2704,8 +2758,21 @@ mod tests {
         }
     }
 
+    /// Compare general wide GCD results with the backend on balanced and unbalanced inputs.
+    ///
+    /// Generates 168 pairs across seven base widths from 192 through 4096 bits,
+    /// with small injected common factors, then six initially unbalanced divisions
+    /// whose remainder re-enters a nearer-width state. Exact results must match
+    /// BigUint GCD. The name does not guarantee that every call selects a Lehmer
+    /// batch; this fixture does not record dispatch or benchmark the transition.
     #[test]
     fn lehmer_magnitude_gcd_matches_backend_reference() {
+        /// Generate a positive exact-width magnitude while advancing a shared deterministic seed.
+        ///
+        /// Concatenates wrapping 64-bit states, masks to bits and sets the highest bit.
+        /// Requires bits > 0 and practical allocation/shift sizes. Repeated calls advance
+        /// the caller's seed; the finite corpus is reproducible, not a uniform sampling
+        /// or exhaustive quotient-distribution guarantee.
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -2752,10 +2819,27 @@ mod tests {
         }
     }
 
+    /// Check accepted leading-word matrices and their application to perturbed full magnitudes.
+    ///
+    /// Pins one exact matrix and several declines, then checks consecutive Fibonacci
+    /// pairs below 2^62, requiring more than seventy accepted batches. Also submits
+    /// 256 deterministic pairs and one boundary pair without requiring their
+    /// acceptance. Accepted matrices must have determinant magnitude one, bounded
+    /// coefficients and progressing leading rows; applying them to wider values
+    /// with differing low parts must preserve backend GCD. None remains a permitted
+    /// batch decline, not failure of the enclosing exact GCD algorithm.
     #[test]
     fn lehmer_batches_preserve_gcd_at_leading_word_boundaries() {
         use crate::verified::lehmer::matrix;
 
+        /// Validate one admitted leading-word matrix, returning false when selection declines.
+        ///
+        /// Requires 0 <= smaller <= larger < 2^62. On Some, checks determinant +/-1,
+        /// u64-bounded coefficient magnitudes and nonnegative rows below the leading
+        /// larger input. Then appends unequal low parts to the two operands, requires
+        /// full-magnitude application to progress and compares their before/after GCDs.
+        /// The latter rows are consumed as absolute magnitudes; the reference does not
+        /// assume the discarded low limbs follow exactly the leading pair's quotients.
         fn check_pair(larger: u64, smaller: u64) -> bool {
             let Some(coefficients @ [a, b, c, d]) = matrix(larger.into(), smaller.into()) else {
                 return false;
@@ -2782,6 +2866,10 @@ mod tests {
             true
         }
 
+        /// Exclusive 2^62 input bound for the signed leading-word matrix fixture.
+        ///
+        /// Keeps generated and Fibonacci inputs inside the selector's declared domain;
+        /// this is a leading-window restriction, not a limit on complete BigUint GCD inputs.
         const LIMIT: u64 = 1 << 62;
         assert_eq!(matrix(55, 34), Some([-1, 2, 2, -3]));
         assert_eq!(matrix(13, 8), None);
@@ -2808,6 +2896,12 @@ mod tests {
         check_pair(LIMIT - 1, (LIMIT - 1) * 3 / 5);
     }
 
+    /// Check row coefficient magnitudes and sign agreement at native coefficient limits.
+    ///
+    /// Crosses five signed values from -u64::MAX through zero to u64::MAX, requiring
+    /// both magnitudes and the is_negative equality flag. Zero counts as nonnegative
+    /// for this flag. Four oversized i128 values must decline in either position.
+    /// This checks coefficient admission alone, not matrix determinant or progress.
     #[test]
     fn lehmer_row_coefficients_handle_signed_word_boundaries() {
         use crate::verified::lehmer::row_coefficients;
@@ -2831,8 +2925,23 @@ mod tests {
         }
     }
 
+    /// Compare unsigned row evaluation with signed BigInt arithmetic for 625 small matrices.
+    ///
+    /// Uses one fixed wide input pair and all four-coefficient combinations from
+    /// -3, -1, 0, 1 and 3. Exact Option equality checks absolute row values and strict
+    /// progress, while two extreme coefficient cases must decline. Arbitrary tested
+    /// matrices need not be unimodular, so successful local application here does not
+    /// imply GCD preservation. Coefficient admission is tested separately from the
+    /// signed reference's value/progress calculation.
     #[test]
     fn unsigned_lehmer_matrix_application_matches_signed_magnitudes() {
+        /// Evaluate both signed matrix rows, take magnitudes and require each below larger.
+        ///
+        /// Uses unrestricted BigInt coefficient arithmetic and returns None when either
+        /// absolute row fails strict progress. Does not validate coefficient width,
+        /// input order or unimodularity. The comparison corpus supplies small coefficients
+        /// for equivalence with the native-coefficient implementation; oversized cases
+        /// are checked separately. Wide products and clones allocate without a budget.
         fn signed_reference(
             larger: &BigUint,
             smaller: &BigUint,
@@ -2880,8 +2989,22 @@ mod tests {
         }
     }
 
+    /// Check exact reconstruction, determinant and the half-GCD difference-width stop rule.
+    ///
+    /// Four deterministic balanced pairs at 1024, 1025, 2048 and 4096 bits must
+    /// produce a reduction. The nonnegative matrix must reconstruct both original
+    /// inputs from the returned pair and have determinant one; backend GCD must
+    /// also agree. Both remainders must remain wider than the half-width target,
+    /// while their absolute difference meets it. This is not a requirement to halve
+    /// each remainder, nor a universal recursion/resource proof.
     #[test]
     fn recursive_half_gcd_preserves_matrix_and_stop_invariants() {
+        /// Build one positive exact-width magnitude from a by-value deterministic seed.
+        ///
+        /// Concatenates wrapping 64-bit states, masks to bits and forces the high bit.
+        /// Requires positive, practically allocatable bit widths. The caller's seed is
+        /// not mutated, so each supplied width/seed pair reproduces its own fixture;
+        /// this is not a random or exhaustive family of balanced operands.
         fn generated_magnitude(bits: usize, mut state: u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -2929,8 +3052,20 @@ mod tests {
         }
     }
 
+    /// Compare candidate-enabled and candidate-disabled exact GCD on three wide pairs.
+    ///
+    /// Uses deterministic balanced operands at 16384, 16391 and 32768 bits.
+    /// Both results must agree, but the entry points share lower reduction machinery;
+    /// this comparison alone is not an independent GCD oracle or evidence that
+    /// recursion ran in every call. It supplies no timing or resource assertion.
     #[test]
     fn half_gcd_candidate_matches_lehmer_baseline() {
+        /// Construct a reproducible positive BigUint of exactly bits bits from a local seed.
+        ///
+        /// Concatenates wrapping state words, masks excess high bits and sets bit bits-1.
+        /// Requires bits > 0 and feasible allocation. State is passed by value and reset
+        /// per call; differing seeded operands exercise this candidate comparison without
+        /// promising exhaustive balance, common-factor or recursion coverage.
         fn generated_magnitude(bits: usize, mut state: u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -2954,6 +3089,13 @@ mod tests {
         }
     }
 
+    /// Compare one threshold-sized candidate GCD with its baseline and require a recursive label.
+    ///
+    /// Builds two deterministic positive magnitudes using the configured half-GCD
+    /// threshold, computes the baseline before recording, then requires value equality
+    /// and exactly one rational_algorithm/gcd/recursive-half-gcd event. The label
+    /// records the selected overall route, not the number of recursive calls or
+    /// successful reductions. No speedup or bounded-work claim follows.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn recursive_half_gcd_path_is_traced() {
@@ -2990,9 +3132,23 @@ mod tests {
         );
     }
 
+    /// Pin Euclidean and Lehmer route labels on four coprime Fibonacci-derived inputs.
+    ///
+    /// Tests pairs below and above the configured Lehmer threshold, then creates
+    /// an initially unbalanced dividend from each pair without changing its GCD.
+    /// Every result must be one. Separate recording scopes require one Euclidean
+    /// label in each lower case and one Lehmer label in each higher case. The
+    /// expectation follows coprimality and remainder invariance; event counts do
+    /// not measure the number of Euclidean steps or selected Lehmer batches.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn lehmer_magnitude_gcd_path_is_traced() {
+        /// Return consecutive positive Fibonacci values once the larger reaches a requested bit width.
+        ///
+        /// Starts at (1,1), repeatedly adds, and returns (current,previous). The pair
+        /// has GCD one, with current at least as large as previous; requests through one
+        /// bit return (1,1). The loop allocates growing integers without a resource cap,
+        /// so this helper is restricted in practice to the fixture's modest thresholds.
         fn fibonacci_pair_at_least(bits: u64) -> (BigUint, BigUint) {
             let (mut previous, mut current) = (BigUint::one(), BigUint::one());
             while current.bits() < bits {
