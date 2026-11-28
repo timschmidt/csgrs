@@ -1444,11 +1444,25 @@ mod tests {
         assert_eq!(drops.load(std::sync::atomic::Ordering::Relaxed), 8);
     }
 
+    /// Construct a power of the native-word base with the requested original limb count.
+    ///
+    /// For positive limbs, returns 2^((limbs-1)*usize::BITS), whose low limbs are
+    /// zero. Zero limbs panics; callers supply small widths so shift arithmetic
+    /// and allocation are practical. This feeds local classifiers, not a guarantee
+    /// of the backend's eventual operand width: multiplication can trim low zeros.
+    /// The helper neither measures allocated capacity nor exercises a kernel.
     fn magnitude_with_backend_limbs(limbs: usize) -> BigUint {
         assert!(limbs > 0);
         BigUint::one() << ((limbs - 1) * usize::BITS as usize)
     }
 
+    /// Pin five local multiplication-classifier outcomes at width and balance boundaries.
+    ///
+    /// Checks basecase, half-Karatsuba, Karatsuba and Toom-3 tags using original
+    /// native-word counts around 32/33 and 256/257. These powers have low zero
+    /// limbs, which the locked backend can trim before selecting its actual kernel.
+    /// The assertions preserve the local diagnostic rule; they do not multiply,
+    /// observe backend dispatch or establish a measured performance crossover.
     #[test]
     fn backend_multiplication_classifier_matches_locked_num_bigint_thresholds() {
         let limbs = magnitude_with_backend_limbs;
@@ -1474,6 +1488,15 @@ mod tests {
         );
     }
 
+    /// Check the Toom-4 gate separately from exact candidate multiplication.
+    ///
+    /// Asserts rejection just below the shorter-width threshold, acceptance at it,
+    /// and rejection of one imbalanced pair. Then compares the forced candidate
+    /// with BigUint multiplication for all pairs in 0..128 and fifteen generated
+    /// pairs at widths 257, 1024, 4096, 16384 and 65536, with equal,
+    /// one-bit-shorter and three-quarter right widths. Candidate calls bypass the
+    /// production gate; these finite comparisons are not a timing crossover or
+    /// proof of every interpolation invariant.
     #[test]
     fn rust_native_toom4_matches_backend_products() {
         let threshold = usize::try_from(Rational::TOOM4_MULTIPLICATION_THRESHOLD_BITS).unwrap();
@@ -1501,6 +1524,13 @@ mod tests {
             }
         }
 
+        /// Build a positive BigUint of exactly bits bits from a deterministic wrapping state.
+        ///
+        /// Concatenates ceil(bits/64) state words, masks to the requested width and
+        /// forces its high bit. Requires bits > 0 and practical shift/allocation sizes;
+        /// zero underflows bits-1 and is outside the caller's corpus. Updates the shared
+        /// seed across operands. This test generator does not sample uniformly or
+        /// establish coverage of every coefficient/carry pattern.
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -1527,6 +1557,12 @@ mod tests {
         }
     }
 
+    /// Check a forced Toom-4 product and exactly one candidate-wrapper event.
+    ///
+    /// Uses fixed 4097/4096-bit positive operands, compares with BigUint multiplication
+    /// inside recording and requires one multiplication-candidate/rust-native-toom4
+    /// event. The candidate bypasses production size/balance gates. The assertion
+    /// does not count interpolation subproducts or measure speed, memory or crossover.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rust_native_toom4_candidate_path_is_traced() {
@@ -1549,6 +1585,14 @@ mod tests {
         );
     }
 
+    /// Check production Toom-4 selection at the configured width/balance boundary.
+    ///
+    /// Uses a shorter width at the Toom-4 threshold and a longer width one fifth
+    /// larger, excluding the earlier Toom-8 and Toom-6 balance gates.
+    /// Compares the complete product with BigUint and requires exactly one
+    /// toom4-selection-test/rust-native-toom4 event. This preserves the configured
+    /// selection rule; no timings establish that this boundary is a performance
+    /// crossover, and other event categories are not asserted absent.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rust_native_toom4_selected_path_is_traced_at_crossover() {
@@ -1573,6 +1617,15 @@ mod tests {
         );
     }
 
+    /// Check the Toom-6 gate separately from exact candidate multiplication.
+    ///
+    /// Asserts rejection just below the shorter-width threshold, acceptance at it,
+    /// and rejection of one imbalanced pair. Then compares the forced candidate
+    /// with BigUint multiplication for all pairs in 0..64 and fifteen generated
+    /// pairs at widths 257, 1024, 4096, 65536 and 131072, with equal,
+    /// one-bit-shorter and five-sixths right widths. Candidate calls bypass the
+    /// production gate; these finite comparisons are not a timing crossover or
+    /// proof of every interpolation invariant.
     #[test]
     fn rust_native_toom6_matches_backend_products() {
         let threshold = usize::try_from(Rational::TOOM6_MULTIPLICATION_THRESHOLD_BITS).unwrap();
@@ -1600,6 +1653,13 @@ mod tests {
             }
         }
 
+        /// Build a positive BigUint of exactly bits bits from a deterministic wrapping state.
+        ///
+        /// Concatenates ceil(bits/64) state words, masks to the requested width and
+        /// forces its high bit. Requires bits > 0 and practical shift/allocation sizes;
+        /// zero underflows bits-1 and is outside the caller's corpus. Updates the shared
+        /// seed across operands. This test generator does not sample uniformly or
+        /// establish coverage of every coefficient/carry pattern.
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -1626,6 +1686,12 @@ mod tests {
         }
     }
 
+    /// Check a forced Toom-6 product and exactly one candidate-wrapper event.
+    ///
+    /// Uses fixed 4097/4096-bit positive operands, compares with BigUint multiplication
+    /// inside recording and requires one multiplication-candidate/rust-native-toom6
+    /// event. The candidate bypasses production size/balance gates. The assertion
+    /// does not count interpolation subproducts or measure speed, memory or crossover.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rust_native_toom6_candidate_path_is_traced() {
@@ -1648,6 +1714,14 @@ mod tests {
         );
     }
 
+    /// Check production Toom-6 selection at the configured width/balance boundary.
+    ///
+    /// Uses a shorter width at the Toom-6 threshold and a longer width one seventh
+    /// larger, excluding the earlier Toom-8 balance gate.
+    /// Compares the complete product with BigUint and requires exactly one
+    /// toom6-selection-test/rust-native-toom6 event. This preserves the configured
+    /// selection rule; no timings establish that this boundary is a performance
+    /// crossover, and other event categories are not asserted absent.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rust_native_toom6_selected_path_is_traced_at_crossover() {
@@ -1672,6 +1746,15 @@ mod tests {
         );
     }
 
+    /// Check the Toom-8 gate separately from exact candidate multiplication.
+    ///
+    /// Asserts rejection just below the shorter-width threshold, acceptance at it,
+    /// and rejection of one imbalanced pair. Then compares the forced candidate
+    /// with BigUint multiplication for all pairs in 0..32 and fifteen generated
+    /// pairs at widths 257, 1024, 4096, 65536 and 131072, with equal,
+    /// one-bit-shorter and seven-eighths right widths. Candidate calls bypass the
+    /// production gate; these finite comparisons are not a timing crossover or
+    /// proof of every interpolation invariant.
     #[test]
     fn rust_native_toom8_matches_backend_products() {
         let threshold = usize::try_from(Rational::TOOM8_MULTIPLICATION_THRESHOLD_BITS).unwrap();
@@ -1699,6 +1782,13 @@ mod tests {
             }
         }
 
+        /// Build a positive BigUint of exactly bits bits from a deterministic wrapping state.
+        ///
+        /// Concatenates ceil(bits/64) state words, masks to the requested width and
+        /// forces its high bit. Requires bits > 0 and practical shift/allocation sizes;
+        /// zero underflows bits-1 and is outside the caller's corpus. Updates the shared
+        /// seed across operands. This test generator does not sample uniformly or
+        /// establish coverage of every coefficient/carry pattern.
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -1725,6 +1815,12 @@ mod tests {
         }
     }
 
+    /// Check a forced Toom-8 product and exactly one candidate-wrapper event.
+    ///
+    /// Uses fixed 4097/4096-bit positive operands, compares with BigUint multiplication
+    /// inside recording and requires one multiplication-candidate/rust-native-toom8
+    /// event. The candidate bypasses production size/balance gates. The assertion
+    /// does not count interpolation subproducts or measure speed, memory or crossover.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rust_native_toom8_candidate_path_is_traced() {
@@ -1747,6 +1843,14 @@ mod tests {
         );
     }
 
+    /// Check production Toom-8 selection at the configured width/balance boundary.
+    ///
+    /// Uses equal operand widths at the Toom-8 threshold, selecting the first
+    /// eligible family in the production dispatch order.
+    /// Compares the complete product with BigUint and requires exactly one
+    /// toom8-selection-test/rust-native-toom8 event. This preserves the configured
+    /// selection rule; no timings establish that this boundary is a performance
+    /// crossover, and other event categories are not asserted absent.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rust_native_toom8_selected_path_is_traced_at_crossover() {
@@ -1770,6 +1874,13 @@ mod tests {
         );
     }
 
+    /// Compare the forced NTT/CRT candidate with BigUint multiplication on a finite corpus.
+    ///
+    /// Crosses all pairs in 0..32, then generates nine positive operand pairs at
+    /// widths from one through 262144 bits, with the right width one bit shorter
+    /// except at the minimum. The exact reference is the integer backend product.
+    /// This exercises the candidate directly, not production selector admission,
+    /// transform-capacity exhaustion or a timing/memory advantage.
     #[test]
     fn rust_native_ntt_matches_backend_products() {
         for left in 0_u32..32 {
@@ -1783,6 +1894,13 @@ mod tests {
             }
         }
 
+        /// Build a positive BigUint of exactly bits bits from a deterministic wrapping state.
+        ///
+        /// Concatenates ceil(bits/64) state words, masks to the requested width and
+        /// forces its high bit. Requires bits > 0 and practical shift/allocation sizes;
+        /// zero underflows bits-1 and is outside the caller's corpus. Updates the shared
+        /// seed across operands. This test generator does not sample uniformly or
+        /// establish coverage of every coefficient/carry pattern.
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -1807,6 +1925,12 @@ mod tests {
         }
     }
 
+    /// Check a forced NTT/CRT product and exactly one candidate-wrapper trace event.
+    ///
+    /// For fixed 4097/4096-bit operands, asserts equality with BigUint multiplication
+    /// inside recording and requires one rational_algorithm/multiplication-candidate/
+    /// rust-native-ntt-crt event. The event identifies the wrapper call; the test does
+    /// not inventory modular suboperations or establish production selection or cost.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rust_native_ntt_candidate_path_is_traced() {
@@ -1829,6 +1953,13 @@ mod tests {
         );
     }
 
+    /// Pin four local division tags for smaller dividends and one-/multi-limb divisors.
+    ///
+    /// Requires the trivial/small-quotient, single-limb and Knuth-basecase labels
+    /// on the listed original widths, including two multi-limb cases. No quotient
+    /// or remainder is computed here. The diagnostic classifier's shortcuts can
+    /// differ from the locked backend's actual division/remainder dispatch; these
+    /// assertions do not validate all backend thresholds or zero-divisor behavior.
     #[test]
     fn backend_division_classifier_matches_locked_num_bigint_thresholds() {
         let limbs = magnitude_with_backend_limbs;
@@ -1850,8 +1981,23 @@ mod tests {
         );
     }
 
+    /// Compare one-shot Barrett candidate quotient/remainder pairs with the integer backend.
+    ///
+    /// Builds small dividends from 127 positive divisors, seven quotients and six
+    /// residue seeds reduced modulo each divisor. Adds 160 deterministic wide pairs
+    /// covering five divisor widths, four block-count choices and eight extra-bit
+    /// cases. Divisor one exercises candidate fallback. Full pair equality checks
+    /// numeric results, but not preparation count, universal correction bounds,
+    /// zero-divisor rejection or a performance/resource contract.
     #[test]
     fn block_wise_barrett_matches_backend_div_rem() {
+        /// Build a positive BigUint of exactly bits bits from a deterministic wrapping state.
+        ///
+        /// Concatenates ceil(bits/64) state words, masks to the requested width and
+        /// forces its high bit. Requires bits > 0 and practical shift/allocation sizes;
+        /// zero underflows bits-1 and is outside the caller's corpus. Updates the shared
+        /// seed across operands. This test generator does not sample uniformly or
+        /// establish coverage of every coefficient/carry pattern.
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -1896,6 +2042,13 @@ mod tests {
         }
     }
 
+    /// Check ordered batch division results for sixteen dividends sharing a divisor.
+    ///
+    /// Uses a fixed 1024-bit divisor and constructs each dividend from a large
+    /// shifted multiple, a small multiple and remainder index-1. Compares complete
+    /// candidate/backend output vectors. The candidate implementation prepares once
+    /// per eligible batch, but this fixture does not count preparations, assert
+    /// cross-call retention or measure the benefit of reciprocal reuse.
     #[test]
     fn block_wise_barrett_batch_reuses_one_reciprocal() {
         let divisor = (BigUint::one() << 1023_usize) + 0x9e37_79b9_u64;
@@ -1912,6 +2065,12 @@ mod tests {
         );
     }
 
+    /// Require one division-candidate/block-wise-barrett trace label for a wrapper call.
+    ///
+    /// Uses a 1024-bit divisor and a shifted multiple plus 19 as dividend. The
+    /// returned quotient/remainder is deliberately discarded; this fixture checks
+    /// the exact event count only. Numeric comparisons live in neighboring fixtures.
+    /// The label alone is not evidence of reciprocal preparation or kernel work.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn block_wise_barrett_candidate_path_is_traced() {
@@ -1931,6 +2090,12 @@ mod tests {
         );
     }
 
+    /// Preserve the local radix-output tags at 31 and 32 native-word limbs.
+    ///
+    /// The current classifier switches at 32, while locked num-bigint 0.4.6 uses
+    /// 64 limbs for its non-power-of-two large-base conversion. Despite the test
+    /// name, these assertions therefore preserve a known diagnostic discrepancy;
+    /// they do not prove backend threshold agreement or execute decimal conversion.
     #[test]
     fn backend_radix_classifier_matches_locked_num_bigint_threshold() {
         assert_eq!(
@@ -1943,6 +2108,13 @@ mod tests {
         );
     }
 
+    /// Compare one 10240-digit decimal integer with the backend's exact parser.
+    ///
+    /// Repeats a fixed ten-digit block, parses through Rational's product-tree
+    /// eligible input path and compares with BigUint::parse_bytes wrapped as an
+    /// integer Rational. Checks value, not an event count. This digit-only fixture
+    /// does not cover signed/scientific/separator grammar, malformed input or the
+    /// parser's separately documented separator-bearing tree limitations.
     #[test]
     fn divide_conquer_decimal_parser_matches_backend_reference() {
         let digits = "1234567890".repeat(1024);
@@ -1952,6 +2124,14 @@ mod tests {
         assert_eq!(digits.parse::<Rational>().unwrap(), expected);
     }
 
+    /// Pin combined retained-fact and multiplication labels for a fixed operation sequence.
+    ///
+    /// Queries 7/15 twice as non-dyadic, then multiplies two positive 40-limb
+    /// integer rationals with nonzero low limbs. The complete recording must contain
+    /// one dyadic-learned, three dyadic-hit and one multiplication-wide-dyadic/
+    /// backend-karatsuba event. Counts belong to the whole sequence, not solely to
+    /// the two explicit queries; the multiplication result is discarded. This checks
+    /// local instrumentation and cache scheduling, not an independent product value.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn retained_dyadic_fact_and_backend_algorithm_paths_are_traced() {
@@ -1990,6 +2170,14 @@ mod tests {
         );
     }
 
+    /// Require reduction labels while constructing three exact rational fixtures.
+    ///
+    /// Checks the values of a one-limb cancellation and a shared-factor 3/5 case;
+    /// a wider shared-factor construction is only required to succeed. Across the
+    /// whole recording, reduction-numerator must report at least one single-limb
+    /// and at least two Knuth-basecase events. These are lower bounds on local labels,
+    /// not exact total work, an assertion of every result's canonical parts, or
+    /// instrumentation inside the backend division implementation.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn exact_reduction_traces_single_limb_and_small_and_large_knuth_division() {
@@ -2042,6 +2230,13 @@ mod tests {
         );
     }
 
+    /// Check a nonintegral fractional part and one local remainder-dispatch label.
+    ///
+    /// Builds a wide positive rational before recording, then calls fract within
+    /// the scope and requires it not to be an integer. Exactly one exact-fractional-
+    /// remainder/backend-knuth-basecase event must be recorded. This fixture does
+    /// not independently compare the fractional numerator/denominator or trace the
+    /// construction work performed before the recording scope.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn exact_fractional_remainder_traces_backend_division() {
@@ -2062,6 +2257,15 @@ mod tests {
         );
     }
 
+    /// Check fixed formatting/parsing results and the existing local radix trace counts.
+    ///
+    /// Records integer 17, a previously formatted 32-limb positive integer and its
+    /// parse round trip, plus four-place alternate formatting of 1/7 as 0.1428.
+    /// Requires at least one repeated-single-limb output event and exactly one each
+    /// of divide-and-conquer output, backend-chunked input and repeated-digit output.
+    /// The large decimal reference comes from the same formatter. Local output labels
+    /// switch at 32 limbs although the locked backend switches at 64; this test
+    /// preserves instrumentation, not a measured or observed backend crossover.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn radix_conversion_paths_are_traced_at_backend_crossover() {
@@ -2113,6 +2317,13 @@ mod tests {
         );
     }
 
+    /// Require integer parsing and one product-tree event for a long digit-only input.
+    ///
+    /// Parses 10240 digits formed by repeating a fixed block, asserts an integer
+    /// result and requires exactly one radix-to-binary/divide-conquer-product-tree
+    /// event. It does not compare the parsed integer's full value; the neighboring
+    /// backend-reference fixture covers a separate long decimal. Malformed grammar,
+    /// resource exhaustion and timing are outside this assertion.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn divide_conquer_radix_input_path_is_traced() {

@@ -26147,6 +26147,94 @@ already records the full public/private/generated Rustdoc mandate. Continue at
 magnitude_with_backend_limbs, now line 1447. This 6,991-line file and the complete
 repository audit remain unfinished; generated-API coverage is still separate.
 
+## Rational test audit: backend candidates and diagnostic traces (28 November 2026)
+
+Owning layer: Hyperreal rational test fixtures for exact integer candidates,
+local backend classifiers, decimal parsing and dispatch recording. P37 requires
+accurate interpretation of these witnesses; P1 and P4 govern the value/cache
+behavior, while P10's performance objective is not established by a trace label.
+At 6267eaf6f, 23 consecutive tests, a shared limb-width helper and five local
+magnitude generators had no Rustdoc explaining their reference or limitations.
+
+Reviewed arithmetic/tests.rs baseline lines 1447–2135, now 1447–2346, together
+with the classifiers, candidate/selector entry points, batch preparation and
+parser dispatch. Rechecked the locked num-bigint 0.4.6 source when qualifying
+backend claims. Added 29 descriptions, including thirteen trace-only fixtures.
+All 211 added source lines are Rustdoc; every existing line, assertion, fixture,
+gate and executable token is unchanged. The rest of the file remains unreviewed.
+
+The descriptions distinguish:
+
+- Original native-word width from an operand after low-zero-limb trimming.
+  The shared helper constructs a power of the word base; the multiplication
+  classifier tests local original-width labels without executing a product.
+  The locked backend trims low zeros before its full-product schedule.
+- Toom-4/6/8 gate assertions from forced candidate execution. The candidates
+  compare small Cartesian corpora and fifteen generated wider pairs with the
+  BigUint product; candidate calls bypass the production width gates. Selected
+  path tests choose widths/balance that admit the intended family in the existing
+  Toom-8, Toom-6, Toom-4 priority order. Exactly one named event is required,
+  not a measured crossover or an inventory of every suboperation.
+- NTT/CRT candidate value agreement and a wrapper event from production selection
+  or transform-limit qualification. Its value fixture covers small pairs and nine
+  generated widths through 262144 bits; no timing or memory claim follows.
+- One-shot Barrett pair equality from a candidate trace that discards the result.
+  The batch fixture compares sixteen ordered results with the backend batch,
+  but does not count reciprocal constructions. Source review confirms that an
+  eligible call prepares once before iteration; the test alone cannot establish
+  that implementation detail or a performance benefit. Divisor one is a valid
+  candidate fallback in the one-shot value corpus.
+- Local division/radix labels from direct backend instrumentation. Despite its
+  name, the radix-classifier test preserves the local 31/32-limb boundary; the
+  locked backend's non-power-of-two large-base conversion threshold is 64.
+  This mismatch remains present on the target revision and is documented,
+  not repaired by weakening or changing the fixture.
+- Complete long-decimal value comparison from an integer-only trace assertion.
+  One 10240-digit fixture compares against BigUint parsing; another asserts
+  only integer output and one product-tree event. Neither covers malformed or
+  separator-bearing grammar. The large formatting reference in the radix trace
+  test comes from the same formatter, alongside fixed small expectations and
+  a round trip; its local label does not prove a backend crossover.
+- Sequence-wide retained-fact counts from individual query effects. The retained
+  fixture requires one learned, three hit and one Karatsuba-tagged event across
+  both queries and multiplication. Reduction tracing uses lower bounds of one
+  single-limb and two Knuth events, with full value assertions on only two of
+  its three constructions. Fractional-remainder tracing asserts nonintegrality
+  and a label, not an independent full fraction expectation.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal library tests pass: ten applicable fixtures with no
+  default features and all 23 with all features, matching the 23-test all-feature
+  baseline. Exact test-name inventories confirm the intended sets. The thirteen
+  feature-gated trace assertions retain their original exact/lower-bound counts.
+  No new fixture, result assertion or trace requirement was substituted.
+- Both private cargo doc configurations pass with warnings and broken/private
+  links denied. An isolated source copy removes only the 23 reviewed test
+  markers, retaining feature guards, and renders unchanged local generators in
+  the original private context. All sixteen applicable descriptions render
+  without default features; all 29 render with all features. The thirteen gated
+  function pages are confirmed absent in the former configuration.
+- Whole-file executable tokens and prior source lines are identical. The source/
+  render inventories, backend-source hashes and git diff --check pass. These
+  tests compare against the locked BigUint backend and sometimes share lower
+  arithmetic dependencies; they are finite agreement/dispatch witnesses, not
+  universal independent algorithm proofs or benchmarks.
+- Full workflows, cross-target classifier qualification, performance and formal
+  verification remain owner-waived for this docs-only session. Production code
+  is unchanged; the affected helper consumers and candidate/selector/parser
+  operations are exercised by the selected tests. Existing backend-label and
+  parser limitations remain open rather than being presented as resolved.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-backends-audit/:
+baseline, scripts, commands, logs, source/render inventories, source hashes and
+compressed selected HTML. Owned source copies and duplicate documentation trees
+are removed after validation; shared Cargo output is reused without incremental
+compilation. AGENTS.md already records the full public/private/generated mandate.
+Continue at binary_word_gcd_matches_euclidean_reference, whose attribute is now
+line 2347. This 7,202-line file, generated APIs and the repository-wide review
+remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
