@@ -4270,6 +4270,10 @@ mod tests {
     }
 
     #[test]
+    /// Compare sine, cosine and tangent at 2^200*pi+7/5 with the corresponding
+    /// functions at 7/5. The exact even pi multiple preserves all three values.
+    /// Require tolerance-comparison Equal at -80 for sine/cosine and -72 for
+    /// tangent; these native consistency checks do not count reduction work.
     fn huge_trig_arguments_reduce_correctly() {
         let huge_multiple = BigInt::from(1_u8) << 200;
         let offset = Computable::rational(Rational::fraction(7, 5).unwrap());
@@ -4296,6 +4300,10 @@ mod tests {
     }
 
     #[test]
+    /// Check sine, cosine and tangent of the exact integer 1,000,000 against
+    /// three stored precision -32 samples, allowing eight integer units each.
+    /// The expected signs distinguish their quadrants without a dispatch assertion
+    /// or a guarantee for arbitrary large rational inputs.
     fn exact_large_rational_trig_uses_correct_quadrant() {
         let million = Computable::rational(Rational::new(1_000_000));
 
@@ -4305,6 +4313,9 @@ mod tests {
     }
 
     #[test]
+    /// Check sine, cosine and tangent of exact 10^30 at precision -72.
+    /// Stored samples allow eight units for sine/cosine and sixteen for tangent;
+    /// these finite reduction fixtures check values and signs, not reduction cost.
     fn exact_huge_rational_trig_uses_correct_quadrant() {
         let huge = Rational::new(10).powi(BigInt::from(30)).unwrap();
         let direct = Computable::rational(huge.clone());
@@ -4315,6 +4326,11 @@ mod tests {
     }
 
     #[test]
+    /// Check sine, cosine and tangent of exact 6^(6^6), a 120,605-bit integer.
+    /// At precision -128 allow eight units from the stored sine/cosine samples
+    /// and sixteen for tangent. This large reduction workload targets shared-pi
+    /// reuse, but its assertions do not count pi evaluations or prove a single
+    /// high-precision pass, despite the fixture name.
     fn many_digits_exact_integer_trig_uses_one_high_precision_pi_pass() {
         // Many Digits C08: the exact argument has 120,605 bits. Besides being
         // a useful quadrant oracle, this crosses the cache-aware reduction
@@ -4344,6 +4360,9 @@ mod tests {
     }
 
     #[test]
+    /// Check tan(1/5) and tan(7/5) against stored precision -32 samples,
+    /// allowing two integer units each. Both exact rational arguments avoid
+    /// half-pi poles and exercise small and near-half-pi evaluation ranges.
     fn tan_small_and_medium_arguments() {
         let one_fifth = Computable::rational(Rational::fraction(1, 5).unwrap());
         assert_approx(one_fifth.tan(), -32, "870632973", 2);
@@ -4353,6 +4372,9 @@ mod tests {
     }
 
     #[test]
+    /// Check tan(pi/2-1/64)=cot(1/64) against its stored precision -32
+    /// sample within eight units. The exact displacement avoids the pole;
+    /// this fixture does not exercise evaluation at an undefined tangent input.
     fn tan_near_half_pi() {
         let epsilon = Computable::rational(Rational::fraction(1, 64).unwrap());
         let near_half_pi = pi_times(Rational::fraction(1, 2).unwrap()).add(epsilon.negate());
@@ -4360,6 +4382,9 @@ mod tests {
     }
 
     #[test]
+    /// Require ln(sqrt(pi)) to produce the stored integer 629321910077
+    /// at precision -40. This fixes one composed native sample; equality to
+    /// that integer is not exact equality of the underlying transcendental value.
     fn ln_sqrt_pi() {
         let pi = Computable::pi();
         let sqrt = Computable::sqrt(pi);
@@ -4369,6 +4394,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare ln(1024) with 10*ln(2) at precision -40 within two units.
+    /// The positive rational input admits exact power-of-two range reduction;
+    /// this assertion checks samples without inspecting the resulting graph.
     fn ln_large_power_of_two() {
         let value = Computable::rational(Rational::new(1024));
         let ten = Computable::rational(Rational::new(10));
@@ -4376,6 +4404,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare ln(1/1024) with -10*ln(2) at precision -40 within two units.
+    /// The exact positive dyadic input checks the sign of binary log scaling,
+    /// without asserting shared-node identity or a specific reduction path.
     fn ln_tiny_power_of_two() {
         let denominator = BigUint::from(1_u8) << 10;
         let value = Computable::rational(
@@ -4386,6 +4417,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare ln(3/1024) with ln(3)-10*ln(2) at precision -40 within two
+    /// integer units. Both constructions retain exact positive rational data;
+    /// this is a native identity consistency check rather than an external oracle.
     fn ln_exact_binary_scaled_rational() {
         let denominator = BigUint::from(1_u8) << 10;
         let value = Computable::rational(
@@ -4398,6 +4432,10 @@ mod tests {
     }
 
     #[test]
+    /// Compare ln(45/14) with 2*ln(3)+ln(5)-ln(2)-ln(7), built from the
+    /// shared prime-log constructors. Require precision -50 samples within three
+    /// units. The factorization motivates reuse, but the test does not inspect
+    /// allocation sharing or which constants the first construction retains.
     fn ln_smooth_rational_reuses_shared_prime_logs() {
         let value = Computable::rational(Rational::fraction(45, 14).unwrap());
         let expected = Computable::ln_constant(3)
@@ -4410,6 +4448,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare sqrt(2)^2 with exact 2 at precision -40 within two units.
+    /// The positive radicand admits the identity; construction may simplify it,
+    /// so the test does not require both numerical kernels to run.
     fn sqrt_square_round_trip() {
         let two = Computable::rational(Rational::new(2));
         let sqrt_two = two.clone().sqrt();
@@ -4417,92 +4458,147 @@ mod tests {
     }
 
     #[test]
+    /// Compare exp(ln(47/32)) with the original positive rational at precision
+    /// -40 within two units. This finite round trip targets a log range boundary;
+    /// it neither independently certifies both kernels nor asserts their dispatch.
     fn ln_near_prescaled_limit_round_trip() {
         let value = Computable::rational(Rational::fraction(47, 32).unwrap());
         assert_close(value.clone().ln().exp(), value, -40, 2);
     }
 
     #[test]
+    /// Compare erf(0) with zero at precision -160, and erf(1/2), erf(1),
+    /// erfc(1) and erfcx(1) with stored decimal rational approximants at -90.
+    /// Each sample pair allows two units. The finite decimals are reference
+    /// approximations, not claims that these transcendental values are rational.
     fn erf_known_values() {
-        assert_close(
-            Computable::zero().erf(),
-            Computable::zero(),
-            -160,
-            2,
-        );
+        assert_close(Computable::zero().erf(), Computable::zero(), -160, 2);
         assert_close(
             Computable::rational(Rational::fraction(1, 2).unwrap()).erf(),
-            Computable::rational("0.5204998778130465376827466538919645287364".parse().unwrap()),
+            Computable::rational(
+                "0.5204998778130465376827466538919645287364"
+                    .parse()
+                    .unwrap(),
+            ),
             -90,
             2,
         );
         assert_close(
             Computable::one().erf(),
-            Computable::rational("0.8427007929497148693412206350826092592960".parse().unwrap()),
+            Computable::rational(
+                "0.8427007929497148693412206350826092592960"
+                    .parse()
+                    .unwrap(),
+            ),
             -90,
             2,
         );
         assert_close(
             Computable::one().erfc(),
-            Computable::rational("0.1572992070502851306587793649173907407040".parse().unwrap()),
+            Computable::rational(
+                "0.1572992070502851306587793649173907407040"
+                    .parse()
+                    .unwrap(),
+            ),
             -90,
             2,
         );
         assert_close(
             Computable::one().erfcx(),
-            Computable::rational("0.4275835761558070044107503444905151808202".parse().unwrap()),
+            Computable::rational(
+                "0.4275835761558070044107503444905151808202"
+                    .parse()
+                    .unwrap(),
+            ),
             -90,
             2,
         );
     }
 
     #[test]
+    /// Check seven standard-normal quantities against stored decimal rational
+    /// approximants at precision -120 within two units: density at zero, CDF
+    /// and survival at one, mass from zero to one, and log CDF, log survival
+    /// and log density at zero. These selected finite references do not qualify
+    /// general tails or treat the decimals as exact distribution values.
     fn normal_density_and_cdf_known_values() {
         assert_close(
             Computable::zero().dnorm(),
-            Computable::rational("0.39894228040143267793994605993438186847585863".parse().unwrap()),
+            Computable::rational(
+                "0.39894228040143267793994605993438186847585863"
+                    .parse()
+                    .unwrap(),
+            ),
             -120,
             2,
         );
         assert_close(
             Computable::one().pnorm(),
-            Computable::rational("0.8413447460685429485852325456320379224779".parse().unwrap()),
+            Computable::rational(
+                "0.8413447460685429485852325456320379224779"
+                    .parse()
+                    .unwrap(),
+            ),
             -120,
             2,
         );
         assert_close(
             Computable::one().normal_sf(),
-            Computable::rational("0.1586552539314570514147674543679620775221".parse().unwrap()),
+            Computable::rational(
+                "0.1586552539314570514147674543679620775221"
+                    .parse()
+                    .unwrap(),
+            ),
             -120,
             2,
         );
         assert_close(
             Computable::normal_interval(Computable::zero(), Computable::one()),
-            Computable::rational("0.3413447460685429485852325456320379224779".parse().unwrap()),
+            Computable::rational(
+                "0.3413447460685429485852325456320379224779"
+                    .parse()
+                    .unwrap(),
+            ),
             -120,
             2,
         );
         assert_close(
             Computable::zero().log_pnorm(),
-            Computable::rational("-0.6931471805599453094172321214581765680755".parse().unwrap()),
+            Computable::rational(
+                "-0.6931471805599453094172321214581765680755"
+                    .parse()
+                    .unwrap(),
+            ),
             -120,
             2,
         );
         assert_close(
             Computable::zero().log_normal_sf(),
-            Computable::rational("-0.6931471805599453094172321214581765680755".parse().unwrap()),
+            Computable::rational(
+                "-0.6931471805599453094172321214581765680755"
+                    .parse()
+                    .unwrap(),
+            ),
             -120,
             2,
         );
         assert_close(
             Computable::zero().log_dnorm(),
-            Computable::rational("-0.9189385332046727417803297364056176398614".parse().unwrap()),
+            Computable::rational(
+                "-0.9189385332046727417803297364056176398614"
+                    .parse()
+                    .unwrap(),
+            ),
             -120,
             2,
         );
     }
 
     #[test]
+    /// Require positive exact signs for erfc(1), erfcx(1), normal survival at
+    /// one and mass from zero to one; require zero for equal interval endpoints.
+    /// Also require negative signs for log CDF, log survival and log density at
+    /// one. The eight assertions inspect sign facts without numerical samples.
     fn normal_tail_nodes_have_structural_signs() {
         let x = Computable::one();
         assert_eq!(x.clone().erfc().exact_sign(), Some(Sign::Plus));
@@ -4522,6 +4618,14 @@ mod tests {
     }
 
     #[test]
+    /// Reconstruct one as sqrt(2)*sqrt(2)/2 without a direct rational projection.
+    /// The raw positive-acos node must sample as zero while exact_sign stays
+    /// unknown, even though the inverse-trig linear recognizer proves zero;
+    /// its bounded comparison with zero still declines. Native acos normalization
+    /// must instead certify zero and compare equal. Equal reconstructed normal
+    /// interval endpoints must also yield zero, while reversing zero and one
+    /// yields a negative signed CDF difference. This is in-memory construction
+    /// replay, not a serialized or fresh-process replay test.
     fn exact_endpoint_replays_do_not_gain_nonzero_certificates() {
         let root_two = Computable::sqrt_rational(Rational::new(2));
         let replayed_one = root_two
@@ -4550,16 +4654,22 @@ mod tests {
         assert_eq!(interval.approx(-96), BigInt::zero());
         assert_eq!(interval.exact_sign(), Some(Sign::NoSign));
 
-        let reversed =
-            Computable::normal_interval(Computable::one(), Computable::zero());
+        let reversed = Computable::normal_interval(Computable::one(), Computable::zero());
         assert_eq!(reversed.exact_sign(), Some(Sign::Minus));
     }
 
     #[test]
+    /// Require expm1 at +/-1/1,000,000 to preserve the argument's exact sign.
+    /// Compare the positive result with a stored decimal rational approximant at
+    /// precision -120 within two units, exercising a small nonzero residual
+    /// without claiming that its decimal reference is the exact exponential.
     fn expm1_preserves_small_argument_and_sign() {
         let tiny = Computable::rational(Rational::fraction(1, 1_000_000).unwrap());
         assert_eq!(tiny.clone().expm1().exact_sign(), Some(Sign::Plus));
-        assert_eq!(tiny.clone().negate().expm1().exact_sign(), Some(Sign::Minus));
+        assert_eq!(
+            tiny.clone().negate().expm1().exact_sign(),
+            Some(Sign::Minus)
+        );
         assert_close(
             tiny.expm1(),
             Computable::rational("0.0000010000005000001666667083333416667".parse().unwrap()),
@@ -4569,14 +4679,34 @@ mod tests {
     }
 
     #[test]
+    /// Check expm1 on 177 input cases using fresh results and forward/reverse
+    /// precision histories: rational grids in [-8,8], integers through +/-10000,
+    /// six arguments around +/-1/2 and +/-2^-512. The 3,648 sample checks use
+    /// 16384-bit outward MPFR expm1 bounds with nearest-rounded final error
+    /// comparisons. Fresh result nodes may still use shared constant caches;
+    /// this finite corpus does not supply a total-resource or correct-rounding
+    /// contract.
     fn expm1_range_guard_and_cache_orders_match_directed_mpfr() {
         use rug::{Float, Integer, Rational as RugRational, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
 
+        /// Check one exact rational input at each requested precision in three histories.
+        /// Round the input and monotone expm1 outward at 16384 bits, evaluating expm1
+        /// directly so tiny residuals are not lost by subtracting one from rounded exp.
+        /// For each result require both scaled endpoint differences to be at most one.
+        /// Integer conversion and final subtraction use nearest-rounded Float operations;
+        /// this is not exact-rational enclosure arithmetic or a rounding-mode guarantee.
+        ///
+        /// Build a fresh result for each request, then reuse separate results in the
+        /// supplied and reversed precision orders. Shared constants may already be warm.
+        /// The precision allocation covers this caller's inputs through +/-10000 and
+        /// requests through -1024, not arbitrary magnitudes. The caller registers MPFR
+        /// cleanup; this helper adds no separate work, memory or cancellation limit.
         fn check(input: Rational, precisions: &[Precision]) {
             // e^10000 needs over 14,000 integer bits before absolute guards.
             let bits = 16_384;
-            let mut numerator = Integer::from_str_radix(&input.numerator().to_string(), 10).unwrap();
+            let mut numerator =
+                Integer::from_str_radix(&input.numerator().to_string(), 10).unwrap();
             if input.sign() == Sign::Minus {
                 numerator = -numerator;
             }
@@ -4623,7 +4753,10 @@ mod tests {
         let precisions = [4, 1, 0, -1, -8, -64, -256];
         for denominator in [3_u64, 7] {
             for numerator in -(8 * denominator as i64)..=8 * denominator as i64 {
-                check(Rational::fraction(numerator, denominator).unwrap(), &precisions);
+                check(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                    &precisions,
+                );
             }
         }
         for numerator in [-10_000, -4_096, -17, 0, 17, 4_096, 10_000] {
@@ -4641,12 +4774,21 @@ mod tests {
     }
 
     #[test]
+    /// At precision one, require expm1(-32) to return zero using retained
+    /// negative sign evidence while leaving its input sample cache empty.
+    /// Then bypass constructor facts for -32 and 3/2: evaluation must populate
+    /// the input cache and return respectively zero or one of the allowed integers
+    /// 1 and 2. The raw-node cases test initially unknown range evidence;
+    /// they do not perform serialization or assert a fixed refinement count.
     fn expm1_coarse_shortcut_requires_a_proven_range() {
         let negative = Computable::rational(Rational::new(-32));
         let value = negative.clone().expm1();
         assert_eq!(negative.immediate_sign(), Some(RealSign::Negative));
         assert!(value.approx(1).is_zero());
-        assert!(negative.cached().is_none(), "retained sign needs no evaluation");
+        assert!(
+            negative.cached().is_none(),
+            "retained sign needs no evaluation"
+        );
 
         for (numerator, denominator) in [(-32, 1), (3, 2)] {
             // Bypass constructor sign analysis to exercise inconclusive facts,
@@ -4679,6 +4821,11 @@ mod tests {
     }
 
     #[test]
+    /// Construct the CDF at exact two and compare its quantile with two at
+    /// precision -120 within two units, supplying a seed derived from 1.9999_f64.
+    /// The seed is only a hint. Retained native CDF identities can recover the
+    /// rational inverse before numerical search, so this round trip does not
+    /// require Newton iteration or independently certify the CDF implementation.
     fn normal_quantile_inverts_cdf() {
         let two = Computable::rational(Rational::new(2));
         let p = two.clone().pnorm();

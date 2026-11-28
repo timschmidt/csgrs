@@ -21926,6 +21926,90 @@ temporary HTML were removed after inspection. Builds reused the roughly 6.6 GiB
 shared target with incremental compilation disabled. Repository-wide line review
 and all-configuration coverage remain unfinished.
 
+## Hyperreal large trig, distribution and expm1 fixture audit
+
+On baseline `0fc0b20bdc4a68813058e77c2d385482d6643e1f`, read every line of
+`crates/hyperreal/src/computable/node/tests.rs` from
+huge_trig_arguments_reduce_correctly through normal_quantile_inverts_cdf:
+baseline lines 4272–4689, 418 lines. Added 22 descriptions for 21 tests and
+one function-local helper. This section now spans 565 lines and ends at current
+line 4836. Continuous review through the preceding batches reaches line 4836
+of the 5347-line file; the remaining tail and enclosing module still receive
+no whole-file completion credit.
+
+Owning layer: Hyperreal native scalar regression fixtures, principally P1–P7.
+The missing acceptance witness was accurate Rustdoc for these private items.
+The domain includes finite exact large trig arguments away from poles, positive
+log/sqrt compositions, selected finite distribution values, valid endpoint
+reconstructions and expm1 on real rational grids. All 21 baseline tests passed
+with all features before editing. Reviewed constructor/kernel context includes
+large-rational pi guard scheduling, signed normal interval construction, exact
+CDF-inverse recognition, the raw positive-acos endpoint, and expm1's sign/range
+shortcuts. No executable behavior or assertion changed.
+
+The descriptions make these qualifications explicit:
+
+- Exact 2^200*pi+7/5 is compared with 7/5 through native trig constructions.
+  Stored trig literals cover 1,000,000, 10^30 and 6^(6^6). The last argument has
+  120,605 bits and exercises cache-aware reduction; the fixture does not count
+  pi evaluations or establish the single pass advertised by its name.
+- Positive logarithm identities and sqrt/exp round trips compare native samples;
+  they do not force a specific kernel or prove allocation reuse. Distribution
+  decimal references are finite rational approximants. Eight separate assertions
+  inspect exact signs for tails, signed interval differences and log quantities.
+- Reconstructed one, sqrt(2)*sqrt(2)/2, lacks a direct rational projection. A raw
+  positive-acos node samples as zero while exact_sign remains unknown and bounded
+  comparison declines, even though the inverse-trig linear helper proves zero.
+  Native acos normalization certifies zero. Reconstructed equal normal interval
+  endpoints also certify zero; reversed endpoints produce a negative signed CDF
+  difference. These are in-memory recipes, not serialized/fresh-process replay.
+- The expm1 helper covers 177 input cases and 3,648 samples: fresh result nodes
+  and forward/reverse histories over rational grids, integers through +/-10000,
+  arguments around +/-1/2 and +/-2^-512. Directed 16384-bit MPFR expm1 bounds
+  preserve tiny residuals. The original helper's final error comparisons use
+  nearest-rounded Float arithmetic, not exact rational enclosure arithmetic.
+  Shared constants can remain warm even when the result node is fresh.
+- The coarse expm1 shortcut requires negative sign evidence or evaluation of an
+  unknown input's range. Raw-node fixtures assert input-cache population where
+  evidence starts invalid; they do not perform serialization. The quantile round
+  trip supplies a seed hint but can recover a rational inverse from its retained
+  CDF construction before numerical search, so it is not a Newton-iteration test.
+
+A temporary probe on the final documented source retained the expm1 inputs,
+precision histories and directed MPFR oracle, replacing the scratch copy's final
+Float error comparisons with exact integer/rational containment checks. All 3,648
+samples enclosed the complete directed interval within one output unit. A second
+probe section held each of the three large integer angles exactly in MPFR and
+independently enclosed sine, cosine and tangent with directed rounding. All nine
+stored literals lie within one unit of those enclosures; the largest input's
+120,605-bit count was checked. These finite checks do not establish universal
+correct rounding, general reduction bounds, or accuracy of every distribution
+reference. Probe execution was externally limited to 2 GiB address space, ninety
+CPU seconds, 120 wall seconds and no core dumps; those are not production bounds.
+
+After the final source edit, locked/offline two-job focused validation passed:
+
+- All 21 selected tests with no default features and with all features; all 63
+  baseline/final logs were checked for one nonempty success each.
+- Both private library Rustdoc configurations and temporary test-enabled private
+  Rustdoc with warnings and broken/private intra-doc links denied. All 21 full
+  fixture descriptions were found in function pages; the function-local helper
+  was separately rendered and checked because ordinary Rustdoc omits it.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Scoped Rustfmt and git diff --check. Independently formatted comment-free
+  tokens are identical. Raw differences are twelve added and one removed
+  optional trailing commas. Source outside the reviewed section is byte-identical.
+
+No focused check remains blocked. Full workflows remain owner-waived for this
+docs-only session; no performance claim is made. AGENTS.md's standing public/
+private mandate remains in force. Evidence under
+`/tmp/csgrs-hyperreal-node-transcendental-fixtures-audit/` retains command logs,
+probe sources and item/render/token inventories. Owned shadow sources, temporary
+HTML and compiled probe artifacts were removed after inspection. Builds reused
+the roughly 6.6 GiB shared target with incremental compilation disabled.
+Repository-wide line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
