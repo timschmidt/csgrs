@@ -25295,6 +25295,128 @@ disabled. AGENTS.md already retains the 100% public/private/generated coverage
 mandate. Remaining aggregate sections, generated-item coverage and the complete
 repository line review remain unfinished.
 
+## Projective normalization and native-word arithmetic batch (partial file)
+
+Reviewed every line of
+crates/hyperreal/src/rational/arithmetic/aggregate_products.rs baseline lines
+1971–2687 at a795beb81, now lines 1971–2865. The whole file grows from 5,854
+to 6,032 lines. This is partial-file credit, following the earlier carrier and
+GCD sections; the remaining quotient and aggregate implementations are pending.
+
+Owner: Hyperreal exact rational normalization, integer polynomial evaluation
+and native-word arithmetic schedules. Relevant properties are P1/P3 (exact
+values and justified reduced-state claims), P4/P10 (cache observation, ordered
+schedules and tracing), P5/P6 (native eligibility versus resources/failure) and
+P37. Inputs include valid stored unreduced rationals, finite coefficient
+iterators, nonempty denominator sets, positive private denominator triples,
+caller-proved coprime word parts and correctly signed product terms. Missing
+private and function-local documentation, a positive-versus-nonnegative GCD
+claim and undocumented preconditions supplied the documentation witnesses.
+
+There are 27 descriptions: 21 associated methods, five function-local helpers
+and their local tuple alias. Context review includes verified fraction/word
+kernels, Real polynomial/normalization/axis wrappers, Hypermesh projective plane
+construction, Hypersolve integer-polynomial consumers and existing acceptance
+witnesses. These reads do not credit the larger context files as fully reviewed.
+
+Findings and clarified contracts:
+
+- Denominator clearing uses the LCM of stored positive denominators without
+  canonicalizing input caches. Valid lazy parts preserve one exact positive
+  shared scale, although it need not be minimal for the reduced values. The
+  public slice path preserves empty input; the private fixed-array path requires
+  N > 0 and panics for an empty array. The underlying empty-slice helper also
+  panics. These are reproduced current behaviors, not newly approved failures.
+- Primitive tuples divide cleared integer components by their common magnitude
+  GCD, preserving orientation rather than forcing a positive leading component.
+  Empty/all-zero tuples retain their shape; one live fixed-array component
+  becomes its signed unit without an LCM. The BigInt slice path instead performs
+  LCM/content work on every nonempty input. Their traces differ: fixed-array
+  normalization reports the final content-division path only when reached,
+  whereas the BigInt routine reports every nonempty call.
+- Numerator-content queries canonicalize both operands and ignore denominator
+  and sign afterward. Their result is nonnegative, including gcd(0,0)=0.
+  Dyadic difference analysis canonicalizes, aligns and cancels powers of two
+  without installing retained linear relations; this does not mean it avoids
+  canonical-cache observation or wide temporary allocation.
+- Integer Horner evaluation consumes and canonicalizes the complete finite
+  coefficient iterator before degree/zero-argument shortcuts. A later producer
+  panic remains observable even at argument zero. The maintained suffix is
+  numerator/(D*denominator_power); zero suffixes reset denominator dependence.
+  Nonzero noninteger output can retain an internally unreduced exact ratio.
+  Iterator termination, coefficient growth and allocations have no total bound.
+- Word reduction checks neither a positive denominator nor every reduced-state
+  invariant at its entry. Equal totals can mask an invalid zero denominator;
+  an unequal invalid call reproduces a panic. A fabricated noncoprime (6,4)
+  pair passed to from_reduced_word_parts remains stored as 6/4 while marked
+  reduced. This is an invalid private call, not a valid-input counterexample;
+  the constructor requires a caller's coprimality proof.
+- Direct product accumulation tries checked prefix multiplication before a
+  whole-term cross-cancellation retry on overflow. Overwide part conversion
+  declines directly. A zero product can decline because earlier prefixes or
+  another stored part exceed the native tier. Signed sums also bound positive
+  and negative subtotals separately, so cancellation does not rescue an
+  overflowing subtotal. None is schedule ineligibility, not mathematical
+  impossibility or exhausted resources; existing general fallbacks remain.
+- The dominant-axis path computes exact reduced magnitudes of (b-a) cross
+  (c-a), retaining the lowest axis index on ties. It can decline either for
+  collinearity or native ineligibility, so None alone proves neither geometric
+  condition. The path does not canonicalize caches or construct temporary
+  Rational values. Its local alias/helpers now state tuple order, signs,
+  denominator assumptions, index bounds and overflow behavior explicitly.
+- Checked shifts reject shifts at least 128 even for zero. The scaled-dyadic
+  helper assumes a power-of-two denominator, removes the caller's shared scale
+  and returns an integer triple. An invalid denominator three passes its
+  unchecked trailing-zero interpretation, demonstrating why that precondition
+  cannot be inferred from the result. No new representation support is claimed.
+
+Executed after the final source edit:
+
+- Locked/offline focused Hyperreal library checks pass: thirteen executions with
+  no default features and fourteen with all features. They cover normalization,
+  numerator queries, native cancellation, reduction trace shapes, word overflow
+  fallback, dominant axes, rational power-sum evaluation and cancelled Horner
+  suffixes, including existing GMP expectations. The trace-only test has zero
+  matches without its feature and is not counted as an executed test there.
+- Both-mode private cargo doc builds pass with warnings and broken/private
+  intra-doc links denied. All 21 ordinary descriptions and method anchors are
+  present. Five local helpers and their alias are omitted from normal Rustdoc
+  item pages; their exact declarations/bodies were additionally rendered in a
+  temporary child module in the copied original crate's private context.
+  This supplemental check caught a bracketed-formula link error invisible to
+  the normal private build; corrected markup then passed. All six full local
+  descriptions are present in the supplemental pages. No doctests were added;
+  zero-match doctest runs do not establish coverage.
+- Four no-default-feature Hypersolve tests pass: three scaled integer
+  interpolation cases and primitive integer polynomial GCD without rational
+  coefficient growth. They cover selected normalization consumers, not the
+  entire downstream geometry/solver or policy matrix.
+- An isolated private probe yields 889 byte-identical before/final records:
+  210 stored/canonical projective tuples, 308 numerator queries, 41 polynomials,
+  144 word reductions, four product schedules, 24 signed sums, 122 axis cases,
+  twenty checked shifts, fifteen shared-scale conversions and one deliberately
+  invalid coprimality call. Full trace snapshots for 210 projective, forty
+  polynomial and 144 word-reduction cases also agree before/after.
+- Independent Python integers/Fraction expectations check stored LCMs, common
+  scaling and primitive content, reduced numerator GCDs, dyadic differences,
+  polynomial power sums, word reduction, signed sums and product values,
+  determinant axis/sign with exact ties, and shift/scale eligibility. Two zero
+  product declines remain separately reported rather than counted as native
+  completion. Private panic/invalid-invariant probes confirm documentation;
+  they do not authorize weakening the normative failure or evidence contract.
+- Noncomment tokens are identical, with no doc(hidden) or signature change.
+  Declaration/render inventory and git diff --check pass. Full workflows,
+  formatting, performance measurements and formal verification remain
+  owner-waived for this docs-only session. Existing assertions are unchanged.
+
+Evidence and repeatable scripts remain under
+/tmp/csgrs-hyperreal-projective-word-audit/. The temporary source copy, executable
+and duplicate documentation tree are removed after checking; six supplemental
+item pages, logs and scripts remain and record JSON is compressed. Shared Cargo
+output is reused with incremental compilation disabled. AGENTS.md already
+retains the 100% public/private/generated Rustdoc mandate. Whole-file completion,
+generated-item coverage and the repository-wide line review remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

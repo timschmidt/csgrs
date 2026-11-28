@@ -1968,13 +1968,15 @@ impl Rational {
         )
     }
 
-    /// Multiply a set of rationals by one positive common denominator.
+    /// Scale a rational slice by the positive LCM of its stored denominators.
     ///
-    /// Every returned value is an integer and the same positive scale is
-    /// applied to every input. This is useful for projective coordinates and
-    /// polynomial coefficients whose common nonzero scale is immaterial.
-    ///
-    /// An empty input produces an empty output.
+    /// Every output is an exact integer and all inputs receive the same scale,
+    /// preserving projective coordinates or polynomial zero sets. Internally
+    /// unreduced inputs are supported without canonicalizing their caches; the
+    /// stored LCM need not be minimal for the reduced values. Empty input returns
+    /// an empty vector before denominator work or tracing. Nonempty inputs emit
+    /// the clearing trace. Big integers and the result vector allocate without a
+    /// total-work, memory or cancellation budget.
     pub fn clear_common_denominator_slice(values: &[&Self]) -> Vec<Self> {
         if values.is_empty() {
             return Vec::new();
@@ -1993,13 +1995,13 @@ impl Rational {
             .collect()
     }
 
-    /// Returns the positive integer greatest common divisor of the reduced
-    /// numerator magnitudes of two rationals.
+    /// Return the nonnegative integer GCD of the two reduced numerator magnitudes.
     ///
-    /// Denominators and signs deliberately do not participate. This exposes
-    /// the reusable integer content needed to schedule projective and affine
-    /// exact-coordinate normalization without cloning numerator internals in
-    /// downstream geometry crates. Zero is the identity, as for integer GCD.
+    /// Canonicalize each operand first, then ignore its sign and denominator.
+    /// Zero is the identity and two zeros return zero, not a positive integer.
+    /// Projective and affine consumers can reuse this integer content without
+    /// owning a second GCD backend. Canonicalization can warm caches; reduction
+    /// and result construction can allocate without a total resource budget.
     pub fn numerator_magnitude_gcd(&self, other: &Self) -> Self {
         let left = self.canonicalized_ref();
         let right = other.canonicalized_ref();
@@ -2009,13 +2011,14 @@ impl Rational {
         ))
     }
 
-    /// Returns the reduced unsigned numerator magnitude of `self - other`
-    /// when both operands are exact dyadics.
+    /// Return the reduced unsigned numerator of a difference of exact dyadics.
     ///
-    /// This structural query deliberately bypasses retained linear-result
-    /// scheduling. It is intended for one-shot representation analysis where
-    /// populating an operand's bounded arithmetic cache would displace work
-    /// that a subsequent numeric kernel actually reuses.
+    /// Canonicalize both operands, require power-of-two denominators, align signed
+    /// magnitudes and cancel powers of two from their absolute difference. Equal
+    /// values return integer zero. None means a nondyadic operand or a shift that
+    /// does not fit usize, not exhausted resources or an undecided numerical value.
+    /// This avoids installing retained linear-result relations, but can still warm
+    /// canonical caches and allocate wide magnitudes without a work/memory budget.
     pub fn dyadic_difference_numerator_magnitude(&self, other: &Self) -> Option<Self> {
         let left = self.canonicalized_ref();
         let right = other.canonicalized_ref();
@@ -2047,13 +2050,18 @@ impl Rational {
         Some(Self::from_unsigned_integer(magnitude))
     }
 
-    /// Normalize a fixed exact-rational ratio to primitive integer components.
+    /// Scale a fixed rational tuple to signed primitive integer components.
     ///
-    /// The returned array differs from the input by one positive common
-    /// scale: denominators are cleared and the greatest common magnitude of
-    /// all nonzero integer components is removed. Empty and all-zero inputs
-    /// preserve their shape; a single nonzero component becomes its signed
-    /// unit without allocating a common denominator.
+    /// Use one positive scale: clear stored denominators, then divide every integer
+    /// by the common magnitude GCD. This preserves orientation and projective
+    /// meaning; it does not force the first nonzero component positive. Empty and
+    /// all-zero arrays preserve shape. A lone nonzero component becomes its signed
+    /// unit without constructing a common denominator. Valid internally unreduced
+    /// inputs are supported without requiring canonicalization first.
+    ///
+    /// Multiple-component arithmetic and output handles can allocate without a
+    /// resource budget. The primitive-integer-ratio trace is emitted only when the
+    /// final content-division loop runs, not on every successful normalization.
     pub fn primitive_integer_ratio<const N: usize>(values: [&Self; N]) -> [Self; N] {
         let mut single = None;
         let mut multiple = false;
@@ -2114,12 +2122,17 @@ impl Rational {
         integers
     }
 
-    /// Normalize an exact-rational ratio directly to primitive big integers.
+    /// Normalize a rational slice directly to primitive signed BigInt components.
     ///
-    /// This has the same positive projective scale as
-    /// [`Self::primitive_integer_ratio`], but avoids constructing temporary
-    /// [`Rational`] wrappers when an integer polynomial or elimination kernel
-    /// immediately needs mutable [`BigInt`] coefficients.
+    /// The positive shared scaling has the same mathematical result as
+    /// [`Self::primitive_integer_ratio`], preserving zero slots and sign orientation.
+    /// Unlike that fixed-array routine, a lone nonzero entry still goes through
+    /// stored-denominator clearing and content computation. Empty input returns
+    /// before work or tracing; every nonempty input emits this routine's trace.
+    ///
+    /// Stored unreduced parts are supported without warming canonical caches.
+    /// Temporary integers and the vector allocate without a total-work, memory or
+    /// cancellation budget; avoiding Rational wrappers does not make this allocation-free.
     pub fn primitive_bigint_ratio(values: &[&Self]) -> Vec<BigInt> {
         if values.is_empty() {
             return Vec::new();
@@ -2163,11 +2176,14 @@ impl Rational {
         integers
     }
 
-    /// Multiply a fixed set of rationals by one positive common denominator.
+    /// Scale a nonempty fixed tuple by the LCM of its stored denominators.
     ///
-    /// Vector normalization is invariant under this shared scale. Clearing it
-    /// before the self-dot prevents the common denominator from passing through
-    /// square extraction, reciprocal construction, and every output lane.
+    /// All outputs are exact integers under one positive scale, which vector
+    /// normalization can remove before self-dot and square-root work. No canonical
+    /// cache observation is required, including for internally unreduced inputs.
+    /// Requires N > 0: unlike the slice entry, an empty array reaches the helper's
+    /// nonempty assertion/indexing and panics. This routine always emits its clearing
+    /// trace after LCM construction; wide arithmetic has no resource budget.
     pub(crate) fn clear_common_denominator<const N: usize>(values: [&Self; N]) -> [Self; N] {
         let common_denominator = Self::common_denominator(&values);
 
@@ -2182,7 +2198,21 @@ impl Rational {
         })
     }
 
-    /// Evaluate constant-first coefficients without reducing each Horner step.
+    /// Evaluate a finite constant-first rational polynomial using integer Horner steps.
+    ///
+    /// Collect and canonicalize the entire coefficient iterator before selecting
+    /// the last nonzero coefficient. Empty/all-zero polynomials yield zero; a
+    /// constant or zero argument returns the canonical constant coefficient. The
+    /// iterator is still consumed in those cases, so it must terminate and its
+    /// later panics remain observable.
+    ///
+    /// For remaining inputs, clear coefficient denominators by D and maintain the
+    /// suffix as numerator/(D*denominator_power) while multiplying by argument p/q.
+    /// A zero suffix resets the denominator power before continuing. Only this
+    /// Horner path emits the homogeneous-integer-horner trace. Nonzero noninteger
+    /// output retains an exact internally unreduced ratio for later observation;
+    /// integer and zero outputs use their direct constructors. Allocation and
+    /// coefficient/power growth have no total-work or cancellation budget.
     pub(crate) fn eval_polynomial<'a>(
         coefficients: impl Iterator<Item = &'a Self>,
         argument: &Self,
@@ -2242,6 +2272,14 @@ impl Rational {
         Self::from_parts_raw_unreduced(sign, numerator, denominator)
     }
 
+    /// Compute the positive LCM of stored denominators in a nonempty rational slice.
+    ///
+    /// Return the shared denominator if all agree; otherwise use the largest power
+    /// of two when every denominator is dyadic, then an ordered GCD/LCM fold for
+    /// the general case. This reads stored parts without canonicalization, so the
+    /// result can exceed the minimal denominator of reduced values. Positive input
+    /// denominators are a Rational invariant. Empty input panics: the debug guard
+    /// is followed by paths that index the first element. Wide work is unbudgeted.
     fn common_denominator(values: &[&Self]) -> BigUint {
         debug_assert!(!values.is_empty());
         if values
@@ -2270,6 +2308,18 @@ impl Rational {
         }
     }
 
+    /// Reduce (positive - negative)/denominator and select an exact Rational result.
+    ///
+    /// Requires a positive denominator. Equal totals return zero and trace it
+    /// before checking that precondition; an invalid zero denominator can therefore
+    /// be masked by cancellation, while other invalid calls can panic. Dyadic
+    /// reduction cancels powers of two; a power-of-five odd part uses direct factor
+    /// cancellation. Other denominators use the shared verified fraction reducer.
+    /// Their three/seven/smooth/size classifications only label traces.
+    ///
+    /// The reduced nonzero result then uses the canonical word constructor and its
+    /// cache schedule. Word arithmetic is bounded, but constructing a Rational can
+    /// allocate. This private routine does not return typed validation failures.
     fn from_word_magnitude_difference(
         positive: u128,
         negative: u128,
@@ -2328,6 +2378,14 @@ impl Rational {
         Self::from_reduced_word_parts(sign, magnitude, denominator)
     }
 
+    /// Construct a nonzero Rational from caller-proved reduced native parts.
+    ///
+    /// Requires nonzero sign/magnitude, positive denominator and coprimality. Debug
+    /// assertions check only the first three; no GCD proves the last. Units, small
+    /// integers, small dyadics and small general fractions try shared cached values
+    /// in that order before allocating raw BigUint parts. Traces report the chosen
+    /// result class. Passing noncoprime unequal parts can publish storage marked
+    /// reduced despite violating its invariant; this is not a normalizing constructor.
     fn from_reduced_word_parts(sign: Sign, magnitude: u128, denominator: u128) -> Self {
         debug_assert_ne!(sign, NoSign);
         debug_assert_ne!(magnitude, 0);
@@ -2382,6 +2440,11 @@ impl Rational {
         )
     }
 
+    /// Convert an exact u128 magnitude to BigUint using a u64 value when it fits.
+    ///
+    /// Zero is supported. Both branches preserve the integer exactly; the narrower
+    /// branch selects the corresponding From implementation, not a different
+    /// arithmetic result or a guaranteed allocation-free path.
     #[inline]
     fn biguint_from_word(value: u128) -> BigUint {
         if let Ok(value) = u64::try_from(value) {
@@ -2391,6 +2454,15 @@ impl Rational {
         }
     }
 
+    /// Attempt the unsigned magnitude/denominator product of stored rational factors.
+    ///
+    /// Signs are handled by the caller. Each stored part must fit u128; checked
+    /// prefix products are tried first without cross-cancellation. A product overflow
+    /// restarts the complete term through pairwise cancellation, but a part too wide
+    /// to convert returns None directly. The successful direct pair need not be
+    /// reduced. Empty factors give (1,1). A later zero does not bypass earlier
+    /// conversion or prefix bounds; None means schedule ineligibility, not proof
+    /// that the final exact product is too large.
     fn product_term_words<const FACTORS: usize>(
         term: [&Self; FACTORS],
     ) -> Option<(u128, u128)> {
@@ -2411,6 +2483,14 @@ impl Rational {
         Some((magnitude, denominator))
     }
 
+    /// Attempt a native unsigned product after numerator-major cross-cancellation.
+    ///
+    /// First convert every stored numerator and positive denominator to u128, then
+    /// delegate cancellation and checked prefix multiplication to the shared
+    /// verified kernel. Signs do not participate. Empty input gives (1,1); a zero
+    /// factor can still arrive after an overflowing multiplication prefix. None
+    /// means conversion/prefix ineligibility, not resource exhaustion. Const-sized
+    /// arrays use stack space proportional to FACTORS with no practical stack cap.
     fn product_term_words_cross_cancelled<const FACTORS: usize>(
         term: [&Self; FACTORS],
     ) -> Option<(u128, u128)> {
@@ -2424,6 +2504,13 @@ impl Rational {
         crate::verified::fraction::cross_cancelled_product(numerators, denominators)
     }
 
+    /// Attempt an exact rational sum from caller-supplied signed product terms.
+    ///
+    /// The signs must already include every factor sign and term polarity; NoSign
+    /// terms are ignored. Checked totals share a native denominator, then their
+    /// difference is reduced by the word-result constructor. None is a native
+    /// schedule decline, including intermediate overflow despite a small final
+    /// answer. Construction can allocate; no approximate result is substituted.
     fn signed_product_sum_words<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
@@ -2437,6 +2524,17 @@ impl Rational {
         ))
     }
 
+    /// Accumulate separate nonnegative word totals over one positive common denominator.
+    ///
+    /// The supplied signs define active terms and must include factor signs. Ignore
+    /// NoSign terms without inspecting their factors, form unsigned product pairs,
+    /// then build their denominator LCM and align each magnitude. Positive and
+    /// negative totals are checked separately, so cancellation does not rescue an
+    /// overflowing subtotal. Empty/all-inactive input returns (0,0,1).
+    ///
+    /// None reports conversion or intermediate native overflow, not a mathematical
+    /// no-solution or total-resource outcome. Stored positive denominators are
+    /// required; arrays use stack storage proportional to TERMS.
     fn signed_product_sum_word_totals<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
@@ -2481,13 +2579,35 @@ impl Rational {
         Some((positive, negative, common_denominator))
     }
 
+    /// Attempt the largest-magnitude axis and sign of (b-a) cross (c-a).
+    ///
+    /// Read stored rational parts into words, reduce coordinate differences, compute
+    /// three signed determinant components and compare their reduced magnitudes.
+    /// Exact ties retain the lowest axis index (x, then y, then z). A zero cross
+    /// product returns None, as does any input/intermediate word ineligibility, so
+    /// None does not itself prove collinearity. Success gives an exact component
+    /// sign, not a unit normal or normalized vector.
+    ///
+    /// This path does not canonicalize caches or allocate Rational temporaries.
+    /// It trusts positive stored denominators and consistent signs; differently
+    /// stored equal rationals can have different native eligibility.
     pub(crate) fn dominant_affine_cross_axis_words(
         a: [&Self; 3],
         b: [&Self; 3],
         c: [&Self; 3],
     ) -> Option<(usize, Sign)> {
+        /// Stored signed rational parts for the local checked determinant calculation.
+        ///
+        /// The tuple is (sign, unsigned magnitude, positive denominator). Raw input
+        /// pairs need not be coprime; difference/reduction helpers establish reduced
+        /// nonzero outputs, and canonical zero is (NoSign,0,1).
         type Word = (Sign, u128, u128);
 
+        /// Convert three stored coordinate pairs to native parts without canonicalization.
+        ///
+        /// Preserve signs and denominators verbatim; any magnitude/denominator wider
+        /// than u128 returns None. Rational invariants supply consistent signs and
+        /// positive denominators.
         fn words(values: [&Rational; 3]) -> Option<[Word; 3]> {
             let word = |value: &Rational| {
                 Some((
@@ -2499,6 +2619,12 @@ impl Rational {
             Some([word(values[0])?, word(values[1])?, word(values[2])?])
         }
 
+        /// Compute a reduced signed difference of two native rational triples.
+        ///
+        /// Align by a checked denominator LCM, subtract through signed_word_sum and
+        /// reduce the nonzero result with the verified fraction kernel. Exact zero
+        /// uses (NoSign,0,1). Native alignment or signed-sum overflow returns None;
+        /// positive denominators and consistent input signs are assumed.
         fn difference(left: Word, right: Word) -> Option<Word> {
             let (left_scale, right_scale, denominator) = if left.2 == right.2 {
                 (1, 1, left.2)
@@ -2517,6 +2643,12 @@ impl Rational {
             Some((sign, magnitude, denominator))
         }
 
+        /// Form separate positive/negative totals for one cross-product component.
+        ///
+        /// Compute `ab[first]*ac[second] - ab[second]*ac[first]`, align the two unsigned
+        /// product pairs and retain their common denominator without final reduction.
+        /// Indices must be below three or array access panics. Product, alignment or
+        /// subtotal overflow returns None even when the final difference is small.
         fn component(ab: [Word; 3], ac: [Word; 3], first: usize, second: usize) -> Option<(u128, u128, u128)> {
             let products = [
                 Rational::word_product(ab[first], ac[second], true)?,
@@ -2543,6 +2675,11 @@ impl Rational {
             Some((positive, negative, common_denominator))
         }
 
+        /// Reduce the absolute difference of two word totals and retain its sign.
+        ///
+        /// A positive denominator is required. Equal totals produce (0,1,NoSign);
+        /// otherwise the verified fraction reducer returns coprime magnitude and
+        /// denominator followed by the original difference sign.
         fn reduced_magnitude(parts: (u128, u128, u128)) -> (u128, u128, Sign) {
             let (positive, negative, denominator) = parts;
             let (magnitude, sign) = match positive.cmp(&negative) {
@@ -2554,6 +2691,12 @@ impl Rational {
             (magnitude, denominator, sign)
         }
 
+        /// Compare two nonnegative native rational magnitudes exactly when alignment fits.
+        ///
+        /// Equal denominators compare numerators directly. Otherwise divide denominator
+        /// scales by their GCD before checked cross-products; overflow returns None,
+        /// not an approximate order. Denominators must be positive. No reduction or
+        /// heap allocation is performed.
         fn compare_magnitudes(left: (u128, u128), right: (u128, u128)) -> Option<Ordering> {
             if left.1 == right.1 {
                 return Some(left.0.cmp(&right.0));
@@ -2595,6 +2738,13 @@ impl Rational {
         (components[axis].2 != NoSign).then_some((axis, components[axis].2))
     }
 
+    /// Attempt the sum of two signed rational product triples in native words.
+    ///
+    /// NoSign terms are skipped before denominator access; two inactive terms
+    /// return zero. Active terms require positive denominators and consistent
+    /// magnitudes. Build a checked LCM, align and separately add positive/negative
+    /// totals, then reduce their difference. None means intermediate native
+    /// ineligibility; an exact result may still fit after cancellation.
     fn two_product_word_sum(
         first: (Sign, u128, u128),
         second: (Sign, u128, u128),
@@ -2629,6 +2779,13 @@ impl Rational {
         ))
     }
 
+    /// Multiply two unsigned rational word pairs and combine signs with a term polarity.
+    ///
+    /// A false polarity negates the product. NoSign short-circuits to (NoSign,0,1)
+    /// before multiplication or denominator validation. Otherwise numerator and
+    /// denominator products are checked independently, without cross-cancellation;
+    /// overflow returns None. The result need not be reduced, and valid active
+    /// inputs require positive denominators and consistent signs.
     fn word_product(
         left: (Sign, u128, u128),
         right: (Sign, u128, u128),
@@ -2645,6 +2802,12 @@ impl Rational {
         ))
     }
 
+    /// Add two signed native magnitudes without a denominator or allocation.
+    ///
+    /// NoSign passes the other pair through verbatim, so callers must keep inactive
+    /// payloads consistent. Active pairs use the verified signed-add kernel: zero
+    /// is canonicalized to NoSign, and equal-sign overflow returns None. Opposite
+    /// signs use an exact magnitude difference fitting the word.
     fn signed_word_sum(first: (Sign, u128), second: (Sign, u128)) -> Option<(Sign, u128)> {
         match (first.0, second.0) {
             (NoSign, _) => Some(second),
@@ -2668,11 +2831,26 @@ impl Rational {
         }
     }
 
+    /// Attempt exact multiplication by 2^shift through the verified word kernel.
+    ///
+    /// Return None for shift >= 128, including value zero, or for magnitude overflow.
+    /// A smaller fitting shift succeeds without allocation. This is a native-width
+    /// eligibility check, not a total work bound or a saturating operation.
     #[inline]
     fn checked_word_shift_left(value: u128, shift: u32) -> Option<u128> {
         crate::verified::word::checked_shift_left(value, shift)
     }
 
+    /// Convert a dyadic word triple to an integer numerator at a common binary scale.
+    ///
+    /// Requires a positive power-of-two denominator and common_shift at least its
+    /// exponent. Multiply the numerator by the remaining power of two and return
+    /// (sign, aligned_magnitude, 1). The discarded common denominator belongs to
+    /// the caller's shared scale; this triple alone is not the original fraction.
+    ///
+    /// A smaller common shift or checked-shift ineligibility returns None, even for
+    /// zero at a shift of at least 128. The helper only counts denominator trailing
+    /// zeros; a non-power-of-two denominator violates an unchecked precondition.
     fn scaled_dyadic_word_part(
         part: (Sign, u128, u128),
         common_shift: u32,
