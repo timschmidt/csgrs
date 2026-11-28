@@ -39,8 +39,8 @@ const NO_GMP_ANALOG: &[&str] = &[
     // even when its result is cached. GMP has no corresponding work receipt.
     // tests/reduction_input_bits.rs covers reduced, deferred and warm storage.
     "reduction_input_bits",
-    // Hidden magnitude probes exist only for internal algorithm crossover
-    // benchmarks; they are not part of the rational numeric API.
+    // Magnitude probes expose internal algorithm crossover workloads, which
+    // this catalogue classifies separately from the rational numeric API.
     "gcd_magnitudes",
     "gcd_magnitudes_half_gcd_candidate",
     "gcd_magnitudes_lehmer_baseline",

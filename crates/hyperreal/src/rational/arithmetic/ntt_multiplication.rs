@@ -1,8 +1,41 @@
+/// Exact integer multiplication candidate using modular transforms and CRT.
+///
+/// Split nonnegative magnitudes into little-endian base-2^15 digits. Zero-padded
+/// radix-two transforms compute their convolution under two primes; Chinese
+/// remainder reconstruction is unique because every integer coefficient is below
+/// the product of those primes. Base-2^15 carry propagation then materializes the
+/// exact BigUint product. No floating-point FFT or approximate reconstruction is
+/// used, and no GMP representation is introduced.
+///
+/// This family is invoked directly by benchmarks/tests, not by the production
+/// Toom/backend selector. It limits transform length to 2^23 and asserts the CRT
+/// coefficient bound. Those checks panic rather than return typed exhaustion;
+/// digit conversion precedes them, and there is no total-work/memory budget or
+/// cancellation. The helpers rely on explicit transform/digit preconditions.
 impl Rational {
+    /// Bits per convolution digit: 15, giving base 32768.
+    ///
+    /// This keeps coefficient growth below the two-prime CRT range at admitted
+    /// transform lengths and allows packing through a u64 accumulator.
     const NTT_DIGIT_BITS: u32 = 15;
+    /// Low-15-bit mask used for digit extraction and carry reduction modulo 32768.
     const NTT_DIGIT_MASK: u64 = (1_u64 << Self::NTT_DIGIT_BITS) - 1;
+    /// Two (prime modulus, primitive root) pairs for exact radix-two transforms.
+    ///
+    /// 2013265921=15*2^27+1 has root 31; 998244353=119*2^23+1 has root 3.
+    /// Their common power-of-two transform capacity is 2^23. Reduced residue products
+    /// fit u64, while CRT reconstruction uses u128. The modulus product is
+    /// 2009731336725594113; primality/root order are assumptions of the transform,
+    /// not checked during each multiplication.
     const NTT_MODULI: [(u64, u64); 2] = [(2_013_265_921, 31), (998_244_353, 3)];
 
+    /// Compute a modular power by binary square-and-multiply using u64 products.
+    ///
+    /// Callers supply a positive prime modulus and reduced values small enough that
+    /// products fit u64. The initial value is not reduced or validated. Exponent zero
+    /// returns the literal 1 without applying the modulus; with a positive exponent,
+    /// modulus zero panics and oversized values can overflow before reduction. The
+    /// NTT constants keep all consumed products in range. No primality test is made.
     fn ntt_mod_pow(mut value: u64, mut exponent: u64, modulus: u64) -> u64 {
         let mut result = 1_u64;
         while exponent != 0 {
@@ -15,6 +48,19 @@ impl Rational {
         result
     }
 
+    /// Replace residues in place with a radix-two transform or its normalized inverse.
+    ///
+    /// For a nonempty slice, require power-of-two length dividing modulus-1, a prime
+    /// modulus, a primitive root, and entries reduced below the modulus. Residue
+    /// products/sums must fit u64. Bit reversal precedes iterative butterfly stages;
+    /// the forward transform uses positive root powers. The inverse uses reciprocal
+    /// stage roots and multiplies by length^(modulus-2) modulo the prime.
+    ///
+    /// These preconditions are not validated. Bad lengths/roots can yield incorrect
+    /// results, and arbitrary inputs can panic or overflow; an empty slice is a no-op
+    /// under the valid modulus assumptions, not a validated transform. Supplied NTT
+    /// primes and caller lengths <=2^23 satisfy the intended arithmetic/width bounds.
+    /// No allocation occurs here, but work is O(n log n) without cancellation.
     fn ntt_transform(values: &mut [u64], inverse: bool, modulus: u64, primitive_root: u64) {
         let mut target = 0_usize;
         for index in 1..values.len() {
@@ -72,6 +118,13 @@ impl Rational {
         }
     }
 
+    /// Convert a magnitude to canonical little-endian base-32768 convolution digits.
+    ///
+    /// Pack its little-endian u32 limbs through a u64 accumulator, emit 15-bit chunks,
+    /// then discard high zero digits. Zero becomes an empty vector. The pending-bit
+    /// count stays below 15 before adding each limb, so the accumulator fits. Both the
+    /// limb copy and output vector allocate; bit-width conversion expects the width to fit usize.
+    /// This helper runs before the multiplication kernel checks transform capacity.
     fn ntt_digits(value: &BigUint) -> Vec<u32> {
         let mut digits = Vec::with_capacity(
             usize::try_from(value.bits())
@@ -98,6 +151,16 @@ impl Rational {
         digits
     }
 
+    /// Return a length-sized modular convolution using two forward transforms and one inverse.
+    ///
+    /// Copy input digits into separate zero-padded u64 vectors, multiply transformed
+    /// residues pointwise, and inverse-transform the first buffer. Require the transform
+    /// preconditions, digits reduced below the prime and length >= each input length.
+    /// Too-short buffers panic while slicing. To obtain a linear rather than cyclic
+    /// convolution, nonempty inputs additionally require length >= left.len()+right.len()-1.
+    /// Padding is retained in the returned vector; the kernel consumes only real
+    /// coefficient positions. Two length-sized residue buffers are allocated per call;
+    /// there is no separate total-memory/work limit or validation of the field inputs.
     fn ntt_convolution_mod(
         left: &[u32],
         right: &[u32],
@@ -124,6 +187,13 @@ impl Rational {
         left_values
     }
 
+    /// Pack little-endian base-32768 digits into u32 limbs and construct a BigUint.
+    ///
+    /// Each digit must be below 32768; no range check is performed. The accumulator
+    /// uses bitwise OR, so oversized digits may overlap rather than propagate carries
+    /// and are not a supported alternative representation. Empty/all-zero input gives
+    /// zero, and high zero limbs are normalized by BigUint. Packing allocates a limb
+    /// vector and supports only finite input iterators; no input-length limit is applied.
     fn ntt_digits_to_biguint(digits: impl IntoIterator<Item = u32>) -> BigUint {
         let mut limbs = Vec::new();
         let mut accumulator = 0_u64;
@@ -143,8 +213,19 @@ impl Rational {
         BigUint::new(limbs)
     }
 
-    /// Exact Rust-native FFT-family candidate using two NTT primes and CRT.
-    #[doc(hidden)]
+    /// Benchmark an exact two-prime NTT product of nonnegative integer magnitudes.
+    ///
+    /// Zero operands return zero. Otherwise the next power of two covering the two
+    /// base-32768 digit lengths minus one must be <=2^23; exceeding that capacity or
+    /// the CRT coefficient bound panics. Input-digit allocation occurs before these
+    /// checks. Integer size conversions and allocation can also fail; there is no
+    /// typed exhaustion, total-work/memory budget or cancellation interface.
+    ///
+    /// With dispatch-trace recording active, the wrapper records
+    /// rational_algorithm/multiplication-candidate/rust-native-ntt-crt even for zero.
+    /// It bypasses the production multiplication selector and always invokes this
+    /// candidate. Successful output is fully materialized and exact; no numerical
+    /// precision parameter, floating-point transform or retained recipe is involved.
     pub fn multiply_magnitudes_ntt_candidate(left: &BigUint, right: &BigUint) -> BigUint {
         #[cfg(feature = "dispatch-trace")]
         crate::trace_dispatch!(
@@ -155,6 +236,24 @@ impl Rational {
         Self::multiply_magnitudes_ntt(left, right)
     }
 
+    /// Materialize an exact product by two modular convolutions and bounded CRT lifting.
+    ///
+    /// Handle zero first, then convert both operands to digits. Let c=a.len()+b.len()-1
+    /// and n=next_power_of_two(c). Assert n<=2^23 and
+    /// 32767^2*min(a.len(),b.len()) < p1*p2 before allocating transform buffers.
+    /// Length arithmetic and conversions are unchecked or expect-based; these are
+    /// panic guards after input conversion, not typed resource admission.
+    ///
+    /// For residues r1,r2, compute t=(r2-r1)*inverse(p1) mod p2 and lift to
+    /// r1+p1*t in [0,p1*p2). The asserted bound makes this the unique nonnegative
+    /// integer convolution coefficient. Add the carried high bits, emit the low
+    /// 15 bits, and propagate the remaining carry; pack the final digits as BigUint.
+    /// With admitted lengths, min(a.len(),b.len())<=4194304, giving a coefficient
+    /// bound of 4503324753657856, below the CRT product and well within u128.
+    ///
+    /// The first residue vector remains live during the second convolution; both
+    /// full padded results are retained until reconstruction ends. No explicit memory
+    /// accounting, cancellation or trace event is provided by this private kernel.
     fn multiply_magnitudes_ntt(left: &BigUint, right: &BigUint) -> BigUint {
         if left.is_zero() || right.is_zero() {
             return BigUint::ZERO;

@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs` | Entire transform, digit packing, convolution and CRT kernel reviewed; all helper preconditions, exactness argument and panic/resource limits documented. | All 11 blocks render; both-mode private docs/tests, public visibility, prime/root/bound checks and 329 independent expectations pass. See NTT multiplication batch. |
 | `crates/hyperreal/src/rational/arithmetic/toom4_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
 | `crates/hyperreal/src/rational/arithmetic/toom6_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
 | `crates/hyperreal/src/rational/arithmetic/toom8_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
@@ -23850,6 +23851,114 @@ logs and source snapshots are retained. Shared Cargo output is reused with
 incremental compilation disabled. AGENTS.md retains the future-agent 100%
 public/private/generated coverage mandate. Whole-repository line review and
 full Rustdoc coverage remain unfinished.
+
+## Hyperreal NTT multiplication documentation batch
+
+Reviewed every line of the 212-line baseline
+crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs at 5b5c23b63.
+The final file has 311 lines. This includes all arithmetic, bit-reversal and
+butterfly loops, digit packing, checks, CRT reconstruction and carry propagation.
+Context review covered the previously audited production selector/scalar benchmark,
+the two existing NTT unit tests and the magnitude-probe classification in
+crates/hyperreal/tests/gmp_api_coverage.rs. These contextual reads are not whole-
+file review credits for the larger unit/integration test sources.
+
+The owning layer is Hyperreal's exact integer magnitude benchmark candidate.
+Relevant properties are P1 (exact modular reconstruction), P5 (transform capacity
+versus total resources), P6 (panic guards rather than typed outcomes), and the
+public/private Rustdoc mandate. Missing acceptance was documentation of every
+helper's preconditions, actual resource handling and visible benchmark API.
+The original two all-feature unit tests passed before editing. The public page
+omitted the existing doc(hidden) candidate method; source review confirms that
+this candidate is called directly by benchmarks/tests rather than selected by
+the production Toom/backend dispatcher.
+
+Added or replaced eleven authored Rustdoc blocks: one inherent impl, three
+constants and seven methods. Removed doc(hidden) from the already-public NTT
+benchmark method so its reviewed contract appears in ordinary Rustdoc. Corrected
+two adjacent ordinary comment lines in the GMP coverage catalogue: magnitude
+probes are classified separately from the rational API, rather than all being
+hidden. No catalogue entry, fixture or test changed. Noncomment tokens match
+before/after after excluding the single documentation attribute; all runtime
+arithmetic, trace calls and precondition checks are unchanged. Existing include-
+fragment formatting is retained.
+
+Documented contracts and independently checked mathematics:
+
+- Little-endian base-32768 digits become zero-padded modular convolutions. The
+  primes are 2013265921=15*2^27+1 and 998244353=119*2^23+1, with primitive
+  roots 31 and 3. Trial division verifies primality; factor/order checks verify
+  the roots, including every power-of-two transform length from 1 through 2^23.
+  Reduced residue products fit u64. Forward transforms use positive root powers;
+  inverse transforms use reciprocal stage roots and inverse-length scaling.
+- The transform helper requires a nonempty power-of-two length dividing p-1,
+  valid prime/root data and reduced residues for its mathematical transform
+  contract. It does not validate those preconditions; an empty slice is a no-op
+  with valid moduli. Convolution allocates two residue buffers, retains padded
+  output and is cyclic unless length covers the full linear coefficient count.
+  Too-short input buffers panic while slicing.
+- For digit lengths a,b, coefficient_count=a+b-1 and the next power of two must
+  be <=2^23. The coefficient bound is 32767^2*min(a,b); the admitted length
+  implies min(a,b)<=4194304 and a bound of 4503324753657856, below the prime
+  product 2009731336725594113. CRT therefore uniquely recovers each nonnegative
+  convolution coefficient, and exact carry propagation reconstructs the integer.
+  These arithmetic checks establish the documented bounds, not a measured peak-
+  memory or universal completion claim.
+- Zero operands return zero before conversion. Otherwise input digit vectors
+  are allocated before length/CRT assertions. Length arithmetic and conversions
+  can panic or overflow; transform-capacity and CRT failure are panics rather
+  than typed exhaustion. The first residue vector remains live during the
+  second convolution. No total-work/memory accounting or cancellation exists.
+  Maximum-capacity and oversized allocation workloads were not run in this
+  documentation batch.
+- Digit extraction strips high zeros; zero has no digits. Packing requires
+  digits below 32768 and uses OR without range validation: invalid [32768,1]
+  packs to 32768 rather than the carry-expanded 65536. Modular powering does
+  not initially reduce its base and returns literal one at exponent zero,
+  including modulus zero/one. Positive-exponent modulus zero panics; oversized
+  bases can overflow before reduction. Current NTT calls satisfy the intended
+  bounds. The wrapper records its trace before the zero fast path when recording
+  is active; the private kernel adds no trace event.
+
+Executed after the final edit:
+
+- Locked/offline cargo test -p hyperreal --lib rust_native_ntt passes one test
+  with --no-default-features and two with --all-features. The unchanged suite
+  covers 1024 small products and nine generated width cases, including digit/
+  limb boundaries, plus the enabled exact candidate-path count assertion.
+- The affected gmp_api_coverage integration test passes under all features;
+  its public-name classification remains unchanged by documentation visibility.
+- cargo doc -p hyperreal --lib --no-deps --document-private-items passes in
+  both feature modes with warnings and broken/private intra-doc links denied.
+  All eleven descriptions and associated-item anchors are checked. Ordinary
+  public cargo doc also passes, and the formerly hidden candidate anchor is
+  now present.
+- Isolated baseline/final harnesses compile the unchanged kernel with debug
+  assertions enabled and disabled. Each run checks digit packing/extraction,
+  transform inversion, padded/cyclic convolution, invalid buffer/modulus/digit
+  behavior, empty cases, and 289 small products against independent u64 arithmetic.
+  An oversized modular-power input panics in debug and wraps in release as
+  documented; independent Python confirms the wrapped result differs from the
+  mathematical one. These out-of-domain probes do not weaken the helper contract.
+- Seventy-five output records are identical before/after in both modes.
+  Independent Python integers, naive modular DFTs and direct convolution check
+  329 scalar/vector expectations: 254 transformed entries, 16 convolution
+  coefficients, 40 powers, 14 digit vectors and five larger products. Root and
+  coefficient-bound evidence is recorded separately. Agreement between wrappers
+  alone is not used as numerical correctness evidence.
+- Declaration/rendered-description inventory, non-documentation-token equality
+  for both touched Rust files, and git diff --check pass. Full workflow/format/
+  performance checks remain owner-waived for this documentation-only session;
+  no statistical performance or pre-existing include-layout formatting claim
+  is made.
+
+No focused check remains blocked. Evidence and reproducible scripts remain under
+/tmp/csgrs-hyperreal-ntt-audit/. The owned probe executable/combined source and
+large duplicate HTML pages are removed after inspection; inventories, logs and
+source snapshots are retained. Shared Cargo output is reused with incremental
+compilation disabled. AGENTS.md retains the future-agent 100% public/private/
+generated Rustdoc mandate. Repository-wide review and full coverage remain
+unfinished.
 
 ## Next work
 
