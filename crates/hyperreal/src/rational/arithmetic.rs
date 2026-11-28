@@ -1,3 +1,12 @@
+//! Exact rational storage, arithmetic, conversion queries and retained evidence.
+//!
+//! Included fragments share this module's private representation and helper
+//! authority; their file boundaries do not define separate numerical kernels.
+//! Exact operations may retain shared results or canonicalize marked unreduced
+//! parts. Caches and borrowed filters reduce some work, but this layer has no
+//! universal total-work, retained-byte or cancellation contract. Test fragments
+//! exercise values, reuse and trace behavior without defining the public API.
+
 use crate::Problem;
 use crate::structural::{RationalFacts, RationalStorageClass};
 use num::bigint::Sign::{self, *};
@@ -26,5 +35,6 @@ include!("arithmetic/ops.rs");
 include!("arithmetic/comparison.rs");
 include!("arithmetic/tests.rs");
 
+/// Integration witnesses for retained arithmetic layouts and source lifetimes.
 #[cfg(test)]
 mod retention_tests;

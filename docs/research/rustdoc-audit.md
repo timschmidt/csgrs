@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/representation.rs` | Entire storage, cache layouts, flags/pools, trait methods, wire helper and tracing macros reviewed; all authored items documented and payload unhidden. | Both-mode private docs/focused tests, lifecycle/race/trace probes and wire replay pass; Serde-generated internal doc gaps remain. See rational-storage batch. |
+| `crates/hyperreal/src/rational/arithmetic/as_ref.rs` | Entire borrow adapter reviewed; documented same-handle borrowing without clone/reduction/cache effects. | Private docs and downstream generic arithmetic tests pass; direct pointer-identity probe passes. See rational-storage batch. |
+| `crates/hyperreal/src/rational/arithmetic/retention_tests.rs` | Entire three-test suite and reference helper reviewed; documented exact expectations, first-cache layouts, lifetime assertions and finite concurrency scope. | All three tests pass in both modes; supplemental rendering preserves bodies while removing only test markers in an isolated copy. See rational-storage batch. |
+| `crates/hyperreal/src/rational/arithmetic.rs` | Entire include facade reviewed; documented shared numerical authority, resource limits and retention-test module. Included files retain separate review obligations. | Both-mode docs/tests and test-module rendered descriptions pass. See rational-storage batch. |
 | `crates/hyperreal/src/rational/arithmetic/comparison.rs` | Entire equality/hash/order and borrowed magnitude/iterator implementation reviewed; all item roles, exact filters, cache effects and helper restrictions documented. | Both-mode private docs and focused tests pass; 26 normal plus two supplemental local descriptions, independent bounds/stream checks and unchanged before/after probes verified. See rational-comparison batch. |
 | `crates/hyperreal/src/rational/arithmetic/algorithm_dispatch.rs` | Entire classifier/trace/remainder file reviewed; every enum variant, helper, derived role and configuration documented, including reproduced backend-label discrepancies. | All 27 blocks render where enabled; focused tests, before/after traces and logging-only backend probes pass. See backend-dispatch documentation batch. |
 | `crates/hyperreal/src/rational/arithmetic/barrett_division.rs` | Entire prepared reciprocal, block loop, fields, derived roles and three benchmark interfaces reviewed; exactness, fallback, tracing and resource contracts documented. | All 13 blocks render; both-mode docs/tests, public visibility, independent block expectations and trace probes pass. See Barrett division batch. |
@@ -24283,6 +24287,157 @@ inventories and source snapshots retained. Shared Cargo output is reused with
 incremental compilation disabled. AGENTS.md already retains the future-agent
 100% public/private/generated coverage mandate. Repository-wide review and full
 coverage remain unfinished; this batch does not repair executable limitations.
+
+## Hyperreal rational-storage and retention documentation batch
+
+Reviewed every line of four files at 24b1ba62e: rational/arithmetic/
+representation.rs (391 baseline lines), as_ref.rs (6), retention_tests.rs (145),
+and rational/arithmetic.rs (30), all under crates/hyperreal/src/. Final lengths
+are 672, 8, 171 and 40 lines respectively. This covers every storage field,
+placeholder variant, flag, static pool, atomic operation, trait method, tracing
+macro, test helper and facade declaration in those files. Context reads covered
+canonicalization and small-value construction, binary/unary cache installation
+and lookup, unique owned negation, square extraction/power admission, conversion
+facts, the trace recorder/classifiers, relevant tests and the root export list.
+Those bounded reads do not grant whole-file credit to the larger consumers.
+
+The owning layer is Hyperreal rational representation and retained exact
+arithmetic evidence. Relevant properties are P1/P3 (exact storage and truthful
+facts), P4/P10 (identity, publication, invalidation and dispatch), P5/P6 (resource
+and failure limits), and private/generated Rustdoc coverage. The domain includes
+valid reduced and explicitly marked internal unreduced fractions, canonical
+zero, weak/strong cache identities, finite conversions and Serde wire records.
+Missing acceptance was documentation of all private items, actual cache roles,
+atomic semantics, input normalization and resource scope. Before edits, all
+37 selected all-feature test executions passed. The existing single-bit
+observation comment was inaccurate: fetch-or cannot give two racing observers
+the initially clear state without a reset.
+
+Added or replaced 123 authored documentation blocks: 114 in representation,
+two in AsRef, five in retention tests and two in the facade. The representation
+inventory includes eight structs (one function-local), two enums, eleven variants,
+27 named/tuple fields, ten impls, seventeen methods, one associated type,
+nineteen constants, thirteen statics and six macros. Tuple fields now have
+individual descriptions without changing their syntax tokens or layout.
+Removed the pre-existing doc(hidden) from RationalData. No noncomment token
+changed apart from that documentation attribute; no visibility, algorithm,
+branch, synchronization ordering, assertion or feature gate changed.
+
+Reviewed and reproduced contracts:
+
+- Rational clones share exact storage, caches and facts. AsRef borrows the same
+  handle; Deref borrows the payload without canonicalization. Debug and Serde
+  serialization obtain canonical parts and omit caches. RationalData has public
+  visibility as the trait target but no direct root re-export; a downstream
+  caller can name it as <Rational as Deref>::Target. Its fields remain private.
+- CompactOnceBox represents empty by null, publishes a fully constructed box
+  with release/acquire ordering, returns a losing publisher's box, and clears
+  only through exclusive access. Clear nulls the pointer before dropping, can
+  be followed by another publication, and destruction drops the installed box.
+  Its explicit Sync implementation requires T: Send + Sync; field auto traits
+  govern Send. Fixed slot storage does not bound T's allocation or destructor.
+- Product entries use weak other-operand identity and strong exact results;
+  the unreduced marker instead reserves that slot for canonicalization.
+  Linear tags encode product/sum/two difference directions, strong/weak inverse
+  and negation links, and a square-layout placeholder. Inert zeros in placeholder
+  records are not arithmetic answers. Weak keys preserve allocation identity
+  without keeping the operand value alive. Consumer schedules retain two binary
+  entries plus eligible unary links and an independent square-reduction pair.
+  Slot count is bounded; retained values/graphs and temporary racing work are not.
+- Learned bits use relaxed operations because they do not publish cache payloads.
+  retained_fact and observe_retained_fact test any mask overlap, not all bits;
+  a zero mask returns false. Exactly one racing single-bit fetch-or sees false
+  before a reset. Exclusive owned negation clears reuse observations/caches while
+  retaining applicable magnitude facts. Packed dyadic exponents use bits 8..30
+  for exponent+1, so the largest encoded exponent is 2^23-2; this is not a bound
+  on admitted rational denominators.
+- Static intern pools have process lifetime and no eviction/reset: integers
+  2..=64 per sign; 32 odd dyadic numerators through 63 at shifts 1..=63 (2,016
+  slots per sign); and the 63 by 63 general-fraction grid (3,969 slots per sign),
+  with ineligible combinations unpopulated. Retained arithmetic graphs can grow
+  beyond the small values themselves. The integer constants and pool indices
+  were checked against their actual consumers.
+- Serde rejects a zero denominator before zero/sign normalization. NoSign with a
+  nonzero numerator and signed zero numerators normalize to zero; they are not
+  all rejected. Nonzero fractions reduce exactly. Derived wire decoding accepts
+  supported map/sequence forms, ignores unknown map fields by default, and
+  rejects missing/duplicate known fields and malformed component values. Replay
+  restores value, not arbitrary allocation identity or cached evidence, and has
+  no local work/byte budget. This does not promise compatibility across every
+  possible Serde format's struct-name conventions.
+- Tracing macros compile away with their arguments when disabled. When enabled,
+  argument evaluation precedes the recording-scope check. Temporary events can
+  include interned clones and are not allocation counts. Reduction/GCD/factor
+  events trust supplied observations; backend division/radix labels classify
+  operands rather than observe actual backend execution, as recorded in the
+  earlier diagnostic batch.
+
+Executed after the final source edit:
+
+- Locked/offline focused library tests pass in both modes: 32 executions without
+  default features and 37 with all features. These cover all three edited
+  retention tests, other matching retention suites, constructor sharing,
+  negation/inverse/power/square reuse, owned invalidation, small pools, lazy
+  canonicalization/serialization, and existing exact tracing assertions.
+  The edited tests retain every numeric, pointer-identity and weak-lifetime
+  assertion. All-feature baseline had the same 37 passing executions.
+- Private cargo doc --lib --no-deps --document-private-items passes in both
+  configurations with warnings and broken/private intra-doc links denied.
+  The all-feature rendered inventory checks 113 ordinary blocks, including
+  tuple fields and the five derived fieldless-enum trait impl anchors. The four
+  function-local wire descriptions render in a supplemental lifted fixture.
+  Six test/module blocks render in the test-enabled documentation fixture.
+- Rustdoc with cfg(test) still omits functions marked #[test]. An isolated
+  source copy removes only the three test attributes from retention_tests.rs
+  for supplemental rendering, preserving all bodies/imports/assertions. This
+  does not modify repository tests or claim normal documentation lists them.
+  The initial isolated build lacked one transitive proptest search path; using
+  all cached dependency-version directories resolved it. No dependency or
+  source workaround was applied to the repository.
+- Seven matching doctests pass in each feature configuration: the four Rational
+  examples plus three Real representation examples selected by the file-name
+  filter. The all-feature public documentation build also passes. Public HTML
+  shows the documented associated Target as RationalData without a direct link
+  to its private module path; the payload/fields are verified in private HTML.
+  An initial probe expecting a direct root type/link was corrected to inspect
+  the actual associated-type API, with that distinction reflected in the docs.
+- Isolated baseline/final probes use unchanged slot, tag, bit-helper and macro
+  bodies. Each of four runs (before/after, tracing off/on) checks 32 eight-thread
+  publication races, 32 eight-thread single-bit observation races, rejected-box
+  ownership, clear/reinitialization/drop counts, all nine tag classifications,
+  multi/zero masks and six macros. Seventy-six complete outcome/trace records
+  are byte-identical before/after within each mode. Thread winner identities
+  are intentionally not compared; exact winner/drop counts are asserted.
+  These finite probes do not prove all concurrent interleavings or memory safety.
+- A separate current-library probe checks fourteen JSON cases, independent exact
+  fraction expectations, JSON/CBOR round trips, canonical Debug, borrowed-handle
+  and clone identity, and distinct storage for a non-interned replay. Fifteen
+  complete records match across two fresh process runs. This is value/encoding
+  evidence, not a claim that caches or source identity serialize.
+- Noncomment-token comparisons (excluding the removed doc(hidden)), authored
+  declaration/rendered-description inventory and git diff --check pass. Full
+  workflow, format, performance and binary-size checks remain owner-waived for
+  this docs-only session. No performance or whole-repository coverage claim is
+  made, and no executable limitation was repaired.
+
+Generated coverage remains incomplete: the complete 220-line Serde expansion
+of the local RationalWire was read. Its generated Deserialize impl, field-tag
+parser, sequence/map visitors, duplicate/missing/unknown-field handling and
+phantom fields agree with the documented behavior and probes. The generated
+__Field, __FieldVisitor, __Visitor, their fields/variants/methods and FIELDS
+constant still lack individual Rustdoc; Serde itself emits hidden attributes
+and allowances. No new suppression was added to repository source. Describing
+the derive's role and checking its public impl anchor does not close these
+internal generated-item gaps. Record them for the future generated-API work;
+this file has authored-item documentation, not complete generated coverage.
+
+No focused validation remains blocked. Evidence and repeatable scripts remain
+under /tmp/csgrs-hyperreal-representation-audit/. The temporary source copy,
+probe executables, combined helper source and duplicate HTML trees are removed
+after inventory. Small logs, records, expansion text and source snapshots remain.
+Shared Cargo output is reused with incremental compilation disabled. AGENTS.md
+already retains the future-agent mandate for 100% public/private/generated
+coverage. Whole-repository review and full coverage remain unfinished.
 
 ## Next work
 

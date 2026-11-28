@@ -1,7 +1,15 @@
-// Non-interned source values make lifetime assertions independent of the small-integer pool.
+//! Exact cache-reuse and source-lifetime regression witnesses.
+//!
+//! Non-interned sources make weak-lifetime assertions independent of static
+//! pools. Tests combine arithmetic answers, pointer reuse and weak expiration;
+//! these finite schedules do not prove every possible concurrent interleaving.
 use super::*;
 use std::sync::{Arc, Barrier};
 
+/// Build an independent BigRational value from canonical public parts.
+///
+/// The accessors may canonicalize an internal unreduced value. BigRational then
+/// performs reference arithmetic independently of Hyperreal's retention slots.
 fn exact_reference(value: &Rational) -> num::BigRational {
     num::BigRational::new(
         BigInt::from_biguint(value.sign(), value.numerator().clone()),
@@ -9,6 +17,12 @@ fn exact_reference(value: &Rational) -> num::BigRational {
     )
 }
 
+/// Exercise four first-cache layouts with two sums, inverse, negation and a square pair.
+///
+/// Checks independently specified fractions and 5,000,000,000 = 50,000^2 * 2,
+/// then pointer reuse for both sums and unary results. Dropping the source must
+/// expire its weak handle while retained outputs still compose to -1 and
+/// 1/500,000,000. The square pair is checked by value, not pointer identity.
 #[test]
 fn initial_cache_kinds_preserve_two_linear_pairs_and_both_unary_results() {
     for first in 0..4 {
@@ -63,6 +77,12 @@ fn initial_cache_kinds_preserve_two_linear_pairs_and_both_unary_results() {
     }
 }
 
+/// Race late reciprocal and negation publication after square/linear cache setup.
+///
+/// Four barrier-synchronized workers run 32 rounds each in alternating operation
+/// orders, checking exact values and the product -1. The parent releases its source
+/// before starting them; joining all workers must leave the weak source expired.
+/// This is a finite lifetime/value witness, not an exhaustive concurrency proof.
 #[test]
 fn concurrent_late_unary_publication_preserves_values_and_source_lifetime() {
     let left = Rational::new(5_000_000_000_i64);
@@ -102,6 +122,12 @@ fn concurrent_late_unary_publication_preserves_values_and_source_lifetime() {
     assert!(owner.upgrade().is_none());
 }
 
+/// Compare wide-source cache churn against BigRational and check operand release.
+///
+/// Uses (2^513+33)/(2^257+73), 24 non-interned operands i/97 and three rounds of
+/// sum/difference/product/negation/inverse per operand. Weak operand/source
+/// expiration and retained-sum checks show these outputs survive their inputs
+/// without requiring the inputs to remain strongly owned.
 #[test]
 fn wide_values_and_replaced_operands_keep_independent_exact_answers() {
     let numerator = (BigUint::one() << 513_usize) + 33_u8;
