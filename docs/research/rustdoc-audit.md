@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/gcd.rs` | Entire authored native GCD implementation, lookup construction and factor proofs reviewed; twenty-eight descriptions cover private const helpers, complete scalar domains and eighteen ghost declarations. | Both-mode private docs and five consumer tests pass; exhaustive u8/table probes, partial fills, native/reuse probes and expanded tokens are unchanged. Ten normal descriptions per mode render; Verus configuration/expansion validation remains open. See native GCD and lookup audit. |
 | `crates/hyperreal/src/verified/division.rs` | Entire authored exact-remainder reducer and GCD specification reviewed; ten descriptions distinguish helper preconditions, exact estimates, stopping pairs and seven ghost declarations. | Both-mode private docs and four consumer tests pass; 10,305 remainder and 10,659 reducer/reuse cases are unchanged, as are expanded tokens. Three normal descriptions per mode render; Verus configuration/expansion validation remains open. See two-limb division audit. |
 | `crates/hyperreal/src/verified/fixed_gcd.rs` | Entire authored fixed-buffer GCD and result carrier reviewed; nine descriptions cover variants/fields, raw construction, exact result meaning, zero paths and resource limits. | Both-mode private docs and three consumer tests pass; 3,084 independent GCD/reuse pairs and expanded tokens are unchanged. Eight normal descriptions per mode and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-buffer GCD audit. |
 | `crates/hyperreal/src/verified/limbs.rs` | Entire authored positional-value, shift, comparison, borrow and conversion implementation reviewed; thirty-eight descriptions include all private helpers and twenty-nine ghost declarations. | Both-mode private docs and five consumer tests pass; every runtime operation has unchanged independent probe results and expanded tokens. Nine normal descriptions per mode render; Verus configuration/expansion validation remains open. See limb arithmetic and positional-value audit. |
@@ -28061,6 +28062,84 @@ AGENTS.md already mandates full public/private/generated Rustdoc. Authored revie
 of this file is complete; ghost/configuration validation and repository-wide
 coverage remain open. Continue with verified/gcd.rs, including its common-factor
 proofs, trailing-bit definitions, constant lookup construction and scalar paths.
+
+## Native GCD and lookup audit (28 November 2026)
+
+Owning layer: Hyperreal's exact native GCD dispatch, trailing-bit counts, constant
+small-pair lookup and common-factor proofs. P1/P5/P6/P37 require exact values,
+explicit helper domains and evidence-scoped resource/verification claims. At
+c6509a32e, read all 566 lines of verified/gcd.rs, including every ghost body and
+const initializer. Seven declarations had brief Rustdoc; the missing acceptance
+witness was complete item coverage distinguishing total entry points from
+unchecked private preconditions. Relevant consumers, acceptance properties and
+admission rules were inspected; those contextual reads earn no additional
+whole-file credit. A source-copy probe reproduced the behavior before editing.
+
+The file now has 749 lines and twenty-eight descriptions: module, eight runtime
+or const functions, the table constant and eighteen ghost declarations. All
+executable/proof/specification tokens, attributes, assertions and call order
+remain unchanged, as do ordinary compiler-expanded tokens. The docs explain:
+
+- Native GCD entry points accept every u64/u128 pair, handle left zero before
+  right zero and return zero for two zeros. The u64 path uses the small table
+  only for positive pairs below 64. The u128 path retains its ordered native,
+  mixed-width and both-wide dispatch, restoring common powers of two after
+  reduction. Removing the minimum trailing count need not make both operands odd.
+- binary_gcd requires two positive inputs. It checks a zero subtraction before
+  another trailing shift; a zero input can otherwise shift by 64. gcd_small_wide
+  requires positive inputs but does not require its right operand to exceed u64.
+  Its power-of-two shortcut and exact remainder path preserve the complete GCD.
+- small_gcd accepts every u8 pair, even though the lookup uses only 0..64.
+  fill_small_gcd_table requires start<=end<=4096, fills only that half-open range,
+  and preserves every outside entry. Its balanced traversal has logarithmic
+  table depth, apart from leaf Euclidean recursion. Reversed ranges doing nothing
+  do not constitute validation. The immutable 4,096-entry constant is fully built
+  without a runtime cache; logical array size is not a binary-size measurement.
+- trailing_zeros_u128 accepts every value, with the sentinel 128 only for zero.
+  Exact positive factorization does not authorize shifting a native u128 by 128.
+  Runtime helpers allocate no heap and expose no work/cancellation budget or
+  exhausted result. Decreasing arithmetic is not a measured timing guarantee.
+- Ghost lemmas distinguish arbitrary-natural GCD identities from positive-only
+  bounds, odd-divisor cancellation, positive scaling, zero-numerator reduction
+  and exact trailing-factor decomposition. Ordered power factors require only
+  the stated odd side; partial factor removal need not leave an odd quotient.
+  Every private proof helper is described without crediting a new proof run.
+
+Executed after the final source edit:
+
+- Both locked/offline feature configurations pass five exact-name consumer tests:
+  native word GCD, fixed 256/512-bit GCD, native fraction reduction, mixed-width/
+  zero rational-operation GCD dispatch and native dyadic normalization. Existing
+  assertions and independent arithmetic references are unchanged.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Ten normal descriptions render in each mode. All eighteen ghost
+  descriptions and unchanged full declaration bodies render separately as
+  Markdown; this is not ghost configuration compilation or Verus expansion.
+- The warnings-denied source-copy probe gives identical baseline/final output:
+  all 65,536 u8 pairs, all 4,096 table entries, seven sentinel-backed partial fills
+  (checking every entry inside and outside each range), 16,384 positive binary
+  GCD pairs and 257 trailing-count cases agree with independent references.
+  It also checks 48 mixed-helper pairs, 5,120 native u64 calls and 2,193 native
+  u128 calls including returned-GCD reuse, directed boundaries and random pairs.
+- Six invalid controls reproduce binary zero-input shift panics, a zero mixed
+  helper's debug underflow, an out-of-range table panic, an unchanged reversed
+  fill and an unvalidated mixed-helper zero success. These describe absent
+  validation rather than expanding admitted helper domains.
+- Source/declaration/render inventories, baseline/final source and expanded-token
+  comparisons and git diff --check pass. No derives add ordinary runtime items
+  here. The pinned Verus executable remains absent; formal runs, ghost/proxy
+  compilation or expansion and refreshed source-bound reports are uncredited.
+  Full workflows, benchmarks and cross-target checks remain owner-waived for this
+  documentation-only session.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-gcd-audit/: baseline,
+probe/expansion sources, scripts, commands/logs, inventories and compressed
+selected HTML. Owned binary/source copy and duplicate HTML trees are removed
+after checking; the shared Cargo target is reused without incremental compilation.
+AGENTS.md already mandates full public/private/generated Rustdoc. Authored review
+of this file is complete; ghost/configuration validation and repository-wide
+coverage remain open. Continue with verified/fraction.rs and its reduction,
+addition/subtraction and cross-cancellation contracts.
 
 ## Next work
 
