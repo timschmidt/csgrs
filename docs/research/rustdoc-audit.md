@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/examples/allocation_profile.rs` | Entire example; documented System allocator accounting, all private records/variants, recipe mathematics, partial warm-up and measurement limits. | Private docs passed in both feature modes; tokens unchanged. See utility-example batch for rendered coverage and focused execution evidence. |
+| `crates/hyperreal/examples/readme_quickstart.rs` | Entire example; documented exact rational/root claims, errors and explicit lossy display; synchronized the README fixture. | Private docs passed in both feature modes; tokens unchanged. See utility-example batch for rendered coverage and focused execution evidence. |
+| `crates/hyperreal/examples/write_benchmarks_md.rs` | Entire facade; documented included-helper authority, file effects, discovery and output-count semantics. Included helper remains a separate audit unit. | Private docs passed in both feature modes; tokens unchanged. See utility-example batch for rendered coverage and focused execution evidence. |
 | `crates/hyperreal/src/computable/mod.rs` | Entire facade; corrected expression-enum ownership, formatting/constant-anchor roles, admission and interruption limits. | Private library/example docs and both example runs passed with and without default features; non-comment tokens and example output unchanged. See the overview/walkthrough batch record. |
 | `crates/hyperreal/src/computable/node.rs` | Entire include facade; documented graph/evidence ownership and the limits of native construction, recognition and resource accounting. | Private library/example docs and both example runs passed with and without default features; non-comment tokens and example output unchanged. See the overview/walkthrough batch record. |
 | `crates/hyperreal/examples/computable_graphs.rs` | Entire example; documented authored graph records, private fields/helpers, derived behavior and both scalar compositions. | Private library/example docs and both example runs passed with and without default features; non-comment tokens and example output unchanged. See the overview/walkthrough batch record. |
@@ -22197,6 +22200,91 @@ exact expectations and the complete item/render/token inventory. Temporary Markd
 HTML was removed after inspection; builds reused the roughly 6.7 GiB shared target
 with incremental compilation disabled. Repository-wide review and all-configuration
 coverage remain unfinished.
+
+## Hyperreal utility example audit: allocation, quickstart and report facade
+
+Baseline: `7e25d71e8f1c6e82134972f2db29144a7e356ae5`. Read every line of
+`crates/hyperreal/examples/allocation_profile.rs` (314 → 435),
+`crates/hyperreal/examples/readme_quickstart.rs` (14 → 25), and
+`crates/hyperreal/examples/write_benchmarks_md.rs` (15 → 33): 343 existing
+lines across three complete files. Read the affected README block, manifest,
+scalar conversion/interval/inversion/fact consumers and relevant report-helper
+paths as context; this does not award whole-file review to those dependencies.
+The included `benches/support/benchmark_report.rs` remains a separate audit unit.
+
+Ownership is Hyperreal example and measurement tooling. P1, P4–P6, P36 and P37
+require explicit exact/approximate boundaries, honest cache/resource observations
+and coverage claims. The domain is the fixed exact-real recipe corpus, fixed
+rational/root quickstart, and report discovery from local files. Missing
+acceptance evidence was private-item documentation and rendered coverage, plus
+an overbroad profiler overview claiming every optimized certificate. The baseline
+profiler and quickstart were executed before editing. No kernel behavior, policy,
+predicate sequence, tests or fixtures changed.
+
+Documented and checked 66 blocks: three executable overviews, three structs,
+one enum, 20 variants, 13 fields, eight statics, one constant, eight functions,
+six methods, two impl blocks and one included-module facade. Reviewed derived
+Clone/Copy behavior for Snapshot and Recipe and checked their rendered trait
+anchors. The global_allocator attribute installs the documented System forwarding
+implementation; it supplies no independent measurement oracle. All three Rust
+files have identical raw non-comment tokens before and after the edit. README's
+quickstart block was synchronized without weakening its byte-for-byte fixture.
+
+The profiler's 20 labels denote authored recipes, not asserted runtime dispatch
+tags or exhaustive representation coverage; Pow2 and Pow10 have no recipes.
+The One recipe is 3/2, LnAffine is ln(2e) = 1+ln(2), and the opaque recipe is
+sin(1 radian). Documentation preserves the exact operations and order. Warm-up
+constructs, encloses and converts, while the measured loop additionally queries
+facts and constructs an inverse. Returned inverses are dropped without a numeric
+query on them; construction itself can do work. Shared caches may outlive the
+values. The CSV reports totals, counts successful reallocations in both allocation
+and deallocation columns, excludes row formatting from its windows, and measures
+requested Rust allocation sizes rather than RSS, allocator overhead or stack.
+Relaxed snapshots and finite counters provide no coherent concurrent snapshot,
+total-work bound or cancellation contract. System realloc's internal simultaneous
+storage is not observed by the peak counter. Positive retained bytes were
+reproduced; this does not identify their owners or establish a leak.
+
+The quickstart proves exact rational equality and a positive root sign, then
+explicitly uses a lossy float display. Its sign floor is not a total-work bound.
+The writer facade documents the compiled-in destination, input-directory precedence,
+read-error fallback, non-atomic write and propagated I/O failures. Direct invocation
+bypasses the benchmark callback's skip switch. Its comparisons count sums rows
+participating in comparison groups, not groups or completed benchmark runs.
+No report was regenerated and no existing benchmark artifact was overwritten.
+
+Final focused validation used locked/offline two-job Cargo commands and the shared
+target with incremental compilation disabled:
+
+- Both runnable examples passed with no default features and all features; the
+  profiler used one lifecycle per recipe in debug mode. Complete output matches
+  the baseline in both modes, including all 20 profiler rows. Independent CSV
+  arithmetic checks confirm allocated-minus-deallocated equals retained bytes,
+  reallocations are included in both event totals, and observed peak deltas cover
+  nonnegative retained totals. These are smoke/accounting checks, not release
+  allocation benchmarks or proof of every recipe's internal dispatch.
+- Private library and all three example documentation builds passed in both
+  feature configurations with warnings, broken links and private intra-doc links
+  denied. The writer docs were rebuilt in both modes after correcting the
+  compared-row wording. All 66 descriptions and relevant field/method/variant
+  anchors render; all four derived trait anchors were checked. The scratch
+  inventory initially needed Markdown fence normalization and Rustdoc's
+  `constant.*.html` filename mapping; its final full reconciliation passes.
+- README integration tests passed in both configurations (two each). The report
+  helper's two existing example tests and the all-feature writer check passed;
+  the report helper tests were rerun after the final wording correction.
+- Scoped Rustfmt, raw token comparison and git diff --check passed. Changes are
+  limited to documentation, so no geometry/predicate downstream runtime check
+  was needed for this batch. Full workflows remain waived by the repository
+  owner for this documentation-only session.
+
+No focused check is blocked. This batch makes no performance, memory-bound,
+mathematical-completeness or repository-wide documentation-coverage claim.
+AGENTS.md's existing 100% public/private Rustdoc mandate remains in force.
+Evidence scripts, baseline/final outputs, commands and the rendered inventory
+are retained under `/tmp/csgrs-hyperreal-utility-examples-audit/` (about 156 KiB).
+No shadow crate or extra release target was created; the shared target is about
+6.8 GiB. Repository-wide line review and all-configuration coverage remain open.
 
 ## Next work
 
