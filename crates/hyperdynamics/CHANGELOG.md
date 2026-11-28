@@ -2,6 +2,18 @@
 
 ## 0.1.0 (unreleased)
 
+- `FlowNoiseRequest` and `FlowNoiseEvolutionOptions` have a `remainder` field
+  (`hypersolve::expression_program::TaylorRemainder`). It chooses the remainder
+  form of the order-one endpoint model built over the noise columns.
+  - The default, `Lagrange`, keeps the current results.
+  - `MeanValue` reuses the regularity Jacobian instead of bounding
+    second-order coefficients over every column.
+  - On the validated-dynamics comparison, `oscillator_long` takes 328 ms
+    instead of 701 ms and `riccati_long` 10.1-11.6 ms instead of 16.4-20.1 ms.
+    Endpoint widths are identical, or wider by up to 0.14% on the Riccati box.
+  - Struct literals of either type need the new field (serialized values
+    default it).
+
 - `FlowTaylorProgram::with_coefficients(FlowTaylorCoefficients::Recurrence)`
   encloses each step's trajectory Taylor coefficients with Hypersolve's
   Taylor-mode ODE recurrence instead of natural evaluation of the prepared

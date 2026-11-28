@@ -5,7 +5,7 @@ use hypersolve::{
     SymbolRef,
     expression_program::{
         CompositionError, CompositionProgram, TaylorAffineError, TaylorAffineMap,
-        TaylorAffineModel, TaylorAffineRow, TaylorNoiseModel, TaylorRequest,
+        TaylorAffineModel, TaylorAffineRow, TaylorNoiseModel, TaylorRemainder, TaylorRequest,
     },
 };
 
@@ -206,6 +206,11 @@ pub struct FlowNoiseRequest<const N: usize> {
     pub candidate: BoxN<DyadicInterval, N>,
     /// Maximum retained nonconstant affine columns; zero charges all to residuals.
     pub maximum_noise: usize,
+    /// Remainder form of the order-one endpoint model. `MeanValue` reuses the
+    /// regularity proof's Jacobian instead of bounding second-order terms:
+    /// much cheaper with many columns, and usually wider.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub remainder: TaylorRemainder,
     /// Round the endpoint center and columns down onto the policy grid.
     ///
     /// Each rounding error, scaled by its parameter domain, joins its row's
@@ -612,13 +617,14 @@ fn advance<const N: usize>(
         budget.graph.charge(1)?;
         center.push(domain.midpoint(&mut budget.arithmetic)?);
     }
-    let model = Arc::new(composition.program().taylor_model(
+    let model = Arc::new(composition.program().taylor_model_with(
         TaylorRequest {
             center,
             domain: domains,
             order: 1,
             precision: budget.policy.precision,
         },
+        e.request.remainder,
         &mut budget.graph,
         &mut budget.arithmetic,
     )?);

@@ -6,7 +6,9 @@ use super::{
 };
 use crate::SymbolId;
 use hyperreal::{Rational, Real};
-pub use model::{OdeBinding, TaylorModel, TaylorRemainderTerm, TaylorRequest, TaylorTerm};
+pub use model::{
+    OdeBinding, TaylorModel, TaylorRemainder, TaylorRemainderTerm, TaylorRequest, TaylorTerm,
+};
 use num::BigInt;
 use std::{collections::BTreeMap, fmt, sync::Arc};
 
@@ -41,6 +43,8 @@ pub enum TaylorError {
     DegreeOverflow,
     /// A native monomial image did not cover its whole operand domain.
     MonomialDomain { variable: SymbolId, exponent: usize },
+    /// [`TaylorRemainder::MeanValue`] is defined only for order-one models.
+    RemainderOrder { order: usize },
     /// Two independently valid enclosures unexpectedly have empty intersection.
     InconsistentEnclosure { output: usize },
     /// ODE outputs, state lanes and bindings disagree (`lane` is out of range,

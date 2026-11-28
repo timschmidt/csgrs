@@ -997,6 +997,7 @@ fn job_n<const N: usize>(spec: &Spec, op: Op) -> Job {
                 end: time(1, step),
                 candidate: p.candidate,
                 maximum_noise: noise,
+                remainder: Default::default(),
                 round_coefficients: true,
                 column_cutoff_bits: Some(16),
             };
@@ -1153,6 +1154,7 @@ fn integrate<const N: usize>(
             );
             let options = FlowNoiseEvolutionOptions {
                 maximum_noise: noise,
+                remainder: Default::default(),
                 native: opts,
                 ..FlowNoiseEvolutionOptions::default()
             };
@@ -1270,6 +1272,7 @@ fn sensitivity<const N: usize>(
                 request.end,
                 FlowNoiseEvolutionOptions {
                     maximum_noise: noise,
+                    remainder: Default::default(),
                     native: opts,
                     ..FlowNoiseEvolutionOptions::default()
                 },

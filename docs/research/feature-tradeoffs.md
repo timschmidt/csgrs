@@ -126,6 +126,28 @@ retention. "Shipped" sizes are linked release or deployed images.
   unavailable in practice.
 
 
+### Mean-value remainder for order-one Taylor models (27 November 2026)
+
+- **Capability:** `TaylorRemainder::MeanValue` in Hypersolve
+  (`taylor_model_with`), opt-in for affine-noise evolution in Hyperdynamics
+  (`FlowNoiseEvolutionOptions::remainder`).
+- **Performance:** validated-dynamics comparison, median of reuse runs:
+  - `oscillator_long` 701 ms to 328 ms (2.1×);
+  - `riccati_long` 16.4 ms to 10.1 ms (point) and 20.1 ms to 11.6 ms (box);
+  - Cartesian cases unchanged.
+  - The profile had put 60% of `taylor_model` in second-order bounds over
+    every noise column.
+- **Widths:** long-case endpoints are identical for the oscillator, a linear
+  field where both remainders vanish. They are +0.01% (point) and +0.14%
+  (box) for Riccati. All are within the comparison's limits.
+- **Code size:** one enum, one constructor branch, and two test files.
+- **Decision:** opt-in. The default stays `Lagrange`, so pinned noise traces
+  and fixtures are unchanged.
+- **Reconsider:** make `MeanValue` the noise-evolution default after a wider
+  nonlinear width survey (two-rate, shear and pendulum cases). Deriving the
+  remaining regularity cost (about 25% of the old build) from the same
+  enclosure is the next step.
+
 ### Exact torus cell ranges in Hypersdf (27 November 2026)
 
 - **Capability:** `classify_cell` now certifies torus cells inside, and

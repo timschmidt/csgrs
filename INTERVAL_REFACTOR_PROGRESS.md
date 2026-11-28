@@ -16778,3 +16778,41 @@ Products already skip exact zeros. The remaining cost is products of genuinely
 nonzero coefficients: every noise column enters every state input, so the
 series are dense. Sparse bookkeeping is therefore not the lever for the long
 tier. The remainder strategy above is.
+
+## 2026-11-27: mean-value remainder for the long tier (opt-in)
+
+This acts on the long-tier profile above. Order-one Taylor models can now
+bound their remainder in mean-value form:
+
+```text
+f(x) - f(c) - J(c)(x - c) = (J(xi) - J(c))(x - c)
+```
+
+Here J(xi) lies in the regularity proof's Jacobian enclosure, so no
+second-order coefficients are bounded over the noise columns. The option is
+`TaylorRemainder::MeanValue` through `taylor_model_with`, and
+`FlowNoiseEvolutionOptions::remainder` for affine-noise evolution. The default
+stays `Lagrange`.
+
+**Comparison adapter**, long cases switched by a local edit that was not
+committed:
+
+| Case | Lagrange | MeanValue | Endpoint width |
+| --- | --- | --- | --- |
+| oscillator_long, point | 701 ms | 328 ms | identical (linear field) |
+| oscillator_long, box | 711 ms | 331 ms | identical |
+| riccati_long, point | 16.4 ms | 10.1 ms | +0.01% |
+| riccati_long, box | 20.1 ms | 11.6 ms | +0.14% |
+
+The whole preflight went from 29.1 s to 15.1 s. The oscillator gap to CAPD
+falls from about 770× to about 360×.
+
+**Tests.**
+- Hypersolve: sampled-point enclosure on a nonlinear two-output program, and
+  refusal at orders 0 and 2.
+- Hyperdynamics: a Riccati evolution under both forms contains the exact
+  solution 2/3, with the mean-value width at most twice the Lagrange width.
+
+**Next.** Survey widths on more nonlinear fields before changing the default.
+Then remove the remaining regularity cost by deriving it from the same
+Jacobian enclosure.

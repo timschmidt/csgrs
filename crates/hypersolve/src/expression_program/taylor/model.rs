@@ -18,6 +18,22 @@ pub struct TaylorRequest {
     /// Outward grid for native enclosure operations, not a final-width bound.
     pub precision: i32,
 }
+/// How a Taylor model bounds what its polynomial omits.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum TaylorRemainder {
+    /// Order n+1 coefficients bounded over the whole domain (the integral form
+    /// of the remainder): one term per omitted monomial.
+    #[default]
+    Lagrange,
+    /// Mean-value form, for order-one models only: the deviation of each
+    /// regular Jacobian entry over the domain from its exact value at the
+    /// center, times the shift of its variable. It reuses the regularity
+    /// proof's Jacobian enclosure, so no second-order coefficients are
+    /// bounded. It is also of second order in the domain width, usually with
+    /// a larger constant.
+    MeanValue,
+}
 /// One exact coefficient of the centered polynomial.
 #[derive(Clone, Debug)]
 pub struct TaylorTerm {
@@ -240,7 +256,28 @@ impl ExpressionProgram {
         graph: &mut ExpressionBudget,
         arithmetic: &mut DyadicBudget,
     ) -> Result<TaylorModel, TaylorError> {
+        self.taylor_model_with(request, TaylorRemainder::Lagrange, graph, arithmetic)
+    }
+
+    /// [`Self::taylor_model`] with a chosen remainder form.
+    ///
+    /// With [`TaylorRemainder::MeanValue`] each remainder term is keyed by the
+    /// first-order request whose Jacobian entry it bounds; its `bound` is that
+    /// entry's deviation from the center coefficient over the domain.
+    pub fn taylor_model_with(
+        &self,
+        request: TaylorRequest,
+        remainder_form: TaylorRemainder,
+        graph: &mut ExpressionBudget,
+        arithmetic: &mut DyadicBudget,
+    ) -> Result<TaylorModel, TaylorError> {
         graph.charge(0)?;
+        let mean_value = remainder_form == TaylorRemainder::MeanValue;
+        if mean_value && request.order != 1 {
+            return Err(TaylorError::RemainderOrder {
+                order: request.order,
+            });
+        }
         let source = self.definition();
         let dimensions = source.variables.len();
         let outputs = source.outputs.len();
@@ -391,15 +428,20 @@ impl ExpressionProgram {
         // Interval Taylor-mode recurrences avoid the expression swell of
         // repeatedly differentiated partial formulas. Natural evaluation of
         // those formulas remains the bound when a recurrence is unavailable.
-        let partials =
-            match recurrence::bounds(self, &variables, &request, last, graph, arithmetic)? {
-                Some(recurrence) => Partials::Recurrence(recurrence),
-                None => Partials::Natural(
-                    formulas_for(&mut program, self, &requests, graph)?
-                        .program()
-                        .eval_dyadic(&request.domain, request.precision, graph, arithmetic)?,
-                ),
-            };
+        let partials = if mean_value {
+            None
+        } else {
+            Some(
+                match recurrence::bounds(self, &variables, &request, last, graph, arithmetic)? {
+                    Some(recurrence) => Partials::Recurrence(recurrence),
+                    None => Partials::Natural(
+                        formulas_for(&mut program, self, &requests, graph)?
+                            .program()
+                            .eval_dyadic(&request.domain, request.precision, graph, arithmetic)?,
+                    ),
+                },
+            )
+        };
         let shifts = shifts(&request.domain, &request.center, graph, arithmetic)?;
         graph.check_entries(&[requests.len(), powers, outputs])?;
         graph.charge(outputs)?;
@@ -418,9 +460,9 @@ impl ExpressionProgram {
                     request: index,
                     coefficient,
                 });
-            } else {
+            } else if let Some(partials) = &partials {
                 let spec = &requests[index];
-                let bound = match &partials {
+                let bound = match partials {
                     Partials::Recurrence(recurrence) => recurrence.coefficient(spec).clone(),
                     Partials::Natural(bounds) => bounds[outputs + index].clone(),
                 };
@@ -436,6 +478,44 @@ impl ExpressionProgram {
                 remainder[spec.output] = remainder[spec.output].add(&contribution, arithmetic)?;
                 remainder_terms.push(TaylorRemainderTerm {
                     request: index,
+                    bound,
+                    monomial,
+                    contribution,
+                });
+            }
+        }
+        if mean_value {
+            // f(x) - f(c) - J(c)(x - c) = (J(xi) - J(c))(x - c) for some xi
+            // on the segment, and J(xi) lies in the regular Jacobian enclosure.
+            for term in &terms {
+                graph.charge(1)?;
+                let spec = &requests[term.request];
+                let [(variable, 1)] = spec.powers[..] else {
+                    continue;
+                };
+                let column = variables
+                    .iter()
+                    .position(|&v| v == variable)
+                    .expect("first-order request of a used variable");
+                let entry = outputs
+                    .checked_mul(column + 1)
+                    .and_then(|v| v.checked_add(spec.output))
+                    .ok_or(ExpressionError::SizeExhausted)?;
+                let center =
+                    DyadicInterval::from_real(&term.coefficient, request.precision, arithmetic)?;
+                let bound = regularity.values()[entry].sub(&center, arithmetic)?;
+                let (monomial, contribution) = contribution(
+                    spec,
+                    &bound,
+                    &shifts,
+                    source,
+                    request.precision,
+                    graph,
+                    arithmetic,
+                )?;
+                remainder[spec.output] = remainder[spec.output].add(&contribution, arithmetic)?;
+                remainder_terms.push(TaylorRemainderTerm {
+                    request: term.request,
                     bound,
                     monomial,
                     contribution,

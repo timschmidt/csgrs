@@ -2,6 +2,19 @@
 
 ## [0.4.0] - Unreleased
 
+- `ExpressionProgram::taylor_model_with` (`taylor-model`) takes a
+  `TaylorRemainder`. `taylor_model` keeps `Lagrange`, the bounded order n+1
+  coefficients. `MeanValue`, for order-one models only, bounds the remainder
+  by each regular Jacobian entry's deviation over the domain from its center
+  coefficient, times its variable's shift.
+  - It reuses the regularity proof's Jacobian enclosure, so no second-order
+    coefficients are bounded.
+  - It is also of second order in the domain width, usually with a larger
+    constant.
+  - Other orders return the new `TaylorError::RemainderOrder`.
+  - In each `TaylorRemainderTerm`, `request_index` names the first-order
+    coefficient and `coefficient_bound` is that deviation.
+
 - `ExpressionProgram::ode_taylor_coefficients` (`taylor-model`) encloses the
   normalized Taylor coefficients `x^(k)(tau)/k!` of solutions of
   `x' = f(t, x)` over a time interval and a state box with the univariate

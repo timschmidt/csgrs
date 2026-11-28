@@ -51,6 +51,7 @@ fn automatic_horizons_preserve_reversible_shear_correlation_and_exact_time() {
             d(end, end, -3),
             FlowNoiseEvolutionOptions {
                 maximum_noise: 2,
+                remainder: Default::default(),
                 round_coefficients: false,
                 column_cutoff_bits: None,
                 native: EvolutionOptions {
@@ -100,6 +101,7 @@ fn validation_precedes_empty_and_identity_and_empty_output_is_reusable() {
         d(0, 0, 0),
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
+            remainder: Default::default(),
             round_coefficients: false,
             column_cutoff_bits: None,
             native: EvolutionOptions {
@@ -146,6 +148,7 @@ fn validation_precedes_empty_and_identity_and_empty_output_is_reusable() {
         d(0, 0, 0),
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
+            remainder: Default::default(),
             round_coefficients: false,
             column_cutoff_bits: None,
             native: EvolutionOptions {
@@ -178,6 +181,7 @@ fn stopped_prefix_is_explicit_and_can_seed_a_later_horizon() {
     );
     let options = FlowNoiseEvolutionOptions {
         maximum_noise: 2,
+        remainder: Default::default(),
         round_coefficients: false,
         column_cutoff_bits: None,
         native: EvolutionOptions {
@@ -224,6 +228,7 @@ fn publication_exhaustion_cancellation_and_retry_never_publish_partial_success()
     );
     let options = FlowNoiseEvolutionOptions {
         maximum_noise: 2,
+        remainder: Default::default(),
         round_coefficients: false,
         column_cutoff_bits: None,
         native: EvolutionOptions {
@@ -351,6 +356,7 @@ fn nonlinear_horizon_keeps_fresh_residuals_and_contains_the_exact_riccati_flow()
         d(1, 1, -3),
         FlowNoiseEvolutionOptions {
             maximum_noise: 2,
+            remainder: Default::default(),
             round_coefficients: false,
             column_cutoff_bits: None,
             native: EvolutionOptions {
@@ -428,6 +434,7 @@ fn time_dependent_constant_state_derivative_is_integrated_exactly() {
         d(3, 3, -2),
         FlowNoiseEvolutionOptions {
             maximum_noise: 0,
+            remainder: Default::default(),
             round_coefficients: false,
             column_cutoff_bits: None,
             native: EvolutionOptions {
@@ -500,6 +507,7 @@ fn fresh_process_reconstructs_sources_and_replays_automatic_horizons() {
                 d(end, end, -3),
                 FlowNoiseEvolutionOptions {
                     maximum_noise: 2,
+                    remainder: Default::default(),
                     round_coefficients: false,
                     column_cutoff_bits: None,
                     native: EvolutionOptions {
@@ -565,6 +573,7 @@ fn rounding_keeps_on_grid_shear_states_exactly() {
                 d(end, end, -3),
                 FlowNoiseEvolutionOptions {
                     maximum_noise: 2,
+                    remainder: Default::default(),
                     round_coefficients,
                     column_cutoff_bits: None,
                     native: EvolutionOptions {
@@ -629,6 +638,7 @@ fn rounded_coefficients_complete_a_long_riccati_horizon_containing_the_flow() {
         d(1, 1, -1),
         FlowNoiseEvolutionOptions {
             maximum_noise: 2,
+            remainder: Default::default(),
             round_coefficients: true,
             column_cutoff_bits: None,
             native: EvolutionOptions {
@@ -711,6 +721,7 @@ fn relative_column_cutoff_bounds_rotation_columns_and_contains_the_exact_flow() 
             d(2, 2, 0),
             FlowNoiseEvolutionOptions {
                 maximum_noise: 16,
+                remainder: Default::default(),
                 round_coefficients: true,
                 column_cutoff_bits: cutoff,
                 native: EvolutionOptions {
@@ -776,4 +787,82 @@ fn relative_column_cutoff_bounds_rotation_columns_and_contains_the_exact_flow() 
             }
         }
     }
+}
+
+/// x' = x^2 from x(0) in 1/2 +- 2^-10 to t = 1/2: the exact solution
+/// x0 / (1 - x0 t) is 2/3 for x0 = 1/2.
+#[test]
+fn mean_value_endpoint_remainder_certifies_the_same_riccati_solution() {
+    use hypersolve::expression_program::TaylorRemainder;
+    let ends = [TaylorRemainder::Lagrange, TaylorRemainder::MeanValue].map(|remainder| {
+        let mut budget = EnclosureBudget::new(EnclosurePolicy::default());
+        let (time, x) = (SymbolId(10), SymbolId(20));
+        let v = Expr::anonymous_symbol(x);
+        let source = ExpressionProgram::compile(
+            &[v.clone() * v],
+            &[time, x],
+            &mut ExpressionBudget::new(100_000, 1_000_000),
+        )
+        .unwrap();
+        let program = ExpressionField::<1>::from_definition(
+            FieldDefinition {
+                source: source.definition().clone(),
+                time,
+                state: vec![x],
+            },
+            &mut budget,
+        )
+        .unwrap()
+        .flow_taylor(3, &mut budget)
+        .unwrap();
+        let initial = BoxN::new([d(511, 513, -10)]).unwrap();
+        let state = Arc::new(FlowNoiseState::new(d(0, 0, 0), initial, &mut budget).unwrap());
+        let report = program.integrate_noise(
+            state,
+            d(1, 1, -1),
+            FlowNoiseEvolutionOptions {
+                remainder,
+                native: EvolutionOptions {
+                    maximum_step: Some(d(1, 1, -4)),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            &mut budget,
+        );
+        assert!(
+            matches!(report.status(), FlowNoiseEvolutionStatus::Completed),
+            "{remainder:?}: {:?}",
+            report.status()
+        );
+        report.end_state().unwrap().enclosure().lanes().unwrap()[0].clone()
+    });
+    let mut scalar = hyperinterval::DyadicBudget::new(16384, 1_000_000_000);
+    let two_thirds = hyperreal::Real::new(hyperreal::Rational::fraction(2, 3).unwrap());
+    let exact = DyadicInterval::from_real(&two_thirds, -80, &mut scalar).unwrap();
+    for end in &ends {
+        assert!(
+            !exact.intersection(end, &mut scalar).unwrap().is_empty(),
+            "{end:?}"
+        );
+    }
+    // The cheaper form stays close to the integral form on this nonlinear flow.
+    let widths = ends.map(|end| end.width(&mut scalar).unwrap());
+    let doubled = widths[0].add(&widths[0], &mut scalar).unwrap();
+    assert!(
+        widths[1]
+            .subset_of(
+                &DyadicInterval::new(0.into(), 1.into(), 0).unwrap(),
+                &mut scalar
+            )
+            .unwrap()
+    );
+    let (m, e) = widths[1].upper().unwrap();
+    let (n, f) = doubled.upper().unwrap();
+    let mean = m.to_string().parse::<f64>().unwrap() * 2f64.powi(e);
+    let bound = n.to_string().parse::<f64>().unwrap() * 2f64.powi(f);
+    assert!(
+        mean <= bound,
+        "mean-value width {mean:e} exceeds twice Lagrange {bound:e}"
+    );
 }
