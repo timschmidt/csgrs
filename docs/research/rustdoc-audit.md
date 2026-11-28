@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/product.rs` | Entire authored product/carry implementation and prefix lemma reviewed; six descriptions cover limb order, complete carries, capacity, empty inputs and failure behavior. | Both-mode private docs and four selected consumers pass; independent source-copy products/carry probes are unchanged. Five runtime descriptions and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-width product audit. |
 | `crates/hyperreal/src/verified/word.rs` | Entire authored word arithmetic and ghost lemmas reviewed; twelve descriptions distinguish raw arithmetic, metadata meaning, native overflow/shift gates and proof preconditions. | Both-mode private docs and six selected consumers pass; direct BigInt/BigUint probes are unchanged. Eight normal descriptions and four separate ghost pages render. Verus configuration/expansion validation remains open. See native-word audit. |
 | `crates/hyperreal/src/verified/float.rs` | Entire authored runtime decoder and ghost relation reviewed; eleven descriptions cover factors, variants/fields, finite bounds, nonfinite information loss and relation assumptions. | Both-mode private docs/conversion tests and unchanged 44,032-case probe pass. Ten normal descriptions render; ghost text renders separately. Pinned Verus is unavailable, and compiler-generated custom-doc gaps remain. See IEEE decoder audit. |
 | `crates/hyperreal/src/rational/mod.rs` | Entire module facade reviewed; documented shared arithmetic authority, child-module roles, value identity and failure/resource boundaries. | Both-mode private docs and compiled README/consumer examples pass; four facade blocks and the corrected parse anchor render. All 21 rational Rust sources map to whole-file records; generated Serde gaps remain. See rational source-guide batch. |
@@ -27391,6 +27392,93 @@ Owned executable and duplicate HTML trees are removed after checking; shared
 Cargo output is reused without incremental compilation. AGENTS.md already
 mandates full public/private/generated Rustdoc. Continue through the remaining
 verified scalar kernels, beginning with product.rs and its reducer consumers.
+
+## Fixed-width product and carry audit (28 November 2026)
+
+Owning layer: Hyperreal's unsigned fixed-width product kernels, used by dyadic
+quotient comparisons and shifted accumulators. P1 governs full products/carries,
+P5/P6 capacity and failure contracts, and P37 the distinction between source
+invariants, finite checks and formal verification. At cb820721e, read all 165
+lines of verified/product.rs. The private multiply-accumulate helper and two
+u128 adapters lacked Rustdoc; the module, generic multiply and prefix-update
+lemma needed domains, ownership, storage and failure explanations.
+
+Read the little-endian denotation definitions, quotient-comparison adapters,
+shifted-product consumers and existing fixed-limb fixtures as context. No new
+whole-file credit is assigned to those surrounding files. A private source-copy
+probe reproduced the carry bound, complete products, padding and invalid-shape
+behavior before editing. The copy uses the ordinary parent's proof/proof_decl
+erasure shapes; production bodies are preserved verbatim.
+
+The file now has six descriptions and 224 lines: module, one ghost lemma and
+four runtime functions, including the private inner step. All executable/proof
+and specification tokens, attributes, assertions and operation order are
+unchanged; 63 inserted lines and four removed lines are docs/spacing only.
+The documentation establishes these distinctions:
+
+- Limb arrays are base-2^64, least significant digit first. That numerical order
+  is independent of host byte order and is not a byte serialization contract.
+  Signs, binary scale, rational reduction and later accumulator capacity belong
+  to the consuming layers.
+- multiply_accumulate accepts any four u64 inputs. Its maximum total is
+  (2^64-1)^2+2*(2^64-1)=2^128-1, so ordinary u128 arithmetic is sufficient.
+  The returned low/high digits reconstruct the exact total; no narrower
+  incoming-carry precondition or overflow Option is required.
+- Generic multiply requires O>=L+R as a mathematical capacity condition. It
+  preserves the complete product and zero high padding, including empty
+  operands and leading zeros. Source loops perform L*R digit steps and one
+  carry write per left row; the next carry slot remains zero before assignment.
+  This source accounting is not a timing or generated-code measurement.
+- Capacity is not validated up front. An undersized zero product can panic on
+  indexing, while L=0 can bypass accesses and appear to succeed despite an
+  invalid shape. Neither is an advertised truncation or typed-failure path.
+  These controls explain the precondition; they do not expand supported input.
+  Larger arrays still require output/stack storage and more source work without
+  a local stack/work/cancellation cap.
+- split_u128 retains both numerical limbs, including high zero. multiply_u128
+  uses exactly two-by-two inputs and four outputs, satisfying capacity for every
+  pair and preserving values beyond u128::MAX. Neither performs normalization,
+  sign interpretation or heap allocation in its body.
+- prefix_update relates the changed digit's positional contribution to the
+  selected prefix under 0<=index<length<=words.len(). Its induction and the
+  product/accumulator uses are documented; the ghost identity does not mutate
+  a runtime buffer or discharge every caller's carry/capacity obligation.
+
+Executed after the final edit:
+
+- Locked/offline Hyperreal tests pass in both feature configurations: four
+  exact-name matches for fixed-limb products, both wide scalar paths, direct
+  shifted stack products and direct shifted wide/narrow products. Existing
+  exact expectations and mutation/failure assertions are unchanged.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All five runtime/module descriptions render, including the private
+  multiply_accumulate page. The exact prefix_update description and full
+  unchanged lemma body render separately as Markdown; this is not a compiled
+  ghost configuration or a replacement executable proof model.
+- The warnings-denied source-copy probe passes with byte-identical baseline/final
+  output. It checks 4,096 four-word multiply-accumulate combinations against
+  BigUint plus the all-maxima identity; 1,408 products across eleven admitted
+  shapes with independently reconstructed operands and padding checks; seven
+  direct u128 splits; and 49 full-width u128 products. Empty left/right inputs,
+  spare output limbs and both wide-scalar shapes are included.
+- Two invalid-shape controls reproduce a panic for multiply<1,1,1>([0],[0])
+  and unvalidated empty output for multiply<0,2,0>. They are distinct from the
+  successful supported-shape corpus. No claim of exhaustive carry states,
+  all const-generic dimensions or complete accumulator behavior is made.
+- Source/declaration inventories and git diff --check pass. Full workflows,
+  benchmarks, cross-target and formal checks remain owner-waived. The pinned
+  Verus executable remains absent; proof runs, ghost configuration compilation
+  and Verus macro-expansion coverage are uncredited. Prior source-bound proof
+  reports were not refreshed by these documentation checks.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-product-audit/: baseline,
+probe source/scripts, commands, logs, source/render inventories and compressed
+selected HTML. The owned executable, temporary product copy and duplicate HTML
+are removed after checking; the shared Cargo target is reused without incremental
+compilation. AGENTS.md already mandates full public/private/generated Rustdoc.
+This completes the file's authored review; ghost/configuration obligations and
+repository-wide coverage remain open. Continue with verified/accumulate.rs and
+its explicit partial-mutation and alignment contracts.
 
 ## Next work
 

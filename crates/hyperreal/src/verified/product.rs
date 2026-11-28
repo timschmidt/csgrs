@@ -1,4 +1,16 @@
-//! Exact schoolbook products for the fixed-width dyadic carriers.
+//! Exact unsigned schoolbook products for fixed-width dyadic and comparison carriers.
+//!
+//! Arrays contain base-2^64 digits with the least significant limb first. This is
+//! numeric limb order, independent of host byte order, not a serialized byte format.
+//! The kernels preserve the complete integer product; signs, binary scales, rational
+//! reduction and subsequent accumulator overflow belong to their callers.
+//!
+//! Capacity is a caller precondition of the generic multiply routine, not a typed
+//! runtime check. Fixed arrays avoid heap allocation in these bodies, but larger
+//! const-generic dimensions increase output storage and arithmetic work without a
+//! local stack/work/cancellation budget. Cargo and the verifier import the same
+//! bodies; conditional loop contracts and ghost lemmas are erased from ordinary
+//! execution and do not by themselves establish a fresh formal proof result.
 
 #[cfg(verus_keep_ghost)]
 use super::limbs::{
@@ -9,7 +21,15 @@ use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
 verus! {
-/// Replacing one positional digit changes only that digit's contribution.
+/// Relate one updated limb to the exact value of a selected little-endian prefix.
+///
+/// Requires 0 <= index < length <= words.len(). The new prefix plus the old
+/// indexed digit's weight equals the old prefix plus the replacement's weight;
+/// all other digit contributions cancel. Induction shortens length down to
+/// index+1, where equality of the untouched earlier prefix closes the identity.
+/// Product and shifted-accumulator proofs use this after individual digit writes.
+/// This ghost sequence relation neither mutates a runtime buffer nor proves its
+/// caller's capacity/carry invariants without the separate preconditions.
 pub(crate) proof fn prefix_update(words: Seq<u64>, index: int, digit: u64, length: int)
     requires 0 <= index < length <= words.len(),
     ensures prefix(words.update(index, digit), length) + words[index] * weight(index as nat)
@@ -24,6 +44,14 @@ pub(crate) proof fn prefix_update(words: Seq<u64>, index: int, digit: u64, lengt
 }
 }
 
+/// Compute one product digit and carry from four unrestricted u64 inputs.
+///
+/// Returns (low, high) satisfying
+/// `low + high * 2^64 = addend + left * right + carry`.
+/// The maximum total is `(2^64-1)^2 + 2*(2^64-1) = 2^128-1`, so the u128
+/// expression cannot overflow and both returned digits fit u64. The caller's
+/// current output digit and incoming row carry need no additional bound.
+/// This inner schoolbook step allocates nothing and has no decline/error case.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.0 as nat + result.1 as nat * radix()
         == addend as nat + left as nat * right as nat + carry as nat,
@@ -44,8 +72,26 @@ fn multiply_accumulate(addend: u64, left: u64, right: u64, carry: u64) -> (u64, 
     (total as u64, (total >> 64) as u64)
 }
 
-/// Multiply every pair of input limbs, retaining all carries in an output
-/// with room for the complete product. Unused high output limbs stay zero.
+/// Multiply two little-endian limb arrays into a full, zero-padded unsigned product.
+///
+/// Requires O >= L+R, interpreted as mathematical lengths. Each input limb may
+/// be any u64; leading zeros and empty operands are permitted. The complete
+/// product fits L+R limbs, and every output limb at index >= L+R stays zero.
+/// The result is exact even when it exceeds a native u128. No truncation,
+/// normalization, sign handling or arbitrary-width allocation is performed.
+///
+/// The source initializes O limbs, performs L*R multiply-accumulate steps and
+/// writes one final carry per left row. The next carry position is still zero,
+/// so it is assigned rather than added. With R=0, rows write zero carries; with
+/// L=0, the initialized zero output returns without entering either loop.
+///
+/// The capacity precondition is not checked up front. Undersized output can panic
+/// on indexing even when the mathematical product is zero; an empty-left invalid
+/// shape can instead bypass the accesses. Such cases are outside the contract,
+/// not typed failures or supported truncating multiplication. Large compile-time
+/// arrays still require output/stack storage; there is no local resource cap.
+/// Conditional proof invariants relate each row/digit prefix and carry to the
+/// same exact product, without replacing the executable loops.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires L as int + R as int <= O,
     ensures value(result@) == value(left@) * value(right@),
@@ -143,6 +189,12 @@ pub(crate) fn multiply<const L: usize, const R: usize, const O: usize>(
     product
 }
 
+/// Split any u128 into its low and high u64 limbs, preserving the exact magnitude.
+///
+/// Returns [word mod 2^64, floor(word/2^64)], including zero and a zero high limb.
+/// This fixed numerical decomposition is independent of host byte order and
+/// requires neither allocation nor a range check. Product and wide-scalar
+/// accumulation callers consume the same little-endian two-limb representation.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures value(result@) == word,
 ))]
@@ -156,6 +208,13 @@ pub(crate) fn split_u128(word: u128) -> [u64; 2] {
     limbs
 }
 
+/// Return the complete unsigned product of two u128 words as four little-endian limbs.
+///
+/// Splits both operands into two limbs and invokes the generic kernel with exactly
+/// four output limbs, satisfying its capacity precondition for every input pair.
+/// Zero and products exceeding u128::MAX succeed exactly; there is no overflow
+/// Option, saturation, sign interpretation or heap allocation in this adapter.
+/// The result is reused by dyadic quotient comparisons and shifted accumulators.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures value(result@) == left as nat * right as nat,
 ))]
