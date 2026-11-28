@@ -1,4 +1,20 @@
-//! Direct binary alignment and checked accumulation for dyadic products.
+//! Exact binary alignment and addition into fixed-width unsigned limb buffers.
+//!
+//! Arrays denote base-2^64 integers with the least significant limb first; this
+//! is numerical digit order, not a byte serialization convention. These kernels
+//! supply the magnitude arithmetic for dyadic product sums. Signs, common binary
+//! scale selection and fallback to larger representations belong to callers.
+//!
+//! A shifted operand that cannot fit is rejected before writing. Overflow from
+//! adding an operand that does fit leaves the modular sum in the buffer: failure
+//! is not a rollback guarantee. Callers such as the aggregate subtotal builder
+//! use disposable scratch buffers when a fixed-width attempt declines.
+//!
+//! The runtime bodies allocate no heap storage and do not materialize the whole
+//! shifted integer. Work depends on source scans, product dimensions, the aligned
+//! span and carry propagation. There is no local total-work, stack or cancellation
+//! budget; a capacity decline is not a resource-exhaustion report. Ghost sequences
+//! and lemmas describe positional values and do not allocate runtime vectors.
 
 #[cfg(verus_keep_ghost)]
 use super::limbs::*;
@@ -9,10 +25,28 @@ use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
 verus! {
+/// Describe a finite window of the source shifted by whole words and bits.
+///
+/// For the consumer domain bit_shift < 64, each output position combines the
+/// corresponding source digit and the high part of its predecessor after moving
+/// by word_shift words. Out-of-range source positions denote zero, including
+/// positions below the whole-word shift. This specification itself imposes no
+/// bit-shift precondition and should not be used to infer behavior outside that
+/// domain.
+///
+/// The result has exactly length digits and can truncate nonzero high bits.
+/// aligned_value supplies the additional extent hypotheses needed for equality
+/// to the complete shifted integer. This is a ghost sequence, not a temporary
+/// runtime allocation.
 pub(crate) open spec fn aligned(source: Seq<u64>, word_shift: nat, bit_shift: u32, length: nat) -> Seq<u64> {
     Seq::new(length, |index: int| left_shifted_limb(source, index - word_shift, bit_shift))
 }
 
+/// Order positional weights when the lower digit index does not exceed the higher.
+///
+/// Each weight is 2^(64*index). Strict growth for unequal indices and equality
+/// otherwise let extent proofs compare an occupied digit with a buffer boundary.
+/// The lemma does not establish that a particular operand fits that boundary.
 proof fn weight_monotone(lower: nat, higher: nat)
     requires lower <= higher,
     ensures weight(lower) <= weight(higher),
@@ -20,8 +54,16 @@ proof fn weight_monotone(lower: nat, higher: nat)
     if lower < higher { lemma_pow2_strictly_increases(64 * lower, 64 * higher); }
 }
 
-/// The highest retained digit, including a possible shifted-out high part,
-/// determines exactly the first buffer width that can hold the value.
+/// Locate the highest nonzero digit of a nonzero source after a binary shift.
+///
+/// Requires a valid last index with a positive digit and zero digits above it.
+/// The final index is last plus shift/64 plus one when shifting the top digit by
+/// shift%64 produces a high spill. The shifted value lies between the weight of
+/// that index, inclusive, and the next weight, exclusive.
+///
+/// This mathematical bound handles every u64 shift without constructing a
+/// runtime shifted buffer. It supports the preflight capacity check but does not
+/// by itself assert that a chosen output buffer is large enough.
 pub(crate) proof fn shifted_extent(source: Seq<u64>, last: int, shift: u64)
     requires 0 <= last < source.len(), source[last] > 0,
         forall|index: int| last < index < source.len() ==> #[trigger] source[index] == 0,
@@ -87,6 +129,18 @@ pub(crate) proof fn shifted_extent(source: Seq<u64>, last: int, shift: u64)
             weight(offset + words + 1) == weight(offset + 1) * weight(words);
 }
 
+/// Relate a sufficiently long aligned digit window to the complete shifted value.
+///
+/// Requires a positive source digit at last, a zero suffix above it, and room
+/// for the final nonzero digit including whole-word displacement and a possible
+/// bit spill. Under those hypotheses, value(aligned(...)) equals the source value
+/// times 2^shift. The output may be shorter than the original source array when
+/// only zero source padding is omitted.
+///
+/// The proof combines zero padding, whole-word displacement, the shifted extent
+/// and the per-digit shift relation. Its exact-value conclusion supplies the
+/// accumulation invariant; it does not cover a truncating window or a zero source
+/// with no positive last digit.
 pub(crate) proof fn aligned_value(source: Seq<u64>, last: int, shift: u64, length: nat)
     requires 0 <= last < source.len(), source[last] > 0,
         forall|index: int| last < index < source.len() ==> #[trigger] source[index] == 0,
@@ -134,6 +188,16 @@ pub(crate) proof fn aligned_value(source: Seq<u64>, last: int, shift: u64, lengt
     }
 }
 
+/// Show that alignment leaves zeros before and after its possible occupied span.
+///
+/// Requires bits < 64, a valid last source index and zero digits above last.
+/// Unlike shifted_extent, this lemma permits `source[last]` to be zero, so last
+/// may overestimate the support. It proves that output positions before words
+/// and beyond last plus displacement and possible spill are zero.
+///
+/// The statements are restricted to positions within length. They neither
+/// require the whole shifted source to fit nor establish its complete value;
+/// they justify the untouched prefix and the carry-only suffix in accumulation.
 proof fn aligned_support(source: Seq<u64>, last: int, words: nat, bits: u32, length: nat)
     requires bits < 64, 0 <= last < source.len(),
         forall|index: int| last < index < source.len() ==> #[trigger] source[index] == 0,
@@ -169,6 +233,17 @@ proof fn aligned_support(source: Seq<u64>, last: int, words: nat, bits: u32, len
     }
 }
 
+/// Lift one digit's addition-and-carry identity to the whole positional value.
+///
+/// Requires an in-range index and a local identity relating the old digit,
+/// addend and incoming carry to digit and next. Replacing that digit changes the
+/// whole value by its weighted contribution; an outgoing carry contributes the
+/// weight at index+1, including a weight just beyond the last stored digit.
+///
+/// The proof uses the product module's prefix-update identity and adjacent
+/// weights. It transports an assumed local equation rather than computing the
+/// addition or proving that the whole result fits. Its sequence update is ghost
+/// reasoning, not a second mutation of the runtime buffer.
 proof fn addition_update(words: Seq<u64>, index: int, digit: u64, addend: u64, carry: bool, next: bool)
     requires 0 <= index < words.len(),
         digit as int + (if next { radix() as int } else { 0int })
@@ -189,6 +264,12 @@ proof fn addition_update(words: Seq<u64>, index: int, digit: u64, addend: u64, c
 }
 }
 
+/// Find the highest occupied source digit, ignoring high zero padding.
+///
+/// Returns None exactly for zero, including an empty array; otherwise returns
+/// an in-range nonzero digit index with only zeros above it. The reverse scan
+/// reads at most N limbs, leaves the source unchanged and lets alignment avoid
+/// work on a high zero suffix.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.is_none() <==> value(words@) == 0,
         match result {
@@ -216,6 +297,17 @@ fn highest_nonzero<const N: usize>(words: &[u64; N]) -> Option<usize> {
     None
 }
 
+/// Form one digit of the source shifted within a word, without a shifted array.
+///
+/// Requires bits < 64 and index <= N. Combines the low part of `words[index]`
+/// (or zero at index == N) with the high part of the preceding source digit.
+/// The two parts occupy disjoint bits. Index N selects the single possible
+/// spill digit; it is not a general out-of-range zero-extension interface.
+///
+/// At index zero there is no preceding digit, and a zero bit shift returns the
+/// current digit without shifting by 64. An empty source at index zero yields
+/// zero. Whole-word displacement is handled by the caller. Preconditions are
+/// not checked as typed errors; invalid indices or shifts can panic.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires bits < 64, index <= N,
     ensures result == left_shifted_limb(words@, index as int, bits),
@@ -236,6 +328,13 @@ fn aligned_digit<const N: usize>(words: &[u64; N], index: usize, bits: u32) -> u
     digit
 }
 
+/// Add two unsigned digits and one incoming carry, retaining the outgoing carry.
+///
+/// For every u64 pair and Boolean carry, the returned (digit, next) satisfies
+/// digit + (next as integer)*2^64 = left + right + (carry as integer).
+/// The total is at most 2^65-1, so one outgoing bit suffices. Two wrapping adds
+/// recover that bit from their overflow comparisons; their carries cannot both
+/// be set. There is no capacity decline or lost arithmetic information here.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.0 as int + (if result.1 { radix() as int } else { 0int })
         == left as int + right as int + (if carry { 1int } else { 0int }),
@@ -255,9 +354,27 @@ fn add_word(left: u64, right: u64, carry: bool) -> (u64, bool) {
     (sum, first_carry || second_carry)
 }
 
-/// Add a shifted product directly into the occupied target limbs, then
-/// propagate carry only as far as needed. Failure means the exact sum does
-/// not fit; as in the original accumulator, a late overflow may mutate limbs.
+/// Add product times 2^shift to a fixed-width unsigned accumulator.
+///
+/// The declared domain requires N and M at most u32::MAX / 64; those dimension
+/// bounds support index arithmetic and are not checked at runtime or a work
+/// budget. All u64 shifts are admitted. Zero products, including empty sources,
+/// succeed unchanged for every shift, even with an empty accumulator.
+///
+/// Let S be the original accumulator, A the shifted product and B = 2^(64*M).
+/// Returns Some(()) exactly when S+A < B and stores that exact sum. If A >= B,
+/// returns None before mutation. Otherwise stores (S+A) modulo B, including on
+/// None from a final carry out. Thus a late failure retains a modular residue;
+/// callers needing the original value must discard or reconstruct their scratch
+/// buffer before fallback or retry. None denotes insufficient magnitude capacity,
+/// not an undecided predicate or a reached resource budget.
+///
+/// The source scan ignores high zero padding. A whole-word displacement and
+/// possible high spill establish capacity before narrowing indices or writing.
+/// The addition visits every digit from the displaced low source position through
+/// the last shifted digit, including internal zeros, then propagates carry only
+/// as far as needed. Lower target digits are untouched. No complete shifted
+/// vector or huge power of two is materialized.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires N <= u32::MAX / 64, M <= u32::MAX / 64,
     ensures
@@ -376,6 +493,17 @@ pub(crate) fn add_shifted<const N: usize, const M: usize>(
     Some(())
 }
 
+/// Accumulate the complete product of two u128 magnitudes at a binary shift.
+///
+/// Computes all four product limbs before delegating to add_shifted; no sign,
+/// scale selection or rational normalization occurs here. Requires M at most
+/// u32::MAX / 64, without runtime dimension validation. Every pair of u128
+/// operands and every u64 shift are otherwise admitted.
+///
+/// The exact success, unchanged early-failure and modular late-failure contracts
+/// are those of add_shifted with `A = left*right*2^shift`. A zero factor succeeds
+/// unchanged even at u64::MAX shift or M == 0, after the fixed-width product is
+/// computed. The product temporary has four limbs and uses no heap allocation.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires M <= u32::MAX / 64,
     ensures result.is_none() <==>
@@ -399,8 +527,20 @@ pub(crate) fn add_product<const M: usize>(
     add_shifted(accumulator, &product, shift)
 }
 
-/// Retain the single-word scalar path while proving both product widths and
-/// their subsequent alignment against one mathematical sum.
+/// Accumulate a four-limb magnitude times a u128 scalar at a binary shift.
+///
+/// The left array is an unsigned base-2^64 integer, least significant limb first.
+/// A scalar at most u64::MAX, including zero, uses a four-by-one multiplication
+/// with five output limbs; larger scalars use four-by-two with six output limbs.
+/// Both paths retain the complete product before the same alignment and addition.
+///
+/// Requires M at most u32::MAX / 64, without runtime dimension validation. All
+/// scalar values and u64 shifts are otherwise admitted. The success and failure
+/// buffer states follow add_shifted with `A = value(left)*right*2^shift`: a product
+/// that cannot fit leaves the buffer unchanged, while overflow of the sum leaves
+/// its modular residue. A zero factor succeeds unchanged for every shift and
+/// buffer width. Fixed product temporaries use no heap allocation; the narrower
+/// scalar path changes storage and work, not the mathematical capacity contract.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires M <= u32::MAX / 64,
     ensures result.is_none() <==>

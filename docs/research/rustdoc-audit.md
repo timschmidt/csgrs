@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/accumulate.rs` | Entire authored shifted-accumulation implementation and six ghost declarations reviewed; thirteen descriptions cover domains, extent, exact carries and early/late failure state. | Both-mode private docs and four consumer tests pass; independent helper/wrapper probes are unchanged. Seven normal descriptions and six separate ghost pages render; Verus configuration/expansion validation remains open. See shifted accumulation audit. |
 | `crates/hyperreal/src/verified/product.rs` | Entire authored product/carry implementation and prefix lemma reviewed; six descriptions cover limb order, complete carries, capacity, empty inputs and failure behavior. | Both-mode private docs and four selected consumers pass; independent source-copy products/carry probes are unchanged. Five runtime descriptions and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-width product audit. |
 | `crates/hyperreal/src/verified/word.rs` | Entire authored word arithmetic and ghost lemmas reviewed; twelve descriptions distinguish raw arithmetic, metadata meaning, native overflow/shift gates and proof preconditions. | Both-mode private docs and six selected consumers pass; direct BigInt/BigUint probes are unchanged. Eight normal descriptions and four separate ghost pages render. Verus configuration/expansion validation remains open. See native-word audit. |
 | `crates/hyperreal/src/verified/float.rs` | Entire authored runtime decoder and ghost relation reviewed; eleven descriptions cover factors, variants/fields, finite bounds, nonfinite information loss and relation assumptions. | Both-mode private docs/conversion tests and unchanged 44,032-case probe pass. Ten normal descriptions render; ghost text renders separately. Pinned Verus is unavailable, and compiler-generated custom-doc gaps remain. See IEEE decoder audit. |
@@ -27479,6 +27480,92 @@ compilation. AGENTS.md already mandates full public/private/generated Rustdoc.
 This completes the file's authored review; ghost/configuration obligations and
 repository-wide coverage remain open. Continue with verified/accumulate.rs and
 its explicit partial-mutation and alignment contracts.
+
+## Shifted accumulation audit (28 November 2026)
+
+Owning layer: Hyperreal's unsigned fixed-limb alignment and accumulation kernels.
+P1/P5/P6/P37 require exact magnitude arithmetic, explicit capacity decline and
+accurate separation of runtime behavior, specification and validation evidence.
+At 238aaacd5, read every line of the 439-line verified/accumulate.rs. The module
+and three functions had brief descriptions, while private helpers, the narrow
+product adapter and five ghost declarations lacked practical/domain Rustdoc.
+The missing acceptance witness was complete item documentation, especially the
+observable buffer state on failure; an existing BigUint fixture already checks
+that arithmetic contract and was preserved.
+
+Read aggregate dispatch/subtotal consumers, the six-limb rational scratch adapter,
+limb shift identities and the relevant tests as context. The aggregate builder
+owns local subtotal buffers and discards them on decline; the rational adapter
+already documents the need to discard wrapped scratch before fallback. These
+context reads do not add whole-file review credit. A source-copy probe ran before
+editing, with production runtime bodies and ordinary proof-erasure macro shapes.
+
+The file now has 579 lines and thirteen descriptions: module, six runtime
+functions and six ghost declarations, including private items. All executable,
+proof and specification tokens, attributes and operation order are unchanged.
+The documentation records:
+
+- Numerical little-endian base-2^64 magnitude semantics, separate from byte
+  serialization, sign interpretation and common-scale selection. Source scans,
+  aligned spans, multiplication dimensions and carry propagation determine work;
+  there is no local total-work/stack/cancellation budget or heap allocation.
+- highest_nonzero ignores high zero padding and admits empty/zero arrays.
+  aligned_digit requires bits<64 and index<=N, including exactly one spill
+  position; it is not unrestricted zero extension. add_word retains both the
+  low digit and the one-bit carry for every u64 pair and Boolean carry.
+- For S the original buffer, A the shifted operand and B=2^(64*M), add_shifted
+  succeeds exactly when S+A<B. If A>=B it returns None unchanged. Otherwise the
+  final buffer is (S+A) modulo B, including late None. This is a precise modular
+  residue, not rollback or an arbitrary partial result. Failed scratch cannot
+  silently stand in for the original subtotal in a retry.
+- Zero succeeds unchanged for every shift, including u64::MAX and M=0. Declared
+  source/target dimension bounds N,M<=u32::MAX/64 support index arithmetic; they
+  are not runtime validation or a resource budget. High padding is skipped,
+  internal zero limbs are visited, and capacity is checked before writes or
+  narrowing displacement indices. Huge shifts need no huge temporary integer.
+- The u128 wrapper computes a complete four-limb product. The wide wrapper uses
+  five limbs for a one-word scalar and six otherwise. Both retain complete
+  products and inherit the same success/early-failure/late-failure contract.
+- Ghost aligned windows may truncate; aligned_value requires enough extent and
+  a positive last digit. aligned_support permits a zero last digit and only
+  bounds zero regions. shifted_extent identifies the true highest occupied
+  digit, weight_monotone orders positional weights, and addition_update lifts
+  an assumed local carry identity without proving whole-buffer capacity.
+
+Executed after the final edit:
+
+- Four exact-name consumer tests pass under both no-default-features and
+  all-features: shifted accumulation with failure state, direct shifted stack
+  products, both wide scalar paths and direct shifted wide/narrow products.
+  Their BigUint expectations and assertions were not changed.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. The first build rejected a bare words[index] as an unresolved link;
+  marking indexed expressions as code fixed it. Render inspection also caught
+  Markdown consuming multiplication signs in two formulas; inline code preserves
+  them. All seven normal descriptions
+  render in each mode, including the three private helpers.
+- The six ghost descriptions and unchanged declaration bodies render separately
+  as Markdown. This does not compile the ghost configuration or validate Verus
+  macro expansion. The pinned verifier is still absent; formal verification and
+  prior source-bound proof reports were not refreshed.
+- The warnings-denied source-copy probe gives identical baseline/final output:
+  98 add_word combinations against u128, 50 highest-digit cases, 12,608 shifted
+  digit cases against BigUint, and 1,100 wrapper capacity/buffer-state cases.
+  Directed sequences check reuse after early and late failure, empty source
+  at u64::MAX and zero into an empty target. These bounded cases do not establish
+  every const-generic dimension or replace the unrun proof configuration.
+- Source/declaration/render inventories, comment-only token comparison and
+  git diff --check pass. Full workflows, benchmarks and cross-target checks
+  remain owner-waived for this documentation-only session.
+
+Evidence: /tmp/csgrs-hyperreal-verified-accumulate-audit/ retains the baseline,
+probe source/scripts, commands/logs, inventories and compressed selected HTML.
+The owned probe binary, source copy and duplicate HTML trees are removed after
+validation. The shared Cargo target is reused without incremental compilation.
+AGENTS.md already contains the full public/private/generated Rustdoc mandate.
+This completes authored review of this file, with ghost/configuration validation
+still open. Repository-wide coverage remains incomplete; continue with
+verified/aggregate.rs and its planning, subtotal and native-path contracts.
 
 ## Next work
 
