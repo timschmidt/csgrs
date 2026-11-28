@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/algorithm_dispatch.rs` | Entire classifier/trace/remainder file reviewed; every enum variant, helper, derived role and configuration documented, including reproduced backend-label discrepancies. | All 27 blocks render where enabled; focused tests, before/after traces and logging-only backend probes pass. See backend-dispatch documentation batch. |
 | `crates/hyperreal/src/rational/arithmetic/barrett_division.rs` | Entire prepared reciprocal, block loop, fields, derived roles and three benchmark interfaces reviewed; exactness, fallback, tracing and resource contracts documented. | All 13 blocks render; both-mode docs/tests, public visibility, independent block expectations and trace probes pass. See Barrett division batch. |
 | `crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs` | Entire transform, digit packing, convolution and CRT kernel reviewed; all helper preconditions, exactness argument and panic/resource limits documented. | All 11 blocks render; both-mode private docs/tests, public visibility, prime/root/bound checks and 329 independent expectations pass. See NTT multiplication batch. |
 | `crates/hyperreal/src/rational/arithmetic/toom4_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
@@ -24064,6 +24065,114 @@ large duplicate HTML pages are removed after inspection; small logs, inventories
 and snapshots remain. Shared Cargo output is reused with incremental compilation
 disabled. AGENTS.md retains the future-agent 100% public/private/generated mandate.
 Whole-repository review and full Rustdoc coverage remain unfinished.
+
+## Hyperreal backend-dispatch documentation batch
+
+Reviewed every line of the 161-line baseline
+crates/hyperreal/src/rational/arithmetic/algorithm_dispatch.rs at cdffc6b8c.
+The final file has 267 lines. This includes every enum/variant, cfg/derive,
+classifier branch, trace label and remainder operation. Context included
+Cargo.lock and dependency patches, num-bigint 0.4.6's digit configuration,
+multiplication/division/remainder/radix branch ordering, the Hyperreal trace
+macro/recorder, fractional-part and formatting consumers, representation trace
+macros, and existing classifier/trace tests. These bounded reads do not confer
+new whole-file credits on the dependency or larger consumer/test sources.
+
+The owning layer is Hyperreal's scalar diagnostic classification, with one exact
+backend remainder wrapper. Relevant properties are P3 (honest evidence), P4/P10
+(preserved predicate order and tracing), P5/P6 (unbounded backend work and invalid
+input panic), and Rustdoc coverage. Missing acceptance was accurate documentation
+of the diagnostic's actual authority and every private item. Before editing,
+all three existing all-feature classifier tests passed, despite the discrepancies
+below. The original claim that these labels describe the exact backend selection
+was reproduced as too strong on the locked revision.
+
+Added or replaced 27 blocks: three enums, nine variants, four impl descriptions
+and eleven methods. Reviewed/documented all fifteen derived Clone/Copy/Debug/Eq/
+PartialEq roles and verified their rendered impl anchors. They copy/name/compare
+fieldless tags, not operand values or mathematical facts. No noncomment token,
+threshold, branch order, trace label, cfg, derive, assertion or runtime operation
+changed. Existing include-fragment formatting is retained. No doc(hidden) or lint
+suppression was introduced.
+
+Reproduced diagnostic limitations:
+
+- Multiplication counts original native-word limbs, sorts their lengths, then
+  chooses basecase at shorter<=32; half-Karatsuba at 2*shorter<=longer;
+  Karatsuba at shorter<=256; otherwise Toom-3. num-bigint strips low zero limbs
+  before that full-product schedule and has separate zero/scalar exits.
+  Two 40-limb powers of the word base classify as Karatsuba locally but execute
+  the backend basecase after trimming to one limb. Adding low one digits to
+  both operands retains 40 limbs and reaches Karatsuba. A local label therefore
+  is not proof of the selected backend kernel.
+- Division computes divisor width, then checks dividend<divisor, zero dividend
+  and equality before the width branch. Backend div_rem checks a one-limb
+  divisor earlier, and borrowed remainder has a u32-divisor shortcut. For 2/3,
+  the local tag is trivial/small but backend division and remainder execute
+  single-limb routines. Classification does not validate a nonzero divisor:
+  0/0 is labeled trivial and positive/0 single-limb.
+- Radix classification uses 32 native-word limbs, while locked non-power-of-two
+  conversion uses its large-base path at 64. The 32..63 range is mislabeled.
+  The helper takes no radix and does not represent zero/power-of-two shortcuts.
+  Current callers submit labels before rational decimal formatting; the event
+  does not observe conversion or validate output.
+- The remainder wrapper submits its label before computing the exact borrowed
+  BigUint remainder; zero-divisor panic can occur after recording an event.
+  Valid output is in [0,divisor), with rational sign/normalization handled by
+  its consumer. No total-resource or cancellation contract is added. Trace
+  classifier arguments are evaluated before the recorder's active-scope check,
+  even when recording is inactive but the feature is compiled.
+- Native-word counting agrees with the locked digit configuration on 32/64-bit
+  pointer targets, includes low zero limbs, and is not an allocation metric.
+  The runtime reproductions here are on the current 64-bit host, not a separate
+  32-bit platform qualification.
+
+Executed after the final edit:
+
+- Locked/offline classifier tests pass in both no-default and all-feature modes
+  (three each). Four additional all-feature tests pass: retained-dyadic/backend
+  multiplication tracing, exact reduction division tracing, fractional-remainder
+  tracing and radix-conversion tracing. All existing count assertions remain
+  unchanged. These tests certify the local labels they assert, not the separate
+  backend execution paths; their names do not override that evidence boundary.
+- Private cargo doc --lib --no-deps --document-private-items passes with warnings
+  and broken/private intra-doc links denied. All 27 descriptions/anchors render
+  with all features; the two always-enabled impl/remainder blocks render without
+  default features. A supplemental cfg(test)-only doc fixture includes the
+  unchanged fragment and renders the eighteen items present in that configuration.
+  Conditional inventories and all fifteen derived impl anchors are checked.
+- Baseline/final isolated helper probes include the unchanged classifier bodies
+  and original trace macro, using the existing recorder. Twenty-three complete
+  classification/trace records are byte-identical. They check width boundaries,
+  operand-order symmetry, all enum labels, zero-divisor classification/panic
+  attempts, exact small remainders and inactive-recording behavior. The broader
+  built-in tests remain the integrated consumer checks.
+- A temporary copy of the locked num-bigint source adds logging lines only at
+  the relevant branch points. A source-diff check confirms removal of those
+  lines recovers the original files byte-for-byte. Its actual arithmetic run
+  confirms sparse-40-limb basecase versus odd-endpoint Karatsuba, single-limb
+  2/3 division/remainder, and decimal limb counts 31/32/63 below the large-base
+  branch versus 64 entering it. Original source hashes, the logging patch and
+  runtime log are retained. This probe records path evidence, not timing.
+- The scratch Cargo attempt could not resolve an unused optional quickcheck
+  package offline. The same logging-only source was then compiled directly
+  with rustc using cached num-integer/num-traits artifacts and feature std;
+  no dependency/runtime algorithm was removed or weakened. Repository Cargo
+  files, dependency sources and locks were not modified.
+- Declaration/rendered-description inventory, noncomment-token equality and
+  git diff --check pass. Full workflow/format/performance checks remain
+  owner-waived for this docs-only session; no performance or existing-layout
+  formatting claim is made.
+
+No focused check remains blocked. The diagnostic discrepancies remain separate
+implementation work; this documentation batch does not present them as repaired.
+Evidence/scripts remain under /tmp/csgrs-hyperreal-backend-dispatch-audit/.
+The temporary dependency copy, its rlib/executable, helper executable/combined
+source and duplicate HTML are removed after inspection. Small inventories,
+patches, logs and source snapshots remain. Shared Cargo output is reused with
+incremental compilation disabled. AGENTS.md retains the future-agent 100%
+public/private/generated mandate. Repository-wide review and full coverage
+remain unfinished.
 
 ## Next work
 
