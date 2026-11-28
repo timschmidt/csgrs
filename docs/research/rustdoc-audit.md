@@ -25069,6 +25069,111 @@ disabled. AGENTS.md already retains the future-agent mandate for 100% public,
 private and generated Rustdoc. The repository-wide review, remaining arithmetic
 fragments and previously recorded generated-item gaps remain unfinished.
 
+## Rational magnitude GCD documentation batch (partial file)
+
+Reviewed the GCD sections of
+crates/hyperreal/src/rational/arithmetic/aggregate_products.rs at cff494b15:
+baseline lines 1–115 and 968–1453, including the complete bodies of the trace
+classifiers, reconstruction carriers and GCD helpers. These correspond to final
+lines 1–182 and 1035–1645. The whole file grows from 5,337 to 5,529 lines, but
+this is deliberately not a whole-file review credit. Product-sum, projective,
+line-intersection and aggregate arithmetic sections remain pending.
+
+Owner: Hyperreal exact magnitude reduction and rational cross-cancellation.
+Relevant properties are P1/P3 (exact values and justified matrix relations),
+P4/P10 (preserved execution and tracing), P5/P6 (resources and invalid inputs),
+and P37. The domain is nonnegative public magnitudes, positive private divisors,
+selected balanced half-GCD inputs and caller-established reconstruction matrices.
+Missing private contracts, a full-GCD description attached to a matrix selector,
+and hidden public benchmark methods supplied the documentation witnesses.
+
+The batch supplies 35 descriptions: 21 functions/methods, two structs, seven
+fields, one impl and four constants. Two existing public GCD comparison methods
+lose doc(hidden); their signatures and bodies are unchanged. Context review
+includes verified scalar/fixed GCD and Lehmer kernels, existing GCD and rational
+consumer tests, and the denominator classifiers' call site. Those contextual
+reads do not establish whole-file review of the other sources or a fresh formal
+verification result.
+
+Findings and clarified contracts:
+
+- Public, mixed-width and benchmark GCD entries share exact arithmetic but have
+  different scheduling and final trace behavior. Mixed-width reduction tries
+  identity, powers of two, equality and fixed 256/512-bit tiers where applicable;
+  ordinary public GCD does not use those fixed tiers. Zero/zero is zero. A public
+  zero shortcut can label a wide identity binary-word; the baseline omits the
+  final GCD record and the candidate emits it only on its wide path.
+- Fixed-limb rejection means tier ineligibility, not exhausted resources.
+  Compile-time limb limits constrain array indexing, not practical stack use,
+  output allocation or total work. The 192-, 1,024- and 16,384-bit settings govern
+  different dispatch decisions; they are neither mathematical limits nor new
+  performance measurements. The powers-of-five table contains exactly 5^0
+  through 5^55, the complete set fitting u128.
+- A valid half-GCD matrix has nonnegative coefficients, determinant one and
+  original = matrix * reduced. Column updates and right multiplication transport
+  this relation. apply_inverse checks unsigned subtraction eligibility but not
+  the determinant; a fabricated diagonal-two matrix demonstrably computes the
+  adjugate action (16,12) on (8,6), not the general inverse. This invalid private
+  call does not establish a valid-public-input regression.
+- The half-GCD stopping condition concerns the absolute difference's bit length,
+  not necessarily either remainder's bit length. Close inputs can stay unchanged.
+  Adjusted subtraction retains reconstruction and can decline before mutation.
+  Recursive high-window reductions require the calling divisor invariants;
+  deliberately unbalanced private input (2^2048,1) reproduces a division panic.
+- Lehmer selection uses a shared leading 62-bit window and produces a candidate
+  matrix, not a completed GCD. Full-width application checks coefficient bounds
+  and strict progress; GCD preservation depends on the supplied matrix being
+  unimodular. The application helper can accept a fabricated zero matrix, so
+  its local guards alone do not prove that relation.
+- Positive denominator trace classification does not select the numerical answer.
+  Invalid factor one and smooth-classifier zero calls fail to complete within
+  one-second probes; loop inspection explains the nontermination. With factor
+  zero, a zero value panics whereas other values test equality to one. A zero
+  private wide-GCD divisor also panics. These are documented preconditions and
+  implementation failure behavior, not weakened normative requirements.
+- Matrix coefficient growth, recursive work and wide temporaries are unbudgeted.
+  Algorithm fallback is not a typed resource-exhaustion result. No new work,
+  memory, cancellation, performance or universal-completion claim is made.
+
+Executed after the final source edit:
+
+- Locked/offline focused Hyperreal library checks pass: 17 executions with no
+  default features and 21 with all features. Filters overlap, so these are not
+  unique-test counts. Coverage includes binary/fixed/mixed/wide reduction,
+  Lehmer and half-GCD invariants/traces, word cross-cancellation, unreduced
+  arithmetic, numerator GCD and average/Real-mean consumers. Original assertions
+  and dispatch-count expectations remain intact.
+- Both-mode private cargo doc builds pass with warnings and broken/private
+  intra-doc links denied. HTML inspection finds all 35 complete descriptions
+  and their applicable method/field/constant anchors. Normal all-feature docs
+  expose both formerly hidden methods while omitting the private wide helper.
+  This section has no doctest examples; zero-match doctest runs do not count as
+  acceptance coverage.
+- Three no-default-feature Hypersolve Bareiss checks pass: determinant swaps and
+  exact value, exact solution replay and general-rational determinant fallback.
+  This is selected consumer coverage, not every downstream policy workload.
+- An isolated private probe produces 1,085 byte-identical baseline/final records:
+  1,024 small pairs, 17 wide pairs through 32,768 bits, ten mixed-width trace
+  snapshots, five half reductions, five adjusted steps, one composition, four
+  explicit and six selected Lehmer cases, one invalid determinant, eleven
+  denominator shapes and one complete powers-of-five table.
+- Independent Python integers/math.gcd check exact answers, tier boundaries,
+  determinant/reconstruction relations, matrix multiplication and signed row
+  results. They separately check half-reduction stops, adjusted-step behavior,
+  factor classifications and the table boundary. Invalid private calls are
+  explicit probes; their outcomes do not count as successful admitted geometry.
+- Noncomment tokens are identical apart from the two removed doc(hidden)
+  attributes. The description inventory and git diff --check pass. Full
+  workflows, formatting, performance checks and formal verification remain
+  owner-waived for this docs-only session. There is no implementation change.
+
+Evidence and repeatable scripts remain under /tmp/csgrs-hyperreal-gcd-audit/.
+The owned source copy and probe executable are removed after validation; record
+JSON is compressed. Shared Cargo output is reused with incremental compilation
+disabled. AGENTS.md retains the future-agent mandate for 100% public, private
+and generated documentation. The rest of this file, complete generated-item
+coverage and the repository-wide line review remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -1,3 +1,11 @@
+/// Classify a positive word as an exact nonnegative power of a trace factor.
+///
+/// Requires `value > 0` and `factor >= 2`; repeated exact division leaves
+/// one precisely for such powers, including exponent zero. This diagnostic
+/// helper is compiled only with dispatch tracing and does not choose the
+/// arithmetic result. Zero value with factor at least two, or factor one,
+/// can loop forever. With factor zero, zero panics and other values simply
+/// test equality to one. Callers use positive denominators and factor three or seven.
 #[cfg(feature = "dispatch-trace")]
 fn word_is_power_of(mut value: u128, factor: u128) -> bool {
     while value.is_multiple_of(factor) {
@@ -6,6 +14,11 @@ fn word_is_power_of(mut value: u128, factor: u128) -> bool {
     value == 1
 }
 
+/// Recognize positive words with no prime factors outside three, five and seven.
+///
+/// One succeeds as the empty product. This trace-only denominator classifier
+/// strips those factors exactly; it does not change reduction dispatch.
+/// Zero is outside the private domain and does not terminate in the loop.
 #[cfg(feature = "dispatch-trace")]
 fn word_is_smooth_357(mut value: u128) -> bool {
     for factor in [3_u128, 5, 7] {
@@ -16,15 +29,31 @@ fn word_is_smooth_357(mut value: u128) -> bool {
     value == 1
 }
 
+/// Nonnegative determinant-one reconstruction matrix for a half-GCD remainder pair.
+///
+/// For a valid reduction, original = U * reduced with columns acting on the
+/// two reduced magnitudes. Column additions and right composition preserve
+/// the unit determinant; private fields alone do not validate it. Derived
+/// Clone copies coefficient magnitudes and Debug prints them, neither proving
+/// the relation. Coefficient storage and multiplication have no byte/work cap.
 #[derive(Clone, Debug)]
 struct HalfGcdMatrix {
+    /// Row-zero, column-zero coefficient of the first reduced magnitude.
     u00: BigUint,
+    /// Row-zero, column-one coefficient of the second reduced magnitude.
     u01: BigUint,
+    /// Row-one, column-zero coefficient of the first reduced magnitude.
     u10: BigUint,
+    /// Row-one, column-one coefficient of the second reduced magnitude.
     u11: BigUint,
 }
 
+/// Exact matrix construction, composition and inverse-action helpers for half-GCD.
 impl HalfGcdMatrix {
+    /// Construct the identity reconstruction matrix for an unchanged magnitude pair.
+    ///
+    /// Its determinant is one and both off-diagonal entries are zero. Subsequent
+    /// column additions and composition preserve the reconstruction relation.
     fn identity() -> Self {
         Self {
             u00: BigUint::one(),
@@ -34,6 +63,15 @@ impl HalfGcdMatrix {
         }
     }
 
+    /// Apply the determinant-one inverse to a candidate original magnitude pair.
+    ///
+    /// Computes `(u11*left - u01*right, u00*right - u10*left)` with unsigned
+    /// products, returning `None` if either difference would be negative. The
+    /// caller must establish determinant one; nonnegative output then supplies
+    /// the reconstructed pair. This routine neither checks the determinant nor
+    /// divides by it. An arbitrary
+    /// matrix therefore computes its adjugate action, not its general inverse.
+    /// Products allocate and are traced without a total work/memory budget.
     fn apply_inverse(&self, left: &BigUint, right: &BigUint) -> Option<(BigUint, BigUint)> {
         let first_positive =
             Rational::multiply_magnitudes("half-gcd-matrix-apply", &self.u11, left);
@@ -52,6 +90,12 @@ impl HalfGcdMatrix {
         ))
     }
 
+    /// Replace this matrix by its ordinary product with a right-hand matrix.
+    ///
+    /// Compute all four new entries before replacing the old ones. If each
+    /// matrix reconstructs one successive reduction, their product reconstructs
+    /// the composed reduction; determinant-one inputs retain that determinant.
+    /// No invariant validation or coefficient-growth budget is performed.
     fn multiply_right(&mut self, right: &Self) {
         let u00 = Rational::multiply_magnitudes("half-gcd-matrix-compose", &self.u00, &right.u00)
             + Rational::multiply_magnitudes(
@@ -80,6 +124,13 @@ impl HalfGcdMatrix {
         (self.u00, self.u01, self.u10, self.u11) = (u00, u01, u10, u11);
     }
 
+    /// Add quotient times the right column to the left column.
+    ///
+    /// This composes the reconstruction matrix with the inverse of a step
+    /// subtracting quotient times the left remainder from the right remainder.
+    /// Nonnegative quotient zero is an identity update. The operation preserves
+    /// determinant one when supplied a valid matrix, with unbounded coefficient
+    /// allocation delegated to exact magnitude multiplication.
     fn update_left_column(&mut self, quotient: &BigUint) {
         self.u00 += Rational::multiply_magnitudes(
             "half-gcd-matrix-column-update",
@@ -93,6 +144,12 @@ impl HalfGcdMatrix {
         );
     }
 
+    /// Add quotient times the left column to the right column.
+    ///
+    /// This transports reconstruction through subtraction of quotient times the
+    /// right remainder from the left remainder. Nonnegative quotients preserve
+    /// a valid unit determinant; this helper does not inspect the remainder pair
+    /// or enforce a coefficient-growth budget.
     fn update_right_column(&mut self, quotient: &BigUint) {
         self.u01 += Rational::multiply_magnitudes(
             "half-gcd-matrix-column-update",
@@ -107,9 +164,19 @@ impl HalfGcdMatrix {
     }
 }
 
+/// Selected reduced magnitudes together with their exact reconstruction relation.
+///
+/// The original pair is matrix times `(left, right)` and the determinant-one
+/// matrix preserves their GCD. The half-GCD stop condition concerns their
+/// absolute difference; these are not necessarily each half the original
+/// width, nor necessarily sorted. This private carrier does not validate
+/// caller-constructed fields or carry a resource/cancellation receipt.
 struct HalfGcdReduction {
+    /// First transformed nonnegative magnitude in reconstruction order.
     left: BigUint,
+    /// Second transformed nonnegative magnitude in reconstruction order.
     right: BigUint,
+    /// Unit-determinant nonnegative matrix mapping this pair back to the original.
     matrix: HalfGcdMatrix,
 }
 
@@ -965,14 +1032,18 @@ impl Rational {
         })
     }
 
-    /// Use one full-width remainder when exactly one operand fits a native word.
+    /// Compute the exact nonnegative GCD with shape-specialized rational dispatch.
     ///
-    /// Word pairs stay in the native binary reducer. Mixed-width identity and
-    /// power-of-two operands resolve structurally; other mixed-width values
-    /// reduce the wide operand modulo the word once. Equal wide operands
-    /// resolve directly. Wider balanced operands use the retained
-    /// Euclidean/Lehmer reducer, avoiding `BigUint`'s subtraction-heavy binary
-    /// GCD on exact-geometry rationals with thousands of bits.
+    /// Zero is an identity, including gcd(0,0)=0. Word operands use the scalar
+    /// binary kernel. A single wide operand admits zero/unit/power-of-two or
+    /// one-remainder shortcuts. Two wide operands try equality, powers of two,
+    /// 256-bit and 512-bit fixed buffers, then the wide Lehmer/remainder route
+    /// with recursive half-GCD disabled. This ordering differs from the public
+    /// general GCD entry point and is retained for arithmetic scheduling.
+    ///
+    /// Inputs are borrowed, but output and wide temporaries can allocate. Trace
+    /// labels identify the selected route; there is no total-work, cancellation
+    /// or typed resource-exhaustion contract.
     pub(crate) fn gcd_magnitudes_with_mixed_width_fast_path(
         left: &BigUint,
         right: &BigUint,
@@ -1059,14 +1130,31 @@ impl Rational {
         }
     }
 
-    // Tuned below after the Lehmer path is benchmarked against the full-width
-    // Euclidean remainder loop. Keeping the boundary explicit lets the trace
-    // and crossover tests describe the selected algorithm rather than merely
-    // the operand size.
+    /// Initial smaller-operand width selecting the wide Lehmer schedule.
+    ///
+    /// The 192-bit gate is reconsidered after an initial alignment remainder;
+    /// an admitted batch loop can continue down to magnitudes above 128 bits.
+    /// This crossover is an implementation setting, not a work bound or a new
+    /// benchmark result.
     const LEHMER_GCD_THRESHOLD_BITS: u64 = 192;
+    /// Inclusive input-width cutoff for the nonrecursive half-GCD reducer.
+    ///
+    /// At most 1,024 maximum operand bits uses adjusted subtraction directly.
+    /// This controls recursion selection, not recursion cost or memory usage.
     const HALF_GCD_RECURSION_BASE_BITS: u64 = 1024;
+    /// Minimum smaller width for balanced recursive half-GCD candidate attempts.
+    ///
+    /// At 16,384 bits or more, the wider engine also requires operand widths to
+    /// differ by at most one and the candidate flag to be enabled. Ordinary GCD
+    /// entry points leave that flag off; this is not a mathematical degree limit.
     const HALF_GCD_THRESHOLD_BITS: u64 = 16_384;
 
+    /// Exact increasing table of 5^0 through 5^55, all powers fitting u128.
+    ///
+    /// Word fraction reduction binary-searches this table to recognize a
+    /// power-of-five odd denominator and cancel that factor directly. The next
+    /// power exceeds u128; the table is a shape recognizer, not a general
+    /// factorization or rational-size limit.
     const POWERS_OF_FIVE: [u128; 56] = {
         let mut powers = [1_u128; 56];
         let mut index = 1;
@@ -1077,13 +1165,27 @@ impl Rational {
         powers
     };
 
+    /// Delegate exact GCD of two unsigned words to the shared verified scalar kernel.
+    ///
+    /// Zero is an identity and two zeros return zero. This adapter adds no
+    /// allocation, tracing or independent arithmetic implementation.
     #[inline]
     fn gcd_u64(left: u64, right: u64) -> u64 {
         crate::verified::gcd::gcd_u64(left, right)
     }
 
-    /// Run binary GCD in a bounded stack buffer, falling through when either
-    /// operand exceeds the selected limb tier.
+    /// Attempt exact binary GCD within a compile-time little-endian limb tier.
+    ///
+    /// `WORDS` must lie from two through floor(u32::MAX/64), enforced at compile
+    /// time. Either magnitude wider than 64*WORDS bits returns `None` before
+    /// conversion; zeros remain supported. Admitted parts fill fixed stack arrays
+    /// and use the shared verified kernel, whose word-plus-shift or limb result
+    /// is materialized as a BigUint.
+    ///
+    /// Ordinary callers select four or eight limbs. Array occupancy is bounded
+    /// for each instantiation, but huge instantiations can exceed the stack and
+    /// result materialization allocates. None is tier ineligibility, not resource
+    /// exhaustion or an undecided GCD.
     fn gcd_fixed<const WORDS: usize>(left: &BigUint, right: &BigUint) -> Option<BigUint> {
         const { assert!(2 <= WORDS && WORDS <= (u32::MAX / 64) as usize) };
         let fixed = |value: &BigUint| {
@@ -1112,20 +1214,25 @@ impl Rational {
         }
     }
 
+    /// Delegate exact u128 GCD to the shared verified binary-word kernel.
+    ///
+    /// Zero is an identity and two zeros return zero. The result fits the word;
+    /// this adapter does not allocate or install a rational cache entry.
     fn gcd_word(left: u128, right: u128) -> u128 {
         crate::verified::gcd::gcd_u128(left, right)
     }
 
-    /// Compute an arbitrary-precision GCD without entering `BigUint`'s
-    /// subtraction-heavy binary reducer for balanced wide operands.
+    /// Select a signed Lehmer reduction matrix from a shared leading-bit window.
     ///
-    /// Exact binary-float matrix inversion repeatedly cross-cancels a dyadic
-    /// cofactor numerator against the same odd determinant. Those operands are
-    /// commonly only two or three machine words wide, where Euclidean
-    /// remainder steps are substantially cheaper than long runs of shifts and
-    /// subtractions. Preserve the tuned binary reducer for values that fit the
-    /// scalar word path, and reduce a wide/small pair to that path after one
-    /// remainder.
+    /// Requires `larger >= smaller` (debug asserted). Shift both magnitudes by
+    /// max(bits(larger)-62,0), then pass the resulting nonnegative signed words
+    /// to the verified matrix selector. It returns a word-bounded unimodular
+    /// matrix only after a sufficient batch; inability to convert or select a
+    /// batch returns `None` for a Euclidean fallback.
+    ///
+    /// This builds a matrix, not the full GCD. Applying it to complete magnitudes
+    /// still requires the caller's exact row/progress check. Head extraction can
+    /// allocate shifted integers and has no work/cancellation budget.
     fn lehmer_gcd_matrix(larger: &BigUint, smaller: &BigUint) -> Option<[i128; 4]> {
         debug_assert!(larger >= smaller);
         let shift = larger.bits().saturating_sub(62);
@@ -1134,6 +1241,16 @@ impl Rational {
         crate::verified::lehmer::matrix(high_larger, high_smaller)
     }
 
+    /// Apply signed matrix rows as unsigned magnitudes and require strict progress.
+    ///
+    /// Each coefficient magnitude must fit u64. Rows use sums for equal signs
+    /// and absolute differences otherwise, avoiding signed BigInt temporaries.
+    /// Both result magnitudes must be strictly less than `larger`; coefficient
+    /// ineligibility or failed progress returns `None`. No sorting is performed.
+    ///
+    /// GCD preservation requires a caller-proved unimodular matrix. This routine
+    /// does not check that proof: even a zero matrix can pass its local progress
+    /// test for a positive larger input. Wide products allocate without a budget.
     fn apply_lehmer_gcd_matrix(
         larger: &BigUint,
         smaller: &BigUint,
@@ -1163,6 +1280,11 @@ impl Rational {
         Some((first, second))
     }
 
+    /// Return the bit length of the exact absolute difference, zero for equality.
+    ///
+    /// This helper allocates the unsigned difference and ignores operand order.
+    /// Half-GCD uses the result as a stop/progress measure, not as a bound on
+    /// the individual operand widths or the cost of subsequent arithmetic.
     fn magnitude_difference_bits(left: &BigUint, right: &BigUint) -> u64 {
         if left >= right {
             (left - right).bits()
@@ -1171,6 +1293,18 @@ impl Rational {
         }
     }
 
+    /// Attempt one adjusted Euclidean subtraction while transporting reconstruction.
+    ///
+    /// Both remainders must be positive and the matrix must reconstruct the
+    /// original pair from them. Divide the larger by the smaller; when the
+    /// ordinary remainder has at most stop_bits bits, reduce the quotient by
+    /// one and add back the divisor. This avoids overshooting the stop scale
+    /// when the maintained remainder invariant puts that divisor above it.
+    ///
+    /// Equal remainders, a zero adjusted quotient or absent strict decrease
+    /// return `None` before mutation. Success changes one remainder and the
+    /// opposite reconstruction column. A zero divisor is not validated and can
+    /// panic. Products/matrix updates have no total work or allocation budget.
     fn half_gcd_sdiv_step(
         left: &mut BigUint,
         right: &mut BigUint,
@@ -1210,6 +1344,16 @@ impl Rational {
         Some(())
     }
 
+    /// Build a reconstruction by adjusted subtraction until the difference is small.
+    ///
+    /// For positive inputs, set stop_bits=max(input widths)/2+1, start from the
+    /// identity matrix, and repeat adjusted steps while the absolute difference
+    /// exceeds that width. Return `None` if a step cannot progress. Success
+    /// preserves the original pair through the returned determinant-one matrix.
+    ///
+    /// The stopping condition bounds the difference, not both remainder widths;
+    /// close inputs can return unchanged. Zero inputs violate the private divisor
+    /// precondition. Cloned remainders and coefficients have no resource budget.
     fn half_gcd_slow(left: &BigUint, right: &BigUint) -> Option<HalfGcdReduction> {
         let stop_bits = left.bits().max(right.bits()) / 2 + 1;
         let mut left = left.clone();
@@ -1225,6 +1369,21 @@ impl Rational {
         })
     }
 
+    /// Attempt a recursive half-GCD reconstruction for the wide candidate schedule.
+    ///
+    /// The wide caller supplies balanced positive inputs; recursive calls use
+    /// selected high parts whose nonzero-divisor invariants must be maintained.
+    /// At most 1,024 input bits uses the slow reducer. Larger inputs reduce high
+    /// halves, apply their inverse matrix to full magnitudes, take adjusted steps,
+    /// then optionally reduce a second high window and compose its matrix.
+    /// A final step loop meets the same difference-width stop condition.
+    ///
+    /// Ineligible shifts, negative inverse results or lack of step progress can
+    /// return `None`; selected second-window cases fall back to the slow reducer.
+    /// This is not validation of arbitrary unbalanced or zero inputs: truncation
+    /// can create a zero divisor and panic outside the calling invariant. A
+    /// successful matrix preserves exact GCD, but neither recursion nor coefficient
+    /// growth is governed by a total-work, memory or cancellation budget.
     fn half_gcd_reduce(left: &BigUint, right: &BigUint) -> Option<HalfGcdReduction> {
         let input_bits = left.bits().max(right.bits());
         if input_bits <= Self::HALF_GCD_RECURSION_BASE_BITS {
@@ -1291,12 +1450,16 @@ impl Rational {
         })
     }
 
-    /// Exact nonnegative magnitude GCD shared by rational cross-cancellation
-    /// and algebraic coefficient normalization.
+    /// Return the exact nonnegative GCD shared by rational and coefficient reduction.
     ///
-    /// Inputs are borrowed; zero is the identity. Algorithm selection stays
-    /// with scalar arithmetic so consuming layers can share the same wide-
-    /// integer machinery without maintaining their own backend loops.
+    /// Zero is an identity and gcd(0,0)=0. After zero and u128 shortcuts, the wide
+    /// engine uses Euclidean/Lehmer reduction with recursive half-GCD disabled.
+    /// This public entry does not use the mixed-width helper's fixed-limb tiers.
+    ///
+    /// Dispatch tracing records the selected label and operand/result widths;
+    /// the zero shortcut uses the binary-word label even for a wide other input.
+    /// Borrowing inputs avoids owning them, not allocation of the output and wide
+    /// temporaries. There is no total-work/memory budget or typed exhaustion.
     pub fn gcd_magnitudes(left: &BigUint, right: &BigUint) -> BigUint {
         let (divisor, algorithm) = if left.is_zero() {
             (right.clone(), "binary-word")
@@ -1321,8 +1484,13 @@ impl Rational {
         divisor
     }
 
-    /// Quadratic Lehmer baseline retained for paired half-GCD benchmarks.
-    #[doc(hidden)]
+    /// Compute the exact nonnegative GCD with the half-GCD candidate disabled.
+    ///
+    /// Zero and word shortcuts precede the same wide schedule used by the
+    /// ordinary public GCD. This benchmark baseline does not publish that entry
+    /// point's final GCD trace/operand record. Its name is not a promise that a
+    /// Lehmer batch is actually selected, nor a measured performance claim.
+    /// Wide temporaries are unbudgeted and zero/zero returns zero.
     pub fn gcd_magnitudes_lehmer_baseline(left: &BigUint, right: &BigUint) -> BigUint {
         if left.is_zero() {
             return right.clone();
@@ -1336,8 +1504,16 @@ impl Rational {
         Self::gcd_wide_magnitudes(left, right, false).0
     }
 
-    /// Recursive Möller half-GCD candidate retained for benchmark comparison.
-    #[doc(hidden)]
+    /// Compute the exact GCD with the experimental recursive half-GCD route enabled.
+    ///
+    /// Zero and word shortcuts return directly. Wide pairs attempt recursion only
+    /// at the configured smaller-width threshold and balanced-size condition;
+    /// remaining work uses Lehmer/Euclidean reduction. Ineligible or nonprogressing
+    /// candidate work falls back without changing the exact answer.
+    ///
+    /// Only the wide route emits this entry's final algorithm/operand trace;
+    /// zero/word shortcuts do not. The candidate label does not promise faster
+    /// completion, bounded resources or that every call uses recursion.
     pub fn gcd_magnitudes_half_gcd_candidate(left: &BigUint, right: &BigUint) -> BigUint {
         if left.is_zero() {
             return right.clone();
@@ -1359,6 +1535,22 @@ impl Rational {
         divisor
     }
 
+    /// Reduce two positive magnitudes and report the effective wide GCD route.
+    ///
+    /// Sort by magnitude. A word-sized smaller operand needs one remainder then
+    /// word GCD. With the candidate enabled, balanced pairs with smaller width
+    /// at least 16,384 attempt half-GCD, subtract the resulting pair once and
+    /// require a decrease in maximum width before continuing recursion.
+    ///
+    /// Lehmer eligibility starts at 192 smaller bits, with one alignment remainder
+    /// for initially unbalanced sizes. Once selected, batches can continue below
+    /// that threshold while the smaller value exceeds 128 bits; failed matrix or
+    /// progress checks use ordinary exact remainders. The label prefers successful
+    /// half-GCD work, then used Lehmer batches, otherwise the remainder route.
+    ///
+    /// Zero inputs must be handled by callers: the initial word reduction divides
+    /// by the smaller magnitude. Output/coefficients can grow or allocate without
+    /// a total work/memory budget, cancellation hook or typed resource outcome.
     fn gcd_wide_magnitudes(
         left: &BigUint,
         right: &BigUint,
