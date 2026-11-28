@@ -26750,6 +26750,93 @@ already contains the full public/private/generated Rustdoc mandate. Continue at
 wide_dyadic_add_sub_matches_fraction_construction, whose attribute is now line
 6264. This 7986-line file and the repository-wide audit remain unfinished.
 
+## Rational test audit: wide dyadics, dots and signed sums (28 November 2026)
+
+Owning layer: Hyperreal rational arithmetic, compact dot accumulators and signed
+product-sum fixtures. P1 governs exact aligned values and fallback, P4 governs
+self-dot reuse, P5 distinguishes compact-width decline from total resource
+exhaustion, and P37 limits claims to asserted witnesses. At 07d1c968d, eighteen
+tests in arithmetic/tests.rs lines 6264–6784 lacked Rustdoc. Passing fixtures
+alone did not prove the algorithm named in every title or independent scalar
+correctness where the reference uses ordinary rational operations.
+
+Reviewed that complete range plus the relevant wide-dyadic operator, native/
+stack/BigUint dot, signed-sum dispatch and self-dot admission implementations.
+Added eighteen descriptions (115 Rustdoc lines); the range is now 6264–6899.
+Only Rustdoc changed: executable tokens, inputs, assertions, feature guards,
+ordinary comments and predicate/cache call order are identical. The reviewed
+Hyperlattice shared-scale vector fixture supplies consumer context without
+establishing a new whole-file review.
+
+The descriptions distinguish:
+
+- 144 signed wide-dyadic operand pairs with explicit BigInt alignment references
+  from an independent normalization implementation. A separate cancellation
+  checks zero. The trace fixture's first window discards values but requires one
+  wide-dyadic add and sub with zero rational GCDs. Its second checks a marked
+  operand's exact result, one lazy canonicalization, one wide subtraction and
+  zero rational GCDs; these events are not total-work measurements.
+- Canonical denominator-eight observations in six integer/fraction combinations
+  from raw stored-part inspection. The common-denominator fixture starts with
+  constructor-reduced fractions and does not exercise lazy canonicalization.
+- Mixed and dyadic dot/signed-sum comparisons from independent literal oracles.
+  Factor signs and outer polarities are both represented; zero lanes and dyadic
+  result classification have separate assertions. Small common-denominator
+  inputs may complete in native arithmetic before the named general schedule.
+- A native dyadic accumulator materializing denominator 2^198 from a wide plan,
+  then declining a 2^130 input magnitude while general arithmetic succeeds.
+  That decline is conversion/width ineligibility, not exhaustion of a declared
+  total-resource budget.
+- Private signed stack plans from ordinary positive self-dots. The square
+  difference explicitly supplies a negative second term even though its factor
+  magnitudes are positive. A second alignment checks a canonical numerator of
+  at least 350 bits; neither assertion proves every limb transition or heap-free
+  result materialization. A separate 400-bit alignment forces stack decline
+  before successful general completion.
+- Self-dot reuse scheduling from existence of a squared norm. The first dense
+  row declines once, then compares successfully with aggregate arithmetic and
+  reuses its payload. A zero-lane row declines the shortcut. A second row primed
+  with conflicting products checks repeated payload identity without a separate
+  expected value. These observations do not prove all cache states or lifetimes.
+- Literal 1/2^129 and positive ordering from a word-dispatch claim; no event is
+  asserted in that fixture. The 2^100 plus 2^-100 case exceeds a word but fits
+  the stack path, so it does not require BigUint fallback specifically.
+- A factor already wider than u128 from overflow of a multiplication whose
+  inputs both fit. The 2^200 signed-sum fixture checks completion against
+  expanded arithmetic, while the reciprocal pair near 2^80 checks a literal
+  unit result. Neither value assertion alone identifies the full dispatch path
+  or proves where cross-cancellation occurred.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal tests: seventeen pass without default features and
+  eighteen with all features, matching the eighteen-test all-feature baseline.
+  Exact-name inventories verify selection. All original trace counts remain.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Supplemental source copies remove only these eighteen test markers,
+  retaining the trace guard. All seventeen applicable descriptions render
+  without default features and all eighteen with all features. This range has
+  no function-local declarations requiring separate rendering; its signed
+  BigInt adapter is a closure, not another function item.
+- The default-feature Hyperlattice vector test
+  shared_scale_vectors_use_known_exact_dot_products passes with one exact-name
+  match, retaining its independent rational expectations and ordinary-dispatch
+  comparisons.
+- Source inventories, executable-token equality and git diff --check pass.
+  Full workflows, benchmarks, cross-target and formal-verification checks remain
+  owner-waived for this docs-only session. General algorithm completeness,
+  resource bounds, performance improvements and generated API coverage are not
+  established by this finite batch.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-dot-audit/:
+baseline, scripts, commands, logs, inventories, hashes and compressed selected
+HTML. Owned source copies and duplicate HTML output are removed after validation;
+shared Cargo output is reused with incremental compilation disabled. AGENTS.md
+already contains the full public/private/generated Rustdoc mandate. Continue at
+signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback,
+whose attribute is now line 6900. This 8101-line file and the repository-wide
+audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

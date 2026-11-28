@@ -6261,6 +6261,13 @@ mod tests {
         assert_eq!(&three_eighths - &three_eighths, Rational::zero());
     }
 
+    /// Compare wide signed dyadic sums and differences with aligned integer references.
+    ///
+    /// Six denominator exponents on each side and both signs give 144 operand
+    /// pairs with odd numerators above `2^180`. Aligns signed BigInts explicitly
+    /// before using the general fraction constructor for each expected value;
+    /// that constructor remains shared normalization authority. A separate
+    /// self-subtraction must yield zero. No dispatch or raw-layout assertion is made.
     #[test]
     fn wide_dyadic_add_sub_matches_fraction_construction() {
         let magnitude = (BigUint::one() << 180_usize) + 3_u8;
@@ -6321,6 +6328,14 @@ mod tests {
         assert_eq!(&value - &value, Rational::zero());
     }
 
+    /// Pin wide-dyadic dispatch and zero general-GCD events in two recording windows.
+    ///
+    /// The first window adds and subtracts reduced wide inputs, requiring one
+    /// wide-dyadic event per operation and no rational GCD; it discards results.
+    /// The second subtracts a negative operand from marked `6 / 2^300`, checks
+    /// an aligned-integer fraction reference, and requires one lazy canonicalization,
+    /// one wide-dyadic subtraction and no rational GCD. These event counts do not
+    /// measure total work or independently inspect every reduction instruction.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn wide_dyadic_add_sub_uses_shift_only_reduction() {
@@ -6366,6 +6381,12 @@ mod tests {
         assert_eq!(trace.rational.gcds, 0);
     }
 
+    /// Pin six signed integer/fraction combinations and their canonical denominator.
+    ///
+    /// Combines 3/8 with positive or negative five in the listed addition and
+    /// subtraction orders. Every result must match its literal fraction and
+    /// report denominator eight. The accessor observes canonical parts; it does
+    /// not establish raw-storage identity or absence of intermediate reduction.
     #[test]
     fn integer_add_sub_preserves_reduced_fraction_denominator() {
         let three_eighths = Rational::fraction(3, 8).unwrap();
@@ -6391,6 +6412,11 @@ mod tests {
         }
     }
 
+    /// Check common reduced denominators independently of sign and value.
+    ///
+    /// 3/10 shares its denominator with -7/10 and constructed 6/20, but not 1/3.
+    /// The fraction constructor has already reduced 6/20; this fixture does not
+    /// exercise lazy canonicalization or equate a shared denominator with equality.
     #[test]
     fn same_denominator_reports_reduced_common_scale() {
         let a = Rational::fraction(3, 10).unwrap();
@@ -6403,6 +6429,12 @@ mod tests {
         assert!(!a.same_denominator(&c));
     }
 
+    /// Compare a four-lane mixed rational dot product with expanded arithmetic.
+    ///
+    /// Includes positive and negative products and a zero lane whose other
+    /// factor has denominator nineteen. The reference multiplies and adds with
+    /// the ordinary rational operators, so it checks aggregate agreement rather
+    /// than independent scalar correctness, a particular schedule or GCD counts.
     #[test]
     fn dot_products_match_pairwise_arithmetic() {
         let left = [
@@ -6431,6 +6463,11 @@ mod tests {
         );
     }
 
+    /// Check a signed three-lane dyadic dot against expanded products.
+    ///
+    /// Requires both rational equality with the ordinary multiply/add expression
+    /// and dyadic classification of the result. This checks value and denominator
+    /// family without asserting which accumulator ran or inspecting raw reduction.
     #[test]
     fn dot_products_preserve_dyadic_exactness() {
         let left = [
@@ -6455,6 +6492,13 @@ mod tests {
         );
     }
 
+    /// Check native accumulation with a wide scale and decline on an oversized factor.
+    ///
+    /// A supplied plan for `3 / 2^200` times five and seven must materialize a
+    /// result matching the general dot with canonical denominator `2^198`.
+    /// A separate factor `2^130` cannot enter u128 numerator storage: the private
+    /// word attempt must return `None`, while the general dot must match expanded
+    /// arithmetic. That decline is tier ineligibility, not exhausted total resources.
     #[test]
     fn dyadic_dot_word_accumulator_handles_wide_denominators_and_falls_back() {
         let tiny = Rational::from_reduced_dyadic_word(Plus, 3, 200);
@@ -6486,6 +6530,14 @@ mod tests {
         );
     }
 
+    /// Check signed square subtraction and wide alignment in the stack accumulator.
+    ///
+    /// The explicit private sign plan subtracts the square of `u128::MAX - 2`
+    /// from that of `u128::MAX`, despite both input magnitudes being positive.
+    /// A second plan aligns a large integer product with `15 / 2^120`; both
+    /// results must match expanded arithmetic and the latter canonical numerator
+    /// must have at least 350 bits. This tests selected borrow/alignment cases,
+    /// not every limb carry, plan validation or allocation-free materialization.
     #[test]
     fn dyadic_dot_stack_accumulator_handles_wide_products_alignment_and_borrow() {
         let largest = Rational::from_unsigned_integer(BigUint::from(u128::MAX));
@@ -6530,6 +6582,12 @@ mod tests {
         assert!(aligned.numerator().bits() >= 350);
     }
 
+    /// Require stack decline and exact general completion for an overwide alignment.
+    ///
+    /// Aligning the square of `u128::MAX` with `3 / 2^400` exceeds the six-limb
+    /// accumulator, so the explicit stack attempt must return `None`. The general
+    /// dot must still equal the expanded sum. This preserves exact fallback,
+    /// without treating compact failure as mathematical failure or measuring cost.
     #[test]
     fn dyadic_dot_stack_accumulator_preserves_arbitrary_precision_fallback() {
         let largest = Rational::from_unsigned_integer(BigUint::from(u128::MAX));
@@ -6551,6 +6609,14 @@ mod tests {
         );
     }
 
+    /// Check self-dot observation, result sharing, zero-lane decline and cache conflicts.
+    ///
+    /// A fresh dense three-lane row first declines, then succeeds and agrees
+    /// with the aggregate dot; the next result must share its payload. A row
+    /// containing zero must decline this shortcut. Priming another row with
+    /// non-square products must still permit two self-dot calls to share a result.
+    /// Only the first dense row has a separate value comparison; declines concern
+    /// reuse scheduling, not the existence of its mathematical squared norm.
     #[test]
     fn self_dot_admits_after_observation_and_reuses_result() {
         let values = [
@@ -6584,6 +6650,12 @@ mod tests {
         assert!(Arc::ptr_eq(&admitted.0, &retained.0));
     }
 
+    /// Compare a three-lane dot with common product denominators against expansion.
+    ///
+    /// The left denominators are ten and the right denominators seven, with
+    /// mixed product signs. Checks exact equality with ordinary products and
+    /// sums; it does not force the equal-denominator path, since a native reducer
+    /// can finish first, or assert a reduction/work saving.
     #[test]
     fn dot_products_handle_equal_non_dyadic_denominators() {
         let left = [
@@ -6606,6 +6678,12 @@ mod tests {
         );
     }
 
+    /// Compare three signed triple products with an expanded rational expression.
+    ///
+    /// The outer polarities add, subtract and add, while factor signs also
+    /// contribute to each term. Mixed non-dyadic denominators exercise composition
+    /// of those signs and exact values. The reference shares rational arithmetic;
+    /// no independent literal result, schedule or reduction count is asserted.
     #[test]
     fn signed_product_sum_matches_pairwise_arithmetic() {
         let terms = [
@@ -6642,6 +6720,13 @@ mod tests {
         );
     }
 
+    /// Check general and known-dyadic two-factor sums against expanded arithmetic.
+    ///
+    /// Three terms combine outer add/subtract polarities with a negative factor.
+    /// The general result must be dyadic, equal the known-dyadic entry point and
+    /// equal the ordinary product/sum expression. Both aggregate paths share
+    /// scalar helpers; these checks do not independently prove every dyadic case
+    /// or exercise invalid input to the known-dyadic entry point.
     #[test]
     fn signed_product_sum_preserves_dyadic_exactness() {
         let terms = [
@@ -6680,6 +6765,12 @@ mod tests {
         );
     }
 
+    /// Pin the value and positive ordering of two products at a wide binary scale.
+    ///
+    /// Two copies of `(1 / 2^130) * 1` must sum to the literal ratio `1 / 2^129`,
+    /// and the ordering-only API must report Greater. This checks materialized
+    /// value and sign but does not assert the word-accumulator trace named in
+    /// the fixture or measure denominator allocation.
     #[test]
     fn signed_product_sum_dyadic_word_accumulator_materializes_a_wide_denominator() {
         let tiny = Rational::from_bigint_fraction(
@@ -6705,6 +6796,12 @@ mod tests {
         );
     }
 
+    /// Check exact known-dyadic completion after native-width alignment is insufficient.
+    ///
+    /// Adds `2^100 * 1` and `2^-100 * 1` and compares with ordinary rational
+    /// addition. The aligned magnitude exceeds u128, but the stack schedule can
+    /// handle it; this fixture neither requires BigUint fallback specifically nor
+    /// asserts the selected dispatch event.
     #[test]
     fn signed_product_sum_falls_back_when_dyadic_alignment_exceeds_a_word() {
         let wide_word = Rational::from_bigint(BigInt::from(1_u8) << 100_usize);
@@ -6722,6 +6819,12 @@ mod tests {
         assert_eq!(actual, &wide_word + &tiny);
     }
 
+    /// Compare three signed two-factor terms sharing denominator seventy.
+    ///
+    /// Factors have denominators ten and seven, with add/subtract/add polarity.
+    /// The exact result must equal expanded arithmetic. This checks the common-
+    /// scale input shape, not exclusive use of the equal-denominator schedule,
+    /// since native reduction precedes it when eligible.
     #[test]
     fn signed_product_sum_handles_equal_non_dyadic_denominators() {
         let terms = [
@@ -6753,6 +6856,12 @@ mod tests {
         );
     }
 
+    /// Check exact completion with a factor already wider than native storage.
+    ///
+    /// For `huge = 2^200`, compares `huge * 3 - huge * 2` with expanded arithmetic.
+    /// The input magnitude itself cannot fit u128; the fixture does not provoke
+    /// only an overflowing native multiplication or assert a fallback trace.
+    /// Agreement with the expanded expression is not an independent literal oracle.
     #[test]
     fn signed_product_sum_word_overflow_falls_back_to_biguint() {
         let huge = Rational::from_bigint(BigInt::one() << 200_usize);
@@ -6769,6 +6878,12 @@ mod tests {
         );
     }
 
+    /// Pin an exact unit result from a reciprocal pair with overwide naive products.
+    ///
+    /// Uses `2^80 / (2^80 - 1)` and its reciprocal in one positive product term.
+    /// Each component fits u128 but the unreduced products do not. The result
+    /// must equal one; without a dispatch assertion this alone does not prove
+    /// cross-cancellation preceded every wide multiplication or bound the work.
     #[test]
     fn signed_product_sum_cross_cancels_before_word_overflow() {
         let a = BigUint::one() << 80_usize;
