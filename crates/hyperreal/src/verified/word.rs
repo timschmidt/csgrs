@@ -1,3 +1,17 @@
+//! Fixed-width arithmetic gates and exponent metadata shared by scalar consumers.
+//!
+//! These kernels plan integer rounding, compare checked cross products, add signed
+//! magnitudes, align words and combine binary-exponent metadata. They operate on
+//! primitive integers without heap allocation or shared caches. An Option decline
+//! means the stated native width/range gate failed, not resource exhaustion or a
+//! claim that an arbitrary-width computation is impossible.
+//!
+//! Callers retain authority over fraction validity, the meaning of bit lengths and
+//! comparison corrections, and any large integer allocation after a scale plan.
+//! Verification-only relations and lemmas describe this same executable arithmetic;
+//! ordinary builds erase them and the proof blocks. Their presence is not evidence
+//! of a fresh verifier run or a proof of every caller's geometric/numeric meaning.
+
 #[cfg(verus_keep_ghost)]
 use vstd::arithmetic::power2::{lemma_pow2_unfold, pow2};
 #[cfg(verus_keep_ghost)]
@@ -5,9 +19,16 @@ use vstd::prelude::*;
 
 use core::cmp::Ordering;
 
-/// Select the integer approximation shift without negating an i32 precision.
-/// A rounded right shift first shifts by one fewer bit, then adds one and
-/// shifts once more, preserving halfway rounding toward positive infinity.
+/// Plan exact scaling or nearest-integer rounding of an integer times 2^-precision.
+///
+/// For precision <= 0, returns (false, -precision): the consumer left-shifts by
+/// that many bits. For positive precision, returns (true, precision-1): the
+/// consumer computes ((n >> bits) + 1) >> 1, using arithmetic right shifts to
+/// round nearest with ties toward positive infinity for either sign.
+///
+/// Accepts every i32, including MIN, whose exact shift count is 2^31 after i64
+/// negation. This function only returns metadata; it neither rounds a value nor
+/// bounds the consumer's potentially enormous allocation or total work.
 #[cfg_attr(verus_keep_ghost, verus_spec(plan =>
     ensures
         plan.0 == (precision > 0),
@@ -23,7 +44,17 @@ pub(crate) fn approximation_scale_plan(precision: i32) -> (bool, u32) {
     }
 }
 
-/// Compare cross products without accepting a wrapped machine product.
+/// Compare `left_numerator * right_denominator` with the reverse cross product.
+///
+/// Both it and `right_numerator * left_denominator` must fit u128. Either overflow
+/// returns None even when another
+/// argument or comparison strategy could decide the order. The left product is
+/// checked first. Successful Less/Equal/Greater is the exact product ordering.
+///
+/// All four raw words, including zero denominators, are accepted arithmetically.
+/// Interpreting the answer as an unsigned rational order requires positive
+/// denominators supplied by the caller. No sign handling, fraction validation,
+/// reduction, arbitrary-width fallback or resource-exhaustion result occurs here.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures
         result.is_none() <==> (
@@ -54,6 +85,13 @@ pub(crate) fn compare_products(
 
 #[cfg(verus_keep_ghost)]
 verus! {
+/// Specify the unbounded integer arithmetic behind checked magnitude metadata.
+///
+/// Subtract denominator bits and a Boolean one-bit correction from numerator bits,
+/// then add the signed offset without an i32 range restriction. For positive
+/// rationals the magnitude model supplies bit-length and aligned-comparison proofs
+/// before using this as a scaled binade exponent. This relation alone does not
+/// validate those inputs, exclude zero or prove any operand's numerical magnitude.
 pub(crate) open spec fn bit_length_msd(
     numerator_bits: u64, denominator_bits: u64, below: bool, offset: i32,
 ) -> int {
@@ -61,10 +99,21 @@ pub(crate) open spec fn bit_length_msd(
         - (if below { 1int } else { 0int }) + offset as int
 }
 
+/// Interpret a Boolean sign and u128 magnitude as an unbounded mathematical integer.
+///
+/// True negates the magnitude; either sign maps zero to zero. This shared ghost
+/// meaning connects signed_add and aggregate/dyadic identities without restricting
+/// magnitudes to i128 or requiring canonical input-zero signs.
 pub(crate) open spec fn signed(negative: bool, magnitude: u128) -> int {
     if negative { -(magnitude as int) } else { magnitude as int }
 }
 
+/// Connect the representable factor 1u128 << shift to the mathematical power 2^shift.
+///
+/// Requires shift < 128. Recursion decreases shift, using the zero-power base and
+/// one-bit doubling plus the power recurrence. Word alignment and shifted-limb
+/// proofs consume the identity. The lemma is erased from ordinary execution;
+/// its source contract is not by itself evidence that verification succeeded.
 pub(crate) proof fn one_shift_is_power_of_two(shift: u32)
     requires shift < 128,
     ensures (1u128 << shift) == pow2(shift as nat),
@@ -81,7 +130,14 @@ pub(crate) proof fn one_shift_is_power_of_two(shift: u32)
     }
 }
 
-/// Widen vstd's bounded-shift multiplication lemma to a two-limb word.
+/// Connect a bounded u128 machine left shift to exact multiplication by 2^shift.
+///
+/// Requires shift < 128 and value*2^shift <= u128::MAX in mathematical arithmetic.
+/// These hypotheses exclude discarded high bits, including in each recursive
+/// predecessor step. Induction on shift combines the previous identity with a
+/// one-bit doubling identity and the power recurrence; zero shift is the base.
+/// GCD proofs use this when restoring a factored common power of two. It is a
+/// ghost proof obligation, not an executable overflow test or a fresh proof result.
 pub(crate) proof fn shift_left_u128_is_mul(value: u128, shift: u32)
     requires shift < 128, value * pow2(shift as nat) <= u128::MAX,
     ensures (value << shift) == value * pow2(shift as nat),
@@ -109,8 +165,17 @@ pub(crate) proof fn shift_left_u128_is_mul(value: u128, shift: u32)
 }
 }
 
-/// Add signed magnitudes, reporting overflow rather than discarding high bits.
-/// A zero result always has a nonnegative sign.
+/// Add two Boolean-sign/u128-magnitude integers exactly when the magnitude fits.
+///
+/// True denotes negation. The admitted signed range is -u128::MAX..=u128::MAX,
+/// not the narrower i128 range; either sign is accepted on an input zero.
+/// Equal signs use checked magnitude addition, returning None on overflow.
+/// Opposite signs subtract the smaller magnitude from the larger and always fit.
+/// Every zero result is canonicalized to (false, 0), including two negative zeros.
+///
+/// Used after native product alignment and by rational sign adapters. The function
+/// performs no scaling or normalization beyond the zero sign; a decline concerns
+/// native magnitude capacity, not cancellation in a larger multi-term sum.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures
         result.is_none() <==> (
@@ -144,7 +209,14 @@ pub(crate) fn signed_add(
     }
 }
 
-/// Multiplication by a representable power of two, with overflow detection.
+/// Multiply a u128 word by 2^shift only when both the shift and result fit this gate.
+///
+/// Returns None for every shift >= 128, including a zero value. For smaller
+/// shifts, checked multiplication by the representable power of two rejects lost
+/// high bits, unlike a plain machine left shift. Zero succeeds for shifts below
+/// 128; shift zero preserves every input. This is native alignment eligibility,
+/// not a saturating operation, arbitrary-width fallback or resource limit.
+/// The conditional proof connects the constructed factor to the exact power.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures
         result.is_none() <==> (shift >= 128
@@ -165,7 +237,12 @@ pub(crate) fn checked_shift_left(value: u128, shift: u32) -> Option<u128> {
     }
 }
 
-/// Accept exponent metadata without narrowing it before checking the word bound.
+/// Apply the checked native left-shift gate to a full u64 exponent difference.
+///
+/// Rejects shift >= 128 before narrowing to u32, including all such shifts of
+/// zero. Smaller shifts delegate to checked_shift_left and decline if the exact
+/// scaled magnitude exceeds u128::MAX. Aggregate/dyadic callers can therefore
+/// pass wide metadata without truncation; no huge power is allocated or evaluated.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.is_none() <==> (shift >= 128 || value as nat * pow2(shift as nat) > u128::MAX),
         match result {
@@ -181,7 +258,12 @@ pub(crate) fn checked_shift_left_u64(value: u128, shift: u64) -> Option<u128> {
     checked_shift_left(value, shift as u32)
 }
 
-/// Halve a binary exponent, rounding toward negative infinity.
+/// Return floor(value/2) for every i32 using an arithmetic right shift.
+///
+/// Negative odd exponents round downward rather than toward zero: -3 becomes -2.
+/// Both signed endpoints are safe. The square-root bound consumer uses this to
+/// transport a binary magnitude exponent; this kernel alone does not validate
+/// that the input is a bound or establish the source value's square-root domain.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures 2 * (result as int) <= value as int,
         (value as int) < 2 * (result as int) + 2,
@@ -196,7 +278,20 @@ pub(crate) fn floor_half(value: i32) -> i32 {
     half
 }
 
-/// Convert the exact bit-length difference and comparison correction plus an offset to an MSD.
+/// Compute numerator_bits - denominator_bits - below + offset, then check i32 range.
+///
+/// Below contributes one when true. All intermediate arithmetic uses i128, so
+/// any u64 bit-length pair and i32 offset fit without wraparound. The correction
+/// and offset apply before narrowing: a suitable offset can rescue a bit-length
+/// difference that alone would be outside i32. Returns None exactly when the
+/// final integer cannot be represented, without allocating or inspecting operands.
+///
+/// For a positive rational, actual magnitude bit lengths and a certified aligned
+/// comparison make this the floor-log2 magnitude plus offset. Those semantic
+/// preconditions belong to the caller; zero or inconsistent metadata is not
+/// rejected as invalid here. Computable sample bounds also use the arithmetic
+/// with their own provenance. None is an exponent-range decline, not proof that
+/// the underlying number or a larger-width exponent is unavailable.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures ({
         let exact = bit_length_msd(numerator_bits, denominator_bits, below, offset);

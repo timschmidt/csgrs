@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/word.rs` | Entire authored word arithmetic and ghost lemmas reviewed; twelve descriptions distinguish raw arithmetic, metadata meaning, native overflow/shift gates and proof preconditions. | Both-mode private docs and six selected consumers pass; direct BigInt/BigUint probes are unchanged. Eight normal descriptions and four separate ghost pages render. Verus configuration/expansion validation remains open. See native-word audit. |
 | `crates/hyperreal/src/verified/float.rs` | Entire authored runtime decoder and ghost relation reviewed; eleven descriptions cover factors, variants/fields, finite bounds, nonfinite information loss and relation assumptions. | Both-mode private docs/conversion tests and unchanged 44,032-case probe pass. Ten normal descriptions render; ghost text renders separately. Pinned Verus is unavailable, and compiler-generated custom-doc gaps remain. See IEEE decoder audit. |
 | `crates/hyperreal/src/rational/mod.rs` | Entire module facade reviewed; documented shared arithmetic authority, child-module roles, value identity and failure/resource boundaries. | Both-mode private docs and compiled README/consumer examples pass; four facade blocks and the corrected parse anchor render. All 21 rational Rust sources map to whole-file records; generated Serde gaps remain. See rational source-guide batch. |
 | `crates/hyperreal/src/rational/convert.rs` | Entire primitive conversion file reviewed; 38 authored blocks document exact float ingress, checked integer egress, private helpers, tests and all local macro expansions. | Both-mode private docs, focused tests, doctest, eight Real consumers and independent finite probes pass. All 50 generated integer items render within their concrete impls; 77/78 total applicable descriptions verified. See primitive-conversion batch. |
@@ -27295,6 +27296,101 @@ Cargo output is reused without incremental compilation. AGENTS.md already
 contains the full public/private/generated Rustdoc mandate. Continue with the
 remaining verified scalar kernels and their consumers; verified/word.rs has no
 whole-file audit record yet.
+
+## Native word gates and exponent metadata audit (28 November 2026)
+
+Owning layer: Hyperreal's fixed-width arithmetic gates, consumed by rational
+comparison, native dyadic/aggregate reducers and computable magnitude/rounding
+paths. P1 governs exact answers, P3 caller-owned metadata meaning, P5/P6 native
+capacity declines versus other failures, and P37 the scope of test/proof claims.
+At e88ff28c2, read every line of the 222-line verified/word.rs. Seven runtime
+functions and one proof lemma had brief descriptions; the module and three
+other ghost items lacked Rustdoc. Missing acceptance was the actual full input
+domain, zero/overflow behavior, metadata preconditions and resource distinction.
+
+Read the approximation scale consumer, rational cross-product and magnitude
+callers, aggregate/dyadic alignment and signed adapters, square-root bound
+transport, the magnitude-model connection and relevant limb/GCD proof calls.
+Those contextual reads do not receive new whole-file review credit. Before
+editing, a standalone probe of the actual production file reproduced the
+bounded-arithmetic contracts against BigUint/BigInt reference calculations.
+
+The file now has twelve descriptions across 317 lines: one module, seven runtime
+functions, two ghost arithmetic definitions and two ghost proof lemmas. All
+executable/specification tokens, assertions, attributes and operation order are
+unchanged. The 106 inserted lines and eleven removed lines are docs/spacing only.
+Documented distinctions include:
+
+- The scale planner returns metadata for n*2^-precision. Nonpositive precision
+  requests exact left scaling; positive precision leaves one rounding guard bit
+  for ((n >> bits)+1)>>1, with ties toward positive infinity for both signs.
+  i32::MIN maps safely to 2^31 shift positions. Planning that shift neither
+  performs it nor bounds the consumer's potentially enormous allocation.
+- Cross-product comparison requires both products to fit u128, checking the
+  left first. Zero denominators are accepted as raw words; positive denominators
+  are a caller precondition for interpreting the result as rational ordering.
+  None does not mean the comparison is undecidable by every exact strategy.
+- Boolean signed addition covers -u128::MAX through +u128::MAX, beyond i128's
+  range. Opposite signs always fit through magnitude subtraction; equal-sign
+  overflow declines. Either sign is admitted on zero input and every zero output
+  has a false sign. This is a two-term sum, not a whole multi-term cancellation
+  analysis or a general canonical rational constructor.
+- Both shift helpers decline at shifts >=128 even for zero. Smaller shifts use
+  checked multiplication, rejecting lost high bits; the u64 wrapper checks before
+  narrowing. This is native representation eligibility, not resource exhaustion
+  or an arbitrary-width fallback.
+- floor_half is downward rounding, including negative odd exponents and i32
+  endpoints. Its square-root consumer supplies source-domain/bound validity.
+  checked_bit_length_msd combines difference, correction and offset in i128
+  before narrowing, allowing an offset to rescue an otherwise overwide result.
+  It accepts synthetic/zero metadata arithmetically; the caller must establish
+  bit lengths and the aligned comparison for an actual magnitude claim.
+- The signed and bit-length ghost definitions give unbounded integer meanings.
+  The two shift lemmas require shift<128; the multiplication lemma also requires
+  the exact result to fit. Their induction connects machine shifts to powers of
+  two for word alignment and GCD restoration. Source lemmas are not fresh proof
+  evidence or runtime overflow checks.
+
+Executed after the final edit:
+
+- Locked/offline Hyperreal tests pass in both feature modes: six exact-name
+  matches covering synthetic MSD boundaries, rational magnitude intervals,
+  native dyadic difference/product sums, square-root magnitude transport and
+  approximation-bound qualification. Existing expectations are unchanged.
+- Private cargo doc builds pass without default features and with all features,
+  with warnings and broken/private links denied. All eight runtime/module
+  descriptions render in each configuration. Four exact ghost descriptions and
+  their unchanged full specification/proof bodies render separately as Markdown;
+  the checker matches both source bodies and description text. No ghost item is
+  falsely credited to ordinary Cargo documentation.
+- The warnings-denied direct probe passes with byte-identical before/final output:
+  20,736 cross-product cases (2,949 Less, 663 Equal, 2,949 Greater, 14,175 declines);
+  576 signed sums (498 success, 78 declines); 156 u64-shift and 144 u32-shift
+  cases (55 successes each, 101/89 declines); seventeen endpoint scale plans;
+  8,755 bounded nearest/tie-up computations; 8,212 floor-half cases; and 4,896
+  synthetic MSD inputs (2,812 success, 2,084 declines). This finite grid is not
+  exhaustive over machine inputs or proof of consumers' metadata provenance.
+- Oracles use arbitrary-width arithmetic, Euclidean floor division and explicit
+  capacity checks. Nonzero enormous shifts are never materialized. The initial
+  probe compile needed explicit u8 constants to disambiguate BigInt multiplication;
+  only the temporary harness was corrected before the baseline run.
+- Source/declaration inventories and git diff --check pass. Full workflows,
+  benchmarks, cross-target and formal checks remain owner-waived. No precision
+  endpoint is advertised as an executable total-work or memory budget.
+
+The pinned Verus executable is still absent. No proof run, ghost-configuration
+compilation or Verus macro-expansion audit is credited; the standalone Markdown
+pages only establish that the exact ghost text can be rendered. Prior
+source-hash-bound proof evidence was not refreshed. Authored whole-file review
+is complete for this file, while those configuration/generated obligations and
+the repository-wide audit remain open.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-word-audit/: baseline, probe,
+scripts, commands, logs, source/render inventories and compressed selected HTML.
+Owned executable and duplicate HTML trees are removed after checking; shared
+Cargo output is reused without incremental compilation. AGENTS.md already
+mandates full public/private/generated Rustdoc. Continue through the remaining
+verified scalar kernels, beginning with product.rs and its reducer consumers.
 
 ## Next work
 
