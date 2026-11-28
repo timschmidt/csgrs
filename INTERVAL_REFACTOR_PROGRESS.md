@@ -16825,3 +16825,19 @@ covering five two-state fields to t = 2 with default noise options:
 
 The default therefore stays `Lagrange`. A width-aware choice is the next
 candidate: `MeanValue` when the noise domain is narrow.
+
+## 2026-11-27: Phase 14 preparation, docs.rs builds
+
+hypervoxel was the only published crate with optional features that did not
+document all of them on docs.rs. It now sets `all-features = true`, like the
+others. Its optional dependencies all have version requirements, so docs.rs
+can resolve them.
+
+A docs.rs-equivalent build of every published crate passes with
+`RUSTDOCFLAGS="-D warnings"`:
+- `cargo doc --locked --no-deps --workspace --exclude csgrs --all-features`;
+- the root crate with `--no-default-features` and its declared docs.rs feature
+  list.
+
+These need the owner: the coordinated release itself, version and publishing
+decisions, and the hardware-in-the-loop and representative application runs.
