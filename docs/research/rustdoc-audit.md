@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/convert.rs` | Entire primitive conversion file reviewed; 38 authored blocks document exact float ingress, checked integer egress, private helpers, tests and all local macro expansions. | Both-mode private docs, focused tests, doctest, eight Real consumers and independent finite probes pass. All 50 generated integer items render within their concrete impls; 77/78 total applicable descriptions verified. See primitive-conversion batch. |
 | `crates/hyperreal/src/rational/arithmetic/tests.rs` | Entire authored file reviewed across twelve contiguous batches; all 249 declarations documented, including local helpers, tuple fields and a local constant. | Both-mode private docs and focused batch tests pass. Cumulative inventories match the final source; 224 minimal-feature and 249 all-feature supplemental descriptions verified. Executable tokens match the original pre-audit file. See comparison-fixture reconciliation for scope and retained limits. |
 | `crates/hyperreal/src/rational/arithmetic/aggregate_products.rs` | Entire authored carrier, reduction, construction and dispatch implementation reviewed across eight batches; all 256 declarations documented, including fields and function-local items. | Both-mode private docs and focused tests pass; 246 ordinary and ten supplemental descriptions render. Whole-file executable tokens agree with the pre-audit revision except eleven removed hiding attributes. Generated-API review remains separate. See aggregate-dispatch reconciliation. |
 | `crates/hyperreal/src/rational/arithmetic/ops.rs` | Entire exact operator, integer shortcut, mean, retention and balanced-product implementation reviewed; all 48 functions, 17 impls, ten associated outputs and chunk constant documented. | Both-mode private docs and focused tests pass; all 76 descriptions render, 1,215 records match before/after and independent expectations pass. See rational-operator batch. |
@@ -27010,6 +27011,106 @@ before this cleanup. AGENTS.md already mandates full public/private/generated
 Rustdoc. The repository-wide audit and generated-API gaps remain unfinished.
 The next unreviewed rational file is convert.rs; its macro-generated integer
 conversions, finite-float ingress, helpers and tests require their own audit.
+
+## Rational primitive conversion audit (28 November 2026)
+
+Owning layer: Hyperreal's exact primitive conversion boundary, including the
+macro-generated integer adapters and private float-import helpers. P1 governs
+preservation of the represented number, P4 the retained exact-view/dyadic facts,
+P5 the disclosed allocation/work limits, P6 the error distinctions and P37 the
+scope of evidence. At f90b61130, rational/convert.rs had 347 lines with no Rustdoc
+on its macros, generated items, helpers, float implementations or fifteen tests.
+
+Read the entire file and the IEEE decoder, then inspected the shared integer and
+dyadic constructors, canonical integer query, exact-f64 fact setter/query and
+Real conversion consumers. Those contextual reads do not grant new whole-file
+review credit to their containing files. Added 38 authored documentation blocks
+(143 Rustdoc lines and one blank line); the file is now 491 lines. All original
+executable tokens, ordinary comments, tests, assertions and feature guards are
+unchanged. The added module example distinguishes binary64 0.1 from exact 1/10
+and demonstrates decimal parsing and typed infinity rejection.
+
+The documented contract includes the following distinctions:
+
+- All five signed and five unsigned fixed-width integer types preserve their
+  full input ranges. unsigned_abs admits each signed minimum without signed
+  overflow. The shared constructors retain authority over canonical storage.
+- Checked integer egress consumes the Rational and queries an exact integer
+  before target-width conversion. Fractions return NotAnInteger even when also
+  outside range; integral out-of-range values return OutOfRange. There is no
+  implicit truncation. Lazy normalization and BigInt cloning have no local
+  total-work/memory/cancellation budget or typed allocation failure.
+- IEEE finite inputs import their exact binary values, including subnormals;
+  signed zeros become canonical mathematical zero. Infinity and every NaN
+  encoding have separate typed errors. Decimal intent and NaN payloads are not
+  rational data. The decoded exponent/significand bounds justify narrowing and
+  negation in the adapters.
+- The private word helpers cancel powers of two exactly and return zero before
+  denominator construction. Their u32 shift domain exceeds the IEEE callers'
+  small bounded exponents; arbitrarily large nonzero shifts can allocate large
+  denominators without a local resource cap. Zero at maximum shift remains cheap
+  by source inspection and the directed probe, without a timing claim.
+- Binary64 ingress explicitly marks exact-f64 representability. That bit stores
+  neither input bits nor a zero sign. Binary32 ingress does not explicitly set
+  it; the Real wrapper establishes the exact widening fact. This does not claim
+  that every newly returned f32 rational has a cold/absent bit: pooled owners can
+  already contain valid retained evidence.
+- Existing fixtures cover selected widths and literals, not every generated
+  adapter or IEEE boundary. The retained-view fixture checks exported bits only
+  for its normal/zero cases; its subnormal branch checks a fact bit. Arithmetic
+  value equality and canonical accessor observations alone do not establish the
+  original raw storage state. The trace fixture retains exactly one dyadic-hit
+  and zero dyadic-learned assertions, with construction inside its window.
+
+Executed after the final edit:
+
+- Locked/offline Hyperreal conversion tests: fourteen pass without default
+  features and fifteen with all features, matching the fifteen-test all-feature
+  baseline. Exact-name inventories verify every selected fixture.
+- Private cargo doc builds pass in both modes with warnings and broken/private
+  links denied. Supplemental test-enabled copies remove only the fifteen test
+  markers and retain feature guards; there are no function-local items to lift.
+  All 77 applicable expanded/authored descriptions render in minimal mode and
+  all 78 in all-feature mode. This includes each of the 50 integer macro-produced
+  impl/method/associated-error items, checked within its particular primitive
+  implementation section on the Rational page, not merely counted as repeated
+  text somewhere in the HTML. The two macros themselves are also documented.
+- The new decimal/import doctest passes in both modes. Eight exact-name Real
+  consumers pass in both modes: zero, infinity, NaN, half, exact post-import
+  division, both literal representations and retained/cached binary64 views.
+- A supplemental source-copy probe compiles with warnings denied and passes
+  three checks in each mode, restoring all original test markers before compile.
+  Every generated integer type checks minimum/maximum/zero/one ingress and
+  export, both adjacent out-of-range values, three fractional errors (including
+  an oversized fraction and marked 6/4), and marked 12/4 exporting as three.
+- The probe compares 4,111 bit patterns per float width with num's separate
+  BigRational float oracle and checks exact binary64 views of finite results,
+  with zero made positive. Binary32 outcomes are 4,091 finite, two infinities
+  and eighteen NaNs; binary64 outcomes are 4,103 finite, two infinities and six
+  NaNs. Directed inputs include both zeros, subnormal/normal boundaries, finite
+  maxima, both infinities, signed signaling/quiet NaN encodings and 0.1, followed
+  by 4,096 deterministic additional patterns per width. This is finite coverage,
+  not exhaustive enumeration of either format or independent decoder proof.
+- Both helpers pass 154 signed ratio comparisons with BigRational, four zero
+  calls at u32::MAX shift and two signed wide-integer cases. Nonzero huge shifts
+  are deliberately not allocated; no general resource bound is inferred.
+- Source/declaration inventories, executable-token comparison and git diff
+  --check pass. The first inventory script had a Python conditional typo, then
+  mistakenly treated Rust generic syntax as HTML when normalizing the doctest;
+  both harness issues were corrected without changing source or expectations.
+  Full workflows, benchmarks, cross-target checks and formal verification remain
+  owner-waived for this docs-only session.
+
+Evidence remains under /tmp/csgrs-hyperreal-rational-convert-audit/: baseline,
+source-copy probe, scripts, commands, logs, source/render inventories and hashes.
+Selected HTML is retained compressed once per page, sharing references for the
+many generated items. Owned source copies, probe binary and duplicate HTML trees
+are removed after verification; shared Cargo artifacts are reused without
+incremental compilation. AGENTS.md already contains the 100% public/private/
+generated Rustdoc mandate. This establishes the conversion file's authored and
+local macro-generated documentation, not repository-wide completion. Continue
+with the rational module/README and remaining implementation/support files,
+consulting existing records before assigning any new whole-file credit.
 
 ## Next work
 
