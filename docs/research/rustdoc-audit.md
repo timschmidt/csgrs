@@ -21554,6 +21554,110 @@ reused the approximately 6.6 GiB shared target with incremental compilation off.
 Repository-wide line review and all-configuration documentation coverage remain
 unfinished.
 
+## Hyperreal node regressions: literal precision, cache sharing and small-angle fixtures
+
+Baseline: `c002971badb03aa317fedd42e4c8b439d8de6e39` on `rustdoc`.
+Reviewed the next 438 contiguous lines of
+`crates/hyperreal/src/computable/node/tests.rs`, baseline lines 1952–2389,
+from `bigger` through `ln_constant_cache_is_shared`. The section becomes
+586 lines, ending at current line 2537. Both surrounding sections remain
+byte-identical. The file grows from 4625 to 4773 lines. Cumulative contiguous
+review now covers current lines 1–2537; continue at the test attribute for
+`negate` on line 2538 (function line 2539). **No whole-file credit is claimed**;
+the enclosing module and remaining contents still need review.
+
+Hyperreal owns these fixtures. P37 requires accurate evidence descriptions;
+P1–P5 and P7 govern exact input, retained structure, facts, cache/publication,
+resource scope and stable removable quotients. The initial gap was 26 missing
+function descriptions: 24 tests and two function-local helpers. Read the complete
+section, relevant scalar constructors, precision/magnitude helpers, small-angle
+admission/kernels and process-wide cache declaration. All 24 baseline tests
+passed before editing. Added all 26 Rustdoc blocks, with 24 checked in temporary
+private fixture pages and two in supplemental rendering because Rustdoc does not
+emit function-local helper pages.
+
+The audit distinguishes these actual assertions:
+
+- Signed integer comparison at tolerance zero does not make approximate Equal
+  a general exact equality certificate. The shift fixture covers one exactly
+  divisible positive case. Integer nine produces 9,5,2,1 at precisions 0,1,2,3
+  and leaves no numerical cache; its half-way tie does not impose universal
+  correct rounding on generic computable expressions.
+- Pi and integral atan(1/5), atan(1/239) fixtures assert fixed integer samples
+  and selected precision reuse. The integral-atan payload is a reciprocal
+  denominator. Pi's process-wide cache may already be warmer than requested.
+- Rational zero and one retain dedicated tags and exact zero/sign facts without
+  explicit digit requests. Eight retained rational square roots have exact
+  binade facts, including reciprocal cases needing floor division of negative
+  odd exponents. The integer and iterative magnitude fixtures cover separated
+  positive examples, not unresolved sentinels or all cache-derived exponents.
+- Cloning pi+1 shares Arc identity and produces equal samples. That witnesses
+  cloning, not mathematical equality of separate allocations or immutable
+  interior caches. The Send/Sync helper establishes Rust trait bounds only.
+- Six scoped threads refine clones of exp(sin(7*pi/3)) through -192 and compare
+  against a rescaled native -192 reference. The shared final cache must retain
+  that precision. This finite schedule is neither independent numerical error
+  evidence nor a proof for every interleaving. The aborted atan fixture checks
+  entry cancellation and absent publication only; it has no clone read or retry.
+- Five size_of ceilings are inline target layout checks, excluding heap graph
+  retention and allocator overhead. They do not establish complete-lifetime
+  memory use or a cross-platform ABI/performance contract.
+- The small-angle corpus has seven explicit and 128 deterministic dyadic cases,
+  including zero and +/-639/1024. Both quotient constructors must accept each
+  case. Nine precision requests give 2430 comparisons with nearest-rounded MPFR
+  samples, using analytic limits one and one-half at zero. The local conversion
+  helper returns a nearest-rounded integer, not an enclosure. Input one must
+  be declined by sinc, and input one-half must preserve the Arc of an attached
+  unset flag. Signal transport is distinct from cancellation responsiveness.
+- e, pi, tau and ln(2) wrappers must observe appropriately fine shared caches.
+  The pi/tau cross-cache tests assert scaled-sample consistency and retained
+  state, not exclusive companion dispatch or measured work savings. Spawning
+  a thread does not clear process-wide slots. The producer/consumer pi test
+  uses sequential joined threads, checking cache visibility before the consumer
+  request and equal output; it does not exercise concurrent producer races.
+
+Independent exact Fraction arithmetic verified all eight square-root binades,
+four integer rounding literals and eight pi/atan sample enclosures. The latter
+used alternating rational atan bounds and Machin's pi identity, retaining the
+sign-reversed interval endpoint for the subtracted atan(1/239) term.
+
+A separate temporary probe kept the small-angle fixture and its original MPFR
+assertions, adding exact rational Taylor bounds for the same returned samples.
+For |x|<=3/4, the even sinc/cosc series alternate with decreasing terms. The
+sum through term 128 and that sum plus negative term 129 bracket the analytic
+value, including the exact zero-input limits. Each next-term magnitude was
+checked below 2^-1100. All 2430 output intervals contained those exact rational
+bounds on both baseline and documented source. This finite qualification does
+not prove universal closure or correct rounding. External probe containment
+was 1 GiB address space, twenty CPU seconds, thirty wall seconds and no core
+dumps; these are harness limits, not production resource bounds.
+
+After the final source edit, focused locked/offline two-job validation passed:
+
+- All 24 selected tests without default features and with all features; all
+  72 baseline/final selected-test logs were checked for nonempty successful runs.
+- Both private library Rustdoc configurations, temporary fixture Rustdoc with
+  warnings and broken/private links denied, 24 rendered function descriptions
+  and the two supplemental local-helper descriptions.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Scoped Rustfmt and git diff --check. Independently formatted comment-free
+  tokens are identical. Raw tokens differ by the two braces Rustfmt removed
+  from a closure whose sole body expression is the returned tuple. This exact
+  before/after closure was inspected and explicitly matched by the inventory;
+  the initial comma-only comparison correctly flagged it for review. No fixture,
+  assertion, API signature, evaluation order or runtime algorithm changed.
+
+No focused check remains blocked and no new runtime defect was found in these
+finite witnesses. Full workflows remain owner-waived for this docs-only session;
+no performance claim is made. AGENTS.md's standing public/private documentation
+mandate remains in force. Evidence under
+`/tmp/csgrs-hyperreal-node-cache-fixtures-audit/` retains commands/logs, exact
+literals, probe sources and item/render/token inventories. Owned temporary source,
+executable/rlib and HTML were removed after inspection. Builds reused the roughly
+6.6 GiB shared target with incremental compilation disabled. Repository-wide
+line review and all-configuration documentation coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

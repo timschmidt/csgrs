@@ -1950,6 +1950,11 @@ mod tests {
     }
 
     #[test]
+    /// Check signed integer comparison at absolute-tolerance exponent zero.
+    ///
+    /// Require 6>5, 4<6 and 5=5. Exact rational leaves supply these decisions;
+    /// this does not make Equal from a general approximate comparison an exact
+    /// equality certificate or test comparison of absolute magnitudes.
     fn bigger() {
         let six: BigInt = "6".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
@@ -1963,6 +1968,10 @@ mod tests {
     }
 
     #[test]
+    /// Check that the floor-shift helper maps integer two to one at exponent -1.
+    ///
+    /// This exactly divisible positive case does not exercise negative rounding,
+    /// large shifts, overflow planning or allocation limits.
     fn shifted() {
         let one = BigInt::one();
         let two = &one + &one;
@@ -1970,6 +1979,11 @@ mod tests {
     }
 
     #[test]
+    /// Check integer nine at binary precision exponents 0,1,2,3 without a node cache.
+    ///
+    /// The expected integers are 9,5,2,1, including the positive half-way tie 9/2
+    /// rounded upward. Direct integer evaluation must leave the numerical cache
+    /// empty; these literals do not impose correct rounding on generic expressions.
     fn prec() {
         let nine: BigInt = "9".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
@@ -1984,6 +1998,11 @@ mod tests {
     }
 
     #[test]
+    /// Check fixed pi samples and retention of the finest requested precision.
+    ///
+    /// Require 402 at -7, then 3,6,13 at 0,-1,-2, with a shared cache no coarser
+    /// than -7. Prior tests may already have warmed the process-wide constant;
+    /// this is a literal/reuse witness, not an isolated cold-cache test.
     fn prec_pi() {
         let three: BigInt = "3".parse().unwrap();
         let six: BigInt = "6".parse().unwrap();
@@ -1998,6 +2017,11 @@ mod tests {
     }
 
     #[test]
+    /// Keep rational zero/one on Int(0) and One with immediate zero/sign facts.
+    ///
+    /// Require Zero/NonZero and exact zero/positive signs without requesting digits.
+    /// The fixture asserts representation and facts, not a dispatch count or an
+    /// allocation bound for the constructor.
     fn rational_zero_and_one_use_dedicated_nodes() {
         let zero = Computable::rational(Rational::zero());
         let one = Computable::rational(Rational::one());
@@ -2005,11 +2029,10 @@ mod tests {
         // These identities are pervasive in higher-level constructors. Keep
         // them on the dedicated nodes so structural facts are available without
         // forcing the generic Ratio approximation path.
-        assert!(matches!(&zero.internal.approximation, Approximation::Int(value) if value.is_zero()));
-        assert!(matches!(
-            &one.internal.approximation,
-            Approximation::One
-        ));
+        assert!(
+            matches!(&zero.internal.approximation, Approximation::Int(value) if value.is_zero())
+        );
+        assert!(matches!(&one.internal.approximation, Approximation::One));
         assert_eq!(zero.zero_status(), ZeroKnowledge::Zero);
         assert_eq!(one.zero_status(), ZeroKnowledge::NonZero);
         assert_eq!(zero.exact_sign(), Some(Sign::NoSign));
@@ -2017,6 +2040,11 @@ mod tests {
     }
 
     #[test]
+    /// Check that cloning pi+1 shares the same Arc-backed expression node.
+    ///
+    /// Both wrappers must return the same -32 sample. Pointer identity witnesses
+    /// this clone's sharing, not mathematical equality of independently allocated
+    /// graphs or immutability of the node's interior caches.
     fn clones_share_immutable_expression_nodes() {
         let value = Computable::pi().add(Computable::one());
         let clone = value.clone();
@@ -2026,25 +2054,49 @@ mod tests {
     }
 
     #[test]
+    /// Check exact root binades for 2,3,5,7 and their reciprocals.
+    ///
+    /// Wrap each rational with the retained square-root constructor and require the
+    /// expected most-significant-bit exponent with exact_msd=true. Reciprocal cases
+    /// include negative odd radicand exponents, where halving needs floor division.
+    /// These eight fact assertions do not request numerical approximations.
     fn rational_square_roots_retain_exact_magnitude_facts() {
         // Include negative odd exponents: truncating division would place
         // sqrt(1/2) in the binade starting at one instead of one half.
         for (numerator, denominator, msd) in [
-            (2, 1, 0), (3, 1, 0), (5, 1, 1), (7, 1, 1),
-            (1, 2, -1), (1, 3, -1), (1, 5, -2), (1, 7, -2),
+            (2, 1, 0),
+            (3, 1, 0),
+            (5, 1, 1),
+            (7, 1, 1),
+            (1, 2, -1),
+            (1, 3, -1),
+            (1, 5, -2),
+            (1, 7, -2),
         ] {
             let radicand = Rational::fraction(numerator, denominator).unwrap();
             let root = Computable::sqrt_squarefree_rational(radicand);
             assert_eq!(
                 root.structural_facts().magnitude,
-                Some(MagnitudeBits { msd, exact_msd: true }),
+                Some(MagnitudeBits {
+                    msd,
+                    exact_msd: true
+                }),
                 "sqrt({numerator}/{denominator})",
             );
         }
     }
 
     #[test]
+    /// Compile-check Send and Sync for Computable, Rational and Real.
+    ///
+    /// Instantiate the local trait-bound helper for all three types. Successful
+    /// compilation establishes those Rust trait bounds, not numerical cache
+    /// correctness under every thread interleaving.
     fn computable_is_send_and_sync() {
+        /// Require both thread-transfer and shared-reference thread-safety traits for T.
+        ///
+        /// The empty body makes this a compile-time bound witness for the enclosing
+        /// test's three scalar types; it performs no runtime concurrency exercise.
         fn assert_send_sync<T: Send + Sync>() {}
 
         assert_send_sync::<Computable>();
@@ -2053,6 +2105,13 @@ mod tests {
     }
 
     #[test]
+    /// Refine six clones of exp(sin(7*pi/3)) concurrently through precision -192.
+    ///
+    /// Compare each result with a rescaled -192 sample from a separately constructed
+    /// expression, allowing one integer unit. After joining all scoped workers,
+    /// require the shared result cache to be at least as fine as -192. Shared
+    /// constants may already be warm. This finite schedule uses the native evaluator
+    /// as its reference and does not prove race freedom or independent error bounds.
     fn cloned_expression_can_be_refined_concurrently() {
         let expression = || {
             Computable::pi()
@@ -2079,6 +2138,11 @@ mod tests {
     }
 
     #[test]
+    /// Leave an entry-cancelled atan(1/5) request unpublished in its node cache.
+    ///
+    /// Use the integral-atan recipe with an already-set explicit flag at -128.
+    /// The returned placeholder is discarded. No clone reads it and no retry or
+    /// mid-evaluation cancellation is exercised by this fixture.
     fn aborted_approximation_is_not_shared_through_cache() {
         use std::sync::atomic::AtomicBool;
 
@@ -2090,6 +2154,12 @@ mod tests {
     }
 
     #[test]
+    /// Enforce inline layout ceilings for five native representation types on this target.
+    ///
+    /// Require Computable<=16, Approximation<=40, Node<=56, BoundCache<=12 and
+    /// ExactSignCache<=1 bytes. These size_of checks exclude heap allocations,
+    /// shared graph retention and allocator overhead; they are neither whole-object
+    /// memory measurements nor stable cross-platform ABI guarantees.
     fn layout_sizes() {
         assert!(
             size_of::<Computable>() <= 16,
@@ -2119,10 +2189,29 @@ mod tests {
     }
 
     #[test]
+    /// Qualify certified sinc/cosc continuations on 135 fixed and generated dyadic inputs.
+    ///
+    /// Seven explicit cases include zero, +/-1/2 and +/-639/1024; a fixed xorshift
+    /// sequence adds 128 values n/1024 with -500<=n<=500. Both constructors must
+    /// accept every case. Nine reused precision requests through -1024 compare with
+    /// nearest-rounded MPFR references within one integer unit, totaling 2430
+    /// comparisons. At zero use the analytic limits sinc(0)=1 and cosc(0)=1/2.
+    /// These are rounded sample comparisons, not directed error enclosures.
+    ///
+    /// Also require sinc to decline input one and preserve the exact Arc identity of
+    /// an attached, unset abort flag for input 1/2. This checks signal transport,
+    /// not cancellation responsiveness. The finite corpus is deterministic and does
+    /// not cover every input accepted by the sufficient small-angle predicate.
     fn certified_small_angle_quotients_match_mpfr() {
         use rug::{Float, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
 
+        /// Round a finite MPFR reference scaled by 2^-precision to a BigInt.
+        ///
+        /// Use saturating negation for the shift and MPFR nearest integer rounding,
+        /// then convert through decimal text. The caller's small fixture precisions
+        /// avoid saturation. Nonfinite references or failed integer parsing panic;
+        /// this returns one rounded sample, not a directed interval or error receipt.
         fn rounded_scaled(mut value: Float, precision: Precision) -> BigInt {
             value <<= precision.saturating_neg();
             value
@@ -2229,6 +2318,11 @@ mod tests {
     }
 
     #[test]
+    /// Check atan(1/5) literals at binary precisions -10 and -20.
+    ///
+    /// The integral-atan payload is a reciprocal denominator, not the argument five.
+    /// Require integer samples 202 and 206984 while reusing the same node; these
+    /// fixed samples are not a universal correct-rounding contract.
     fn prec_atan_5() {
         let five: BigInt = "5".parse().unwrap();
         let atan_5 = Computable::prescaled_atan(five);
@@ -2239,6 +2333,10 @@ mod tests {
     }
 
     #[test]
+    /// Check atan(1/239) literals at binary precisions -10 and -20.
+    ///
+    /// Require samples 4 and 4387 from one integral-atan node, exercising a Machin
+    /// pi component and refinement. This is finite literal evidence only.
     fn prec_atan_239() {
         let two_three_nine: BigInt = "239".parse().unwrap();
         let atan_239 = Computable::prescaled_atan(two_three_nine);
@@ -2249,6 +2347,11 @@ mod tests {
     }
 
     #[test]
+    /// Check exact integer binades for 1,3,5,7,8 using the magnitude query at -4.
+    ///
+    /// Require exponents 0,1,2,2,3. These exact positive leaves do not exercise an
+    /// unresolved or zero result, or justify treating every cache-derived exponent
+    /// from this API as an exact binade.
     fn msd() {
         let one: BigInt = "1".parse().unwrap();
         let a = Computable::integer(one.clone());
@@ -2268,6 +2371,10 @@ mod tests {
     }
 
     #[test]
+    /// Check iterative magnitude results for one, pi and exp(5).
+    ///
+    /// Require exponents 0,1,7 respectively. These separated positive examples do
+    /// not test the unresolved sentinel, zero, cancellation or a total-work bound.
     fn iter_msd() {
         let one = Computable::one();
         assert_eq!(one.iter_msd(), 0);
@@ -2279,6 +2386,11 @@ mod tests {
     }
 
     #[test]
+    /// Check that a fresh e wrapper observes the process-wide constant cache.
+    ///
+    /// Request -32 through one wrapper and require a second to see precision at
+    /// least that fine. Pre-existing warmer data is allowed; the fixture does not
+    /// count evaluations, require a cold start or measure saved work.
     fn e_constant_cache_is_shared() {
         let e = Computable::e_constant();
         let _ = e.approx(-32);
@@ -2290,6 +2402,9 @@ mod tests {
     }
 
     #[test]
+    /// Require exp of rational one to retain the shared E constant representation.
+    ///
+    /// This constructor-tag assertion does not evaluate e or inspect its cache.
     fn exp_one_uses_dedicated_e_constant() {
         let e = Computable::rational(Rational::one()).exp();
         assert!(matches!(
@@ -2299,6 +2414,11 @@ mod tests {
     }
 
     #[test]
+    /// Check that a fresh pi wrapper observes the process-wide constant cache.
+    ///
+    /// Request -32 through one wrapper and require a second to see precision at
+    /// least that fine. Pre-existing warmer data is allowed; the fixture does not
+    /// count evaluations, require a cold start or measure saved work.
     fn pi_cache_is_shared() {
         let pi = Computable::pi();
         let _ = pi.approx(-32);
@@ -2310,6 +2430,11 @@ mod tests {
     }
 
     #[test]
+    /// Check that a fresh tau wrapper observes the process-wide constant cache.
+    ///
+    /// Request -32 through one wrapper and require a second to see precision at
+    /// least that fine. Pre-existing warmer data is allowed; the fixture does not
+    /// count evaluations, require a cold start or measure saved work.
     fn tau_cache_is_shared() {
         let tau = Computable::tau();
         let _ = tau.approx(-32);
@@ -2321,6 +2446,12 @@ mod tests {
     }
 
     #[test]
+    /// Check tau/pi scaled-sample agreement after warming pi to -64.
+    ///
+    /// In a joined worker thread, require tau at -32 to equal pi at -33, a tau
+    /// cache at least as fine as -32, and an identical repeated tau request.
+    /// The worker shares process-wide caches, so it does not establish a cold tau
+    /// slot or count whether the companion cache actually supplied this result.
     fn tau_cache_reuses_warmed_pi_cache() {
         std::thread::spawn(|| {
             let pi = Computable::pi();
@@ -2341,6 +2472,12 @@ mod tests {
     }
 
     #[test]
+    /// Check pi/tau scaled-sample agreement after warming tau to -65.
+    ///
+    /// In a joined worker, require pi at -64 to equal tau at -63, a pi cache at
+    /// least as fine as -64, and identical repeated pi output. Existing process-wide
+    /// pi data remains possible; the fixture asserts consistency and retained state,
+    /// not an exclusive companion-cache dispatch or work count.
     fn pi_cache_reuses_warmed_tau_cache() {
         std::thread::spawn(|| {
             let tau = Computable::tau();
@@ -2361,21 +2498,32 @@ mod tests {
     }
 
     #[test]
+    /// Check publication of a pi approximation from one joined thread to another.
+    ///
+    /// A producer requests -384; a later consumer must observe a cache at least
+    /// that fine before its own request, then return the identical sample. The
+    /// threads execute sequentially and may inherit warmer process-wide data.
+    /// This proves the tested visibility/reuse state, not overlapping-thread race
+    /// freedom or a measured reduction in evaluation work.
     fn shared_constant_cache_reuses_work_across_threads() {
         let expected = std::thread::spawn(|| Computable::pi().approx(-384))
             .join()
             .expect("constant producer thread should finish");
-        let (cached, actual) = std::thread::spawn(|| {
-            (Computable::pi().cached(), Computable::pi().approx(-384))
-        })
-        .join()
-        .expect("constant consumer thread should finish");
+        let (cached, actual) =
+            std::thread::spawn(|| (Computable::pi().cached(), Computable::pi().approx(-384)))
+                .join()
+                .expect("constant consumer thread should finish");
 
         assert!(cached.is_some_and(|(precision, _)| precision <= -384));
         assert_eq!(actual, expected);
     }
 
     #[test]
+    /// Check that a fresh ln(2) wrapper observes the process-wide constant cache.
+    ///
+    /// Request -32 through one wrapper and require a second to see precision at
+    /// least that fine. Pre-existing warmer data is allowed; the fixture does not
+    /// count evaluations, require a cold start or measure saved work.
     fn ln_constant_cache_is_shared() {
         let ln2 = Computable::ln_constant(2).unwrap();
         let _ = ln2.approx(-32);
