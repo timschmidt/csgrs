@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/computable/node/tests.rs` | Entire file across nine contiguous batches; all 206 authored functions and the private module documented, including seven function-local helpers. | Private library docs in both feature configurations and test-enabled render inventory passed; 199 function pages, one module page and seven supplemental descriptions checked. Finite runtime evidence and limitations are recorded in the nine batch entries. |
 | `crates/csgrs-ffi/src/lib.rs` | Entire file; documented all direct/generated ABI operations, records/fields, family dispatch, private conversion/ownership helpers and regression tests. | All-target compilation and private docs with missing public docs/broken links denied passed; 176 C function pages inspected. Tests were compiled, not executed. |
 | `benchmarks/size-harness/src/bin/primitive.rs` | Entire file; documented argument/default handling, timing/drop boundaries and count-only result. | Standalone all-feature check/private docs passed; workload not executed. |
 | `benchmarks/size-harness/src/bin/composed.rs` | Entire file; corrected extrusion-only receipt description and documented fixed tool, bounds assertion, exports and timing. | Standalone all-feature check/private docs passed; workflow not executed. |
@@ -22008,6 +22009,98 @@ private mandate remains in force. Evidence under
 probe sources and item/render/token inventories. Owned shadow sources, temporary
 HTML and compiled probe artifacts were removed after inspection. Builds reused
 the roughly 6.6 GiB shared target with incremental compilation disabled.
+Repository-wide line review and all-configuration coverage remain unfinished.
+
+## Hyperreal node fixture completion: cancellation and retained facts
+
+On baseline `c269f62e357ce5c65779b9216c0c8cd545705a0b`, read every line of the
+remaining `crates/hyperreal/src/computable/node/tests.rs` tail: baseline lines
+4837–5347, 511 lines, from add through the final directly included
+inverse_trig_presence_survives_bound_cache_updates test. Added nineteen fixture
+descriptions and fourteen lines documenting the enclosing cfg(test) module.
+The tail now spans 564 lines; the complete file has 5414 lines.
+
+This completes the whole-file authored-source review across nine contiguous
+batches. The previously reviewed prefix is byte-identical apart from the new
+module documentation. Reconciled inventories cover all 206 authored functions
+(192 tests and fourteen helpers) plus the module, with no remaining undocumented
+authored item. There are no authored type/field declarations, derives or macro
+definitions in this file. Its test attributes generate harness machinery; that
+is not a new public modeling API. Two fixtures are serde-gated, and the final
+presence test is included directly in the parent node module rather than the
+nested tests module.
+
+The final render audit checked all 207 descriptions, including those from the
+preceding eight batches: 199 function pages, the module page, and seven separate
+function-local helper descriptions. The temporary test-enabled Rustdoc build
+makes cfg(test) items visible; ordinary library Rustdoc alone would omit them.
+The whole-file source review is distinct from the finite runtime evidence in
+this and the preceding batch records. It is not repository-wide completion.
+
+Owning layer: Hyperreal native scalar regression fixtures, principally P1–P5.
+The missing acceptance witness was accurate private-item documentation for the
+last nineteen tests and the module. All nineteen baseline tests passed with all
+features. Reviewed consumer context includes exact cancellation, inverse-angle
+argument retention, successful Laurent proof publication, conservative sample
+bounds, integer rounding and retention of node metadata. Defined inputs remain
+a prerequisite for these raw/internal constructions.
+
+The final descriptions distinguish the assertions and their limits:
+
+- Nested pi cancellation must retain positive 2^-5000 structurally. Commuted
+  root sums expose exact zero; unequal controls remain negative. Quadratic field
+  identities and principal atan anchors use exact signs or structural equality.
+  Shared pi/inverse-pi cancellation additionally requires allocation identity.
+- The opposed inverse-atan sign fixture samples before querying exact_sign;
+  the linear recognizer declines while the later sign query succeeds. It does
+  not prove a cold decision path. Half-pi replay checks the coordinate-swap flag
+  and retained argument; two returned orientation signs are intentionally ignored.
+- Scalar parameter recipes agree through exact projection. Their mathematical
+  common values are pi/3, 1/2-sqrt(2)/8, and atan(1+sqrt(2))+pi. A separate shifted
+  root reciprocal projects to one, and atan of its negation matches -pi/4.
+  These are scalar reconstruction witnesses, not topology or serialization tests.
+- Thirty raw graphs cover three symbolic zeros and five rational residuals at
+  two depth budgets. A zero-budget decline publishes no sign; later successful
+  projection retains signs across clones and leaves the root sample cache empty.
+  Distinct atan atoms decline rational projection before a separate negative-sign
+  query. A balanced 1024-argument atan sum also declines; None alone does not
+  identify the limiting rule or establish typed total-resource exhaustion.
+- Integer scaling includes the positive halfway case 10/4 -> 3. Unit-magnitude
+  samples retain Unknown bounds; larger signed samples retain nonexact magnitude
+  hints. Offering pi a coarser valid sample must preserve its exact bound, without
+  requiring replacement of an already finer numeric cache. The final presence
+  test checks metadata across a bound query, not an asserted cache transition.
+
+Independent Fraction-based Laurent arithmetic over Q[sqrt(2)] verified the
+parameter identities and conjugate cancellation without calling native reducers.
+Exact inequalities verified the inverse-function binades at 1/4, the rational
+triangle expectations, fixture counts and integer scaling. Previously retained
+independent Machin bounds also certified the offered pi sample 50 at precision
+-4. These checks support the specified expectations, not universal recognizer
+completeness or any performance claim.
+
+After the final source edit, locked/offline two-job focused validation passed:
+
+- All nineteen selected tests with no default features and with all features;
+  all 57 baseline/final logs were checked for one nonempty success each. The
+  directly included parent-module test used its distinct exact filter path.
+- Both private library Rustdoc configurations, temporary test-enabled private
+  Rustdoc with warnings and broken/private intra-doc links denied, and the full
+  207-description inventory/render reconciliation described above.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Whole-file Rustfmt and git diff --check. Independently formatted comment-free
+  source tokens agree with baseline. Raw tail-token differences are eight removed
+  optional trailing commas. No fixture, assertion, predicate order, runtime
+  algorithm, signature or feature gate changed.
+
+No focused check remains blocked. Full workflows remain owner-waived for this
+docs-only session; the standing AGENTS.md public/private documentation mandate
+remains in force. Evidence under
+`/tmp/csgrs-hyperreal-node-final-fixtures-audit/` retains scripts, command logs,
+exact expectations and the cumulative item/render/token inventory. Owned shadow
+sources and temporary HTML were removed after inspection. Builds reused the
+roughly 6.6 GiB shared target with incremental compilation disabled.
 Repository-wide line review and all-configuration coverage remain unfinished.
 
 ## Next work

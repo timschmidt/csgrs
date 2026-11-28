@@ -1,4 +1,18 @@
 #[cfg(test)]
+/// Native computable-real regression fixtures with access to private constructors and facts.
+/// Cover exact retained identities, approximation error, range/domain guards, cache
+/// histories, shared graphs and selected representation/resource boundaries.
+/// Helpers distinguish integer sample comparisons from structural or exact-sign
+/// assertions; selected numeric corpora also use directed MPFR references.
+///
+/// Raw nodes intentionally bypass constructor facts for named regression cases;
+/// they are not a public admission API. Finite successful cases and explicit
+/// recognizer declines do not establish universal scalar completeness, absence of
+/// refinement, or total-resource bounds. Tests can share constant caches even when
+/// their result graphs are freshly constructed. This cfg(test) module is omitted
+/// from ordinary library Rustdoc; a test-enabled documentation build is needed to
+/// render these private fixture items, and function-local helpers need separate
+/// inspection.
 mod tests {
     use super::*;
     use num::Signed;
@@ -4835,6 +4849,9 @@ mod tests {
     }
 
     #[test]
+    /// Require exact integer addition 3+5 to sample as 256 at precision -5.
+    /// The output integer represents eight in units of 2^-5; this is a finite
+    /// leaf-arithmetic check, not a general approximate-addition error proof.
     fn add() {
         let three: BigInt = "3".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
@@ -4846,13 +4863,13 @@ mod tests {
     }
 
     #[test]
+    /// Cancel a shared pi term from three nested sum arrangements containing
+    /// 2^-5000. Require each result to match the tiny term structurally and
+    /// retain a positive exact sign, so cancellation preserves a residual far
+    /// below ordinary display precision without using sample agreement.
     fn add_cancels_structurally_shared_term_across_nested_sum() {
         let tiny = Computable::rational(
-            Rational::from_bigint_fraction(
-                BigInt::one(),
-                BigUint::one() << 5000_usize,
-            )
-            .unwrap(),
+            Rational::from_bigint_fraction(BigInt::one(), BigUint::one() << 5000_usize).unwrap(),
         );
         let pi = Computable::pi();
 
@@ -4867,6 +4884,10 @@ mod tests {
     }
 
     #[test]
+    /// Require both orders of (sqrt(2)+sqrt(3))-(sqrt(3)+sqrt(2)) to expose
+    /// exact rational zero and zero sign. A nearby unequal pair leaves -sqrt(2)
+    /// and must be negative. These cases guard recognition of commuted pairs
+    /// without asserting general canonical reordering or a dispatch count.
     fn add_cancels_a_commuted_exact_pair_without_general_reordering() {
         let root_two = Computable::sqrt_rational(Rational::new(2));
         let root_three = Computable::sqrt_rational(Rational::new(3));
@@ -4881,35 +4902,36 @@ mod tests {
             assert_eq!(zero.exact_sign(), Some(Sign::NoSign));
         }
 
-        let nonzero = root_two
-            .clone()
-            .add(Computable::one())
-            .add(
-                Computable::one()
-                    .add(root_two.multiply_rational(Rational::new(2)))
-                    .negate(),
-            );
+        let nonzero = root_two.clone().add(Computable::one()).add(
+            Computable::one()
+                .add(root_two.multiply_rational(Rational::new(2)))
+                .negate(),
+        );
         assert_eq!(nonzero.exact_sign(), Some(Sign::Minus));
     }
 
     #[test]
+    /// Require two nested arrangements of -sqrt(5) and cancelling +/-3
+    /// constants to recover the original root expression structurally.
+    /// The assertion checks retained structure, not only its numerical value.
     fn add_folds_rational_terms_across_nested_sum() {
         let root_five = Computable::sqrt_rational(Rational::new(5)).negate();
         for reduced in [
             Computable::integer(BigInt::from(-3))
                 .add(root_five.clone())
                 .add(Computable::integer(BigInt::from(3))),
-            Computable::integer(BigInt::from(3)).add(
-                root_five
-                    .clone()
-                    .add(Computable::integer(BigInt::from(-3))),
-            ),
+            Computable::integer(BigInt::from(3))
+                .add(root_five.clone().add(Computable::integer(BigInt::from(-3)))),
         ] {
             assert!(Computable::internal_structural_eq(&reduced, &root_five));
         }
     }
 
     #[test]
+    /// Require zero signs for (4-2*sqrt(2))*sqrt(2)+4-4*sqrt(2) and
+    /// 1/(1+sqrt(2))+1-sqrt(2). The defining square relation and the nonzero
+    /// conjugate denominator prove both identities; the fixture checks exact-sign
+    /// recognition without specifying which internal proof path succeeds.
     fn exact_sign_reduces_quadratic_surd_field_identities() {
         let root_two = Computable::sqrt_rational(Rational::new(2));
         let collapse_distance = Computable::rational(Rational::new(4))
@@ -4929,6 +4951,9 @@ mod tests {
     }
 
     #[test]
+    /// Require sqrt(2)-1 to have positive exact sign and sqrt(2)-2 negative
+    /// exact sign. The inequalities 1 < sqrt(2) < 2 provide independent expected
+    /// orders for these nonzero quadratic-surd expressions.
     fn exact_sign_orders_nonzero_quadratic_surds() {
         let root_two = Computable::sqrt_rational(Rational::new(2));
         let positive = root_two
@@ -4941,7 +4966,12 @@ mod tests {
     }
 
     #[test]
-fn inverse_atan_linear_sign_includes_the_argument_sign() {
+    /// Use the negative argument sqrt(2)-2 to make -2*atan(argument) positive.
+    /// With a subtracted pi/8, require a positive -64 sample and exact_sign,
+    /// while the inverse-trig linear helper declines. With added pi/8, require
+    /// both sign queries to prove positive. The opposed case is sampled first,
+    /// so this fixture does not establish a cold exact-sign decision path.
+    fn inverse_atan_linear_sign_includes_the_argument_sign() {
         let negative_argument = Computable::sqrt_rational(Rational::new(2))
             .add(Computable::rational(Rational::new(-2)));
         assert_eq!(negative_argument.exact_sign(), Some(Sign::Minus));
@@ -4964,14 +4994,14 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Cancel shared pi and inverse-pi factors around atan(sqrt(15)) in two
+    /// product nestings. Require both results to reuse the original argument
+    /// node allocation, a stronger assertion than structural or numeric equality.
     fn shared_pi_reciprocals_cancel_across_a_product() {
         let argument = Computable::sqrt_rational(Rational::new(15)).atan();
 
-        let right_nested = Computable::pi().multiply(
-            argument
-                .clone()
-                .multiply(Computable::pi_inverse_constant()),
-        );
+        let right_nested =
+            Computable::pi().multiply(argument.clone().multiply(Computable::pi_inverse_constant()));
         let left_nested = Computable::pi_inverse_constant()
             .multiply(argument.clone())
             .multiply(Computable::pi());
@@ -4981,6 +5011,10 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Reconstruct pi/2-atan(1/sqrt(15)) through a normalized inverse-pi
+    /// expression. Require positive complement orientation and the original
+    /// atan input allocation from the recognizer, preserving reusable argument
+    /// identity through the surrounding arithmetic.
     fn normalized_half_pi_complement_retains_its_atan_argument() {
         let argument = Computable::sqrt_rational(Rational::new(15))
             .inverse()
@@ -5005,15 +5039,16 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Require atan(sqrt(3)) and atan(1/sqrt(3)) to match pi/3 and pi/6
+    /// structurally. Positive roots select the principal anchors; these assertions
+    /// check exact retained expressions without numerical approximation.
     fn quadratic_surd_atan_anchors_survive_computable_composition() {
         let root_three = Computable::sqrt_rational(Rational::new(3));
         let inverse_root_three = root_three.clone().inverse();
-        let third_pi = Computable::pi().multiply_rational(
-            Rational::fraction(1, 3).expect("three is nonzero"),
-        );
-        let sixth_pi = Computable::pi().multiply_rational(
-            Rational::fraction(1, 6).expect("six is nonzero"),
-        );
+        let third_pi =
+            Computable::pi().multiply_rational(Rational::fraction(1, 3).expect("three is nonzero"));
+        let sixth_pi =
+            Computable::pi().multiply_rational(Rational::fraction(1, 6).expect("six is nonzero"));
 
         assert!(Computable::internal_structural_eq(
             &root_three.atan(),
@@ -5026,10 +5061,13 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Retain the 3/4 argument in pi-atan(3/4), then subtract pi/2 twice.
+    /// Before and after reduction require no coordinate swap and structural
+    /// argument preservation; the other returned orientation signs are ignored.
+    /// The reduced sine and cosine must structurally equal -3/5 and 4/5.
+    /// This is an in-memory composition replay, not a serialization test.
     fn integer_pi_atan_replay_survives_nested_half_pi_cancellation() {
-        let argument = Computable::rational(
-            Rational::fraction(3, 4).expect("four is nonzero"),
-        );
+        let argument = Computable::rational(Rational::fraction(3, 4).expect("four is nonzero"));
         let atan = argument.clone().atan();
         let angle = atan.negate().add(Computable::pi());
         let (swap, _, _, retained) = angle
@@ -5039,9 +5077,7 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         assert!(Computable::internal_structural_eq(&retained, &argument));
 
         let half_pi = Computable::pi().shift_right(1);
-        let reduced = angle
-            .add(half_pi.clone().negate())
-            .add(half_pi.negate());
+        let reduced = angle.add(half_pi.clone().negate()).add(half_pi.negate());
         let (swap, _, _, retained) = reduced
             .quarter_turn_plus_or_minus_atan_argument()
             .expect("nested half-pi cancellation must retain its inverse-trig argument");
@@ -5058,6 +5094,13 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Check exact agreement of independently assembled scalar parameter recipes.
+    /// The first pair must expose pi coefficient 1/3 and cancel to rational zero.
+    /// A shifted sqrt(2) reciprocal product must project to one and give -pi/4
+    /// under atan after negation. Further shared-offset quadratic recipes and
+    /// nested pi/atan recipes must also cancel through depth-48 Laurent projection.
+    /// These are scalar identity witnesses for reconstruction, not geometry/topology
+    /// or serialized-replay tests; every reciprocal in the fixtures is defined.
     fn pi_laurent_arithmetic_canonicalizes_nested_parameter_replay() {
         let pi = Computable::pi();
         let pi_squared = pi.clone().multiply(pi.clone());
@@ -5086,10 +5129,7 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
             domain_parameter.pi_rational_multiple(),
             Some(one_third.clone())
         );
-        assert_eq!(
-            contact_parameter.pi_rational_multiple(),
-            Some(one_third)
-        );
+        assert_eq!(contact_parameter.pi_rational_multiple(), Some(one_third));
         assert_eq!(
             contact_parameter
                 .add(domain_parameter.negate())
@@ -5115,14 +5155,14 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
                 .atan(),
             &Computable::pi().shift_right(2).negate()
         ));
-        let root_two_over_pi =
-            Computable::pi_inverse_constant().multiply(root_two.clone());
-        let shared_offset = root_two
-            .clone()
-            .multiply_rational(Rational::new(3))
-            .add(Computable::rational(
-                Rational::fraction(1, 2).expect("two is nonzero"),
-            ));
+        let root_two_over_pi = Computable::pi_inverse_constant().multiply(root_two.clone());
+        let shared_offset =
+            root_two
+                .clone()
+                .multiply_rational(Rational::new(3))
+                .add(Computable::rational(
+                    Rational::fraction(1, 2).expect("two is nonzero"),
+                ));
         let contact_parameter = root_two
             .clone()
             .shift_left(2)
@@ -5178,6 +5218,14 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Build thirty raw graphs with unknown sign facts: three symbolic zero
+    /// forms plus five rational residuals, at each of depth budgets 48 and 64.
+    /// A zero-budget query must decline without publishing a sign; a successful
+    /// projection must retain the exact sign for the original and its clone,
+    /// answer sign_until(0), and leave the root sample cache empty.
+    /// A difference of distinct atan atoms must decline rational projection and
+    /// retain unknown sign before a separate -128 sign query proves negative.
+    /// These recognizer outcomes are not total-resource exhaustion certificates.
     fn rational_normal_form_retains_only_successful_sign_proofs() {
         let opaque = |approximation| Computable {
             internal: Arc::new(Node::new(
@@ -5190,11 +5238,7 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         let pi = Computable::pi();
         let root = Computable::sqrt_rational(Rational::new(5));
         let atom = Computable::rational(Rational::fraction(3, 4).unwrap()).atan();
-        let tiny = Rational::from_bigint_fraction(
-            BigInt::one(),
-            BigUint::one() << 2_000,
-        )
-        .unwrap();
+        let tiny = Rational::from_bigint_fraction(BigInt::one(), BigUint::one() << 2_000).unwrap();
         for budget in [48, 64] {
             for zero in [
                 Approximation::Add(pi.clone(), pi.clone().negate()),
@@ -5229,12 +5273,14 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
                     assert_eq!(value.immediate_sign(), Some(sign));
                     assert_eq!(shared.immediate_sign(), Some(sign));
                     assert_eq!(value.sign_until(0), Some(sign));
-                    assert!(value.cached().is_none(), "a symbolic proof must not approximate");
+                    assert!(
+                        value.cached().is_none(),
+                        "a symbolic proof must not approximate"
+                    );
                 }
             }
         }
-        let different_atom =
-            Computable::rational(Rational::fraction(4, 5).unwrap()).atan();
+        let different_atom = Computable::rational(Rational::fraction(4, 5).unwrap()).atan();
         let unresolved = opaque(Approximation::Add(atom, different_atom.negate()));
         assert_eq!(unresolved.bounded_laurent_rational(64), None);
         assert_eq!(unresolved.immediate_sign(), None);
@@ -5243,14 +5289,15 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Build a balanced sum of 1,024 distinct atan(n/4099) inputs for
+    /// n=2 through 1025 and require depth-48 rational projection to decline.
+    /// The result alone does not identify whether a visit limit or surviving
+    /// opaque terms caused refusal, and it is not a typed resource-exhaustion test.
     fn pi_laurent_normal_form_declines_wide_opaque_expression_dags() {
         let denominator = Rational::new(4_099);
         let mut layer = (2..1_026)
             .map(|numerator| {
-                Computable::rational(
-                    Rational::new(numerator) / denominator.clone(),
-                )
-                .atan()
+                Computable::rational(Rational::new(numerator) / denominator.clone()).atan()
             })
             .collect::<Vec<_>>();
         while layer.len() > 1 {
@@ -5270,6 +5317,9 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Check integer scaling of ten at exponents zero, -2 and +2, yielding
+    /// 10, 3 and 40. The negative exponent rounds the exact halfway value 5/2
+    /// toward positive infinity; the other two results are exact shifts.
     fn scale_up() {
         let ten: BigInt = "10".parse().unwrap();
         let three: BigInt = "3".parse().unwrap();
@@ -5282,6 +5332,11 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Require precision -37 samples -1, 0 and 1 to yield Unknown bounds.
+    /// Samples -2 and 2 must instead retain their negative/positive signs and
+    /// magnitude hint -36 with exact_msd=false. The fixture preserves the
+    /// conservative unit-boundary rule and the qualification of inferred magnitude;
+    /// it supplies samples directly rather than validating their source.
     fn approximation_bounds_preserve_the_unit_error_boundary() {
         for value in [-1, 0, 1] {
             assert_eq!(
@@ -5309,6 +5364,10 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Offer pi the valid sample 50 at precision -4 and require its existing
+    /// exact magnitude bound to remain unchanged. Shared pi may already have a
+    /// finer sample, so the test does not require the numerical cache entry to
+    /// be replaced; it specifically checks preservation of exact bound evidence.
     fn approximation_cache_does_not_weaken_exact_structural_bound() {
         let value = Computable::pi();
         let exact_bound = value.internal.facts.bound();
@@ -5326,6 +5385,10 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
     }
 
     #[test]
+    /// Require atan(1/4) and asinh(1/4) to have magnitude exponent -3
+    /// with query floor -128. Both values lie strictly between 1/8 and 1/4;
+    /// the fixture checks the final binades without counting refinement steps
+    /// or requiring a particular initial cache state.
     fn msd_refines_ambiguous_unit_approximations_at_binary_boundaries() {
         for value in [
             Computable::rational(Rational::fraction(1, 4).unwrap()).atan(),
@@ -5337,6 +5400,10 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
 }
 
 #[test]
+/// Require the inverse-trig/pi presence flag on atan(3/4)+1 to stay true
+/// across a cheap_bound query. This guards retention of node metadata when
+/// bounds are queried; it neither checks the returned bound nor forces a
+/// particular cache transition or absence of prior cached evidence.
 fn inverse_trig_presence_survives_bound_cache_updates() {
     let angle = Computable::rational(Rational::fraction(3, 4).unwrap()).atan();
     let expression = angle.add(Computable::one());
