@@ -1,3 +1,24 @@
+//! Unsigned fixed-limb arithmetic and its positional-value proof vocabulary.
+//!
+//! Arrays denote base-2^64 integers with the least significant digit first. This
+//! is numerical limb order, independent of host byte order; signs, denominators
+//! and canonical rational carriers belong to consumers. High zero padding is
+//! permitted and empty arrays denote zero where the individual operation admits
+//! them. Dyadic reduction, fixed-buffer GCD, products and accumulation share these
+//! definitions instead of maintaining separate integer interpretations.
+//!
+//! Several runtime operations rely on caller-established preconditions. Subtraction
+//! requires an ordered pair; exact left shift requires a fitting result; narrowing
+//! to u128 requires at least two source limbs. These are not checked error APIs.
+//! Right shift computes floor division and can discard low bits; exact factor
+//! cancellation requires the additional divisibility supplied by its caller.
+//!
+//! Runtime bodies allocate no heap storage. Scans and in-place arithmetic scale
+//! with array dimensions; resize returns a fixed output array. There is no local
+//! total-work, stack or cancellation budget. Option declines in conversion mean
+//! insufficient output capacity. Ghost sequences, powers and induction describe
+//! the same arithmetic and allocate no runtime vectors or huge integers.
+
 #[cfg(verus_keep_ghost)]
 use vstd::arithmetic::{div_mod::*, power2::*};
 #[cfg(verus_keep_ghost)]
@@ -9,13 +30,26 @@ use core::cmp::Ordering;
 
 #[cfg(verus_keep_ghost)]
 verus! {
+/// The mathematical digit base `2^64`, one larger than the greatest u64 digit.
+///
+/// Carries, borrows and positional-value lemmas use this natural-number constant;
+/// it is not a representable u64 runtime value.
 pub(crate) open spec fn radix() -> nat { 0x1_0000_0000_0000_0000 }
 
+/// The positional multiplier `2^(64*index)` for a digit counted from the low end.
+///
+/// Index is an arbitrary mathematical natural number, with weight(0)=1. The
+/// specification does not allocate this power or impose a runtime exponent bound.
 pub(crate) open spec fn weight(index: nat) -> nat {
     pow2(64 * index)
 }
 
-/// Denotation of the first `length` little-endian 64-bit limbs.
+/// Denote the integer stored in the first length least-significant digits.
+///
+/// The recommended domain is `0 <= length <= words.len()`. Recursively adds each
+/// digit times its positional weight; the empty prefix is zero. Digits beyond
+/// the prefix are irrelevant. Recommended bounds are specification assumptions,
+/// not runtime input validation.
 pub(crate) open spec fn prefix(words: Seq<u64>, length: int) -> nat
     recommends 0 <= length <= words.len(),
     decreases length,
@@ -25,10 +59,18 @@ pub(crate) open spec fn prefix(words: Seq<u64>, length: int) -> nat
     }
 }
 
+/// Denote the whole unsigned integer represented by a finite limb sequence.
+///
+/// Uses prefix over the complete length, including high zero padding. Empty
+/// sequences denote zero. This mathematical natural carries no sign or denominator.
 pub(crate) open spec fn value(words: Seq<u64>) -> nat {
     prefix(words, words.len() as int)
 }
 
+/// Prove positivity of a positional weight and multiplication by the radix at the next index.
+///
+/// Combines power-of-two positivity and exponent addition. These facts justify
+/// carry/borrow weights and strict bounds for every natural index.
 pub(crate) proof fn weight_step(index: nat)
     ensures weight(index) > 0, weight(index + 1) == weight(index) * radix(),
 {
@@ -37,12 +79,21 @@ pub(crate) proof fn weight_step(index: nat)
     lemma2_to64();
 }
 
+/// Factor a positional weight at a sum of indices into the two individual weights.
+///
+/// For any natural indices, exponent addition gives the identity used when a
+/// subsequence is rebased or displaced by whole words.
 pub(crate) proof fn weight_add(left: nat, right: nat)
     ensures weight(left + right) == weight(left) * weight(right),
 {
     lemma_pow2_adds(64 * left, 64 * right);
 }
 
+/// Bound a valid length-digit unsigned prefix strictly below its next positional weight.
+///
+/// Requires `0 <= length <= words.len()`. Induction uses the u64 digit bound to
+/// prove that the prefix fits in exactly that many available digits, including
+/// the empty-prefix bound `0 < weight(0)`. This is not a minimal-width assertion.
 pub(crate) proof fn prefix_bound(words: Seq<u64>, length: int)
     requires 0 <= length <= words.len(),
     ensures prefix(words, length) < weight(length as nat),
@@ -63,6 +114,11 @@ pub(crate) proof fn prefix_bound(words: Seq<u64>, length: int)
     }
 }
 
+/// Transport digitwise equality of a shared prefix to equality of its integer values.
+///
+/// Requires nonnegative length within both sequences and equal digits below it.
+/// The total sequence lengths and higher digits may differ. The lemma does not
+/// assert equality of the complete integers unless those prefixes cover them.
 pub(crate) proof fn prefix_equal(left: Seq<u64>, right: Seq<u64>, length: int)
     requires 0 <= length <= left.len(), length <= right.len(),
         forall|index: int| 0 <= index < length ==> #[trigger] left[index] == right[index],
@@ -74,8 +130,11 @@ pub(crate) proof fn prefix_equal(left: Seq<u64>, right: Seq<u64>, length: int)
     }
 }
 
-/// Equal higher limbs and unequal current limbs determine integer ordering,
-/// regardless of all lower limbs.
+/// Derive whole-integer order from the highest differing digit of equal-length sequences.
+///
+/// Requires a valid index, a smaller left digit there and equality at every higher
+/// index. Bounds on both lower prefixes show they cannot overturn that comparison;
+/// then equal high digits extend it to the full values. Lower digits need not match.
 proof fn prefix_less(left: Seq<u64>, right: Seq<u64>, index: int)
     requires 0 <= index < left.len(), left.len() == right.len(),
         left[index] < right[index],
@@ -95,6 +154,11 @@ proof fn prefix_less(left: Seq<u64>, right: Seq<u64>, index: int)
     extend_prefix_less(left, right, index + 1, left.len() as int);
 }
 
+/// Preserve an established strict prefix order while appending identical higher digits.
+///
+/// Requires equal sequence lengths, `0 <= start <= end <= left.len()`, strict
+/// order at start and equal digits from start through end-1. Induction yields
+/// strict order at end; digits beyond that endpoint need not agree.
 proof fn extend_prefix_less(left: Seq<u64>, right: Seq<u64>, start: int, end: int)
     requires 0 <= start <= end <= left.len(), left.len() == right.len(),
         prefix(left, start) < prefix(right, start),
@@ -107,6 +171,12 @@ proof fn extend_prefix_less(left: Seq<u64>, right: Seq<u64>, start: int, end: in
     }
 }
 
+/// Split a prefix into its low part and a rebased higher subrange.
+///
+/// Requires `0 <= start <= end <= words.len()`. The length-end prefix equals the
+/// length-start prefix plus `weight(start)` times the value of the subrange from
+/// start to end. This ghost identity provides the place-value factor for shifts
+/// and narrowing; it makes no runtime copy or claim of zero in either part.
 pub(crate) proof fn prefix_split(words: Seq<u64>, start: int, end: int)
     requires 0 <= start <= end <= words.len(),
     ensures prefix(words, end) == prefix(words, start)
@@ -136,6 +206,11 @@ pub(crate) proof fn prefix_split(words: Seq<u64>, start: int, end: int)
     }
 }
 
+/// Characterize a zero unsigned prefix by every included digit being zero.
+///
+/// Requires a valid nonnegative prefix length. Positive positional weights and
+/// nonnegative digits rule out cancellation, including the vacuous empty case.
+/// Digits outside the prefix are not constrained.
 pub(crate) proof fn prefix_zero(words: Seq<u64>, length: int)
     requires 0 <= length <= words.len(),
     ensures prefix(words, length) == 0 <==>
@@ -154,10 +229,22 @@ pub(crate) proof fn prefix_zero(words: Seq<u64>, length: int)
     }
 }
 
+/// Read a mathematical sequence digit with zero extension on both ends.
+///
+/// Every integer index is admitted: negative indices and indices at least the
+/// sequence length yield zero. Shift formulas use this ghost accessor to express
+/// boundary digits without runtime out-of-bounds access.
 pub(crate) open spec fn limb(words: Seq<u64>, index: int) -> u64 {
     if 0 <= index < words.len() { words[index] } else { 0 }
 }
 
+/// Relate a right-shifted two-digit window to its input digits and discarded remainder.
+///
+/// Requires `0 < shift < 64`. The low digit shifted right and the high digit
+/// shifted left occupy disjoint bit ranges. Multiplying their combined digit by
+/// `2^shift` and restoring the low remainder equals the low input plus the low
+/// bits of the high input at radix weight. This retains the information needed
+/// for floor division; it does not assert that discarded bits were zero.
 proof fn shifted_digit_correct(low: u64, high: u64, shift: u32)
     requires 0 < shift < 64,
     ensures
@@ -197,6 +284,11 @@ proof fn shifted_digit_correct(low: u64, high: u64, shift: u32)
             bottom == (high as nat) % factor, factor * other == radix();
 }
 
+/// Extend a valid prefix through zero digits without changing its value.
+///
+/// Requires `0 <= start <= end <= words.len()` and zeros only in the appended
+/// range. The prefix below start may be nonzero. This establishes equality of
+/// the two prefix values, not that either prefix itself is zero.
 pub(crate) proof fn extend_prefix_zero(words: Seq<u64>, start: int, end: int)
     requires 0 <= start <= end <= words.len(),
         forall|index: int| start <= index < end ==> #[trigger] words[index] == 0,
@@ -210,15 +302,34 @@ pub(crate) proof fn extend_prefix_zero(words: Seq<u64>, start: int, end: int)
     }
 }
 
+/// Describe whole-word right displacement in a sequence of unchanged length.
+///
+/// Each output digit reads the source at index plus shift through zero extension.
+/// Low source words are discarded and vacated high positions are zero; a shift
+/// at least the length yields all zeros. This is a ghost construction, while
+/// word_shift_value proves the numeric quotient under its narrower hypotheses.
 spec fn word_shifted(words: Seq<u64>, shift: nat) -> Seq<u64> {
     Seq::new(words.len(), |index: int| limb(words, index + shift))
 }
 
+/// Describe one digit of an intra-word right shift using adjacent source digits.
+///
+/// The intended bit domain is `shift < 64`: zero returns limb at index, and a
+/// positive shift combines that digit with low bits from index+1. Each source
+/// lookup is independently zero-extended, so a negative window index can still
+/// include an in-range neighbor. The definition has no explicit shift precondition;
+/// callers establish the intended range before using its arithmetic meaning.
 spec fn shifted_limb(words: Seq<u64>, index: int, shift: u32) -> u64 {
     if shift == 0 { limb(words, index) }
     else { (limb(words, index) >> shift) | (limb(words, index + 1) << (64 - shift)) }
 }
 
+/// Prove that whole-word right displacement gives division by the corresponding weight.
+///
+/// Requires `shift < words.len()`, so the source is nonempty. Splitting at shift
+/// isolates the discarded low prefix, whose bound makes it the division remainder;
+/// the retained tail and zero padding form the quotient. The sequence definition
+/// also exists beyond this domain, but this lemma does not cover those cases.
 proof fn word_shift_value(words: Seq<u64>, shift: nat)
     requires shift < words.len(),
     ensures value(word_shifted(words, shift)) == value(words) / weight(shift),
@@ -237,6 +348,13 @@ proof fn word_shift_value(words: Seq<u64>, shift: nat)
         value(tail) as int, prefix(words, shift as int) as int);
 }
 
+/// Combine local right-shift digit equations into a weighted prefix equation.
+///
+/// Requires a positive factor, equal source/output lengths, a valid prefix and
+/// the stated digit equation throughout that prefix. Induction telescopes the
+/// interior remainders, leaving the lowest source remainder and the next source
+/// digit's remainder at the prefix boundary. No power-of-two assumption is added
+/// beyond the local equations; a prefix boundary carry need not be zero.
 proof fn shift_prefix_carry(source: Seq<u64>, output: Seq<u64>, factor: nat, length: int)
     requires factor > 0, source.len() == output.len(), 0 <= length <= source.len(),
         forall|index: int| 0 <= index < length ==>
@@ -273,6 +391,12 @@ proof fn shift_prefix_carry(source: Seq<u64>, output: Seq<u64>, factor: nat, len
     }
 }
 
+/// Turn full-length right-shift digit equations into an exact floor quotient.
+///
+/// Requires equal lengths, a positive factor and the local equation for every
+/// digit. The carry at the high boundary is zero by extension, and the low
+/// remainder is below factor, so value(output) equals value(source)/factor.
+/// This is integer division; exact divisibility is not required or concluded.
 proof fn shift_value(source: Seq<u64>, output: Seq<u64>, factor: nat)
     requires factor > 0, source.len() == output.len(),
         forall|index: int| 0 <= index < source.len() ==>
@@ -288,6 +412,13 @@ proof fn shift_value(source: Seq<u64>, output: Seq<u64>, factor: nat)
         value(output) as int, ((limb(source, 0) as nat) % factor) as int);
 }
 
+/// Extract the exact binary factor determined by the lowest nonzero digit.
+///
+/// Requires a valid positive digit at index and zero digits below it. The complete
+/// value has `64*index + trailing_zeros(words[index])` trailing bits, fewer than
+/// the sequence width, and dividing by that power of two gives a positive odd
+/// integer. Higher digits are unrestricted; the proof shows they add an even
+/// contribution to the quotient.
 proof fn first_nonzero_factor(words: Seq<u64>, index: int)
     requires 0 <= index < words.len(), words[index] > 0,
         forall|lower: int| 0 <= lower < index ==> #[trigger] words[lower] == 0,
@@ -335,15 +466,33 @@ proof fn first_nonzero_factor(words: Seq<u64>, index: int)
         quotient as int, 0);
 }
 
+/// Describe whole-word left displacement within an unchanged sequence length.
+///
+/// Each output reads index minus shift through zero extension. Vacated low words
+/// are zero and high source words may be discarded; a shift at least the length
+/// yields zeros. This ghost sequence alone does not promise a lossless product.
 pub(crate) open spec fn word_left_shifted(words: Seq<u64>, shift: nat) -> Seq<u64> {
     Seq::new(words.len(), |index: int| limb(words, index - shift))
 }
 
+/// Describe one digit of an intra-word left shift with a preceding source digit.
+///
+/// For the intended range `shift < 64`, zero returns limb at index; otherwise
+/// the current low part combines with high bits from index-1. Both lookups are
+/// zero-extended independently, so index equal to the source length can expose
+/// a high spill digit. There is no explicit shift precondition in this definition;
+/// callers establish the intended bit range and any required capacity bound.
 pub(crate) open spec fn left_shifted_limb(words: Seq<u64>, index: int, shift: u32) -> u64 {
     if shift == 0 { limb(words, index) }
     else { (limb(words, index) << shift) | (limb(words, index - 1) >> (64 - shift)) }
 }
 
+/// Relate a whole-word left displacement to the retained low source prefix.
+///
+/// Requires `shift < words.len()`. The output value is the prefix of length
+/// `words.len()-shift` times weight(shift), since the finite output drops higher
+/// source words. Equality to the complete shifted source requires an additional
+/// proof that those dropped digits are zero.
 pub(crate) proof fn word_left_shift_value(words: Seq<u64>, shift: nat)
     requires shift < words.len(),
     ensures value(word_left_shifted(words, shift))
@@ -360,6 +509,11 @@ pub(crate) proof fn word_left_shift_value(words: Seq<u64>, shift: nat)
             value(tail) == prefix(words, words.len() as int - shift);
 }
 
+/// Identify a short prefix with the full value when the full value fits its width.
+///
+/// Requires a valid prefix length and `value(words) < weight(length)`. Splitting
+/// the sequence forces the higher subrange's nonnegative value to zero. Used to
+/// justify that a whole-word left shift discards only zero padding.
 proof fn prefix_is_value_below_bound(words: Seq<u64>, length: int)
     requires 0 <= length <= words.len(), value(words) < weight(length as nat),
     ensures prefix(words, length) == value(words),
@@ -374,6 +528,12 @@ proof fn prefix_is_value_below_bound(words: Seq<u64>, length: int)
     assert(weight(length as nat) * tail == 0) by (nonlinear_arith) requires tail == 0;
 }
 
+/// Account for both the stored digit and outgoing carry of an intra-word left shift.
+///
+/// Requires `0 < shift < 64`. The combined current/previous digit plus the high
+/// current carry at radix weight equals the scaled current digit plus the high
+/// part entering from the previous digit. The proof reuses the complementary
+/// right-shift relation; it does not assume the outgoing carry is zero.
 pub(crate) proof fn left_shifted_digit_correct(current: u64, previous: u64, shift: u32)
     requires 0 < shift < 64,
     ensures
@@ -403,6 +563,13 @@ pub(crate) proof fn left_shifted_digit_correct(current: u64, previous: u64, shif
             radix() == factor * other, other > 0;
 }
 
+/// Combine local left-shift equations while retaining the high prefix carry.
+///
+/// Requires positive factor and other, equal sequence lengths, a valid prefix
+/// and the stated per-digit equations. Induction proves that the output prefix
+/// plus its high carry at weight(length) equals the scaled input prefix. The low
+/// incoming carry vanishes by zero extension. Neither a capacity bound nor the
+/// relation `factor*other == radix()` is independently required by this lemma.
 proof fn left_shift_prefix_carry(source: Seq<u64>, output: Seq<u64>, factor: nat, other: nat, length: int)
     requires factor > 0, other > 0, source.len() == output.len(), 0 <= length <= source.len(),
         forall|index: int| 0 <= index < length ==>
@@ -436,6 +603,13 @@ proof fn left_shift_prefix_carry(source: Seq<u64>, output: Seq<u64>, factor: nat
     }
 }
 
+/// Prove a complete scaled value from left-shift digit equations and a capacity bound.
+///
+/// Requires positive factor and other, equal lengths, every local digit equation,
+/// and `value(source)*factor < weight(source.len())`. The prefix identity then
+/// forces the outgoing high carry to zero, leaving exact multiplication in the
+/// output. Without the supplied capacity hypothesis, the prefix lemma retains
+/// a carry and cannot establish lossless fixed-width scaling.
 pub(crate) proof fn left_shift_value(source: Seq<u64>, output: Seq<u64>, factor: nat, other: nat)
     requires factor > 0, other > 0, source.len() == output.len(),
         value(source) * factor < weight(source.len()),
@@ -454,6 +628,12 @@ pub(crate) proof fn left_shift_value(source: Seq<u64>, output: Seq<u64>, factor:
     assert(carry * weight(source.len()) == 0) by (nonlinear_arith) requires carry == 0;
 }
 
+/// Identify the two low digits with their packed u128 value and its exclusive capacity bound.
+///
+/// Requires at least two source digits. Their shifted bit ranges are disjoint,
+/// so bitwise OR equals the low digit plus the high digit times the radix.
+/// Also establishes `weight(2) == u128::MAX + 1` in mathematical naturals.
+/// Higher digits are not constrained; consumers must check them before narrowing.
 pub(crate) proof fn two_limbs_value(words: Seq<u64>)
     requires words.len() >= 2,
     ensures prefix(words, 2) == ((words[0] as u128) | ((words[1] as u128) << 64)),
@@ -473,6 +653,12 @@ pub(crate) proof fn two_limbs_value(words: Seq<u64>)
 }
 }
 
+/// Compare same-width unsigned limb values exactly, reading from the high end.
+///
+/// All arrays of the chosen N are admitted, including high zero padding and N=0.
+/// Returns at the first unequal digit; two empty or digitwise-equal arrays compare
+/// Equal. Reads at most N digit pairs without mutation, sign handling, allocation
+/// or an undecided outcome.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures match result {
         Ordering::Less => value(left@) < value(right@),
@@ -507,6 +693,13 @@ pub(crate) fn compare<const N: usize>(left: &[u64; N], right: &[u64; N]) -> Orde
     Ordering::Equal
 }
 
+/// Subtract a digit and one incoming borrow while retaining the outgoing borrow.
+///
+/// Accepts every u64 pair and Boolean borrow. For returned (digit, next),
+/// `digit + right + borrow = left + next*2^64`, interpreting Booleans as zero/one.
+/// Two wrapping subtractions detect the outgoing bit; their individual borrows
+/// cannot both be set. The digit is the difference modulo the radix. This private
+/// step retains underflow information for the multi-digit subtraction invariant.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.0 as int + right as int + (if borrow { 1int } else { 0int })
         == left as int + (if result.1 { radix() as int } else { 0int }),
@@ -527,7 +720,16 @@ fn subtract_word(left: u64, right: u64, borrow: bool) -> (u64, bool) {
     (difference, first_borrow || second_borrow)
 }
 
-/// Subtract a no-larger integer in place, carrying borrow across every limb.
+/// Subtract a no-larger unsigned magnitude in place, preserving the exact difference.
+///
+/// Requires the original left value to be at least right. Both arrays have N
+/// numerical little-endian digits; empty arrays satisfy the condition and are a
+/// no-op. Visits all N digits from low to high, propagating borrow, and leaves
+/// right unchanged. The comparison in dyadic/GCD callers establishes the ordering.
+///
+/// There is no runtime ordering check or returned borrow. Violating the precondition
+/// can silently wrap the buffer, so this is not a checked subtraction interface.
+/// No sign, normalization, allocation or resource-budget outcome is supplied.
 #[cfg_attr(verus_keep_ghost, verus_spec(
     requires value(left@) >= value(right@),
     ensures value(final(left)@) + value(right@) == value(old(left)@),
@@ -584,7 +786,18 @@ pub(crate) fn subtract<const N: usize>(left: &mut [u64; N], right: &[u64; N]) {
     }
 }
 
-/// Shift in place from low limbs upward, so unread source limbs survive.
+/// Replace a limb value by floor division by a power of two, in place.
+///
+/// Requires `N <= u32::MAX / 64` and `shift < 64*N`, excluding empty arrays.
+/// Splits the shift into whole-word and intra-word parts, visits all N output
+/// positions from low to high and zero-fills vacated high positions. This order
+/// preserves unread source digits; the zero bit-shift branch avoids shifting a
+/// u64 by 64. Shift zero retains the input.
+///
+/// Low discarded bits need not be zero: callers using this for exact factor
+/// cancellation must establish divisibility separately. Preconditions are not
+/// validated as errors, and behavior beyond them is not an extension contract.
+/// There is no allocation, returned remainder or overflow/underflow Option.
 #[cfg_attr(verus_keep_ghost, verus_spec(
     requires N <= u32::MAX / 64, shift < 64 * N,
     ensures value(final(words)@) == value(old(words)@) / pow2(shift as nat),
@@ -651,8 +864,13 @@ pub(crate) fn shift_right<const N: usize>(words: &mut [u64; N], shift: u32) {
     }
 }
 
-/// Zero has the full buffer width as its count; every nonzero value factors
-/// into exactly this power of two times a positive odd integer.
+/// Count low zero bits, using the full buffer width as the zero-value sentinel.
+///
+/// Requires `N <= u32::MAX / 64` so the bit count fits u32; no runtime dimension
+/// validation occurs. Scans from the low end and combines the first nonzero digit's
+/// bit count with its word displacement. For nonzero input the count is below
+/// `64*N`, and removing that factor yields a positive odd integer. Zero returns
+/// `64*N`, including zero for an empty array. No digits are changed or allocated.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires N <= u32::MAX / 64,
     ensures
@@ -686,7 +904,18 @@ pub(crate) fn trailing_zeros<const N: usize>(words: &[u64; N]) -> u32 {
     N as u32 * 64
 }
 
-/// Restore a power-of-two factor without discarding any significant bits.
+/// Restore a binary factor in place when the complete scaled value fits the buffer.
+///
+/// Requires `N <= u32::MAX / 64`, `shift < 64*N` and
+/// `value(words)*2^shift < 2^(64*N)`. Thus empty arrays are outside the domain;
+/// zero is admitted for every in-range shift. Visits all N digits from high to
+/// low, preserving source digits not yet consumed, and zero-fills low positions.
+/// The intra-word zero branch avoids a u64 shift by 64. Shift zero is identity.
+///
+/// Capacity and range are caller obligations, not runtime checks. An overwide
+/// scaled input can lose high bits silently rather than return an error. The GCD
+/// consumer proves the restored factor fits before using this exact path. No
+/// allocation, saturation or resource-exhaustion result occurs here.
 #[cfg_attr(verus_keep_ghost, verus_spec(
     requires N <= u32::MAX / 64, shift < 64 * N,
         value(words@) * pow2(shift as nat) < weight(N as nat),
@@ -769,6 +998,17 @@ pub(crate) fn shift_left<const N: usize>(words: &mut [u64; N], shift: u32) {
     }
 }
 
+/// Narrow exactly when every digit above the low two is zero.
+///
+/// Requires `N >= 2`. Scans higher digits in increasing index order and returns
+/// None at the first nonzero one; otherwise packs the low two digits into u128.
+/// For admitted dimensions, Some is the unchanged value, including zero, and
+/// None means the unsigned value exceeds u128::MAX. Input storage is unchanged.
+///
+/// The minimum dimension is not checked as a typed error: N=0 or N=1 reaches
+/// out-of-bounds indexing and panics, even for zero. This helper neither pads short
+/// arrays nor truncates an overwide value; resize supplies a separate checked
+/// change of limb width.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires N >= 2,
     ensures
@@ -816,8 +1056,18 @@ pub(crate) fn to_u128<const N: usize>(words: &[u64; N]) -> Option<u128> {
     Some(words[0] as u128 | (words[1] as u128) << 64)
 }
 
-/// Copy into a different limb width, rejecting exactly the values that do
-/// not fit. Larger output buffers are filled with zero above the input.
+/// Copy an unsigned value into O limbs exactly when it fits, with zero high padding.
+///
+/// Admits all source/output dimensions, including zero. When shrinking, checks
+/// the discarded high source digits before creating output; any nonzero digit
+/// returns None. Otherwise copies the retained low digits and fills added high
+/// positions with zero. Some preserves the exact value and every retained digit;
+/// None is precisely `value(words) >= 2^(64*O)`, not an exhausted resource budget.
+///
+/// An empty source grows to zeros. O=0 accepts only a zero value and returns an
+/// empty array; equal dimensions preserve all digits. The source is read-only,
+/// and the O-element output is fixed storage with no heap allocation in this body.
+/// Dimensions determine scan/copy work and storage without a local work/stack cap.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.is_none() <==> value(words@) >= weight(O as nat),
         match result {

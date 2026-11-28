@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/limbs.rs` | Entire authored positional-value, shift, comparison, borrow and conversion implementation reviewed; thirty-eight descriptions include all private helpers and twenty-nine ghost declarations. | Both-mode private docs and five consumer tests pass; every runtime operation has unchanged independent probe results and expanded tokens. Nine normal descriptions per mode render; Verus configuration/expansion validation remains open. See limb arithmetic and positional-value audit. |
 | `crates/hyperreal/src/verified/dyadic.rs` | Entire authored carrier, difference and reduction implementation reviewed; twenty-one descriptions distinguish raw fields, exact-zero sentinels, native declines and ten ghost declarations. | Both-mode private docs and five consumer tests pass; independent reduction/reuse probes and expanded tokens are unchanged. Eleven normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See dyadic difference and reduction audit. |
 | `crates/hyperreal/src/verified/aggregate.rs` | Entire authored descriptor, planning and signed-aggregate implementation reviewed; thirty descriptions include fields/payloads, private dispatch and twelve ghost declarations. | Both-mode private docs and four consumer tests pass; private helper probes and expanded executable tokens are unchanged. Eighteen normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See signed dyadic aggregate audit. |
 | `crates/hyperreal/src/verified/accumulate.rs` | Entire authored shifted-accumulation implementation and six ghost declarations reviewed; thirteen descriptions cover domains, extent, exact carries and early/late failure state. | Both-mode private docs and four consumer tests pass; independent helper/wrapper probes are unchanged. Seven normal descriptions and six separate ghost pages render; Verus configuration/expansion validation remains open. See shifted accumulation audit. |
@@ -27779,6 +27780,107 @@ Authored review of this file is complete, while generated and ghost/configuratio
 validation remain open. Repository-wide coverage remains incomplete. Continue
 with verified/limbs.rs, which owns the digit denotation, shift, comparison,
 subtraction, resize and narrowing contracts consumed by these kernels.
+
+## Limb arithmetic and positional-value audit (28 November 2026)
+
+Owning layer: Hyperreal's shared unsigned limb denotation, comparison, borrow,
+shifts and buffer conversion. P1/P5/P6/P37 govern exact value meaning, caller
+preconditions, explicit capacity declines and evidence scope. At 8d21a16f7,
+read all 879 lines of verified/limbs.rs in contiguous ranges, including every
+private spec/proof and executable body. It had no module overview and only seven
+short item descriptions; most declarations lacked practical/domain Rustdoc.
+The missing acceptance witness was complete authored documentation, especially
+checked conversion versus caller-proved subtraction/shift preconditions.
+
+Read fixed-GCD restoration and narrowing, dyadic reduction, aggregate/product
+consumers and relevant independent test fixtures as context. These reads do not
+credit whole-file documentation review for those consumers. A source-copy probe
+reproduced each runtime operation before editing, including direct access to the
+private subtract_word helper. Existing tests and implementations were unchanged.
+
+The file now has 1,129 lines and thirty-eight descriptions: module, eight runtime
+functions and twenty-nine ghost declarations, including private word-shift specs
+and induction helpers. All executable, proof and specification tokens, attributes
+and operation order are preserved; ordinary compiler-expanded tokens also match
+the baseline after removing comments. The review documents:
+
+- Base-2^64 numerical little-endian digits, independent of host byte order,
+  with high zero padding permitted. Empty arrays denote zero only where the
+  individual operation admits their dimensions. Signs and denominators belong
+  to consumers. Runtime bodies allocate no heap, and dimension-dependent scans,
+  shifts and output storage have no local total-work/stack/cancellation budget.
+- compare inspects high digits first and returns exact order for all same-width
+  arrays, including empty arrays. subtract_word retains its outgoing borrow for
+  every digit pair and incoming bit. subtract requires left>=right, processes
+  every digit and discards the final borrow because callers must establish that
+  it vanishes; it does not check ordering or return an underflow error.
+- shift_right requires the stated dimension/range bounds and computes floor
+  division, potentially discarding nonzero low bits. Dyadic/GCD factor removal
+  supplies divisibility separately. shift_left requires the complete scaled
+  value to fit; it does not check capacity or preserve lost high bits outside
+  that contract. Low-to-high/right and high-to-low/left traversal protect unread
+  source digits. Zero bit shifts avoid primitive shifts by 64.
+- trailing_zeros returns the full width for zero, including zero for an empty
+  array, and an exact positive odd factorization for nonzero values. Its
+  N<=u32::MAX/64 dimension precondition keeps bit-count arithmetic representable;
+  it is not runtime validation or a practical resource bound.
+- to_u128 requires at least two digits. Within that domain, None means a nonzero
+  high digit and Some preserves the complete value. Short zero arrays still
+  panic on indexing. resize admits every source/target dimension, checks any
+  discarded high digits, zero-pads growth and accepts an empty target only for
+  a zero source. Its decline is exact output-capacity ineligibility.
+- Ghost prefix/value/weight relations distinguish digit order, rebase factors,
+  width bounds and equal/zero prefixes. extend_prefix_zero preserves a possibly
+  nonzero lower prefix; it does not claim the whole value is zero. The highest
+  unequal digit establishes order independently of lower digits.
+- Zero-extended ghost windows describe individual adjacent digits; an out-of-range
+  window position may still include an in-range neighbor or spill. Finite left
+  displacement can truncate, and its value lemma names the retained prefix.
+  Right-shift equations retain low remainders; left-shift equations retain high
+  carries until a separate capacity hypothesis eliminates them. Generic factor
+  lemmas rely on their local equations without silently adding a power-of-two or
+  factor*other==radix hypothesis. Two-limb packing constrains only the low prefix.
+
+Executed after the final source edit:
+
+- Both locked/offline feature configurations pass five exact-name tests: resize
+  capacity, finished dyadic differences, fixed 256/512-bit GCD, shifted
+  accumulation/failure state and signed-product subtotal limits. The GCD corpus
+  exercises both narrowing and restoration of common powers, including 20,000
+  generated four-limb pairs and directed eight-limb boundaries. Existing exact
+  BigUint/BigRational expectations and assertions remain unchanged.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All nine normal descriptions render in each mode, including the
+  private borrow helper. Twenty-nine exact ghost descriptions and complete
+  declaration bodies render separately as Markdown. That rendering is not
+  compilation of the ghost configuration or Verus macro-expansion validation.
+- The warnings-denied source-copy probe has identical baseline/final output:
+  98 borrow steps; 98 trailing-zero cases; 60 direct u128 narrowings; 294 resize
+  cases with round-trip consumption; 19,200 right shifts; 2,061 fitting left
+  shifts followed by exact right-shift recovery; 1,924 comparisons; and 1,164
+  ordered subtractions. Five widths include empty, one-, two-, four- and eight-limb
+  arrays. References reconstruct integers independently and use primitive u128
+  or BigUint arithmetic; the finite corpus is not a universal proof or benchmark.
+- Eight distinct invalid controls reproduce unordered subtraction wrap,
+  overwide left-shift loss, whole-width left/right shifts yielding zero, empty
+  left/right shifts doing no work, and zero-/one-limb narrowing panics. They
+  explain missing runtime validation and do not expand the supported domain.
+- Source/declaration/render inventories, source/expanded-token comparisons and
+  git diff --check pass. No generated runtime declarations require an additional
+  derive audit in this file. The pinned Verus executable is still unavailable;
+  formal verification, ghost configuration compilation/expansion and refreshed
+  source-bound proof reports are uncredited. Full workflows, benchmarks and
+  cross-target checks remain owner-waived for this docs-only session.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-limbs-audit/: baseline,
+probe/expansion sources, scripts, commands/logs, inventories and compressed
+selected HTML. Owned binary/source copy and duplicate HTML trees are removed
+after checking; the shared Cargo target is reused without incremental compilation.
+AGENTS.md already mandates full public/private/generated Rustdoc. Authored review
+of this file is complete, with ghost/configuration validation still open.
+Repository-wide coverage remains incomplete. Continue with verified/fixed_gcd.rs,
+whose implementation was read as consumer context but has no whole-file audit
+record yet.
 
 ## Next work
 
