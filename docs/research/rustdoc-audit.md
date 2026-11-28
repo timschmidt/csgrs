@@ -26409,6 +26409,97 @@ Continue at lossy_dyadic_view_handles_wide_geometry_coefficients, whose attribut
 is now line 4081. This 7,510-line file and the repository-wide audit remain
 unfinished; generated API coverage remains separate.
 
+## Rational test audit: rounding, decimal presentation and wire admission (28 November 2026)
+
+Owning layer: Hyperreal rational conversion, formatting, parsing and Serde test
+fixtures. P37 governs the asserted coverage, P1 distinguishes explicit lossy
+boundaries from exact decimal/rational values, and P6 governs parse/admission
+outcomes. At 845c10b59, fourteen items lacked Rustdoc; the nearest-float helper's
+existing summary overstated its IEEE scope and the parse fixture had only a
+one-line description. An inline comment also treated canonical observations as
+proof that raw parts were already reduced.
+
+Reviewed arithmetic/tests.rs baseline lines 4081–4540, now 4081–4656, together
+with the relevant conversion, parser/formatter and Serde contracts. Updated
+sixteen descriptions (fourteen new, two revised) and corrected that observation
+comment. The current OBJ export call and exact-decimal formatting helper were
+read to check the 47/6 fixture's stated origin; this does not credit a new
+whole-file OBJ review or establish export fidelity from a scalar fixture.
+All tracked edits are comments and executable tokens are unchanged.
+
+The documented witnesses distinguish:
+
+- Directed wide dyadic rounding from exact conversion. Native fast-path
+  assertions check bits and singleton enclosures where applicable, then require
+  two narrow-tier declines to retain successful general conversion. The normal
+  dyadic corpus compares with 53-bit MPFR and pins a symmetric pair of outward
+  neighbors; that pair is not asserted to be the tightest enclosure.
+- A finite-neighbor nearest-even oracle from a complete IEEE conversion rule.
+  is_nearest_f64 requires a finite candidate, skips infinite neighbors and cannot
+  distinguish signed zero by rational distance. Its source-copy probe confirms
+  acceptance of f64::MAX for exact 2^1024 and acceptance of both zero signs;
+  the exact midpoint above one accepts even one and rejects its odd neighbor.
+  Infinity/NaN candidates panic during the deliberately unwrapped import.
+- A corpus with permitted declines from mandatory representability coverage.
+  The 2000-case wide-rational fixture checks only accepted positive conversions,
+  requires a nonzero subnormal, compares normal results with MPFR, and repeats
+  one common-factor raw-storage variant. Its name does not establish every
+  representation/sign. Unmarked raw operands remain private fixture states,
+  not a general admission guarantee or native replay contract.
+- Direct binary32 rounding from narrowing a rounded binary64. The directed
+  midpoint cases retain their above/below/even/negative expectations, plus tiny
+  underflow and large overflow; they do not exhaust ties or signed-zero behavior.
+- Presentation from interchange. Integer and mixed-fraction Display expectations
+  do not test parsing the mixed output. Decimal identities and parse/display
+  boundary examples remain concrete witnesses, with shared-parser expectations
+  identified separately from literal exact fraction expectations.
+- Canonical accessors, hashes and dyadic recognition from raw stored-part
+  inspection. Long decimal cases compare observable values and canonical parts;
+  those observations may canonicalize storage and cannot alone establish its
+  prior state. Equal hashes are not treated as a substitute for value equality.
+- Scientific grammar errors from configured expansion declines and zero
+  shortcuts. BadDecimal/Exhausted/success assertions preserve their separate
+  meaning; no allocation or total-work measurement follows from the zero cases.
+- Invalid wire rejection from normalization of valid unreduced input. The Serde
+  fixture rejects a zero denominator but accepts and reduces 9/18, despite its
+  broad name. It neither asserts a particular error string nor reserializes
+  bytes or covers every inconsistent sign/magnitude combination.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal library tests pass: fourteen applicable tests without
+  default features and fifteen with all features, matching the fifteen-test
+  all-feature baseline. Exact name inventories confirm the selected set; all
+  assertions, corpus sizes, acceptance quotas and expected values are preserved.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Isolated supplemental builds remove only the fifteen reviewed test
+  markers, retaining the Serde guard. All fifteen applicable descriptions render
+  without default features and all sixteen with all features. The temporary
+  lifter was corrected to match complete function names, avoiding parse versus
+  parse_fractions prefix collisions; no repository declaration was changed.
+- The nearest-oracle probe runs the unchanged helper in a private source copy
+  with original test attributes restored, compiling with warnings denied. Its
+  seven assertions establish the scope witnesses above; the two caught panics
+  are expected invalid-candidate behavior. An initial build using documentation-
+  lifted test functions emitted dead-code warnings; restoring the original
+  attributes removed that harness artifact without suppressing any lint.
+- Source/render inventories, executable-token equality and git diff --check
+  pass. The diff contains 118 new Rustdoc lines replacing three old Rustdoc
+  lines, plus a two-line ordinary comment replaced with three lines. No test
+  body, input, acceptance condition, feature guard or production algorithm changed.
+- Full workflows, performance, cross-target and formal-verification runs remain
+  owner-waived for this docs-only session. Finite probes and shared-path fixtures
+  do not prove universal rounding, complete parser grammar, resource bounds or
+  performance improvements. Generated API review remains separate.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-rounding-audit/:
+baseline, scripts, commands, logs, inventories, hashes, probe source and compressed
+selected HTML. Owned probe executable/source copies and duplicate documentation
+trees are removed after validation; shared Cargo output is reused without
+incremental compilation. AGENTS.md already contains the full public/private/
+generated Rustdoc mandate. Continue at square_reduced, whose attribute is now
+line 4657. This 7,626-line file and the repository-wide audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

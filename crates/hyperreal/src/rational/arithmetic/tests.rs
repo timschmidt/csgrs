@@ -4078,6 +4078,12 @@ mod tests {
         }
     }
 
+    /// Check three directed wide dyadic values against exact binary64 rounding expectations.
+    ///
+    /// A 201-bit numerator over 2^180 rounds away its final low bit for both signs,
+    /// leaving 2^20+2^-32. A ratio near one with a 2049-bit denominator similarly
+    /// retains 1+2^-52. These fixed cases exercise wide storage at an explicit lossy
+    /// boundary; they do not assert an exact-view result, error enclosure or dispatch.
     #[test]
     fn lossy_dyadic_view_handles_wide_geometry_coefficients() {
         let numerator = (BigUint::one() << 200_usize)
@@ -4107,6 +4113,15 @@ mod tests {
         assert_eq!(balanced.to_f64_lossy(), Some(1.0 + 2.0_f64.powi(-52)));
     }
 
+    /// Check exact native dyadic conversion bits, singleton bounds and selected fallback cases.
+    ///
+    /// Crosses six odd numerators fitting 53 bits with six denominator exponents,
+    /// using exact float multiplication by a power of two for normal expectations.
+    /// Checks the private fast path, general lossy conversion and singleton enclosures,
+    /// including negative general views. Two further cases require the fast path to
+    /// decline while general conversion succeeds: a 54-bit significand and exponent
+    /// 1023 denominator. This tests that helper's narrower admission, not inability
+    /// to represent either value through the general conversion schedule.
     #[test]
     fn exact_word_dyadic_view_is_bit_exact_across_the_fast_path() {
         for numerator in [
@@ -4172,6 +4187,15 @@ mod tests {
         assert_eq!(deep_denominator.to_f64_lossy(), Some(deep_expected));
     }
 
+    /// Compare a deterministic normal-range dyadic corpus with 53-bit MPFR rounding.
+    ///
+    /// Generates 5000 positive sparse wide numerators and binary denominators,
+    /// filters exact leading exponents to -1022..=1023, and requires more than 3000
+    /// checked cases. GMP holds the exact ratio; the 53-bit MPFR value supplies the
+    /// expected binary64 bits. Also pins the enclosure to the rounded float's two
+    /// outward neighbors, which is not a minimal adjacent bounding pair. Does not
+    /// cover negative values, subnormal rounding or every normal-range boundary;
+    /// registers MPFR thread-cache cleanup for the fixture.
     #[test]
     fn normal_dyadic_view_matches_gmp_rounding() {
         use rug::{Float, Integer, Rational as GmpRational, integer::Order};
@@ -4223,8 +4247,14 @@ mod tests {
         assert!(checked > 3_000);
     }
 
-    /// Whether `candidate` is the binary64 value nearest to `value`, with a
-    /// tie going to the even significand, decided with exact arithmetic.
+    /// Check exact nearest-even distance against a finite candidate's finite immediate neighbors.
+    ///
+    /// Requires candidate to be finite: exact Rational import is unwrapped, as are
+    /// exact distance comparisons. Ties with either neighbor require the candidate's
+    /// low significand bit to be even. Infinite neighbors are skipped, so this helper
+    /// does not enforce overflow-to-infinity thresholds, and rational distance does
+    /// not distinguish signed zeros. The positive finite conversion corpus uses it
+    /// for local rounding checks; it is not a complete IEEE conversion specification.
     fn is_nearest_f64(value: &Rational, candidate: f64) -> bool {
         let distance = |float: f64| {
             let difference = value - &Rational::try_from(float).unwrap();
@@ -4241,6 +4271,14 @@ mod tests {
             })
     }
 
+    /// Pin the binary64 bits of one decimal spelling under parsed and private raw storage.
+    ///
+    /// Uses the exact 50-fractional-digit spelling of the binary64 quotient 47/6,
+    /// with an explicit bit-pattern expectation. Both parsing and an unmarked raw
+    /// fraction over 10^50 must compare equal to the imported float and round to
+    /// those bits through Rational and Real. The private raw fixture deliberately
+    /// omits the lazy marker; success here does not establish general admissibility
+    /// of such storage, native replay fidelity or correctness of an OBJ exporter.
     #[test]
     fn unreduced_decimals_convert_by_value() {
         // OBJ export writes 47/6's binary64 value as this exact decimal.
@@ -4265,6 +4303,15 @@ mod tests {
         }
     }
 
+    /// Check accepted positive wide-rational rounding and one common-factor storage variant.
+    ///
+    /// For 2000 deterministic sparse pairs, shifts the denominator to reach normal,
+    /// subnormal and zero outputs; conversion declines are permitted. Each success
+    /// must pass the exact finite-neighbor oracle. Normal results also match a 53-bit
+    /// MPFR reference; at least one nonzero subnormal must occur. Adding a common
+    /// factor through unmarked raw storage must preserve bits. Despite the name,
+    /// this covers selected storage constructions, not every representation, sign,
+    /// overflow case or mandatory finite-input success; registers MPFR cleanup.
     #[test]
     fn wide_rationals_round_to_the_nearest_f64_in_every_representation() {
         use rug::{Float, Integer, Rational as GmpRational, integer::Order};
@@ -4315,6 +4362,14 @@ mod tests {
         assert!(subnormal > 0, "the corpus must reach subnormal results");
     }
 
+    /// Pin direct binary32 rounding around a midpoint where binary64-first conversion can double-round.
+    ///
+    /// Uses exact rationals just above/below 1+2^-24 and at the midpoint. The upper
+    /// value first rounds to that midpoint in binary64 but must round upward directly
+    /// to binary32 through Rational and Real; the midpoint selects even one. Also
+    /// checks the upper case's negative, underflow below half the least subnormal,
+    /// and overflow at 2^128. These directed outputs do not exhaust binary32 ties,
+    /// subnormals or signed-zero behavior.
     #[test]
     fn rationals_next_to_a_binary32_tie_round_once() {
         // 1 + 2^-24 is the binary32 midpoint between 1 and 1 + 2^-23, and a
@@ -4354,6 +4409,12 @@ mod tests {
         assert_eq!(huge.to_f32_correctly_rounded(), None);
     }
 
+    /// Check default integer and mixed-fraction presentation on two exact values.
+    ///
+    /// Parsing 12345 must display as the same digits, and five times one third must
+    /// display as the literal mixed fraction 1 2/3. No parse of that mixed output is
+    /// attempted; Display is not established as a general exact replay format here.
+    /// Formatting flags, signed values and sink failures are outside this fixture.
     #[test]
     fn display() {
         let many: Rational = "12345".parse().unwrap();
@@ -4365,6 +4426,13 @@ mod tests {
         assert_eq!(s, "1 2/3");
     }
 
+    /// Check selected exact decimal spellings, arithmetic and native-word boundary fallbacks.
+    ///
+    /// Covers zero, 0.4 times 2.5, a missing whole or fractional part and a leading
+    /// plus. Integer parse/display round trips straddle u128::MAX, and a wide half
+    /// must display as an explicit mixed fraction. These literals test exact base-ten
+    /// values and formatting; the fixture does not validate the complete grammar or
+    /// compare decimal 0.1 with binary64 input.
     #[test]
     fn decimals() {
         let first: Rational = "0.0".parse().unwrap();
@@ -4393,6 +4461,14 @@ mod tests {
         );
     }
 
+    /// Check long-decimal value, canonical observations, hashing and dyadic recognition.
+    ///
+    /// Uses the exact 51-place decimal spelling of binary64 10/3 with a literal
+    /// numerator over 2^51, including negative, trailing-zero and exponent variants. Parsed
+    /// values, canonical accessors, hashes and is_dyadic must agree. A long spelling
+    /// of 1/8 must expose denominator eight. Accessors can canonicalize lazy storage;
+    /// these assertions do not independently inspect raw stored parts or cache state,
+    /// and equal hashes alone would not establish equality.
     #[test]
     fn long_decimals_parse_to_reduced_rationals() {
         // The exact decimal spelling of binary64 10/3 has 51 fractional digits,
@@ -4418,8 +4494,9 @@ mod tests {
         ] {
             let parsed: Rational = text.parse().unwrap();
             assert_eq!(parsed, value, "{text}");
-            // Stored parts are reduced, so equal values hash equally and
-            // retain their dyadic structure.
+            // Canonical accessors, hash and dyadic classification must agree.
+            // These observations can canonicalize lazy storage; they do not
+            // independently establish that the raw stored parts were reduced.
             assert_eq!(parsed.denominator(), value.denominator(), "{text}");
             assert_eq!(parsed.numerator(), value.numerator(), "{text}");
             assert_eq!(hash(&parsed), hash(&value), "{text}");
@@ -4429,6 +4506,13 @@ mod tests {
         assert_eq!(long_fraction.denominator(), &BigUint::from(8_u8));
     }
 
+    /// Compare twelve scientific spellings with their stated exact decimal counterparts.
+    ///
+    /// Covers exponent/sign forms, empty whole or fractional mantissa parts and
+    /// magnitudes around the u128 boundary. Both sides use the Rational parser, so
+    /// the listed identities check equivalent notation but share parsing authority.
+    /// No independent grammar oracle, invalid-input corpus or cost bound is supplied
+    /// by this particular fixture.
     #[test]
     fn scientific_notation_parses_as_an_exact_rational() {
         let cases = [
@@ -4467,6 +4551,14 @@ mod tests {
         }
     }
 
+    /// Pin selected scientific grammar errors, expansion declines and zero shortcuts.
+    ///
+    /// Nine malformed inputs must return BadDecimal, including a trailing nondigit
+    /// after exponent overflow. Three large valid nonzero exponents must return
+    /// Exhausted. A zero mantissa with an enormous exponent and a 10000-digit zero
+    /// mantissa must still succeed. These assertions check outcome distinctions;
+    /// they do not measure total work or allocation, prove every grammar branch,
+    /// or treat the decimal expansion limit as a general memory/cancellation bound.
     #[test]
     fn scientific_notation_validates_grammar_and_bounds_expansion() {
         for malformed in [
@@ -4497,8 +4589,13 @@ mod tests {
         assert_eq!(wide_zero.parse::<Rational>(), Ok(Rational::zero()));
     }
 
+    /// Check one exact product of decimal integers against a separately parsed literal.
+    ///
+    /// Multiplies 288230376151711743 by 45 and requires 12970366926827028435.
+    /// This combines decimal parsing with Rational multiplication; the reference
+    /// uses the same parser, so it is a concrete arithmetic identity rather than
+    /// independent coverage of arbitrary-length input or every parse path.
     #[test]
-    /// Large decimal integer parsing and multiplication remain exact.
     fn parse() {
         let big: Rational = "288230376151711743".parse().unwrap();
         let small: Rational = "45".parse().unwrap();
@@ -4506,6 +4603,12 @@ mod tests {
         assert_eq!(big * small, expected);
     }
 
+    /// Check one signed fraction expression against an exact parsed fraction literal.
+    ///
+    /// Computes one third plus negative four times 12/20 and requires -31/15.
+    /// Parsing, reduction and arithmetic compose in this example, but the reference
+    /// shares their Rational representation. The fixture does not cover malformed
+    /// fraction syntax, zero denominators or raw normalization state.
     #[test]
     fn parse_fractions() {
         let third: Rational = "1/3".parse().unwrap();
@@ -4516,6 +4619,12 @@ mod tests {
         assert_eq!(answer, expected);
     }
 
+    /// Require typed zero-denominator errors and canonical presentation of one reducible fraction.
+    ///
+    /// Both 1/0 and 0/0 must return DivideByZero. Parsed 9/18 must equal one half
+    /// and display as 1/2. These checks distinguish invalid input from zero and
+    /// verify observable value/presentation, not every stored cache/normalization
+    /// state or every malformed fraction spelling.
     #[test]
     fn parse_fraction_rejects_zero_denominator_and_reduces() {
         assert_eq!("1/0".parse::<Rational>(), Err(Problem::DivideByZero));
@@ -4526,6 +4635,13 @@ mod tests {
         assert_eq!(format!("{reduced}"), "1/2");
     }
 
+    /// Reject a zero denominator in JSON while accepting and reducing a valid unreduced fraction.
+    ///
+    /// The sign/magnitude wire with an empty denominator limb array must fail.
+    /// The 9/18 wire must deserialize successfully, equal one half and display as
+    /// 1/2. Despite the name, unreduced valid input is accepted rather than rejected.
+    /// Checks one invalid and one valid wire only; it does not assert an error
+    /// message, serialize back to bytes, or cover every sign/magnitude inconsistency.
     #[cfg(feature = "serde")]
     #[test]
     fn serde_rejects_invalid_or_uncanonical_rational_state() {
