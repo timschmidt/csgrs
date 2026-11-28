@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/aggregate.rs` | Entire authored descriptor, planning and signed-aggregate implementation reviewed; thirty descriptions include fields/payloads, private dispatch and twelve ghost declarations. | Both-mode private docs and four consumer tests pass; private helper probes and expanded executable tokens are unchanged. Eighteen normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See signed dyadic aggregate audit. |
 | `crates/hyperreal/src/verified/accumulate.rs` | Entire authored shifted-accumulation implementation and six ghost declarations reviewed; thirteen descriptions cover domains, extent, exact carries and early/late failure state. | Both-mode private docs and four consumer tests pass; independent helper/wrapper probes are unchanged. Seven normal descriptions and six separate ghost pages render; Verus configuration/expansion validation remains open. See shifted accumulation audit. |
 | `crates/hyperreal/src/verified/product.rs` | Entire authored product/carry implementation and prefix lemma reviewed; six descriptions cover limb order, complete carries, capacity, empty inputs and failure behavior. | Both-mode private docs and four selected consumers pass; independent source-copy products/carry probes are unchanged. Five runtime descriptions and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-width product audit. |
 | `crates/hyperreal/src/verified/word.rs` | Entire authored word arithmetic and ghost lemmas reviewed; twelve descriptions distinguish raw arithmetic, metadata meaning, native overflow/shift gates and proof preconditions. | Both-mode private docs and six selected consumers pass; direct BigInt/BigUint probes are unchanged. Eight normal descriptions and four separate ghost pages render. Verus configuration/expansion validation remains open. See native-word audit. |
@@ -27566,6 +27567,108 @@ AGENTS.md already contains the full public/private/generated Rustdoc mandate.
 This completes authored review of this file, with ghost/configuration validation
 still open. Repository-wide coverage remains incomplete; continue with
 verified/aggregate.rs and its planning, subtotal and native-path contracts.
+
+## Signed dyadic aggregate audit (28 November 2026)
+
+Owning layer: Hyperreal's shared dyadic-product descriptors, scale planning and
+native/fixed-buffer aggregate schedules. P1/P5/P6/P37 govern exact values,
+representation limits, honest decline and evidence scope. At c022a781a, read all
+373 lines of verified/aggregate.rs, including every ghost declaration and proof.
+The descriptors, fields/payloads, most relations and the private limb dispatcher
+lacked Rustdoc; existing function summaries did not fully state inactive metadata,
+zero eligibility, subtotal-before-cancellation or resource behavior. Complete
+item documentation was the missing acceptance witness; existing independent
+arithmetic fixtures were retained unchanged.
+
+Read the rational sign/polarity adapters, subtotal consumer, native signed-add
+and shift gates, dyadic reduction bodies, parent macro erasure and four existing
+consumer fixtures as context. These reads do not give surrounding files new
+whole-file credit. Before editing, a source-copy probe reproduced planning and
+both private dispatch contracts against checked primitive/BigUint expectations.
+The first temporary harness build needed parentheses around a match expression;
+only that probe was corrected before the baseline run, not repository behavior.
+
+The authored file is now 545 lines with thirty descriptions: module, both types,
+two variants, their two tuple payloads, six Product fields, five runtime functions
+and twelve ghost declarations. Inline block Rustdoc documents tuple payloads
+without changing any noncomment token. All executable/specification/proof tokens,
+attributes, assertions and operation order are preserved. Normal compiler-expanded
+tokens also match the baseline after comments are excluded.
+
+The review documents these contracts:
+
+- Product fields describe an unreduced signed dyadic product with two binary
+  denominator exponents. Activity controls contribution, not metadata planning.
+  Inactive descriptors and active zero factors need not be canonical. Clone/Copy
+  preserve raw fields and the left storage tag. Wide represents a numerical
+  little-endian four-limb magnitude, independent of host byte order.
+- plan checks every exponent sum in input order, including inactive and zero
+  terms. Overflow returns None before multiplication or accumulation. Otherwise
+  it returns all exponents and their maximum; empty input has maximum zero.
+  This uses N stored exponents with no local stack/work/cancellation cap.
+- The private add_product adapter ignores activity, sign and stored exponents;
+  its caller supplies the target subtotal and alignment. It inherits exact
+  accumulation, unchanged early decline and modular late-decline buffer states.
+  Aggregate scratch is owned locally and discarded on failure.
+- The fixed-buffer sum requires M<=u32::MAX/64 as an unvalidated dimension
+  precondition. After successful planning, both unsigned subtotals must be below
+  2^(64*M), before cancellation. A small signed answer cannot rescue an overwide
+  subtotal. Success is reduced sign/magnitude/exponent, and zero is successful
+  (false, zero limbs, 0). An empty target admits only zero subtotals, not nonzero
+  cancellation. Huge denominator exponents stay metadata rather than allocations.
+- The native helper requires the supplied maximum to bound the mathematical
+  exponent sum. It skips inactive terms but rejects active Wide tags before
+  multiplication, even for zero. Active Word products and alignments must fit
+  u128, with displacement below 128 even for zero. The two-term caller checks
+  planning, first term, second term, then signed addition in that order. Its
+  symmetric magnitude range is not i128; opposite signs may cancel only after
+  individual gates pass. None is this schedule's decline, not a zero result,
+  reached resource budget or arbitrary-width impossibility.
+- Ghost magnitude/exponent relations ignore activity; scale includes every
+  descriptor. Aligned/subtotal/signed-sum definitions need a sufficiently large
+  scale for fraction interpretation. Native eligibility includes storage tags
+  and intermediate limits. The induction lemmas establish exponent bounds,
+  monotone unsigned subtotals, their signed difference, fraction preservation
+  and exact rescaling under their stated prefix/scale hypotheses. They do not
+  prove runtime capacity merely by existing in source.
+
+Executed after the final source edit:
+
+- Both locked/offline feature configurations pass four exact-name tests: native
+  dyadic product sums, fixed-buffer subtotal limits, both rational sign adapters
+  and maximal exponent metadata. Independent BigUint/BigRational expectations,
+  canonical fields, mixed tags, cancellation and decline assertions are unchanged.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All eighteen normal descriptions render in each configuration, including
+  tuple fields and private functions. Twelve ghost descriptions and their unchanged
+  full declaration bodies render separately as Markdown, without claiming ghost
+  configuration compilation or Verus macro-expansion validation.
+- The source-copy probe passes with identical baseline/final output: 99 planning
+  cases; 768 native cases, of which 318 decline; 1,536 private limb-adapter cases
+  checking buffer state; eight directed aggregate controls; and two raw Clone/Copy
+  checks. Huge shifts are handled by bounded expectations without constructing
+  huge integers. Scoped dead_code expectations apply only to unused dependency
+  functions in the isolated probe; repository docs and lints are not suppressed.
+- Inspected ordinary compiler expansion of both derives: each type gets
+  TrivialClone, Clone and Copy implementations, and one clone method. All six
+  impls and both methods lack custom attached documentation; normal Rustdoc
+  inherits the Clone trait summary. TrivialClone is hidden by compiler-generated
+  attributes, not new authored hiding directives. Carrier documentation and copy
+  probes do not close this item-level gap. Changing derive implementations is
+  outside this docs-only batch; generated coverage remains explicitly open.
+- Source/declaration/render inventories, baseline/final source and expanded-token
+  comparisons and git diff --check pass. The pinned Verus executable remains
+  unavailable, and no formal run or source-bound proof receipt was refreshed.
+  Full workflows, benchmarks and cross-target checks remain owner-waived.
+
+Evidence under /tmp/csgrs-hyperreal-verified-aggregate-audit/ retains baseline,
+probe/expansion source, scripts, commands/logs, inventories and compressed selected
+HTML. Owned binary/source copies and duplicate HTML are removed after checks;
+the shared Cargo target is reused without incremental compilation. AGENTS.md
+already mandates full public/private/generated Rustdoc. This completes authored
+review of the file; generated and ghost/configuration validation remain open.
+Repository-wide coverage remains incomplete. Continue with verified/dyadic.rs,
+its canonical carrier, difference and denominator-reduction contracts.
 
 ## Next work
 
