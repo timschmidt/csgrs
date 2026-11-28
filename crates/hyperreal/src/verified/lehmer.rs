@@ -1,6 +1,18 @@
-//! Lehmer batch selection and signed row coefficients shared with wide GCD.
-//! The matrix algebra is verified for arbitrary mathematical magnitudes;
-//! the production BigUint extraction and row arithmetic remain separate.
+//! Select native Lehmer batches and signed row descriptors for exact wide GCD.
+//!
+//! The rational adapter extracts a shared leading 62-bit window, obtains a
+//! word-bounded unimodular matrix here, and applies its rows to the full BigUint
+//! operands with a separate strict-progress check. This module neither extracts
+//! those windows nor performs wide multiplication or computes the complete GCD.
+//! A declined batch requests the caller's exact Euclidean fallback.
+//!
+//! Ghost declarations express determinant, GCD preservation, coefficient growth
+//! and the precise endpoint-agreement selection. Their mathematical row identities
+//! cover arbitrary natural magnitudes; the runtime selector has the narrower
+//! ordered leading-word domain stated on matrix. Ordinary builds erase the ghost
+//! items and proof annotations. Runtime helpers allocate no heap and expose no
+//! configurable total-work, memory or cancellation budget; model fuel is not such
+//! a runtime budget or an exhausted result.
 
 #[cfg(verus_keep_ghost)]
 use super::division::{gcd, gcd_characterization};
@@ -11,10 +23,22 @@ use vstd::{math::abs, prelude::*};
 
 #[cfg(verus_keep_ghost)]
 verus! {
+/// Define the signed determinant of a two-by-two integer row matrix.
+///
+/// For rows (a,b) and (c,d), returns `a*d - b*c` in mathematical integers.
+/// No coefficient bound or nonsingularity is assumed. A determinant of +1 or -1
+/// makes the matrix unimodular, enabling an integer inverse and exact preservation
+/// of common divisors; native width and progress are separate properties.
 pub(crate) open spec fn determinant(a: int, b: int, c: int, d: int) -> int {
     a * d - b * c
 }
 
+/// Relate exact divisibility of a signed integer and its magnitude.
+///
+/// For a positive natural divisor, abs(value) has zero remainder exactly when
+/// value has zero signed remainder. Covers negative, zero and positive integers.
+/// This transports common-divisor facts between signed matrix rows and unsigned
+/// GCD operands without assuming the row signs or a native-width bound.
 proof fn abs_divisibility(value: int, divisor: nat)
     requires divisor > 0,
     ensures abs(value) % divisor == 0 <==> value % (divisor as int) == 0,
@@ -26,6 +50,12 @@ proof fn abs_divisibility(value: int, divisor: nat)
     }
 }
 
+/// Preserve a positive common divisor through an integer linear combination.
+///
+/// Requires both signed operands divisible by the positive natural divisor.
+/// Arbitrary signed coefficients a,b give a divisible `a*left + b*right`.
+/// Rewriting the operands as multiples establishes the relation used in both
+/// directions of the unimodular GCD proof; zero and negative operands are allowed.
 proof fn linear_combination_divisible(left: int, right: int, a: int, b: int, divisor: nat)
     requires divisor > 0, left % (divisor as int) == 0, right % (divisor as int) == 0,
     ensures (a * left + b * right) % (divisor as int) == 0,
@@ -39,8 +69,14 @@ proof fn linear_combination_divisible(left: int, right: int, a: int, b: int, div
     lemma_mod_multiples_basic(a * l + b * r, divisor as int);
 }
 
-/// A unit determinant supplies an integer inverse, so taking the magnitudes
-/// of the transformed rows preserves exactly the original greatest divisor.
+/// Preserve the exact GCD after applying a unimodular matrix and taking row magnitudes.
+///
+/// Requires determinant +1 or -1, with arbitrary integer coefficients and natural
+/// operands, including two zeros. Integer inverse rows show that both transformed
+/// magnitudes have exactly the same positive common divisors as the original pair.
+/// Taking absolute values does not change those divisors. No leading-window,
+/// coefficient-width or progress assumption is needed for this mathematical result;
+/// none is established by it either.
 pub(crate) proof fn unimodular_preserves_gcd(left: nat, right: nat, a: int, b: int, c: int, d: int)
     requires determinant(a, b, c, d) == 1 || determinant(a, b, c, d) == -1,
     ensures gcd(abs(a * left + b * right), abs(c * left + d * right)) == gcd(left, right),
@@ -85,6 +121,14 @@ pub(crate) proof fn unimodular_preserves_gcd(left: nat, right: nat, a: int, b: i
     }
 }
 
+/// Express a signed row magnitude using only nonnegative products.
+///
+/// For natural left/right and arbitrary signed coefficients a/b, equal negativity
+/// flags give `abs(a)*left + abs(b)*right`; different flags give the magnitude of
+/// the difference of those products. Zero coefficients count as nonnegative, which
+/// still gives the correct magnitude when paired with a negative coefficient.
+/// This justifies the adapter's unsigned row evaluation, without bounding products
+/// or proving that a row belongs to a valid reduction matrix.
 pub(crate) proof fn magnitude_row(left: nat, right: nat, a: int, b: int)
     ensures abs(a * left + b * right) == if (a < 0) == (b < 0) {
         abs(a) * left + abs(b) * right
@@ -99,11 +143,23 @@ pub(crate) proof fn magnitude_row(left: nat, right: nat, a: int, b: int)
     }) by (nonlinear_arith) requires left >= 0, right >= 0;
 }
 
+/// Describe either weak alternating sign pattern of a Lehmer matrix.
+///
+/// Allows nonnegative/nonpositive entries in the pattern (+,-;-,+) or its
+/// negation. The inequalities are weak, so zeros fit both applicable positions.
+/// This ghost invariant controls coefficient growth during positive-quotient row
+/// updates; by itself it implies neither a unit determinant nor bounded entries.
 pub(crate) open spec fn alternating(a: int, b: int, c: int, d: int) -> bool {
     (a >= 0 && b <= 0 && c <= 0 && d >= 0)
         || (a <= 0 && b >= 0 && c >= 0 && d <= 0)
 }
 
+/// Convert an opposite-sign coefficient subtraction into magnitude addition.
+///
+/// Requires a positive integer quotient and weak opposite signs for a and c.
+/// Then `abs(a - quotient*c) = abs(a) + quotient*abs(c)`, including zero
+/// coefficients. The identity supplies one column of the row-growth argument;
+/// no upper bound or native representability is asserted.
 proof fn opposite_coefficient_growth(a: int, c: int, quotient: int)
     requires quotient > 0, (a >= 0 && c <= 0) || (a <= 0 && c >= 0),
     ensures abs(a - quotient * c) == abs(a) + quotient * abs(c),
@@ -112,6 +168,14 @@ proof fn opposite_coefficient_growth(a: int, c: int, quotient: int)
         requires quotient > 0, (a >= 0 && c <= 0) || (a <= 0 && c >= 0);
 }
 
+/// Transport alternating signs and exponential row-sum lower bounds through one step.
+///
+/// Requires a positive quotient, an alternating matrix, and absolute row sums at
+/// least `2^(steps/2)` and `2^((steps+1)/2)`, using natural integer division.
+/// The update `(c,d; a-quotient*c,b-quotient*d)` retains alternation and gives the
+/// corresponding bounds at steps+1. Opposite coefficient signs turn subtraction
+/// into magnitude addition. These are lower bounds on sums, not a claim that each
+/// individual coefficient doubles, and not an upper resource bound.
 proof fn row_growth(a: int, b: int, c: int, d: int, quotient: int, steps: nat)
     requires quotient > 0, alternating(a, b, c, d),
         abs(a) + abs(b) >= pow2(steps / 2),
@@ -147,8 +211,13 @@ proof fn row_growth(a: int, b: int, c: int, d: int, quotient: int, steps: nat)
     }
 }
 
-/// The bounded coefficients double in magnitude at least every two steps.
-/// Their word-size bound therefore keeps the existing u8 counter below 129.
+/// Bound the u8 step count using a bounded row and its growth invariant.
+///
+/// Requires both coefficient magnitudes at most u64::MAX and their sum at least
+/// `2^((steps+1)/2)`. Concludes steps < 129: at 129 that lower bound reaches 2^65,
+/// exceeding the sum of two maximum u64 magnitudes. This guards counter increment
+/// and the ghost model's fuel accounting. It does not measure wide-GCD runtime or
+/// provide a configurable total-work limit.
 proof fn step_counter_bound(c: int, d: int, steps: u8)
     requires abs(c) <= u64::MAX, abs(d) <= u64::MAX,
         abs(c) + abs(d) >= pow2((steps as nat + 1) / 2),
@@ -163,12 +232,24 @@ proof fn step_counter_bound(c: int, d: int, steps: u8)
     }
 }
 
+/// Require a unit determinant and u64-sized magnitudes for all four entries.
+///
+/// Interprets the i128 array in row-major order (a,b;c,d) using mathematical
+/// arithmetic. Entries may be negative or zero. This ghost predicate does not
+/// require alternating signs, a particular number of steps, any input ordering
+/// or decreasing transformed values. Those are separate selector/caller facts.
 pub(crate) open spec fn valid_matrix(matrix: [i128; 4]) -> bool {
     (determinant(matrix[0] as int, matrix[1] as int, matrix[2] as int, matrix[3] as int) == 1
         || determinant(matrix[0] as int, matrix[1] as int, matrix[2] as int, matrix[3] as int) == -1)
         && forall|index: int| 0 <= index < 4 ==> abs(#[trigger] matrix[index] as int) <= u64::MAX
 }
 
+/// Negate the determinant under a Euclidean row update.
+///
+/// For arbitrary integer inputs and quotient, replacing the rows by
+/// `(c,d; a-quotient*c,b-quotient*d)` negates `a*d - b*c`. No positivity or
+/// coefficient limit is needed. Starting from determinant one, the selector
+/// therefore retains determinant +1 or -1 at every accepted step.
 proof fn determinant_step(a: int, b: int, c: int, d: int, quotient: int)
     ensures determinant(c, d, a - quotient * c, b - quotient * d) == -determinant(a, b, c, d),
 {
@@ -176,13 +257,30 @@ proof fn determinant_step(a: int, b: int, c: int, d: int, quotient: int)
         by (nonlinear_arith);
 }
 
+/// Expose a candidate coefficient tuple only after at least two modeled steps.
+///
+/// Returns Some((a,b,c,d)) when steps >= 2, otherwise None. This ghost projection
+/// itself checks neither coefficient bounds nor determinant nor progress; callers
+/// supply those invariants. It models the selector's normal loop-exit threshold,
+/// not a successful complete GCD or a resource-exhaustion classification.
 pub(crate) open spec fn finish(a: int, b: int, c: int, d: int, steps: nat) -> Option<(int, int, int, int)> {
     if steps >= 2 { Some((a, b, c, d)) } else { None }
 }
 
-/// A bounded recursive model of endpoint agreement using mathematical
-/// integers. Coefficient growth proves that 129 guard evaluations suffice;
-/// the executable loop never exhausts this model's recursion budget.
+/// Model endpoint-agreement selection with exact integers and explicit recursion fuel.
+///
+/// Checks the leading pair and corrected numerator/denominator signs, then requires
+/// a positive quotient agreeing at both corrected endpoints. An accepted step must
+/// leave a nonnegative remainder and u64-bounded retained/new row coefficients;
+/// recursion swaps the rows and decreases fuel. A failed guard or zero fuel calls
+/// finish, which may return an already accumulated batch after at least two steps.
+/// The model therefore does not report fuel exhaustion as a distinct outcome.
+///
+/// The runtime correspondence starts at the identity, zero steps and fuel 129 on
+/// matrix's admitted leading-word domain. Coefficient growth prevents that run from
+/// needing more guard evaluations; arbitrary starting states or fuel values carry
+/// no such guarantee. This opaque ghost definition uses unbounded integer arithmetic
+/// rather than copying native checked-overflow semantics outside the admitted domain.
 #[verifier::opaque]
 pub(crate) open spec fn batch_spec(
     larger: int, smaller: int, a: int, b: int, c: int, d: int, steps: nat, fuel: nat,
@@ -207,6 +305,12 @@ pub(crate) open spec fn batch_spec(
     }
 }
 
+/// Translate an optional native coefficient array into the ghost integer tuple.
+///
+/// `Some([a,b,c,d])` becomes Some((a,b,c,d)) with exact i128-to-integer embeddings;
+/// None remains None. No determinant, coefficient-width or input-domain validation
+/// is performed. The projection lets the selector's complete return value be
+/// compared with batch_spec, rather than only checking a successful matrix's shape.
 pub(crate) open spec fn matrix_view(result: Option<[i128; 4]>) -> Option<(int, int, int, int)> {
     match result {
         Some(matrix) => Some((matrix[0] as int, matrix[1] as int, matrix[2] as int, matrix[3] as int)),
@@ -214,6 +318,14 @@ pub(crate) open spec fn matrix_view(result: Option<[i128; 4]>) -> Option<(int, i
     }
 }
 
+/// Bound an agreeing endpoint quotient by the nonnegative leading larger value.
+///
+/// Requires nonnegative leading values, an alternating matrix, nonnegative corrected
+/// numerators and positive corrected denominators. The two integer quotients must
+/// agree. The sign pattern supplies a corrected numerator no larger than larger,
+/// giving `0 <= quotient <= larger`. Input ordering and a unit determinant are
+/// not assumptions of this lemma. The selector combines the bound with its own
+/// 62-bit inputs and coefficient bounds to justify native intermediate arithmetic.
 proof fn quotient_bound(larger: int, smaller: int, a: int, b: int, c: int, d: int)
     requires larger >= 0, smaller >= 0, alternating(a, b, c, d),
         larger + a >= 0, larger + b >= 0, smaller + c > 0, smaller + d > 0,
@@ -228,6 +340,12 @@ proof fn quotient_bound(larger: int, smaller: int, a: int, b: int, c: int, d: in
 }
 }
 
+/// Accept exactly the signed coefficients whose magnitudes fit u64.
+///
+/// Checks the inclusive interval from -u64::MAX through u64::MAX by comparisons,
+/// without negating the input. Every i128 value is safe to inspect, including
+/// MIN; zero is accepted. This gate establishes only coefficient width, with
+/// no determinant, sign-pattern or matrix-progress assertion.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result <==> abs(value as int) <= u64::MAX,
 ))]
@@ -236,6 +354,12 @@ fn coefficient_fits(value: i128) -> bool {
     value >= -(u64::MAX as i128) && value <= u64::MAX as i128
 }
 
+/// Convert a signed coefficient to its exact u64 magnitude when representable.
+///
+/// Accepts every i128 input. Returns None precisely outside the inclusive signed
+/// u64-magnitude range; the gate runs before negation, so i128::MIN safely declines.
+/// Zero yields Some(0), and the negative bound yields Some(u64::MAX). No truncation,
+/// allocation or approximate value is used.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.is_none() <==> abs(value as int) > u64::MAX,
         match result { Some(magnitude) => magnitude == abs(value as int), None => true },
@@ -252,8 +376,17 @@ fn coefficient_magnitude(value: i128) -> Option<u64> {
     })
 }
 
-/// Select exact word magnitudes and the addition/difference branch for a
-/// signed matrix row, rejecting precisely the coefficients that do not fit.
+/// Select exact word magnitudes and the unsigned addition/difference rule for a row.
+///
+/// Checks left first, then right; None means at least one magnitude exceeds u64.
+/// On success returns (abs(left),abs(right),add), where add is true exactly when
+/// the negativity flags match. Zero counts as nonnegative. For nonnegative input
+/// magnitudes the caller adds the two weighted products when add is true and takes
+/// their absolute difference otherwise; it need not materialize signed BigInts.
+///
+/// This descriptor does not evaluate the row, validate a matrix determinant or
+/// establish progress. All i128 inputs are admitted for inspection, with oversized
+/// coefficients declined safely; the helper does not allocate or exhaust a budget.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.is_none() <==> (abs(left as int) > u64::MAX || abs(right as int) > u64::MAX),
         match result {
@@ -269,9 +402,29 @@ pub(crate) fn row_coefficients(left: i128, right: i128) -> Option<(u64, u64, boo
     Some((left_magnitude, right_magnitude, (left < 0) == (right < 0)))
 }
 
-/// Build a word-bounded unimodular transform from the leading 62 bits. The
-/// endpoint agreement guard and checked arithmetic retain the existing batch
-/// selection; every accepted update strictly decreases the leading pair.
+/// Select a word-bounded unimodular batch from an ordered shared leading-bit window.
+///
+/// Requires `0 <= input_smaller <= input_larger < 2^62`; the adapter obtains both
+/// values by shifting its full magnitudes by the same amount. A zero smaller value
+/// returns None. Starting with the identity matrix, requires positive quotients
+/// agreeing at two corrected endpoints, checks remainder and coefficient bounds, and
+/// accepts each row update in order. Normal loop exit returns a batch only after
+/// at least two updates; otherwise None requests the caller's exact fallback.
+///
+/// `Some([a,b,c,d])` has determinant +1 or -1, all coefficient magnitudes at most
+/// u64::MAX, and both transformed leading values nonnegative and strictly below
+/// the original larger input. This is a reduction matrix, not a completed GCD or
+/// proof that discarded low limbs follow the same quotients. Its absolute rows
+/// preserve GCD for complete natural operands; the adapter still evaluates those
+/// rows and checks strict progress on the full magnitudes before accepting them.
+///
+/// Checked addition/subtraction failures stop the loop, whereas a checked
+/// multiplication failure returns None immediately via propagation. The declared
+/// input/coefficient bounds keep these native intermediates representable in the
+/// admitted run. The function does not validate or extend its leading-word domain;
+/// out-of-domain declines are not typed validation errors. Coefficient growth
+/// bounds the admitted step count below 129, without a caller-configurable work or
+/// cancellation budget. Only native scalar state and a four-entry array are retained.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires 0 <= input_smaller <= input_larger < 0x4000_0000_0000_0000i128,
     ensures match result {

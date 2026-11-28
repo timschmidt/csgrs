@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/lehmer.rs` | Entire authored matrix selector, coefficient gates and proofs reviewed; twenty descriptions distinguish width, unimodularity, leading progress and full-magnitude application. | Both-mode private docs and four consumer tests plus the all-feature trace fixture pass; 34,008 leading pairs and coefficient/reuse probes are unchanged, as are expanded tokens. Five normal descriptions per mode render; Verus configuration/expansion validation remains open. See Lehmer batch audit. |
 | `crates/hyperreal/src/verified/fraction.rs` | Entire authored native reduction, cross-cancellation and supporting proofs reviewed; twenty-two descriptions cover prefix admission, unchecked domains and eighteen ghost declarations. | Both-mode private docs and four consumer tests pass; independent reduction/product/reuse probes and expanded tokens are unchanged. Four normal descriptions per mode render; Verus configuration/expansion validation remains open. See native fraction and cross-cancellation audit. |
 | `crates/hyperreal/src/verified/gcd.rs` | Entire authored native GCD implementation, lookup construction and factor proofs reviewed; twenty-eight descriptions cover private const helpers, complete scalar domains and eighteen ghost declarations. | Both-mode private docs and five consumer tests pass; exhaustive u8/table probes, partial fills, native/reuse probes and expanded tokens are unchanged. Ten normal descriptions per mode render; Verus configuration/expansion validation remains open. See native GCD and lookup audit. |
 | `crates/hyperreal/src/verified/division.rs` | Entire authored exact-remainder reducer and GCD specification reviewed; ten descriptions distinguish helper preconditions, exact estimates, stopping pairs and seven ghost declarations. | Both-mode private docs and four consumer tests pass; 10,305 remainder and 10,659 reducer/reuse cases are unchanged, as are expanded tokens. Three normal descriptions per mode render; Verus configuration/expansion validation remains open. See two-limb division audit. |
@@ -28225,6 +28226,90 @@ AGENTS.md already mandates full public/private/generated Rustdoc. Authored revie
 of this file is complete; ghost/configuration validation and repository-wide
 coverage remain open. Continue with verified/lehmer.rs and the distinction between
 leading-word matrix selection, row admission and full-magnitude application.
+
+## Lehmer batch audit (28 November 2026)
+
+Owning layer: Hyperreal's native leading-word Lehmer selector, coefficient gates
+and matrix/GCD proof relations. P1/P5/P6/P37 require exact transformations,
+preserved fallback/guard order, explicit input domains and scoped resource claims.
+At 2b44e78f6, read all 405 lines of verified/lehmer.rs, including every ghost
+body and loop invariant. Most declarations lacked Rustdoc, while the existing
+module summary could be read as a current formal-validation claim. Complete
+item descriptions were the missing acceptance witness. Before editing, a
+source-copy probe reproduced native selector/gate behavior and independent
+integer invariants; no repository assertions were changed.
+
+Read the adapter's shared leading-bit extraction, unsigned row application,
+strict full-magnitude progress check, wide GCD entry and affected boundary,
+backend-reference and dispatch fixtures. Contextual reads earn no whole-file
+credit. The file now has 558 lines and twenty descriptions: module, four runtime
+functions and fifteen ghost declarations. All executable/proof/specification
+tokens, attributes, assertions and call order are unchanged; ordinary compiler-
+expanded tokens also match. The documentation distinguishes:
+
+- coefficient_fits and coefficient_magnitude safely inspect every i128, including
+  MIN, accepting precisely magnitudes through u64::MAX. The gate precedes any
+  negation. row_coefficients checks left then right and selects addition exactly
+  when negativity flags match; zero counts as nonnegative. Row descriptors do not
+  validate determinants, evaluate wide products or establish progress.
+- matrix requires 0<=smaller<=larger<2^62, starts from identity, retains endpoint
+  quotient agreement and returns a normally completed batch only after at least
+  two steps. A successful matrix is unimodular and word-bounded, with both leading
+  rows nonnegative and below the original larger value. None requests an exact
+  fallback; it is not an undecided GCD, invalid-input diagnosis or resource failure.
+- A unimodular matrix preserves GCD of arbitrary full natural operands after
+  taking absolute rows, even if discarded low bits follow different quotients.
+  Its full-magnitude progress remains a separate caller check. The selector
+  does not perform extraction, BigUint multiplication or the complete GCD.
+- Checked additions/subtractions break the loop; checked multiplication failure
+  propagates None immediately. Admitted bounds make those intermediates fit.
+  Coefficient row-sum growth bounds the admitted counter below 129. The growth
+  assertion concerns sums, not doubling every individual coefficient.
+- Ghost helpers cover signed divisibility, absolute row arithmetic, weak sign
+  alternation, determinant transport, coefficient bounds and view conversion.
+  valid_matrix asserts neither progress nor sign pattern; finish only checks the
+  step threshold. The fuelled batch model can return an accumulated batch at zero
+  fuel; it does not publish typed exhaustion. Its identity-start, 129-fuel runtime
+  correspondence does not extend to arbitrary starting states or invalid inputs.
+  Runtime helpers use fixed native state without a configurable work/cancellation
+  contract; this does not measure or bound the enclosing wide GCD workload.
+
+Executed after the final source edit:
+
+- Both locked/offline feature configurations pass four exact-name tests: wide
+  Lehmer GCD against the backend, leading-word matrix boundaries, signed coefficient
+  boundaries and unsigned matrix application against signed magnitudes. The
+  all-feature dispatch-count fixture also passes with its existing assertions.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Five normal descriptions render in each mode. All fifteen ghost
+  descriptions and unchanged full declaration bodies render separately as
+  Markdown; ghost compilation, expansion and formal proof runs are uncredited.
+  Render inspection found multiplication markers swallowed by Markdown emphasis
+  in two ghost formulas; inline-code delimiters fix their exact presentation.
+- The warnings-denied source-copy probe has identical baseline/final output.
+  Thirteen signed coefficient boundary values and all 169 row pairs match exact
+  unsigned conversion and signed BigInt row expectations. Of 34,008 admitted
+  leading pairs, 15,656 select matrices satisfying determinant, coefficient,
+  nonnegative-progress and independent GCD checks. Complete perturbed 256-bit-low
+  operands retain their GCD. Reapplying selection to each accepted leading result
+  yields another 3,097 accepted matrices, checked by the same exact invariants.
+- Seven directed selectors pin one exact matrix and declines. Three out-of-domain
+  controls decline without runtime validation; this does not extend support.
+  Probe counts are corpus outcomes, not instrumented step counts or benchmarks.
+- Source/declaration/render inventories, baseline/final source and expanded-token
+  comparisons and git diff --check pass. No derives add normal runtime API items.
+  The pinned Verus executable remains unavailable; no formal run, ghost expansion/
+  compilation or refreshed source-bound proof report is credited. Full workflows,
+  benchmarks and cross-target checks remain owner-waived for this docs-only session.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-lehmer-audit/: baseline,
+probe/expansion sources, scripts, commands/logs, inventories and compressed selected
+HTML. Owned binary/source copy and duplicate HTML are removed after checking;
+the shared Cargo target is reused without incremental compilation. AGENTS.md
+already mandates full public/private/generated Rustdoc. Authored review of this
+file is complete; ghost/configuration validation and repository-wide coverage
+remain open. Continue with verified/mod.rs, its normal-build proof erasure macros
+and the shared module boundary, without inferring completed formal coverage.
 
 ## Next work
 
