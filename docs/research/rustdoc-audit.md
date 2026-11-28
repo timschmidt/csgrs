@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/tests.rs` | Entire authored file reviewed across twelve contiguous batches; all 249 declarations documented, including local helpers, tuple fields and a local constant. | Both-mode private docs and focused batch tests pass. Cumulative inventories match the final source; 224 minimal-feature and 249 all-feature supplemental descriptions verified. Executable tokens match the original pre-audit file. See comparison-fixture reconciliation for scope and retained limits. |
 | `crates/hyperreal/src/rational/arithmetic/aggregate_products.rs` | Entire authored carrier, reduction, construction and dispatch implementation reviewed across eight batches; all 256 declarations documented, including fields and function-local items. | Both-mode private docs and focused tests pass; 246 ordinary and ten supplemental descriptions render. Whole-file executable tokens agree with the pre-audit revision except eleven removed hiding attributes. Generated-API review remains separate. See aggregate-dispatch reconciliation. |
 | `crates/hyperreal/src/rational/arithmetic/ops.rs` | Entire exact operator, integer shortcut, mean, retention and balanced-product implementation reviewed; all 48 functions, 17 impls, ten associated outputs and chunk constant documented. | Both-mode private docs and focused tests pass; all 76 descriptions render, 1,215 records match before/after and independent expectations pass. See rational-operator batch. |
 | `crates/hyperreal/src/rational/arithmetic/queries_conversion.rs` | Entire exact query/scaling/rounding/enclosure/fact implementation reviewed; all 53 functions, impl role and local constant documented. | Both-mode private docs, six doctests, focused conversions/filters and independent exact probes pass; 54 ordinary descriptions plus one supplemental local constant checked. See rational-query/conversion batch. |
@@ -26922,6 +26923,93 @@ removed after checking; shared Cargo output is reused without incremental
 compilation. AGENTS.md already mandates full public/private/generated Rustdoc.
 Continue at sign_queries_are_strict, whose attribute is now line 7518. This
 8178-line file and the repository-wide audit remain unfinished.
+
+## Rational comparison fixtures and whole-file reconciliation (28 November 2026)
+
+Owning layer: Hyperreal rational comparison, canonical observations and arithmetic
+adapter tests. P1 governs exact value/order, P4 retained evidence, P6 typed errors,
+and P37 the distinction between a test's assertions and its name or intended
+coverage. At 4084cbf1b, the final arithmetic/tests.rs range, lines 7518–8178,
+contained nineteen undocumented tests and four undocumented function-local
+helpers. Two tests require serde or dispatch-trace respectively.
+
+Read the entire remaining range through the closing module delimiter, alongside
+comparison dispatch, raw/marked construction and canonicalization, hash/query
+consumers and the serializer/deserializer. Added 23 descriptions (145 Rustdoc
+lines); the range is now 7518–8323. No fixture, assertion, feature guard or
+executable token changes. The descriptions distinguish:
+
+- Strict signs and stable borrowed-one identity from general cache guarantees.
+  Raw unreduced comparison fixtures do not admit those states to all arithmetic.
+  A cross-product test name does not force that fallback past earlier filters.
+- 110 retained representations and all 12,100 ordered pairs, repeated twice,
+  from exhaustive equality laws or independently isolated cold/warm runs.
+  Immediate equality may decline; any definite result must match exact stored
+  cross products, as must the equality indicated by partial ordering.
+- BigRational expectations for eleven signed values and three common-factor
+  scales from comparisons solely between wrappers of Rational. Unary operations
+  and three binary storage arrangements check value, canonical observations and
+  hash consistency. Common factors are 2^bits+2, including three at bits zero;
+  zero reciprocals/divisors are skipped. Observers can warm canonicalization.
+- The many canonical queries and subsequent operations on marked 6/4 from
+  evidence that its original payload is rewritten. Eight thread results compare
+  canonical storage identities, without checking all races or numeric parts.
+  The JSON round trip checks decoded 3/2; because decoding normalizes, those
+  assertions alone do not prove that the emitted fields were canonical.
+- Direct interval-helper certifications from public comparisons that can resolve
+  earlier. Exact significand enclosures cover 10,000 generated positive integers;
+  5,000 candidate rational pairs admit declines and require at least 1,000 actual
+  certifications against exact cross products. The quota is corpus-specific.
+- Two intentionally distinct generators: the significand helper trims excess
+  low bits and forces exactly the requested width, whereas the shifted-comparison
+  helper keeps full blocks and can exceed that width up to the next 64-bit
+  boundary. Neither defines a probabilistic distribution or a zero-width API.
+- A signed dyadic grid's exact order oracle from a production trace assertion.
+  The wide dyadic test observes stable retained fact words over 128 repetitions;
+  that alone cannot prove the absence of rescanning. The separate small trace
+  requires exactly one borrowed-dyadic dispatch after operand construction.
+- Borrowed shifted comparisons against materialized BigUint references at limb
+  boundaries and 5,000 generated pairs from arbitrary shift/resource coverage.
+  Typed zero-denominator and reciprocal errors do not test division-operator
+  behavior. The two ownership-form tests cover their listed small exact operands.
+
+Executed after the final Rustdoc edit:
+
+- Locked/offline Hyperreal tests: seventeen pass without default features and
+  nineteen with all features, matching the nineteen-test all-feature baseline.
+  Exact-name inventories verify selection and retain the existing trace count.
+- Private cargo doc builds pass in both modes with warnings and broken/private
+  links denied. Supplemental copies preserve bodies and feature guards, remove
+  only the nineteen selected test markers, and expose unchanged local helpers
+  with their required imports. All 21 applicable descriptions render without
+  default features and all 23 with all features. These copies are evidence for
+  test/local Rustdoc that ordinary library Rustdoc does not expose automatically.
+- Source inventories, comment-only diff checks, executable-token comparison and
+  git diff --check pass. Full workflows, cross-target checks, benchmarks and
+  formal verification remain owner-waived for this docs-only session. No new
+  performance, memory, universal arithmetic or downstream geometry claim is made.
+
+This completes the authored whole-file review across twelve contiguous batches.
+The original 6,672-line arithmetic/tests.rs is now 8,323 lines. All 249 source
+blocks match the cumulative inventories exactly: 243 functions, one module, one
+struct, two fields, one impl and one local constant. Every earlier retained HTML
+page was decompressed, hash-checked and matched against its current description.
+Together the render evidence covers 224 descriptions without default features
+and all 249 with all features. Executable tokens also match the original
+pre-audit file, including the tuple-field layout expansion in the limbs batch.
+The batches retain their own runtime evidence and limits; this reconciliation
+neither reruns every earlier fixture nor converts finite tests into closure proof.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-comparison-audit/:
+baseline, scripts, commands, logs, tail/full-file inventories, hashes and
+compressed selected HTML. Earlier batch directories retain their respective
+source and render evidence. Owned source copies and duplicate HTML trees are
+removed after validation; the shared Cargo target is reused with incremental
+compilation disabled. It occupies about 11 GiB, with about 112 GiB free in /tmp
+before this cleanup. AGENTS.md already mandates full public/private/generated
+Rustdoc. The repository-wide audit and generated-API gaps remain unfinished.
+The next unreviewed rational file is convert.rs; its macro-generated integer
+conversions, finite-float ingress, helpers and tests require their own audit.
 
 ## Next work
 

@@ -7515,6 +7515,12 @@ mod tests {
         assert!(Rational::fraction(1, 4).unwrap() < Rational::fraction(1, 3).unwrap());
     }
 
+    /// Pin strict sign queries at both units and zero, plus stable borrowed one.
+    ///
+    /// Zero must be neither positive nor negative; each unit has only its own
+    /// sign. The borrowed one must equal constructed one and repeated borrowed
+    /// calls must return the same address. These are value and reference-identity
+    /// checks, not a claim about every constructor or cached predicate.
     #[test]
     fn sign_queries_are_strict() {
         assert!(Rational::new(-1).is_negative());
@@ -7527,6 +7533,12 @@ mod tests {
         assert!(std::ptr::eq(Rational::one_ref(), Rational::one_ref()));
     }
 
+    /// Check value equality of one half in three stored fraction forms.
+    ///
+    /// Compares canonical 1/2 with unmarked raw 2/4 and then raw 3/6. These
+    /// private states exercise comparison only; they do not establish general
+    /// admission of unreduced unmarked payloads. No dispatch assertion requires
+    /// arbitrary-width cross multiplication rather than an earlier exact shortcut.
     #[test]
     fn equality_cross_multiplies_unequal_denominators() {
         let half = Rational::fraction(1, 2).unwrap();
@@ -7544,6 +7556,14 @@ mod tests {
         assert_eq!(two_quarters, three_sixths);
     }
 
+    /// Compare equality and equality-of-order against exact stored cross products.
+    ///
+    /// Builds 110 values: two zeros, signed small marked fractions, and raw plus
+    /// common-factor-marked wide pairs at five scales through 4097 bits. All
+    /// 12100 ordered pairs are checked twice, including any definite immediate
+    /// equality result and whether partial ordering is Equal. Immediate `None`
+    /// is allowed. Repetition exercises learned evidence without isolating every
+    /// cold/warm state; the corpus does not validate every raw payload or hash rule.
     #[test]
     fn equality_matches_cross_products_across_retained_representations() {
         let mut values = vec![
@@ -7599,11 +7619,26 @@ mod tests {
         }
     }
 
+    /// Compare lazy arithmetic and observable canonical parts with BigRational.
+    ///
+    /// Eleven signed values, including zero and two wide fractions, use common
+    /// factors `2^bits + 2` at bits 0, 129 and 513. Unary operations and three
+    /// binary storage arrangements exercise reduced/lazy operands in both positions,
+    /// independent common factors, unit steps, reciprocal, binary scaling, means,
+    /// products and dots. Zero reciprocals/divisors are skipped. Every result checks
+    /// value, canonical queries and equal-value hashes; these observations may
+    /// warm normalization and do not prove raw parts were reduced beforehand.
     #[test]
     fn unreduced_arithmetic_preserves_canonical_queries_and_hashes() {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
 
+        /// Construct one oracle value with reduced or explicitly marked scaled storage.
+        ///
+        /// A common factor of one uses the general fraction constructor. Other
+        /// positive factors multiply both magnitudes and preserve the BigRational
+        /// numerator sign, including zero. Callers supply the positive common factor;
+        /// this helper does not validate arbitrary raw fraction states.
         fn retained(value: &num::BigRational, common: &BigUint) -> Rational {
             if common.is_one() {
                 return Rational::from_bigint_fraction(
@@ -7617,6 +7652,13 @@ mod tests {
             )
         }
 
+        /// Check exact value, canonical observations and hash consistency after arithmetic.
+        ///
+        /// Uses BigRational for the expected sign, reduced parts, integer conversion
+        /// and unit/zero classifications. Also builds a canonical Rational for value
+        /// and DefaultHasher comparisons. Accessors can populate normalization caches;
+        /// equal hashes supplement the value check and are not a stable wire checksum
+        /// or proof that the original payload was already canonical.
         fn check(actual: Rational, expected: num::BigRational) {
             let canonical = Rational::from_bigint_fraction(
                 expected.numer().clone(), expected.denom().magnitude().clone(),
@@ -7693,6 +7735,14 @@ mod tests {
         }
     }
 
+    /// Exercise canonical queries and subsequent arithmetic from marked 6/4.
+    ///
+    /// Compares with 3/2 across value/order, parts, formatting, hashing, decimal
+    /// and dyadic queries, integer/fractional parts and float views. Then consumes
+    /// the value in scalar, power, dot, mean and known-dyadic operations with literal
+    /// expectations. Marked 12/4 checks integer observations, and marked 16/36 checks
+    /// root extraction. Earlier queries can warm later operations; this is neither
+    /// a cold-cache test of every boundary nor proof of rewritten original parts.
     #[test]
     fn lazy_internal_fraction_is_canonical_at_observable_boundaries() {
         use std::collections::hash_map::DefaultHasher;
@@ -7778,6 +7828,12 @@ mod tests {
         assert_eq!(rest, Rational::one());
     }
 
+    /// Require eight cloned lazy handles to observe the same canonical payload identity.
+    ///
+    /// Scoped workers request canonicalization of marked 6/4 and return only
+    /// storage identities. All joined identities must match. This checks shared
+    /// publication for the observed execution, not the normalized numeric parts,
+    /// all race interleavings, allocation counts or owner release.
     #[test]
     fn lazy_internal_canonicalization_is_shared_across_threads() {
         let lazy = Rational::from_parts_raw_unreduced(
@@ -7800,6 +7856,12 @@ mod tests {
         assert!(identities.iter().all(|identity| *identity == identities[0]));
     }
 
+    /// Round-trip marked 6/4 through JSON and check the decoded reduced fraction.
+    ///
+    /// The decoded value must equal 3/2 and expose numerator three and denominator
+    /// two. Because deserialization normalizes, these assertions alone do not
+    /// prove the serialized fields were reduced; no emitted-byte expectation or
+    /// cache/source-identity replay is checked.
     #[cfg(feature = "serde")]
     #[test]
     fn lazy_internal_fraction_serializes_canonically() {
@@ -7815,6 +7877,12 @@ mod tests {
         assert_eq!(decoded.denominator(), &BigUint::from(2_u8));
     }
 
+    /// Check exact unequal ordering when stored cross products exceed u128.
+    ///
+    /// Compares raw `u128::MAX / 3` with `(u128::MAX - 1) / 2`, requiring inequality
+    /// and Less. Their unmarked parts are comparison fixtures, not general reduced
+    /// admission. No trace or private-helper assertion proves that the full cross-
+    /// product fallback ran; magnitude or leading-significand evidence can decide.
     #[test]
     fn word_comparison_falls_back_exactly_when_cross_products_overflow() {
         use std::cmp::Ordering;
@@ -7833,6 +7901,12 @@ mod tests {
         assert_eq!(left.partial_cmp(&right), Some(Ordering::Less));
     }
 
+    /// Compare large rational orderings with direct BigUint cross-product references.
+    ///
+    /// Three size choices and sixteen offset pairs give 48 positive comparisons;
+    /// negating both operands must reverse each expected order. Inputs are private
+    /// raw ratios. Public comparison may finish before the interval filter, so
+    /// this tests exact ordering without requiring a particular leading-bit path.
     #[test]
     fn leading_bit_interval_comparison_matches_large_cross_products() {
         for bits in [129_usize, 257, 521] {
@@ -7875,6 +7949,12 @@ mod tests {
         }
     }
 
+    /// Require the normalized interval filter to separate four same-binade pairs.
+    ///
+    /// At four scales through 1025, explicitly checks both exact magnitudes are
+    /// in binade zero, then requires Greater and Less in reversed helper calls.
+    /// The directed numerator construction separates the fractions over a shared
+    /// denominator; equality, overlapping bounds and rejection cases are absent.
     #[test]
     fn leading_significand_cross_products_certify_exact_order() {
         for bits in [129_usize, 257, 521, 1025] {
@@ -7906,8 +7986,22 @@ mod tests {
         }
     }
 
+    /// Check integer significand enclosures and accepted rational interval comparisons.
+    ///
+    /// 10000 generated positive integers at widths 1..=1024 must have exact
+    /// singleton endpoints through 53 bits or an inclusive lower/strict upper
+    /// integer enclosure above that. Of 5000 wide rational pairs, only matching
+    /// binades and accepted interval decisions are compared with exact cross
+    /// products; at least 1000 must certify. Declines are allowed, and the quota
+    /// is coverage for this deterministic corpus rather than a universal hit rate.
     #[test]
     fn normalized_significand_intervals_match_biguint_reference() {
+        /// Generate a positive integer with exactly the requested number of bits.
+        ///
+        /// Advances a caller-owned xorshift state once per full 64-bit block, trims
+        /// excess low bits, then forces the requested highest bit. Callers use positive
+        /// widths through 1024; zero width would underflow the final shift. This is
+        /// a reproducible fixture generator, not a random-distribution guarantee.
         fn generated(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -7970,6 +8064,10 @@ mod tests {
         assert!(certified >= 1_000, "only {certified} comparisons certified");
     }
 
+    /// Pin reflexive partial-order equality at zero, one and negative ten.
+    ///
+    /// Requires Some(Equal) for each pair of separately requested values. It
+    /// does not require distinct allocations or cover general ordering laws.
     #[test]
     fn same() {
         use std::cmp::Ordering;
@@ -7988,6 +8086,13 @@ mod tests {
         );
     }
 
+    /// Compare a five-value signed dyadic grid with explicit signed cross products.
+    ///
+    /// Checks all 25 ordered pairs, reversing magnitude order for two negative
+    /// values and using sign order otherwise. Also compares canonical half with
+    /// unmarked raw 2/4. The test does not trace production dispatch; its own
+    /// reference intentionally materializes cross products, and the raw fixture
+    /// is not a general arithmetic-admission guarantee.
     #[test]
     fn dyadic_comparison_handles_unequal_denominators_without_cross_products() {
         use std::cmp::Ordering;
@@ -8022,6 +8127,13 @@ mod tests {
         assert_eq!(Rational::fraction(1, 2).unwrap(), two_quarters);
     }
 
+    /// Check wide dyadic ordering, learned exponent fields and stable repeated facts.
+    ///
+    /// Orders `5 / 2^512` below `3 / 2^511`, then requires packed exponents 513
+    /// and 512. Repeats the comparison 128 times and checks both full fact words
+    /// remain unchanged. Marked `10 / 2^513` must equal the left value. This
+    /// observes retained facts, not proof that every call avoided rescanning or
+    /// that every cache/policy transition preserves them.
     #[test]
     fn wide_dyadic_comparison_reuses_retained_denominator_shifts() {
         use std::cmp::Ordering;
@@ -8073,6 +8185,11 @@ mod tests {
         assert_eq!(unreduced.partial_cmp(&left), Some(Ordering::Equal));
     }
 
+    /// Pin 17/32 below 9/16 and one borrowed-dyadic comparison dispatch.
+    ///
+    /// Records only the comparison after constructing operands. The named path
+    /// must occur once; this is not an allocation measurement or a count of every
+    /// internal digit visit or other dispatch event.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn dyadic_comparison_trace_reports_borrowed_digit_path() {
@@ -8088,8 +8205,22 @@ mod tests {
         );
     }
 
+    /// Compare borrowed shifted magnitudes with fully materialized BigUint references.
+    ///
+    /// A fixed boundary value checks equality in both operand orders at shifts
+    /// 1..63 and 64, 65, 127, 128, 129. Another 5000 generated positive pairs use
+    /// shifts 0..384 and compare exact orders. The generator can exceed its
+    /// requested width up to the next 64-bit boundary. Zero inputs, width overflow
+    /// and unbounded shift costs are outside this fixture.
     #[test]
     fn shifted_biguint_comparison_matches_materialized_shifts() {
+        /// Generate a positive block-built magnitude at least as wide as requested.
+        ///
+        /// Advances the xorshift state once per rounded-up 64-bit block, then forces
+        /// the requested highest bit without trimming higher bits. For positive
+        /// widths through 512, actual width lies between the request and its next
+        /// 64-bit boundary. Zero width is invalid; this generator is deliberately
+        /// different from the exact-width significand fixture.
         fn generated(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             for _ in 0..bits.div_ceil(64) {
@@ -8143,6 +8274,10 @@ mod tests {
         }
     }
 
+    /// Pin typed DivideByZero for a zero-denominator constructor and zero reciprocal.
+    ///
+    /// Checks fraction(1, 0) and inverse(zero). The division operator is not
+    /// called, so this fixture does not establish its failure behavior.
     #[test]
     fn divide_by_zero() {
         let err = Rational::fraction(1, 0).unwrap_err();
@@ -8152,6 +8287,11 @@ mod tests {
         assert_eq!(err, Problem::DivideByZero);
     }
 
+    /// Check owned-left arithmetic with borrowed right operands on small integers.
+    ///
+    /// Multiplication, nonzero division, subtraction and addition match literal
+    /// values; borrowed negation is also checked. This witnesses these adapter
+    /// forms without a general ownership, allocation or error-path comparison.
     #[test]
     fn operations_work_on_refs_on_rhs() {
         let a = Rational::new(2);
@@ -8164,6 +8304,11 @@ mod tests {
         assert_eq!(a.clone() + &b, Rational::new(5));
     }
 
+    /// Check both-borrowed arithmetic and negation on small exact integers.
+    ///
+    /// Requires the literal product, nonzero quotient, difference, negative and
+    /// sum for values two, three and six. This covers the listed adapters, not
+    /// all representations or all behavior shared with owned arithmetic.
     #[test]
     fn operations_work_on_refs() {
         let a = Rational::new(2);
