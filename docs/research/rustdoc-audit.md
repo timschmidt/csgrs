@@ -25174,6 +25174,127 @@ disabled. AGENTS.md retains the future-agent mandate for 100% public, private
 and generated documentation. The rest of this file, complete generated-item
 coverage and the repository-wide line review remain unfinished.
 
+## Dyadic carriers and line planning documentation batch (partial file)
+
+Reviewed every line of the next section of
+crates/hyperreal/src/rational/arithmetic/aggregate_products.rs at 4ddf18b0d:
+baseline lines 183–1034, now lines 183–1359. The whole file grows from 5,529
+to 5,854 lines; this remains partial-file credit. The earlier GCD batch remains
+separate. Remaining aggregate, projective and quotient implementations below
+these sections are not implicitly marked reviewed.
+
+Owner: Hyperreal exact dyadic scratch arithmetic, retained line constructions
+and scalar parameter comparison. Relevant properties are P1/P3 (exact values
+and honest retained relations), P4/P10 (unchanged ordering and trace effects),
+P5/P6 (capacity, allocation, fallback and panic distinctions) and P37. The domain
+includes consistent signed dyadic words, nonzero determinant quotients, exact
+binary64 inputs within checked tiers, fixed-stack magnitudes and supporting
+lines before segment selection. Missing private/field/local-constant contracts,
+hidden public carriers and unspecified materialization bounds supplied the
+acceptance witnesses. No implementation or support-envelope extension is claimed.
+
+The section now has 110 descriptions: twelve structs, 38 named fields, one tuple
+field, seven impls, 47 functions/methods, one module constant and four function-
+local constants. Five public carrier types and two public normalized comparators
+lose doc(hidden). Remaining methods in real/arithmetic/facts.rs are a separate
+review obligation. Context reads include the native word/accumulator kernels,
+plan and quotient producers/consumers, Real wrappers, current unit/integration
+witnesses and Hyperlimit's exact line-point fallback; these are not whole-file
+review credits for those larger sources.
+
+Findings and clarified contracts:
+
+- Dyadic words represent sign*magnitude/2^shift; canonical producers cancel
+  powers of two and use NoSign for zero. Native adapters only translate flags
+  and copy payloads. A fabricated inactive word retains its nonzero payload and
+  shift across adapter round-trip, confirming that adaptation is not validation.
+  Derived copies/debug output likewise do not establish defining relations.
+- Product-sum plans retain denominator alignment and a conservative width
+  estimate for scheduling, not a completed arithmetic result. Six-limb scratch
+  capacity is 384 bits; it does not bound surrounding allocations or work.
+  Accumulator overflow is not transactional: an individually overwide product
+  leaves scratch unchanged, while a final carry can wrap already-mutated limbs
+  before returning None. Zero products remain successful identities even at
+  extreme shifts. Nonzero-only BigUint conversion panics on all-zero scratch.
+- Compact parameter ordering can compare scalars from unrelated source lines;
+  it neither checks nor proves shared source identity or segment incidence.
+  Ordinary comparison uses sign/zero, exponent separation, six-limb alignment
+  and a BigUint fallback. Normalized comparison uses four-limb products and
+  virtual normalization instead. Wide comparison uses eight-limb products and
+  sixteen-limb alignment; equal effective bit lengths bound relative shifts by
+  511. Metadata arithmetic uses u128 to avoid overflow of summed u64 exponents.
+- Compact materialization requires an i32 exponent difference and fully reduced
+  numerator/denominator fitting u128. Comparison has a broader metadata domain.
+  The public binary64 path reproduces a concrete composition gap: retain the
+  line (0,0)–(2^100,0), then its crossing with (2^-100,-1)–(2^-100,1). Retention
+  and comparison succeed and the point materializes exactly as (2^-100,0),
+  but materialize_first_parameter panics for the valid parameter 2^-200.
+  The second parameter is 1/2. This existing public-input failure remains
+  unchanged; documenting it does not satisfy typed failure or operation closure.
+- Wide parameter materialization reduces arbitrary-precision quotients and
+  coordinate materialization deliberately retains nonzero quotients internally
+  unreduced. Zero coordinate signs become canonical zero. Exponent differences
+  can drive large allocation, and invalid indices or broken private invariants
+  can panic; fixed carrier size is not a complete-lifetime memory budget.
+- Binary64 decoding preserves the exact binary value, including subnormals;
+  signed zeros become canonical zero. Nonfinite values and numerators wider
+  than u128 return None for distinct reasons. Rational line construction can
+  canonicalize and allocate before producing its compact carrier. Checked
+  alignment/difference eligibility is stricter than mathematical existence.
+- Line planning retains denominator cross(d1,d2) and numerator cross(v,d2),
+  cross(v,d1), where v is the second origin minus the first. It solves unbounded
+  supporting lines, not clipped segments. Seventeen fixtures include parameters
+  outside [0,1] with successful exact intersections. Parallel, coincident,
+  degenerate and capacity-ineligible cases can all decline with None; that
+  outcome alone cannot establish geometric disjointness. A four-limb plan also
+  completes the retained large-determinant fixture declined by the native tier.
+
+Executed after the final source edit:
+
+- Locked/offline focused Hyperreal library checks pass: eleven executions with
+  no default features and twelve with all features. These include the existing
+  20,000-case compact comparator corpus, compact/wide line construction and
+  materialization, lazy-coordinate trace assertions, stack/fallback arithmetic,
+  parameterized-point consumers and layout assertions. Counts are test
+  executions, not a universal proof or a claim of new performance measurement.
+- Both private cargo doc configurations pass with warnings and broken/private
+  intra-doc links denied. HTML inspection finds 106 complete descriptions and
+  applicable anchors. The four function-local masks are absent from ordinary
+  Rustdoc output, so their unchanged declarations/docs also build and render in
+  an isolated supplemental module. Normal all-feature docs expose all five
+  carrier types and both normalized comparators, with the private comparator
+  absent. This section has no doctests; zero-match runs are not coverage.
+- Both feature configurations pass the two reduction_input_bits integration
+  tests. Seven all-feature Hyperinterval rational_admission/rational_conversion
+  tests pass, exercising generated lazy coordinates, admission budgets, cache-
+  independent conversion and trace expectations. This is selected downstream
+  evidence, not a complete geometry or policy-workload qualification.
+- A private source-copy probe yields 451 byte-identical before/final records:
+  200 paired compact carriers, 120 paired wide carriers, seven extreme shifts,
+  93 binary64 patterns, seventeen supporting-line intersections, one public
+  materialization gap, one wide line and twelve accumulator cases. The compact
+  corpus contains 333 parameter values outside native materialization bounds;
+  they remain comparison successes, not mislabeled materialization successes.
+- Independent Python integers/Fraction expectations check ordering, quotient
+  values and eligibility, binary64 decoding, exact determinant/affine equations,
+  wide-line halves and accumulator success/overflow/mutation behavior. Extreme
+  u64 shifts use independent effective-width comparisons without constructing
+  enormous integers. Existing dispatch assertions remain intact and seventeen
+  full construction trace snapshots agree before/after.
+- Noncomment tokens agree after removing only the seven doc(hidden) attributes;
+  the tuple field's new multiline spelling is token-identical. Inventory and
+  git diff --check pass. Initial Rustdoc bracket-link failures were corrected
+  before the successful final builds. Full workflows, formatting, performance
+  measurements and formal-verifier reruns remain owner-waived for this docs-only
+  session; no existing acceptance assertion was weakened.
+
+Evidence and scripts remain under /tmp/csgrs-hyperreal-dyadic-carriers-audit/.
+The owned source copy/probe executable are removed after checking and record JSON
+is compressed. The shared Cargo target is reused with incremental compilation
+disabled. AGENTS.md already retains the 100% public/private/generated coverage
+mandate. Remaining aggregate sections, generated-item coverage and the complete
+repository line review remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

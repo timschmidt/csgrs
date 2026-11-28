@@ -180,35 +180,76 @@ struct HalfGcdReduction {
     matrix: HalfGcdMatrix,
 }
 
+/// Alignment and width estimate for a fixed number of signed dyadic products.
+///
+/// The producer counts only live terms, sums their denominator exponents and
+/// estimates aligned numerator growth. This plan selects an arithmetic schedule;
+/// it neither stores the terms nor proves that a chosen word path will succeed.
 struct DyadicProductSumPlan<const TERMS: usize> {
+    /// Sum of factor denominator exponents per live term; inactive slots stay zero.
     denominator_shifts: [u64; TERMS],
+    /// Maximum live denominator exponent, or zero when no term is live.
     max_shift: u64,
+    /// Whether the conservative aligned numerator/carry estimate exceeds 128 bits.
     prefer_wide: bool,
 }
 
+/// Six u64 limbs for the checked 384-bit dyadic scratch accumulator.
+///
+/// This capacity controls fallback eligibility, not the complete scalar domain
+/// or a total memory/work budget.
 const DYADIC_STACK_LIMBS: usize = 6;
 
-// Keep the common geometry envelope allocation-free through 384 bits. Every
-// operation is checked; operands, alignment, or carries outside this bound
-// return to the arbitrary-precision reducer without changing the result.
+/// Unsigned little-endian 384-bit scratch magnitude for exact dyadic accumulation.
+///
+/// Default is zero; Copy/Clone duplicate the six limbs and Debug exposes them.
+/// Checked addition can fail after mutating the limbs on a final carry, so callers
+/// must discard failed scratch state before a general exact fallback. The fixed
+/// buffer bounds this scratch storage, not the surrounding operation's resources.
 #[derive(Clone, Copy, Debug, Default)]
-struct DyadicStackAccumulator([u64; DYADIC_STACK_LIMBS]);
+struct DyadicStackAccumulator(
+    /// Unsigned scratch digits, least significant limb first.
+    [u64; DYADIC_STACK_LIMBS]
+);
 
+/// Signed dyadic result with a six-limb numerator and a power-of-two denominator.
+///
+/// Its value is sign * magnitude / 2^denominator_shift. Normal producers cancel
+/// common powers of two and encode zero with NoSign, zero limbs and zero shift.
+/// Private field construction does not check these invariants. Derived copies
+/// and Debug retain or display the stored representation without rational reduction.
 #[derive(Clone, Copy, Debug)]
 struct DyadicStackSum {
+    /// Sign of the numerator; NoSign denotes zero.
     sign: Sign,
+    /// Unsigned numerator limbs after the producer's power-of-two cancellation.
     magnitude: DyadicStackAccumulator,
+    /// Nonnegative exponent of the power-of-two denominator.
     denominator_shift: u64,
 }
 
+/// Native-word signed dyadic used before allocating a Rational.
+///
+/// The represented value is sign * magnitude / 2^denominator_shift. Canonical
+/// producers use NoSign exactly for zero and an odd magnitude when the shift is
+/// positive. Private construction and native adapters do not enforce normalization.
+/// Copy/Clone and Debug operate on the stored fields, not on a reduced quotient.
 #[derive(Clone, Copy, Debug)]
 struct DyadicWord {
+    /// Numerator sign; NoSign marks an inactive zero for the native kernel.
     sign: Sign,
+    /// Unsigned numerator fitting u128; canonical zero stores zero here.
     magnitude: u128,
+    /// Exponent of the exact power-of-two denominator, not a floating exponent.
     denominator_shift: u64,
 }
 
+/// Exact DyadicWord conversion and arithmetic helpers preserving its stored dyadic meaning.
 impl DyadicWord {
+    /// Translate the sign into native activity/negativity flags without normalization.
+    ///
+    /// NoSign becomes inactive; magnitude and denominator shift are copied verbatim.
+    /// The caller retains responsibility for canonical zero and power-of-two reduction.
     fn into_native(self) -> crate::verified::dyadic::Word {
         crate::verified::dyadic::Word {
             active: self.sign != NoSign,
@@ -218,102 +259,167 @@ impl DyadicWord {
         }
     }
 
+    /// Translate native activity and sign flags while retaining magnitude and shift.
+    ///
+    /// Inactive means NoSign regardless of the negative flag. This adapter trusts
+    /// the producer: it neither clears inactive payloads nor normalizes active zero.
     fn from_native(word: crate::verified::dyadic::Word) -> Self {
         let sign = if !word.active { NoSign } else if word.negative { Minus } else { Plus };
         Self { sign, magnitude: word.magnitude, denominator_shift: word.shift }
     }
 }
 
+/// Determinant construction for two unbounded dyadic supporting lines.
+///
+/// For directions d1,d2 and start displacement v, denominator is cross(d1,d2),
+/// and numerators are cross(v,d2), cross(v,d1). Their quotients give the two
+/// parameters. Producers require a nonzero determinant and checked word bounds;
+/// this carrier does not validate segment membership. Derived copies retain the
+/// construction values without materializing parameter or coordinate rationals.
 #[derive(Clone, Copy)]
 struct DyadicLineIntersectionPlan {
+    /// First line origin, in x/y coordinate order.
     first_start: [DyadicWord; 2],
+    /// First line direction, end minus start, in x/y order.
     first_delta: [DyadicWord; 2],
+    /// Nonzero signed determinant shared by both parameter quotients.
     denominator: DyadicWord,
+    /// Signed determinants for the first and second line parameters, respectively.
     numerators: [DyadicWord; 2],
 }
-
-/// Exact-dyadic source line for repeated intersection queries.
+/// Retained exact dyadic origin and direction for repeated supporting-line queries.
 ///
-/// The compact endpoint words and their exact delta are retained without
-/// materializing standalone rational differences. Queries that exceed this
-/// native-word envelope return `None` for the general exact fallback.
+/// Endpoints and their difference must fit native dyadic words. The source stores
+/// start and end-minus-start; it does not retain endpoint handles, segment bounds
+/// or a topology certificate. Coincident endpoints can be retained, but subsequent
+/// intersection planning declines their zero determinant. Query failure can also
+/// mean a representation bound, so None alone does not prove disjointness.
+/// Copy/Clone duplicate compact fields and Debug displays their representation.
 #[derive(Clone, Copy, Debug)]
-#[doc(hidden)]
 pub struct ExactDyadicLine2 {
+    /// Exact origin coordinates in x/y order.
     start: [DyadicWord; 2],
+    /// Exact end-minus-start coordinates; a zero direction is representable.
     delta: [DyadicWord; 2],
 }
 
+/// Signed dyadic with a four-limb little-endian numerator.
+///
+/// The value is sign * magnitude / 2^denominator_shift. Producers normalize
+/// powers of two and represent zero with NoSign. The fields do not validate this
+/// invariant; Copy/Clone and Debug only copy or display them. This is a 256-bit
+/// numerator carrier, not a bound on the denominator exponent or later allocation.
 #[derive(Clone, Copy, Debug)]
 struct DyadicWideWord {
+    /// Numerator sign, with NoSign denoting zero.
     sign: Sign,
+    /// Unsigned 256-bit numerator, least significant limb first.
     magnitude: [u64; 4],
+    /// Exponent of the exact power-of-two denominator.
     denominator_shift: u64,
 }
 
+/// Line-intersection construction retaining four-limb determinant values.
+///
+/// It has the same determinant and parameter meaning as the compact plan, with
+/// nonzero denominator and checked 256-bit numerators. Origins and directions
+/// remain native words. Copy/Clone preserve the retained construction; no segment
+/// clipping, point materialization or topology validation occurs here.
 #[derive(Clone, Copy)]
 struct DyadicWideLineIntersectionPlan {
+    /// First supporting line origin in native x/y words.
     first_start: [DyadicWord; 2],
+    /// First supporting line direction in native x/y words.
     first_delta: [DyadicWord; 2],
+    /// Nonzero four-limb determinant shared by both parameters.
     denominator: DyadicWideWord,
+    /// Four-limb determinants for the first and second line parameters.
     numerators: [DyadicWideWord; 2],
 }
-
-/// Compact exact parameters for a line crossing whose inputs are dyadic.
+/// Two exact line parameters retained as signed dyadic determinant quotients.
 ///
-/// The determinant quotients stay in their native word representation so
-/// geometry layers can order crossings without constructing reduced
-/// rationals. Parameters are materialized only when an API exposes them.
-#[doc(hidden)]
+/// Each parameter is `numerator[i] / denominator`, including their independent
+/// powers of two. A nonzero denominator and consistent signs/magnitudes are
+/// required. Retention avoids Rational allocation and GCD reduction; it carries
+/// no line identity, segment-membership evidence or topology certificate.
+/// Comparisons order the stored scalars even across unrelated source lines.
+/// Clone/Debug copy or display fields without proving the defining relations.
+/// Materialization has stricter shift/resource requirements than comparison.
 #[derive(Clone, Debug)]
 pub struct ExactDyadicLineParameters2 {
+    /// Unsigned native numerator magnitudes for first and second parameters.
     numerator_magnitudes: [u128; 2],
+    /// Nonzero unsigned native magnitude of the shared determinant.
     denominator_magnitude: u128,
+    /// Power-of-two exponents for numerator zero, numerator one, then denominator.
     denominator_shifts: [u64; 3],
+    /// Signs in the same two-numerators-then-denominator order; the last is nonzero.
     signs: [Sign; 3],
 }
-
-/// Deferred exact coordinates for a line crossing with a native-word
-/// determinant.
+/// Deferred exact x/y coordinates over one native dyadic determinant.
 ///
-/// The affine coordinate numerators stay in the fixed-stack representation
-/// used by the intersection kernel. Geometry layers can retain this carrier
-/// without allocating arbitrary-precision rationals and materialize the two
-/// coordinates only if they are observed.
-#[doc(hidden)]
+/// Coordinate numerators retain origin*determinant + direction*parameter_numerator
+/// in fixed-stack form. Dividing by the shared nonzero determinant yields the
+/// point. Copies require no arbitrary-precision rational materialization; observing
+/// coordinates can allocate and leaves nonzero quotients internally unreduced.
+/// Copy/Clone and Debug preserve or display fields, not a validated incidence proof.
 #[derive(Clone, Copy, Debug)]
 pub struct ExactDyadicLinePoint2 {
+    /// Affine coordinate numerators in x/y order, each a signed stack dyadic.
     coordinate_numerators: [DyadicStackSum; 2],
+    /// Nonzero unsigned native determinant magnitude.
     denominator_magnitude: u128,
+    /// Power-of-two denominator exponent of the determinant itself.
     denominator_shift: u64,
+    /// Nonzero sign of the determinant; combined with each numerator sign.
     denominator_sign: Sign,
 }
-
-/// Wider compact exact parameters for dyadic line crossings whose determinant
-/// does not fit the native-word carrier.
+/// Two exact line parameters over a shared four-limb dyadic determinant.
 ///
-/// Geometry layers normally box this uncommon representation so the dominant
-/// inline crossing event stays compact.
-#[doc(hidden)]
+/// Each signed numerator divided by the signed denominator defines one scalar.
+/// The denominator must be nonzero and the stored signs must agree with zero
+/// magnitudes. Comparison uses bounded integer products without reducing to
+/// rationals; materialization can allocate according to exponent differences.
+/// This carrier does not own source lines or establish segment incidence.
+/// Clone/Debug copy or display the fields without validating their relations.
 #[derive(Clone, Debug)]
 pub struct ExactDyadicWideLineParameters2 {
+    /// Two unsigned 256-bit numerators, each stored least significant limb first.
     numerator_magnitudes: [[u64; 4]; 2],
+    /// Nonzero unsigned 256-bit determinant, least significant limb first.
     denominator_magnitude: [u64; 4],
+    /// Dyadic denominator exponents for the two numerators and shared denominator.
     denominator_shifts: [u64; 3],
+    /// Signs of the two numerators followed by the nonzero denominator sign.
     signs: [Sign; 3],
 }
-
-/// Deferred exact coordinates for a line crossing with a wide determinant.
-#[doc(hidden)]
+/// Deferred exact x/y coordinates over a four-limb dyadic determinant.
+///
+/// Each signed stack numerator is divided by the shared nonzero determinant.
+/// Retention uses fixed fields; materialization creates potentially large,
+/// internally unreduced rational quotients. Copy/Clone and Debug preserve or
+/// display these fields without a new incidence proof or resource receipt.
 #[derive(Clone, Copy, Debug)]
 pub struct ExactDyadicWideLinePoint2 {
+    /// Signed affine numerators in x/y order, each held in six limbs.
     coordinate_numerators: [DyadicStackSum; 2],
+    /// Nonzero four-limb determinant magnitude in little-endian order.
     denominator_magnitude: [u64; 4],
+    /// Power-of-two denominator exponent of the determinant.
     denominator_shift: u64,
+    /// Nonzero determinant sign shared by both coordinate quotients.
     denominator_sign: Sign,
 }
 
+/// Exact ExactDyadicLinePoint2 conversion and arithmetic helpers preserving its stored dyadic meaning.
 impl ExactDyadicLinePoint2 {
+    /// Construct the two exact coordinate quotients without mutating this carrier.
+    ///
+    /// NoSign numerators become canonical zero. Nonzero coordinates use the
+    /// unreduced quotient path, deferring general cancellation until observation.
+    /// Requires valid numerator signs and a nonzero determinant; large shift
+    /// differences can allocate heavily or panic if they do not fit usize. There
+    /// is no total-work limit or typed exhaustion result.
     pub(crate) fn materialize_rationals(&self) -> [Rational; 2] {
         self.coordinate_numerators.map(|numerator| {
             if numerator.sign == NoSign {
@@ -330,7 +436,9 @@ impl ExactDyadicLinePoint2 {
     }
 }
 
+/// Exact ExactDyadicWideLinePoint2 conversion and arithmetic helpers preserving its stored dyadic meaning.
 impl ExactDyadicWideLinePoint2 {
+    /// Reassemble the retained wide determinant without validation or allocation.
     fn denominator(&self) -> DyadicWideWord {
         DyadicWideWord {
             sign: self.denominator_sign,
@@ -339,6 +447,13 @@ impl ExactDyadicWideLinePoint2 {
         }
     }
 
+    /// Construct the two exact coordinate quotients without mutating this carrier.
+    ///
+    /// NoSign numerators become canonical zero. Nonzero coordinates use the
+    /// unreduced quotient path, deferring general cancellation until observation.
+    /// Requires valid numerator signs and a nonzero determinant; large shift
+    /// differences can allocate heavily or panic if they do not fit usize. There
+    /// is no total-work limit or typed exhaustion result.
     pub(crate) fn materialize_rationals(&self) -> [Rational; 2] {
         let denominator = self.denominator();
         self.coordinate_numerators.map(|numerator| {
@@ -351,7 +466,13 @@ impl ExactDyadicWideLinePoint2 {
     }
 }
 
+/// Exact ExactDyadicLineParameters2 conversion and arithmetic helpers preserving its stored dyadic meaning.
 impl ExactDyadicLineParameters2 {
+    /// Pack two dyadic numerators and their shared denominator without reduction.
+    ///
+    /// Requires a nonzero denominator and consistent signs/magnitudes. No check
+    /// or allocation is performed; arbitrary private inputs need not describe a
+    /// valid quotient or any line intersection.
     fn from_words(numerators: [DyadicWord; 2], denominator: DyadicWord) -> Self {
         Self {
             numerator_magnitudes: [numerators[0].magnitude, numerators[1].magnitude],
@@ -365,6 +486,9 @@ impl ExactDyadicLineParameters2 {
         }
     }
 
+    /// Reassemble parameter numerator zero or one without validation or reduction.
+    ///
+    /// An index outside 0..2 panics on array access.
     fn numerator(&self, index: usize) -> DyadicWord {
         DyadicWord {
             sign: self.signs[index],
@@ -373,6 +497,7 @@ impl ExactDyadicLineParameters2 {
         }
     }
 
+    /// Reassemble the shared signed dyadic denominator without validating nonzero.
     fn denominator(&self) -> DyadicWord {
         DyadicWord {
             sign: self.signs[2],
@@ -381,11 +506,18 @@ impl ExactDyadicLineParameters2 {
         }
     }
 
+    /// Multiply two u128 magnitudes exactly into four little-endian limbs.
+    ///
+    /// Delegates to the shared verified product kernel; zero is supported and no
+    /// heap allocation or rational reduction is needed.
     #[inline]
     fn multiply_magnitudes(left: u128, right: u128) -> [u64; 4] {
         crate::verified::product::multiply_u128(left, right)
     }
 
+    /// Return the exact bit length of a nonzero four-limb unsigned product.
+    ///
+    /// Zero panics at the nonzero-limb assertion. Valid output lies in 1..=256.
     #[inline]
     fn product_bit_length(product: &[u64; 4]) -> u128 {
         let index = product
@@ -396,6 +528,13 @@ impl ExactDyadicLineParameters2 {
             .expect("fixed product bit length fits u128")
     }
 
+    /// Compare nonzero products after shifting each highest bit to bit 255.
+    ///
+    /// Supplied lengths must be the actual lengths in 1..=256. Limbs are read
+    /// virtually after normalization, without allocation. This orders normalized
+    /// significands; the caller must already establish equal effective exponents
+    /// for it to decide the full scaled-value order. Incorrect lengths are not
+    /// validated and can panic or produce a wrong order.
     #[inline]
     fn compare_normalized_products(
         left: [u64; 4],
@@ -430,6 +569,13 @@ impl ExactDyadicLineParameters2 {
         Ordering::Equal
     }
 
+    /// Order parameter zero or one using fixed products and normalized significands.
+    ///
+    /// Resolve signs/zero first, then compare product bit lengths plus dyadic
+    /// exponents in u128. Equal effective widths use virtual normalization to
+    /// 256 bits. Valid carriers need no heap allocation, even for u64 exponents.
+    /// An invalid index or a signed nonzero value with zero magnitude can panic;
+    /// no source identity or defining equation is checked.
     #[cold]
     #[inline(never)]
     fn compare_parameter_normalized(&self, index: usize, other: &Self) -> Ordering {
@@ -477,6 +623,13 @@ impl ExactDyadicLineParameters2 {
         }
     }
 
+    /// Order parameter zero or one by exact signed, scaled cross-products.
+    ///
+    /// After signs/zero, an exponent separation of at least 256 decides order.
+    /// Otherwise try six-limb aligned products and fall back to BigUint if they
+    /// do not fit; that fallback can allocate. Negative quotients reverse magnitude
+    /// order. Requires consistent magnitudes and nonzero denominators; an invalid
+    /// index panics. No rational reduction or source-identity check occurs.
     fn compare_parameter(&self, index: usize, other: &Self) -> Ordering {
         let left_numerator = self.numerator(index);
         let right_numerator = other.numerator(index);
@@ -542,29 +695,47 @@ impl ExactDyadicLineParameters2 {
             ordering
         }
     }
-
-    /// Compare the parameter on the first source line without reducing it.
+    /// Order the first retained scalar parameter against the other carrier.
+    ///
+    /// Uses exact signed cross-products without rational reduction. The carriers
+    /// need valid nonzero denominators but need not refer to the same source line;
+    /// this comparison does not establish common provenance or segment membership.
     pub fn compare_first_parameter(&self, other: &Self) -> Ordering {
         self.compare_parameter(0, other)
     }
-
-    /// Compare the parameter on the second source line without reducing it.
+    /// Order the second retained scalar parameter against the other carrier.
+    ///
+    /// Uses exact signed cross-products without rational reduction. The carriers
+    /// need valid nonzero denominators but need not refer to the same source line;
+    /// this comparison does not establish common provenance or segment membership.
     pub fn compare_second_parameter(&self, other: &Self) -> Ordering {
         self.compare_parameter(1, other)
     }
-
-    /// Compare the first parameter through normalized fixed-width products.
-    #[doc(hidden)]
-    pub fn compare_first_parameter_normalized(&self, other: &Self) -> Ordering {
+        /// Order the first parameter with the fixed-width normalized-product path.
+        ///
+        /// This exact comparison avoids the ordinary path's possible BigUint fallback.
+        /// Valid carriers supply consistent signs and a nonzero denominator; comparing
+        /// scalars does not prove that the carriers share a source line.
+        pub fn compare_first_parameter_normalized(&self, other: &Self) -> Ordering {
         self.compare_parameter_normalized(0, other)
     }
-
-    /// Compare the second parameter through normalized fixed-width products.
-    #[doc(hidden)]
-    pub fn compare_second_parameter_normalized(&self, other: &Self) -> Ordering {
+        /// Order the second parameter with the fixed-width normalized-product path.
+        ///
+        /// This exact comparison avoids the ordinary path's possible BigUint fallback.
+        /// Valid carriers supply consistent signs and a nonzero denominator; comparing
+        /// scalars does not prove that the carriers share a source line.
+        pub fn compare_second_parameter_normalized(&self, other: &Self) -> Ordering {
         self.compare_parameter_normalized(1, other)
     }
 
+    /// Reduce parameter zero or one into an exact Rational.
+    ///
+    /// The native quotient path cancels the magnitude GCD and applies the exponent
+    /// difference. That difference must fit i32 and the fully reduced numerator
+    /// and denominator must each fit u128. None becomes an expect panic, even for
+    /// a valid retained parameter outside that tier. An invalid index also panics.
+    /// Comparison admits broader exponent metadata than this materializer, and
+    /// allocation is not covered by a total-work or memory budget.
     pub(crate) fn materialize_parameter(&self, index: usize) -> Rational {
         Rational::quotient_dyadic_words(self.numerator(index), self.denominator())
             .expect("retained dyadic line parameter remains representable")
@@ -572,7 +743,13 @@ impl ExactDyadicLineParameters2 {
     }
 }
 
+/// Exact ExactDyadicWideLineParameters2 conversion and arithmetic helpers preserving its stored dyadic meaning.
 impl ExactDyadicWideLineParameters2 {
+    /// Pack two dyadic numerators and their shared denominator without reduction.
+    ///
+    /// Requires a nonzero denominator and consistent signs/magnitudes. No check
+    /// or allocation is performed; arbitrary private inputs need not describe a
+    /// valid quotient or any line intersection.
     fn from_words(numerators: [DyadicWideWord; 2], denominator: DyadicWideWord) -> Self {
         Self {
             numerator_magnitudes: [numerators[0].magnitude, numerators[1].magnitude],
@@ -586,6 +763,9 @@ impl ExactDyadicWideLineParameters2 {
         }
     }
 
+    /// Reassemble parameter numerator zero or one without validation or reduction.
+    ///
+    /// An index outside 0..2 panics on array access.
     fn numerator(&self, index: usize) -> DyadicWideWord {
         DyadicWideWord {
             sign: self.signs[index],
@@ -594,6 +774,7 @@ impl ExactDyadicWideLineParameters2 {
         }
     }
 
+    /// Reassemble the shared signed dyadic denominator without validating nonzero.
     fn denominator(&self) -> DyadicWideWord {
         DyadicWideWord {
             sign: self.signs[2],
@@ -602,6 +783,9 @@ impl ExactDyadicWideLineParameters2 {
         }
     }
 
+    /// Zero-extend a native dyadic numerator to four limbs without changing its value.
+    ///
+    /// Sign and denominator exponent are preserved without validation or reduction.
     fn wide_word(value: DyadicWord) -> DyadicWideWord {
         DyadicWideWord {
             sign: value.sign,
@@ -615,10 +799,19 @@ impl ExactDyadicWideLineParameters2 {
         }
     }
 
+    /// Multiply two four-limb unsigned magnitudes exactly into eight little-endian limbs.
+    ///
+    /// Delegates to the shared verified kernel; zero is supported without allocation.
     fn multiply_magnitudes(left: [u64; 4], right: [u64; 4]) -> [u64; 8] {
         crate::verified::product::multiply(&left, &right)
     }
 
+    /// Place an eight-limb product left-shifted into sixteen little-endian limbs.
+    ///
+    /// The comparison caller bounds shift by 511 after equal-width classification,
+    /// so the result fits 1,024 bits. Zero source limbs are skipped. This helper
+    /// does not check arbitrary shifts for capacity; out-of-range conversions or
+    /// indices can panic. No heap allocation is performed.
     fn shifted_product(product: [u64; 8], shift: u128) -> [u64; 16] {
         let word_shift = usize::try_from(shift / 64)
             .expect("bounded wide comparison shift fits usize");
@@ -636,6 +829,13 @@ impl ExactDyadicWideLineParameters2 {
         shifted
     }
 
+    /// Order two signed dyadic quotients using fixed-width exact products.
+    ///
+    /// Requires nonzero denominators and consistent signs/magnitudes. Signs and zero
+    /// resolve first; nonzero cross-products occupy eight limbs. Compare bit lengths
+    /// plus exponents in u128, then align equal-width cases in sixteen limbs. That
+    /// equality bounds relative shift by 511. Negative order reverses. No rational
+    /// reduction or heap allocation occurs; invalid zero products can panic.
     fn compare_parameter_words(
         left_numerator: DyadicWideWord,
         left_denominator: DyadicWideWord,
@@ -691,6 +891,10 @@ impl ExactDyadicWideLineParameters2 {
         }
     }
 
+    /// Order parameter zero or one by the fixed-width signed quotient comparator.
+    ///
+    /// An index outside 0..2 panics; valid carrier comparisons do not allocate or
+    /// verify that source lines are shared.
     fn compare_parameter(&self, index: usize, other: &Self) -> Ordering {
         Self::compare_parameter_words(
             self.numerator(index),
@@ -700,6 +904,10 @@ impl ExactDyadicWideLineParameters2 {
         )
     }
 
+    /// Order parameter zero or one against a native carrier after exact widening.
+    ///
+    /// Only the compact operands are zero-extended; no Rational is constructed.
+    /// Both carriers must be valid, and an index outside 0..2 panics.
     fn compare_parameter_to_compact(
         &self,
         index: usize,
@@ -712,26 +920,36 @@ impl ExactDyadicWideLineParameters2 {
             Self::wide_word(other.denominator()),
         )
     }
-
-    /// Compare the parameter on the first source line without reducing it.
+    /// Order the first retained scalar parameter against the other carrier.
+    ///
+    /// Uses exact signed cross-products without rational reduction. The carriers
+    /// need valid nonzero denominators but need not refer to the same source line;
+    /// this comparison does not establish common provenance or segment membership.
     pub fn compare_first_parameter(&self, other: &Self) -> Ordering {
         self.compare_parameter(0, other)
     }
-
-    /// Compare the parameter on the second source line without reducing it.
+    /// Order the second retained scalar parameter against the other carrier.
+    ///
+    /// Uses exact signed cross-products without rational reduction. The carriers
+    /// need valid nonzero denominators but need not refer to the same source line;
+    /// this comparison does not establish common provenance or segment membership.
     pub fn compare_second_parameter(&self, other: &Self) -> Ordering {
         self.compare_parameter(1, other)
     }
-
-    /// Compare the first parameter with the native-word carrier.
+    /// Order the first scalar parameter against a native-word carrier.
+    ///
+    /// Exact widening followed by fixed-width cross-products avoids Rational
+    /// allocation. This does not require or prove a common supporting line.
     pub fn compare_first_parameter_to_compact(
         &self,
         other: &ExactDyadicLineParameters2,
     ) -> Ordering {
         self.compare_parameter_to_compact(0, other)
     }
-
-    /// Compare the second parameter with the native-word carrier.
+    /// Order the second scalar parameter against a native-word carrier.
+    ///
+    /// Exact widening followed by fixed-width cross-products avoids Rational
+    /// allocation. This does not require or prove a common supporting line.
     pub fn compare_second_parameter_to_compact(
         &self,
         other: &ExactDyadicLineParameters2,
@@ -739,6 +957,12 @@ impl ExactDyadicWideLineParameters2 {
         self.compare_parameter_to_compact(1, other)
     }
 
+    /// Construct and reduce the exact parameter zero or one from its wide quotient.
+    ///
+    /// Zero numerator sign returns zero; otherwise the nonzero denominator and
+    /// sign/magnitude invariants are trusted. Exponent differences must fit usize
+    /// and can require large allocations. Invalid index or invariant violations
+    /// can panic; there is no typed exhaustion or cancellation contract.
     pub(crate) fn materialize_parameter(&self, index: usize) -> Rational {
         Rational::quotient_dyadic_wide_words(
             self.numerator(index),
@@ -748,11 +972,24 @@ impl ExactDyadicWideLineParameters2 {
     }
 }
 
+/// Exact DyadicStackAccumulator conversion and arithmetic helpers preserving its stored dyadic meaning.
 impl DyadicStackAccumulator {
+    /// Add left * right * 2^shift exactly when the result fits 384 bits.
+    ///
+    /// Zero products succeed without changing the buffer, even for large shifts.
+    /// An overwide shifted product returns None before mutation; a final sum carry
+    /// returns None after wrapping the buffer modulo 2^384. Discard failed scratch
+    /// state before fallback. Delegates to the shared verified accumulator.
     fn add_product(&mut self, left: u128, right: u128, shift: u64) -> Option<()> {
         crate::verified::accumulate::add_product(&mut self.0, left, right, shift)
     }
 
+    /// Add a four-limb magnitude times a u128 word, aligned by 2^shift.
+    ///
+    /// Uses the shared verified accumulator with the same success and failure
+    /// mutation contract as add_product: an overwide product leaves the buffer
+    /// unchanged, but sum overflow may wrap it before returning None. No allocation
+    /// is needed; None is fixed-tier ineligibility, not a general arithmetic failure.
     fn add_wide_word_product(
         &mut self,
         left: [u64; 4],
@@ -762,10 +999,18 @@ impl DyadicStackAccumulator {
         crate::verified::accumulate::add_wide_product(&mut self.0, &left, right, shift)
     }
 
+    /// Return the exact native magnitude if all limbs above the first two are zero.
+    ///
+    /// Zero succeeds. A wider magnitude returns None without mutation or allocation.
     fn to_u128(self) -> Option<u128> {
         crate::verified::limbs::to_u128(&self.0)
     }
 
+    /// Materialize a nonzero accumulator as an unsigned arbitrary-precision magnitude.
+    ///
+    /// Split occupied u64 limbs into little-endian u32 digits and discard high zero
+    /// digits. Zero panics at the nonzero-limb assertion; callers handle zero first.
+    /// The temporary vector and BigUint can allocate despite the fixed input size.
     fn into_biguint(self) -> BigUint {
         let last = self
             .0
@@ -784,11 +1029,23 @@ impl DyadicStackAccumulator {
     }
 }
 
+/// Exact magnitude, aggregate and dyadic construction helpers for rational arithmetic.
 impl Rational {
+    /// Decode the exact finite binary64 value into a normalized native dyadic word.
+    ///
+    /// Both signed zeros become canonical zero. Subnormals use exponent 1074;
+    /// normal values include the implicit significand bit, then cancel powers of
+    /// two. NaN, infinities and values requiring more than 128 numerator bits
+    /// return None. No decimal rounding, float arithmetic or Rational allocation
+    /// occurs; a finite value outside this tier is not mathematically invalid.
     fn exact_dyadic_f64_word(value: f64) -> Option<DyadicWord> {
+        /// Binary64 sign bit, tested without changing the input bits.
         const SIGN_MASK: u64 = 1 << 63;
+        /// Binary64 eleven-bit exponent field before its shift to the low bits.
         const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;
+        /// Binary64 explicit 52-bit fraction field, excluding the hidden leading bit.
         const SIGNIFICAND_MASK: u64 = 0x000f_ffff_ffff_ffff;
+        /// Leading significand bit restored for normal binary64 values.
         const IMPLICIT_BIT: u64 = SIGNIFICAND_MASK + 1;
 
         let bits = value.to_bits();
@@ -826,6 +1083,13 @@ impl Rational {
         })
     }
 
+    /// Retain a dyadic line origin and exact end-minus-start direction.
+    ///
+    /// Canonicalize endpoint rationals as needed, then require power-of-two
+    /// denominators and u128 numerators; checked differences must also fit. None
+    /// is representation ineligibility, not proof that the supporting line is
+    /// invalid. Coincident endpoints succeed with zero direction. Canonicalization
+    /// can allocate even though the returned carrier itself is compact.
     pub(crate) fn exact_dyadic_line2_from_rationals(
         start: [&Self; 2],
         end: [&Self; 2],
@@ -847,6 +1111,13 @@ impl Rational {
         })
     }
 
+    /// Retain a line directly from exact binary64 endpoint values.
+    ///
+    /// Decode each endpoint with exact_dyadic_f64_word, then compute checked native
+    /// differences. Nonfinite input, endpoint width or difference width/alignment
+    /// ineligibility returns None without distinguishing those causes. Signed zero
+    /// is canonicalized and coincident endpoints are allowed; no segment or
+    /// nondegeneracy predicate is applied.
     pub(crate) fn exact_dyadic_line2_from_f64(
         start: [f64; 2],
         end: [f64; 2],
@@ -868,6 +1139,12 @@ impl Rational {
         })
     }
 
+    /// Build a native-word determinant plan from four rational endpoints.
+    ///
+    /// Retain the first line, then delegate second-line conversion and determinant
+    /// construction. Endpoint canonicalization can allocate. None conflates input
+    /// or intermediate tier ineligibility with a zero determinant; no segment
+    /// range test is performed.
     fn line_intersection2_plan_known_dyadic(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
@@ -882,6 +1159,11 @@ impl Rational {
         )
     }
 
+    /// Reuse a retained first line and convert the second line from rationals.
+    ///
+    /// Canonicalize second endpoints as needed, requiring native dyadic words,
+    /// then delegate to the native-word planner. None is a fallback signal, not
+    /// a proof of disjointness. The retained first-line invariants are trusted.
     fn line_intersection2_plan_with_first_line(
         first: &ExactDyadicLine2,
         second_start: [&Self; 2],
@@ -898,6 +1180,11 @@ impl Rational {
         Self::line_intersection2_plan_with_first_line_words(first, second_start, second_end)
     }
 
+    /// Reuse the first line and decode exact binary64 endpoints for the second.
+    ///
+    /// Nonfinite or overwide inputs return None; otherwise delegate to the
+    /// native-word determinant planner. No rounded endpoint or segment clipping
+    /// is introduced, and the retained first-line invariants are trusted.
     fn line_intersection2_plan_with_first_line_exact_dyadic_f64(
         first: &ExactDyadicLine2,
         second_start: [f64; 2],
@@ -916,6 +1203,17 @@ impl Rational {
         )
     }
 
+    /// Construct exact native-word determinants for two supporting lines.
+    ///
+    /// Let d1,d2 be directions and v the second origin minus the first. Retain
+    /// cross(d1,d2) as denominator and cross(v,d2), cross(v,d1) as numerators.
+    /// Each cross-product tries native words then a checked stack sum narrowed
+    /// to u128. Any failed difference, alignment, sum or narrowing returns None.
+    /// A zero denominator also returns None, covering parallel, coincident and
+    /// degenerate lines without distinguishing them. Nonzero denominator does not
+    /// prove that either quotient lies in `[0,1]`; callers own segment selection.
+    /// Inputs must satisfy dyadic word invariants. Planning uses fixed scratch
+    /// storage and does not materialize parameter/coordinate rationals.
     fn line_intersection2_plan_with_first_line_words(
         first: &ExactDyadicLine2,
         second_start: [DyadicWord; 2],
@@ -948,6 +1246,12 @@ impl Rational {
         })
     }
 
+    /// Build a four-limb determinant plan from four rational endpoints.
+    ///
+    /// Retain the first line, then delegate second-line conversion and determinant
+    /// construction. Endpoint canonicalization can allocate. None conflates input
+    /// or intermediate tier ineligibility with a zero determinant; no segment
+    /// range test is performed.
     fn line_intersection2_wide_plan_known_dyadic(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
@@ -962,6 +1266,11 @@ impl Rational {
         )
     }
 
+    /// Reuse a retained first line and convert the second line from rationals.
+    ///
+    /// Canonicalize second endpoints as needed, requiring native dyadic words,
+    /// then delegate to the four-limb planner. None is a fallback signal, not
+    /// a proof of disjointness. The retained first-line invariants are trusted.
     fn line_intersection2_wide_plan_with_first_line(
         first: &ExactDyadicLine2,
         second_start: [&Self; 2],
@@ -978,6 +1287,11 @@ impl Rational {
         Self::line_intersection2_wide_plan_with_first_line_words(first, second_start, second_end)
     }
 
+    /// Reuse the first line and decode exact binary64 endpoints for the second.
+    ///
+    /// Nonfinite or overwide inputs return None; otherwise delegate to the
+    /// four-limb determinant planner. No rounded endpoint or segment clipping
+    /// is introduced, and the retained first-line invariants are trusted.
     fn line_intersection2_wide_plan_with_first_line_exact_dyadic_f64(
         first: &ExactDyadicLine2,
         second_start: [f64; 2],
@@ -996,6 +1310,17 @@ impl Rational {
         )
     }
 
+    /// Construct exact four-limb determinants for two supporting lines.
+    ///
+    /// Let d1,d2 be directions and v the second origin minus the first. Retain
+    /// cross(d1,d2) as denominator and cross(v,d2), cross(v,d1) as numerators.
+    /// Cross-products use checked six-limb sums narrowed to four-limb magnitudes.
+    /// Any failed difference, alignment, sum or narrowing returns None.
+    /// A zero denominator also returns None, covering parallel, coincident and
+    /// degenerate lines without distinguishing them. Nonzero denominator does not
+    /// prove that either quotient lies in `[0,1]`; callers own segment selection.
+    /// Inputs must satisfy dyadic word invariants. Planning uses fixed scratch
+    /// storage and does not materialize parameter/coordinate rationals.
     fn line_intersection2_wide_plan_with_first_line_words(
         first: &ExactDyadicLine2,
         second_start: [DyadicWord; 2],
