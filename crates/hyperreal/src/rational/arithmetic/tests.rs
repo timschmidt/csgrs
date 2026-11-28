@@ -3236,6 +3236,12 @@ mod tests {
         );
     }
 
+    /// Check fixed-array and slice clearing against the same explicit integer tuple.
+    ///
+    /// For 3/8, -5/12 and zero, the positive denominator LCM is 24, yielding
+    /// 9, -10 and zero in the original order. Each entry point must match that
+    /// expectation. This checks one shared scale and sign/zero preservation, not
+    /// primitive-content removal, cache behavior or arbitrary input coverage.
     #[test]
     fn clear_common_denominator_preserves_one_positive_shared_scale() {
         let values = [
@@ -3257,11 +3263,23 @@ mod tests {
         );
     }
 
+    /// Require an empty slice of rational inputs to produce an empty output vector.
+    ///
+    /// Exercises the slice entry's successful empty case only. It makes no claim
+    /// about the fixed-array entry's separate nonempty-input requirement, allocation
+    /// counts or dispatch events.
     #[test]
     fn clear_common_denominator_slice_preserves_empty_input() {
         assert!(Rational::clear_common_denominator_slice(&[]).is_empty());
     }
 
+    /// Check positively scaled primitive integer tuples while preserving component signs.
+    ///
+    /// The main tuple 2/3, -4/3, zero must become 1, -2, zero. Additional assertions
+    /// cover an all-zero array, a sole negative entry becoming -1 in its original
+    /// slot, and an empty array. These exact outputs distinguish content removal
+    /// from denominator clearing and from forcing a positive first nonzero entry;
+    /// no representation or trace state is asserted.
     #[test]
     fn primitive_integer_ratio_clears_denominators_and_content() {
         let values = [
@@ -3288,6 +3306,12 @@ mod tests {
         assert!(Rational::primitive_integer_ratio([]).is_empty());
     }
 
+    /// Check explicit primitive BigInt vectors for shared and differing rational denominators.
+    ///
+    /// Requires 2/3, -4/3, zero to yield 1, -2, zero, and 3/10, 9/14 to yield 7, 15.
+    /// An empty slice must remain empty. These literal expectations check scale,
+    /// content and sign semantics directly; this fixture does not call the Rational
+    /// output adapter as its reference or cover all-zero/nontrivial lazy inputs.
     #[test]
     fn primitive_bigint_ratio_matches_rational_components() {
         let values = [
@@ -3309,6 +3333,13 @@ mod tests {
         assert!(Rational::primitive_bigint_ratio(&[]).is_empty());
     }
 
+    /// Check exact integer division success and selected admission failures.
+    ///
+    /// Directed cases cover a negative quotient, zero dividend, nondivisibility,
+    /// a fractional dividend and a zero divisor. A bounded signed grid constructs
+    /// products of known quotient/divisor pairs and requires the exact quotient.
+    /// None is an input/divisibility decline, not an undecided value or exhaustion.
+    /// Fractional divisors and arbitrary-width inputs are not exercised here.
     #[test]
     fn checked_exact_integer_quotient_requires_divisible_integers() {
         assert_eq!(
@@ -3344,6 +3375,14 @@ mod tests {
         }
     }
 
+    /// Compare `(left*right-subtract_left*subtract_right)/divisor` with bounded integer arithmetic.
+    ///
+    /// Enumerates four signed factors in -3..=3 and nonzero divisors in -8..=8;
+    /// remainder zero decides Some versus None, and native division supplies the
+    /// value. Also rejects a fractional operand despite a cancelling zero numerator,
+    /// and zero divisor despite cancellation. Two wide common-factor identities
+    /// check positive and negative division. The native oracle cannot overflow on
+    /// this grid; it is not a universal input-size or dispatch assertion.
     #[test]
     fn checked_exact_integer_cross_difference_quotient_matches_small_integers() {
         for left in -3_i64..=3 {
@@ -3411,6 +3450,13 @@ mod tests {
         );
     }
 
+    /// Compare `left-subtractand*scale` with exact expectations across a signed small grid.
+    ///
+    /// All three native values range over -8..=8. Fractional left/subtractand cases
+    /// must decline even when multiplying a fractional subtractand would produce
+    /// an integer. A wide-value identity and i64::MIN scale check additional sign
+    /// and magnitude handling, using Rational arithmetic for those expectations.
+    /// No cancellation/resource limit or exact trace count is exercised.
     #[test]
     fn checked_exact_integer_scaled_difference_matches_small_integers() {
         for left in -8_i64..=8 {
@@ -3453,6 +3499,14 @@ mod tests {
         );
     }
 
+    /// Compare owned/borrowed iterator products with sequential exact multiplication.
+    ///
+    /// Checks empty-product identity and eleven lengths through 777, including
+    /// 511/512/513 around the reducer's chunk boundary. A 256-factor Wallis product
+    /// also matches a sequential fold. Finally, a zero-containing owned iterator
+    /// must return zero after all five producer visits, preserving producer effects.
+    /// The references share Rational multiplication; values alone do not prove a
+    /// balanced schedule, cost improvement or retained-storage identity.
     #[test]
     fn iterator_products_balance_exact_factors_and_preserve_semantics() {
         let empty: Vec<Rational> = Vec::new();
@@ -3510,6 +3564,13 @@ mod tests {
         assert_eq!(visits.get(), 5, "product must consume the whole iterator");
     }
 
+    /// Check four exact multiplication values involving binary64, general fractions and decimals.
+    ///
+    /// The scaled binary64 input is compared with a literal exact fraction; 35/22
+    /// times 121/14 must be 55/4, and products involving parsed 1.6 and 1.5 have
+    /// explicit expectations. Those short decimals currently use the reduced word
+    /// parser path. Equality against reduced references checks values, not raw-part
+    /// coprimality or the order of cancellation, and does not force lazy operands.
     #[test]
     fn word_multiplication_cross_cancellation_stays_reduced() {
         let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
@@ -3527,9 +3588,9 @@ mod tests {
         let right = Rational::fraction(121, 14).unwrap();
         assert_eq!(&left * right, Rational::fraction(55, 4).unwrap());
 
-        // Decimal parsing may retain an unreduced internal fraction until a
-        // later arithmetic operation. The dyadic/general path must reduce
-        // those parts as well as cross-cancelling the operands.
+        // These short decimals take the reduced word-parser path. They check
+        // multiplication after decimal conversion, not mandatory lazy storage;
+        // the assertions below do not inspect cache or representation state.
         let decimal: Rational = "1.6".parse().unwrap();
         assert_eq!(Rational::fraction(5, 4).unwrap() * decimal, Rational::new(2));
         let odd_common_factor: Rational = "1.5".parse().unwrap();
@@ -3539,6 +3600,14 @@ mod tests {
         );
     }
 
+    /// Check wide dyadic/general products against explicit exact fractions.
+    ///
+    /// Covers both operand orders, a sign reversal, dyadic exponent cancellation
+    /// and a wide odd denominator. One private raw operand deliberately retains a
+    /// common factor without the internal-unreduced marker; its passing value is
+    /// not a general admission guarantee for unmarked unreduced storage. The fixture
+    /// checks results, not cancellation-before-multiplication order, temporary size
+    /// or raw output coprimality; those require separate evidence.
     #[test]
     fn wide_dyadic_multiplication_cross_cancels_before_products() {
         let dyadic = Rational::from_bigint_fraction(
@@ -3603,6 +3672,13 @@ mod tests {
         assert_eq!(dyadic * general, expected);
     }
 
+    /// Check a signed dyadic product whose denominator exceeds the native-word tier.
+    ///
+    /// Imports the exact binary64 value of 1.0e-12, asserts a native-sized numerator
+    /// and a squared denominator wider than 128 bits, then multiplies by its negative.
+    /// The reference independently multiplies stored BigUint parts and constructs
+    /// the negative fraction. This tests exact binary input, not the decimal ratio
+    /// 1/10^12, and does not assert which multiplication path was taken.
     #[test]
     fn wide_dyadic_word_numerator_product_matches_biguint_reference() {
         let tiny = Rational::try_from(1.0e-12_f64).unwrap();
@@ -3618,6 +3694,13 @@ mod tests {
         assert_eq!(product, expected);
     }
 
+    /// Check accepted exact binary64 views by rational reimport over a deterministic bit corpus.
+    ///
+    /// Generates 20000 bit patterns, skips nonfinite values, and checks every Some
+    /// result by exact Rational reimport. Requires more than 19000 recoveries while
+    /// permitting other finite inputs to decline. Equality is of rational values,
+    /// not float bit patterns, so this does not test signed-zero preservation or
+    /// individually require every representable input to succeed.
     #[test]
     fn exact_dyadic_f64_view_round_trips_finite_binary64_values() {
         let mut state = 0xbb67_ae85_84ca_a73b_u64;
@@ -3639,6 +3722,13 @@ mod tests {
         assert!(recovered_count > 19_000);
     }
 
+    /// Compare direct binary64 decoding with canonical Rational-to-word admission.
+    ///
+    /// For 20000 deterministic bit patterns, both paths must either decline or
+    /// return identical sign, numerator magnitude and denominator shift. Nonfinite
+    /// inputs have no canonical reference; finite values can also exceed the native
+    /// numerator tier. This is representation-envelope agreement between two paths,
+    /// not an independent real-value oracle or a guarantee that all floats fit.
     #[test]
     fn direct_binary64_words_match_canonical_rational_words() {
         let mut state = 0x3c6e_f372_fe94_f82b_u64;
@@ -3669,8 +3759,21 @@ mod tests {
         }
     }
 
+    /// Compare admitted native two-product sums with their six-limb exact counterparts.
+    ///
+    /// Generates 20000 signed carrier rows and polarities. Every stack result must
+    /// succeed; each native success must narrow from that result with equal sign,
+    /// magnitude and exponent. Requires more than 10000 native successes and more
+    /// than 100 declines, but does not prove each decline unavoidable. The reference
+    /// shares aggregate arithmetic authority; no independent fraction oracle or
+    /// performance/resource measurement is supplied by this fixture.
     #[test]
     fn native_word_product_sums_match_stack_accumulation() {
+        /// Advance the deterministic 64-bit xorshift state used by this carrier corpus.
+        ///
+        /// Mutates and returns the state using shifts 13, 7 and 17. Fixed seeds make
+        /// failures reproducible; this is not a cryptographic source or a guarantee of
+        /// uniform or exhaustive coverage of carrier states.
         fn next(state: &mut u64) -> u64 {
             *state ^= *state << 13;
             *state ^= *state >> 7;
@@ -3678,6 +3781,13 @@ mod tests {
             *state
         }
 
+        /// Generate a sign-consistent raw dyadic word with exponent below 32.
+        ///
+        /// Produces zero-magnitude NoSign entries, ordinary positive/negative magnitudes
+        /// up to 2^56, and a rare negative near-u128-maximum branch. Zero can keep a
+        /// nonzero exponent and nonzero words are not normalized. These bounds keep
+        /// the two aligned products within the six-limb reference while allowing the
+        /// native accumulator to decline. State consumption depends on the chosen branch.
         fn word(state: &mut u64) -> DyadicWord {
             let control = next(state);
             let sign = match control & 15 {
@@ -3724,6 +3834,13 @@ mod tests {
         assert!(deferred > 100, "only {deferred} wide sums deferred");
     }
 
+    /// Check selected exact-view declines and the least positive/negative subnormal values.
+    ///
+    /// Rejects 1/3, 2^54+1 and 2^-1075, while 2^54+4 must convert exactly.
+    /// The two signed values of magnitude 2^-1074 must have the expected float bits;
+    /// the positive value's enclosure must be a singleton at those bits. These are
+    /// directed representability witnesses, not complete overflow, sign or midpoint
+    /// coverage; separate fixtures exercise finite-enclosure overflow boundaries.
     #[test]
     fn exact_dyadic_f64_view_rejects_unrepresentable_values() {
         let too_precise = Rational::new((1_i64 << 54) + 1);
@@ -3764,6 +3881,13 @@ mod tests {
         assert_eq!(too_small.dyadic_to_f64_exact(), None);
     }
 
+    /// Check finite binary64 enclosure admission around both signs of the largest finite value.
+    ///
+    /// Constructs the exact maximum 2^1024-2^971, nine nearby offsets and seven
+    /// rational scales, giving 126 signed cases. Independent GMP rationals decide
+    /// whether magnitude exceeds the maximum: those cases must decline; all other
+    /// listed cases must return finite endpoints enclosing the exact value. This
+    /// checks admission and containment, not nearest rounding or minimal width.
     #[test]
     fn f64_enclosure_stays_finite_at_both_overflow_boundaries() {
         use rug::{Integer, Rational as GmpRational, integer::Order};
@@ -3808,6 +3932,14 @@ mod tests {
         assert_eq!(checked, 126);
     }
 
+    /// Check accepted enclosure bounds with GMP and require success in a selected normal range.
+    ///
+    /// Uses four top-bit positions through 4096, sixteen deterministic low-word
+    /// pairs, eleven scale exponents and both signs, totaling 1408 inputs. Wide
+    /// values have random low 64 bits rather than dense random interiors. Selected
+    /// exponents in -1021..=1021 must succeed; other tested exponents may decline.
+    /// Every returned endpoint pair must be finite and contain the independent GMP
+    /// value. This is not full finite-range completion or a tightness assertion.
     #[test]
     fn f64_enclosure_bit_length_scaling_matches_gmp() {
         use rug::{Integer, Rational as GmpRational, integer::Order};
@@ -3856,6 +3988,13 @@ mod tests {
         assert_eq!(checked, 1408);
     }
 
+    /// Require finite containment for directed wide fractions near one and simple controls.
+    ///
+    /// Checks 1/3, ratios formed from 2^4096+1 and 2^4096+3 on both sides of one,
+    /// a negative counterpart, and 3/8 via the shared exact-reimport helper.
+    /// Zero must return the literal pair 0.0, 0.0. The helper requires successful
+    /// containment but does not prove minimal width or independently validate the
+    /// Rational conversion primitives it uses.
     #[test]
     fn f64_enclosure_contains_wide_non_dyadic_rationals() {
         let wide = BigUint::one() << 4096_usize;
@@ -3883,8 +4022,21 @@ mod tests {
         assert_eq!(Rational::zero().to_f64_enclosure(), Some([0.0, 0.0]));
     }
 
+    /// Require finite enclosure containment for 72 exact ratios spanning nine width pairs.
+    ///
+    /// Alternates signs across eight cases per pair, from unit inputs through
+    /// 4000/4096-bit numerators and denominators. The local generator forces odd,
+    /// exact-width magnitudes; Rational construction and the shared helper then
+    /// require successful finite containment by exact endpoint reimport. This does
+    /// not cover every bit pattern, cancellation factor or enclosure boundary.
     #[test]
     fn f64_enclosure_contains_varied_exact_rational_corpus() {
+        /// Construct an odd positive integer of exactly bits bits from successive low-to-high words.
+        ///
+        /// Advances a shared xorshift state, masks each partial high word, and forces
+        /// both low and high bits. Requires bits > 0 and practically allocatable sizes;
+        /// zero would underflow the final high-bit index. The seed is deterministic,
+        /// and forcing oddness excludes even numerator/denominator fixtures.
         fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
             let mut value = BigUint::ZERO;
             let mut offset = 0_usize;

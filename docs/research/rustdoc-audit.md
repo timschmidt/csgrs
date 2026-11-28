@@ -26318,6 +26318,97 @@ Continue at clear_common_denominator_preserves_one_positive_shared_scale, whose
 attribute is now line 3239. This 7,358-line file and the complete repository audit
 remain unfinished; generated API review remains a separate obligation.
 
+## Rational test audit: scaling, integer shortcuts and float enclosures (28 November 2026)
+
+Owning layer: Hyperreal rational scaling, exact integer shortcuts, products and
+binary64 conversion fixtures. P37 governs the scope of each witness; P1, P4 and
+P6 govern exact values, retained-state interpretation and admission outcomes.
+At 4e4bf555e, nineteen fixtures and three local generators lacked Rustdoc, and
+an inline decimal comment suggested lazy storage that these short inputs do
+not force on the current parser path.
+
+Reviewed arithmetic/tests.rs baseline lines 3239–3928, now 3239–4080, together
+with denominator/content clearing, integer shortcut validation, iterator products,
+raw/marked constructors, short-decimal reduction, native dyadic decoding and
+exact float views. Added 22 descriptions and corrected that three-line comment.
+All edits are comments: executable tokens, fixture values, thresholds, generators
+and assertions are identical. The rest of the file is not credited as reviewed.
+
+The descriptions distinguish:
+
+- Positive common-denominator scaling from primitive-content removal and sign
+  canonicalization. Explicit tuples check both output carriers, zero slots and
+  selected empty cases. Empty-slice clearing does not establish support for the
+  fixed-array entry's separately restricted empty input.
+- Exact integer admission from cancellation or an integral final value. Small
+  signed grids provide bounded native arithmetic expectations; directed cases
+  reject fractional operands even when their products/cross difference would
+  be integral, and reject a zero divisor before a zero-result shortcut. Wide
+  identities and i64::MIN extend those finite value checks.
+- Iterator product equality from proof of balancing or performance. Owned and
+  borrowed reductions match sequential Rational multiplication around the
+  512-factor chunk boundary and other sizes; a zero-containing owned iterator
+  still must execute all five producer visits. Shared arithmetic references do
+  not independently prove every intermediate or the scheduling advantage.
+- Exact multiplication values from raw coprimality and cancellation order.
+  The short 1.6/1.5 decimals follow the reduced word-parser path. Another fixture
+  deliberately constructs an unmarked raw fraction with a common factor; its
+  passing result is not a general support guarantee for that private state.
+  Neither value equality nor the fixture names establish intermediate sizes or
+  cancellation-before-product timing. Binary64 literals retain their binary
+  values, including the distinction between 1.0e-12_f64 and 1/10^12.
+- Accepted exact float views from complete admission or bitwise identity. The
+  20000-pattern round-trip fixture permits finite declines while requiring more
+  than 19000 successes, and compares exact reimported rational values. Direct
+  binary64 word decoding instead checks Option and carrier-field agreement with
+  the canonical path; finite floats can exceed its native numerator tier.
+- Native sum success from required admission. Every generated six-limb reference
+  must succeed, and every admitted native result must agree field-for-field.
+  The fixture requires success/decline quotas but does not independently prove
+  that each native decline is unavoidable or use a separate fraction oracle.
+- Exact-view representability from finite-enclosure containment. Directed cases
+  pin excessive precision, nondyadic/underflow declines and signed least-subnormal
+  bits. Independent GMP rationals check 126 cases around both signs of MAX:
+  above-MAX magnitudes must decline, other listed values must be enclosed.
+- Required conversion success from conditional checks. The 1408-case GMP scale
+  fixture requires Some only at its selected exponents within -1021..=1021;
+  other tested exponents permit None. All returned bounds must contain the exact
+  GMP value. Wide generated inputs have sparse interiors, not arbitrary dense
+  coefficients. Separate directed and 72-case fixtures require containment via
+  exact Rational endpoint reimport, without proving tightness or nearest rounding.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal library tests pass: all nineteen selected fixtures
+  with no default features and with all features. The same nineteen passed on
+  the all-feature baseline. Exact test-name inventories confirm the set; all
+  existing case counts, admission quotas and arithmetic assertions are intact.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Supplemental isolated builds remove only the nineteen reviewed test
+  markers and additionally render unchanged local generators in their original
+  private context. All 22 complete descriptions render under both configurations.
+  The first text inventory exposed Markdown emphasis on multiplication signs;
+  inline code formatting fixed the formulas, and final builds/inventories pass.
+- Source diff inventory confirms 152 added Rustdoc lines and three replaced
+  ordinary-comment lines, with no code changes. Executable-token equality,
+  source/render inventories and git diff --check pass. The parser observation
+  follows the current short-decimal branch and its reducing word constructor;
+  no claim of a new lazy-state runtime probe is made.
+- Full workflows, performance, cross-target and formal-verification checks remain
+  owner-waived for this docs-only session. Production algorithms are unchanged;
+  the selected fixtures exercise the affected helper and public-operation
+  consumers. These finite checks do not establish universal conversion closure,
+  complete grammar support, resource bounds or performance improvements.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-scaling-audit/:
+baseline, scripts, commands, logs, source/render inventories, hashes and compressed
+selected HTML. Owned source copies and duplicate HTML output are removed after
+checking; shared Cargo artifacts are reused without incremental compilation.
+AGENTS.md already contains the 100% public/private/generated Rustdoc mandate.
+Continue at lossy_dyadic_view_handles_wide_geometry_coefficients, whose attribute
+is now line 4081. This 7,510-line file and the repository-wide audit remain
+unfinished; generated API coverage remains separate.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
