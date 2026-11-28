@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/computable/mod.rs` | Entire facade; corrected expression-enum ownership, formatting/constant-anchor roles, admission and interruption limits. | Private library/example docs and both example runs passed with and without default features; non-comment tokens and example output unchanged. See the overview/walkthrough batch record. |
+| `crates/hyperreal/src/computable/node.rs` | Entire include facade; documented graph/evidence ownership and the limits of native construction, recognition and resource accounting. | Private library/example docs and both example runs passed with and without default features; non-comment tokens and example output unchanged. See the overview/walkthrough batch record. |
+| `crates/hyperreal/examples/computable_graphs.rs` | Entire example; documented authored graph records, private fields/helpers, derived behavior and both scalar compositions. | Private library/example docs and both example runs passed with and without default features; non-comment tokens and example output unchanged. See the overview/walkthrough batch record. |
+| `crates/hyperreal/examples/computable_refinement_steps.rs` | Entire example; documented query order, fixed diagrams, fact/tolerance meanings and shared-cache history. | Private library/example docs and both example runs passed with and without default features; non-comment tokens and example output unchanged. See the overview/walkthrough batch record. |
 | `crates/hyperreal/src/computable/node/tests.rs` | Entire file across nine contiguous batches; all 206 authored functions and the private module documented, including seven function-local helpers. | Private library docs in both feature configurations and test-enabled render inventory passed; 199 function pages, one module page and seven supplemental descriptions checked. Finite runtime evidence and limitations are recorded in the nine batch entries. |
 | `crates/csgrs-ffi/src/lib.rs` | Entire file; documented all direct/generated ABI operations, records/fields, family dispatch, private conversion/ownership helpers and regression tests. | All-target compilation and private docs with missing public docs/broken links denied passed; 176 C function pages inspected. Tests were compiled, not executed. |
 | `benchmarks/size-harness/src/bin/primitive.rs` | Entire file; documented argument/default handling, timing/drop boundaries and count-only result. | Standalone all-feature check/private docs passed; workload not executed. |
@@ -22102,6 +22106,97 @@ exact expectations and the cumulative item/render/token inventory. Owned shadow
 sources and temporary HTML were removed after inspection. Builds reused the
 roughly 6.6 GiB shared target with incremental compilation disabled.
 Repository-wide line review and all-configuration coverage remain unfinished.
+
+## Hyperreal computable overview and executable walkthrough audit
+
+On baseline `fad0c11f1e44d3b6db8dc3bb658bb2fbb8db9b82`, read all lines of four
+previously unrecorded Rust files: src/computable/mod.rs (18),
+src/computable/node.rs (96), examples/computable_graphs.rs (205), and
+examples/computable_refinement_steps.rs (312), under crates/hyperreal. Also read
+the complete 552-line src/computable/README.md. These are 1183 existing lines of
+new whole-file review. The four Rust files now have 26, 109, 266 and 357 lines;
+the README has 71. The detailed walkthrough moved to the new, fully reviewed
+442-line docs/research/computable-graph-walkthrough.md. Included implementation
+files are separate audit units; reading a facade's include list earns no new
+whole-file credit for its children. Previously reviewed constant/approximation
+anchors and selected implementation methods were context, not new review credit.
+
+Owning layer: Hyperreal native scalar facade and executable documentation,
+principally P1–P7 and P37. Missing acceptance witnesses were inaccurate module
+ownership, undocumented private example APIs, and stale unqualified example
+output. Both examples ran successfully on the baseline before editing. The
+README assigned the expression enum to node instead of approximation, described
+constants.rs as an implementation rather than an anchor, listed nonexistent
+symbolic.rs, and overstated uniform laziness, resource bounds and interrupted
+result publication. The corrected overview follows the actual storage/evaluator
+boundary and retains exact input meaning, domain prerequisites, uncertainty and
+separate resource limitations without claiming all implementation gaps resolved.
+
+The 39 reviewed Rustdoc blocks cover four module/crate overviews, two structures,
+six fields, one impl and 26 functions/methods. All descriptions were found in
+ordinary private Rustdoc output. Derived Graphed::Clone and Graph::Default were
+reviewed for their shared-handle/copied-label and empty-diagram behavior, described
+on their types, and checked in the rendered trait implementation anchors.
+Raw non-comment tokens in all four Rust files are identical to baseline.
+
+The examples maintain a presentation graph or print fixed Mermaid strings. Neither
+is an internal DAG traversal, dispatch trace, benchmark or independent oracle.
+Graph helper documentation covers insertion order, local IDs, unchecked graph
+membership, callback domain obligations and entries retained if a callback panics.
+Its quote/backslash helper is limited label escaping. The refinement walkthrough
+preserves query order: snapshots, sign queries, samples and decimal formatting
+can expose or warm different evidence. In particular, print_facts_only also calls
+sign_until, which may refine. Fresh root graphs still share constant caches.
+
+The stale first root sample was reproduced as a documentation mismatch:
+
+- The README reported 1398739548397216159170853 at -80 (about 1.157010...), while
+  the current graph returns 1378387510292223641544648 (about 1.140175425098964...).
+- Independent exact Fraction enclosures reduce the even 10^30*pi period and
+  retain the distinct sine/cosine arguments. Taylor sums with alternating tails
+  enclose the positive denominator, and integer-square-root brackets enclose
+  sqrt((13/10)/(sin(7/5+2^-40)^2+cos(7/5)^2)). The current sample satisfies the
+  one-unit contract; the former README sample is outside it.
+- The second root uses sqrt(12)+e+45/14+atanh(999999/1000000)+asinh(1/2)
+  +acosh(5/2)+2^-50. Exact rational factorial/log series and root brackets enclose
+  its current sample 5227679412026104074933469. The former adjacent sample ending
+  in 468 remains within one unit too; this difference is not evidence of a
+  semantic regression or a canonical-rounding requirement.
+
+The relocated walkthrough preserves all six diagrams, which were checked against
+the examples' emitted blocks. Its numeric excerpt matches the reproduced query
+sequence. It labels the snapshot revision, shared-cache history and limits of
+sample equality, and avoids claiming every authored inverse or reduction ran.
+All seven relative Markdown links across the README and walkthrough resolve.
+Both Markdown files render, and the README now gives workspace-qualified build,
+private-doc and example commands. The repository's README layout rule is preserved
+by keeping the long observed-output discussion in docs/.
+
+After the final source edit, focused locked/offline two-job validation passed:
+
+- Both examples with no default features and with all features. Their complete
+  output is byte-identical to the baseline all-feature output in both modes.
+- Private library and both example Rustdoc builds in both feature configurations,
+  denying warnings and broken/private intra-doc links. An initial ambiguous
+  format link was corrected with the module disambiguator before the final runs.
+- All-feature cargo check, serde_graph_domains (four),
+  serde_opaque_operand_domains (five), and downstream Hyperlimit resolve::tests
+  (five).
+- All 39 description/field/method/derived-impl render checks, scoped Rustfmt,
+  git diff --check, raw token equivalence, Markdown links/diagram/output checks,
+  and the two independent exact root enclosures. Scratch exact-bound serialization
+  used hexadecimal integer fields after Python's decimal conversion limit was
+  encountered; the mathematical precision and checks were unchanged.
+
+No focused check remains blocked and no runtime implementation was changed.
+Full workflows remain owner-waived for this documentation-only session; no timing,
+allocation, binary-size or general completeness claim is made. AGENTS.md's
+standing public/private documentation mandate remains in force. Evidence under
+`/tmp/csgrs-hyperreal-computable-overview-audit/` retains commands, output snapshots,
+exact expectations and the complete item/render/token inventory. Temporary Markdown
+HTML was removed after inspection; builds reused the roughly 6.7 GiB shared target
+with incremental compilation disabled. Repository-wide review and all-configuration
+coverage remain unfinished.
 
 ## Next work
 

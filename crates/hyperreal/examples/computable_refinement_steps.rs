@@ -1,17 +1,32 @@
+//! Print staged illustrations, fact queries and sample histories for a scalar graph.
+//! The diagrams are fixed strings explaining the authored expression; they are
+//! not extracted from native nodes or dispatch events. Calls can warm shared
+//! caches, so later observations depend on the displayed evaluation sequence.
+//! The program reports comparisons and repeated samples without assertions,
+//! independent oracles, timing, cancellation or a total-resource budget.
+
 use hyperreal::{
     Computable, MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge,
 };
 use num::BigInt;
 use std::cmp::Ordering;
 
+/// Construct exact n/d for the example's nonzero denominators.
+/// Invalid zero d panics at expect; this helper is not user-input validation.
 fn rational(n: i64, d: u64) -> Computable {
     Computable::rational(Rational::fraction(n, d).expect("valid nonzero denominator"))
 }
 
+/// Materialize exact 10^exp and retain it as a rational Computable.
+/// Callers use exponent 30; no general allocation or work bound is imposed.
 fn huge_integer_pow10(exp: u32) -> Computable {
     Computable::rational(Rational::from_bigint(BigInt::from(10_u8).pow(exp)))
 }
 
+/// Format a structural-fact snapshot including the magnitude's exactness flag.
+/// The query can recognize and retain proofs or consume earlier cached evidence;
+/// it does not request a new approximation. False exact_rational means no
+/// direct rational projection is exposed, not a proof of irrationality.
 fn facts(value: &Computable) -> String {
     let RealStructuralFacts {
         sign,
@@ -29,6 +44,7 @@ fn facts(value: &Computable) -> String {
     )
 }
 
+/// Render a known sign or unknown without turning missing evidence into zero.
 fn sign_text(sign: Option<RealSign>) -> &'static str {
     match sign {
         Some(RealSign::Negative) => "negative",
@@ -38,6 +54,7 @@ fn sign_text(sign: Option<RealSign>) -> &'static str {
     }
 }
 
+/// Render zero knowledge while keeping Unknown distinct from NonZero.
 fn zero_text(zero: ZeroKnowledge) -> &'static str {
     match zero {
         ZeroKnowledge::Zero => "zero",
@@ -46,6 +63,9 @@ fn zero_text(zero: ZeroKnowledge) -> &'static str {
     }
 }
 
+/// Render the binary magnitude exponent together with its exact_msd qualification.
+/// Absent evidence prints unknown; a nonexact exponent is not advertised as
+/// the exact floor of the value's binary logarithm.
 fn magnitude_text(magnitude: Option<MagnitudeBits>) -> String {
     match magnitude {
         Some(MagnitudeBits { msd, exact_msd }) => format!("msd {msd} (exact={exact_msd})"),
@@ -53,6 +73,9 @@ fn magnitude_text(magnitude: Option<MagnitudeBits>) -> String {
     }
 }
 
+/// Label the signed result of compare_absolute for this demonstration.
+/// Equal is printed as equal within tolerance, without promoting it to an exact
+/// equality certificate; exact native paths can also decide that same enum value.
 fn ordering_text(ordering: Ordering) -> &'static str {
     match ordering {
         Ordering::Less => "less",
@@ -61,6 +84,9 @@ fn ordering_text(ordering: Ordering) -> &'static str {
     }
 }
 
+/// Print facts, a sign query with floor -24, then samples at -12 and -24.
+/// Keep that order: later queries may consume evidence retained by earlier ones.
+/// The sign floor does not cap kernel guard precision or total work.
 fn print_node(name: &str, value: &Computable) {
     println!("{name}:");
     println!("  facts: {}", facts(value));
@@ -70,6 +96,9 @@ fn print_node(name: &str, value: &Computable) {
     println!();
 }
 
+/// Print a fact snapshot followed by a sign query at floor -24.
+/// Despite the helper name, sign_until may refine numerically; only the first
+/// query is a structural-fact report. No approximation integers are printed.
 fn print_facts_only(name: &str, value: &Computable) {
     println!("{name}:");
     println!("  facts: {}", facts(value));
@@ -77,6 +106,9 @@ fn print_facts_only(name: &str, value: &Computable) {
     println!();
 }
 
+/// Print samples at the supplied precisions in order, followed by 24-place display.
+/// This reuses one graph and can warm it further during formatting; it neither
+/// checks error bounds nor guarantees strictly increasing precision requests.
 fn print_refinement(name: &str, value: &Computable, precisions: &[i32]) {
     println!("{name} refinement:");
     for &precision in precisions {
@@ -86,6 +118,9 @@ fn print_refinement(name: &str, value: &Computable, precisions: &[i32]) {
     println!();
 }
 
+/// Print four fixed Mermaid illustrations of the expression, reductions and reuse.
+/// Labels describe intended mathematical stages rather than observed internal
+/// node changes, chosen dispatch paths or measured cache hits.
 fn print_stage_graphs() {
     println!("symbolic stage 1 - original expression graph:");
     println!(
@@ -196,6 +231,11 @@ flowchart LR
     );
 }
 
+/// Construct the trig tower and return denominator, numerator, product, root and 7/5.
+/// The denominator uses sin(10^30*pi+7/5+2^-40)^2 plus cos(10^30*pi+7/5)^2;
+/// its differing arguments prevent replacement by one. The numerator is
+/// mathematically 13/10. Shared child handles let later inspection/refinement
+/// benefit related roots, and native construction may simplify the authored graph.
 fn build_expression() -> (Computable, Computable, Computable, Computable, Computable) {
     let pi = Computable::pi();
     let huge = huge_integer_pow10(30);
@@ -221,6 +261,11 @@ fn build_expression() -> (Computable, Computable, Computable, Computable, Comput
     (trig_norm, numerator, product, root, residual)
 }
 
+/// Run the fact/refinement walkthrough, then tolerance checks and a repeated root query.
+/// Build multiple root graphs while reusing process-wide constants; this is not
+/// an isolated cold-cache comparison. Mathematical inputs are valid, but printed
+/// Equal results and repeated integers are observations rather than assertions
+/// of exact equality, an independent error bound, or a cache-hit count.
 fn main() {
     let pi = Computable::pi();
     let huge = huge_integer_pow10(30);

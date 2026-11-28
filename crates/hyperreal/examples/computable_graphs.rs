@@ -1,21 +1,42 @@
+//! Print authored expression diagrams and evaluate two native scalar compositions.
+//! The parallel Graph records example construction calls, not the rewritten
+//! Computable DAG or an evaluator trace. Root samples and decimal displays are
+//! observations, not independent correctness checks or performance measurements.
+//! All supplied inputs satisfy their native domains. The program has no command
+//! line parameters, attached abort signal or total-resource limit.
+
 use hyperreal::{Computable, Rational};
 use num::BigInt;
 
 #[derive(Clone)]
+/// Pair one presentation node with its retained exact scalar handle.
+/// Cloning copies the label and presentation ID while sharing Computable state;
+/// the ID is local to the authored diagram, not a native node identity.
 struct Graphed {
+    /// Index assigned by the owning presentation graph; used to draw incident edges.
     id: usize,
+    /// Owned display label repeated in the graph and used to name the printed root.
     label: String,
+    /// Retained scalar produced by the corresponding example construction.
     value: Computable,
 }
 
 #[derive(Default)]
+/// Accumulate a presentation graph independently of native algebraic rewrites.
+/// Default creates an unnamed empty graph; new supplies the report name.
+/// Neither storage nor graph membership of passed handles is validated here.
 struct Graph {
+    /// Static section title for the emitted Markdown report.
     name: &'static str,
+    /// Authored node IDs and owned labels in insertion order; no retained scalar payloads.
     nodes: Vec<(usize, String)>,
+    /// Directed presentation edges from operand IDs to the authored operation ID.
     edges: Vec<(usize, usize)>,
 }
 
+/// Append diagram nodes while applying native scalar constructors to cloned handles.
 impl Graph {
+    /// Create an empty named diagram without constructing any scalar expression.
     fn new(name: &'static str) -> Self {
         Self {
             name,
@@ -23,6 +44,9 @@ impl Graph {
         }
     }
 
+    /// Append a label and pair its new ID with an already constructed scalar.
+    /// The supplied value is moved unchanged; an authored leaf need not be a
+    /// primitive leaf in the native graph.
     fn leaf(&mut self, label: impl Into<String>, value: Computable) -> Graphed {
         let id = self.nodes.len();
         let label = label.into();
@@ -30,6 +54,10 @@ impl Graph {
         Graphed { id, label, value }
     }
 
+    /// Record one input edge and apply op once to a clone of the input scalar.
+    /// The input must belong to this diagram for the edge to be meaningful.
+    /// The callback may simplify or evaluate and must honor its own domain;
+    /// if the callback panics, presentation entries have already been appended.
     fn unary(
         &mut self,
         label: impl Into<String>,
@@ -47,6 +75,10 @@ impl Graph {
         }
     }
 
+    /// Record left/right edges in that order, then apply op once to cloned values.
+    /// Both handles must belong to this diagram. Shared or rewritten native nodes
+    /// do not merge presentation nodes; callback domains and resource limits
+    /// remain its responsibility, with no rollback of entries if it panics.
     fn binary(
         &mut self,
         label: impl Into<String>,
@@ -66,6 +98,10 @@ impl Graph {
         }
     }
 
+    /// Render the accumulated nodes and edges as a Mermaid fenced block.
+    /// Mark root.id with the root style, trusting it belongs to this diagram.
+    /// Labels receive only the local quote/backslash escaping; output is intended
+    /// for these authored labels, not arbitrary untrusted Mermaid content.
     fn markdown(&self, root: &Graphed) -> String {
         let mut out = String::new();
         out.push_str("```mermaid\nflowchart TD\n");
@@ -82,22 +118,37 @@ impl Graph {
     }
 }
 
+/// Escape backslashes, then double quotes, for these quoted node labels.
+/// This minimal replacement does not sanitize newlines, markup or arbitrary
+/// Mermaid syntax and is not a general renderer-security boundary.
 fn escape_mermaid(label: &str) -> String {
     label.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
+/// Construct exact n/d for a nonzero denominator supplied by the example.
+/// A zero denominator panics at expect; this local helper is not fallible
+/// numeric input admission for an application.
 fn rational(n: i64, d: u64) -> Computable {
     Computable::rational(Rational::fraction(n, d).expect("valid nonzero denominator"))
 }
 
+/// Construct an exact signed integer through the rational scalar constructor.
 fn integer(n: i64) -> Computable {
     Computable::rational(Rational::new(n))
 }
 
+/// Materialize exact 10^exp as a BigInt and retain it as a rational scalar.
+/// The sole caller uses 30; the helper imposes no exponent/work/allocation cap.
 fn huge_integer_pow10(exp: u32) -> Computable {
     Computable::rational(Rational::from_bigint(BigInt::from(10_u8).pow(exp)))
 }
 
+/// Build the authored trig-reduction tower and return its diagram and root.
+/// The root is sqrt((tan(atan(7/10))+sin(asin(3/5)))/D), where
+/// D=sin(10^30*pi+7/5+2^-40)^2+cos(10^30*pi+7/5)^2. The two angles differ,
+/// so D must not be replaced by the identity one. The even pi multiple can
+/// reduce exactly; the positive nonzero denominator makes the root admissible.
+/// The diagram records calls even when native constructors simplify them.
 fn build_argument_reduction_graph() -> (Graph, Graphed) {
     let mut graph = Graph::new("argument_reduction_tower");
 
@@ -134,6 +185,11 @@ fn build_argument_reduction_graph() -> (Graph, Graphed) {
     (graph, root)
 }
 
+/// Build a positive root combining exact radical/log identities and hyperbolic terms.
+/// The radicand is sqrt(12)+e+45/14+atanh(999999/1000000)+asinh(1/2)
+/// +acosh(5/2)+2^-50. It is authored using exp/ln round trips, sqrt(2)^2,
+/// and a double inverse around pi+2^-50-pi. Those compositions can simplify;
+/// the diagram does not demonstrate that their numerical kernels all ran.
 fn build_cancellation_graph() -> (Graph, Graphed) {
     let mut graph = Graph::new("cancellation_and_nested_inverse_tower");
 
@@ -181,6 +237,10 @@ fn build_cancellation_graph() -> (Graph, Graphed) {
     (graph, root)
 }
 
+/// Evaluate the root at precision -80, then print its diagram and 24-place display.
+/// Decimal formatting may request further precision after the integer sample.
+/// This reports observations without checking an oracle, timing execution or
+/// returning a certainty receipt; native evaluation and stdout can fail.
 fn print_report(graph: &Graph, root: &Graphed) {
     let p = -80;
     let scaled = root.value.approx(p);
@@ -196,6 +256,7 @@ fn print_report(graph: &Graph, root: &Graphed) {
     println!();
 }
 
+/// Build and report the trig tower followed by the cancellation tower in one process.
 fn main() {
     let (argument_graph, argument_root) = build_argument_reduction_graph();
     print_report(&argument_graph, &argument_root);

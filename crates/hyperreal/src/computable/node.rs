@@ -1,8 +1,21 @@
-//! Core computable expression graph.
+//! Shared computable graph handles, constructors and evidence-consuming queries.
 //!
-//! This facade keeps the shared imports and includes semantic implementation
-//! slices. The included files remain in one module so private graph/cache
-//! invariants and hot constructor rewrites keep their original visibility.
+//! This facade supplies imports and includes implementation slices in one
+//! namespace. [`Computable`] retains an immutable recipe plus shared accelerator
+//! state and a wrapper-specific stop signal. The recipe enum belongs to
+//! [`super::approximation`]; this module owns node storage, exact structural
+//! recognizers, constructor rewrites, comparison and outer evaluation/cache
+//! coordination. Included test sources can inspect those private invariants.
+//!
+//! Constructors may simplify or evaluate operands; graph construction is not
+//! uniformly lazy or a general domain validator. Successful structural proofs
+//! may be retained for later queries, while recognizer decline does not prove
+//! inequality. Allocation sharing can accelerate identity checks without
+//! defining mathematical equality. Precision and local recognition limits do
+//! not impose a cumulative resource contract. Native callers must honor each
+//! method's domain and interruption requirements; [`crate::Real`] provides
+//! checked scalar entry points. The includes do not create separate geometry
+//! or scalar authorities.
 
 use crate::computable::approximation::{
     Approximation, LinearCombination3, NormalQuantileData, SharedConstant,
