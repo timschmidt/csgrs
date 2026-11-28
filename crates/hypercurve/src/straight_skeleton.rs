@@ -21,7 +21,7 @@ use line_builders::*;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperreal::{Real, RealSign, ZeroKnowledge};
+use hyperreal::{Real, RealSign};
 
 use crate::arc_bezier::{rational_bezier_circular_arc, rational_quadratic_circular_arc};
 use crate::classify::{compare_reals, is_zero, real_sign};

@@ -1192,6 +1192,34 @@ pub(super) fn split_active_cycle(
     }
 }
 
+/// First position of the run of adjacent collapsed positions containing
+/// `index` in a cycle of `len` positions. Adjacent edges that collapse at the
+/// same time meet at one point, the only point their two non-parallel moving
+/// lines share then, so a run gets one node. A run covering the whole cycle
+/// collapses to one point; position 0 names it.
+fn collapse_run_start(collapsed: &BTreeSet<usize>, len: usize, index: usize) -> usize {
+    if collapsed.len() == len {
+        return 0;
+    }
+    let mut start = index;
+    while collapsed.contains(&((start + len - 1) % len)) {
+        start = (start + len - 1) % len;
+    }
+    start
+}
+
+/// Record that `collapsed` also collapsed at an existing edge-event node.
+fn merge_collapsed_edge(nodes: &mut [StraightSkeletonNode2], node: usize, collapsed: usize) {
+    if let StraightSkeletonNodeKind2::EdgeEvent {
+        collapsed_source_edges,
+    } = &mut nodes[node].kind
+        && !collapsed_source_edges.contains(&collapsed)
+    {
+        collapsed_source_edges.push(collapsed);
+        collapsed_source_edges.sort_unstable();
+    }
+}
+
 pub(super) fn apply_general_edge_events(
     cycles: &mut Vec<ActiveWavefrontCycle2>,
     nodes: &mut Vec<StraightSkeletonNode2>,
@@ -1215,16 +1243,29 @@ pub(super) fn apply_general_edge_events(
         let mut removed = BTreeSet::new();
         let mut event_node_by_edge = BTreeMap::new();
         let mut event_nodes = Vec::new();
+        let positions = collapsing
+            .iter()
+            .map(|candidate| candidate.active_index)
+            .collect::<BTreeSet<_>>();
+        let mut run_node = BTreeMap::<usize, usize>::new();
         for candidate in &collapsing {
             removed.insert(candidate.active_index);
             let collapsed = cycle.source_edges[candidate.active_index];
-            let node = event_node(
-                nodes,
-                &mut event_nodes,
-                candidate.point.clone(),
-                time.clone(),
-                collapsed,
-            );
+            let run = collapse_run_start(&positions, count, candidate.active_index);
+            let node = if let Some(&node) = run_node.get(&run) {
+                merge_collapsed_edge(nodes, node, collapsed);
+                node
+            } else {
+                let node = event_node(
+                    nodes,
+                    &mut event_nodes,
+                    candidate.point.clone(),
+                    time.clone(),
+                    collapsed,
+                );
+                run_node.insert(run, node);
+                node
+            };
             event_node_by_edge.insert(candidate.active_index, node);
             for vertex in [candidate.active_index, (candidate.active_index + 1) % count] {
                 add_arc(
@@ -1574,6 +1615,16 @@ pub(super) fn build_convex_straight_skeleton(
         let old_pair_start = pair_start.clone();
         let mut removed = BTreeSet::new();
         let mut event_nodes = Vec::new();
+        // Each run of adjacent collapsed edges gets one node (see
+        // `collapse_run_start`), identified structurally rather than by
+        // comparing coordinates, which differ in form and can carry several
+        // edge-length radicals.
+        let collapsed_positions = collapsing
+            .iter()
+            .map(|candidate| candidate.active_index)
+            .collect::<BTreeSet<_>>();
+        let mut run_node = BTreeMap::<usize, usize>::new();
+        let mut collapse_node = BTreeMap::<usize, usize>::new();
         for candidate in &collapsing {
             let index = candidate.active_index;
             let previous = active[(index + active.len() - 1) % active.len()];
@@ -1581,13 +1632,22 @@ pub(super) fn build_convex_straight_skeleton(
             let next = active[(index + 1) % active.len()];
             removed.insert(collapsed);
 
-            let node = event_node(
-                &mut nodes,
-                &mut event_nodes,
-                candidate.point.clone(),
-                minimum_time.clone(),
-                collapsed,
-            );
+            let run_start = collapse_run_start(&collapsed_positions, active.len(), index);
+            let node = if let Some(&node) = run_node.get(&run_start) {
+                merge_collapsed_edge(&mut nodes, node, collapsed);
+                node
+            } else {
+                let node = event_node(
+                    &mut nodes,
+                    &mut event_nodes,
+                    candidate.point.clone(),
+                    minimum_time.clone(),
+                    collapsed,
+                );
+                run_node.insert(run_start, node);
+                node
+            };
+            collapse_node.insert(collapsed, node);
             for pair in [(previous, collapsed), (collapsed, next)] {
                 let Some(start_node) = old_pair_start.get(&pair).copied() else {
                     continue;
@@ -1641,6 +1701,16 @@ pub(super) fn build_convex_straight_skeleton(
                 next_active[index],
             );
             if let Some(node) = old_pair_start.get(&pair).copied() {
+                next_pair_start.insert(pair, node);
+                continue;
+            }
+            // The new vertex starts where the edge that followed `pair.0`
+            // collapsed.
+            let position = active
+                .iter()
+                .position(|&support| support == pair.0)
+                .expect("surviving support was active");
+            if let Some(&node) = collapse_node.get(&active[(position + 1) % active.len()]) {
                 next_pair_start.insert(pair, node);
                 continue;
             }
@@ -1738,35 +1808,30 @@ pub(super) fn edge_event_candidate(
         Err(blocker) => return Ok(Err(blocker)),
     };
 
-    let delta_origin_x = &left.origin_x - &right.origin_x;
-    let delta_origin_y = &left.origin_y - &right.origin_y;
-    let delta_velocity_x = &left.velocity_x - &right.velocity_x;
-    let delta_velocity_y = &left.velocity_y - &right.velocity_y;
-    let time = match solve_collision_coordinate(&delta_origin_x, &delta_velocity_x, policy)? {
+    // Both trajectories are intersections with the moving line of `edge`, so
+    // their difference stays parallel to that line for every time. It is
+    // zero exactly when its component along the line's direction (-n_y, n_x)
+    // is zero; no second coordinate needs checking. Testing both Cartesian
+    // components instead would require proving an exact zero across several
+    // edge-length radicals, which exact arithmetic cannot always do.
+    let direction_x = -&supports[edge].normal_y;
+    let direction_y = &supports[edge].normal_x;
+    let along = |x: &Real, y: &Real| x * &direction_x + y * direction_y;
+    let delta_origin = along(
+        &(&left.origin_x - &right.origin_x),
+        &(&left.origin_y - &right.origin_y),
+    );
+    let delta_velocity = along(
+        &(&left.velocity_x - &right.velocity_x),
+        &(&left.velocity_y - &right.velocity_y),
+    );
+    let time = match solve_collision_coordinate(&delta_origin, &delta_velocity, policy)? {
         CollisionCoordinate::Time(time) => time,
         CollisionCoordinate::Coincident => {
-            match solve_collision_coordinate(&delta_origin_y, &delta_velocity_y, policy)? {
-                CollisionCoordinate::Time(time) => time,
-                CollisionCoordinate::Coincident => {
-                    return Ok(Err(StraightSkeletonBlocker2::NonAdvancingEvent));
-                }
-                CollisionCoordinate::Never => return Ok(Ok(None)),
-            }
+            return Ok(Err(StraightSkeletonBlocker2::NonAdvancingEvent));
         }
         CollisionCoordinate::Never => return Ok(Ok(None)),
     };
-
-    let residual_x = &delta_origin_x + &delta_velocity_x * &time;
-    let residual_y = &delta_origin_y + &delta_velocity_y * &time;
-    for residual in [&residual_x, &residual_y] {
-        match residual.zero_status() {
-            ZeroKnowledge::Zero => {}
-            ZeroKnowledge::NonZero => return Ok(Ok(None)),
-            ZeroKnowledge::Unknown => {
-                return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation));
-            }
-        }
-    }
     match compare_reals(&time, current_time, policy) {
         Some(Ordering::Greater) => Ok(Ok(Some(EdgeEventCandidate2 {
             active_index,

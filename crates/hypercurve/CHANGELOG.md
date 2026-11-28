@@ -2,6 +2,24 @@
 
 ## [0.4.0] - Unreleased
 
+- `Contour2::straight_skeleton` completes on polygons whose edge lengths bring
+  in several distinct square roots. Before, it stopped with
+  `UncertainWavefrontRelation` before the first event. A reported survey
+  completed 8.8% of 10,000 building footprints, all with at most four sides.
+  - Each edge event is now solved along the collapsing edge's own direction.
+    Both moving vertices lie on that edge's moving line, so their difference
+    vanishes exactly when its component along the line does.
+  - Each run of adjacent edges collapsing at the same time becomes one node,
+    and new wavefront vertices inherit the node of the edge that collapsed
+    between them.
+  - Before, both relations were proved by testing exact zeros, or coordinate
+    equality, across unrelated radicals, which exact arithmetic cannot always
+    decide. Duplicate nodes at one point no longer appear after split events.
+  - Results are unchanged wherever the earlier code completed.
+  - Remaining: a fully simultaneous degenerate collapse, such as an
+    axis-aligned T of uniform width, can still produce a ridge cycle, as it
+    did before.
+
 - **Breaking:** the re-exported `BudgetExceeded` receipt has private fields
   and exact `u64` accessors. See Hypersolve's changelog and
   [the migration note](../../docs/MIGRATIONS.md).
