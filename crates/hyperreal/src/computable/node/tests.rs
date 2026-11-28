@@ -3207,6 +3207,9 @@ mod tests {
     }
 
     #[test]
+    /// Check sin(1/5) against a stored integer sample at precision -32 within
+    /// one unit, and require the zero input to sample as zero. The nonzero
+    /// assertion is a finite approximation fixture, not an exact-value test.
     fn sin_small_arguments() {
         let one_fifth = Computable::rational(Rational::fraction(1, 5).unwrap());
         assert_approx(one_fifth.sin(), -32, "853278278", 1);
@@ -3216,6 +3219,9 @@ mod tests {
     }
 
     #[test]
+    /// Check sin(3) at precision -32 within one integer unit of its stored
+    /// fixture, exercising a rational argument beyond the small-angle range.
+    /// No particular reduction node or dispatch count is asserted.
     fn sin_medium_arguments() {
         let three: BigInt = "3".parse().unwrap();
         let three = Computable::integer(three);
@@ -3223,6 +3229,11 @@ mod tests {
     }
 
     #[test]
+    /// Compare sine/cosine complements and odd/even symmetry for four exact
+    /// rational inputs at precision -96, allowing two integer units per comparison.
+    /// The f64 input denotes its exact binary value, not the displayed decimal.
+    /// These sixteen native comparisons check consistency, not independent accuracy
+    /// or a particular direct/reduced dispatch path.
     fn sin_cos_direct_medium_exact_rationals_match_reduced_forms() {
         for rational in [
             Rational::fraction(6, 5).unwrap(),
@@ -3247,6 +3258,11 @@ mod tests {
     }
 
     #[test]
+    /// Compare owned rational sine, cosine and tangent constructors with their
+    /// generic Computable paths on five inputs from -1/5 through 1,000,000.
+    /// At precision -80 allow eight units for sine/cosine and sixteen for tangent.
+    /// All fifteen comparisons share the native implementation; they neither
+    /// supply an independent oracle nor assert dispatch or allocation counts.
     fn owned_rational_trig_helpers_match_generic_paths() {
         for rational in [
             Rational::fraction(-1, 5).unwrap(),
@@ -3274,6 +3290,9 @@ mod tests {
     }
 
     #[test]
+    /// Check sin(123) at precision -32 within one unit of its stored integer
+    /// fixture. This finite large-argument reduction case does not qualify
+    /// arbitrary argument size or bound reduction work.
     fn sin_large_arguments() {
         let one_two_three: BigInt = "123".parse().unwrap();
         let one_two_three = Computable::integer(one_two_three);
@@ -3281,12 +3300,17 @@ mod tests {
     }
 
     #[test]
+    /// Check sin(-3/5) at precision -32 within one integer unit of the stored
+    /// negative fixture, retaining the sign through native sine evaluation.
     fn sin_negative_arguments() {
         let negative_three_fifths = Computable::rational(Rational::fraction(-3, 5).unwrap());
         assert_approx(negative_three_fifths.sin(), -32, "-2425120957", 1);
     }
 
     #[test]
+    /// Check sin(pi+1/64) and sin(2*pi-1/64) against the same negative sample
+    /// at precision -32 within one unit. Both equal -sin(1/64); the fixtures
+    /// exercise signed reduction near two different multiples of pi.
     fn sin_near_pi_multiples() {
         let epsilon = Computable::rational(Rational::fraction(1, 64).unwrap());
         let pi_plus_epsilon = Computable::pi().add(epsilon.clone());
@@ -3297,6 +3321,9 @@ mod tests {
     }
 
     #[test]
+    /// Check sine on both sides of pi/2 at exact displacement 1/64.
+    /// Both values equal cos(1/64) and must agree with the stored precision -32
+    /// integer fixture within one unit; no exact scalar equality is asserted.
     fn sin_near_half_pi() {
         let epsilon = Computable::rational(Rational::fraction(1, 64).unwrap());
         let half_pi = pi_times(Rational::fraction(1, 2).unwrap());
@@ -3308,6 +3335,10 @@ mod tests {
     }
 
     #[test]
+    /// Compare sin(x) with cos(pi/2-x) for six rational arguments and five
+    /// rational multiples of pi. Each precision -40 sample pair may differ by
+    /// one unit. The eleven checks compare native constructions, rather than
+    /// independently certifying their common value or their internal graph shape.
     fn sin_matches_shifted_cos_identity() {
         for r in ["-12", "-3/5", "0", "1/5", "3", "123"] {
             let r: Rational = r.parse().unwrap();
@@ -3323,6 +3354,9 @@ mod tests {
     }
 
     #[test]
+    /// Check principal asin at +/-7/10 and acos at 7/10 against three stored
+    /// precision -40 samples, each within two integer units. These are admitted
+    /// interior inputs; the fixture does not test domain-error handling.
     fn inverse_trig_computable_kernels_approximate_expected_values() {
         let value = Computable::rational(Rational::fraction(7, 10).unwrap());
         let negative_value = Computable::rational(Rational::fraction(-7, 10).unwrap());
@@ -3333,6 +3367,10 @@ mod tests {
     }
 
     #[test]
+    /// Check asin, acos and atanh at the interior rationals 1/10^12 and
+    /// 999999/1000000. Six stored samples allow two units: tiny asin/atanh use
+    /// precision -80 and the remaining cases use -40. Despite the fixture name,
+    /// neither an exact endpoint nor an invalid inverse-function input is tested.
     fn endpoint_inverse_trig_computable_kernels_approximate_expected_values() {
         let tiny = Computable::rational(Rational::fraction(1, 1_000_000_000_000).unwrap());
         let near_one = Computable::rational(Rational::fraction(999_999, 1_000_000).unwrap());
@@ -3346,6 +3384,11 @@ mod tests {
     }
 
     #[test]
+    /// Require ten signed interior rationals to retain their original payload
+    /// in AsinRational, then compare with the sign-adjusted acos complement.
+    /// Four precisions from -16 through -256 give forty comparisons with a
+    /// two-unit allowance. The tag checks establish retained representation;
+    /// the native complement comparisons establish finite numerical consistency.
     fn signed_rational_asin_deferred_node_matches_acos_complement() {
         for input in [
             Rational::fraction(-999_999, 1_000_000).unwrap(),
@@ -3366,11 +3409,7 @@ mod tests {
             ));
 
             let sign = input.sign();
-            let magnitude = if sign == Sign::Minus {
-                -input
-            } else {
-                input
-            };
+            let magnitude = if sign == Sign::Minus { -input } else { input };
             let complement = Computable::pi()
                 .shift_right(1)
                 .add(Computable::rational(magnitude).acos().negate());
@@ -3387,6 +3426,10 @@ mod tests {
     }
 
     #[test]
+    /// Require asin(sqrt(2)*2^-20) to select PrescaledAsin and compare its
+    /// precision -80 sample with the deferred native arcsine construction within
+    /// four units. This is one nonrational dispatch and consistency witness,
+    /// not an independent enclosure or a universal small-argument guarantee.
     fn tiny_non_rational_asin_uses_prescaled_series() {
         let tiny = Computable::rational(Rational::new(2))
             .sqrt()
@@ -3401,6 +3444,10 @@ mod tests {
     }
 
     #[test]
+    /// Require atanh(sqrt(2)*2^-20) to select PrescaledAtanh and compare its
+    /// precision -80 sample with the direct deferred native construction within
+    /// four units. This admits a valid interior nonrational argument and checks
+    /// one representation choice plus numerical consistency.
     fn tiny_non_rational_atanh_uses_prescaled_series() {
         let tiny = Computable::rational(Rational::new(2))
             .sqrt()
@@ -3415,6 +3462,10 @@ mod tests {
     }
 
     #[test]
+    /// Check six stored precision -40 samples for asinh(+/-1/2), acosh(2),
+    /// acosh(sqrt(2)) and atanh(+/-1/2), allowing two integer units each.
+    /// All inputs satisfy their real domains; these fixtures cover values and
+    /// signs without qualifying invalid inputs or general resource behavior.
     fn inverse_hyperbolic_computable_kernels_approximate_expected_values() {
         let half = Computable::rational(Rational::fraction(1, 2).unwrap());
         let negative_half = Computable::rational(Rational::fraction(-1, 2).unwrap());
@@ -3434,6 +3485,10 @@ mod tests {
     }
 
     #[test]
+    /// Require AsinhRational at 1/4 and a different node kind at 1/2 and 3/4.
+    /// Also check asinh(3/4)=ln(2) at precision -40 within two integer units.
+    /// The three tags witness the intended boundary choice at these inputs;
+    /// they are not an exhaustive characterization of series dispatch.
     fn asinh_uses_series_only_below_the_half_boundary() {
         let quarter = Computable::rational(Rational::fraction(1, 4).unwrap()).asinh();
         let half = Computable::rational(Rational::fraction(1, 2).unwrap()).asinh();
@@ -3455,6 +3510,10 @@ mod tests {
     }
 
     #[test]
+    /// Perform 5,000 additions of one starting from one, then require the
+    /// precision-zero integer sample 5001. Constructors can fold these exact
+    /// inputs, so this loop does not assert a 5,000-node retained graph,
+    /// measure stack depth, or prove arbitrary graph traversal is nonrecursive.
     fn deep_add_chain_approximates_without_recursive_walk() {
         let mut value = Computable::one();
         for _ in 0..5000 {
@@ -3465,6 +3524,9 @@ mod tests {
     }
 
     #[test]
+    /// Perform 5,000 multiplications by one and require the precision-zero
+    /// sample one. Identity simplification is available throughout; this is a
+    /// repeated-construction value regression, not a retained-depth or stack bound.
     fn deep_multiply_chain_of_ones_stays_exact() {
         let mut value = Computable::one();
         for _ in 0..5000 {
@@ -3475,6 +3537,9 @@ mod tests {
     }
 
     #[test]
+    /// Multiply pi by one 5,000 times and compare with pi at precision -40
+    /// within two integer units. Identity simplification may reuse the operand;
+    /// the assertions do not measure graph depth, allocation, or stack usage.
     fn deep_multiply_chain_by_one_preserves_irrational() {
         let mut value = Computable::pi();
         for _ in 0..5000 {
@@ -3485,12 +3550,19 @@ mod tests {
     }
 
     #[test]
+    /// Require the binary magnitude exponent -2 for 1/3 with query floor -4.
+    /// The exact inequality 2^-2 <= 1/3 < 2^-1 supplies the expected binade;
+    /// this fixture does not assert the internal proof path or work count.
     fn rational_msd_exact_for_small_fraction() {
         let third = Computable::rational(Rational::fraction(1, 3).unwrap());
         assert_eq!(third.msd(-4), Some(-2));
     }
 
     #[test]
+    /// Compare three successive multiplications of pi by 7/8 with
+    /// (343/512)*pi at precision -60 within two units. The rational identity
+    /// is exact; the assertion checks samples without inspecting factor folding
+    /// or retained graph size.
     fn multiply_combines_exact_scales() {
         let scale = Computable::rational(Rational::fraction(7, 8).unwrap());
         let combined = Computable::pi()
@@ -3503,6 +3575,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare ((7/8)*pi)^2 with (49/64)*pi^2 at precision -60 within two
+    /// integer units. This checks numerical agreement of equivalent exact
+    /// constructions, without asserting scale-node reuse or allocation identity.
     fn square_of_scaled_irrational_reuses_exact_scale() {
         let scaled =
             Computable::pi().multiply(Computable::rational(Rational::fraction(7, 8).unwrap()));
@@ -3513,6 +3588,9 @@ mod tests {
     }
 
     #[test]
+    /// Require the reciprocal of 1/3 to have positive sign with floor zero
+    /// and binary magnitude exponent 1 with floor -4. The reciprocal is exactly
+    /// 3; these result assertions do not count refinements or inspect its graph.
     fn inverse_of_exact_fraction_has_structural_bound() {
         let third = Computable::rational(Rational::fraction(1, 3).unwrap());
         let inverse = third.inverse();
@@ -3521,6 +3599,11 @@ mod tests {
     }
 
     #[test]
+    /// Warm pi at precision -16, then distinguish the planning estimate zero
+    /// for (7/8)*pi from its queried binary magnitude exponent one.
+    /// Compare its reciprocal and the negated reciprocal of (-7/8)*pi with
+    /// (8/7)/pi at precision -60 within two units. The planning estimate is
+    /// not an exact-binade claim, and no absence of refinement is asserted.
     fn inverse_of_scaled_irrational_uses_structural_msd() {
         let scale = Rational::fraction(7, 8).unwrap();
         let base = Computable::pi();
@@ -3544,6 +3627,9 @@ mod tests {
     }
 
     #[test]
+    /// Require (-3/8)^2=9/64 to have positive sign with floor zero and binary
+    /// magnitude exponent -3 with floor -4. These finite fact-query results
+    /// do not assert which cached or structural proof supplied them.
     fn square_of_negative_fraction_has_structural_bound() {
         let value = Computable::rational(Rational::fraction(-3, 8).unwrap()).square();
         assert_eq!(value.sign_until(0), Some(RealSign::Positive));
@@ -3551,6 +3637,10 @@ mod tests {
     }
 
     #[test]
+    /// Require sqrt(((7/8)*pi)^2) to be positive with binary magnitude
+    /// exponent one, then compare it with (7/8)*pi at precision -60 within
+    /// two units. Positivity selects the expected principal square root;
+    /// the fixture does not inspect rewrite structure or refinement counts.
     fn sqrt_of_scaled_square_tracks_structural_msd() {
         let value = Computable::pi()
             .multiply(Computable::rational(Rational::fraction(7, 8).unwrap()))
@@ -3564,6 +3654,9 @@ mod tests {
     }
 
     #[test]
+    /// Require sqrt((-3/8)^2) and +3/8 to have identical precision -8 samples.
+    /// The positive reference checks the principal-root sign; equality of these
+    /// samples alone is not a general exact scalar equality procedure.
     fn sqrt_of_square_of_negative_value_returns_absolute_value() {
         let value = Computable::rational(Rational::fraction(-3, 8).unwrap())
             .square()
@@ -3575,12 +3668,18 @@ mod tests {
     }
 
     #[test]
+    /// Compare twice-negated pi with pi at precision -60 within two units.
+    /// Although the name targets a constructor simplification, the assertion
+    /// checks numerical agreement and does not inspect the resulting node kind.
     fn double_negate_collapses_at_construction() {
         let value = Computable::pi().negate().negate();
         assert_close(value, Computable::pi(), -60, 2);
     }
 
     #[test]
+    /// Warm pi at precision -16 and compare its double reciprocal with the
+    /// original value at -60 within two units. The nonzero input makes the
+    /// identity valid; no graph-collapse or allocation-identity assertion is made.
     fn inverse_of_inverse_of_nonzero_value_collapses_at_construction() {
         let base = Computable::pi();
         base.approx(-16);
@@ -3589,6 +3688,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare 1/x^2 with (1/x)^2 for x=(7/8)*pi at precision -60 within
+    /// two units. The selected input is nonzero, and the assertion checks
+    /// sample agreement rather than the constructor's retained graph shape.
     fn inverse_of_square_of_nonzero_value_collapses_at_construction() {
         let base =
             Computable::pi().multiply(Computable::rational(Rational::fraction(7, 8).unwrap()));
@@ -3598,6 +3700,10 @@ mod tests {
     }
 
     #[test]
+    /// Compare pi scaled by 2^5 and then 2^-3 with pi scaled by 2^2,
+    /// at precision -60 within two units. These small exponents admit exact
+    /// composition; the test does not inspect offset collapse or exercise
+    /// exponent overflow.
     fn nested_offsets_collapse_at_construction() {
         let value = Computable::pi().shift_left(5).shift_right(3);
         let expected = Computable::pi().shift_left(2);

@@ -21766,6 +21766,83 @@ sources, executable/rlib and temporary HTML were removed after inspection. Build
 reused the roughly 6.6 GiB shared target with incremental compilation disabled.
 Repository-wide line review and all-configuration coverage remain unfinished.
 
+## Hyperreal native trig and elementary composition fixture audit
+
+On baseline `3c712dbab6916c88a76c17d92dc2567f3f153ed8`, read every line of
+`crates/hyperreal/src/computable/node/tests.rs` from sin_small_arguments through
+nested_offsets_collapse_at_construction: baseline lines 3209–3606, 398 lines.
+This batch adds 31 fixture descriptions and expands that section to 504 lines,
+ending at current line 3712. Together with preceding records, the continuous
+review reaches line 3712 of the now 5056-line file. The remaining tail and the
+enclosing module still receive no whole-file completion credit.
+
+Owning layer: Hyperreal native scalar regression fixtures, principally P1–P5.
+The missing acceptance witness was accurate Rustdoc for these 31 private test
+functions. Their domains are finite rational/symbolic trig values, admitted
+inverse-function interiors, and elementary nonzero arithmetic compositions.
+All 31 tests passed on the baseline with all features before editing. Reviewed
+constructor context includes signed rational arcsine retention, prescaled tiny
+inputs, the asinh half boundary, exact rational folding, identity multiplication,
+nonzero reciprocal rewrites and checked offset composition. No executable logic,
+fixture, signature, predicate order or assertion changed.
+
+The descriptions separate what each assertion establishes:
+
+- Stored sine fixtures cover 0, 1/5, 3, 123, -3/5 and exact displacements 1/64
+  from pi, 2*pi and pi/2. Complement/symmetry comparisons use native constructions;
+  the f64-derived input retains its exact binary value, not its decimal spelling.
+  Owned rational trig helpers have fifteen same-implementation comparisons,
+  including argument 1,000,000, without dispatch/work-count assertions.
+- Inverse-function literals cover valid interior inputs, even in the fixture
+  named for endpoints. Ten signed asin inputs require unchanged rational payloads
+  and forty complement comparisons. The two tiny nonrational cases inspect
+  PrescaledAsin/PrescaledAtanh for sqrt(2)*2^-20. The asinh boundary fixture
+  inspects three node kinds and checks the value at 3/4; it is not an exhaustive
+  dispatch theorem.
+- Three loops make 5,000 constructor calls on simplifiable inputs. Their final
+  sample assertions do not establish retained graph depth or stack bounds.
+  Several tests named for constructor collapse similarly compare only samples.
+- Exact rational scale identities and magnitude binades explain their expected
+  results. For warmed (7/8)*pi, planning_msd returns a planning estimate of zero
+  while msd returns one; the estimate is not an exact-binade certificate.
+  Reciprocal identities use nonzero inputs and principal roots use the positive
+  branch. No absence of refinement is inferred from the resulting values.
+
+An independent Python Fraction check proved seven distinct stored nonzero
+literal one-unit enclosures using exact sine/cosine Taylor sums with alternating
+remainder bounds and the positive atanh series with a geometric tail for ln(2).
+It includes sin(123), both near-pi identities and asinh(3/4)=ln(2), plus exact
+rational scales, binades and integer expectations. These checks certify the
+selected literals, not every native result or universal correct rounding. An
+initial scratch serialization hit Python's decimal digit limit; shorter still
+rigorously bounded series for small inputs resolved it. No repository behavior
+was changed to obtain the independent checks.
+
+After the final source edit, locked/offline two-job focused validation passed:
+
+- All 31 selected tests with no default features and with all features; all 93
+  baseline/final selected-test logs were checked for one nonempty success each.
+- Both private library Rustdoc configurations, and temporary test-enabled private
+  Rustdoc, with warnings and broken/private intra-doc links denied. Each of the
+  31 complete descriptions was found in its generated function page. Ordinary
+  library Rustdoc alone does not expose these cfg(test) fixtures.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Scoped Rustfmt and git diff --check. Raw non-comment tokens are identical,
+  independently formatted comment-free sources agree, and source outside the
+  reviewed section is byte-identical. The only existing-code formatting change
+  puts one if expression on a single line.
+
+No focused check remains blocked and no new runtime defect was found in these
+finite witnesses. Full workflows remain owner-waived for this docs-only session;
+no performance claim is made. The standing public/private documentation mandate
+in AGENTS.md remains in force. Evidence under
+`/tmp/csgrs-hyperreal-node-trig-fixtures-audit/` retains scripts, command logs,
+exact expectations and item/render/token inventories. Owned shadow sources and
+temporary HTML were removed after inspection. Builds reused the roughly 6.6 GiB
+shared target with incremental compilation disabled. Repository-wide line review
+and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
