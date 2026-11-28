@@ -210,6 +210,12 @@ retention. "Shipped" sizes are linked release or deployed images.
   - The spring probe is about 25% faster (65 ms to 46–50 ms).
   - The pinned Hypersolve dispatch traces (polynomial import, Jacobian rules)
     are unchanged.
+  - Hypercurve's warm degree-257 rational Bezier evaluation at 1/2 uses 2,569
+    temporary rationals instead of 2,567. Its two lost hits were multi-word
+    products cached across calls on the interned parameter 1/2, which is the
+    retention this change removes. The pinned count was rebaselined on 28
+    November. Hypercurve's workflow runs only on pushes to main, so this was
+    found only after the merge.
 - **Rejected designs:**
   - Sealing every slot on interned values lost warm hits:
     `rational_matmul_8` +5%, `tanh_rational_one` +10%, and the polynomial

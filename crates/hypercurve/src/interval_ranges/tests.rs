@@ -514,7 +514,11 @@ fn high_degree_native_point_dispatch_is_unchanged_by_range_preparation() {
         let expected = dispatch_trace::with_recording(evaluate);
         let baseline = dispatch_trace::take_trace();
         assert_eq!(expected, warm);
-        assert_eq!(baseline.rational.temporary_rationals, 2567);
+        // 2567 before 27 November: two warm hits came from multi-word results
+        // cached across calls on the interned parameter 1/2. Interned values
+        // no longer keep results that would outlive them (see the Hyperreal
+        // changelog), so those two products are recomputed.
+        assert_eq!(baseline.rational.temporary_rationals, 2569);
         assert_eq!(baseline.rational.gcds, 751);
         let _prepared = prepare_rational_bezier_ranges(&source, &mut graph()).unwrap();
         assert!(source.cached_homogeneous_power_basis().is_none());
