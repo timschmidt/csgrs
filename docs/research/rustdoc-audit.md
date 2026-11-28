@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/real_representations.rs` | Entire 20-recipe workload; documented enum/variants/derived roles, exact expressions, lossy export, prepared timings and finite coverage. | Thirty blocks render; both-mode smoke/docs pass. Two Criterion-generated functions still lack attached docs. See representation/replay batch. |
+| `crates/hyperreal/benches/bounded_parameter_encodings.rs` | Entire replay/retained-proof workload; documented residual equations, domains, admission/cache work, timing and serialization checks. | Four blocks render; serde/all docs/compilation and baseline/final 220-row replay checks pass. See representation/replay batch. |
+| `crates/hyperreal/tests/bounded_parameter_encodings.rs` | Entire base/serde test suite and helpers; documented signed/endpoint identities, downstream sine proofs, concurrency and distinct byte/order checks. | Ten blocks render in test-enabled private docs; one minimal and four tests each in serde/all pass. Assertions and executable tokens unchanged. See representation/replay batch. |
 | `crates/hyperreal/benches/elliptic_integrals.rs` | Entire custom RF benchmark; documented exact construction, rounded AGM reference, timing/cache scope and acceptance limitations. | Five blocks render; both-mode compilation/docs, release baseline/final rows and focused integration test pass. See elliptic-benchmark batch. |
 | `crates/hyperreal/benches/legendre_integrals.rs` | Entire complete/incomplete F/E benchmark; documented fixed cases, pair computation, adopted reference points and exact width checks. | Three blocks render; both-mode compilation/docs, release baseline/final rows and focused integration test pass. See elliptic-benchmark batch. |
 | `crates/hyperreal/benches/inverse_legendre.rs` | Entire unwrapped inverse benchmark; documented sibling oracle dependencies, input domains, retained definitions and residual/point distinction. | Four blocks render; both-mode compilation/docs, release baseline/final rows and focused integration test pass. See elliptic-benchmark batch. |
@@ -22854,6 +22857,129 @@ semantic comparisons and rendered inventory are retained under
 no second Cargo tree or copied probe executables were created. The shared target
 is about 7.7 GiB and this batch's evidence about 1.1 MiB. Whole-repository
 line review and 100% coverage remain unfinished.
+
+## Hyperreal representation and parameter-replay benchmarks/tests (2026-11-27)
+
+Baseline: `69a6500a2` on `rustdoc`. Read every line of
+benches/real_representations.rs (253), benches/bounded_parameter_encodings.rs
+(61) and tests/bounded_parameter_encodings.rs (156): 470 existing lines.
+The shared representation fixture was re-read and already has whole-file credit
+in the exponential/root batch. The current Class variants, lossy conversion,
+exact-rational projection, Real clone/serialization admission and manifest supplied
+context; no additional whole-file credit is claimed for those contextual reads.
+The shared report helper and Criterion macros retain their earlier audit records.
+
+Ownership is Hyperreal's scalar development evidence and exact-relation/replay
+fixtures: P1/P4/P19 with P5/P6 limits and P36/P37 evidence scope. Inputs are fixed
+positive symbolic/rational/opaque expressions, bounded signed parameters and
+selected exact near-endpoint offsets. Missing acceptance was documentation of
+all private recipes/helpers/test bodies and the actual completion/cache/byte
+contracts. Baseline all-feature Criterion smoke, all four replay tests and the
+serde release replay workload passed. Only Rustdoc changed; raw non-comment
+tokens, tests, metadata strings, inputs and assertions are unchanged.
+
+Documented/reviewed 44 authored blocks: 30 in the representation benchmark
+(module, included report module, two constants, enum, twenty variants, impl,
+three methods and workload function); four in the replay benchmark (module,
+included fixture module and two functions); ten in the integration test (module,
+two included/nested modules, three private helpers and four tests). All render
+under private documentation. Reviewed Clone/Copy for the fieldless Recipe enum:
+they copy only its selector, not a native graph or MPFR value; both derived impl
+anchors render. No function-local named declarations are present.
+
+Two generated-item gaps remain in real_representations: Criterion 0.5.1 emits
+public benches and private main without attached docs. Their rendered pages lack
+docblocks. Module prose describes their runner/report/summary roles, but does not
+count as attached item coverage. The macro does not forward doc attributes;
+rewriting executable harnesses is outside this docs-only session. No new hiding
+or lint allowance was introduced. The replay executable's ordinary main is
+fully documented; the used JSON macro branches add no named API items.
+
+Corrected the representation module's stale claim to cover every optimized
+representation: it has twenty fixed recipes, while the shared fixture has 22
+and includes the current Pow2/Pow10 families. No private Class variant is asserted
+by this benchmark. One means the rational 3/2. Variant docs spell out the twenty
+mathematical expressions; labels describe intended recipes, not observed classes.
+The length assertion checks a fixed catalogue size, not representation completeness.
+
+The forty construction/export cases include native exact construction or MPFR
+192-bit point construction, lossy binary64 export and temporary destruction.
+Native Option is not unwrapped in that loop. Prepared setup compares finite
+binary64 views with 32*EPSILON*max(abs(mpfr),1), which does not prove exact equality.
+Five prepared cases per recipe measure two clones, two float exports and a native
+-192 enclosure query: 140 cases total. Float setup warms primitive views; it does
+not explicitly pre-refine a -192 enclosure. Later queries may strengthen shared
+evidence. The enclosure case unwraps availability without testing its bounds;
+-192 is computable precision, not a checked uniform relative-error/width guarantee.
+Criterion iter includes output destruction, and throughput counts operations
+regardless of output contract. No MPFR cleanup guard or total resource envelope
+is supplied. These timings do not establish matched-output backend speedups.
+
+The replay benchmark maps each positive x to v=x/(x+1), m=v/2, then sets
+r=sqrt(m/(1-m)), a=v/sqrt(1-v^2), tau=asin(v). Residuals are
+1/(1+r^2)-(1-m), a/sqrt(1+a^2)-v and sin(tau)-v. The positive-root and bounded-input
+relations establish their intended zero values; the helper only constructs them
+and callers require Some(0) exact projections. None fails acceptance. Before
+every mode, even cold replay, the benchmark decodes/reconstructs/proves a warm
+triple. Cold timing includes JSON decode/admission, reconstruction, proof and
+storage; retained timing clones already-proved residuals and reuses evidence.
+Decoding does not load live serialized proof caches but can establish new
+admission evidence. Same-process replay does not reset shared constant caches.
+
+Accepted counts represent whole triples. Validation and repeated JSON comparison
+of the original payload are outside the timer; that byte check is separate from
+residual proofs and does not test arbitrary source equivalence. The executable
+ignores arguments and emits JSON before asserting accepted==repeats. Failure
+panics, bounded internal searches and ten repeats do not give a complete resource
+or cancellation contract, and no fresh-process/hostile-wire claim is made.
+
+The test docs distinguish five base residuals per fixture plus three asin endpoint
+checks, 88 signed cold/display-warmed JSON replays, nine delta=10^-100 endpoint
+combinations, and 22 negative-input CBOR/concurrency cases. accept checks each
+residual and then its sine, exercising subsequent exact use. Warm display calls
+ignore their float return values; JSON replay helpers do not themselves compare
+bytes. Each concurrent fixture runs four workers three times, then three sequential
+precision stages: fifteen accept calls. All five enclosures at -32,-192,-32 are
+checked only for ordered endpoints, not containment, overlap or nesting. JSON
+stability across proofs/refinement and final CBOR equality are separate assertions.
+
+Focused final validation used locked/offline two-job Cargo, a reused target and
+incremental compilation disabled:
+
+- All 140 Criterion smoke cases under no default features and all features;
+  baseline all-feature smoke also had 140 successes. Report writes were disabled
+  and Criterion output redirected to task-owned space. These are smoke runs,
+  not full statistical performance measurements.
+- Integration tests: one without default features, four with serde only and four
+  with all features. All passed; the baseline four all-feature tests also passed.
+- No-run benchmark/test compilation in those three configurations, respecting
+  the replay benchmark's serde requirement. Private representation-bench docs
+  pass with no default/all features; replay-bench docs pass with serde/all.
+  Matching self/dev externs and dependency paths from Cargo JSON address the
+  previously recorded cargo rustdoc --bench dependency omission.
+- Private integration-test docs in no-default/serde/all configurations, using a
+  temporary source copy with only test attributes removed and the existing shared
+  fixture path made absolute. No repository cfg/test attributes were changed.
+  All Rustdoc builds deny warnings and broken/private links. The initial replay
+  doc build caught unquoted Option<Rational> as an HTML tag; marking it as code
+  resolved the warning before the final builds.
+- Serde release replay before/after: 220 rows, 2,200 accepted triples, all 22
+  families in the expected family/trial/mode order. All JSON fields except
+  elapsed_ns, including serialized input lengths, match exactly. Each process
+  completed within external 600-second containment; this is not a production
+  resource bound or timing-stability claim.
+- Forty-four rendered blocks, twenty variant/three method/impl anchors and two
+  derived trait anchors reconcile with the source inventory. Two generated gaps
+  are recorded separately. Raw token equality, scoped Rustfmt, git diff --check
+  and unchanged repository benchmarks.md SHA-256 checks passed.
+
+No focused command remains blocked. Generated-item coverage remains incomplete.
+Full workflow checks remain owner-waived, and AGENTS.md already carries the
+future-agent 100% public/private/generated Rustdoc mandate. Scripts, inventories,
+logs and small JSON evidence remain under
+`/tmp/csgrs-hyperreal-representation-benches-audit/`; temporary test-source copies
+and duplicate rendered HTML are removed after inspection. The shared build target
+is about 7.9 GiB. Whole-repository review and coverage remain unfinished.
 
 ## Next work
 

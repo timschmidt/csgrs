@@ -1,7 +1,24 @@
+//! Exact parameter-encoding identities, replay and shared-proof regression fixtures.
+//!
+//! Positive scalar representatives are mapped into bounded domains; negative values
+//! and selected endpoints extend the corpus. Exact rational zero projections test
+//! defining relations and subsequent sine consumption. Feature-gated replay tests
+//! separately check JSON/CBOR stability and ordered enclosures; they do not equate
+//! those byte/order checks with complete mathematical equivalence or containment.
+
 use hyperreal::{Rational, Real};
+/// Shared finite scalar constructions; expected public categories are fixture assertions.
 #[path = "support/representations.rs"]
 mod representations;
 
+/// Verify parameter, signed meridian and inverse-sine recovery for 22 scalar fixtures.
+///
+/// Check each public structural category, map positive x to u=x/(x+1), and use
+/// m=u/2. Require exact zero projections for parameter reconstruction and for both
+/// signs of meridian and sine recovery: five residuals per fixture. Separately test
+/// sin(asin(v))=v at v=0,1,-1; meridian encoding is not applied at the poles.
+/// Some(0), rather than approximate closeness or an undecided result, is required.
+/// This is finite identity coverage, not every value of every certificate family.
 #[test]
 fn bounded_parameter_encodings_retain_all_scalar_family_values() {
     for case in representations::optimized_certificate_representatives() {
@@ -45,13 +62,27 @@ fn bounded_parameter_encodings_retain_all_scalar_family_values() {
     }
 }
 
+/// Serde-only replay, endpoint and concurrent-proof fixtures.
+///
+/// All replay occurs in the same process and may share global constants. No total
+/// work/memory or cancellation limit, malformed-wire corpus or fresh-process claim
+/// is supplied by these tests.
 #[cfg(feature = "serde")]
 mod serialization {
     use super::*;
+    /// JSON round-trip the five authoritative encoding values into fresh objects.
+    ///
+    /// Serialization and deserialization are unwrapped. This does not reset global
+    /// caches or compare the serialized bytes before/after the round trip.
     fn replay(value: &[Real; 5]) -> [Real; 5] {
         serde_json::from_str(&serde_json::to_string(value).unwrap()).unwrap()
     }
 
+    /// Build `[v,m,sqrt(m/(1-m)),v/sqrt(1-v^2),asin(v)]` for valid fixture inputs.
+    ///
+    /// Callers supply 0<=m<1 and abs(v)<1, including exact near-endpoint offsets.
+    /// Positive-root and inverse-trig relations remain in the exact expressions;
+    /// invalid/unresolved construction domains panic through unwrapped results.
     fn encoded(v: Real, m: Real) -> [Real; 5] {
         let r = (&m / (Real::one() - &m)).unwrap().sqrt().unwrap();
         let a = (&v / (Real::one() - &v * &v).sqrt().unwrap()).unwrap();
@@ -59,6 +90,12 @@ mod serialization {
         [v, m, r, a, tau]
     }
 
+    /// Require all three reconstructed residuals, and then their sines, to prove zero.
+    ///
+    /// Decode the parameter complement, signed meridian and inverse-sine encodings;
+    /// compare by exact rational normal form Some(0). Applying sine to each residual
+    /// exercises subsequent use of its exact relation. The context labels failures;
+    /// None or a nonzero rational fails. No floating tolerance or sampling is used.
     fn accept([v, m, r, a, tau]: [Real; 5], context: &str) {
         let decoded_h = (Real::one() / (Real::one() + &r * &r)).unwrap();
         let decoded_v = (&a / (Real::one() + &a * &a).sqrt().unwrap()).unwrap();
@@ -79,6 +116,13 @@ mod serialization {
         }
     }
 
+    /// Exercise 88 JSON replays: 22 fixtures, both signs and cold/display-warmed modes.
+    ///
+    /// Assert each source public category, encode v with each sign and m from the
+    /// positive bounded magnitude, then replay. Warm mode requests lossy float views
+    /// of all five decoded values but ignores their return values. Both modes require
+    /// all exact residual and subsequent-sine proofs through accept; neither mode
+    /// clears process-global caches or asserts JSON byte equality.
     #[test]
     fn serialized_parameter_encodings_replay_cold_and_after_display_warming() {
         for case in representations::optimized_certificate_representatives() {
@@ -103,6 +147,12 @@ mod serialization {
         }
     }
 
+    /// Check nine exact JSON-replayed boundary combinations without endpoint snapping.
+    ///
+    /// Use delta=10^-100, m in {0,delta,1-delta} and v in {0,-1+delta,1-delta}.
+    /// Every combination remains inside the meridian/root domains and must pass all
+    /// six exact zero projections in accept. These are finite near-endpoint witnesses,
+    /// not a proof for all small offsets or the excluded singular parameter m=1.
     #[test]
     fn parameter_zero_and_exact_near_endpoint_offsets_survive_replay() {
         let delta: Real = "1e-100".parse().unwrap();
@@ -113,6 +163,20 @@ mod serialization {
         }
     }
 
+    /// Check CBOR replay, concurrent exact proofs and serialization stability for 22 cases.
+    ///
+    /// Encode negative bounded v with m from its positive magnitude, decode CBOR and
+    /// record the decoded JSON. Four scoped workers each call accept three times on
+    /// clones sharing the decoded values; joining propagates worker panics. Require
+    /// unchanged JSON afterward. Then request all five enclosures at precisions
+    /// -32,-192,-32, checking only endpoint order, and repeat exact proofs and JSON
+    /// byte equality after each precision stage. Finally require the decoded CBOR
+    /// bytes to equal the original source encoding.
+    ///
+    /// This gives 15 accept calls per fixture (12 concurrent plus three sequential).
+    /// Ordered endpoints alone do not prove containment, overlap or nested refinement;
+    /// those properties are not asserted here. Byte stability and exact relation
+    /// proofs remain separate checks, with no fresh-process or latency guarantee.
     #[test]
     fn binary_replay_and_concurrent_proofs_preserve_authoritative_values() {
         for case in representations::optimized_certificate_representatives() {
