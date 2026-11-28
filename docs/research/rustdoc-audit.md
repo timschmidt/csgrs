@@ -26062,6 +26062,91 @@ incremental compilation. AGENTS.md already records the full public/private/
 generated Rustdoc mandate. Continue at assert_f64_enclosure_contains, now line
 792. This 6,841-line file and the repository-wide audit remain incomplete.
 
+## Rational test audit: limb buffers, parameters and publication (28 November 2026)
+
+Owning layer: Hyperreal rational arithmetic's private tests and their exact
+fixed-buffer kernels. P37 governs fixture claims; P1, P4 and P5 supply the exact
+value, retained-state and intermediate-capacity contracts. At 74705f356, the
+next eleven fixtures, float-enclosure assertion helper, seven local oracles and
+local destructor-counting type had no Rustdoc. Missing descriptions of failure
+state, reference independence and actual coverage were the acceptance witness.
+
+Reviewed arithmetic/tests.rs baseline lines 792–1296, now 792–1446, together
+with the fixed product/accumulation/resize kernels, retained parameter comparison,
+CompactOnceBox publication/destruction and both float-helper consumers. Added
+24 descriptions: eleven tests, one shared helper, seven function-local helpers,
+a local struct, both tuple fields, its Drop impl and destructor. The tuple
+spelling expands only to attach field documentation; executable tokens are
+identical, and source outside the reviewed range is unchanged.
+
+The descriptions distinguish:
+
+- Full fixed-width multiplication and zero high padding from an undersized
+  output, which the fixture does not admit. Nine valid shapes use independent
+  BigUint products, including empty operands, carry boundaries and spare limbs.
+  Native/native and wide/native accumulator tests select both scalar-width paths.
+- An overwide shifted addend, which leaves the destination untouched, from a
+  fitting addend whose sum overflows and leaves a wrapped destination. The general
+  shifted-addition fixture checks both post-failure states; other directed tests
+  check only None. Huge shifts use metadata bounds instead of enormous oracle
+  allocations, and zero addends retain their distinct successful behavior.
+- Canonical signed dyadic differences from kernel equality: the Rational adapter
+  constructs zero, while the lower finish kernel returns None. Resizing admits
+  exactly values below the destination capacity, including only zero for an
+  empty destination. Independent fraction/integer references check these values.
+- Agreement between unplanned and planned four/six-term schedules from an
+  independent mathematical oracle. The existing fixture compares two production
+  paths, forces narrow-row success and requires at least one decline overall;
+  it does not require a decline separately for each shape.
+- Scalar order of arbitrary retained quotient carriers from source incidence,
+  segment membership or quotient materialization. The 20,000-row parameter
+  fixture compares both slots under ordinary and normalized schedules against
+  materialized exact cross-products, with nonzero denominators and bounded
+  exponents. Local generator/oracle assumptions and allocation limits are stated.
+- The host's 88-byte inline RationalData cap from heap and retained-graph memory.
+  The eight-thread publication fixture checks an installed label in range and
+  eight total destructor calls, without recording a per-label drop tally,
+  a chosen winner, or exhaustive interleavings. Field and destructor docs explain
+  ownership of the shared counter and observation after worker joins.
+- Finite binary64 enclosure containment after exact endpoint reimport from
+  tightness or nearest rounding. The shared helper unwraps declined conversion;
+  its consumer fixtures supply values expected to have finite enclosures.
+
+Executed after the final source edit:
+
+- Thirteen focused Hyperreal library tests pass with no default features and
+  all features: the eleven newly documented fixtures plus the two consumers of
+  the float-enclosure helper. The same thirteen passed on the all-feature
+  baseline. Exact test-name inventories confirm the intended set; existing
+  assertions, generator seeds and fixture bounds remain unchanged.
+- Both locked/offline private cargo doc builds pass with warnings and broken/
+  private links denied. Supplemental builds remove only the eleven reviewed
+  #[test] markers in an isolated source copy and render unchanged local helpers
+  and the local type/Drop impl in the original private context. All 24 complete
+  descriptions render under both feature modes, with both tuple-field anchors
+  and the destructor anchor checked. This does not change normal Rustdoc's
+  omission of test functions and function-local declarations.
+- An independent Python replay inventories the deterministic parameter generator.
+  Among 40,000 slot pairs, 3,910 differ in quotient sign, 49 are both zero and
+  36,041 share a nonzero sign. The latter classify into 30,001 exponent shortcuts,
+  2,949 fitting stack comparisons and 3,091 BigUint fallbacks by exact bit bounds.
+  Only one pair has equal effective widths, and none has equal nonzero values.
+  These are derived fixture counts, not observed dispatch trace counts or claims
+  of exhaustive comparison coverage. The original hard cases are preserved.
+- Executable-token equality, source/render inventories and git diff --check pass.
+  The only non-comment source change is whitespace in the local tuple declaration.
+  Full workflows, cross-target layout checks, performance and formal verification
+  remain owner-waived for this docs-only session. No production implementation
+  changed; the helper's two consumers supply affected local downstream coverage.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-limbs-audit/: baseline,
+scripts, commands, test/doc logs, inventories, hashes and compressed selected
+HTML. Owned source copies and duplicate HTML trees are removed after checking;
+shared Cargo artifacts are reused without incremental compilation. AGENTS.md
+already records the full public/private/generated Rustdoc mandate. Continue at
+magnitude_with_backend_limbs, now line 1447. This 6,991-line file and the complete
+repository audit remain unfinished; generated-API coverage is still separate.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

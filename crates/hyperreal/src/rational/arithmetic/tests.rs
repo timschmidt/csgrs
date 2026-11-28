@@ -789,6 +789,13 @@ mod tests {
         assert!(Rational::product_sum_wide_narrow_words([wide], [right], [true]).is_none());
     }
 
+    /// Require a finite ordered binary64 enclosure containing the exact rational.
+    ///
+    /// Unwraps enclosure construction and exactly imports both finite endpoints
+    /// back into Rational before checking containment. Used by the wide/non-dyadic
+    /// and varied-ratio fixtures. Inputs must have an available finite enclosure;
+    /// this helper panics on decline and does not test tightness, nearest rounding,
+    /// error width or cache/dispatch behavior.
     fn assert_f64_enclosure_contains(value: &Rational) {
         let [lower, upper] = value.to_f64_enclosure().unwrap();
         assert!(lower.is_finite());
@@ -798,8 +805,22 @@ mod tests {
         assert!(*value <= Rational::try_from(upper).unwrap());
     }
 
+    /// Compare fixed-buffer multiplication and high padding with an independent BigUint product.
+    ///
+    /// Exercises nine input/output width combinations, including empty operands
+    /// and spare output limbs, with 128 patterns each. Directed patterns cover zero,
+    /// all-one limbs, sparse and high-bit inputs; the rest are deterministic.
+    /// Also crosses six native u128 boundary values through multiply_u128. Every
+    /// supplied output has room for the full product; undersized outputs are not
+    /// part of this fixture's kernel contract.
     #[test]
     fn fixed_limb_products_match_biguint_across_carry_boundaries() {
+        /// Check one valid L-by-R limb multiplication shape using 128 deterministic patterns.
+        ///
+        /// Requires O >= L+R, both for the multiplication contract and the padding
+        /// slice. Reconstructs the input/output integers independently and asserts
+        /// both exact multiplication and zero limbs above L+R. The seed resets for
+        /// each shape; this finite corpus is not an exhaustive carry-state proof.
         fn check<const L: usize, const R: usize, const O: usize>() {
             let mut state = 0xa409_3822_299f_31d0_u64;
             for case in 0..128 {
@@ -847,6 +868,14 @@ mod tests {
         }
     }
 
+    /// Check six-limb accumulation for one- and two-limb scalar multiplication paths.
+    ///
+    /// Starts each accumulator at three and crosses three four-limb magnitudes,
+    /// five scalar values and nine shifts, including u64::MAX. BigUint bit length
+    /// predicts whether a nonzero aligned product can fit before materialization;
+    /// zero products bypass huge shifts. Successful addition must equal the exact
+    /// sum, and both addend and subtotal overflow must decline. This fixture does
+    /// not assert the accumulator's contents after a declined addition.
     #[test]
     fn wide_stack_products_match_biguint_on_both_scalar_paths() {
         let maximum = [u64::MAX; 4];
@@ -880,8 +909,23 @@ mod tests {
         }
     }
 
+    /// Pin both exact shifted addition and the two distinct failure-state contracts.
+    ///
+    /// Across ten source/destination width pairs, generates sixteen source/buffer
+    /// patterns and all shifts through the destination width plus 64, followed by
+    /// u64::MAX. An overwide addend must leave the buffer unchanged; an individually
+    /// fitting addend leaves the sum modulo buffer capacity, even if the total
+    /// overflows and returns None. Includes empty buffers and zero products; huge
+    /// nonzero shifts are rejected without allocating an oracle at that exponent.
     #[test]
     fn shifted_accumulation_matches_biguint_and_failure_state() {
+        /// Compare one source/destination shape against exact addition and modular failure state.
+        ///
+        /// For each generated pair, predicts success by initial+addend < 2^(64*M).
+        /// If the addend itself cannot fit, requires the original array unchanged;
+        /// otherwise checks the modulo-capacity result. A zero source succeeds even
+        /// with a huge shift. Arrays and oracle integers must be practical to allocate;
+        /// N and M are the small fixed dimensions supplied by the enclosing fixture.
         fn check<const N: usize, const M: usize>() {
             let mut state = 0x082e_fa98_ec4e_6c89_u64;
             let width = u64::try_from(64 * M).unwrap();
@@ -944,8 +988,22 @@ mod tests {
         check::<9, 3>();
     }
 
+    /// Check subtraction and binary reduction of six-limb positive/negative subtotals.
+    ///
+    /// Uses every single-bit magnitude through bit 383 at thirteen denominator
+    /// shifts, plus 64 deterministic subtotal pairs and equal-pair cancellations.
+    /// BigRational expectations check canonical sign, magnitude and denominator.
+    /// Maximal-exponent cases instead assert the reduced metadata directly. The
+    /// Rational adapter maps equality to canonical zero, whereas the underlying
+    /// finish kernel returns None for equality, including empty limb arrays.
     #[test]
     fn finished_dyadic_differences_match_bigrational() {
+        /// Assert canonical fields for (positive-negative)/2^shift against BigRational.
+        ///
+        /// Reconstructs both six-limb integers independently, then checks the sign,
+        /// reduced numerator and complete power-of-two denominator. Also requires the
+        /// returned exponent not to exceed the input. The supplied shift must fit
+        /// usize and be feasible to materialize; u64::MAX cases bypass this helper.
         fn check(positive: [u64; 6], negative: [u64; 6], shift: u64) {
             let actual = Rational::finish_dyadic_stack_sum(
                 DyadicStackAccumulator(positive), DyadicStackAccumulator(negative), shift,
@@ -1006,8 +1064,21 @@ mod tests {
         assert_eq!(crate::verified::dyadic::finish([], [], u64::MAX), None);
     }
 
+    /// Compare limb resizing with exact capacity for nine source/destination shapes.
+    ///
+    /// Tests zero, all-one limbs, every source single-bit value and 64 deterministic
+    /// arrays for each shape, including zero-width input/output, shrinking and
+    /// expansion. Success must coincide with value < 2^(64*output_limbs), and the
+    /// output integer must be unchanged. Numeric equality also detects nonzero
+    /// padding on expansion; this fixture does not measure allocation or speed.
     #[test]
     fn resized_limb_buffers_reject_exactly_unrepresentable_values() {
+        /// Exercise one resize shape against a BigUint capacity and value oracle.
+        ///
+        /// For practical fixed N/O, tests zero, maximal limbs, all 64*N single bits and
+        /// 64 seeded arrays. None must mean the exact value cannot fit; Some must
+        /// reconstruct the same integer. With O=0, only zero is admitted. The reference
+        /// allocates arbitrary-precision values rather than reusing the resize kernel.
         fn check<const N: usize, const O: usize>() {
             let limit = BigUint::one() << (64 * O);
             let verify = |words: [u64; N]| {
@@ -1044,6 +1115,14 @@ mod tests {
         check::<9, 3>();
     }
 
+    /// Check directed native-product alignment, carry propagation and six-limb overflow.
+    ///
+    /// Six fitting u128 product/shift triples must equal independently constructed
+    /// BigUint values. A separate unit addition carries from limb zero into limb
+    /// one. Full-buffer addition and a 129-bit shift of the maximal native product
+    /// must decline. The two failure checks assert None, not the post-failure
+    /// scratch contents; shifted_accumulation_matches_biguint_and_failure_state
+    /// covers that distinction separately.
     #[test]
     fn direct_shifted_stack_products_match_biguint_boundaries() {
         let cases = [
@@ -1080,6 +1159,14 @@ mod tests {
         );
     }
 
+    /// Compare fused native totals with explicitly planned totals on four/six-term rows.
+    ///
+    /// For 512 deterministic rows of positive dyadic factors, alternates term signs
+    /// and compares complete Option results for both shapes. Narrow rows must
+    /// succeed, and at least one wider row across the run must decline. This checks
+    /// schedule agreement and exercises fallback admission, using two production
+    /// paths that share arithmetic authority; it is not an independent proof of
+    /// exact product-sum values or a per-shape fallback-coverage assertion.
     #[test]
     fn unplanned_four_and_six_term_dyadic_word_totals_match_two_pass_alignment() {
         let mut state = 0x243f_6a88_85a3_08d3_u64;
@@ -1141,6 +1228,13 @@ mod tests {
         assert!(saw_fallback);
     }
 
+    /// Check ten fitting four-limb-by-native aligned products against BigUint.
+    ///
+    /// A fixed sparse magnitude with three nonzero limbs is multiplied by values
+    /// just below the u64 and u128 maxima, selecting both scalar-width paths, at
+    /// five shifts through 127. Each zero-initialized six-limb accumulator must
+    /// succeed and equal the independent integer product. Declines and addition
+    /// to existing nonzero totals are covered by separate fixtures.
     #[test]
     fn direct_shifted_wide_narrow_product_matches_biguint() {
         let left = [u64::MAX, u64::MAX - 1, 1, 0];
@@ -1159,8 +1253,22 @@ mod tests {
         }
     }
 
+    /// Check both retained parameter orders and both comparison schedules against exact cross-products.
+    ///
+    /// Builds 20,000 deterministic pairs of two-parameter carriers with shared
+    /// nonzero denominators, signed/zero numerators and exponents below 2048.
+    /// The oracle compares signs and independently materialized scaled BigUint
+    /// cross-products. Checks ordinary and normalized comparisons for both slots,
+    /// without materializing Rational quotients. These arbitrary carriers need not
+    /// describe line intersections; the fixture proves neither incidence/provenance
+    /// nor coverage of every exponent or comparison dispatch branch.
     #[test]
     fn compact_dyadic_parameter_comparison_matches_biguint_cross_products() {
+        /// Advance the fixture's reproducible wrapping 64-bit linear-congruential state.
+        ///
+        /// Returns the updated state for magnitude, sign and exponent construction.
+        /// Wraparound is intentional. This deterministic source is not a probabilistic
+        /// coverage guarantee or a cryptographic generator.
         fn next(state: &mut u64) -> u64 {
             *state = state
                 .wrapping_mul(6_364_136_223_846_793_005)
@@ -1168,6 +1276,13 @@ mod tests {
             *state
         }
 
+        /// Generate one internally consistent signed dyadic carrier with a bounded exponent.
+        ///
+        /// Combines two state words into a u128 magnitude. When allowed, a later state
+        /// can select canonical zero magnitude with NoSign; otherwise selects a sign
+        /// and forces magnitude at least one. Exponents lie in 0..2048, including for
+        /// zero carriers. Does not cancel binary factors, so nonzero carriers need not
+        /// be reduced. Denominator callers pass false to exclude zero.
         fn word(state: &mut u64, allow_zero: bool) -> DyadicWord {
             let magnitude = (u128::from(next(state)) << 64) | u128::from(next(state));
             let sign = if allow_zero && next(state).is_multiple_of(29) {
@@ -1184,6 +1299,14 @@ mod tests {
             }
         }
 
+        /// Order two valid signed dyadic quotients by independent integer cross-products.
+        ///
+        /// Requires consistent signs/magnitudes and nonzero denominator carriers.
+        /// Resolves quotient signs and zeros first; same-sign nonzero values compare
+        /// numerator times opposite denominator at aligned binary scales, reversing
+        /// for negative quotients. The enclosing generator bounds exponent sums and
+        /// allocation. Arbitrary u64 exponents could overflow the additions or make
+        /// materialized shifts impractical; this is a bounded fixture oracle.
         fn expected(
             left_numerator: DyadicWord,
             left_denominator: DyadicWord,
@@ -1260,6 +1383,12 @@ mod tests {
         }
     }
 
+    /// Keep the inline RationalData layout within the existing 88-byte host-target cap.
+    ///
+    /// Checks size_of on the current compilation target and reports the measured
+    /// size on failure. This protects inline representation growth only: pointed-to
+    /// magnitudes, caches, retained graphs and temporary allocations are excluded.
+    /// Passing on one target does not establish the bound for other targets.
     #[test]
     fn rational_data_layout_stays_bounded() {
         assert!(
@@ -1269,11 +1398,32 @@ mod tests {
         );
     }
 
+    /// Exercise concurrent slot publication and total candidate destruction with eight threads.
+    ///
+    /// Each scoped worker submits one uniquely labeled box and drops the set result,
+    /// so rejected boxes are released. After joining, the slot must hold a label in
+    /// 0..8; dropping the final slot must bring the shared destructor count to eight.
+    /// This checks the installed range and aggregate destruction, not a per-label
+    /// drop tally, a deterministic winner, or every possible concurrent interleaving.
     #[test]
     fn compact_once_box_publishes_one_value_and_drops_every_candidate() {
-        struct Counted(usize, Arc<std::sync::atomic::AtomicUsize>);
+        /// Carry a publisher label and shared destructor count through slot ownership.
+        ///
+        /// Used only by this concurrent publication fixture; destruction contributes
+        /// to one aggregate counter rather than recording each label separately.
+        struct Counted(
+            /// Publisher label checked after all workers join; identifies the installed candidate.
+            usize,
+            /// Shared count kept alive by every candidate and by the observing test thread.
+            Arc<std::sync::atomic::AtomicUsize>
+        );
 
+        /// Count destruction regardless of whether this candidate won publication or was rejected.
         impl Drop for Counted {
+            /// Increment the shared aggregate once when this candidate is destroyed.
+            ///
+            /// Uses a relaxed atomic increment; the fixture observes the total only after
+            /// joining workers and dropping the final cell. The label is not recorded.
             fn drop(&mut self) {
                 self.1
                     .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
