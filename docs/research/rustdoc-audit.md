@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/float.rs` | Entire authored runtime decoder and ghost relation reviewed; eleven descriptions cover factors, variants/fields, finite bounds, nonfinite information loss and relation assumptions. | Both-mode private docs/conversion tests and unchanged 44,032-case probe pass. Ten normal descriptions render; ghost text renders separately. Pinned Verus is unavailable, and compiler-generated custom-doc gaps remain. See IEEE decoder audit. |
 | `crates/hyperreal/src/rational/mod.rs` | Entire module facade reviewed; documented shared arithmetic authority, child-module roles, value identity and failure/resource boundaries. | Both-mode private docs and compiled README/consumer examples pass; four facade blocks and the corrected parse anchor render. All 21 rational Rust sources map to whole-file records; generated Serde gaps remain. See rational source-guide batch. |
 | `crates/hyperreal/src/rational/convert.rs` | Entire primitive conversion file reviewed; 38 authored blocks document exact float ingress, checked integer egress, private helpers, tests and all local macro expansions. | Both-mode private docs, focused tests, doctest, eight Real consumers and independent finite probes pass. All 50 generated integer items render within their concrete impls; 77/78 total applicable descriptions verified. See primitive-conversion batch. |
 | `crates/hyperreal/src/rational/arithmetic/tests.rs` | Entire authored file reviewed across twelve contiguous batches; all 249 declarations documented, including local helpers, tuple fields and a local constant. | Both-mode private docs and focused batch tests pass. Cumulative inventories match the final source; 224 minimal-feature and 249 all-feature supplemental descriptions verified. Executable tokens match the original pre-audit file. See comparison-fixture reconciliation for scope and retained limits. |
@@ -27195,6 +27196,105 @@ compilation. AGENTS.md already mandates 100% public/private/generated Rustdoc.
 Continue through the remaining Hyperreal implementations and support files;
 verified/float.rs has been read as conversion context but still needs its own
 API/ghost-configuration audit. Repository-wide completion remains unestablished.
+
+## IEEE decoder and ghost-relation audit (28 November 2026)
+
+Owning layer: Hyperreal's fixed-width IEEE decomposition, consumed by exact
+rational ingress. P1 governs the exact finite factors, P6 the distinct nonfinite
+categories handed to the importer and P37 the boundary between source contracts,
+finite checks and formal verification. At 5513ac285, read every line of the
+122-line verified/float.rs. Only its enum had a short description; the variants,
+fields, two runtime decoders and ghost relation lacked their own Rustdoc.
+
+Read the ordinary proof-erasure parent, rational float adapters and verifier
+entry point/runner/dependency preparation as context. Those supporting files
+receive no new whole-file credit here. The entry point imports the production
+verified module by path; decodes is a conditional specification over the same
+runtime carrier, not a second executable decoder.
+
+Added/replaced eleven authored descriptions: the module, enum, three variants,
+three fields, two decoders and ghost relation. The file is now 203 lines. The
+83 inserted lines and two removed lines are documentation/spacing only; all
+executable bodies, proof blocks, attributes, constants and specification tokens
+are unchanged. The documented distinctions include:
+
+- Finite decomposition denotes signed significand times a binary power; it
+  retains the sign of zero and does not cancel trailing binary factors. Rational
+  construction/canonicalization belongs to the consumer. Decoded significands
+  have fewer than 24/53 bits and exponents lie in -149..104/-1074..971.
+- Every u32/u64 pattern is admitted. All-ones exponents with zero fraction select
+  Infinity, otherwise NotANumber. These tags discard nonfinite signs and NaN
+  payload/signaling distinctions. The caller, not the decoder, produces typed
+  Infinity/NotANumber import errors. No floating arithmetic, allocation, cache
+  or resource-policy input occurs in either fixed-width decoder body.
+- Derived equality compares categories and stored fields. Opposite finite-zero
+  signs differ, alternate factorizations of the same real value can differ,
+  and two NaN tags compare equal. This is neither mathematical rational equality
+  nor IEEE floating comparison. Clone/Copy and Debug roles are described on the
+  carrier; arbitrary manual enum construction does not enforce decoder bounds.
+- decodes relates arithmetic field extraction to the output for concrete IEEE
+  parameters. It does not itself constrain arbitrary integer fields/constants
+  to a valid format. Its max(raw exponent, 1) interpretation requires nonnegative
+  raw fields, as supplied by the actual decoders. The source contracts connect
+  masks, division/remainder, finite bounds and special values; their presence
+  alone does not establish that Verus ran or verified the import consumer.
+
+Executed after the final edit:
+
+- Locked/offline rational conversion tests pass: fourteen without default
+  features and fifteen with all features. Existing value, exact-view and dispatch
+  assertions are retained. The direct decoder probe also ran before editing.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All ten ordinary descriptions render, including each variant and
+  finite field. The ghost relation is absent from normal library docs as its
+  cfg requires. Its exact description and unchanged specification body were
+  extracted into a separately rendered Markdown page; that is display evidence,
+  not an emulated Rust implementation or ghost-configuration compilation.
+- A warnings-denied standalone probe imports the actual decoder file and uses
+  the production parent's ordinary proof-erasure shape. It checks all raw
+  exponent fields with both signs and six selected fractions, then 8,192 further
+  deterministic patterns per width: 44,032 cases total. Expected fields use
+  integer division/remainder instead of the decoder's masks. Finite output
+  bounds are checked separately. Binary32 outcomes are 11,221 finite, two
+  infinities and 41 NaNs; binary64 outcomes are 32,754 finite, two infinities
+  and twelve NaNs. Before/final output is byte-identical.
+- Directed checks pin distinct signed finite zeros, equal opposite infinities,
+  equal selected signaling/quiet NaN tags and unequal manually constructed
+  factorizations 1*2^1 versus 2*2^0. This finite corpus is not an enumeration of
+  all fraction bits or an independent formal IEEE correctness proof.
+- Compiler expansion was inspected before and after with rustc 1.100.0
+  (0ef1bc386 2026-11-09). The decoder module's expanded executable tokens match,
+  including generated trait bodies. The source/spec token comparison, declaration
+  inventories and git diff --check pass. No performance or cross-target result
+  is claimed; full workflows remain owner-waived for this docs-only session.
+
+Generated/configuration work remains explicit. This compiler emits seven impls:
+TrivialClone, Clone, Copy, Debug, StructuralPartialEq, PartialEq and Eq. Four
+methods are clone, fmt, eq and assert_fields_are_eq. These generated bodies were
+read; their operations are field copying, field formatting, discriminant/field
+equality and compile-time trait witnesses. They carry no custom attached
+explanatory docs. Ordinary HTML inherits standard trait-method text but does not
+expose the compiler-hidden TrivialClone impl or Eq witness method. The two
+hiding attributes come from compiler expansion, not new source annotations.
+Carrier prose and inherited trait text do not close this generated-item gap;
+no handwritten replacement implementation or hiding/lint suppression was added.
+
+The pinned Verus executable is absent at its configured default path, and VERUS
+is unset. The pinned Rust compiler is installed, which alone is insufficient.
+No verifier download, proof run or verus_keep_ghost documentation build was
+performed; prior source-hash-bound proof evidence was not refreshed. The eleven
+source descriptions establish authored review, while ghost-cfg and generated
+coverage remain pending. This limitation does not block continued docs work on
+other source files and is not repository-wide completion.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-float-audit/: baseline,
+probe, compiler expansions, exact ghost Markdown, scripts, commands, build/test
+logs, source/render inventories and compressed selected HTML. The owned probe
+executable and duplicate documentation trees are removed after checking; shared
+Cargo output is reused without incremental compilation. AGENTS.md already
+contains the full public/private/generated Rustdoc mandate. Continue with the
+remaining verified scalar kernels and their consumers; verified/word.rs has no
+whole-file audit record yet.
 
 ## Next work
 
