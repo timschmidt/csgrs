@@ -460,7 +460,9 @@ exact signatures.
 - `Contour2::straight_skeleton`, `CurvePath2::straight_skeleton`, and the
   `Contour2::straight_skeleton_*_events` methods expose staged skeleton construction and
   blockers. `translation_obstacle_convex` constructs the exact translational
-  configuration-space obstacle for supported convex contours.
+  configuration-space obstacle for supported convex contours. Planned
+  skeleton work, including holes, weights, faces, roofs and offsets, is in
+  [`STRAIGHT_SKELETON_PLAN.md`](STRAIGHT_SKELETON_PLAN.md).
 
 ### Conversion, finite output, and adapters
 

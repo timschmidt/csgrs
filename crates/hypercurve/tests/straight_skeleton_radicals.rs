@@ -37,10 +37,16 @@ fn inside(ring: &[[f64; 2]], x: f64, y: f64) -> bool {
 /// n - 2 event nodes joined by 2n - 3 arcs into a tree, with every event
 /// node strictly inside the polygon.
 fn assert_generic_skeleton(ring: &[[f64; 2]]) {
-    let graph = skeleton(ring);
+    let graph = assert_tree(ring);
     let n = ring.len();
     assert_eq!(graph.nodes().len(), 2 * n - 2, "{ring:?}");
-    assert_eq!(graph.arcs().len(), 2 * n - 3, "{ring:?}");
+}
+
+/// The skeleton is one tree (connected, no cycle) whose event nodes lie
+/// strictly inside the polygon.
+fn assert_tree(ring: &[[f64; 2]]) -> StraightSkeleton2 {
+    let graph = skeleton(ring);
+    assert_eq!(graph.arcs().len() + 1, graph.nodes().len(), "{ring:?}");
     let mut parent: Vec<usize> = (0..graph.nodes().len()).collect();
     fn root(parent: &mut [usize], mut node: usize) -> usize {
         while parent[node] != node {
@@ -63,6 +69,7 @@ fn assert_generic_skeleton(ring: &[[f64; 2]]) {
         let (x, y) = (approx(node.point().x()), approx(node.point().y()));
         assert!(inside(ring, x, y), "event node ({x}, {y}) outside {ring:?}");
     }
+    graph
 }
 
 #[test]
@@ -155,5 +162,57 @@ fn concave_footprints_with_split_events_complete_as_trees() {
         ],
     ] {
         assert_generic_skeleton(ring);
+    }
+}
+
+/// Uniform-width shapes collapse everywhere at once. A final ridge can pass
+/// through a multi-way vertex event, which must split it rather than be
+/// bridged by a direct ridge that would close a cycle.
+#[test]
+fn fully_simultaneous_collapses_stay_trees() {
+    for ring in [
+        // T: stem x in [3, 5], bar y in [6, 8].
+        &[
+            [3.0, 0.0],
+            [5.0, 0.0],
+            [5.0, 6.0],
+            [8.0, 6.0],
+            [8.0, 8.0],
+            [0.0, 8.0],
+            [0.0, 6.0],
+            [3.0, 6.0],
+        ][..],
+        // Plus sign of arm width 2.
+        &[
+            [3.0, 0.0],
+            [5.0, 0.0],
+            [5.0, 3.0],
+            [8.0, 3.0],
+            [8.0, 5.0],
+            [5.0, 5.0],
+            [5.0, 8.0],
+            [3.0, 8.0],
+            [3.0, 5.0],
+            [0.0, 5.0],
+            [0.0, 3.0],
+            [3.0, 3.0],
+        ],
+        // H of stroke width 2.
+        &[
+            [0.0, 0.0],
+            [2.0, 0.0],
+            [2.0, 3.0],
+            [6.0, 3.0],
+            [6.0, 0.0],
+            [8.0, 0.0],
+            [8.0, 8.0],
+            [6.0, 8.0],
+            [6.0, 5.0],
+            [2.0, 5.0],
+            [2.0, 8.0],
+            [0.0, 8.0],
+        ],
+    ] {
+        assert_tree(ring);
     }
 }

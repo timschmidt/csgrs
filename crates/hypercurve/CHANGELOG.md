@@ -16,9 +16,10 @@
     equality, across unrelated radicals, which exact arithmetic cannot always
     decide. Duplicate nodes at one point no longer appear after split events.
   - Results are unchanged wherever the earlier code completed.
-  - Remaining: a fully simultaneous degenerate collapse, such as an
-    axis-aligned T of uniform width, can still produce a ridge cycle, as it
-    did before.
+  - The final ridges of a fully simultaneous collapse are split at the final
+    nodes inside them. Before, an axis-aligned T of uniform width got a ridge
+    straight through its multi-way vertex event, which closed a cycle.
+  - Remaining work is planned in `STRAIGHT_SKELETON_PLAN.md`.
 
 - **Breaking:** the re-exported `BudgetExceeded` receipt has private fields
   and exact `u64` accessors. See Hypersolve's changelog and

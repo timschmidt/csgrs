@@ -4,6 +4,9 @@ This file records the remaining directions from the 2026 API and machinery revie
 
 The detailed chronological log, including commit hashes, timings and samples, is `exactcore-hyper-comparison/audits/hypercurve-api-review-2026-09-12/implementation.md`. The original review is `review.md` beside it.
 
+
+The straight skeleton, including holes, weights, faces, roofs and mitred offsets, has its own plan in [`STRAIGHT_SKELETON_PLAN.md`](STRAIGHT_SKELETON_PLAN.md).
+
 ## Current state
 
 The 2026-11-04 nonlinear-chart increment extends finite-map line sections,

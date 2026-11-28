@@ -1503,6 +1503,16 @@ pub(super) fn finish_terminal_parallel_cycle(
         );
     }
 
+    // The collapsed wavefront is a degenerate polygon traced around a tree.
+    // One of its edges can pass through another final node that is not a
+    // vertex of the cycle (a multi-way vertex event in its interior), so each
+    // ridge is split at the final nodes strictly inside it. Joining the two
+    // ends directly would close a cycle.
+    let final_nodes = boundary_nodes
+        .iter()
+        .flatten()
+        .copied()
+        .collect::<BTreeSet<_>>();
     for source_edge_index in 0..count {
         let Some(start_node) = boundary_nodes[source_edge_index] else {
             return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
@@ -1510,12 +1520,61 @@ pub(super) fn finish_terminal_parallel_cycle(
         let Some(end_node) = boundary_nodes[(source_edge_index + 1) % count] else {
             return Ok(Err(StraightSkeletonBlocker2::DegenerateSimultaneousEvents));
         };
-        add_arc(
-            arcs,
-            start_node,
-            end_node,
-            StraightSkeletonArcKind2::TerminalRidge,
-        );
+        if start_node == end_node {
+            continue;
+        }
+        let a = nodes[start_node].point.clone();
+        let b = nodes[end_node].point.clone();
+        let (dx, dy) = (b.x() - a.x(), b.y() - a.y());
+        let length = &dx * &dx + &dy * &dy;
+        let mut interior = Vec::new();
+        for &node in &final_nodes {
+            if node == start_node || node == end_node {
+                continue;
+            }
+            let c = &nodes[node].point;
+            let (cx, cy) = (c.x() - a.x(), c.y() - a.y());
+            let cross = &dx * &cy - &dy * &cx;
+            match real_sign(&cross, policy) {
+                Some(RealSign::Zero) => {}
+                Some(_) => continue,
+                None => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+            }
+            let along = &dx * &cx + &dy * &cy;
+            let beyond = &along - &length;
+            match (real_sign(&along, policy), real_sign(&beyond, policy)) {
+                (Some(RealSign::Positive), Some(RealSign::Negative)) => {
+                    interior.push((along, node))
+                }
+                (Some(_), Some(_)) => {}
+                _ => return Ok(Err(StraightSkeletonBlocker2::UncertainWavefrontRelation)),
+            }
+        }
+        let mut order = Vec::with_capacity(interior.len());
+        for (along, node) in interior {
+            let mut position = order.len();
+            for (index, (other, _)) in order.iter().enumerate() {
+                match compare_reals(&along, other, policy) {
+                    Some(Ordering::Less) => {
+                        position = index;
+                        break;
+                    }
+                    Some(_) => {}
+                    None => return Ok(Err(StraightSkeletonBlocker2::UncertainEventOrdering)),
+                }
+            }
+            order.insert(position, (along, node));
+        }
+        let mut previous = start_node;
+        for node in order.into_iter().map(|(_, node)| node).chain([end_node]) {
+            add_arc(
+                arcs,
+                previous,
+                node,
+                StraightSkeletonArcKind2::TerminalRidge,
+            );
+            previous = node;
+        }
     }
     Ok(Ok(true))
 }
