@@ -34,6 +34,8 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/lib.rs` | Entire crate facade, 55 named reexports and feature/module boundaries reviewed; crate guidance and private trace-alias docs explain exact ingress, receipts, feature scope and private/hidden documentation limits. | Both ordinary private builds and an unstable-option hidden build pass; 33/38 doctests, 54/55 external type exports, seven negative visibility controls and token/render checks pass. Child implementation and existing hidden/generated gaps remain separate. See root facade audit. |
+| `crates/hyperreal/src/problem.rs` | Entire error carrier and standard trait adapters reviewed; 20 descriptions cover actual producer categories, unresolved evidence, resource granularity and payload-free behavior. | Both private-doc modes, seven focused test runs, before/after format/equality/producer probes and token/render checks pass. Seven derive impls reviewed; generated custom-doc coverage remains open. See scalar error-category audit. |
 | `crates/hyperreal/src/main.rs` | Entire calculator entry point and private answer printer reviewed; three descriptions cover line/error handling, exact saved history, rounded diagnostics and unbounded session resources. | Both simple-only/all private binary docs and the existing recovery integration test pass; seven transcripts per mode and a separate exact-history/rounded-display witness match before/after, as do expanded tokens. See calculator entry-point audit. |
 | `crates/hyperreal/src/dispatch_trace.rs` | Entire authored collector, reports, classifiers, private hashing/scope machinery and fixtures reviewed; 143 descriptions correct mutability, heuristic scope, guard lifecycle and partial overflow effects. | Both trace-only/all private docs and ten tests per mode pass, with two selected consumer trace checks and unchanged source/expanded executable tokens. All authored descriptions render, including supplemental local statics; generated derive/TLS custom-doc gaps remain open. See dispatch collector audit. |
 | `crates/hyperreal/src/trace.rs` | Entire authored feature-selected macro and crate-local alias reviewed; four descriptions cover eager enabled arguments, disabled erasure, scope delegation and visibility. | Both-mode private docs, actual-collector source-copy probes and three all-feature scope/trace tests pass; expanded tokens match in both modes. Alias details also render on the module page because Rustdoc omits a separate re-export description. See Hyperreal trace macro audit. |
@@ -28676,6 +28678,73 @@ the full public/private/generated documentation mandate. Authored review of this
 file is complete; generated coverage and repository-wide completion remain open.
 Continue with the root facade and Simple implementation after consulting existing
 whole-file records, then remaining owning-crate and support files.
+
+## Hyperreal root facade and feature-boundary audit (28 November 2026)
+
+Owning layer: scalar crate discovery, reexports and feature-gated module admission,
+under P1–P6/P37. At e4f3ff685, read all 62 lines of src/lib.rs, the feature/target
+manifest, module overviews and relevant consumers/producers. The missing witness
+was a crate-level explanation of exact input, decision receipts, native graph
+preconditions, optional features and limits of private documentation generation.
+Context reads do not add whole-file credit to child implementations or fixtures.
+
+The facade now has 134 lines and two authored descriptions: the expanded crate
+introduction and private trace alias. Existing child-module inner docs remain
+inherited rather than duplicating their implementation authority. Root guidance
+separates Rational, Real and lower-level Computable; distinguishes exact binary
+float ingress from decimal/ratio input; preserves unknown decisions and proof
+receipts; and discloses operation-specific panics, failure categories and absent
+uniform work/memory bounds. The feature list reflects that binary64 projection
+caching also exists without either named primitive-cache feature. Ordinary private
+docs exclude cfg(test), Verus-only and existing doc-hidden declarations.
+
+A new executable example checks decimal 0.1 equals 1/10, binary64 0.1 differs,
+1/10+1/10 equals 1/5, NaN ingress fails typed, and sqrt(2) has a certified positive
+sign. It passed against the baseline library before insertion. After the final
+source edit:
+
+- Locked/offline private library cargo doc passes with no default features and
+  all features, with warnings/broken/private intra-doc links denied. The root prose
+  and inherited overviews of all seven/ten active modules match rendered pages.
+- The same private all-feature build with scoped RUSTC_BOOTSTRAP=1 and Rustdoc's
+  -Z unstable-options --document-hidden-items passes. The flag is unstable on this
+  compiler; the final instructions state that requirement. This inspection renders
+  all 55 root-exported types, including 13 pre-existing doc-hidden filter/query
+  types. Ordinary private modes expose 41/42 type pages; Simple is feature-gated.
+  Root hyperlinks, not stale files left by another feature build, determine the
+  per-configuration inventory. Hidden output links to owning-module paths.
+- Cargo doctest invocations pass 33 minimal-feature and 38 all-feature cases,
+  including the new crate example. The attempted root-name filter did not isolate
+  merged doctests; these are actual reported run counts, not single-test claims.
+- External rustc consumers compiled against freshly built libraries name all 54/55
+  active public root types and execute the exact-input/sign example. The all-feature
+  consumer also accesses the collector and roundtrips an exact tenth through JSON.
+  Seven negative compile controls retain expected diagnostic codes: private rational
+  namespace and trace macro in both modes, plus disabled Simple, collector and JSON
+  method in the minimal configuration. These are visibility/feature witnesses, not
+  package-release or general interchange-completeness qualification.
+- Comment-stripped source tokens, scoped rustfmt and git diff --check pass. No
+  executable declaration, export, attribute, predicate order or feature gate changed.
+  Full workflow/benchmark/cross-target checks remain owner-waived for this docs-only
+  session; no performance claim or child-implementation expansion audit is made.
+
+Initial duplicate outer module descriptions disturbed inherited relative-link
+resolution; they were removed before final checks, preserving the owning docs and
+links. A first hidden-doc invocation reproduced the unstable-option prerequisite,
+which was then corrected in both instructions and validation. No warning was
+suppressed or assertion weakened. Rustdoc omits a separate rendered private alias
+entry; its role remains documented in source and in the root/trace module prose.
+
+The 13 existing hidden filter/query exports still require their full owning-file
+item audit, including private fields, methods and derives. Exposing their pages
+for inspection does not close that work. Test-only MPFR and Verus configurations
+remain separate review scopes; private-document generation is not a coverage proof.
+Evidence under /tmp/csgrs-hyperreal-root-facade-audit/ retains source, scripts,
+commands/logs, export/visibility/render inventories and compressed selected HTML.
+Owned executables are removed and the shared nonincremental Cargo target is reused.
+AGENTS.md already mandates full public/private/generated Rustdoc. Authored facade
+review is complete; the repository-wide audit remains open. Continue with Simple
+and the remaining Real implementation files, consulting prior whole-file records.
 
 ## Next work
 
