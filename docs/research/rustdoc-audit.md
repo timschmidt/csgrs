@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/barrett_division.rs` | Entire prepared reciprocal, block loop, fields, derived roles and three benchmark interfaces reviewed; exactness, fallback, tracing and resource contracts documented. | All 13 blocks render; both-mode docs/tests, public visibility, independent block expectations and trace probes pass. See Barrett division batch. |
 | `crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs` | Entire transform, digit packing, convolution and CRT kernel reviewed; all helper preconditions, exactness argument and panic/resource limits documented. | All 11 blocks render; both-mode private docs/tests, public visibility, prime/root/bound checks and 329 independent expectations pass. See NTT multiplication batch. |
 | `crates/hyperreal/src/rational/arithmetic/toom4_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
 | `crates/hyperreal/src/rational/arithmetic/toom6_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
@@ -23959,6 +23960,110 @@ source snapshots are retained. Shared Cargo output is reused with incremental
 compilation disabled. AGENTS.md retains the future-agent 100% public/private/
 generated Rustdoc mandate. Repository-wide review and full coverage remain
 unfinished.
+
+## Hyperreal Barrett division documentation batch
+
+Reviewed every line of the 129-line baseline
+crates/hyperreal/src/rational/arithmetic/barrett_division.rs at 890362e2c.
+The final file has 203 lines. This covers every stored field, derived role,
+preparation/fallback branch, block operation, assertion, trace and batch loop.
+Context review included its include host, the already-audited scalar benchmark,
+three existing unit tests and the existing GMP public-name classification.
+Those reads do not credit the larger unit-test, catalogue or include-host files
+as newly whole-file reviewed.
+
+The owning layer is Hyperreal's exact unsigned division benchmark machinery.
+Relevant properties are P1 (exact quotient/remainder and reciprocal invariants),
+P4/P10 (preserved execution/tracing), P5 (unbounded work/memory), P6 (invalid
+input panics versus eligibility outcomes), and private/public Rustdoc coverage.
+Missing acceptance was accurate documentation of every private field/helper and
+of the already-public benchmark methods. Before editing, all three all-feature
+Barrett tests passed and the public docs omitted the three doc(hidden) methods.
+
+Added or replaced thirteen authored blocks: one struct, four fields, two impl
+blocks and six methods. Reviewed the derived Clone/Debug behavior and documented
+its relation to owned BigUint storage; both generated impl anchors render in
+private docs. Removed doc(hidden) from the one-shot candidate, batch candidate
+and backend-batch comparator. Signatures and Rust visibility were already public;
+only documentation visibility changed. Runtime tokens are identical after
+excluding those three attributes. No threshold, correction loop, assertion,
+trace event, fixture or call order changed; include-fragment formatting remains
+as authored.
+
+Documented findings and mathematical reasoning:
+
+- Preparation stores d, k=bits(d), B-1 for B=2^k and the exact truncated
+  reciprocal mu=floor(B^2/d). It returns None for d=0, d=1 or failed bit-width
+  conversion. The wrappers reject zero first and fall back to the backend when
+  preparation declines, notably for one. Saturating 2*k arithmetic is not work
+  or memory admission; allocation/representable-shift requirements remain.
+- A valid combined block x<d*B is estimated by
+  q0=floor(floor(x/2^(k-1))*mu/2^(k+1)). Both truncations round down, so q0
+  cannot exceed floor(x/d). Reciprocal truncation loses less than one quotient
+  unit and prefix truncation less than 2^(k-1)/d<=1; therefore the integer
+  estimate is at most two low. Corrections recover q,r exactly. The range,
+  nonnegative subtraction and correction bound are debug assertions, not a
+  hard release iteration limit or typed validation of arbitrary forged state.
+- Multi-block division keeps r<d and forms x=r*B+digit<d*B, so the quotient
+  digit fits k bits. Iterating high-to-low materializes q and r satisfying
+  dividend=q*d+r and 0<=r<d. Dividend<d returns zero plus a cloned dividend.
+  There is no shared global reciprocal cache or retained cross-call result.
+- One-shot preparation occurs even for a zero/small dividend when d>=2. Batch
+  preparation occurs before iteration, even for an empty batch, and is reused
+  only within that call. Both batch methods reject zero even with no dividends;
+  successful output retains input order. Neither batch emits the one-shot
+  division-candidate event.
+- The one-shot event precedes preparation, including divisor-one fallback;
+  its block-wise-barrett label identifies the requested wrapper, not proof of
+  the actual prepared kernel. Zero rejection precedes that event. Results
+  are exact BigUint pairs but resource limits, cancellation and typed exhaustion
+  are absent. The prepared fields must remain mutually coherent; Clone copies
+  their owned values and Debug reports them without recomputing the reciprocal.
+
+Executed after the final edit:
+
+- Locked/offline cargo test -p hyperreal --lib block_wise_barrett passes two
+  tests with --no-default-features and three with --all-features, including
+  the unchanged exact trace-count assertion. The existing corpus checks 5334
+  small combinations, 160 generated width/block cases and a sixteen-value batch.
+- The existing gmp_api_coverage integration test passes under all features;
+  documentation visibility does not change its classification. An all-feature
+  library build provides artifacts for an additional current-library trace probe:
+  divisors 1,2,18 each emit exactly one candidate event, while zero rejection
+  and the exercised batch paths emit none.
+- Private cargo doc --lib --no-deps --document-private-items passes in both
+  modes with warnings and broken/private intra-doc links denied. All thirteen
+  descriptions, fields/method anchors and both derived impl anchors are checked.
+  Ordinary public cargo doc also passes; all three formerly hidden method
+  anchors are now present.
+- An independent Python integer calculation checks all 893316 blocks for
+  divisors 2..127: estimates are never high and correction counts are
+  474299 zero, 416634 one and 2383 two. The first observed two-correction case
+  is d=18,x=414,mu=56,q0=21,q=23. This is finite supporting evidence for the
+  documented algebraic argument, not a universal implementation/resource proof.
+- Baseline/final scratch copies compile the unchanged implementation with debug
+  assertions enabled and disabled. Each run checks 13700 blocks for divisors
+  2..31 against u64 division/remainder; all three correction counts occur.
+  They also check prepared fields, Clone/Debug, None/fallback cases, empty
+  batches, zero-divisor panics, and fifty constructed quotient/remainder cases
+  spanning multiple blocks and wider divisors. A deliberately out-of-range block
+  panics only in debug for the selected witness; its release result is checked
+  without claiming that invalid inputs are supported.
+- The 56 serialized helper records are identical before/after in both modes.
+  Independent Python divmod verifies all fifty larger quotient/remainder pairs.
+  Declaration/rendered-document inventory, non-documentation-token equality
+  and git diff --check pass. A first documentation insertion attempt stopped
+  before writing because its field matcher also matched parameter text; the
+  matcher was narrowed and all final validation rerun after the actual edit.
+
+No focused check is blocked. Full workflow/format/performance checks remain
+owner-waived for this docs-only session; no performance or whole include-layout
+formatting claim is made. Evidence and repeatable scripts remain under
+/tmp/csgrs-hyperreal-barrett-audit/. Owned executables/combined probe source and
+large duplicate HTML pages are removed after inspection; small logs, inventories
+and snapshots remain. Shared Cargo output is reused with incremental compilation
+disabled. AGENTS.md retains the future-agent 100% public/private/generated mandate.
+Whole-repository review and full Rustdoc coverage remain unfinished.
 
 ## Next work
 
