@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/support/benchmark_report.rs` | Entire report implementation and both tests; documented discovery, private fields, parser/fallback behavior, comparison semantics and file effects. | 51-block private/test render inventory, both feature-mode tests/docs, nine consumer checks and isolated before/after report fixtures passed; non-comment tokens unchanged. See shared-report batch. |
 | `crates/hyperreal/examples/directed_scalar_probe.rs` | Entire process probe, six tests and helper; documented query order, receipt projection, timing/trace scope, cache checks and finite validation. | Private/test docs, 42-block render inventory, focused tests and before/after semantic/trace checks passed; concrete generator witnesses retained. See probe/atlas batch. |
 | `crates/hyperreal/examples/perf_atlas.rs` | Entire atlas example; documented source generators, actual scalar domains, timing/status limitations and both local callback aliases. | Private/test docs, 42-block render inventory, focused tests and before/after semantic/trace checks passed; concrete generator witnesses retained. See probe/atlas batch. |
 | `crates/hyperreal/examples/directed_scalar_bench.rs` | Entire executable and local tests; documented timed scope, adaptive precision/width, overlap checks, CLI and cleanup. | Focused benchmark/probe tests, private docs, release replay, independent exact cases and 91-block render inventory passed. See directed-enclosure batch. |
@@ -22529,6 +22530,107 @@ or all repository configurations. The standing AGENTS.md mandate remains intact.
 Evidence is retained under `/tmp/csgrs-hyperreal-probe-atlas-audit/`; temporary
 shadow sources, generator executable and rendered HTML are removed after checking.
 The shared target is about 7.3 GiB. The broader repository audit remains active.
+
+## Hyperreal shared benchmark-report implementation audit
+
+Baseline: `6fb6c1b783628ae44ef4eda8bc2efc0cef88192a`. Read all 476 existing lines
+of `crates/hyperreal/benches/support/benchmark_report.rs` (now 648), including
+all private records/helpers and both tests. Read its direct example, nine
+benchmark registration/wrapper consumers, current manifest and
+scripts/bench-reports.sh as context; no whole-file credit is added for those
+context reads. This closes the included-helper gap recorded by the example
+facade audit, not the remaining benchmark implementations or repository audit.
+
+Ownership is development evidence discovery/presentation under P36 and P37,
+with explicit failure/resource behavior from P5/P6. The domain is stored
+Criterion JSON, current simple explicit bench manifest declarations and marked
+Markdown. Missing acceptance evidence was complete private-item Rustdoc that
+states what the helper actually validates and what its counts mean. Baseline
+example tests and a task-owned filesystem fixture were executed before edits.
+No runtime implementation, emitted report string, test or fixture was changed;
+raw non-comment tokens are identical to baseline.
+
+Documented and checked 51 blocks: one module overview, five constants, three
+structs, seventeen fields, twenty-two functions, one test module and two tests.
+All descriptions/field anchors render in private/test-enabled documentation.
+Reviewed the three derived Debug implementations and their rendered anchors;
+they format stored fields without recomputing or validating evidence. No body-local
+items or other authored macro-generated API require supplemental rendering here.
+
+The callback ignores its Criterion argument and reads stored files. It honors
+skip-variable presence, requires --bench and suppresses --test/--list/--help;
+the direct writer bypasses that guard. It logs errors instead of propagating
+them as benchmark failure. Directory resolution distinguishes CRITERION_HOME,
+absolute/relative CARGO_TARGET_DIR, executable ancestors and fallback paths.
+Shared directories can contain other crates' results. Neither provenance nor
+successful execution of every declared target is validated.
+
+Traversal treats directories named new as leaves, ignores nondirectories and
+keeps usable rows in a BTreeMap by full_id. Repeated IDs replace earlier values
+in filesystem iteration order; sorted output does not make duplicate selection
+deterministic. Missing required fields omit rows, missing optional statistics
+fall back to the mean, and malformed change data is ignored. Missing/non-u64
+throughput counts become zero for a selected object entry. No positivity,
+confidence-level, confidence-order or statistical-validity check is supplied;
+the fixed 95% CI heading is not established by parsing. Comparison groups depend
+on labels, not proof of equivalent completed work. The summary's comparisons
+field counts participating rows, not groups.
+
+Manifest discovery is a line/quote parser, not Cargo/TOML authority. It ignores
+features before a name, uses guessed source paths, and classifies Criterion by
+literal substrings even in comments. Report links are guessed and not checked.
+Markdown escaping only handles pipes/backticks. Replacement touches the first
+marker pair; later pairs survive, and a missing closing marker discards the tail
+from the opening marker. Existing-report read errors, including invalid UTF-8,
+fall back to a fresh heading before an unlocked non-atomic write. Recursion,
+input allocation, retained rows and cancellation have no explicit total contract.
+The docs preserve these limitations without fixing runtime behavior in this
+session's docs-only worktree.
+
+The existing replacement test checks a single marker and changed content, not
+bytewise idempotence of repeating one replacement. The manifest test checks
+fifteen entries, two selected names and a non-Criterion entry, not equivalence
+to Cargo metadata. Both assertions remain intact.
+
+Final focused validation passed with locked/offline, two-job Cargo commands,
+a shared target and incremental compilation disabled:
+
+- Both existing write_benchmarks_md example tests with no default features and
+  all features (two each), after documentation changes.
+- Private example docs in both feature configurations, denying warnings and
+  broken/private intra-doc links. A test-enabled temporary copy exposes both
+  tests for rendered review; all 51 item descriptions and three Debug anchors
+  reconcile. The first capture request reused Cargo's cached documentation and
+  produced no command record; an otherwise unused cfg flag forced a fresh
+  Rustdoc invocation for capture. No repository cfg or warning policy changed.
+- All-feature cargo check for all nine include consumers: borrowed_ops, gmp_api,
+  numerical_micro, real_representations, adversarial_library,
+  adversarial_transcendentals, float_convert, library_perf and scalar_micro.
+  These were compiled, not timed or run; no tracked report was regenerated.
+- Baseline/final scratch executions with CARGO_MANIFEST_DIR fixed to a task-owned
+  fixture: two retained rows, one comparison group/two compared rows, three suites,
+  mean/median/confidence fallback, ignored malformed change data, malformed count
+  fallback, required JSON InvalidData, missing data, duplicate-ID collapse,
+  required-features-before-name omission, partial Markdown escaping, malformed
+  marker tails and surviving duplicate sections. Six subprocess argument/env
+  combinations confirm the callback write guard, including an empty skip value.
+- End-to-end writes in that fixture preserve surrounding text and are bytewise
+  idempotent for the tested valid section. Invalid UTF-8 existing content produces
+  a fresh heading as documented. Both normal and fallback report files are
+  byte-identical to baseline. A SHA-256 check confirms the repository's actual
+  crates/hyperreal/benchmarks.md never changed.
+- Scoped Rustfmt, full item/render inventory, raw token comparison and
+  git diff --check passed.
+
+No focused check remains blocked. Full workflows remain owner-waived for this
+documentation-only session. The synthetic statistics test formatting/fallback,
+not benchmark validity, statistical correctness or performance. No broader
+parser-completeness, memory-bound or repository-coverage claim is made.
+AGENTS.md's standing public/private documentation mandate remains in force.
+Evidence is retained under `/tmp/csgrs-hyperreal-benchmark-report-audit/`;
+temporary compiled/shadow source, executable and rendered HTML are removed after
+inspection. The shared target remains about 7.3 GiB. Whole-repository review and
+configuration coverage remain unfinished.
 
 ## Next work
 
