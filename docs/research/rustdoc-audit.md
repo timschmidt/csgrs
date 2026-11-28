@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/dispatch_trace.rs` | Entire authored collector, reports, classifiers, private hashing/scope machinery and fixtures reviewed; 143 descriptions correct mutability, heuristic scope, guard lifecycle and partial overflow effects. | Both trace-only/all private docs and ten tests per mode pass, with two selected consumer trace checks and unchanged source/expanded executable tokens. All authored descriptions render, including supplemental local statics; generated derive/TLS custom-doc gaps remain open. See dispatch collector audit. |
 | `crates/hyperreal/src/trace.rs` | Entire authored feature-selected macro and crate-local alias reviewed; four descriptions cover eager enabled arguments, disabled erasure, scope delegation and visibility. | Both-mode private docs, actual-collector source-copy probes and three all-feature scope/trace tests pass; expanded tokens match in both modes. Alias details also render on the module page because Rustdoc omits a separate re-export description. See Hyperreal trace macro audit. |
 | `crates/hyperreal/src/verified/mod.rs` | Entire authored module boundary and both private proof-erasure macros reviewed; three descriptions explain shared bodies, lexical scope and normal/ghost differences. | Both-mode private docs render the three descriptions and twelve inherited child-module descriptions; baseline/final erasure probes and expanded tokens agree. Verus configuration validation and previously recorded generated-item gaps remain open. See verified module audit. |
 | `crates/hyperreal/src/verified/lehmer.rs` | Entire authored matrix selector, coefficient gates and proofs reviewed; twenty descriptions distinguish width, unimodularity, leading progress and full-magnitude application. | Both-mode private docs and four consumer tests plus the all-feature trace fixture pass; 34,008 leading pairs and coefficient/reuse probes are unchanged, as are expanded tokens. Five normal descriptions per mode render; Verus configuration/expansion validation remains open. See Lehmer batch audit. |
@@ -28427,6 +28428,108 @@ file review is complete; repository-wide coverage remains open. Continue with
 src/dispatch_trace.rs: its 1,078 lines have been read in contiguous ranges as
 context, but item/consumer audit, missing-doc remediation and whole-file review
 credit are still pending.
+
+## Hyperreal dispatch collector audit (28 November 2026)
+
+Owning layer: thread-local scalar/cross-stack diagnostics and report aggregation.
+P4/P5/P37 require preserved evaluation/count behavior, truthful resource scope
+and no semantic certification inferred from labels. At 923ff76ba, reviewed all
+1,078 authored lines of src/dispatch_trace.rs, including the ten tests and three
+function-local statics. Read the trace macro, crate-root feature gate, benchmark
+collector and a Hyperlimit orientation consumer as context. The missing acceptance
+witness was complete item documentation: many public/private declarations lacked
+Rustdoc, and existing summaries implied immutable reports and stronger semantic
+classification than the mutable, lexical implementation provides.
+
+Before editing, a source-copy probe reproduced public report/query behavior and
+private recorder, bucket, scope and overflow mechanisms. It used the actual
+collector bodies, with no repository test modifications. The file now has 1,497
+lines and 143 authored descriptions: 129 runtime/module/field/implementation
+items and fourteen test-module/function/local-static items. Executable tokens,
+attributes other than documentation, call order and assertions are unchanged.
+Ordinary expanded executable tokens also match; the only non-comment expansion
+difference is the five expected documentation attributes transported by
+thread_local onto TRACE_STATE, checked against the exact authored text.
+
+The documentation now records:
+
+- Reports are public, mutable carriers. Collector snapshots merge by text and
+  sort lexicographically, but user-created reports may contain duplicates,
+  unsorted rows or unrelated statistics. path_count returns the first match;
+  totals/grouping include every row. Clone copies report data, not live state.
+- Classifiers use the exact case-sensitive substring/prefix/equality rules in
+  their helper bodies. Categories overlap and arbitrary labels can produce false
+  positives or negatives. Counters describe explicit recorder calls rather than
+  independently measured allocations, certified arithmetic or successful geometry.
+- Live key equality/hash use string pointer and length; static lifetime does
+  not imply one stable storage location per call site. Snapshot keys instead
+  compare text. The custom unseeded hasher has separate byte and usize mixers,
+  with no cryptographic, persistent-checksum or adversarial-performance claim.
+- Common factors distinguish zero/one, other powers of two and non-power bit
+  widths. Metadata-only power-of-two calls accept every u64 shift without
+  materialization and do not increment gcds or peak width. GCD/reduction recorders
+  trust supplied values; they do not validate divisors or positive denominators.
+- Scopes accumulate counters and restore a saved bool. Guards must be dropped
+  on the originating thread in reverse creation order, but their bool-only type
+  does not enforce this. Moving a guard changes the destination thread on Drop;
+  out-of-order drops can disable a live scope or leave recording enabled. Forget
+  skips restoration. with_recording owns a normal local guard and does not catch
+  panics, clear counters or enable spawned threads.
+- reset/take preserve recording state and live-map capacity. Snapshot grouping
+  allocates and leaves entries intact on overflow panic; draining take clears
+  entries even on aggregation unwind. take_trace drains dispatch before taking
+  rational statistics, so failure can clear only the first group. Updates and
+  sums use ordinary build-dependent u64 overflow, without rollback, saturation,
+  typed exhaustion or a total-work/memory/cancellation budget.
+
+Executed after the final source edit:
+
+- All ten collector tests pass under no-default-features plus dispatch-trace and
+  under all features. Existing merging, ordering, debug overflow, rational route,
+  correlation and eight-thread assertions remain unchanged. Exact-name downstream
+  fixtures for Hyperreal's Lehmer GCD trace and Hyperlimit's shared-denominator
+  orientation filter also pass with their original count assertions.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All 129 normal descriptions render per mode. A warnings-denied test-doc
+  copy removes only the ten test markers and retains their bodies, resolving
+  Rational through the built library. Its complete 143-item inventory also renders
+  the three unchanged local statics in supplemental modules because ordinary
+  Rustdoc omits function-local items. This is documented supplemental rendering,
+  not a claim that native Rustdoc emits those local pages.
+- Baseline/final warnings-denied source-copy probes have identical output. They
+  check six fabricated-report queries, ten common-factor values, four GCD width
+  bins, eighteen precision boundaries, nested/reset/unwind scope behavior,
+  out-of-order and moved-guard effects, two debug aggregation-overflow controls,
+  retained rational statistics after partial take failure and three hasher checks.
+  The scope misuse probes clean their own state after reproducing the behavior;
+  they are not newly supported protocols or implementation fixes.
+- Source/declaration/render inventories and git diff --check pass. The ordinary
+  expanded implementation comparison excludes only comments and the exact five
+  expected TLS doc attributes, not arbitrary attribute or executable differences.
+  Full workflows, benchmarks and cross-target checks remain owner-waived for this
+  docs-only session. No correctness/performance claim is based on a label count.
+
+Generated review: read all 66 derive implementations and their 45 generated
+methods on the current normal compiler, including fieldwise Clone/Copy, default
+values, Debug fields, equality and DispatchKey ordering. None has custom attached
+item descriptions; native pages mostly inherit trait documentation. Six
+TrivialClone impls and nine Eq-check methods carry compiler-generated doc(hidden)
+attributes. They were not introduced or suppressed by this change. Reviewed the
+thread_local expansion's LocalKey constant, initialization helper and two
+conditional LazyStorage statics; only the named constant receives the authored
+static's text. Generated helper/custom-item documentation and other target
+expansions remain open. Type-level explanations do not close those gaps, and
+replacing derives or TLS machinery is outside this docs-only batch.
+
+Evidence is under /tmp/csgrs-hyperreal-dispatch-collector-audit/: baseline,
+probe/scripts, commands/logs, both source expansions, exact generated bodies,
+source/render inventories and compressed selected HTML. Owned executables,
+source/doc copies and duplicate HTML are removed after checking. Shared Cargo
+artifacts are reused without incremental compilation. AGENTS.md already mandates
+full public/private/generated Rustdoc. Authored review of this file is complete;
+generated coverage and repository-wide completion remain open. Continue with
+remaining Hyperreal root modules, beginning with src/structural.rs and its
+structural facts and retained certificates.
 
 ## Next work
 
