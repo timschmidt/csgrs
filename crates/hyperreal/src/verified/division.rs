@@ -1,3 +1,22 @@
+//! Exact two-limb remainder reduction and the shared mathematical GCD specification.
+//!
+//! The runtime helper computes an exact u128 remainder using small-quotient
+//! subtractions, a conservative high-limb quotient estimate and an exact remainder
+//! fallback. The pair reducer applies those steps only while its divisor exceeds
+//! u64::MAX, leaving the native GCD consumer to finish at a machine-word boundary.
+//! The integer estimate is an internal optimization, not approximate arithmetic.
+//!
+//! The ghost recurrence and common-divisor lemmas give optimized GCD, fraction
+//! reduction and other consumers one mathematical meaning, including gcd(0,0)=0.
+//! They are erased in ordinary builds; documentation of these claims is separate
+//! from running the verifier on this revision.
+//!
+//! Runtime operations use primitive integers without heap allocation or growing
+//! intermediate expressions. The Euclidean loop decreases its divisor, but this
+//! module provides no configurable total-work, cancellation or exhaustion outcome.
+//! The remainder helper relies on caller preconditions; the pair reducer accepts
+//! all u128 pairs and establishes those preconditions at each call.
+
 #[cfg(verus_keep_ghost)]
 use vstd::arithmetic::div_mod::*;
 #[cfg(verus_keep_ghost)]
@@ -5,13 +24,25 @@ use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
 verus! {
-/// Euclid's mathematical GCD over unbounded natural numbers.
+/// Euclid's mathematical GCD of two arbitrary natural numbers.
+///
+/// Returns left when right is zero; otherwise recurses on right and the remainder
+/// of left by right. The second argument strictly decreases on recursion.
+/// The convention includes gcd(0,0)=0. This ghost definition is not a runtime
+/// arbitrary-precision implementation; gcd_characterization establishes the
+/// common-divisor meaning used by the optimized arithmetic proofs.
 pub(crate) open spec fn gcd(left: nat, right: nat) -> nat
     decreases right,
 {
     if right == 0 { left } else { gcd(right, left % right) }
 }
 
+/// Preserve remainder modulo a positive divisor when taking one Euclidean step.
+///
+/// Requires positive right and divisor, with divisor dividing right. Then
+/// `left % divisor == (left % right) % divisor`: subtracting a multiple of right
+/// cannot change that remainder. The result does not assume divisor divides left;
+/// it supplies the equivalence needed by the common-divisor induction.
 proof fn common_divisors_step(left: nat, right: nat, divisor: nat)
     requires right > 0, divisor > 0, right % divisor == 0,
     ensures left % divisor == (left % right) % divisor,
@@ -23,6 +54,12 @@ proof fn common_divisors_step(left: nat, right: nat, divisor: nat)
     lemma_small_mod(0, divisor);
 }
 
+/// Identify the positive divisors of the recursive GCD with the common divisors of its inputs.
+///
+/// For every positive divisor, divisibility of gcd(left,right) is equivalent to
+/// divisibility of both inputs. Induction follows the Euclidean recurrence and
+/// uses common_divisors_step. All natural inputs are admitted, including two
+/// zeros, for which every positive integer divides both inputs and the result.
 pub(crate) proof fn gcd_preserves_common_divisors(left: nat, right: nat)
     ensures forall|divisor: nat| divisor > 0 ==>
         (#[trigger] (gcd(left, right) % divisor) == 0
@@ -44,6 +81,11 @@ pub(crate) proof fn gcd_preserves_common_divisors(left: nat, right: nat)
     }
 }
 
+/// Prove that the recursive GCD is positive when at least one input is nonzero.
+///
+/// The nonzero-input precondition excludes the conventional gcd(0,0)=0 case.
+/// Recursing on a nonzero right operand retains a positive input until the base
+/// case. This establishes positivity, not a separate runtime computation.
 pub(crate) proof fn gcd_positive(left: nat, right: nat)
     requires left != 0 || right != 0,
     ensures gcd(left, right) > 0,
@@ -54,9 +96,16 @@ pub(crate) proof fn gcd_positive(left: nat, right: nat)
     }
 }
 
-/// The recursive specification really is the greatest common divisor, with
-/// the conventional gcd(0, 0) = 0. Thus preserving it has a mathematical meaning
-/// independent of the optimized machine implementation.
+/// Give the recursive specification its greatest-common-divisor meaning.
+///
+/// For arbitrary naturals, the result is zero exactly when both inputs are zero.
+/// Otherwise it divides both inputs and is at least every positive common divisor.
+/// Combines the common-divisor equivalence and positivity; a purported larger
+/// positive divisor contradicts the remainder bound for a smaller positive value.
+///
+/// The greatest-positive-divisor assertion is conditional on a positive result:
+/// two zeros have no largest positive common divisor. Their result is the explicit
+/// zero convention, not a positive maximum or a failure sentinel.
 pub(crate) proof fn gcd_characterization(left: nat, right: nat)
     ensures
         gcd(left, right) == 0 <==> left == 0 && right == 0,
@@ -79,6 +128,11 @@ pub(crate) proof fn gcd_characterization(left: nat, right: nat)
     }
 }
 
+/// Swap an increasing natural-number pair without changing its recursive GCD.
+///
+/// Requires `left < right`, including left zero. Then left is already the remainder
+/// modulo right, so unfolding one Euclidean step proves symmetry for this ordering.
+/// The pair reducer uses this restricted lemma only when its initial swap occurs.
 proof fn gcd_swap_increasing(left: nat, right: nat)
     requires left < right,
     ensures gcd(left, right) == gcd(right, left),
@@ -86,7 +140,17 @@ proof fn gcd_swap_increasing(left: nat, right: nat)
     lemma_small_mod(left, right);
 }
 
-/// An upper bound on a divisor's high limb gives a lower bound on the quotient.
+/// Prove that the high-limb quotient estimate can be subtracted safely.
+///
+/// Requires `right > u64::MAX` and `left >= 5*right`, with that multiplication
+/// interpreted mathematically rather than as a possibly overflowing u128 operation.
+/// For `q = (left >> 64) / ((right >> 64) + 1)`, proves `0 <= q*right <= left`
+/// and that the high divisor limb is below u64::MAX, so adding one is safe.
+///
+/// The upper bound on the full divisor induced by its high limb yields a
+/// conservative quotient. This guarantees representable multiplication and
+/// nonnegative subtraction; it does not say q is the exact quotient or that only
+/// one corrective subtraction will always suffice.
 proof fn high_quotient_bound(left: u128, right: u128)
     requires
         right > u64::MAX,
@@ -125,9 +189,23 @@ proof fn high_quotient_bound(left: u128, right: u128)
 }
 }
 
-/// Exact remainder step used by the two-limb GCD reducer.
-/// Small quotients use subtraction; larger quotients use the high-limb estimate
-/// before falling back to `%`. Every intermediate subtraction stays nonnegative.
+/// Compute the exact u128 remainder for an ordered pair with a two-limb divisor.
+///
+/// Requires `left >= right` and `right > u64::MAX`. Tests quotients one through
+/// four by successive subtraction, returning as soon as the remaining value is
+/// below right. Reaching the next stage establishes `left >= 5*right` in natural
+/// arithmetic, which bounds the high-limb estimate and its product safely.
+///
+/// Subtracts that conservative estimated multiple from the original left. Returns
+/// the residual if it is already below right, otherwise tries one further
+/// subtraction and finally uses exact `%` if needed. Every successful return is
+/// `left % right`, strictly below right; no floating-point or qualified approximate
+/// result is involved. The estimate is not a promise of an exact quotient.
+///
+/// Preconditions are not validated as typed errors. In particular, an unordered
+/// pair can underflow, and a zero divisor can reach remainder by zero. Apparent
+/// success on some one-limb divisors does not extend the admitted helper domain.
+/// The body allocates nothing and returns neither Option nor a resource receipt.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires left >= right, right > u64::MAX,
     ensures result == left % right, result < right,
@@ -188,9 +266,23 @@ pub(crate) fn gcd_remainder(left: u128, right: u128) -> u128 {
     }
 }
 
-/// Reduce an arbitrary pair to a pair with a machine-word second operand,
-/// preserving its mathematical GCD. The loop discharges every precondition of
-/// `gcd_remainder` and strictly decreases the second operand.
+/// Reduce any u128 pair to an ordered pair whose second operand fits u64.
+///
+/// Sorts the original pair, then repeatedly replaces `(larger, smaller)` by
+/// `(smaller, larger % smaller)` while smaller exceeds u64::MAX. Each call to
+/// gcd_remainder therefore has ordered operands and a two-limb positive divisor;
+/// the divisor strictly decreases, preserving the mathematical GCD.
+///
+/// Returns two u128 values with first at least second and second at most u64::MAX.
+/// The first may remain wide. This is not necessarily the finished GCD: when
+/// second is zero, first is the GCD; otherwise the caller still computes the GCD
+/// of the returned pair. If the original smaller operand already fits u64, only
+/// the initial ordering is performed. Both zero and one-zero inputs are admitted.
+///
+/// The native GCD caller removes common binary factors before this helper and
+/// restores them after completing the scalar reduction; this helper itself does
+/// neither. Inputs are values, no allocation occurs, and no local work budget,
+/// cancellation check or exhausted result is provided.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures
         result.0 >= result.1,

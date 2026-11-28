@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/division.rs` | Entire authored exact-remainder reducer and GCD specification reviewed; ten descriptions distinguish helper preconditions, exact estimates, stopping pairs and seven ghost declarations. | Both-mode private docs and four consumer tests pass; 10,305 remainder and 10,659 reducer/reuse cases are unchanged, as are expanded tokens. Three normal descriptions per mode render; Verus configuration/expansion validation remains open. See two-limb division audit. |
 | `crates/hyperreal/src/verified/fixed_gcd.rs` | Entire authored fixed-buffer GCD and result carrier reviewed; nine descriptions cover variants/fields, raw construction, exact result meaning, zero paths and resource limits. | Both-mode private docs and three consumer tests pass; 3,084 independent GCD/reuse pairs and expanded tokens are unchanged. Eight normal descriptions per mode and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-buffer GCD audit. |
 | `crates/hyperreal/src/verified/limbs.rs` | Entire authored positional-value, shift, comparison, borrow and conversion implementation reviewed; thirty-eight descriptions include all private helpers and twenty-nine ghost declarations. | Both-mode private docs and five consumer tests pass; every runtime operation has unchanged independent probe results and expanded tokens. Nine normal descriptions per mode render; Verus configuration/expansion validation remains open. See limb arithmetic and positional-value audit. |
 | `crates/hyperreal/src/verified/dyadic.rs` | Entire authored carrier, difference and reduction implementation reviewed; twenty-one descriptions distinguish raw fields, exact-zero sentinels, native declines and ten ghost declarations. | Both-mode private docs and five consumer tests pass; independent reduction/reuse probes and expanded tokens are unchanged. Eleven normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See dyadic difference and reduction audit. |
@@ -27970,6 +27971,96 @@ AGENTS.md already mandates full public/private/generated Rustdoc. Authored revie
 of this file is complete; ghost/configuration validation and repository-wide
 coverage remain open. Continue with verified/division.rs and its Euclidean
 reduction and mathematical GCD contracts.
+
+## Two-limb division and GCD specification audit (28 November 2026)
+
+Owning layer: Hyperreal's exact u128 remainder reducer and shared mathematical
+GCD recurrence/characterization. P1/P5/P6/P37 require exact arithmetic, explicit
+helper domains, honest resource claims and evidence-scoped verification. At
+23a7d9351, read all 223 lines of verified/division.rs. Five declarations had brief
+summaries, but the module and other ghost lemmas lacked descriptions; runtime
+summaries omitted unchecked preconditions and the distinction between a reduced
+pair and a completed GCD. Complete item documentation was the missing acceptance
+witness. Existing consumer fixtures were retained unchanged.
+
+Read the native GCD consumer's factor removal, pair reduction and final scalar
+completion, related common-divisor consumers and affected rational/fixed-buffer
+fixtures as context. These reads do not confer whole-file review credit on those
+files. Before editing, a source-copy probe reproduced exact remainders and the
+reducer's stopping/reuse contract with independent native remainder expectations.
+
+The file now has 315 lines and ten descriptions: module, two runtime functions
+and seven ghost declarations, including private helpers. All executable/proof/
+specification tokens, attributes, assertions and call order are unchanged;
+ordinary compiler-expanded tokens also match after comments are excluded.
+The documentation records:
+
+- The ghost gcd recurrence admits arbitrary naturals with gcd(0,0)=0. Its
+  common-divisor induction preserves exactly the positive divisors of both
+  operands. Positivity requires at least one nonzero input. Characterization
+  gives divisibility and a greatest-positive-divisor assertion only for a
+  positive result; two zeros have no largest positive common divisor.
+- common_divisors_step assumes a positive divisor of the positive right operand,
+  without requiring it to divide left. The increasing-pair swap lemma covers
+  the reducer's initial swap. These are mathematical relations, not a runtime
+  arbitrary-precision implementation or evidence of a new proof run.
+- high_quotient_bound requires a two-limb divisor and left>=5*right in mathematical
+  arithmetic. It bounds the divisor's high limb so adding one fits, and bounds
+  the conservative estimate's product by left. This establishes safe native
+  multiplication/subtraction without asserting an exact quotient or a universally
+  sufficient single correction.
+- gcd_remainder requires left>=right and right>u64::MAX. Quotients one through
+  four use ordered subtractions. Larger quotients use a conservative high-limb
+  estimate, then a possible subtraction and exact remainder fallback. Every
+  admitted result is the exact remainder below right; the estimate does not
+  introduce numerical approximation or a qualified certainty result.
+- Helper preconditions are not runtime validation. An unordered pair can
+  underflow and zero can reach remainder by zero. Occasional success with a
+  one-limb divisor does not extend this helper's domain.
+- reduce_gcd_to_word accepts all u128 pairs, orders them, and reduces only while
+  the second operand exceeds u64::MAX. The first result may remain wide; the
+  pair preserves GCD but is not necessarily the completed GCD. A zero second
+  operand identifies the first as the GCD; otherwise the caller finishes the
+  scalar computation. Common-factor removal/restoration belongs to that caller.
+  Runtime arithmetic allocates no heap and has no configurable work/cancellation
+  budget or exhausted outcome; decreasing the divisor is not a timing claim.
+
+Executed after the final source edit:
+
+- Both locked/offline feature configurations pass four exact-name tests: native
+  word GCD, fixed 256/512-bit GCD, native fraction reduction and mixed-width/zero
+  rational-operation GCD dispatch. Independent remainder/BigUint/BigRational
+  expectations, directed quotient boundaries and existing assertions are unchanged.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All three normal descriptions render in each mode. Seven exact ghost
+  descriptions and unchanged full declaration bodies render separately as
+  Markdown, without claiming ghost configuration compilation or Verus expansion.
+- The warnings-denied source-copy probe gives identical baseline/final output:
+  10,305 remainders equal ordinary u128 remainder; 10,659 reduced pairs retain
+  ordering, a u64-sized second operand and the reference GCD. Reapplying the
+  reducer preserves every returned pair. Pairs already within the stopping gate
+  equal the sorted input, including zero cases.
+- Remainder input categories include quotients one through four (5,069/1,620/893/
+  514 cases), then estimate differences zero, one and at least two (2,051/54/104).
+  These are classifications derived from input arithmetic, not instrumented
+  dispatch counts or performance measurements. Three invalid controls reproduce
+  debug underflow, zero-divisor panic and an unvalidated one-limb success; none
+  is advertised as supported helper input.
+- Source/declaration/render inventories, baseline/final source and expanded-token
+  comparisons and git diff --check pass. There are no derives adding runtime
+  items to audit here. The pinned Verus executable remains absent; formal runs,
+  ghost compilation/expansion and refreshed source-bound proof reports are
+  uncredited. Full workflows, benchmarks and cross-target checks remain
+  owner-waived for this documentation-only session.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-division-audit/: baseline,
+probe/expansion sources, scripts, commands/logs, inventories and compressed
+selected HTML. Owned binary/source copy and duplicate HTML trees are removed
+after checking; the shared Cargo target is reused without incremental compilation.
+AGENTS.md already mandates full public/private/generated Rustdoc. Authored review
+of this file is complete; ghost/configuration validation and repository-wide
+coverage remain open. Continue with verified/gcd.rs, including its common-factor
+proofs, trailing-bit definitions, constant lookup construction and scalar paths.
 
 ## Next work
 
