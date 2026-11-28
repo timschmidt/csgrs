@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/mod.rs` | Entire authored module boundary and both private proof-erasure macros reviewed; three descriptions explain shared bodies, lexical scope and normal/ghost differences. | Both-mode private docs render the three descriptions and twelve inherited child-module descriptions; baseline/final erasure probes and expanded tokens agree. Verus configuration validation and previously recorded generated-item gaps remain open. See verified module audit. |
 | `crates/hyperreal/src/verified/lehmer.rs` | Entire authored matrix selector, coefficient gates and proofs reviewed; twenty descriptions distinguish width, unimodularity, leading progress and full-magnitude application. | Both-mode private docs and four consumer tests plus the all-feature trace fixture pass; 34,008 leading pairs and coefficient/reuse probes are unchanged, as are expanded tokens. Five normal descriptions per mode render; Verus configuration/expansion validation remains open. See Lehmer batch audit. |
 | `crates/hyperreal/src/verified/fraction.rs` | Entire authored native reduction, cross-cancellation and supporting proofs reviewed; twenty-two descriptions cover prefix admission, unchecked domains and eighteen ghost declarations. | Both-mode private docs and four consumer tests pass; independent reduction/product/reuse probes and expanded tokens are unchanged. Four normal descriptions per mode render; Verus configuration/expansion validation remains open. See native fraction and cross-cancellation audit. |
 | `crates/hyperreal/src/verified/gcd.rs` | Entire authored native GCD implementation, lookup construction and factor proofs reviewed; twenty-eight descriptions cover private const helpers, complete scalar domains and eighteen ghost declarations. | Both-mode private docs and five consumer tests pass; exhaustive u8/table probes, partial fills, native/reuse probes and expanded tokens are unchanged. Ten normal descriptions per mode render; Verus configuration/expansion validation remains open. See native GCD and lookup audit. |
@@ -28310,6 +28311,63 @@ already mandates full public/private/generated Rustdoc. Authored review of this
 file is complete; ghost/configuration validation and repository-wide coverage
 remain open. Continue with verified/mod.rs, its normal-build proof erasure macros
 and the shared module boundary, without inferring completed formal coverage.
+
+## Verified module and proof-erasure audit (28 November 2026)
+
+Owning layer: Hyperreal's shared kernel module boundary and ordinary-build ghost
+syntax erasure. P1/P6/P37 require that documentation distinguish executable
+behavior, input validation and actual proof evidence. At 2ac99c812, read all
+27 lines of verified/mod.rs, both import sites in the library/verification entry
+point and representative proof/ghost-declaration consumers from the audited
+children. Both private macros lacked descriptions. The missing acceptance
+witness was documented erasure and configuration behavior, rather than an
+assumption that a module named verified establishes current formal completeness.
+
+Before editing, a source-prefix probe reproduced both macro definitions exactly.
+Six item/statement invocations, including empty input, unknown names, ghost
+syntax and a compile_error invocation inside the erased tokens, compile without
+expanding their contents. A Cell mutation inside a proof block has no runtime
+side effect. Negative controls show that an empty expansion is not a unit-valued
+expression and that these local definitions are absent under verus_keep_ghost
+when invoked with ordinary rustc without the verification environment. The
+latter is not a Verus compilation or a failure of that environment.
+
+The file now has 65 lines and three descriptions: module plus two macros.
+The twelve child-module declarations inherit their documentation from the
+already reviewed child files; redundant copies are not introduced. Docs explain
+that the same production bodies are imported by both entry points, that normal
+builds omit ghost declarations and erase proof tokens, and that normal success
+neither validates erased names nor proves the mathematical contracts. The
+macros emit no bindings, assertions or side effects and are lexical helpers,
+not exported APIs. Individual child domains and resource limits remain local.
+
+Executed after the final edit:
+
+- Both locked/offline private cargo doc builds pass with warnings and broken/
+  private links denied. The module and both private macro pages render their
+  complete descriptions. All twelve inherited child-module descriptions also
+  render in both configurations; thirty selected pages are retained compressed.
+- Baseline/final warnings-denied erasure probes and both negative controls agree.
+  Source and ordinary compiler-expanded tokens are unchanged after comments are
+  excluded. git diff --check passes. No executable, proof, specification, lint,
+  assertion or module ordering was changed, and no repository test was added.
+- The pinned Verus executable remains unavailable. Actual ghost compilation,
+  macro expansion and formal proof runs remain uncredited. Full workflow,
+  benchmark and cross-target checks remain waived by the owner for this session.
+
+All thirteen authored files currently in src/verified now have explicit
+whole-file review records. That closes this directory's authored-source review,
+not its generated/configuration validation: prior FloatParts, Word, Magnitude
+and Product derive-item documentation gaps and absent Verus evidence remain
+open. These records do not establish repository-wide 100% coverage or formal
+verification completeness. AGENTS.md already mandates full public/private/
+generated Rustdoc and private-doc generation; the requirement is unchanged.
+
+Evidence is under /tmp/csgrs-hyperreal-verified-module-audit/: baseline, source-
+prefix probe, scripts/logs, expansions, inventories and compressed selected HTML.
+Owned binaries and duplicate HTML trees are removed; shared Cargo artifacts are
+reused without incremental compilation. Continue with remaining Hyperreal root
+modules, beginning with trace.rs and its enabled/disabled argument evaluation.
 
 ## Next work
 
