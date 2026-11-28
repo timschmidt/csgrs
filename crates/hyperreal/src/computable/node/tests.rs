@@ -3711,6 +3711,12 @@ mod tests {
     }
 
     #[test]
+    /// Require nested offsets to retain the original shared child when adding
+    /// +1 to i32::MAX or -1 to i32::MIN cannot fit one exponent. Undo each
+    /// outer shift and an affine offset composition, requiring structural recovery
+    /// of the original base and no cached sample on the recovered node.
+    /// The sin(1) base is not evaluated at these extreme scales; this tests
+    /// construction and cancellation, not safe evaluation at arbitrary precision.
     fn affine_offset_scaling_keeps_extreme_binary_exponents_exact() {
         let atom = Computable::one().sin();
         for (inner, outer) in [(i32::MAX, 1), (i32::MIN, -1)] {
@@ -3720,24 +3726,37 @@ mod tests {
                 Approximation::Offset(child, shift) if *shift == outer
                     && Arc::ptr_eq(&child.internal, &base.internal)));
             assert!(Computable::internal_structural_eq(
-                &shifted.shift_left(-outer), &base,
+                &shifted.shift_left(-outer),
+                &base,
             ));
             let affine = base.clone().add(Computable::one()).shift_left(outer);
             let offset = Computable::power_of_two_rational(outer).add_one();
-            let recovered = affine.add(Computable::one())
-                .add(Computable::rational(-offset)).shift_left(-outer);
+            let recovered = affine
+                .add(Computable::one())
+                .add(Computable::rational(-offset))
+                .shift_left(-outer);
             assert!(Computable::internal_structural_eq(&recovered, &base));
             assert!(recovered.cached().is_none());
         }
     }
 
     #[test]
+    /// Exercise 144 scaled affine sums over sin(1), requiring exact extracted
+    /// scale/offset coefficients, the same structural base, an empty result sample
+    /// cache and certified cancellation against the expected expression.
+    /// Separately require an Add to retain both operand allocations, a shared
+    /// three-visit extraction budget, and recognizer decline for insufficient
+    /// budgets, extreme shifts and an oversized scale. Decline is not inequality
+    /// or a total-resource certificate. A final distinct-base case compares
+    /// samples only, at precision -128 within two units.
     fn affine_offsets_preserve_shared_bases_through_exact_scaling() {
         let atom = Computable::one().sin();
         let left_offset = Rational::fraction(-5, 8).unwrap();
         let right_offset = Rational::fraction(-3, 8).unwrap();
         let scales = [
-            Rational::one(), Rational::new(-1), Rational::new(-3),
+            Rational::one(),
+            Rational::new(-1),
+            Rational::new(-3),
             Rational::fraction(7, 11).unwrap(),
             Rational::fraction(-1, 1024).unwrap(),
             Rational::new(1024),
@@ -3755,16 +3774,24 @@ mod tests {
                             };
                             sum.multiply_rational(scale.clone())
                         };
-                        let actual = affine(&left_offset, left_scale, left_reversed)
-                            .add(affine(&right_offset, right_scale, right_reversed));
-                        let expected = atom.clone().multiply_rational(left_scale + right_scale)
+                        let actual = affine(&left_offset, left_scale, left_reversed).add(affine(
+                            &right_offset,
+                            right_scale,
+                            right_reversed,
+                        ));
+                        let expected = atom
+                            .clone()
+                            .multiply_rational(left_scale + right_scale)
                             .add(Computable::rational(
                                 &left_offset * left_scale + &right_offset * right_scale,
                             ));
                         let (base, scale, offset) = actual.rational_offset_parts(&mut 8).unwrap();
                         assert!(Computable::internal_structural_eq(base, &atom));
                         assert_eq!(scale, left_scale + right_scale);
-                        assert_eq!(offset, &left_offset * left_scale + &right_offset * right_scale);
+                        assert_eq!(
+                            offset,
+                            &left_offset * left_scale + &right_offset * right_scale
+                        );
                         assert!(actual.cached().is_none(), "folding must not approximate");
                         let cancelled = actual.add(expected.negate());
                         assert_eq!(cancelled.sign_until(0), Some(RealSign::Zero));
@@ -3777,34 +3804,65 @@ mod tests {
         let lower = atom.clone().add(Computable::rational(left_offset.clone()));
         let upper = atom.clone().add(Computable::rational(right_offset.clone()));
         let sum = lower.clone().add(upper.clone());
-        assert!(matches!(&sum.internal.approximation, Approximation::Add(left, right)
+        assert!(
+            matches!(&sum.internal.approximation, Approximation::Add(left, right)
             if Arc::ptr_eq(&left.internal, &lower.internal)
-                && Arc::ptr_eq(&right.internal, &upper.internal)));
+                && Arc::ptr_eq(&right.internal, &upper.internal))
+        );
         assert!(sum.rational_offset_parts(&mut 2).is_none());
         let mut budget = 3;
         assert!(sum.rational_offset_parts(&mut budget).is_some());
         assert_eq!(budget, 0, "both branches share one traversal budget");
-        let affine = atom.clone().add(Computable::rational(left_offset.clone()))
+        let affine = atom
+            .clone()
+            .add(Computable::rational(left_offset.clone()))
             .multiply_rational(Rational::fraction(-7, 11).unwrap());
         assert!(affine.rational_offset_parts(&mut 0).is_none());
         assert!(affine.rational_offset_parts(&mut 1).is_none());
         assert!(affine.rational_offset_parts(&mut 8).is_some());
-        assert!(affine.clone().shift_left(i32::MAX).rational_offset_parts(&mut 8).is_none());
-        assert!(affine.clone().shift_left(i32::MIN).rational_offset_parts(&mut 8).is_none());
+        assert!(
+            affine
+                .clone()
+                .shift_left(i32::MAX)
+                .rational_offset_parts(&mut 8)
+                .is_none()
+        );
+        assert!(
+            affine
+                .clone()
+                .shift_left(i32::MIN)
+                .rational_offset_parts(&mut 8)
+                .is_none()
+        );
         let large_scale = Rational::from_bigint((BigInt::one() << 8192_usize) + BigInt::one());
-        assert!(affine.multiply_rational(large_scale).rational_offset_parts(&mut 8).is_none());
+        assert!(
+            affine
+                .multiply_rational(large_scale)
+                .rational_offset_parts(&mut 8)
+                .is_none()
+        );
 
         // Different symbolic bases must not be merged merely because the
         // rational offsets and scales agree.
         let distinct = Computable::rational(Rational::new(2)).sin();
-        let actual = atom.clone().add(Computable::rational(left_offset.clone()))
-            .add(distinct.clone().add(Computable::rational(right_offset.clone())));
-        let expected = atom.add(distinct)
+        let actual = atom
+            .clone()
+            .add(Computable::rational(left_offset.clone()))
+            .add(
+                distinct
+                    .clone()
+                    .add(Computable::rational(right_offset.clone())),
+            );
+        let expected = atom
+            .add(distinct)
             .add(Computable::rational(left_offset + right_offset));
         assert_close(actual, expected, -128, 2);
     }
 
     #[test]
+    /// Compare (-pi)^2 with pi^2 at precision -60 within two integer units.
+    /// This checks the sign-normalization identity numerically; despite its name,
+    /// the fixture does not inspect constructor collapse or retained node kinds.
     fn square_of_negative_value_collapses_to_square_of_positive_value() {
         let value = Computable::pi().negate().square();
         let expected = Computable::pi().square();
@@ -3812,6 +3870,9 @@ mod tests {
     }
 
     #[test]
+    /// Warm pi at precision -16, then compare 1/(-pi) with -(1/pi) at -60
+    /// within two units. The nonzero input admits reciprocal sign normalization;
+    /// no graph-shape or refinement-count assertion accompanies the comparison.
     fn inverse_of_negative_nonzero_value_normalizes_sign() {
         let base = Computable::pi();
         base.approx(-16);
@@ -3821,6 +3882,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare pi*(-1) with -pi at precision -60 within two integer units.
+    /// The identity motivates a constructor rewrite, but this fixture checks
+    /// numerical agreement rather than the resulting node kind.
     fn multiply_by_negative_one_collapses_to_negate() {
         let minus_one = Computable::rational(Rational::one().neg());
         let value = Computable::pi().multiply(minus_one);
@@ -3829,6 +3893,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare pi*(1/8) with pi shifted right by three bits at precision -60
+    /// within two units. This witnesses exact binary scaling numerically without
+    /// inspecting whether multiplication actually became an Offset node.
     fn multiply_by_power_of_two_fraction_collapses_to_shift() {
         let value =
             Computable::pi().multiply(Computable::rational(Rational::fraction(1, 8).unwrap()));
@@ -3837,6 +3904,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare pi*(-1/8) with the negation of pi shifted right by three bits,
+    /// at precision -60 within two units. The assertion checks the signed scaling
+    /// identity without requiring particular Negate or Offset node tags.
     fn multiply_by_negative_power_of_two_fraction_collapses_to_shift_and_negate() {
         let value =
             Computable::pi().multiply(Computable::rational(Rational::fraction(-1, 8).unwrap()));
@@ -3845,6 +3915,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare (8*pi)^2 with pi^2 scaled by 2^6 at precision -60 within
+    /// two integer units. This finite identity check does not inspect the rewrite
+    /// or exercise overflow of the doubled binary exponent.
     fn square_of_power_of_two_scaled_value_collapses_to_shifted_square() {
         let value = Computable::pi()
             .multiply(Computable::rational(Rational::new(8)))
@@ -3854,6 +3927,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare sqrt(((7/8)*pi)^2) with (7/8)*pi at precision -60 within
+    /// two units. Positivity determines the principal root; the assertion does
+    /// not establish that the constructor returned an existing node.
     fn sqrt_of_exactly_scaled_square_collapses_at_construction() {
         let value = Computable::pi()
             .multiply(Computable::rational(Rational::fraction(7, 8).unwrap()))
@@ -3865,6 +3941,10 @@ mod tests {
     }
 
     #[test]
+    /// Require identical precision -60 samples for sqrt(49/64) and 7/8,
+    /// using zero allowance. The expected principal root is rational and exactly
+    /// representable at this binary precision; the test does not query an exact
+    /// rational projection or prove equality from samples in general.
     fn sqrt_of_exact_rational_square_is_exact() {
         let value = Computable::rational(Rational::fraction(49, 64).unwrap()).sqrt();
         let expected = Computable::rational(Rational::fraction(7, 8).unwrap());
@@ -3872,6 +3952,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare sqrt(12) with twice the shared sqrt(3) construction at precision
+    /// -60 within two units. This checks the positive-root identity numerically,
+    /// without asserting allocation identity or actual shared-constant reuse.
     fn sqrt_squarefree_two_three_reuses_shared_constants() {
         let sqrt_twelve = Computable::rational(Rational::new(12)).sqrt();
         let expected = Computable::sqrt_constant(3)
@@ -3881,6 +3964,10 @@ mod tests {
     }
 
     #[test]
+    /// Build two sqrt(2) handles and oppositely signed, binary-scaled products,
+    /// then require exact_sign to certify their sum as zero. The construction
+    /// calls are separate but may share native constants; no distinct allocation
+    /// or numerical approximation is required by the assertion.
     fn independently_expanded_quadratic_products_cancel_exactly() {
         let left_sqrt = Computable::sqrt_rational(Rational::new(2));
         let right_sqrt = Computable::sqrt_rational(Rational::new(2));
@@ -3895,6 +3982,9 @@ mod tests {
     }
 
     #[test]
+    /// Require oppositely signed products of sqrt(2) and 2*sqrt(2), each
+    /// scaled by 1/2, to expose exact rational zero when added. This checks
+    /// recoverable rational cancellation, beyond agreement of approximate samples.
     fn sign_normalization_exposes_scaled_product_cancellation() {
         let left = Computable::sqrt_rational(Rational::new(2));
         let right = Computable::sqrt_rational(Rational::new(2)).shift_left(1);
@@ -3905,6 +3995,9 @@ mod tests {
     }
 
     #[test]
+    /// Compare sqrt(2)^2 with 2 at precision -60 within two integer units.
+    /// The positive radicand admits the identity; the fixture does not inspect
+    /// whether construction eliminated the square and square-root nodes.
     fn square_of_sqrt_of_positive_value_collapses_at_construction() {
         let value = Computable::rational(Rational::new(2)).sqrt().square();
         let expected = Computable::rational(Rational::new(2));
@@ -3912,6 +4005,9 @@ mod tests {
     }
 
     #[test]
+    /// Warm pi at precision -16, then compare 1/(2^5*pi) with 2^-5/pi
+    /// at -60 within two units. This valid nonzero reciprocal identity checks
+    /// sample agreement without inspecting the offset/inverse rewrite.
     fn inverse_of_shifted_nonzero_value_collapses_to_shifted_inverse() {
         let base = Computable::pi();
         base.approx(-16);
@@ -3921,6 +4017,10 @@ mod tests {
     }
 
     #[test]
+    /// Require zero to expose zero sign/status and exact rational availability,
+    /// with no magnitude exponent. Require -7/8 to expose negative/nonzero facts,
+    /// exact rational availability and the exact binary magnitude exponent -1.
+    /// These assertions check all four fields for the two selected snapshots.
     fn structural_facts_for_exact_rationals() {
         let zero = Computable::rational(Rational::zero()).structural_facts();
         assert_eq!(zero.sign, Some(RealSign::Zero));
@@ -3942,6 +4042,9 @@ mod tests {
     }
 
     #[test]
+    /// Require pi to expose positive/nonzero facts, no directly available exact
+    /// rational representation, and exact binary magnitude exponent one.
+    /// The snapshot assertions do not measure cache activity or traversal work.
     fn structural_facts_for_shared_constant() {
         let facts = Computable::pi().structural_facts();
         assert_eq!(facts.sign, Some(RealSign::Positive));
@@ -3957,6 +4060,10 @@ mod tests {
     }
 
     #[test]
+    /// Require signed nonzero facts and exact magnitude exponents for pi-3,
+    /// 3-pi and 2*pi-6: respectively positive/-3, negative/-3 and positive/-2.
+    /// Also require pi-3 to have positive sign at floor zero. These assertions
+    /// exercise constant-offset certificates without counting refinement calls.
     fn structural_facts_for_constant_rational_offset_certificates() {
         let pi_minus_three = Computable::pi().add(Computable::rational(Rational::new(-3)));
         let facts = pi_minus_three.structural_facts();
@@ -3999,6 +4106,9 @@ mod tests {
     }
 
     #[test]
+    /// Check Zero for rational zero and NonZero for -7/8, pi and pi-22/7.
+    /// These inputs admit structural nonzero proofs. The test checks returned
+    /// statuses; it does not instrument refinement or require empty caches.
     fn zero_status_uses_structural_facts_without_refinement() {
         assert_eq!(
             Computable::rational(Rational::zero()).zero_status(),
@@ -4016,6 +4126,9 @@ mod tests {
     }
 
     #[test]
+    /// Require pi-3 to have positive sign with floors zero and -8.
+    /// Its structural certificate permits the coarse answer; these two successful
+    /// queries do not test an undecided floor boundary or count internal precision.
     fn sign_until_respects_precision_floor() {
         let near_pi = Computable::pi().add(Computable::rational(Rational::new(-3)));
 
@@ -4024,6 +4137,9 @@ mod tests {
     }
 
     #[test]
+    /// Require -(1/((-7/8)*pi)) to have positive sign with floor zero.
+    /// The nonzero construction preserves sign evidence; the assertion does not
+    /// instrument approximation calls or establish a general no-refinement bound.
     fn sign_until_uses_structural_bounds_without_refinement() {
         let value = Computable::pi()
             .multiply(Computable::rational(Rational::fraction(-7, 8).unwrap()))
@@ -4034,6 +4150,9 @@ mod tests {
     }
 
     #[test]
+    /// Require 8-1/8=63/8 to have positive sign with floor zero and binary
+    /// magnitude exponent two with floor -4. The rational sum can fold exactly;
+    /// these result checks do not isolate a general dominant-term proof path.
     fn add_with_dominant_term_has_structural_bound() {
         let value = Computable::integer(BigInt::from(8))
             .add(Computable::rational(Rational::fraction(-1, 8).unwrap()));
@@ -4042,6 +4161,9 @@ mod tests {
     }
 
     #[test]
+    /// Require 1/2-(3/8)*sqrt(2) to be nonzero and negative at sign floor -64.
+    /// The exact comparison 1/4 < 9/32 proves the negative radical term has
+    /// larger magnitude; the fixture checks sign/zero facts, not sample closeness.
     fn opposite_sign_quadratic_surd_is_certified_nonzero() {
         let half = Computable::rational(Rational::fraction(1, 2).unwrap());
         let negative_radical = Computable::rational(Rational::new(2))
@@ -4054,6 +4176,10 @@ mod tests {
     }
 
     #[test]
+    /// Require the tolerance comparison of pi+2^-200 with pi at exponent -128
+    /// to return Equal. Their exact values differ, so this result means the
+    /// comparison did not separate the perturbation; it does not authorize
+    /// removing the term from the represented expression.
     fn add_ignores_tiny_term_at_target_precision() {
         let big = Computable::pi();
         let tiny = Computable::rational(
@@ -4066,6 +4192,10 @@ mod tests {
     }
 
     #[test]
+    /// Subtract the shared pi base from pi-2^-200 and compare the residual
+    /// with -2^-200 at tolerance exponent -180. This checks the cancellation
+    /// path's result; compare_absolute can use exact rational evidence even below
+    /// its tolerance, while Equal is not a general exact-equality certificate.
     fn add_does_not_ignore_tiny_opposite_sign_term() {
         let big = Computable::pi();
         let tiny = Computable::rational(
@@ -4077,6 +4207,11 @@ mod tests {
     }
 
     #[test]
+    /// Apply x -> -(1/((-7/8)*x)) 2,000 times to warmed pi, then require
+    /// positive sign at floor zero and agreement with pi at -60 within two units.
+    /// The transform is the involution 8/(7*x) on nonzero inputs; an even count
+    /// returns pi. Constructor simplification means iteration count alone does
+    /// not establish retained depth, stack usage or a total-resource bound.
     fn deep_structural_bound_chain() {
         let scale = Computable::rational(Rational::fraction(-7, 8).unwrap());
         let mut value = Computable::pi();
@@ -4089,6 +4224,10 @@ mod tests {
     }
 
     #[test]
+    /// Double a shared exp(pi)-100 expression through 128 additions and require
+    /// cheap_bound to return Unknown. This guards completion of a repeated-sharing
+    /// workload while preserving conservative facts; it does not assert visit
+    /// counts, retained node count or a bound on total traversal work.
     fn structural_bound_walk_reuses_shared_dag_subtrees() {
         // `exp(pi) - 100` has no cheap structural bound. Repeatedly sharing it
         // under addition makes the logical expression tree exponential while
@@ -4105,6 +4244,11 @@ mod tests {
     }
 
     #[test]
+    /// Construct two matching shared exp(pi)-100 graphs and one exp(pi)-101
+    /// graph, each doubled through 128 additions. Require structural equality
+    /// for the matching pair and inequality for the differing constants.
+    /// The finite shared-graph regression does not instrument visits or prove
+    /// that each pair was visited exactly once.
     fn structural_equality_visits_shared_dag_pairs_once() {
         let mut left = Computable::pi()
             .exp()

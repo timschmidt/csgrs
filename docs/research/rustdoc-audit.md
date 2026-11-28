@@ -21843,6 +21843,89 @@ temporary HTML were removed after inspection. Builds reused the roughly 6.6 GiB
 shared target with incremental compilation disabled. Repository-wide line review
 and all-configuration coverage remain unfinished.
 
+## Hyperreal affine normalization and structural-fact fixture audit
+
+On baseline `e5b825a21049c07a62572bfd61029b384e1feebd`, read every line of
+`crates/hyperreal/src/computable/node/tests.rs` from
+affine_offset_scaling_keeps_extreme_binary_exponents_exact through
+structural_equality_visits_shared_dag_pairs_once: baseline lines 3713–4127,
+415 lines. Added 28 descriptions; the section now spans 559 lines and ends
+at line 4271. Continuous review, including preceding records, reaches line
+4271 of the 5200-line file. The enclosing module and remaining tail still
+receive no whole-file completion credit.
+
+Owning layer: Hyperreal native scalar regression fixtures, principally P1–P5.
+The missing acceptance witness was accurate Rustdoc for these private tests.
+Inputs include finite affine forms over shared sine bases, exact rational
+scales, nonzero reciprocal compositions, positive principal roots, constant
+and quadratic-surd facts, tiny signed perturbations and shared arithmetic DAGs.
+All 28 selected baseline tests passed with all features before editing.
+Reviewed consumer context includes rational_offset_parts, constructor identity
+and reciprocal rewrites, structural_facts, zero_status, compare_absolute,
+cheap_bound and structural equality. Production behavior remains unchanged.
+
+The descriptions preserve these distinctions:
+
+- Extreme binary shifts retain two offsets when the exponent sum cannot fit
+  i32. Tests inspect the shared child, structural recovery and the recovered
+  node's empty sample cache. They do not evaluate those extreme scales.
+- The affine corpus covers 144 combinations: six left scales, six right scales
+  and both addition orders on each side. It asserts exact extracted scale and
+  offset, the same structural base, an empty result sample cache and certified
+  zero after cancellation. A separate Add preserves both operand allocations.
+  Extraction declines at budget two and succeeds at three with zero remaining;
+  scaled cases also cover inadequate budgets, extreme shifts and an 8193-bit
+  authored scale. These are recognizer limits, not total-resource accounting
+  or inequality proofs. The distinct sine-base case compares samples only.
+- Sample-only rewrite fixtures are distinguished from exact-sign and exact
+  rational cancellation assertions. Separate sqrt(2) construction calls need
+  not produce distinct allocations. Zero allowance for sqrt(49/64) versus 7/8
+  asserts equal samples at -60, not a general scalar-equality procedure.
+- Structural snapshots qualify sign, zero, rational availability and exact
+  magnitude separately. Queries named for absence of refinement do not count
+  refinements or inspect all caches. pi-3 can be positive at floor zero using
+  existing structural evidence; that is not a failed-floor boundary witness.
+- pi+2^-200 compares Equal with pi at tolerance -128 despite unequal exact
+  values. The negative perturbation fixture subtracts the shared pi base and
+  compares the residual with -2^-200; exact rational comparison may distinguish
+  values below the requested tolerance. Equal is not uniformly exact equality.
+- The 2,000-step reciprocal/sign chain applies the involution 8/(7*x), so its
+  even iteration count returns pi on this nonzero domain. Constructor iteration
+  counts do not establish retained graph depth. The 128-step sharing fixtures
+  assert Unknown bounds or structural equality/inequality, without instrumented
+  visit counts or a total traversal/memory bound.
+
+Independent Python Fraction arithmetic used Machin/alternating-atan enclosures
+for pi to verify the selected constant-offset signs/binades and pi<22/7. Exact
+arithmetic also verified rational binades, the negative quadratic-surd sign,
+root/scaling identities and the reciprocal involution's coefficient matrix.
+These establish the mathematical fixture expectations, not universal native
+algorithm completeness, absence of refinement or performance bounds.
+
+After the final source edit, locked/offline two-job focused validation passed:
+
+- All 28 tests without default features and with all features; all 84 selected
+  baseline/final logs were checked for one nonempty success each.
+- Both private library Rustdoc configurations and temporary test-enabled private
+  Rustdoc, denying warnings and broken/private intra-doc links. All 28 complete
+  descriptions were located in their rendered function pages.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Scoped Rustfmt and git diff --check. Independently formatted comment-free
+  tokens are identical; raw token differences are two optional trailing commas
+  inserted by Rustfmt. Source outside the reviewed section is byte-identical.
+  No fixture, assertion, predicate order, algorithm or signature changed.
+
+No focused check remains blocked and no new runtime defect was found in these
+finite witnesses. Full workflows remain owner-waived for the docs-only session;
+no performance claim is made. AGENTS.md's public/private documentation mandate
+remains in force. Evidence under
+`/tmp/csgrs-hyperreal-node-affine-fixtures-audit/` retains scripts, command logs,
+exact expectations and item/render/token inventories. Owned shadow sources and
+temporary HTML were removed after inspection. Builds reused the roughly 6.6 GiB
+shared target with incremental compilation disabled. Repository-wide line review
+and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
