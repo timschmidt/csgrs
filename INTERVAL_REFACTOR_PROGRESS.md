@@ -16816,3 +16816,12 @@ falls from about 770× to about 360×.
 **Next.** Survey widths on more nonlinear fields before changing the default.
 Then remove the remaining regularity cost by deriving it from the same
 Jacobian enclosure.
+
+**Nonlinear width survey.** This used a temporary release test, since deleted,
+covering five two-state fields to t = 2 with default noise options:
+- `MeanValue` was 2.9–3.6× faster on every field.
+- Endpoint widths grew by 0.1–1.4% from narrow initial boxes (2^-9 wide).
+- They grew by 20–25% for Van der Pol from a 16x wider box.
+
+The default therefore stays `Lagrange`. A width-aware choice is the next
+candidate: `MeanValue` when the noise domain is narrow.

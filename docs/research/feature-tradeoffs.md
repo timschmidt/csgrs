@@ -141,8 +141,21 @@ retention. "Shipped" sizes are linked release or deployed images.
   field where both remainders vanish. They are +0.01% (point) and +0.14%
   (box) for Riccati. All are within the comparison's limits.
 - **Code size:** one enum, one constructor branch, and two test files.
-- **Decision:** opt-in. The default stays `Lagrange`, so pinned noise traces
-  and fixtures are unchanged.
+- **Nonlinear survey (27 November):** five two-state fields to t = 2, with
+  step cap 1/16, flow order 3 and default noise options, release build:
+
+  | Field | Speedup | Width change |
+  | --- | --- | --- |
+  | Van der Pol | 3.6× | +1.1–1.3% |
+  | cubic pendulum | 3.1× | +0.1–0.2% |
+  | Lotka-Volterra | 3.4× | +1.4% |
+  | quadratic shear | 2.9× | +0.3–0.5% |
+  | Van der Pol, 16x wider box | 3.4× | +20–25% |
+
+- **Decision:** opt-in, with `Lagrange` as the default. The cost of
+  `MeanValue` grows with box width: it is negligible for narrow, point-like
+  states and about 20% for wide boxes. Pinned noise traces and fixtures are
+  unchanged.
 - **Reconsider:** make `MeanValue` the noise-evolution default after a wider
   nonlinear width survey (two-rate, shear and pendulum cases). Deriving the
   remaining regularity cost (about 25% of the old build) from the same
