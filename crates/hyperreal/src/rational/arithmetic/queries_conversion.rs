@@ -1,27 +1,38 @@
+/// Exact value/size queries, symbolic binary scaling and primitive-float views.
+///
+/// Canonicalizing queries can allocate and retain reduced parts; raw views and
+/// borrowed comparisons keep original storage available for size admission.
+/// Rounded floats, exact representability facts and certified enclosures have
+/// distinct contracts. This layer supplies no universal work/memory budget.
 impl Rational {
-    /// Returns a shared multiplicative identity for borrowed exact kernels.
+    /// Borrow the process-lifetime shared rational one without cloning its handle.
+    ///
+    /// Borrowed exact kernels use this identity to avoid constructing a temporary
+    /// rational. First access initializes the shared value if necessary.
     #[inline]
     pub fn one_ref() -> &'static Self {
         &RATIONAL_ONE
     }
 
-    /// Returns the identity of this rational's immutable shared storage.
+    /// Return the address of this rational's immutable shared payload as a cache key.
     ///
-    /// This is an internal cache key, not a numeric hash. Callers that retain
-    /// the key must also retain a clone of the rational so allocator address
-    /// reuse cannot alias a different value.
+    /// Clones have the same key; equal values with separate payloads need not.
+    /// This is neither a numeric hash nor a stable serialization identifier.
+    /// Callers retaining the key must also retain an owning clone so allocator
+    /// address reuse cannot identify a different object. The query performs no
+    /// canonicalization or numeric comparison.
     #[inline]
-    #[doc(hidden)]
     pub fn storage_identity(&self) -> usize {
         Arc::as_ptr(&self.0) as usize
     }
 
-    /// Returns a coarse immutable-storage cost class for exact scheduling.
+    /// Classify stored magnitude widths for choosing exact arithmetic schedules.
     ///
-    /// This inspects only stored numerator and denominator bit lengths. It is
-    /// not a numeric predicate and reveals no value, so higher-level kernels
-    /// can defer expensive constructions without crossing the scalar
-    /// abstraction boundary.
+    /// Stored zero returns `Zero`. Otherwise both widths at most 64 give
+    /// `WordSized`; a combined width at most 4,096 gives `MultiLimb`; larger
+    /// storage gives `VeryLarge`. Lazy fractions are inspected without reduction,
+    /// so their class can differ from the canonical class in detailed facts.
+    /// These buckets are not byte counts, work bounds or float-range certificates.
     #[inline]
     pub fn storage_class(&self) -> RationalStorageClass {
         if self.sign == NoSign {
@@ -39,21 +50,21 @@ impl Rational {
         }
     }
 
+    /// Return whether the stored sign identifies exact zero.
     ///
-    /// This is a stored-sign structural predicate. It deliberately avoids
-    /// constructing a comparison value so downstream numeric kernels can ask
-    /// identity questions without allocating or canonicalizing. This keeps
-    /// algebraic simplification ahead of approximation.
+    /// Valid rational construction keeps zero sign and magnitude consistent.
+    /// This query does not allocate, compare magnitudes, reduce the fraction or
+    /// populate a cache; it is not a validator for malformed private payloads.
     #[inline(always)]
     pub fn is_zero(&self) -> bool {
         self.sign == NoSign
     }
 
-    /// Returns whether this rational is exactly one.
+    /// Return whether this rational equals positive one exactly.
     ///
-    /// Kept as a structural identity predicate so matrix/vector callers can
-    /// specialize common homogeneous coordinates without constructing
-    /// `Rational::one()` in hot paths.
+    /// Internally unreduced inputs first obtain their cached canonical value,
+    /// which may allocate and reduce. Canonical inputs compare sign and both
+    /// unit magnitudes without constructing a comparison rational.
     #[inline(always)]
     pub fn is_one(&self) -> bool {
         if self.is_internally_unreduced() {
@@ -62,6 +73,11 @@ impl Rational {
         self.sign == Plus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
     }
 
+    /// Recognize positive two for exact scalar simplification.
+    ///
+    /// Canonicalize internally unreduced input, then test sign, numerator width
+    /// and the exact numerator/denominator. False is an exact rejection on valid
+    /// rational storage, not a failed numerical approximation.
     #[inline]
     pub(crate) fn is_two(&self) -> bool {
         if self.is_internally_unreduced() {
@@ -73,6 +89,10 @@ impl Rational {
             && self.denominator == *ONE.deref()
     }
 
+    /// Recognize positive one half for exact scalar simplification.
+    ///
+    /// Internally unreduced inputs canonicalize first. Sign, small bit widths
+    /// and exact unit/two magnitudes then decide the identity without refinement.
     #[inline]
     pub(crate) fn is_one_half(&self) -> bool {
         if self.is_internally_unreduced() {
@@ -85,6 +105,10 @@ impl Rational {
             && self.denominator == *TWO.deref()
     }
 
+    /// Recognize negative one exactly, canonicalizing lazy storage if necessary.
+    ///
+    /// Reduced inputs require negative sign and unit numerator and denominator;
+    /// no temporary comparison rational or numerical approximation is needed.
     #[inline]
     pub(crate) fn is_minus_one(&self) -> bool {
         if self.is_internally_unreduced() {
@@ -93,6 +117,11 @@ impl Rational {
         self.sign == Minus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
     }
 
+    /// Compare this signed rational with one directly from stored parts.
+    ///
+    /// Negative values and zero are less; positive values compare numerator
+    /// with denominator. The result is exact even for valid unreduced ratios,
+    /// without normalization, multiplication, allocation or cache changes.
     #[inline]
     pub(crate) fn cmp_one_structural(&self) -> Ordering {
         match self.sign {
@@ -101,14 +130,21 @@ impl Rational {
         }
     }
 
+    /// Compare the absolute rational value with one using its stored magnitudes.
+    ///
+    /// Numerator/denominator order is exact for valid reduced or unreduced
+    /// fractions. Sign is ignored and no normalization or allocation occurs.
     #[inline]
     pub(crate) fn abs_cmp_one_structural(&self) -> Ordering {
         self.numerator.cmp(&self.denominator)
     }
 
-    /// The integer part of this Rational.
+    /// Return the exact integer part, truncating toward zero.
     ///
-    /// Non integer rationals will thus be truncated towards zero
+    /// Internally unreduced storage canonicalizes first. Integers clone their
+    /// canonical handle; other values divide the unsigned magnitudes and restore
+    /// the sign, with a canonical zero for magnitudes below one. Division and
+    /// canonicalization have no caller-supplied work or allocation budget.
     ///
     /// # Examples
     ///
@@ -142,9 +178,13 @@ impl Rational {
         Self::from_parts_raw(self.sign, n, ONE.deref().clone())
     }
 
-    /// The fractional part of this Rational.
+    /// Return `self - trunc(self)` exactly, with magnitude strictly below one.
     ///
-    /// If the rational was negative, this fraction will also be negative
+    /// Nonzero fractional parts have the input sign; integers return zero.
+    /// Lazy inputs canonicalize first. The unsigned remainder reuses the
+    /// canonical denominator, since a reduced fraction's remainder is coprime
+    /// to that denominator. Remainder dispatch is traced and has no local
+    /// work/cancellation budget.
     ///
     /// # Examples
     ///
@@ -176,26 +216,32 @@ impl Rational {
         Self::from_parts_raw(self.sign, n, self.denominator.clone())
     }
 
-    /// Returns the reduced positive denominator magnitude.
+    /// Borrow the canonical positive denominator, including one for zero.
     ///
-    /// Together with [`Rational::numerator`] and [`Rational::sign`], this
-    /// exposes the canonical exact-rational representation without cloning it.
+    /// Together with [`Self::numerator`] and [`Self::sign`], this exposes the
+    /// reduced exact ratio without cloning the returned magnitude. Obtaining
+    /// that reference can reduce and cache internally unreduced input; it is
+    /// not an allocation-free inspection of the original payload.
     pub fn denominator(&self) -> &BigUint {
         &self.canonicalized_ref().denominator
     }
 
-    /// Returns the reduced unsigned numerator magnitude.
+    /// Borrow the canonical unsigned numerator magnitude, zero for zero.
     ///
-    /// The sign is available separately through [`Rational::sign`].
+    /// The sign is separate in [`Self::sign`]. Lazy ratios may allocate a cached
+    /// canonical representation before returning this reference. Use
+    /// [`Self::ratio_parts`] to inspect stored magnitudes without normalization.
     pub fn numerator(&self) -> &BigUint {
         &self.canonicalized_ref().numerator
     }
 
-    /// Width of the largest stored magnitude that may need reduction to
-    /// expose the canonical numerator and denominator. Already reduced
-    /// storage returns zero. The bound ignores cache warmth so a budgeted
-    /// caller can charge the same work on a fresh or repeated evaluation.
-    /// Inspecting it does not reduce the fraction or allocate.
+    /// Report the largest stored width needing possible canonicalization.
+    ///
+    /// Internally unreduced input returns the maximum numerator/denominator bit
+    /// length even if its canonical cache is warm; reduced input returns zero.
+    /// The query neither reduces nor allocates. Consumers can charge consistent
+    /// size admission, but this width is not a count of arithmetic operations,
+    /// retained bytes or actual remaining work.
     #[inline]
     pub fn reduction_input_bits(&self) -> u64 {
         if self.is_internally_unreduced() {
@@ -207,15 +253,24 @@ impl Rational {
 
     /// Borrow the stored sign, numerator magnitude and positive denominator.
     ///
-    /// Their ratio is exactly this value, but the parts need not be reduced.
-    /// Unlike [`Self::numerator`] and [`Self::denominator`], this view never
-    /// canonicalizes, allocates or populates a cache. Budgeted consumers can
-    /// inspect operand sizes before copying or performing arithmetic. Do not
-    /// use these parts as a canonical serialization or mathematical identity.
+    /// Their ratio is exact, but the magnitudes need not be reduced. The view
+    /// never canonicalizes, clones a magnitude or populates a cache. Budgeted
+    /// consumers can inspect sizes before arithmetic. These raw parts are not
+    /// a canonical serialization or a mathematical identity key.
     pub fn ratio_parts(&self) -> (Sign, &BigUint, &BigUint) {
         (self.sign, &self.numerator, &self.denominator)
     }
 
+    /// Split the value exactly as `2^shift * odd_part` for symbolic log scaling.
+    ///
+    /// After canonicalizing lazy input, remove all factors of two from both
+    /// magnitudes and preserve the sign. Nonzero residual magnitudes are odd;
+    /// zero returns shift zero and zero. The extracted factor can become a
+    /// binary scale instead of a generic rational expression.
+    ///
+    /// Each trailing-zero count must fit `i32` and each allocation shift must
+    /// fit `usize`; failed conversions panic rather than report exhaustion.
+    /// Magnitude copies/reduction are not covered by a total resource budget.
     pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().factor_two_powers();
@@ -240,6 +295,16 @@ impl Rational {
         )
     }
 
+    /// Return the exact quotient by `2^shift` for a nonnegative machine shift.
+    ///
+    /// Negative shifts return `None` before canonicalization. Otherwise lazy
+    /// input canonicalizes, zero returns zero, and numerator powers of two
+    /// cancel before the remaining shift expands the denominator. The resulting
+    /// fraction is reduced through the normal construction authority.
+    ///
+    /// None reports shift ineligibility, not resource exhaustion. Large accepted
+    /// shifts can allocate large magnitudes; there is no work/memory budget or
+    /// cancellation hook. Shift conversion assumes the supported address width.
     pub(crate) fn divide_by_power_of_two(&self, shift: i32) -> Option<Self> {
         if shift < 0 {
             return None;
@@ -265,6 +330,13 @@ impl Rational {
         Some(Self::from_fraction_parts(self.sign, numerator, denominator))
     }
 
+    /// Recognize a nonzero signed power of two as `(exponent, sign)`.
+    ///
+    /// Canonicalize lazy input, then require both magnitudes to have one set bit.
+    /// Zero and nonpowers return `None`. Each individual magnitude exponent must
+    /// fit `i32`; an out-of-range exponent also returns `None`, without claiming
+    /// that the rational is not a mathematical power of two. Symbolic consumers
+    /// use successful recognition to construct an exact binary scale.
     #[inline]
     pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
         if self.is_internally_unreduced() {
@@ -297,6 +369,13 @@ impl Rational {
         Some((numerator_shift - denominator_shift, self.sign))
     }
 
+    /// Decide `abs(self) >= 2^exponent` exactly for a nonnegative exponent.
+    ///
+    /// Zero fails. Stored bit lengths usually decide; equal-width cases compare
+    /// borrowed shifted digits without constructing the shifted integer. Valid
+    /// unreduced ratios are supported without canonicalization. The denominator
+    /// width plus exponent must fit `u64`, as for the borrowed comparison helper;
+    /// there is no total scanning-work or cancellation budget.
     pub(crate) fn magnitude_at_least_power_of_two(&self, exponent: u32) -> bool {
         // Hot constructors sometimes need only a threshold such as |x| >= 8.
         // Bit lengths prove almost every case. Boundary-sized rationals use the
@@ -319,20 +398,38 @@ impl Rational {
             != Ordering::Greater
     }
 
+    /// Compare `left * 2^shift` with `right` using borrowed magnitude digits.
+    ///
+    /// Both magnitudes must be positive and the shifted width must fit `u64`.
+    /// This adapter preserves the common shifted-integer comparison authority;
+    /// it does not allocate a shifted `BigUint` or add validation for zero and
+    /// overflow outside that helper's domain.
     #[inline]
     fn compare_shifted_to(left: &BigUint, shift: u64, right: &BigUint) -> Ordering {
         compare_shifted_biguints(left, shift, right, 0)
     }
 
+    /// Return `floor(log2(abs(self)))` when nonzero and representable as `i32`.
+    ///
+    /// Zero or exponent-range failure returns `None`. Exact borrowed magnitude
+    /// comparison works on unreduced ratios without canonicalization; no float
+    /// logarithm or approximation participates.
     #[inline]
     pub(crate) fn msd_exact(&self) -> Option<i32> {
         self.msd_exact_with_offset(0).map(|(msd, _)| msd)
     }
 
-    /// Exact binary magnitude plus an offset, and a power-of-two certificate.
-    /// Keep bit lengths and alignment shifts wide until the final range check.
-    /// The same comparison determines whether the absolute scale is binary,
-    /// including when the stored numerator and denominator are unreduced.
+    /// Return the exact floor-log2 magnitude plus offset, and a binary-scale flag.
+    ///
+    /// For a nonzero value the pair is `(floor(log2(abs(self))) + offset, binary)`,
+    /// where `binary` proves that the original magnitude is an integer power of
+    /// two. Zero or a final exponent outside `i32` returns `None`. Wide bit
+    /// length arithmetic applies the offset before narrowing, so it can rescue
+    /// an otherwise out-of-range exponent.
+    ///
+    /// The same borrowed shifted comparison establishes the binade and equality,
+    /// including valid unreduced ratios. No canonicalization, shifted-magnitude
+    /// allocation or floating-point logarithm is needed.
     #[inline]
     pub(crate) fn msd_exact_with_offset(&self, offset: i32) -> Option<(i32, bool)> {
         if self.sign == NoSign {
@@ -355,6 +452,19 @@ impl Rational {
         Some((msd, ordering == Ordering::Equal))
     }
 
+    /// Round this exact rational to nearest binary64, with ties to even.
+    ///
+    /// Returns a finite float or `None` when its rounded magnitude overflows or
+    /// the exact magnitude exponent is outside the internal `i32` query range.
+    /// Zero becomes positive zero; tiny negative inputs can round to negative
+    /// zero. Internally unreduced storage canonicalizes first.
+    ///
+    /// Dyadic paths combine scale and significand directly. Other inputs use
+    /// exactly convertible small operands or exact quotient/remainder rounding
+    /// to avoid double rounding. Conversion may learn dyadic facts, but success
+    /// alone does not publish an exact-float or certified-filter fact. The exact
+    /// rational remains authoritative. Wide quotient rounding can allocate and
+    /// has no total-work or cancellation budget.
     #[inline]
     pub(crate) fn to_f64_lossy(&self) -> Option<f64> {
         // The unreduced bit is immutable and learned dyadic facts are
@@ -365,9 +475,8 @@ impl Rational {
         if retained & RETAINED_UNREDUCED_INTERNAL != 0 {
             return self.canonicalized_ref().to_f64_lossy();
         }
-        // Fast borrowed approximate conversion for modest rationals. If either
-        // side cannot fit through num-traits' f64 conversion, callers fall back
-        // to the general Computable approximation path.
+        // Direct rational rounding can use borrowed dyadic paths or exact
+        // quotient arithmetic. None lets callers select their fallback route.
         if self.sign == NoSign {
             return Some(0.0);
         }
@@ -419,11 +528,19 @@ impl Rational {
         })
     }
 
-    /// Rounds `|self|` to `precision` significant bits, ties to even, with
-    /// the last place no finer than `2^minimum_ulp_exponent` (the subnormal
-    /// floor of the target format). Returns the significand `q` and the
-    /// exponent `u` of its last place: the rounded value is `q * 2^u`, with
-    /// `q <= 2^precision`.
+    /// Round the magnitude to a binary significand by exact quotient/remainder.
+    ///
+    /// Returns `(q, u)` representing `q * 2^u`, rounded to nearest with ties to
+    /// even and `u >= minimum_ulp_exponent`. With `1 <= precision <= 63`, a
+    /// positive valid ratio and representable shift arithmetic, `q <= 2^precision`
+    /// including a carry into the next binade. Existing callers use `(53, -1074)`
+    /// and `(24, -149)` for the target formats' subnormal floors. Sign is ignored
+    /// and valid unreduced ratios need no normalization.
+    ///
+    /// This is not a checked arbitrary-format API: a wider quotient can fail
+    /// the `u64` conversion, precision 64 can overflow on rounding carry, and
+    /// extreme exponent arithmetic is not validated. Shifted integer temporaries
+    /// and division have no caller-supplied allocation/work limit.
     fn rounded_binary_magnitude(&self, precision: u32, minimum_ulp_exponent: i64) -> (u64, i64) {
         use num::Integer as _;
 
@@ -456,8 +573,14 @@ impl Rational {
         (significand, ulp)
     }
 
-    /// Rounds to the nearest binary32 value, ties to even. Returns `None`
-    /// when the magnitude overflows binary32.
+    /// Round this exact rational directly to binary32, nearest with ties to even.
+    ///
+    /// No intermediate binary64 rounding is used. Zero becomes positive zero;
+    /// negative underflow can yield negative zero. A nonfinite rounded result
+    /// or ineligible scale returns `None`. Stored unreduced ratios are consumed
+    /// directly by exact quotient/remainder arithmetic without canonicalizing.
+    /// The conversion preserves the rational source and installs no exact-view
+    /// fact; shifted temporaries have no total allocation/work budget.
     pub(crate) fn to_f32_correctly_rounded(&self) -> Option<f32> {
         if self.sign == NoSign {
             return Some(0.0);
@@ -476,6 +599,13 @@ impl Rational {
         Some(if self.sign == Minus { -value } else { value })
     }
 
+    /// Convert a small positive dyadic magnitude exactly by normal binary scaling.
+    ///
+    /// The caller must provide the actual power-of-two denominator exponent.
+    /// A numerator of at most 53 bits and exponent at most 1,022 permit an exact
+    /// integer conversion and normal scaling. Other shapes, including an empty
+    /// zero numerator, return `None`. Sign is ignored; a false exponent can
+    /// produce a wrong value because this helper does not inspect the denominator.
     #[inline]
     fn exact_word_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
         let numerator_bits = self.numerator.bits();
@@ -489,6 +619,14 @@ impl Rational {
         Some((numerator as f64) * scale)
     }
 
+    /// Round a positive dyadic magnitude whose exact binade is binary64-normal.
+    ///
+    /// The caller supplies the true denominator exponent for a nonzero numerator.
+    /// Binades outside -1,022 through 1,023 return `None`. A normalized 64-bit
+    /// head with an odd sticky bit preserves the final binary64 rounding choice;
+    /// normal power-of-two scaling then restores the magnitude. Overflow returns
+    /// `None`. Sign is ignored and no exact-representability fact is installed.
+    /// Zero or inconsistent metadata is outside the private contract.
     #[inline]
     fn normal_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
         let numerator_bits = self.numerator.bits();
@@ -504,6 +642,14 @@ impl Rational {
         value.is_finite().then_some(value)
     }
 
+    /// Normalize a positive integer to a 64-bit head with discarded bits jammed odd.
+    ///
+    /// `bits` must equal the integer's actual bit length. Up to 64 bits, left
+    /// alignment is exact. Wider inputs keep the highest 64 bits and set their
+    /// low bit if any discarded bit is nonzero. This preserves sticky information
+    /// for subsequent narrower nearest-even rounding; it is not that final
+    /// rounding itself. Zero returns `None`. The scan borrows digits and may
+    /// inspect the full tail without allocating a shifted magnitude.
     #[inline]
     fn normalized_high_u64_round_to_odd(value: &BigUint, bits: u64) -> Option<u64> {
         let mut digits = value.iter_u64_digits();
@@ -528,12 +674,18 @@ impl Rational {
         Some(high)
     }
 
-    /// Return an `f64` only when conversion preserves this dyadic rational exactly.
+    /// Return a finite binary64 value only if it equals this rational exactly.
     ///
-    /// Non-dyadic rationals and dyadics outside the finite binary64 range return
-    /// `None`. Callers that have already selected a dyadic schedule avoid the
-    /// repeated denominator scan by construction, but this public query remains
-    /// total for arbitrary rationals.
+    /// Lazy input canonicalizes first. Zero succeeds as positive zero. Other
+    /// inputs need a power-of-two denominator, at most 53 significant bits after
+    /// removing numerator zeros, and set bits within binary64's finite exponent
+    /// range. Non-dyadic, overly precise, overflowing and underflowing values
+    /// return `None`; representable subnormals are supported.
+    ///
+    /// Success records the exact-view fact on the canonical owner. The query
+    /// can learn dyadic facts or allocate during canonicalization/subnormal
+    /// construction; it has no total resource budget. No rounding is adopted as
+    /// a replacement for the exact rational.
     #[inline]
     pub fn dyadic_to_f64_exact(&self) -> Option<f64> {
         if self.is_internally_unreduced() {
@@ -560,6 +712,14 @@ impl Rational {
         Some(value)
     }
 
+    /// Prove finite binary64 representability of a positive dyadic magnitude.
+    ///
+    /// The numerator must be nonzero and `denominator_shift` must describe the
+    /// actual denominator. A small normal significand succeeds immediately;
+    /// otherwise trailing-zero counting verifies at most 53 significant bits,
+    /// a highest set-bit exponent at most 1,023 and a lowest at least -1,074.
+    /// Sign is immaterial. No float round trip, allocation or fact publication
+    /// occurs; invalid zero/scale metadata is not validated here.
     #[inline]
     fn is_exact_f64_with_denominator_shift(&self, denominator_shift: u64) -> bool {
         let numerator_bits = self.numerator.bits();
@@ -586,6 +746,17 @@ impl Rational {
         significand_bits <= 53 && greatest_exponent <= 1023 && least_exponent >= -1074
     }
 
+    /// Construct a previously proved exactly representable subnormal magnitude.
+    ///
+    /// The caller supplies the true denominator exponent and must already have
+    /// proved exact binary64 representability. The exact magnitude exponent must
+    /// lie from -1,074 through -1,023. Scaling to subnormal integer units builds
+    /// the float bits; conversion/range failures return `None`.
+    ///
+    /// Right shifts are exact only under the caller's representability proof.
+    /// For example, an unproved 3/2^1075 truncates to one subnormal unit here,
+    /// although nearest-even conversion yields two. This helper is not a general
+    /// subnormal-rounding routine and can allocate shifted temporaries.
     fn exact_subnormal_dyadic_f64_magnitude(&self, denominator_shift: u64) -> Option<f64> {
         if !(-1074..=-1023).contains(&self.msd_exact()?) {
             return None;
@@ -600,11 +771,21 @@ impl Rational {
         (units != 0 && units <= (1_u64 << 52)).then(|| f64::from_bits(units))
     }
 
-    /// Return finite outward-rounded binary64 bounds for this exact rational.
+    /// Return finite binary64 bounds containing this exact rational, when available.
     ///
-    /// The first value is no greater than the rational and the second is no
-    /// less than it. Values outside the supported finite binary64 enclosure
-    /// range return `None` instead of weakening the enclosure.
+    /// For `Some([lo, hi])`, `lo <= self <= hi`. Lazy inputs canonicalize first.
+    /// Zero and exactly representable dyadics get singleton intervals. Other
+    /// normal dyadics use adjacent outward floats, with a separate exact check
+    /// near maximum finite magnitude. The general path encloses leading-digit
+    /// ratios and scales outward when the raw bit-count difference lies in
+    /// -1,022 through 1,023.
+    ///
+    /// `None` means this schedule could not produce finite bounds; it is not a
+    /// proof that no finite enclosure exists. In particular, many non-dyadic
+    /// subnormals and boundary cases decline. Bounds need not be the tightest
+    /// adjacent pair. These are certified bounds on the retained exact source,
+    /// not permission to replace it with rounded geometry. Canonicalization and
+    /// subnormal construction have no total work/memory budget.
     #[inline]
     pub fn to_f64_enclosure(&self) -> Option<[f64; 2]> {
         if self.is_internally_unreduced() {
@@ -664,7 +845,13 @@ impl Rational {
         })
     }
 
-    /// Called only for an inexact dyadic whose rounded magnitude is MAX.
+    /// Enclose an inexact dyadic whose nearest magnitude rounded to binary64 MAX.
+    ///
+    /// The caller establishes exact binade 1,023 and the rounded-MAX condition.
+    /// Comparing the normalized sticky head against MAX's exact head distinguishes
+    /// values above MAX, which return `None`, from values within the finite
+    /// range. The latter use MAX and its predecessor with sign-correct ordering.
+    /// Arbitrary input is not validated by this specialized boundary helper.
     #[cold]
     #[inline(never)]
     fn f64_enclosure_at_rounded_max(&self) -> Option<[f64; 2]> {
@@ -672,6 +859,7 @@ impl Rational {
         // the value is at most MAX: compare the normalized integer head.
         // MAX has 53 one bits; the odd sticky bit distinguishes a discarded
         // positive tail from equality without constructing a large rational.
+        /// MAX's exact 53-one-bit significand aligned to the 64-bit sticky head.
         const MAX_HEAD: u64 = ((1_u64 << 53) - 1) << 11;
         let head = Self::normalized_high_u64_round_to_odd(
             &self.numerator,
@@ -687,21 +875,44 @@ impl Rational {
         })
     }
 
+    /// Read the owner's retained proof that its value has an exact binary64 view.
+    ///
+    /// False means no retained proof, not nonrepresentability. This reads a fact
+    /// bit without canonicalizing or producing a float. The setter's caller is
+    /// responsible for establishing the proof for this same immutable value.
     #[inline]
     pub(crate) fn has_exact_f64_view(&self) -> bool {
         self.retained_fact(RETAINED_EXACT_F64_VIEW)
     }
 
+    /// Read retained eligibility for the direct rational binary64 filter route.
+    ///
+    /// The flag concerns a previously established approximation/error contract,
+    /// not exact float representability. False is missing evidence. The query
+    /// neither canonicalizes nor reconstructs the approximation or its bound.
     #[inline]
     pub(crate) fn has_relative_f64_filter_view(&self) -> bool {
         self.retained_fact(RETAINED_RELATIVE_F64_FILTER_VIEW)
     }
 
+    /// Record the caller's proof that direct rational conversion meets its filter bound.
+    ///
+    /// The Real filter consumer first establishes a finite approximation and its
+    /// error contract, then marks this immutable owner. This setter only retains
+    /// a bit: it validates neither the approximation nor its error and stores
+    /// no float, error interval or independent replay certificate.
     #[inline]
     pub(crate) fn mark_relative_f64_filter_view(&self) {
         self.retain_fact(RETAINED_RELATIVE_F64_FILTER_VIEW);
     }
 
+    /// Cheaply reject canonical denominators that cannot be powers of two.
+    ///
+    /// Lazy input canonicalizes. A retained dyadic decision is reused and traced;
+    /// otherwise denominator one or an even denominator passes. True is only
+    /// eligibility until a complete dyadic query establishes the fact: an even
+    /// nonpower such as six passes cold but fails after that query. This helper
+    /// does not itself establish an unknown dyadic decision.
     #[inline]
     pub(crate) fn denominator_could_be_dyadic(&self) -> bool {
         if self.is_internally_unreduced() {
@@ -714,14 +925,23 @@ impl Rational {
         self.denominator == *ONE || !self.denominator.bit(0)
     }
 
+    /// Retain the caller's proof of exact finite binary64 representability.
+    ///
+    /// This sets a fact bit on the immutable owner without checking the rational
+    /// or storing a float. Only callers with an exact import or conversion proof
+    /// may use it; a fabricated flag is not independent validation evidence.
     #[inline]
     pub(crate) fn mark_exact_f64_view(&self) {
         self.retain_fact(RETAINED_EXACT_F64_VIEW);
     }
 
-    /// Is this Rational better understood as a fraction?
+    /// Return whether the canonical rational has a nonterminating decimal expansion.
     ///
-    /// If a decimal expansion of this fraction would never end this is true.
+    /// After canonicalizing lazy input, remove denominator factors of ten, five
+    /// and two. A remaining factor means nontermination; integers and zero return
+    /// false. Sign has no effect. This is a presentation choice, not permission
+    /// to round. Denominator cloning and repeated exact divisions have no local
+    /// work/allocation budget.
     ///
     /// # Example
     ///
@@ -747,8 +967,13 @@ impl Rational {
         rem != BigUint::one()
     }
 
-    /// Left shift the value by any amount and return a [`BigInt`]
-    /// of the truncated integer value.
+    /// Return `trunc(self * 2^shift)` as a signed arbitrary-width integer.
+    ///
+    /// Positive shifts expand the numerator and negative shifts expand the
+    /// denominator before unsigned division and sign restoration. Truncation is
+    /// toward zero, including for negative values. Valid unreduced parts are
+    /// consumed directly without canonicalization. Accepted `i32` shifts can
+    /// allocate large integers; there is no typed exhaustion or cancellation.
     ///
     /// # Example
     ///
@@ -768,9 +993,17 @@ impl Rational {
         BigInt::from_biguint(self.sign, whole)
     }
 
-    /// Smallest enclosing interval on the grid with spacing `2^precision`.
-    /// Unsigned quotient and remainder keep rounding exact for either sign,
-    /// including unreduced rationals and values smaller than one grid cell.
+    /// Return the tight exact enclosing pair on the grid of spacing `2^precision`.
+    ///
+    /// The endpoints are `floor(self/grid)*grid` and `ceil(self/grid)*grid`, with
+    /// sign-correct ordering and a singleton for values already on the grid.
+    /// Zero returns canonical zeros. Reduced dyadics on a nonpositive-precision
+    /// grid can reuse their shared handles without division; other valid ratios,
+    /// including unreduced ones, use exact quotient/remainder and reconstruction.
+    ///
+    /// This constructs rational endpoints, not approximate floats. Large shifts
+    /// and result reductions have no total work/memory limit or cancellation;
+    /// the internal expect relies on a power-of-two denominator being nonzero.
     pub(crate) fn enclosing_dyadic_interval(&self, precision: i32) -> [Self; 2] {
         if self.is_zero() {
             return [Self::zero(), Self::zero()];
@@ -819,10 +1052,13 @@ impl Rational {
         }
     }
 
-    /// Compare the magnitudes of two rationals without flipping signs.
+    /// Compare the absolute values exactly without constructing signed rationals.
     ///
-    /// This keeps exact-rational absolute comparisons in `Computable` on
-    /// pre-normalized magnitude fields and avoids temporary allocations.
+    /// Equal stored denominators compare numerators directly. Equal numerators
+    /// wider than 64 bits reverse denominator order. All other cases allocate
+    /// cross-products. These comparisons support valid unreduced ratios without
+    /// canonicalization; the helper is not universally allocation-free and has
+    /// no explicit work or memory budget.
     #[inline]
     pub(crate) fn compare_magnitude(&self, other: &Self) -> Ordering {
         if self.denominator == other.denominator {
@@ -841,13 +1077,13 @@ impl Rational {
         (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
     }
 
-    /// Compare `|self|^2 * factor` with `other` without constructing an
-    /// intermediate Rational.
+    /// Compare `abs(self)² * abs(factor)` with `abs(other)` exactly.
     ///
-    /// This is a structural predicate for sqrt-domain gates such as
-    /// `|a*sqrt(r)| <= 1`. Avoiding canonicalization here keeps inverse
-    /// trigonometric and hyperbolic dispatch in the exact-rational layer until
-    /// a real approximation is actually required.
+    /// All signs are ignored. Consumers intending the signed expression must
+    /// establish that factor and other are nonnegative, as the sqrt-domain gates
+    /// do. Stored cross-products support valid unreduced fractions without an
+    /// intermediate Rational or canonicalization, but allocate arbitrary-width
+    /// integers and have no total-work or memory bound.
     #[inline]
     pub(crate) fn compare_magnitude_squared_times(&self, factor: &Self, other: &Self) -> Ordering {
         let left = &self.numerator * &self.numerator * &factor.numerator * &other.denominator;
@@ -855,6 +1091,14 @@ impl Rational {
         left.cmp(&right)
     }
 
+    /// Construct exact rational facts from canonical parts for downstream dispatch.
+    ///
+    /// Lazy input obtains its cached reduced value. The result identifies integer,
+    /// dyadic and nonzero absolute power-of-two forms and the canonical size bucket.
+    /// The small-integer flag conservatively requires at most 63 magnitude bits,
+    /// so it excludes `i64::MIN` even though that value fits the signed type.
+    /// Flags describe this canonical snapshot, not cache warmth or a serialized
+    /// proof; obtaining it can allocate during normalization.
     #[inline]
     pub(crate) fn detailed_rational_facts(&self) -> RationalFacts {
         if self.is_internally_unreduced() {
@@ -886,12 +1130,21 @@ impl Rational {
         }
     }
 
-    /// Either the corresponding [`BigInt`] or None if this value is not an integer.
+    /// Return the exact signed integer, or `None` when the value is fractional.
+    ///
+    /// Lazy input canonicalizes through the borrowed integer-magnitude query.
+    /// Success clones that magnitude into a `BigInt`, without a primitive-width
+    /// restriction; normalization and allocation have no local resource budget.
     pub fn to_big_integer(&self) -> Option<BigInt> {
         self.integer_magnitude()
             .map(|magnitude| BigInt::from_biguint(self.sign, magnitude.clone()))
     }
 
+    /// Borrow the canonical unsigned magnitude only when the denominator is one.
+    ///
+    /// Lazy storage canonicalizes and may allocate a cached reduced payload.
+    /// Zero returns its zero magnitude; nonintegers return `None`. The borrow
+    /// avoids constructing a signed `BigInt` and remains tied to this owner.
     pub(crate) fn integer_magnitude(&self) -> Option<&BigUint> {
         // Integer-only callers usually need the non-negative magnitude. Return
         // the borrowed BigUint so they can avoid constructing a signed BigInt.
@@ -899,6 +1152,12 @@ impl Rational {
         (canonical.denominator == *ONE.deref()).then_some(&canonical.numerator)
     }
 
+    /// Recognize an integer whose unsigned magnitude fits positive `i64` range.
+    ///
+    /// The integer query canonicalizes lazy input, converts the magnitude first,
+    /// then restores sign. Fractional values and magnitudes above `i64::MAX`
+    /// return `None`, including `i64::MIN`. Thus failure is not an exhaustive
+    /// signed-range test; consumers use success as a small-integer shortcut.
     pub(crate) fn to_integer_i64(&self) -> Option<i64> {
         let magnitude = self.integer_magnitude()?.to_i64()?;
         match self.sign {
@@ -907,19 +1166,26 @@ impl Rational {
         }
     }
 
-    /// The [`Sign`] of this value.
+    /// Return the exact stored sign, with `NoSign` denoting zero.
+    ///
+    /// Valid construction maintains this sign even for lazy fractions. No
+    /// canonicalization, approximation, allocation or cache mutation is needed.
     #[inline]
     pub fn sign(&self) -> Sign {
         self.sign
     }
 
-    /// Returns whether this value is strictly negative without allocating.
+    /// Return whether this exact rational is strictly negative from its stored sign.
+    ///
+    /// Zero fails. The query does not allocate, reduce or consult numeric filters.
     #[inline]
     pub fn is_negative(&self) -> bool {
         self.sign == Minus
     }
 
-    /// Returns whether this value is strictly positive without allocating.
+    /// Return whether this exact rational is strictly positive from its stored sign.
+    ///
+    /// Zero fails. The query does not allocate, reduce or consult numeric filters.
     #[inline]
     pub fn is_positive(&self) -> bool {
         self.sign == Plus
@@ -927,8 +1193,11 @@ impl Rational {
 
 }
 
-/// `2^exponent` as binary64, including subnormal powers; `None` past the
-/// finite range.
+/// Construct exact binary64 `2^exponent`, including subnormal powers.
+///
+/// Exponents from -1,074 through 1,023 produce positive finite values by bit
+/// construction. All others return `None`, including underflowing powers;
+/// there is no rounding to zero or infinity and no allocation.
 fn f64_power_of_two(exponent: i64) -> Option<f64> {
     match exponent {
         -1022..=1023 => Some(f64::from_bits(u64::try_from(exponent + 1023).ok()? << 52)),
@@ -937,8 +1206,11 @@ fn f64_power_of_two(exponent: i64) -> Option<f64> {
     }
 }
 
-/// `2^exponent` as binary32, including subnormal powers; `None` past the
-/// finite range.
+/// Construct exact binary32 `2^exponent`, including subnormal powers.
+///
+/// Exponents from -149 through 127 produce positive finite values by bit
+/// construction. All others return `None`, including underflowing powers;
+/// there is no rounding to zero or infinity and no allocation.
 fn f32_power_of_two(exponent: i64) -> Option<f32> {
     match exponent {
         -126..=127 => Some(f32::from_bits(u32::try_from(exponent + 127).ok()? << 23)),

@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/queries_conversion.rs` | Entire exact query/scaling/rounding/enclosure/fact implementation reviewed; all 53 functions, impl role and local constant documented. | Both-mode private docs, six doctests, focused conversions/filters and independent exact probes pass; 54 ordinary descriptions plus one supplemental local constant checked. See rational-query/conversion batch. |
 | `crates/hyperreal/src/rational/arithmetic/squares_powers.rs` | Entire root, partial-factor extraction, power recognition, retained reduction and exponentiation implementation reviewed; all 22 functions and five constants documented. | Both-mode private docs/focused tests and three doctests pass; 28 descriptions render, exact independent probes pass and outputs/traces remain unchanged. See rational-roots/powers batch. |
 | `crates/hyperreal/src/rational/arithmetic/construction.rs` | Entire constructor/reduction/cache/query implementation reviewed; all 42 functions documented, including signed inputs, validation ownership, hint proofs and lifetime/resource limits. | Both-mode private docs/focused tests and four doctests pass; all 43 blocks render and 673 unchanged probe records have independent exact expectations. See rational-construction batch. |
 | `crates/hyperreal/src/rational/arithmetic/format_parse.rs` | Entire formatter and decimal/scientific parser reviewed; every helper, guard, error and presentation rule documented, including reproduced fallback syntax defects. | Both-mode private docs, focused tests and doctests pass; all 16 blocks render, outputs/traces remain identical, and independent exact expectations pass. See rational-formatting/parsing batch. |
@@ -24822,6 +24823,131 @@ is reused with incremental compilation disabled. AGENTS.md already retains the
 future-agent mandate for 100% public/private/generated Rustdoc. The complete
 repository audit and previously recorded generated-item gaps remain unfinished;
 this batch repairs documentation, not the recorded implementation limitations.
+
+## Rational query and primitive-conversion documentation batch
+
+Reviewed every line of the 948-line queries_conversion.rs at d25750b1f and the
+relevant construction, comparison, checked-MSD, fact-carrier and Real/Computable
+consumers. The final file is 1,220 lines, with descriptions for all 53 functions,
+the impl role and one function-local constant. Owning layer: Hyperreal exact
+rational queries and conversion; P1–P6 and P37. Domains include valid reduced
+and internally unreduced rational payloads, signed binary scale/grid exponents,
+finite primitive views and caller-proved private dyadic metadata. Initial
+witnesses were missing private contracts, an allocation-free comparison claim
+contradicted by its cross-products, and incomplete signed-range/conversion/fact
+semantics. Executable behavior, ordering and fixtures remain unchanged.
+
+The storage_identity method was public but doc(hidden). Its ordinary public
+description now renders and explains owner-address identity, clone retention
+and the distinction from numeric equality/serialization. This exposes existing
+API documentation without changing visibility or adding a new identity scheme.
+
+Findings and clarified contracts:
+
+- Raw ratio_parts, storage_class and reduction_input_bits inspect original
+  storage without normalization. Detailed facts and canonical magnitude borrows
+  can allocate/cache a reduction. A cold 4,097-plus-bit common-factor payload
+  remains VeryLarge in the raw class after warming while its canonical facts
+  say WordSized; reduction_input_bits remains unchanged. Raw references and the
+  original immutable fields retain their identities. Zero is classified by sign.
+- Unit predicates canonicalize lazy input; comparison with one and magnitude
+  exponent queries use exact stored-ratio relations directly. The MSD offset is
+  applied before narrowing to i32 and its equality flag certifies a power of two.
+  Binary extraction/recognition checks individual exponent ranges, so mathematical
+  powers outside that representation can panic or return None according to the
+  particular helper. Shift/bit-count limits are implementation preconditions,
+  not a measured total-work or memory bound.
+- Truncation is toward zero and the fractional part has the source sign unless
+  zero. Shifted integers truncate the exact binary-scaled ratio. Dyadic intervals
+  are the tight rational grid floor/ceiling, including negative and unreduced
+  inputs; the reduced on-grid shortcut preserves shared handles. No primitive
+  approximation replaces these exact values.
+- to_integer_i64 and exact_small_integer_i64 reject i64::MIN because they admit
+  at most 63 unsigned magnitude bits. BigInt conversion still returns that
+  exact integer. This is a conservative shortcut restriction, not proof that
+  the original value is outside signed i64 range. The existing field contract
+  in structural.rs already identifies this limitation; the producer now agrees.
+- compare_magnitude allocates cross-products outside its denominator/equal-wide-
+  numerator shortcuts. compare_magnitude_squared_times actually compares
+  |self|²*|factor| with |other| and ignores every sign; a negative-factor/threshold
+  probe verifies that behavior. Consumers of the signed formula must establish
+  nonnegative factor/threshold, as the retained sqrt-domain routes require.
+- Binary32 and binary64 conversion use nearest-even rounding, including signed
+  underflow, and decline nonfinite output. Float export, exact representability
+  and enclosing bounds are separate contracts. The direct binary32 quotient
+  avoids rounding twice near a binary32 midpoint. Binary64's odd-sticky head
+  retains discarded-tail information for narrower final rounding; its metadata
+  must match the source bit length.
+- Exact dyadic export proves finite representability and records that fact.
+  to_f64_enclosure supplies certified finite bounds when its particular schedule
+  succeeds; None does not prove that a finite enclosure is impossible. Many
+  non-dyadic subnormals decline, and successful general bounds need not be the
+  tightest float pair. The rounded-MAX helper requires its established binade
+  and inexact-dyadic preconditions before using the normalized head comparison.
+- Private metadata/certification is trusted: passing exponent one to the small
+  dyadic helper on 3/5 returns 1.5; the unproved subnormal 3/2^1075 truncates to
+  one unit in the exact-subnormal constructor, while general rounding returns
+  two. The internal rounded-significand helper overflows a u64 rounding carry
+  at precision 64 for (2^65-1)/2; normal callers use precision 24 or 53. These
+  are invalid private calls, not evidence of a valid public conversion defect.
+- A cold even denominator six passes the dyadic prefilter but fails once a
+  full dyadic query has retained its negative decision. Fact readers distinguish
+  absent proof from negative mathematical evidence. Marking exact/filter flags
+  performs no validation: an isolated fabricated exact flag on 101/103 does not
+  make direct exact conversion succeed. Real consumers must retain their actual
+  conversion/error proof rather than trusting externally replayed flags.
+- Corrected two consumer comments without changing code: real/convert.rs no
+  longer calls all direct rational conversion allocation-free, and the relative
+  filter comment in real/arithmetic/linear_algebra.rs describes nearest rounding
+  and its normal error-radius gate instead of independent numerator/denominator
+  conversion. This is a local follow-up, not new whole-file review credit for
+  either consumer; remaining declarations retain their existing audit status.
+
+Validation after the final source edit:
+
+- Locked/offline focused library tests pass without default features (62 test
+  executions) and with all features (72). These include 23 focused rational/
+  magnitude/conversion witnesses, 32/42 Real conversion tests and seven rational
+  linear-form filter tests in each configuration. Existing double-rounding,
+  subnormal/MAX boundaries, wide-representation equality, enclosure containment,
+  raw-view/cache invariants, exact-MSD and relative-filter assertions are intact.
+- Both-mode private cargo doc --lib --no-deps --document-private-items passes
+  with warnings and broken/private intra-doc links denied. Six existing doctests
+  pass in each configuration. The ordinary all-feature public docs also build;
+  the storage_identity method and full description appear while a private MSD
+  method is absent from that public page.
+- Rendered inventory verifies all 54 normally emitted descriptions and method/
+  free-function anchors. Rustdoc omits function-local MAX_HEAD, so its unchanged
+  declaration and authored description are lifted into an isolated supplemental
+  module and compiled/rendered there. That one check is not claimed as ordinary
+  private-doc discovery of local items. No blanket hiding or lint allowance was
+  introduced; the existing public-method doc(hidden) was removed.
+- An isolated copy of the exact crate appends a private probe and runs only that
+  probe. Before/final query bodies produce 716 byte-identical records, including
+  three full dispatch snapshots. Additional assertions cover lazy-cache behavior,
+  pointer identity and invalid private metadata/precision/fact preconditions.
+  All repository tests and their assertions remain unchanged.
+- Independent Python integer/Fraction checks cover 507 small rational query/grid/
+  scale cases, six signed-integer boundaries, five lazy payloads, 150 float cases,
+  27 normalized heads, thirteen binary scale boundaries, one sign-ignoring
+  comparison, three prefilter transitions, one fabricated fact and three trace
+  cases. The float oracle searches monotonically ordered IEEE bit patterns and
+  compares exact rational midpoints, including the overflow threshold, separately
+  for binary32 and binary64. It does not duplicate the source's shifted-quotient
+  or odd-head algorithm. Every returned enclosure contains the exact rational.
+- Noncomment source tokens match the baseline in all three touched Rust files,
+  apart from removing the documentation-only hidden attribute. git diff --check
+  passes. Full workflows, formatting and performance measurements remain
+  owner-waived for this docs-only session; no performance, resource-bound or
+  universal primitive-conversion completion claim is made.
+
+No focused check remains blocked. Reproduction scripts, source snapshot,
+compressed records, hashes, logs and inventories remain under
+/tmp/csgrs-hyperreal-queries-audit/. Owned source-copy, executable and supplemental
+HTML build artifacts are removed after validation; shared Cargo output is reused
+with incremental compilation disabled. AGENTS.md already retains the future-agent
+100% public/private/generated Rustdoc mandate. The complete repository review and
+previously recorded generated-item gaps remain unfinished.
 
 ## Next work
 

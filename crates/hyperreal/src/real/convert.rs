@@ -398,9 +398,9 @@ impl Real {
             && let Some(value) = self.rational.to_f64_lossy()
             && value != 0.0
         {
-            // Exact rationals dominate render buffers. Reuse their allocation-
-            // free borrowed binary64 conversion before narrowing at this
-            // explicitly lossy IO boundary. Zero falls through so the general
+            // Reuse direct rational binary64 conversion before narrowing at
+            // this explicitly lossy IO boundary. Wide quotient rounding or
+            // lazy canonicalization can allocate. Zero falls through so the general
             // path can retain the sign of an underflowed negative value.
             // Narrowing the correctly rounded binary64 value is exact unless
             // it sits at or next to a binary32 tie, where rounding twice could

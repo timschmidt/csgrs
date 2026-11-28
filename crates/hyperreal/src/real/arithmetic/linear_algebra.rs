@@ -1141,12 +1141,11 @@ impl Real {
             return exact_zero.then_some((0.0, 0.0));
         }
 
-        // `BigUint::to_f64` retains the high significand bits and introduces
-        // less than one ulp of relative error. Numerator conversion,
-        // denominator conversion, and the final division therefore fit well
-        // inside this 32-epsilon radius, including compounding and normal
-        // rounding. Rejecting non-normal values keeps the bound purely
-        // relative and avoids underflow edge cases.
+        // The direct rational route rounds the exact ratio to nearest,
+        // using exact quotient rounding when independent limb conversions
+        // could round twice. Use a conservative 32-epsilon relative radius.
+        // Requiring the radius itself to remain normal excludes the
+        // underflow-sensitive cases from this relative filter.
         let error =
             approximation.abs() * (32.0 * f64::EPSILON);
         error.is_normal().then_some((approximation, error))
