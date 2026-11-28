@@ -3697,6 +3697,12 @@ impl Rational {
         ])
     }
 
+    /// Canonicalize a rational and attempt its exact signed binary-fraction view.
+    ///
+    /// Accepts zero and reduced numerators fitting u128 with power-of-two
+    /// denominators; returns None for a wider numerator or a non-dyadic value.
+    /// Despite the name, it checks admission. Lazy reduction and fact learning may
+    /// allocate or warm caches; this is not a bounded, read-only metadata cast.
     fn known_dyadic_word(value: &Self) -> Option<DyadicWord> {
         let value = value.canonicalized_ref();
         Some(DyadicWord {
@@ -3706,13 +3712,24 @@ impl Rational {
         })
     }
 
-    /// Construct the oriented affine plane through three dyadic points.
+    /// Attempt exact oriented coefficients (nx, ny, nz, d) through three points.
     ///
-    /// Coordinate differences, cross products, and the offset remain in
-    /// checked native-word or fixed-stack form. A value outside that envelope
-    /// returns `None` so the caller can retain its arbitrary-precision
-    /// determinant construction.
-    #[doc(hidden)]
+    /// The normal is (p1-p0) cross (p2-p0), and d is minus its dot product with
+    /// p0, so the equation is nx*x + ny*y + nz*z + d = 0. Collinear or duplicate
+    /// points can successfully return four zeros; this does not certify a unique
+    /// or nondegenerate plane. The normal is not normalized to unit length.
+    ///
+    /// Canonicalizes and checks all coordinates for dyadic denominators and u128
+    /// numerators. Differences must fit checked native arithmetic, cross products
+    /// use six-limb subtotals, and each reduced normal magnitude must narrow to
+    /// four limbs before the wide-by-native offset sum. None means an admission,
+    /// alignment or intermediate-width failure, even when final coefficients
+    /// would fit; callers retain their general exact determinant fallback.
+    ///
+    /// Scratch arithmetic uses fixed buffers. Input canonicalization and final
+    /// Rational materialization can allocate, especially for large denominators;
+    /// no total-work, allocation or cancellation budget is enforced here. A
+    /// completed compact construction emits the dyadic-stack-fused dispatch event.
     pub fn affine_plane3_coefficients_known_dyadic(
         points: [[&Self; 3]; 3],
     ) -> Option<[Self; 4]> {
@@ -3756,11 +3773,24 @@ impl Rational {
         ])
     }
 
+    /// Attempt left minus right using the shared checked native dyadic kernel.
+    ///
+    /// Both magnitudes align to the larger denominator exponent before inactive
+    /// signs are applied. A shift of at least 128 therefore declines even for a
+    /// stored zero. None also covers shifted-magnitude or signed-sum overflow;
+    /// later cancellation does not rescue failed alignment. Success cancels
+    /// common powers of two and canonicalizes zero without heap arithmetic.
     fn difference_dyadic_words(left: DyadicWord, right: DyadicWord) -> Option<DyadicWord> {
         crate::verified::dyadic::difference_word(left.into_native(), right.into_native())
             .map(DyadicWord::from_native)
     }
 
+    /// Subtract six-limb unsigned subtotals over the common denominator 2^max_shift.
+    ///
+    /// Uses the shared dyadic difference/reduction kernel and cancels only powers
+    /// of two present in both numerator and denominator. Equal subtotals become
+    /// canonical NoSign, zero magnitude and exponent zero. Its internal None is
+    /// exact equality, not exhaustion; no Rational or BigUint is materialized.
     fn finish_dyadic_stack_sum(
         positive: DyadicStackAccumulator,
         negative: DyadicStackAccumulator,
@@ -3782,6 +3812,11 @@ impl Rational {
         }
     }
 
+    /// Narrow a retained six-limb magnitude to u128 for another native operation.
+    ///
+    /// None means a nonzero high limb. Sign and denominator exponent are copied
+    /// unchanged, including for zero; this adapter neither validates nor restores
+    /// the producer's normalization and sign/magnitude invariants.
     fn dyadic_stack_sum_word(sum: DyadicStackSum) -> Option<DyadicWord> {
         Some(DyadicWord {
             sign: sum.sign,
@@ -3790,6 +3825,11 @@ impl Rational {
         })
     }
 
+    /// Embed a native magnitude in the low two limbs of a six-limb retained sum.
+    ///
+    /// Zero-fills the remaining limbs and copies sign and denominator exponent.
+    /// No arithmetic reduction, invariant validation or heap allocation occurs;
+    /// the caller must retain the word producer's normalization proof.
     fn dyadic_word_stack_sum(word: DyadicWord) -> DyadicStackSum {
         let mut magnitude = DyadicStackAccumulator::default();
         magnitude.0[0] = word.magnitude as u64;
@@ -3801,6 +3841,11 @@ impl Rational {
         }
     }
 
+    /// Narrow a retained sum to the four-limb factor used by wide-by-native products.
+    ///
+    /// None means one of the two omitted high limbs is nonzero. Copies sign and
+    /// denominator exponent without normalization or validation, preserving the
+    /// existing producer proof rather than independently establishing one.
     fn dyadic_stack_sum_wide_word(sum: DyadicStackSum) -> Option<DyadicWideWord> {
         Some(DyadicWideWord {
             sign: sum.sign,
@@ -3809,6 +3854,13 @@ impl Rational {
         })
     }
 
+    /// Attempt a signed sum of N native dyadic products with six-limb subtotals.
+    ///
+    /// A true polarity adds the signed product; false subtracts it. Delegates
+    /// descriptor construction and checked planning to the shared stack reducer,
+    /// including inactive-term exponents. None is schedule ineligibility, not a
+    /// zero result; an empty sum succeeds as canonical zero. No heap arithmetic
+    /// is used, though the const-sized descriptor array grows with N.
     fn product_sum_dyadic_words<const N: usize>(
         left: [DyadicWord; N],
         right: [DyadicWord; N],
@@ -3817,6 +3869,12 @@ impl Rational {
         Self::product_sum_stack(Self::dyadic_word_products(left, right, positive_terms))
     }
 
+    /// Describe signed dyadic products for the shared verified aggregate kernels.
+    ///
+    /// Multiplies polarity and both stored signs to set activity and negativity,
+    /// while copying magnitudes and denominator exponents even for inactive terms.
+    /// Performs no multiplication, normalization or exponent-overflow check here.
+    /// Consumers plan all copied exponents before skipping inactive arithmetic.
     fn dyadic_word_products<const N: usize>(
         left: [DyadicWord; N],
         right: [DyadicWord; N],
@@ -3838,6 +3896,12 @@ impl Rational {
         })
     }
 
+    /// Attempt two signed dyadic products and their sum entirely in native words.
+    ///
+    /// Shared planning checks both exponent sums, including inactive descriptors.
+    /// Each active product and alignment must fit u128 before signed addition;
+    /// opposite signs can cancel at that final addition. None means a checked
+    /// step declined. Success returns a normalized word, including canonical zero.
     #[inline]
     fn product_sum2_dyadic_words_word(
         left: [DyadicWord; 2],
@@ -3848,6 +3912,12 @@ impl Rational {
             .map(DyadicWord::from_native)
     }
 
+    /// Attempt the oriented 2D determinant `left[0]*right[1] - left[1]*right[0]`.
+    ///
+    /// Uses native factors with separate six-limb positive/negative subtotals and
+    /// returns a normalized retained dyadic sum. Inherits checked exponent and
+    /// subtotal limits from product_sum_dyadic_words; None does not prove a zero
+    /// determinant. No rational coefficients are materialized here.
     fn cross_dyadic_words(left: [DyadicWord; 2], right: [DyadicWord; 2]) -> Option<DyadicStackSum> {
         Self::product_sum_dyadic_words(
             [left[0], left[1]],
@@ -3856,6 +3926,11 @@ impl Rational {
         )
     }
 
+    /// Attempt the oriented 2D determinant with the two-product native schedule.
+    ///
+    /// Forms `left[0]*right[1] - left[1]*right[0]`, retaining its reduced dyadic word.
+    /// Individual products and alignments must fit u128 before cancellation;
+    /// None leaves callers free to try a wider exact determinant implementation.
     fn cross_dyadic_words_word(
         left: [DyadicWord; 2],
         right: [DyadicWord; 2],
@@ -3867,6 +3942,13 @@ impl Rational {
         )
     }
 
+    /// Attempt a signed sum of four-limb by u128 dyadic products in six-limb buffers.
+    ///
+    /// Combines stored signs with each add/subtract polarity and copies all
+    /// denominator exponents into shared aggregate descriptors. Planning includes
+    /// inactive exponents. None means exponent or unsigned-subtotal overflow;
+    /// cancellation is performed only after both subtotals fit. Empty input
+    /// succeeds as zero; fixed arithmetic scratch and N descriptors use no heap.
     fn product_sum_wide_narrow_words<const N: usize>(
         left: [DyadicWideWord; N],
         right: [DyadicWord; N],
@@ -3889,6 +3971,13 @@ impl Rational {
         Self::product_sum_stack::<N>(products)
     }
 
+    /// Adapt shared aggregate reduction to a normalized six-limb Rational carrier.
+    ///
+    /// Checks every descriptor's exponent sum, including inactive terms, then
+    /// accumulates active products into separate unsigned 384-bit subtotals.
+    /// Overflow of either subtotal declines before cancellation. Success retains
+    /// the exact difference with common binary factors removed; empty or equal
+    /// totals become canonical zero. No heap-backed denominator is constructed.
     fn product_sum_stack<const N: usize>(
         products: [crate::verified::aggregate::Product; N],
     ) -> Option<DyadicStackSum> {
@@ -3908,6 +3997,17 @@ impl Rational {
         })
     }
 
+    /// Plan a common binary denominator for the active terms of a dot product.
+    ///
+    /// The caller supplies each full product sign; NoSign terms are skipped before
+    /// inspecting operands. Live operands must have unmarked reduced dyadic
+    /// storage: marked lazy fractions decline even when their values are dyadic.
+    /// Fact queries may learn denominator metadata without canonicalizing inputs.
+    ///
+    /// Returns per-term exponent sums and their maximum, with zeros for inactive
+    /// terms and for an empty plan. The pairwise exponent addition is ordinary
+    /// u64 arithmetic and assumes its sum fits; it is not a checked exhaustion
+    /// outcome. The general product-sum planner instead uses checked addition.
     fn dyadic_product_alignment<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -3927,6 +4027,17 @@ impl Rational {
         Some((denominator_shifts, max_shift))
     }
 
+    /// Evaluate a dot product through native, six-limb and BigUint dyadic schedules.
+    ///
+    /// Trusts caller-supplied product signs and first requires reduced dyadic
+    /// admission for live operands. None means that planning declined; native or
+    /// stack overflow instead continues to arbitrary-precision signed subtotals
+    /// over one binary denominator. All inactive terms produce exact zero.
+    ///
+    /// Native and stack successes emit their accumulator dispatch events. The
+    /// final path may allocate large shifted numerators and a denominator, assumes
+    /// shifts fit usize, and has no local work/memory/cancellation budget. No input
+    /// approximation or precision loss is used to recover from a compact decline.
     fn dot_products_dyadic<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -3978,6 +4089,13 @@ impl Rational {
         ))
     }
 
+    /// Materialize a dot product only if its supplied plan fits the six-limb path.
+    ///
+    /// The caller must supply current product signs, correct dyadic exponent sums
+    /// and a maximum covering every active term. Delegates checked accumulation
+    /// to dot_products_dyadic_stack_sum, then materializes its normalized result.
+    /// None leaves the general fallback to the caller; final denominator storage
+    /// can allocate even though the accumulation itself uses fixed buffers.
     fn dot_products_dyadic_stack<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -3995,6 +4113,12 @@ impl Rational {
         .map(Self::materialize_dyadic_stack_sum)
     }
 
+    /// Check dyadic admission and retain a dot product without its BigUint denominator.
+    ///
+    /// Uses caller-supplied product signs, plans reduced dyadic operands, then
+    /// attempts native factors and six-limb signed subtotals. Returns None on
+    /// planning or compact-width failure, with no arbitrary-precision retry here.
+    /// Empty input succeeds as zero; marked unreduced live operands are ineligible.
     fn dot_products_known_dyadic_stack_sum<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -4011,6 +4135,16 @@ impl Rational {
         )
     }
 
+    /// Accumulate a preplanned dot product into a normalized six-limb dyadic sum.
+    ///
+    /// Trusts the signs and exponent plan; it does not inspect denominators or
+    /// canonicalize operands. Each live numerator must fit u128, and each shifted
+    /// product and unsigned subtotal must fit 384 bits before cancellation. None
+    /// discards local scratch after a conversion or accumulation decline.
+    ///
+    /// The caller must ensure max_shift covers every active denominator_shifts
+    /// entry. Empty or equal subtotals return canonical zero. No heap arithmetic
+    /// or output denominator materialization occurs in this helper.
     fn dot_products_dyadic_stack_sum<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -4038,6 +4172,18 @@ impl Rational {
         ))
     }
 
+    /// Build a Rational from a retained sum whose normalization is already proved.
+    ///
+    /// NoSign returns canonical zero immediately. Otherwise uses native reduced
+    /// parts when the magnitude and binary denominator fit u128, or constructs a
+    /// BigUint denominator and the stored limb magnitude. It supplies no general
+    /// normalization: callers must establish nonzero magnitude and coprimality
+    /// with 2^denominator_shift. A forged carrier can publish unreduced parts as
+    /// reduced or violate constructor assertions.
+    ///
+    /// The wide path records a rational temporary and assumes the exponent fits
+    /// usize. Six numerator limbs do not bound denominator allocation or total
+    /// work; no resource budget or cancellation check is supplied here.
     fn materialize_dyadic_stack_sum(sum: DyadicStackSum) -> Self {
         if sum.sign == NoSign {
             return Self::zero();
@@ -4062,6 +4208,17 @@ impl Rational {
         )
     }
 
+    /// Attempt unsigned positive/negative u128 totals for a preplanned product sum.
+    ///
+    /// Trusts supplied term signs and dyadic exponents. Skips NoSign terms; each
+    /// live stored numerator product, alignment and subtotal must fit checked
+    /// native arithmetic. None occurs before subtraction, so cancellation cannot
+    /// rescue overflowing subtotals. A shift of at least 128 also declines.
+    ///
+    /// The caller must supply a maximum covering every live exponent and current
+    /// signs/plan for these exact operands; denominators are not revalidated.
+    /// Empty factor products are one and an empty term list returns (0, 0).
+    /// The common scale is retained by the caller, not returned with the totals.
     fn signed_product_sum_dyadic_word_totals<
         const TERMS: usize,
         const FACTORS: usize,
@@ -4093,6 +4250,18 @@ impl Rational {
         Some((positive, negative))
     }
 
+    /// Attempt native signed-product subtotals while discovering their common scale.
+    ///
+    /// Computes full term signs and skips zeros, then checks each live factor's
+    /// reduced dyadic admission, exponent addition and numerator multiplication.
+    /// Raises both accumulated subtotals when the maximum exponent grows, or
+    /// aligns a later term to that maximum. Conversion, shift, product or subtotal
+    /// overflow returns None; no general fallback or canonicalization occurs here.
+    ///
+    /// Only the two unsigned totals are returned: their comparison decides the
+    /// sum's sign because the omitted scale is positive. Materializing a value
+    /// requires recovering that scale. Empty factor products are one; an empty
+    /// sum returns (0, 0). Storage is native and has no heap arithmetic.
     fn signed_product_sum_dyadic_word_totals_unplanned<
         const TERMS: usize,
         const FACTORS: usize,
@@ -4138,6 +4307,16 @@ impl Rational {
         Some((positive, negative))
     }
 
+    /// Materialize a reduced rational from checked native dyadic product subtotals.
+    ///
+    /// Inherits the caller's signs and exponent-plan preconditions from
+    /// signed_product_sum_dyadic_word_totals. None means native accumulation
+    /// declined. Otherwise subtracts the totals and cancels common binary factors;
+    /// equality returns canonical zero before denominator construction.
+    ///
+    /// Native accumulation does not require the final denominator to fit u128:
+    /// exponents of at least 128 materialize a BigUint and record a temporary.
+    /// That path assumes the exponent fits usize and has no allocation budget.
     fn signed_product_sum_dyadic_words_with_plan<
         const TERMS: usize,
         const FACTORS: usize,
@@ -4179,6 +4358,12 @@ impl Rational {
         ))
     }
 
+    /// Adapt a preplanned dot product to the two-factor native product-sum reducer.
+    ///
+    /// Builds N borrowed factor pairs and preserves the caller's full product
+    /// signs, per-term denominator exponents and common maximum without validation.
+    /// Returns None on native-total failure; success may allocate a wide final
+    /// denominator through signed_product_sum_dyadic_words_with_plan.
     fn dot_products_dyadic_words<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -4195,6 +4380,16 @@ impl Rational {
         )
     }
 
+    /// Sum dot-product terms whose stored product denominators are identical.
+    ///
+    /// Checks each active left-denominator times right-denominator, not equality
+    /// of individual factor denominators. Caller-supplied NoSign terms are ignored;
+    /// no active terms return canonical zero. None means a product-denominator
+    /// mismatch, possibly after allocating earlier products.
+    ///
+    /// Matching terms use BigUint positive/negative numerator totals and one final
+    /// exact reduction. Valid unreduced storage is accepted without canonicalizing
+    /// inputs. Coefficient growth, allocations and cancellation are not budgeted.
     fn dot_products_equal_denominator<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -4239,6 +4434,12 @@ impl Rational {
         ))
     }
 
+    /// Multiply a term's stored denominator magnitudes for delayed exact reduction.
+    ///
+    /// Clones the first denominator and multiplies the remaining factors in order;
+    /// an empty product is one. Does not canonicalize factors, cancel against
+    /// numerators or skip work for zero-valued terms. Arbitrary-precision growth
+    /// and allocation are left to the surrounding product-sum operation.
     fn product_term_denominator<const FACTORS: usize>(term: [&Self; FACTORS]) -> BigUint {
         let mut factors = term.into_iter();
         let Some(first) = factors.next() else {
@@ -4251,6 +4452,12 @@ impl Rational {
         denominator
     }
 
+    /// Multiply a term's stored unsigned numerators without intermediate reduction.
+    ///
+    /// Clones the first magnitude and multiplies remaining factors in order,
+    /// continuing the loop even after a zero factor. Empty products are one; signs
+    /// and denominators are handled separately. BigUint work and allocation have
+    /// no local resource limit, and valid lazy fraction storage is preserved.
     fn product_term_magnitude<const FACTORS: usize>(term: [&Self; FACTORS]) -> BigUint {
         let mut factors = term.into_iter();
         let Some(first) = factors.next() else {
@@ -4263,6 +4470,12 @@ impl Rational {
         magnitude
     }
 
+    /// Combine an add/subtract polarity with every stored factor sign.
+    ///
+    /// True starts at Plus and false at Minus. Multiplies all signs even after
+    /// encountering NoSign; zero factors make the final term inactive. An empty
+    /// factor list retains the polarity, representing plus or minus one. No
+    /// canonicalization, numeric predicate or heap arithmetic is needed.
     fn product_term_sign<const FACTORS: usize>(positive: bool, term: [&Self; FACTORS]) -> Sign {
         let mut sign = if positive { Plus } else { Minus };
         for factor in term {
@@ -4271,6 +4484,19 @@ impl Rational {
         sign
     }
 
+    /// Recognize active reduced dyadic terms and estimate their native-sum width.
+    ///
+    /// Trusts caller-supplied complete term signs and skips NoSign terms. Checks
+    /// each live factor's reduced dyadic admission and checked-adds its denominator
+    /// exponent. None means a live factor declined or its exponent sum overflowed;
+    /// marked lazy fractions are not promoted. Fact queries may warm metadata.
+    ///
+    /// Retains each exponent sum and their maximum. prefer_wide uses saturating
+    /// numerator-bit sums, alignment growth and ceil(log2(live_terms)) to predict
+    /// a width above 128; this conservative dispatch estimate is not a proof that
+    /// native evaluation fails or a measured cost bound. Empty plans have zero
+    /// exponents and do not prefer wide. Const-sized arrays scale with TERMS;
+    /// this planner supplies no total resource or cancellation contract.
     fn product_sum_dyadic_plan<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
@@ -4308,6 +4534,16 @@ impl Rational {
         })
     }
 
+    /// Evaluate a preplanned dyadic product sum with arbitrary-precision subtotals.
+    ///
+    /// Trusts current term signs and exact per-term exponents with a common maximum
+    /// covering them. Multiplies stored numerators, shifts each active term to that
+    /// denominator, then reduces the difference of positive and negative totals.
+    /// No denominator admission check or per-term rational construction is repeated.
+    ///
+    /// Shifts must fit usize. Even zero or empty totals reach construction of the
+    /// common binary denominator before final reduction. Large integers and
+    /// denominators are unbudgeted; this is an exact fallback, not typed exhaustion.
     fn signed_product_sum_dyadic_with_plan<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
@@ -4343,6 +4579,14 @@ impl Rational {
         )
     }
 
+    /// Decide a preplanned dyadic sum's sign by comparing its BigUint subtotals.
+    ///
+    /// Trusts current complete term signs, exact exponents and a covering common
+    /// maximum. Aligns active stored-numerator products and compares positive with
+    /// negative, yielding the sum's ordering relative to zero; empty input is Equal.
+    /// The omitted common denominator is positive, so no Rational or denominator
+    /// needs construction. Shift conversion assumes usize fit; potentially large
+    /// intermediate numerators still have no work, memory or cancellation budget.
     fn signed_product_sum_dyadic_ordering_with_plan<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
@@ -4371,6 +4615,18 @@ impl Rational {
         positive.cmp(&negative)
     }
 
+    /// Attempt a two-factor sum's sign with four-limb by native products.
+    ///
+    /// Rejects FACTORS other than two, including an empty sum of that shape. For
+    /// each active term, first tries a native right numerator and four-limb left;
+    /// otherwise swaps their roles. Checks product alignment and separate unsigned
+    /// six-limb subtotals before comparing high limbs first. None means a shape,
+    /// width or subtotal limit, even when signed cancellation would fit.
+    ///
+    /// Trusts the caller's complete term signs and exact dyadic exponent plan with
+    /// a covering maximum; denominators are not revalidated. For two-factor shape,
+    /// empty input returns Equal. No denominator, Rational or BigUint arithmetic is
+    /// materialized, and general fallback remains the caller's responsibility.
     fn signed_product_sum_dyadic_wide_narrow_ordering_with_plan<
         const TERMS: usize,
         const FACTORS: usize,

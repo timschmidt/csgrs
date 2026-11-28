@@ -25531,6 +25531,126 @@ compilation disabled. AGENTS.md retains the 100% public/private/generated
 Rustdoc mandate. Remaining aggregate sections, generated-item coverage and the
 repository-wide line review are still unfinished.
 
+## Dyadic planes and product-sum schedules batch (partial file)
+
+Scope and admission witness:
+
+- Reviewed every line of the contiguous section in
+  crates/hyperreal/src/rational/arithmetic/aggregate_products.rs at ec9d8a468,
+  baseline lines 3700–4419: known_dyadic_word through
+  signed_product_sum_dyadic_wide_narrow_ordering_with_plan. The final section
+  occupies lines 3700–4675; the complete file grows from 6173 to 6429 lines.
+  This is a partial-file record, not completion of its remaining reducers.
+- Owning layer: Hyperreal exact scalar arithmetic, P1 and P3–P7. Inputs are
+  finite rational coordinates, signed dyadic words/limbs, product descriptors
+  and caller-proved signs/alignment plans. Reviewed surrounding shared verified
+  aggregate/dyadic kernels, stored-fact queries, public dispatchers and
+  Hypermesh Plane::from_points as context; this does not credit those complete
+  files or their generated/formal variants as reviewed.
+- Missing acceptance evidence was accurate rendered documentation for 31
+  private helpers plus the public compact plane constructor's actual admission,
+  degeneracy, fallback and allocation behavior. Existing tests compare native,
+  stack and arbitrary-precision paths, but do not replace independent exact
+  expectations or explain their distinct eligibility envelopes.
+- Added/revised 32 complete method descriptions and removed the plane method's
+  doc(hidden). No arithmetic, predicate order, fallback, fixture, assertion or
+  policy changed. The full-source token comparison allows only that one removed
+  documentation attribute. No other hidden item is implicitly certified.
+
+Established behavior and current limitations:
+
+- Plane output is (p1-p0) cross (p2-p0), followed by minus its dot product with
+  p0. The normal is not a unit normal. Duplicate/collinear points can return
+  four zeros; successful coefficient construction is not proof of a valid
+  nondegenerate plane. Sixty-one probe cases complete, including eight zero
+  planes; three independently selected non-dyadic, excessive-alignment or wide
+  coordinate cases decline. Hypermesh retains general exact fallback and owns
+  subsequent validity decisions.
+- Plane input conversion canonicalizes and checks dyadic admission. Coordinate
+  differences must fit u128; cross-product unsigned subtotals use six limbs,
+  then reduced normal magnitudes must narrow to four limbs before offset work.
+  None means this schedule declined, not no mathematical plane or exhaustion
+  of a declared resource budget. Canonicalization and output denominators can
+  allocate despite fixed scratch buffers.
+- Word/stack adapters preserve sign/exponent metadata without validating a
+  normalization proof. Materialization trusts that proof. A deliberately
+  invalid private carrier with magnitude six and denominator four preserves
+  noncoprime storage marked reduced; this is caller-invariant misuse, not a
+  valid-input failure or permission to weaken exact public behavior. An initial
+  invalid-proof probe using equal numerator/denominator was corrected because
+  the existing unit shortcut canonicalizes that case.
+- Shared aggregate planning includes inactive descriptor exponents and checks
+  their sums. An inactive descriptor can therefore cause exponent overflow or
+  force an active term outside the fixed-width envelope. The rational planners
+  instead skip NoSign terms before probing operands. Native differences align
+  stored magnitudes before activity, and even shifting zero by 128 or more
+  declines. Intermediate failure need not imply the reduced result is wide.
+- Native two-product signed addition can cancel opposite signs at its final
+  addition. General product totals and stack schedules keep positive/negative
+  subtotals separately, so either subtotal can overflow before cancellation.
+  Word totals may still materialize a denominator wider than u128. The stack
+  ordering specialization requires two-factor shape and one native/four-limb
+  pairing per active term; it does not materialize a denominator or Rational.
+- Reduced-storage planning declines marked lazy fractions even when their exact
+  values are dyadic. The canonicalizing word adapter accepts such values without
+  changing the original storage's marked admission status. Pairwise dot-product
+  exponent addition is ordinary u64 arithmetic; the general product planner
+  checks exponent sums. No valid physical-input overflow claim was manufactured
+  for the former. prefer_wide is a conservative bit-growth dispatch estimate,
+  not a performance measurement or proof that native evaluation fails.
+- Planned reducers trust current signs, exact denominator exponents and a
+  covering maximum. Arbitrary-precision fallback retains exact values but does
+  not supply total-work, heap or cancellation bounds; usize shift conversion is
+  assumed. Ordering avoids denominator materialization but can still build
+  large shifted numerators. Equal-denominator dot products compare stored
+  product denominators, not each factor's denominator, and accept valid lazy
+  storage. Empty products are one; empty sums are zero; the fixed two-factor
+  ordering path rejects other shapes even when their term list is empty.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal focused checks pass: seventeen library test
+  executions in each of no-default-feature and all-feature configurations.
+  These include native differences/product sums, exact subtotal and maximal
+  exponent boundaries, finished differences, the existing 512-case unplanned
+  four/six-term comparison, dot-product fallback paths, wide-denominator
+  materialization, four/six-term ordering and plane admission/fallback.
+- Private cargo doc builds pass in both configurations with warnings and
+  broken/private intra-doc links denied. Full rendered-description and method
+  inventories cover all 32 methods. Public all-feature docs expose the formerly
+  hidden plane constructor. The first doc build caught bracketed array indices
+  interpreted as links; code formatting fixed them before final verification.
+  This section adds no doctests; zero-match invocations are not acceptance tests.
+- Two all-feature Hypermesh consumer tests pass: point_nondegeneracy_matches_
+  materialized_plane_validation and wide_dyadic_plane_uses_primitive_normal_
+  before_offset_construction. The latter checks on-plane classification and
+  Certified receipts under STRICT and APPROXIMATE_512. This is selected consumer
+  coverage, not a whole modeling-operation or serialization conformance claim.
+- A private source-copy probe produces 268 byte-identical baseline/final records:
+  64 point triples, 160 signed product sums, 32 native-word cases, five narrowing
+  boundaries, four lazy-storage cases, one equal-product-denominator case, one
+  empty-identity record and one deliberately invalid normalization proof.
+  Complete recorded traces for 64 plane attempts and 160 dot products agree.
+- Independent Python Fraction calculations check plane coefficients and point
+  incidence, signed product values/orderings, checked native/stack admission,
+  conservative width estimates, word cross-products, scale preservation and
+  empty identities. The 160 product cases have eighty native/stack successes
+  and eighty general fallbacks; original broader width fixtures remain intact.
+  Metadata-only maximal-exponent and inactive-term assertions use no enormous
+  denominator allocation. Finite probes establish these cases, not universal
+  closure, formal verification or a practical resource bound.
+- Noncomment-token equality, declaration/render inventory and git diff --check
+  pass. Full workflows, formatting, formal verification and performance checks
+  remain owner-waived for this docs-only session. No implementation or measured
+  performance improvement is claimed.
+
+Evidence and scripts remain under /tmp/csgrs-hyperreal-dyadic-products-audit/.
+Owned temporary source/executable artifacts are removed and record JSON is
+compressed after checking. Shared Cargo output is reused with incremental
+compilation disabled. AGENTS.md already retains the 100% public/private/generated
+Rustdoc mandate. Remaining reducers, generated-item coverage and repository-wide
+line review are unfinished; continue at signed_product_sum_shared_denominator.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
