@@ -28606,6 +28606,77 @@ Authored review of this entry point is complete; repository-wide coverage remain
 open. Continue with src/problem.rs and the actual origins/limits of each scalar
 error variant, then the remaining root facade and Simple implementation.
 
+## Hyperreal scalar error-category audit (28 November 2026)
+
+Owning layer: Hyperreal's payload-free Problem carrier and standard error/display
+boundary. P1/P5/P6/P37 require exact ingress, honest failure distinctions and
+resource claims supported by the producer. At 8868fec37, read all 60 lines of
+src/problem.rs and reproduce its public behavior. The missing acceptance witness
+was complete module/impl/method documentation and variant descriptions reflecting
+their actual producers, including nonlexical parser failures and unresolved work.
+Read relevant Rational parsing/conversion, Real inversion/scientific output/power/
+certificate/wire admission, Simple evaluation and CBOR adapter paths. Contextual
+reads and selected test fixtures do not earn whole-file credit for those files.
+
+The file now has 166 lines and 20 authored descriptions: module, enum, 15 variants,
+two trait impls and the formatter method. Docs distinguish definite zero and
+negative-domain rejection from UnknownZero/UnknownCertificate, describe unit
+variants' lack of operands, limits or chained causes, and explain category-only
+equality and non-exhaustive external matching. Display delegates to derived Debug,
+currently prints the identifier without width/precision transformation, propagates
+sink failure and is not a versioned error serialization format.
+
+Producer review found important limits to the old short descriptions. ParseError
+also covers expression arity, wire structure and proved certificate mismatch;
+BadInteger can represent an intermediate CBOR integer range failure. NotANumber
+also covers integer-parameter/domain admission; NotAnInteger includes unsupported
+nonpositive-base arbitrary-power cases after integer shortcuts. Exhausted combines
+bounded unresolved decisions, conversion guards, cancellation and unavailable
+prerequisites. The enum alone does not prove that a declared total-work or memory
+limit was actually reached. These are recorded implementation limitations, not
+changes to the target failure/resource contract or a claim that it is satisfied.
+
+Executed after the final source edit:
+
+- Before/after warnings-denied source-copy probes agree exactly: all 15 categories,
+  60 format projections, 225 equality pairs, 45 copy/source/downcast checks and
+  15 formatter failures. Fifteen public producer witnesses exercise typed parse,
+  conversion, domain, arity and unresolved-decimal outcomes. The enum formatting
+  and equality checks compile the edited source; producer checks use the external
+  all-feature library dependency. The focused Cargo tests below rebuild the library.
+- Private library cargo doc passes with no default features and with all features,
+  using --document-private-items --no-deps and denied warnings/broken/private links.
+  All 20 authored descriptions match rendered HTML in both configurations.
+- Both configurations pass checked_decimal's exact-filtered
+  unresolved_zero_rounding_and_notation_remain_typed and
+  final_value_abort_does_not_become_a_number tests. All features additionally pass
+  cli::public_problem_display_and_error_contract_is_available_to_cli_callers,
+  numeric_roundtrip_formats::non_finite_float_imports_are_rejected_losslessly and
+  serde_named_certificates::unproved_payload_equality_remains_distinct_from_invalid_input.
+  Existing assertions are unchanged; each selected invocation runs one passing test.
+- Comment-stripped source and ordinary compiler-expanded tokens are unchanged.
+  The authored/expanded inventory, rendered-description checks, file-local rustfmt
+  check and git diff --check pass. Full CI, benchmark and cross-target checks remain
+  owner-waived for this docs-only session. No performance or universal decision
+  completeness claim is made.
+
+Read all seven ordinary derive-generated impls and their three methods: Copy,
+TrivialClone, Clone, Debug, Eq, StructuralPartialEq and PartialEq. Clone copies the
+category, Debug selects the literal identifier, and PartialEq compares discriminants.
+These generated items have no custom attached descriptions; TrivialClone is hidden
+by the compiler. The enum prose explains their behavior but does not close generated
+item coverage. Replacing derives is outside this docs-only batch; no suppression
+or executable change was introduced.
+
+Evidence is under /tmp/csgrs-hyperreal-problem-audit/: baseline, commands/logs,
+probe/scripts, source expansions, exact generated bodies, inventories and compressed
+HTML. Owned probe executable and source copies are removed after checking. Cargo
+uses the shared target without incremental compilation. AGENTS.md already records
+the full public/private/generated documentation mandate. Authored review of this
+file is complete; generated coverage and repository-wide completion remain open.
+Continue with the root facade and Simple implementation after consulting existing
+whole-file records, then remaining owning-crate and support files.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
