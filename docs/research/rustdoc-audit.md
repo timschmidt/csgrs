@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/main.rs` | Entire calculator entry point and private answer printer reviewed; three descriptions cover line/error handling, exact saved history, rounded diagnostics and unbounded session resources. | Both simple-only/all private binary docs and the existing recovery integration test pass; seven transcripts per mode and a separate exact-history/rounded-display witness match before/after, as do expanded tokens. See calculator entry-point audit. |
 | `crates/hyperreal/src/dispatch_trace.rs` | Entire authored collector, reports, classifiers, private hashing/scope machinery and fixtures reviewed; 143 descriptions correct mutability, heuristic scope, guard lifecycle and partial overflow effects. | Both trace-only/all private docs and ten tests per mode pass, with two selected consumer trace checks and unchanged source/expanded executable tokens. All authored descriptions render, including supplemental local statics; generated derive/TLS custom-doc gaps remain open. See dispatch collector audit. |
 | `crates/hyperreal/src/trace.rs` | Entire authored feature-selected macro and crate-local alias reviewed; four descriptions cover eager enabled arguments, disabled erasure, scope delegation and visibility. | Both-mode private docs, actual-collector source-copy probes and three all-feature scope/trace tests pass; expanded tokens match in both modes. Alias details also render on the module page because Rustdoc omits a separate re-export description. See Hyperreal trace macro audit. |
 | `crates/hyperreal/src/verified/mod.rs` | Entire authored module boundary and both private proof-erasure macros reviewed; three descriptions explain shared bodies, lexical scope and normal/ghost differences. | Both-mode private docs render the three descriptions and twelve inherited child-module descriptions; baseline/final erasure probes and expanded tokens agree. Verus configuration validation and previously recorded generated-item gaps remain open. See verified module audit. |
@@ -28528,8 +28529,82 @@ source/doc copies and duplicate HTML are removed after checking. Shared Cargo
 artifacts are reused without incremental compilation. AGENTS.md already mandates
 full public/private/generated Rustdoc. Authored review of this file is complete;
 generated coverage and repository-wide completion remain open. Continue with
-remaining Hyperreal root modules, beginning with src/structural.rs and its
-structural facts and retained certificates.
+remaining Hyperreal root modules after consulting earlier whole-file records.
+structural.rs already has a full authored review in the public structural fact
+and decision carrier batch; the later calculator batch corrects this work pointer.
+
+## Hyperreal calculator entry-point audit (28 November 2026)
+
+Owning layer: the optional Simple calculator's terminal input, history and
+presentation boundary. P1/P5/P6/P37 require exact retained values, explicit
+failure/display distinctions and resource claims matching the executable.
+At f2ad85d18, read all 67 lines of src/main.rs. Its module, public entry point
+and private answer function had no Rustdoc. Read the feature-gated binary
+manifest, parser/evaluator paths, structural storage queries, fraction preference,
+ordinary/diagnostic formatters and existing recovery fixture as context. Those
+reads earn no new whole-file credit in their owning files. The missing acceptance
+witness was documentation of the complete terminal contract, including saved
+exact values versus limited-precision text.
+
+An earlier work pointer suggested structural.rs; inspection of the existing
+ledger and its source history found the complete authored review at 7085e31c8.
+That file was not re-edited or counted again. Work proceeded to the undocumented
+calculator, and the pointer is corrected without changing any completion claim.
+
+Before editing, built both simple-only and all-feature binaries and reproduced
+seven transcript cases: empty EOF, whitespace termination, numbered/last history
+reuse, parse/evaluation error recovery, rational/nonrational display, unresolved
+decimal recovery and blank-line termination with later input still queued. The
+fixture inputs were adjusted to the actual parser grammar (operator whitespace
+and a genuinely incomplete operand expression); expectations retain dedicated
+parse and insufficient-parameter failures. Ordinary Real display prints 1/8,
+with 0.125 supplied separately by the diagnostic view. No repository fixture or
+assertion was weakened or changed.
+
+The file now has 118 lines and three descriptions. Docs explain that each line
+is trimmed and parsed independently; empty trimmed lines or EOF end the session;
+parse errors go to stderr; evaluation diagnostics go to stdout; failed evaluations
+do not consume answer numbers. Successful values are printed and retained exactly
+under #n and last. History and input/evaluation work have no session resource cap,
+and I/O failure or u32 answer-counter overflow retains ordinary panic/build behavior.
+The fixed internal debug_parse flag is not a command-line option.
+
+The printer's structural queries do not prove opaque values nonintegral or
+irrational. Integers do not format the borrowed decimal view. Other branches
+use the default 32-place diagnostic conversion at floor -256; exact values stay
+in history even if conversion prints [UnknownZero] or [Exhausted]. A terminating
+rational's = separator is not an exact-text guarantee, and neither retained-form
+Display nor the diagnostic decimal is advertised as exact interchange. The floor
+is not a total-work, memory or wall-clock bound.
+
+Executed after the final source edit:
+
+- Both binary configurations build and reproduce all seven baseline stdout/stderr/
+  exit-status transcripts exactly. Selected integer/history/error cases have
+  complete independent expected output, not just a baseline checksum.
+- A separate before/after source-body probe evaluates 1/2^200, then multiplies
+  last by 2^200. Exact Python Fraction checks show that the = diagnostic differs
+  from the original rational, while its ordinary fraction display equals that
+  rational and the subsequent exact computation returns one. This verifies the
+  documented display/history distinction without adopting printed decimals as data.
+- Private cargo doc for the binary passes in both modes with warnings and broken/
+  private links denied. All three descriptions match rendered pages. The existing
+  calculator_diagnostics integration test passes in each configuration, retaining
+  its unresolved-marker and subsequent-answer assertions and timeout behavior.
+- Source and ordinary compiler-expanded tokens are identical after comments are
+  excluded; source/render inventories and git diff --check pass. There are no new
+  authored API items or derive expansions in this file. No executable, formatting
+  call order, history behavior or test assertion changed. Full workflow/benchmark/
+  cross-target checks remain owner-waived for this docs-only session.
+
+Evidence is under /tmp/csgrs-hyperreal-calculator-main-audit/: baseline, replay and
+expansion scripts, build/doc/test logs, transcripts, exact rounding/reuse witness,
+expansions, inventories and six compressed selected HTML pages. Owned probe binary
+and duplicate HTML trees are removed; Cargo uses the shared nonincremental target.
+AGENTS.md already records the full public/private/generated documentation mandate.
+Authored review of this entry point is complete; repository-wide coverage remains
+open. Continue with src/problem.rs and the actual origins/limits of each scalar
+error variant, then the remaining root facade and Simple implementation.
 
 ## Next work
 
