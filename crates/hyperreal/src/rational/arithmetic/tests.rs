@@ -1,8 +1,22 @@
+/// Regression witnesses with access to rational storage and private arithmetic schedules.
+///
+/// Tests compare exact values, representation observations and selected dispatch
+/// behavior. Fixture-local arbitrary-precision oracles distinguish mathematical
+/// results from native admission limits; finite corpora do not prove universal
+/// coverage, resource bounds or the separate policy/topology contracts of consumers.
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::mem::size_of;
 
+    /// Check that borrowed raw parts retain their identity before and after canonical observation.
+    ///
+    /// For both signs, stores 6f/4f with f = 2^8192 + 7, checks pointers to the
+    /// original 8195-bit parts and an initially empty product cache, then observes
+    /// canonical 3/2 parts and checks the raw view again after the cache warms.
+    /// With dispatch tracing enabled, the borrowed view must emit no dispatch events.
+    /// Also checks canonical zero's borrowed sign and 0/1 parts. This tests the
+    /// product-cache state and view, not every possible cache or allocation.
     #[test]
     fn borrowed_ratio_parts_do_not_canonicalize_or_populate_caches() {
         let factor = (BigUint::one() << 8192_usize) + BigUint::from(7_u8);
@@ -38,6 +52,14 @@ mod tests {
         assert!(denominator.is_one());
     }
 
+    /// Compare both enclosure endpoints with exact floor/ceiling multiples of 2^precision.
+    ///
+    /// The local oracle uses BigRational division by the grid, independently of the
+    /// production enclosure path, and checks that returned endpoints are dyadic.
+    /// Exercises both signs of n/d for n = 0..20 and d = 1..20 at five precisions,
+    /// then four ratios retaining a 1026-bit common factor at seven precisions
+    /// through +/-513. Equality to the two grid neighbors proves tightness for
+    /// these cases; this fixture does not exercise arbitrary extreme precision.
     #[test]
     fn dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid() {
         let check = |value: Rational, precision: i32| {
@@ -96,6 +118,13 @@ mod tests {
         }
     }
 
+    /// Pin eleven exact MSD arithmetic cases around the signed 32-bit output limits.
+    ///
+    /// Calls the bit-length kernel directly with synthetic u64 metadata, including
+    /// u64::MAX, so no enormous rational needs to be allocated. Checks that the
+    /// comparison correction and signed offset apply before narrowing, with None
+    /// only for the listed out-of-range results. It does not validate whether the
+    /// supplied bit lengths and correction describe any particular rational.
     #[test]
     fn magnitude_bit_length_boundaries_apply_offset_before_narrowing() {
         let maximum = i32::MAX as u64;
@@ -116,8 +145,23 @@ mod tests {
         }
     }
 
+    /// Check exact magnitude exponents and power-of-two flags against rational bounds.
+    ///
+    /// For both signs, compares zero and small ratios with an independent positive
+    /// BigRational, then shifted ratios retaining common factors at 129, 257, 1025
+    /// and 2048-bit shift positions. Every nonzero result must place the magnitude
+    /// in [2^msd, 2^(msd+1)); the flag must mean equality to the lower bound.
+    /// Zero must yield None. Uses offset zero; signed-offset narrowing is covered
+    /// separately by the metadata-boundary fixture.
     #[test]
     fn rational_magnitude_certificate_matches_exact_intervals() {
+        /// Assert the magnitude certificate of one valid lazy fraction using exact bounds.
+        ///
+        /// Requires a positive denominator and a valid nonzero sign when the numerator
+        /// is nonzero. The reference deliberately ignores sign because MSD describes
+        /// absolute magnitude. Zero checks None; other cases construct 2^msd and assert
+        /// both interval inequalities and the equality flag. Allocates arbitrary-size
+        /// integers and unwraps the nonzero certificate for this bounded test corpus.
         fn check(numerator: BigUint, denominator: BigUint, sign: Sign) {
             let expected = num::BigRational::new(BigInt::from(numerator.clone()), BigInt::from(denominator.clone()));
             let value = Rational::from_parts_raw_unreduced(
@@ -165,12 +209,23 @@ mod tests {
     }
     use std::sync::atomic::Ordering as AtomicOrdering;
 
+    /// Interpret a little-endian base-2^64 limb slice as an arbitrary-precision integer.
+    ///
+    /// Reverse traversal builds the value by shifting and adding, independently of
+    /// the production limb kernels. Empty input returns zero; leading zero limbs
+    /// are allowed. This allocating test oracle has no input-size budget.
     fn limbs_to_biguint(limbs: &[u64]) -> BigUint {
         limbs.iter().rev().fold(BigUint::ZERO, |value, limb| {
             (value << 64) + BigUint::from(*limb)
         })
     }
 
+    /// Decode a signed native carrier as an independent reduced BigRational.
+    ///
+    /// Uses sign*magnitude/2^denominator_shift, with NoSign denoting zero even
+    /// when raw magnitude is nonzero. Does not require a normalized carrier.
+    /// The shift must fit usize and its denominator must be practical to allocate;
+    /// u64::MAX metadata cases therefore use separate nonmaterializing checks.
     fn reference_dyadic_word(word: DyadicWord) -> num::BigRational {
         num::BigRational::new(
             BigInt::from_biguint(word.sign, BigUint::from(word.magnitude)),
@@ -178,14 +233,37 @@ mod tests {
         )
     }
 
+    /// Assert canonical sign, numerator magnitude and binary denominator exponent.
+    ///
+    /// The expected BigRational must already have a power-of-two denominator;
+    /// this helper compares its bit-length-derived exponent without rechecking
+    /// that precondition. Equality of all three fields checks the returned carrier's
+    /// reduction, including zero's NoSign, zero magnitude and zero shift.
     fn assert_dyadic_word_matches(word: DyadicWord, expected: num::BigRational) {
         assert_eq!(word.sign, expected.numer().sign());
         assert_eq!(&BigUint::from(word.magnitude), expected.numer().magnitude());
         assert_eq!(word.denominator_shift, expected.denom().magnitude().bits() - 1);
     }
 
+    /// Check native product admission and reduced output against an independent fraction oracle.
+    ///
+    /// Covers the empty product, one/two-factor small ratios, ten directed overflow/
+    /// zero/cancellation triples and 256 deterministic four-factor rows. Denominators
+    /// are positive. The oracle distinguishes a too-large reduced prefix before a
+    /// later zero from a successfully formed zero, and checks the rational adapter
+    /// against the same native result. This is a finite admission/value corpus,
+    /// not an assertion that every mathematically representable product is admitted.
     #[test]
     fn native_cross_cancelled_products_match_independent_fraction_oracle() {
+        /// Check one product's native admission using a reduced prefix over all denominators.
+        ///
+        /// For positive native denominators, reduces the numerator prefix before the
+        /// first zero against the complete original denominator product. Its numerator
+        /// must fit u128; without a zero its denominator must also fit. This models
+        /// prefix overflow independently of the production pairwise cancellation loop.
+        /// On success, checks canonical 0/1 or both reduced fraction parts, then compares
+        /// the lazy Rational adapter with the kernel result. Empty arrays denote one;
+        /// zero denominators violate the reference constructor's precondition.
         fn check<const N: usize>(numerators: [u128; N], denominators: [u128; N]) {
             // Before the first zero, the reduced prefix numerator is exactly
             // the numerator of that prefix over ALL original denominators.
@@ -269,6 +347,12 @@ mod tests {
         }
     }
 
+    /// Compare native numerator/denominator reduction with canonical BigRational parts.
+    ///
+    /// Crosses a finite list of zero, small values, u128 extrema and neighbors of
+    /// selected powers of two, excluding zero denominators. Exact component equality
+    /// checks both the value and canonical reduction, including 0/1. This does not
+    /// test invalid denominators or a particular GCD dispatch/performance schedule.
     #[test]
     fn native_fraction_reduction_matches_bigrational() {
         let mut values = vec![0, 1, 3, 5, 63, 64, 65, u128::MAX - 1, u128::MAX];
@@ -286,6 +370,13 @@ mod tests {
         }
     }
 
+    /// Check native binary-factor cancellation, sign retention and canonical zero.
+    ///
+    /// For every native bit position, two magnitude shapes and both signs, compares
+    /// nine materializable denominator shifts with reduced BigRational parts.
+    /// Checks u64::MAX exponent metadata algebraically without building that power
+    /// of two. Separate zero cases require inactive, nonnegative, zero-magnitude,
+    /// zero-shift output regardless of input sign or exponent.
     #[test]
     fn native_dyadic_normalization_matches_bigrational() {
         for bit in 0..128 {
@@ -317,8 +408,23 @@ mod tests {
         }
     }
 
+    /// Check native difference admission separately from its normalized exact value.
+    ///
+    /// Uses all native power-of-two positions, ten alignment exponents, three signs
+    /// and 256 deterministic operand pairs with an additional common-scale variant.
+    /// Directed cases cover signed overflow, inactive raw-magnitude alignment,
+    /// maximal-exponent cancellation and excessive alignment. NoSign can accompany
+    /// a nonzero stored magnitude here: these are carrier-level admission probes,
+    /// not assertions that such storage is a valid canonical Rational.
     #[test]
     fn native_dyadic_difference_matches_exact_fallbacks() {
+        /// Predict native alignment and difference capacity with arbitrary-precision integers.
+        ///
+        /// Both raw magnitudes must align with shifts below 128 and fit u128, including
+        /// inactive inputs. The signed difference must also fit. Checks Some/None exactly
+        /// against those conditions, then verifies canonical output against decoded
+        /// fractions. Input exponents must be small enough for materialized references;
+        /// maximal-metadata cases are checked separately without this helper.
         fn check(left: DyadicWord, right: DyadicWord) {
             let maximum = left.denominator_shift.max(right.denominator_shift);
             let left_shift = maximum - left.denominator_shift;
@@ -374,8 +480,23 @@ mod tests {
         assert!(Rational::difference_dyadic_words(extreme, unit).is_none());
     }
 
+    /// Check the native two-product signed sum's value and precise admission conditions.
+    ///
+    /// Exercises four polarity patterns across shifts through 129, inactive and
+    /// zero-magnitude carriers, overwide products, and 256 deterministic rows.
+    /// Additional checks cover exponent addition overflow, cancellation at maximal
+    /// metadata, rejection of active Wide factors even when numerically zero, and
+    /// skipping inactive Wide factors. The reference checks intermediate limits,
+    /// so a small final answer alone does not imply native success.
     #[test]
     fn native_dyadic_product_sums_match_exact_fallbacks() {
+        /// Compare two active-product bounds and the signed total with a u128 capacity oracle.
+        ///
+        /// Forms the common binary scale from both terms, including inactive metadata.
+        /// Active raw and aligned products must fit with alignment below 128, then the
+        /// final signed magnitude must fit. On success, checks canonical fields against
+        /// a separately accumulated BigRational sum. Exponent sums must not overflow
+        /// u64 and shifts must be practical to materialize in this helper's corpus.
         fn check(left: [DyadicWord; 2], right: [DyadicWord; 2], positive: [bool; 2]) {
             let shifts: [_; 2] = std::array::from_fn(|i| left[i].denominator_shift + right[i].denominator_shift);
             let maximum = shifts[0].max(shifts[1]);
@@ -438,10 +559,26 @@ mod tests {
         assert_eq!((skipped.magnitude, skipped.shift), (0, 0));
     }
 
+    /// Check fixed-buffer success against both unsigned subtotals before cancellation.
+    ///
+    /// Covers empty and zero-limb buffers, alignment through 384 bits, wide factors,
+    /// and a directed case whose final difference fits but positive subtotal does
+    /// not. Adds 128 deterministic five-term rows at one, two, six and nine limbs.
+    /// Inactive exponent metadata still influences the common scale. BigUint
+    /// subtotals decide admission independently; reduced BigRational fields decide
+    /// the accepted value. Exponent overflow is tested in a separate fixture.
     #[test]
     fn dyadic_product_sums_match_exact_subtotal_limits() {
         use crate::verified::aggregate::{Magnitude, Product, sum_products};
 
+        /// Assert exact M-limb admission and canonical fields for one N-term product array.
+        ///
+        /// Builds positive and negative aligned BigUint subtotals from active terms,
+        /// using every term's exponent in the scale. Each subtotal must be below
+        /// 2^(64*M); cancellation cannot recover admission after either exceeds that
+        /// capacity. Successful output is compared with the reduced exact difference.
+        /// Requires nonoverflowing exponent sums and practically materializable shifts;
+        /// this allocating oracle does not impose a production resource contract.
         fn check<const N: usize, const M: usize>(products: [Product; N]) {
             let shifts: Vec<_> = products.iter().map(|p| p.left_shift + p.right_shift).collect();
             let maximum = shifts.iter().copied().max().unwrap_or(0);
@@ -528,20 +665,44 @@ mod tests {
         }
     }
 
+    /// Compare native/native and wide/native carrier adapters with independent signed sums.
+    ///
+    /// Builds 128 deterministic three-term rows with all three sign states, varying
+    /// polarities and exponents below four per factor. Inactive magnitudes are zero;
+    /// wide/native right factors are masked to 80 bits, keeping this corpus within
+    /// the six-limb accumulator. Both adapters must succeed and return canonical
+    /// fields matching their own BigRational sum. This fixture does not check
+    /// arbitrary-width overflow or all possible sign/polarity combinations.
     #[test]
     fn dyadic_product_sums_preserve_both_carrier_sign_adapters() {
+        /// Decode a native signed carrier for this fixture's independent fraction sum.
+        ///
+        /// Uses the stored sign and magnitude over 2^shift; NoSign becomes zero. This
+        /// local oracle accepts unreduced carriers but assumes shifts fit usize and
+        /// are small enough to allocate, as ensured by the generator.
         fn word(value: DyadicWord) -> num::BigRational {
             num::BigRational::new(
                 BigInt::from_biguint(value.sign, BigUint::from(value.magnitude)),
                 BigInt::one() << usize::try_from(value.denominator_shift).unwrap(),
             )
         }
+        /// Decode four little-endian magnitude limbs over the carrier's binary denominator.
+        ///
+        /// Reuses the test-only limb oracle, then lets BigRational reduce the signed
+        /// fraction. NoSign denotes zero. Exponents must fit usize and remain small
+        /// enough to materialize; the fixture generates shifts below four.
         fn wide(value: DyadicWideWord) -> num::BigRational {
             num::BigRational::new(
                 BigInt::from_biguint(value.sign, limbs_to_biguint(&value.magnitude)),
                 BigInt::one() << usize::try_from(value.denominator_shift).unwrap(),
             )
         }
+        /// Check canonical stack-sum fields against one exact expected dyadic fraction.
+        ///
+        /// Requires the expected denominator to be a power of two and the fixture's
+        /// common exponent to be at most six. Compares sign, reconstructed numerator
+        /// and the full denominator, so unreduced or incorrectly signed outputs fail.
+        /// The exponent assertion also guards the denominator shift used by this oracle.
         fn check(actual: DyadicStackSum, expected: num::BigRational) {
             assert_eq!(actual.sign, expected.numer().sign());
             assert_eq!(&limbs_to_biguint(&actual.magnitude.0), expected.numer().magnitude());
@@ -594,6 +755,14 @@ mod tests {
         }
     }
 
+    /// Exercise exponent overflow and alignment without allocating enormous denominators.
+    ///
+    /// Checks a single term at u64::MAX, exact cancellation to canonical zero,
+    /// and exponent-addition rejection for both active and inactive terms. A zero
+    /// product may survive huge alignment, while inactive high-scale metadata can
+    /// make a nonzero term exceed the buffer. Both native/native and wide/native
+    /// Rational adapters must propagate exponent-sum decline. These are metadata
+    /// and fixed-buffer outcomes, not allocation or total-work budget tests.
     #[test]
     fn dyadic_product_sums_check_maximal_exponent_metadata() {
         use crate::verified::aggregate::{Magnitude, Product, sum_products};

@@ -25981,6 +25981,87 @@ compilation. AGENTS.md already contains the 100% public/private/generated
 Rustdoc mandate. Continue with arithmetic/tests.rs, whose 6,672 lines have not
 yet received whole-file review; the repository-wide audit remains unfinished.
 
+## Rational test audit: native arithmetic and dyadic oracles (28 November 2026)
+
+Owning layer: Hyperreal rational arithmetic's private test module. P37 requires
+accurate claims about what a fixture proves; P1, P3, P4 and P5 supply the exact
+value, magnitude-fact, cache and intermediate-growth contracts being described.
+At e5964ac22, the first twelve tests and their eleven shared/local helpers lacked
+Rustdoc. The missing acceptance witness was attached documentation explaining
+the actual assertion, oracle domain and failure/admission distinction, including
+items omitted from ordinary library documentation.
+
+Reviewed arithmetic/tests.rs baseline lines 1–622, now lines 1–791, and the
+corresponding ratio_parts, enclosure, magnitude, native fraction, dyadic and
+aggregate implementations. Added 24 descriptions: one module, twelve tests,
+three shared test helpers and eight function-local helpers. All 169 added source
+lines are Rustdoc; every prior source line, assertion and executable token is
+unchanged. The remaining test file is not credited as reviewed.
+
+The documented witnesses distinguish:
+
+- Borrowing the original 8195-bit numerator/denominator from observing the
+  reduced value. The fixture checks raw pointer identity and product-cache state
+  before/after canonicalization, plus absence of dispatch events when tracing
+  is enabled; it does not inventory every cache or allocation.
+- Exact floor/ceiling grid endpoints from approximate float bounds. Small ratios
+  and wide retained common factors use an independent BigRational grid oracle.
+  Magnitude certificates must satisfy both exact binade inequalities and the
+  equality flag; eleven synthetic metadata cases separately test offset-before-
+  narrowing without allocating enormous rational values.
+- A native product's reduced prefix capacity before a later zero from its final
+  mathematical value. The cross-cancellation reference reduces the nonzero
+  prefix against all denominators, independently of the pairwise production
+  loop. Empty products, small exhaustive pairs, directed boundary triples and
+  deterministic four-factor rows remain covered.
+- Native dyadic normalization and difference/product admission from canonical
+  value checks. Carrier-level NoSign probes can retain nonzero raw magnitudes;
+  these are not claims about valid canonical Rational storage. Alignment and
+  product limits can decline even when the final answer is small.
+- Separate positive/negative fixed-buffer capacities from the post-cancellation
+  answer. The stack oracle checks both subtotals; inactive metadata can still
+  determine the scale. Both sign adapters compare with their own exact fraction
+  sums within a deliberately fitting six-limb corpus.
+- Maximal exponent metadata from materialized denominators. Dedicated cases
+  check overflow, cancellation, inactive terms and zero products without trying
+  to allocate 2^u64::MAX. Local oracle preconditions explicitly exclude such
+  materialization and disclose their arbitrary-precision allocation.
+
+Executed after the final source edit:
+
+- All twelve selected Hyperreal library tests pass with no default features and
+  with all features; the same twelve passed on the all-feature baseline. The
+  existing independent BigInt/BigUint/BigRational expectations, native admission
+  assertions and trace check remain unchanged. Exact test-name inventories
+  confirm that each run exercised the intended twelve functions.
+- Both locked/offline private cargo doc builds pass with warnings and broken/
+  private intra-doc links denied. Ordinary Rustdoc omits #[test] functions and
+  function-local declarations. An isolated source copy removes only the twelve
+  reviewed test markers and additionally renders the eight unchanged local
+  helper definitions in their original private context. All 24 complete
+  descriptions render under both feature configurations. A first inventory
+  comparison needed typographic-apostrophe normalization; compilation and links
+  were already clean, and the corrected text inventory passes.
+- Hyperinterval's all-feature rational_conversion integration test
+  lazy_rational_conversion_keeps_stored_parts_and_cache_independent_cost passes.
+  It consumes generated exact line coordinates, checks interval containment,
+  preserves raw parts and verifies equal cold/warm work accounting. This is
+  selected downstream borrowing/conversion coverage, not universal topology or
+  resource evidence.
+- Exact source-line preservation outside the new Rustdoc, executable-token
+  equality and git diff --check pass. Full workflows, formatting, performance
+  and formal-verification runs remain owner-waived for this docs-only session.
+  These checks do not establish a new algorithmic capability or performance
+  improvement, and test-harness/generated API coverage remains separate.
+
+Evidence is retained under /tmp/csgrs-hyperreal-arithmetic-tests-native-audit/:
+source baseline, scripts, commands, test/doc logs, source/render inventories,
+hashes and compressed selected rendered pages. Owned source copies and duplicate
+HTML trees are removed after validation; Cargo uses the shared target without
+incremental compilation. AGENTS.md already records the full public/private/
+generated Rustdoc mandate. Continue at assert_f64_enclosure_contains, now line
+792. This 6,841-line file and the repository-wide audit remain incomplete.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
