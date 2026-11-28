@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/mod.rs` | Entire module facade reviewed; documented shared arithmetic authority, child-module roles, value identity and failure/resource boundaries. | Both-mode private docs and compiled README/consumer examples pass; four facade blocks and the corrected parse anchor render. All 21 rational Rust sources map to whole-file records; generated Serde gaps remain. See rational source-guide batch. |
 | `crates/hyperreal/src/rational/convert.rs` | Entire primitive conversion file reviewed; 38 authored blocks document exact float ingress, checked integer egress, private helpers, tests and all local macro expansions. | Both-mode private docs, focused tests, doctest, eight Real consumers and independent finite probes pass. All 50 generated integer items render within their concrete impls; 77/78 total applicable descriptions verified. See primitive-conversion batch. |
 | `crates/hyperreal/src/rational/arithmetic/tests.rs` | Entire authored file reviewed across twelve contiguous batches; all 249 declarations documented, including local helpers, tuple fields and a local constant. | Both-mode private docs and focused batch tests pass. Cumulative inventories match the final source; 224 minimal-feature and 249 all-feature supplemental descriptions verified. Executable tokens match the original pre-audit file. See comparison-fixture reconciliation for scope and retained limits. |
 | `crates/hyperreal/src/rational/arithmetic/aggregate_products.rs` | Entire authored carrier, reduction, construction and dispatch implementation reviewed across eight batches; all 256 declarations documented, including fields and function-local items. | Both-mode private docs and focused tests pass; 246 ordinary and ten supplemental descriptions render. Whole-file executable tokens agree with the pre-audit revision except eleven removed hiding attributes. Generated-API review remains separate. See aggregate-dispatch reconciliation. |
@@ -27111,6 +27112,89 @@ generated Rustdoc mandate. This establishes the conversion file's authored and
 local macro-generated documentation, not repository-wide completion. Continue
 with the rational module/README and remaining implementation/support files,
 consulting existing records before assigning any new whole-file credit.
+
+## Rational module and source-guide audit (28 November 2026)
+
+Owning layer: the rational module facade and its developer-facing source guide.
+P1/P4 govern exact value and shared evidence, P5/P6 the resource/error claims,
+and P37 accurate architecture, support and validation scope. At aefef6651,
+read all eleven lines of rational/mod.rs and all 126 lines of rational/README.md.
+The README incorrectly assigned parsing implementation to parse.rs, mixed
+platform-specific size/history claims into its overview and did not distinguish
+operator division panics from checked inversion or presentation from exact replay.
+Read the seven-line parse.rs anchor again; it already has whole-file credit in
+the exact-set/private-anchor batch, so this is not a new review count.
+
+Inspected arithmetic.rs, parser/formatter branches, exact constructors, division,
+canonicalization/retention documentation and the crate overview/performance
+records as context. Those reads do not award new whole-file credit elsewhere.
+Before edits, a public-consumer probe on the current all-feature build reproduced
+literal exact inputs, typed errors, four owned/borrowed zero-divisor panics,
+Display mixed-fraction rejection, alternate decimal truncation, the separator
+parsing defect and the scientific guard's nonzero/zero distinction.
+
+The facade now has thirty lines and four documentation blocks: module ownership
+and the three child modules. It describes shared storage, canonical observations,
+value equality, the broader Real carrier and operation-specific failure/resource
+limits. The glob re-export is described by the module, not treated as a new
+arithmetic implementation. An outer description on parse exposed Rustdoc's
+relative-link scope difference: its prior super::arithmetic link resolved from
+the wrong level and failed the warnings-denied build. Changed that one link to
+crate::rational::arithmetic, retaining all other anchor text and behavior.
+
+The 98-line README now supplies an architecture diagram, an accurate source map,
+build/private-doc commands and a compiled exact-arithmetic example. It explains
+binary-versus-decimal ingress, canonical zero, checked errors versus division
+panics, integer export, presentation/replay differences and resource limits.
+The actual 1.2_5 -> 41/40 parser defect is disclosed as an implementation gap,
+not endorsed syntax or a reason to weaken the exact contract. Root/specialized
+helpers retain their separate domain/decline contracts. Detailed timing history,
+inline node sizes and cache schedules are replaced by links to implementation
+Rustdoc, PERFORMANCE.md, FUTURE_WORK.md and the audit ledger; no fresh performance
+or platform-size result is claimed. Prior README content remains in the baseline
+snapshot and Git history.
+
+Executed after the final link correction:
+
+- Locked/offline library builds and private cargo doc builds pass without default
+  features and with all features; warnings and broken/private links are denied.
+  All five affected facade/anchor descriptions render in each mode. The repaired
+  link text resolves to the arithmetic module page in both rendered trees.
+- The README's sole Rust block is extracted byte-for-byte, compiled with warnings
+  denied and run in both modes. It checks exact tenths, binary64 0.1 inequality
+  and checked reciprocal composition. All sixteen local Markdown links resolve.
+- The public-consumer probe passes in both modes with output identical to the
+  pre-edit baseline. It pins exact decimal/scientific/fraction inputs, NaN and
+  infinity errors, zero-denominator/inverse errors, the four zero-divisor panics,
+  5/3 displaying as unparseable mixed text, truncation to 1.66, the separator
+  defect and Exhausted for 1e10000000 while 0e10000000 remains exact zero.
+  These are finite examples; they do not prove all parser grammar or resource
+  behavior. No implementation or fixture is changed to accommodate a failure.
+- The first standalone probe builds lacked dependency search paths for Cargo's
+  per-artifact output layout. Deriving all dependency directories from Cargo's
+  JSON artifacts fixed the harness; both baseline and final probes then ran.
+  The HTML checker was also corrected to account for the link's nested code tag
+  while still requiring its exact label and arithmetic destination.
+- Rust executable tokens match the baseline in both changed .rs files. Source
+  inventories, README/example equality and git diff --check pass. Full workflows,
+  benchmarks, cross-target and formal checks remain owner-waived. No unrelated
+  broad test rerun or runtime/performance claim is credited to this overview edit.
+
+A source-hash inventory now maps all 21 rational Rust files to their existing
+whole-file records, including this facade review and the earlier parse anchor.
+It reconciles documentation work; it is not a new line-by-line review of every
+file on this turn, nor proof of all configuration/generated APIs. In particular,
+the representation batch's Serde-generated internal documentation gaps remain
+open. The README also receives whole-file review credit as a non-Rust source.
+
+Evidence remains under /tmp/csgrs-hyperreal-rational-overview-audit/: before/after
+sources, extracted example, probe, command/build logs, source/hash inventories,
+and compressed selected HTML. Owned executables and duplicate HTML trees are
+removed after validation; shared Cargo output is reused without incremental
+compilation. AGENTS.md already mandates 100% public/private/generated Rustdoc.
+Continue through the remaining Hyperreal implementations and support files;
+verified/float.rs has been read as conversion context but still needs its own
+API/ghost-configuration audit. Repository-wide completion remains unestablished.
 
 ## Next work
 

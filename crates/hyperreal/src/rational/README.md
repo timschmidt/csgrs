@@ -1,126 +1,98 @@
 # Rational
 
-`Rational` is the exact arithmetic base for `hyperreal`.
+`Rational` is the exact fraction carrier beneath `hyperreal::Real` and the Hyper
+geometry kernels. It represents arbitrary-width rational numbers using a sign,
+an unsigned numerator and a nonzero unsigned denominator. It does not represent
+irrational numbers; `Real` supplies the broader scalar representations.
 
-## Representation
+## Architecture
 
-`Rational` stores:
+```text
+integer / finite IEEE input ── convert.rs ──┐
+                                          ▼
+text input ── arithmetic/format_parse.rs ── Rational ── Real / geometry consumers
+                                          ▲
+                   arithmetic/*.rs ────────┘
+                   exact operations, queries and retained evidence
+```
 
-- a `num::bigint::Sign`
-- a non-negative `BigUint` numerator
-- a non-zero `BigUint` denominator
+| Source | Responsibility |
+| --- | --- |
+| [mod.rs](mod.rs) | Connect the private modules and re-export arithmetic items to the crate facade. |
+| [arithmetic.rs](arithmetic.rs) | Include implementation fragments into one module with shared representation and helper authority. |
+| [arithmetic/representation.rs](arithmetic/representation.rs) | Shared payload, retained facts, cache layouts and optional Serde interchange. |
+| [arithmetic/construction.rs](arithmetic/construction.rs) | Constructors, exact reduction, canonicalization and shared-value reuse. |
+| [arithmetic/ops.rs](arithmetic/ops.rs), [aggregate_products.rs](arithmetic/aggregate_products.rs) | Scalar operations, balanced iterator products and fused exact reductions. |
+| [arithmetic/comparison.rs](arithmetic/comparison.rs), [queries_conversion.rs](arithmetic/queries_conversion.rs) | Exact equality/order, hash, canonical observations and explicit float views. |
+| [convert.rs](convert.rs) | Primitive integer ingress/egress and exact finite-float imports. |
+| [arithmetic/format_parse.rs](arithmetic/format_parse.rs) | Text parsing and display; [parse.rs](parse.rs) is only a private documentation anchor. |
 
-Zero is canonicalized as `NoSign`, numerator `0`, denominator `1`. Non-zero
-values are reduced when constructors or operations require canonical form.
-One internal exception serves fused exact-geometry kernels: a result may retain
-an exact numerator/denominator pair whose remaining common factor has not yet
-been divided out. The stored ratio is still the exact value. Public numerator
-and denominator access, exact extraction, hashing, formatting, debugging,
-serialization, integer/dyadic classification, roots, and lossy IO views all
-observe a canonical reduction. Exact sign and cross-product comparisons can use
-the unreduced ratio directly. The first canonical observation is computed once
-and shared safely by every clone and thread.
+Clones share the payload and its retained evidence. Zero has sign `NoSign`,
+numerator zero and denominator one. Some internal constructions retain a marked
+unreduced ratio with its exact value intact. Canonical observations such as
+numerator/denominator access, hashing and formatting obtain a shared reduced
+value; exact comparisons can also use the stored ratio directly. A cache entry
+or allocation identity is not the definition of rational equality.
 
-## Module map
+## Build and use
 
-- `mod.rs`: public module export.
-- `arithmetic.rs`: representation, constructors, arithmetic, reduction,
-  structural predicates, exact product sums, and tests.
-- `convert.rs`: primitive integer and floating-point conversions.
-- `parse.rs`: exact text parsing for integers, decimals, scientific notation,
-  and fractions.
+From the repository root:
 
-## API expectations
+```sh
+cargo build -p hyperreal --lib
+cargo doc -p hyperreal --lib --no-deps --document-private-items
+```
 
-- `Rational::new` builds exact integers.
-- `Rational::fraction` validates the denominator and reduces exactly.
-- finite `f32`/`f64` imports decode the IEEE-754 value exactly, including values
-  like `0.3` that are not decimal `3/10`.
-- `NaN` and infinities are rejected.
-- text decimals, scientific notation, and fractions parse as exact rationals
-  without an intermediate floating-point conversion.
-- exponent-only storage amplification is bounded; an oversized nonzero
-  scientific value returns `Problem::Exhausted` before allocating its expanded
-  numerator or denominator.
-- `-0.0` imports as canonical rational zero, so IEEE signed zero is not
-  preserved.
+Open `target/doc/hyperreal/index.html` with the default Cargo target directory.
+The private docs include `rational` and its implementation modules. Add
+`--all-features` to include optional APIs such as Serde. Test functions and
+function-local declarations are not automatically exposed by ordinary library
+Rustdoc; their coverage is tracked in the [audit ledger](../../../../docs/research/rustdoc-audit.md).
 
-## Performance expectations
+```rust
+use hyperreal::{Problem, Rational};
 
-The hot path avoids generic `BigInt` work where the representation already has
-the needed facts:
+/// Construct exact tenths and use a checked reciprocal before multiplication.
+fn main() -> Result<(), Problem> {
+    let tenth = Rational::fraction(1, 10)?;
+    let sum = &tenth + "0.2".parse::<Rational>()?;
+    assert_eq!(sum, Rational::fraction(3, 10)?);
+    assert_ne!(Rational::try_from(0.1_f64)?, tenth);
+    let quotient = sum * Rational::new(3).inverse()?;
+    assert_eq!(quotient, tenth);
+    Ok(())
+}
+```
 
-- signs are stored separately from magnitudes
-- dyadic denominators reduce by shifts instead of full GCDs
-- small reduced dyadics share canonical storage; immutable operand pairs retain one
-  exact product, while repeated borrowed pairs adaptively retain a sum or directed
-  difference through weak keys
-- wide dyadic products keep word-sized numerators in `u128` even when the combined
-  power-of-two denominator requires `BigUint`
-- exact dot products and signed product sums build shared denominators and
-  reduce once at the end; dyadic dots first align checked `u128` products and
-  fall through to `BigUint` unchanged on overflow
-- owned and borrowed iterator products skip multiplicative identities and use
-  bounded balanced chunks plus a logarithmic partial-product tree, avoiding the
-  rapidly growing intermediates of a long left fold without retaining every
-  streamed factor
-- fused exact-dyadic line intersections reduce their two ordering parameters
-  eagerly but retain the two point coordinates as exact internal quotients;
-  output assembly can compare and clone those coordinates without paying two
-  otherwise-unused odd GCDs per proper crossing
-- product-sum signs are computed once and reused across reducer stages
-- all-zero and single-term sums exit before denominator construction
+## Current behavior and limits
 
-These optimizations support the higher-level `Real` and `hyperlattice`
-matrix/vector kernels, where repeated rational reduction can dominate runtime.
+Integer inputs and ordinary ASCII integer, decimal, scientific and fraction
+literals preserve their exact values. Finite binary32/binary64 imports preserve
+the encoded binary value, including subnormals; `0.1_f64` is not decimal 1/10.
+Both signed zeros become canonical rational zero. NaNs and infinities return
+`Problem::NotANumber` and `Problem::Infinity` respectively.
 
-## Numerical explosion controls
+`fraction` rejects a zero denominator, including 0/0, and `inverse` rejects zero
+with `Problem::DivideByZero`. The `/` operator instead panics on a zero divisor,
+including 0/0. Integer export rejects fractions before checking the target range;
+it does not truncate. Root and other specialized helpers have their own domains
+and decline/error contracts, documented with their implementations.
 
-`Rational` is the first line of defense against exact-value growth:
+Display is presentation, not general exact replay: an improper fraction can
+print as `1 2/3`, which the parser rejects. Alternate decimal formatting truncates
+at its digit limit. Backend-accepted separator syntax also has known parser
+defects: `1.2_5` currently parses as 41/40, not 1.25. See the
+[parser implementation documentation](arithmetic/format_parse.rs) for the grammar
+and other limitations. These defects are not additional exact syntax guarantees.
 
-- canonical zero and separate sign storage keep common identities small
-- lazy internal intersection quotients reuse the existing primary cache slot
-  for their canonical value; this adds no field to the 88-byte rational node,
-  and public or dyadic-specialized consumers cross that boundary explicitly
-- finite float imports become exact dyadics, preserving shift-only denominator
-  reduction where possible
-- bounded product retention reuses repeated coefficients without changing canonical
-  numerator/denominator values or retaining either operand strongly
-- repeated powers two through five first use the direct integer kernel, then reuse
-  that same bounded product graph when the immutable base is observed again
-- adaptive linear-result retention reuses repeated exact translations and differences;
-  unshared first-use operands only record a one-byte hint, the second observation
-  admits a bounded result, and later calls reuse it; the lazy arithmetic box has room
-  for up to three weak-keyed sums, differences, or secondary products while `RationalData`
-  remains 88 bytes
-- dense identity-equal three- and four-term self-dots reuse those bounded product
-  and linear entries after observation; one conflict-attempt bit admits a square when
-  the primary product belongs to a shared inverse norm, while cold, sparse,
-  distinct-operand, and full-cache rows keep the aggregate zero-pruned reducer
-- repeated square-root reductions use the same adaptive schedule, retaining the exact
-  square factor and residual only after reuse is observed; the dedicated
-  lazy slot remains cycle-free and does not displace either linear result or unary pair
-- shared rationals retain one exact reciprocal in that same bounded lazy box; the
-  reciprocal points back weakly, avoiding ownership cycles while stabilizing the
-  multiplier identity used by repeated scalar division
-- repeated sign flips use a second cycle-free unary slot in the lazy box; the source
-  owns its opposite sign and the reverse edge is weak, while reciprocal and both
-  linear-result entries remain independently available
-- shared-denominator dot products and signed product sums accumulate related
-  terms before the final reduction; word-sized dyadic accumulators avoid one
-  arbitrary-precision allocation per dense vector lane
-- iterator products consume the complete input even after observing zero;
-  empty, all-one, and single-factor inputs avoid allocating a product buffer
-- scale-invariant polynomial kernels can clear denominators and integer content
-  directly into mutable `BigInt` coefficients with `primitive_bigint_ratio`,
-  avoiding an intermediate vector of `Rational` wrappers
-- all-zero and single-term exits avoid building denominators that will be
-  discarded immediately
-- reducers should use already-known signs, zero checks, and denominator facts
-  instead of re-querying scalar properties inside hot accumulation loops
+Shared reductions, dyadic paths and retained products can avoid repeated work,
+but arbitrary-width arithmetic and retained result graphs have no general local
+work, memory or cancellation budget. The scientific parser's exponent-expansion
+guard reports `Problem::Exhausted` for excessive nonzero scale; it is not a bound
+on all parsing or allocation. Cache-slot counts and inline node sizes likewise
+do not bound retained bytes.
 
-## Error expectations
-
-`Rational` reports divide-by-zero construction or inversion through `Problem`.
-Ordinary arithmetic on valid rationals is exact and total except for operations
-that explicitly require a non-zero denominator or divisor.
+The [crate overview](../../README.md) introduces the public scalar API.
+Measurements and optimization history belong in
+[PERFORMANCE.md](../../PERFORMANCE.md); open work is tracked in
+[FUTURE_WORK.md](../../FUTURE_WORK.md) and the repository audit ledger.
