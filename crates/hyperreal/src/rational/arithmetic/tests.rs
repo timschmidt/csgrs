@@ -5154,6 +5154,12 @@ mod tests {
         }
     }
 
+    /// Check shared cloning and value-preserving separation during negation.
+    ///
+    /// For 7/11, the clone must share the original payload. Consuming that
+    /// clone in negation must leave the original value unchanged and produce
+    /// -7/11 in a different payload. This witnesses alias safety for one
+    /// operation, not independence of all learned facts or caches.
     #[test]
     fn clones_share_storage_without_sharing_arithmetic_results() {
         let value = Rational::fraction(7, 11).unwrap();
@@ -5166,6 +5172,11 @@ mod tests {
         assert!(!Arc::ptr_eq(&value.0, &negated.0));
     }
 
+    /// Pin repeated zero and one construction to separate shared payloads.
+    ///
+    /// Two zero handles must share, as must two one handles, while the zero
+    /// and one payloads must differ. These are allocation-identity assertions;
+    /// the fixture does not independently inspect their numeric parts.
     #[test]
     fn identity_constructors_share_canonical_storage() {
         let zero = Rational::zero();
@@ -5178,6 +5189,13 @@ mod tests {
         assert!(!Arc::ptr_eq(&zero.0, &one.0));
     }
 
+    /// Check cross-constructor interning for signed four and the positive boundary.
+    ///
+    /// Unsigned 8/128-bit imports and new(4) must share; signed 8/128-bit imports
+    /// and new(-4) must share a different payload. Positive 64 shares across
+    /// constructors, whereas two constructions of 65 must be equal in value but
+    /// distinct in storage. This samples the pool rather than exhausting every
+    /// integer, primitive type or negative boundary.
     #[test]
     fn primitive_small_integer_constructors_share_canonical_storage() {
         let positive_u8 = Rational::from(4_u8);
@@ -5209,6 +5227,14 @@ mod tests {
         ));
     }
 
+    /// Check exact float-import sharing and three exclusions from the small pool.
+    ///
+    /// Binary64 imports of both units, four and signed 3/8 must reuse their
+    /// canonical handles; binary32 positive 3/8 must share too. The two signs
+    /// remain distinct. Four and positive 3/8 must retain the exact-f64-view fact.
+    /// Repeated imports of 65, 65/2 and `3 / 2^64` must have distinct payloads,
+    /// exercising integer, numerator and denominator-shift limits. This checks
+    /// selected finite values, not exceptional imports or a full conversion oracle.
     #[test]
     fn finite_float_imports_reuse_small_canonical_storage() {
         let positive_one = Rational::try_from(1.0_f64).unwrap();
@@ -5251,6 +5277,12 @@ mod tests {
         ));
     }
 
+    /// Check borrowed-negation reuse and release of the original large fraction.
+    ///
+    /// Two negatives of the same noninterned owner must share a payload. After
+    /// dropping that owner and both results, its weak observer must no longer
+    /// upgrade. This excludes a retained strong cycle keeping this owner alive;
+    /// it does not count all allocations or independently check the negative value.
     #[test]
     fn repeated_negation_reuses_exact_storage_without_a_cycle() {
         let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
@@ -5266,6 +5298,11 @@ mod tests {
         assert!(owner.upgrade().is_none());
     }
 
+    /// Require two consumed aliases to reuse one retained negative payload.
+    ///
+    /// Clones a noninterned large fraction, then negates both owned handles.
+    /// Pointer equality checks the shared-owner route; there is no separate
+    /// numeric expectation, lifetime assertion or unique-owner mutation check.
     #[test]
     fn shared_owned_negation_reuses_retained_storage() {
         let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
@@ -5276,6 +5313,13 @@ mod tests {
         assert!(Arc::ptr_eq(&first.0, &second.0));
     }
 
+    /// Check coexistence when negation initializes an owner's arithmetic cache.
+    ///
+    /// On the large integer owner, creates negation, reciprocal and two sums
+    /// with exact binary64-derived right operands, then repeats every operation.
+    /// Each result must reuse its corresponding payload. This checks this
+    /// publication order; it does not independently verify values, inspect slot
+    /// tags or measure retained memory.
     #[test]
     fn negation_first_cache_still_retains_inverse_and_two_linear_results() {
         let left = Rational::new(5_000_000_000);
@@ -5298,6 +5342,12 @@ mod tests {
         assert!(Arc::ptr_eq(&second.0, &second_reused.0));
     }
 
+    /// Guard against reusing a positive sum after consuming and negating its owner.
+    ///
+    /// First observes and retains `5_000_000_000 + 1/7`, checking warm payload
+    /// reuse. After owned negation, adding 1/7 must equal `-34_999_999_999/7`.
+    /// The exact expectation detects stale arithmetic evidence for the old sign;
+    /// the fixture does not directly assert in-place mutation or inspect cleared slots.
     #[test]
     fn unique_owned_negation_discards_results_for_the_old_sign() {
         let left = Rational::new(5_000_000_000);
@@ -5312,6 +5362,13 @@ mod tests {
         assert_eq!(&negated + &right, Rational::fraction(-34_999_999_999_i64, 7).unwrap());
     }
 
+    /// Check warm result sharing for exponents two through five on one large base.
+    ///
+    /// Each exponent starts with a fresh noninterned fraction, compares the
+    /// first two power results by value, then requires the second and third
+    /// to share a payload. This exercises the retained-product schedule without
+    /// an independent power oracle, a cold/warm pointer inequality assertion,
+    /// or a claim about powers outside this range.
     #[test]
     fn repeated_small_power_reuses_the_retained_product_chain() {
         for exponent in 2..=5 {
@@ -5326,6 +5383,13 @@ mod tests {
         }
     }
 
+    /// Check repeated factor-pair sharing and release of its noninterned owner.
+    ///
+    /// Compares the first and second reductions by value, then requires both
+    /// factor payloads from the second and third calls to match. After dropping
+    /// the source and all pairs, its weak observer must expire. No literal pair
+    /// or reconstructed product is asserted here, and source release alone is
+    /// not a complete allocation-lifetime measurement.
     #[test]
     fn repeated_square_reduction_reuses_exact_factors_without_a_cycle() {
         let value = Rational::fraction(90_000_000_054_i64, 49_000_000_063).unwrap();
@@ -5346,6 +5410,13 @@ mod tests {
         assert!(owner.upgrade().is_none());
     }
 
+    /// Check factor, reciprocal, negative and two-sum reuse after factor retention.
+    ///
+    /// Calls square reduction twice on a large integer before constructing the
+    /// other results. Repeating them must preserve both factor payloads and each
+    /// unary/sum payload. The exact float-derived right operands remain distinct;
+    /// this fixture checks coexistence for this order without independent value,
+    /// slot-layout, cycle-freedom or memory-bound assertions.
     #[test]
     fn square_reduction_first_cache_retains_both_unary_and_linear_pairs() {
         let left = Rational::new(5_000_000_000);
@@ -5373,6 +5444,12 @@ mod tests {
         assert!(Arc::ptr_eq(&second.0, &second_reused.0));
     }
 
+    /// Pin two dyadic product values and repeated-result payload sharing.
+    ///
+    /// Requires `(5/4) * (5/2) = 25/8` and `(-11/4) * (1/8) = -11/32`.
+    /// Repeating each product on the same operands must share its payload.
+    /// Since retained products can also supply these hits, the pointer checks
+    /// alone do not isolate canonical-pool lookup as their cause.
     #[test]
     fn small_dyadic_products_share_canonical_storage() {
         let left = Rational::fraction(5, 4).unwrap();
@@ -5390,6 +5467,12 @@ mod tests {
         assert!(Arc::ptr_eq(&first.0, &second.0));
     }
 
+    /// Check equal reduced results from different small non-dyadic products.
+    ///
+    /// Two distinct factorizations of each of 7/5, -5/7 and 63/62 must yield
+    /// the expected value and share result storage. This witnesses canonical
+    /// sharing across these factorizations, including numerator 63, without
+    /// exhausting the pool or measuring its lifetime and allocation cost.
     #[test]
     fn small_general_products_share_canonical_storage() {
         let first =
@@ -5414,6 +5497,12 @@ mod tests {
         assert!(Arc::ptr_eq(&first.0, &second.0));
     }
 
+    /// Check same-order and reversed-order reuse of nontrivial product payloads.
+    ///
+    /// Squares the exact binary64 value 1.0e-12 twice, then multiplies a billion
+    /// by the exact binary64 value 1.0e-9 in both orders. Pointer equality pins
+    /// reuse; no independent product value is asserted. Those float literals
+    /// remain their exact binary values, not decimal powers of ten.
     #[test]
     fn products_retain_exact_results_in_both_operand_orders() {
         let value = Rational::try_from(1.0e-12_f64).unwrap();
@@ -5430,6 +5519,13 @@ mod tests {
         assert!(Arc::ptr_eq(&product.0, &reversed.0));
     }
 
+    /// Inspect asymmetric primary retention and commutative lookup for one pair.
+    ///
+    /// After multiplying two large fractions, the left primary product slot
+    /// must be occupied and the right empty. Reversing the operands must return
+    /// the same product payload. The fixture inspects only these primary slots;
+    /// it does not establish a global slot count, retained-byte bound or literal
+    /// product expectation.
     #[test]
     fn product_retention_occupies_only_one_primary_slot() {
         let left = Rational::fraction(1_000_000_007, 1_000_000_009).unwrap();
@@ -5441,6 +5537,13 @@ mod tests {
         assert!(Arc::ptr_eq(&product.0, &(&right * &left).0));
     }
 
+    /// Check product reuse after priming both operands with different partners.
+    ///
+    /// Multiplies each large dyadic operand by its own blocker, then requires
+    /// their mutual product to reuse one payload in repeated and reversed order.
+    /// This exercises fallback retention after the priming operations, but does
+    /// not directly inspect secondary slot tags, assert dispatch counts or
+    /// compare with an independent product value.
     #[test]
     fn secondary_product_retention_handles_two_occupied_primary_slots() {
         let left = Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap();
@@ -5457,6 +5560,13 @@ mod tests {
         assert!(Arc::ptr_eq(&product.0, &reversed.0));
     }
 
+    /// Check sum, directed-difference and product reuse on one operand pair.
+    ///
+    /// Extra operand clones remain alive, yet the first sum is only an
+    /// observation: it must equal the second sum while using a different payload.
+    /// The reversed sum reuses the second; subsequent differences and products
+    /// also reuse their respective results. This checks coexistence and observed
+    /// reuse, not retention caused by cloning alone or independently expected values.
     #[test]
     fn observed_linear_operations_retain_exact_results_without_competing_for_one_slot() {
         let left = Rational::new(1_000_000_000);
@@ -5480,6 +5590,12 @@ mod tests {
         assert!(Arc::ptr_eq(&product.0, &retained_product.0));
     }
 
+    /// Pin the cold/retained/reused transition for separate borrowed sums and differences.
+    ///
+    /// For each fresh large-operand pair, the first and second values must agree
+    /// but their payloads must differ; the third must share the second payload.
+    /// This witnesses delayed retention in these sequences, without inspecting
+    /// observation bits or proving the behavior of every possible cache state.
     #[test]
     fn borrowed_linear_operations_retain_only_after_reuse_evidence() {
         let left = Rational::new(1_000_000_000);
@@ -5508,6 +5624,12 @@ mod tests {
         ));
     }
 
+    /// Check directed-difference reuse while an extra right-hand alias remains live.
+    ///
+    /// The first and second results must agree in value but differ in payload,
+    /// and the third must reuse the second. Despite the fixture name, it does
+    /// not inspect which operand owns the retained entry or compare against a
+    /// literal difference; both operands receive arithmetic observations.
     #[test]
     fn observed_right_operand_can_retain_a_directed_difference() {
         let left = Rational::new(3_000_000_000);
@@ -5522,6 +5644,13 @@ mod tests {
         assert!(Arc::ptr_eq(&retained.0, &reused.0));
     }
 
+    /// Check two sum results retained around a shared large left operand.
+    ///
+    /// The first sum must be numerically equal but pointer-distinct from its
+    /// second evaluation, whose third evaluation reuses storage. A sum with a
+    /// different exact float-derived right operand must already reuse its first
+    /// result on repetition. These assertions distinguish the first observation
+    /// from later cache admission without asserting internal slot placement.
     #[test]
     fn observed_operand_retains_two_distinct_linear_results() {
         let left = Rational::new(5_000_000_000);
@@ -5541,6 +5670,13 @@ mod tests {
         assert!(Arc::ptr_eq(&second.0, &second_reused.0));
     }
 
+    /// Check reciprocal reuse, reverse identity and release while an inverse survives.
+    ///
+    /// Two inversions of shared aliases must reuse a payload, and inverting
+    /// that reciprocal must recover the original payload. After dropping all
+    /// explicit original handles, the original weak observer must expire even
+    /// though the reused inverse remains live. This witnesses a nonowning return
+    /// relation for this pair, not all cache cycles or an independent reciprocal value.
     #[test]
     fn shared_inverse_is_retained_with_weak_reverse_link() {
         let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
@@ -5560,6 +5696,13 @@ mod tests {
         assert!(owner.upgrade().is_none());
     }
 
+    /// Check that reciprocal-first initialization leaves two sums reusable.
+    ///
+    /// Keeps a reciprocal of the shared large integer alive, computes sums with
+    /// two exact binary64-derived operands, and requires each repeated sum to
+    /// share its first payload. The reciprocal itself is not repeated or compared;
+    /// this checks the resulting reuse opportunities, not every slot arrangement
+    /// or an independent arithmetic result.
     #[test]
     fn inverse_first_cache_still_retains_two_linear_results() {
         let left = Rational::new(5_000_000_000);

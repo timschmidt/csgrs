@@ -26578,6 +26578,89 @@ already mandates 100% Rustdoc for public, private and generated items. Continue
 at clones_share_storage_without_sharing_arithmetic_results, whose attribute is
 now line 5157. This 7735-line file and the repository-wide audit remain unfinished.
 
+## Rational test audit: shared storage and retained arithmetic (28 November 2026)
+
+Owning layer: Hyperreal rational storage, interning and arithmetic-retention
+fixtures. P1 governs exact values and binary float ingress, P4 governs cache
+validity across reuse and sign changes, P5 distinguishes retained slot counts
+from memory bounds, and P37 limits claims to the asserted evidence. At 3ec96a3e4,
+twenty-two test functions in arithmetic/tests.rs lines 5157–5579 lacked Rustdoc.
+The baseline fixtures passed, but their broad names did not by themselves
+establish numerical correctness, slot ownership or complete cycle freedom.
+
+Reviewed that whole range and the relevant clone, intern-pool, float-import,
+retained-fact, negation, inverse, product, linear, square-reduction and small-power
+implementations. Added twenty-two descriptions (143 Rustdoc lines); the reviewed
+range is now 5157–5722. All executable tokens, assertions, operation order,
+feature guards and ordinary comments are unchanged. Partial conversion/consumer
+reads do not credit whole-file review of those files.
+
+The documented evidence distinguishes:
+
+- Clone aliasing and exact signed results for 7/11 from independence of every
+  cache. Zero/unit constructors assert shared payloads; primitive constructors
+  sample signed four, shared positive 64 and equal-but-distinct positive 65.
+  Neither fixture exhausts the intern domain or primitive types.
+- Float-import reuse for units, four and signed 3/8, including positive binary32
+  3/8 and two exact-f64-view fact assertions. Distinct repeated payloads for 65,
+  65/2 and 3/2^64 exercise separate pool exclusions. Nonterminating decimal float
+  literals elsewhere remain their exact binary values, not decimal rationals.
+- Borrowed and shared-owned negation reuse from unique-owner sign invalidation.
+  The latter checks the new sum against -34999999999/7 after warming the old sum;
+  it does not directly assert in-place mutation or inspect every cleared slot.
+- Three specific owner-release observations from a complete allocation-lifetime
+  or concurrency argument. Negation and factor-pair fixtures drop their source
+  and all named outputs before probing the source weak reference. The reciprocal
+  fixture instead releases the source while a reused reciprocal remains alive,
+  after checking reciprocal reuse and recovery of the original payload.
+- Repeated powers two through five and repeated square reductions from independent
+  arithmetic oracles. Cold/warm values agree and warm payloads share, but those
+  fixtures do not assert literal powers/factors or factor-product reconstruction.
+- Negation-first, reduction-first and inverse-first cache initialization orders
+  that preserve subsequent unary and two-sum reuse. These are coexistence
+  witnesses, not exhaustive slot layouts, all operation permutations or memory
+  measurements. The inverse-first fixture does not recheck the reciprocal itself.
+- Dyadic product value expectations plus same-operand reuse, which cannot alone
+  distinguish retained-product hits from canonical-pool lookup. Different small
+  general factorizations do check shared reduced results across operand pairs.
+- One directly inspected primary product placement from global occupancy bounds.
+  Reversed multiplication must reuse that result. Priming each operand with a
+  blocker exercises fallback product reuse, without directly checking secondary
+  slot tags or dispatch counts.
+- Arithmetic observation from mere cloning. Cold sum/difference results compare
+  equal but pointer-distinct from retained results, then reuse on a later call.
+  The right-alias fixture does not inspect which operand owns its retained
+  difference; both operands receive observations. Two distinct right operands
+  expose the different first-observation and later-admission cases.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal tests: all twenty-two pass without default features
+  and with all features, matching the twenty-two-test all-feature baseline.
+  Exact-name inventories verify the selected fixtures.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Supplemental source copies remove only the twenty-two reviewed test
+  markers; all twenty-two descriptions render in each configuration. There are
+  no function-local items or feature-specific tests in this reviewed range.
+- Two neighboring all-feature conversion tests pass by exact name:
+  float_import_retains_the_reduced_dyadic_fact and
+  f64_import_retains_exact_view_for_normal_subnormal_and_integer_values. The
+  former preserves its exact one-hit/zero-learned dispatch assertions.
+- Source inventories account for every function in the range. Executable-token
+  equality and git diff --check pass. No implementation or test behavior changed.
+- Full workflows, performance, cross-target and formal-verification checks remain
+  owner-waived for this docs-only session. This batch establishes no general
+  memory bound, speedup, universal cache validity or generated API coverage.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-retention-audit/:
+baseline, scripts, commands, logs, inventories, hashes and compressed selected
+HTML. Owned source copies and duplicate HTML output are removed after validation;
+shared Cargo artifacts are reused with incremental compilation disabled. The
+/tmp filesystem had 113 GiB free during the batch. AGENTS.md already mandates
+100% Rustdoc for public, private and generated items. Continue at
+perfect_nth_root_detects_exact_rational_roots, whose attribute is now line 5723.
+This 7878-line file and the repository-wide audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
