@@ -1335,6 +1335,11 @@ mod tests {
     }
 
     #[test]
+    /// Check exact integer ordering through the default optional comparison entry point.
+    ///
+    /// Require 6>5, 5<6 and 4<6 as definite results. These distinct rational leaves
+    /// exercise basic ordering; this fixture does not test equality, unresolved
+    /// comparisons, cancellation, the fallback precision floor or dispatch counts.
     fn compare() {
         let six: BigInt = "6".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
@@ -1349,6 +1354,14 @@ mod tests {
     }
 
     #[test]
+    /// Check the filter's stored pi/e endpoint literals against 256-bit MPFR samples.
+    ///
+    /// Convert each binary64 endpoint exactly and require strict inclusion of the
+    /// nearest-rounded pi or exp(1) reference. These are high-precision sample
+    /// comparisons, not directed transcendental reference intervals. Separately
+    /// check six powers of two at overflow, the largest finite power, the normal/
+    /// subnormal transition, the smallest subnormal and underflow to zero; exact
+    /// bit patterns qualify the threshold builder at those boundaries.
     fn binary64_filter_constant_enclosures_cover_mpfr_values() {
         use rug::{Float, float::Constant};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -1364,14 +1377,36 @@ mod tests {
         assert!(e_lower < e && e < e_upper);
 
         assert_eq!(Binary64Interval::power_of_two(1_024), f64::INFINITY);
-        assert_eq!(Binary64Interval::power_of_two(1_023).to_bits(), 0x7fe0_0000_0000_0000);
-        assert_eq!(Binary64Interval::power_of_two(-1_022).to_bits(), 1_u64 << 52);
-        assert_eq!(Binary64Interval::power_of_two(-1_023).to_bits(), 1_u64 << 51);
+        assert_eq!(
+            Binary64Interval::power_of_two(1_023).to_bits(),
+            0x7fe0_0000_0000_0000
+        );
+        assert_eq!(
+            Binary64Interval::power_of_two(-1_022).to_bits(),
+            1_u64 << 52
+        );
+        assert_eq!(
+            Binary64Interval::power_of_two(-1_023).to_bits(),
+            1_u64 << 51
+        );
         assert_eq!(Binary64Interval::power_of_two(-1_074).to_bits(), 1);
         assert_eq!(Binary64Interval::power_of_two(-1_075).to_bits(), 0);
     }
 
     #[test]
+    /// Exercise raw square-root evaluation across seed thresholds, scales and near-squares.
+    ///
+    /// Bypass constructor folding with a fresh Sqrt node and invalid facts for each
+    /// request. Use n*2^e for n=2,3,5,17 and seven e values from -601 through 601,
+    /// at 21 precisions computed as e/2 minus a digit count (integer division
+    /// truncates toward zero). Also test n^2+delta*2^-256 for n=1,2,17 and
+    /// delta=-1,0,1 at ten precisions. These produce 678 output comparisons.
+    ///
+    /// The helper closure encloses the exact rational and its root with directed
+    /// 2048-bit MPFR operations. It scales both endpoints into output units and
+    /// checks distances at most one using nearest-rounded Float subtraction. This
+    /// is not an exact rational containment assertion or a correct-rounding test,
+    /// and does not count seed dispatches or establish arbitrary-scale resource bounds.
     fn demand_sized_sqrt_seeds_match_directed_mpfr() {
         use rug::{Float, Integer, Rational as RugRational, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -1446,6 +1481,20 @@ mod tests {
     }
 
     #[test]
+    /// Compare retained nonnegative roots of degrees 3 through the native maximum with MPFR.
+    ///
+    /// For each degree, cover four positive integers at eight precisions, five
+    /// positive fractions at six precisions and four dyadic scales through 2^+/-2048
+    /// at four precisions. The integer cases also assert the retained NthRoot tag
+    /// and stored degree. Requests reuse each root, rather than rebuilding for every
+    /// precision; the current maximum nine gives 546 approximation comparisons.
+    ///
+    /// MPFR precision includes 256 guard bits and, for large dyadics, the root's
+    /// magnitude. Division, root evaluation and the final integer reference use
+    /// nearest rounding. Permit a difference of one integer output unit from that
+    /// reference; this is not directed endpoint containment or correct rounding of
+    /// the exact root. Negative inputs, invalid degrees and extreme i32 precision
+    /// fallbacks are outside this fixture.
     fn direct_nth_root_approximations_match_mpfr() {
         use rug::{Float, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -1480,10 +1529,9 @@ mod tests {
             }
 
             for (numerator, denominator) in [(1_i64, 257_u64), (1, 3), (2, 3), (17, 19), (257, 3)] {
-                let root = Computable::rational(
-                    Rational::fraction(numerator, denominator).unwrap(),
-                )
-                .nth_root(degree);
+                let root =
+                    Computable::rational(Rational::fraction(numerator, denominator).unwrap())
+                        .nth_root(degree);
                 for precision in [4_i32, 0, -7, -31, -128, -511] {
                     let actual = root.approx(precision);
                     let oracle_precision = u32::try_from(precision.saturating_neg())
@@ -1550,11 +1598,29 @@ mod tests {
         }
     }
 
+    /// Build the retained native nth root of an exact positive fixture fraction.
+    ///
+    /// Callers supply numerator>0, denominator>0 and degree in the native 3..=9
+    /// range. Fraction construction is exact and unwraps validation; the native
+    /// root constructor has a debug degree assertion, not a typed admission result.
+    /// This helper neither proves the caller's domain nor bounds later evaluation.
     fn positive_rational_nth_root(numerator: i64, denominator: u64, degree: u32) -> Computable {
         Computable::rational(Rational::fraction(numerator, denominator).unwrap()).nth_root(degree)
     }
 
     #[test]
+    /// Qualify three retained radical zero identities and their separation thresholds.
+    ///
+    /// The cases encode 3*sqrt(cbrt(5)-cbrt(4))=cbrt(2)+cbrt(20)-cbrt(25),
+    /// cbrt(cbrt(2)-1)=cbrt(1/9)-cbrt(2/9)+cbrt(4/9), and, for u=root_5(2),
+    /// cbrt(7+u-5*u^3)=1+u-u^2. Roots use the admitted nonnegative real branch.
+    ///
+    /// Require metadata exponents 85, 376 and 70 respectively. Floor zero must
+    /// remain unresolved; floor -2048 must certify zero with a retained sample of
+    /// magnitude at most one and precision coarser than -512. The exact identities
+    /// and separation argument justify zero, not numerical smallness alone. This
+    /// fixture asserts specific metadata and stopping evidence, not a universal
+    /// algebraic decision procedure, work budget or dispatch trace.
     fn algebraic_separation_bounds_certify_archived_radical_identities() {
         let cbrt2 = positive_rational_nth_root(2, 1, 3);
         let cbrt4 = positive_rational_nth_root(4, 1, 3);
@@ -1597,8 +1663,15 @@ mod tests {
                 .algebraic_separation_bound_bits()
                 .unwrap_or_else(|| panic!("{name} should have bounded algebraic metadata"));
             assert_eq!(bound, expected_bound);
-            assert!(bound <= 2_046, "{name} bound {bound} should fit the public floor");
-            assert_eq!(value.sign_until(0), None, "{name} should need exact certification");
+            assert!(
+                bound <= 2_046,
+                "{name} bound {bound} should fit the public floor"
+            );
+            assert_eq!(
+                value.sign_until(0),
+                None,
+                "{name} should need exact certification"
+            );
             assert_eq!(
                 value.sign_until(-2_048),
                 Some(RealSign::Zero),
@@ -1617,11 +1690,22 @@ mod tests {
     }
 
     #[test]
+    /// Check exact root-power reconstruction and tiny signed perturbations on a fixed grid.
+    ///
+    /// For native degrees 3..=9 and five positive fractions a/b with a<=17,b<=256,
+    /// build the public Real root, multiply degree copies and subtract its source.
+    /// Require the folded identity's separation exponent B to satisfy
+    /// B<=8*n*(n+1)+(n-1) and B+2<=1024, then certify zero at floor -1024.
+    /// Fresh identities shifted by +/-2^-600 must not certify zero at floor -64
+    /// and must have the corresponding sign at -1024. The first assertion only
+    /// excludes Zero; it does not require Unknown or check the sign at that floor.
+    /// Despite the name, this is deterministic finite coverage, not randomized fuzzing.
     fn fractional_root_reconstruction_fuzz_precision_and_nonzero_controls() {
         for degree in 3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
             for (numerator, denominator) in [(1, 92), (1, 129), (1, 256), (17, 255), (17, 256)] {
                 let identity = || {
-                    let radicand = crate::Real::new(Rational::fraction(numerator, denominator).unwrap());
+                    let radicand =
+                        crate::Real::new(Rational::fraction(numerator, denominator).unwrap());
                     let root = radicand.clone().root_n(degree).unwrap();
                     ((0..degree).fold(crate::Real::one(), |product, _| product * root.clone())
                         - radicand)
@@ -1632,32 +1716,44 @@ mod tests {
                 // A shared degree-n root of a/b, a <= 17 and b <= 256,
                 // has denominator/conjugate log bounds <= 8. Multiplying n
                 // copies and subtracting a/b gives this norm-separation bound.
-                let worst_bound = 8 * u64::from(degree) * u64::from(degree + 1)
-                    + u64::from(degree - 1);
-                assert!(bound <= worst_bound && bound + 2 <= 1_024,
-                    "{numerator}/{denominator}, degree={degree}, bound={bound}");
+                let worst_bound =
+                    8 * u64::from(degree) * u64::from(degree + 1) + u64::from(degree - 1);
+                assert!(
+                    bound <= worst_bound && bound + 2 <= 1_024,
+                    "{numerator}/{denominator}, degree={degree}, bound={bound}"
+                );
                 assert_eq!(zero.sign_until(-1_024), Some(RealSign::Zero));
                 for (sign, expected) in [(-1, RealSign::Negative), (1, RealSign::Positive)] {
                     let delta = Rational::from_bigint_fraction(
-                        BigInt::from(sign), BigUint::one() << 600_usize,
-                    ).unwrap();
+                        BigInt::from(sign),
+                        BigUint::one() << 600_usize,
+                    )
+                    .unwrap();
                     let nonzero = identity().add(Computable::rational(delta));
                     assert_ne!(nonzero.sign_until(-64), Some(RealSign::Zero));
-                    assert_eq!(nonzero.sign_until(-1_024), Some(expected),
-                        "{numerator}/{denominator}, degree={degree}, perturbation={sign}");
+                    assert_eq!(
+                        nonzero.sign_until(-1_024),
+                        Some(expected),
+                        "{numerator}/{denominator}, degree={degree}, perturbation={sign}"
+                    );
                 }
             }
         }
     }
 
     #[test]
+    /// Check dependent radical recipes, nonzero controls and a reciprocal identity.
+    ///
+    /// For each degree n=3..=9, compare 2*root_n(2)^(n-1)*root_n(3) with
+    /// root_n(3*2^(2*n-1)). Perturb the shared identity by +/-2^-256 and require
+    /// the corresponding signs at -512; then certify the identity as zero at its
+    /// computed separation floor -(B+2). Also require root_5(17)^-1*root_5(17)-1
+    /// to certify zero and pi-3 to decline algebraic separation metadata.
+    /// These assertions exercise dependency consumption; they do not inspect a
+    /// minimal field basis, generator count or the dispatch path used for each proof.
     fn algebraic_generator_dependencies_and_perturbations_are_exact() {
         let dyadic = |power: usize| {
-            Rational::from_bigint_fraction(
-                BigInt::one(),
-                BigUint::one() << power,
-            )
-            .unwrap()
+            Rational::from_bigint_fraction(BigInt::one(), BigUint::one() << power).unwrap()
         };
 
         for degree in 3_u32..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
@@ -1678,9 +1774,7 @@ mod tests {
 
             let dependent = Computable::rational(radicand).nth_root(degree);
             let identity = expected.add(dependent.negate());
-            let positive = identity
-                .clone()
-                .add(Computable::rational(dyadic(256)));
+            let positive = identity.clone().add(Computable::rational(dyadic(256)));
             let negative = identity
                 .clone()
                 .add(Computable::rational(dyadic(256).neg()));
@@ -1704,10 +1798,7 @@ mod tests {
             .inverse()
             .multiply(root)
             .add(Computable::integer(BigInt::from(-1_i8)));
-        assert_eq!(
-            reciprocal_identity.sign_until(-512),
-            Some(RealSign::Zero)
-        );
+        assert_eq!(reciprocal_identity.sign_until(-512), Some(RealSign::Zero));
 
         assert!(
             Computable::pi()
@@ -1718,12 +1809,19 @@ mod tests {
     }
 
     #[test]
+    /// Check generator-count and traversal-visit refusals in optional separation metadata.
+    ///
+    /// Sixteen distinct prime square roots must fit the generator and product-degree
+    /// limits. Inserting a seventeenth into a disposable clone must return None;
+    /// this does not assert rollback of the mutated clone. A raw chain of 257
+    /// negations must also decline the 256-visit metadata traversal. Neither result
+    /// is a zero proof or typed total-resource exhaustion. The fixture does not
+    /// independently cross the product-degree, coefficient/log or memory limits.
     fn algebraic_separation_resource_caps_fail_closed() {
         let primes = [
             2_i64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59,
         ];
-        let mut metadata =
-            AlgebraicSeparation::rational(&Rational::one()).expect("unit metadata");
+        let mut metadata = AlgebraicSeparation::rational(&Rational::one()).expect("unit metadata");
         for prime in &primes[..AlgebraicSeparation::MAX_GENERATORS] {
             let root = Computable::rational(Rational::new(*prime)).sqrt();
             metadata
@@ -1737,10 +1835,7 @@ mod tests {
         assert!(
             metadata
                 .clone()
-                .insert_generator(
-                    Computable::rational(Rational::new(primes[16])).sqrt(),
-                    2,
-                )
+                .insert_generator(Computable::rational(Rational::new(primes[16])).sqrt(), 2,)
                 .is_none(),
             "a seventeenth generator must fail closed"
         );
@@ -1760,6 +1855,20 @@ mod tests {
     }
 
     #[test]
+    /// Check binary64 sign filtering at caller floors and on a deterministic expression corpus.
+    ///
+    /// Require pi-103993/33102 to decline at floor zero and prove positive at -64;
+    /// pi^2-(29/21)*e must prove positive at zero. Three arithmetic/linear-form
+    /// wrappers must agree with separated -256 samples. A 40-product expression
+    /// must decline the fixed-visit filter.
+    ///
+    /// A fixed wrapping generator supplies 10000 rational forms a*pi+b*e+c with
+    /// numerators in [-200,200] and denominators 1..=97. At floors 0,-16,-64,
+    /// compare only successful filter results with the native -256 sample's sign;
+    /// nonzero decisions also require sample magnitude above one. Declines are
+    /// skipped, no success count is asserted, and a zero sample alone is not an
+    /// independent zero certificate. This is finite consistency coverage using the
+    /// native approximation path, not an independent oracle for every generated form.
     fn binary64_filter_respects_floor_and_matches_fine_certified_signs() {
         let near_pi = Computable::pi().add(Computable::rational(
             -Rational::fraction(103_993, 33_102).unwrap(),
@@ -1768,14 +1877,9 @@ mod tests {
         assert_eq!(near_pi.binary64_filter_sign_until(-64), Some(Sign::Plus));
 
         let matrix_like = Computable::pi().square().add(
-            Computable::e().multiply(Computable::rational(
-                -Rational::fraction(29, 21).unwrap(),
-            )),
+            Computable::e().multiply(Computable::rational(-Rational::fraction(29, 21).unwrap())),
         );
-        assert_eq!(
-            matrix_like.binary64_filter_sign_until(0),
-            Some(Sign::Plus)
-        );
+        assert_eq!(matrix_like.binary64_filter_sign_until(0), Some(Sign::Plus));
 
         let supported_wrappers = [
             Computable::pi()

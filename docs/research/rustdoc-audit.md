@@ -21437,6 +21437,123 @@ Owned temporary sources, executable/rlib and HTML were removed after inspection;
 builds reused the approximately 6.6 GiB shared target with incremental compilation
 disabled. Repository-wide line review and all-configuration coverage are unfinished.
 
+## Hyperreal node regressions: roots, algebraic separation and binary64 filters
+
+Baseline: `4bd0ec93f03723ad9bde9be6f3c44e617265a4cc` on `rustdoc`.
+Reviewed the next contiguous 511 lines of
+`crates/hyperreal/src/computable/node/tests.rs`, baseline lines 1337–1847,
+from `compare` through `binary64_filter_respects_floor_and_matches_fine_certified_signs`.
+The section becomes 615 lines, ending at current line 1951; both surrounding
+sections remain byte-identical. The complete file grows from 4521 to 4625 lines.
+The three consecutive batches now cover current lines 1–1951. Continue with the
+`#[test]` for `bigger` on line 1952 (function line 1953). The enclosing module and
+remaining file are unfinished; **no whole-file review credit is claimed**.
+
+Hyperreal owns these approximation, sign-filter and zero-separation witnesses.
+P37 requires accurate description of their evidence; P1–P6 cover exact input,
+retained structure, conservative facts, cache histories, resource restrictions
+and honest outcomes. The initial gap was ten undocumented functions: nine tests
+and the shared positive-rational-root helper. Read the entire section and its
+relevant comparison, root construction/evaluation, metadata and filter consumers.
+All nine baseline tests passed before editing. Added and privately rendered all
+ten function Rustdoc blocks, without changing runtime behavior or assertions.
+
+The descriptions distinguish these actual contracts:
+
+- `compare` proves three orderings of distinct integer leaves. It does not test
+  equality, unresolved outcomes, cancellation, fallback floors or dispatch counts.
+- Binary64 pi/e literals strictly enclose nearest-rounded 256-bit MPFR samples
+  in the repository fixture. Six power-of-two boundary assertions separately
+  check overflow, largest finite power, the normal/subnormal transition, least
+  subnormal and underflow. The sample comparisons are not themselves directed
+  transcendental intervals; the temporary probe below checks directed bounds.
+- The square-root seed fixture bypasses symbolic folding with raw Sqrt nodes.
+  Seven binary scales times four rational seeds times 21 precision requests,
+  plus nine near-square cases times ten requests, give 678 comparisons. Precision
+  uses signed integer e/2, which truncates toward zero. Directed 2048-bit input/
+  root endpoints are compared through nearest-rounded Float subtraction, not
+  exact-rational containment. No dispatch count or resource envelope is asserted.
+- Direct roots span native degrees 3–9, four integer, five rational and four
+  dyadic cases, totaling 546 samples. Integer cases assert the NthRoot tag and
+  degree. Each root receives multiple requests. The reference division/root and
+  final integer use nearest rounding, and the allowed integer difference is one;
+  that assertion is not a correct-rounding or directed-enclosure contract.
+  Invalid degrees, negative radicands and extreme-precision fallbacks are absent.
+  The helper requires positive fixture fractions and an admitted degree; it
+  unwraps fraction construction and is not a checked public admission boundary.
+- Three archived radical identities assert separation exponents 85, 376 and 70,
+  unresolved signs at floor zero, exact zeros at -2048, and retained samples of
+  magnitude at most one at precisions coarser than -512. Small numerical samples
+  alone cannot justify their zero results; their exact relations and separation
+  certificates matter. These are finite metadata/stopping witnesses.
+- The fractional reconstruction grid contains 35 exact identities and 70 fresh
+  +/-2^-600 perturbations. Its coarse check only excludes Zero, permitting any
+  nonzero sign or None; the finer check requires the expected sign. Despite the
+  test's name this is deterministic coverage, not randomized fuzz execution.
+- Seven dependent-generator cases compare 2*root_n(2)^(n-1)*root_n(3) with
+  root_n(3*2^(2*n-1)), certify zeros at the computed separation floor, and test
+  +/-2^-256 controls. The reciprocal fifth-root identity and pi-3 metadata
+  refusal add consumption/unsupported-shape witnesses. No minimal field basis,
+  generator count or proof-dispatch trace is asserted by this fixture.
+- The cap fixture admits sixteen prime quadratic generators and rejects a
+  seventeenth in a disposable clone. It does not assert mutation rollback.
+  A 257-negation raw chain declines the 256-visit metadata traversal. The
+  seventeenth quadratic degree remains below the field-degree cap, so this
+  does not independently test that cap, log limits, memory or total work.
+  None is an unavailable optional certificate, not a zero proof or typed total
+  resource exhaustion outcome.
+- Binary64 filtering has explicit floor/shape cases and 10000 deterministic
+  rational forms a*pi+b*e+c at three floors. Only successful filter answers are
+  compared with native -256 samples; declines are skipped and no success count
+  is asserted. Nonzero decisions require separated samples, while a zero sample
+  alone is not an independent zero certificate. This is native-path consistency
+  coverage, not an independent oracle for the generated corpus.
+
+Independent Python exact polynomial reductions verified the three archived
+relations: the first in Q[a,b]/(a^3-2,b^3-5), the second using
+(1-a+a^2)^3=9*(a-1) modulo a^3-2, and the third using
+(1+u-u^2)^3=7+u-5*u^3 modulo u^5-2. Rational isolating bounds
+5/4<a<63/50, 17/10<b<171/100 and 11/10<u<6/5 establish the positive branches
+needed by the selected roots. Exact exponent arithmetic also verified all seven
+dependent-generator identities and the generator-cap/field-cap distinction.
+These checks preserve the equations and branch reasoning rather than inferring
+identities from small approximate differences.
+
+A temporary probe kept the root fixtures and their original assertions, then
+added independent rational power inequalities for every sample. For a returned
+integer a, unit h=2^p and positive radicand q, it checked
+(max(a-1,0)*h)^n <= q <= ((a+1)*h)^n with a nonnegative upper endpoint.
+Monotonicity of the nonnegative nth power gives the one-unit error enclosure.
+All 678 square-root and 546 direct-root cases passed on both baseline and
+documented source. Directed 256-bit pi/e bounds also lay strictly inside the
+stored binary64 endpoints on both revisions. The probe's external containment
+was 1 GiB address space, twenty CPU seconds, thirty wall seconds and no core
+files; these limits are not production resource guarantees.
+
+After the final source edit, focused locked/offline two-job validation passed:
+
+- All nine selected tests without default features and with all features.
+- Both private library Rustdoc configurations and temporary test-fixture Rustdoc
+  with warnings and broken/private intra-doc links denied; all ten rendered
+  descriptions were checked against their full authored text.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Scoped Rustfmt and git diff --check. Independently formatted comment-free
+  tokens are identical. Raw-token differences are three optional trailing commas
+  removed by Rustfmt and inspected in the diff. No fixture, assertion, algorithm,
+  predicate order or API signature changed.
+
+No focused check remains blocked and no new runtime defect was found in these
+finite cases. Full workflow/performance checks remain owner-waived for this
+docs-only session; no performance claim is made. AGENTS.md's standing public/
+private Rustdoc mandate remains in force. Evidence under
+`/tmp/csgrs-hyperreal-node-root-filter-fixtures-audit/` retains commands/logs,
+probe sources, exact algebra checks and item/render/token inventories. Owned
+shadow sources, executable/rlib and HTML were removed after inspection. Builds
+reused the approximately 6.6 GiB shared target with incremental compilation off.
+Repository-wide line review and all-configuration documentation coverage remain
+unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
