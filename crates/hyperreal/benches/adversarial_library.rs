@@ -1,3 +1,22 @@
+//! Deterministic adversarial timing probes, retained history and promoted-case scoring.
+//!
+//! The raw probe keeps the fastest of five wall-clock calls, including result drop,
+//! without checking mathematical values or unwrapping generic results. Construction,
+//! approximation, conversion and declined/error outcomes are different workloads.
+//! History retains maxima of these minima after lossy text interchange; scores are
+//! not correctness certificates or matched-output performance comparisons.
+//!
+//! Report paths use the process working directory. Direct writers are unlocked and
+//! non-atomic; read failures often become empty history and write failures are logged.
+//! Imported labels are leaked for static lifetimes. Row-count limits do not bound
+//! input files, individual evaluation work, allocation or cancellation latency.
+//!
+//! The Criterion callback requires --bench and suppresses --test/--list/--help.
+//! The skip-report environment variable suppresses wrapper writes, not collection
+//! or scoring. Criterion 0.5.1 generates undocumented benches/main functions to
+//! configure the runner, call this workload and the shared report callback, and
+//! print its final summary. Their item-doc gaps remain in the repository audit.
+
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Computable, Rational, Real};
 use num::bigint::{BigInt, BigUint};
@@ -7,39 +26,76 @@ use std::ops::Neg;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+/// Shared Criterion result aggregator, called after this workload by the generated runner.
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
+/// Slow-history filename joined to the process working directory, not the manifest path.
 const REPORT_NAME: &str = "slow_performers.txt";
+/// Tab-separated promoted-list filename used by this writer and the companion transcendental bench.
 const PROMOTED_NAME: &str = "promoted_slow_offenders.txt";
+/// Working-directory Markdown file receiving the promoted-score section.
 const BENCHMARKS_NAME: &str = "benchmarks.md";
+/// Five sequential calls per raw probe; the minimum elapsed time is retained without result validation.
 const SAMPLE_REPEATS: usize = 5;
+/// Maximum retained history/table rows (1,000); not a read-size, evaluation or memory limit.
 const REPORT_LIMIT: usize = 1_000;
+/// Collection target of 20,000 rows, filled by generated cases after fixed cases; not a work budget.
 const TARGET_CASES: usize = 20_000;
+/// One lowest-ranked retained case released and at most one first-pass replacement per refresh.
 const PROMOTION_ROTATION: usize = 1;
+/// Desired promoted-list cap of 100; insufficient eligible replacements can leave fewer cases.
 const PROMOTED_TARGET: usize = 100;
+/// Literal first opening marker used to replace a score section in Markdown.
 const SCORE_SECTION_BEGIN: &str = "<!-- BEGIN promoted_slow_offender_score -->";
+/// Literal closing marker searched after the first opening score marker.
 const SCORE_SECTION_END: &str = "<!-- END promoted_slow_offender_score -->";
+/// Metadata-line prefix storing the unsigned current average in decimal nanoseconds.
 const SCORE_NANOS_PREFIX: &str = "<!-- promoted_slow_score_nanos:";
+/// Metadata-line prefix storing the preceding average used for the displayed delta.
 const SCORE_PREVIOUS_NANOS_PREFIX: &str = "<!-- promoted_slow_previous_score_nanos:";
+/// Metadata-line prefix storing the signed current-minus-previous average for the next derivative.
 const SCORE_DELTA_PREFIX: &str = "<!-- promoted_slow_score_delta_nanos:";
 
+/// One labeled timing observation or retained historical maximum.
+///
+/// Derived Clone copies static labels and the duration and clones the owned input
+/// string. Labels identify workloads without proving their domain, outcome or
+/// mathematical equivalence; imported labels may have leaked process lifetime.
 #[derive(Clone)]
 struct TimedCase {
+    /// Static family label; imported Markdown labels are leaked allocations, not validated scalar tags.
     family: &'static str,
+    /// Static operation label used for grouping and optional promotion dispatch.
     operation: &'static str,
+    /// Owned human-readable input text, sometimes a generated seed plus a rational; not a general replay format.
     input: String,
+    /// Raw best-of-five duration, parsed historical duration or their maximum, depending on the producer.
     nanos: u128,
 }
 
+/// Construct an exact fixture fraction, panicking on a zero denominator.
+///
+/// No float conversion or timer is introduced here; callers supply the domain and
+/// may invoke this constructor inside their measured closures.
 fn rational(n: i64, d: u64) -> Rational {
     Rational::fraction(n, d).unwrap()
 }
 
+/// Construct an exact signed-bigint fraction with an unsigned denominator.
+///
+/// Unwrap construction, so zero denominators panic. Integer allocation/reduction
+/// cost is inherited from Rational and has no additional bound here.
 fn rational_big(n: BigInt, d: BigUint) -> Rational {
     Rational::from_bigint_fraction(n, d).unwrap()
 }
 
+/// Generate a signed rational coefficient times an exact binary scale.
+///
+/// Use magnitude ((seed mod 997)+1)/((seed mod 251)+1), negative for odd seeds,
+/// and multiply by 2^exponent. Current callers use exponents -128 through 128.
+/// Negative i32::MIN cannot be negated safely and panics in the checked path;
+/// large shifts also have no allocation bound. This is fixture construction.
 fn scaled_rational(seed: u64, exponent: i32) -> Rational {
     let numerator_seed = i64::try_from((seed % 997) + 1).expect("small numerator fits i64");
     let denominator_seed = (seed % 251) + 1;
@@ -57,6 +113,12 @@ fn scaled_rational(seed: u64, exponent: i32) -> Rational {
     }
 }
 
+/// Deterministically map a seed to a nonzero signed dyadic-scaled rational.
+///
+/// The exponent is seed mod 193 minus 96. Wrapping products 37*seed and 53*seed
+/// select numerator magnitude 1..=1009 and denominator 1..=251; odd seeds negate
+/// the numerator. Exact shifts preserve the value. This finite formula is not a
+/// randomness, full-domain or independent-distribution guarantee.
 fn generated_rational(seed: u64) -> Rational {
     let exponent = i32::try_from(seed % 193).expect("small exponent fits i32") - 96;
     let numerator = BigInt::from(((seed.wrapping_mul(37) % 1_009) + 1) as i64);
@@ -75,6 +137,11 @@ fn generated_rational(seed: u64) -> Rational {
     }
 }
 
+/// Map wrapping seed products to an exact rational in the closed range -999..=999.
+///
+/// The numerator is (73*seed mod 1999)-999 and denominator (97*seed mod 997)+1.
+/// The result may be zero and need not lie in the unit interval; seed products wrap
+/// before the modulus, so components are deterministic and correlated.
 fn bounded_generated_rational(seed: u64) -> Rational {
     rational(
         i64::try_from(seed.wrapping_mul(73) % 1_999).expect("small numerator fits i64") - 999,
@@ -82,26 +149,39 @@ fn bounded_generated_rational(seed: u64) -> Rational {
     )
 }
 
+/// Return the exact fixture value 999999/1000000, below one by 10^-6.
 fn near_one() -> Rational {
     rational(999_999, 1_000_000)
 }
 
+/// Return the exact positive fixture value 10^-12; its decimal scale is not binary64 input.
 fn tiny() -> Rational {
     rational(1, 1_000_000_000_000)
 }
 
+/// Return the exact fixture value 1+10^-12 for just-above-one domains.
 fn one_plus_tiny() -> Rational {
     Rational::one() + tiny()
 }
 
+/// Wrap a rational as an exact Computable source without requesting approximation.
 fn computable(r: Rational) -> Computable {
     Computable::rational(r)
 }
 
+/// Wrap a rational in the exact rational-backed Real carrier.
 fn real(r: Rational) -> Real {
     Real::new(r)
 }
 
+/// Measure five calls of a closure and retain the smallest elapsed nanoseconds.
+///
+/// Start the clock before f(), black-box its result and drop that result before
+/// reading elapsed time. Captured input setup and label construction occur outside
+/// this timer, but work performed by the closure remains inside. Repeated calls can
+/// warm shared caches; this is not five independent cold samples. No result/domain,
+/// certainty or completion check is performed: Result/Option errors can be timed,
+/// and panics propagate. No timeout or cancellation guard is installed.
 fn time_case<T>(
     family: &'static str,
     operation: &'static str,
@@ -123,6 +203,10 @@ fn time_case<T>(
     }
 }
 
+/// Build 37 exact rational fixtures: eleven literals plus two seeds at 13 binary scales.
+///
+/// Include zero, both signs, tiny values, 355/113, +/-10^30 and scales from -128 to
+/// 128. This is a fixed list without deduplication or an exhaustive scalar domain.
 fn rational_inputs() -> Vec<Rational> {
     let mut inputs = vec![
         Rational::zero(),
@@ -150,6 +234,11 @@ fn rational_inputs() -> Vec<Rational> {
     inputs
 }
 
+/// Label the 37 rational sources and append four computable constructions.
+///
+/// The extras are pi, e, 2^256*pi+7/5 and pi/2-2^-40. Construction can reuse global
+/// constants; the returned labels and expressions are prepared outside each raw
+/// probe's clock, without a cold-cache or structural-distinctness guarantee.
 fn computable_inputs() -> Vec<(String, Computable)> {
     let mut inputs: Vec<(String, Computable)> = rational_inputs()
         .into_iter()
@@ -176,6 +265,11 @@ fn computable_inputs() -> Vec<(String, Computable)> {
     inputs
 }
 
+/// Label 37 rational-backed values and append six symbolic/near-boundary fixtures.
+///
+/// Add pi, e, positive sqrt(2), pi+10^-12, 1+10^-12 and 1-10^-6. The root result is
+/// unwrapped for its valid fixed domain; no class or numerical-value assertion
+/// accompanies the 43-item catalogue.
 fn real_inputs() -> Vec<(String, Real)> {
     let mut inputs: Vec<(String, Real)> = rational_inputs()
         .into_iter()
@@ -191,6 +285,12 @@ fn real_inputs() -> Vec<(String, Real)> {
     inputs
 }
 
+/// Append raw rational clone, seventh-power, conversion and adjacent-pair timings.
+///
+/// Time each of 37 inputs, then add/multiply adjacent pairs and divide when the
+/// right operand is structurally nonzero. Input/label setup is outside each raw
+/// clock; powi/conversion results are not checked and no exact output is retained.
+/// The repeated minimum is a latency observation, not a correctness receipt.
 fn collect_rational_cases(out: &mut Vec<TimedCase>) {
     let inputs = rational_inputs();
     for (i, value) in inputs.iter().enumerate() {
@@ -229,6 +329,14 @@ fn collect_rational_cases(out: &mut Vec<TimedCase>) {
     }
 }
 
+/// Append fixed native approximation probes at -96 or -128 computable precision.
+///
+/// For 41 prepared sources, time approximation, trig, sqrt(x^2) and ln(x^2+1).
+/// The historical ln_abs_plus_one label means ln(x^2+1), not ln(abs(x)+1).
+/// Additional bounded inverse-trig/atanh, asinh and above-one acosh fixtures probe
+/// endpoint/tail behavior. Requested approximation and any closure-side cloning or
+/// construction are timed. Returned integers are not independently validated and
+/// cancellation status is not checked; precision is not a total-work bound.
 fn collect_computable_cases(out: &mut Vec<TimedCase>) {
     let inputs = computable_inputs();
     for (name, value) in &inputs {
@@ -316,6 +424,16 @@ fn collect_computable_cases(out: &mut Vec<TimedCase>) {
     }
 }
 
+/// Append fixed Real observations, adjacent arithmetic and stable-function constructions.
+///
+/// The 43-source loop times clone, facts, lossy f64 conversion, trig, sqrt(x^2)
+/// and ln(x^2+1); adjacent pairs supply arithmetic. Additional cases cover tiny
+/// stable formulas, exact roots/trig endpoints, tails, distribution functions,
+/// geometry helpers and polynomial evaluation. Build labels do not imply zero
+/// admission/refinement work. Fallible results are black-boxed without success or
+/// certainty assertions; no subsequent numerical evaluation is requested by most
+/// construction rows. Prepared sources/labels are outside the raw timers; inline
+/// argument construction inside closures, such as hypot fixture values, is timed.
 fn collect_real_cases(out: &mut Vec<TimedCase>) {
     let inputs = real_inputs();
     for (name, value) in &inputs {
@@ -569,6 +687,16 @@ fn collect_real_cases(out: &mut Vec<TimedCase>) {
     ));
 }
 
+/// Append deterministic generated rows until the existing vector reaches 20,000.
+///
+/// Restart seed at zero and cycle through fifteen operations: rational arithmetic/
+/// power, computable trig/log/square-root/atan approximations, and Real arithmetic/
+/// construction. Generate both nonzero wide operands and a bounded operand each
+/// iteration; format their displayed values with the seed. Right rational divisors
+/// are nonzero by construction. sqrt rows use sqrt(x^2), and ln rows use ln(x^2+1).
+/// Despite the name, no randomness, fuzz feedback, oracle or result assertion is
+/// used. Existing rows count toward the target; already-full vectors are unchanged.
+/// The limit bounds row count, not individual arithmetic work or peak allocation.
 fn collect_generated_fuzz_cases(out: &mut Vec<TimedCase>) {
     let mut seed = 0_u64;
     while out.len() < TARGET_CASES {
@@ -693,6 +821,12 @@ fn collect_generated_fuzz_cases(out: &mut Vec<TimedCase>) {
     }
 }
 
+/// Run fixed rational, computable and Real probes, then fill the generated catalogue.
+///
+/// Truncate to 20,000 after collection and stably sort by descending raw duration.
+/// The whole process includes setup, formatting, result drops and nested clocks;
+/// inside its Criterion aggregate this all contributes to measured time. No
+/// numerical correctness, error-result rejection or completion budget is supplied.
 fn collect_all_cases() -> Vec<TimedCase> {
     let mut cases = Vec::new();
     collect_rational_cases(&mut cases);
@@ -704,6 +838,11 @@ fn collect_all_cases() -> Vec<TimedCase> {
     cases
 }
 
+/// Format integer nanoseconds as ns or three-decimal us/ms/s at decimal thresholds.
+///
+/// Below 1,000, print the integer exactly. Larger values convert to f64 and round
+/// text, so persisted durations can lose nanosecond precision or large-integer bits.
+/// This is report formatting, not exact statistical interchange.
 fn format_duration(nanos: u128) -> String {
     if nanos < 1_000 {
         format!("{nanos} ns")
@@ -716,6 +855,11 @@ fn format_duration(nanos: u128) -> String {
     }
 }
 
+/// Read a float and one ns/us/ms/s unit, ignoring any further whitespace tokens.
+///
+/// Multiply, round and cast to u128. Negative values and NaN become zero; positive
+/// overflow/infinity saturate at u128::MAX. Missing/unparseable fields or unknown
+/// units return None. No finiteness, sign, provenance or trailing-text check is made.
 fn parse_duration_nanos(value: &str) -> Option<u128> {
     let mut parts = value.split_whitespace();
     let number = parts.next()?.parse::<f64>().ok()?;
@@ -730,30 +874,42 @@ fn parse_duration_nanos(value: &str) -> Option<u128> {
     Some((number * multiplier).round() as u128)
 }
 
+/// Return text between the first two backticks, or None if either delimiter is absent; no escaping is decoded.
 fn extract_tick_value(value: &str) -> Option<String> {
     let start = value.find('`')? + 1;
     let end = value[start..].find('`')? + start;
     Some(value[start..end].to_owned())
 }
 
+/// Join REPORT_NAME to current_dir; despite the name, no crate/manifest location is consulted. Panic if cwd lookup fails.
 fn crate_report_path() -> PathBuf {
     std::env::current_dir()
         .expect("bench runner has a current directory")
         .join(REPORT_NAME)
 }
 
+/// Join PROMOTED_NAME to current_dir; callers choose cwd, and lookup failure panics.
 fn crate_promoted_path() -> PathBuf {
     std::env::current_dir()
         .expect("bench runner has a current directory")
         .join(PROMOTED_NAME)
 }
 
+/// Join BENCHMARKS_NAME to current_dir, without checking file existence or crate ownership; lookup failure panics.
 fn crate_benchmarks_path() -> PathBuf {
     std::env::current_dir()
         .expect("bench runner has a current directory")
         .join(BENCHMARKS_NAME)
 }
 
+/// Extract rows from the simple Markdown table, treating every read error as empty history.
+///
+/// Split lines on literal pipes, reject any line containing --- or Rank (even in
+/// input text), and parse duration plus
+/// backtick fields. Embedded pipes are not escaped by the writer and can make its
+/// own rows unreadable. Generated labels without a space are skipped. No family or
+/// operation validation is performed. Accepted family/operation strings are leaked
+/// to obtain static lifetimes; reading a report is not bounded by REPORT_LIMIT.
 fn read_existing_cases(report_path: &Path) -> Vec<TimedCase> {
     let Ok(report) = fs::read_to_string(report_path) else {
         return Vec::new();
@@ -792,6 +948,13 @@ fn read_existing_cases(report_path: &Path) -> Vec<TimedCase> {
     cases
 }
 
+/// Merge parsed history and current rows by exact family/operation/input text.
+///
+/// For each equal key keep the maximum duration, then stably sort descending and
+/// retain at most 1,000 rows. Equal-duration ordering follows the preceding key
+/// sort. These are maxima of parsed history and fresh probe minima, not a full
+/// worst-ever record: prior truncation, failed parsing and rounded text can lose
+/// observations. Imported labels remain leaked even when their rows are discarded.
 fn merge_historical_cases(report_path: &Path, current: &[TimedCase]) -> Vec<TimedCase> {
     let mut merged = read_existing_cases(report_path);
     merged.extend_from_slice(current);
@@ -820,6 +983,11 @@ fn merge_historical_cases(report_path: &Path, current: &[TimedCase]) -> Vec<Time
     deduped
 }
 
+/// Recognize computable generated log/atan/tan/sin/cos rows with parseable inputs.
+///
+/// The log operation is ln(x^2+1). This checks labels and textual parseability, not
+/// agreement between seed and value, mathematical output correctness or cost.
+/// Zero denominators can panic in the parser instead of returning false.
 fn is_promotable(case: &TimedCase) -> bool {
     case.family == "computable"
         && matches!(
@@ -833,6 +1001,11 @@ fn is_promotable(case: &TimedCase) -> bool {
         && parse_generated_input(&case.input).is_some()
 }
 
+/// Parse the exact prefix `generated[seed]` followed by a space and limited rational text.
+///
+/// Require a u64 seed, but do not regenerate/validate the value from it. Delegate
+/// numeric parsing, including its zero-denominator panic; malformed text otherwise
+/// returns None. This is not the general Rational or native-geometry wire grammar.
 fn parse_generated_input(input: &str) -> Option<(u64, Rational)> {
     let rest = input.strip_prefix("generated[")?;
     let (seed, rational) = rest.split_once("] ")?;
@@ -841,6 +1014,13 @@ fn parse_generated_input(input: &str) -> Option<(u64, Rational)> {
     Some((seed, rational))
 }
 
+/// Parse an i64 integer, i64/u64 fraction or signed mixed number used by reports.
+///
+/// For a negative whole part, subtract the parsed fraction; otherwise add it.
+/// No canonical-sign check is made: textual -0 loses its sign, and signed fraction
+/// numerators are accepted. Fraction construction unwraps and panics on denominator
+/// zero even though syntax failures return None. Large integers outside these
+/// machine types, decimals and pair inputs are not admitted.
 fn parse_generated_rational_text(value: &str) -> Option<Rational> {
     if let Some((whole, fraction)) = value.split_once(' ') {
         let whole = whole.parse::<i64>().ok()?;
@@ -863,10 +1043,18 @@ fn parse_generated_rational_text(value: &str) -> Option<Rational> {
     Some(Rational::new(value.parse::<i64>().ok()?))
 }
 
+/// Use operation and exact input text as the promoted identity; family is deliberately absent from this key.
 fn promoted_case_key(case: &TimedCase) -> (&str, &str) {
     (case.operation, case.input.as_str())
 }
 
+/// Read tab-separated operation/input/u128 timing rows, then keep promotable ones.
+///
+/// Read errors become an empty list; blank/comment lines are skipped. A fourth
+/// name field is optional and ignored here, though the companion consumer requires
+/// it. Imported operations are leaked before eligibility filtering; duplicates are
+/// retained, file size/row count are unbounded, and malformed zero denominators can
+/// panic through the rational parser.
 fn read_promoted_cases(promoted_path: &Path) -> Vec<TimedCase> {
     let Ok(contents) = fs::read_to_string(promoted_path) else {
         return Vec::new();
@@ -891,6 +1079,10 @@ fn read_promoted_cases(promoted_path: &Path) -> Vec<TimedCase> {
         .collect()
 }
 
+/// Reprobe a recognized row and retain the maximum of its old and fresh minimum.
+///
+/// Return None on unsupported text/operation; parser/evaluation panics propagate.
+/// This preserves historical slow scores for rotation, not current latency alone.
 fn time_promoted_case(case: &TimedCase) -> Option<TimedCase> {
     let timed = time_promoted_case_current(case)?;
     Some(TimedCase {
@@ -899,6 +1091,13 @@ fn time_promoted_case(case: &TimedCase) -> Option<TimedCase> {
     })
 }
 
+/// Time one of five parsed computable operations afresh at precision -96.
+///
+/// Ignore the input family and seed/value consistency; use the parsed rational to
+/// build ln(x^2+1), atan, tan, sin or cos. Prepare the source before timing but clone,
+/// construct and approximate inside each of five calls. Unknown operations or text
+/// return None, while construction/parser panics propagate. Do not retain the old
+/// duration or validate approximation values/cancellation here.
 fn time_promoted_case_current(case: &TimedCase) -> Option<TimedCase> {
     let (_, rational) = parse_generated_input(&case.input)?;
     let operation = case.operation;
@@ -930,6 +1129,12 @@ fn time_promoted_case_current(case: &TimedCase) -> Option<TimedCase> {
     Some(timed)
 }
 
+/// Build a companion Criterion label from a recognized operation, seed and rational.
+///
+/// Normalize the rational through Display, encode minus as neg_, spaces/slashes as
+/// underscores and other nonalphanumeric characters as underscores; append _p96.
+/// This is not a collision-proof or general reversible encoding. Family is ignored;
+/// unsupported operations/text return None, with parser panics still possible.
 fn promoted_bench_name(case: &TimedCase) -> Option<String> {
     let (seed, rational) = parse_generated_input(&case.input)?;
     let op = match case.operation {
@@ -958,6 +1163,15 @@ fn promoted_bench_name(case: &TimedCase) -> Option<String> {
     Some(name)
 }
 
+/// Reprobe promoted history, release its fastest retained-score row, then refill.
+///
+/// Scores are maxima of prior and new best-of-five timings. Prefer the first
+/// eligible historical candidate not already retained or just released, then
+/// backfill to 100 in supplied history order. The usual caller supplies descending
+/// history; this helper does not sort candidates before selection. Released keys
+/// cannot reenter in this refresh, so a sparse set can shrink. Existing duplicates
+/// are not removed. Finally sort descending and truncate to 100; this function
+/// returns rows without writing the file.
 fn rotate_promoted_cases(promoted_path: &Path, historical: &[TimedCase]) -> Vec<TimedCase> {
     let mut retained: Vec<_> = read_promoted_cases(promoted_path)
         .into_iter()
@@ -1010,6 +1224,12 @@ fn rotate_promoted_cases(promoted_path: &Path, historical: &[TimedCase]) -> Vec<
     retained
 }
 
+/// Write a fresh tab-separated promoted list, omitting rows without a generated name.
+///
+/// Use the supplied order and durations, with operation/input text unescaped. The
+/// fourth name supports the companion benchmark loader. The direct unlocked write
+/// is non-atomic and logs errors without propagating failure; this helper does not
+/// honor the skip-report variable or enforce the advertised 100-entry count.
 fn write_promoted_cases(promoted_path: &Path, cases: &[TimedCase]) {
     let mut out = String::new();
     out.push_str("# Generated by `cargo bench --bench adversarial_library`.\n");
@@ -1037,15 +1257,30 @@ fn write_promoted_cases(promoted_path: &Path, cases: &[TimedCase]) {
     }
 }
 
+/// Stored/current mean comparison with the number of eligible timed rows.
+///
+/// Derived Clone/Copy duplicate integer fields; Debug prints them without checking
+/// arithmetic or workload comparability. Delta and its change can compare different
+/// rosters, and this record carries no correctness or statistical confidence proof.
 #[derive(Clone, Copy, Debug)]
 struct PromotedScore {
+    /// Current timed row count; metadata loading instead substitutes the target 100.
     cases: usize,
+    /// Previous stored mean, or current mean when no usable predecessor exists.
     previous_nanos: u128,
+    /// Current integer-truncated mean of best-of-five probes, or a parsed stored mean.
     average_nanos: u128,
+    /// Current mean minus previous mean in nanoseconds; unchecked signed arithmetic can overflow.
     delta_nanos: i128,
+    /// Change from the previously recorded delta; not divided by elapsed time and not a physical derivative.
     derivative_nanos: i128,
 }
 
+/// Return the integer-truncated mean of a nonempty slice's stored durations.
+///
+/// Sum with saturating u128 addition before division; on overflow this understates
+/// the mathematical mean. Empty input returns None. No statistical weighting,
+/// outlier handling or completion/certainty validation is supplied.
 fn average_nanos(cases: &[TimedCase]) -> Option<u128> {
     if cases.is_empty() {
         return None;
@@ -1056,6 +1291,15 @@ fn average_nanos(cases: &[TimedCase]) -> Option<u128> {
     Some(total / cases.len() as u128)
 }
 
+/// Reprobe every eligible file row and compare its current mean with stored score metadata.
+///
+/// Do not retain historic timing maxima here. Sort current rows descending and
+/// average their minima; an empty set returns None. Duplicates and more than 100
+/// rows can be scored. Read previous average/delta from working-directory Markdown;
+/// if unavailable, use current average and zero delta. Compute current-minus-prior
+/// and its change, not a time derivative. Casts to i128 and signed subtraction are
+/// unchecked, so extreme values can wrap or overflow/panic by build mode.
+/// Roster, hardware and cache comparability are not established; no files are written.
 fn score_promoted_cases(promoted_path: &Path) -> Option<(PromotedScore, Vec<TimedCase>)> {
     let mut timed: Vec<_> = read_promoted_cases(promoted_path)
         .iter()
@@ -1082,6 +1326,10 @@ fn score_promoted_cases(promoted_path: &Path) -> Option<(PromotedScore, Vec<Time
     ))
 }
 
+/// Return the first parseable signed integer after a trimmed prefix and before -->.
+///
+/// Scan all lines, ignoring malformed candidates. No section scope, uniqueness or
+/// metadata provenance is checked, so unrelated matching lines can supply a value.
 fn parse_metadata_i128(contents: &str, prefix: &str) -> Option<i128> {
     contents.lines().find_map(|line| {
         let value = line.trim().strip_prefix(prefix)?.trim();
@@ -1090,6 +1338,12 @@ fn parse_metadata_i128(contents: &str, prefix: &str) -> Option<i128> {
     })
 }
 
+/// Load score metadata, returning None on file/read/current-score or unsigned conversion failure.
+///
+/// Missing/malformed previous average defaults to current; missing delta defaults
+/// to zero. Negative averages are rejected by u128 conversion. Synthesize cases=100
+/// and derivative=0 rather than reading them. The actual prior roster and its
+/// comparability with current measurements are not recovered.
 fn read_previous_promoted_score(benchmarks_path: &Path) -> Option<PromotedScore> {
     let contents = fs::read_to_string(benchmarks_path).ok()?;
     let average_nanos = parse_metadata_i128(&contents, SCORE_NANOS_PREFIX)?;
@@ -1105,6 +1359,7 @@ fn read_previous_promoted_score(benchmarks_path: &Path) -> Option<PromotedScore>
     })
 }
 
+/// Format a signed nanosecond delta with a minus for negatives and no explicit plus; unsigned_abs also handles i128::MIN.
 fn format_signed_duration(nanos: i128) -> String {
     if nanos < 0 {
         format!("-{}", format_duration(nanos.unsigned_abs()))
@@ -1113,6 +1368,12 @@ fn format_signed_duration(nanos: i128) -> String {
     }
 }
 
+/// Render metadata, score metrics and the first ten supplied rows between fixed markers.
+///
+/// The prose always says 100 offenders, but the metric uses score.cases and no
+/// length/score consistency is checked. Only input backticks are replaced with
+/// apostrophes; pipes and other Markdown syntax are unescaped. Row order is trusted.
+/// Durations are rounded report text, while decimal metadata stores the integers.
 fn promoted_score_section(score: PromotedScore, timed: &[TimedCase]) -> String {
     let mut out = String::new();
     out.push_str(SCORE_SECTION_BEGIN);
@@ -1163,6 +1424,13 @@ fn promoted_score_section(score: PromotedScore, timed: &[TimedCase]) -> String {
     out
 }
 
+/// Replace the first complete score marker pair, preserving all surrounding bytes.
+///
+/// If the opening marker or its following close is missing, prepend the new section
+/// and retain the entire old document, including any malformed opening marker.
+/// For a matched pair, the new section's final newline and the old suffix are both
+/// kept; repeated replacement can accumulate blank lines. No uniqueness, Markdown
+/// validation or bytewise idempotence is guaranteed.
 fn replace_section(contents: &str, section: &str) -> String {
     let Some(start) = contents.find(SCORE_SECTION_BEGIN) else {
         let mut out = String::new();
@@ -1186,6 +1454,12 @@ fn replace_section(contents: &str, section: &str) -> String {
     out
 }
 
+/// Write the score section into working-directory Markdown unless the skip variable exists.
+///
+/// Even an empty skip value suppresses work. Otherwise any read failure substitutes
+/// an empty document, then direct replacement/write occurs without locking or atomic
+/// rename. Write errors are logged and not propagated; no --bench argument is required
+/// by this helper itself.
 fn update_benchmarks_score(score: PromotedScore, timed: &[TimedCase]) {
     if std::env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some() {
         return;
@@ -1202,6 +1476,11 @@ fn update_benchmarks_score(score: PromotedScore, timed: &[TimedCase]) {
     }
 }
 
+/// Append at most 1,000 ranked rows in supplied order under a Worst Time heading.
+///
+/// Replace input backticks with apostrophes, but do not escape embedded pipes or
+/// validate label/timing meaning. The simple history reader can therefore discard
+/// rows emitted here. Rank is positional and duration text can lose precision.
 fn write_case_table(out: &mut String, cases: &[TimedCase]) {
     out.push_str("| Rank | Worst Time | Family | Operation | Input |\n");
     out.push_str("| ---: | ---: | --- | --- | --- |\n");
@@ -1217,6 +1496,14 @@ fn write_case_table(out: &mut String, cases: &[TimedCase]) {
     }
 }
 
+/// Merge history, rotate/write promoted cases, then overwrite the requested history report.
+///
+/// The promoted path always comes from cwd, even when report_path points elsewhere.
+/// Rotation can run new probes; the helper ignores the skip-report environment flag.
+/// It writes promoted data before the report, without a transaction or rollback.
+/// Read failures may discard history; direct write errors are logged rather than
+/// propagated. The worst-ever wording describes retained parsed maxima, not all
+/// past samples or a correctness-qualified performance record.
 fn write_report_to(report_path: &Path, title: &str, cases: &[TimedCase]) {
     let historical = merge_historical_cases(report_path, cases);
     let promoted = rotate_promoted_cases(&crate_promoted_path(), &historical);
@@ -1250,6 +1537,10 @@ fn write_report_to(report_path: &Path, title: &str, cases: &[TimedCase]) {
     }
 }
 
+/// Refresh the working-directory history/promoted files unless the skip variable is present.
+///
+/// Presence, including an empty value, returns immediately. Otherwise delegate to
+/// the direct writer; no CLI guard or typed success result is supplied here.
 fn write_report(cases: &[TimedCase]) {
     if std::env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some() {
         return;
@@ -1261,6 +1552,19 @@ fn write_report(cases: &[TimedCase]) {
     );
 }
 
+/// Collect/update once, then register aggregate collection and current-score timings.
+///
+/// Return unless --bench is present, or if --test/--list/--help is present. Initial
+/// collection, history/promotion writing and score update precede Criterion timing.
+/// Skip-report presence suppresses wrapper writes but not collection/scoring.
+///
+/// Each collection iteration repeats all 20,000 raw best-of-five probes, setup,
+/// formatting, sorting and drops; only the row count is black-boxed. Score iterations
+/// reread promoted inputs and prior metadata, reprobe and drop their rows. Empty/
+/// unreadable/unsupported promoted sets become a timed zero sentinel, not a completed
+/// 100-case success. Neither aggregate validates scalar outputs. Ten samples and
+/// 100ms warm-up/400ms measurement settings are statistical scheduling, not hard
+/// work/memory bounds. Panics propagate, while report-write errors only log.
 fn bench_adversarial_library(c: &mut Criterion) {
     let args: Vec<_> = std::env::args().collect();
     if !args.iter().any(|arg| arg == "--bench")

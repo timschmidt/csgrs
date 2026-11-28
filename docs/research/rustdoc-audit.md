@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/adversarial_library.rs` | Entire collection/history/promotion/score implementation; documented every private item, real timing/output scope, parser loss, leaks, file effects and resource limits. | All 75 blocks render; both-mode docs/compilation and isolated baseline/final fixtures pass. Full numerical collection unrun; two Criterion-generated doc gaps remain. See adversarial-library batch. |
 | `crates/hyperreal/benches/real_representations.rs` | Entire 20-recipe workload; documented enum/variants/derived roles, exact expressions, lossy export, prepared timings and finite coverage. | Thirty blocks render; both-mode smoke/docs pass. Two Criterion-generated functions still lack attached docs. See representation/replay batch. |
 | `crates/hyperreal/benches/bounded_parameter_encodings.rs` | Entire replay/retained-proof workload; documented residual equations, domains, admission/cache work, timing and serialization checks. | Four blocks render; serde/all docs/compilation and baseline/final 220-row replay checks pass. See representation/replay batch. |
 | `crates/hyperreal/tests/bounded_parameter_encodings.rs` | Entire base/serde test suite and helpers; documented signed/endpoint identities, downstream sine proofs, concurrency and distinct byte/order checks. | Ten blocks render in test-enabled private docs; one minimal and four tests each in serde/all pass. Assertions and executable tokens unchanged. See representation/replay batch. |
@@ -22980,6 +22981,131 @@ logs and small JSON evidence remain under
 `/tmp/csgrs-hyperreal-representation-benches-audit/`; temporary test-source copies
 and duplicate rendered HTML are removed after inspection. The shared build target
 is about 7.9 GiB. Whole-repository review and coverage remain unfinished.
+
+## Hyperreal adversarial library collection, history and scoring (2026-11-27)
+
+Baseline: `e6971e108` on `rustdoc`. Read all 1,312 lines of
+crates/hyperreal/benches/adversarial_library.rs, including every collector,
+parser, writer, promotion/scoring path and generated harness invocation.
+The companion promoted-list loader, Cargo target and previously audited shared
+report helper supplied context; no additional whole-file credit is added for
+those reads. Ownership is development timing/evidence presentation (P36/P37),
+with P1/P4/P5/P6 relevant to outcome checks, caches, failures and resource limits.
+The domain is fixed/generated scalar probe inputs and stored Markdown/tabular
+history. Missing acceptance was accurate private-item documentation, especially
+where labels and file formats overstate the evidence they retain.
+
+Baseline compilation and isolated helper fixtures preceded source edits. The
+final file has 75 documented blocks: module overview, included helper module,
+13 constants, two structs, nine fields and 49 functions. Every description and
+field anchor renders in private docs. Reviewed four derived implementations:
+TimedCase Clone copies labels/duration and clones its owned string; PromotedScore
+Clone/Copy/Debug copy or display integer fields without validation. Their four
+rendered anchors are present. No function-local named items occur in this source.
+Criterion-generated public benches/private main still lack attached docs; their
+two rendered gaps are recorded separately. Module explanations do not count as
+attached generated-item coverage. No hiding or lint suppression was introduced.
+
+Only documentation changed; all raw non-comment tokens remain identical. The
+full 20,000-case numerical collection and its Criterion timing loops were not
+run, and no statistical performance or complete numerical-acceptance claim is
+made. The --test/--list guards register no workload, so successful guard execution
+is explicitly not counted as a benchmark smoke run.
+
+The raw timer takes the minimum of five sequential wall-clock calls, including
+returned-value destruction. Reused inputs/global caches can warm between calls.
+It does not inspect generic Result/Option outcomes, validate approximations or
+check cancellation. Probe labels mix construction, conversion, facts, exact
+arithmetic and approximation. sqrt rows construct sqrt(x^2); historical
+ln_abs_plus_one labels construct ln(x^2+1), not ln(abs(x)+1). Build labels do not
+promise absence of admission or refinement. The aggregate Criterion collection
+includes setup/formatting/sorting and all nested clocks, not just scalar work.
+
+Documented the 37 rational, 41 computable and 43 Real prepared-input catalogues;
+their sizes were reproduced without running all collectors. Wide generation uses
+nonzero signed rationals and binary exponents -96..96; the bounded generator lies
+in -999..999, not necessarily the unit interval. Generated seeds/operands are
+deterministic and correlated. TARGET_CASES bounds retained collection length,
+not individual evaluation time or input-controlled allocation. The general
+scaled helper's i32::MIN negation panics in the checked fixture, and fraction
+helpers unwrap zero denominators. These existing behaviors were documented,
+not changed in this docs-only session.
+
+Report paths are cwd-relative, despite the crate_* helper names. Reads can turn
+file errors into empty history. The simple pipe/backtick parser cannot reliably
+read its own writer's pair inputs containing |; it also drops any line containing
+Rank or --- even inside a field. Imported family/operation labels are leaked for
+static lifetimes, including some rows later discarded by filtering/truncation.
+Duration parsing accepts extra tokens, maps negatives/NaN to zero and positive
+infinity/overflow to u128::MAX. Larger formatted durations use rounded f64 text.
+History merges exact textual keys, retaining maxima of parsed historical values
+and new probe minima, then caps 1,000 rows. This is not a complete worst-ever
+record: rounding, parse failures and earlier truncation can discard evidence.
+
+Promotion admits five named computable operations and limited rational text.
+The parser does not verify a seed/value relationship, accepts signed mixed-number
+fractions and loses the sign of -0. Zero denominators panic rather than returning
+None. The fourth tab field is optional/ignored by this loader but required by the
+companion consumer. Duplicates remain. Rotation reprobes with historical maxima,
+releases the fastest retained-score row and excludes its key from immediate
+reentry; sparse pools can shrink instead of reaching 100. Candidate order comes
+from the caller. Generated names normalize text but are not collision-proof.
+
+Current scoring uses fresh minima, not historical maxima, and can score any number
+of eligible file rows, including duplicates. Its saturating u128 sum followed by
+division can understate a mean. Prior metadata parsing is not section-scoped;
+missing fields default, cases is synthesized as 100 and derivative as zero.
+Delta and its change may compare different rosters/hardware/cache states. Source
+inspection also discloses unchecked i128 casts/subtractions; extreme signed-score
+overflow was not executed by this fixture. The score-loop's missing/empty-set None
+becomes a timed zero sentinel, not successful completion of 100 cases.
+
+Writers are unlocked/non-atomic and log errors without propagating failure.
+The direct report writer updates the cwd promoted list before the supplied report
+path, with no transaction or rollback. Only wrapper writes honor skip-variable
+presence; collection/scoring can still run. Score text always says 100 offenders
+but displays the actual supplied count. A missing closing marker prepends a new
+section while retaining the malformed original; matched replacement keeps both
+the new final newline and old suffix, so repeated updates can add blank lines.
+No escaping/general Markdown parser or bytewise idempotence is promised.
+
+Focused final validation, using locked/offline two-job Cargo and the reused
+nonincremental target, passed:
+
+- Benchmark no-run compilation/private Rustdoc with no default features and all
+  features; strict warning and broken/private-link checks pass. Matching self/dev
+  externs from Cargo JSON supply dependencies missing from bare cargo rustdoc
+  --bench in this environment. An initial generated[seed] prose link was rejected;
+  marking the literal as code fixed the warning before final builds.
+- Companion adversarial_transcendentals benchmark cargo check in both modes.
+  It was compiled, not executed. Original adversarial_library executables run
+  with --test and --list in a temporary cwd return without registering either
+  expensive benchmark group; these four guard checks are not completion evidence.
+- Scratch execution of the baseline snapshot and final helpers, with only the
+  Criterion harness replaced by fixture main and the included helper path made
+  absolute. The fixture verifies generator values/catalogue sizes, five calls
+  and five result drops, formatting thresholds, duration saturation, mixed-input
+  parsing, expected zero-denominator/min-exponent panics, pipe/header-word row
+  loss, historical maxima, duplicate promoted rows, optional names, five cheap
+  zero-input operation dispatches, rotation/shrinkage, saturating averages,
+  metadata/default/delta calculations and file-writing behavior.
+- Temporary report, promoted-list, score-section and updated Markdown files are
+  byte-identical before/after for fixed fixture data. New timing values are not
+  used for that byte comparison. Missing-end retention, repeated-newline growth
+  and empty skip-variable suppression are explicitly asserted. Extended fixture
+  assertions were also rerun against the preserved baseline source snapshot.
+- All 75 rendered descriptions/nine field anchors/four derived impl anchors,
+  source declaration inventory, raw token equality, scoped Rustfmt and
+  git diff --check pass. Repository/crate report hashes and absence states remain
+  unchanged; no real benchmark report or promoted list was rewritten.
+
+No focused check remains blocked. Generated-item docs remain incomplete, and
+full workflow checks remain owner-waived. AGENTS.md's future-agent public/private/
+generated Rustdoc mandate remains intact. Evidence scripts, source snapshot,
+fixtures, logs and inventory are retained under
+`/tmp/csgrs-hyperreal-adversarial-library-audit/`; the temporary compiled probe and
+combined source copy are removed after inspection. The shared target is about
+8.0 GiB. Whole-repository line review and documentation coverage remain unfinished.
 
 ## Next work
 
