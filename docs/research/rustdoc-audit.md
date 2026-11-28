@@ -26661,6 +26661,95 @@ shared Cargo artifacts are reused with incremental compilation disabled. The
 perfect_nth_root_detects_exact_rational_roots, whose attribute is now line 5723.
 This 7878-line file and the repository-wide audit remain unfinished.
 
+## Rational test audit: recognition, magnitude and dyadic evidence (28 November 2026)
+
+Owning layer: Hyperreal rational recognition, arithmetic and retained dyadic-fact
+fixtures. P1 governs exact values versus float references and lossy export; P3
+and P4 govern recognition/evidence scope; P6 distinguishes the root API's shared
+None outcome from separately typed errors; P37 governs claimed coverage. At
+9b46c7953, seventeen test functions in arithmetic/tests.rs lines 5723–6155 lacked
+Rustdoc. Their baseline passes did not establish every representation path or
+force the algorithms named in their titles.
+
+Reviewed that whole range and the relevant root/power, presentation, unit-step,
+word-construction, arithmetic-dispatch, magnitude and retained-shift kernels.
+Added seventeen descriptions (108 Rustdoc lines); the range is now 5723–6263.
+Executable tokens, assertions, values, guards and ordinary comments are unchanged.
+The Computable binary-scale consumer and Real root consumer were also read for
+context; those partial reads do not establish whole-file review.
+
+The descriptions distinguish:
+
+- Three literal cube roots from three different decline reasons sharing None:
+  a nonperfect cube, negative even-root request and degree zero. The test does
+  not cover zero radicands, degree one or resource exhaustion.
+- Nine selected rational perfect powers and five nonpowers from a universal
+  integer-base definition. The admitted base is rational; component exponents
+  must agree, and zero/units use the implementation's convention. Neither a
+  base/exponent witness nor exponent-cap coverage follows from these booleans.
+- Exactly one multiplicity rejection and one exact prime-root success from
+  candidate counts and total work. The separate odd-denominator trace fixture
+  requires one event in each of seven classes, discarding the constructed
+  values. With numerator one it does not exercise actual factor cancellation;
+  classifications do not imply seven independent reduction algorithms.
+- Decimal termination preference from rendered text or rounding permission;
+  three signed binary-scale successes and three small declines from general
+  exponent-range and lazy-state coverage.
+- Seven unit-step comparisons from independent arithmetic oracles: generic
+  add/subtract can call the very helpers being compared. Small literal
+  arithmetic expectations and wide cancellation chains are separate witnesses;
+  the wide reciprocal/unit cases can take identity shortcuts. Large operands
+  do not prove that the general fallback ran on the same contract.
+- Two valid reduced native-part constructions from raw-layout or noncoprime-input
+  validation. The final dyadic add/subtract fixture checks exact values, not raw
+  stored coprimality or shift-only dispatch.
+- Six comparisons against magnitude eight from arbitrary exponent coverage.
+  The 16384-ratio msd grid uses binary64 division/log2/floor as an approximate,
+  platform-dependent reference. Separate 2^4096, predecessor and reciprocal
+  cases instead pin literal exact exponents without a float oracle.
+- Learned exponent-plus-one encoding for 3/2^300 from admission of a nonexistent
+  exponent. Upper-bound checks exercise the encoder only, without constructing
+  huge denominators; zero encoding means absent stored exponent evidence.
+- Four selected lossy-export states from every retained-fact path. Only the
+  first dyadic case checks stability of the complete fact word on repetition.
+  The non-dyadic fields, canonicalized 6/8 exponent and fresh-zero no-learning
+  case retain their separate assertions. Conversion success alone does not
+  publish an exact-float proof.
+- Reduced-only probe ineligibility for marked 6/8 from non-dyadicness. The later
+  canonicalizing query succeeds, and a wide marked operand is subsequently
+  multiplied to the literal exact ratio 15/2^399. This is selected composition
+  coverage, not every representation or an allocation-free decline assertion.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal tests: fifteen pass without default features and
+  seventeen with all features, matching the seventeen-test all-feature baseline.
+  Exact-name inventories verify selection; both trace-only fixtures retain every
+  count assertion unchanged.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Supplemental copies remove only the seventeen reviewed test markers,
+  preserving both trace guards. All fifteen applicable descriptions render
+  without default features and all seventeen with all features. No local items
+  occur in this reviewed range.
+- The all-feature Real nth_roots_and_rational_powers_preserve_exact_cases consumer
+  test passes with one exact-name match, including its existing typed error and
+  reconstructed-root identity assertions. An initial filter matched zero tests;
+  listing the harness exposed the nested real::tests::tests module, and the
+  corrected exact filter ran the intended fixture. The unmatched run is not
+  credited as validation.
+- Source inventories, executable-token equality and git diff --check pass.
+  Full workflows, performance, cross-target and formal-verification checks remain
+  owner-waived for this docs-only session. General correctness, universal closure,
+  resource bounds and generated coverage are not established by this batch.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-recognition-audit/:
+baseline, scripts, commands, logs, inventories, hashes and compressed selected
+HTML. Owned source copies and duplicate HTML output are removed after validation;
+shared Cargo output is reused with incremental compilation disabled. AGENTS.md
+already contains the full public/private/generated Rustdoc mandate. Continue at
+wide_dyadic_add_sub_matches_fraction_construction, whose attribute is now line
+6264. This 7986-line file and the repository-wide audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

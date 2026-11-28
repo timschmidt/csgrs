@@ -5720,6 +5720,12 @@ mod tests {
         assert!(Arc::ptr_eq(&second.0, &second_reused.0));
     }
 
+    /// Pin three exact cube roots and three distinct reasons for declining a root.
+    ///
+    /// Requires roots 3, -3 and 2/3 for 27, -27 and 8/27. A nonperfect cube,
+    /// a negative even-root request and degree zero each return `None`; the
+    /// Option does not distinguish those reasons. This finite fixture does not
+    /// cover degree one, zero radicands or a resource-exhaustion outcome.
     #[test]
     fn perfect_nth_root_detects_exact_rational_roots() {
         assert_eq!(
@@ -5739,6 +5745,14 @@ mod tests {
         assert_eq!(Rational::new(16).perfect_nth_root(0), None);
     }
 
+    /// Check selected rational perfect powers, including the zero/unit convention.
+    ///
+    /// Nine positive classifications include signed integer powers, 8/27 and
+    /// `101^7 / 103^7`; five negative classifications include reduced 4/8 and
+    /// `101^7 / 103^5`, whose component exponents have no common divisor above one.
+    /// The property is existence of a rational base and integer exponent greater
+    /// than one, not necessarily an integer base. No base/exponent witness is
+    /// returned, and these cases do not cover the implementation's exponent cap.
     #[test]
     fn general_perfect_power_detection_matches_integer_definition() {
         for value in [
@@ -5765,6 +5779,12 @@ mod tests {
         }
     }
 
+    /// Pin one multiplicity rejection and one exact prime-root success event.
+    ///
+    /// Inside recording, 12 must fail perfect-power recognition and
+    /// `101^7 / 103^7` must pass. The two named terminal paths must each occur
+    /// once. Candidate-root attempts, iteration counts and total cost are not
+    /// asserted, so terminal event counts are not a work bound.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn general_perfect_power_paths_are_traced() {
@@ -5796,6 +5816,11 @@ mod tests {
         );
     }
 
+    /// Check fraction-format preference for two terminating ratios and one third.
+    ///
+    /// Parsed 7.125 and 4/8 must not prefer fraction presentation; parsed 2/6
+    /// must prefer it. This exercises value-based decimal termination after
+    /// parsing, without asserting display text or permitting rounding.
     #[test]
     fn decimal() {
         let decimal: Rational = "7.125".parse().unwrap();
@@ -5806,6 +5831,11 @@ mod tests {
         assert!(third.prefer_fraction());
     }
 
+    /// Pin signed binary-scale recognition for three powers and three declines.
+    ///
+    /// Checks 8, 1/8 and reduced -4/32 against literal exponent/sign pairs;
+    /// 7/8, 5/6 and zero must return `None`. These small values do not exercise
+    /// exponent-range failure, which also uses `None`, or marked lazy storage.
     #[test]
     fn power_of_two_shift_detects_only_power_of_two_ratios() {
         assert_eq!(
@@ -5825,6 +5855,12 @@ mod tests {
         assert_eq!(Rational::zero().power_of_two_shift(), None);
     }
 
+    /// Compare unit-step helpers with generic arithmetic on seven signed values.
+    ///
+    /// Zero, both units and positive/negative 7/4 and 3/5 cover cancellation
+    /// and sign crossings. Generic addition/subtraction are shared authority
+    /// and can route to the same helpers; this agreement is not an independent
+    /// oracle or an assertion that no reduction work occurred.
     #[test]
     fn add_and_subtract_one_helpers_match_generic_arithmetic() {
         for value in [
@@ -5841,6 +5877,12 @@ mod tests {
         }
     }
 
+    /// Pin small mixed-sign sums and differences plus one wide cancellation chain.
+    ///
+    /// For -17/30 and 11/42, requires the literal results -32/105 and -29/35.
+    /// Then adds 11/42 to `2^200` and subtracts that integer to recover 11/42.
+    /// This checks small results and wide composition separately; it does not
+    /// force two implementations to evaluate the same operands or assert paths.
     #[test]
     fn word_sized_add_sub_matches_arbitrary_precision_fallback() {
         let left = Rational::fraction(-17, 30).unwrap();
@@ -5852,6 +5894,14 @@ mod tests {
         assert_eq!(&huge + &right - &huge, right);
     }
 
+    /// Check small product/quotient literals and wide reciprocal identities.
+    ///
+    /// Pins multiplication and division of -17/30 by 11/42. Ratios built from
+    /// `2^80` and its predecessor, then values based on `2^200`, exercise inverse,
+    /// unit and cancellation identities, including parsed reciprocal fractions.
+    /// All divisors are nonzero. Large operands do not force the general kernel:
+    /// unit, equal-magnitude or reciprocal shortcuts can satisfy these assertions.
+    /// No matched fallback comparison or dispatch count is asserted.
     #[test]
     fn word_sized_mul_div_matches_arbitrary_precision_fallback() {
         let left = Rational::fraction(-17, 30).unwrap();
@@ -5881,6 +5931,12 @@ mod tests {
         assert_eq!(&huge_ratio * &huge_reciprocal, Rational::one());
     }
 
+    /// Compare two already-coprime native-part constructions with reduced fractions.
+    ///
+    /// Uses adjacent magnitudes around `u64::MAX` and an odd numerator above
+    /// `2^100` over `2^99`. Each private reduced-word result must equal the
+    /// general BigInt/BigUint fraction constructor's result. This checks exact
+    /// values, not raw limb layout, cache state or validation of noncoprime inputs.
     #[test]
     fn reduced_word_construction_preserves_narrow_and_wide_parts() {
         for (magnitude, denominator) in [
@@ -5902,6 +5958,12 @@ mod tests {
         }
     }
 
+    /// Require one trace label for each of seven odd-denominator classes.
+    ///
+    /// Constructs `1/d` for 25, 27, 49, 75, 11, 65537 and `2^65 + 1`, then
+    /// requires one event per named power, smoothness or width class. Results
+    /// are discarded and numerator one needs no cancellation; the test checks
+    /// classification events, not quotient values or seven distinct algorithms.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn word_reduction_trace_classifies_odd_denominator_shapes() {
@@ -5937,6 +5999,11 @@ mod tests {
         }
     }
 
+    /// Pin the inclusive absolute-magnitude comparison against eight.
+    ///
+    /// Requires false for 7, 15/2 and zero, and true for 8, -9 and reduced 16/2.
+    /// The negative case checks magnitude rather than signed ordering. Only
+    /// exponent three is tested; no general exponent or allocation bound follows.
     #[test]
     fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
         assert!(
@@ -5967,6 +6034,12 @@ mod tests {
         assert!(!Rational::zero().magnitude_at_least_power_of_two(3));
     }
 
+    /// Compare exact binary magnitude with a floating reference on a small grid.
+    ///
+    /// For all 16384 positive ratios with numerator and denominator in 1..=128,
+    /// compares with binary64 division followed by log2 and floor. This reference
+    /// is approximate and platform-dependent, not an independent exact oracle
+    /// for arbitrary boundary inputs. Zero, signs and exponent-range failure are absent.
     #[test]
     fn exact_msd_matches_f64_floor_for_small_rationals() {
         for numerator in 1..=128 {
@@ -5980,6 +6053,12 @@ mod tests {
         }
     }
 
+    /// Pin exact binades at a binary power, its predecessor and its reciprocal.
+    ///
+    /// Requires 4096 for `2^4096`, 4095 for `2^4096 - 1`, and -4096 for
+    /// `1 / 2^4096`. Integer-constructed inputs and literal exponents avoid a
+    /// floating reference here; the fixture does not cover every boundary or
+    /// instrument allocation and internal dispatch.
     #[test]
     fn exact_msd_handles_large_shift_boundaries_without_rounding() {
         let power = BigUint::one() << 4096usize;
@@ -5992,6 +6071,13 @@ mod tests {
         assert_eq!(reciprocal.msd_exact(), Some(-4096));
     }
 
+    /// Check learned exponent encoding and the encoder's upper boundary.
+    ///
+    /// A raw reduced `3 / 2^300` starts with an empty exponent field. Querying
+    /// must return 300, store 301 in the field and return 300 again. The largest
+    /// encodable exponent maps to the full mask; the next maps to zero. These
+    /// last assertions test encoding alone, without allocating those denominators
+    /// or treating an unencodable exponent as non-dyadic.
     #[test]
     fn dyadic_denominator_shift_is_retained() {
         let value =
@@ -6024,6 +6110,15 @@ mod tests {
         );
     }
 
+    /// Check conversion and dyadic evidence for four selected representation states.
+    ///
+    /// For `3 / 2^300`, pins the float value, known/dyadic bits and exponent-plus-one
+    /// encoding, then requires the complete fact word to remain stable on reuse.
+    /// For 2/3, pins the rounded quotient and known-nondyadic fields. Marked 6/8
+    /// must convert to 0.75 and expose exponent encoding three on its canonical
+    /// owner; a fresh raw zero must convert to zero without learning any facts.
+    /// The broad name does not cover every encoding, sign or representation, and
+    /// lossy success alone is not a retained proof of exact float representability.
     #[test]
     fn lossy_view_preserves_every_retained_dyadic_fact_path() {
         let dyadic =
@@ -6085,6 +6180,14 @@ mod tests {
         );
     }
 
+    /// Distinguish a reduced dyadic exponent from a declined lazy-state probe.
+    ///
+    /// Repeated queries of raw reduced `3 / 2^300` return 300; 2/3 returns `None`.
+    /// Marked 6/8 also returns `None` from the reduced-only probe, although the
+    /// canonicalizing query then returns two. Finally, multiplying marked
+    /// `6 / 2^200` by reduced `5 / 2^200` must equal `15 / 2^399`.
+    /// This checks selected representation paths and subsequent exact consumption,
+    /// not every raw state or absence of allocation during the declined probe.
     #[test]
     fn reduced_dyadic_shift_probe_preserves_every_representation_path() {
         let dyadic =
@@ -6133,6 +6236,11 @@ mod tests {
         assert_eq!(wide_unreduced * wide_dyadic, expected);
     }
 
+    /// Pin four dyadic addition/subtraction values, including exact cancellation.
+    ///
+    /// For 3/8 and 5/16, requires sum 11/16, directed differences 1/16 and -1/16,
+    /// and zero from self-subtraction. Rational equality checks these exact values;
+    /// it does not directly inspect raw stored coprimality or prove shift-only reduction.
     #[test]
     fn dyadic_add_sub_stay_reduced() {
         let three_eighths = Rational::fraction(3, 8).unwrap();
