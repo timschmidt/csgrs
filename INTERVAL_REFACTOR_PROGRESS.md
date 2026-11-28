@@ -16723,3 +16723,48 @@ bound when that already decides the sign.
 
 **Checks.** Hypersdf tests pass under default and all features, as do Clippy
 for both, `-D warnings` docs, and the root crate's `sdf` tests in release.
+
+## 2026-11-27: CAPD comparison on current main, and the long-tier cost
+
+The validated-dynamics comparison was rerun on main 8b9b84334: 20 iterations
+and 3 samples per case, and all 40 outcomes validated. CAPD 6.1.0 at
+`37057e58` was built without its Boost-dependent upstream tests (Boost is not
+installed on this host). These are reuse medians:
+
+| Case | Hyperdynamics | CAPD | Ratio |
+| --- | --- | --- | --- |
+| oscillator, point | 691 µs | 56 µs | 12.3× (21× on 15 November) |
+| constant, point | 298 µs | 36 µs | 8.2× |
+| riccati, point | 638 µs | 157 µs | 4.1× |
+| two_rate, point | 3.09 ms | 231 µs | 13.4× |
+| riccati_long, point | 16.4 ms | 352 µs | 47× |
+| oscillator_long, point | 701 ms | 912 µs | 769× |
+
+**Long-tier profile.** Temporary timers, since reverted, were placed in the
+affine-noise evolution and in `taylor_model`. One `oscillator_long`
+integration took about 660 ms:
+
+| Part | Share |
+| --- | --- |
+| order-1 `taylor_model` of the composed noise program (128 calls, about 4.5 ms each) | 89% |
+| `verify` | 1.3% (9 ms) |
+| native Picard search | 0.5% (3 ms) |
+| endpoint polynomial and composition | 0.2% |
+
+Inside `taylor_model`:
+- about 60% is the interval recurrence bounds, which reach order 2 for the
+  remainder over every noise column;
+- about 25% is `jacobian(..).enclose_regular`, the regularity evidence;
+- about 8% is the exact center recurrence.
+
+**Next target.** The composed noise program is a polynomial: the endpoint
+polynomial applied to affine inputs. So the regularity check proves no domain
+condition for it, and its second-order remainder is the largest cost. Two
+candidates:
+- derive the regularity evidence from the recurrence's first-order bounds;
+- use a cheaper remainder for polynomial programs, such as exact higher-order
+  coefficients and bounds on their monomials.
+
+Both change what each model records as evidence, so either needs an evidence
+review and width comparisons before adoption. Nothing is changed by this
+profile.
