@@ -1,5 +1,22 @@
 # Migrations
 
+## Hyperdynamics affine-noise endpoint remainders (2026-11-27)
+
+`FlowNoiseEvolutionOptions` and `FlowNoiseRequest` have a new `remainder`
+field.
+- **Default.** `FlowNoiseEvolutionOptions::default()` now uses
+  `TaylorRemainder::Adaptive`:
+  - The cheap mean-value form is kept where, for every output, it is at most
+    1/16 of the polynomial's range.
+  - Otherwise it is intersected with the order-two (Lagrange) bound.
+  - Results are still certified. They are never wider than `Lagrange` where
+    the fallback runs, and up to about 1.4% wider where the mean-value form
+    is kept. Long horizons are 2–3.5× faster.
+- **Reproducing earlier outputs.** Set `remainder: TaylorRemainder::Lagrange`.
+- **Struct literals.** Literals of either type must name the field.
+  `Default::default()` gives `Lagrange` for the field itself. Serialized
+  values without the field also get `Lagrange`.
+
 ## Hyperdynamics trajectory Taylor and QR defaults (2026-11-26)
 
 Two Hyperdynamics defaults changed. Both alternatives remain available, and

@@ -113,3 +113,66 @@ fn mean_value_remainder_is_refused_outside_order_one() {
         ));
     }
 }
+
+fn model(
+    request: TaylorRequest,
+    form: TaylorRemainder,
+) -> hypersolve::expression_program::TaylorModel {
+    source()
+        .taylor_model_with(request, form, &mut graph(), &mut scalar())
+        .unwrap()
+}
+
+#[test]
+fn adaptive_keeps_the_mean_value_form_on_narrow_domains() {
+    // x in 1/4 +- 2^-12, y in 1/2 +- 2^-12: the remainder is second order in
+    // the width, far below the first-order polynomial range.
+    let narrow = TaylorRequest {
+        center: vec![d(1, 1, -2), d(1, 1, -1)],
+        domain: vec![d(1023, 1025, -12), d(2047, 2049, -12)],
+        order: 1,
+        precision: -64,
+    };
+    let adaptive = model(narrow.clone(), TaylorRemainder::Adaptive);
+    assert!(!adaptive.remainder_terms().is_empty());
+    assert!(
+        adaptive
+            .remainder_terms()
+            .iter()
+            .all(|term| term.kind() == TaylorRemainder::MeanValue)
+    );
+    let mean = model(narrow, TaylorRemainder::MeanValue);
+    assert_eq!(adaptive.remainder(), mean.remainder());
+}
+
+#[test]
+fn adaptive_intersects_both_forms_on_wide_domains_and_is_never_wider_than_lagrange() {
+    let adaptive = model(request(1), TaylorRemainder::Adaptive);
+    let lagrange = model(request(1), TaylorRemainder::Lagrange);
+    let kinds = |m: &hypersolve::expression_program::TaylorModel, k| {
+        m.remainder_terms().iter().filter(|t| t.kind() == k).count()
+    };
+    assert!(kinds(&adaptive, TaylorRemainder::MeanValue) > 0);
+    assert_eq!(
+        kinds(&adaptive, TaylorRemainder::Lagrange),
+        lagrange.remainder_terms().len()
+    );
+    assert!(
+        lagrange
+            .remainder_terms()
+            .iter()
+            .all(|term| term.kind() == TaylorRemainder::Lagrange)
+    );
+    for (a, l) in adaptive.remainder().iter().zip(lagrange.remainder()) {
+        assert!(
+            a.subset_of(l, &mut scalar()).unwrap(),
+            "{a:?} not within {l:?}"
+        );
+    }
+    // Order two has no mean-value form, so adaptive is exactly Lagrange.
+    let second = model(request(2), TaylorRemainder::Adaptive);
+    assert_eq!(
+        second.remainder(),
+        model(request(2), TaylorRemainder::Lagrange).remainder()
+    );
+}

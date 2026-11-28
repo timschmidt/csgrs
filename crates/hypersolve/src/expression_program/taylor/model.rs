@@ -33,6 +33,12 @@ pub enum TaylorRemainder {
     /// bounded. It is also of second order in the domain width, usually with
     /// a larger constant.
     MeanValue,
+    /// Mean-value form when, for every output, its width is at most 1/16 of
+    /// the polynomial's range over the domain. Otherwise the order n+1 terms
+    /// are also bounded and the remainder is the intersection of both forms,
+    /// so it is never wider than `Lagrange`. Models of order other than one
+    /// use `Lagrange`.
+    Adaptive,
 }
 /// One exact coefficient of the centered polynomial.
 #[derive(Clone, Debug)]
@@ -54,11 +60,19 @@ impl TaylorTerm {
 #[derive(Clone, Debug)]
 pub struct TaylorRemainderTerm {
     request: usize,
+    kind: TaylorRemainder,
     bound: DyadicInterval,
     monomial: Option<DyadicInterval>,
     contribution: DyadicInterval,
 }
 impl TaylorRemainderTerm {
+    /// Which remainder form this term belongs to: `Lagrange` (an omitted
+    /// order n+1 coefficient) or `MeanValue` (a first-order Jacobian entry's
+    /// deviation). An adaptive model may hold both; its remainder is then the
+    /// intersection of the two sums.
+    pub fn kind(&self) -> TaylorRemainder {
+        self.kind
+    }
     /// Index in the model's coefficient-program requests.
     pub fn request_index(&self) -> usize {
         self.request
@@ -428,26 +442,11 @@ impl ExpressionProgram {
         // Interval Taylor-mode recurrences avoid the expression swell of
         // repeatedly differentiated partial formulas. Natural evaluation of
         // those formulas remains the bound when a recurrence is unavailable.
-        let partials = if mean_value {
-            None
-        } else {
-            Some(
-                match recurrence::bounds(self, &variables, &request, last, graph, arithmetic)? {
-                    Some(recurrence) => Partials::Recurrence(recurrence),
-                    None => Partials::Natural(
-                        formulas_for(&mut program, self, &requests, graph)?
-                            .program()
-                            .eval_dyadic(&request.domain, request.precision, graph, arithmetic)?,
-                    ),
-                },
-            )
-        };
         let shifts = shifts(&request.domain, &request.center, graph, arithmetic)?;
         graph.check_entries(&[requests.len(), powers, outputs])?;
         graph.charge(outputs)?;
-        let mut remainder = vec![zero()?; outputs];
         let mut terms = Vec::new();
-        let mut remainder_terms = Vec::new();
+        let mut omitted = Vec::new();
         for (index, degree) in degrees.into_iter().enumerate() {
             graph.charge(1)?;
             let formula = formulas.next();
@@ -460,31 +459,16 @@ impl ExpressionProgram {
                     request: index,
                     coefficient,
                 });
-            } else if let Some(partials) = &partials {
-                let spec = &requests[index];
-                let bound = match partials {
-                    Partials::Recurrence(recurrence) => recurrence.coefficient(spec).clone(),
-                    Partials::Natural(bounds) => bounds[outputs + index].clone(),
-                };
-                let (monomial, contribution) = contribution(
-                    spec,
-                    &bound,
-                    &shifts,
-                    source,
-                    request.precision,
-                    graph,
-                    arithmetic,
-                )?;
-                remainder[spec.output] = remainder[spec.output].add(&contribution, arithmetic)?;
-                remainder_terms.push(TaylorRemainderTerm {
-                    request: index,
-                    bound,
-                    monomial,
-                    contribution,
-                });
+            } else {
+                omitted.push(index);
             }
         }
-        if mean_value {
+        let mut remainder_terms = Vec::new();
+        let mut remainder = vec![zero()?; outputs];
+        let first_order = request.order == 1 && !variables.is_empty();
+        let mut lagrange = remainder_form == TaylorRemainder::Lagrange
+            || (remainder_form == TaylorRemainder::Adaptive && !first_order);
+        if !lagrange {
             // f(x) - f(c) - J(c)(x - c) = (J(xi) - J(c))(x - c) for some xi
             // on the segment, and J(xi) lies in the regular Jacobian enclosure.
             for term in &terms {
@@ -516,6 +500,7 @@ impl ExpressionProgram {
                 remainder[spec.output] = remainder[spec.output].add(&contribution, arithmetic)?;
                 remainder_terms.push(TaylorRemainderTerm {
                     request: term.request,
+                    kind: TaylorRemainder::MeanValue,
                     bound,
                     monomial,
                     contribution,
@@ -534,8 +519,99 @@ impl ExpressionProgram {
             image: Vec::new(),
             empty: false,
         };
-        (model.polynomial_image, model.image) =
-            model.evaluate_on(&model.request.domain, graph, arithmetic)?;
+        if !lagrange {
+            (model.polynomial_image, model.image) =
+                model.evaluate_on(&model.request.domain, graph, arithmetic)?;
+            if remainder_form == TaylorRemainder::Adaptive {
+                // Keep the mean-value form only where it is negligible next to
+                // the polynomial's own range; otherwise also bound the omitted
+                // terms and keep the intersection of both valid remainders.
+                for (rest, range) in model.remainder.iter().zip(&model.polynomial_image) {
+                    graph.charge(1)?;
+                    let sixteen = DyadicInterval::point(16.into(), 0)?;
+                    let scaled = rest.width(arithmetic)?.mul(&sixteen, arithmetic)?;
+                    let allowed = zero()?.hull(&range.width(arithmetic)?, arithmetic)?;
+                    if !scaled.subset_of(&allowed, arithmetic)? {
+                        lagrange = true;
+                    }
+                }
+            }
+        }
+        if lagrange {
+            // Interval Taylor-mode recurrences avoid the expression swell of
+            // repeatedly differentiated partial formulas. Natural evaluation of
+            // those formulas remains the bound when a recurrence is unavailable.
+            let partials = match recurrence::bounds(
+                self,
+                &variables,
+                &model.request,
+                last,
+                graph,
+                arithmetic,
+            )? {
+                Some(recurrence) => Partials::Recurrence(recurrence),
+                None => Partials::Natural(
+                    formulas_for(&mut program, self, &model.requests, graph)?
+                        .program()
+                        .eval_dyadic(
+                            &model.request.domain,
+                            model.request.precision,
+                            graph,
+                            arithmetic,
+                        )?,
+                ),
+            };
+            let mut lagrange_remainder = vec![zero()?; outputs];
+            for &index in &omitted {
+                graph.charge(1)?;
+                let spec = &model.requests[index];
+                let bound = match &partials {
+                    Partials::Recurrence(recurrence) => recurrence.coefficient(spec).clone(),
+                    Partials::Natural(bounds) => bounds[outputs + index].clone(),
+                };
+                let (monomial, contribution) = contribution(
+                    spec,
+                    &bound,
+                    &shifts,
+                    source,
+                    model.request.precision,
+                    graph,
+                    arithmetic,
+                )?;
+                lagrange_remainder[spec.output] =
+                    lagrange_remainder[spec.output].add(&contribution, arithmetic)?;
+                model.remainder_terms.push(TaylorRemainderTerm {
+                    request: index,
+                    kind: TaylorRemainder::Lagrange,
+                    bound,
+                    monomial,
+                    contribution,
+                });
+            }
+            model.remainder = if model
+                .remainder_terms
+                .iter()
+                .any(|t| t.kind == TaylorRemainder::MeanValue)
+            {
+                // Both forms enclose the same remainder over the whole domain.
+                let mut both = Vec::new();
+                for (output, (mean, integral)) in
+                    model.remainder.iter().zip(&lagrange_remainder).enumerate()
+                {
+                    graph.charge(1)?;
+                    let meet = mean.intersection(integral, arithmetic)?;
+                    if meet.is_empty() {
+                        return Err(TaylorError::InconsistentEnclosure { output });
+                    }
+                    both.push(meet);
+                }
+                both
+            } else {
+                lagrange_remainder
+            };
+            (model.polynomial_image, model.image) =
+                model.evaluate_on(&model.request.domain, graph, arithmetic)?;
+        }
         graph.charge(0)?;
         Ok(model)
     }

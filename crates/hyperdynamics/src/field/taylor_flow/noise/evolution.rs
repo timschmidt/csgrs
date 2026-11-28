@@ -12,7 +12,9 @@ use core::cmp::Ordering;
 pub struct FlowNoiseEvolutionOptions {
     /// Maximum retained columns per endpoint; all omitted terms remain in residuals.
     pub maximum_noise: usize,
-    /// Endpoint model remainder form; see [`FlowNoiseRequest`].
+    /// Endpoint model remainder form; see [`FlowNoiseRequest`]. The default,
+    /// `Adaptive`, keeps the cheap mean-value form where it is negligible and
+    /// otherwise intersects it with the order-two bound.
     #[cfg_attr(feature = "serde", serde(default))]
     pub remainder: TaylorRemainder,
     /// Round each endpoint onto the policy grid; see [`FlowNoiseRequest`].
@@ -28,7 +30,7 @@ impl Default for FlowNoiseEvolutionOptions {
     fn default() -> Self {
         Self {
             maximum_noise: 16,
-            remainder: TaylorRemainder::Lagrange,
+            remainder: TaylorRemainder::Adaptive,
             round_coefficients: true,
             column_cutoff_bits: Some(16),
             native: EvolutionOptions::default(),

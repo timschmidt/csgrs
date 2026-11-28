@@ -5,7 +5,11 @@
 - `FlowNoiseRequest` and `FlowNoiseEvolutionOptions` have a `remainder` field
   (`hypersolve::expression_program::TaylorRemainder`). It chooses the remainder
   form of the order-one endpoint model built over the noise columns.
-  - The default, `Lagrange`, keeps the current results.
+  - `FlowNoiseEvolutionOptions::default()` uses `Adaptive` (see
+    `docs/MIGRATIONS.md`). Across five nonlinear fields it was 2.5–3.5×
+    faster from narrow boxes, with widths +0.1–1.4%, and identical to
+    `Lagrange` from a wide box, at about 4% extra cost.
+  - Set `Lagrange` to reproduce earlier results.
   - `MeanValue` reuses the regularity Jacobian instead of bounding
     second-order coefficients over every column.
   - On the validated-dynamics comparison, `oscillator_long` takes 328 ms

@@ -16841,3 +16841,28 @@ A docs.rs-equivalent build of every published crate passes with
 
 These need the owner: the coordinated release itself, version and publishing
 decisions, and the hardware-in-the-loop and representative application runs.
+
+## 2026-11-27: adaptive endpoint remainders become the noise default
+
+The owner chose automatic remainder selection. `TaylorRemainder::Adaptive`
+builds the mean-value remainder first. It keeps that remainder when, for every
+output, its width is at most 1/16 of the polynomial's own range. Otherwise it
+also bounds the omitted order-two terms and keeps the intersection. Both are
+valid enclosures of the same remainder over the whole domain, so the result is
+never wider than `Lagrange`. `TaylorRemainderTerm::kind` records each term's
+form.
+
+**Survey.** The same five fields to t = 2, release build:
+
+| Field | Lagrange | MeanValue | Adaptive | Adaptive width |
+| --- | --- | --- | --- | --- |
+| Van der Pol | 2,458 ms | 704 ms | 805 ms | +1.0–1.2% |
+| cubic pendulum | 1,134 ms | 359 ms | 409 ms | +0.1–0.2% |
+| Lotka-Volterra | 1,629 ms | 470 ms | 472 ms | +1.4% |
+| quadratic shear | 748 ms | 262 ms | 302 ms | +0.2–0.5% |
+| Van der Pol, 16x wider box | 1,942 ms | 567 ms | 2,022 ms | identical |
+
+`FlowNoiseEvolutionOptions::default()` now uses `Adaptive`. The
+validated-dynamics preflight takes 15.0 s instead of 29.1 s, and all 20
+records validate. The long-tier endpoints are unchanged except the
+`riccati_long` box (+0.14%). The migration is recorded in `docs/MIGRATIONS.md`.

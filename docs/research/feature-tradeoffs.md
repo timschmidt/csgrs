@@ -152,7 +152,17 @@ retention. "Shipped" sizes are linked release or deployed images.
   | quadratic shear | 2.9× | +0.3–0.5% |
   | Van der Pol, 16x wider box | 3.4× | +20–25% |
 
-- **Decision:** opt-in, with `Lagrange` as the default. The cost of
+- **Adaptive form (27 November):** this was the owner's choice. It keeps
+  the mean-value form when its width is at most 1/16 of the polynomial range,
+  and otherwise intersects it with the Lagrange bound. On the same survey:
+  - Van der Pol 3.1×, pendulum 2.8×, Lotka-Volterra 3.5× and shear 2.5×
+    faster, with widths +0.1–1.4%;
+  - the wide Van der Pol box gives identical widths at 1.04× cost.
+
+  The validated-dynamics long tier matches the mean-value timings, and all
+  20 records validate. `Adaptive` is the noise-evolution default since 27
+  November.
+- **Earlier decision (superseded):** opt-in, with `Lagrange` as the default. The cost of
   `MeanValue` grows with box width: it is negligible for narrow, point-like
   states and about 20% for wide boxes. Pinned noise traces and fixtures are
   unchanged.

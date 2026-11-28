@@ -12,6 +12,11 @@
   - It is also of second order in the domain width, usually with a larger
     constant.
   - Other orders return the new `TaylorError::RemainderOrder`.
+  - `Adaptive` keeps the mean-value form when, for every output, its width is
+    at most 1/16 of the polynomial's range. Otherwise it also bounds the
+    omitted terms and intersects the two, so it is never wider than
+    `Lagrange`. Other orders use `Lagrange`.
+  - `TaylorRemainderTerm::kind` reports which form each term belongs to.
   - In each `TaylorRemainderTerm`, `request_index` names the first-order
     coefficient and `coefficient_bound` is that deviation.
 

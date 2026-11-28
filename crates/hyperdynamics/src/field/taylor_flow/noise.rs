@@ -208,7 +208,9 @@ pub struct FlowNoiseRequest<const N: usize> {
     pub maximum_noise: usize,
     /// Remainder form of the order-one endpoint model. `MeanValue` reuses the
     /// regularity proof's Jacobian instead of bounding second-order terms:
-    /// much cheaper with many columns, and usually wider.
+    /// much cheaper with many columns, and usually wider. `Adaptive` keeps it
+    /// only where it is negligible and is never wider than `Lagrange`, which
+    /// is this field's `Default`.
     #[cfg_attr(feature = "serde", serde(default))]
     pub remainder: TaylorRemainder,
     /// Round the endpoint center and columns down onto the policy grid.

@@ -40,7 +40,8 @@ Hyperdynamics uses prepared order 3 with the existing default enclosure policy
 and the default Taylor-mode recurrence step coefficients (since 26 November;
 the 15 November record used the stage formulas).
 The original sixteen cases use Cartesian whole-horizon evolution. The long tier
-uses correlated affine-noise evolution with `FlowNoiseEvolutionOptions::default()`:
+uses correlated affine-noise evolution with `FlowNoiseEvolutionOptions::default()`
+(since 27 November, `Adaptive` endpoint remainders):
 up to 16 noise columns, policy-grid rounding and a 16-bit relative column cutoff.
 Each record states its `method`.
 CAPD uses order 12, `IOdeSolver`, `C0Rect2Set`, and an interval `SolutionCurve`.
