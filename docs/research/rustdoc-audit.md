@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/trace.rs` | Entire authored feature-selected macro and crate-local alias reviewed; four descriptions cover eager enabled arguments, disabled erasure, scope delegation and visibility. | Both-mode private docs, actual-collector source-copy probes and three all-feature scope/trace tests pass; expanded tokens match in both modes. Alias details also render on the module page because Rustdoc omits a separate re-export description. See Hyperreal trace macro audit. |
 | `crates/hyperreal/src/verified/mod.rs` | Entire authored module boundary and both private proof-erasure macros reviewed; three descriptions explain shared bodies, lexical scope and normal/ghost differences. | Both-mode private docs render the three descriptions and twelve inherited child-module descriptions; baseline/final erasure probes and expanded tokens agree. Verus configuration validation and previously recorded generated-item gaps remain open. See verified module audit. |
 | `crates/hyperreal/src/verified/lehmer.rs` | Entire authored matrix selector, coefficient gates and proofs reviewed; twenty descriptions distinguish width, unimodularity, leading progress and full-magnitude application. | Both-mode private docs and four consumer tests plus the all-feature trace fixture pass; 34,008 leading pairs and coefficient/reuse probes are unchanged, as are expanded tokens. Five normal descriptions per mode render; Verus configuration/expansion validation remains open. See Lehmer batch audit. |
 | `crates/hyperreal/src/verified/fraction.rs` | Entire authored native reduction, cross-cancellation and supporting proofs reviewed; twenty-two descriptions cover prefix admission, unchecked domains and eighteen ghost declarations. | Both-mode private docs and four consumer tests pass; independent reduction/product/reuse probes and expanded tokens are unchanged. Four normal descriptions per mode render; Verus configuration/expansion validation remains open. See native fraction and cross-cancellation audit. |
@@ -28368,6 +28369,64 @@ prefix probe, scripts/logs, expansions, inventories and compressed selected HTML
 Owned binaries and duplicate HTML trees are removed; shared Cargo artifacts are
 reused without incremental compilation. Continue with remaining Hyperreal root
 modules, beginning with trace.rs and its enabled/disabled argument evaluation.
+
+## Hyperreal trace macro audit (28 November 2026)
+
+Owning layer: scalar dispatch instrumentation and its feature-selected call shim.
+P4/P5/P37 require unchanged evaluation/dispatch order, honest resource scope and
+precise reporting claims. At eadde5992, read all thirteen lines of trace.rs.
+The module, both private macro definitions and the crate-local alias lacked
+Rustdoc. Read the crate-root alias, feature declaration, recorder, recording
+scope and relevant fixtures as consumer context. Complete authored descriptions
+and an argument-evaluation witness were missing; no implementation or test
+change was needed.
+
+Before editing, a source-copy probe with the real dispatch collector reproduced
+the feature split: disabled invocations erase argument expressions, including
+unresolved names and otherwise incompatible types. Enabled invocations evaluate
+all three expressions once, left to right, before the recorder checks its scope.
+Two invocations produce six evaluations; the inactive one records no event and
+the active one records exactly one. Labels are static strings. These outcomes
+are separate from which arithmetic path a caller chose.
+
+The file now has 60 lines and four descriptions: module, enabled/disabled macro
+variants and alias. The enabled expansion is a semicolon-terminated call; the
+disabled expansion emits no tokens, not a unit expression. Neither starts or
+clears a recording scope, validates geometry or returns a certainty receipt.
+The collector owns storage and ordinary counter/borrow behavior, without a new
+resource contract in this shim. The macro syntax requires exactly three
+expressions and no trailing comma. $crate resolves the collector independently
+of the invoking module; the aliases remain crate-local.
+
+Executed after the final edit:
+
+- Both locked/offline private cargo doc builds pass with warnings and broken/
+  private links denied. The module and active macro variant render in each mode.
+  Rustdoc does not show the local use item's separate description, even in an
+  isolated doc(inline) experiment. Its complete visibility/forwarding prose is
+  therefore also included on the module page. The repository's attributes remain
+  unchanged; native omission is recorded rather than credited as a separate page.
+- Baseline/final warnings-denied probes with the actual collector agree in both
+  configurations. Executable and compiler-expanded tokens are unchanged after
+  comments are excluded. The initial isolated enabled probe exposed an unused
+  crate-visible precision helper; invoking it outside recording, with no retained
+  event, resolved that probe-only warning without a lint allowance or code edit.
+- Three exact-name all-feature tests pass unchanged: recording only inside scope,
+  eight concurrent independent thread snapshots and the Lehmer dispatch-count
+  fixture. git diff --check and source/render inventories pass. Runtime tests of
+  a disabled collector are inapplicable; its macro erasure is exercised directly.
+- Full workflow, benchmark and cross-target checks remain owner-waived. No
+  numerical output, policy, assertion, fixture, executable macro or alias changed.
+
+Evidence remains under /tmp/csgrs-hyperreal-trace-audit/: baseline, probe/scripts,
+logs, both-mode expansions, inventories and compressed module/macro pages. Owned
+executables, source copy and duplicate HTML trees are removed after checking.
+The shared Cargo target remains in use without incremental compilation.
+AGENTS.md already mandates full public/private/generated Rustdoc. This authored
+file review is complete; repository-wide coverage remains open. Continue with
+src/dispatch_trace.rs: its 1,078 lines have been read in contiguous ranges as
+context, but item/consumer audit, missing-doc remediation and whole-file review
+credit are still pending.
 
 ## Next work
 
