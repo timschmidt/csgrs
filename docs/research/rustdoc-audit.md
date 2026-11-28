@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/dyadic.rs` | Entire authored carrier, difference and reduction implementation reviewed; twenty-one descriptions distinguish raw fields, exact-zero sentinels, native declines and ten ghost declarations. | Both-mode private docs and five consumer tests pass; independent reduction/reuse probes and expanded tokens are unchanged. Eleven normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See dyadic difference and reduction audit. |
 | `crates/hyperreal/src/verified/aggregate.rs` | Entire authored descriptor, planning and signed-aggregate implementation reviewed; thirty descriptions include fields/payloads, private dispatch and twelve ghost declarations. | Both-mode private docs and four consumer tests pass; private helper probes and expanded executable tokens are unchanged. Eighteen normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See signed dyadic aggregate audit. |
 | `crates/hyperreal/src/verified/accumulate.rs` | Entire authored shifted-accumulation implementation and six ghost declarations reviewed; thirteen descriptions cover domains, extent, exact carries and early/late failure state. | Both-mode private docs and four consumer tests pass; independent helper/wrapper probes are unchanged. Seven normal descriptions and six separate ghost pages render; Verus configuration/expansion validation remains open. See shifted accumulation audit. |
 | `crates/hyperreal/src/verified/product.rs` | Entire authored product/carry implementation and prefix lemma reviewed; six descriptions cover limb order, complete carries, capacity, empty inputs and failure behavior. | Both-mode private docs and four selected consumers pass; independent source-copy products/carry probes are unchanged. Five runtime descriptions and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-width product audit. |
@@ -27669,6 +27670,115 @@ already mandates full public/private/generated Rustdoc. This completes authored
 review of the file; generated and ghost/configuration validation remain open.
 Repository-wide coverage remains incomplete. Continue with verified/dyadic.rs,
 its canonical carrier, difference and denominator-reduction contracts.
+
+## Dyadic difference and reduction audit (28 November 2026)
+
+Owning layer: Hyperreal's signed dyadic carrier, unsigned-subtotal difference and
+power-of-two denominator reduction. P1/P5/P6/P37 require exact values, preserved
+representation meaning, explicit outcome semantics and bounded evidence claims.
+At aee1a8893, read all 309 lines of verified/dyadic.rs, including every ghost body.
+The four Word fields and most mathematical relations lacked Rustdoc; the module
+and runtime summaries needed domains, raw-field behavior, zero conventions and
+resource limitations. Complete authored documentation was the missing acceptance
+witness; existing arithmetic tests already covered the main contracts and were
+not changed.
+
+Read rational sign adapters, the stack-finishing consumer, limb comparison,
+subtraction, trailing-zero and shift bodies, native word gates, and affected
+consumer fixtures as context. These reads do not grant new whole-file credit to
+surrounding files. A source-copy probe reproduced the runtime contracts before
+editing, using independent integer reconstruction and repeated division by two.
+Its initial warnings-denied build caught an unused import in the temporary probe;
+that import was removed before the baseline run. Production code was unchanged.
+
+The file now has 455 lines and twenty-one descriptions: module, Word, four
+fields, five runtime functions and ten ghost relations/lemmas. All executable,
+proof and specification tokens, attributes and call order are unchanged. Ordinary
+compiler-expanded tokens also match after comments are removed. The review
+establishes these documentation distinctions:
+
+- Raw Word fields need not be canonical. Inactive denotes zero independently of
+  the sign and magnitude, while the exponent remains denominator metadata.
+  Clone/Copy preserve those raw fields. word_value denotes only the signed
+  numerator; dividing it by 2^shift supplies the represented rational.
+- canonical_word specifies activity/nonzero agreement, cleared zero sign and
+  exponent, and a reduced binary denominator. word_scale includes inactive
+  exponents. aligned_word needs a sufficiently large scale for fraction meaning;
+  word_difference is an unreduced numerator at that scale, without native gates.
+- difference compares unsigned same-width arrays and subtracts smaller from
+  larger, so the absolute result fits the same N limbs. None is exact equality,
+  including empty arrays; Some is always nonzero. It performs no denominator
+  reduction and has no capacity-failure sentinel.
+- normalize requires a positive magnitude and N<=u32::MAX/64. It removes only
+  the lesser of trailing binary zeros and denominator exponent, returning the
+  reduced exponent and mutating the magnitude exactly. Zero/empty input is
+  outside its declared domain and is not validated or canonicalized. finish
+  checks equality first, so its call satisfies the positive-magnitude condition.
+- finish returns a reduced nonzero sign/magnitude/exponent tuple, or None for
+  equal subtotals. Rational and aggregate adapters map that equality sentinel
+  to their canonical zero. This is distinct from difference_word's None.
+- normalize_word accepts every Boolean/u128/u64 input, canonicalizes zero and
+  removes at most 127 common factors for nonzero magnitude. Exponents such as
+  u64::MAX remain metadata; neither reducer constructs a huge denominator.
+  Idempotence follows the resulting integer-or-odd-numerator condition.
+- difference_word checks left raw alignment, then right raw alignment, before
+  applying activity and subtracting. Displacement at least 128 or an overwide
+  shifted magnitude declines even for inactive payloads. Later cancellation
+  cannot rescue those gates. Its symmetric signed magnitude range is ±u128::MAX,
+  not i128. Successful zero is Some canonical Word; None means this native
+  schedule declined, not equality, exhaustion or an arbitrary-width impossibility.
+- The ghost lemmas separately establish alignment by cross multiplication,
+  cancellation from a known positive odd factorization, reduction-preserving
+  fraction identity (including zero), and coprimality from oddness or denominator
+  one. They do not establish runtime eligibility, canonical sign/activity or
+  resource limits beyond their stated hypotheses. Fixed-array runtime work
+  uses no heap and has no local total-work/stack/cancellation cap.
+
+Executed after the final source edit:
+
+- Five exact-name tests pass under both no-default-features and all-features:
+  native dyadic normalization, native difference, finished limb differences,
+  native product sums and fixed-buffer subtotal limits. Existing independent
+  BigRational/BigUint expectations and exact field/decline assertions are retained.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All eleven normal descriptions render in each mode. Ten ghost
+  descriptions and unchanged full declaration bodies render separately as
+  Markdown; that does not compile the ghost configuration or validate Verus
+  macro expansion.
+- The warnings-denied source-copy probe gives identical baseline/final output:
+  23,040 nonzero reductions with idempotent reuse across one, two, six and nine
+  limbs; 69,120 associated signed difference/finish checks; two empty controls;
+  98 native normalization-and-reuse cases; and 180 native differences, including
+  101 declines. References use independent integer reconstruction, repeated
+  division and raw alignment limits. Huge metadata is never materialized as a
+  huge denominator. Existing tests supply mixed-subtotal/borrow cases beyond
+  the probe's zero-subtotal and equality shapes.
+- Two out-of-domain controls retain zero through normalize([0],65) with returned
+  exponent 1 and normalize([],9) with returned exponent 9. These are observations
+  explaining absent validation, not newly supported canonical-zero behavior.
+  Two Clone/Copy controls preserve inactive negative nonzero raw payloads.
+  Scoped dead_code expectations exist only for unused dependency items in the
+  isolated probe; repository documentation and lints were not suppressed.
+- Ordinary compiler expansion exposes three derived implementations (TrivialClone,
+  Clone and Copy) and one clone method without custom attached docs. Rustdoc
+  inherits standard Clone text. The compiler hides TrivialClone; no authored
+  hiding attribute was added. Carrier prose does not close this generated-item
+  gap, and changing derives is outside this documentation-only batch.
+- Source/declaration/render inventories, source and expanded-token comparisons,
+  and git diff --check pass. The pinned Verus executable remains absent; formal
+  verification, ghost configuration compilation and refreshed source-bound proof
+  reports are uncredited. Full workflows, benchmarks and cross-target checks
+  remain owner-waived for this session.
+
+Evidence under /tmp/csgrs-hyperreal-verified-dyadic-audit/ retains the baseline,
+probe/expansion sources, scripts, commands/logs, inventories and compressed
+selected HTML. The owned binary, source copy and duplicate HTML trees are removed
+after checking; the shared Cargo target is reused without incremental compilation.
+AGENTS.md already carries the full public/private/generated Rustdoc mandate.
+Authored review of this file is complete, while generated and ghost/configuration
+validation remain open. Repository-wide coverage remains incomplete. Continue
+with verified/limbs.rs, which owns the digit denotation, shift, comparison,
+subtraction, resize and narrowing contracts consumed by these kernels.
 
 ## Next work
 
