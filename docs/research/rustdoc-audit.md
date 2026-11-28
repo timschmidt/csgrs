@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/squares_powers.rs` | Entire root, partial-factor extraction, power recognition, retained reduction and exponentiation implementation reviewed; all 22 functions and five constants documented. | Both-mode private docs/focused tests and three doctests pass; 28 descriptions render, exact independent probes pass and outputs/traces remain unchanged. See rational-roots/powers batch. |
 | `crates/hyperreal/src/rational/arithmetic/construction.rs` | Entire constructor/reduction/cache/query implementation reviewed; all 42 functions documented, including signed inputs, validation ownership, hint proofs and lifetime/resource limits. | Both-mode private docs/focused tests and four doctests pass; all 43 blocks render and 673 unchanged probe records have independent exact expectations. See rational-construction batch. |
 | `crates/hyperreal/src/rational/arithmetic/format_parse.rs` | Entire formatter and decimal/scientific parser reviewed; every helper, guard, error and presentation rule documented, including reproduced fallback syntax defects. | Both-mode private docs, focused tests and doctests pass; all 16 blocks render, outputs/traces remain identical, and independent exact expectations pass. See rational-formatting/parsing batch. |
 | `crates/hyperreal/src/rational/arithmetic/representation.rs` | Entire storage, cache layouts, flags/pools, trait methods, wire helper and tracing macros reviewed; all authored items documented and payload unhidden. | Both-mode private docs/focused tests, lifecycle/race/trace probes and wire replay pass; Serde-generated internal doc gaps remain. See rational-storage batch. |
@@ -24719,6 +24720,108 @@ with incremental compilation disabled. AGENTS.md retains the future-agent 100%
 public/private/generated documentation mandate. Whole-repository review and
 remaining generated-item documentation are unfinished; no executable behavior
 or unchecked-helper limitation was repaired in this batch.
+
+## Rational roots and powers documentation batch
+
+Reviewed all 665 baseline lines of
+crates/hyperreal/src/rational/arithmetic/squares_powers.rs at 6c6e6793b, including
+all private helpers and constants, and the relevant rational tests, Real square
+root/inversion/root-classification/power consumers and locked num-bigint root
+implementation. The final file has 913 lines and 28 descriptions: one impl,
+five constants and 22 functions. Owning layer: Hyperreal exact rational arithmetic;
+properties P1–P6 and P37. Domains include canonical and internally unreduced
+rationals, nonnegative root degrees, arbitrary signed integer exponents, and the
+explicitly positive magnitudes required by private extraction helpers. Initial
+acceptance witnesses were missing private contracts and public square-reduction
+claims contradicted by the current implementation. This changes documentation
+only; it does not migrate or weaken the normative support/resource contract.
+
+Findings and reproduced boundaries:
+
+- Square reduction preserves n=a²b with nonnegative rational a and signed integer
+  b. Zero gives (0,0); 4 gives (2,1), contradicting the former claim that b=0
+  identifies an extracted square. Rationalizing the residual denominator aligns
+  common surds but does not guarantee a squarefree or universal normal form.
+  The word input 19²*23=8303 remains (1,8303), retaining a square factor.
+- The non-power-of-two square (2^2501+1)² is returned as (1,n), so even a perfect
+  square can remain in the residual. The general cutoff is greater than 5,000
+  bits, whereas the public hint requires strictly less than 5,000. The exactly
+  5,000-bit input 9*2^4996 fully extracts despite a false hint. The 6,002-bit
+  power 2^6001 also extracts to root 2^3000 and residual 2 despite a false hint.
+  The hint inspects stored widths without canonicalizing; it is not a proof of
+  mathematical impossibility, complete factorization or resource exhaustion.
+- Independent modular enumeration verifies all twelve square residues modulo
+  64 and sixteen modulo 63. The 81.25% rejection statement now refers to residue
+  classes rather than an unmeasured workload. The small-square product and both
+  residual-divisor LCMs are independently verified. Integer roots are checked
+  by exact powering; the trace names identify dispatch, not necessarily Newton
+  iteration, since the dependency also shortcuts units, small degrees and words.
+- Perfect rational powers require a shared exponent for both magnitudes and
+  an odd exponent for negative values. Small-prime multiplicities constrain the
+  search; missing factors do not establish success. The u32::MAX exponent cap
+  is an implementation limitation, not a universal decision guarantee. An input
+  whose sole possible prime exponent exceeds this cap was not materialized:
+  that limitation is inspection evidence, not a completed huge-input experiment.
+  Root/perfect-power entry points lack total-work/cancellation budgets and a
+  distinct exhausted outcome; documentation does not cure those gaps.
+- Private zero input to the word square extractor panics with overflow checks;
+  without checks the loop cannot reduce zero. Zero input to the multiplicity
+  helper did not complete under an external one-second subprocess timeout; the
+  child was killed and reaped. Degree zero in the private exact-power helper
+  panics for magnitude two but returns true for its unit shortcut. These are
+  invalid private inputs; valid public zero/degree paths are handled separately.
+- The eager-power guard admits all exponents through 255 and applies its 65,536
+  bit-amplification estimate only above that boundary. (2^300)^255 succeeds with
+  a 76,501-bit numerator; exponent 256 returns Exhausted. This is a configured
+  amplification restriction, not an absolute output or total-memory bound.
+  Zero/unit shortcuts precede it; i64::MIN and exponents wider than u64 retain
+  their typed behavior. Rational defines 0^0 as one, while Real owns its stricter
+  domain check and can use an exact lazy fallback after eager exhaustion.
+- Repeated square reduction retains a pair only after observing reuse, with
+  write-once publication and possible lost races. Repeated small powers route
+  through borrowed product chains with fixed operand order. Slots retain exact
+  objects, not a byte-bounded cache; installation trusts the supplied relation.
+  Documentation distinguishes value identity, shared owner reuse and lifetime.
+
+Executed after the final source edit:
+
+- Locked/offline focused library checks pass in both configurations: 57 test
+  executions without default features and 58 with all features. Filters overlap;
+  these counts are executions, not unique tests. Coverage includes square
+  extraction, residue checks, perfect powers, retained small powers, rational
+  powers and downstream Real power/domain/lazy-fallback/MPFR tests. Initial
+  baseline Real filters matched zero and were corrected to actual test names;
+  zero-match runs are not acceptance evidence.
+- Private cargo doc --lib --no-deps --document-private-items passes with and
+  without default features, denying warnings and broken/private intra-doc links.
+  The rendered inventory checks all 28 full descriptions and method/constant
+  anchors. Three new doctests pass in each configuration, covering extracted
+  factors, rational roots, zero domains, signed powers and eager exhaustion.
+- An isolated exact source copy appends one private probe; repository tests and
+  assertions are unchanged. Before/final bodies produce 1,908 byte-identical
+  records, including twelve cold/warm/reused power traces and three reduction
+  traces. Additional assertions verify lazy normalization, retained-factor
+  lifetime expiration and the invalid private degree/zero preconditions.
+- Independent Python integers/Fraction expectations check all records: 774
+  rational cases with degrees zero through seven, 1,025 integer residue/root/
+  primality cases, four extraction boundaries, 65 signed-power cases, three
+  power-guard boundaries, four huge-exponent shortcuts, nine multiplicity cases,
+  nine private power chains and fifteen traced constructions. Modular identities
+  are checked separately. Full output/trace agreement is not used as a substitute
+  for those independent arithmetic expectations. These finite probes do not prove
+  universal closure, concurrency, ownership acyclicity or resource bounds.
+- All authored declarations have descriptions; noncomment source tokens are
+  identical, and git diff --check passes. Full workflow/format/performance checks
+  remain owner-waived for this docs-only session. No performance, new capability,
+  resource-cap or whole-repository coverage claim is made.
+
+No focused check remains blocked. Evidence and repeatable scripts remain under
+/tmp/csgrs-hyperreal-squares-powers-audit/. Owned source-copy/probe build artifacts
+are removed after validation and record JSON is compressed; shared Cargo output
+is reused with incremental compilation disabled. AGENTS.md already retains the
+future-agent mandate for 100% public/private/generated Rustdoc. The complete
+repository audit and previously recorded generated-item gaps remain unfinished;
+this batch repairs documentation, not the recorded implementation limitations.
 
 ## Next work
 

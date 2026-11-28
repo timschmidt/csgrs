@@ -1,9 +1,25 @@
+/// Exact rational root recognition, partial square reduction and integer powers.
+///
+/// These kernels preserve rational values and supply symbolic `Real` shortcuts.
+/// Partial extraction is not a squarefree normal-form oracle; eager-power size
+/// admission is not a total resource contract. Cache reuse keeps constructed
+/// factor/product relations on immutable owners with exact value semantics.
 impl Rational {
-    // Eager integer powers can otherwise turn a tiny input into an arbitrarily
-    // large numerator or denominator. Real uses `Problem::Exhausted` from this
-    // kernel to retain the same exact value as a lazy computable expression.
+    /// Bit-amplification threshold used only for integer exponents above 255.
+    ///
+    /// The guard compares `(numerator.bits() + denominator.bits()) * exponent`
+    /// with 65,536, using division to avoid multiplication overflow. Smaller
+    /// exponents bypass this threshold, so it is not an absolute output-size,
+    /// allocation, work, or cancellation budget. `Real` can handle the resulting
+    /// [`Problem::Exhausted`] by retaining an exact computable expression.
     const MAX_EAGER_POWER_OUTPUT_BITS: u64 = 1 << 16;
 
+    /// Apply the eager-power size heuristic to an unsigned machine exponent.
+    ///
+    /// Every exponent through 255 passes, including zero without division.
+    /// Larger exponents use the saturating sum of the stored magnitude widths;
+    /// this helper neither reduces the operand nor accounts for intermediate
+    /// allocations. Public power entry points handle zero and units first.
     fn eager_power_u64_fits_budget(&self, exp: u64) -> bool {
         exp <= u64::from(u8::MAX)
             || self
@@ -13,6 +29,11 @@ impl Rational {
                 <= Self::MAX_EAGER_POWER_OUTPUT_BITS / exp
     }
 
+    /// Apply the same eager-power guard to an arbitrary-width exponent.
+    ///
+    /// An exponent of at most eight bits passes immediately. Wider values must
+    /// fit `u64` and pass the machine-exponent guard; larger values return false.
+    /// Zero and unit bases are handled by the caller before this test.
     fn eager_power_fits_budget(&self, exp: &BigUint) -> bool {
         // Modest exponents have bounded amplification relative to the input
         // rational and remain on the established fast path.
@@ -23,7 +44,17 @@ impl Rational {
             .is_some_and(|exp| self.eager_power_u64_fits_budget(exp))
     }
 
+    /// Maximum magnitude width admitted to general partial square extraction.
+    ///
+    /// The extraction kernel processes up to 5,000 bits inclusive after its
+    /// word and power-of-two shortcuts. The public viability hint instead uses
+    /// strictly less than this value for both stored rational components.
     const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
+    /// Prime/square pairs removed repeatedly before residual root probes.
+    ///
+    /// The seven primes from 2 through 17 provide cheap common-factor cleanup,
+    /// not full factorization. Pairwise coprime squares permit one shared
+    /// remainder to identify every applicable entry.
     const SMALL_SQUARE_FACTORS: [(u64, u64); 7] = [
         (2, 4),
         (3, 9),
@@ -33,17 +64,32 @@ impl Rational {
         (13, 169),
         (17, 289),
     ];
+    /// Product of the seven prime squares used by the shared remainder screen.
+    ///
+    /// Each table square divides this positive `u64`, so the remainder modulo
+    /// this product preserves divisibility by every table entry.
     const SMALL_SQUARE_PRODUCT: u64 = 260_620_460_100;
+    /// Odd primes through 97 used to constrain possible power exponents.
+    ///
+    /// Powers of two are handled separately by trailing-zero counting. Missing
+    /// larger factors do not certify a candidate exponent; exact root tests
+    /// still decide the surviving candidates.
     const PERFECT_POWER_TRIAL_PRIMES: [u32; 24] = [
         3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79,
         83, 89, 97,
     ];
 
+    /// Reject magnitudes whose residues cannot belong to an integer square.
+    ///
+    /// All nonnegative inputs, including zero, are admitted. The modulo-64
+    /// screen runs before modulo 63; each failed screen emits its own trace.
+    /// True means only that both necessary conditions passed, not that a root
+    /// exists. Neither screen uses floating-point approximation.
     #[inline]
     fn could_be_perfect_square(n: &BigUint) -> bool {
         // Every integer square is one of twelve residues modulo 64. This cheap
-        // screen rejects 81.25% of arbitrary candidates before the
-        // substantially more expensive arbitrary-precision square root.
+        // screen rejects 81.25% of residue classes modulo 64 before the
+        // arbitrary-precision square root; workload rejection rates vary.
         let residue_64 = (n % 64_u8)
             .to_u8()
             .expect("a residue modulo 64 fits in u8");
@@ -71,19 +117,36 @@ impl Rational {
         possible
     }
 
-    // Some(root) squared is n, otherwise None
+    /// Return the nonnegative integer square root exactly when it squares to `n`.
+    ///
+    /// Residue screens reject impossible inputs first. Survivors use the
+    /// backend integer square root and an exact multiplication check; zero
+    /// returns zero. The `newton-square-root` trace labels this dispatch, not
+    /// proof that the backend used Newton iteration for this particular input.
+    /// There is no magnitude limit or caller-supplied work budget here.
     fn try_perfect(n: &BigUint) -> Option<BigUint> {
         if !Self::could_be_perfect_square(n) {
             return None;
         }
-        // BigUint::sqrt is cheap enough as a final check once small square
-        // factors have been stripped.
+        // The backend integer square root supplies a candidate after the
+        // necessary residue screens; multiplication below verifies it exactly.
         crate::trace_dispatch!("rational_algorithm", "root-extraction", "newton-square-root");
         let root = n.sqrt();
         let square = &root * &root;
         if square == *n { Some(root) } else { None }
     }
 
+    /// Extract selected square factors from a strictly positive word magnitude.
+    ///
+    /// Returns positive `(root, rest)` with `root * root * rest` equal to the
+    /// input. It strips prime squares through 17, then tests fixed odd/even
+    /// residual divisors using exact integer roots. The residual need not be
+    /// squarefree: `19² * 23` is returned unchanged. Intermediate products fit
+    /// because the extracted square divides the positive original magnitude.
+    ///
+    /// Zero violates the private precondition: division never reduces it and
+    /// the root multiplication overflows (or loops with overflow checks off).
+    /// The public rational entry point handles zero before calling this helper.
     fn extract_square_u64(mut rest: u64) -> (u64, u64) {
         let mut root = 1_u64;
         for (prime, square) in [(2, 4), (3, 9), (5, 25), (7, 49), (11, 121), (13, 169), (17, 289)] {
@@ -116,7 +179,19 @@ impl Rational {
         (root, rest)
     }
 
-    // (root squared times rest) = n
+    /// Partially factor a positive arbitrary-width magnitude as `root² * rest`.
+    ///
+    /// Word inputs use the word kernel. Larger powers of two split the exponent
+    /// exactly, even above the general 5,000-bit cutoff; all other inputs above
+    /// that cutoff return `(1, n)`. Remaining inputs strip selected small squares
+    /// and test a fixed list of residual divisors with exact square checks.
+    /// Shared remainders avoid repeated divisibility calculations.
+    ///
+    /// Both outputs are positive, but `rest` need not be squarefree or even a
+    /// nonsquare. Zero is outside this helper's domain. The bit cutoff bounds
+    /// only the general factoring path, not total allocation, cache memory or
+    /// cancellation; converting a power-of-two shift to `usize` assumes a
+    /// representable allocation.
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
         if let Some(small) = n.to_u64() {
             let (root, rest) = Self::extract_square_u64(small);
@@ -144,7 +219,7 @@ impl Rational {
 
         // Partial square extraction is a performance shortcut, not full prime
         // factorization. It peels common small squares and then tests a few
-        // residual divisors so sqrt simplification remains bounded.
+        // residual divisors to limit factoring work on this size-gated path.
         let one: BigUint = One::one();
         let mut root = one.clone();
         let mut rest = n;
@@ -210,11 +285,29 @@ impl Rational {
         (root, rest)
     }
 
-    /// For a value n, the result of this function is a pair (a, b)
-    /// such that a * a * b = n.
+    /// Extract rational square factors while preserving `self = a² * b`.
     ///
-    /// Where b is zero, a is the exact square root of n
-    /// Otherwise, b is a residual for which no exact rational square root exists.
+    /// Returns a nonnegative rational `a` and an integer `b` with the original
+    /// sign. Zero returns `(0, 0)`; a fully extracted positive square has `b = 1`.
+    /// The residual denominator is rationalized, so `1/2` becomes `(1/2, 2)`.
+    /// Negative inputs are valid factorizations, not real square-root results.
+    /// Internally unreduced values are canonicalized before extraction.
+    ///
+    /// Extraction is partial: it strips selected small factors and tests a
+    /// fixed set of residual divisors. Non-power-of-two magnitudes above 5,000
+    /// bits are left unchanged. Consequently `b` can retain square factors or
+    /// be a perfect square, and equivalent surds need not receive a common
+    /// normal form. There is no typed exhaustion or total work/memory budget.
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// assert_eq!(Rational::new(4).extract_square_reduced(),
+    ///            (Rational::new(2), Rational::one()));
+    /// assert_eq!(Rational::fraction(1, 2).unwrap().extract_square_reduced(),
+    ///            (Rational::fraction(1, 2).unwrap(), Rational::new(2)));
+    /// assert_eq!(Rational::zero().extract_square_reduced(),
+    ///            (Rational::zero(), Rational::zero()));
+    /// ```
     pub fn extract_square_reduced(self) -> (Self, Self) {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().clone().extract_square_reduced();
@@ -225,8 +318,8 @@ impl Rational {
         let (sign, numerator, denominator) = self.into_parts();
         let (nroot, nrest) = Self::extract_square(numerator);
         let (droot, drest) = Self::extract_square(denominator);
-        // Rationalize the residual denominator so equivalent quadratic surds
-        // have one exact representation:
+        // Rationalize the residual denominator to align common quadratic surds
+        // without claiming a complete squarefree normal form:
         //
         //   sqrt(nrest / drest) = sqrt(nrest * drest) / drest.
         //
@@ -238,6 +331,12 @@ impl Rational {
         )
     }
 
+    /// Clone an already published square-factor pair from this immutable owner.
+    ///
+    /// A missing arithmetic cache or reduction slot is a miss. A hit emits the
+    /// retained-reduction trace and trusts the installing caller's exact
+    /// `self = square² * rest` relation; it performs no new factorization or
+    /// validation. Cloned handles keep the retained magnitudes alive.
     #[inline]
     fn retained_square_reduction(&self) -> Option<(Self, Self)> {
         let reduction = self
@@ -249,6 +348,17 @@ impl Rational {
         Some((reduction.square.clone(), reduction.rest.clone()))
     }
 
+    /// Attempt to publish an exact square-factor pair for later reuse.
+    ///
+    /// The caller must supply this owner's reduction and preserve acyclic
+    /// strong ownership; the relation is not checked here. The pair is strongly
+    /// retained in the existing arithmetic cache, or in a new cache whose
+    /// primary linear entry is an inert square-reduction placeholder.
+    ///
+    /// Occupied slots and lost installation races leave existing evidence
+    /// untouched; failure to install the outer cache is not retried. Losing
+    /// candidate handles are dropped. Fixed slot counts do not bound the byte
+    /// size of retained factors, and this helper reports no allocation budget.
     #[cold]
     fn retain_square_reduction(&self, square: &Self, rest: &Self) {
         let reduction = CachedRationalSquareReduction {
@@ -278,6 +388,16 @@ impl Rational {
             }));
     }
 
+    /// Reuse partial square extraction after repeated requests on one owner.
+    ///
+    /// A published pair wins immediately. Otherwise the first observation sets
+    /// the reuse bit and extracts without retaining a pair; later observations
+    /// extract from a clone and attempt publication. Competing calls may repeat
+    /// work or lose publication without changing the exact factorization.
+    ///
+    /// Canonicalization, partial-factor limits and zero/negative behavior are
+    /// those of [`Self::extract_square_reduced`]. Clones share the observation
+    /// and cache; equal independently allocated values need not share them.
     pub(crate) fn extract_square_reduced_retained(self) -> (Self, Self) {
         if let Some(reduction) = self.retained_square_reduction() {
             return reduction;
@@ -292,15 +412,40 @@ impl Rational {
         reduction
     }
 
-    /// For very big rationals, the algorithm used for calculating a square
-    /// root is not viable, in this case the predicate is false.
+    /// Return a conservative size hint for attempting symbolic square extraction.
+    ///
+    /// True means both stored magnitude widths are strictly below 5,000 bits.
+    /// This reads the original representation without canonicalizing it. It
+    /// neither proves complete factorization nor certifies a squarefree residual.
+    /// False does not imply extraction fails: the kernel handles exactly 5,000
+    /// bits and has an unrestricted power-of-two shortcut. `Real` uses this
+    /// hint to choose whether to attempt its symbolic square-root path.
     pub fn extract_square_will_succeed(&self) -> bool {
         self.numerator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
             && self.denominator.bits() < Self::EXTRACT_SQUARE_MAX_LEN
     }
 
-    /// Return the exact nth root when both numerator and denominator are
-    /// perfect nth powers. Negative values are supported for odd `n`.
+    /// Return an exact rational real `n`th root, if one exists and `n > 0`.
+    ///
+    /// Both reduced magnitudes must be perfect `n`th powers. Negative inputs
+    /// admit only odd degrees; even roots use the nonnegative choice. Degree
+    /// zero, a negative even root, and a nonperfect magnitude all return `None`.
+    /// Positive-degree roots of zero are zero, and degree one returns the value.
+    /// Internally unreduced inputs are canonicalized before these checks.
+    ///
+    /// Backend integer roots are verified by exact powering. One
+    /// `newton-nth-root` dispatch trace precedes the numerator/denominator work;
+    /// it does not count iterations or guarantee a backend algorithm. There is
+    /// no input-size cutoff, cancellation hook or typed resource exhaustion.
+    ///
+    /// ```
+    /// use hyperreal::Rational;
+    /// assert_eq!(Rational::fraction(-8, 27).unwrap().perfect_nth_root(3),
+    ///            Some(Rational::fraction(-2, 3).unwrap()));
+    /// assert_eq!(Rational::new(2).perfect_nth_root(2), None);
+    /// assert_eq!(Rational::new(-4).perfect_nth_root(2), None);
+    /// assert_eq!(Rational::new(4).perfect_nth_root(0), None);
+    /// ```
     pub fn perfect_nth_root(&self, n: u32) -> Option<Self> {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().perfect_nth_root(n);
@@ -329,6 +474,18 @@ impl Rational {
         Some(Self::from_parts_raw(self.sign, numerator, denominator))
     }
 
+    /// Intersect candidate-exponent constraints from selected prime valuations.
+    ///
+    /// For a positive magnitude, merge the multiplicities of two and odd primes
+    /// through 97 into `exponent_gcd`. Zero in the accumulator means no factor
+    /// has constrained it yet; one proves no exponent greater than one can
+    /// work. The caller shares the accumulator across numerator and denominator.
+    /// Unexamined factors can impose further constraints, so surviving values
+    /// still require exact root checks. One contributes no constraint.
+    ///
+    /// This updates a local accumulator, not a retained object cache. It clones
+    /// the magnitude and has no work budget. Zero magnitude violates the private
+    /// precondition and can remain indefinitely in the divisibility loop.
     fn retain_perfect_power_factor_exponents(value: &BigUint, exponent_gcd: &mut u64) {
         if value.is_one() {
             return;
@@ -364,6 +521,12 @@ impl Rational {
         }
     }
 
+    /// Decide primality for a `u32` candidate by exact trial division.
+    ///
+    /// Values below two fail; two passes, and other evens fail. Odd divisors are
+    /// tested through the square root using `divisor <= candidate / divisor`
+    /// to avoid multiplication overflow. No probabilistic test or explicit
+    /// work/cancellation budget participates.
     fn is_prime_exponent(candidate: u32) -> bool {
         if candidate < 2 {
             return false;
@@ -381,6 +544,13 @@ impl Rational {
         true
     }
 
+    /// Check whether a magnitude is an exact power of a nonnegative integer.
+    ///
+    /// The exponent must be positive; perfect-power callers supply primes at
+    /// least two. One returns true immediately. Other values use an integer
+    /// root followed by exact powering, with no resource guard. Degree zero
+    /// violates the precondition: it panics in the backend except for the
+    /// one shortcut, which returns true without consulting the degree.
     fn magnitude_is_exact_power(value: &BigUint, exponent: u32) -> bool {
         if value.is_one() {
             return true;
@@ -389,11 +559,24 @@ impl Rational {
         root.pow(exponent) == *value
     }
 
-    /// Return whether this rational is an integer power with exponent greater
-    /// than one.
+    /// Search for a rational base and integer exponent greater than one.
     ///
-    /// Zero, one, and negative one are perfect powers. Negative values are
-    /// tested only at odd prime exponents, matching the integer definition.
+    /// For a reduced rational, numerator and denominator must share a valid
+    /// exponent. Zero and both units return true by convention. Negative inputs
+    /// use only odd exponents. Testing prime exponents suffices because every
+    /// composite power is also a power at a prime divisor of its exponent.
+    /// Internally unreduced inputs are canonicalized first.
+    ///
+    /// Small-prime multiplicities reject impossible cases or constrain the
+    /// candidate exponents. Each survivor requires exact integer roots of both
+    /// magnitudes. The search bound is the smaller bit length minus one among
+    /// nonunit components, capped at `u32::MAX` for the backend root interface.
+    ///
+    /// That cap is an implementation limitation: this Boolean result cannot
+    /// report an untested exponent beyond it, and a negative result is not a
+    /// universal certificate for arbitrarily large inputs requiring such a
+    /// prime exponent. There is no total-work, allocation or cancellation budget;
+    /// the method does not report exhausted resources separately.
     pub fn is_perfect_power(&self) -> bool {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().is_perfect_power();
@@ -454,6 +637,18 @@ impl Rational {
         false
     }
 
+    /// Materialize a nonnegative machine power of a nonzero reduced rational.
+    ///
+    /// Callers handle zero/unit shortcuts and enforce the eager-power guard.
+    /// Zero exponent returns one. Repeated requests for exponents two through
+    /// five use retained borrowed-product chains; the first observation instead
+    /// uses the direct kernel. Through exponent 64, checked `u128` powers win
+    /// when both fit, otherwise backend powers run with a dyadic-denominator
+    /// shift shortcut. Larger exponents use binary repeated squaring.
+    ///
+    /// Sign follows exponent parity. The helper neither enforces the outer
+    /// size guard nor turns allocation failure into a typed outcome; retained
+    /// products and intermediate magnitudes contribute additional memory.
     #[inline]
     fn pow_up_u64(&self, exp: u64) -> Self {
         if exp == 0 {
@@ -525,6 +720,15 @@ impl Rational {
         self.pow_up_by_multiplication(exp)
     }
 
+    /// Build a power through borrowed products that can retain reusable edges.
+    ///
+    /// Exponents two through five have short square/product chains. Other
+    /// nonnegative exponents use binary repeated squaring; zero returns one.
+    /// The squared factor stays on the left of accumulated products so that its
+    /// cache is probed first. Operand order is part of the reuse behavior.
+    ///
+    /// The caller controls amplification. No separate power-result cache or
+    /// work/memory budget is installed by this helper.
     fn pow_up_by_retained_multiplication(&self, mut exp: u64) -> Self {
         match exp {
             2 => return self * self,
@@ -560,6 +764,12 @@ impl Rational {
         result
     }
 
+    /// Evaluate a nonnegative machine exponent by binary repeated squaring.
+    ///
+    /// An accumulator starts at one, multiplies selected powers from low bits
+    /// to high bits, and avoids the last unused square. Zero returns one.
+    /// Multiplication assignment and borrowed squaring retain their existing
+    /// cache behavior; this helper supplies no independent resource guard.
     fn pow_up_by_multiplication(&self, mut exp: u64) -> Self {
         let mut result = Self::one();
         let mut factor = self.clone();
@@ -575,8 +785,13 @@ impl Rational {
         result
     }
 
-    // This could grow unreasonably in terms of object size
-    // so only call this for modest exp values.
+    /// Materialize an unsigned arbitrary-width exponent after caller admission.
+    ///
+    /// Machine-width exponents delegate to the specialized kernel. Larger
+    /// exponents use a bitwise repeated-squaring loop with no local size or
+    /// work guard. The public power method's current admission guard rejects
+    /// this wider case for nonzero nonunit bases before reaching this helper;
+    /// calling it directly can cause uncontrolled intermediate growth.
     fn pow_up(&self, exp: &BigUint) -> Self {
         if let Some(exp) = exp.to_u64() {
             return self.pow_up_u64(exp);
@@ -596,6 +811,17 @@ impl Rational {
         result
     }
 
+    /// Raise a rational to a signed machine exponent with eager-size admission.
+    ///
+    /// This is the allocation-saving exponent interface used by `Real`.
+    /// It has the same value/error rules as [`Self::powi`], including `0^0 = 1`,
+    /// zero to a negative power returning [`Problem::DivideByZero`], unit
+    /// shortcuts, and the amplification guard returning [`Problem::Exhausted`].
+    /// Internally unreduced operands canonicalize before any shortcut.
+    ///
+    /// Unsigned absolute value handles `i64::MIN` without signed overflow.
+    /// `Real` performs its own domain checks before entering this kernel and
+    /// can retain a lazy exact expression when eager admission fails.
     #[inline]
     pub(crate) fn powi_i64(self, exp: i64) -> Result<Self, Problem> {
         if self.is_internally_unreduced() {
@@ -630,7 +856,29 @@ impl Rational {
         }
     }
 
-    /// Integer exponentiation. Raise this Rational to an integer exponent.
+    /// Raise this rational exactly to an arbitrary signed integer exponent.
+    ///
+    /// Zero exponent returns one, including `0^0`. Zero to a positive exponent
+    /// returns zero; zero to a negative exponent returns
+    /// [`Problem::DivideByZero`]. Both units handle arbitrarily wide exponents
+    /// by parity. Other negative exponents invert the base before powering.
+    /// Internally unreduced operands canonicalize before these shortcuts.
+    ///
+    /// For nonzero nonunit bases, exponent magnitudes through 255 always pass.
+    /// Larger exponents must fit `u64` and satisfy the conservative 65,536-bit
+    /// amplification estimate; otherwise this returns [`Problem::Exhausted`].
+    /// That estimate does not bound total work, retained memory, cancellation,
+    /// or outputs on the small-exponent path. Allocation failures are not
+    /// converted into typed exhaustion. Success retains exact rational data.
+    ///
+    /// ```
+    /// use hyperreal::{Problem, Rational};
+    /// assert_eq!(Rational::fraction(-2, 3).unwrap().powi((-3).into()),
+    ///            Rational::fraction(-27, 8));
+    /// assert_eq!(Rational::zero().powi(0.into()), Ok(Rational::one()));
+    /// assert_eq!(Rational::zero().powi((-1).into()), Err(Problem::DivideByZero));
+    /// assert_eq!(Rational::new(10).powi(20_000.into()), Err(Problem::Exhausted));
+    /// ```
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().clone().powi(exp);
