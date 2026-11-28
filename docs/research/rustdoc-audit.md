@@ -25417,6 +25417,120 @@ output is reused with incremental compilation disabled. AGENTS.md already
 retains the 100% public/private/generated Rustdoc mandate. Whole-file completion,
 generated-item coverage and the repository-wide line review remain unfinished.
 
+## Scaled quotients, complex arithmetic and matrix cofactors batch (partial file)
+
+Reviewed every line of
+crates/hyperreal/src/rational/arithmetic/aggregate_products.rs baseline lines
+2866–3558 at 76ba2a95f, now lines 2866–3699. The whole file grows from 6,032
+to 6,173 lines. Seventeen associated methods receive complete contracts. This
+remains partial-file credit; the next unreviewed section starts with
+known_dyadic_word, followed by the plane/stack/product-sum implementation.
+
+Owner: Hyperreal exact scalar quotient scheduling, rational complex components
+and fixed-dimension cofactor constructions. Relevant properties are P1/P3
+(exact values and retained reduced/sparsity evidence), P4/P10 (unchanged cache
+and dispatch order), P5/P6 (native eligibility, allocation and failure) and P37.
+The domains include valid rational/lazy component pairs, positive private
+quotient scales, complete supplied GCDs, caller-proved sparse rows and exact
+rational or classified-dyadic matrices. Missing private contracts, unstated
+native materialization limits and unchecked sparsity/GCD/classification
+preconditions supplied the documentation witnesses.
+
+Context reads covered scaled-word constructors, exact dyadic product sums,
+reciprocal behavior, Real wrappers and their sparse-row classification,
+Hyperlattice's exact matrix dispatcher and current scalar/matrix tests. Those
+reads are not whole-file credits for the larger context sources. No algorithm,
+signature, hidden-item attribute, assertion or operation order changed.
+
+Findings and clarified contracts:
+
+- Reduced binary-scale construction cancels the complete magnitude GCD, then
+  cancels powers of two against the opposite part before requiring native
+  result parts. The supplied-divisor helper checks divisibility only in debug
+  assertions; divisibility alone is not a coprimality proof. An invalid private
+  divisor-one call on 6/9 preserves those noncoprime parts while marking them
+  reduced. This is caller-invariant misuse, not a valid-public-input regression.
+- Unreduced binary-scale construction cancels only powers of two against the
+  requested scale. Eighteen probe cases decline even though the reduced path
+  fits; no approximate result or resource-exhaustion diagnosis is substituted.
+  Zero sign/magnitude shortcuts can precede validation. The general scale
+  constructor requires positive scale parts; fabricated equal zero scale parts
+  demonstrate its unchecked equal-scale shortcut. These are not new public
+  domain guarantees or permission to weaken normative failure handling.
+- Dyadic word quotients reject zero denominator metadata, compute a magnitude
+  GCD, then check the exponent difference and native reduced result. Even a
+  zero numerator must pass the i32 exponent gate. Returned GCD provenance is
+  the original magnitude pair, not a post-shift divisor. None conflates
+  zero-divisor rejection with schedule ineligibility; the surrounding operation
+  owns the eventual typed error or exact fallback.
+- Complex multiplication scans stored words once and uses paired product/sum
+  checks before general exact reducers. Ordinary and right-conjugate formulas
+  differ in both output signs. A native component already constructed can be
+  discarded when the other declines. Valid unreduced storage remains exact;
+  cache observation and allocation depend on the selected path.
+- Complex division tries dyadic words, general words and then a shared exact
+  norm fallback in that order. Native None means continue, whereas a completed
+  DivideByZero result is propagated. Public division rejects a zero complex
+  divisor even for a zero dividend. The wide path builds conjugate numerators
+  before testing the norm, so typed failure does not imply early validation or
+  a bounded amount of preceding work.
+- Sparse homogeneous output is precisely (-1)^(j+1) times each deleted-column
+  3x3 minor. The selected component is zero; the routine neither divides by the
+  fourth component nor classifies rank, uniqueness or affine validity. Its
+  caller must prove exactly one nonzero entry in the selected row. A fabricated
+  nonsparse input produces a vector with residual (1,0,0) against that input,
+  confirming that omitted row entries are not checked. Invalid indices panic.
+- General 3x3/4x4 inverses retain fixed cofactor schedules and one exact
+  determinant reciprocal; zero determinant returns DivideByZero before the
+  success trace. Known-dyadic entry points trust classification and can panic
+  on nondyadic factors. The 4x4 specialization lifts rows by D, computes integer
+  B=D*A, then restores A^-1=B^-1*D by scaling output columns. Determinant sign
+  enters the numerator, and final fractions are reduced. Fixed dimensions do
+  not bound coefficient growth, total work, allocation or cancellation latency.
+  The inline allocation comment now explicitly excludes input canonicalization
+  from the claim about avoiding intermediate Rational construction.
+
+Executed after the final source edit:
+
+- Locked/offline focused Hyperreal checks pass: six library test executions in
+  each of the no-default-feature and all-feature configurations. They cover
+  paired complex arithmetic, exact dyadic quotient scale/fallback behavior,
+  exact/singular 3x3/4x4 inverses and the existing 128-case row-scaled inverse
+  comparison. Original value and failure assertions remain intact.
+- Both private cargo doc configurations pass with warnings and broken/private
+  intra-doc links denied. Inventory finds all seventeen complete descriptions
+  and method anchors in generated pages. This section adds no doctests;
+  zero-match doctest invocations are not acceptance evidence.
+- Three all-feature Hyperlattice matrix integration tests pass: 3x3 inverse and
+  powers, a general integer 4x4 inverse/determinant, and checked singular-matrix
+  rejection. This covers selected consumers, not every matrix shape, policy
+  or downstream modeling operation.
+- An isolated private source-copy probe yields 855 byte-identical baseline/final
+  records: 528 binary-scale attempts, sixty general-scale cases, five dyadic
+  quotients, 160 compact/lazy complex cases, four wider complex cases, 24
+  matrices of each dimension, 48 sparse cofactor constructions and two invalid
+  proof-input records. The corpus includes eight singular matrices. Recorded
+  full traces for 160 complex, 48 matrix and 48 sparse cases also agree.
+- Independent Python Fraction arithmetic checks quotient formulas and native
+  eligibility, ordinary/conjugate products and exact complex division. Exact
+  Gauss–Jordan elimination supplies inverse expectations, with both matrix
+  product identities checked for nonsingular results. Permutation determinant
+  sums independently check every signed sparse minor and its matrix residual.
+  Private invalid-GCD, sparsity, index and classification probes are reported
+  separately from successful admitted operations; they do not count as closure
+  or typed-failure completion.
+- Declaration/render inventory, noncomment-token equality and git diff --check
+  pass. Full workflows, formatting, performance measurements and formal
+  verification remain owner-waived for this docs-only session. These finite
+  results do not establish a universal closure or practical resource bound.
+
+Evidence and scripts remain under /tmp/csgrs-hyperreal-complex-matrix-audit/.
+Owned temporary source/executable artifacts are removed after checking and
+record JSON is compressed. Shared Cargo output is reused with incremental
+compilation disabled. AGENTS.md retains the 100% public/private/generated
+Rustdoc mandate. Remaining aggregate sections, generated-item coverage and the
+repository-wide line review are still unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -2863,6 +2863,13 @@ impl Rational {
         ))
     }
 
+    /// Attempt sign*magnitude/denominator times 2^scale_shift as a reduced word ratio.
+    ///
+    /// Requires a positive denominator. NoSign or zero magnitude returns zero before
+    /// validating that precondition. Otherwise cancel the magnitude GCD and delegate
+    /// power-of-two cancellation and checked scaling. None is native-result
+    /// ineligibility, not mathematical failure or resource exhaustion. Successful
+    /// Rational construction can allocate; invalid nonzero calls can panic.
     fn from_scaled_dyadic_quotient_component(
         sign: Sign,
         magnitude: u128,
@@ -2883,6 +2890,18 @@ impl Rational {
         )
     }
 
+    /// Construct a scaled word quotient using a caller-supplied complete magnitude GCD.
+    ///
+    /// For nonzero output, denominator must be positive and divisor must equal
+    /// GCD(magnitude,denominator). Debug assertions check nonzero divisor and exact
+    /// divisibility, not that it is the greatest common divisor. Divide both parts,
+    /// cancel the binary scale against the opposite part, and require the remaining
+    /// shift/products to fit u128 before marking the result reduced. A smaller
+    /// common divisor can violate that reduced-state invariant.
+    ///
+    /// NoSign or zero magnitude returns zero before these checks. None means native
+    /// scale/width ineligibility; invalid input can panic rather than return a typed
+    /// error. The i32 minimum exponent is handled through its unsigned magnitude.
     fn from_scaled_dyadic_quotient_component_with_divisor(
         sign: Sign,
         mut magnitude: u128,
@@ -2916,6 +2935,14 @@ impl Rational {
         ))
     }
 
+    /// Attempt a binary-scaled quotient while retaining remaining common factors.
+    ///
+    /// Requires a positive denominator. Zero sign or magnitude returns zero first;
+    /// otherwise cancel only powers of two against the requested scale and require
+    /// both stored parts to fit u128. Retain the exact result through the internally
+    /// unreduced constructor, allowing later observation to perform general reduction.
+    /// None can occur even when cancelling a common odd factor would make the final
+    /// reduced result fit. Invalid input can panic; there is no typed resource budget.
     fn from_scaled_dyadic_quotient_component_unreduced(
         sign: Sign,
         mut magnitude: u128,
@@ -2943,6 +2970,18 @@ impl Rational {
         ))
     }
 
+    /// Attempt a native quotient of signed dyadics and return its magnitude GCD.
+    ///
+    /// Reject a zero denominator sign or magnitude with None. Compute the magnitude
+    /// GCD, require denominator_shift minus numerator_shift to fit i32, then use the
+    /// scaled reduced-word constructor. The returned divisor concerns the stored
+    /// magnitudes, before exponent adjustment. Other input signs/magnitudes must be
+    /// consistent; zero numerators still pass the exponent-conversion gate.
+    ///
+    /// None conflates zero divisor with shift/result ineligibility; callers decide
+    /// whether to report an error or fall back. Successful calls record the native
+    /// GCD when tracing is enabled, which can allocate temporary BigUint records in
+    /// addition to result storage. There is no arbitrary-precision fallback here.
     fn quotient_dyadic_words(
         numerator: DyadicWord,
         denominator: DyadicWord,
@@ -2973,6 +3012,18 @@ impl Rational {
         Some((result, divisor))
     }
 
+    /// Attempt exact (a+ib)/(c+id) from four dyadic rational word triples.
+    ///
+    /// Require power-of-two denominators for all four stored parts, including zeros.
+    /// Align each complex pair to one binary scale, form ac+bd, bc-ad and c*c+d*d
+    /// with checked native arithmetic, then restore the right/left scale ratio.
+    /// The component constructors reduce exact quotients independently.
+    ///
+    /// None means a nondyadic denominator or intermediate/result tier ineligibility.
+    /// Some(Err(DivideByZero)) means the completed native norm is zero; eligibility
+    /// checks can decline before reaching that diagnosis. Some(Ok(...)) is exact
+    /// success and emits the paired dyadic trace. Consistent signs/magnitudes are
+    /// caller invariants; bounded word work does not eliminate result allocation.
     fn complex_dyadic_quotient_words(
         parts: [(Sign, u128, u128); 4],
     ) -> Option<Result<(Self, Self), crate::Problem>> {
@@ -3021,6 +3072,17 @@ impl Rational {
         Some(Ok((re, im)))
     }
 
+    /// Attempt sign*magnitude/norm times scale_numerator/scale_denominator exactly.
+    ///
+    /// Nonzero output requires positive norm and positive scale parts. Reduce the
+    /// component and scale ratios, cross-cancel their opposing factors, then require
+    /// final numerator and denominator products to fit u128. The equal-scale case
+    /// uses unit scale directly. NoSign or zero magnitude returns zero before
+    /// checking any denominator or scale invariant.
+    ///
+    /// None means final native product overflow. Invalid private inputs can panic
+    /// or pass a shortcut without validation; this is not a typed domain checker.
+    /// Reduced result construction may allocate despite native cancellation.
     fn from_scaled_word_quotient_component(
         sign: Sign,
         mut magnitude: u128,
@@ -3054,6 +3116,18 @@ impl Rational {
         ))
     }
 
+    /// Attempt exact complex division using a common native denominator for each pair.
+    ///
+    /// Parts are ordered a,b,c,d for (a+ib)/(c+id), with positive denominators and
+    /// consistent signs. Build pairwise denominator LCMs, align numerators, form the
+    /// conjugate-product components and squared norm, then restore the right/left
+    /// LCM ratio through cross-cancellation. Intermediate LCMs, products and sums
+    /// must fit u128 even when the eventual quotient is small.
+    ///
+    /// None requests a wider exact schedule; Some(Err(DivideByZero)) diagnoses a norm
+    /// that reached the zero test. Only exact success emits the general-word trace.
+    /// Unlike the dyadic recognizer, this helper trusts positive denominators and can
+    /// panic on invalid triples. Result storage can allocate without a total budget.
     fn complex_word_quotient_words(
         parts: [(Sign, u128, u128); 4],
     ) -> Option<Result<(Self, Self), crate::Problem>> {
@@ -3120,6 +3194,17 @@ impl Rational {
         Some(Ok((re, im)))
     }
 
+    /// Multiply rational complex pairs, optionally conjugating the right operand.
+    ///
+    /// For left (a,b) and right (c,d), ordinary output is (ac-bd,ad+bc); conjugated
+    /// output is (ac+bd,bc-ad). Scan stored word parts once, compute four checked
+    /// products and the two sums, then fall back to exact signed-product reducers
+    /// if either component is ineligible. A previously constructed native component
+    /// can be discarded when its partner declines.
+    ///
+    /// Stored unreduced inputs retain their exact values; canonicalization follows
+    /// the selected arithmetic path. Trace labels distinguish conjugation and native
+    /// versus general scheduling. Wide arithmetic and result allocation are unbudgeted.
     fn complex_product_components_impl(
         left: [&Self; 2],
         right: [&Self; 2],
@@ -3190,20 +3275,29 @@ impl Rational {
         }
     }
 
-    /// Multiply two exact complex component pairs with one shared word scan.
+    /// Multiply exact rational complex pairs as (ac-bd,ad+bc).
     ///
-    /// Returns `(ac - bd, ad + bc)` for left `(a, b)` and right `(c, d)`.
-    /// Word-sized operands convert once; wider products fall back to the
-    /// general exact signed-product reducers.
+    /// Inputs are left (a,b) and right (c,d), including valid internally unreduced
+    /// rationals. The shared word scan tries a paired native schedule; any
+    /// ineligibility falls back to exact general product sums without approximation.
+    /// Outputs are exact rational components, not a complex wrapper. Intermediate
+    /// work and result allocation have no total resource/cancellation contract.
     pub fn complex_product_components(left: [&Self; 2], right: [&Self; 2]) -> (Self, Self) {
         Self::complex_product_components_impl(left, right, false)
     }
 
-    /// Divide two exact complex component pairs with delayed canonicalization.
+    /// Divide exact rational complex pairs, rejecting a zero complex divisor.
     ///
-    /// The conjugate product `(ac + bd, bc - ad)` is formed with one shared
-    /// word scan, while `c² + d²` is reduced once and reused by both output
-    /// components. No approximation participates in the zero check or result.
+    /// For (a+ib)/(c+id), return ((ac+bd)/(c*c+d*d),(bc-ad)/(c*c+d*d)). Try paired
+    /// dyadic words, then general words, then the exact conjugate-product and shared
+    /// norm fallback. Native None means continue; a native error is returned directly.
+    /// A zero divisor returns Problem::DivideByZero even for a zero dividend, with
+    /// no floating comparison or epsilon test.
+    ///
+    /// Inputs may have valid internally unreduced storage. The wide fallback checks
+    /// the norm after constructing its numerators, so this is not an early validation
+    /// or total-work bound. Canonicalization and temporary allocation follow the
+    /// selected exact path; no precision policy or cancellation budget is accepted.
     pub fn complex_quotient_components(
         left: [&Self; 2],
         right: [&Self; 2],
@@ -3239,12 +3333,20 @@ impl Rational {
         ))
     }
 
-    /// Construct a homogeneous three-plane intersection when one exact row
-    /// has a single nonzero coefficient.
+    /// Construct the signed homogeneous cofactor tuple from a caller-proved sparse row.
     ///
-    /// The sparse coefficient is a common projective scale. Applying it once
-    /// to each two-by-two minor reproduces the exact signed cofactor tuple
-    /// without expanding four independent three-by-three determinants.
+    /// Requires sparse_row < 3, sparse_column < 4, and that row's only nonzero entry
+    /// at the selected column. For column j the result is (-1)^(j+1) times the 3x3
+    /// minor obtained by deleting j. Expand through the sparse coefficient once,
+    /// using the cross-product of the other two rows over the remaining columns.
+    /// The selected output column is zero; no division by the fourth component occurs.
+    ///
+    /// Canonicalize the other rows and selected scale. Use the dyadic reducer only
+    /// when all six relevant other-row coefficients are dyadic. A zero tuple or a
+    /// point at infinity is returned as such, without classifying rank, uniqueness
+    /// or affine validity. Invalid indices panic; incorrect sparsity can yield a
+    /// tuple that does not annihilate the original matrix because omitted entries
+    /// are never checked. Wide work/allocations have no resource budget.
     pub(crate) fn homogeneous_plane_intersection3_sparse(
         matrix: [[&Self; 4]; 3],
         sparse_row: usize,
@@ -3306,25 +3408,40 @@ impl Rational {
         result
     }
 
-    /// Invert a fixed 3x3 exact-rational matrix as one aggregate operation.
+    /// Invert a 3x3 rational matrix using an exact adjugate and shared reciprocal.
     ///
-    /// Keeping the cofactors and shared determinant reciprocal in `Rational`
-    /// avoids repeatedly reclassifying and wrapping intermediate `Real`
-    /// values. Each signed product is still fused and every returned component
-    /// remains canonically exact.
+    /// The general aggregate handles valid reduced or internally unreduced entries.
+    /// A zero determinant returns Problem::DivideByZero. Cofactor products remain
+    /// exact rationals; no Real wrappers, approximate decisions or pivot tolerances
+    /// are introduced. Fixed dimensions do not bound coefficient growth, allocation
+    /// or total work; no cancellation input is accepted.
     pub(crate) fn matrix3_inverse_components(
         matrix: [[&Self; 3]; 3],
     ) -> Result<[[Self; 3]; 3], crate::Problem> {
         Self::matrix3_inverse_components_impl::<false>(matrix)
     }
 
-    /// Invert a fixed 3x3 matrix after the caller classified every component dyadic.
+    /// Invert a 3x3 matrix using caller-established dyadic product-sum schedules.
+    ///
+    /// Every entry must be an exact dyadic, including valid internally unreduced
+    /// representations. The shared implementation preserves adjugate/determinant
+    /// semantics and returns Problem::DivideByZero for singularity. Nondyadic factors
+    /// reached by the unchecked dyadic reducer can panic; this is not a classifier.
+    /// Intermediate exact arithmetic and output storage have no total resource bound.
     pub(crate) fn matrix3_inverse_components_known_dyadic(
         matrix: [[&Self; 3]; 3],
     ) -> Result<[[Self; 3]; 3], crate::Problem> {
         Self::matrix3_inverse_components_impl::<true>(matrix)
     }
 
+    /// Evaluate the 3x3 adjugate, determinant and one exact reciprocal in fixed order.
+    ///
+    /// KNOWN_DYADIC selects the caller-proved dyadic product-sum schedule; otherwise
+    /// use general signed products. Cofactors are already arranged in transposed
+    /// adjugate order. Expand the determinant along the first matrix row, invert it
+    /// once, then scale all nine entries. Singular inversion returns DivideByZero
+    /// before the aggregate success trace. Dyadic preconditions are not validated
+    /// up front; invalid classifications can panic. Work and memory are unbudgeted.
     fn matrix3_inverse_components_impl<const KNOWN_DYADIC: bool>(
         matrix: [[&Self; 3]; 3],
     ) -> Result<[[Self; 3]; 3], crate::Problem> {
@@ -3376,25 +3493,38 @@ impl Rational {
         ])
     }
 
-    /// Invert a fixed 4x4 exact-rational matrix as one aggregate operation.
+    /// Invert a 4x4 rational matrix through shared 2x2 minors and exact cofactors.
     ///
-    /// Keeping fixed minors and cofactors in `Rational` avoids wrapping and
-    /// reclassifying every intermediate as a `Real`, while preserving the
-    /// same division-free cofactor polynomial and exact reductions.
+    /// The general rational schedule accepts valid stored unreduced entries and
+    /// returns Problem::DivideByZero for a zero determinant. It reuses one determinant
+    /// reciprocal across all sixteen adjugate entries without introducing Real wrappers
+    /// or approximate predicates. Arithmetic, caches and output allocation have no
+    /// total-work or cancellation budget.
     pub(crate) fn matrix4_inverse_components(
         matrix: [[&Self; 4]; 4],
     ) -> Result<[[Self; 4]; 4], crate::Problem> {
         Self::matrix4_inverse_components_impl(matrix)
     }
 
-    /// Invert a fixed 4x4 matrix after the caller classified every component dyadic.
+    /// Invert a dyadic 4x4 matrix by lifting each row to its smallest integer grid.
+    ///
+    /// Canonicalize every entry and require a power-of-two denominator. If D contains
+    /// the four positive row scales and B=D*A, compute integer minors, determinant
+    /// and adjugate of B, then use A^-1=B^-1*D: output column j receives the scale of
+    /// input row j. The determinant sign is applied to each numerator while its
+    /// positive magnitude is shared as denominator. Final quotients are reduced.
+    ///
+    /// Zero determinant returns Problem::DivideByZero before the success trace.
+    /// A nondyadic entry or a shift not fitting usize panics at an invariant check;
+    /// this entry trusts prior classification. BigInt lifting/minors and sixteen
+    /// rational outputs can allocate without a work, memory or cancellation budget.
     pub(crate) fn matrix4_inverse_components_known_dyadic(
         matrix: [[&Self; 4]; 4],
     ) -> Result<[[Self; 4]; 4], crate::Problem> {
         // Lift each row onto its smallest integer grid. If B = D A for the
         // diagonal power-of-two scale D, then A^-1 = B^-1 D. This keeps every
-        // minor fraction-free and avoids allocating cache-bearing Rational
-        // nodes until the sixteen final adjugate/determinant quotients.
+        // minor fraction-free. After input canonicalization, intermediate cofactors
+        // stay in BigInt until the sixteen final adjugate/determinant quotients.
         let row_shifts: [u64; 4] = matrix.map(|row| {
             row.into_iter()
                 .map(|value| {
@@ -3489,6 +3619,17 @@ impl Rational {
         ])
     }
 
+    /// Compute the general 4x4 inverse from two groups of six exact 2x2 minors.
+    ///
+    /// The groups use the first and last pair of rows. Their fixed six-product
+    /// combination yields the determinant; an exact reciprocal scales each signed
+    /// three-product cofactor into adjugate order. Singular inversion propagates
+    /// DivideByZero before the aggregate success trace and output assembly.
+    ///
+    /// General signed-product reducers preserve valid unreduced inputs and can
+    /// canonicalize or reuse arithmetic state as scheduled. Fixed minor counts do
+    /// not constrain integer growth or complete-lifetime memory; no resource or
+    /// cancellation receipt is attached.
     fn matrix4_inverse_components_impl(
         matrix: [[&Self; 4]; 4],
     ) -> Result<[[Self; 4]; 4], crate::Problem> {
