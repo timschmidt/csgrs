@@ -16768,3 +16768,13 @@ candidates:
 Both change what each model records as evidence, so either needs an evidence
 review and width comparisons before adoption. Nothing is changed by this
 profile.
+
+**Sparse-zero trial (not retained).** Adding exact-zero fast paths to the
+interval recurrence's series addition, with budget charges kept the same:
+- the comparison adapter's preflight went from 29.4 s to 27.7 s, about 6%;
+- `scalar_work` counters changed (for example 3,837,301 to 3,837,181).
+
+Products already skip exact zeros. The remaining cost is products of genuinely
+nonzero coefficients: every noise column enters every state input, so the
+series are dense. Sparse bookkeeping is therefore not the lever for the long
+tier. The remainder strategy above is.
