@@ -1,14 +1,60 @@
-//! Exact native enclosures versus independent MPFR point calculations.
+//! Unwrapped inverse-Legendre enclosure timings versus a rounded MPFR root reference.
+//!
+//! Native results retain the inverse equation for F or E. The development reference
+//! uses safeguarded Newton iteration over independent forward-series evaluations
+//! and checks its final rounded residual. That point calculation and native exact
+//! expressions with certified enclosures have different output contracts; the rows
+//! do not establish a kernel speedup or a directed error proof for the MPFR root.
+//!
+//! These are custom executables, not Criterion harnesses: arguments are ignored and
+//! JSON rows go to stdout without updating Markdown reports. Domain, enclosure and
+//! acceptance failures panic. A row is printed before its accepted-count assertion;
+//! consumers must check both counts and process success. Fixed repetition counts
+//! and precision requests do not impose a total-work, memory or cancellation bound.
+//! No explicit MPFR cache-cleanup guard is installed here.
+
 use hyperreal::{Rational, Real};
 use std::{hint::black_box, time::Instant};
 
+/// Independent 1024-bit safeguarded inverse reference with a final residual check.
+///
+/// The helper admits rounded abs(u)<4 and abs(m)<=3/4, caps Newton steps at 24 and
+/// requires final residual magnitude below 2^-800. It panics on failed fixture
+/// conditions and supplies a rounded point, not a certified root enclosure.
 #[path = "../tests/support/inverse_legendre_oracle.rs"]
 mod inverse_oracle;
+/// Shared forward series/adapters used by the inverse reference and point import.
+///
+/// The benchmark calls its exact binary-rational MPFR import through the `oracle`
+/// alias. The sibling inverse helper also uses its input conversions and series;
+/// only the complete AGM function is unused in this benchmark.
 #[path = "../tests/support/legendre_oracle.rs"]
-#[allow(dead_code)] // Only the exact MPFR point import is needed here.
+#[allow(dead_code)] // Complete AGM is unused by this benchmark and its inverse oracle.
 mod legendre_oracle;
 use legendre_oracle as oracle;
 
+/// Emit 120 rows for four argument/parameter pairs, two inverses and three modes.
+///
+/// The exact pairs (u,m) are (3/4,1/2), (3/4,-3/4), (7/2,1/2) and (-7/2,-3/4).
+/// For each, test the continuous inverse of F (Jacobi amplitude) and inverse of E,
+/// five trials each; amplitudes are not wrapped to a principal interval. Parse
+/// inputs and adopt one 1024-bit reference point as an exact binary rational before
+/// timing. Each reference evaluation solves using both forward-series components.
+///
+/// Before every mode, even MPFR, construct and request a -112 native enclosure.
+/// Cold rows then construct three fresh expressions; warm rows clone that prepared
+/// expression 25 times; MPFR rows compute 25 inverse points. Cold does not reset
+/// process/global caches. The timer includes construction/cloning, evaluation,
+/// vector allocation and row storage, plus expression temporaries destroyed in the
+/// loop. Preparation, validation, printing and retained-row drops are excluded.
+///
+/// Each native enclosure must contain the adopted reference rational and have exact
+/// width below 2^-96. Each MPFR point-minus-expectation enclosure requested at -112
+/// must lie inside inclusive bounds -2^-96 and 2^-96. All repeats must be accepted.
+/// Repeating the same MPFR solver as the expectation checks reproducibility against
+/// that rounded point, not an independent exact root or a directed rounding proof.
+/// Construction/interval/reference failures are unwrapped or asserted, not reported
+/// as typed benchmark outcomes.
 fn main() {
     for (name, argument, parameter) in [
         ("principal_oblate", "0.75", "0.5"),

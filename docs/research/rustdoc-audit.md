@@ -34,6 +34,10 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/elliptic_integrals.rs` | Entire custom RF benchmark; documented exact construction, rounded AGM reference, timing/cache scope and acceptance limitations. | Five blocks render; both-mode compilation/docs, release baseline/final rows and focused integration test pass. See elliptic-benchmark batch. |
+| `crates/hyperreal/benches/legendre_integrals.rs` | Entire complete/incomplete F/E benchmark; documented fixed cases, pair computation, adopted reference points and exact width checks. | Three blocks render; both-mode compilation/docs, release baseline/final rows and focused integration test pass. See elliptic-benchmark batch. |
+| `crates/hyperreal/benches/inverse_legendre.rs` | Entire unwrapped inverse benchmark; documented sibling oracle dependencies, input domains, retained definitions and residual/point distinction. | Four blocks render; both-mode compilation/docs, release baseline/final rows and focused integration test pass. See elliptic-benchmark batch. |
+| `crates/hyperreal/benches/jacobi.rs` | Entire shared-triplet benchmark; documented component order, prepared evidence, timing/drop boundaries and accepted-triplet semantics. | Five blocks render; both-mode compilation/docs, release baseline/final rows and focused integration test pass. See elliptic-benchmark batch. |
 | `crates/hyperreal/benches/support/bench_docs.rs` | Entire catalogue helper; documented private fields, text parsing, duration display, directory resolution and write/marker behavior. | All 20 authored blocks render; six consumers compile and before/after fixture reports match. See small-bench batch. |
 | `crates/hyperreal/benches/borrowed_ops.rs` | Entire 24-case suite and metadata; documented operands, timing/destruction boundaries, unwraps and report callbacks. | All 11 authored blocks render; both-mode smoke/docs pass. Two Criterion-generated functions still lack attached docs. See small-bench batch. |
 | `crates/hyperreal/benches/float_convert.rs` | Entire 11-case suite and metadata; documented exact binary imports, measured scope and actual enclosure endpoints. | All six authored blocks render; both-mode smoke/docs and independent endpoint expectations pass. Two Criterion-generated functions still lack attached docs. See small-bench batch. |
@@ -22744,6 +22748,112 @@ No performance, universal correctness or complete repository coverage claim is
 made. Evidence scripts, logs, inventory and small fixtures remain under
 `/tmp/csgrs-hyperreal-small-benches-audit/`; temporary probe executables are
 removed after inspection. The reused build/doc target is about 7.5 GiB.
+
+## Hyperreal elliptic benchmark executables (2026-11-27)
+
+Baseline: `4047ab415` on `rustdoc`. Reviewed every line of four custom benchmark
+executables: benches/elliptic_integrals.rs (92), legendre_integrals.rs (98),
+inverse_legendre.rs (94), and jacobi.rs (97), totaling 381 existing lines.
+The three included development oracles were re-read as context and already
+have whole-file records in the forward Legendre, inverse Legendre and Jacobi
+batches. Public operation/enclosure implementations, selected integration tests,
+the manifest and relevant serde_json macro branches supplied additional context;
+no new whole-file credit is claimed for those contextual reads.
+
+Ownership is Hyperreal's development measurement/evidence layer (P36/P37),
+with P1 exact native definitions, P4 shared-cache scope and P5/P6 resource/failure
+limits relevant to the descriptions. The domain is the fixed positive power-of-two
+Carlson complements, complete/incomplete Legendre cases and unwrapped inverse/
+Jacobi pairs encoded in the sources. Missing acceptance evidence was accurate
+private-item documentation of each workload, timing boundary and reference check.
+Baseline release executables were built before source edits and run to completion.
+All baseline acceptance rows passed. This batch changes only documentation and
+one misleading dead-code-allowance comment; all non-comment tokens are identical.
+
+The 17 reviewed/documented Rustdoc blocks comprise four module overviews, six
+included-module declarations and seven functions. Every description is present
+in the private rendered pages, including all four ordinary main functions.
+There are no authored types, fields, constants, traits, derives or function-local
+named items in these files. The used serde_json object/value macro branches
+construct values and local bindings without adding named API declarations.
+These executables do not use Criterion's undocumented harness functions; earlier
+Criterion coverage gaps remain tracked separately and are not resolved here.
+
+The docs distinguish exact native expressions plus -112 requested enclosures
+from nearest-rounded MPFR points. The Carlson reference is pi/(2 AGM(1,sqrt(y)))
+for y=2^-bits, bits=1,20,128. Its expected point uses 1024-bit precision and its
+timed point uses 256 bits. Other references use 1024-bit complete AGM or the
+independent forward series, safeguarded inverse and derived Jacobi components.
+Complete Legendre uses m=1/2,-3; incomplete uses (phi,m)=(3/4,1/2),(15/2,-3/4).
+Both inverse kinds and Jacobi use (u,m)=(3/4,1/2),(3/4,-3/4),(7/2,1/2),
+(-7/2,-3/4). Values are parsed from exact decimal input. The forward MPFR
+closure computes both integral kinds before selecting one; inverse references
+also evaluate both forward-series components. That work remains in timings.
+
+Every mode, including MPFR, prepares and refines a native expression/triplet
+before timing. Cold means fresh result construction inside the loop, not a
+fresh process or cleared global caches. Warm clones retain prepared evidence.
+The timer includes construction/cloning, evaluation, vector allocation and row
+storage, plus native expression temporaries destroyed in the loop. Preparation,
+validation, printing and destruction of retained rows occur afterward/outside.
+Native rows retain enclosures, not the original expressions through validation.
+
+Carlson validation compares the 1024-bit rounded expected point with nearest-
+rounded endpoint conversions and checks exact rational width below 2^-96;
+its MPFR points require strict absolute difference below 2^-96. Other native
+checks contain the adopted exact binary rational of the reference and have
+width below 2^-96. Their point checks require the -112 difference enclosure
+inside inclusive +/-2^-96. Jacobi checks all three fixed-array components and
+counts accepted triplets, not components. These finite checks do not turn a
+rounded reference into a directed mathematical oracle. Repeating the same MPFR
+formula/solver as the expectation is not an independent MPFR correctness proof.
+
+All programs ignore arguments, emit JSON to stdout and do not write benchmark
+Markdown. They print each row before asserting accepted==repeats; process success
+and accepted counts are both required. Construction, reference and enclosure
+failures panic rather than emitting typed benchmark outcomes. Fixed schedules
+and precision requests add no total-work/memory/cancellation bound. No explicit
+MPFR cache-cleanup guard is installed. The existing allow(dead_code) attribute
+is unchanged; its inverse-benchmark comment now correctly notes that only complete
+AGM is unused, because the sibling inverse also consumes conversions and series.
+
+Focused evidence after documentation edits, using locked/offline two-job Cargo,
+nonincremental shared builds and an external 600-second per-process containment:
+
+- Unmodified release workloads with no default features completed before/after:
+  Carlson 45 rows/3,150 accepted repeats; Legendre 120/2,120; inverse Legendre
+  120/2,120; Jacobi 60/1,060 triplet repeats. All 345 rows pass their own checks.
+  Independent metadata enumeration confirms every case/kind/trial/mode in order.
+  All emitted fields except elapsed_ns match baseline exactly. Numeric outputs
+  are checked internally, not serialized by these executables. No matched-output
+  speedup, timing stability or universal numerical-correctness claim is made.
+- Both no-default-feature and all-feature debug benchmark targets compile with
+  cargo test --no-run. All four private benchmark docs build in both modes with
+  warnings and broken/private intra-doc links denied. As in previous benchmark
+  batches, explicit matching self/dev externs and search paths from Cargo JSON
+  artifacts supply dependencies omitted by bare cargo rustdoc --bench here.
+- The first private-doc build rejected a public module overview's link to private
+  main. Replaced that link with inline code and rebuilt both configurations;
+  no visibility or lint changes were used. Release replay preceded this final
+  link-only correction; final token comparison establishes that it changed no
+  executable tokens. No repeated full timing run was needed for that link fix.
+- Four all-feature existing integration tests pass, one each: elliptic_integrals
+  diagonal_and_complete_circular_values; legendre_integrals
+  nonzero_odd_quarter_reductions_match_independent_integrand_series;
+  inverse_legendre independent_inverse_oracle_accepts_fresh_rational_inputs;
+  jacobi fresh_rational_arguments_match_independent_mpfr_inverse. These preserve
+  existing exact/independent-reference assertions, not a rewritten benchmark check.
+- Seventeen-block rendered inventory, exact non-comment token comparison, scoped
+  Rustfmt and git diff --check pass. No tests, inputs or emitted strings changed.
+
+No focused check remains blocked. Full workflows remain owner-waived for this
+documentation-only session. The standing future-agent public/private/generated
+Rustdoc mandate remains in AGENTS.md. Evidence scripts, build/run logs, raw JSON,
+semantic comparisons and rendered inventory are retained under
+`/tmp/csgrs-hyperreal-elliptic-benches-audit/`. Builds reuse the shared target;
+no second Cargo tree or copied probe executables were created. The shared target
+is about 7.7 GiB and this batch's evidence about 1.1 MiB. Whole-repository
+line review and 100% coverage remain unfinished.
 
 ## Next work
 

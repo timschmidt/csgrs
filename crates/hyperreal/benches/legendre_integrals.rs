@@ -1,10 +1,53 @@
-//! Exact native enclosures versus independent MPFR point calculations.
+//! Complete and unwrapped Legendre F/E enclosure timings versus MPFR point work.
+//!
+//! The fixed native inputs use the parameter m (squared modulus), including negative
+//! m, and radian amplitudes. The shared reference uses AGM for complete integrals
+//! and a fixed binomial/sine-moment series for incomplete integrals. It returns
+//! nearest-rounded points rather than directed error bounds. Comparing those points
+//! with native exact expressions plus enclosures does not establish a kernel speedup.
+//!
+//! These are custom executables, not Criterion harnesses: arguments are ignored and
+//! JSON rows go to stdout without updating Markdown reports. Domain, enclosure and
+//! acceptance failures panic. A row is printed before its accepted-count assertion;
+//! consumers must check both counts and process success. Fixed repetition counts
+//! and precision requests do not impose a total-work, memory or cancellation bound.
+//! No explicit MPFR cache-cleanup guard is installed here.
+
 use hyperreal::{Rational, Real};
 use std::{hint::black_box, time::Instant};
 
+/// Development-only complete AGM, incomplete series and exact MPFR-point import.
+///
+/// Imported point values preserve their binary rational value, not exact equality
+/// to the integral. The helper's domain, truncation and rounding limitations apply.
 #[path = "../tests/support/legendre_oracle.rs"]
 mod oracle;
 
+/// Emit 120 timing rows covering four cases, two kinds, five trials and three modes.
+///
+/// Complete cases use m=1/2 and m=-3; their zero amplitude field is unused by the
+/// integral calculation. Incomplete cases use (phi,m)=(3/4,1/2) and (15/2,-3/4).
+/// Decimal strings are parsed exactly. Both kinds select K/F when `second` is false
+/// and E when true. Each reference call computes both F/E or K/E before cloning
+/// the selected result; this extra work remains in the timed MPFR path.
+///
+/// Adopt one 1024-bit reference point as an exact binary-rational Real expectation
+/// outside timing. Before every mode, including MPFR, construct and request a -112
+/// native enclosure. Cold iterations construct three fresh native expressions;
+/// warm iterations clone the prepared expression 25 times; MPFR iterations compute
+/// 25 reference points. Cold does not clear process/global caches.
+///
+/// Timing includes construction/cloning, enclosure or point evaluation, vector
+/// allocation and result storage; it excludes preparation, validation, printing and
+/// retained-row destruction. Temporary expression destruction can occur in the loop.
+/// Each native row must contain the adopted reference rational and have exact width
+/// strictly below 2^-96. For MPFR rows, the -112 enclosure of point minus expectation
+/// must lie within the inclusive bounds -2^-96 and 2^-96.
+///
+/// Every repeat must pass. The MPFR comparison repeats the same reference algorithm;
+/// its rounded expectation is not the exact integral or a directed oracle enclosure.
+/// The finite checks therefore do not certify arbitrary inputs, oracle rounding or
+/// comparable completed output contracts.
 fn main() {
     for (name, complete, amplitude, parameter) in [
         ("complete_oblate", true, "0", "0.5"),
