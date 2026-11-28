@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/adversarial_transcendentals.rs` | Entire six-group benchmark and promoted loader; documented every authored item, exact inputs, timing/cache scope, parser/resource limits and actual row counts. | All 44 blocks render; private docs and 119-case fallback/70-case loaded smoke runs pass in both modes. Two Criterion-generated doc gaps remain. See adversarial-transcendental batch. |
 | `crates/hyperreal/benches/adversarial_library.rs` | Entire collection/history/promotion/score implementation; documented every private item, real timing/output scope, parser loss, leaks, file effects and resource limits. | All 75 blocks render; both-mode docs/compilation and isolated baseline/final fixtures pass. Full numerical collection unrun; two Criterion-generated doc gaps remain. See adversarial-library batch. |
 | `crates/hyperreal/benches/real_representations.rs` | Entire 20-recipe workload; documented enum/variants/derived roles, exact expressions, lossy export, prepared timings and finite coverage. | Thirty blocks render; both-mode smoke/docs pass. Two Criterion-generated functions still lack attached docs. See representation/replay batch. |
 | `crates/hyperreal/benches/bounded_parameter_encodings.rs` | Entire replay/retained-proof workload; documented residual equations, domains, admission/cache work, timing and serialization checks. | Four blocks render; serde/all docs/compilation and baseline/final 220-row replay checks pass. See representation/replay batch. |
@@ -23106,6 +23107,108 @@ fixtures, logs and inventory are retained under
 `/tmp/csgrs-hyperreal-adversarial-library-audit/`; the temporary compiled probe and
 combined source copy are removed after inspection. The shared target is about
 8.0 GiB. Whole-repository line review and documentation coverage remain unfinished.
+
+## Adversarial transcendental benchmark audit (2026-11-28)
+
+Baseline: 7a539f3d3 on rustdoc. This docs-only batch owns
+crates/hyperreal/benches/adversarial_transcendentals.rs, reviewed beginning to
+end, including all metadata rows, fallback literals, callbacks, local helpers
+and harness declarations: 1,428 baseline lines, 1,629 final lines. Included
+bench_docs.rs and benchmark_report.rs already have whole-file records above;
+context reads of their consumers, computable approximation/representation and
+Criterion 0.5.1 timing code do not add whole-file review credit.
+
+The owning layer is Hyperreal's benchmark/documentation surface. Relevant
+contracts are P1/P2 (exact rational and symbolic inputs), P4 (retained caches),
+P5 (precision versus actual resource limits), and P6 (error checking and parser
+panics), plus the private/generated Rustdoc mandate. The missing acceptance
+witness was accurate documentation of every authored item and the actual
+workload/timing/loading contract, rather than treating catalogue prose as
+numerical certification. The unchanged baseline was compiled and all 119
+fallback smoke cases executed before editing. Isolated baseline helpers
+reproduced the loading, parsing and generation findings below. No runtime
+implementation, benchmark label, metadata string, hard case or assertion changed.
+All noncomment tokens match the baseline.
+
+Added 44 authored Rustdoc blocks: module overview, two included modules, one
+catalogue constant, 32 functions, one enum, five variants, one inherent impl
+and its method. Rendered private HTML contains all 44 descriptions and the
+variant/method/impl anchors. Clone/Copy derived impl anchors were checked and
+their discriminator-only role documented. Criterion-generated benches and main
+still have no attached docblock: their role is described at module level, but
+these two gaps are not counted as complete generated coverage. The harness was
+not rewritten in this docs-only worktree.
+
+Findings now documented:
+
+- Six groups have 69 fixed registered rows plus a variable promoted list. The
+  fallback has 50 rows: 12 logarithms, 10 atan, 12 tan, 8 sin and 8 cos. The
+  static catalogue has 70 descriptors, including a promoted-100 aggregate
+  placeholder that is never registered. Its missing estimate does not imply
+  that the individual cases were unrun.
+- Exact rational data and symbolic pi are retained; the one f64 fixture denotes
+  its binary value. The 768-input sweep contains 752 rational expressions and
+  16 pi composites. All 66 scale-row seeded values are negative because every
+  seed is odd, including negative literals cast to u64. Casts through usize
+  make sequence portability depend on target width. There is no deduplication,
+  randomized fuzzing or complete numerical-domain coverage. The eight fixed
+  candidates include negative 2^512 and negative 2^-512.
+- File loading uses the current directory, requires four tab-separated fields,
+  ignores timing text and does not validate seed text. Any nonempty accepted
+  list replaces the fallback without backfill or a 100-case limit. Empty names
+  and duplicates survive; names leak before operation/input rejection. The
+  companion history reader's three-field rows are not accepted by this loader.
+- Word-sized parsing rejects negative mixed fractional numerators and decimals,
+  loses the sign of textual negative zero, and can panic on zero denominators
+  or an oversized mixed numerator. The minimum signed exponent also panics in
+  the scaling helper; large shifts have no local allocation/work budget. These
+  existing defects and limitations remain unchanged for implementation work.
+- The historical ln_abs_plus_one operation actually constructs ln(x*x+1).
+  Batched helpers exclude prepared-source cloning and returned-output drops
+  from timing; whole-vector sweeps include cloning and result destruction.
+  Clones retain shared caches. The separate promoted log in the inverse-trig
+  group is prebuilt before registration and can reuse its own numeric cache.
+  Catalogue claims of cold work are not guarantees. Criterion durations and
+  approximation precision are not hard bounds on elapsed work or memory.
+- Most results, including fallible shortcut results, are merely black-boxed.
+  Only atanh(1) requires an error and does not check its variant. The workload
+  supplies no independent numerical oracle, general cancellation check or
+  correctness/performance regression assertion. Successful smoke execution is
+  not certification of the represented mathematical results or timing evidence.
+
+Executed after the final source edit:
+
+- Locked/offline cargo test --no-run for this bench, then cargo rustdoc with
+  --document-private-items, -D warnings and both private/broken intra-doc-link
+  lints, with --no-default-features and --all-features. Both pass. Explicit
+  matching externs come from Cargo JSON artifacts because bench rustdoc omits
+  self/dev dependencies in this environment; check.py records the commands.
+- Original compiled Criterion executables with --test in both configurations:
+  119 fallback cases each, with identical ordered IDs to the baseline. Each
+  also completes 70 cases when a one-row fixture replaces the fallback. The
+  loaded row deliberately has nonnumeric seed/timing text. Files and cwd are
+  task-owned, with report writes suppressed by the existing environment guard.
+- Isolated baseline/final helper probes preserve original functions and replace
+  only the harness in a scratch copy. They assert catalogue/vector/operation
+  counts, exact scaled rationals and scale-row signs, five zero-input operation
+  results, input parsing and expected panics, four-field requirements, duplicate
+  retention, empty names, fallback replacement and rejected-operation fallback.
+  Both produce identical fixture output. An initial scratch compile needed
+  explicit integer types; this was fixed without any repository code change.
+- Source declaration and rendered-description inventories, all noncomment-token
+  equality, scoped Rustfmt and git diff --check pass. Repository/crate report
+  and promoted-list hashes/absence states are unchanged. Report strings remain
+  untouched; their known discrepancies are documented rather than silently
+  rewritten into a different benchmark contract.
+
+No focused check remains blocked. Full workflow checks remain owner-waived for
+this session; no statistical benchmark, performance claim or whole-kernel
+certification is made. AGENTS.md retains the future-agent 100% public/private/
+generated Rustdoc mandate. Whole-repository line review and coverage remain
+unfinished. Evidence lives in
+/tmp/csgrs-hyperreal-adversarial-transcendentals-audit/; the owned probe executable
+and combined scratch source are removed after checking, retaining scripts,
+logs, baseline and inventory. The shared target is about 8.1 GiB.
 
 ## Next work
 

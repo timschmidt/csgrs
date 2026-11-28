@@ -1,3 +1,22 @@
+//! Time selected exact-input transcendental expressions and `Real` shortcuts.
+//!
+//! Six Criterion groups cover argument reduction, inverse-function endpoints,
+//! fixed generated sweeps, historical offenders and structural/domain shortcuts.
+//! The helpers preserve rational inputs and symbolic pi; the one `f64` input
+//! means its exact binary value. These are timing workloads, without an
+//! independent numerical oracle or general completion/cancellation checks.
+//! Only the `atanh(1)` row asserts an error, without checking its variant.
+//!
+//! There are 69 fixed rows plus one row per loaded or fallback offender. The
+//! fallback has 50 cases. Labels saying "cold" do not establish empty caches:
+//! prepared inputs are cloned, and nodes or constants can retain prior work.
+//! Precision and Criterion measurement duration do not bound total work or memory.
+//!
+//! The included writers publish a static catalogue and shared report under their
+//! own skip guards; the benchmark groups themselves still run in smoke mode.
+//! The catalogue's single promoted-100 placeholder is not an actual registered
+//! benchmark. Criterion generates `benches` to invoke the callbacks and `main`
+//! to run the harness; those generated items have no attached Rustdoc here.
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Computable, Problem, Rational, Real};
 use num::bigint::{BigInt, BigUint};
@@ -5,13 +24,22 @@ use std::fs;
 use std::ops::Neg;
 use std::time::Duration;
 
+/// Render the static workload catalogue and any matching Criterion estimates.
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+/// Aggregate Criterion output through the shared report writer and its skip guards.
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
+/// Human-readable metadata for six groups and 70 catalogue rows.
+///
+/// Descriptions express intended workloads, not checked results or cold-cache
+/// certificates. The promoted group has one placeholder naming 100 cases; the
+/// actual fallback has 50 separately named rows, and a loaded list can have any
+/// nonzero length. No benchmark registers the placeholder, so its estimate can
+/// be reported as not run even when the individual promoted cases completed.
 const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
     BenchGroupDoc {
         name: "trig_adversarial_approx",
@@ -329,10 +357,18 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
     },
 ];
 
+/// Construct an exact signed word-sized ratio for fixtures.
+///
+/// Panics if `d` is zero; no floating conversion or rounding occurs.
 fn rational(n: i64, d: u64) -> Rational {
     Rational::fraction(n, d).unwrap()
 }
 
+/// Interpret a mixed number as `whole - n/d` when negative, otherwise `whole + n/d`.
+///
+/// The fractional numerator must fit `i64` and the denominator must be nonzero;
+/// violations panic. An integer zero has no negative sign, so parsed `-0` is
+/// handled as nonnegative.
 fn mixed_rational(whole: i64, n: u64, d: u64) -> Rational {
     let fraction =
         Rational::fraction(i64::try_from(n).expect("small numerator fits i64"), d).unwrap();
@@ -343,6 +379,13 @@ fn mixed_rational(whole: i64, n: u64, d: u64) -> Rational {
     }
 }
 
+/// Parse the word-sized integer, fraction or mixed-number text in a promoted row.
+///
+/// Plain numerators and integer parts use `i64`; denominators and mixed fractional
+/// numerators use `u64`. Malformed syntax, decimals and out-of-range integers
+/// return `None`. A parsed zero denominator or mixed numerator above `i64::MAX`
+/// can instead panic in the constructor. Negative mixed fractional numerators are
+/// rejected, and `-0 1/2` becomes positive one-half. Whitespace is not normalized.
 fn parse_generated_promoted_rational(value: &str) -> Option<Rational> {
     if let Some((whole, fraction)) = value.split_once(' ') {
         let whole = whole.parse::<i64>().ok()?;
@@ -362,49 +405,70 @@ fn parse_generated_promoted_rational(value: &str) -> Option<Rational> {
     Some(Rational::new(value.parse::<i64>().ok()?))
 }
 
+/// Extract rational text after the first `] ` in a `generated[seed]` label.
+///
+/// Only the prefix and separator are checked. The seed is discarded without
+/// parsing or validating its relationship to the value; an empty or nonnumeric
+/// seed is accepted. Numeric parsing inherits the rational parser's panics.
 fn parse_generated_promoted_input(input: &str) -> Option<Rational> {
     let (_, rational) = input.strip_prefix("generated[")?.split_once("] ")?;
     parse_generated_promoted_rational(rational)
 }
 
+/// Construct an exact arbitrary-size rational, panicking on a zero denominator.
+///
+/// Allocation and normalization costs grow with the supplied integers.
 fn rational_big(n: BigInt, d: BigUint) -> Rational {
     Rational::from_bigint_fraction(n, d).unwrap()
 }
 
+/// Return exact `10^-12` for small-argument and domain-boundary fixtures.
 fn tiny() -> Rational {
     rational(1, 1_000_000_000_000)
 }
 
+/// Return exact `1 - 10^-6` for inverse-trigonometric and atanh endpoint fixtures.
 fn near_one() -> Rational {
     rational(999_999, 1_000_000)
 }
 
+/// Return exact `1 + 10^-12` for acosh and out-of-domain shortcut fixtures.
 fn one_plus_tiny() -> Rational {
     Rational::one() + tiny()
 }
 
+/// Return exact `1 - 10^-12` for the acosh domain-error workload.
 fn one_minus_tiny() -> Rational {
     Rational::one() - tiny()
 }
 
+/// Retain a rational as a computable source without approximating its value.
 fn computable(r: Rational) -> Computable {
     Computable::rational(r)
 }
 
+/// Wrap a rational in the exact `Real` carrier for structural shortcut workloads.
 fn real(r: Rational) -> Real {
     Real::new(r)
 }
 
+/// Construct exact `(n/d) * pi` as a `Real` for recognizable trig arguments.
+///
+/// The ratio constructor panics on a zero denominator.
 fn pi_fraction(n: i64, d: u64) -> Real {
     real(rational(n, d)) * Real::pi()
 }
 
+/// Build exact `2^512 * pi + 7/5` to exercise large symbolic argument reduction.
+///
+/// The returned expression retains pi rather than importing a rounded product.
 fn huge_pi_plus_offset() -> Computable {
     Computable::pi()
         .multiply(computable(Rational::from_bigint(BigInt::from(1_u8) << 512)))
         .add(computable(rational(7, 5)))
 }
 
+/// Build exact `pi/2 - 2^-40`, a selected argument below a tangent pole.
 fn near_half_pi() -> Computable {
     let offset = rational_big(BigInt::from(1_u8), BigUint::from(1_u8) << 40);
     Computable::pi()
@@ -412,6 +476,13 @@ fn near_half_pi() -> Computable {
         .add(computable(offset).negate())
 }
 
+/// Generate `sign * ((seed % 997) + 1) / ((seed % 251) + 1) * 2^exponent`.
+///
+/// Odd seeds select a negative sign and even seeds a positive one. Integer shifts
+/// preserve exactness; seed names are not coordinates or randomness guarantees.
+/// `i32::MIN` cannot be negated safely and panics either on overflow or subsequent
+/// conversion. Large exponents can require large allocations; there is no local
+/// work or allocation budget.
 fn scaled_rational(seed: u64, exponent: i32) -> Rational {
     let numerator_seed = i64::try_from((seed % 997) + 1).expect("small numerator fits i64");
     let denominator_seed = (seed % 251) + 1;
@@ -426,6 +497,18 @@ fn scaled_rational(seed: u64, exponent: i32) -> Rational {
     }
 }
 
+/// Prepare 768 exact expressions for repeated whole-vector trig measurements.
+///
+/// A wrapping 64-bit linear congruential sequence supplies 520 initial and 166
+/// final rational values. Between them are 66 seeded rational cases and 16
+/// expressions `pi/2 +/- 2^-s` and `2^s*pi +/- 2^-s` for `s = 8,16,24,32`.
+/// All six seeds in each of the eleven rational scale rows are odd, including
+/// negative literals cast to `u64`, so those 66 values are all negative.
+///
+/// The sequence is repeatable for a fixed target width; indexing casts through
+/// `usize` can change it on another width. Duplicate values are not removed.
+/// This finite deterministic sample is neither random fuzzing nor a coverage
+/// proof. Prepared expressions and their caches are reused by each sweep.
 fn trig_sweep_inputs() -> Vec<Computable> {
     let mut inputs = Vec::with_capacity(768);
     let exponents = [
@@ -480,6 +563,12 @@ fn trig_sweep_inputs() -> Vec<Computable> {
     inputs
 }
 
+/// Prepare eight retained stress expressions for whole-vector trig measurements.
+///
+/// They are `10^30`, `10^80`, `-2^512`, `-2^-512`, `2^512*pi + 7/5`,
+/// `pi/2 - 2^-40`, `2^768*pi + 1/1000003`, and `pi/2 - 2^-96`.
+/// These fixed historical candidates are not reranked or independently verified
+/// here; cloning them does not reset shared caches.
 fn promoted_trig_slow_candidates() -> Vec<Computable> {
     vec![
         computable(Rational::from_bigint(BigInt::from(10_u8).pow(30))),
@@ -500,16 +589,31 @@ fn promoted_trig_slow_candidates() -> Vec<Computable> {
     ]
 }
 
+/// Select the computable operation attached to a historical promoted rational input.
+///
+/// Derived `Clone` and `Copy` duplicate only this fieldless discriminator; they
+/// carry no input, approximation, provenance validation or timing evidence.
 #[derive(Clone, Copy)]
 enum PromotedSlowOp {
+    /// Construct `ln(x*x + 1)` despite the historical absolute-value label.
     LnAbsPlusOne,
+    /// Construct the real principal arctangent of the rational input.
     Atan,
+    /// Construct tangent; evaluation still requires a defined argument.
     Tan,
+    /// Construct sine for argument-reduction timing.
     Sin,
+    /// Construct cosine for argument-reduction timing.
     Cos,
 }
 
+/// Dispatch promoted operation labels without approximating the result.
 impl PromotedSlowOp {
+    /// Build the selected expression from an owned source; do not approximate it here.
+    ///
+    /// The logarithm uses a square plus one, which is positive for real inputs.
+    /// Other operations use their native computable constructors and inherit their
+    /// domain/resource requirements; this wrapper performs no validation.
     fn apply(self, value: Computable) -> Computable {
         match self {
             Self::LnAbsPlusOne => value.square().add(Computable::one()).ln(),
@@ -521,6 +625,10 @@ impl PromotedSlowOp {
     }
 }
 
+/// Recognize the five exact `generated_*_p96` operation labels from the history writer.
+///
+/// Other strings return `None`. The `ln_abs_plus_one` label selects `ln(x*x+1)`;
+/// the label itself does not specify an absolute-value construction.
 fn promoted_slow_op_from_report(operation: &str) -> Option<PromotedSlowOp> {
     match operation {
         "generated_ln_abs_plus_one_p96" => Some(PromotedSlowOp::LnAbsPlusOne),
@@ -532,6 +640,19 @@ fn promoted_slow_op_from_report(operation: &str) -> Option<PromotedSlowOp> {
     }
 }
 
+/// Load usable promoted rows from `promoted_slow_offenders.txt` in the current directory.
+///
+/// Unreadable/non-UTF-8 files or no accepted rows return `None`. Blank/comment
+/// lines are skipped. Each other row must contain four tab-separated fields:
+/// operation, generated input, timing text and name. Timing is not parsed; the
+/// name may be empty and includes any further tabs. Seed text is not validated.
+/// Numeric parsing can panic as described by the input parser.
+///
+/// Names are leaked for a static Criterion identifier before operation/input
+/// validation, even for subsequently rejected rows. There is no size bound,
+/// deduplication or uniqueness check; duplicate accepted names may later cause
+/// Criterion registration to panic. A three-field row accepted by the companion
+/// history reader is rejected here.
 fn generated_promoted_library_slow_offenders()
 -> Option<Vec<(&'static str, PromotedSlowOp, Rational)>> {
     let contents = fs::read_to_string("promoted_slow_offenders.txt").ok()?;
@@ -554,6 +675,12 @@ fn generated_promoted_library_slow_offenders()
     (!promoted.is_empty()).then_some(promoted)
 }
 
+/// Use all accepted file rows, or the complete 50-case historical fallback.
+///
+/// Any nonempty loaded list replaces the fallback without backfilling, sorting
+/// or enforcing a 100-case limit. The fallback has 12 `ln(x*x+1)`, 10 atan,
+/// 12 tan, 8 sin and 8 cos cases, all with exact rational inputs. Embedded names
+/// record history; neither ranking nor seed/value consistency is rechecked.
 fn promoted_library_slow_offenders() -> Vec<(&'static str, PromotedSlowOp, Rational)> {
     use PromotedSlowOp::{Atan, Cos, LnAbsPlusOne, Sin, Tan};
 
@@ -815,6 +942,14 @@ fn promoted_library_slow_offenders() -> Vec<(&'static str, PromotedSlowOp, Ratio
     ]
 }
 
+/// Register a batched operation-construction and computable-approximation workload.
+///
+/// Cloning the prepared source happens outside the timed interval; `op` and
+/// `approx(precision)` happen inside. Criterion defers returned integer drops
+/// until after timing, while batch iteration overhead is included. Shared source
+/// and constant caches may be warm. The precision is an absolute binary scale,
+/// not relative accuracy or a total-work bound. Integers are black-boxed without
+/// an independent oracle or cancellation-status check.
 fn bench_approx<F>(
     group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &'static str,
@@ -833,6 +968,12 @@ fn bench_approx<F>(
     });
 }
 
+/// Register one iteration as an entire sweep of operation construction and approximation.
+///
+/// Unlike the batched single-input helper, cloning and result destruction are
+/// inside the timed loop. Inputs are prepared once and can reuse cached work.
+/// No per-element throughput normalization or numerical/cancellation assertion
+/// is performed; `precision` has the same binary-scale meaning as `approx`.
 fn bench_approx_sweep<F>(
     group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &'static str,
@@ -851,6 +992,11 @@ fn bench_approx_sweep<F>(
     });
 }
 
+/// Time an infallible `Real` operation on clones of a prepared exact input.
+///
+/// Batched setup excludes the clone, and returned `Real` drops occur after timing.
+/// The operation and batch overhead are measured; no exact-value or representation
+/// assertion is made, and cloning does not promise empty caches.
 fn bench_real<F>(
     group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &'static str,
@@ -868,6 +1014,11 @@ fn bench_real<F>(
     });
 }
 
+/// Time a fallible `Real` operation without inspecting its returned outcome.
+///
+/// Both `Ok` and `Err` are black-boxed, so a name suggesting a domain error is
+/// not an assertion of that error or its type. Input cloning and returned-result
+/// destruction are outside the batched timing interval. Prepared caches can persist.
 fn bench_real_result<F>(
     group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &'static str,
@@ -885,12 +1036,23 @@ fn bench_real_result<F>(
     });
 }
 
+/// Request ten samples, 100 ms warmup and 400 ms measurement time from Criterion.
+///
+/// These scheduling targets do not impose a hard timeout, operation budget or
+/// memory limit, and smoke mode does not produce statistical timing evidence.
 fn configure_group(group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>) {
     group.sample_size(10);
     group.warm_up_time(Duration::from_millis(100));
     group.measurement_time(Duration::from_millis(400));
 }
 
+/// Publish catalogue metadata and register 19 trig approximation cases at precision -96.
+///
+/// Tiny, medium, million-sized, `10^30` and large pi-offset inputs exercise all
+/// three trig operations. Sine/cosine also use the exact binary value of
+/// `1.23456789_f64`; tangent adds a near-pole and `604/125` case. Sources are
+/// prepared outside the batched operation timing. Report writes obey the shared
+/// writer's guards, but registration and execution are not guarded by this callback.
 fn bench_trig_adversarial(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "adversarial_transcendentals",
@@ -1034,6 +1196,14 @@ fn bench_trig_adversarial(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register 21 inverse-trig and promoted-log measurements.
+///
+/// Asin/acos/atan use zero, tiny and `7/10`; atan also sweeps four anchor-neighbor
+/// values at precisions -32, -96 and -256. Endpoint-neighbor, upper-edge, large,
+/// huge and historical rational cases use -96. The promoted log expression
+/// `ln((677/222)^2+1)` is built before registration and passed to an identity
+/// operation, so that row measures approximation of a retained log, not rebuilding
+/// it. Its numeric cache can be reused. No row establishes a regression assertion.
 fn bench_inverse_trig_adversarial(c: &mut Criterion) {
     let mut group = c.benchmark_group("inverse_trig_adversarial_approx");
     configure_group(&mut group);
@@ -1192,6 +1362,12 @@ fn bench_inverse_trig_adversarial(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register six whole-vector sin/cos/tan workloads at precision -96.
+///
+/// Each operation consumes the 768-expression deterministic sweep and the separate
+/// eight-expression stress list. Source preparation is excluded; each timed
+/// iteration includes every input clone, operation, approximation and result drop.
+/// The name "fuzz" does not imply randomized generation or a numerical oracle.
 fn bench_trig_fuzz_adversarial(c: &mut Criterion) {
     let mut group = c.benchmark_group("trig_fuzz_adversarial_approx");
     configure_group(&mut group);
@@ -1226,6 +1402,13 @@ fn bench_trig_fuzz_adversarial(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register one precision -96 workload per loaded or fallback historical offender.
+///
+/// File loading and rational-source construction happen before timing; source
+/// cloning is batched setup, operation construction and approximation are timed,
+/// and returned integers are dropped afterward. The row count is not fixed at
+/// 100, and the catalogue's aggregate placeholder is never registered. Loader
+/// panics and duplicate Criterion identifiers are not caught here.
 fn bench_promoted_library_slow_offenders(c: &mut Criterion) {
     let mut group = c.benchmark_group("promoted_library_slow_offenders_approx");
     configure_group(&mut group);
@@ -1243,6 +1426,12 @@ fn bench_promoted_library_slow_offenders(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register twelve asinh/acosh/atanh approximation cases at precision -128.
+///
+/// Asinh uses tiny, one-half and signed million-sized arguments; acosh uses
+/// `1+10^-12`, sqrt(2), two and a million; atanh uses tiny, one-half and
+/// `+/- (1-10^-6)`. Exact source construction, including sqrt(2), precedes the
+/// batched timing. Results have no independent accuracy or outcome assertion.
 fn bench_inverse_hyperbolic_adversarial(c: &mut Criterion) {
     let mut group = c.benchmark_group("inverse_hyperbolic_adversarial_approx");
     configure_group(&mut group);
@@ -1344,6 +1533,13 @@ fn bench_inverse_hyperbolic_adversarial(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register eleven structural-value and domain/endpoint `Real` workloads.
+///
+/// Six use familiar exact trig/inverse-trig arguments; four request asin, acos,
+/// atanh or acosh outside the real domain. Their returned values/errors are not
+/// checked. The separate `atanh(1)` case constructs one during untimed setup and
+/// calls `unwrap_err` inside timing: it requires some error but not a particular
+/// `Problem` variant. These timings alone do not certify shortcut correctness.
 fn bench_real_shortcut_adversarial(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_shortcut_adversarial");
     configure_group(&mut group);
@@ -1418,6 +1614,11 @@ criterion_group!(
 );
 criterion_main!(benches);
 
+/// Refresh the catalogue, then invoke the shared final Criterion report callback.
+///
+/// Both writers retain their own skip and I/O-error handling. This callback adds
+/// no numerical validation; missing catalogue matches and report-write failures
+/// are not evidence about successful mathematical completion.
 fn finish_benchmark_report(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "adversarial_transcendentals",
