@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/numerical_micro.rs` | Entire 134-case suite; documented all private helpers, exact chain formulas, timing/cache scope, actual assertions and stale metadata. | All 40 blocks render; both-mode private docs/smoke and before/after 75-record helper replay pass. Two Criterion-generated doc gaps remain. See numerical microbenchmark batch. |
 | `crates/hyperreal/benches/dispatch_trace.rs` | Entire 156-sample diagnostic runner; documented every function, exact fixture formulas, filter/cache/thread scope, omissions and report effects. | All 28 blocks render; supported minimal/all-feature private docs, full before/after reports and complete-snapshot comparisons pass. See Hyperreal dispatch-runner batch. |
 | `crates/hyperreal/benches/adversarial_transcendentals.rs` | Entire six-group benchmark and promoted loader; documented every authored item, exact inputs, timing/cache scope, parser/resource limits and actual row counts. | All 44 blocks render; private docs and 119-case fallback/70-case loaded smoke runs pass in both modes. Two Criterion-generated doc gaps remain. See adversarial-transcendental batch. |
 | `crates/hyperreal/benches/adversarial_library.rs` | Entire collection/history/promotion/score implementation; documented every private item, real timing/output scope, parser loss, leaks, file effects and resource limits. | All 75 blocks render; both-mode docs/compilation and isolated baseline/final fixtures pass. Full numerical collection unrun; two Criterion-generated doc gaps remain. See adversarial-library batch. |
@@ -23315,6 +23316,106 @@ owned scratch executable and combined probe source are removed after checking;
 the shared target is reused with incremental compilation disabled. AGENTS.md
 retains the future-agent public/private/generated 100% Rustdoc mandate. The
 whole-repository line review and coverage objective remains unfinished.
+
+## Numerical microbenchmark audit (2026-11-28)
+
+Baseline: 5fd95c4df on rustdoc. Reviewed all 1,885 baseline lines of
+crates/hyperreal/benches/numerical_micro.rs, including all catalogue entries,
+chain/helper definitions, benchmark closures, assertions and harness/report
+callbacks. The final file has 2,103 lines. Included catalogue/report modules
+have separate prior whole-file records; API/consumer context reads do not add
+whole-file credit for unrelated implementations.
+
+This is Hyperreal benchmark-documentation work under P1/P2 (exact inputs and
+recipe meaning), P3/P4 (query evidence and cache history), P5 (construction and
+precision versus resources), and P6 (unchecked outcomes and unwraps), plus the
+public/private/generated Rustdoc mandate. The missing acceptance witness was
+accurate documentation of every authored item, actual timer scope, mathematical
+fixture definitions and checked versus intended outcomes. Before editing, the
+unchanged all-feature executable completed all 134 cases. Source registration
+and metadata inventories reproduced eleven stale names. No executable tokens,
+metadata strings, input fixtures, assertions or predicate order changed.
+
+Added 40 authored Rustdoc blocks: module overview, two included modules, the
+catalogue constant and all 36 private functions. All descriptions render in
+private HTML and match the declaration inventory. Criterion generates benches
+and main with no attached docblocks; their roles are explained in the module,
+but these two remaining generated gaps are not counted as complete coverage.
+No runtime harness rewrite was made in this docs-only session.
+
+Documented findings and limits:
+
+- Five groups register 134 cases (6 cache, 17 bounds, 10 algebraic-root, 8
+  comparison and 93 transcendental/chain rows). The catalogue also has 134
+  entries, but eleven bounds names differ from actual sign-query identifiers.
+  An absent estimate can reflect that mismatch. Intended cold-cache, node-count,
+  degree-limit, certification and dispatch descriptions are not checked claims.
+- Clone-based cold rows retain source caches; fresh construction also shares
+  constants. Some constructors can evaluate while preparing inputs. Batched
+  setup and returned-output destruction are outside timing. Ordinary iter rows
+  include returned-output destruction. The single scaled-square-root row builds
+  inside its timed closure, while most transcendental batched rows construct
+  their operation during untimed setup. Cached rows explicitly warm before
+  ordinary iteration; callback-level setup can run with row filters applied.
+- Chain documentation gives exact formulas and distinguishes loop iterations
+  from retained graph nodes. Identity multiplication can collapse; add depth
+  5000 represents 5001. Structural-bound iteration is x -> 8/(7*x), alternating
+  pi and 8/(7*pi). Scaled and half-square chains raise their initial scaled pi
+  to 2^depth, which can grow rapidly. Inverse pairs and negate-square-root
+  chains retain pi; sqrt-square chains retain two. Several helpers explicitly
+  warm their source even at depth zero. No helper adds a total resource budget.
+- All scalar fixtures retain exact rationals/symbolic definitions; the f64 trig
+  input means its binary value. Named algebraic cancellation fixtures state
+  their actual root formulas and unwrap failures. Native inverse-function
+  adapters add no domain validation or typed errors, and retain their native
+  resource and construction-evaluation behavior.
+- compare_absolute orders signed values at an absolute tolerance, rather than
+  comparing magnitudes. A tolerance-based Equal result need not prove exact
+  equality. The comparison rows black-box optional orders and toleranced orders
+  without assertions. Interval rows similarly black-box Option results without
+  requiring Some; zero-identity names do not assert a certified zero result.
+- Three pre-registration checks require coarse exp(3/2) at precision 1 to yield
+  integer 2 or 3, coarse expm1(3/2) to yield 1 or 2, and exp(-10000) at -128 to
+  yield zero. Other results are unchecked. Positive precision 1 scales by a
+  half, not by two. Two exp-half/near-limit rows both use exact one-half; ln
+  near-limit uses 47/32, near-pole tangent uses pi/2-1/64, and huge trig uses
+  2^512*pi+7/5. Names alone do not enforce thresholds or a regression policy.
+
+Executed after the final source edit:
+
+- Locked/offline cargo test --bench numerical_micro --no-run and cargo rustdoc
+  --bench numerical_micro --document-private-items with -D warnings and broken/
+  private intra-doc-link lints denied, under --no-default-features and
+  --all-features. Both pass. Matching self/dev externs and dependency paths
+  were supplied from Cargo JSON artifacts because bench rustdoc omits them in
+  this environment; check.py retains exact commands.
+- Original Criterion executables with --test complete all 134 cases in each
+  feature mode. The ordered IDs match the pre-edit baseline, and all three
+  original preparatory assertions remain enabled and pass. No statistical
+  timing or performance claim follows from smoke execution.
+- Isolated baseline/final helper execution replaces only the Criterion harness
+  in a scratch copy and makes included support paths absolute. It compares 75
+  serialized recipes and subsequent approximation/sign results, including
+  fifteen chain generators at depths 0/1/2/6, the cancellation/filter/asymmetric
+  helpers, algebraic fixtures and native adapters. The records are identical.
+  Separate exact expectations assert the depth-5000 sum is 5001, depth-5000
+  one-product is one, forty sqrt-square steps retain two, and the warmed zero
+  sum approximates zero at -128. These finite checks do not prove arbitrary
+  depth behavior or substitute for a general correctness oracle.
+- All 40 rendered descriptions and declarations were inventoried; the two
+  generated doc gaps were inspected in HTML. Metadata versus registration
+  differences are recorded separately. Noncomment-token equality, scoped
+  Rustfmt and git diff --check pass. Repository/crate benchmark report hashes
+  and absence states are unchanged: all executions used a temporary cwd and
+  the existing report-suppression variable.
+
+No focused check remains blocked. Full workflow checks remain waived by the
+owner for this docs-only session. AGENTS.md retains the 100% public/private/
+generated Rustdoc mandate for future agents. Whole-repository review and
+coverage remain unfinished. Evidence is retained under
+/tmp/csgrs-hyperreal-numerical-micro-audit/; the owned compiled probe and combined
+scratch source are removed after checking. The shared target is reused with
+incremental compilation disabled and is about 8.3 GiB.
 
 ## Next work
 

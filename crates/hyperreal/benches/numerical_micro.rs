@@ -1,15 +1,48 @@
+//! Microbenchmarks for native approximation, retained facts and exact scalar recipes.
+//!
+//! Five groups register 134 cases. Rational inputs retain exact values; the trig
+//! binary64 fixture retains its exact binary value rather than the decimal ideal.
+//! Depth parameters count construction iterations, not retained graph nodes:
+//! native simplification can collapse identities and compact scaled chains.
+//!
+//! Batched setup excludes input cloning/construction from timing, except for the
+//! single scaled-square-root case that constructs inside the measured closure.
+//! Returned batched outputs are dropped after timing; ordinary `iter` rows include
+//! output destruction. Cached rows explicitly warm their values, but "cold" labels
+//! do not reset shared source or process-wide constant caches. Constructors can
+//! perform their own evaluation even when no explicit approximation is requested.
+//!
+//! Three pre-registration assertions check coarse exp/expm1 integers and the
+//! very negative exponential case. Other outcomes are black-boxed, including
+//! interval options and sign/comparison results; names do not assert certification,
+//! implementation thresholds or dispatch paths. Precision and loop depth are not
+//! total-work or memory bounds, and the runner adds no cancellation protocol.
+//!
+//! The static catalogue has eleven stale sign-query names. Writers use their own
+//! skip guards; benchmarks and preparatory assertions still run in smoke mode.
+//! Criterion generates `benches` for callbacks and `main` for the harness; those
+//! generated items have no attached Rustdoc here.
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Computable, Rational, Real};
 use num::bigint::{BigInt, BigUint};
 use std::ops::Neg;
 
+/// Publish the static catalogue and available Criterion estimates through the shared writer.
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+/// Aggregate completed Criterion output using the shared report callback and write guards.
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
+/// Describe five groups and 134 intended workloads for the generated catalogue.
+///
+/// Eleven sign-row names differ from registration names, so absent estimates may
+/// reflect a name mismatch rather than missing execution. Descriptions of cold
+/// caches, node counts, certification, algorithm limits and selected paths express
+/// intent, not assertions. In particular, `compare_absolute` uses an absolute
+/// tolerance to order signed values; it does not compare absolute magnitudes.
 const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
     BenchGroupDoc {
         name: "computable_cache",
@@ -579,6 +612,10 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
     },
 ];
 
+/// Build exact `depth + 1` by repeatedly adding one to an initial one.
+///
+/// Depth counts construction iterations; native exact simplification can prevent
+/// a deep retained tree. No approximation or graph-size assertion is made here.
 fn deep_add_chain(depth: usize) -> Computable {
     let mut value = Computable::one();
     for _ in 0..depth {
@@ -587,6 +624,10 @@ fn deep_add_chain(depth: usize) -> Computable {
     value
 }
 
+/// Repeatedly multiply exact one by one, retaining the mathematical value one.
+///
+/// The loop stresses identity construction; it does not ensure a node per step
+/// or perform any approximation.
 fn deep_multiply_chain(depth: usize) -> Computable {
     let mut value = Computable::one();
     for _ in 0..depth {
@@ -595,6 +636,9 @@ fn deep_multiply_chain(depth: usize) -> Computable {
     value
 }
 
+/// Repeatedly multiply pi by one, preserving pi through native identity simplification.
+///
+/// Depth is a construction count, not a promise of retained evaluator depth.
 fn deep_multiply_identity_chain(depth: usize) -> Computable {
     let mut value = Computable::pi();
     for _ in 0..depth {
@@ -603,6 +647,10 @@ fn deep_multiply_identity_chain(depth: usize) -> Computable {
     value
 }
 
+/// Build exact `pi * (7/8)^depth` through repeated rational scaling.
+///
+/// Native normalization can compact the graph; coefficient growth and construction
+/// work have no local bound beyond the supplied iteration count.
 fn deep_scaled_product_chain(depth: usize) -> Computable {
     let scale = Computable::rational(Rational::fraction(7, 8).unwrap());
     let mut value = Computable::pi();
@@ -612,6 +660,10 @@ fn deep_scaled_product_chain(depth: usize) -> Computable {
     value
 }
 
+/// Build exact `(7*pi/8)^(2^depth)` by squaring the initially scaled pi repeatedly.
+///
+/// Even depth zero includes the initial scaling. Exponent/value complexity can
+/// grow rapidly; depth does not bound coefficient size, memory or evaluation work.
 fn scaled_square_chain(depth: usize) -> Computable {
     let scale = Computable::rational(Rational::fraction(7, 8).unwrap());
     let mut value = Computable::pi().multiply(scale);
@@ -621,6 +673,12 @@ fn scaled_square_chain(depth: usize) -> Computable {
     value
 }
 
+/// Warm pi at precision -16, then iterate `x -> 8/(7*x)` via multiply/inverse/negate.
+///
+/// The value is pi at even depth and `8/(7*pi)` at odd depth. The initial
+/// approximation is unconditional and discarded without an accuracy assertion.
+/// Each nonzero iterate admits the inverse; graph simplification and cache reuse
+/// can change the retained shape, and no total-resource contract is added.
 fn deep_structural_bound_chain(depth: usize) -> Computable {
     let scale = Computable::rational(Rational::fraction(-7, 8).unwrap());
     let mut value = Computable::pi();
@@ -631,6 +689,10 @@ fn deep_structural_bound_chain(depth: usize) -> Computable {
     value
 }
 
+/// Warm pi at -16 and repeatedly apply inverse twice, retaining pi.
+///
+/// The warmup occurs even at depth zero. Its result is discarded; inverse-pair
+/// normalization can collapse nodes, so loop count is not graph depth.
 fn deep_inverse_pair_chain(depth: usize) -> Computable {
     let mut value = Computable::pi();
     value.approx(-16);
@@ -640,6 +702,10 @@ fn deep_inverse_pair_chain(depth: usize) -> Computable {
     value
 }
 
+/// Repeat negate, square and principal square root starting from positive pi.
+///
+/// Each iteration mathematically returns pi. This exercises native normalization
+/// rather than guaranteeing a deep graph; the helper requests no approximation.
 fn deep_negated_square_chain(depth: usize) -> Computable {
     let mut value = Computable::pi();
     for _ in 0..depth {
@@ -648,6 +714,9 @@ fn deep_negated_square_chain(depth: usize) -> Computable {
     value
 }
 
+/// Build `(-1)^depth*pi` by successive multiplication by exact minus one.
+///
+/// The sign depends on parity; native simplification can compact the expression.
 fn deep_negative_one_product_chain(depth: usize) -> Computable {
     let minus_one = Computable::rational(Rational::one().neg());
     let mut value = Computable::pi();
@@ -657,6 +726,9 @@ fn deep_negative_one_product_chain(depth: usize) -> Computable {
     value
 }
 
+/// Build exact `pi*2^-depth` by repeated multiplication by one-half.
+///
+/// Construction may compact dyadic scaling; no explicit approximation is requested.
 fn deep_half_product_chain(depth: usize) -> Computable {
     let half = Computable::rational(Rational::fraction(1, 2).unwrap());
     let mut value = Computable::pi();
@@ -666,6 +738,10 @@ fn deep_half_product_chain(depth: usize) -> Computable {
     value
 }
 
+/// Build exact `(pi/2)^(2^depth)` by repeated squaring after one initial half-scale.
+///
+/// Depth zero returns pi/2. Exponential value/representation growth is not limited
+/// by a separate work or allocation budget.
 fn deep_half_square_chain(depth: usize) -> Computable {
     let half = Computable::rational(Rational::fraction(1, 2).unwrap());
     let mut value = Computable::pi().multiply(half);
@@ -675,6 +751,10 @@ fn deep_half_square_chain(depth: usize) -> Computable {
     value
 }
 
+/// Repeat principal square root followed by square starting from exact two.
+///
+/// Every iterate mathematically equals two; native normalization can collapse it.
+/// The helper requests no approximation and does not assert a retained shape.
 fn deep_sqrt_square_chain(depth: usize) -> Computable {
     let mut value = Computable::rational(Rational::new(2));
     for _ in 0..depth {
@@ -683,10 +763,18 @@ fn deep_sqrt_square_chain(depth: usize) -> Computable {
     value
 }
 
+/// Invert the nonzero half-product chain to represent exact `2^depth/pi`.
+///
+/// Construction and evaluation inherit the native chain/inverse resource limits.
 fn inverse_half_product_chain(depth: usize) -> Computable {
     deep_half_product_chain(depth).inverse()
 }
 
+/// Warm `pi+1/1024` at -16, then construct `(pi+1/1024)*(7/8)^depth`.
+///
+/// The initial approximation is unconditional, including at depth zero, and not
+/// validated. Later clones share retained work; native simplification may compact
+/// the construction without changing its exact intended value.
 fn perturbed_scaled_product_chain(depth: usize) -> Computable {
     let scale = Computable::rational(Rational::fraction(7, 8).unwrap());
     let epsilon = Computable::rational(Rational::fraction(1, 1024).unwrap());
@@ -698,18 +786,29 @@ fn perturbed_scaled_product_chain(depth: usize) -> Computable {
     value
 }
 
+/// Construct exact `pi^2 - (29/21)*e` for the precision-zero sign workload.
+///
+/// This helper does not establish which filter will decide the resulting sign.
 fn mixed_pi_e_filter_expression() -> Computable {
     Computable::pi()
         .square()
         .add(Computable::e().multiply(Computable::rational(-Rational::fraction(29, 21).unwrap())))
 }
 
+/// Construct exact `pi - 103993/33102` for close sign-query workloads.
+///
+/// Neither a particular decision path nor inconclusiveness at precision zero is
+/// asserted; shared constant caches can carry earlier work.
 fn near_pi_filter_expression() -> Computable {
     Computable::pi().add(Computable::rational(
         -Rational::fraction(103_993, 33_102).unwrap(),
     ))
 }
 
+/// Construct `sin(1/3) - 1095149352672539061/3347087722986034159` exactly.
+///
+/// This cancellation fixture is queried at floors zero and -64. "Unsupported" is
+/// a historical workload name, not an assertion about current decision support.
 fn unsupported_sin_difference_expression() -> Computable {
     let one_third = Rational::fraction(1, 3).unwrap();
     let near_sine =
@@ -719,12 +818,20 @@ fn unsupported_sin_difference_expression() -> Computable {
         .add(Computable::rational(-near_sine))
 }
 
+/// Construct a selected real degree-th root of an exact word-sized rational.
+///
+/// Zero denominators and `Real::root_n` errors panic through unwrap. Branch/domain
+/// selection follows that API, with no added work budget or floating conversion.
 fn algebraic_root(numerator: i64, denominator: u64, degree: u32) -> Real {
     Real::new(Rational::fraction(numerator, denominator).unwrap())
         .root_n(degree)
         .unwrap()
 }
 
+/// Build `3*sqrt(cbrt(5)-cbrt(4)) - (cbrt(2)+cbrt(20)-cbrt(25))`.
+///
+/// This first Ramanujan zero-identity fixture retains real roots for the -2048
+/// sign workload. Root errors panic; the benchmark does not assert the sign result.
 fn ramanujan_one_identity() -> Real {
     Real::from(3_i32)
         * (algebraic_root(5, 1, 3) - algebraic_root(4, 1, 3))
@@ -733,11 +840,20 @@ fn ramanujan_one_identity() -> Real {
         - (algebraic_root(2, 1, 3) + algebraic_root(20, 1, 3) - algebraic_root(25, 1, 3))
 }
 
+/// Build `cbrt(cbrt(2)-1) - (cbrt(1/9)-cbrt(2/9)+cbrt(4/9))`.
+///
+/// This nested Ramanujan zero-identity fixture uses real cube roots. Root errors
+/// panic; the later sign-query result is black-boxed without a zero assertion.
 fn ramanujan_two_identity() -> Real {
     (algebraic_root(2, 1, 3) - Real::one()).root_n(3).unwrap()
         - (algebraic_root(1, 9, 3) - algebraic_root(2, 9, 3) + algebraic_root(4, 9, 3))
 }
 
+/// Build the Many Digits C10 cancellation fixture from real cube and fifth roots.
+///
+/// For `r = 2^(1/5)`, the exact expression is
+/// `cbrt(7+r-5*r^3) + r^2 - r - 1`. Root errors panic; the benchmark does not
+/// assert that the later query proves this zero identity.
 fn many_digits_c10_identity() -> Real {
     let fifth_root_two = algebraic_root(2, 1, 5);
     (Real::from(7_i32) + fifth_root_two.clone() - Real::from(5_i32) * algebraic_root(8, 1, 5))
@@ -748,35 +864,67 @@ fn many_digits_c10_identity() -> Real {
         - Real::one()
 }
 
+/// Build exact `2^(1/8) - 1199025932245/2^40` for a close sign query.
+///
+/// The dyadic is subtracted without rounding the selected root; the later -64
+/// query is measured without asserting a particular sign or certificate.
 fn eighth_root_near_dyadic() -> Real {
     algebraic_root(2, 1, 8)
         - Real::new(Rational::fraction(1_199_025_932_245_i64, 1_u64 << 40).unwrap())
 }
 
+/// Invert the nonzero scaled product to represent exact `(8/7)^depth/pi`.
+///
+/// The native inverse and source chain retain their resource limitations.
 fn inverse_scaled_product_chain(depth: usize) -> Computable {
     deep_scaled_product_chain(depth).inverse()
 }
 
+/// Forward a caller-admitted `[-1,1]` input to native principal arcsine.
+///
+/// This benchmark adapter adds no validation, approximation or typed error result;
+/// construction inherits the native method's reduction and resource behavior.
 fn computable_asin(value: Computable) -> Computable {
     value.asin()
 }
 
+/// Forward a caller-admitted `[-1,1]` input to native principal arccosine.
+///
+/// This adapter adds no domain check or typed error and makes no explicit
+/// approximation request; native construction and resource behavior still apply.
 fn computable_acos(value: Computable) -> Computable {
     value.acos()
 }
 
+/// Forward a defined finite real input to native inverse hyperbolic sine.
+///
+/// The adapter adds no explicit approximation, but native construction may evaluate
+/// the source to choose a reduction. It adds no error or total-resource contract.
 fn computable_asinh(value: Computable) -> Computable {
     value.asinh()
 }
 
+/// Forward a caller-admitted real input at least one to native principal acosh.
+///
+/// There is no adapter validation or typed failure. Native construction may evaluate
+/// the source; its signal and resource behavior is inherited.
 fn computable_acosh(value: Computable) -> Computable {
     value.acosh()
 }
 
+/// Forward a caller-admitted input in `(-1,1)` to native real atanh.
+///
+/// The adapter adds no validation, typed failure or explicit approximation request;
+/// native reduction and resource limitations remain applicable.
 fn computable_atanh(value: Computable) -> Computable {
     value.atanh()
 }
 
+/// Build exact `pi^2*(7/8)^50*2^200`, placing the small factor before the large one.
+///
+/// The `2^200*pi` factor is warmed at -16 before multiplication. The historical
+/// "bad order" label does not assert a slower path or a particular current
+/// scheduler; source construction and this warmup precede the benchmark timing.
 fn asymmetric_product_bad_order() -> Computable {
     let small = deep_scaled_product_chain(50);
     let large_scale = Computable::rational(Rational::from_bigint(BigInt::from(1_u8) << 200));
@@ -785,12 +933,23 @@ fn asymmetric_product_bad_order() -> Computable {
     small.multiply(large)
 }
 
+/// Construct exact `pi-pi`, request precision -128, and retain the resulting source.
+///
+/// The approximation is discarded without asserting zero. The later benchmark
+/// multiplies this warmed source by pi; known cancellation may already simplify it.
 fn warmed_zero_sum() -> Computable {
     let zero = Computable::pi().add(Computable::pi().negate());
     zero.approx(-128);
     zero
 }
 
+/// Publish metadata and register six retained-source approximation workloads at -128.
+///
+/// Inputs are exact `355/113`, pi and `pi +/- 2^-200`. "Cold" rows clone the same
+/// prepared source in untimed batched setup; caches are not reset. Cached ratio/pi
+/// rows explicitly approximate once before ordinary `iter` timing. Batched integer
+/// drops occur afterward, while ordinary rows include them. Results are unchecked;
+/// the report writer's skip guard does not skip the benchmark callback.
 fn bench_computable_cache(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "numerical_micro",
@@ -850,6 +1009,17 @@ fn bench_computable_cache(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register seventeen bounded sign/structural-fact workloads with distinct setup histories.
+///
+/// Depth-200 scaled, structural and perturbed chains, a six-square value, its root,
+/// `pi-2^-200` and `exp(1-pi)` use retained sources and mostly -2000 sign floors;
+/// the perturbed source also uses -128. Cached sign/fact rows explicitly query
+/// before timing. The last five rows rebuild mixed pi/e, close pi/rational or
+/// sine-difference fixtures in untimed setup and query at zero or -64.
+///
+/// Batched setup may itself evaluate; shared constants can remain warm. Neither
+/// sign outcomes, uncertainty, fact contents nor selected dispatch are asserted.
+/// Eleven catalogue names are stale relative to the registered sign-query names.
 fn bench_computable_bounds(c: &mut Criterion) {
     let mut group = c.benchmark_group("computable_bounds");
 
@@ -982,6 +1152,17 @@ fn bench_computable_bounds(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register ten real-root construction, interval and sign-query workloads.
+///
+/// The construction row times and drops `17^(1/5)`. Batched interval rows construct
+/// fifth/ninth roots of 17 outside timing, then request -128 or -2048 intervals;
+/// the tenth root requests -128. Other rows prepare the eighth-root/dyadic
+/// difference or three nested identities outside timing and measure sign queries.
+///
+/// Interval options and sign results are black-boxed without requiring successful
+/// certification. Historical degree-cap/fallback labels do not assert the current
+/// representation or dispatch. Construction can establish facts before the timer;
+/// shared constants and native resource limitations remain in scope.
 fn bench_computable_algebraic_roots(c: &mut Criterion) {
     let mut group = c.benchmark_group("computable_algebraic_roots");
 
@@ -1055,6 +1236,16 @@ fn bench_computable_algebraic_roots(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register eight signed-order queries on retained exact/native expressions.
+///
+/// The first three use optional comparison for opposite signs, a `2^200` scale
+/// gap and a shared composite node. Others use absolute tolerance -40, except
+/// `pi+2^-200` versus pi at -128. "Absolute" describes the tolerance, not operand
+/// magnitudes, and an `Equal` fallback need not certify exact equality.
+///
+/// Operands are prepared once; the scale-gap source is explicitly warmed at -16.
+/// One row constructs the one leaf inside timing. Outcomes are black-boxed without
+/// assertions, so names do not certify a shortcut, sign or equality result.
 fn bench_computable_compare(c: &mut Criterion) {
     let mut group = c.benchmark_group("computable_compare");
     let minus_pi = Computable::pi().negate();
@@ -1119,6 +1310,29 @@ fn bench_computable_compare(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register 93 approximation/construction rows and check three preliminary integer results.
+///
+/// Most kernels use precision -128; trig/inverse-trig rows use -96, and coarse
+/// exp/expm1 rows use positive precision 1. Preparation asserts the scaled
+/// exp(3/2)/2 approximation is 2 or 3, expm1(3/2)/2 is 1 or 2, and
+/// exp(-10000) at -128 yields integer zero. These finite checks do not validate
+/// other outcomes or enforce any particular internal path.
+///
+/// Most batched rows construct the operation in untimed setup and time only
+/// approximation; prepared-chain rows clone retained objects. Cached rows warm
+/// explicitly and use ordinary `iter`. The deferred-exp constructor row measures
+/// cloning/construction/destruction, while the single scaled-square-root row
+/// constructs and approximates inside its measured closure. Batched returned
+/// integer drops are deferred. Rebuilding does not clear shared constant caches.
+///
+/// The two exp-half/near-limit rows both use exact one-half; ln near-limit uses
+/// 47/32. Near-pole tangent uses `pi/2-1/64`, and huge trig uses `2^512*pi+7/5`.
+/// Inverse trig uses 7/10, zero and exact endpoint neighbors; asinh/atanh use
+/// one-half and acosh uses two, with additional tiny/endpoint cases. Identity
+/// chains use 5000 iterations, products/inverse pairs 200, squarings six and
+/// root-square normalizations forty. Those counts do not establish graph depth.
+/// Callback-level construction, warmups and assertions still run with row filters;
+/// there is no independent oracle for the remaining black-boxed results.
 fn bench_computable_transcendentals(c: &mut Criterion) {
     let mut group = c.benchmark_group("computable_transcendentals");
     let p = -128;
@@ -1875,6 +2089,10 @@ criterion_group!(
 );
 criterion_main!(benches);
 
+/// Refresh the catalogue, then delegate final Criterion reporting to the shared writer.
+///
+/// Each writer keeps its own skip and I/O-error handling. This callback supplies
+/// no numerical validation, count reconciliation or successful-write guarantee.
 fn finish_benchmark_report(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "numerical_micro",
