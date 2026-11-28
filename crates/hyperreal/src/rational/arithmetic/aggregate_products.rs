@@ -4673,17 +4673,24 @@ impl Rational {
         Some(positive.0.iter().rev().cmp(negative.0.iter().rev()))
     }
 
-    /// Evaluate a signed product sum when every live factor shares one
-    /// reduced denominator.
+    /// Attempt an exact signed product sum with one stored denominator for all live factors.
     ///
-    /// The caller is expected to have carried an object-level common-scale
-    /// certificate, but this method still validates the denominator fact before
-    /// using it. Returning `None` means the certificate was too weak for this
-    /// particular product shape, so callers should fall back to
-    /// [`Self::signed_product_sum`]. Keeping the validation in `Rational`
-    /// preserves scalar storage ownership while giving geometric kernels a
-    /// denominator-specialized schedule. The final delayed reduction uses the
-    /// same fraction-delay strategy as the generic reducer.
+    /// Each row is a product, added for true polarity and subtracted for false.
+    /// Checks equality of every live factor's stored denominator, not merely the
+    /// product denominators or canonical values. Zero products are skipped before
+    /// that check. Valid unreduced storage is accepted without canonicalizing it;
+    /// equal values in different representations can have different eligibility.
+    ///
+    /// None means a denominator mismatch, or a factor count outside u32 after the
+    /// native path declines. Callers can use signed_product_sum for general exact
+    /// evaluation. An empty sum or all-zero terms return Some(zero). Zero-factor
+    /// products are one and delegate to the general reducer with their polarities.
+    ///
+    /// After validation, tries checked native reduction, then accumulates unsigned
+    /// BigUint totals over the common denominator raised to FACTORS and reduces
+    /// once. Intermediate integer growth, const-sized arrays and allocation have
+    /// no local work/memory/cancellation limit. A compact decline is not exhaustion
+    /// or evidence that the exact result does not exist.
     pub fn signed_product_sum_shared_denominator<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
@@ -4748,11 +4755,17 @@ impl Rational {
         ))
     }
 
-    /// Return the exact arithmetic mean of borrowed rationals, reducing once.
+    /// Return the exact arithmetic mean of a nonempty slice of borrowed rationals.
     ///
-    /// The denominator schedule is built across the complete input before the
-    /// final division by the number of values. This avoids reducing every
-    /// partial sum and then reducing the quotient again.
+    /// None means the slice is empty. The divisor is the complete slice length,
+    /// including zero entries. Canonicalizes lazy operands before choosing a
+    /// common dyadic, equal-denominator or LCM schedule; all-zero input succeeds
+    /// as canonical zero. Accumulates signed integer magnitudes before final
+    /// reduction instead of constructing every partial rational sum.
+    ///
+    /// Input canonicalization may itself reduce and warm caches, so this is not
+    /// a promise of one GCD for the entire call. Large denominators and totals
+    /// allocate without a total-work, memory or cancellation budget.
     pub fn mean_refs(values: &[&Self]) -> Option<Self> {
         if values.is_empty() {
             return None;
@@ -4761,12 +4774,17 @@ impl Rational {
         Some(Self::sum_refs_with_denominator_factor(values, &count))
     }
 
-    /// Return the exact arithmetic mean of three borrowed rationals.
+    /// Return (a+b+c)/3 using a fixed three-value exact denominator schedule.
     ///
-    /// The fixed-size schedule avoids constructing a potentially expensive
-    /// pairwise LCM before the final reduction. This is useful for geometric
-    /// centroids whose projective coordinates often carry large, related
-    /// denominators.
+    /// Canonicalizes all operands, then returns zero for three zeros. If all live
+    /// denominators agree, sums magnitudes over three times that denominator;
+    /// otherwise multiplies all three denominators and scales each numerator by
+    /// the other two. Zero entries still count in the divisor three.
+    ///
+    /// This centroid-oriented schedule avoids a preliminary LCM calculation but
+    /// can build a larger product denominator. It does not choose the general
+    /// mean's dyadic alignment path. Lazy input reduction and final reduction can
+    /// allocate; no measured speed claim or local resource bound is implied.
     pub fn mean3_refs(values: [&Self; 3]) -> Self {
         let values = values.map(Self::canonicalized_ref);
         let mut live_count = 0_usize;
@@ -4827,6 +4845,19 @@ impl Rational {
         Self::from_signed_magnitude_difference(positive, negative, denominator)
     }
 
+    /// Evaluate the exact sum of borrowed rationals divided by a positive integer factor.
+    ///
+    /// The mean caller supplies its nonzero input count. Canonicalizes operands
+    /// while recognizing live denominators, then tries dyadic alignment, equal
+    /// denominators and an LCM in that order. Zero terms do not enlarge the common
+    /// denominator. Accumulates positive/negative magnitudes and multiplies the
+    /// final denominator by factor before reducing the result.
+    ///
+    /// The caller must establish factor > 0; it is not validated at entry. Empty,
+    /// all-zero or cancelling sums can return zero even for an invalid zero factor,
+    /// while a nonzero result can retain an invalid zero denominator. Repeated
+    /// canonicalized views can reuse input caches. BigUint shifts, LCM work and
+    /// retained/temporary allocations have no local budget or cancellation check.
     fn sum_refs_with_denominator_factor(values: &[&Self], factor: &BigUint) -> Self {
         let mut live_count = 0_usize;
         let mut common_dyadic_shift = Some(0_u64);
@@ -4934,18 +4965,18 @@ impl Rational {
         Self::from_signed_magnitude_difference(positive, negative, common_denominator)
     }
 
-    /// Evaluate a fixed-size signed sum of products exactly.
+    /// Evaluate two signed products of two borrowed rational factors exactly.
     ///
-    /// Each row in `terms` is multiplied, then added or subtracted according to
-    /// the matching entry in `positive_terms`. The implementation delays
-    /// rational reduction until the final sum and has structural fast paths for
-    /// dyadic and equal-denominator products. This is the scalar reducer that
-    /// geometry crates use for small determinant schedules while preserving
-    /// their abstraction boundary: they pass a known polynomial shape, but do
-    /// not inspect `Rational` storage internals.
+    /// True polarity adds and false subtracts the corresponding product. Computes
+    /// full structural signs, first attempts the shared checked native reducer,
+    /// then delegates unchanged inputs to signed_product_sum. Native overflow or
+    /// representation ineligibility therefore preserves general exact evaluation;
+    /// zero terms and valid unreduced operands remain supported.
     ///
-    /// The fraction-delay strategy keeps algebraic object shape visible before
-    /// scalar expansion.
+    /// Distinct dispatch events report native success or fallback. This entry
+    /// point lets small determinant and complex-arithmetic consumers select their
+    /// fixed shape without inspecting scalar storage. Arbitrary-precision fallback
+    /// is unbudgeted and may allocate; it does not approximate the result.
     pub fn signed_product_sum2(
         positive_terms: [bool; 2],
         terms: [[&Self; 2]; 2],
@@ -4962,12 +4993,17 @@ impl Rational {
         Self::signed_product_sum(positive_terms, terms)
     }
 
-    /// Evaluate a signed sum of two-factor dyadic products exactly.
+    /// Evaluate a signed sum of two-factor products under a dyadic-input proof.
     ///
-    /// The caller must have already proved that every factor is dyadic. This
-    /// avoids making general exact-rational product sums repeatedly inspect
-    /// denominators just to discover that the dyadic schedule does not apply.
-    #[doc(hidden)]
+    /// Canonicalizes every factor, computes full term signs and uses the dyadic
+    /// dot-product schedules, including arbitrary-precision fallback when compact
+    /// widths fail. True polarity adds and false subtracts. Empty or all-zero
+    /// terms return exact zero; no denominator check is needed for inactive terms.
+    ///
+    /// The caller must establish dyadic factors. An active non-dyadic factor panics
+    /// when admission declines, even if cancellation would make the final sum zero;
+    /// this is not a checked general-rational entry point. Canonicalization and wide
+    /// arithmetic can allocate and have no local work or cancellation budget.
     pub fn signed_product_sum_known_dyadic<const TERMS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
@@ -4985,6 +5021,22 @@ impl Rational {
         .expect("known-dyadic product sum received a non-dyadic factor")
     }
 
+    /// Divide two exact rationals whose dyadic classification is already established.
+    ///
+    /// Canonicalizes both inputs, rejects a zero divisor with DivideByZero, then
+    /// returns zero for a zero numerator. Only afterward queries dyadic exponents;
+    /// an active non-dyadic operand violates the caller's proof and panics. Thus
+    /// zero-over-non-dyadic can return zero without validating that classification.
+    ///
+    /// First tries native magnitude cancellation and a signed binary-scale
+    /// difference fitting i32. On decline, cancels the arbitrary-precision
+    /// magnitude GCD and shifts the appropriate quotient part by the exponent
+    /// difference. Canonical dyadic inputs justify publishing reduced output.
+    /// Distinct dispatch events identify native and wide cross-cancellation.
+    ///
+    /// Shift conversion assumes usize fit. Input canonicalization, magnitude GCD
+    /// and shifted output allocation have no total-work, memory or cancellation
+    /// budget; compact ineligibility does not become a typed resource error.
     pub(crate) fn quotient_known_dyadic(
         numerator: &Self,
         denominator: &Self,
@@ -5045,6 +5097,23 @@ impl Rational {
         ))
     }
 
+    /// Materialize a dyadic quotient using the caller's already proved magnitude GCD.
+    ///
+    /// Inputs must be canonical dyadics with nonzero denominator. The supplied
+    /// shifts must describe those exact operands, denominator_word must equal the
+    /// denominator's numerator magnitude, and divisor must be their positive complete
+    /// magnitude GCD. This helper neither rediscovers that proof nor validates it
+    /// generally; debug checks on the native path are only partial safeguards.
+    ///
+    /// Attempts native cancellation/scaling first and returns true in the second
+    /// tuple slot on success. Otherwise divides the stored numerator and native
+    /// denominator magnitude by divisor, applies the exponent difference, and
+    /// publishes reduced parts with false. A zero numerator can use the native
+    /// zero shortcut. Invalid proof data can cause truncating division, invalid
+    /// reduced storage or a panic, not a typed domain error.
+    ///
+    /// The wide branch records a temporary, assumes shifts fit usize and has no
+    /// allocation budget. The caller owns the quotient dispatch event.
     fn quotient_known_dyadic_with_word_divisor(
         numerator: &Self,
         denominator: &Self,
@@ -5086,6 +5155,19 @@ impl Rational {
         )
     }
 
+    /// Divide a nonzero normalized six-limb dyadic sum using a proved native GCD.
+    ///
+    /// The divisor's sign must be nonzero, its magnitude denominator_word positive,
+    /// and denominator_shift must describe its dyadic value. divisor is the exact
+    /// positive GCD of the numerator magnitude and denominator_word. These are
+    /// caller proofs; debug assertions check only selected nonzero/divisibility
+    /// conditions, not a complete admission contract.
+    ///
+    /// Tries native cancellation/scaling, otherwise materializes the numerator
+    /// limbs, divides both magnitudes by divisor and applies the exponent difference
+    /// before publishing reduced parts. No Rational numerator need be constructed
+    /// first. Invalid proof data can panic or publish incorrect/unreduced storage.
+    /// Wide shifts assume usize fit and can allocate without a resource budget.
     fn quotient_dyadic_stack_sum_with_word_divisor(
         numerator: DyadicStackSum,
         denominator_sign: Sign,
@@ -5126,6 +5208,18 @@ impl Rational {
         Self::from_parts_raw(numerator.sign * denominator_sign, magnitude, scale)
     }
 
+    /// Materialize a retained nonzero dyadic sum divided by a native dyadic divisor.
+    ///
+    /// Requires consistent normalized numerator metadata, a nonzero denominator
+    /// sign, positive denominator_word and its correct binary exponent. Tries the
+    /// native unreduced quotient constructor, then forms the magnitude ratio with
+    /// its exponent difference using BigUint parts. It does not compute a general
+    /// magnitude GCD; common odd factors may remain until canonical observation.
+    ///
+    /// The result remains an exact Rational with unreduced provenance where needed.
+    /// Zero numerators must be handled by the caller. Invalid denominator metadata
+    /// is an invariant violation, not a typed DivideByZero result. Wide shifts
+    /// assume usize fit and have no allocation or cancellation budget.
     fn quotient_dyadic_stack_sum_unreduced(
         numerator: DyadicStackSum,
         denominator_sign: Sign,
@@ -5164,6 +5258,13 @@ impl Rational {
         )
     }
 
+    /// Materialize a nonzero four-limb magnitude as a BigUint.
+    ///
+    /// Finds the highest nonzero u64 limb, writes low/high u32 digits in little-endian
+    /// order and removes the final high zero digit if present. Sign and binary
+    /// exponent are ignored; this is a magnitude conversion, not validation of a
+    /// dyadic value. All-zero limbs panic. The digit vector holds at most eight
+    /// entries, and the returned BigUint owns its digit storage.
     fn dyadic_wide_magnitude(value: DyadicWideWord) -> BigUint {
         let last = value
             .magnitude
@@ -5181,6 +5282,19 @@ impl Rational {
         BigUint::new(digits)
     }
 
+    /// Materialize a quotient of retained four-limb dyadic values.
+    ///
+    /// The caller must establish consistent signs/magnitudes and a nonzero divisor.
+    /// A zero numerator returns canonical zero after the denominator-sign debug
+    /// assertion. Nonzero inputs become BigUint magnitudes, with the exponent
+    /// difference applied to the numerator or denominator as appropriate.
+    ///
+    /// With unreduced=true, retains exact possibly noncoprime parts for lazy
+    /// canonicalization and records a temporary. Otherwise the general fraction
+    /// constructor fully reduces; its error is treated as a violated nonzero
+    /// determinant invariant. This helper does not provide typed domain failure.
+    /// Shift conversion assumes usize fit; four input limbs do not bound shifted
+    /// output allocation, reduction work or cancellation latency.
     fn quotient_dyadic_wide_words(
         numerator: DyadicWideWord,
         denominator: DyadicWideWord,
@@ -5213,6 +5327,18 @@ impl Rational {
         }
     }
 
+    /// Form a lazy exact quotient from a six-limb numerator and four-limb divisor.
+    ///
+    /// Used to materialize an affine coordinate whose common determinant remains
+    /// retained. Requires consistent nonzero numerator and denominator values;
+    /// zero coordinates are handled before calling. Converts both magnitudes,
+    /// applies their binary exponent difference and stores unreduced rational
+    /// parts without a general GCD, retaining the need for later canonicalization.
+    ///
+    /// Invalid signs or zero magnitudes violate constructor invariants rather than
+    /// returning a typed error. Shifts must fit usize. Compact inputs do not bound
+    /// shifted output allocation or the eventual reduction, and no work/memory/
+    /// cancellation budget is enforced here.
     fn quotient_dyadic_stack_sum_by_wide_unreduced(
         numerator: DyadicStackSum,
         denominator: DyadicWideWord,

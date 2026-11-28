@@ -25651,6 +25651,115 @@ compilation disabled. AGENTS.md already retains the 100% public/private/generate
 Rustdoc mandate. Remaining reducers, generated-item coverage and repository-wide
 line review are unfinished; continue at signed_product_sum_shared_denominator.
 
+## Means, common-factor denominators and retained quotients batch (partial file)
+
+Scope and admission witness:
+
+- Reviewed every line of crates/hyperreal/src/rational/arithmetic/
+  aggregate_products.rs from the shared-denominator
+  product-sum documentation through quotient_dyadic_stack_sum_by_wide_unreduced:
+  baseline 14e120eec lines 4676–5241, final lines 4676–5367. The complete file
+  grows from 6429 to 6555 lines. Thirteen methods are covered, including private
+  and crate-visible helpers; line-intersection consumers after this section
+  remain pending rather than implicitly receiving whole-file review credit.
+- Owning layer: Hyperreal exact scalar arithmetic, P1 and P3–P7. Domains include
+  finite rational means, signed products with common stored denominators,
+  canonical dyadics and retained six-/four-limb quotients with caller-proved
+  divisor metadata. Read constructors, canonicalization, parameterized-point
+  consumers and Hyperlattice homogeneous-to-affine conversion as context.
+- Missing acceptance evidence was rendered semantic coverage of private helpers
+  and accurate public admission, zero, normalization and allocation contracts.
+  In particular, the existing common-denominator description said reduced
+  denominator although implementation compares stored factor denominators.
+  Existing mean tests compare wrappers of exact arithmetic; independent
+  Fraction expectations supplement rather than replace their assertions.
+- Revised/added thirteen descriptions and removed the known-dyadic product-sum
+  entry point's doc(hidden). Token equality allows only that one documentation
+  attribute removal. No implementation, predicate order, fixture or assertion
+  changed, and no broader hidden/generated API is certified by this batch.
+
+Established behavior and limits:
+
+- Shared-denominator admission checks every live factor's stored denominator,
+  not equality of whole product denominators or canonical values. Valid marked
+  unreduced fractions can qualify. Zero terms skip their denominator checks;
+  empty sums return zero and zero-factor products represent signed ones. After
+  native decline the common denominator is raised to FACTORS, requiring a u32
+  exponent. A mismatch or that representation limit returns None for caller
+  fallback, not proof of no result or actual resource exhaustion.
+- Slice means return None only for empty input, count zeros in their divisor,
+  and canonicalize before dyadic/equal-denominator/LCM selection. Three-value
+  means instead choose equal live denominators or a direct product denominator,
+  always dividing by three. Avoiding an initial LCM is not a measured speed
+  advantage, and lazy canonicalization can itself reduce before final reduction.
+- The private scaled-sum helper requires a positive factor. Its only current
+  caller supplies the positive count after checking for empty input. Deliberate
+  private misuse shows factor zero can return zero for empty/cancelling sums or
+  store raw 1/0 for a nonzero sum. The initial probe's expected panic was rejected
+  by actual execution and corrected; documentation records trust in the caller
+  rather than inventing an entry validation check. This is not a valid-public-
+  input regression or permission to weaken the normative typed-failure contract.
+- Fixed two-by-two sums try native arithmetic then the general exact reducer.
+  Known-dyadic sums canonicalize all factors but only admit live terms; inactive
+  non-dyadic factors can be ignored, whereas active non-dyadic terms panic even
+  if cancellation would make their sum zero. Quotient_known_dyadic checks zero
+  denominator before zero numerator, then dyadic classification. Thus 0/0 is
+  DivideByZero and zero over a non-dyadic nonzero value returns zero without a
+  classification check. These shortcut observations do not replace caller proofs.
+- Quotient helpers with a supplied divisor require its complete magnitude GCD,
+  correct exponents, matching denominator magnitude and consistent normalized
+  input metadata. Partial debug assertions are not full validation. Native
+  success flags identify the construction path, not a precision qualification.
+  Wider paths can publish reduced parts only because their caller proofs imply
+  coprimality; fabricated metadata can truncate or corrupt those invariants.
+- Retained unreduced quotients preserve exact fractions while postponing general
+  GCD reduction. Wide-word conversion ignores sign/exponent and requires nonzero
+  limbs. The four-limb quotient can choose full reduction or lazy storage; the
+  six-by-four coordinate quotient retains lazy parts. Fixed input widths do not
+  bound shifted output allocation or later reduction work. No local total-work,
+  memory or cancellation budget was added or established.
+
+Verification:
+
+- Final locked/offline focused Hyperreal tests pass: nine library test executions
+  without default features and eleven with all features. Coverage includes both
+  mean schedules, shared-factor admission, lazy boundary canonicalization,
+  parameterized points, wide retained intersections and the existing 38,400-case
+  dyadic quotient comparison plus its wide fixtures. All-feature trace tests
+  cover deferred coordinate canonicalization and native/wide quotient routes;
+  the corresponding zero-match no-default invocation is not counted.
+- Private cargo doc builds pass in both configurations with warnings and
+  broken/private intra-doc links denied. The inventory matches all thirteen
+  complete descriptions and method anchors. Public all-feature docs expose the
+  formerly hidden known-dyadic sum. No doctests were added; zero-match doctest
+  commands do not count as acceptance evidence.
+- The Hyperreal determinant_product_cancellation integration test for empty
+  product identities passes in both feature configurations. The all-feature
+  Hyperlattice wide_dyadic_affine_point_matches_independent_exact_division test
+  passes, exercising the quotient consumer beyond its owning crate.
+- The isolated private probe has 227 byte-identical baseline/final records:
+  72 mean triples, eight slice lengths, 64 common-factor product sums, 72 compact
+  quotient cases, eight wide quotient cases and three boundary/precondition
+  records. Shared-denominator admission completes 56 cases and declines eight;
+  48 compact quotient cases take native construction. Complete traces agree for
+  mean triples, shared-denominator sums and compact quotient calls.
+- Independent Python Fraction arithmetic checks every admitted mean/product/
+  quotient result, representation-based admission, full reduced-output
+  coprimality and native quotient eligibility. Private invalid-factor and
+  classification probes remain separate from admitted exact completion.
+  These finite checks do not prove universal closure or formal correctness.
+- Declaration/render inventory, executable-token equality and git diff --check
+  pass. Full workflows, formatting, formal verification and performance checks
+  remain waived by the owner for this docs-only session. No runtime performance
+  or resource-completeness claim is made.
+
+Evidence remains under /tmp/csgrs-hyperreal-means-quotients-audit/. Owned probe
+source/executables are removed and records compressed after checking; shared
+Cargo output is reused without incremental compilation. AGENTS.md already
+contains the public/private/generated 100% Rustdoc mandate. Continue at
+line_intersection2_point_known_dyadic; the rest of this file and the repository-
+wide line review remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
