@@ -1,14 +1,48 @@
+//! Measure public rational, exact-real and parsed-expression workflows.
+//!
+//! This `simple`-feature benchmark registers 176 cases in nineteen groups, with
+//! 175 static catalogue entries. Inputs are exact rational/symbolic constructions;
+//! formatting explicitly produces approximate decimal/scientific strings. Most
+//! rows measure construction or a query without materializing a numeric enclosure
+//! or testing the exact resulting value. Successful unwrapping checks `Ok`, and
+//! error rows check `Err`, but neither establishes the expected value/error variant.
+//!
+//! Batched setup excludes prepared-input cloning, vector generation and expression
+//! parsing from timing. Its returned outputs are dropped afterward; consumed input
+//! destruction can occur inside the routine. Ordinary `iter` rows include their
+//! in-loop construction and output destruction. Shared source/constant caches can
+//! survive cloning or fresh wrappers, so no global cold-state guarantee is made.
+//! The constructor's own validation/refinement remains part of the called method.
+//!
+//! The nested-radical equality row black-boxes an optional boolean without asserting
+//! true. The parsed error bundle short-circuits at its first error. Resource-limit
+//! and algorithm-path labels are not runtime assertions, and configured precision
+//! or fixed inputs do not supply a total work, memory or cancellation contract.
+//!
+//! Catalogue/report callbacks retain their own write guards; suppressing writes
+//! does not skip workload setup. Criterion generates `benches` and `main` to invoke
+//! the callbacks and run the harness; neither generated item has attached Rustdoc
+//! here. These finite benchmarks do not establish public-API completeness.
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Rational, Real, Simple};
 use num::bigint::BigInt;
 
+/// Publish static workload descriptions and matching Criterion estimates with shared write guards.
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+/// Delegate final benchmark aggregation and file handling to the shared reporting implementation.
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
+/// Catalogue metadata for nineteen groups and 175 rows, separate from measured assertions.
+///
+/// The registered `real_powi/pi_negative_one` case has no entry here. Descriptions
+/// of paths, bounded work, exact identities and errors express intent; the timed
+/// closures usually check only success/error polarity. In particular, the parsed
+/// inverse-error group does not require `NotANumber` for every row: atanh(1)
+/// returns an infinity error. The error bundle does not evaluate all its operands.
 const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
     BenchGroupDoc {
         name: "real_format",
@@ -826,14 +860,30 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
     },
 ];
 
+/// Construct an exact signed word-sized ratio for benchmark inputs.
+///
+/// A zero denominator panics through unwrap; there is no floating conversion.
 fn rational(n: i64, d: u64) -> Rational {
     Rational::fraction(n, d).unwrap()
 }
 
+/// Wrap the exact ratio `n/d` in a rational-backed `Real` fixture.
+///
+/// A zero denominator inherits the rational helper's panic.
 fn real(n: i64, d: u64) -> Real {
     Real::new(rational(n, d))
 }
 
+/// Build the first `count` exact Wallis factors `4*k^2/(4*k^2-1)` for k starting at one.
+///
+/// Nonpositive counts return an empty vector. For positive n the product is
+/// `2^(4*n)*(n!)^4 / ((2*n)!*(2*n+1)!)`; this finite exact product is used to
+/// compare multiplication orders, not as a certified approximation of pi/2.
+///
+/// The signed `4*index*index` arithmetic is safe through index 1,518,500,249.
+/// Larger counts can overflow before fraction construction; conversion/denominator
+/// unwraps can also panic after overflow in unchecked builds. There is no
+/// allocation/work cap, so even arithmetically valid counts can be impractical.
 fn wallis_rationals(count: i64) -> Vec<Rational> {
     (1..=count)
         .map(|index| {
@@ -843,6 +893,12 @@ fn wallis_rationals(count: i64) -> Vec<Rational> {
         .collect()
 }
 
+/// Publish metadata and time three precision-32 format requests on retained values.
+///
+/// The rows use lower-exponential pi and alternate decimal pi/sqrt(2). Formatting,
+/// string allocation and destruction occur inside ordinary `iter`; initial root
+/// construction is outside timing. Cached arithmetic may be reused. Strings are
+/// black-boxed without digit/rounding assertions and are not exact interchange.
 fn bench_real_format(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "library_perf",
@@ -867,6 +923,10 @@ fn bench_real_format(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time symbolic pi/e construction and returned-value destruction in two ordinary rows.
+///
+/// Shared constants can reuse process state; these rows do not require numerical
+/// approximation or assert representation identity.
 fn bench_real_constants(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_constants");
 
@@ -876,6 +936,14 @@ fn bench_real_constants(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register one parse workload and four evaluations of pre-parsed expression trees.
+///
+/// The parser row includes parsing, unwrap and tree destruction. Evaluation rows
+/// clone trees in untimed setup, then create a default symbol table and evaluate
+/// inside timing; returned values are dropped afterward. Cases cover a nested
+/// pi/power/sine product, repeated pi/e, and two rational arithmetic expressions.
+/// Successful parsing/evaluation is required, but exact outputs are not asserted;
+/// parse cost is excluded from the evaluation rows.
 fn bench_simple(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple");
     let source = "(* (+ pi pi) (pow (+ 3/2 4/7) 9/2) (sin (/ 1 5)))";
@@ -923,6 +991,13 @@ fn bench_simple(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time five successful powers without requiring full numeric output materialization.
+///
+/// Inputs are `(7/5)^17` through BigInt and i64 APIs, `sqrt(3)^17`, `10^20000`
+/// and `pi^-1`. Bases are cloned/constructed in untimed setup; BigInt exponent
+/// cloning is inside the measured routine. Unwrap requires success, not a particular
+/// representation, value or resource path. The lazy-20000 label is not a bound on
+/// all later consumption, and the pi reciprocal row is missing from the catalogue.
 fn bench_real_powi(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_powi");
     let exact = Real::new(Rational::fraction(7, 5).unwrap());
@@ -970,6 +1045,12 @@ fn bench_real_powi(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time successful `(7/5)^17` and an expected error for `(7/5)^20000`.
+///
+/// Input cloning is batched setup; exponent cloning and eager power/error handling
+/// are measured. `unwrap_err` requires an error but does not assert its variant,
+/// the allocation count or the point at which materialization is rejected. The
+/// large case uses a different base and outcome contract from the `Real` power row.
 fn bench_rational_powi(c: &mut Criterion) {
     let mut group = c.benchmark_group("rational_powi");
     let value = Rational::fraction(7, 5).unwrap();
@@ -994,6 +1075,17 @@ fn bench_rational_powi(c: &mut Criterion) {
     group.finish();
 }
 
+/// Compare four exact products of 1000 freshly prepared Wallis factors.
+///
+/// Untimed `LargeInput` setup builds each vector and, for the Real row, wraps every
+/// factor. Timed routines use a borrowed left fold, owned rational Product,
+/// borrowed rational Product, or owned rational-backed Real Product. The rational
+/// Product combines factors in a balanced order; the Real exact prefix delegates
+/// to that path. Borrowed Product clones factors inside the measured routine.
+///
+/// Input-vector consumption/destruction occurs inside the routine; the returned
+/// product is dropped after timing. None of the rows asserts product equality
+/// or materialized representation, so timing alone is not correctness evidence.
 fn bench_iterator_products(c: &mut Criterion) {
     let mut group = c.benchmark_group("iterator_products");
 
@@ -1040,6 +1132,10 @@ fn bench_iterator_products(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time sin(pi/6), cos(pi/3) and tan(pi/5) on cloned prepared exact arguments.
+///
+/// Batched timing excludes argument construction and output destruction. Tangent
+/// must return Ok; no result equality or exact-shortcut dispatch is asserted.
 fn bench_real_exact_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_exact_trig");
     let pi_sixth = Real::pi() * Real::new(Rational::fraction(1, 6).unwrap());
@@ -1071,6 +1167,11 @@ fn bench_real_exact_trig(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time successful tangent construction at sqrt(2) and pi*sqrt(2)/5.
+///
+/// Roots, symbolic multiplication/division and input clones are prepared outside
+/// timing. Unwrap propagates failures as panics; no numerical output is requested
+/// or compared, and validation inside tangent remains measured.
 fn bench_real_general_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_general_trig");
     let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
@@ -1096,6 +1197,12 @@ fn bench_real_general_trig(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time ten inverse-trig constructions on familiar rational, radical and trig inputs.
+///
+/// Asin uses signed one-half, sqrt(2)/2 and sin(pi/5); acos uses signed one and
+/// one-half; atan uses one, sqrt(3)/3 and tan(pi/5). Roots and inner trig operations
+/// are prepared before timing, with clones in batched setup. Each result must be
+/// Ok, but the expected pi multiple or recognized path is not asserted.
 fn bench_real_exact_inverse_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_exact_inverse_trig");
     let half = Real::new(Rational::fraction(1, 2).unwrap());
@@ -1185,6 +1292,12 @@ fn bench_real_exact_inverse_trig(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time eight successful inverse-trig requests and two required domain errors.
+///
+/// Asin/acos use 7/10 and sqrt(2)/3; asin also uses signed 999999/1000000.
+/// Atan uses eight and sqrt(2). Asin/acos of 11/10 must return Err, without a
+/// particular error-variant assertion. Input construction/cloning is outside the
+/// batched timer; returned values/errors are destroyed afterward.
 fn bench_real_general_inverse_trig(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_general_inverse_trig");
     let rational_in_domain = Real::new(Rational::fraction(7, 10).unwrap());
@@ -1271,6 +1384,13 @@ fn bench_real_general_inverse_trig(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time fourteen successful inverse-hyperbolic constructions and the atanh(1) error.
+///
+/// Asinh uses zero, signed one-half, sqrt(2) and a million. Acosh uses one, two,
+/// sqrt(2) and a million; atanh uses zero, signed one-half, sqrt(2)/2 and 9/10.
+/// Prepared sources are cloned or one is freshly constructed during untimed setup.
+/// Success/error unwraps do not check values, reduction paths or error variants;
+/// atanh(1)'s infinity outcome is only required to be some error here.
 fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_inverse_hyperbolic");
     let zero = Real::zero();
@@ -1391,6 +1511,11 @@ fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
     group.finish();
 }
 
+/// Evaluate twelve pre-parsed inverse-trig/hyperbolic trees with required success.
+///
+/// The cases mirror selected exact/general rational and radical inputs. Parsing
+/// and batched tree cloning are excluded; default-symbol-table construction and
+/// evaluation are timed. Every result is unwrapped but no expected value is checked.
 fn bench_simple_inverse_functions(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple_inverse_functions");
     let expressions: [(&str, Simple); 12] = [
@@ -1421,6 +1546,13 @@ fn bench_simple_inverse_functions(c: &mut Criterion) {
     group.finish();
 }
 
+/// Evaluate six pre-parsed invalid inverse-function requests, requiring some error.
+///
+/// The sources are asin(11/10), acos(sqrt(2)), acosh(0), acosh(-2), atanh(1)
+/// and atanh(sqrt(2)). The catalogue's blanket NotANumber description is too narrow:
+/// atanh(1) returns Infinity. The benchmark checks only `unwrap_err`, not variants.
+/// Parsing/cloning are outside timing; default-symbol-table creation and evaluation
+/// are inside, with returned error destruction deferred.
 fn bench_simple_inverse_error_functions(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple_inverse_error_functions");
     let expressions: [(&str, Simple); 6] = [
@@ -1445,6 +1577,10 @@ fn bench_simple_inverse_error_functions(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time successful logarithm construction for 1024, 1/8 and 1000.
+///
+/// Clones of prepared rational inputs are batched setup. The expected logarithmic
+/// factorizations are not asserted or numerically materialized by these rows.
 fn bench_real_exact_ln(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_exact_ln");
     let ln_1024 = Real::new(Rational::new(1024));
@@ -1476,6 +1612,13 @@ fn bench_real_exact_ln(c: &mut Criterion) {
     group.finish();
 }
 
+/// Time eight successful exp/log/power compositions from prepared exact intermediates.
+///
+/// Rows apply exp to ln(1000) and ln(1/8), log10 to 1000 and 1/1000,
+/// base-two/base-ten power to log2(3)/log10(2), and log2/log10 to
+/// `2^(1/7)`/`10^(6411/4096)`. Inner logarithms/powers are constructed before
+/// timing; the two integer bases are created inside the timed power calls. Unwrap
+/// requires success without asserting inverse identities or full materialization.
 fn bench_real_exact_exp_log10(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_exact_exp_log10");
     let exp_ln_1000 = Real::new(Rational::new(1000)).ln().unwrap();
@@ -1549,6 +1692,18 @@ fn bench_real_exact_exp_log10(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register 21 stable-function, root and integer-decision workloads.
+///
+/// Inputs include exact 10^-12 and 1-10^-6, signed 64, perfect roots, (-8)^(1/3),
+/// 7/3, sqrt(2), and the Euclidean remainder of -17/5 by three. Prepared sources
+/// are mostly cloned in untimed setup; sqrt(2) is rebuilt for its near/floor rows.
+/// The surd root uses `sqrt(3+2*sqrt(2))`.
+///
+/// The nested-radical row compares `sqrt(x)+sqrt(y)` with
+/// `sqrt(x+y+2*sqrt(x*y))` for x=3/5 and y=7/11. Construction is outside timing;
+/// `certified_eq_until(...).as_bool()` is black-boxed without requiring Some(true).
+/// Other fallible operations unwrap, but their values/certificates are not checked.
+/// Precision limits do not impose a total-work bound or erase inherited cache state.
 fn bench_real_stable_scalar_substrate(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_stable_scalar_substrate");
     let tiny = real(1, 1_000_000_000_000);
@@ -1730,6 +1885,19 @@ fn bench_real_stable_scalar_substrate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register 21 scalar geometry/product/polynomial workloads on exact inputs.
+///
+/// Rows cover rational multiples of pi, removable sinc/cosc limits, atan2 axes
+/// and quadrants, exact norm fixtures, a cancellation-prone norm difference,
+/// product sums and polynomial evaluation at one-half. Three "opaque zero" inputs
+/// are freshly built as `sin(e)^2+cos(e)^2-1` in untimed setup; opacity is a workload
+/// label, not an asserted representation or undecidability claim.
+///
+/// Vectors/coefficient arrays are cloned outside timing. The product-difference
+/// row instead constructs `(1+10^-7)*(1-10^-7)-1` inside ordinary `iter`, including
+/// output destruction. Most other rows defer returned-value destruction with
+/// batched timing. Unwraps require successful construction where used; no norm,
+/// limit, determinant-like residual or polynomial result is asserted.
 fn bench_real_geometry_polynomial_substrate(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_geometry_polynomial_substrate");
     let tiny = real(1, 1_000_000_000_000);
@@ -1923,6 +2091,20 @@ fn bench_real_geometry_polynomial_substrate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register 39 Gaussian-tail, moment and gamma/beta-family construction workloads.
+///
+/// Tail arguments use signed six; parametric density/survival use x=6, mean=2,
+/// sigma=3/2. Narrow mass uses endpoints 1/10 and 100000001/1000000000, a width
+/// of 10^-9. Inverse tails use probability 10^-6. Hermite degree eight and density
+/// derivative degree four use x=2; interval moment degree three and truncated mean
+/// use `[0,1]`. The standard-normal twelfth moment is an ordinary-iteration row.
+///
+/// Gamma inputs are eight, one-half and three-halves. Beta uses (2,3) or
+/// (1/2,3/2); regularized beta at one-half also covers (1,1) and (1,3).
+/// Regularized gamma uses (3/2,1) or (3,1), and chi-square survival uses x=2,
+/// five degrees of freedom. Setup constructs/clones exact inputs outside batched
+/// timing; method-specific admission/refinement is still measured. Unwraps require
+/// success where used, but no expected value, enclosure width or path is asserted.
 fn bench_real_normal_scientific_substrate(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_normal_scientific_substrate");
     let zero = Real::zero();
@@ -2211,6 +2393,16 @@ fn bench_real_normal_scientific_substrate(c: &mut Criterion) {
     group.finish();
 }
 
+/// Evaluate five pre-parsed bundles of stable, geometry, normal and scientific operations.
+///
+/// Four sums must evaluate successfully; their values are not checked. The error
+/// sum must return an error, but evaluation short-circuits at its first operand,
+/// `ln_1p(-1)`, before reaching the other six expressions. It therefore does not
+/// exercise every listed failure or imply that every operand is invalid.
+///
+/// Parsing and batched tree cloning precede timing. Default-symbol-table creation,
+/// evaluation and sum composition are measured; result/error destruction is
+/// deferred. This is evaluation coverage, not a parser timing or completeness test.
 fn bench_simple_new_function_surface(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple_new_function_surface");
     let expressions: [(&str, Simple); 5] = [
@@ -2294,6 +2486,10 @@ criterion_group!(
 );
 criterion_main!(benches);
 
+/// Refresh static descriptions and then invoke the shared final Criterion report callback.
+///
+/// Each writer keeps its own skip and I/O-error handling. This callback adds no
+/// value/error validation, catalogue reconciliation or successful-write guarantee.
 fn finish_benchmark_report(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "library_perf",

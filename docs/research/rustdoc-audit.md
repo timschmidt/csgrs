@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/library_perf.rs` | Entire 176-case public-library workload; documented every authored item, timing/output scope, Wallis domains and parser/error limits. | All 27 blocks render; minimal-simple/all docs and smoke, closed-form product expectations and parsed-output replay pass. Two Criterion-generated doc gaps remain. See public-library benchmark batch. |
 | `crates/hyperreal/benches/numerical_micro.rs` | Entire 134-case suite; documented all private helpers, exact chain formulas, timing/cache scope, actual assertions and stale metadata. | All 40 blocks render; both-mode private docs/smoke and before/after 75-record helper replay pass. Two Criterion-generated doc gaps remain. See numerical microbenchmark batch. |
 | `crates/hyperreal/benches/dispatch_trace.rs` | Entire 156-sample diagnostic runner; documented every function, exact fixture formulas, filter/cache/thread scope, omissions and report effects. | All 28 blocks render; supported minimal/all-feature private docs, full before/after reports and complete-snapshot comparisons pass. See Hyperreal dispatch-runner batch. |
 | `crates/hyperreal/benches/adversarial_transcendentals.rs` | Entire six-group benchmark and promoted loader; documented every authored item, exact inputs, timing/cache scope, parser/resource limits and actual row counts. | All 44 blocks render; private docs and 119-case fallback/70-case loaded smoke runs pass in both modes. Two Criterion-generated doc gaps remain. See adversarial-transcendental batch. |
@@ -23416,6 +23417,111 @@ coverage remain unfinished. Evidence is retained under
 /tmp/csgrs-hyperreal-numerical-micro-audit/; the owned compiled probe and combined
 scratch source are removed after checking. The shared target is reused with
 incremental compilation disabled and is about 8.3 GiB.
+
+## Public-library benchmark audit (2026-11-28)
+
+Baseline: 449fbd405 on rustdoc. Reviewed all 2,304 baseline lines of
+crates/hyperreal/benches/library_perf.rs: catalogue entries, every fixed and
+parsed fixture, all benchmark closures, three scalar/corpus helpers and the
+harness/report callbacks. The final file has 2,500 lines. No prior whole-file
+record existed for this file. Included reporting helpers were already audited;
+context reads of Simple evaluation, formatting and product implementations do
+not claim whole-file review of those separate implementation files.
+
+The owning layer is Hyperreal's benchmark/documentation surface. Relevant
+contracts are P1/P2 (exact input/construction), P3/P4 (query evidence and cached
+state), P5 (power/corpus resource limitations), and P6 (error polarity versus
+typed outcomes), together with the public/private/generated Rustdoc mandate.
+The missing acceptance witness was an accurate description of every authored
+item and the actual completed workload/timing contract. Before editing, the
+all-feature executable completed all 176 cases. Source/context review and
+baseline helper probes reproduced the metadata, error and corpus observations.
+All executable tokens, fixed fixtures, metadata/report strings and call order
+are unchanged; this batch adds comments only.
+
+Added 27 authored Rustdoc blocks: module overview, two included modules,
+catalogue constant and all 23 private functions. All descriptions render and
+match the source declaration inventory. Criterion-generated benches and main
+still have no attached docblocks. Their roles are documented at module level,
+but these two gaps remain explicitly incomplete; no runtime harness rewrite
+was made in this docs-only worktree.
+
+Documented findings:
+
+- Nineteen groups register 176 cases, whereas the static catalogue describes
+  175. The only missing entry is real_powi/pi_negative_one. Descriptive claims
+  of shortcut paths, successful identities or bounded work are not assertions.
+  Success unwraps check Ok, error unwraps check Err, and neither validates the
+  numerical result or a particular error variant.
+- The nested-radical row compares sqrt(x)+sqrt(y) with
+  sqrt(x+y+2*sqrt(x*y)) at x=3/5, y=7/11, but black-boxes as_bool without requiring
+  Some(true). Large Real power measures construction of 10^20000 without
+  demanding full numeric output; the Rational error row uses (7/5)^20000 and
+  only requires some error. These are distinct output/base contracts.
+- Batched setup excludes source cloning, vector generation and parsing. Its
+  returned outputs are destroyed after timing, while consumed-input cleanup
+  can occur inside the routine. Ordinary iter rows include in-loop construction
+  and output destruction. BigInt exponent clones are timed; prepared inner
+  logs/powers/roots are excluded. Shared caches may survive either cloning or
+  fresh wrappers. Constructor-specific validation/refinement remains measured.
+- The parsed inverse-error catalogue's blanket NotANumber wording is inaccurate
+  for atanh(1), which returns Infinity; the row checks only error polarity.
+  The seven-operand error bundle stops at ln_1p(-1), so it does not exercise the
+  other listed operations or prove they are all invalid. Parser cost is timed
+  only by the dedicated parse row; other expression rows parse before timing.
+- Wallis generation emits 4*k^2/(4*k^2-1) for k=1..count and returns an empty
+  vector for nonpositive counts. Its finite product equals
+  2^(4*n)*(n!)^4/((2*n)!*(2*n+1)!). Signed intermediate arithmetic is safe only
+  through index 1,518,500,249; huge counts have no allocation/work cap and can
+  overflow. The ordinary workload uses 1000 factors. Borrowed balanced Product
+  clones factors inside timing, whereas vector preparation is outside; the
+  exact-rational Real prefix uses the rational product path. The four benchmark
+  rows themselves do not compare their products.
+- Formatting creates approximate strings, not native exact replay, with no
+  digit/rounding assertion. Geometry "opaque zero" rows rebuild
+  sin(e)^2+cos(e)^2-1 in setup; opacity is not asserted. The product-difference
+  row builds (1+10^-7)*(1-10^-7)-1 inside ordinary timing. Gaussian interval
+  endpoints differ by exactly 10^-9. Rustdoc records each group's concrete
+  domains, root/log/power compositions, moment degrees and construction limits.
+
+Executed after the final source edit:
+
+- Locked/offline cargo test --bench library_perf --no-run and cargo rustdoc
+  --bench library_perf --document-private-items, with warnings and broken/private
+  intra-doc links denied, for --no-default-features --features simple and for
+  --all-features. Both pass. Simple is required by this benchmark's manifest;
+  feature-free support is not claimed. Matching self/dev externs and dependency
+  directories are taken from Cargo JSON artifacts for private bench rustdoc.
+- Original Criterion executables with --test complete all 176 cases in both
+  configurations; ordered IDs match the unchanged baseline. All original
+  unwrap/unwrap_err expectations remain enabled. This smoke execution is not
+  a statistical timing or full numerical correctness claim.
+- Isolated baseline/final helpers replace only the Criterion harness in scratch
+  copies and use absolute included-helper paths. Six Wallis lengths
+  (0,1,2,3,10,1000) match independent Python Fraction/factorial expectations in
+  sequential, owned/borrowed Rational and owned Real product forms. Nonpositive
+  emptiness and the safe/unsafe integer-arithmetic boundary are checked without
+  constructing an enormous vector or deliberately overflowing repository code.
+- All 27 parsed source expressions evaluate with 20 successes/seven errors;
+  their serialized successful values/error records and three formatted strings
+  are byte-identical before/after. Separate probes require Infinity at atanh(1)
+  and NotANumber for a sum whose first operand is ln_1p(-1), consistent with
+  source-reviewed short-circuiting. An initially added scratch expression used
+  unsupported identifier syntax; it was corrected to valid function syntax and
+  both baseline/final probes were rerun. No repository fixture was changed.
+- All 27 rendered descriptions, source declaration inventory, catalogue versus
+  registered IDs, noncomment-token equality, scoped Rustfmt and git diff --check
+  pass. Repository/crate benchmark-report hashes/absence states are unchanged.
+  All runs use a task-owned cwd and the existing report-suppression variable.
+
+No focused check remains blocked. Full workflow checks remain owner-waived for
+this docs-only session, and no performance claim is made. Evidence, scripts,
+source snapshot and inventories remain under
+/tmp/csgrs-hyperreal-library-perf-audit/; the owned probe executable and combined
+scratch source are removed after checking. Shared build output is reused with
+incremental compilation disabled and is about 8.4 GiB. AGENTS.md retains the
+future-agent 100% public/private/generated Rustdoc mandate. Whole-repository
+line review and coverage remain unfinished.
 
 ## Next work
 
