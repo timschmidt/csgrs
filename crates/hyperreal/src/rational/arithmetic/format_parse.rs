@@ -1,6 +1,39 @@
 use core::fmt;
 
+/// Present canonical parts as an integer, mixed fraction or truncated decimal.
+///
+/// Default output uses an integer for denominator one, `n/d` for a proper
+/// fraction, and `whole remainder/d` for an improper fraction. A leading minus
+/// applies to the entire value. Mixed fractions are presentation text: `FromStr`
+/// does not accept their intervening space, so Display is not a general replay
+/// format. Marked unreduced storage is canonicalized before formatting.
+///
+/// For nonintegers, alternate formatting (`#`) performs decimal long division,
+/// truncating toward zero after at most the requested precision (default 1,000
+/// fractional digits). It stops early at a zero remainder and does not round or
+/// pad trailing zeros. Precision zero still prints the decimal point. Integers
+/// ignore alternate/precision and use integral padding. Nonintegers honor the
+/// explicit plus flag but ignore width, alignment and zero-padding flags.
+///
+/// Formatting propagates sink errors. Canonicalization and arbitrary-width
+/// division/allocation have no local work, memory or cancellation budget; the
+/// fractional digit limit does not bound integer output or total arithmetic work.
+///
+/// ```
+/// use hyperreal::Rational;
+/// let value = Rational::fraction(5, 3).unwrap();
+/// assert_eq!(value.to_string(), "1 2/3");
+/// assert_eq!(format!("{value:#.3}"), "1.666");
+/// assert_eq!(format!("{value:#.0}"), "1.");
+/// assert_eq!(format!("{:#.4}", Rational::fraction(1, 8).unwrap()), "0.125");
+/// ```
 impl fmt::Display for Rational {
+    /// Delegate to a cached canonical value, then apply the selected presentation.
+    ///
+    /// Integer output uses `pad_integral`; fractional output writes sign and
+    /// components directly. Decimal digits are exact quotient/remainder steps
+    /// until termination or truncation. Dispatch events describe the chosen local
+    /// path; backend radix labels are inferred diagnostics, not observed kernels.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let canonical = self.canonicalized_ref();
         if !std::sync::Arc::ptr_eq(&self.0, &canonical.0) {
@@ -62,11 +95,24 @@ impl fmt::Display for Rational {
     }
 }
 
+/// Shared exact decimal parsing helpers and the scientific-expansion guard.
+///
+/// Checked word parsing precedes arbitrary-width construction. Scientific input
+/// validates ASCII digits explicitly; general magnitude fallback delegates leaf
+/// grammar to num-bigint. Decimal scale counts are byte counts, which is exact
+/// for digit-only input but exposes the documented separator limitations.
 impl Rational {
     // GMP reports a commonly large SET_STR crossover. Local paired benchmarks
     // put this backend's crossover between 5,120 digits (product tree slower)
     // and 10,240 digits (product tree faster), so retain the power-of-two
     // boundary between them.
+    /// Byte-length threshold for the local product-tree decimal parser.
+    ///
+    /// The word parser is tried first regardless of length, so long leading-zero
+    /// inputs that still fit u128 can bypass the tree. Otherwise lengths below
+    /// 8,192 use the backend and lengths at/above it use recursive splitting.
+    /// Tree leaves use half this threshold. The adjacent historical benchmark
+    /// comment motivates this selection; it is not a new performance measurement.
     const RADIX_INPUT_DIVIDE_CONQUER_THRESHOLD: usize = 8192;
 
     // A textual significand already accounts for its own storage cost, but a
@@ -74,8 +120,19 @@ impl Rational {
     // numerator or denominator. Permit generous, useful exact inputs while
     // bounding exponent-only amplification to roughly 415 KiB of BigUint
     // limbs. Longer significands retain a proportional input-sized budget.
+    /// Extra decimal-power allowance beyond the source significand byte count.
+    ///
+    /// This limits exponent-driven amplification of nonzero scientific literals,
+    /// not source length, total allocations, arithmetic work or all parser paths.
+    /// The allowance is checked on the net scale before and after trailing-zero
+    /// removal; intermediate allocations and backend powers remain unbudgeted.
     const MAX_SCIENTIFIC_EXPANSION_DIGITS: usize = 1_000_000;
 
+    /// Read a nonempty ASCII digit sequence into u128 by checked multiply/add.
+    ///
+    /// Leading zeros are accepted without a length cap. Empty input, nondigits or
+    /// numeric overflow return `None`; once folding fails, later bytes are not
+    /// visited. There is no allocation, sign handling or separator acceptance.
     #[inline]
     fn parse_decimal_word(digits: &[u8]) -> Option<u128> {
         if digits.is_empty() {
@@ -90,6 +147,12 @@ impl Rational {
         })
     }
 
+    /// Read two concatenated ASCII digit slices without allocating a joined buffer.
+    ///
+    /// At least one slice must be nonempty. The point's position is not represented
+    /// in the result; callers separately account for fractional length. Checked
+    /// u128 overflow or a nondigit returns `None` and stops the fold. Either slice
+    /// may be empty, supporting `.5` and `5.` in the outer parser.
     #[inline]
     fn parse_decimal_word_parts(whole: &[u8], fraction: &[u8]) -> Option<u128> {
         if whole.is_empty() && fraction.is_empty() {
@@ -107,6 +170,13 @@ impl Rational {
             })
     }
 
+    /// Validate an optional exponent sign followed by at least one ASCII digit.
+    ///
+    /// Returns `(negative, magnitude)`. A syntactically valid magnitude too large
+    /// for usize becomes `None`, preserving the distinction from `BadDecimal`.
+    /// Scanning continues after overflow so a later nondigit still wins as a syntax
+    /// error. The boolean records a minus even for zero. No exponent-sized integer
+    /// is allocated and no input-length or total-scan budget is imposed.
     fn parse_scientific_exponent(exponent: &[u8]) -> Result<(bool, Option<usize>), Problem> {
         let (negative, digits) = match exponent.first() {
             Some(b'-') => (true, &exponent[1..]),
@@ -134,6 +204,14 @@ impl Rational {
         Ok((negative, magnitude))
     }
 
+    /// Cancel decimal powers from the exponent, point and stripped trailing zeros.
+    ///
+    /// The net exponent is signed exponent + significand_trailing_zeros minus
+    /// fractional_digits. Returns `(in_denominator, magnitude)`, with `(false, 0)`
+    /// for complete cancellation. Checked additions on the numerator/denominator
+    /// side occur before cancellation, so intermediate usize overflow returns
+    /// `Exhausted` even when a mathematical difference might fit. This helper does
+    /// not enforce the amplification guard or materialize a power of ten.
     fn scientific_decimal_power(
         exponent_negative: bool,
         exponent_magnitude: usize,
@@ -158,12 +236,40 @@ impl Rational {
         Ok((denominator_power != 0, numerator_power.max(denominator_power)))
     }
 
+    /// Test the inclusive net-power allowance against source bytes plus one million.
+    ///
+    /// The addition saturates at usize::MAX. `source_digits` is the significand
+    /// length without its decimal point/sign; scientific grammar makes those bytes
+    /// ASCII digits. This boolean is an amplification gate, not a whole-operation
+    /// resource receipt or a check for actual allocator exhaustion.
     #[inline]
     fn scientific_power_is_within_budget(power: usize, source_digits: usize) -> bool {
         power
             <= source_digits.saturating_add(Self::MAX_SCIENTIFIC_EXPANSION_DIGITS)
     }
 
+    /// Construct an exact rational from a signed decimal significand and exponent.
+    ///
+    /// The caller supplies `Plus` or `Minus` separately and unsigned significand
+    /// text with at most one point and at least one ASCII digit. Either side of
+    /// the point may be empty. The exponent accepts one optional sign and digits;
+    /// separators, extra signs/points and whitespace are rejected as `BadDecimal`.
+    /// Both components are validated before a zero significand returns canonical
+    /// zero, even if the exponent magnitude overflows usize.
+    ///
+    /// Nonzero values require a representable exponent and checked decimal-power
+    /// arithmetic within the source-sized amplification allowance. A u128 scale
+    /// and magnitude are preferred. The wider path joins parts if needed, removes
+    /// trailing decimal zeros, recomputes the scale, and forms a power of ten.
+    /// A denominator scale is reduced via binary cancellation when the final
+    /// digit is even, is already coprime when that digit is odd and not five, or
+    /// uses general reduction for five. These decisions preserve exact parts.
+    ///
+    /// `Exhausted` reports checked size/exponent conversion or reservation failures
+    /// and the amplification guard; it is not evidence that every allocation/work
+    /// limit is enforced. The initial guard precedes trailing-zero removal, so a
+    /// rejected scale is not retried after that cancellation. Backend integer
+    /// powers, products and reductions have no total-work or cancellation hook.
     fn parse_scientific(
         sign: Sign,
         significand: &str,
@@ -300,6 +406,21 @@ impl Rational {
         }
     }
 
+    /// Parse an unsigned decimal magnitude through word, backend and tree paths.
+    ///
+    /// Digit-only nonempty ASCII input gives its exact integer value, subject to
+    /// resources. The checked u128 path is attempted before the length threshold.
+    /// Shorter fallback inputs use BigUint's radix-10 parser; larger ones allocate
+    /// a per-call decimal-power cache and recurse. `None` combines parse failure
+    /// with an unrepresentable tree exponent; allocation failure is not uniformly
+    /// converted to an Option or typed resource error. No total-work cap applies.
+    ///
+    /// The backend also accepts a leading plus and some underscore separators.
+    /// Those extensions are not validated uniformly here: recursive scale lengths
+    /// count bytes, including separators, and leaf boundaries affect acceptance.
+    /// For example, a trailing underscore on an 8,192-byte input can change its
+    /// value relative to the backend parser. This is an implementation limitation,
+    /// not an exact grammar guarantee for separator-bearing input.
     fn parse_decimal_magnitude(digits: &[u8]) -> Option<BigUint> {
         if let Some(value) = Self::parse_decimal_word(digits) {
             crate::trace_dispatch!("rational_algorithm", "radix-to-binary", "word-sized");
@@ -323,6 +444,21 @@ impl Rational {
         Self::parse_decimal_magnitude_tree(digits, &mut powers)
     }
 
+    /// Combine decimal halves as left * 10^(right byte length) + right.
+    ///
+    /// For digit-only input this is the exact positional-value identity. Leaves
+    /// shorter than 4,096 bytes delegate to BigUint; larger spans recurse left then
+    /// right. A caller-owned BTreeMap caches powers by right length. Every prefilled
+    /// entry must equal 10^key: this invariant is trusted, not revalidated. Hits
+    /// clone a BigUint, and misses compute, insert a clone, then use the power.
+    ///
+    /// A failed leaf or right length outside u32 returns `None`; the cache may
+    /// already contain entries from earlier recursion. It has no eviction, total
+    /// work or byte budget. Recursion depth is logarithmic in input length, but
+    /// power construction, multiplication and retained limbs still grow with it.
+    /// Backend separator/plus acceptance in leaves does not justify byte-count
+    /// scales for those inputs and can cause incorrect values or split-dependent
+    /// rejection. The outer magnitude helper creates a fresh cache for each call.
     fn parse_decimal_magnitude_tree(
         digits: &[u8],
         powers: &mut std::collections::BTreeMap<usize, BigUint>,
@@ -349,9 +485,49 @@ impl Rational {
     }
 }
 
+/// Parse exact signed integers, fractions, decimals and scientific literals.
+///
+/// The intended decimal grammar uses ASCII digits and an optional leading sign.
+/// Fractions are `numerator/denominator`; decimals permit `.5` and `5.`; scientific
+/// forms add `e` or `E` and an optionally signed integer exponent. No floating-point
+/// conversion occurs. Whitespace and Display's `whole remainder/denominator` mixed
+/// notation are not accepted. After removing one leading sign, dispatch checks
+/// scientific notation first, then slash, point and finally integer syntax.
+///
+/// Malformed input maps to `BadDecimal`, `BadFraction` or `BadInteger` according
+/// to that selected branch. Zero denominators yield `DivideByZero`, including
+/// `0/0`. Scientific exponent amplification and checked size conversions can
+/// yield `Exhausted`; the parser as a whole has no total-work, memory or
+/// cancellation budget, and ordinary integer/decimal/fraction input has no
+/// matching source-length guard.
+///
+/// Known fallback limitations: num-bigint accepts extra plus signs and underscores
+/// that the word/scientific grammar rejects. Examples include `++1` becoming one
+/// and `1/+2` becoming one half. Fractional scale counts raw bytes, so `1.2_5`
+/// currently becomes `41/40`, not the separator-free decimal `1.25`; large
+/// product-tree inputs have analogous byte-count and split-boundary defects.
+/// These are implementation gaps, not additional exact syntax contracts.
+///
+/// ```
+/// use hyperreal::{Problem, Rational};
+/// assert_eq!(".125e1".parse::<Rational>().unwrap(), Rational::fraction(5, 4).unwrap());
+/// assert_eq!("9/18".parse::<Rational>().unwrap(), Rational::fraction(1, 2).unwrap());
+/// assert_eq!("0/0".parse::<Rational>(), Err(Problem::DivideByZero));
+/// assert_eq!("1 2/3".parse::<Rational>(), Err(Problem::BadFraction));
+/// ```
 impl std::str::FromStr for Rational {
+    /// Syntax, zero-denominator or checked expansion/resource failure for this parse.
+    /// Backend allocations are not all fallible through this error channel.
     type Err = Problem;
 
+    /// Select a grammar branch after removing at most one leading sign.
+    ///
+    /// Checked word construction precedes arbitrary-width parsing in each branch.
+    /// Fallback fractions reduce common factors; fallback decimals parse the whole
+    /// and fractional pieces separately, reduce the fraction and add signed parts.
+    /// A zero fractional piece returns the whole before constructing its scale.
+    /// Scientific dispatch validates both components through the dedicated helper;
+    /// other fallback branches inherit the backend syntax limitations above.
     fn from_str(s: &str) -> Result<Self, Problem> {
         let mut sign: Sign = Plus;
         let s = match s.as_bytes().first() {

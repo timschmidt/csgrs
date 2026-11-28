@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/format_parse.rs` | Entire formatter and decimal/scientific parser reviewed; every helper, guard, error and presentation rule documented, including reproduced fallback syntax defects. | Both-mode private docs, focused tests and doctests pass; all 16 blocks render, outputs/traces remain identical, and independent exact expectations pass. See rational-formatting/parsing batch. |
 | `crates/hyperreal/src/rational/arithmetic/representation.rs` | Entire storage, cache layouts, flags/pools, trait methods, wire helper and tracing macros reviewed; all authored items documented and payload unhidden. | Both-mode private docs/focused tests, lifecycle/race/trace probes and wire replay pass; Serde-generated internal doc gaps remain. See rational-storage batch. |
 | `crates/hyperreal/src/rational/arithmetic/as_ref.rs` | Entire borrow adapter reviewed; documented same-handle borrowing without clone/reduction/cache effects. | Private docs and downstream generic arithmetic tests pass; direct pointer-identity probe passes. See rational-storage batch. |
 | `crates/hyperreal/src/rational/arithmetic/retention_tests.rs` | Entire three-test suite and reference helper reviewed; documented exact expectations, first-cache layouts, lifetime assertions and finite concurrency scope. | All three tests pass in both modes; supplemental rendering preserves bodies while removing only test markers in an isolated copy. See rational-storage batch. |
@@ -24438,6 +24439,143 @@ after inventory. Small logs, records, expansion text and source snapshots remain
 Shared Cargo output is reused with incremental compilation disabled. AGENTS.md
 already retains the future-agent mandate for 100% public/private/generated
 coverage. Whole-repository review and full coverage remain unfinished.
+
+## Hyperreal rational-formatting and parsing documentation batch
+
+Reviewed every line of the 460-line baseline
+crates/hyperreal/src/rational/arithmetic/format_parse.rs at 5b1b902b1.
+The final file has 636 lines. Review covered Display's flags and streaming
+writes, all decimal/scientific helpers, power-cache recursion, the FromStr
+branch order and typed errors. Context included the already documented parse
+anchor, rational canonicalization/construction, Problem variants, the locked
+num-bigint 0.4.6 radix parser, Real parsing tests and existing rational parser/
+format/trace tests. These context reads do not give the larger files new
+whole-file review credit.
+
+The owning layer is Hyperreal's exact rational text boundary. Relevant properties
+are P1/P3 (exact values and honest presentation/grammar claims), P4/P10 (preserved
+canonicalization/dispatch order), P5/P6 (checked amplification and failure scope),
+and Rustdoc coverage. The intended exact input domain is ASCII digit-only signed
+integers, fractions, decimals and scientific literals; actual fallback acceptance
+and its defects are recorded separately. Missing acceptance was documentation of
+every helper, the difference between display and replay, the true resource guard,
+and backend syntax interactions. Before editing, all eleven selected rational
+parser/formatter/trace tests passed, and the additional public probe reproduced
+the syntax inconsistencies below. The initial Real filter matched zero tests;
+it was replaced with the actual five-test path for final downstream validation.
+
+Added sixteen blocks: three impls, ten functions, two constants and one associated
+error type. Every authored item is documented and rendered; this fragment has no
+local or generated type/macro definitions needing supplemental rendering.
+Two runnable examples demonstrate exact parsing, typed failures, mixed display
+and truncation. No noncomment token, dispatch event/order, constant, branch,
+assertion, cache operation or feature gate changed. No hidden item or suppression
+was introduced. Existing include-fragment formatting is preserved.
+
+Reviewed and reproduced behavior:
+
+- Default Display canonicalizes marked unreduced parts and emits an integer,
+  proper fraction or mixed fraction. The sign applies to the whole value.
+  Mixed output such as 1 2/3 fails FromStr with BadFraction, so Display is not a
+  general native replay format. Alternate noninteger output performs exact
+  long division but truncates toward zero, with default maximum 1,000 fractional
+  digits. It stops at a zero remainder without trailing-zero padding; precision
+  zero still writes the point. Integers use integral padding and ignore precision/
+  alternate. Nonintegers honor plus but ignore width/alignment/zero padding.
+  Sink errors propagate; output precision is not a total-work or memory budget.
+- FromStr strips at most one sign, then dispatches scientific before slash before
+  point before integer. That branch determines BadDecimal/BadFraction/BadInteger.
+  Both 1/0 and 0/0 give DivideByZero. Decimal/scientific values use exact powers
+  of ten, never a float import. Ordinary integer/fraction/decimal inputs have no
+  source-length guard matching the scientific amplification check.
+- Checked u128 helpers require ASCII digits, accept arbitrarily many leading
+  zeros, and stop on malformed input or overflow. Exponent validation instead
+  continues scanning after usize overflow: a later nondigit remains BadDecimal;
+  a valid overflowing exponent is represented separately as None. A fully
+  validated zero significand returns zero even with an enormous exponent.
+- Scientific scale arithmetic cancels exponent, fractional length and stripped
+  trailing zeros, but checked additions occur before cancellation. Overflow of
+  those intermediate sums gives Exhausted. The inclusive power allowance is
+  source significand bytes plus one million, with saturating addition. It is
+  checked before and after trailing-zero removal; this is an amplification
+  guard, not an allocator/work/cancellation contract. The private sign argument
+  is Plus or Minus. Wide denominator construction cancels binary factors for
+  even final digits, recognizes odd non-five coprimality, and otherwise reduces.
+- Magnitude parsing first tries u128, then backend parsing below 8,192 bytes,
+  then the local product tree. Long all-zero inputs can stay on the word path.
+  Tree leaves are shorter than 4,096 bytes. The exact digit-only recurrence is
+  left*10^(right length)+right. Its BTreeMap keys are right byte lengths and
+  callers must supply correct 10^key entries. Hits clone their BigUint; failed
+  recursion can leave valid earlier entries in the map. The ordinary entry point
+  starts with a fresh map. Historical crossover comments were read as provenance,
+  not reproduced as a current performance claim.
+
+Reproduced implementation gaps, not repaired or redefined as exact support:
+
+- The locked BigUint leaf parser accepts a leading plus and underscores after
+  an initial digit. Word and scientific paths reject those bytes. Consequently
+  ++1 becomes 1, -+1 becomes -1, and 1/+2 becomes 1/2 through fallback paths.
+  Whitespace and mixed fractions remain rejected.
+- Fallback fractional length counts separator/sign bytes even though the leaf
+  parser ignores/consumes them: 1.2_5 becomes 41/40, .+5 becomes 1/20 and 1.+5
+  becomes 21/20. The scientific versions with those extra bytes are rejected.
+- For source `1` + `0` repeated (L-2) times + `_`, lengths 4,095, 4,096 and
+  8,191 produce 10^(L-2), matching separator removal. At L=8,192, 8,193 and
+  10,240 the tree instead produces 10^(L-1). An 8,192-byte string of ones with
+  byte 4,096 replaced by underscore is rejected as BadInteger because a leaf
+  begins with underscore, despite whole-input backend acceptance. These original
+  witnesses and adjacent pure-digit controls are preserved in probe scripts.
+- A deliberately false prefilled tree power produces a false result, confirming
+  the private helper's trusted-cache precondition; this is not a public cache
+  poisoning path, because the normal entry creates its own map. A separate bad
+  trailing-character fixture returns None while retaining the earlier valid
+  10^2048 entry. These are distinct from the public separator-scaling defects.
+
+Executed after the final source edit:
+
+- Locked/offline focused tests pass: fourteen without default features and
+  sixteen with all features, including five Real parser consumers. Existing
+  exact-value, reduced-part, hash and dispatch count assertions are unchanged.
+  Both added doctests pass in each configuration. The baseline subset had eleven
+  passing all-feature tests; no zero-match filter is counted as acceptance.
+- Private cargo doc --lib --no-deps --document-private-items passes in both
+  configurations with warnings and broken/private intra-doc links denied.
+  All sixteen complete descriptions and applicable method/constant/trait anchors
+  are checked in the all-feature HTML. No universal coverage inference is made
+  from successful doc compilation alone.
+- Public baseline/final probes give eighty byte-identical complete records:
+  68 parse outcomes and twelve formatting rows (eleven formats each), including
+  full dispatch snapshots. Six failing-sink attempts propagate fmt::Error.
+  The large pure-digit controls span 4,095 through 10,240 bytes, with separator
+  cases alongside them and validated zero with a huge exponent.
+- Extracted unchanged helper bodies give 234 byte-identical before/after records:
+  fourteen word cases (including u128 boundaries and 10,000 leading zeros),
+  twelve exponent cases, 160 checked net-power cases, forty amplification-boundary
+  cases, six tree/cache records, one failed tree and one invalid-cache fixture.
+  Word/parts equivalence is also checked at every UTF-8 boundary split of the
+  word corpus. These probes host the private helpers on a local empty type and
+  do not replace the integrated Rational parser checks.
+- Independent Python integers/Fraction expectations check the 234 helper records,
+  all 68 public parse values/errors and all 132 formatted strings. Pure-digit
+  trees are checked as 10^(length-1)+7 and cached powers as 10^key. Decimal
+  presentation is checked by exact scaled integer division and denominator
+  divisibility, independently of the formatter's remainder loop. Reported
+  separator defects are checked against explicit actual values and separately
+  against the differing separator-free expectation. Before/after agreement alone
+  is not used as the correctness oracle. These finite probes are not a universal
+  parser proof or a resource/performance qualification.
+- Noncomment-token equality, authored-item/rendered-description inventory and
+  git diff --check pass. Full workflow/format/performance checks remain waived
+  by the repository owner for this docs-only session. No benchmark, memory-cap,
+  new geometric capability or whole-repository coverage claim is made.
+
+No focused check remains blocked. Evidence and repeatable scripts remain under
+/tmp/csgrs-hyperreal-format-parse-audit/. Owned probe executables/combined helper
+source are removed and bulky records compressed after validation. Shared Cargo
+output is reused with incremental compilation disabled. AGENTS.md retains the
+future-agent 100% public/private/generated documentation mandate. The exact
+syntax defects require separate implementation/regression work; the complete
+repository audit and generated-code coverage remain unfinished.
 
 ## Next work
 
