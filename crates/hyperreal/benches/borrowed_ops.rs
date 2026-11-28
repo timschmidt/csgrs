@@ -1,13 +1,38 @@
+//! Criterion comparison of owned and borrowed exact arithmetic on fixed operands.
+//!
+//! Three groups exercise rational, rational-backed `Real`, and symbolic square-root
+//! operands. Owned cases clone in `iter_batched` setup, outside the measured
+//! interval, and drop collected outputs afterward. Borrowed `iter` cases include
+//! output destruction in the measured loop. Batching/collection overhead also
+//! differs, so these are not identical complete-lifetime workloads. Operands are
+//! reused and may share warmed internal evidence; no cold-cache guarantee is made.
+//!
+//! Results are black-boxed without an independent equality, evaluation or certainty
+//! assertion. These timings alone establish neither general correctness nor a
+//! resource/completion envelope. Criterion settings control sampling.
+//!
+//! Criterion 0.5.1 generates `benches`, which configures a default runner from CLI
+//! arguments and calls the three groups then the report callback, and `main`, which
+//! runs that group and requests the final summary. Those macro-generated functions
+//! have no attached item documentation; their remaining coverage gap is recorded
+//! in the repository Rustdoc audit.
+
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 
+/// Authored per-binary catalogue writer; reads existing estimates and logs write failures.
 #[path = "support/bench_docs.rs"]
 mod bench_docs;
+/// Shared report aggregator invoked after the per-binary catalogue callback.
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
+/// Eight shared catalogue rows for add/subtract/multiply/divide in two ownership forms.
+///
+/// The owned descriptions refer to cloned inputs, but cloning occurs outside the
+/// measured interval. These strings do not register or validate benchmark cases.
 const OWNED_REF_BENCHES: &[BenchDoc] = &[
     BenchDoc {
         name: "add_owned",
@@ -43,6 +68,10 @@ const OWNED_REF_BENCHES: &[BenchDoc] = &[
     },
 ];
 
+/// Catalogue order and labels for the three eight-case arithmetic groups.
+///
+/// Each group reuses the same row metadata; labels do not assert equivalent total
+/// work across ownership forms or scalar representations.
 const BORROWED_OP_GROUPS: &[BenchGroupDoc] = &[
     BenchGroupDoc {
         name: "rational_ops",
@@ -61,14 +90,28 @@ const BORROWED_OP_GROUPS: &[BenchGroupDoc] = &[
     },
 ];
 
+/// Construct a fixed exact fraction for benchmark setup.
+///
+/// Panics when `d` is zero because construction is unwrapped. Current callers use
+/// nonzero denominators; setup is outside the measured arithmetic loops.
 fn rational(n: i64, d: u64) -> Rational {
     Rational::fraction(n, d).unwrap()
 }
 
+/// Wrap the setup fraction as a rational-backed `Real` without float conversion.
+///
+/// Inherits the zero-denominator panic of [`rational`]. This does not evaluate a
+/// computable approximation or supply a separate certainty receipt.
 fn real(n: i64, d: u64) -> Real {
     Real::new(rational(n, d))
 }
 
+/// Register eight rational operations on 123456789/987654321 and its reciprocal.
+///
+/// Refreshes catalogue text from stored estimates before registering the group.
+/// Both operands are nonzero, so the fixed division input is valid. Owned setup
+/// clones and deferred output drops are outside measurement; borrowed output drops
+/// are inside it. Results are consumed by `black_box`, not checked for equality.
 fn bench_rational(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "borrowed_ops",
@@ -127,6 +170,12 @@ fn bench_rational(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register the same eight ownership cases with rational-backed `Real` operands.
+///
+/// The reciprocal setup fractions are constructed before timing. Division results
+/// are unwrapped inside the timed routine and would panic on failure. The fixed
+/// nonzero operands satisfy division's domain; no result evaluation or independent
+/// correctness/receipt assertion is added. Timing boundaries follow the module overview.
 fn bench_real(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_ops");
     let lhs = real(123_456_789, 987_654_321);
@@ -179,6 +228,12 @@ fn bench_real(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register eight ownership cases using the positive square roots of two and three.
+///
+/// Square-root construction and its unwraps occur before timing. Division is
+/// unwrapped within the timed routine. Shared operands can retain internal work
+/// across iterations; returned exact expressions are black-boxed without explicitly
+/// requesting numerical evaluation or checking their mathematical values.
 fn bench_real_irrational(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_irrational_ops");
     let lhs = Real::new(Rational::new(2)).sqrt().unwrap();
@@ -231,6 +286,12 @@ fn bench_real_irrational(c: &mut Criterion) {
     group.finish();
 }
 
+/// Refresh this binary's catalogue, then invoke the shared report callback.
+///
+/// Called after all three groups by the generated Criterion runner. Each writer
+/// applies its own argument/environment guard and logs write errors; report work
+/// is not part of the measured arithmetic closures. The catalogue reads whatever
+/// estimate files currently exist, not a receipt of this run's completion.
 fn finish_benchmark_report(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "borrowed_ops",

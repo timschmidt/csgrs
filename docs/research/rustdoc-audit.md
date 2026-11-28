@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/support/bench_docs.rs` | Entire catalogue helper; documented private fields, text parsing, duration display, directory resolution and write/marker behavior. | All 20 authored blocks render; six consumers compile and before/after fixture reports match. See small-bench batch. |
+| `crates/hyperreal/benches/borrowed_ops.rs` | Entire 24-case suite and metadata; documented operands, timing/destruction boundaries, unwraps and report callbacks. | All 11 authored blocks render; both-mode smoke/docs pass. Two Criterion-generated functions still lack attached docs. See small-bench batch. |
+| `crates/hyperreal/benches/float_convert.rs` | Entire 11-case suite and metadata; documented exact binary imports, measured scope and actual enclosure endpoints. | All six authored blocks render; both-mode smoke/docs and independent endpoint expectations pass. Two Criterion-generated functions still lack attached docs. See small-bench batch. |
 | `crates/hyperreal/benches/support/benchmark_report.rs` | Entire report implementation and both tests; documented discovery, private fields, parser/fallback behavior, comparison semantics and file effects. | 51-block private/test render inventory, both feature-mode tests/docs, nine consumer checks and isolated before/after report fixtures passed; non-comment tokens unchanged. See shared-report batch. |
 | `crates/hyperreal/examples/directed_scalar_probe.rs` | Entire process probe, six tests and helper; documented query order, receipt projection, timing/trace scope, cache checks and finite validation. | Private/test docs, 42-block render inventory, focused tests and before/after semantic/trace checks passed; concrete generator witnesses retained. See probe/atlas batch. |
 | `crates/hyperreal/examples/perf_atlas.rs` | Entire atlas example; documented source generators, actual scalar domains, timing/status limitations and both local callback aliases. | Private/test docs, 42-block render inventory, focused tests and before/after semantic/trace checks passed; concrete generator witnesses retained. See probe/atlas batch. |
@@ -22631,6 +22634,116 @@ Evidence is retained under `/tmp/csgrs-hyperreal-benchmark-report-audit/`;
 temporary compiled/shadow source, executable and rendered HTML are removed after
 inspection. The shared target remains about 7.3 GiB. Whole-repository review and
 configuration coverage remain unfinished.
+
+## Hyperreal catalogue helper and small arithmetic/conversion benches (2026-11-27)
+
+Baseline: `a70f085fd` on `rustdoc`. Read every line of
+`benches/support/bench_docs.rs` (185 lines), `benches/borrowed_ops.rs`
+(250 lines), and `benches/float_convert.rs` (122 lines): 557 existing lines.
+Read the Criterion 0.5.1 harness macros and relevant timing-loop implementation,
+conversion implementation, existing ownership test, manifest and consumer call
+sites as context; those context reads receive no additional whole-file credit.
+Both files under Hyperreal's benches/support now have whole-file review records.
+The remaining benchmark suite and repository audit are not complete.
+
+Ownership is Hyperreal's development benchmark/report layer under P36/P37,
+with P1 exact binary conversion, P4 cache scope and P5/P6 resource/failure
+limitations relevant to the descriptions. The domain is fixed nonzero rational
+and square-root operands, finite IEEE-754 inputs, three rational enclosure cases,
+stored Criterion estimate text and marked Markdown. Missing acceptance evidence
+was item-level documentation of timing boundaries, concrete values and the
+helper's actual parsing/failure behavior. Baseline all-feature smoke execution
+and isolated helper fixtures preceded edits. No runtime token, emitted report
+string, benchmark input, assertion or manifest changed.
+
+Added/reviewed 37 authored Rustdoc blocks: helper module, three structs, eight
+fields and eight functions (20); borrowed benchmark module, two included
+modules, two constants and six functions (11); conversion benchmark module,
+two included modules, one constant and two functions (6). Every description
+renders with private items enabled, including the eight field anchors. There
+are no authored derives or function-local items in these three files.
+
+Generated coverage remains incomplete: Criterion 0.5.1 expands each benchmark
+into an undocumented public `benches` function and private `main` function.
+Inspected all four rendered function pages and confirmed the absence of item
+docblocks. The module docs explain their configuration/callback/summary roles;
+that explanation does not count as attached item documentation. The dependency
+macros do not forward doc attributes, and changing the executable harness is
+outside this session's docs-only scope. Preserve this four-item gap for a
+follow-up that can modify the harness; whole-file reading credit here is not
+100% generated-item coverage. No doc(hidden) or lint suppression was added.
+
+Owned arithmetic uses iter_batched: input cloning and output destruction are
+outside its measured interval, while batching/collection contributes overhead.
+Borrowed iter includes output destruction. The two forms are not the same
+complete-lifetime workload. The rational operands are reciprocal fractions;
+the third group uses positive square roots of two and three. Reused or cloned
+Real values can share internal evidence. Neither returned mathematical values
+nor certainty/evaluation completion are independently checked by these benches.
+
+Float imports preserve the exact binary value of each finite input, including
+bits=2 representing 2^-1073. Imports unwrap; exports black-box Option without
+asserting success or bounds. Independent Python Fraction expectations and an
+execution against the matching all-feature library establish these current
+returned endpoints: 3/4 singleton; 2^51 - 1/4 through 2^51 + 1/2 for the exact
+input 2^51 + 1/8; predecessor(MAX) through MAX for exact MAX - 1. The middle
+lower endpoint is wider than the tightest possible lower bound; the first draft
+was corrected after reading and probing the implementation. No minimal-width
+claim is made. Fixture endpoint bits and exact containment checks are retained.
+
+The catalogue helper performs exact text searches, not JSON parsing. It can
+accept fields from a later object or non-JSON text and rejects a spaced
+`"mean" :` marker. Its numeric scanner can skip null to a later field, accept
+quoted numbers and parse exponent overflow as infinity. Missing/read/parse
+failures all display `not run`. The fixed 95% CI header does not validate
+confidence level, ordering, statistical validity or freshness. Descriptions
+are unescaped Markdown. No input/work/memory/cancellation bound is established.
+
+The writer honors skip-variable presence and exact --test/--list/--help args;
+unlike the shared aggregator callback, it does not require --bench. Any report
+read error, including invalid UTF-8, falls back to a new document. Writes are
+unlocked and non-atomic; errors are logged and the callback returns normally.
+The first begin/end pair is replaced, missing END discards the old tail, and
+later markers remain. Trailing suffix whitespace is preserved, unlike some
+other report helpers; these implementations were not merged.
+
+After the final source edit, the following focused checks passed with locked,
+offline, two-job Cargo, incremental compilation disabled and a shared target:
+
+- Both Criterion smoke targets under no-default-features and all-features:
+  24 arithmetic plus 11 conversion cases in each configuration. Report writes
+  were disabled and Criterion output redirected into task-owned temporary space.
+  These are smoke runs, not performance measurements.
+- Private Rustdoc for both benches in both feature modes, denying warnings and
+  broken/private intra-doc links. Bare cargo rustdoc --bench initially failed
+  because it omitted self/development extern dependencies in this environment,
+  reproducing the earlier benchmark-doc tooling limitation. Supplying matching
+  rlibs/search paths from Cargo's no-run JSON artifacts made all four builds
+  pass; no source or manifest workaround was introduced.
+- All-feature cargo check of all six helper consumers: borrowed_ops,
+  float_convert, scalar_micro, numerical_micro, adversarial_transcendentals
+  and library_perf. The four larger suites were compiled, not timed.
+- Existing ownership_float_assignment_and_iterator_forms_match_borrowed_arithmetic
+  integration test (one) and all four library f64_enclosure tests, all features.
+- Before/after isolated helper execution: text parsing limitations, unit
+  thresholds, missing estimates, marker replacement and suffix whitespace;
+  six argument/environment guard combinations including an empty skip value;
+  report idempotence for the valid fixture; invalid-UTF8 fallback and logged
+  write failure without process failure. Rendered, written and fallback reports
+  and guard records are byte-identical before/after. The repository's actual
+  benchmarks.md SHA-256 remained unchanged.
+- All 37 authored item descriptions and field anchors checked in rendered HTML;
+  four generated-item gaps recorded separately. Raw non-comment tokens are
+  identical for all three files. Scoped Rustfmt and git diff --check passed.
+
+No focused command remains blocked after the explicit Rustdoc dependency inputs.
+Generated item documentation remains a known gap, not a passed coverage check.
+Full workflows remain owner-waived for this docs-only session. AGENTS.md's
+standing future-agent public/private/generated Rustdoc mandate remains intact.
+No performance, universal correctness or complete repository coverage claim is
+made. Evidence scripts, logs, inventory and small fixtures remain under
+`/tmp/csgrs-hyperreal-small-benches-audit/`; temporary probe executables are
+removed after inspection. The reused build/doc target is about 7.5 GiB.
 
 ## Next work
 
