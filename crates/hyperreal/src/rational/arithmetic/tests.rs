@@ -4654,6 +4654,12 @@ mod tests {
         assert_eq!(format!("{decoded}"), "1/2");
     }
 
+    /// Pin square-factor pairs for 32 and negative one.
+    ///
+    /// Requires `(4, 2)` for 32 and `(1, -1)` for negative one. The latter
+    /// preserves a signed algebraic factorization; it does not construct a real
+    /// square root of a negative value. These two pairs do not establish complete
+    /// squarefree reduction.
     #[test]
     fn square_reduced() {
         let thirty_two = Rational::new(32);
@@ -4668,6 +4674,11 @@ mod tests {
         assert_eq!(rest, minus_one);
     }
 
+    /// Require the half-radicand factorization used to align rational surds.
+    ///
+    /// Checks the literal pair `(1/2, 2)` and reconstructs the original half as
+    /// `scale * scale * radicand`. This exercises output as exact arithmetic
+    /// input, without testing symbolic-root combination or a general normal form.
     #[test]
     fn square_reduction_rationalizes_the_residual_denominator() {
         let half = Rational::fraction(1, 2).unwrap();
@@ -4677,6 +4688,13 @@ mod tests {
         assert_eq!(&scale * &scale * radicand, half);
     }
 
+    /// Check residue-screen acceptance and exact roots for a finite square corpus.
+    ///
+    /// Verifies the small-square table's product constant, then requires both
+    /// screen acceptance and the expected root for squares of 0 through 4096.
+    /// Fourteen listed nonsquares must fail exact root recognition; they need
+    /// not all fail the preliminary screen. The screen alone is not a square
+    /// certificate, and this fixture does not measure its rejection rate.
     #[test]
     fn perfect_square_residue_filter_never_rejects_a_square() {
         assert_eq!(
@@ -4698,6 +4716,13 @@ mod tests {
         }
     }
 
+    /// Pin selected large factor pairs with known squarefree residuals.
+    ///
+    /// For eight multipliers of `2^80 + 123` and twelve listed residuals, squares
+    /// the expected root and multiplies by the residual, then requires extraction
+    /// to recover both factors. These 96 constructed cases exercise the large
+    /// magnitude schedule; their canonical residuals do not make partial
+    /// extraction a universal squarefree normalizer or establish a speedup.
     #[test]
     fn large_square_factor_schedule_preserves_canonical_residuals() {
         let base = (BigUint::one() << 80_usize) + BigUint::from(123_u8);
@@ -4712,6 +4737,12 @@ mod tests {
         }
     }
 
+    /// Check exact reconstruction and residual parity for four large binary powers.
+    ///
+    /// Exponents 64, 65, 256 and 257 exceed the word-input range. Each returned
+    /// pair must reconstruct the input, with residual one for even exponents
+    /// and two for odd exponents. This checks the binary-power shortcut without
+    /// asserting dispatch counts or the general extraction cutoff.
     #[test]
     fn large_power_of_two_square_extraction_splits_the_exponent() {
         for exponent in [64_usize, 65, 256, 257] {
@@ -4722,6 +4753,11 @@ mod tests {
         }
     }
 
+    /// Check that subtraction and inversion agree on negative one half.
+    ///
+    /// Forms -1/2 by parsing 4/8 and subtracting one, then compares with
+    /// the inverse of `0 - 2`. This is a composition witness with shared rational
+    /// arithmetic, not an independent sign or zero-divisor oracle.
     #[test]
     fn signs() {
         let half: Rational = "4/8".parse().unwrap();
@@ -4734,6 +4770,10 @@ mod tests {
         assert_eq!(i2, minus_half);
     }
 
+    /// Check the exact chain `(inverse(2) + 1) * 2 = 3`.
+    ///
+    /// Consumes the reciprocal and sum in subsequent owned arithmetic and
+    /// compares with an integer literal. All denominators here are nonzero.
     #[test]
     fn half_plus_one_times_two() {
         let two = Rational::new(2);
@@ -4745,6 +4785,14 @@ mod tests {
         assert_eq!(sum * two, three);
     }
 
+    /// Compare pair means with expanded arithmetic in both operand orders.
+    ///
+    /// Five pairs cover equal fractions, mixed signs, zero, deep dyadic
+    /// denominators and a same-sign integer sum exceeding `u128`. The expected
+    /// value uses ordinary rational addition and multiplication by one half,
+    /// so this checks agreement and symmetry rather than an independent kernel.
+    /// Raw dyadic fixture parts are already coprime; no lazy-reduction or path
+    /// count assertion is made.
     #[test]
     fn average_pair_matches_expanded_exact_arithmetic() {
         let cases = [
@@ -4787,6 +4835,13 @@ mod tests {
         }
     }
 
+    /// Pin the GCD count for a mean with consecutive wide denominators.
+    ///
+    /// Uses `1 / 2^300` and `1 / (2^300 + 1)`; their denominator GCD is one,
+    /// so the final possible cancellation factor is two. Computes the expanded
+    /// reference before recording, then requires exact equality, one rational
+    /// GCD event and one arbitrary-precision mean dispatch. These counts cover
+    /// this call, not total work, allocations or a timing bound.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn average_pair_bounds_final_reduction_by_shared_denominator_content() {
@@ -4813,6 +4868,13 @@ mod tests {
         );
     }
 
+    /// Compare slice means with a rational fold divided by the full length.
+    ///
+    /// Four schedules include dyadic alignment, equal non-dyadic denominators,
+    /// mixed denominators, signed wide dyadics and zeros that still count in
+    /// the divisor. Empty input must return `None`. The expected sums share
+    /// rational arithmetic with the implementation; no independent rounding,
+    /// allocation or dispatch-count claim follows.
     #[test]
     fn mean_refs_matches_expanded_exact_arithmetic() {
         let schedules = [
@@ -4861,6 +4923,13 @@ mod tests {
         }
     }
 
+    /// Compare the fixed three-value reducer with the general slice mean.
+    ///
+    /// Six triples cover dyadic, equal and mixed denominators, all zero, one
+    /// zero, and signed wide raw fractions. The expected value comes from
+    /// `mean_refs`, rather than a separately expanded literal oracle. This
+    /// checks agreement between schedules, including the divisor three for
+    /// zeros, without proving general raw-state admission or dispatch counts.
     #[test]
     fn mean3_refs_matches_expanded_exact_arithmetic() {
         let schedules = [
@@ -4913,6 +4982,10 @@ mod tests {
         }
     }
 
+    /// Check that owned integer division produces the exact parsed half.
+    ///
+    /// The nonzero divisor six exercises successful rational reduction; this
+    /// fixture makes no zero-divisor or error-contract assertion.
     #[test]
     fn three_divided_by_six() {
         let three = Rational::new(3);
@@ -4921,6 +4994,7 @@ mod tests {
         assert_eq!(three / six, half);
     }
 
+    /// Pin owned rational addition of one and two to the integer three.
     #[test]
     fn one_plus_two() {
         let one = Rational::one();
@@ -4929,6 +5003,9 @@ mod tests {
         assert_eq!(one + two, three);
     }
 
+    /// Pin owned rational subtraction of one from two to canonical value one.
+    ///
+    /// Equality checks the value, not shared allocation identity.
     #[test]
     fn two_minus_one() {
         let two = Rational::new(2);
@@ -4936,6 +5013,7 @@ mod tests {
         assert_eq!(two - one, Rational::one());
     }
 
+    /// Pin owned rational multiplication of two by three to the integer six.
     #[test]
     fn two_times_three() {
         let two = Rational::new(2);
@@ -4943,6 +5021,10 @@ mod tests {
         assert_eq!(two * three, Rational::new(6));
     }
 
+    /// Pin signed fractional remainders for positive and negative 70/9.
+    ///
+    /// Requires `7/9` and `-7/9`, respectively, matching truncation toward zero,
+    /// and requires an integer input of six to have zero fractional part.
     #[test]
     fn fract() {
         let seventy_ninths = Rational::fraction(70, 9).unwrap();
@@ -4955,6 +5037,12 @@ mod tests {
         assert_eq!(six.fract(), Rational::zero());
     }
 
+    /// Check exact recomposition from integer and fractional parts.
+    ///
+    /// For 70/9 and -405/11, adds the two returned parts and compares with the
+    /// original value. At zero it also requires the parts to agree. This paired
+    /// identity does not independently assert the nonzero integer parts or
+    /// distinguish every possible rounding convention.
     #[test]
     fn trunc() {
         let seventy_ninths = Rational::fraction(70, 9).unwrap();
@@ -4972,6 +5060,14 @@ mod tests {
         assert_eq!(whole + frac, zero);
     }
 
+    /// Check signed integer powers, exact float-derived input and size declines.
+    ///
+    /// Pins `5^-3`, `7^11` and odd, even and reciprocal powers of `-7/5` to
+    /// literal rational values. Compares the fifth power of the exact binary64
+    /// value `1.0e-12_f64` with repeated multiplication; that input is not the
+    /// exact decimal `10^-12`. Both signs of exponent 20,000 for base ten must
+    /// return `Problem::Exhausted` under eager-size admission. This is not a
+    /// total-work or memory measurement, and zero/unit special cases are absent.
     #[test]
     fn power() {
         let one_two_five = Rational::new(5).powi(BigInt::from(-3));
@@ -5009,6 +5105,12 @@ mod tests {
         );
     }
 
+    /// Preserve ten literal square-factor regression expectations.
+    ///
+    /// Checks the exact ordered root/residual pairs for positive integers from
+    /// one through 715716, including 1323 as `(21, 3)` and 123456 as `(8, 1929)`.
+    /// These expected factors are specified directly, not obtained from another
+    /// root wrapper; the finite table does not establish complete factorization.
     #[test]
     fn sqrt_trouble() {
         for (n, root, rest) in [
@@ -5029,6 +5131,13 @@ mod tests {
         }
     }
 
+    /// Check factor-product conservation on seven positive word magnitudes.
+    ///
+    /// Includes small squares and nonsquares, 123456, 715716, `u32::MAX` and
+    /// `u64::MAX`. Multiplying the returned root twice by the residual must
+    /// recover the input. No particular root or residual is required, so this
+    /// invariant alone would also accept the trivial factorization `(1, input)`.
+    /// Zero is excluded by the private extraction kernel's positive-input contract.
     #[test]
     fn word_sized_square_extraction_preserves_exact_product() {
         for value in [

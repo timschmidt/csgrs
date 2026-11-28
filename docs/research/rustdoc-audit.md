@@ -26500,6 +26500,84 @@ incremental compilation. AGENTS.md already contains the full public/private/
 generated Rustdoc mandate. Continue at square_reduced, whose attribute is now
 line 4657. This 7,626-line file and the repository-wide audit remain unfinished.
 
+## Rational test audit: square factors, means and powers (28 November 2026)
+
+Owning layer: Hyperreal rational arithmetic acceptance fixtures. P1 governs
+exact factor/product and mean identities, P5/P6 distinguish eager-power size
+admission from successful arithmetic, and P37 governs the stated strength of
+each witness. At 555674c07, the twenty test functions in arithmetic/tests.rs
+lines 4657–5047 had no Rustdoc. Their passing baseline did not resolve that
+missing documentation or justify universal claims suggested by broad names.
+
+Reviewed that complete range and the relevant squares_powers, ops,
+aggregate_products, queries_conversion and construction implementations. Added
+twenty descriptions (109 Rustdoc lines); the reviewed range is now 4657–5156.
+There are no executable, attribute, assertion, test-data or ordinary-comment
+changes. Read the Real pair-mean delegation and relevant root-factor consumers
+for context; these partial reads do not credit whole-file consumer review.
+
+The descriptions separate the following evidence:
+
+- Literal factor pairs for 32, negative one and ten positive regression values
+  from a complete squarefree normal form. Negative-one extraction is a signed
+  factorization, not a real square root. The half-radicand test also reconstructs
+  its input from the literal `(1/2, 2)` output.
+- Residue-screen acceptance and exact-root recognition for 4097 constructed
+  squares, plus fourteen nonsquare recognition failures. A passing screen is
+  only a necessary condition; the test does not require every nonsquare to fail
+  that screen or measure a workload rejection rate.
+- Ninety-six large constructed root/residual pairs and four large binary powers
+  from unrestricted factorization coverage. The seven word-sized inputs check
+  only product reconstruction, which alone would admit `(1, input)`; zero is
+  excluded by the private kernel's positive-input precondition.
+- Five pair-mean cases checked in both orders, four slice-mean schedules with
+  explicit empty rejection, and six fixed triples compared with mean_refs.
+  Expanded rational references share arithmetic authority; the three-value
+  reference is specifically the general reducer, not an independent literal
+  oracle. Zeros still participate in the divisor. Private raw fixtures are not
+  a general admission guarantee or a lazy-canonicalization witness.
+- One trace-guarded mean over denominators 2^300 and 2^300+1. The reference is
+  computed before recording; exactly one rational GCD and one arbitrary-
+  precision dispatch are required. The final possible factor is two, consistent
+  with the shift reduction path. These event assertions are preserved verbatim
+  and do not establish a total-work, allocation or timing bound.
+- Small owned arithmetic compositions and signed fractional-part literals from
+  the weaker truncation recomposition identity. The latter does not independently
+  specify the nonzero integer parts or every rounding convention.
+- Literal signed powers and a float-derived dyadic fifth power from exact
+  decimal input. The binary64 value 1.0e-12 is not 10^-12. Base ten to either
+  sign of exponent 20000 must produce Exhausted under eager-size admission;
+  the fixture does not measure memory/work or cover zero/unit shortcuts.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal tests: nineteen pass without default features and
+  twenty with all features, matching the twenty-test all-feature baseline.
+  Exact-name inventories verify that these are the intended fixtures.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Supplemental source copies remove only these twenty test markers,
+  retaining the dispatch-trace guard. All nineteen applicable descriptions
+  render without default features and all twenty with all features. The HTML
+  text comparator was corrected to normalize inline-code delimiters and tag-
+  induced whitespace; no source documentation or lint was suppressed to pass it.
+- The all-feature Real average_pair_preserves_exact_and_symbolic_fast_paths
+  consumer test passes (one exact-name match).
+- Source inventories account for every function in the reviewed range;
+  executable-token equality and git diff --check pass. No function-local items
+  occur in this batch. Generated API coverage remains a separate obligation.
+- Full workflows, performance, cross-target and formal-verification checks remain
+  owner-waived for the docs-only session. These fixtures do not establish general
+  algorithm completeness, universal normal forms or performance improvements.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-squares-means-audit/:
+baseline, scripts, commands, logs, inventories, hashes and compressed selected
+HTML. Owned source copies and duplicate HTML trees are removed after validation;
+shared Cargo output is reused with incremental compilation disabled. The shared
+target measured 9.9 GiB with 113 GiB free on /tmp during this batch. AGENTS.md
+already mandates 100% Rustdoc for public, private and generated items. Continue
+at clones_share_storage_without_sharing_arithmetic_results, whose attribute is
+now line 5157. This 7735-line file and the repository-wide audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
