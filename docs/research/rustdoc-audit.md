@@ -21658,6 +21658,114 @@ executable/rlib and HTML were removed after inspection. Builds reused the roughl
 6.6 GiB shared target with incremental compilation disabled. Repository-wide
 line review and all-configuration documentation coverage remain unfinished.
 
+## Hyperreal node regressions: arithmetic, comparisons and shared fixture helpers
+
+Baseline: `74185a7dc33ad45c6fbbd400de534162203a7632` on `rustdoc`.
+Reviewed 494 contiguous lines of `crates/hyperreal/src/computable/node/tests.rs`,
+baseline lines 2538–3031, from `negate` through `shifted_cos_sin`. The section
+becomes 671 lines, ending at current line 3208. Both surrounding sections remain
+byte-identical. The file grows from 4773 to 4950 lines. Cumulative contiguous
+review now covers current lines 1–3208; continue at the `sin_small_arguments`
+test attribute on line 3209 (function line 3210). The remaining contents and
+enclosing module still need review; **no whole-file credit is claimed**.
+
+Hyperreal owns these scalar fixtures and their consumers. P37 requires accurate
+descriptions; P1–P4, P6 and P7 supply the exact-input, retained-structure, facts,
+cache, honest-outcome and stable-composition contracts. The initial gap was
+36 undocumented functions: 29 tests, four shared fixture helpers and three
+function-local helpers. Read the entire section, relevant arithmetic kernels,
+comparison cascades, exponential scheduling and nearby helper consumers. All
+29 baseline tests passed before editing. Added all 36 Rustdoc blocks: 33 were
+checked on temporary private function pages and three function-local helpers
+were checked through supplemental rendering.
+
+The documented evidence distinguishes the following:
+
+- Integer negation supplies the -15/2 -> -7 positive-direction half-way tie.
+  The six positive 1/6 samples instead follow rational truncation; they do not
+  promise nearest rounding. The multiplication literals represent 4*atan(1/5)
+  in both operand orders. PrescaledLn stores a residual for ln(1+x), so its
+  zero and exact-decimal 0.4 cases represent ln(1) and ln(7/5), not ln(0) or
+  a rounded binary64 decimal.
+- ln(5), cos(0) and cos(1) use fixed integer samples. The exponential/logarithm
+  round trips, inverse-product identity and ln(2) reduction compare native
+  paths within two output units. The test named exact_transcendental_identities
+  checks matching -40 samples only; it does not inspect structural exactness.
+- Comparison fixtures assert signed-value order, including mixed One/Ratio/
+  zero leaves and signed irrationals. compare_absolute refers to an absolute
+  tolerance, not comparison of absolute magnitudes. Equal on general numerical
+  paths must not be promoted to an exact equality certificate.
+- Explicit identity cases include pi self-comparison, separate rational 3/7
+  leaves and an Arc-shared pi*e+7/13 clone. Magnitude-gap cases compare pi with
+  2^200*pi after warming pi; signed perturbations cover +/-1 and +/-2^-100.
+  These expected results do not assert dispatch counts or absence of refinement.
+- The 17-value comparison corpus first evaluates operands at -256 and only then
+  calls the comparison with floor -128. Its local reference accepts a strict
+  order only for sample gaps greater than two units and skips other pairs.
+  Finer cached evidence is therefore available. This is native consistency
+  coverage, not an independent oracle, cold-floor test or equality check for
+  skipped pairs. The helper's two-unit argument presumes valid completed samples.
+- The unsigned-magnitude fixture directly injects exact binades 3 and -3 for
+  -8 and -1/8 while keeping sign unknown. Correct signed order must survive;
+  the local wrapper does not validate arbitrary injected certificates. Its
+  assertions do not determine which later proof path supplied the signs.
+- A warmed pi-pi product must sample as zero, without inspecting whether the
+  constructor already folded it. Bounded integer exponentials are compared
+  with explicit ln(2) reduction in 259 cases. The local reduction helper
+  requires success within 64 corrections and an i32 scale for these inputs;
+  this is not a total-work or universal reduction bound. Separate tag assertions
+  require Square at exp(256) and Offset(PrescaledExp) at exp(257).
+- assert_approx compares one integer sample with a decimal fixture; assert_close
+  evaluates left then right and bounds the sample difference. Neither is an
+  independent oracle or mathematical equality procedure. pi_times and
+  shifted_cos_sin retain exact native constructions and shared constant behavior,
+  with no additional resource limit. Their nearby sine consumers were checked.
+
+Independent exact Fraction arithmetic verified the negative integer tie, six
+rational truncation samples and four nontrivial literal enclosures. The latter
+use alternating atan/cos series and a positive atanh series with an explicit
+geometric tail bound for ln(5) and ln(7/5). These certify the selected literals'
+one-unit intervals without asserting universal correct rounding.
+
+The same exact arithmetic constructed disjoint rational intervals for all 17
+comparison values: Machin/atan bounds for pi and atan(1/3), a factorial-series
+bound for e, a squared rational bracket for sqrt(2), and exact transport through
+negation, shifts and reciprocal pi. Adjacent intervals in the resulting total
+order are strictly separated. A temporary probe retained the original corpus
+check, then compared all 289 ordered pairs against that independently derived
+rank order at -128: 272 strict orders and 17 equal self-pairs passed on both
+baseline and documented source. These extra checks retain the original warm
+operand history; they do not claim cold-cache qualification or universal
+comparison completeness. External containment was 1 GiB address space, twenty
+CPU seconds, thirty wall seconds and no core dumps, not a production resource
+contract.
+
+After the final source edit, focused locked/offline two-job validation passed:
+
+- All 29 selected fixtures without default features and with all features;
+  all 87 baseline/final selected-test logs were checked for nonempty success.
+- The two helper consumers sin_small_arguments and
+  sin_matches_shifted_cos_identity in both feature configurations.
+- Both private library Rustdoc configurations and temporary fixture Rustdoc,
+  with warnings and broken/private intra-doc links denied, all 33 rendered
+  descriptions and the three supplemental local-helper descriptions.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Scoped Rustfmt and git diff --check. Independently formatted comment-free
+  tokens are identical; raw-token differences are two added and two removed
+  optional trailing commas, inspected in the diff. No fixture, assertion,
+  predicate order, runtime algorithm or signature changed.
+
+No focused check remains blocked and no new runtime defect was found in these
+finite witnesses. Full workflows remain owner-waived for this docs-only session;
+no performance claim is made. AGENTS.md's standing public/private documentation
+mandate remains in force. Evidence under
+`/tmp/csgrs-hyperreal-node-comparison-fixtures-audit/` retains command logs,
+probe sources, exact expectations and item/render/token inventories. Owned shadow
+sources, executable/rlib and temporary HTML were removed after inspection. Builds
+reused the roughly 6.6 GiB shared target with incremental compilation disabled.
+Repository-wide line review and all-configuration coverage remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

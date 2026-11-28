@@ -2536,6 +2536,11 @@ mod tests {
     }
 
     #[test]
+    /// Check the negative integer half-way rounding case after native negation.
+    ///
+    /// Negating fifteen and requesting precision one must return -7, rounding
+    /// -15/2 toward positive infinity at the tie. This is one integer-leaf case,
+    /// not a rounding rule for all computable expressions.
     fn negate() {
         let fifteen: BigInt = "15".parse().unwrap();
         let a = Computable::integer(fifteen.clone());
@@ -2545,6 +2550,11 @@ mod tests {
     }
 
     #[test]
+    /// Check four times atan(1/5), with the exact scale on the left.
+    ///
+    /// Require sample 809 at precision -10. The integral-atan payload is denominator
+    /// five. This literal case checks the chosen operand order without asserting
+    /// an internal multiplication tag, dispatch count or general correct rounding.
     fn multiply() {
         let four: BigInt = "4".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
@@ -2556,6 +2566,11 @@ mod tests {
     }
 
     #[test]
+    /// Check four times atan(1/5), with the exact scale on the right.
+    ///
+    /// Require sample 809 at precision -10. The integral-atan payload is denominator
+    /// five. This literal case checks the chosen operand order without asserting
+    /// an internal multiplication tag, dispatch count or general correct rounding.
     fn multiply_opposite() {
         let four: BigInt = "4".parse().unwrap();
         let five: BigInt = "5".parse().unwrap();
@@ -2567,6 +2582,11 @@ mod tests {
     }
 
     #[test]
+    /// Check six integer samples of the exact fraction 1/6 through precision -9.
+    ///
+    /// At precisions 0,-1,-2,-3,-6,-9 require 0,0,0,1,10,85. These samples follow
+    /// the rational kernel's truncation at this positive input, rather than a
+    /// nearest-integer promise; the one-unit error contract still applies.
     fn rational() {
         let sixth: Rational = "1/6".parse().unwrap();
         let c = Computable::rational(sixth);
@@ -2583,10 +2603,18 @@ mod tests {
     }
 
     #[test]
+    /// Check a raw PrescaledLn node for residual zero at coarse precision 100.
+    ///
+    /// Its meaning is ln(1+0), not ln(0). Start without cached sign/magnitude facts
+    /// or an attached signal and require a zero sample at this one request.
     fn scaled_ln1() {
         let zero = Computable::integer(BigInt::zero());
         let ln = Computable {
-            internal: Arc::new(Node::new(Approximation::PrescaledLn(zero), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::PrescaledLn(zero),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         };
         let zero = BigInt::zero();
@@ -2594,11 +2622,19 @@ mod tests {
     }
 
     #[test]
+    /// Check the raw ln(1+x) kernel for exact decimal residual 0.4=2/5.
+    ///
+    /// Construct PrescaledLn with invalid facts and require sample five at -4,
+    /// representing ln(7/5) in sixteenth units. Decimal parsing is exact here.
     fn scaled_ln1_4() {
         let zero_4: Rational = "0.4".parse().unwrap();
         let rational = Computable::rational(zero_4);
         let ln = Computable {
-            internal: Arc::new(Node::new(Approximation::PrescaledLn(rational), BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                Approximation::PrescaledLn(rational),
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         };
         let five: BigInt = "5".parse().unwrap();
@@ -2606,6 +2642,10 @@ mod tests {
     }
 
     #[test]
+    /// Check a fixed -40 sample of the natural logarithm of integer five.
+    ///
+    /// Require 1769595698905 from the native constructor/evaluator. This finite
+    /// literal witness is not a universal correctly rounded logarithm contract.
     fn ln() {
         let five: BigInt = "5".parse().unwrap();
         let integer = Computable::integer(five);
@@ -2615,12 +2655,21 @@ mod tests {
     }
 
     #[test]
+    /// Compare ln(exp(7/5)) with its exact rational source at precision -40.
+    ///
+    /// Allow two integer units between the two native samples. This qualifies
+    /// composition consistency, not structural equality or an independent oracle.
     fn exp_and_ln_round_trip() {
         let seven_fifths = Computable::rational(Rational::fraction(7, 5).unwrap());
         assert_close(seven_fifths.clone().exp().ln(), seven_fifths, -40, 2);
     }
 
     #[test]
+    /// Check sampled endpoint identities for exp(0), ln(1), sin(0), cos(0) and tan(0).
+    ///
+    /// Require zero integer difference from one or zero at -40. Despite the test
+    /// name, these assertions do not inspect exact rational metadata or retained
+    /// tags, and one matching approximation is not a general exact-equality proof.
     fn exact_transcendental_identities() {
         let zero = Computable::rational(Rational::zero());
         let one = Computable::rational(Rational::one());
@@ -2632,6 +2681,10 @@ mod tests {
     }
 
     #[test]
+    /// Require definite order for -pi<pi and 7/8<9/10.
+    ///
+    /// These opposite-sign and rational cases qualify the comparison result;
+    /// the fixture does not assert which shortcut ran or count refinement work.
     fn compare_to_uses_exact_sign_and_rational_shortcuts() {
         let minus_pi = Computable::pi().negate();
         let pi = Computable::pi();
@@ -2643,6 +2696,10 @@ mod tests {
     }
 
     #[test]
+    /// Require exact comparison equality for pi with itself and two rational 3/7 leaves.
+    ///
+    /// The cases cover self-identity and separately constructed exact values,
+    /// not arbitrary equivalence of distinct symbolic expression graphs.
     fn try_compare_to_handles_identical_symbolic_values() {
         let pi = Computable::pi();
         assert_eq!(pi.try_compare_to(&pi), Some(Ordering::Equal));
@@ -2653,6 +2710,11 @@ mod tests {
     }
 
     #[test]
+    /// Order pi and 2^200*pi in both directions and after negating both operands.
+    ///
+    /// Warm pi at -16 before constructing the scaled value. Require the reversed
+    /// ordering for negatives; no dispatch count or absence-of-refinement assertion
+    /// establishes that a particular magnitude shortcut supplied the result.
     fn compare_to_uses_exact_msd_gap_shortcut() {
         let base = Computable::pi();
         base.approx(-16);
@@ -2674,6 +2736,10 @@ mod tests {
     }
 
     #[test]
+    /// Compare a clone of pi*e+7/13 as exactly equal to its shared source.
+    ///
+    /// Assert Arc identity before the comparison. This witnesses clone-based
+    /// structural equality, not an independent algebraic equivalence procedure.
     fn compare_to_accepts_clone_shared_composite_expression() {
         let expression = Computable::pi()
             .multiply(Computable::e())
@@ -2685,6 +2751,10 @@ mod tests {
     }
 
     #[test]
+    /// Order zero below 1/1024 and -7/8 below 9/10 at tolerance exponent -40.
+    ///
+    /// The inputs are exact rational leaves. The test asserts signed ordering,
+    /// not a dispatch trace or the interpretation of Equal on unresolved inputs.
     fn compare_absolute_uses_exact_shortcuts() {
         let zero = Computable::rational(Rational::zero());
         let tiny = Computable::rational(Rational::fraction(1, 1024).unwrap());
@@ -2696,6 +2766,11 @@ mod tests {
     }
 
     #[test]
+    /// Check six signed orders among One, zero and rational +/-100/3 at tolerance -40.
+    ///
+    /// The mixed leaf kinds must respect sign rather than absolute magnitude.
+    /// Both directions are checked for each selected pair; representation-specific
+    /// shortcut counts and general approximate equality are not asserted.
     fn compare_absolute_orders_mixed_exact_leaf_kinds_by_signed_value() {
         let one = Computable::one();
         let negative_large =
@@ -2710,17 +2785,24 @@ mod tests {
             one.compare_absolute(&negative_large, -40),
             Ordering::Greater
         );
+        assert_eq!(negative_large.compare_absolute(&one, -40), Ordering::Less);
         assert_eq!(
-            negative_large.compare_absolute(&one, -40),
-            Ordering::Less
+            zero.compare_absolute(&negative_large, -40),
+            Ordering::Greater
         );
-        assert_eq!(zero.compare_absolute(&negative_large, -40), Ordering::Greater);
         assert_eq!(negative_large.compare_absolute(&zero, -40), Ordering::Less);
         assert_eq!(zero.compare_absolute(&positive_large, -40), Ordering::Less);
-        assert_eq!(positive_large.compare_absolute(&zero, -40), Ordering::Greater);
+        assert_eq!(
+            positive_large.compare_absolute(&zero, -40),
+            Ordering::Greater
+        );
     }
 
     #[test]
+    /// Order zero against +/-pi in both directions at tolerance exponent -16.
+    ///
+    /// Require signed-value order; compare_absolute names absolute tolerance,
+    /// not an instruction to compare the operands' absolute magnitudes.
     fn compare_absolute_orders_zero_and_signed_irrationals_by_value() {
         let zero = Computable::zero();
         let pi = Computable::pi();
@@ -2733,14 +2815,14 @@ mod tests {
     }
 
     #[test]
+    /// Order base+delta against its shared base for base=+/-pi and delta=+/-1.
+    ///
+    /// Both comparison directions must follow the perturbation sign independently
+    /// of the base sign. These eight results do not assert an internal proof path.
     fn compare_to_orders_structurally_shared_signed_perturbations() {
         let cases = [
             (Computable::pi(), Computable::one(), Ordering::Greater),
-            (
-                Computable::pi(),
-                Computable::one().negate(),
-                Ordering::Less,
-            ),
+            (Computable::pi(), Computable::one().negate(), Ordering::Less),
             (
                 Computable::pi().negate(),
                 Computable::one(),
@@ -2769,6 +2851,11 @@ mod tests {
     }
 
     #[test]
+    /// Order pi+/-2^-100 against the shared pi source with requested floor -16.
+    ///
+    /// Require both directions to retain the exact perturbation sign despite its
+    /// scale below the numerical request floor. The fixture does not measure child
+    /// precision, cache history or the dispatch path used to obtain that evidence.
     fn compare_to_retains_exact_perturbation_sign_below_refinement_floor() {
         let base = Computable::pi();
         let tiny = Computable::rational(
@@ -2783,10 +2870,7 @@ mod tests {
             above.try_compare_to_until(&base, -16),
             Some(Ordering::Greater)
         );
-        assert_eq!(
-            base.try_compare_to_until(&above, -16),
-            Some(Ordering::Less)
-        );
+        assert_eq!(base.try_compare_to_until(&above, -16), Some(Ordering::Less));
         assert_eq!(below.try_compare_to_until(&base, -16), Some(Ordering::Less));
         assert_eq!(
             base.try_compare_to_until(&below, -16),
@@ -2795,7 +2879,25 @@ mod tests {
     }
 
     #[test]
+    /// Compare the bounded cascade with separated native samples for 17 exact expressions.
+    ///
+    /// Enumerate all ordered pairs of zero, signed unit/pi/e/sqrt(2), four pi
+    /// shifts, signed atan(1/3) and signed reciprocal pi. The local -256 evaluator
+    /// supplies an order only when sample separation exceeds two units; otherwise
+    /// skip the pair. Require the -128 comparison to match every supplied order.
+    ///
+    /// Reference evaluation warms these same operands before the comparison, so
+    /// finer cached evidence is available. This is finite consistency coverage,
+    /// not an independent oracle, an equality test for skipped pairs, a cold-cache
+    /// floor test or an assertion of the number of successful comparisons.
     fn certified_compare_cascade_matches_separated_full_evaluation_corpus() {
+        /// Return a strict order only when two completed samples are more than two units apart.
+        ///
+        /// Evaluate left then right at the supplied precision. Each approximation may
+        /// err by one unit, so a gap exceeding two certifies strict separation on their
+        /// admitted domains. Otherwise return None, never Equal. The caller supplies
+        /// valid manageable precision and uninterrupted operands; this helper adds no
+        /// cancellation receipt or work limit and warms both operands' caches.
         fn evaluated_order(
             left: &Computable,
             right: &Computable,
@@ -2816,8 +2918,7 @@ mod tests {
         let pi = Computable::pi();
         let e = Computable::e();
         let root_two = Computable::rational(Rational::new(2)).sqrt();
-        let atan_third =
-            Computable::rational(Rational::fraction(1, 3).unwrap()).atan();
+        let atan_third = Computable::rational(Rational::fraction(1, 3).unwrap()).atan();
         let values = [
             Computable::zero(),
             Computable::one(),
@@ -2853,6 +2954,10 @@ mod tests {
     }
 
     #[test]
+    /// Order positive pi and 2^200*pi in both directions at tolerance -40.
+    ///
+    /// Warm pi at -16 first. The asserted results are consistent with a magnitude
+    /// gap, but the fixture does not inspect dispatch or further refinement.
     fn compare_absolute_uses_exact_msd_gap_shortcut() {
         let base = Computable::pi();
         base.approx(-16);
@@ -2866,7 +2971,18 @@ mod tests {
     }
 
     #[test]
+    /// Require -8<-1/8 when wrappers retain exact binades but deliberately unknown signs.
+    ///
+    /// Wrap both rationals with raw zero-offset nodes carrying magnitude metadata,
+    /// then compare in both directions at floor zero. This prevents interpreting
+    /// unsigned magnitude order as signed numeric order; it does not identify the
+    /// fallback proof path or assert a final cache state.
     fn unsigned_magnitude_facts_do_not_determine_signed_order() {
+        /// Wrap a fixture value in Offset(value,0) with exact binade metadata and unknown sign.
+        ///
+        /// The caller must prove the value is nonzero and has the supplied msd. Store
+        /// that assertion directly, set the exact-sign cache to Unknown, and attach no
+        /// signal. This test helper does not validate its injected certificate.
         fn with_unsigned_magnitude(value: Computable, msd: Precision) -> Computable {
             Computable {
                 internal: Arc::new(Node::new(
@@ -2882,12 +2998,9 @@ mod tests {
             }
         }
 
-        let large_negative =
-            with_unsigned_magnitude(Computable::rational(Rational::new(-8)), 3);
-        let small_negative = with_unsigned_magnitude(
-            Computable::rational(Rational::fraction(-1, 8).unwrap()),
-            -3,
-        );
+        let large_negative = with_unsigned_magnitude(Computable::rational(Rational::new(-8)), 3);
+        let small_negative =
+            with_unsigned_magnitude(Computable::rational(Rational::fraction(-1, 8).unwrap()), -3);
 
         assert_eq!(
             large_negative.try_compare_to_until(&small_negative, 0),
@@ -2900,6 +3013,11 @@ mod tests {
     }
 
     #[test]
+    /// Keep a warmed pi-pi cancellation zero after multiplication by pi.
+    ///
+    /// Request -128 before multiplication and require a zero -128 product sample.
+    /// The assertion does not inspect whether construction already folded the sum
+    /// or retained a cache, nor independently prove zero from the final sample.
     fn warmed_zero_sum_product_stays_zero() {
         let zero = Computable::pi().add(Computable::pi().negate());
         zero.approx(-128);
@@ -2908,6 +3026,10 @@ mod tests {
     }
 
     #[test]
+    /// Compare exp(11/10)*exp(-11/10) with one at precision -40.
+    ///
+    /// Allow two integer units between native samples. This is a defined-domain
+    /// composition witness, not a structural identity or independent error oracle.
     fn exp_negative_is_inverse() {
         let eleven_tenths = Computable::rational(Rational::fraction(11, 10).unwrap());
         let product = eleven_tenths
@@ -2918,12 +3040,21 @@ mod tests {
     }
 
     #[test]
+    /// Compare ln(exp(1/2)) with one-half near the exponential series scheduling boundary.
+    ///
+    /// Allow two integer units at -40; no node tag or range-reduction dispatch is
+    /// asserted, and both sides use the native evaluator.
     fn exp_near_prescaled_limit_round_trip() {
         let half = Computable::rational(Rational::fraction(1, 2).unwrap());
         assert_close(half.clone().exp().ln(), half, -40, 2);
     }
 
     #[test]
+    /// Compare exp(200*ln(2)+7/20) with 2^200*exp(7/20) at precision -80.
+    ///
+    /// The exact reduction identity supplies the expected composition; permit two
+    /// integer units between native samples. This test does not measure reduction
+    /// work or prove which construction path was selected.
     fn exp_large_argument_reduces_by_ln2() {
         let exponent = BigInt::from(200);
         let offset = Computable::rational(Rational::fraction(7, 20).unwrap());
@@ -2936,7 +3067,19 @@ mod tests {
     }
 
     #[test]
+    /// Compare positive integer exponentials with explicit ln(2) reduction.
+    ///
+    /// Cover every exponent 2..=256 at -40 and 2,13,128,256 at -128, for 259
+    /// comparisons. The helper checks two native constructions within two integer
+    /// units, not an independent reference or the optimized path's dispatch count.
     fn bounded_integer_exp_matches_ln2_reduction() {
+        /// Compare native exp(exponent) with a constructed residual exponential times 2^k.
+        ///
+        /// For this caller's positive exponents 2..=256, require ln(2) reduction at
+        /// probe precision -4 within 64 corrections, and require its integer multiple
+        /// to fit i32. Build PrescaledExp(residual), shift by that multiple, and bound
+        /// the integer sample difference by two. Failed reduction/conversion panics;
+        /// these finite fixtures do not promise reduction or bounded work for every input.
         fn compare(exponent: i32, precision: Precision) {
             let input = Computable::rational(Rational::new(i64::from(exponent)));
             let optimized = input.clone().exp();
@@ -2966,6 +3109,11 @@ mod tests {
     }
 
     #[test]
+    /// Check exponential construction tags on either side of the retained integer-power limit.
+    ///
+    /// Require exp(256) to have a Square outer node and exp(257) to have an Offset
+    /// whose child is PrescaledExp. This inspects graph shape without evaluating
+    /// samples or asserting a performance benefit.
     fn integer_exp_uses_binary_power_only_through_the_retained_limit() {
         let at_limit = Computable::rational(Rational::new(256)).exp();
         assert!(matches!(
@@ -2982,6 +3130,9 @@ mod tests {
     }
 
     #[test]
+    /// Require the -32 sample of cos(0) to equal 2^32, representing exact one.
+    ///
+    /// The fixture checks the returned integer, not a retained symbolic tag.
     fn cos_zero() {
         let zero = Computable::rational(Rational::zero());
         let cos = zero.cos();
@@ -2990,6 +3141,9 @@ mod tests {
     }
 
     #[test]
+    /// Require the fixed -32 sample 2320580734 for cos(1 radian).
+    ///
+    /// This is a finite literal regression, not a universal correct-rounding claim.
     fn cos_one() {
         let one = Computable::one();
         let cos = one.cos();
@@ -2997,6 +3151,12 @@ mod tests {
         assert_eq!(cos.approx(-32), correct);
     }
 
+    /// Compare one native approximation with a decimal integer fixture in output units.
+    ///
+    /// Evaluate c at p, parse the expected integer and require absolute difference
+    /// at most max_error. Callers supply a nonnegative tolerance, admitted expression
+    /// and manageable precision. Parse/inequality failures panic. The decimal is a
+    /// fixture sample, not an exact represented real or an independently derived bound.
     fn assert_approx(c: Computable, p: Precision, expected: &str, max_error: i32) {
         let actual = c.approx(p);
         let expected: BigInt = expected.parse().unwrap();
@@ -3008,6 +3168,13 @@ mod tests {
         );
     }
 
+    /// Compare two native approximation integers at one binary precision.
+    ///
+    /// Evaluate left before right and require their absolute integer difference to
+    /// be at most max_error. Callers supply nonnegative tolerance and admitted,
+    /// uninterrupted operands at manageable precision. Failure panics; the helper
+    /// neither supplies an independent oracle nor proves mathematical equality,
+    /// even when the observed difference is zero.
     fn assert_close(left: Computable, right: Computable, p: Precision, max_error: i32) {
         let left = left.approx(p);
         let right = right.approx(p);
@@ -3019,10 +3186,20 @@ mod tests {
         );
     }
 
+    /// Construct the exact expression r*pi for a fixture rational coefficient.
+    ///
+    /// Reuse the shared pi constructor and native multiplication, allowing their
+    /// normal simplifications and cache behavior. This helper does not approximate
+    /// the coefficient or impose a separate evaluation budget.
     fn pi_times(r: Rational) -> Computable {
         Computable::pi().multiply(Computable::rational(r))
     }
 
+    /// Construct cos(pi/2-c), the sine identity used as a native reference path.
+    ///
+    /// Use an exact half-pi coefficient, native subtraction and cosine. The identity
+    /// holds for defined real c; agreement with this construction is not independent
+    /// of the scalar kernel or its shared constants.
     fn shifted_cos_sin(c: Computable) -> Computable {
         pi_times(Rational::fraction(1, 2).unwrap())
             .add(c.negate())
