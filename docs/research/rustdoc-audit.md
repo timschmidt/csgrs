@@ -26837,6 +26837,92 @@ signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback,
 whose attribute is now line 6900. This 8101-line file and the repository-wide
 audit remain unfinished.
 
+## Rational test audit: ordering, planes and complex pairs (28 November 2026)
+
+Owning layer: Hyperreal rational signed-product ordering, compact plane and
+paired complex arithmetic fixtures. P1 governs exact expression values, P5
+separates compact-width admission from resource exhaustion, P6 governs the
+complex zero-divisor outcome, and P37 governs the strength of test claims.
+At fb2f4561c, eleven tests in arithmetic/tests.rs lines 6900–7440 lacked Rustdoc.
+An ordinary comment also claimed that a particular four-product input overflowed
+six limbs and used arbitrary precision; that claim required reproduction.
+
+Reviewed the entire range and the relevant fixed/dynamic ordering dispatch,
+wide-by-native accumulator, compact plane, shared-factor-denominator and complex
+product/quotient implementations. Added eleven descriptions (76 Rustdoc lines)
+and replaced one inaccurate ordinary comment with two lines. The reviewed
+range is now 6900–7517. Executable tokens, fixture data, assertions, guards and
+operation order are unchanged; the original hard case is retained.
+
+Before editing, a private source-copy probe reproduced the disputed fixture.
+Both positive and negative unsigned subtotals are exactly 384 bits. The private
+six-limb helper returns Some(Less), and public ordering records one stack event
+and zero arbitrary-precision-dyadic events. The corrected comment identifies a
+successful full-width boundary, not a carry overflow. The probe is supplemental
+measurement, not a replacement assertion or new permanent conformance fixture;
+the repository test still compares with its materialized sum. No actual
+six-limb-overflow coverage is credited to that middle schedule.
+
+Other documented distinctions include:
+
+- Literal zero/single/small signed orderings and one wide negative expression
+  from agreement with materialized dyadic/non-dyadic sums. Those materialized
+  references share scalar authority. Four/six-term shapes and broad fallback
+  names do not identify every dispatched path without event assertions.
+- Runtime-slice ordering over two selected sizes from empty/length-mismatch,
+  raw-state admission or allocation-bound coverage. The wide raw inputs are
+  private fixtures; their presence does not create a general invalid-state API.
+- Three four-product and three six-product schedules from all possible fallback
+  conditions. Closures construct and compare operands but are not separate item
+  declarations. The explicit trace fixture independently pins negative ordering
+  and one stack event; its coefficient combination is -3/16 times a positive
+  common factor, and some small constructors run inside recording.
+- One exact oriented plane tuple from equality up to common scale. The reference
+  expands the cross product of point differences and the negative normal dot
+  first point. Replacements by 1/3, 2^129+1 and 2^-300 require None from the compact
+  constructor; those cases invoke no general fallback and establish neither
+  complete plane construction nor independent incidence/degeneracy coverage.
+- A shared denominator of fifteen on every active factor from one mixed-factor
+  mismatch. The specialized result is compared with expanded arithmetic; the
+  mismatch is a decline, with no general fallback or zero-term exemption tested.
+- Separately expanded complex formulas from an independent arithmetic kernel.
+  Product and quotient cases cover ordinary fractions, float-derived dyadics and
+  wide inputs. The wide conjugate product pins zero imaginary component; the
+  quotient rejects a zero divisor for a nonzero dividend with DivideByZero.
+  Zero-over-zero, every native path and resource bounds are not covered here.
+- Four strict rational comparisons from complete ordering laws, alternate
+  representations or dispatch coverage.
+
+Executed after the final comment edit:
+
+- Locked/offline Hyperreal tests: ten pass without default features and eleven
+  with all features, matching the eleven-test all-feature baseline. Exact-name
+  inventories verify selection and preserve the existing stack trace assertion.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Supplemental copies remove only these eleven test markers, retaining
+  the trace guard. All ten applicable descriptions render without default features
+  and all eleven with all features. The reviewed range has no local item requiring
+  lifting; its local adapters are closures.
+- The source-copy boundary probe passes again with warnings denied. It preserves
+  the original test attributes, confirms both 384-bit subtotal widths, and pins
+  successful compact ordering and the one/zero dispatch observations above.
+- Default-feature Hyperlattice complex multiplication and division ownership-form
+  tests pass (two exact-name matches), retaining their existing scalar formula
+  references and checked-division assertion. Reading those consumers does not
+  establish a new whole-file review.
+- Source inventories, executable-token equality and git diff --check pass.
+  Full workflows, benchmarks, cross-target and formal-verification checks remain
+  owner-waived for this docs-only session. No universal completeness, performance,
+  memory bound or generated API coverage is claimed.
+
+Evidence remains under /tmp/csgrs-hyperreal-arithmetic-tests-ordering-audit/:
+baseline, scripts, commands, logs, probe source, inventories, hashes and compressed
+selected HTML. Owned probe binary/source copies and duplicate HTML trees are
+removed after checking; shared Cargo output is reused without incremental
+compilation. AGENTS.md already mandates full public/private/generated Rustdoc.
+Continue at sign_queries_are_strict, whose attribute is now line 7518. This
+8178-line file and the repository-wide audit remain unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

@@ -6897,6 +6897,13 @@ mod tests {
         );
     }
 
+    /// Check literal orderings and agreement with two wide materialized sums.
+    ///
+    /// Small zero/single/multiple-live cases require Equal, Less and Greater;
+    /// `-3 * 2^200 + 2 * 2^200` must be negative. Wide non-dyadic and dyadic
+    /// sums compare with the sign of the general materialized reducer. Those
+    /// references share scalar authority, and the fixture does not assert a
+    /// particular fallback event or an allocation saving.
     #[test]
     fn signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback() {
         let one = Rational::one();
@@ -6981,6 +6988,12 @@ mod tests {
         );
     }
 
+    /// Check zero, single-live and mixed factor/polarity signs for four/six terms.
+    ///
+    /// Four zero products must compare Equal and a lone negative product Less.
+    /// A six-term mixture, including a zero term, compares with its materialized
+    /// sum. This witnesses sign composition for the unplanned-dispatch shapes;
+    /// without trace assertions it does not identify which shortcut completed.
     #[test]
     fn fused_unplanned_signs_preserve_zero_single_and_mixed_product_ordering() {
         let zero = Rational::zero();
@@ -7023,6 +7036,13 @@ mod tests {
         );
     }
 
+    /// Compare runtime-slice ordering with fixed-shape materialized sums.
+    ///
+    /// Uses three small non-dyadic products and two wide raw-fraction products
+    /// near `2^320`, with mixed factor signs and outer polarities. Both slice
+    /// results must match comparison of the materialized value with zero.
+    /// The two paths share scalar helpers; no length-mismatch, empty-slice,
+    /// raw-state admission or allocation-bound assertion is made.
     #[test]
     fn dynamic_signed_product_sum_ordering_matches_materialized_result() {
         let values = [
@@ -7063,6 +7083,14 @@ mod tests {
         );
     }
 
+    /// Check four-product ordering on three wide dyadic schedules.
+    ///
+    /// Compares each alternating-sign sum with its materialized value: one
+    /// four-limb-by-native schedule, one full six-limb subtotal boundary, and
+    /// one schedule with a factor over 256 bits and pairs lacking a native factor.
+    /// The middle case's unsigned subtotals fit exactly 384 bits; it does not
+    /// exercise carry overflow. The fixture asserts values, not dispatch counts
+    /// or every compact-decline condition; closures only construct and compare cases.
     #[test]
     fn signed_product_sum_ordering_four_products_preserves_wide_dyadic_fallbacks() {
         let wide = |bits: usize, add: u8, shift: usize| {
@@ -7098,7 +7126,8 @@ mod tests {
             wide(190, 15, 83),
             wide(80, 17, 31),
         ]);
-        // A carry beyond six limbs falls through to arbitrary precision.
+        // Both unsigned subtotals fit exactly six limbs (384 bits); this is
+        // a successful boundary case, not an overflowing carry.
         assert_matches_materialized(&[
             wide(255, 1, 1),
             wide(127, 1, 1),
@@ -7123,6 +7152,14 @@ mod tests {
         ]);
     }
 
+    /// Check one oriented plane coefficient tuple and three compact admission declines.
+    ///
+    /// Expands the cross product of two point differences as signed products,
+    /// then forms the negative dot with the first point for the offset. The
+    /// compact constructor must return those exact coefficients, without allowing
+    /// an arbitrary common rescaling. Replacing one coordinate by 1/3, `2^129 + 1`
+    /// or `2^-300` must return `None`. No fallback is invoked for these declines,
+    /// and no independent point-incidence, degeneracy or total-resource test is made.
     #[test]
     fn affine_plane3_dyadic_stack_matches_expanded_determinants_and_falls_back() {
         let dyadic = |numerator: i64, shift: usize| {
@@ -7193,6 +7230,12 @@ mod tests {
         );
     }
 
+    /// Require a negative four-product ordering and exactly one stack dispatch.
+    ///
+    /// A shared positive wide factor multiplies `5/8 - 3/4 + 7/16 - 1/2`,
+    /// which is -3/16. The recorded ordering must be Less and the named dyadic
+    /// stack event must occur once. Some small operands are constructed inside
+    /// recording; the fixture does not assert total GCD, allocation or event counts.
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn signed_product_sum_ordering_traces_four_product_dyadic_stack_path() {
@@ -7228,6 +7271,13 @@ mod tests {
         );
     }
 
+    /// Compare six-product signs with materialization on three input schedules.
+    ///
+    /// Covers small signed dyadics, generated wide dyadics and small non-dyadic
+    /// fractions under the fixed outer-polarity pattern. The broad name does not
+    /// establish every fallback: no dispatch counts are asserted, and the reference
+    /// shares the general product-sum arithmetic. Local closures build operands
+    /// and compare the same selected expression in both APIs.
     #[test]
     fn signed_product_sum_ordering_six_products_preserves_all_fallbacks() {
         let assert_matches_materialized = |values: &[Rational; 12]| {
@@ -7289,6 +7339,13 @@ mod tests {
         ]);
     }
 
+    /// Check a shared stored-factor denominator and one active mismatch.
+    ///
+    /// All six original factors have denominator fifteen; the signed three-term
+    /// sum must equal expanded arithmetic. Replacing one live factor by 1/7 must
+    /// return `None` from the specialized API. This checks eligibility as well as
+    /// value; it does not evaluate a general fallback for the mismatch or cover
+    /// zero-term exemptions and equivalent differently stored fractions.
     #[test]
     fn signed_product_sum_shared_denominator_consumes_common_scale() {
         let terms = [
@@ -7334,6 +7391,13 @@ mod tests {
         );
     }
 
+    /// Compare paired complex components with scalar expansions on three cases.
+    ///
+    /// Small non-dyadic fractions and exactly representable binary-float dyadics
+    /// check `(ac - bd, ad + bc)`. A wide conjugate pair checks real component
+    /// `wide^2 + 1` and zero imaginary component. Despite the name, scalar
+    /// operations remain shared authority; these are separately expanded formulas,
+    /// not an independent kernel or an asserted paired-dispatch trace.
     #[test]
     fn paired_complex_product_matches_independent_exact_arithmetic() {
         let cases = [
@@ -7370,6 +7434,14 @@ mod tests {
         assert_eq!(im, Rational::zero());
     }
 
+    /// Check complex quotient components and a typed zero-divisor failure.
+    ///
+    /// Small non-dyadic, exact binary64-derived and wide fraction cases compare
+    /// with conjugate numerators divided by `c^2 + d^2`, using ordinary rational
+    /// arithmetic. The float-derived values retain their binary meanings, not
+    /// exact decimal powers of ten. A nonzero dividend over the zero pair must
+    /// return `Problem::DivideByZero`; zero-over-zero is not tested. These formulas
+    /// share scalar authority and do not establish a dispatch or resource bound.
     #[test]
     fn paired_complex_quotient_matches_independent_exact_arithmetic() {
         let cases = [
@@ -7430,6 +7502,11 @@ mod tests {
         );
     }
 
+    /// Pin four strict comparisons across integers, signs and fractional scales.
+    ///
+    /// Checks one above zero, five above four, negative ten below five and
+    /// one quarter below one third. This finite set does not test equality,
+    /// transitivity, alternate representations or the selected comparison path.
     #[test]
     fn compare() {
         assert!(Rational::one() > Rational::zero());
