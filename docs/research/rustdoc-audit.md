@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/fraction.rs` | Entire authored native reduction, cross-cancellation and supporting proofs reviewed; twenty-two descriptions cover prefix admission, unchecked domains and eighteen ghost declarations. | Both-mode private docs and four consumer tests pass; independent reduction/product/reuse probes and expanded tokens are unchanged. Four normal descriptions per mode render; Verus configuration/expansion validation remains open. See native fraction and cross-cancellation audit. |
 | `crates/hyperreal/src/verified/gcd.rs` | Entire authored native GCD implementation, lookup construction and factor proofs reviewed; twenty-eight descriptions cover private const helpers, complete scalar domains and eighteen ghost declarations. | Both-mode private docs and five consumer tests pass; exhaustive u8/table probes, partial fills, native/reuse probes and expanded tokens are unchanged. Ten normal descriptions per mode render; Verus configuration/expansion validation remains open. See native GCD and lookup audit. |
 | `crates/hyperreal/src/verified/division.rs` | Entire authored exact-remainder reducer and GCD specification reviewed; ten descriptions distinguish helper preconditions, exact estimates, stopping pairs and seven ghost declarations. | Both-mode private docs and four consumer tests pass; 10,305 remainder and 10,659 reducer/reuse cases are unchanged, as are expanded tokens. Three normal descriptions per mode render; Verus configuration/expansion validation remains open. See two-limb division audit. |
 | `crates/hyperreal/src/verified/fixed_gcd.rs` | Entire authored fixed-buffer GCD and result carrier reviewed; nine descriptions cover variants/fields, raw construction, exact result meaning, zero paths and resource limits. | Both-mode private docs and three consumer tests pass; 3,084 independent GCD/reuse pairs and expanded tokens are unchanged. Eight normal descriptions per mode and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-buffer GCD audit. |
@@ -28138,8 +28139,92 @@ selected HTML. Owned binary/source copy and duplicate HTML trees are removed
 after checking; the shared Cargo target is reused without incremental compilation.
 AGENTS.md already mandates full public/private/generated Rustdoc. Authored review
 of this file is complete; ghost/configuration validation and repository-wide
-coverage remain open. Continue with verified/fraction.rs and its reduction,
-addition/subtraction and cross-cancellation contracts.
+coverage remain open. Continue with verified/fraction.rs and its reduction and cross-cancellation
+contracts, including their use by signed arithmetic consumers.
+
+## Native fraction and cross-cancellation audit (28 November 2026)
+
+Owning layer: Hyperreal's exact native fraction reduction, numerator-major
+cross-cancellation and prefix-product admission. P1/P5/P6/P37 require exact
+values, preserved fallback order, explicit helper domains and scoped claims.
+At 9b69517e5, read all 535 lines of verified/fraction.rs, including every proof
+body and loop invariant. Existing brief summaries omitted private helper
+coverage and distinctions between mathematical product size and native prefix
+admission. Complete authored documentation was the missing acceptance witness.
+Before editing, a source-copy probe reproduced those contracts against independent
+BigInt/BigRational products. Existing repository tests remain unchanged.
+
+Read the signed product adapters, reduction consumers for differences, cross
+products and complex quotients, and relevant independent-oracle fixtures as
+context. These reads earn no further whole-file credit. The prior batch's next
+work sentence is corrected to identify reduction/cross-cancellation in this
+file; signed addition/subtraction consumers live in the rational adapter.
+
+The file now has 703 lines and twenty-two descriptions: module, three executable
+functions and eighteen ghost declarations. All executable/proof/specification
+tokens, attributes, assertions and call order are unchanged; normal compiler-
+expanded tokens match as well. The documentation records:
+
+- reduce requires a positive denominator and returns canonical coprime parts,
+  including zero as (0,1), without increasing either part. It is not a domain
+  validator: an invalid positive/zero pair can return (1,0), while zero/zero
+  panics. These outcomes do not extend the admitted fraction domain.
+- checked_factors_product borrows its array, starts at one and checks every
+  stored-order prefix. Empty input succeeds with one. A prefix overflow before
+  a later zero returns None even though the final mathematical product is zero;
+  moving zero before the overflowing multiplication can change native admission.
+- cross_cancelled_product requires positive denominators, handles signs elsewhere,
+  visits pairs numerator first with unit shortcuts, and completes cancellation
+  before multiplying numerator then denominator prefixes. Successful outputs are
+  reduced, positive-denominator pairs; successful zero is (0,1) and empty arrays
+  give (1,1). None denotes prefix ineligibility, not approximation or exhaustion.
+  Arrays occupy space proportional to N; at most N squared pair visits and two
+  N-step scans do not constitute a configurable total-work/stack/cancellation cap.
+- Ghost descriptions cover Bezout existence, signed divisibility, coprime products
+  and exact quotients, empty prefixes, zero factors and the traversal invariant.
+  factors_update_quotient allows a zero divisor under its multiplication relation;
+  that is not permission to divide or cancel zero. A single cancellation lemma
+  only requires its selected denominator positive. Cross-multiplication transitivity
+  only requires the middle denominator positive. Additional positivity is needed
+  where callers interpret all products as fractions. Mathematical sequence models
+  need not share the executable arrays' equal-length restriction.
+
+Executed after the final source edit:
+
+- Both locked/offline feature configurations pass four exact-name tests: native
+  cross-cancelled products against an independent fraction oracle, native reduction
+  against BigRational, a reciprocal signed-product cancellation and paired complex
+  quotients against independent exact arithmetic. No assertions were changed.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. Four normal descriptions render in each mode. All eighteen ghost
+  descriptions and unchanged full declaration bodies render separately as
+  Markdown, without claiming ghost compilation or Verus macro expansion.
+- The warnings-denied source-copy probe produces identical baseline/final output:
+  132 reductions with idempotent reuse, 1,741 private prefix products and 3,713
+  cross-cancelled products match independent exact expectations. Of those products,
+  3,412 succeed; every successful pair is reduced again and consumed in another
+  product with a compensating denominator factor, checking its exact integer result.
+  Admission is modeled by a reduced numerator prefix over all original denominator
+  factors, independently of the production pairwise loop.
+- Five invalid controls reproduce zero/zero panics and positive/zero or skipped-unit
+  zero-denominator results. They explain missing validation, not supported inputs.
+  A temporary documentation-insertion script initially rejected the opening ghost
+  block before writing any repository file; distinguishing runtime attribute groups
+  from ghost declarations resolved it without changing source semantics.
+- Source/declaration/render inventories, baseline/final source and expanded-token
+  comparisons and git diff --check pass. No derives add ordinary runtime APIs here.
+  The pinned Verus executable remains unavailable; formal runs, ghost compilation/
+  expansion and refreshed source-bound reports are uncredited. Full workflows,
+  benchmarks and cross-target checks remain owner-waived for this docs-only session.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-fraction-audit/: baseline,
+probe/expansion sources, scripts, commands/logs, inventories and compressed
+selected HTML. Owned binary/source copy and duplicate HTML trees are removed
+after checking; the shared Cargo target is reused without incremental compilation.
+AGENTS.md already mandates full public/private/generated Rustdoc. Authored review
+of this file is complete; ghost/configuration validation and repository-wide
+coverage remain open. Continue with verified/lehmer.rs and the distinction between
+leading-word matrix selection, row admission and full-magnitude application.
 
 ## Next work
 

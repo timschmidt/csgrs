@@ -1,11 +1,35 @@
-//! Exact native fraction reduction shared with production arithmetic.
+//! Exact unsigned fraction reduction and native cross-cancelled products.
+//!
+//! The rational adapters use these shared executable kernels after converting
+//! magnitudes and positive denominators to u128; signs belong to those callers.
+//! Reduction returns canonical coprime parts. Products cancel opposing factors
+//! before checked multiplication, retaining the original prefix-overflow fallback
+//! even when a later zero makes the mathematical result small.
+//!
+//! Ghost definitions describe Bezout witnesses, coprimality, prefix products and
+//! the precise cancellation traversal. Ordinary builds erase those declarations
+//! and proof annotations, not the executable arithmetic. These private kernels
+//! trust denominator preconditions rather than returning typed validation errors.
+//! Native overflow requests a wider exact path; it is neither approximation nor
+//! resource exhaustion. No configurable work, stack or cancellation budget is
+//! implemented here.
 
 #[cfg(verus_keep_ghost)]
 use super::division::gcd;
 #[cfg(verus_keep_ghost)]
 use vstd::prelude::*;
 
-/// Divide both parts by their complete GCD, including `0 / denominator`.
+/// Reduce an unsigned native fraction by its complete positive GCD.
+///
+/// Requires denominator > 0; numerator may be zero or any u128 value. Returns
+/// coprime numerator/denominator parts with positive denominator, the same exact
+/// ratio and neither part increased. Zero reduces to (0,1). Calls the shared native
+/// GCD once, then divides both inputs; no multiplication or heap allocation is
+/// needed and the returned pair can be reduced again unchanged.
+///
+/// This helper does not validate its precondition. With denominator zero, two
+/// zeros divide by zero while a positive numerator can return (1,0). Neither is
+/// an admitted fraction, typed failure or supported extension of the domain.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires denominator > 0,
     ensures
@@ -30,11 +54,22 @@ use vstd::arithmetic::div_mod::*;
 
 #[cfg(verus_keep_ghost)]
 verus! {
+/// Describe an integer linear combination equal to the natural GCD.
+///
+/// The relation is `gcd(left,right) = x*left + y*right`, with natural operands
+/// and signed integer coefficients. Zero operands are allowed, including two
+/// zeros. This ghost predicate records a witness relation; it does not compute
+/// runtime coefficients or imply their native-width representability.
 pub(crate) open spec fn bezout_witness(left: nat, right: nat, x: int, y: int) -> bool {
     gcd(left, right) == x * left + y * right
 }
 
-/// Euclid's GCD has an integer linear-combination witness.
+/// Establish existence of signed Bezout coefficients for any natural pair.
+///
+/// Uses Euclidean recursion on right, with the zero-right witness (1,0), and
+/// transports the recursive coefficients through quotient and remainder. Both
+/// operands may be zero. The result is an existential ghost witness, not a
+/// runtime extended-GCD implementation or a bound on coefficient size.
 pub(crate) proof fn gcd_bezout(left: nat, right: nat)
     ensures exists|x: int, y: int| #[trigger] bezout_witness(left, right, x, y),
     decreases right,
@@ -56,6 +91,13 @@ pub(crate) proof fn gcd_bezout(left: nat, right: nat)
     }
 }
 
+/// Preserve divisibility through a signed integer linear combination.
+///
+/// Requires a positive divisor dividing both integer operands exactly. Arbitrary
+/// signed coefficients x and y then give a divisible `x*left + y*right`, including
+/// negative operands and coefficients. The proof rewrites the operands as exact
+/// multiples; positivity is needed for the modular lemmas. Used to transport
+/// Bezout identities into coprimality arguments.
 proof fn linear_combination_divisible(left: int, right: int, divisor: int, x: int, y: int)
     requires divisor > 0, left % divisor == 0, right % divisor == 0,
     ensures (x * left + y * right) % divisor == 0,
@@ -69,7 +111,13 @@ proof fn linear_combination_divisible(left: int, right: int, divisor: int, x: in
     lemma_mod_multiples_basic(coefficient, divisor);
 }
 
-/// A divisor coprime to one factor must divide the other factor.
+/// Cancel a coprime factor from exact product divisibility.
+///
+/// Requires a positive divisor, gcd(left,divisor)=1, and divisibility of the
+/// natural product `left*right`. Concludes that divisor divides right. Zero
+/// factors are allowed when these hypotheses hold; no prime-divisor assumption
+/// is needed. A Bezout witness supplies the integer linear combination proving
+/// the cancellation, without a runtime factorization.
 pub(crate) proof fn coprime_divides_product(left: nat, right: nat, divisor: nat)
     requires divisor > 0, gcd(left, divisor) == 1, (left * right) % divisor == 0,
     ensures right % divisor == 0,
@@ -82,7 +130,12 @@ pub(crate) proof fn coprime_divides_product(left: nat, right: nat, divisor: nat)
         requires x * left + y * divisor == 1;
 }
 
-/// Multiplication preserves coprimality to a common positive denominator.
+/// Keep a product coprime to a shared positive denominator.
+///
+/// If each natural factor is coprime to denominator > 0, their mathematical
+/// product is also coprime to it. Zero factors are possible only with denominator
+/// one under these hypotheses. The argument uses a common divisor and a Bezout
+/// identity; it does not require or establish a native-width product bound.
 pub(crate) proof fn coprime_product(left: nat, right: nat, denominator: nat)
     requires denominator > 0, gcd(left, denominator) == 1, gcd(right, denominator) == 1,
     ensures gcd(left * right, denominator) == 1,
@@ -99,7 +152,13 @@ pub(crate) proof fn coprime_product(left: nat, right: nat, denominator: nat)
     assert(divisor <= gcd(right, denominator));
 }
 
-/// Dividing either part cannot introduce a common factor into a reduced pair.
+/// Preserve reducedness when dividing each fraction part exactly.
+///
+/// Requires a positive denominator, an initially coprime natural pair, and
+/// positive divisors that exactly divide their respective parts. The quotients
+/// remain coprime and the denominator quotient is positive. Numerator zero is
+/// allowed; no division-by-zero or inexact-division case is admitted. Cancellation
+/// uses this fact to retain coprimality of previously processed cross pairs.
 pub(crate) proof fn coprime_quotients(numerator: nat, denominator: nat, left_divisor: nat, right_divisor: nat)
     requires denominator > 0, gcd(numerator, denominator) == 1,
         left_divisor > 0, right_divisor > 0,
@@ -127,7 +186,13 @@ pub(crate) proof fn coprime_quotients(numerator: nat, denominator: nat, left_div
     }
 }
 
-/// Prefix products retain the ordering relevant to checked native multiplication.
+/// Define the mathematical product of a sequence prefix in stored order.
+///
+/// The recommended domain is `0 <= length <= factors.len()`. The empty prefix
+/// is one, and each recursive step appends the next u128 factor in natural
+/// arithmetic, without native overflow. Sequence order matters when all prefix
+/// bounds are checked by factors_fit, although the full mathematical product is
+/// commutative. This definition alone does not establish any capacity bound.
 pub(crate) open spec fn factors_product(factors: Seq<u128>, length: int) -> nat
     recommends 0 <= length <= factors.len(),
     decreases length,
@@ -137,6 +202,12 @@ pub(crate) open spec fn factors_product(factors: Seq<u128>, length: int) -> nat
     }
 }
 
+/// Show that a valid prefix of positive factors has positive product.
+///
+/// Requires every factor before length to be positive and length within the
+/// sequence bounds. Induction includes the empty product one. Factors beyond
+/// the prefix are unconstrained. The result supports positive denominator
+/// products and exact cross-multiplication; it does not bound their magnitude.
 pub(crate) proof fn factors_positive(factors: Seq<u128>, length: int)
     requires 0 <= length <= factors.len(),
         forall|i: int| 0 <= i < length ==> #[trigger] factors[i] > 0,
@@ -152,6 +223,12 @@ pub(crate) proof fn factors_positive(factors: Seq<u128>, length: int)
     }
 }
 
+/// Show that a valid prefix containing only ones has product one.
+///
+/// Requires an in-range length and unit factors throughout that prefix, with no
+/// restriction on later entries. The empty prefix is included. Used when a zero
+/// numerator is coprime to every positive denominator factor, forcing all those
+/// factors to one and hence the canonical zero denominator to one.
 pub(crate) proof fn factors_unit(factors: Seq<u128>, length: int)
     requires 0 <= length <= factors.len(),
         forall|i: int| 0 <= i < length ==> #[trigger] factors[i] == 1,
@@ -161,8 +238,15 @@ pub(crate) proof fn factors_unit(factors: Seq<u128>, length: int)
     if length > 0 { factors_unit(factors, length - 1); }
 }
 
-/// An exact factor division divides every containing prefix by the same amount.
-/// This formulation also covers a zero factor, without cancelling that zero.
+/// Transport an exact factor relation through every containing prefix.
+///
+/// Requires a valid update index, an in-range prefix length and the relation
+/// `old_factor = quotient*divisor` in natural arithmetic. A prefix containing
+/// the index satisfies `new_product*divisor = old_product`; an earlier prefix
+/// is unchanged. Neither divisor positivity nor nonzero factors are assumed.
+/// In particular divisor zero is permitted when the old factor is zero: the
+/// conclusion is a multiplication identity, not cancellation or division by zero.
+/// The relation is used after a separately justified positive GCD division.
 pub(crate) proof fn factors_update_quotient(
     factors: Seq<u128>, index: int, quotient: u128, divisor: nat, length: int,
 )
@@ -196,7 +280,14 @@ pub(crate) proof fn factors_update_quotient(
     }
 }
 
-/// Cross-cancelling any numerator/denominator pair preserves the whole fraction.
+/// Preserve the whole product's cross-multiplied relation after one cancellation.
+///
+/// Requires valid numerator/denominator indices and a positive selected
+/// denominator. Divide the selected pair by its positive GCD and leave other
+/// entries alone. The old and new full products obey exact cross-multiplication,
+/// including a selected zero numerator. Other denominator entries are not
+/// required positive by this lemma, so interpreting both products as fractions
+/// requires that additional caller fact. No native product bound is assumed.
 pub(crate) proof fn cancel_preserves_product_fraction(
     numerators: Seq<u128>, denominators: Seq<u128>, ni: int, di: int,
 )
@@ -226,6 +317,12 @@ pub(crate) proof fn cancel_preserves_product_fraction(
             factors_product(ds, ds.len() as int) * divisor == factors_product(denominators, denominators.len() as int);
 }
 
+/// Lift prefix-wise coprimality to coprimality of the prefix product.
+///
+/// Requires denominator > 0, an in-range length and every selected factor
+/// coprime to that denominator. Induction uses coprime_product; the empty prefix
+/// one is coprime as well. Zero factors are allowed if the hypotheses hold.
+/// The statement concerns exact natural products without a native-width limit.
 pub(crate) proof fn coprime_factors(factors: Seq<u128>, denominator: nat, length: int)
     requires denominator > 0, 0 <= length <= factors.len(),
         forall|i: int| 0 <= i < length ==> gcd(#[trigger] factors[i] as nat, denominator) == 1,
@@ -241,7 +338,13 @@ pub(crate) proof fn coprime_factors(factors: Seq<u128>, denominator: nat, length
     }
 }
 
-/// Pairwise cross-coprimality gives a reduced product, including zero numerators.
+/// Turn pairwise cross-coprimality into a reduced product fraction.
+///
+/// All denominator factors must be positive and every numerator factor must be
+/// coprime to each denominator factor. The two full mathematical products are
+/// then coprime, including empty sequences. A zero numerator forces every
+/// denominator factor to one and the denominator product to one. The sequences
+/// need not have equal lengths here, and no runtime overflow admission follows.
 pub(crate) proof fn mutually_coprime_products(numerators: Seq<u128>, denominators: Seq<u128>)
     requires
         forall|j: int| 0 <= j < denominators.len() ==> #[trigger] denominators[j] > 0,
@@ -276,8 +379,14 @@ pub(crate) proof fn mutually_coprime_products(numerators: Seq<u128>, denominator
     coprime_factors(numerators, denominator, numerators.len() as int);
 }
 
-/// Reducing the next pair preserves every already-processed coprime pair.
-/// This is the induction step for the numerator-major cancellation loop.
+/// Advance the numerator-major cancellation invariant by one selected pair.
+///
+/// Requires valid indices, all denominators positive and coprimality of every
+/// pair in earlier numerator rows or earlier columns of the current row. Dividing
+/// the selected pair by its GCD preserves denominator positivity and all prior
+/// coprimality, adding the current pair. coprime_quotients handles previously
+/// processed pairs sharing a changed factor. This lemma neither changes later
+/// pairs' obligations nor establishes native product bounds.
 pub(crate) proof fn cancel_preserves_processed_coprimality(
     numerators: Seq<u128>, denominators: Seq<u128>, ni: int, di: int,
 )
@@ -328,13 +437,30 @@ pub(crate) proof fn cancel_preserves_processed_coprimality(
 
 #[cfg(verus_keep_ghost)]
 verus! {
-/// Every checked prefix must fit, even if a later zero makes the total small.
+/// Require every stored-order prefix product to fit u128.
+///
+/// Includes the empty prefix one and the full product. This is exactly the
+/// admission condition for checked_factors_product, not just a bound on the final
+/// mathematical product. For example, factors (u128::MAX,2,0) fail because the
+/// second prefix overflows, whereas (u128::MAX,0,2) fit. The predicate describes
+/// native capacity, not a total-work or memory budget.
 pub(crate) open spec fn factors_fit(factors: Seq<u128>) -> bool {
     forall|length: int| 0 <= length <= factors.len()
         ==> #[trigger] factors_product(factors, length) <= u128::MAX
 }
 
-/// The numerator-major cancellation traversal, including its unit shortcuts.
+/// Model the exact numerator-major traversal and its unit shortcuts.
+///
+/// Recommended indices range from zero through each sequence length. At the end
+/// of a numerator row, or when its current factor is one, continue with the next
+/// row at column zero. Skip a unit denominator; otherwise divide the pair by
+/// its GCD and continue with the next column. Returns both resulting sequences
+/// without multiplying them. Different sequence lengths are allowed here.
+///
+/// Correspondence with the runtime fraction kernel additionally requires positive
+/// denominators; the index recommendations alone do not establish that domain.
+/// This ghost recursion is neither runtime input validation nor permission to
+/// reorder cancellation or bypass checked multiplication when a zero is present.
 pub(crate) open spec fn cancelled_factors(
     numerators: Seq<u128>, denominators: Seq<u128>, ni: int, di: int,
 ) -> (Seq<u128>, Seq<u128>)
@@ -355,6 +481,11 @@ pub(crate) open spec fn cancelled_factors(
     }
 }
 
+/// Discharge the skipped-unit numerator's coprimality obligation.
+///
+/// For every positive natural denominator, gcd(1,denominator)=1. Uses symmetry
+/// and the Euclidean remainder of division by one. The cancellation loop invokes
+/// it when a numerator becomes one before visiting all denominator columns.
 proof fn unit_is_coprime(denominator: nat)
     requires denominator > 0,
     ensures gcd(1, denominator) == 1,
@@ -363,6 +494,13 @@ proof fn unit_is_coprime(denominator: nat)
     assert(gcd(denominator, 1) == gcd(1, 0));
 }
 
+/// Compose two cross-multiplication identities through a positive middle denominator.
+///
+/// Requires d1 > 0, `n1*d0 = n0*d1` and `n2*d1 = n1*d2`, and concludes
+/// `n2*d0 = n0*d2`. All six values are natural; only the middle denominator is
+/// required positive in this lemma. Interpreting the other pairs as fractions
+/// needs their separate positivity facts. The loop uses the identity to connect
+/// each cancellation back to its original input products.
 proof fn product_fraction_transitive(
     n0: nat, d0: nat, n1: nat, d1: nat, n2: nat, d2: nat,
 )
@@ -374,6 +512,17 @@ proof fn product_fraction_transitive(
 }
 }
 
+/// Multiply a fixed array in stored order while checking every u128 prefix.
+///
+/// Accepts every factor value and every array length, including an empty array
+/// whose product is Some(1). Returns the exact product only if each prefix fits;
+/// the first overflowing multiplication returns None immediately. A later zero
+/// does not rescue that failure: (u128::MAX,2,0) fails but (u128::MAX,0,2) gives
+/// Some(0). The input is borrowed unchanged, with no reordering or allocation.
+///
+/// At most N native multiplications are attempted. None denotes this schedule's
+/// capacity failure rather than a claim that the final mathematical value is
+/// overwide, an approximation or a configured resource-budget exhaustion.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures result.is_none() <==> !factors_fit(factors@),
         match result {
@@ -409,9 +558,28 @@ fn checked_factors_product<const N: usize>(factors: &[u128; N]) -> Option<u128> 
     Some(value)
 }
 
-/// Cross-cancel first, then multiply both arrays in their original order.
-/// The caller's conversion to positive native denominators is a separate proof
-/// obligation. This kernel must preserve the existing prefix-overflow fallback.
+/// Cross-cancel unsigned factors, then multiply each array in its original order.
+///
+/// Requires every denominator positive; numerator factors may be zero. Visits
+/// numerators first, then denominators, skipping unit denominators and stopping
+/// a row when its numerator becomes one. Every other pair is reduced by its full
+/// GCD. Input arrays are owned local copies; signs and conversion of arbitrary
+/// precision inputs belong to the rational adapter.
+///
+/// After cancellation, checks numerator prefixes before denominator prefixes.
+/// Some((n,d)) is the exact original product with coprime parts and d > 0; a
+/// successful zero is (0,1), and empty arrays give (1,1). None means at least one
+/// reduced prefix does not fit u128. It need not mean the final value is too large:
+/// (u128::MAX,2,0) over unit denominators fails before reaching zero, while moving
+/// the zero to the second position succeeds. The complete cancellation pass
+/// precedes these checks; no early-zero shortcut changes that schedule.
+///
+/// Denominator positivity is a caller obligation, not a runtime check. Invalid
+/// zeros may bypass cancellation or yield zero denominators, and a zero/zero pair
+/// can panic. No typed domain error or partial product is returned. There are at
+/// most N squared pair visits and two N-step product scans, with native GCD work
+/// per nonunit pair. The owned arrays occupy space proportional to N, without a
+/// practical stack cap, heap allocation or configurable work/cancellation budget.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     requires forall|j: int| 0 <= j < N ==> #[trigger] denominators[j] > 0,
     ensures ({
