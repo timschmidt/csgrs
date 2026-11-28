@@ -1,15 +1,49 @@
+//! Measure fixed scalar construction, query, aggregate and backend workloads.
+//!
+//! The eleven groups exercise exact rationals, symbolic Real constructions, explicit
+//! lossy binary64 exports, warmed Computable approximations and selected certified
+//! cotangent intervals. These are different output contracts: constructing an exact
+//! expression does not demand its numeric evaluation. Binary64 fixtures enter with
+//! their exact binary values, not their displayed decimal fractions.
+//!
+//! Ordinary iteration includes in-loop clones, construction and output destruction.
+//! Batched setup and returned-output destruction are outside the measured routine;
+//! consumed-input cleanup can remain inside it. Cloning prepared values can retain
+//! proofs and caches, and even fresh wrappers do not reset global state. Cold/retained
+//! and algorithm labels describe the intended fixture, not a dispatch-count test.
+//!
+//! Most results are only black-boxed. Backend comparison/equality assertions run in
+//! setup, including large inputs even when a Criterion row filter excludes them.
+//! Some candidate rows reuse differently seeded baseline rows, so their names do
+//! not guarantee identical operands. Precision, fixed iteration sizes and limb labels
+//! are not total-work or memory limits. Unwraps/assertions panic on unmet assumptions.
+//!
+//! The static catalogue omits some registered rows and contains unchecked path
+//! claims. Its writer runs before cache rows and again in the final report callback,
+//! subject to the shared write guards. Criterion generates benches and main, but
+//! these generated functions have no attached Rustdoc; this overview does not close
+//! those item-level coverage gaps.
+
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Computable, Rational, Real};
 use num::Integer as _;
 use num::bigint::{BigInt, BigUint};
 
 #[path = "support/bench_docs.rs"]
+/// Render the authored scalar benchmark catalogue using the shared report/write guards.
 mod bench_docs;
 #[path = "support/benchmark_report.rs"]
+/// Aggregate Criterion estimates through the shared report finalizer and its write guards.
 mod benchmark_report;
 
 use bench_docs::{BenchDoc, BenchGroupDoc};
 
+/// Authored descriptions used to render eleven groups, not to register or validate them.
+///
+/// The catalogue omits the ten detailed_facts and ten to_f64_lossy structural rows,
+/// and sqrt_scaled_exp_squarefree. Cache wording mentions cold requests although
+/// all six raw-cache rows prewarm at -256. Algorithm and same-operand claims are
+/// not checked by this metadata; see the dispatch group's actual comparison scope.
 const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
     BenchGroupDoc {
         name: "construction_speed",
@@ -1247,22 +1281,34 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
     },
 ];
 
+/// Construct a normalized exact signed word ratio; a zero denominator panics on unwrap.
 fn rational(n: i64, d: u64) -> Rational {
     Rational::fraction(n, d).unwrap()
 }
 
+/// Wrap an exact signed word ratio as Real, panicking for a zero denominator.
 fn real(n: i64, d: u64) -> Real {
     Real::new(rational(n, d))
 }
 
+/// Return the shared computable representation of two pi without requesting approximation.
 fn tau_computable() -> Computable {
     Computable::tau()
 }
 
+/// Request and discard the scaled-integer approximation at the supplied binary precision.
+///
+/// This allows subsequent requests to reuse the value's refinement state. It neither
+/// checks the approximation nor resets other caches, and supplies no work limit.
 fn warm_cache(value: &Computable, precision: i32) {
     black_box(value.approx(precision));
 }
 
+/// Register ten ordinary-iteration constructors for exact one and signed small integers.
+///
+/// The Rational, Computable and Real rows include construction and output destruction;
+/// no numeric approximation or equality assertion is requested. Constant storage may
+/// be shared, so these are not measurements of uniformly fresh heap allocations.
 fn bench_construction_speed(c: &mut Criterion) {
     let mut group = c.benchmark_group("construction_speed");
 
@@ -1296,6 +1342,12 @@ fn bench_construction_speed(c: &mut Criterion) {
     group.finish();
 }
 
+/// Build ten labeled Real fixtures spanning rational, named, radical and composite forms.
+///
+/// They are 0, 1, -7, 2^-160, pi, e, tau, sqrt(2), pi-3 and
+/// (7*pi/8 + sqrt(2))*3/5. Positive roots and nonzero denominators justify unwraps.
+/// The vector gives deterministic order and labels, not independent expected facts;
+/// constructing it does not promise cold child or shared-constant caches.
 fn structural_values() -> Vec<(&'static str, Real)> {
     let tiny = Real::new(
         Rational::from_bigint_fraction(BigInt::from(1), BigUint::from(1_u8) << 160).unwrap(),
@@ -1319,6 +1371,11 @@ fn structural_values() -> Vec<(&'static str, Real)> {
     ]
 }
 
+/// Left-fold borrowed products from zero over the shorter of two rational slices.
+///
+/// Zip silently ignores an unmatched tail; either empty slice yields zero. Factors
+/// are black-boxed, and each product/addition materializes exact rational arithmetic.
+/// This control has no length validation or resource bound.
 fn rational_dot(left: &[Rational], right: &[Rational]) -> Rational {
     left.iter()
         .zip(right)
@@ -1327,6 +1384,11 @@ fn rational_dot(left: &[Rational], right: &[Rational]) -> Rational {
         })
 }
 
+/// Left-fold borrowed Real products from zero over the shorter input slice.
+///
+/// Unmatched trailing entries are ignored and an empty side gives zero. Exact
+/// expression construction does not force numeric evaluation; factor black-boxing
+/// prevents the benchmark from assuming known inputs. No length check is made.
 fn real_dot(left: &[Real], right: &[Real]) -> Real {
     left.iter()
         .zip(right)
@@ -1335,6 +1397,12 @@ fn real_dot(left: &[Real], right: &[Real]) -> Real {
         })
 }
 
+/// Allocate and fill a row-major 8-by-8 exact rational matrix product.
+///
+/// Each output uses eight multiply/add steps from zero. Both slices must have at
+/// least 64 entries or indexing panics; extra entries are ignored. Output allocation
+/// and arithmetic belong to this helper; it is a fixed-size benchmark control, not
+/// a shape-checked general matrix API.
 fn rational_matmul_8(left: &[Rational], right: &[Rational]) -> Vec<Rational> {
     let n = 8;
     let mut out = vec![Rational::zero(); n * n];
@@ -1350,6 +1418,11 @@ fn rational_matmul_8(left: &[Rational], right: &[Rational]) -> Vec<Rational> {
     out
 }
 
+/// Allocate a row-major 6-by-6 Real product with six terms per output entry.
+///
+/// Slices shorter than 36 entries panic and trailing entries are ignored. Products
+/// and sums preserve exact expressions without forcing approximation. The result
+/// includes its vector allocation; no caller-provided output buffer is reused.
 fn real_matmul_6(left: &[Real], right: &[Real]) -> Vec<Real> {
     let n = 6;
     let mut out = vec![Real::zero(); n * n];
@@ -1365,6 +1438,12 @@ fn real_matmul_6(left: &[Real], right: &[Real]) -> Vec<Real> {
     out
 }
 
+/// Write catalogue metadata, then measure six prewarmed approximation requests.
+///
+/// Zero, one, two, e, pi and tau are requested at -256 before their timed -128
+/// requests. Both precisions are absolute binary scales for integer approximations.
+/// Despite the catalogue's cold/cached wording, no cold approximation row is
+/// registered here; the results are black-boxed without accuracy assertions.
 fn bench_raw_cache_hit_cost(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "scalar_micro",
@@ -1394,6 +1473,13 @@ fn bench_raw_cache_hit_cost(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register six queries per structural fixture plus two structural-negation probes.
+///
+/// Each fixture first requests structural_facts outside timing. Timed rows query
+/// zero status, sign, magnitude, full/detailed facts and lossy binary64 conversion
+/// in that order; later rows may inherit more cache evidence. The final comparisons
+/// use sqrt(2) with its negative and with pi. No query result or floating-point
+/// accuracy is asserted; an Unknown fact must not be interpreted as a false claim.
 fn bench_structural_query_speed(c: &mut Criterion) {
     let mut group = c.benchmark_group("structural_query_speed");
 
@@ -1435,6 +1521,23 @@ fn bench_structural_query_speed(c: &mut Criterion) {
     group.finish();
 }
 
+/// Compare exact arithmetic/construction on prepared and batched fresh scalar fixtures.
+///
+/// The main rational pair is 123456789/987654321 and its reciprocal. Explicit
+/// precomputation warms selected product, inverse, negation, fifth-power and sqrt(90)
+/// paths. Fresh setup variants rebuild operands outside timing, including shared
+/// clones kept alive during addition/subtraction. No dispatch counts are asserted.
+///
+/// Binary64-derived dyadics include 1e-9, 1e-12 and three norm coordinates; they
+/// are imported exactly as binary numbers. Other rows form a rational sum of squares,
+/// scale a reciprocal norm, construct ln(1024), and construct (7/5)^17. Reusing norm
+/// inputs may warm reductions over iterations; cloning them does not clear caches.
+///
+/// Fused/composed integer controls use A=2^191+17 and B=2^159+29 for A-3B and
+/// (7A-4B)/(-1). Checked fused outputs are merely black-boxed, so their success and
+/// equality with composed arithmetic are not asserted. Other unwraps require success
+/// but do not test the value. Batched setup/output-drop and ordinary timing follow
+/// the module contract; no general numeric evaluation is requested.
 fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let mut group = c.benchmark_group("pure_scalar_algorithm_speed");
     let lhs = rational(123_456_789, 987_654_321);
@@ -1783,12 +1886,26 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     group.finish();
 }
 
+/// Build the integer 2^((limbs-1)*usize::BITS) + low as an exact Rational.
+///
+/// Positive limbs and a nonoverflowing shift calculation are required. Zero limbs
+/// underflow, huge inputs can overflow or exhaust allocation, and no limit is checked.
+/// The native-word count is a fixture convention, not a portable proof of a selected
+/// backend algorithm. At one limb the result is 1+low, including even values.
 fn backend_limb_rational(limbs: usize, low: u8) -> Rational {
     let magnitude =
         (BigUint::from(1_u8) << ((limbs - 1) * usize::BITS as usize)) + BigUint::from(low);
     Rational::from_bigint(BigInt::from(magnitude))
 }
 
+/// Generate a deterministic positive integer of exactly bits bits from a u64 seed.
+///
+/// Append ceil(bits/64) wrapping LCG words using multiplier 6364136223846793005
+/// and increment 1442695040888963407, keep the low bits bits, then force the top bit.
+/// For partial words this retains the low bits of the concatenation. bits must be
+/// positive: zero underflows in bits-1. Repeated growing shifts/copies and allocations
+/// have no explicit work or memory cap; this is neither a random nor cryptographic
+/// source, and seed equality/bit width alone do not establish benchmark comparability.
 fn benchmark_magnitude(bits: usize, mut state: u64) -> BigUint {
     let mut value = BigUint::ZERO;
     for _ in 0..bits.div_ceil(64) {
@@ -1801,6 +1918,11 @@ fn benchmark_magnitude(bits: usize, mut state: u64) -> BigUint {
     (value & mask) | (BigUint::from(1_u8) << (bits - 1))
 }
 
+/// Compute a nonnegative integer GCD by descending full-width Euclidean remainders.
+///
+/// Clone/sort the operands, then repeatedly replace (a,b) with (b,a mod b) until b
+/// is zero. gcd(0,0)=0 and gcd(a,0)=a. This benchmark baseline includes input cloning
+/// and intermediate allocation; it has no iteration/resource limit or cancellation.
 fn euclidean_magnitude_gcd(left: &BigUint, right: &BigUint) -> BigUint {
     let (mut larger, mut smaller) = if left >= right {
         (left.clone(), right.clone())
@@ -1815,6 +1937,35 @@ fn euclidean_magnitude_gcd(left: &BigUint, right: &BigUint) -> BigUint {
     larger
 }
 
+/// Exercise rational facts, wide integer algorithms, perfect powers and exact radix I/O.
+///
+/// Setup asserts non-dyadic 7/15, two rational orderings, eight equality cases,
+/// candidate products against BigUint, selected unbalanced products, selected GCDs
+/// against Euclid, half-GCD against Lehmer, and Barrett div/rem against backend
+/// results. Assertions and generated inputs execute even for filtered-out rows.
+/// Timing results themselves are generally unchecked, and no dispatch counts are
+/// asserted. Limb-shaped fixtures depend on usize width; labels are not path proofs.
+///
+/// Balanced products range from 4096 to 4194304 bits. Toom-4, Toom-6, Toom-8 and
+/// NTT use distinct seed pairs. Several later candidates reuse earlier named
+/// backend/selected baselines at the same width but with different operands; NTT
+/// has no same-seed timed baseline. The 131072-bit backend_reference row actually
+/// calls the production selector. Unbalanced selected/backend pairs do share inputs.
+///
+/// GCD workloads use 128..4096-bit balanced values, constructed unbalanced dividends
+/// whose first remainder is smaller than the divisor, and 8192..1048576-bit
+/// half-GCD/Lehmer pairs. Barrett one-shot includes preparation; each batch call
+/// prepares once for sixteen dividends and returns the vector of quotient/remainder
+/// pairs, including preparation and materialization in timing.
+///
+/// Other rows construct fresh reduced fractions, take a retained fractional part,
+/// compute a zero quotient, query perfect powers of 12 or 101/103 and a mismatched
+/// seventh/fifth power, and parse/format exact decimals. Scientific and expanded
+/// 5120-digit fixtures denote the same value; 10240/20480-digit parse comparisons
+/// return Rational versus BigUint, with distinct representation costs. Formatting
+/// 1/7 to 32 decimal places is approximate display, not exact replay. Predicate and
+/// formatting results are not generally checked. Large fixed workloads have no
+/// internal time/memory cap; Criterion filters do not contain their setup cost.
 fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     let mut group = c.benchmark_group("rational_algorithm_dispatch_speed");
 
@@ -2570,6 +2721,15 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
     group.finish();
 }
 
+/// Compare cloned/owned and borrowed addition, then symbolic dot products of two to four lanes.
+///
+/// Rationals use a reciprocal pair; Real additions use pi/e and scales 7/8, 5/6.
+/// Dense dot factors combine pi, e, sqrt(2) and their products, while mixed arrays
+/// include exact zero/one/integer lanes. Active variants receive the dense inputs
+/// without a separate timed activity-classification pass. All outputs are constructed
+/// and black-boxed without numeric or equality checks. Owned addition excludes setup
+/// clones and returned-output drops; ordinary borrowed/clone rows include their drops.
+/// Prepared operands and clone-shared evidence persist across iterations.
 fn bench_borrowed_op_overhead(c: &mut Criterion) {
     let mut group = c.benchmark_group("borrowed_op_overhead");
     let rational_lhs = rational(123_456_789, 987_654_321);
@@ -2779,6 +2939,22 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register fixed rational/symbolic dots, matrix products and 64/1024-term aggregate controls.
+///
+/// Rational vectors have 64 terms n/(n mod 11+2), n=1..64, and n/(n mod 13+2),
+/// n=65..128. The 36-term Real vectors scale pi and e by n/(n mod 7+2) and
+/// n/(n mod 5+2). Helpers also treat these arrays as row-major matrices.
+///
+/// Symbolic sums use sqrt(n) for n=2..65 or 2..1025, including perfect squares.
+/// The rational sum alternates signs with numerator index mod 97+1 and denominator
+/// 1009+2*index over index=0..1023. Sequential folds and public aggregates construct
+/// results; rows ending to_f64 additionally request lossy approximation. Those names
+/// do not imply certified floating-point accuracy, and no equivalence is asserted.
+///
+/// Large approximation rows rebuild children in batched setup, while other rows reuse
+/// prepared children. Fresh roots are not a global cache reset. Owned controls clone
+/// the input vector outside timing; the former path adds one clone/drop per element
+/// inside the routine. Follow the module's distinct ordinary/batched drop contracts.
 fn bench_dense_algebra(c: &mut Criterion) {
     let mut group = c.benchmark_group("dense_algebra");
     let rational_left: Vec<_> = (1..=64).map(|n| rational(n, (n as u64 % 11) + 2)).collect();
@@ -2900,13 +3076,29 @@ fn bench_dense_algebra(c: &mut Criterion) {
     group.finish();
 }
 
-// This control deliberately reproduces the extra clone performed by the first
-// generic owned reducer so the retained move-preserving path stays measurable.
+/// Consume a vector through the public sum reducer while cloning each yielded element.
+///
+/// The deliberately redundant map reproduces a former per-value clone/drop path for
+/// comparison with direct moves. It retains shared inner state, returns zero for an
+/// empty vector, and constructs the sum without demanding numeric approximation.
+/// The narrow Clippy allowance keeps this historical control expression intact.
 #[allow(clippy::map_clone)]
 fn sum_owned_with_former_per_value_clone(values: Vec<Real>) -> Real {
     Real::sum_owned(values.into_iter().map(|value| value.clone()))
 }
 
+/// Measure construction of rational-angle, inverse, hyperbolic, atan2 and log2 expressions.
+///
+/// Fixtures include pi/7; principal inverse compositions at 6*pi/7 and 9*pi/7;
+/// asinh(1000000); atanh(sqrt(2)/2) and invalid atanh(sqrt(2)); hyperbolics of ln(2)
+/// and one; six atan2 axis/quadrant cases; log2(1024), log2(3), and ln(5)/ln(2).
+/// The intended principal angles are pi/7, 5*pi/7 and -pi/7 respectively. Hyperbolics
+/// of ln(2) mathematically equal 3/4, 5/4 and 3/5.
+///
+/// Batched clones exclude source preparation/output destruction. Success unwraps
+/// and one unwrap_err check only outcome polarity, not result values, error variant,
+/// representation or dispatch. atan2 results are only black-boxed, including the
+/// library's defined origin behavior. No numerical approximation is requested.
 fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
     let mut group = c.benchmark_group("exact_transcendental_special_forms");
     let pi_over_7 = Real::pi() * real(1, 7);
@@ -3104,10 +3296,20 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
     group.finish();
 }
 
+/// Construct cos(value)/sin(value), cloning the input for the cosine branch.
+///
+/// The benchmark requires a nonzero sine and successful division; failure panics.
+/// This composition is defined at odd half-pi angles where cotangent is zero, unlike
+/// the reciprocal-tangent control. Construction does not request numeric output.
 fn cot_via_quotient(value: Real) -> Real {
     (value.clone().cos() / value.sin()).expect("benchmark cotangent input has nonzero sine")
 }
 
+/// Construct the reciprocal of tan(value), panicking if either operation fails.
+///
+/// This control requires finite defined tangent and a nonzero tangent. It excludes
+/// odd half-pi angles although cotangent itself is zero there, as well as cotangent
+/// poles. It constructs the result without requesting a numerical enclosure.
 fn cot_via_inverse_tangent(value: Real) -> Real {
     value
         .tan()
@@ -3116,6 +3318,14 @@ fn cot_via_inverse_tangent(value: Real) -> Real {
         .expect("benchmark tangent is nonzero")
 }
 
+/// Compare public cotangent, cosine/sine and reciprocal-tangent constructions.
+///
+/// Three rows use atan(2), whose mathematical cotangent is 1/2, without forcing
+/// approximation. Three use exact 1/1024 and request certified rational intervals
+/// at absolute precision -256. Setup clones are outside timing; construction and
+/// interval generation are inside. Cold labels do not reset shared caches. Unwraps
+/// require success, but neither interval width nor equality across paths is checked.
+/// The reciprocal-tangent helper has a narrower domain than public cotangent.
 fn bench_real_cotangent(c: &mut Criterion) {
     let mut group = c.benchmark_group("real_cotangent");
     let atan_two = Real::from(2_i32).atan().unwrap();
@@ -3188,6 +3398,15 @@ fn bench_real_cotangent(c: &mut Criterion) {
     group.finish();
 }
 
+/// Construct twenty fixed root/log/product/quotient reductions of pi, e and radicals.
+///
+/// Prepared sources include pi squared, (pi*e) squared, 18*exp(2), 2e, pi-3,
+/// pi^3*exp(5), pi*exp(2), sqrt(2) and sqrt(3). The extra squarefree exponential
+/// root row is absent from the static catalogue. Other expressions exercise reciprocal
+/// rationalization, cancellation and fact retrieval; their names are not assertions
+/// of canonical output or dispatch. Most setup clones and returned-output drops are
+/// outside timing, while the facts row uses ordinary iteration. No numeric evaluation
+/// or independent expected value is demanded, and retained inputs may carry caches.
 fn bench_symbolic_reductions(c: &mut Criterion) {
     let mut group = c.benchmark_group("symbolic_reductions");
     let pi = Real::pi();
@@ -3351,6 +3570,20 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
     group.finish();
 }
 
+/// Construct six exact determinant/cofactor workloads from prepared rational or symbolic data.
+///
+/// Three six-term two-factor sums use signs +,-,+,+,-,+ with mixed denominators,
+/// a common denominator 15, or only the third term active. The first and sparse
+/// specialized calls return Options that are black-boxed without requiring Some;
+/// the known-shared-denominator call returns Real. The common-scale fixture sums
+/// to 392/225, and the sparse fixture is (37/41)*(43/47).
+///
+/// Two general signed-product sums expand 3-by-3 determinants, one rational and
+/// one with pi/e/tau/sqrt(2) and exact zero entries. A sparse three-plane fixture
+/// has third row (0,0,-41/8,0); its specialized cofactor Option is unwrapped, but
+/// neither the tuple nor its plane incidences is checked. These are exact expression
+/// outputs, not a general geometry validation. Ordinary timing includes construction
+/// and output destruction, reuses prepared factors, and makes no numeric query.
 fn bench_exact_product_sums(c: &mut Criterion) {
     let mut group = c.benchmark_group("exact_product_sums");
     let zero = Real::zero();
@@ -3527,6 +3760,11 @@ criterion_group!(
 );
 criterion_main!(benches);
 
+/// Rewrite the scalar catalogue, then run the shared Criterion report finalizer.
+///
+/// The catalogue is also written before raw-cache measurements. Both helpers apply
+/// their own write/skip/error handling; this callback performs no numerical check
+/// or benchmark-completion validation and does not propagate a typed write result.
 fn finish_benchmark_report(c: &mut Criterion) {
     bench_docs::write_benchmark_docs(
         "scalar_micro",

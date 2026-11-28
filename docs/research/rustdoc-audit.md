@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/scalar_micro.rs` | Entire 313-case scalar workload, metadata, helpers and registrations; documented domains, exact constructions, timing/cache scope and comparison limits. | All 31 authored blocks render; both-mode private docs and 200-case focused runs pass; full 313-case baseline passes. Two Criterion-generated gaps remain. See scalar microbenchmark batch. |
 | `crates/hyperreal/benches/gmp_api.rs` | Entire 504-case GMP/MPFR comparison suite; all helpers, local macros, exact inputs, output/timing contracts and reproduced comparison defects reviewed. | All 46 authored blocks checked; both-mode private docs/smoke and baseline/final probes pass. Two Criterion-generated doc gaps remain; local macros require supplemental rendering. See GMP API benchmark batch. |
 | `crates/hyperreal/benches/library_perf.rs` | Entire 176-case public-library workload; documented every authored item, timing/output scope, Wallis domains and parser/error limits. | All 27 blocks render; minimal-simple/all docs and smoke, closed-form product expectations and parsed-output replay pass. Two Criterion-generated doc gaps remain. See public-library benchmark batch. |
 | `crates/hyperreal/benches/numerical_micro.rs` | Entire 134-case suite; documented all private helpers, exact chain formulas, timing/cache scope, actual assertions and stale metadata. | All 40 blocks render; both-mode private docs/smoke and before/after 75-record helper replay pass. Two Criterion-generated doc gaps remain. See numerical microbenchmark batch. |
@@ -23629,6 +23630,123 @@ scratch source are removed after inspection. Shared build output is reused with
 incremental compilation disabled. AGENTS.md retains the future-agent mandate;
 whole-repository line review, generated-item coverage and configuration-wide
 coverage remain unfinished.
+
+## Hyperreal scalar microbenchmark documentation batch
+
+Reviewed all 3,537 baseline lines of crates/hyperreal/benches/scalar_micro.rs
+at 5ad4327c4a1e0af46de06ed32c64dd6ab2c9a3ac: every catalogue entry, helper,
+operation, setup assertion, closure, loop and Criterion registration. The final
+file has 3,775 lines. Context included previously reviewed report helpers,
+Criterion iteration/drop behavior, Real product-sum/cofactor entry points and
+Rational multiplication/Barrett selectors. Those contextual reads do not claim
+whole-file review of the separate implementations. All Rust files under
+crates/hyperreal/benches now have whole-file review rows; generated-item and
+configuration-wide coverage gaps remain distinct from those review credits.
+
+The owning layer is Hyperreal's scalar benchmark/documentation surface. Relevant
+contracts are P1/P2 (exact inputs, symbolic construction and output meaning),
+P3/P4 (facts, refinement and retained state), P5 (explicit resource limits),
+P6 (unchecked outcomes and panics), plus the public/private/generated Rustdoc
+mandate. The missing acceptance witness was item-level documentation matching
+actual input domains, measured work and assertions. Before editing, the original
+all-feature executable was built and started; it completed all 313 smoke cases
+in 351.2 seconds. Baseline helpers and source review reproduce the limitations
+below. Only comments changed; all noncomment tokens, fixtures, metadata strings,
+call order and assertion expressions are identical.
+
+Added 31 authored Rustdoc blocks: module overview, two included modules, catalogue
+constant and all 27 private functions. Their full descriptions render under
+private rustdoc. Criterion-generated benches and main still lack attached
+docblocks; module-level explanations do not establish item-level coverage.
+The existing narrow map_clone allowance is explained, not expanded or added.
+
+Documented findings:
+
+- Eleven groups register 313 cases; the static catalogue contains 292. It omits
+  detailed_facts and to_f64_lossy for each of ten structural fixtures, plus
+  sqrt_scaled_exp_squarefree. No catalogue entry names an unregistered case.
+  All six raw-cache rows prewarm at -256 before timing -128 requests; the
+  catalogue's cold/cached description does not describe a cold measurement.
+- Construction of exact Real expressions, numeric approximation, exact rational
+  arithmetic, certified cotangent intervals and lossy display are distinct
+  completed outputs. Binary64 literals enter as exact binary rationals. Most
+  outputs are only black-boxed, and success/error unwraps check polarity rather
+  than value, representation, specific error variant or dispatch counts.
+- Ordinary iteration includes output destruction and in-loop cloning. Batched
+  setup/returned-output destruction are outside the measured routine, while
+  consumed inputs may be destroyed inside. Prepared or cloned inputs retain
+  evidence; fresh wrappers are not a global cache reset. Structural rows run
+  after an initial facts query and can inherit further evidence from earlier
+  rows. Backend setup assertions execute even when row filters exclude timing.
+- Toom-4, Toom-6, Toom-8 and NTT use different deterministic seed pairs. Some
+  candidates reuse earlier named same-width baseline rows with different
+  operands; NTT has no same-seed timed baseline. The 131072-bit backend_reference
+  row calls the production selector. Unbalanced selected/backend comparisons
+  do share inputs. The source assertions check individual candidate products
+  against BigUint, but do not make all timed pairs the same workload.
+- Barrett batches include one reciprocal preparation per call and materialize
+  sixteen quotient/remainder pairs. Radix parse comparisons return Rational
+  versus BigUint, with different representation costs. Backend/GCD input sizes
+  reach millions of bits without an internal time/memory cap. Limb fixtures use
+  usize width; algorithm labels are not verified dispatch-count claims.
+- Dot helpers truncate to the shorter slice and return zero for an empty side.
+  Matrix helpers use the first 64/36 entries as row-major 8x8/6x6 matrices;
+  short slices panic and extra entries are ignored. The deterministic magnitude
+  helper appends wrapping LCG words, masks low bits and forces the top bit;
+  zero bit count underflows. Zero limb count also underflows. Neither generator
+  is a bounded or cryptographic random source.
+- Reciprocal tangent excludes odd half-pi angles where public cotangent and
+  cosine/sine return zero. Three atan(2) rows only construct results; three
+  exact-1/1024 rows request -256 certified intervals without asserting their
+  widths or cross-path equality. The historical owned sum control deliberately
+  clones/drops each yielded element before the public reducer consumes it.
+- Dense algebra includes symbolic sums with perfect-square radicands, alternating
+  rational sums and prepared pi/e matrix factors. Special-form and symbolic
+  groups describe their concrete angles, roots, logs and compositions without
+  asserting canonicalization. Product-sum rows describe signs and rational or
+  symbolic factors; two specialized Option outputs are not unwrapped. The
+  sparse cofactor output is unwrapped but its plane incidences are not checked.
+
+Executed after the final edit:
+
+- Locked/offline cargo test --bench scalar_micro --no-run and private cargo
+  rustdoc pass for --no-default-features and --all-features. Warnings and broken/
+  private intra-doc links are denied. Matching self/dev externs and dependency
+  directories come from Cargo JSON artifacts; ordinary rustdoc contains all 31
+  authored descriptions and confirms the two generated-item gaps.
+- A scratch harness retains every function body and fixture but omits the
+  113-case backend group's Criterion registration. The remaining ten groups
+  pass all 200 cases on baseline and final no-default/all-feature libraries;
+  ordered IDs exactly match that subset of the original 313-case baseline.
+  This is explicitly partial final runtime coverage, not a replacement fixture
+  or claim that the 113 expensive cases were rerun after comments changed.
+- Baseline/final scratch helper probes check invalid ratio/bit/limb/shape panics,
+  shortened/empty dots, extra matrix entries, Euclidean zero and swapped cases,
+  empty/ordinary historical sums, cold/warm integer approximations, cotangent
+  domain differences and distinct candidate seed outputs. The probe's 155
+  structural/approximation/generator/matrix/cotangent/display records are
+  byte-identical before/after; snapshots alone do not prove correctness.
+- Independent Python integer/Fraction calculations check 32 LCG magnitudes,
+  four limb-shaped integers, all 100 rational matrix coefficients and two dots:
+  138 exact expectations. Matrix/Real helper probes use rational coefficients
+  to make these expectations independent; they do not certify all symbolic
+  benchmark outputs. Initial Python parsing assumed simple fractions and was
+  corrected to support the helper's positive mixed-number display before the
+  complete comparison passed. No repository fixture changed.
+- Source declaration/rendered-description inventory, noncomment-token equality,
+  catalogue/registered-ID comparison, scoped Rustfmt and git diff --check pass.
+  Repository/crate benchmark report hashes/absence states are unchanged; all
+  execution uses a task-owned cwd and the existing report-suppression variable.
+
+No documentation check is blocked. The full 313-case baseline passed; final
+runtime validation deliberately covers the other 200 cases rather than repeating
+113 expensive unchanged backend cases under the owner's docs-only waiver.
+Full workflows remain waived, and no statistical performance or universal numeric
+correctness claim is made. Evidence, source snapshot and scripts remain under
+/tmp/csgrs-hyperreal-scalar-micro-audit/. Owned probe/focused executables and
+combined scratch sources are removed after checking; shared target output is
+reused with incremental compilation disabled. AGENTS.md retains the future-agent
+100% mandate. Whole-repository line review and full Rustdoc coverage are unfinished.
 
 ## Next work
 
