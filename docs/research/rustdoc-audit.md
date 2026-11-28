@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/dispatch_trace.rs` | Entire 156-sample diagnostic runner; documented every function, exact fixture formulas, filter/cache/thread scope, omissions and report effects. | All 28 blocks render; supported minimal/all-feature private docs, full before/after reports and complete-snapshot comparisons pass. See Hyperreal dispatch-runner batch. |
 | `crates/hyperreal/benches/adversarial_transcendentals.rs` | Entire six-group benchmark and promoted loader; documented every authored item, exact inputs, timing/cache scope, parser/resource limits and actual row counts. | All 44 blocks render; private docs and 119-case fallback/70-case loaded smoke runs pass in both modes. Two Criterion-generated doc gaps remain. See adversarial-transcendental batch. |
 | `crates/hyperreal/benches/adversarial_library.rs` | Entire collection/history/promotion/score implementation; documented every private item, real timing/output scope, parser loss, leaks, file effects and resource limits. | All 75 blocks render; both-mode docs/compilation and isolated baseline/final fixtures pass. Full numerical collection unrun; two Criterion-generated doc gaps remain. See adversarial-library batch. |
 | `crates/hyperreal/benches/real_representations.rs` | Entire 20-recipe workload; documented enum/variants/derived roles, exact expressions, lossy export, prepared timings and finite coverage. | Thirty blocks render; both-mode smoke/docs pass. Two Criterion-generated functions still lack attached docs. See representation/replay batch. |
@@ -23209,6 +23210,111 @@ unfinished. Evidence lives in
 /tmp/csgrs-hyperreal-adversarial-transcendentals-audit/; the owned probe executable
 and combined scratch source are removed after checking, retaining scripts,
 logs, baseline and inventory. The shared target is about 8.1 GiB.
+
+## Hyperreal dispatch-runner audit (2026-11-28)
+
+Baseline: c55cdc5b3 on rustdoc. Reviewed every line of
+crates/hyperreal/benches/dispatch_trace.rs: 1,765 baseline lines and 1,920 final
+lines, including all 156 catalogue samples, helper constructors, filtering,
+report projection and main. No prior whole-file record existed for this file;
+the older Hyperlimit dispatch-runner record describes a different crate. Context
+reads of Hyperreal's trace implementation, manifest and nested-radical tests
+supply evidence for this runner, not new whole-file review credit for those files.
+An initial oversized read of other benchmark files was truncated and earns no
+whole-file review credit; this file was subsequently read in bounded contiguous
+ranges from first line to last.
+
+The owning layer is Hyperreal benchmark/diagnostic documentation. Relevant
+properties are P1/P2 (exact inputs and retained expressions), P3 (trace labels
+versus mathematical evidence), P4 (cache history), P5 (resource limitations),
+and P6 (unwrap and file-error behavior), with the public/private Rustdoc mandate.
+The missing acceptance witness was an item-complete, behavior-accurate account
+of the runner's diagnostic scope and output semantics. Before edits, both the
+minimal supported feature combination and all features compiled and executed
+all 156 samples. Isolated baseline probes reproduced filtering, trace omission,
+replacement, thread scope and input failures. This batch changes comments only;
+all noncomment tokens, operations, call order and report strings are identical.
+
+Added 28 Rustdoc blocks: the module and all 27 private functions. The declaration
+inventory and rendered private pages contain all 28 descriptions, including main.
+There are no authored local types/methods or macro-generated harness functions
+in this standalone runner; no generated-item coverage gap was found within this
+file. This is a file-scoped result, not whole-repository coverage.
+
+Documented behavior and limits:
+
+- Filters are case-sensitive substring matches combined with OR. Empty filter
+  lists select all rows; main discards every empty or hyphen-prefixed argument.
+  --test alone therefore runs the complete catalogue. This is not a Criterion
+  harness, timing run, exact-match selector or automatic smoke guard.
+- A selected closure executes once on the recording thread. Counter reset does
+  not invalidate arithmetic caches. Recording does not aggregate other threads.
+  The snapshot is retained only when raw dispatch labels are nonempty: rational
+  statistics alone do not preserve a row. A nonempty repeated name replaces its
+  old entry, but an empty repeated sample does not remove the old entry. Printed
+  path counts measure distinct label tuples, not summed event multiplicity.
+- Filtered closures are not called and do not clear preexisting counters, but
+  collect_rows still prepares cached sign fixtures and final adversarial sources
+  outside filtering. Full-run and subset cache histories differ. The exp-cached
+  row includes its own initial approximation inside the trace, whereas several
+  cached-sign rows warm before recording. Map/report order is lexical; execution
+  order remains source order. Names such as unknown, unsupported, fallback and
+  inconclusive do not assert present-day algorithmic outcomes.
+- Exact rational helpers and symbolic pi retain values; f64 fixtures mean their
+  exact binary values. Mixed-number sign handling, zero-denominator/oversized
+  numerator failures, root-domain unwraps and nonfinite-import panics are stated.
+  Chain helpers document their formulas, construction counts and unconditional
+  warmup in the perturbed case. Native simplification can change graph shape;
+  construction depth and approximation/sign floors are not total-work limits.
+  The three nested zero-identity helpers state their actual root expressions,
+  without claiming that black-boxed sign results prove the identities.
+- The report projects full snapshots to correlation counts and raw dispatch
+  tuples, omitting some detailed rational statistics. It does not escape labels,
+  lock or atomically replace the file. Output is cwd-relative and can replace a
+  full report with an empty/subset one. Presence of the skip environment variable
+  suppresses writing even when its value is empty. I/O errors are logged and
+  swallowed; main still prints an unconditional updated message after a skipped
+  or failed write. These existing limitations remain unchanged.
+- Results are diagnostic. Most fallible operations unwrap; sign/comparison/
+  approximation results and counts have no expected-value assertions here.
+  The runner provides no independent correctness oracle, total-resource bound,
+  cancellation handler or performance measurement.
+
+Executed after the final source edit:
+
+- Locked/offline cargo test --bench dispatch_trace --no-run and cargo rustdoc
+  --bench dispatch_trace --document-private-items with warnings and broken/private
+  intra-doc links denied, for --no-default-features --features dispatch-trace
+  and for --all-features. Both pass. The feature is required by the manifest;
+  unsupported feature-free compilation is not claimed. Matching self/num externs
+  and dependency directories are supplied from Cargo JSON artifacts for rustdoc.
+- Full original executables in fresh processes, in both configurations: all 156
+  rows complete and Markdown is byte-identical to the corresponding pre-edit
+  baseline. --test also runs all 156 and produces the same report. Two-substring
+  selection runs exactly two rows; an unmatched selector writes an empty report.
+  Skip-variable and unwritable-output fixtures confirm retained files, logged
+  failure and the unconditional success-looking message. All cwd/report effects
+  are contained in task-owned temporary directories.
+- Isolated baseline/final helper probes replace only main in scratch copies and
+  assert rejected closures, counter preservation/reset, empty/rational-only
+  omission, repeated-name replacement/retention, OR and empty-substring filters,
+  worker-thread exclusion, exact mixed rationals and expected constructor panics.
+  The probes execute the full catalogue and compare every TraceSnapshot field,
+  including detailed rational statistics, as well as Markdown bytes. Baseline
+  and final outputs match. This establishes trace preservation for this finite
+  workload/configuration, not a universal numerical correctness claim.
+- All 28 descriptions appear in private HTML; source declaration inventory,
+  noncomment-token equality, scoped Rustfmt and git diff --check pass. Actual
+  repository/crate dispatch report hashes and absence states are unchanged.
+  Complete commands, feature choices, logs, before/final snapshots and rendered
+  inventory are retained in /tmp/csgrs-hyperreal-dispatch-bench-audit/.
+
+No focused check remains blocked. Full workflow checks remain waived by the
+owner for this docs-only session. No timing/performance claim is made. The
+owned scratch executable and combined probe source are removed after checking;
+the shared target is reused with incremental compilation disabled. AGENTS.md
+retains the future-agent public/private/generated 100% Rustdoc mandate. The
+whole-repository line review and coverage objective remains unfinished.
 
 ## Next work
 

@@ -1,3 +1,21 @@
+//! Sample Hyperreal dispatch paths for a fixed scalar workload catalogue.
+//!
+//! This standalone runner requires `dispatch-trace`; it performs no Criterion
+//! measurement and does not update `benchmarks.md`. Non-option command-line
+//! arguments are case-sensitive row-name substrings combined with OR. No filters
+//! means all rows, including when only flags such as `--test` are supplied.
+//!
+//! A matched closure runs once with current-thread recording enabled, after
+//! clearing counters. Arithmetic caches survive resets, earlier rows and prepared
+//! inputs. Filtering can therefore change later traces. Some preparation executes
+//! even for excluded rows. Samples without dispatch labels are omitted, including
+//! rational-counter-only samples; retained rows are sorted by name for reporting.
+//!
+//! Results and counts are diagnostic, not asserted mathematical expectations or
+//! coverage certificates. Many calls unwrap errors; approximation and sign floors
+//! are not total-work limits, and no cancellation/timeout policy is installed.
+//! The report is overwritten in the current directory unless the skip variable
+//! is present. The final status message does not certify a successful write.
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
@@ -7,6 +25,20 @@ use std::ops::Neg;
 use hyperreal::{Computable, Rational, Real};
 use num::{BigInt, BigUint};
 
+/// Run a matching sample once and retain its nonempty current-thread dispatch snapshot.
+///
+/// An empty filter list accepts all names; otherwise any case-sensitive substring
+/// match suffices. A rejected sample is never invoked and existing counters are
+/// untouched. For an accepted row, reset both dispatch/rational counters, record
+/// the closure, then take and clear the snapshot. Reset does not clear value caches.
+/// Worker-thread activity is not merged into the calling thread's trace.
+///
+/// A sample with no dispatch labels is discarded even if rational counters changed.
+/// An accepted nonempty snapshot replaces an existing row of the same name; an
+/// empty snapshot leaves an earlier entry intact. Panics propagate without inserting
+/// a row; the recording guard restores its prior state, but taking the trace is
+/// then skipped. Progress goes to stderr; reported path count is the number of
+/// label tuples, not the sum of their event counts.
 fn trace_row(
     rows: &mut BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot>,
     filters: &[String],
@@ -32,14 +64,24 @@ fn trace_row(
     }
 }
 
+/// Import a finite binary64 fixture exactly, panicking on NaN or infinity.
+///
+/// The represented value is the binary number, not the ideal decimal spelling;
+/// for example `0.1_f64` is not the rational one-tenth.
 fn real_from_f64(value: f64) -> Real {
     Real::try_from(value).expect("finite f64 imports exactly")
 }
 
+/// Construct an exact signed word-sized fixture ratio; a zero denominator panics.
 fn rational(numerator: i64, denominator: u64) -> Rational {
     Rational::fraction(numerator, denominator).unwrap()
 }
 
+/// Construct `whole - numerator/denominator` for negative wholes, otherwise their sum.
+///
+/// The fractional numerator must fit `i64` and the denominator must be nonzero,
+/// or construction panics. Zero selects the nonnegative branch; all arithmetic
+/// preserves the rational value without a floating conversion.
 fn mixed_rational(whole: i64, numerator: u64, denominator: u64) -> Rational {
     let fraction = Rational::fraction(
         i64::try_from(numerator).expect("small numerator fits i64"),
@@ -53,32 +95,41 @@ fn mixed_rational(whole: i64, numerator: u64, denominator: u64) -> Rational {
     }
 }
 
+/// Construct an exact arbitrary-size ratio, panicking on a zero denominator.
+///
+/// Integer allocation and normalization have no local work or memory cap.
 fn rational_big(numerator: BigInt, denominator: BigUint) -> Rational {
     Rational::from_bigint_fraction(numerator, denominator).unwrap()
 }
 
+/// Retain an exact rational fixture as a computable source for native dispatch sampling.
 fn computable(rational: Rational) -> Computable {
     Computable::rational(rational)
 }
 
+/// Return exact `10^-12` for stable-function and small-argument samples.
 fn tiny() -> Rational {
     Rational::fraction(1, 1_000_000_000_000_u64).unwrap()
 }
 
+/// Return exact `1 - 10^-6` for endpoint-neighbor and cancellation samples.
 fn near_one() -> Rational {
     Rational::fraction(999_999, 1_000_000).unwrap()
 }
 
+/// Return exact `1 + 10^-12` for acosh near its real-domain boundary.
 fn one_plus_tiny() -> Rational {
     Rational::one() + tiny()
 }
 
+/// Construct exact `2^512*pi + 7/5` for symbolic argument-reduction traces.
 fn huge_pi_plus_offset() -> Computable {
     Computable::pi()
         .multiply(computable(Rational::from_bigint(BigInt::from(1_u8) << 512)))
         .add(computable(rational(7, 5)))
 }
 
+/// Construct exact `pi/2 - 2^-40` for a tangent argument just below a pole.
 fn near_half_pi() -> Computable {
     let offset = rational_big(BigInt::from(1_u8), BigUint::from(1_u8) << 40);
     Computable::pi()
@@ -86,6 +137,11 @@ fn near_half_pi() -> Computable {
         .add(computable(offset).negate())
 }
 
+/// Build exact `pi * (7/8)^depth` by repeated native multiplications.
+///
+/// The source recipe may normalize during construction, so `depth` counts loop
+/// iterations rather than guaranteeing that many retained graph nodes. No explicit
+/// approximation is requested; work and coefficient growth are not locally capped.
 fn deep_scaled_product_chain(depth: usize) -> Computable {
     let scale = computable(Rational::fraction(7, 8).unwrap());
     let mut value = Computable::pi();
@@ -95,6 +151,12 @@ fn deep_scaled_product_chain(depth: usize) -> Computable {
     value
 }
 
+/// Build exact `(pi + 1/1024) * (7/8)^depth` after warming the unscaled source.
+///
+/// The preliminary `approx(-16)` is unconditional, including at depth zero, and
+/// its integer is discarded without validation. If the helper runs in a recording
+/// scope, that warmup is included in its trace. Subsequent multiplication can
+/// normalize structure; there is no whole-construction resource bound.
 fn perturbed_scaled_product_chain(depth: usize) -> Computable {
     let scale = computable(Rational::fraction(7, 8).unwrap());
     let epsilon = computable(Rational::fraction(1, 1024).unwrap());
@@ -106,6 +168,10 @@ fn perturbed_scaled_product_chain(depth: usize) -> Computable {
     value
 }
 
+/// Build exact `pi * 2^-depth` through repeated multiplications by one-half.
+///
+/// Native simplification may compact the result, so depth is a construction count,
+/// not a graph-size promise. The helper itself requests no approximation.
 fn deep_half_product_chain(depth: usize) -> Computable {
     let half = computable(Rational::fraction(1, 2).unwrap());
     let mut value = Computable::pi();
@@ -115,35 +181,61 @@ fn deep_half_product_chain(depth: usize) -> Computable {
     value
 }
 
+/// Construct `exp(1-pi)` to sample positive-result inference independently of child sign.
+///
+/// The argument is mathematically negative. Its historical "unknown sign" name
+/// is a workload label, not an assertion about current structural facts or caches.
+/// The expression is constructed here without an explicit approximation request.
 fn exp_unknown_sign_arg_chain() -> Computable {
-    // 1 - pi keeps the exponent argument sign-ambiguous in exact structural
-    // terms, which is useful for validating that exp always caches a
-    // positive sign without probing the child sign.
     Computable::one().add(Computable::pi().negate()).exp()
 }
 
+/// Construct exact `pi^2 - (29/21)*e` for the zero-floor sign-query sample.
+///
+/// The helper supplies the expression, without asserting which sign-deciding path
+/// or certificate the consumer will use.
 fn mixed_pi_e_filter_expression() -> Computable {
     Computable::pi()
         .square()
         .add(Computable::e().multiply(computable(-Rational::fraction(29, 21).unwrap())))
 }
 
+/// Construct exact `pi - 103993/33102` for coarse and refined sign-query samples.
+///
+/// The nearby rational creates cancellation. The helper does not assert that a
+/// particular precision floor is inconclusive; cached facts may change dispatch.
 fn near_pi_filter_expression() -> Computable {
     Computable::pi().add(computable(-Rational::fraction(103_993, 33_102).unwrap()))
 }
 
+/// Construct `sin(1/3) - 1095149352672539061/3347087722986034159` exactly.
+///
+/// This near-cancellation fixture samples a bounded sign query. "Unsupported" is
+/// a historical label, not a claim that the current implementation must reject
+/// or fail to decide this expression.
 fn unsupported_sin_difference_expression() -> Computable {
     let one_third = rational(1, 3);
     let near_sine = rational(1_095_149_352_672_539_061_i64, 3_347_087_722_986_034_159_u64);
     computable(one_third).sin().add(computable(-near_sine))
 }
 
+/// Request the real degree-th root of an exact rational for algebraic fixtures.
+///
+/// A zero denominator or any `root_n` error panics through unwrap. The admitted
+/// root domain and branch follow `Real::root_n`; this helper imposes no additional
+/// work budget and does not replace the root by a floating approximation.
 fn algebraic_root(numerator: i64, denominator: u64, degree: u32) -> Real {
     Real::new(rational(numerator, denominator))
         .root_n(degree)
         .unwrap()
 }
 
+/// Construct the first Ramanujan zero-identity fixture using real roots.
+///
+/// The exact expression is `3*sqrt(cbrt(5)-cbrt(4)) -
+/// (cbrt(2)+cbrt(20)-cbrt(25))`. Its consumer samples sign refinement at -2048
+/// without asserting zero. Root errors panic; constructing a named identity does
+/// not itself establish that the implementation has proved the cancellation.
 fn ramanujan_one_identity() -> Real {
     Real::from(3_i32)
         * (algebraic_root(5, 1, 3) - algebraic_root(4, 1, 3))
@@ -152,11 +244,21 @@ fn ramanujan_one_identity() -> Real {
         - (algebraic_root(2, 1, 3) + algebraic_root(20, 1, 3) - algebraic_root(25, 1, 3))
 }
 
+/// Construct the second Ramanujan zero-identity fixture using real cube roots.
+///
+/// The exact expression is `cbrt(cbrt(2)-1) -
+/// (cbrt(1/9)-cbrt(2/9)+cbrt(4/9))`. The later sign query's result is unchecked;
+/// any root-construction error panics.
 fn ramanujan_two_identity() -> Real {
     (algebraic_root(2, 1, 3) - Real::one()).root_n(3).unwrap()
         - (algebraic_root(1, 9, 3) - algebraic_root(2, 9, 3) + algebraic_root(4, 9, 3))
 }
 
+/// Construct the Many Digits C10 zero-identity fixture with selected real roots.
+///
+/// Writing `r = 2^(1/5)`, the expression is
+/// `cbrt(7+r-5*r^3) + r^2 - r - 1`. It exercises nested algebraic cancellation,
+/// without asserting the eventual sign outcome. Root-construction errors panic.
 fn many_digits_c10_identity() -> Real {
     let fifth_root_two = algebraic_root(2, 1, 5);
     (Real::from(7_i32) + fifth_root_two.clone() - Real::from(5_i32) * algebraic_root(8, 1, 5))
@@ -167,10 +269,21 @@ fn many_digits_c10_identity() -> Real {
         - Real::one()
 }
 
+/// Construct exact `2^(1/8) - 1199025932245/2^40` for close algebraic sign sampling.
+///
+/// The subtraction retains the selected real root and exact dyadic; it is not a
+/// rounded replacement of the root. The later -64 sign query is not asserted.
 fn eighth_root_near_dyadic() -> Real {
     algebraic_root(2, 1, 8) - Real::new(rational(1_199_025_932_245_i64, 1_u64 << 40))
 }
 
+/// Record operation construction and one approximation of a prepared source if selected.
+///
+/// The input and any clone were constructed before this call; only `op(input)`
+/// and `approx(precision)` run inside the recorded closure. Shared source caches
+/// can retain earlier work. The returned scaled integer is discarded without an
+/// oracle or cancellation-status check. Precision is an absolute binary scale,
+/// not a relative-accuracy promise or a bound on total computation.
 fn trace_computable_approx(
     rows: &mut BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot>,
     filters: &[String],
@@ -184,6 +297,26 @@ fn trace_computable_approx(
     });
 }
 
+/// Visit the fixed catalogue in source order and collect selected nonempty snapshots.
+///
+/// The catalogue exercises exact and binary64-imported `Real` construction,
+/// arithmetic, symbolic roots, stable/geometry/scientific helpers, dot products,
+/// computable sign/comparison queries, historical offenders and transcendental
+/// approximations. The final trig and inverse-trig groups request precision -96;
+/// the inverse-hyperbolic group requests -128. Historical names do not assert
+/// particular outcomes, fallback paths or current algorithmic limitations.
+///
+/// Most per-row preparation occurs inside its closure, but cached sign fixtures
+/// and the final adversarial inputs are prepared unconditionally outside filtering
+/// and recording. A filter that matches no rows still performs this setup.
+/// The exp-cached-probe row instead includes both initial evaluation and reuse
+/// inside one recording scope. Prior samples and shared constants can warm caches;
+/// subset and full-run counts need not match. Returned map order is lexical,
+/// independent of execution order. Samples with empty dispatch are absent.
+///
+/// Fallible calls often unwrap; sign, comparison and approximation results are
+/// black-boxed without exact expectations or count assertions. This runner supplies
+/// neither a completion guarantee nor a numerical correctness oracle.
 fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot> {
     let mut rows = BTreeMap::new();
 
@@ -1691,6 +1824,18 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
     rows
 }
 
+/// Overwrite `dispatch_trace.md` in the current directory with diagnostic Markdown.
+///
+/// Presence of `HYPERREAL_SKIP_BENCHMARK_REPORTS`, even with an empty value, returns
+/// before rendering or writing. Otherwise buffer the whole report, order rows by
+/// the supplied map, and write correlation summaries plus raw dispatch tuples in
+/// the snapshot's vector order. Rational detail is projected to the summary's
+/// temporary/reduction/GCD totals; not every retained rational statistic is emitted.
+/// Labels are inserted without Markdown escaping.
+///
+/// The write is non-atomic and unlocked, can replace an existing report with an
+/// empty/subset report, and logs I/O failure to stderr rather than returning it.
+/// It does not validate trace provenance, outcomes, completeness or count totals.
 fn write_report(rows: &BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot>) {
     if env::var_os("HYPERREAL_SKIP_BENCHMARK_REPORTS").is_some() {
         return;
@@ -1748,6 +1893,16 @@ fn write_report(rows: &BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot
     }
 }
 
+/// Read substring filters, collect trace samples and request a report write.
+///
+/// Discard empty arguments and all arguments starting with `-`; combine remaining
+/// strings with OR. There is no option parser, exact-match mode or special smoke
+/// flag: `--test` alone selects the full catalogue. Non-Unicode arguments can panic
+/// in `env::args`. Progress and the final row count go to stderr.
+///
+/// The final "updated" message is unconditional even when the skip guard prevents
+/// writing or an I/O error occurred. Sample panics propagate and prevent reaching
+/// that message; the program adds no timeout or cancellation handler.
 fn main() {
     let filters: Vec<String> = env::args()
         .skip(1)
