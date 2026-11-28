@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/verified/fixed_gcd.rs` | Entire authored fixed-buffer GCD and result carrier reviewed; nine descriptions cover variants/fields, raw construction, exact result meaning, zero paths and resource limits. | Both-mode private docs and three consumer tests pass; 3,084 independent GCD/reuse pairs and expanded tokens are unchanged. Eight normal descriptions per mode and one separate ghost page render; Verus configuration/expansion validation remains open. See fixed-buffer GCD audit. |
 | `crates/hyperreal/src/verified/limbs.rs` | Entire authored positional-value, shift, comparison, borrow and conversion implementation reviewed; thirty-eight descriptions include all private helpers and twenty-nine ghost declarations. | Both-mode private docs and five consumer tests pass; every runtime operation has unchanged independent probe results and expanded tokens. Nine normal descriptions per mode render; Verus configuration/expansion validation remains open. See limb arithmetic and positional-value audit. |
 | `crates/hyperreal/src/verified/dyadic.rs` | Entire authored carrier, difference and reduction implementation reviewed; twenty-one descriptions distinguish raw fields, exact-zero sentinels, native declines and ten ghost declarations. | Both-mode private docs and five consumer tests pass; independent reduction/reuse probes and expanded tokens are unchanged. Eleven normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See dyadic difference and reduction audit. |
 | `crates/hyperreal/src/verified/aggregate.rs` | Entire authored descriptor, planning and signed-aggregate implementation reviewed; thirty descriptions include fields/payloads, private dispatch and twelve ghost declarations. | Both-mode private docs and four consumer tests pass; private helper probes and expanded executable tokens are unchanged. Eighteen normal descriptions per mode render. Generated custom docs and Verus configuration/expansion validation remain open. See signed dyadic aggregate audit. |
@@ -27881,6 +27882,94 @@ of this file is complete, with ghost/configuration validation still open.
 Repository-wide coverage remains incomplete. Continue with verified/fixed_gcd.rs,
 whose implementation was read as consumer context but has no whole-file audit
 record yet.
+
+## Fixed-buffer GCD result and reduction audit (28 November 2026)
+
+Owning layer: Hyperreal's fixed-limb binary GCD and retained result encoding.
+P1/P5/P6/P37 require exact magnitude meaning, explicit dimension/resource limits
+and evidence-scoped claims. At 2f7207036, read every line of the 120-line
+verified/fixed_gcd.rs. Only the enum and executable entry point had one-line
+summaries. Module, variants, fields and ghost denotation lacked documentation;
+the summaries did not explain factored result meaning, zero exits or unchecked
+kernel dimensions. Complete authored Rustdoc was the missing acceptance witness.
+
+Read the rational adapter's compile-time dimension assertion, width checks and
+BigUint materialization; native GCD exits; and existing fixed/wide consumer
+fixtures. Those context reads do not add whole-file credit. An isolated source
+copy reproduced exact values and result variants before editing. The temporary
+probe needed an explicit const-generic argument and removal of two unfulfilled
+dead_code expectations; only the probe was corrected before its baseline run.
+
+The file now has 189 lines and nine descriptions: module, enum, two variants,
+three fields, ghost denotation and executable entry point. Inline block Rustdoc
+attaches descriptions to variant fields without altering their noncomment tokens.
+All executable/proof/specification tokens, attributes, assertions and call order
+are unchanged; ordinary compiler-expanded tokens also match after comments are
+excluded. The documentation explains:
+
+- Word means value*2^shift. Its full GCD may exceed u128 even though its factor
+  fits that type. The producer's factor is positive and odd, and shift is the
+  common trailing-zero count of the original nonzero inputs. Raw enum fields
+  are not validated and do not independently establish those producer invariants.
+- Limbs contains the whole numerical little-endian magnitude with any binary
+  factor already restored. Zero-input exits retain the other array, including
+  its padding; two zeros return zero. A Limbs result can therefore be small,
+  while a Word result can be wide. Variant identity is not determined solely
+  by the final value's bit length.
+- The kernel requires 2<=N<=u32::MAX/64 without validating that range itself.
+  The rational adapter enforces the dimensions and rejects arbitrary-precision
+  inputs that exceed the tier before conversion. The kernel returns a result
+  for every admitted input pair; it has no width-decline or exhaustion Option.
+- Nonzero inputs lose their separate binary factors first. Each iteration tries
+  left narrowing, then right narrowing, before limb equality. Otherwise it orders
+  the odd residuals, subtracts the smaller, removes powers of two from the positive
+  difference and repeats. The residual sum decreases while the common-factor
+  GCD identity is preserved. A final GCD fits the original buffer, justifying
+  exact shift restoration on the limb exit.
+- Owned fixed arrays and native arithmetic allocate no heap in the kernel.
+  Adapter materialization can allocate. Chosen dimensions bound array occupancy,
+  not a declared total-work/stack/cancellation budget. The ghost result_value
+  relation decodes arbitrary raw variants; the postcondition supplies the GCD
+  identity, while producer paths establish encoding-specific invariants.
+
+Executed after the final source edit:
+
+- Three exact-name tests pass in both no-default-features and all-features:
+  fixed 256/512-bit GCD, balanced/wide-word magnitude GCD, and mixed-width/zero
+  rational-operation dispatch. Existing exact expectations, 20,000 generated
+  fixed-tier pairs, common-factor restoration and width-decline checks remain
+  unchanged. This documents tested paths without claiming matched benchmarks.
+- Both private cargo doc builds pass with warnings and broken/private links
+  denied. All eight normal descriptions render in each mode, including variant
+  fields. The exact result_value description and unchanged body render separately
+  as Markdown; that does not compile the ghost configuration or validate Verus
+  macro expansion.
+- The warnings-denied source-copy probe passes with identical baseline/final
+  output. Across two-, four- and eight-limb inputs, 3,084 pairs yield 3,073 Word
+  and eleven Limbs results matching an independent Euclidean-remainder reference.
+  Each output is reconstructed and consumed as another GCD operand. A directed
+  Word result denotes 2^511, confirming that the retained shift is necessary.
+- Three invalid-dimension controls reproduce empty-array zero, one-limb zero
+  copying the other operand, and a panic for one-limb nonzero narrowing. These
+  observations explain absent kernel validation; they do not expand its domain
+  or imply that the rational adapter accepts those instantiations. Scoped
+  dead_code expectations remain only on unused dependency items in the isolated
+  probe; repository documentation/lints are not suppressed.
+- Source/declaration/render inventories, baseline/final source and expanded-token
+  comparisons and git diff --check pass. The enum has no derives requiring a
+  generated-implementation audit. The pinned Verus executable remains unavailable;
+  proof runs, ghost compilation/expansion and refreshed source-bound proof reports
+  are uncredited. Full workflows, benchmarks and cross-target checks remain
+  owner-waived for this documentation-only session.
+
+Evidence remains under /tmp/csgrs-hyperreal-verified-fixed-gcd-audit/: baseline,
+probe/expansion sources, scripts, commands/logs, inventories and compressed
+selected HTML. Owned binary/source copy and duplicate HTML are removed after
+checking; the shared Cargo target is reused without incremental compilation.
+AGENTS.md already mandates full public/private/generated Rustdoc. Authored review
+of this file is complete; ghost/configuration validation and repository-wide
+coverage remain open. Continue with verified/division.rs and its Euclidean
+reduction and mathematical GCD contracts.
 
 ## Next work
 
