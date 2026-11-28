@@ -25760,6 +25760,118 @@ contains the public/private/generated 100% Rustdoc mandate. Continue at
 line_intersection2_point_known_dyadic; the rest of this file and the repository-
 wide line review remain unfinished.
 
+## Retained line-intersection and affine-point construction batch (partial file)
+
+Scope and admission witness:
+
+- Reviewed every line of crates/hyperreal/src/rational/arithmetic/
+  aggregate_products.rs baseline d4371bfdc lines 5368–5805, from
+  line_intersection2_point_known_dyadic through parameterized_point2_known_dyadic.
+  Final lines are 5368–5974; the whole file grows from 6555 to 6724 lines.
+  Fourteen crate-visible/private methods are documented. The following general
+  product-sum, ordering and dot-product reducers remain pending.
+- Owning layer: Hyperreal exact scalar construction, P1 and P3–P7, with retained
+  output consumability relevant to P18–P20. Inputs are valid dyadic rationals,
+  retained first-line carriers, exact binary64 values or caller-proved determinant
+  plans. Read the planning/carrier implementations, Real wrappers and Hypercurve
+  nonparallel line construction as context, without crediting those entire files.
+- Missing evidence was accurate private Rustdoc for the wrapper and coordinate
+  paths. Existing wording described a proper crossing even though these helpers
+  construct supporting-line intersections without segment selection. Checked
+  decline, lazy coordinate reduction and retained-parameter materialization
+  limits also needed explicit contracts. Existing tests provide compact/wide
+  arithmetic comparisons; independent defining-equation checks supplement them.
+- Replaced/added fourteen complete descriptions. Executable-token equality is
+  exact; no attributes, arithmetic, call order, assertions or fixtures changed.
+  No public Real-wrapper hidden attribute or generated API was modified or
+  implicitly certified by this partial-file review.
+
+Established behavior and current gaps:
+
+- Supporting-line parameters can be negative, outside the unit interval or
+  exactly at endpoints. None combines zero determinant (parallel, coincident or
+  degenerate sources), non-dyadic/overwide input and checked intermediate failure.
+  It is not proof that segments are disjoint or that a declared work budget was
+  exhausted. Segment selection and topology remain the consumer's responsibility.
+- Compact and wide determinant tiers both require native source coordinates and
+  differences. The wide tier retains four-limb determinant magnitudes and uses
+  six-limb affine numerators; it does not admit arbitrary-width authored points.
+  Retained first-line variants reuse its exact origin/direction rather than
+  reconstructing them from rounded endpoints.
+- Materialized coordinates use (origin*determinant + direction*first_numerator)
+  divided by determinant. Zero coordinates become canonical zero; nonzero line
+  coordinates retain lazy exact fraction parts. Compact affine accumulation
+  tries native signed products before six-limb subtotals. Wide accumulation
+  uses four-limb by native products. Failed second-coordinate work discards any
+  earlier coordinate; no partial tuple is published.
+- Deferred points copy the two affine numerators and shared determinant without
+  coordinate division or Rational construction. They preserve the construction
+  values but add no source-line identity, segment-selection or topology proof.
+  Fixed retention/scratch widths do not bound later shifted denominators,
+  allocations, reduction work or cancellation latency.
+- The compact output/materialization gap previously recorded in the carrier
+  batch still reproduces: lines (0,0)–(2^100,0) and
+  (2^-100,-1)–(2^-100,1) construct point (2^-100,0) with retained first parameter
+  2^-200. Calling that compact parameter's materializer panics because reduced
+  quotient parts must fit u128. The eager-parameter intersection instead returns
+  None. This is a valid constructed-output limitation, not a fabricated private
+  precondition violation or proof of completed operation closure. Docs state
+  the current limitation; implementation repair is outside this docs-only batch.
+- Binary64 endpoints retain their exact binary values, including 0.1_f64's
+  distinction from one tenth and canonicalization of signed zero. Nonfinite
+  values decline. Finite inputs can also decline because native source or
+  alignment bounds fail; the smallest subnormal and 2^200 are reproduced cases.
+- Parameterized-point construction canonicalizes all inputs, rejects zero
+  denominator first, and requires numerator/denominator dyadic exponents even
+  for zero numerator. Inactive coordinate factors can be skipped; false active
+  dyadic proofs can panic. Native quotient GCD reuse is conditional. For odd
+  denominator magnitude D and an eligible delta, g1*gcd(delta_magnitude,D/g1)
+  cancels the affine numerator because the origin contribution vanishes modulo
+  D and removed powers of two are invertible modulo D. Wide/general paths retain
+  exact fallback. This routine returns reduced parameter/coordinate rationals,
+  whereas retained line-point constructors can defer coordinate reduction.
+
+Executed after the final source edit:
+
+- Locked/offline focused Hyperreal tests pass: six library test executions with
+  no default features and seven with all features. They cover parameterized
+  points, large affine numerators, compact and wide line construction, retained
+  comparisons and deferred coordinate observation. Existing 512-case line
+  fixtures and their successful-path assertions remain intact.
+- Both private cargo doc configurations pass with warnings and broken/private
+  intra-doc links denied. The rendered inventory finds all fourteen complete
+  descriptions and method anchors. This section adds no doctests; zero-match
+  doctest invocations are not counted as acceptance evidence.
+- Hypercurve's no-default-feature fused_proper_crossing_kernel_matches_public_
+  exact_intersection library test passes. It checks two certified dyadic proper
+  crossings under STRICT against the public intersection path. This is selected
+  downstream construction coverage, not independent evidence of all region or
+  topology contracts or of approximate-policy behavior.
+- A private source-copy probe yields 179 byte-identical baseline/final records:
+  72 line cases across eight construction variants, one retained-parameter gap,
+  one wide-only determinant case, three finite binary64 values, five binary64
+  declines, 96 parameterized points and one inactive-delta case. Complete traces
+  agree for the 72 line and 96 affine cases. Of the line cases, 69 construct,
+  three have zero determinant and 54 successful cases have exterior parameters;
+  nine affine cases return DivideByZero.
+- Independent Python Fraction determinants check both line parameters and both
+  source incidence equations, then check every returned coordinate. Binary64
+  expectations use exact decoded bit values. Affine expectations use
+  origin+(numerator/denominator)*delta and independently verify reduced-output
+  coprimality. Invalid classification probes, checked declines and the valid
+  parameter-materialization gap remain distinct from completed exact results.
+- Token equality, declaration/render inventory and git diff --check pass. Full
+  workflows, formatting, formal verification and performance checks remain
+  owner-waived for this docs-only session. These finite checks do not establish
+  universal closure, a total resource bound or a performance improvement.
+
+Evidence remains under /tmp/csgrs-hyperreal-line-construction-audit/. Owned
+source-copy/executable artifacts are removed and records compressed after
+checking; shared Cargo output is reused without incremental compilation.
+AGENTS.md already contains the 100% public/private/generated Rustdoc mandate.
+Continue at signed_product_sum; this file's remainder and the complete
+repository-wide line review are unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.

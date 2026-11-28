@@ -5365,10 +5365,24 @@ impl Rational {
         )
     }
 
-    /// Solve a proper crossing between four exact dyadic points without
-    /// materializing coordinate deltas or determinant rationals. Returns
-    /// `None` when a word or fixed-stack bound is exceeded so the caller can
-    /// retain its arbitrary-precision construction.
+    /// Attempt the exact intersection of two dyadic supporting lines with compact parameters.
+    ///
+    /// Canonicalizes rational endpoints as needed, requiring native dyadic origins,
+    /// differences and determinant magnitudes. Forms each coordinate from the first
+    /// origin, direction and retained determinant quotient. Returns retained first/
+    /// second line parameters and x/y rationals; nonzero coordinates defer general
+    /// fraction reduction until canonical observation.
+    ///
+    /// No segment-range or proper-crossing test is performed. None conflates
+    /// non-dyadic or overwide inputs, checked intermediate failure and zero
+    /// determinant, including parallel, coincident or degenerate lines. It is a
+    /// fallback signal, not proof of disjointness or declared resource exhaustion.
+    ///
+    /// Retained parameters are not checked against their later materializer's
+    /// stricter native quotient bounds: a valid point can be returned while a
+    /// parameter accessor would panic. Endpoint canonicalization and coordinate
+    /// materialization can allocate; fixed scratch buffers do not bound total work,
+    /// output size or cancellation latency. Success records dyadic-stack-fused-point.
     pub(crate) fn line_intersection2_point_known_dyadic(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
@@ -5389,6 +5403,17 @@ impl Rational {
         ))
     }
 
+    /// Reuse a compact first supporting line and materialize its intersection coordinates.
+    ///
+    /// Trusts the retained first origin/direction, canonicalizes second rational
+    /// endpoints as needed and uses native determinant magnitudes with checked
+    /// coordinate accumulation. Returns compact parameters and exact x/y rationals,
+    /// retaining lazy reduction for nonzero coordinates.
+    ///
+    /// No segment membership is checked. None combines input/width ineligibility
+    /// and zero determinant. Returned parameters retain the stricter materialization
+    /// limitation of line_intersection2_point_known_dyadic. Conversion and output
+    /// allocation are unbudgeted; success emits the first-line fused-point event.
     pub(crate) fn line_intersection2_point_with_first_line(
         first: &ExactDyadicLine2,
         second_start: [&Self; 2],
@@ -5408,6 +5433,18 @@ impl Rational {
         ))
     }
 
+    /// Intersect a retained first line with exact binary64 second endpoints.
+    ///
+    /// Decodes each finite float's exact binary value, including canonical zero
+    /// for either signed zero; no decimal rounding or approximate geometry enters
+    /// the construction. Nonfinite, overwide or excessive-alignment input, zero
+    /// determinant and checked coordinate failure all return None.
+    ///
+    /// Uses compact determinant parameters and materialized x/y rationals with
+    /// lazy reduction for nonzero coordinates. Supporting-line parameters need not
+    /// lie in the segments or fit their later native materializers. Trusts the
+    /// retained first line. Output allocation is unbudgeted; success emits the
+    /// first-line-f64 fused-point event.
     pub(crate) fn line_intersection2_point_with_first_line_exact_dyadic_f64(
         first: &ExactDyadicLine2,
         second_start: [f64; 2],
@@ -5430,6 +5467,18 @@ impl Rational {
         ))
     }
 
+    /// Retain an exact binary64-line intersection without materializing coordinates.
+    ///
+    /// Reuses the first line, decodes exact second endpoints and builds compact
+    /// determinant parameters plus two six-limb affine coordinate numerators over
+    /// their shared determinant. Neither coordinate division nor Rational output
+    /// construction occurs here. Later observation can allocate and defer reduction.
+    ///
+    /// None combines nonfinite/input-width rejection, zero determinant and checked
+    /// accumulation failure. No segment-range test or source-incidence certificate
+    /// is added. Compact parameter accessors still have narrower materialization
+    /// bounds than retention. This fixed-buffer path emits its retained-point event;
+    /// it supplies no total resource guarantee for subsequent materialization.
     pub(crate) fn line_intersection2_retained_point_with_first_line_exact_dyadic_f64(
         first: &ExactDyadicLine2,
         second_start: [f64; 2],
@@ -5452,6 +5501,18 @@ impl Rational {
         ))
     }
 
+    /// Attempt a supporting-line intersection retaining four-limb determinant magnitudes.
+    ///
+    /// Endpoint coordinates and differences still require native dyadic words;
+    /// the wider tier applies to determinants, not arbitrary-width source points.
+    /// Canonicalizes rational endpoints as needed, then forms six-limb affine
+    /// numerators and materializes exact x/y coordinates with lazy reduction.
+    ///
+    /// Returns wide parameters without clipping to either segment. None combines
+    /// source/intermediate ineligibility with zero determinant, not proof of no
+    /// intersection. Shifted output denominators can exceed the fixed scratch
+    /// widths; allocation, reduction and cancellation are not budgeted here.
+    /// Success emits the wide fused-point dispatch event.
     pub(crate) fn line_intersection2_point_known_dyadic_wide(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
@@ -5476,6 +5537,16 @@ impl Rational {
         ))
     }
 
+    /// Reuse the first line for four-limb determinant planning and exact coordinates.
+    ///
+    /// Second rational endpoints canonicalize as needed and must fit native dyadic
+    /// words, as must their checked differences. The wider retained determinant
+    /// quotients then produce lazy exact x/y rationals through six-limb affine sums.
+    /// Trusts the retained first-line invariants and performs no segment clipping.
+    ///
+    /// None conflates source/width failure with parallel, coincident or degenerate
+    /// supporting lines. Output allocation and later reduction have no local budget;
+    /// success records the wide-first-line fused-point event.
     pub(crate) fn line_intersection2_point_wide_with_first_line(
         first: &ExactDyadicLine2,
         second_start: [&Self; 2],
@@ -5498,6 +5569,17 @@ impl Rational {
         ))
     }
 
+    /// Materialize a retained-line/binary64 intersection through four-limb determinants.
+    ///
+    /// Second endpoints denote their exact binary values. Rejects nonfinite values
+    /// and native source/difference limits before wider determinant and six-limb
+    /// coordinate arithmetic. None also covers zero determinant or checked
+    /// intermediate failure; it is not a segment-miss classification.
+    ///
+    /// Returns wide parameters and exact x/y rationals with deferred nonzero
+    /// fraction reduction. Trusts the first-line carrier. Materialization may
+    /// allocate beyond fixed scratch widths without a resource budget, and success
+    /// emits the wide-first-line-f64 fused-point event.
     pub(crate) fn line_intersection2_point_wide_with_first_line_exact_dyadic_f64(
         first: &ExactDyadicLine2,
         second_start: [f64; 2],
@@ -5520,6 +5602,18 @@ impl Rational {
         ))
     }
 
+    /// Retain binary64-line intersection coordinates over a four-limb determinant.
+    ///
+    /// Reuses the first line and interprets second endpoints exactly as binary
+    /// rationals. Source coordinates/differences remain native words; determinants
+    /// use four limbs and each affine coordinate numerator uses six. Returns wide
+    /// parameter quotients and a deferred point without dividing or allocating
+    /// Rational coordinates. The fixed carrier can be materialized later.
+    ///
+    /// None covers nonfinite/input-width rejection, zero determinant and checked
+    /// intermediate failure. No segment selection or new topology/incidence proof
+    /// is supplied. Subsequent quotient allocation is not bounded by these fixed
+    /// fields. Success emits the wide retained-point first-line-f64 event.
     pub(crate) fn line_intersection2_retained_point_wide_with_first_line_exact_dyadic_f64(
         first: &ExactDyadicLine2,
         second_start: [f64; 2],
@@ -5542,6 +5636,17 @@ impl Rational {
         ))
     }
 
+    /// Materialize x/y from a caller-proved nonzero wide supporting-line plan.
+    ///
+    /// Each coordinate is (origin*determinant + direction*first_numerator) divided
+    /// by determinant. Four-limb by native products accumulate in six-limb signed
+    /// sums. None means a checked affine accumulation declined; any already built
+    /// first coordinate is discarded if the second declines.
+    ///
+    /// Zero numerators become canonical zero. Nonzero quotients retain unreduced
+    /// exact parts, so cancellation is delayed until observation. Trusts all plan
+    /// signs, scales and defining relations without revalidating source incidence
+    /// or segment bounds. Quotient shifts/allocation have no local resource budget.
     fn line_intersection2_point_from_wide_plan(
         plan: DyadicWideLineIntersectionPlan,
     ) -> Option<[Self; 2]> {
@@ -5562,6 +5667,17 @@ impl Rational {
         Some([coordinate(0)?, coordinate(1)?])
     }
 
+    /// Retain both affine coordinate numerators from a valid wide line plan.
+    ///
+    /// Computes origin*determinant + direction*first_numerator for x and then y
+    /// using checked four-limb by native products and six-limb subtotals. None
+    /// discards local partial work on a width/alignment decline. Zero numerators
+    /// remain successful retained coordinates over the shared nonzero determinant.
+    ///
+    /// Copies determinant sign, magnitude and exponent without division, Rational
+    /// construction or heap arithmetic. The caller proves plan consistency and
+    /// nonzero determinant; no incidence or segment membership is re-established.
+    /// Fixed retention does not bound later coordinate materialization costs.
     fn line_intersection2_retained_point_from_wide_plan(
         plan: DyadicWideLineIntersectionPlan,
     ) -> Option<ExactDyadicWideLinePoint2> {
@@ -5580,6 +5696,18 @@ impl Rational {
         })
     }
 
+    /// Attempt materialized parameters and coordinates for two dyadic supporting lines.
+    ///
+    /// Plans compact determinants, then materializes first and second parameters
+    /// before constructing x/y. Each parameter must pass native quotient limits:
+    /// its exponent difference fits i32 and its reduced parts fit u128. None can
+    /// therefore occur even when the retained-parameter point path succeeds.
+    ///
+    /// Also declines non-dyadic/source-width input, zero determinant or checked
+    /// coordinate accumulation. No proper-crossing or segment-range proof is made.
+    /// Parameter rationals are reduced; nonzero coordinate rationals may retain
+    /// lazy reduction. Conversion and output allocations are unbudgeted; completed
+    /// construction emits dyadic-stack-fused. No partial tuple is published.
     pub(crate) fn line_intersection2_known_dyadic(
         first_start: [&Self; 2],
         first_end: [&Self; 2],
@@ -5601,6 +5729,18 @@ impl Rational {
         Some((first_parameter, second_parameter, point))
     }
 
+    /// Materialize x/y from a caller-proved compact nonzero determinant plan.
+    ///
+    /// Forms each origin*determinant + direction*first_numerator first with native
+    /// signed product arithmetic, then retries with six-limb subtotals if needed.
+    /// A failed checked retry returns None. Zero becomes canonical zero; otherwise
+    /// divides by the shared determinant without a general magnitude GCD, retaining
+    /// exact lazy fraction parts. Coordinates are attempted in x/y order.
+    ///
+    /// Trusts plan signs, scales, determinant nonzeroness and source relations. It
+    /// neither materializes parameter rationals nor tests segment bounds. A later
+    /// coordinate decline discards an earlier coordinate; quotient allocation can
+    /// exceed scratch widths and has no local resource or cancellation budget.
     fn line_intersection2_point_from_plan(plan: DyadicLineIntersectionPlan) -> Option<[Self; 2]> {
         let coordinate = |index: usize| {
             let left = [plan.first_start[index], plan.numerators[0]];
@@ -5621,6 +5761,17 @@ impl Rational {
         Some([coordinate(0)?, coordinate(1)?])
     }
 
+    /// Retain compact-plan affine coordinate numerators without quotient construction.
+    ///
+    /// For x then y, attempts native origin*determinant + direction*first_numerator,
+    /// then checked six-limb accumulation. None discards the partial retained state
+    /// when neither schedule fits. Exact zero remains a successful numerator.
+    /// Copies the shared determinant metadata into a fixed deferred point.
+    ///
+    /// No Rational or heap-backed quotient is materialized. Caller-proved plan
+    /// invariants, nonzero determinant and defining relations are trusted rather
+    /// than checked here; no segment selection is implied. Subsequent observation
+    /// can allocate and reduce beyond this fixed retention envelope.
     fn line_intersection2_retained_point_from_plan(
         plan: DyadicLineIntersectionPlan,
     ) -> Option<ExactDyadicLinePoint2> {
@@ -5639,13 +5790,31 @@ impl Rational {
         })
     }
 
-    /// Construct `t = numerator / denominator` and both coordinates of
-    /// `origin + t * delta` after the caller has proved every input dyadic.
-    /// One native cancellation of the shared quotient is reused by all three
-    /// results. For an odd quotient denominator, each affine cancellation is
-    /// then completed from its coordinate delta: `origin * denominator`
-    /// vanishes modulo the denominator, and dyadic normalization removes only
-    /// invertible powers of two.
+    /// Construct t=numerator/denominator and the exact point origin+t*delta.
+    ///
+    /// The caller establishes dyadic inputs; this operation does not restrict t
+    /// to a segment or require a nonzero direction. Canonicalizes all inputs first,
+    /// rejects zero denominator with DivideByZero, then requires dyadic exponents
+    /// for numerator and denominator even when numerator is zero. Active non-dyadic
+    /// coordinate factors violate the proof and can panic; inactive terms need
+    /// not be classified. No partial parameter/point result is returned on failure.
+    ///
+    /// Native quotient magnitudes permit reuse of their GCD. For an odd denominator
+    /// magnitude D>1 and native delta magnitude, the affine divisor is
+    /// g1*gcd(delta_magnitude,D/g1), where g1=gcd(numerator_magnitude,D).
+    /// The origin contribution vanishes modulo D and binary normalization removes
+    /// only invertible powers of two, justifying this reused cancellation proof.
+    /// It applies only when those admission conditions hold, not to every input.
+    ///
+    /// Coordinates first try six-limb dyadic accumulation, otherwise use the exact
+    /// arbitrary-precision sum. The odd-divisor path can divide a retained numerator
+    /// directly; other paths materialize it and use exact quotient reduction.
+    /// Zero affine numerators become canonical zero. The parameter and successful
+    /// coordinates are reduced rationals, unlike the lazy line-point constructors.
+    ///
+    /// Dispatch traces distinguish native/wide quotient construction, stack sums
+    /// and reused affine cancellation. Canonicalization, fallback and shifted
+    /// output allocation have no local work, memory or cancellation budget.
     pub(crate) fn parameterized_point2_known_dyadic(
         origin: [&Self; 2],
         delta: [&Self; 2],
