@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/aggregate_products.rs` | Entire authored carrier, reduction, construction and dispatch implementation reviewed across eight batches; all 256 declarations documented, including fields and function-local items. | Both-mode private docs and focused tests pass; 246 ordinary and ten supplemental descriptions render. Whole-file executable tokens agree with the pre-audit revision except eleven removed hiding attributes. Generated-API review remains separate. See aggregate-dispatch reconciliation. |
 | `crates/hyperreal/src/rational/arithmetic/ops.rs` | Entire exact operator, integer shortcut, mean, retention and balanced-product implementation reviewed; all 48 functions, 17 impls, ten associated outputs and chunk constant documented. | Both-mode private docs and focused tests pass; all 76 descriptions render, 1,215 records match before/after and independent expectations pass. See rational-operator batch. |
 | `crates/hyperreal/src/rational/arithmetic/queries_conversion.rs` | Entire exact query/scaling/rounding/enclosure/fact implementation reviewed; all 53 functions, impl role and local constant documented. | Both-mode private docs, six doctests, focused conversions/filters and independent exact probes pass; 54 ordinary descriptions plus one supplemental local constant checked. See rational-query/conversion batch. |
 | `crates/hyperreal/src/rational/arithmetic/squares_powers.rs` | Entire root, partial-factor extraction, power recognition, retained reduction and exponentiation implementation reviewed; all 22 functions and five constants documented. | Both-mode private docs/focused tests and three doctests pass; 28 descriptions render, exact independent probes pass and outputs/traces remain unchanged. See rational-roots/powers batch. |
@@ -25871,6 +25872,114 @@ checking; shared Cargo output is reused without incremental compilation.
 AGENTS.md already contains the 100% public/private/generated Rustdoc mandate.
 Continue at signed_product_sum; this file's remainder and the complete
 repository-wide line review are unfinished.
+
+## Aggregate dispatch and whole-file reconciliation (28 November 2026)
+
+Owning layer: Hyperreal exact rational aggregate arithmetic. P37 governs the
+accuracy of these descriptions; exact arithmetic, dispatch/cache order and
+retained evidence remain unchanged. Domain: finite signed product arrays and
+slices over valid canonical or lazy rational storage, including empty shapes,
+zero factors, dyadic and general denominators, native and arbitrary-width
+magnitudes, and cold/warm/conflicting cache states. Downstream consumers include
+Real dot products and Hyperlattice vectors. At baseline bb283c33f, the last eight
+methods had missing or incomplete descriptions of scheduling, mutation, empty
+cases and resource limits; six earlier impl summaries merely restated names.
+
+Reviewed aggregate_products.rs baseline lines 5975–6724, now 5999–6855, together
+with the retained-product/linear-cache consumers. Documented all eight methods
+and replaced the six generic impl summaries with their actual conversion,
+comparison, materialization and overflow roles. An inline measurement claim now
+explicitly identifies historical results without changing its values or target.
+No executable body, predicate order, trace assertion or test was changed.
+
+The descriptions distinguish:
+
+- Fixed signed sums return reduced exact values; empty products are signed ones
+  and empty sums are zero. Structural zero pruning precedes denominator work.
+  Native, dyadic, equal-product-denominator and LCM schedules preserve exact
+  fallback without requiring universal canonicalization of lazy inputs.
+- Ordering compares exact positive/negative totals over a positive common scale.
+  Avoiding a final Rational does not eliminate LCM/GCD work or allocation. The
+  four-term unplanned probe checks the fourth term's first stored numerator even
+  when that term will later prove inactive. Declined probes restart from original
+  operands and complete signs, not partially accumulated scratch.
+- Dynamic two-factor ordering asserts matching lengths before empty shortcuts
+  and allocates its complete sign vector before zero/single-term resolution.
+  Native failure restarts the general exact schedule. Native success does not
+  imply allocation-free execution.
+- Dot products try their general native reducer before a single-live-term
+  shortcut. Retained self-dot admission is a cache scheduling decision: None
+  does not deny the squared norm's existence. Lazy unit recognition and history
+  observations can mutate metadata even on decline. Four admitted lanes use
+  balanced pairs; other nonempty sizes use a left fold. Source identity checks
+  belong to the Real callers. Repeated equal values need not share storage.
+- Conflict admission first checks retained squares, then may claim a one-shot
+  observation on the leading owner. The direct empty helper returns true
+  vacuously, while the enclosing empty self-dot returns None. Cache slot bounds
+  do not establish retained-byte, total-work or cancellation bounds.
+
+Executed after the final source edit:
+
+- Locked/offline Hyperreal focused library tests pass: 24 executions with no
+  default features and 25 with all features, using signed_product_sum,
+  dot_products, self_dot_admits and dense_self_dot_reuses filters. Existing
+  assertion and trace requirements remain intact.
+- Both private cargo doc configurations pass with warnings and broken/private
+  intra-doc links denied. No new doctests were added; filtered zero-test runs
+  are not counted as acceptance evidence.
+- Hyperlattice's all-feature vector integration test
+  shared_scale_vectors_use_known_exact_dot_products passes, covering the exact
+  -23/60 dot, 51/36 squared norm, zero and dyadic four-vector expectations.
+- A private source-copy probe produces 184 byte-identical baseline/final records:
+  164 fixed sums (96 four-by-two, 32 six-by-two, 32 three-by-three and four empty
+  or singleton shapes), nine dynamic slices, ten self-dot rows and one cache/
+  panic admission record. Inputs include valid lazy fractions, widths through
+  211 bits and zero pruning. Full traces agree. Seven of eight nonempty self-dot
+  rows share their second/third result storage; documentation promises no
+  universal sharing guarantee. Two mismatched slice lengths panic as specified.
+- Independent Python Fraction expectations check sums, products, signs, squared
+  norms and reduced-output coprimality. Cold/warm/conflict observations remain
+  separate from numeric results. These finite checks do not establish universal
+  closure, policy-level certainty receipts or performance improvement.
+- Token equality and git diff --check pass. Full workflows, formatting, formal
+  verification and performance checks remain owner-waived for this docs-only
+  session. The changes do not resolve the earlier recorded valid retained-
+  parameter materialization gap or establish total resource bounds.
+
+The complete authored file is now reconciled across these review batches, using
+line positions after this batch's final source edit:
+
+| Batch | Current reviewed lines |
+| --- | --- |
+| GCD schedules, 4ddf18b0d | 1–182 and 1384–1994 |
+| Dyadic carriers, a795beb81 | 183–1383 |
+| Projective/native schedules, 76ba2a95f | 1995–2889 |
+| Scaled/complex/matrix schedules, ec9d8a468 | 2890–3723 |
+| Dyadic products and planes, 14e120eec | 3724–4699 |
+| Means and retained quotients, d4371bfdc | 4700–5391 |
+| Retained lines and affine points, bb283c33f | 5392–5998 |
+| Final dispatchers, this batch | 5999–6855 |
+
+The final inventory records 178 functions, fourteen structs, 46 fields, eight
+impl descriptions, nine constants and one type alias: 256 authored descriptions.
+All 246 ordinary descriptions appear in private Rustdoc. Ten function-local
+items (four binary64 constants, a native-word alias and five determinant helpers)
+are omitted by ordinary Rustdoc; their unchanged definitions were additionally
+rendered in an isolated child module in the original private crate context.
+This supplemental check is distinct from normal documentation visibility.
+Executable tokens agree with pre-file-audit revision cff494b15 after accounting
+for exactly eleven doc(hidden) attributes removed by earlier batches. The file
+grew from 5,337 to 6,855 lines through documentation work.
+
+This establishes authored whole-file review, not complete repository coverage or
+review of every generated API. Existing generated-API gaps remain open. Evidence
+is retained under /tmp/csgrs-hyperreal-aggregate-dispatch-audit/: scripts, logs,
+source baseline, inventories, compressed probe records and selected supplemental
+HTML. Owned source copies, executable and duplicate documentation output are
+removed after checking; shared Cargo output is reused without incremental
+compilation. AGENTS.md already contains the 100% public/private/generated
+Rustdoc mandate. Continue with arithmetic/tests.rs, whose 6,672 lines have not
+yet received whole-file review; the repository-wide audit remains unfinished.
 
 ## Next work
 

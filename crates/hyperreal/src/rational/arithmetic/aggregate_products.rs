@@ -244,7 +244,10 @@ struct DyadicWord {
     denominator_shift: u64,
 }
 
-/// Exact DyadicWord conversion and arithmetic helpers preserving its stored dyadic meaning.
+/// Translate retained signs, magnitudes and exponents to and from the shared dyadic kernel.
+///
+/// These adapters copy producer invariants without normalization or validation;
+/// they do not perform rational arithmetic or materialize heap-backed fractions.
 impl DyadicWord {
     /// Translate the sign into native activity/negativity flags without normalization.
     ///
@@ -411,7 +414,11 @@ pub struct ExactDyadicWideLinePoint2 {
     denominator_sign: Sign,
 }
 
-/// Exact ExactDyadicLinePoint2 conversion and arithmetic helpers preserving its stored dyadic meaning.
+/// Materialize deferred affine coordinates over their shared native determinant.
+///
+/// Zero coordinates normalize immediately; nonzero quotients retain lazy exact
+/// fraction parts. The carrier remains unchanged and later observation owns
+/// canonical reduction and any additional allocation.
 impl ExactDyadicLinePoint2 {
     /// Construct the two exact coordinate quotients without mutating this carrier.
     ///
@@ -436,7 +443,11 @@ impl ExactDyadicLinePoint2 {
     }
 }
 
-/// Exact ExactDyadicWideLinePoint2 conversion and arithmetic helpers preserving its stored dyadic meaning.
+/// Recover the wide determinant and materialize its two deferred coordinate quotients.
+///
+/// The shared four-limb divisor retains its sign and binary exponent. Nonzero
+/// coordinates become lazy exact fractions; these accessors trust construction
+/// relations and do not revalidate source incidence or segment membership.
 impl ExactDyadicWideLinePoint2 {
     /// Reassemble the retained wide determinant without validation or allocation.
     fn denominator(&self) -> DyadicWideWord {
@@ -466,7 +477,12 @@ impl ExactDyadicWideLinePoint2 {
     }
 }
 
-/// Exact ExactDyadicLineParameters2 conversion and arithmetic helpers preserving its stored dyadic meaning.
+/// Compare retained determinant quotients and materialize them within the native tier.
+///
+/// Comparison aligns exact integer products without first reducing parameter
+/// fractions. Normalized and general comparison schedules have distinct admission
+/// contracts; materialization additionally requires reduced quotient parts to fit
+/// u128 and can panic for an otherwise valid retained parameter.
 impl ExactDyadicLineParameters2 {
     /// Pack two dyadic numerators and their shared denominator without reduction.
     ///
@@ -743,7 +759,11 @@ impl ExactDyadicLineParameters2 {
     }
 }
 
-/// Exact ExactDyadicWideLineParameters2 conversion and arithmetic helpers preserving its stored dyadic meaning.
+/// Order retained four-limb determinant quotients and materialize exact rational parameters.
+///
+/// Comparison uses fixed integer products and certified exponent alignment.
+/// Materialization instead builds and reduces potentially large rational parts;
+/// fixed comparison scratch does not bound the cost of that conversion.
 impl ExactDyadicWideLineParameters2 {
     /// Pack two dyadic numerators and their shared denominator without reduction.
     ///
@@ -972,7 +992,11 @@ impl ExactDyadicWideLineParameters2 {
     }
 }
 
-/// Exact DyadicStackAccumulator conversion and arithmetic helpers preserving its stored dyadic meaning.
+/// Accumulate aligned products in six limbs and convert their retained magnitudes.
+///
+/// Checked arithmetic distinguishes overwide products from subtotal overflow;
+/// the latter can leave wrapped scratch that callers must discard. Narrowing is
+/// checked, while BigUint conversion requires a nonzero magnitude and allocates.
 impl DyadicStackAccumulator {
     /// Add left * right * 2^shift exactly when the result fits 384 bits.
     ///
@@ -5972,11 +5996,25 @@ impl Rational {
         Ok((parameter, [x?, y?]))
     }
 
-    /// Evaluate a fixed-size signed sum of products exactly.
+    /// Return a reduced exact sum of fixed-shape signed rational products.
     ///
-    /// This general entry point accepts any fixed product shape. Two products
-    /// of two factors should use [`Self::signed_product_sum2`] so word-sized
-    /// complex and determinant kernels can bypass the generic shape planner.
+    /// Each row is multiplied, then added for true polarity or subtracted for false.
+    /// Empty products are one; an empty sum or all-zero terms return canonical zero.
+    /// Accepts valid unreduced storage without canonicalizing every input first.
+    /// Structural signs skip zero terms before denominator planning.
+    ///
+    /// A dyadic width plan selects native accumulation when useful; without such a
+    /// plan, the general native reducer is attempted. Then handles a single live
+    /// product, arbitrary-precision dyadic alignment, equal stored product
+    /// denominators or an LCM schedule in that order. Checked native decline
+    /// continues exact evaluation, rather than approximating or dropping terms.
+    ///
+    /// Delayed reduction avoids a Rational for each product and partial sum;
+    /// denominator planning may still compute GCDs. Geometry consumers retain their
+    /// determinant/cofactor shape while scalar storage and reduction stay here.
+    /// For exactly two products of two factors, signed_product_sum2 tries the native
+    /// schedule directly. Const-sized arrays grow with TERMS, and arbitrary integer
+    /// growth/allocation has no local total-work, memory or cancellation budget.
     pub fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
@@ -6156,6 +6194,21 @@ impl Rational {
     // Keep complete planning and arbitrary-precision reduction out of the
     // common exact word-accumulator dispatchers. This helper is deliberately
     // shared only after every direct path declines.
+    /// Decide a signed product sum's ordering against zero through complete scalar schedules.
+    ///
+    /// The caller supplies current complete product signs for these exact operands.
+    /// Zero terms are skipped; this helper can also handle empty or single-live-term
+    /// input, although public dispatchers usually resolve those cases earlier.
+    /// A dyadic width estimate governs native probing; absent dyadic admission,
+    /// tries general native totals. Four two-factor terms additionally try the
+    /// wide-by-native six-limb ordering schedule.
+    ///
+    /// Remaining paths compare arbitrary-precision positive/negative totals using
+    /// dyadic alignment, equal stored product denominators or an LCM. Every common
+    /// denominator is positive, so no output Rational or final fraction reduction
+    /// is needed. LCM planning still computes GCDs. Valid lazy fraction storage is
+    /// supported; native ineligibility preserves exact fallback. Arrays, integer
+    /// growth and allocation have no local work/memory/cancellation bound.
     #[inline(never)]
     fn signed_product_sum_ordering_fallback<const TERMS: usize, const FACTORS: usize>(
         terms: [[&Self; FACTORS]; TERMS],
@@ -6301,6 +6354,17 @@ impl Rational {
     // the common four- and six-product word accumulator. A declined word probe
     // reaches this helper with the original inputs, so no fallback capability
     // depends on partial fast-path state.
+    /// Reconstruct complete signs before ordering after a direct accumulator declines.
+    ///
+    /// Builds all product signs from the original factors and polarities, then
+    /// counts live terms only until finding two. No live term returns Equal; one
+    /// returns its sign without multiplying magnitudes. Otherwise delegates to the
+    /// full ordering fallback. Does not consume or depend on partial fast-path
+    /// scratch state, nor require a separately supplied failure proof.
+    ///
+    /// The four/six-term public dispatch uses this cold helper to keep full planning
+    /// outside its common native path. Generic empty products still have signed-one
+    /// meaning. Sign storage grows with TERMS; fallback arithmetic is unbudgeted.
     #[inline(never)]
     fn signed_product_sum_ordering_after_unplanned_declines<
         const TERMS: usize,
@@ -6342,8 +6406,23 @@ impl Rational {
         }
     }
 
-    /// Compare a fixed signed sum of products with zero without materializing
-    /// or reducing the resulting rational.
+    /// Compare an exact fixed-shape signed product sum with zero without constructing it.
+    ///
+    /// Each product is added for true polarity and subtracted for false. Empty
+    /// products are one, so zero-factor shapes compare positive and negative term
+    /// counts; empty sums return Equal. Valid unreduced factors are supported.
+    ///
+    /// Four/six two-factor terms first try unplanned native dyadic totals; the
+    /// four-term case also requires the fourth term's first stored numerator to
+    /// fit u128 before that probe, even if the term later proves inactive. On
+    /// decline, reconstructs signs and uses the complete ordering fallback. Other
+    /// shapes compute signs first, resolving zero/one live term structurally before
+    /// native, fixed-stack or arbitrary-precision denominator schedules.
+    ///
+    /// All decisions use exact integer signs and positive common scales, not float
+    /// approximations or tolerance. No result Rational is materialized, but LCM/GCD
+    /// work, large integer temporaries and const-sized arrays remain unbudgeted.
+    /// Dispatch traces describe the chosen proof path, not a numeric qualification.
     pub fn signed_product_sum_ordering<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
@@ -6405,13 +6484,23 @@ impl Rational {
         Self::signed_product_sum_ordering_fallback(terms, signs)
     }
 
-    /// Compare a dynamically sized signed sum of two-factor products with
-    /// zero without materializing the resulting rational.
+    /// Compare a dynamically sized signed sum of two-factor products with zero exactly.
     ///
-    /// This complements [`Self::signed_product_sum_ordering`] for predicates
-    /// whose number of terms is data-dependent, such as polygon area. The
-    /// word-sized path keeps only scaled numerator totals; the arbitrary-width
-    /// fallback likewise compares positive and negative magnitudes directly.
+    /// Requires one polarity per term and panics on a length mismatch before any
+    /// empty/all-zero shortcut. True adds and false subtracts. Empty or all-zero
+    /// input is Equal; one live product is decided from its structural sign.
+    /// Valid unreduced storage is accepted without mandatory input reduction.
+    ///
+    /// Allocates the complete sign vector, then for multiple live terms attempts
+    /// checked native products, denominator LCM, scaling and unsigned subtotals.
+    /// Any decline restarts from the original terms with BigUint denominator and
+    /// magnitude schedules. Compares positive/negative totals directly, avoiding an
+    /// output Rational and final fraction reduction; LCM construction still uses
+    /// GCDs. This path serves data-dependent sums such as polygon area.
+    ///
+    /// Even native success can allocate vectors proportional to term count.
+    /// General coefficient growth, work, memory and cancellation have no local
+    /// budget; compact overflow does not weaken the exact ordering result.
     pub fn signed_product_sum2_ordering_slice(
         positive_terms: &[bool],
         terms: &[[&Self; 2]],
@@ -6544,14 +6633,28 @@ impl Rational {
         positive.cmp(&negative)
     }
 
+    /// Return the exact sum of N pairwise rational products with delayed reduction.
+    ///
+    /// Derives complete structural product signs and skips zeros; an empty or
+    /// all-zero dot returns canonical zero. Tries the general native product-sum
+    /// reducer before the single-live-product shortcut, then dyadic native/stack/
+    /// BigUint schedules, equal stored product denominators and finally an LCM.
+    /// Valid unreduced operands remain exact without an initial canonicalization
+    /// pass. Native decline continues general arithmetic rather than losing terms.
+    ///
+    /// Dense vector/matrix consumers share this scalar denominator authority and
+    /// avoid constructing every product and partial-sum Rational. Output is reduced,
+    /// while planning itself can perform GCD work. Const arrays and BigUint products,
+    /// denominators and totals have no local work/memory/cancellation budget.
+    /// Dispatch events expose the selected schedule, not an approximation policy.
     pub(crate) fn dot_products<const N: usize>(left: [&Self; N], right: [&Self; N]) -> Self {
         // Dense vector and matrix dot products are exact rational linear
         // forms when all inputs are rational. Build one shared denominator and
         // canonicalize only the final sum instead of reducing every product
         // and partial sum, delaying fractions until the end.
-        // Keep exact matrix rows at one rational
-        // constructor per output cell. This dropped mat4 powi from-f64 trace
-        // activity from 161.75 to 32 reductions/call and from 462.25 to 67.75
+        // Historical mat4 powi measurements of this aggregate schedule reported
+        // the following from-f64 trace changes, not bounds for every route:
+        // 161.75 to 32 reductions/call and 462.25 to 67.75
         // temporaries/call; keep future changes within noise of those counts.
         let mut signs = [NoSign; N];
         let mut nonzero_count = 0_usize;
@@ -6668,9 +6771,26 @@ impl Rational {
         Self::from_signed_magnitude_difference(positive, negative, common_denominator)
     }
 
-    /// Reuse the ordinary bounded product and linear caches after a dense
-    /// self-dot's leading coordinate has already been observed by borrowed
-    /// arithmetic. Sparse rows keep the cheaper aggregate zero-pruned path.
+    /// Attempt an exact sum of squares through existing borrowed-arithmetic caches.
+    ///
+    /// Empty input or any zero coordinate returns None, leaving the ordinary
+    /// aggregate path to the caller. For a dense row, inspects every primary
+    /// self-product state. Existing products admit the row if all are squares or
+    /// conflict admission succeeds. With no primary products, requires the leading
+    /// coordinate's arithmetic-history observation to admit reuse.
+    ///
+    /// These observations can canonicalize lazy units or set retention bits even
+    /// when the attempt returns None; this is scheduling, not a read-only numeric
+    /// predicate. None does not deny existence of the exact squared norm. Consumer
+    /// dot3/dot4 paths separately check that both operands are the same sources.
+    ///
+    /// On admission, computes borrowed squares, observes each product for future
+    /// linear reuse, then adds four lanes as two pairs followed by their sum.
+    /// Other nonempty sizes use a left fold. Preserving that call order preserves
+    /// cache opportunities. Success emits retained-self-dot; repeated results can
+    /// share storage, but cache availability is not guaranteed by numeric equality.
+    /// Bounded cache slots do not bound retained graph bytes, arithmetic growth or
+    /// allocation, and no local resource/cancellation budget is supplied.
     #[inline(never)]
     pub(crate) fn self_dot_if_reused<const N: usize>(values: [&Self; N]) -> Option<Self> {
         if values.iter().any(|value| value.sign == NoSign) {
@@ -6711,6 +6831,17 @@ impl Rational {
         Some(sum)
     }
 
+    /// Admit a conflicted dense self-dot from retained squares or one retry observation.
+    ///
+    /// First checks for a retained square on every owner, short-circuiting at the
+    /// first miss. If that fails, the leading owner atomically claims its one-shot
+    /// conflict-attempt bit. Repeated claims decline until an owning-state transition
+    /// clears that bit; this does not prove that a square or sum is already cached.
+    ///
+    /// The all-squares test is vacuously true for an empty array, although the self-dot
+    /// caller never invokes this branch for an empty self-dot. Unit recognition
+    /// can canonicalize and the retry can mutate retention metadata. Input identity
+    /// controls cache scheduling, not mathematical equality or the norm's existence.
     #[inline(never)]
     fn conflicted_self_dot_is_reusable<const N: usize>(values: [&Self; N]) -> bool {
         values
