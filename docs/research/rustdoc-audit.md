@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/comparison.rs` | Entire equality/hash/order and borrowed magnitude/iterator implementation reviewed; all item roles, exact filters, cache effects and helper restrictions documented. | Both-mode private docs and focused tests pass; 26 normal plus two supplemental local descriptions, independent bounds/stream checks and unchanged before/after probes verified. See rational-comparison batch. |
 | `crates/hyperreal/src/rational/arithmetic/algorithm_dispatch.rs` | Entire classifier/trace/remainder file reviewed; every enum variant, helper, derived role and configuration documented, including reproduced backend-label discrepancies. | All 27 blocks render where enabled; focused tests, before/after traces and logging-only backend probes pass. See backend-dispatch documentation batch. |
 | `crates/hyperreal/src/rational/arithmetic/barrett_division.rs` | Entire prepared reciprocal, block loop, fields, derived roles and three benchmark interfaces reviewed; exactness, fallback, tracing and resource contracts documented. | All 13 blocks render; both-mode docs/tests, public visibility, independent block expectations and trace probes pass. See Barrett division batch. |
 | `crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs` | Entire transform, digit packing, convolution and CRT kernel reviewed; all helper preconditions, exactness argument and panic/resource limits documented. | All 11 blocks render; both-mode private docs/tests, public visibility, prime/root/bound checks and 329 independent expectations pass. See NTT multiplication batch. |
@@ -24173,6 +24174,115 @@ patches, logs and source snapshots remain. Shared Cargo output is reused with
 incremental compilation disabled. AGENTS.md retains the future-agent 100%
 public/private/generated mandate. Repository-wide review and full coverage
 remain unfinished.
+
+## Hyperreal rational-comparison documentation batch
+
+Reviewed every line of the 331-line baseline
+crates/hyperreal/src/rational/arithmetic/comparison.rs at a436077a3.
+The final file has 489 lines. Review covered every equality/order/hash branch,
+leading-significand bound, local constant, iterator state transition, field and
+trait implementation. Context reads covered retained dyadic facts, internal
+unreduced storage and canonicalization, binary-magnitude and finite-float
+consumers, the checked word-product kernel, Real's immediate-equality consumer,
+and relevant tests. These bounded context reads confer no whole-file credit on
+larger consumer or test files.
+
+The owning layer is Hyperreal exact rational comparison and its borrowed
+magnitude filters. Relevant properties are P1/P3 (exact answers and honest
+incomplete evidence), P4/P10 (fact-cache effects and ordered shortcuts), P5/P6
+(resource and private-helper preconditions), and the Rustdoc mandate. The domain
+is valid rational storage, including correctly marked internal unreduced
+fractions; helper restrictions are stated separately. Missing acceptance was
+accurate documentation of every private item, the actual cheap-proof order,
+normalization meaning, cache effects and input/resource limits. Before editing,
+the 29 selected all-feature tests passed on the target revision.
+
+Added or replaced 28 documentation blocks: seven impls, twelve functions/methods,
+two function-local constants, one struct, five fields and one associated type.
+Documented default equality/ordering methods and iterator behavior supplied by
+standard traits; there are no derives or generated item definitions in this
+fragment. No noncomment token, branch order, trace event, assertion, feature gate
+or runtime operation changed. No hidden item or lint suppression was introduced.
+
+Reviewed mathematical and practical contracts:
+
+- Equality is exact value equality. Its incomplete immediate helper tries
+  allocation identity, signs, stored denominator equality, dyadic recognition,
+  checked word products and binary magnitudes in order. Equal unavailable
+  magnitude results mean unresolved evidence, not inequality. General equality
+  lazily cross-multiplies if necessary. Ordering also uses strict leading-bound
+  separation before its cross-product fallback and reverses magnitude order
+  for negative values. Zero/sign invariants belong to valid stored fractions.
+- Hashing canonicalizes an internal unreduced fraction through the reserved
+  shared product-cache slot and hashes sign, reduced numerator and denominator.
+  Comparisons do not require reduction, but dyadic recognition can learn facts.
+  Hash input equality is not a stable serialization or checksum guarantee.
+- Integer significand bounds represent value/2^(bits-1) with integer endpoints
+  over 2^52. At most 53 bits gives coincident endpoints; wider inputs use the
+  leading 53 bits and its successor, even with an all-zero discarded tail.
+  Strict order uses products at most 2^107, fitting u128. Overlap/equality is
+  unresolved. The float helper encloses abs(value)/2^msd; its caller may supply
+  the raw bit-count difference rather than the exact floor-log2. Endpoint
+  conversion and scaling by one/two are exact in that normalized range;
+  adjacent outward floats account for division rounding. The exact fraction
+  remains authoritative.
+- The shifted comparator requires positive integers and nonoverflowing u64
+  width sums. Reproduced outside that domain: comparing zero shifted by 65
+  against one returns Greater; one shifted by u64::MAX panics with overflow
+  checks and returns Less without them. These are documented private-helper
+  limitations, not demonstrated public rational regressions. Current eligible
+  rational comparison/magnitude paths establish positivity; canonical zeros
+  exit earlier and marked unreduced fractions bypass the dyadic helper.
+- The iterator itself accepts zero but emits shift/64 zero words, so that
+  stream is not a canonical integer word representation. A residual shift
+  avoids shifting by 64 through lazy initialization, and a nonzero high spill
+  precedes adjacent-word windows. Equal positive shifted widths justify equal
+  stream lengths. Borrowing avoids full shifted integers but does not bound
+  total scan work. Neither arbitrary-width fallback nor hashing has a local
+  work/memory/cancellation budget or typed exhaustion result.
+
+Executed after the final edit:
+
+- Locked/offline focused library tests pass: 28 without default features and
+  29 with all features. Filters cover comparison, equality, unreduced hashing,
+  strict leading-significand order, generated significand bounds, exact msd,
+  magnitude thresholds and finite-float enclosures. This includes Real and
+  Computable consumers selected by those filters. Existing dyadic dispatch
+  count and retained-fact assertions remain unchanged and pass. This is not a
+  claim that the entire crate, downstream matrix or workflow suite was run.
+- Private cargo doc --lib --no-deps --document-private-items passes in both
+  feature configurations, denying warnings and broken/private intra-doc links.
+  The all-feature HTML inventory verifies all 26 normally rendered descriptions
+  and their applicable anchors, plus inherited comparison/iterator anchors.
+  Rustdoc omits function-local constants; a supplemental fixture lifts only
+  those two unchanged declarations/comments to module scope and renders both.
+  This fixture does not assert that normal Rustdoc includes local items.
+- Isolated probes extract the unchanged helper bodies from baseline and final
+  source, hosting numerator/denominator fields locally for interval helpers.
+  They are not replacement integrated Rational implementations. Both overflow
+  modes give byte-identical before/after records within each mode: 55 integer
+  enclosures, 605 word streams, 3,080 float interval attempts, 252 interval
+  orders and two invalid-domain observations (3,994 records). Each run also
+  checks 18,468 positive shifted comparisons against materialized shifts.
+- Independent Python integer/Fraction checks verify all integer bounds and
+  reconstructed streams, scale eligibility and exact rational containment for
+  float intervals, and every decided interval order. The 3,080 attempts include
+  expected None outcomes; they are not all successful enclosures. Built-in
+  generated tests additionally retain their original 10,000 significand and
+  5,000 comparison corpora. Before/after equality alone is not the correctness
+  oracle, and these finite checks are not a universal proof.
+- Declaration/rendered-description inventory, noncomment-token equality and
+  git diff --check pass. Full workflow/format/performance checks remain waived
+  by the repository owner for this docs-only session. No performance or
+  existing include-fragment formatting claim is made.
+
+No focused check remains blocked. Evidence and repeatable scripts remain under
+/tmp/csgrs-hyperreal-comparison-audit/. Owned probe executables and combined
+source are removed after inspection; records are compressed and small logs,
+inventories and source snapshots retained. Shared Cargo output is reused with
+incremental compilation disabled. AGENTS.md already retains the future-agent
+100% public/private/generated coverage mandate. Repository-wide review and full
+coverage remain unfinished; this batch does not repair executable limitations.
 
 ## Next work
 
