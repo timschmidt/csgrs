@@ -34,6 +34,9 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/toom4_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
+| `crates/hyperreal/src/rational/arithmetic/toom6_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
+| `crates/hyperreal/src/rational/arithmetic/toom8_multiplication.rs` | Entire magnitude kernel, selection gate, chunk/evaluation/interpolation helpers and benchmark entry points reviewed; every authored item documented. | Both-mode private docs/tests, public visibility, exact interpolation identities and helper-domain probes pass. See Toom multiplication batch. |
 | `crates/hyperreal/benches/scalar_micro.rs` | Entire 313-case scalar workload, metadata, helpers and registrations; documented domains, exact constructions, timing/cache scope and comparison limits. | All 31 authored blocks render; both-mode private docs and 200-case focused runs pass; full 313-case baseline passes. Two Criterion-generated gaps remain. See scalar microbenchmark batch. |
 | `crates/hyperreal/benches/gmp_api.rs` | Entire 504-case GMP/MPFR comparison suite; all helpers, local macros, exact inputs, output/timing contracts and reproduced comparison defects reviewed. | All 46 authored blocks checked; both-mode private docs/smoke and baseline/final probes pass. Two Criterion-generated doc gaps remain; local macros require supplemental rendering. See GMP API benchmark batch. |
 | `crates/hyperreal/benches/library_perf.rs` | Entire 176-case public-library workload; documented every authored item, timing/output scope, Wallis domains and parser/error limits. | All 27 blocks render; minimal-simple/all docs and smoke, closed-form product expectations and parsed-output replay pass. Two Criterion-generated doc gaps remain. See public-library benchmark batch. |
@@ -23747,6 +23750,106 @@ correctness claim is made. Evidence, source snapshot and scripts remain under
 combined scratch sources are removed after checking; shared target output is
 reused with incremental compilation disabled. AGENTS.md retains the future-agent
 100% mandate. Whole-repository line review and full Rustdoc coverage are unfinished.
+
+## Hyperreal Toom multiplication documentation batch
+
+Reviewed every line of three baseline files at
+be5b87736: rational/arithmetic/toom4_multiplication.rs (138 lines),
+toom6_multiplication.rs (143 lines), and toom8_multiplication.rs (104 lines),
+all under crates/hyperreal/src/. This includes every interpolation coefficient,
+selector condition, arithmetic operation, assertion and tracing branch. Final
+lengths are 218, 206 and 179 lines. Context review included their include host,
+Rational representation location, benchmark callers, rational product/cross-
+difference and half-GCD matrix consumers, and nine existing kernel/trace tests.
+Those context reads do not claim whole-file review of the larger consumer/test
+files or the adjacent backend-dispatch implementation.
+
+The owning layer is Hyperreal's exact nonnegative magnitude arithmetic. Relevant
+properties are P1 (exact reconstruction), P4/P10 (unchanged ordered dispatch and
+trace effects), P5 (unbounded intermediate work/memory), P6 (invariant failure
+versus typed outcomes), and the public/private Rustdoc mandate. The missing
+acceptance witness was accurate documentation of all private helpers, mathematical
+interpolation invariants, resource limits and benchmark API visibility. Before
+editing, nine existing all-feature Toom tests and strict private rustdoc passed;
+the generated Rational page omitted all four doc(hidden) benchmark methods.
+
+Added or replaced 27 authored blocks: three inherent impl descriptions, four
+associated constants and twenty methods. Removed doc(hidden) from the production
+selector benchmark wrapper and three forced-family candidates. Their signatures
+and visibility were already public; only documentation visibility changed.
+Noncomment tokens match after excluding those four documentation attributes.
+No predicate order, selector threshold, interpolation weight, assert, trace,
+arithmetic expression or runtime behavior was changed. Existing include-fragment
+expression formatting was preserved instead of reformatting the large tables.
+
+Documented mathematical/operational contracts:
+
+- Each kernel splits magnitudes into n base-B chunks, B=2^ceil(max_bits/n),
+  evaluates degree-(n-1) polynomials and reconstructs a degree-(2n-2) product.
+  Toom-4/6/8 use 7/11/15 point products respectively; scalar-weight products
+  and recombination are additional work. Point products use the integer backend,
+  not recursive calls to Hyperreal's selector. Shifted addition preserves carries
+  even when recovered coefficients exceed one base-B digit.
+- End coefficients come directly from chunk products; finite-point values have
+  those contributions removed. The static inverse Vandermonde weights recover
+  the middle coefficients exactly. Direct integer convolution explains their
+  nonnegativity. The independent audit checks all 275 inverse-matrix identities
+  with Python Fraction arithmetic, covering every table row and basis power.
+  This establishes the interpolation identities, not an unrestricted resource
+  guarantee or complete implementation proof.
+- Selection order is Toom-8, Toom-6, Toom-4, backend. Shorter-operand thresholds
+  are 262144, 524288 and 1048576 bits, with longer <= shorter+floor(shorter/n)
+  and saturating upper-bound addition. Gates overlap; earlier eligible families
+  win. Zero operands fail the gates and reach the backend, whereas direct kernels
+  return zero before splitting. Candidates bypass gates and record their path
+  before that zero return when tracing is active.
+- Chunk extraction retains only n windows and returns zeros at width zero;
+  multiplication's positive ceiling width makes its own extraction lossless.
+  Arbitrary signed coefficient arrays can be evaluated by Horner's rule. Linear
+  combination helpers require nonzero divisors and valid exactly divisible
+  interpolation data. Remainders are always computed; nonzero remainders panic
+  only with debug assertions, while release division truncates toward zero.
+  A zero divisor panics. Negative recovered coefficients also panic.
+- These functions return fully materialized BigUints. Signs, denominator
+  cancellation and rational normalization belong to their consumers. No retained
+  recipe, cache, precision budget, total-work/memory bound, cancellation or typed
+  resource-exhaustion result is added here. Thresholds are tuning gates, not
+  mathematical validity limits or resource contracts. No performance claim is
+  inferred from the names, thresholds or finite qualification corpus.
+
+Executed after the final edit:
+
+- Locked/offline cargo test -p hyperreal --lib rust_native_toom with two test
+  threads passes all three tests under --no-default-features and all nine under
+  --all-features. Existing product expectations and six exact path-count
+  assertions remain unchanged and pass. The corpus covers exhaustive small
+  products, generated larger and unbalanced magnitudes, threshold predicates
+  and selected-family crossover paths.
+- cargo doc -p hyperreal --lib --no-deps --document-private-items passes under
+  both feature modes with warnings and broken/private intra-doc links denied.
+  All 27 authored descriptions and associated-item anchors are checked in both
+  rendered Rational pages. Ordinary public cargo doc also passes with the same
+  strict flags; the four formerly hidden methods now have public anchors.
+- Isolated before/after harnesses compile the unchanged kernel fragments against
+  num, with debug assertions both enabled and disabled. They check zero/truncated
+  chunk extraction, signed Horner evaluation, negative/zero/inexact divisors,
+  threshold/balance boundaries and symmetry, zero gate rejection, and 867 small
+  products against independent u64 multiplication. All four runs pass with
+  identical before/after outcome records. These probes do not substitute for
+  the integrated tracing tests and do not modify repository tests or fixtures.
+- Independent interpolation identities, declaration/rendered-document inventory,
+  runtime-token preservation and git diff --check pass. No new API hiding or
+  lint suppression was introduced. Full workflow/format/benchmark validation
+  remains owner-waived for this docs-only session; no full formatting claim is
+  made for the pre-existing include-fragment layout.
+
+No focused check is blocked. Evidence and scripts remain under
+/tmp/csgrs-hyperreal-toom-audit/. The owned probe executable/combined source and
+large duplicate HTML pages are removed after inspection; small inventories,
+logs and source snapshots are retained. Shared Cargo output is reused with
+incremental compilation disabled. AGENTS.md retains the future-agent 100%
+public/private/generated coverage mandate. Whole-repository line review and
+full Rustdoc coverage remain unfinished.
 
 ## Next work
 
