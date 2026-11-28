@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/src/rational/arithmetic/construction.rs` | Entire constructor/reduction/cache/query implementation reviewed; all 42 functions documented, including signed inputs, validation ownership, hint proofs and lifetime/resource limits. | Both-mode private docs/focused tests and four doctests pass; all 43 blocks render and 673 unchanged probe records have independent exact expectations. See rational-construction batch. |
 | `crates/hyperreal/src/rational/arithmetic/format_parse.rs` | Entire formatter and decimal/scientific parser reviewed; every helper, guard, error and presentation rule documented, including reproduced fallback syntax defects. | Both-mode private docs, focused tests and doctests pass; all 16 blocks render, outputs/traces remain identical, and independent exact expectations pass. See rational-formatting/parsing batch. |
 | `crates/hyperreal/src/rational/arithmetic/representation.rs` | Entire storage, cache layouts, flags/pools, trait methods, wire helper and tracing macros reviewed; all authored items documented and payload unhidden. | Both-mode private docs/focused tests, lifecycle/race/trace probes and wire replay pass; Serde-generated internal doc gaps remain. See rational-storage batch. |
 | `crates/hyperreal/src/rational/arithmetic/as_ref.rs` | Entire borrow adapter reviewed; documented same-handle borrowing without clone/reduction/cache effects. | Private docs and downstream generic arithmetic tests pass; direct pointer-identity probe passes. See rational-storage batch. |
@@ -24576,6 +24577,148 @@ output is reused with incremental compilation disabled. AGENTS.md retains the
 future-agent 100% public/private/generated documentation mandate. The exact
 syntax defects require separate implementation/regression work; the complete
 repository audit and generated-code coverage remain unfinished.
+
+## Hyperreal rational-construction documentation batch
+
+Reviewed every line of the 835-line baseline
+crates/hyperreal/src/rational/arithmetic/construction.rs at 3c7af3b0b.
+The final file has 1,117 lines. This includes all raw/normalized constructors,
+small-value pool indexing, reciprocal cache scheduling, lazy canonicalization,
+reduction/hint branches and packed dyadic queries. Context reads covered the
+already audited storage/trace definitions, integer/float conversion entry points,
+addition/subtraction/mean reduction proofs, square-extraction consumption, lazy
+coordinate constructors and relevant exact/cache/trace tests. These bounded
+reads confer no new whole-file review credit on their larger source files.
+
+The owning layer is Hyperreal exact rational construction and reduction. Relevant
+properties are P1/P3 (exact values and justified facts), P4/P10 (shared evidence,
+cache order and invalidation), P5/P6 (resource limits and validation ownership),
+and Rustdoc coverage. Public input domains include signed integers through the
+full i64 range and BigInt numerators with positive denominators. Private domains
+separately require sign/zero consistency, reduced or explicitly marked parts,
+valid cancellation hints and owner-bound reciprocal/dyadic evidence. Missing
+acceptance was documentation of those preconditions and of every private item;
+existing new/fraction comments incorrectly called their signed results
+nonnegative. Before editing, 22 selected all-feature tests and the 673-record
+isolated constructor probe passed on the target revision.
+
+Added or replaced 43 blocks: the impl and all 42 functions. Corrected the signed
+constructor descriptions, preserved the two existing examples and added two
+public constructor examples. All blocks render with the expected method anchors.
+This fragment has no generated or function-local type definitions requiring
+supplemental rendering. No noncomment token, assertion, branch order, cache
+operation, trace event, threshold or feature gate changed. No doc(hidden) or
+lint suppression was introduced; existing include-fragment layout is retained.
+
+Reviewed contracts and reproduced distinctions:
+
+- Raw allocation validates/reduces nothing and starts with empty caches/facts.
+  The marked constructor reserves lazy canonicalization while retaining raw
+  common factors. Unmarked transient results need a reduction proof before
+  consumers that assume reduced parts. canonicalized_ref trusts unmarked input;
+  marked input initializes a reserved OnceLock result from cloned/reduced parts,
+  leaving original parts and marker unchanged. into_parts returns stored parts,
+  not necessarily canonical parts, and discards the metadata from that returned
+  representation. A sole strong owner moves limbs even when weak references exist.
+- new preserves signed i64::MIN using unsigned_abs. Public fraction constructors
+  reject denominator zero before zero normalization, including 0/0. Primitive
+  integers reuse zero/units and the 2..=64 pools; BigInt/owned-magnitude paths
+  do not uniformly intern those small nonzero values. Private magnitude helpers
+  have distinct normalization behavior, which is documented rather than merged.
+- Reduced dyadic word construction trusts nonzero signed data and odd numerators
+  at positive shifts. It reuses eligible small pools, otherwise allocates the
+  exact power-of-two denominator, and retains known/value/exponent bits. Pool
+  helpers have debug-only shape assertions and unchecked reducedness/index
+  assumptions; invalid denominators must not reach their identity-keyed slots.
+  Fixed slot counts do not bound retained graphs or large exponent allocation.
+- Reciprocal lookup checks primary, tertiary, quaternary then quinary. An expired
+  matching weak entry returns None immediately. Installation is write-once and
+  layout-sensitive, with no replacement/retry after a lost box-publication race;
+  nonprimary duplicates are not deduplicated. The cache helper proves neither
+  reciprocity nor ownership-cycle freedom. The actual pair caller constructs a
+  fresh reciprocal payload and installs a weak backlink before the strong forward
+  link. Unique inversion moves/swaps limbs into fresh storage; shared inversion
+  clones and attempts retention. Cached reciprocal evidence is trusted before
+  the public zero check; valid construction must preserve that relation.
+- Adding/subtracting one uses gcd(n +/- d,d)=gcd(n,d) after lazy normalization.
+  General reduction uses dyadic shifts or GCD. No-op paths can preserve their
+  original marker/metadata rather than forcing a new payload. A possible-divisor
+  hint must divide the denominator and contain every possible common factor;
+  addition/subtraction use the denominator GCD and mean uses twice that GCD.
+  The implementation trusts those proofs and does not repair a false hint.
+- Private counterexamples are preserved as precondition evidence: reducing
+  18/24 with incomplete hint 2 leaves raw 9/12; false hint 4 on 6/9 gives 3/4,
+  and false hint 3 on 6/10 gives 2/3. The latter two change value. The unchecked
+  reduced-parts helper with 6/0 produces raw 1/0; equal signed totals with a zero
+  denominator exit as zero. Public fraction inputs still reject all zero
+  denominators. These fixtures do not demonstrate a valid public constructor
+  regression or authorize treating malformed parts as supported input.
+- NoSign with nonzero primitive magnitude is outside the caller contract:
+  magnitude one returns +1 while magnitudes two and 65 normalize to zero.
+  Into-parts probes return raw 6/4 from marked storage under both shared and
+  unique ownership, confirming that it is not a canonicalization boundary.
+- Dyadic queries canonicalize marked input except the explicit reduced-only
+  probe, which returns None without promotion. That None means ineligibility
+  as well as possible non-dyadicness and must not be consumed as a false fact.
+  Encoded exponents use exponent+1 through 2^23-2; larger exponents return no
+  encoding and remain mathematically admissible. The private snapshot decoder
+  trusts an encoded field: an unrelated encoded five applied to a 1/3 owner
+  returns five. Normal callers load that owner's facts and exclude unreduced
+  storage first. This is not validation of external/cache-replay data.
+
+Executed after the final source edit:
+
+- Locked/offline focused library checks pass: twenty tests without default
+  features and 23 with all features, including separate exact-average consumers.
+  Coverage includes all retention integration tests, lazy canonicalization and
+  downstream arithmetic/hash queries, small-value sharing/float ingress,
+  inverse/negation-first layouts, denominator queries, dyadic fact transitions,
+  public zero-denominator rejection and existing exact reduction trace assertions.
+  One trace-only average test initially matched zero without the feature; the
+  final runner skips it there and runs the ordinary exact-average witness in both
+  modes. Zero-match runs are not counted as acceptance.
+- Private cargo doc --lib --no-deps --document-private-items passes in both
+  configurations, denying warnings and broken/private intra-doc links. The
+  all-feature HTML inventory verifies all 43 complete descriptions and method
+  anchors. Four constructor/query doctests pass in each mode. The new fraction
+  example initially lacked a concrete parse type because Rational has comparisons
+  with both Rational and Real; adding parse::<Rational> resolves compilation
+  without changing the numeric expectation. Final checks were repeated afterward.
+- An isolated copy of the exact crate source appends one private probe module;
+  only that probe runs in the directly compiled test harness. Before/final
+  construction bodies produce 673 byte-identical records, including four full
+  trace snapshots. This exercises the real constructors, caches and reducers,
+  not stubs or a duplicate arithmetic implementation. The repository test files
+  and all original assertions remain untouched.
+- Records comprise 84 public-fraction cases (including signed endpoints and
+  zero denominators), twelve signed integer cases, 513 lazy/reduction chains,
+  three cancellation-hint counterexamples, two unchecked zero-denominator cases,
+  three invalid-NoSign primitive cases, two into-parts and two inverse-ownership
+  cases, forty dyadic words, six exponent-encoding boundaries, one invalid
+  snapshot, one expired primary reciprocal and four trace cases. The 513 chains
+  check canonical reduction, both reducers, full-denominator hints, +/-one,
+  inversion, integer/dyadic facts, promotion-free probing and shared canonical
+  identity. Dyadic inputs cover both signs and shifts through 1,074.
+- Independent Python integers/Fraction checks verify every numeric/flag outcome
+  and canonical parts where claimed, separately recognizing intentionally
+  unreduced/invalid cases. Rust assertions additionally check exact pointer reuse,
+  lazy-cache population, weak lifetime expiration and reciprocal backlinks.
+  Full before/after records match, but that agreement is not the independent
+  arithmetic oracle. These finite witnesses are not a universal closure,
+  concurrency, ownership-cycle or resource-bound proof.
+- Authored declaration/rendered-description inventory, noncomment-token equality
+  and git diff --check pass. Full workflow/format/performance checks remain
+  owner-waived for this docs-only session. No performance, memory-cap, new
+  geometric capability or whole-repository coverage claim is made.
+
+No focused check remains blocked. Evidence and repeatable scripts remain under
+/tmp/csgrs-hyperreal-construction-audit/. The owned source copy and probe executable
+are removed after validation, and record JSON is compressed; small logs, inventories,
+source snapshots and the isolated probe remain. Shared Cargo output is reused
+with incremental compilation disabled. AGENTS.md retains the future-agent 100%
+public/private/generated documentation mandate. Whole-repository review and
+remaining generated-item documentation are unfinished; no executable behavior
+or unchecked-helper limitation was repaired in this batch.
 
 ## Next work
 
