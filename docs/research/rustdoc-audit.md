@@ -34,6 +34,7 @@ repository rules for later sessions or authorize implementation edits.
 
 | File | Review and change | Remaining validation |
 | --- | --- | --- |
+| `crates/hyperreal/benches/gmp_api.rs` | Entire 504-case GMP/MPFR comparison suite; all helpers, local macros, exact inputs, output/timing contracts and reproduced comparison defects reviewed. | All 46 authored blocks checked; both-mode private docs/smoke and baseline/final probes pass. Two Criterion-generated doc gaps remain; local macros require supplemental rendering. See GMP API benchmark batch. |
 | `crates/hyperreal/benches/library_perf.rs` | Entire 176-case public-library workload; documented every authored item, timing/output scope, Wallis domains and parser/error limits. | All 27 blocks render; minimal-simple/all docs and smoke, closed-form product expectations and parsed-output replay pass. Two Criterion-generated doc gaps remain. See public-library benchmark batch. |
 | `crates/hyperreal/benches/numerical_micro.rs` | Entire 134-case suite; documented all private helpers, exact chain formulas, timing/cache scope, actual assertions and stale metadata. | All 40 blocks render; both-mode private docs/smoke and before/after 75-record helper replay pass. Two Criterion-generated doc gaps remain. See numerical microbenchmark batch. |
 | `crates/hyperreal/benches/dispatch_trace.rs` | Entire 156-sample diagnostic runner; documented every function, exact fixture formulas, filter/cache/thread scope, omissions and report effects. | All 28 blocks render; supported minimal/all-feature private docs, full before/after reports and complete-snapshot comparisons pass. See Hyperreal dispatch-runner batch. |
@@ -23522,6 +23523,112 @@ scratch source are removed after checking. Shared build output is reused with
 incremental compilation disabled and is about 8.4 GiB. AGENTS.md retains the
 future-agent 100% public/private/generated Rustdoc mandate. Whole-repository
 line review and coverage remain unfinished.
+
+## Hyperreal GMP API benchmark documentation batch
+
+Reviewed every line of the 2,253-line baseline
+crates/hyperreal/benches/gmp_api.rs at a1a855f150eacac25e54983717c5abc46e41bf59,
+including all eight groups, helper formulas, borrowed operations, local macros
+and Criterion registration. The final file has 2,502 lines. Previously reviewed
+report and elliptic-oracle modules were consulted, along with native scalar
+implementations and Rug's deferred-arithmetic macros; these contextual reads
+are not new whole-file review credits for those other files.
+
+The owning layer is Hyperreal's numeric benchmark/documentation surface.
+Relevant contracts are P1/P2 (exact data and output meaning), P3/P4 (decision
+and cache evidence), P5 (precision versus resource bounds), P6 (failure), and
+the public/private/generated Rustdoc mandate. The missing witness was accurate
+item-level documentation of the actual completed workloads and their comparison
+limits. The baseline all-feature executable passed 504 smoke cases before
+editing. Baseline helper probes reproduced the defects described below; no
+executable token, fixture, call order or benchmark contract was changed.
+
+Added or replaced 46 authored Rustdoc blocks: one module, four included modules,
+one constant, 32 functions and eight function-local macros. Ordinary private
+rustdoc renders the 38 top-level descriptions. Rustdoc does not expose these
+function-local definitions, so an isolated supplemental crate lifts the unchanged
+macro declarations into lexical-owner modules and renders their eight docblocks.
+That check establishes their syntax/content, not normal bench-page discoverability.
+Criterion still generates benches and main without attached docblocks. Their
+module-level explanation does not close these two generated-item coverage gaps.
+
+Documented and reproduced findings:
+
+- Five borrowed GMP rational arithmetic forms return incomplete expression
+  objects. The local timing macro black-boxes and drops them without completing
+  arithmetic, whereas native operations return completed Rational values.
+  Integer magnitude rows explicitly complete the GMP operations and therefore
+  have a different workload. Pair labels alone do not establish equal work.
+- MPFR sinc_pi divides sin(pi*x) by x instead of pi*x; cosc divides 1-cos(x)
+  by x instead of x squared; lower inverse Mills computes CDF/PDF instead of
+  PDF/CDF. At the actual fixed inputs (3/4, 3/4 and zero), native-minus-reference
+  enclosures at precision -80 exclude the entire interval [-1/100,1/100]. The
+  adopted references are exact rational values of the rounded MPFR points.
+- The rational binary64 row pairs optional exact dyadic conversion with rounded
+  conversion; 355/113 yields None on the exact side and a finite rounded value.
+  The alleged enclosure helper rounds to directed 53-bit MPFR endpoints but
+  converts them to binary64 using nearest rounding. Positive 2^-1075 gives
+  [0,0], and finite 2^1024 gives [infinity,infinity], neither an enclosure.
+  The ordinary 355/113 endpoints do enclose the input.
+- The GMP perfect-power partner checks numerator and denominator independently,
+  without a shared exponent. It accepts 16/27 while the native rational
+  predicate rejects it. Square-extraction rows also expose different output
+  contracts: factor/residual versus integer square roots/remainders.
+- General Real rows mostly construct exact expressions; MPFR partners compute
+  rounded points. Computable absolute precision -128 differs from MPFR's
+  128-bit significand precision. Selected elliptic/inverse rows force native
+  rational intervals and check rounded reference discrepancies at -144 against
+  inclusive +/-2^-124 before timing. Reference working precision varies among
+  128, 256 and 1024 bits. These finite checks are not directed MPFR enclosures
+  or a general same-contract speed comparison. Prechecks also warm state.
+- Rounded Gaussian/gamma/beta/moment helpers add no general validation or typed
+  convergence contract. Inverse erf always performs eight Newton updates;
+  inverse isometric latitude uses 160 rounded bisections at 256 bits and returns
+  a 128-bit midpoint without a bracket, residual or rounding proof. Binomial
+  multiplication can overflow before division: debug probes panic at (3,4) and
+  (67,33), the latter despite the final mathematical coefficient fitting u64.
+  Integer beta arithmetic can overflow, and moment powers narrow usize to u32.
+- Prepared inputs/constants and shared caches may survive calls. Ordinary iter
+  includes spelled-out clones/constructions and output destruction. Most rows
+  only black-box results; no general cross-backend equivalence or output check
+  is performed. There is no explicit MPFR cache-cleanup hook, total work bound
+  or allocation bound in this runner. These limits are described per helper
+  and group, without changing the benchmark or claiming performance evidence.
+
+Executed after the final source edit:
+
+- Locked/offline cargo test --bench gmp_api --no-run and private cargo rustdoc
+  for --no-default-features and --all-features pass. Documentation denies
+  warnings and broken/private intra-doc links. Matching self/dev externs and
+  dependency paths are obtained from Cargo JSON artifacts. The supplemental
+  local-macro rustdoc build passes the same strict documentation checks.
+- Original Criterion executables with --test pass all 504 cases in both modes,
+  including the existing elliptic prechecks. Ordered IDs match the baseline.
+  This is smoke execution, not statistical timing or numerical conformance.
+- Isolated baseline/final probes retain the original functions, replace only
+  the Criterion tail and use absolute included-module paths. They check five
+  Rug incomplete types, the conversion/enclosure/formula/perfect-power
+  counterexamples above, debug overflow behavior, and exact helper expectations:
+  choose(5,2)=10, inverse-erf(0)=0, quantile(1/2)=0, H6(0)=-15,
+  I_(1/2)(2,3)=11/16, empty sum=0 and [2,3] dot [5,7]=31.
+- Three discrepancy intervals and nine exact adopted rounded helper outputs
+  are byte-identical before/after. These snapshots cover square-root constants,
+  Gaussian PDF/CDF/survival, regularized gamma, interval moment and latitude;
+  byte equality establishes preservation, not independent numerical correctness.
+- All 46 authored descriptions match the source inventory and rendered pages;
+  the two generated-function gaps are explicitly verified. Noncomment-token
+  equality, scoped Rustfmt and git diff --check pass. Benchmark-report hashes
+  and absence states are unchanged; smoke runs use an isolated cwd and the
+  existing report-suppression variable.
+
+No focused check remains blocked. The defects above remain implementation work
+outside this docs-only session. Full workflow checks remain owner-waived and
+no performance claim is made. Evidence and repeatable scripts remain under
+/tmp/csgrs-hyperreal-gmp-api-audit/; the owned probe executable and combined
+scratch source are removed after inspection. Shared build output is reused with
+incremental compilation disabled. AGENTS.md retains the future-agent mandate;
+whole-repository line review, generated-item coverage and configuration-wide
+coverage remain unfinished.
 
 ## Next work
 

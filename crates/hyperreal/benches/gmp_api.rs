@@ -1,10 +1,30 @@
-//! Public numeric API comparisons against Rug's GMP/MPFR backend.
+//! Benchmark selected public numeric operations beside Rug GMP/MPFR expressions.
 //!
-//! Exact rational rows use GMP-backed `rug::Rational`. Real and computable
-//! rows use MPFR at 128-bit precision. Hyperreal-only structural certificate,
-//! cache-introspection, abort, and prepared-filter APIs have no GMP analogue
-//! and are intentionally covered by the existing native benchmark suites.
-
+//! The eight groups mix several output contracts. Most `Real` rows construct an
+//! exact result without requesting its numeric evaluation, whereas their MPFR
+//! partners compute rounded points, usually at 128 significand bits. Computable
+//! rows request scaled integers at absolute binary precision -128. Selected
+//! elliptic/inverse rows force native rational enclosures and compare against
+//! rounded reference points before timing; their references use 128, 256 or
+//! 1024 working bits. These distinctions prevent a general same-contract speed ratio.
+//!
+//! Several rational GMP rows only produce Rug borrowed incomplete expressions;
+//! the macro does not force completion. Some paired formulas differ: the MPFR
+//! `sinc_pi` denominator lacks pi, `cosc` divides by x rather than x squared,
+//! and lower inverse Mills uses the reciprocal ratio. The rational binary64 row
+//! also pairs an optional exact dyadic conversion with a rounded conversion.
+//! These existing comparison gaps are preserved and documented, not corrected here.
+//!
+//! All timing uses ordinary Criterion iteration, including clones/constructions
+//! spelled inside closures and output destruction. Prepared sources and constants
+//! can retain caches. Most results are merely black-boxed; pairing names is not a
+//! numerical equivalence assertion. Unwraps can panic, rounded helpers lack typed
+//! failure/convergence guarantees, and precision is not a total-resource limit.
+//! No explicit MPFR cache-cleanup hook is installed by this runner.
+//!
+//! The shared report callback handles its own write guards. Criterion generates
+//! `benches` and `main`; their roles are described here, but those generated items
+//! have no attached Rustdoc. This finite workload does not certify API completeness.
 use criterion::{
     BenchmarkGroup, BenchmarkId, Criterion, black_box, criterion_group, criterion_main,
 };
@@ -18,41 +38,75 @@ use rug::{
     ops::Pow,
 };
 
+/// Aggregate Criterion estimates through the shared report writer and its skip guards.
 #[path = "support/benchmark_report.rs"]
 mod benchmark_report;
 
+/// Reuse the independent rounded inverse-Legendre reference for evaluated elliptic rows.
 #[path = "../tests/support/inverse_legendre_oracle.rs"]
 mod inverse_legendre_oracle;
 use inverse_legendre_oracle as inverse_oracle;
+/// Reuse the rounded Jacobi reference triplet; these points are not certified enclosures.
 #[path = "../tests/support/jacobi_oracle.rs"]
 mod jacobi_oracle;
+/// Reuse Legendre AGM/series references and exact adoption of their rounded binary values.
 #[path = "../tests/support/legendre_oracle.rs"]
 mod legendre_oracle;
 
+/// Default MPFR significand precision for ordinary fixtures and point results.
+///
+/// 128 significand bits differ from Hyperreal's absolute precision -128. Helpers
+/// may inherit supplied Float precision, and elliptic/latitude references use
+/// higher working precision; this is not a universal precision or work bound.
 const GMP_PRECISION: u32 = 128;
 
+/// Import the exact binary value of a finite f64 fixture into `Real`.
+///
+/// NaN/infinity panic. Decimal-looking literals such as 0.6 mean their binary64
+/// values, not exact decimal fractions.
 fn real(value: f64) -> Real {
     Real::try_from(value).expect("finite benchmark value")
 }
 
+/// Import a binary64 value into a 128-significand-bit MPFR point.
+///
+/// Finite f64 values fit exactly at this precision. Unlike `real`, this accepts
+/// nonfinite values; later MPFR operations can propagate NaN/infinity.
 fn gmp(value: f64) -> Float {
     Float::with_val(GMP_PRECISION, value)
 }
 
+/// Construct an exact word-sized signed ratio, panicking on a zero denominator.
 fn rational(numerator: i64, denominator: u64) -> Rational {
     Rational::fraction(numerator, denominator).expect("nonzero benchmark denominator")
 }
 
+/// Construct a GMP rational from signed numerator and unsigned nonzero denominator.
+///
+/// A zero denominator is invalid and may panic; the fixture adds no validation.
 fn gmp_rational(numerator: i64, denominator: u64) -> GmpRational {
     GmpRational::from((numerator, denominator))
 }
 
+/// Round a rational down/up to 53-bit MPFR, then convert each endpoint to f64.
+///
+/// The final conversions use nearest rounding, so the pair is an enclosure only
+/// when those MPFR endpoints transfer exactly to binary64. Subnormal rounding and
+/// exponent overflow can invalidate it: positive 2^-1075 produces two zeros and
+/// 2^1024 produces two infinities. The ordinary 355/113 fixture avoids these
+/// limits; this helper is not a general directed binary64 conversion.
 fn gmp_rational_f64_enclosure(value: &GmpRational) -> [f64; 2] {
     let (lower, _) = Float::with_val_round(53, value, Round::Down);
     let (upper, _) = Float::with_val_round(53, value, Round::Up);
     [lower.to_f64(), upper.to_f64()]
 }
 
+/// Register a unary exact-construction/rounded-point pair from one binary64 input.
+///
+/// Inputs are imported before timing. Each ordinary iteration clones the prepared
+/// input, invokes its closure and drops the output. Hyperreal evaluation is only
+/// whatever its closure requests; no common error bound or equality check is added.
+/// Source/constant caches can be reused; input import panics if nonfinite on Real.
 fn bench_real_unary<H, G>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &str,
@@ -74,6 +128,11 @@ fn bench_real_unary<H, G>(
     });
 }
 
+/// Register binary closures on two pre-imported binary64 fixtures for both backends.
+///
+/// Cloning both operands, executing each closure and dropping its output are timed.
+/// The Real closure may only construct an exact expression while MPFR computes a
+/// rounded point. The helper performs no outcome/equivalence assertion or cache reset.
 fn bench_real_binary<H, G>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &str,
@@ -108,6 +167,11 @@ fn bench_real_binary<H, G>(
     });
 }
 
+/// Register ternary closures on three pre-imported binary64 fixtures per backend.
+///
+/// Ordinary iterations include three input clones, closure work and output drops.
+/// The helper does not force a common evaluated-output contract, validate results
+/// or reset caches; mathematical domain checks belong to the supplied closures.
 fn bench_real_ternary<H, G>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &str,
@@ -141,50 +205,88 @@ fn bench_real_ternary<H, G>(
     });
 }
 
+/// Return sqrt(2) rounded at the default MPFR precision for Gaussian formulas.
 fn gmp_sqrt_two() -> Float {
     Float::with_val(GMP_PRECISION, 2).sqrt()
 }
 
+/// Form rounded 2*pi and its square root at default precision; no directed enclosure is returned.
 fn gmp_sqrt_two_pi() -> Float {
     let mut two_pi = Float::with_val(GMP_PRECISION, Constant::Pi);
     two_pi *= 2;
     two_pi.sqrt()
 }
 
+/// Evaluate the rounded point formula `exp(-x*x/2)/sqrt(2*pi)`.
+///
+/// The owned x operations inherit its precision; the denominator is built at the
+/// default precision. Fixtures use 128 bits. No tail-error or finiteness check is made.
 fn gmp_standard_normal_pdf(x: Float) -> Float {
     let mut exponent = x.clone() * &x;
     exponent /= -2;
     exponent.exp() / gmp_sqrt_two_pi()
 }
 
+/// Evaluate the rounded standard-normal CDF as `erfc(-x/sqrt(2))/2`.
+///
+/// The sqrt constant uses default precision; arithmetic inherits the owned input's
+/// precision. This returns a point without a directed error or domain receipt.
 fn gmp_standard_normal_cdf(x: Float) -> Float {
     let scaled = -x / gmp_sqrt_two();
     scaled.erfc() / 2
 }
 
+/// Evaluate the rounded standard-normal survival function as `erfc(x/sqrt(2))/2`.
+///
+/// The default-precision sqrt constant and input-precision arithmetic provide no
+/// certified tail enclosure; nonfinite inputs are not rejected.
 fn gmp_standard_normal_sf(x: Float) -> Float {
     let scaled = x / gmp_sqrt_two();
     scaled.erfc() / 2
 }
 
+/// Compute rounded `Gamma(a,x)/Gamma(a)` via MPFR's upper incomplete gamma.
+///
+/// The intended real probability domain is a>0 and x>=0. It is not checked here;
+/// operations inherit the owned a precision, and invalid inputs can yield nonfinite
+/// points without typed failure or a certified ratio bound.
 fn gmp_regularized_gamma_q(a: Float, x: Float) -> Float {
     a.clone().gamma_inc(&x) / a.gamma()
 }
 
+/// Compute the lower regularized gamma point as default-precision `1-Q(a,x)`.
+///
+/// Domain validation and directed error bounds are absent; subtraction can lose
+/// relative accuracy for a small lower tail.
 fn gmp_regularized_gamma_p(a: Float, x: Float) -> Float {
     Float::with_val(GMP_PRECISION, 1) - gmp_regularized_gamma_q(a, x)
 }
 
+/// Left-fold Float values into a default-precision rounded zero accumulator.
+///
+/// An empty slice returns zero. Each addition rounds; this is neither an exact
+/// summation algorithm nor a certified enclosure.
 fn gmp_sum(values: &[Float]) -> Float {
     values.iter().fold(gmp(0.0), |sum, value| sum + value)
 }
 
+/// Left-fold N separately rounded products into a default-precision sum.
+///
+/// Each product clones its left operand and inherits that precision; the sum uses
+/// default precision. Empty arrays yield zero. This is not fused dot-product
+/// rounding and imposes no work bound beyond the array length.
 fn gmp_dot<const N: usize>(left: &[Float; N], right: &[Float; N]) -> Float {
     (0..N).fold(gmp(0.0), |sum, index| {
         sum + left[index].clone() * &right[index]
     })
 }
 
+/// Take eight unguarded Newton steps for erf(x)=target, seeded with target itself.
+///
+/// The derivative is `2/sqrt(pi)*exp(-x*x)`. Default-precision constants combine
+/// with the input/estimate precision. Intended targets are in (-1,1), but no
+/// domain, residual, convergence or nonzero-derivative check is made. Endpoint or
+/// poorly conditioned inputs may produce inaccurate/nonfinite points without failure.
 fn gmp_erfinv(target: Float) -> Float {
     let mut estimate = target.clone();
     let derivative_scale = gmp(2.0) / Float::with_val(GMP_PRECISION, Constant::Pi).sqrt();
@@ -197,14 +299,26 @@ fn gmp_erfinv(target: Float) -> Float {
     estimate
 }
 
+/// Compute `sqrt(2)*erfinv(2*p-1)` using the fixed eight-step Newton helper.
+///
+/// Intended probabilities lie in (0,1); no check enforces this or certifies a
+/// quantile. The final multiplication starts from the default-precision sqrt.
 fn gmp_standard_normal_quantile(probability: Float) -> Float {
     let erf_argument = probability * 2 - 1;
     gmp_sqrt_two() * gmp_erfinv(erf_argument)
 }
 
-// Independent benchmark oracle: direct latitude bisection at 256 working
-// bits, then a 128-bit result. This is a rounded value, not Hyperreal's
-// retained exact equation or certificate; timings cannot compare those claims.
+/// Bisect the ellipsoidal isometric-latitude equation at 256 working bits for 160 steps.
+///
+/// For positive axis ratio q and finite psi, set e=sqrt(abs(1-q*q)). Solve
+/// `asinh(tan(phi))-e*atanh(e*sin(phi))=psi` for q<1, and the corresponding
+/// plus/e*atan expression otherwise, within rounded endpoints +/-pi/2. Return
+/// the final midpoint rounded to the default 128-bit precision.
+///
+/// Inputs are promoted from their existing Float values, not reconstructed exact
+/// data. Squaring discards an axis sign; no domain, finite-value, bracket, residual
+/// or convergence proof is checked. Rounded branch decisions and a fixed step
+/// count provide a benchmark point, not a certified enclosure or exact selected root.
 fn gmp_inverse_isometric_latitude(psi: Float, axis_ratio: Float) -> Float {
     let psi = Float::with_val(256, psi);
     let square = Float::with_val(256, axis_ratio).square();
@@ -239,6 +353,11 @@ fn gmp_inverse_isometric_latitude(psi: Float, axis_ratio: Float) -> Float {
     Float::with_val(GMP_PRECISION, midpoint)
 }
 
+/// Evaluate probabilists' Hermite polynomials by `H_(k+1)=x*H_k-k*H_(k-1)`.
+///
+/// Seeds are default-precision one and a clone of x; n=0/1 return those seeds.
+/// Later products inherit x precision. Arithmetic is rounded and loop work grows
+/// with n; no exactness or whole-work bound is asserted.
 fn gmp_hermite_probabilists(n: usize, x: &Float) -> Float {
     if n == 0 {
         return gmp(1.0);
@@ -253,6 +372,13 @@ fn gmp_hermite_probabilists(n: usize, x: &Float) -> Float {
     current
 }
 
+/// Compute a rounded unnormalized Gaussian moment integral between lo and hi.
+///
+/// Start with CDF(hi)-CDF(lo), then density(lo)-density(hi). For degree n>=2 use
+/// `lo^(n-1)*pdf(lo)-hi^(n-1)*pdf(hi)+(n-1)*moment_(n-2)`.
+/// Endpoints/order/finiteness are unchecked, and CDF subtraction can cancel.
+/// Power exponents cast usize to u32, so excessive degrees truncate. Work grows
+/// with n without a local budget; this is a point recurrence, not an interval proof.
 fn gmp_normal_interval_moment(lo: &Float, hi: &Float, n: usize) -> Float {
     let mass = gmp_standard_normal_cdf(hi.clone()) - gmp_standard_normal_cdf(lo.clone());
     if n == 0 {
@@ -277,6 +403,12 @@ fn gmp_normal_interval_moment(lo: &Float, hi: &Float, n: usize) -> Float {
     one_back
 }
 
+/// Compute an integer binomial coefficient by symmetric multiplicative recurrence.
+///
+/// Requires k<=n and every multiply-before-divide intermediate to fit u64.
+/// Violations use ordinary unchecked arithmetic: debug overflow panics and release
+/// wrapping can corrupt results even if the final coefficient would fit. The
+/// helper has no typed failure or arbitrary-size fallback; fixtures use small n.
 fn binomial(n: u32, k: u32) -> u64 {
     let k = k.min(n - k);
     (0..k).fold(1_u64, |value, index| {
@@ -284,6 +416,12 @@ fn binomial(n: u32, k: u32) -> u64 {
     })
 }
 
+/// Evaluate the finite binomial tail for I_x(a,b) with positive integer parameters.
+///
+/// Sum C(a+b-1,k)*x^k*(1-x)^(a+b-1-k) for k=a through a+b-1. The intended
+/// probability domain is 0<=x<=1, but no validation occurs. Parameter arithmetic
+/// can overflow/underflow u32, binomial intermediates can overflow u64, and the
+/// rounded sum has no directed error certificate or total-work bound.
 fn gmp_regularized_beta_integer(a: u32, b: u32, x: Float) -> Float {
     let n = a + b - 1;
     let one_minus_x = gmp(1.0) - &x;
@@ -292,6 +430,18 @@ fn gmp_regularized_beta_integer(a: u32, b: u32, x: Float) -> Float {
     })
 }
 
+/// Register rational construction, arithmetic, inspection and combined-operation pairs.
+///
+/// Main operands are 355/113 and -22/7, with wide dyadics, shared-denominator,
+/// complex, root and mean fixtures. In-loop clones/temporaries and outputs are
+/// timed/dropped by ordinary iteration; prepared operands are reused.
+///
+/// The local pair macro black-boxes expressions as written. GMP borrowed add,
+/// subtract, multiply, divide and negation return incomplete objects that are never
+/// completed here. Other rows explicitly materialize results. Exact dyadic-to-f64
+/// returns None for 355/113, whereas GMP rounds a value. Square extraction returns
+/// different decompositions; perfect-power predicates are not universally equivalent
+/// when numerator/denominator exponents differ. No paired equality is asserted.
 fn bench_rational_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_rational_api");
     let lhs = rational(355, 113);
@@ -299,6 +449,8 @@ fn bench_rational_api(c: &mut Criterion) {
     let gmp_lhs = gmp_rational(355, 113);
     let gmp_rhs = gmp_rational(-22, 7);
 
+    /// Register paired ordinary iterations without completing a deferred GMP expression.
+    /// Each side is black-boxed and dropped as written; no matching result type or value is required.
     macro_rules! pair {
         ($name:literal, $hyperreal:expr, $gmp:expr) => {
             group.bench_function(BenchmarkId::new("hyperreal", $name), |b| {
@@ -603,6 +755,13 @@ fn bench_rational_api(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register seventeen arithmetic, power, integer-rounding and angle-conversion pairs.
+///
+/// The shared helpers import finite binary64 fixtures outside timing, then time
+/// cloning, operation and output destruction. Rational Real arithmetic may finish
+/// exactly; symbolic angle/power results need not be numerically evaluated. MPFR
+/// points use default precision. Unwrap checks success, not equivalent outputs or
+/// rounding policies outside these fixtures.
 fn bench_real_arithmetic_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_arithmetic_api");
 
@@ -705,6 +864,25 @@ fn bench_real_arithmetic_api(c: &mut Criterion) {
     group.finish();
 }
 
+/// Compare elementary constructors plus selected evaluated elliptic/inverse workloads.
+///
+/// General unary/binary/ternary rows pair exact Real construction with rounded
+/// MPFR points. The local unary macros require Ok only on fallible Real methods;
+/// no comparison is performed. MPFR sinc_pi spells sin(pi*x)/x, missing pi in the
+/// denominator; MPFR cosc spells (1-cos(x))/x, missing a second x. These partners
+/// therefore disagree with their Real operations at the supplied nonzero input.
+///
+/// Jacobi/Legendre and inverse rows instead force native -128 rational intervals
+/// and use 1024-bit series/AGM-derived points. Carlson RF/RD use only circular
+/// fixtures (0,1,1), with 128-bit pi identities as references. Inverse isometric
+/// latitude uses exact binary64 imports 0.5/0.6 and the 256-to-128 bisection helper.
+/// Before timing, -144 enclosures of native-minus-adopted-reference must lie
+/// within +/-2^-124. This tests closeness to a rounded point, not containment of
+/// the exact mathematical reference or equal completed output contracts.
+///
+/// Preparatory checks run even with Criterion row filters. They can warm shared
+/// state; timed expressions are reconstructed, not guaranteed globally cold.
+/// Ordinary iteration includes cloning/construction/evaluation and output drops.
 fn bench_real_elementary_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_elementary_api");
 
@@ -927,6 +1105,8 @@ fn bench_real_elementary_api(c: &mut Criterion) {
         },
     );
 
+    /// Pair a fallible Real unary method, unwrapped for success, with a Float method.
+    /// Delegate import, cloning and timing to bench_real_unary without forcing native evaluation.
     macro_rules! unary_result {
         ($name:literal, $input:expr, $hyper:ident, $gmp:ident) => {
             bench_real_unary(
@@ -938,6 +1118,8 @@ fn bench_real_elementary_api(c: &mut Criterion) {
             );
         };
     }
+    /// Pair infallible Real/Float unary methods through the common unary timing helper.
+    /// No equality, domain or precision-equivalence assertion is introduced.
     macro_rules! unary_value {
         ($name:literal, $input:expr, $hyper:ident, $gmp:ident) => {
             bench_real_unary(&mut group, $name, $input, Real::$hyper, Float::$gmp);
@@ -1131,6 +1313,17 @@ fn bench_real_elementary_api(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register stable/Gaussian/scientific formula pairs on fixed binary64 fixtures.
+///
+/// Real methods generally retain exact results; MPFR uses direct rounded formulas,
+/// including subtractions that can cancel and unguarded Newton quantiles. Integer
+/// beta parameters, Hermite degree six, the fixed eighth moment 105 and fourth
+/// interval moments are finite examples, not general support proofs.
+///
+/// The MPFR normal_inverse_mills partner computes CDF/PDF at zero, whereas Real
+/// computes PDF/CDF; these are reciprocal values. No equality assertion catches
+/// that mismatch. Timing includes prepared-input clones and output destruction;
+/// all ordinary pairs inherit the helpers' differing output/error contracts.
 fn bench_real_derived_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_derived_api");
 
@@ -1425,6 +1618,17 @@ fn bench_real_derived_api(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register dot/product-sum, affine and polynomial pairs on prepared dyadic inputs.
+///
+/// Real retains exact arithmetic; MPFR evaluates rounded left folds and separate
+/// multiply/add operations. Some two/three-lane partners build cloned arrays
+/// inside timing, while four-lane partners borrow existing arrays. Horner rows
+/// use coefficients in ascending degree and x=3/4; the rational-polynomial partner
+/// computes numerator/denominator separately before rounded division.
+///
+/// The local linear_pair macro adds no equivalence, fused-rounding or certificate
+/// check. All in-loop allocations/clones and output drops are measured; active
+/// API labels do not require a particular dispatch path.
 fn bench_real_linear_algebra_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_linear_algebra_api");
 
@@ -1469,6 +1673,8 @@ fn bench_real_linear_algebra_api(c: &mut Criterion) {
         })
     });
 
+    /// Register exact-expression and rounded-point linear-algebra closures as ordinary iterations.
+    /// Measure their written clones/allocations and output drops without comparing results.
     macro_rules! linear_pair {
         ($name:literal, $hyperreal:expr, $gmp:expr) => {
             group.bench_function(BenchmarkId::new("hyperreal", $name), |b| {
@@ -1652,11 +1858,26 @@ fn bench_real_linear_algebra_api(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register collections, statistics, exact constructions and conversion partners.
+///
+/// Rows include constants, sums/means/sample deviation, affine/interpolated points,
+/// line intersections and conversions of 3/4. The non-dyadic line-intersection
+/// partner rounds its rational coordinates to MPFR before arithmetic, changing
+/// input fidelity. Even dyadic-input quotients/intersections need not have dyadic
+/// outputs; an exact rational result and a rounded point have different contracts.
+///
+/// The local pair macro measures expressions as written without validating common
+/// semantics. Wrapping GMP to_f64 in Some does not prove exact conversion, and
+/// numeric min/max/finiteness are not general substitutes for exact-real decisions.
+/// Prepared data is reused; clones/conversions spelled inside ordinary iteration
+/// and all returned-output drops remain timed.
 fn bench_real_collection_and_conversion_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_real_collection_and_conversion_api");
     let hyperreal_values = [real(1.25), real(-3.5), real(0.75), real(2.0)];
     let gmp_values = [gmp(1.25), gmp(-3.5), gmp(0.75), gmp(2.0)];
 
+    /// Register collection/conversion expressions under backend labels without normalizing their contracts.
+    /// Both ordinary iterations time the expressions as written and their output destruction.
     macro_rules! pair {
         ($name:literal, $hyperreal:expr, $gmp:expr) => {
             group.bench_function(BenchmarkId::new("hyperreal", $name), |b| {
@@ -1987,9 +2208,24 @@ fn bench_real_collection_and_conversion_api(c: &mut Criterion) {
     group.finish();
 }
 
+/// Register native evaluated approximations beside MPFR point operations and queries.
+///
+/// Most native rows construct an operation and request an integer at absolute
+/// precision -128; partners return 128-significand-bit points. Unary macros use
+/// exact quarter inputs; the custom macro converts its ratio through f64 on the
+/// MPFR side (current uses are dyadic). Input clones and output drops are timed,
+/// while shared source/constants may already be warm. No numeric oracle is checked.
+///
+/// The quantile row uses native Phi(2) and a binary seed near two, versus a rounded
+/// Phi(2) passed through eight Newton steps. Comparison/sign/zero rows use fixed
+/// rational inputs; MPFR predicates on rounded values are not general certified
+/// real predicates. Constant partners merely clone precomputed Float values,
+/// whereas native partners request approximation from retained constants.
 fn bench_computable_api(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_computable_api_p128");
 
+    /// Build native numerator/4 inputs and matching binary64-imported MPFR quarters before timing.
+    /// Time operation construction plus native approx(-128), or the rounded Float operation, including clones/drops.
     macro_rules! unary {
         ($name:literal, $input:expr, $hyper:ident, $gmp:ident) => {{
             let hyperreal_input = Computable::rational(rational($input, 4));
@@ -2003,6 +2239,9 @@ fn bench_computable_api(c: &mut Criterion) {
         }};
     }
 
+    /// Pair a native exact ratio with an MPFR ratio imported through f64 division.
+    /// Non-dyadic future inputs can differ before evaluation; current fixtures use quarters.
+    /// Time the supplied operation and native approx(-128) without comparing outputs.
     macro_rules! unary_custom {
         ($name:literal, $numerator:expr, $denominator:expr, $hyperreal:expr, $gmp:expr) => {{
             let hyperreal_input = Computable::rational(rational($numerator, $denominator));
@@ -2069,6 +2308,8 @@ fn bench_computable_api(c: &mut Criterion) {
     let h_rhs = Computable::rational(rational(7, 4));
     let g_lhs = gmp(0.75);
     let g_rhs = gmp(1.75);
+    /// Register written native expressions followed by approx(-128), paired with MPFR expressions.
+    /// The name also covers unary negate/square; no common result or precision contract is enforced.
     macro_rules! binary {
         ($name:literal, $hyperreal:expr, $gmp:expr) => {
             group.bench_function(BenchmarkId::new("hyperreal", $name), |b| {
@@ -2188,6 +2429,14 @@ fn bench_computable_api(c: &mut Criterion) {
     group.finish();
 }
 
+/// Compare completed integer multiply/divide kernels and conversion-inclusive paths.
+///
+/// At bit sizes 4096, 16384 and 65536, operands are 2^bits-159 and 2^bits-173;
+/// the dividend is `(left << bits)+right`. Inputs are prepared outside timing.
+/// Direct GMP rows explicitly complete borrowed arithmetic with Integer::from.
+/// Roundtrip rows serialize num magnitudes to little-endian bytes, import GMP,
+/// compute, export bytes and reconstruct BigUint inside timing. Result/temporary
+/// destruction is also timed. No cross-backend equality assertion is made here.
 fn bench_magnitude_backend_algorithms(c: &mut Criterion) {
     let mut group = c.benchmark_group("gmp_magnitude_algorithms");
     for bits in [4096_usize, 16_384, 65_536] {
