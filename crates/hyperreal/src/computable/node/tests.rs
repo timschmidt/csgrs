@@ -654,6 +654,19 @@ mod tests {
         assert!(value.approx_signal(&Some(signal), -128).sign() == Sign::Minus);
     }
 
+    /// Check asin or atanh on a signed radical sum whose magnitude estimate is too small.
+    ///
+    /// The positive source is sqrt(5)/64+740*sqrt(7)/2048. Directed 512-bit root
+    /// bounds and exact rational interval arithmetic place it strictly between zero
+    /// and one. Its retained planning exponent is at most -4 but is not a certified
+    /// magnitude. `asin` chooses the function; `raw_prescaled` bypasses the constructor
+    /// with a raw series tag and invalid initial facts to model legacy scheduling.
+    ///
+    /// For each sign, outward conversion and monotonic function evaluation supply a
+    /// reference interval. Require its containment in the returned center plus/minus
+    /// 2^p at five precisions, including coarse requests and reuse after refinement.
+    /// This qualifies admitted function inputs outside the tiny-series range; it does
+    /// not test invalid inputs or require a particular result tag or dispatch count.
     fn check_inverse_series_domain(asin: bool, raw_prescaled: bool) {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -670,7 +683,11 @@ mod tests {
         let upper: Q = b / 64 + d * 740 / 2048;
         assert!(lower > 0 && upper < 1);
         for negative in [false, true] {
-            let (lo, hi) = if negative { (-upper.clone(), -lower.clone()) } else { (lower.clone(), upper.clone()) };
+            let (lo, hi) = if negative {
+                (-upper.clone(), -lower.clone())
+            } else {
+                (lower.clone(), upper.clone())
+            };
             let mut lo = Float::with_val_round(512, lo, Round::Down).0;
             let mut hi = Float::with_val_round(512, hi, Round::Up).0;
             if asin {
@@ -682,50 +699,110 @@ mod tests {
             }
             let lo = lo.to_rational().unwrap();
             let hi = hi.to_rational().unwrap();
-            let mut input = Computable::rational(Rational::from(5)).sqrt().shift_right(6);
-            let term = Computable::rational(Rational::from(7)).sqrt().shift_right(11);
-            for _ in 0..740 { input = input.add(term.clone()); }
+            let mut input = Computable::rational(Rational::from(5))
+                .sqrt()
+                .shift_right(6);
+            let term = Computable::rational(Rational::from(7))
+                .sqrt()
+                .shift_right(11);
+            for _ in 0..740 {
+                input = input.add(term.clone());
+            }
             assert!(input.cheap_bound().planning_msd().flatten().unwrap() <= -4);
             assert_eq!(input.cheap_bound().known_msd(), None);
-            if negative { input = input.negate(); }
+            if negative {
+                input = input.negate();
+            }
             let result = if raw_prescaled {
                 // Older public construction could serialize this invalid series
                 // choice. The approximation boundary must recheck its domain.
-                let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
-                Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None }
-            } else if asin { input.asin() } else { input.atanh() };
+                let kind = if asin {
+                    Approximation::PrescaledAsin(input)
+                } else {
+                    Approximation::PrescaledAtanh(input)
+                };
+                Computable {
+                    internal: Arc::new(Node::new(
+                        kind,
+                        BoundCache::Invalid,
+                        ExactSignCache::Invalid,
+                    )),
+                    signal: None,
+                }
+            } else if asin {
+                input.asin()
+            } else {
+                input.atanh()
+            };
             // A prescaled node is allowed as a lazy schedule, but its kernel
             // must not consume this inexact planning hint as a certificate.
             for precision in [-32_i32, 1, 0, -160, -8] {
-                let value = Integer::from_str_radix(&result.approx(precision).to_string(), 10).unwrap();
-                let unit = if precision > 0 { Q::from(Integer::from(1) << precision) } else { Q::from((1, Integer::from(1) << -precision)) };
+                let value =
+                    Integer::from_str_radix(&result.approx(precision).to_string(), 10).unwrap();
+                let unit = if precision > 0 {
+                    Q::from(Integer::from(1) << precision)
+                } else {
+                    Q::from((1, Integer::from(1) << -precision))
+                };
                 let center = Q::from(value) * &unit;
-                assert!(Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi, "asin={asin}, raw={raw_prescaled}, negative={negative}, precision={precision}");
+                assert!(
+                    Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi,
+                    "asin={asin}, raw={raw_prescaled}, negative={negative}, precision={precision}"
+                );
             }
         }
     }
 
     #[test]
+    /// Check native asin construction on the radical sum with an uncertified tiny estimate.
+    ///
+    /// Use the shared domain witness for both signs and five precision requests;
+    /// the independent enclosure checks output accuracy rather than forbidding a
+    /// prescaled node whose evaluator can recheck its range.
     fn asin_series_domain_rejects_estimated_magnitudes() {
         check_inverse_series_domain(true, false);
     }
 
     #[test]
+    /// Check native atanh construction on the radical sum with an uncertified tiny estimate.
+    ///
+    /// Use the shared directed-domain witness for both signs and five requests,
+    /// including coarse output where an unjustified small-input zero would fail.
     fn atanh_series_domain_rejects_estimated_magnitudes() {
         check_inverse_series_domain(false, false);
     }
 
     #[test]
+    /// Check raw asin series tags on the radical sum outside the tiny-series range.
+    ///
+    /// The shared witness supplies both signs directly with invalid initial facts;
+    /// its directed enclosures require evaluation to handle the admitted input
+    /// without treating the stored schedule as a range certificate.
     fn asin_series_domain_rechecks_prescaled_nodes() {
         check_inverse_series_domain(true, true);
     }
 
     #[test]
+    /// Check raw atanh series tags on the radical sum outside the tiny-series range.
+    ///
+    /// The shared witness tests both signs through coarse, fine and reused requests.
+    /// The represented input stays inside (-1,1), even though its stored tiny-series
+    /// schedule needs range checking and reduction.
     fn atanh_series_domain_rechecks_prescaled_nodes() {
         check_inverse_series_domain(false, true);
     }
 
     #[test]
+    /// Check asin/atanh range guards on 2047 dyadics strictly between -1 and one.
+    ///
+    /// For n/1024, -1023<=n<=1023, enumerate the admissible integers among three
+    /// candidate -8 cache roundings on an opaque add-zero child with unknown facts.
+    /// If the coarse scheduling predicate accepts, require |x|<=1/8. Then install a
+    /// raw prescaled function tag and make five requests from coarse through -128
+    /// and back to -8. All 46050 returned one-unit intervals must contain their
+    /// 512-bit directed MPFR reference intervals. Exact dyadic oracle inputs need
+    /// no rounding at that precision; this finite enumeration is not a proof for
+    /// all cache states or an invalid-domain test.
     fn inverse_series_domain_boundary_accepts_valid_cache_roundings() {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
@@ -746,27 +823,56 @@ mod tests {
                 let hi = hi.to_rational().unwrap();
                 for rounding in -1..=1 {
                     let coarse = numerator.div_euclid(4) + rounding;
-                    if (Q::from(coarse) - q.clone() * 256_i32).abs() > 1 { continue; }
+                    if (Q::from(coarse) - q.clone() * 256_i32).abs() > 1 {
+                        continue;
+                    }
                     // Opaque exact input with every legal rounding at the
                     // domain probe, including both one-unit endpoint errors.
                     let input = Computable {
                         internal: Arc::new(Node::new(
-                            Approximation::Add(Computable::rational(Rational::fraction(i64::from(numerator), 1024).unwrap()), Computable::zero()),
-                            BoundCache::Valid(BoundInfo::Unknown), ExactSignCache::Unknown,
-                        )), signal: None,
+                            Approximation::Add(
+                                Computable::rational(
+                                    Rational::fraction(i64::from(numerator), 1024).unwrap(),
+                                ),
+                                Computable::zero(),
+                            ),
+                            BoundCache::Valid(BoundInfo::Unknown),
+                            ExactSignCache::Unknown,
+                        )),
+                        signal: None,
                     };
                     input.internal.store_cache_value(-8, BigInt::from(coarse));
                     if input.inverse_series_argument_is_small(&None) {
                         assert!(q.clone().abs() <= Q::from((1, 8)));
                     }
-                    let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
-                    let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+                    let kind = if asin {
+                        Approximation::PrescaledAsin(input)
+                    } else {
+                        Approximation::PrescaledAtanh(input)
+                    };
+                    let result = Computable {
+                        internal: Arc::new(Node::new(
+                            kind,
+                            BoundCache::Invalid,
+                            ExactSignCache::Invalid,
+                        )),
+                        signal: None,
+                    };
                     // Cold coarse request, then refinement and cache reuse.
                     for precision in [1_i32, 0, -32, -128, -8] {
-                        let value = Integer::from_str_radix(&result.approx(precision).to_string(), 10).unwrap();
-                        let unit = if precision > 0 { Q::from(Integer::from(1) << precision) } else { Q::from((1, Integer::from(1) << -precision)) };
+                        let value =
+                            Integer::from_str_radix(&result.approx(precision).to_string(), 10)
+                                .unwrap();
+                        let unit = if precision > 0 {
+                            Q::from(Integer::from(1) << precision)
+                        } else {
+                            Q::from((1, Integer::from(1) << -precision))
+                        };
                         let center = Q::from(value) * &unit;
-                        assert!(Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi, "asin={asin}, n={numerator}, coarse={coarse}, p={precision}");
+                        assert!(
+                            Q::from(&center - &unit) <= lo && Q::from(&center + &unit) >= hi,
+                            "asin={asin}, n={numerator}, coarse={coarse}, p={precision}"
+                        );
                         checks += 1;
                     }
                 }
@@ -776,12 +882,29 @@ mod tests {
     }
 
     #[test]
+    /// Keep entry-cancelled asin/atanh of 255/256 uncached and permit a completed retry.
+    ///
+    /// Use raw prescaled tags with invalid facts. A signalled -128 request must
+    /// leave the result cache empty; after clearing the same flag, require a
+    /// positive sample and a populated cache. This checks publication and retry
+    /// sign, not an independent error bound or interruption during kernel work.
     fn inverse_series_domain_abort_does_not_publish_an_approximation() {
         use std::sync::atomic::{AtomicBool, Ordering};
         for asin in [false, true] {
             let input = Computable::rational(Rational::fraction(255, 256).unwrap());
-            let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
-            let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+            let kind = if asin {
+                Approximation::PrescaledAsin(input)
+            } else {
+                Approximation::PrescaledAtanh(input)
+            };
+            let result = Computable {
+                internal: Arc::new(Node::new(
+                    kind,
+                    BoundCache::Invalid,
+                    ExactSignCache::Invalid,
+                )),
+                signal: None,
+            };
             let signal = Arc::new(AtomicBool::new(true));
             let _ = result.approx_signal(&Some(signal.clone()), -128);
             assert!(result.cached().is_none());
@@ -792,33 +915,68 @@ mod tests {
     }
 
     #[test]
+    /// Check both inverse-series kernels at signed one-eighth working-sample boundaries.
+    ///
+    /// Four output/operand precision pairs include the evaluator's guard bits.
+    /// For 17 quarter-unit offsets about each boundary, retain the admissible
+    /// members of three candidate cache roundings, then query raw asin and atanh
+    /// tags with unknown child facts. Require 624 output intervals to contain the
+    /// 1024-bit directed MPFR intervals; each exact dyadic oracle input is asserted
+    /// unchanged on conversion. Coverage is limited to these generated samples and
+    /// precision pairs, rather than every possible working precision or history.
     fn inverse_series_domain_checks_every_working_sample_boundary_rounding() {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
         // These pairs include the kernels' iteration/rounding guard bits.
-        for (precision, operand_precision) in [(0_i32, -12_i32), (-1, -13), (-32, -46), (-128, -144)] {
+        for (precision, operand_precision) in
+            [(0_i32, -12_i32), (-1, -13), (-32, -46), (-128, -144)]
+        {
             let threshold = Integer::from(1) << (-operand_precision - 3);
             for delta in -8_i32..=8 {
                 for negative in [false, true] {
-                    let q = Q::from((threshold.clone() * 4 + delta, Integer::from(1) << (-operand_precision + 2)));
+                    let q = Q::from((
+                        threshold.clone() * 4 + delta,
+                        Integer::from(1) << (-operand_precision + 2),
+                    ));
                     let q = if negative { -q } else { q };
                     let base = threshold.clone() + delta.div_euclid(4);
                     let base = if negative { -base } else { base };
                     for rounding in -1..=1 {
                         let sample: Integer = base.clone() + rounding;
                         let sample_unit = Q::from((1, Integer::from(1) << -operand_precision));
-                        if (Q::from(sample.clone()) * &sample_unit - &q).abs() > sample_unit { continue; }
+                        if (Q::from(sample.clone()) * &sample_unit - &q).abs() > sample_unit {
+                            continue;
+                        }
                         for asin in [false, true] {
                             let input = Computable {
                                 internal: Arc::new(Node::new(
-                                    Approximation::Add(Computable::rational(q.to_string().parse().unwrap()), Computable::zero()),
-                                    BoundCache::Valid(BoundInfo::Unknown), ExactSignCache::Unknown,
-                                )), signal: None,
+                                    Approximation::Add(
+                                        Computable::rational(q.to_string().parse().unwrap()),
+                                        Computable::zero(),
+                                    ),
+                                    BoundCache::Valid(BoundInfo::Unknown),
+                                    ExactSignCache::Unknown,
+                                )),
+                                signal: None,
                             };
-                            input.internal.store_cache_value(operand_precision, sample.to_string().parse().unwrap());
-                            let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
-                            let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+                            input.internal.store_cache_value(
+                                operand_precision,
+                                sample.to_string().parse().unwrap(),
+                            );
+                            let kind = if asin {
+                                Approximation::PrescaledAsin(input)
+                            } else {
+                                Approximation::PrescaledAtanh(input)
+                            };
+                            let result = Computable {
+                                internal: Arc::new(Node::new(
+                                    kind,
+                                    BoundCache::Invalid,
+                                    ExactSignCache::Invalid,
+                                )),
+                                signal: None,
+                            };
                             let mut lo = Float::with_val(1024, &q);
                             assert_eq!(lo.to_rational().unwrap(), q);
                             let mut hi = lo.clone();
@@ -830,7 +988,9 @@ mod tests {
                                 hi.atanh_round(Round::Up);
                             }
                             let unit = Q::from((1, Integer::from(1) << -precision));
-                            let value = Integer::from_str_radix(&result.approx(precision).to_string(), 10).unwrap();
+                            let value =
+                                Integer::from_str_radix(&result.approx(precision).to_string(), 10)
+                                    .unwrap();
                             let center = Q::from(value) * &unit;
                             assert!(Q::from(&center - &unit) <= lo.to_rational().unwrap());
                             assert!(Q::from(&center + &unit) >= hi.to_rational().unwrap());
@@ -845,13 +1005,36 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
+    /// Replay raw asin/atanh series tags for +/-31/256 and +/-255/256 through JSON.
+    ///
+    /// The inputs lie inside the function domains but span both sides of the tiny
+    /// series threshold. Compare each decoded graph with native construction at
+    /// five precisions, permitting two integer units for two approximations. This
+    /// same-process comparison exercises current replay of legacy-shaped tags;
+    /// it neither imports a historical byte fixture nor uses an independent oracle,
+    /// fresh process or deterministic-serialization assertion.
     fn inverse_series_domain_survives_legacy_serialization() {
         for asin in [false, true] {
             for numerator in [-255, -31, 31, 255] {
                 let input = Computable::rational(Rational::fraction(numerator, 256).unwrap());
-                let expected = if asin { input.clone().asin() } else { input.clone().atanh() };
-                let kind = if asin { Approximation::PrescaledAsin(input) } else { Approximation::PrescaledAtanh(input) };
-                let result = Computable { internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)), signal: None };
+                let expected = if asin {
+                    input.clone().asin()
+                } else {
+                    input.clone().atanh()
+                };
+                let kind = if asin {
+                    Approximation::PrescaledAsin(input)
+                } else {
+                    Approximation::PrescaledAtanh(input)
+                };
+                let result = Computable {
+                    internal: Arc::new(Node::new(
+                        kind,
+                        BoundCache::Invalid,
+                        ExactSignCache::Invalid,
+                    )),
+                    signal: None,
+                };
                 let encoded = serde_json::to_string(&result).unwrap();
                 let decoded: Computable = serde_json::from_str(&encoded).unwrap();
                 for p in [1, 0, -32, -128, -8] {
@@ -862,11 +1045,23 @@ mod tests {
     }
 
     #[test]
+    /// Check raw sqrt(Square(q)) against the exact absolute value of 35 rationals.
+    ///
+    /// Bypass constructor folding with invalid initial facts for seven numerators
+    /// and five positive denominators. Eleven requests, from precision 64 through
+    /// -2048 and back to zero, must differ from |q| in output units by at most one.
+    /// The intermediate square must remain uncached, witnessing fused absolute-value
+    /// evaluation. Exact Rug rational arithmetic supplies the independent expected
+    /// value; this is a finite accuracy/history witness, not an allocation count.
     fn sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history() {
         use rug::{Integer, Rational as RugRational};
 
         let raw = |kind| Computable {
-            internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)),
+            internal: Arc::new(Node::new(
+                kind,
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
             signal: None,
         };
         for numerator in [-65_i64, -17, -1, 0, 1, 17, 65] {
@@ -893,6 +1088,13 @@ mod tests {
     }
 
     #[test]
+    /// Exercise fused sqrt(x^2) for x=sin(1/8)-1/2 with no retained exact sign.
+    ///
+    /// After native square/sqrt construction, an entry-cancelled -256 request must
+    /// leave result and square caches empty. The retry must equal the absolute
+    /// value of the child's retained -256 integer, while the square stays uncached.
+    /// This checks child precision, fusion and publication; it does not count child
+    /// calls or independently verify the sine approximation's error.
     fn sqrt_square_unresolved_sign_reuses_one_child_and_does_not_cache_aborts() {
         use std::sync::atomic::{AtomicBool, Ordering};
         let x = Computable::rational(Rational::fraction(1, 8).unwrap())
@@ -914,15 +1116,39 @@ mod tests {
     }
 
     #[test]
+    /// Check native and raw exponential schedules on rational grids and large integers.
+    ///
+    /// Native construction covers n/d in [-8,8] for d=3,7. Eleven integers through
+    /// +/-10000 cover both native and raw PrescaledExp paths; six raw inputs near
+    /// +/-1/2 cover the series boundary. The local helper checks fresh result graphs
+    /// and forward/reverse precision histories against 16384-bit directed MPFR
+    /// bounds, with a nearest-rounded final error comparison. This finite corpus
+    /// qualifies range reduction and reuse, without a global work or memory bound.
     fn exp_constructor_and_deferred_kernel_match_directed_mpfr() {
         use rug::{Float, Integer, Rational as RugRational, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();
 
+        /// Compare exp(input) at each requested precision using three result-graph histories.
+        ///
+        /// `raw` bypasses constructor reduction with a positive-sign PrescaledExp node;
+        /// otherwise use native exp. Convert the exact Rational to Rug rational data,
+        /// then round input and monotone exp outward at 16384 bits. That precision is
+        /// chosen for this caller's e^10000 cases at absolute precision -256, not for
+        /// unrestricted input magnitudes or precision requests.
+        ///
+        /// Build a fresh result for every request, then reuse separate results in forward
+        /// and reverse order. Shared underlying constants can still have warm caches.
+        /// After scaling the oracle endpoints into output units, require both absolute
+        /// differences from the sample to be at most one. Integer conversion and those
+        /// subtractions use nearest-rounded Float operations; this assertion is not an
+        /// exact-rational containment check or a correct-rounding promise. The fixture
+        /// caller registers MPFR cleanup; this helper adds no independent resource cap.
         fn check(input: Rational, raw: bool, precisions: &[Precision]) {
             // Includes e^10000 at absolute 256-bit accuracy, so 2048 relative
             // oracle bits would be insufficient for these largest inputs.
             let oracle_bits = 16_384;
-            let mut numerator = Integer::from_str_radix(&input.numerator().to_string(), 10).unwrap();
+            let mut numerator =
+                Integer::from_str_radix(&input.numerator().to_string(), 10).unwrap();
             if input.sign() == Sign::Minus {
                 numerator = -numerator;
             }
@@ -995,11 +1221,23 @@ mod tests {
             }
         }
         for numerator in [-9, -8, -7, 7, 8, 9] {
-            check(Rational::fraction(numerator, 16).unwrap(), true, &precisions);
+            check(
+                Rational::fraction(numerator, 16).unwrap(),
+                true,
+                &precisions,
+            );
         }
     }
 
     #[test]
+    /// Check exp on pi, sqrt(2), pi+sqrt(2) and 1/pi at six precisions.
+    ///
+    /// Directed 2048-bit constants, root and arithmetic operations enclose each
+    /// source; reciprocal endpoints are reversed before monotone exp is applied
+    /// outward. Rebuild exp from clones of each shared source for every request.
+    /// Both scaled reference endpoints must differ from the result by at most one
+    /// under nearest-rounded Float subtraction. This witnesses those finite source
+    /// compositions, not exact-rational containment, cache isolation or dispatch counts.
     fn exp_of_shared_and_inexact_magnitude_nodes_matches_directed_mpfr() {
         use rug::{
             Float, Integer,
@@ -1053,6 +1291,13 @@ mod tests {
     }
 
     #[test]
+    /// Reject publication of an entry-cancelled raw exp(7/2), then retry its reduction.
+    ///
+    /// The stopped -128 request returns the zero placeholder and leaves no result
+    /// cache. After clearing the flag, require equality with the native exp sample
+    /// and a populated cache. This compares two implementation paths; zero here is
+    /// an abort placeholder, not the value of exp(7/2), and no independent oracle or
+    /// mid-evaluation interruption is exercised.
     fn deferred_exp_does_not_cache_an_aborted_range_check() {
         use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
         let input = Computable::rational(Rational::fraction(7, 2).unwrap());
@@ -1069,6 +1314,12 @@ mod tests {
     }
 
     #[test]
+    /// Distinguish an exact cached small binade from a small planning estimate for exp.
+    ///
+    /// After fact planning, 1/4 passes the cheap range filter while pi does not.
+    /// The small value 1/(8*(pi+1)) has a planning exponent at most -2 but still
+    /// fails that sufficient filter. False does not certify a large argument, and
+    /// this fixture checks scheduling evidence without evaluating an exponential.
     fn exp_range_filter_requires_exact_cached_magnitude() {
         let small = Computable::rational(Rational::fraction(1, 4).unwrap());
         small.planning_sign_and_msd();

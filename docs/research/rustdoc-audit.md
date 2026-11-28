@@ -21323,6 +21323,120 @@ reused the approximately 6.7 GiB shared target with incremental compilation off.
 Repository-wide line review and all-configuration documentation coverage remain
 unfinished.
 
+## Hyperreal node regressions: inverse-series, square fusion and exponential fixtures
+
+Baseline: `8fd2ff31e9ded097a3c1d263c0b847da66dcad1c` on `rustdoc`.
+Reviewed the next contiguous 429 lines of
+`crates/hyperreal/src/computable/node/tests.rs`, baseline lines 657–1085,
+from `check_inverse_series_domain` through `exp_range_filter_requires_exact_cached_magnitude`.
+They become 680 lines, ending at current line 1336. Both surrounding sections
+remain byte-identical. The file grows from 4270 to 4521 lines. Together with the
+previous batch, current lines 1–1336 have contiguous review credit; the enclosing
+module and remaining file are still unfinished. Continue at the `#[test]` for
+`compare` on line 1337 (function line 1338). **No whole-file credit is claimed.**
+
+Hyperreal owns these witnesses. P37 requires their actual domains, assertions
+and limitations to be documented; P2–P7 cover retained structure, conservative
+facts, cache/cancellation behavior, resource limitations and stable evaluation.
+The initial acceptance gap was 16 undocumented functions: 14 tests, the shared
+inverse-series helper and a function-local exponential helper. Read every line
+in the section, its relevant range predicates, constructors and approximation
+kernels, and the reused comparison helper. All 14 baseline tests passed before
+editing. Runtime and fixture behavior remain unchanged.
+
+Added all 16 Rustdoc blocks. Temporary private rendering exposed 15 functions;
+Rustdoc does not emit a page for the function-local helper, so its full text was
+rendered and checked separately as supplemental documentation. Merely enabling
+other test items in the shadow module earns them no semantic review credit.
+
+The documented witnesses and their limits are:
+
+- The source sqrt(5)/64+740*sqrt(7)/2048 has a tiny planning estimate but no
+  certified magnitude. Directed root bounds and rational interval composition
+  enclose it inside (0,1); both signs feed asin/atanh via native construction
+  and raw prescaled tags. Five output requests check full directed MPFR interval
+  containment. A stored schedule need not be rejected at construction if its
+  evaluator rechecks the range. These are admitted function inputs, not tests
+  of invalid-domain failure.
+- The n/1024 grid for -1023<=n<=1023 enumerates legal -8 sample roundings,
+  verifies the sufficient coarse predicate implies |x|<=1/8, then checks raw
+  asin/atanh over five precision requests. The 46050 output assertions compare
+  exact rational intervals against directed 512-bit MPFR references. The
+  working-sample boundary grid covers four precision pairs and 17 quarter-unit
+  offsets per signed boundary, giving 624 directed 1024-bit checks. Finite grids
+  do not certify every precision or history.
+- Raw asin/atanh at 255/256 remain uncached after entry cancellation, then retry
+  with positive samples and populated result caches. The same-process JSON
+  fixture replays current encodings of legacy-shaped tags at +/-31/256 and
+  +/-255/256. It compares native implementations within two integer output units,
+  not historical byte fixtures, independent reference values, deterministic
+  encoding, or fresh-process state.
+- Raw sqrt(Square(q)) uses seven numerators and five denominators at eleven
+  precisions, yielding 385 exact rational error checks. Its square cache stays
+  empty. The unknown-sign source sin(1/8)-1/2 exercises native construction,
+  entry cancellation and fused retry; the result equals the absolute value of
+  the child's -256 cached integer. The latter asserts precision and fusion,
+  not a call count or an independent sine error bound.
+- Exponential fixtures cover n/d in [-8,8] for d=3,7, eleven integers through
+  +/-10000 via native/raw paths, and six raw inputs around +/-1/2. Fresh result
+  graphs and forward/reverse histories use 16384-bit outward MPFR references,
+  sufficient for these large outputs at the requested absolute precisions.
+  Shared constants can retain warm caches despite fresh wrappers. Four symbolic
+  sources (pi, sqrt(2), their sum and reciprocal pi) use directed 2048-bit input
+  bounds, including reversed reciprocal endpoints.
+- The repository exponential assertions convert samples to Float and use
+  nearest-rounded endpoint differences. Their reference bounds are directed,
+  but the final assertion is not written as exact rational interval containment
+  or a correct-rounding test. Documentation states that arithmetic accurately.
+  The temporary probe below supplies a separate exact-rational check for this
+  finite corpus; no repository assertion was weakened or replaced.
+- Entry-cancelled raw exp(7/2) returns an uncached zero placeholder; retry matches
+  native exp and populates the cache. That zero is not a successful exponential
+  value. The cheap-range fixture accepts a cached exact small binade for 1/4
+  but declines the small estimated binade of 1/(8*(pi+1)); false does not prove
+  a large argument. It does not evaluate exp.
+
+Independent Python Fraction enumeration confirmed 4605 admissible coarse samples
+per function, giving 46050 output checks, and 312 working samples, giving 624
+checks across the two kernels. Each accepted integer guard implies the exact
+one-eighth bound for those enumerated values. Simple rational root bounds give
+507213/512000 < sqrt(5)/64+740*sqrt(7)/2048 < 253703/256000, explicitly outside
+the tiny series range and inside the admitted domains.
+
+A temporary probe retained the exponential fixture inputs, directed MPFR oracle
+construction and graph histories, replacing only its output comparison with
+exact Integer/Rational arithmetic. On both baseline and documented source,
+3792 rational-source samples and 24 symbolic-source samples satisfied full
+reference-interval containment in center plus/minus 2^p. These 3816 checks are
+finite evidence, not a universal kernel proof. The probe used external containment
+of 2 GiB address space, 90 CPU seconds, 120 wall seconds and no core dumps;
+these are harness limits, not production resource guarantees.
+
+After the final source edit, focused locked/offline two-job validation passed:
+
+- 13 selected tests without default features and 14 with all features; the extra
+  test is serde replay. The inverse-domain and exponential corpora were completed,
+  not skipped or reduced.
+- Private library Rustdoc in both feature configurations, temporary fixture
+  Rustdoc, all 15 rendered function texts and the supplemental local-helper text.
+  Library and temporary fixture docs denied warnings and broken/private links.
+- All-feature serde_graph_domains (four), serde_opaque_operand_domains (five),
+  and downstream Hyperlimit resolve::tests (five).
+- Scoped Rustfmt and git diff --check. Independently formatted comment-free
+  tokens are identical. Raw-token differences are 17 optional trailing commas
+  introduced by Rustfmt and inspected in the diff. No algorithm, fixture,
+  assertion, predicate order or signature changed.
+
+No focused check remains blocked and no new runtime defect was found in these
+finite witnesses. Full workflow/performance checks remain owner-waived for this
+docs-only session; no performance claim is made. The standing AGENTS.md mandate
+for 100% public/private documentation remains in force. Evidence in
+`/tmp/csgrs-hyperreal-node-domain-fixtures-audit/` retains command/test logs,
+probe sources, render records, exact enumerations and token/item inventories.
+Owned temporary sources, executable/rlib and HTML were removed after inspection;
+builds reused the approximately 6.6 GiB shared target with incremental compilation
+disabled. Repository-wide line review and all-configuration coverage are unfinished.
+
 ## Next work
 
 Continue with owning-crate implementations and remaining build/support files.
